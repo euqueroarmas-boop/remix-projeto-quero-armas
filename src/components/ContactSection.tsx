@@ -26,13 +26,16 @@ const ContactSection = () => {
             </p>
             <div className="space-y-3 font-mono text-sm text-gunmetal-foreground/60">
               <p>
-                <span className="text-primary">email:</span> contato@nexcore.com.br
+                <span className="text-primary">email:</span> contato@wmti.com.br
               </p>
               <p>
-                <span className="text-primary">tel:</span> (11) 3000-0000
+                <span className="text-primary">whatsapp:</span>{" "}
+                <a href="https://wa.me/5511963166915" className="hover:text-primary transition-colors">(11) 96316-6915</a>
               </p>
               <p>
-                <span className="text-primary">local:</span> São Paulo, SP
+                <span className="text-primary">endereço:</span> Rua José Benedito Duarte, 140
+                <br />
+                <span className="ml-[4.5ch]">Parque Itamarati — Jacareí, SP</span>
               </p>
             </div>
           </motion.div>
