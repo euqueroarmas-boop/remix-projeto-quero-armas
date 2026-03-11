@@ -3,6 +3,7 @@ import { Menu, X } from "lucide-react";
 import logoWmti from "@/assets/logo-wmti.jpeg";
 
 const navLinks = [
+  { href: "#cartorios", label: "Cartórios" },
   { href: "#servicos", label: "Serviços" },
   { href: "#infraestrutura", label: "Infraestrutura" },
   { href: "#seguranca", label: "Segurança" },
