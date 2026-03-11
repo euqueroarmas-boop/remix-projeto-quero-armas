@@ -186,8 +186,8 @@ const CartoriosSection = () => {
                   {req.description}
                 </p>
                 <div className="flex items-center gap-2 pt-3 border-t border-border">
-                  <div className="w-2 h-2 rounded-full bg-green-500 led-pulse" />
-                  <span className="font-mono text-[10px] text-green-600 uppercase tracking-wider">
+                  <div className="w-2 h-2 rounded-full bg-primary led-pulse" />
+                  <span className="font-mono text-[10px] text-primary uppercase tracking-wider">
                     {req.compliance}
                   </span>
                 </div>
