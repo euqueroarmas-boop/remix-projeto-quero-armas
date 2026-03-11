@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
+import logoWmti from "@/assets/logo-wmti.jpeg";
 
 const navLinks = [
   { href: "#servicos", label: "Serviços" },
@@ -14,8 +15,8 @@ const Navbar = () => {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-secondary/95 backdrop-blur-sm border-b border-gunmetal-foreground/10">
       <div className="container flex items-center justify-between h-16">
-        <a href="#" className="font-mono text-lg font-bold text-gunmetal-foreground">
-          <span className="text-primary">//</span> NEXCORE
+        <a href="#" className="flex items-center gap-2">
+          <img src={logoWmti} alt="WMTi Tecnologia da Informação" className="h-10 w-auto" />
         </a>
 
         {/* Desktop */}
