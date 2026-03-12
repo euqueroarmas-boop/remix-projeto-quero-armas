@@ -4,6 +4,7 @@ import logoWmti from "@/assets/logo-wmti.jpeg";
 
 const navLinks = [
   { href: "#cartorios", label: "Cartórios" },
+  { href: "/provimento-213", label: "Provimento 213", isRoute: true },
   { href: "#servicos", label: "Serviços" },
   { href: "#infraestrutura", label: "Infraestrutura" },
   { href: "#seguranca", label: "Segurança" },
