@@ -64,16 +64,27 @@ const Navbar = () => {
       {open && (
         <div className="md:hidden bg-secondary border-t border-gunmetal-foreground/10 py-6">
           <div className="container flex flex-col gap-4">
-            {navLinks.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                onClick={() => setOpen(false)}
-                className="font-mono text-sm uppercase tracking-wider text-gunmetal-foreground/60 hover:text-primary transition-colors"
-              >
-                {link.label}
-              </a>
-            ))}
+            {navLinks.map((link) =>
+              link.isRoute ? (
+                <Link
+                  key={link.href}
+                  to={link.href}
+                  onClick={() => setOpen(false)}
+                  className="font-mono text-sm uppercase tracking-wider text-gunmetal-foreground/60 hover:text-primary transition-colors"
+                >
+                  {link.label}
+                </Link>
+              ) : (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setOpen(false)}
+                  className="font-mono text-sm uppercase tracking-wider text-gunmetal-foreground/60 hover:text-primary transition-colors"
+                >
+                  {link.label}
+                </a>
+              )
+            )}
           </div>
         </div>
       )}
