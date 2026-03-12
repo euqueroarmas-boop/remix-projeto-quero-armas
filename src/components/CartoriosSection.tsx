@@ -109,7 +109,7 @@ const CartoriosSection = () => {
 
             <div className="flex flex-wrap gap-4 mb-12">
               <a
-                href="https://wa.me/5511963166915?text=Olá! Gostaria de um orçamento para adequação do meu cartório ao Provimento 74 do CNJ."
+                href="https://wa.me/5511963166915?text=Olá! Gostaria de um orçamento para adequação do meu cartório ao Provimento 213 do CNJ."
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
@@ -117,6 +117,12 @@ const CartoriosSection = () => {
                 <AlertTriangle size={16} />
                 Adequar meu cartório
               </a>
+              <Link
+                to="/provimento-213"
+                className="inline-flex items-center gap-2 border border-gunmetal-foreground/30 text-gunmetal-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:border-primary hover:text-primary transition-all"
+              >
+                Ver Provimento 213 completo
+              </Link>
               <a
                 href="#contato"
                 className="inline-flex items-center gap-2 border border-gunmetal-foreground/30 text-gunmetal-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:border-primary hover:text-primary transition-all"
