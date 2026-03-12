@@ -123,6 +123,7 @@ const CartoriosSection = () => {
               >
                 Ver Provimento 213 completo
               </Link>
+            </div>
 
             {/* Stats */}
             <div className="grid grid-cols-3 gap-px bg-gunmetal-foreground/10">
