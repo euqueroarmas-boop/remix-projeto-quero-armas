@@ -90,7 +90,7 @@ const CartoriosSection = () => {
             <div className="flex items-center gap-3 mb-6">
               <FileCheck size={20} className="text-primary" />
               <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary">
-                // Provimento 74/2018 — CNJ
+                // Provimento 213/2026 — CNJ
               </p>
             </div>
             <h2 className="text-3xl md:text-5xl lg:text-6xl mb-6">
