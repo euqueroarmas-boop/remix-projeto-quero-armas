@@ -123,13 +123,6 @@ const CartoriosSection = () => {
               >
                 Ver Provimento 213 completo
               </Link>
-              <a
-                href="#contato"
-                className="inline-flex items-center gap-2 border border-gunmetal-foreground/30 text-gunmetal-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:border-primary hover:text-primary transition-all"
-              >
-                Solicitar diagnóstico
-              </a>
-            </div>
 
             {/* Stats */}
             <div className="grid grid-cols-3 gap-px bg-gunmetal-foreground/10">
