@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import { ShieldCheck, HardDrive, Cloud, Server, Lock, Activity, FileCheck, AlertTriangle } from "lucide-react";
 
 const requirements = [
@@ -89,7 +90,7 @@ const CartoriosSection = () => {
             <div className="flex items-center gap-3 mb-6">
               <FileCheck size={20} className="text-primary" />
               <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary">
-                // Provimento 74/2018 — CNJ
+                // Provimento 213/2026 — CNJ
               </p>
             </div>
             <h2 className="text-3xl md:text-5xl lg:text-6xl mb-6">
@@ -108,7 +109,7 @@ const CartoriosSection = () => {
 
             <div className="flex flex-wrap gap-4 mb-12">
               <a
-                href="https://wa.me/5511963166915?text=Olá! Gostaria de um orçamento para adequação do meu cartório ao Provimento 74 do CNJ."
+                href="https://wa.me/5511963166915?text=Olá! Gostaria de um orçamento para adequação do meu cartório ao Provimento 213 do CNJ."
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
@@ -116,12 +117,12 @@ const CartoriosSection = () => {
                 <AlertTriangle size={16} />
                 Adequar meu cartório
               </a>
-              <a
-                href="#contato"
+              <Link
+                to="/provimento-213"
                 className="inline-flex items-center gap-2 border border-gunmetal-foreground/30 text-gunmetal-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:border-primary hover:text-primary transition-all"
               >
-                Solicitar diagnóstico
-              </a>
+                Ver Provimento 213 completo
+              </Link>
             </div>
 
             {/* Stats */}
@@ -159,7 +160,7 @@ const CartoriosSection = () => {
               // Requisitos atendidos
             </p>
             <h3 className="text-2xl md:text-4xl max-w-2xl">
-              Cada artigo do Provimento 74,
+              Cada artigo do Provimento 213,
               <br />
               <span className="text-primary">implementado e monitorado.</span>
             </h3>
@@ -260,10 +261,10 @@ const CartoriosSection = () => {
             <p className="font-body text-gunmetal-foreground/60 max-w-xl mx-auto mb-8">
               Nossa equipe técnica faz uma análise completa da sua infraestrutura
               atual e identifica todos os pontos de adequação necessários ao
-              Provimento 74.
+               Provimento 213.
             </p>
             <a
-              href="https://wa.me/5511963166915?text=Olá! Gostaria de solicitar um diagnóstico gratuito do meu cartório para adequação ao Provimento 74 do CNJ."
+              href="https://wa.me/5511963166915?text=Olá! Gostaria de solicitar um diagnóstico gratuito do meu cartório para adequação ao Provimento 213 do CNJ."
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
