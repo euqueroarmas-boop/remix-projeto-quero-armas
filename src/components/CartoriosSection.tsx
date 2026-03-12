@@ -261,10 +261,10 @@ const CartoriosSection = () => {
             <p className="font-body text-gunmetal-foreground/60 max-w-xl mx-auto mb-8">
               Nossa equipe técnica faz uma análise completa da sua infraestrutura
               atual e identifica todos os pontos de adequação necessários ao
-              Provimento 74.
+               Provimento 213.
             </p>
             <a
-              href="https://wa.me/5511963166915?text=Olá! Gostaria de solicitar um diagnóstico gratuito do meu cartório para adequação ao Provimento 74 do CNJ."
+              href="https://wa.me/5511963166915?text=Olá! Gostaria de solicitar um diagnóstico gratuito do meu cartório para adequação ao Provimento 213 do CNJ."
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
