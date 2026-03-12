@@ -54,19 +54,19 @@ const services = [
 
 const ServicesSection = () => {
   return (
-    <section id="servicos" className="py-24 section-light">
+    <section id="servicos" className="py-20 md:py-24 section-light">
       <div className="container">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="mb-16"
+          className="mb-12 md:mb-16"
         >
           <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
             // Serviços
           </p>
-          <h2 className="text-3xl md:text-5xl max-w-2xl">
+          <h2 className="text-2xl md:text-5xl max-w-2xl">
             Engenharia de sistemas,
             <br />
             não consultoria genérica.
@@ -81,23 +81,23 @@ const ServicesSection = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: i * 0.1 }}
-              className="bg-background p-8 lg:p-10 group hover:bg-muted transition-colors"
+              className="bg-background p-6 md:p-10 group hover:bg-muted transition-colors"
             >
-              <div className="flex items-center gap-3 mb-6">
+              <div className="flex items-center gap-3 mb-4 md:mb-6">
                 <service.icon size={18} className="text-primary" strokeWidth={1.5} />
-                <span className="font-mono text-[10px] tracking-[0.2em] uppercase text-muted-foreground">
+                <span className="font-mono text-[11px] md:text-xs tracking-[0.2em] uppercase text-muted-foreground">
                   {service.tag}
                 </span>
               </div>
-              <h3 className="text-xl mb-4">{service.title}</h3>
-              <p className="font-body text-sm text-muted-foreground leading-relaxed mb-6">
+              <h3 className="text-lg md:text-xl mb-3 md:mb-4">{service.title}</h3>
+              <p className="font-body text-sm md:text-base text-muted-foreground leading-relaxed mb-5 md:mb-6">
                 {service.description}
               </p>
               <div className="border-t border-border pt-4">
                 {service.specs.map((spec) => (
                   <div key={spec} className="flex items-center gap-2 mb-1.5">
-                    <span className="w-1 h-1 bg-primary rounded-full" />
-                    <span className="font-mono text-[11px] text-muted-foreground">{spec}</span>
+                    <span className="w-1 h-1 bg-primary rounded-full flex-shrink-0" />
+                    <span className="font-mono text-xs md:text-sm text-muted-foreground">{spec}</span>
                   </div>
                 ))}
               </div>
