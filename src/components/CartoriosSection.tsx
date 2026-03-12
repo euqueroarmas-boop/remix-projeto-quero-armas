@@ -160,7 +160,7 @@ const CartoriosSection = () => {
               // Requisitos atendidos
             </p>
             <h3 className="text-2xl md:text-4xl max-w-2xl">
-              Cada artigo do Provimento 74,
+              Cada artigo do Provimento 213,
               <br />
               <span className="text-primary">implementado e monitorado.</span>
             </h3>
