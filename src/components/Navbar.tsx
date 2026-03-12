@@ -7,6 +7,7 @@ const navLinks = [
   { href: "#cartorios", label: "Cartórios" },
   { href: "/provimento-213", label: "Provimento 213", isRoute: true },
   { href: "#servicos", label: "Serviços" },
+  { href: "#locacao", label: "Locação" },
   { href: "#infraestrutura", label: "Infraestrutura" },
   { href: "#seguranca", label: "Segurança" },
   { href: "#contato", label: "Contato" },
@@ -17,13 +18,13 @@ const Navbar = () => {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-secondary/95 backdrop-blur-sm border-b border-gunmetal-foreground/10">
-      <div className="container flex items-center justify-between h-16">
+      <div className="container flex items-center justify-between h-14 md:h-16">
         <a href="#" className="flex items-center gap-2">
-          <img src={logoWmti} alt="WMTi Tecnologia da Informação" className="h-10 w-auto" />
+          <img src={logoWmti} alt="WMTi Tecnologia da Informação" className="h-8 md:h-10 w-auto" />
         </a>
 
         {/* Desktop */}
-        <div className="hidden md:flex items-center gap-8">
+        <div className="hidden lg:flex items-center gap-6 xl:gap-8">
           {navLinks.map((link) =>
             link.isRoute ? (
               <Link
@@ -54,7 +55,7 @@ const Navbar = () => {
         {/* Mobile toggle */}
         <button
           onClick={() => setOpen(!open)}
-          className="md:hidden text-gunmetal-foreground"
+          className="lg:hidden text-gunmetal-foreground"
         >
           {open ? <X size={20} /> : <Menu size={20} />}
         </button>
@@ -62,15 +63,15 @@ const Navbar = () => {
 
       {/* Mobile menu */}
       {open && (
-        <div className="md:hidden bg-secondary border-t border-gunmetal-foreground/10 py-6">
-          <div className="container flex flex-col gap-4">
+        <div className="lg:hidden bg-secondary border-t border-gunmetal-foreground/10 py-4 md:py-6">
+          <div className="container flex flex-col gap-3 md:gap-4">
             {navLinks.map((link) =>
               link.isRoute ? (
                 <Link
                   key={link.href}
                   to={link.href}
                   onClick={() => setOpen(false)}
-                  className="font-mono text-sm uppercase tracking-wider text-gunmetal-foreground/60 hover:text-primary transition-colors"
+                  className="font-mono text-sm uppercase tracking-wider text-gunmetal-foreground/60 hover:text-primary transition-colors py-1"
                 >
                   {link.label}
                 </Link>
@@ -79,12 +80,19 @@ const Navbar = () => {
                   key={link.href}
                   href={link.href}
                   onClick={() => setOpen(false)}
-                  className="font-mono text-sm uppercase tracking-wider text-gunmetal-foreground/60 hover:text-primary transition-colors"
+                  className="font-mono text-sm uppercase tracking-wider text-gunmetal-foreground/60 hover:text-primary transition-colors py-1"
                 >
                   {link.label}
                 </a>
               )
             )}
+            <a
+              href="#contato"
+              onClick={() => setOpen(false)}
+              className="bg-primary text-primary-foreground font-mono text-sm uppercase tracking-wider px-5 py-3 hover:brightness-110 transition-all text-center mt-2"
+            >
+              Orçamento
+            </a>
           </div>
         </div>
       )}
