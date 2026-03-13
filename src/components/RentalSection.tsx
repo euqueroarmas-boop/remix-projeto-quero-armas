@@ -84,7 +84,7 @@ const RentalSection = () => {
             alt="Dell OptiPlex completo com monitor, teclado e mouse em escritório corporativo"
             className="w-full h-56 md:h-80 object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-foreground/80 via-foreground/50 to-transparent flex items-center">
+          <div className="absolute inset-0 bg-gradient-to-r from-secondary/90 via-secondary/60 to-transparent flex items-center">
             <div className="p-6 md:p-12 max-w-lg">
               <p className="font-mono text-xs md:text-sm text-primary mb-2">DELL OPTIPLEX</p>
               <h3 className="text-xl md:text-3xl text-background mb-3 md:mb-4">
