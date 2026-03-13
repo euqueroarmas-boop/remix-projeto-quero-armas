@@ -85,6 +85,7 @@ const ServicesSection = () => {
               src={datacenterImage}
               alt="Técnico de TI trabalhando em rack de servidores em data center"
               className="w-full h-48 md:h-72 object-cover"
+              loading="lazy"
             />
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/70 to-transparent p-4 md:p-6">
               <p className="font-mono text-xs text-primary">
@@ -102,7 +103,7 @@ const ServicesSection = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: i * 0.1 }}
-              className="bg-background p-6 md:p-10 group hover:bg-muted transition-colors"
+              className="bg-background p-6 md:p-10 group hover:bg-muted hover:-translate-y-1 transition-all duration-300"
             >
               <div className="flex items-center gap-3 mb-4 md:mb-6">
                 <service.icon size={18} className="text-primary" strokeWidth={1.5} />
