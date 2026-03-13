@@ -6,8 +6,10 @@ import ProblemsSection from "@/components/ProblemsSection";
 import InfraSection from "@/components/InfraSection";
 import RentalSection from "@/components/RentalSection";
 import SecuritySection from "@/components/SecuritySection";
+import TestimonialsSection from "@/components/TestimonialsSection";
 import ContactSection from "@/components/ContactSection";
 import Footer from "@/components/Footer";
+import WhatsAppButton from "@/components/WhatsAppButton";
 
 const Index = () => {
   return (
@@ -20,8 +22,10 @@ const Index = () => {
       <RentalSection />
       <InfraSection />
       <SecuritySection />
+      <TestimonialsSection />
       <ContactSection />
       <Footer />
+      <WhatsAppButton />
     </div>
   );
 };
