@@ -85,9 +85,9 @@ const RentalSection = () => {
             className="w-full h-56 md:h-80 object-cover"
           />
           <div className="absolute inset-0 flex items-center">
-            <div className="p-6 md:p-12 max-w-lg">
+            <div className="p-6 md:p-12 max-w-lg bg-secondary/80 backdrop-blur-sm">
               <p className="font-mono text-xs md:text-sm text-primary mb-2">DELL OPTIPLEX</p>
-              <h3 className="text-xl md:text-3xl text-background mb-3 md:mb-4">
+              <h3 className="text-xl md:text-3xl text-foreground mb-3 md:mb-4">
                 Produtividade sem investimento inicial.
               </h3>
               <a
