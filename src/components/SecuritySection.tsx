@@ -57,6 +57,7 @@ const SecuritySection = () => {
               src={firewallImage}
               alt="Appliance de firewall pfSense com cabos de rede conectados em data center"
               className="w-full h-48 md:h-72 object-cover"
+              loading="lazy"
             />
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/70 to-transparent p-4 md:p-6">
               <p className="font-mono text-xs text-primary">
