@@ -70,7 +70,7 @@ const TestimonialsSection = () => {
                 ))}
               </div>
 
-              <p className="font-body text-sm md:text-base text-muted-foreground leading-relaxed mb-6">
+              <p className="font-body text-sm md:text-base text-muted-foreground leading-relaxed mb-6 flex-1">
                 "{t.text}"
               </p>
 
