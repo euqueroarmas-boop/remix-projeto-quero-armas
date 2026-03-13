@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Shield, Lock, Eye, Wifi } from "lucide-react";
+import firewallImage from "@/assets/firewall-security.jpg";
 
 const features = [
   {
@@ -28,22 +29,42 @@ const SecuritySection = () => {
   return (
     <section id="seguranca" className="py-20 md:py-24 section-light">
       <div className="container">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="mb-12 md:mb-16"
-        >
-          <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
-            // Segurança
-          </p>
-          <h2 className="text-2xl md:text-5xl max-w-3xl">
-            Perímetro blindado.
-            <br />
-            <span className="text-primary">pfSense</span> como espinha dorsal.
-          </h2>
-        </motion.div>
+        <div className="grid lg:grid-cols-2 gap-8 md:gap-12 items-center mb-12 md:mb-16">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+          >
+            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
+              // Segurança
+            </p>
+            <h2 className="text-2xl md:text-5xl max-w-3xl">
+              Perímetro blindado.
+              <br />
+              <span className="text-primary">pfSense</span> como espinha dorsal.
+            </h2>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="relative overflow-hidden"
+          >
+            <img
+              src={firewallImage}
+              alt="Appliance de firewall pfSense com cabos de rede conectados em data center"
+              className="w-full h-48 md:h-72 object-cover"
+            />
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/70 to-transparent p-4 md:p-6">
+              <p className="font-mono text-xs text-primary">
+                FIREWALL STATUS: ACTIVE // THREATS BLOCKED
+              </p>
+            </div>
+          </motion.div>
+        </div>
 
         <div className="grid md:grid-cols-2 gap-px bg-border">
           {features.map((feature, i) => (
