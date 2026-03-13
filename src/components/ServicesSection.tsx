@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Server, Cloud, Shield, HardDrive, Network, MonitorCog } from "lucide-react";
+import datacenterImage from "@/assets/network-datacenter.jpg";
 
 const services = [
   {
@@ -56,22 +57,42 @@ const ServicesSection = () => {
   return (
     <section id="servicos" className="py-20 md:py-24 section-light">
       <div className="container">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="mb-12 md:mb-16"
-        >
-          <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
-            // Serviços
-          </p>
-          <h2 className="text-2xl md:text-5xl max-w-2xl">
-            Engenharia de sistemas,
-            <br />
-            não consultoria genérica.
-          </h2>
-        </motion.div>
+        <div className="grid lg:grid-cols-2 gap-8 md:gap-12 items-center mb-12 md:mb-16">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+          >
+            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
+              // Serviços
+            </p>
+            <h2 className="text-2xl md:text-5xl max-w-2xl">
+              Engenharia de sistemas,
+              <br />
+              não consultoria genérica.
+            </h2>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="relative overflow-hidden"
+          >
+            <img
+              src={datacenterImage}
+              alt="Técnico de TI trabalhando em rack de servidores em data center"
+              className="w-full h-48 md:h-72 object-cover"
+            />
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/70 to-transparent p-4 md:p-6">
+              <p className="font-mono text-xs text-primary">
+                EQUIPE CERTIFICADA // DELL & MICROSOFT
+              </p>
+            </div>
+          </motion.div>
+        </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-px bg-border">
           {services.map((service, i) => (

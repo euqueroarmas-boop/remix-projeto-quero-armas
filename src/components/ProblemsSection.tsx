@@ -11,6 +11,7 @@ import {
   ArrowRight,
   CheckCircle2,
 } from "lucide-react";
+import slowComputer from "@/assets/slow-computer.jpg";
 
 const problems = [
   {
@@ -67,27 +68,44 @@ const ProblemsSection = () => {
   return (
     <section id="problemas" className="py-20 md:py-24 bg-background">
       <div className="container">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="text-center mb-12 md:mb-16"
-        >
-          <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
-            // Diagnóstico
-          </p>
-          <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4 md:mb-6">
-            Seu computador está lento?
-            <br />
-            <span className="text-primary">Nós resolvemos.</span>
-          </h2>
-          <p className="font-body text-sm md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            A maioria dos problemas de performance e falhas em computadores, notebooks
-            e redes acontecem por falta de manutenção adequada. Conheça os vilões
-            mais comuns e como a WMTi elimina cada um deles.
-          </p>
-        </motion.div>
+        {/* Hero with image */}
+        <div className="grid lg:grid-cols-2 gap-8 md:gap-12 items-center mb-12 md:mb-16">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+          >
+            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
+              // Diagnóstico
+            </p>
+            <h2 className="text-2xl md:text-4xl lg:text-5xl text-foreground mb-4 md:mb-6">
+              Seu computador está lento?
+              <br />
+              <span className="text-primary">Nós resolvemos.</span>
+            </h2>
+            <p className="font-body text-sm md:text-lg text-muted-foreground max-w-xl leading-relaxed">
+              A maioria dos problemas de performance e falhas em computadores, notebooks
+              e redes acontecem por falta de manutenção adequada. Conheça os vilões
+              mais comuns e como a WMTi elimina cada um deles.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="relative overflow-hidden"
+          >
+            <img
+              src={slowComputer}
+              alt="Profissional frustrado com computador lento no escritório"
+              className="w-full h-56 md:h-80 object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent" />
+          </motion.div>
+        </div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-12 md:mb-16">
           {problems.map((item, i) => (
@@ -128,7 +146,7 @@ const ProblemsSection = () => {
           transition={{ duration: 0.5 }}
           className="bg-secondary border border-border/30 p-8 md:p-12 text-center"
         >
-          <h3 className="text-xl md:text-3xl font-bold text-secondary-foreground mb-3 md:mb-4">
+          <h3 className="text-xl md:text-3xl text-secondary-foreground mb-3 md:mb-4">
             Não espere o problema parar sua empresa
           </h3>
           <p className="font-body text-sm md:text-base text-muted-foreground max-w-xl mx-auto mb-6 md:mb-8 leading-relaxed">
