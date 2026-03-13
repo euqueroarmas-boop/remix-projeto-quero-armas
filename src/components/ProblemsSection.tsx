@@ -115,7 +115,7 @@ const ProblemsSection = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: i * 0.05 }}
-              className="group bg-secondary border border-border/30 p-5 md:p-6 hover:border-primary/40 transition-all duration-300"
+              className="group bg-secondary border border-border/30 p-5 md:p-6 hover:border-primary/40 transition-all duration-300 flex flex-col"
             >
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-9 h-9 bg-primary/10 flex items-center justify-center shrink-0">
@@ -125,7 +125,7 @@ const ProblemsSection = () => {
                   {item.title}
                 </h3>
               </div>
-              <p className="font-body text-xs md:text-sm text-muted-foreground leading-relaxed mb-3">
+              <p className="font-body text-xs md:text-sm text-muted-foreground leading-relaxed mb-3 flex-1">
                 {item.desc}
               </p>
               <div className="flex items-start gap-2 pt-3 border-t border-border/20">
