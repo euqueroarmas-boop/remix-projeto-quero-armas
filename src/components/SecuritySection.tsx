@@ -74,7 +74,7 @@ const SecuritySection = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: i * 0.1 }}
-              className="bg-background p-6 md:p-10 group"
+              className="bg-background p-6 md:p-10 group hover:bg-muted/50 hover:-translate-y-1 transition-all duration-300"
             >
               <div className="flex items-start gap-4 mb-4">
                 <div className="w-10 h-10 border border-border flex items-center justify-center group-hover:border-primary group-hover:bg-primary/5 transition-all flex-shrink-0">
