@@ -28,6 +28,7 @@ const InfraSection = () => {
               src={poweredgeImage}
               alt="Servidores Dell PowerEdge em rack de data center com LEDs laranjas"
               className="w-full h-48 md:h-auto md:max-h-[500px] object-cover"
+              loading="lazy"
             />
           </motion.div>
 
