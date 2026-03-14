@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
-import { Shield, Lock, Eye, Wifi } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Shield, Lock, Eye, Wifi, ArrowRight } from "lucide-react";
 import firewallImage from "@/assets/firewall-security.jpg";
 import MobileSummary from "@/components/MobileSummary";
 
