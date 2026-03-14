@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
-import { Server, Cloud, Shield, HardDrive, Network, MonitorCog } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Server, Cloud, Shield, HardDrive, Network, MonitorCog, ArrowRight } from "lucide-react";
 import datacenterImage from "@/assets/network-datacenter.jpg";
 import MobileSummary from "@/components/MobileSummary";
 
