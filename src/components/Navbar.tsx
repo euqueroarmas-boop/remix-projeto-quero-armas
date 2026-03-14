@@ -20,7 +20,7 @@ const Navbar = () => {
   const navRef = useRef<HTMLDivElement>(null);
   const [pillStyle, setPillStyle] = useState<{ left: number; width: number } | null>(null);
   const linkRefs = useRef<(HTMLAnchorElement | null)[]>([]);
-  const ctaRef = useRef<HTMLAnchorElement | null>(null);
+  
 
   const resolveHref = (link: typeof navLinks[0], isMobile: boolean) => {
     if (link.isRoute) return link.href;
@@ -52,8 +52,6 @@ const Navbar = () => {
 
   const activeIndex = getActiveIndex();
   const noNavActive = activeIndex === -1;
-  // If no nav link is active, highlight the CTA "Orçamento"
-  const ctaIsHighlighted = noNavActive;
 
   useEffect(() => {
     const updatePill = () => {
@@ -61,10 +59,6 @@ const Navbar = () => {
         const el = linkRefs.current[activeIndex]!;
         const navRect = navRef.current.getBoundingClientRect();
         const elRect = el.getBoundingClientRect();
-        setPillStyle({ left: elRect.left - navRect.left, width: elRect.width });
-      } else if (noNavActive && ctaRef.current && navRef.current) {
-        const navRect = navRef.current.getBoundingClientRect();
-        const elRect = ctaRef.current.getBoundingClientRect();
         setPillStyle({ left: elRect.left - navRect.left, width: elRect.width });
       } else {
         setPillStyle(null);
@@ -124,13 +118,8 @@ const Navbar = () => {
           })}
 
           <a
-            ref={ctaRef}
             href={isHome ? "#contato" : "/#contato"}
-            className={`font-mono text-xs uppercase tracking-wider px-5 py-2.5 transition-all ${
-              ctaIsHighlighted
-                ? "bg-primary text-primary-foreground hover:brightness-110"
-                : "bg-muted text-foreground hover:bg-primary hover:text-primary-foreground"
-            }`}
+            className="font-mono text-xs uppercase tracking-wider px-5 py-2.5 transition-all bg-primary text-primary-foreground hover:brightness-110"
           >
             Orçamento
           </a>
