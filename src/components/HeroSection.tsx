@@ -39,7 +39,7 @@ const HeroSection = () => {
               corporativa, servidores Dell PowerEdge, redes empresariais,
               Microsoft 365, Azure e segurança de rede com firewall pfSense.
             </p>
-            <p className="font-body text-sm md:text-lg text-gunmetal-foreground/50 max-w-2xl mb-8 md:mb-12 leading-relaxed">
+            <p className="font-body text-base md:text-xl text-gunmetal-foreground/70 max-w-2xl mb-8 md:mb-12 leading-relaxed">
               Há mais de 15 anos ajudando empresas a manter seus sistemas
               funcionando com segurança, desempenho e confiabilidade.
             </p>
