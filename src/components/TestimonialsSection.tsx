@@ -3,9 +3,9 @@ import { Star, Quote } from "lucide-react";
 
 const testimonials = [
   {
-    name: "Carlos Eduardo",
-    role: "Diretor de TI",
-    company: "Cartório 2º Ofício — Jacareí",
+    name: "Tânia Pessim",
+    role: "Tabeliã",
+    company: "1º Tabelião de Jacareí",
     text: "A WMTi reestruturou toda nossa infraestrutura de rede e servidores. Desde a migração para o PowerEdge, não tivemos nenhuma parada crítica. Atendimento excepcional.",
     stars: 5,
   },
