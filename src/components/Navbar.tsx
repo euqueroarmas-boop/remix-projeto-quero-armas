@@ -20,7 +20,7 @@ const Navbar = () => {
   const navRef = useRef<HTMLDivElement>(null);
   const [pillStyle, setPillStyle] = useState<{ left: number; width: number } | null>(null);
   const linkRefs = useRef<(HTMLAnchorElement | null)[]>([]);
-  const ctaRef = useRef<HTMLAnchorElement | null>(null);
+  
 
   const resolveHref = (link: typeof navLinks[0], isMobile: boolean) => {
     if (link.isRoute) return link.href;
