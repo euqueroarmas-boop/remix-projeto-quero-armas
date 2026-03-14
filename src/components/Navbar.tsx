@@ -159,7 +159,7 @@ const Navbar = () => {
             <a
               href={isHome ? "#contato" : "/#contato"}
               onClick={() => setOpen(false)}
-              className="bg-primary text-primary-foreground font-mono text-sm uppercase tracking-wider px-5 py-3 hover:brightness-110 transition-all text-center mt-2"
+              className="font-mono text-sm uppercase tracking-wider transition-colors py-1 text-muted-foreground hover:text-primary"
             >
               Orçamento
             </a>
