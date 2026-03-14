@@ -46,17 +46,17 @@ const HeroSection = () => {
             className="flex flex-col sm:flex-row gap-3 md:gap-4"
           >
             <a
-              href="#servicos"
-              className="inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-6 md:px-8 py-3.5 md:py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
+              href="#contato"
+              className="group inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-8 md:px-10 py-4 md:py-5 font-mono text-sm md:text-base font-bold uppercase tracking-wider hover:brightness-110 transition-all shadow-[0_0_30px_hsl(var(--primary)/0.3)] hover:shadow-[0_0_40px_hsl(var(--primary)/0.5)]"
             >
-              Ver Serviços
-              <span className="text-lg">→</span>
+              Solicitar Orçamento Gratuito
+              <span className="text-lg group-hover:translate-x-1 transition-transform">→</span>
             </a>
             <a
-              href="#contato"
+              href="#servicos"
               className="inline-flex items-center justify-center gap-2 border border-gunmetal-foreground/30 text-gunmetal-foreground px-6 md:px-8 py-3.5 md:py-4 font-mono text-sm font-bold uppercase tracking-wider hover:border-primary hover:text-primary transition-all"
             >
-              Solicitar Orçamento
+              Ver Serviços
             </a>
           </motion.div>
 

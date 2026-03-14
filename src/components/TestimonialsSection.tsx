@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Star, Quote } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const testimonials = [
   {
@@ -8,6 +9,7 @@ const testimonials = [
     company: "1º Tabelião de Jacareí",
     text: "A WMTi reestruturou toda nossa infraestrutura de rede e servidores. Desde a migração para o PowerEdge, não tivemos nenhuma parada crítica. Atendimento excepcional.",
     stars: 5,
+    initials: "TP",
   },
   {
     name: "Fernanda Oliveira",
@@ -15,6 +17,7 @@ const testimonials = [
     company: "Construtora Horizonte",
     text: "O serviço de locação de desktops transformou nossa operação. Sem investimento inicial e com suporte técnico incluso, ganhamos agilidade e economia.",
     stars: 5,
+    initials: "FO",
   },
   {
     name: "Ricardo Santos",
@@ -22,6 +25,7 @@ const testimonials = [
     company: "Escritório Santos & Associados",
     text: "A implementação do pfSense com VPN site-to-site conectou nossas 3 unidades com segurança. O monitoramento 24/7 nos dá total tranquilidade.",
     stars: 5,
+    initials: "RS",
   },
 ];
 
@@ -74,16 +78,23 @@ const TestimonialsSection = () => {
                 "{t.text}"
               </p>
 
-              <div className="border-t border-border pt-4">
-                <p className="font-heading text-sm font-semibold text-foreground">
-                  {t.name}
-                </p>
-                <p className="font-mono text-[10px] md:text-xs text-muted-foreground tracking-wider uppercase">
-                  {t.role}
-                </p>
-                <p className="font-mono text-[10px] md:text-xs text-primary/70 tracking-wider">
-                  {t.company}
-                </p>
+              <div className="border-t border-border pt-4 flex items-center gap-3">
+                <Avatar className="h-10 w-10 border-2 border-primary/30">
+                  <AvatarFallback className="bg-primary/10 text-primary font-mono text-xs font-bold">
+                    {t.initials}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="font-heading text-sm font-semibold text-foreground">
+                    {t.name}
+                  </p>
+                  <p className="font-mono text-[10px] md:text-xs text-muted-foreground tracking-wider uppercase">
+                    {t.role}
+                  </p>
+                  <p className="font-mono text-[10px] md:text-xs text-primary/70 tracking-wider">
+                    {t.company}
+                  </p>
+                </div>
               </div>
             </motion.div>
           ))}
