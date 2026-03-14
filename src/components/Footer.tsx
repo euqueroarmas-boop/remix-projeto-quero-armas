@@ -76,7 +76,7 @@ const Footer = () => {
         <div className="border-t border-border pt-6 md:pt-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-3">
-              <img src={logoWmti} alt="WMTi" className="h-8 w-auto brightness-200" />
+              <img src={logoWmti} alt="WMTi" className="h-16 md:h-[72px] w-auto" />
               <p className="font-body text-xs md:text-sm text-muted-foreground">
                 Tecnologia da Informação
               </p>
