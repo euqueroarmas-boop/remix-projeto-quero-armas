@@ -90,14 +90,15 @@ const ServicosPage = () => (
                 initial={{ opacity: 0, y: 16 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                className="relative mb-8 overflow-hidden"
+                className="relative mb-8 overflow-hidden h-56 md:h-72 lg:h-80 bg-center bg-cover bg-no-repeat"
+                style={{ backgroundImage: `url(${brasilCoverage})` }}
               >
-                <img src={brasilCoverage} alt="Cobertura nacional WMTi" className="w-full h-48 md:h-64 object-cover" />
-                <div className="absolute inset-0 bg-secondary/80 flex items-center justify-center">
+                <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/70 to-background/50" />
+                <div className="relative z-10 flex items-center justify-center h-full px-4">
                   <div className="text-center">
-                    <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-2">// Cobertura Nacional</p>
-                    <p className="text-xl md:text-3xl font-bold">Atendemos empresas em <span className="text-primary">todo o Brasil</span></p>
-                    <p className="font-body text-sm text-muted-foreground mt-2">Sede em Jacareí (SP) • NOC 24/7 • Equipes de campo em todos os estados</p>
+                    <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-3">// Cobertura Nacional</p>
+                    <p className="text-2xl md:text-4xl font-bold text-foreground">Atendemos empresas em <span className="text-primary">todo o Brasil</span></p>
+                    <p className="font-body text-sm md:text-base text-muted-foreground mt-3">Sede em Jacareí (SP) • NOC 24/7 • Equipes de campo em todos os estados</p>
                   </div>
                 </div>
               </motion.div>
