@@ -357,9 +357,13 @@ const Navbar = () => {
                   {link.label}
                 </Link>
               ) : (
-                <a key={link.label} href={href} onClick={() => setOpen(false)} className={baseClass}>
+                <button
+                  key={link.label}
+                  onClick={() => { setOpen(false); handleAnchorClick(link.href.replace("#", "")); }}
+                  className={baseClass}
+                >
                   {link.label}
-                </a>
+                </button>
               );
             })}
             <button
