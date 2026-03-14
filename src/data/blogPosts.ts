@@ -1035,7 +1035,6 @@ export const blogContent: Record<string, BlogPostContent> = {
       { label: "Montagem de redes", href: "/montagem-redes-estruturadas-jacarei" },
     ],
   },
-  },
   "provimento-213-cnj-desafios-tecnologia-cartorios": {
     metaTitle: "Provimento 213 do CNJ: Desafios de TI para Cartórios | WMTi",
     metaDescription: "Entenda como o Provimento nº 213 do CNJ impacta a infraestrutura de TI dos cartórios brasileiros e quais medidas são necessárias para conformidade e segurança.",
