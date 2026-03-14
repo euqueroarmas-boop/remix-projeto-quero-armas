@@ -5,21 +5,7 @@ import { ArrowLeft, Calendar, ArrowRight } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
-import { blogPosts, blogContent as blogContentData, type BlogCategory } from "@/data/blogPosts";
-import catHospitais from "@/assets/blog/cat-hospitais.jpg";
-import catCartorios from "@/assets/blog/cat-cartorios.jpg";
-import catAdvocacia from "@/assets/blog/cat-advocacia.jpg";
-import catEmpresarial from "@/assets/blog/cat-empresarial.jpg";
-import catContabilidade from "@/assets/blog/cat-contabilidade.jpg";
-
-const categoryImages: Record<BlogCategory, string> = {
-  "Hospitais e Clínicas": catHospitais,
-  "Cartórios": catCartorios,
-  "Escritórios de Advocacia": catAdvocacia,
-  "Escritórios de Contabilidade": catContabilidade,
-  "Empresas Corporativas": catEmpresarial,
-  "Tecnologia Empresarial": catEmpresarial,
-};
+import { blogPosts, blogContent as blogContentData } from "@/data/blogPosts";
 
 // Legacy content for original posts
 const legacyContent: Record<string, React.ReactNode> = {
@@ -83,8 +69,6 @@ const BlogPostPage = () => {
   if (!post) return <Navigate to="/blog" replace />;
   if (!structuredContent && !legacy) return <Navigate to="/blog" replace />;
 
-  const featuredImage = categoryImages[post.category];
-
   return (
     <div className="min-h-screen">
       <Navbar />
@@ -92,7 +76,7 @@ const BlogPostPage = () => {
       {/* Featured image banner */}
       <div className="relative w-full h-48 md:h-64 mt-14 md:mt-16 overflow-hidden">
         <img
-          src={featuredImage}
+          src={post.image}
           alt={post.title}
           className="w-full h-full object-cover"
         />

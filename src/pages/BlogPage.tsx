@@ -6,23 +6,9 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import { blogPosts, blogCategories, type BlogCategory } from "@/data/blogPosts";
-import catHospitais from "@/assets/blog/cat-hospitais.jpg";
-import catCartorios from "@/assets/blog/cat-cartorios.jpg";
-import catAdvocacia from "@/assets/blog/cat-advocacia.jpg";
-import catEmpresarial from "@/assets/blog/cat-empresarial.jpg";
-import catContabilidade from "@/assets/blog/cat-contabilidade.jpg";
 
 export type { BlogPost } from "@/data/blogPosts";
 export { blogPosts } from "@/data/blogPosts";
-
-const categoryImages: Record<BlogCategory, string> = {
-  "Hospitais e Clínicas": catHospitais,
-  "Cartórios": catCartorios,
-  "Escritórios de Advocacia": catAdvocacia,
-  "Escritórios de Contabilidade": catContabilidade,
-  "Empresas Corporativas": catEmpresarial,
-  "Tecnologia Empresarial": catEmpresarial,
-};
 
 const BlogPage = () => {
   const [activeCategory, setActiveCategory] = useState<BlogCategory | "Todos">("Todos");
@@ -110,10 +96,9 @@ const BlogPage = () => {
                 transition={{ duration: 0.4, delay: (i % 6) * 0.08 }}
                 className="bg-background group hover:bg-muted transition-colors"
               >
-                {/* Featured image */}
                 <Link to={`/blog/${post.slug}`} className="block overflow-hidden">
                   <img
-                    src={categoryImages[post.category]}
+                    src={post.image}
                     alt={post.title}
                     className="w-full h-40 object-cover transition-transform duration-500 group-hover:scale-105"
                     loading="lazy"
