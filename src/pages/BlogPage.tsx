@@ -20,9 +20,11 @@ const BlogPage = () => {
     window.scrollTo(0, 0);
   }, []);
 
+  const sorted = [...blogPosts].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   const filtered = activeCategory === "Todos"
-    ? blogPosts
-    : blogPosts.filter((p) => p.category === activeCategory);
+    ? sorted
+    : sorted.filter((p) => p.category === activeCategory);
+  const recentSlugs = new Set(sorted.slice(0, 3).map(p => p.slug));
 
   return (
     <div className="min-h-screen">
