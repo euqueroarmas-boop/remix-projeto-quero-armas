@@ -227,17 +227,17 @@ const Navbar = () => {
     link: NavLink,
     active: boolean
   ) => {
-    const baseClass = `font-mono text-sm uppercase tracking-wider transition-colors py-1 ${
-      active ? "text-primary border-l-2 border-primary pl-3" : "text-muted-foreground hover:text-primary"
+    const baseClass = `font-mono text-base uppercase tracking-wider transition-colors py-2 ${
+      active ? "text-primary border-l-2 border-primary pl-4" : "text-muted-foreground hover:text-primary"
     }`;
     return (
       <div key={link.label}>
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className={`${baseClass} inline-flex items-center gap-1 w-full text-left`}
+          className={`${baseClass} inline-flex items-center gap-2 w-full text-left`}
         >
           {link.label}
-          <ChevronDown size={14} className={`transition-transform ${isOpen ? "rotate-180" : ""}`} />
+          <ChevronDown size={14} className={`transition-transform flex-shrink-0 ${isOpen ? "rotate-180" : ""}`} />
         </button>
         <AnimatePresence>
           {isOpen && (
