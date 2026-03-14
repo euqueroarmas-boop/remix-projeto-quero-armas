@@ -39,6 +39,7 @@ const services = [
     description:
       "Estratégias de backup 3-2-1 com Veeam Backup & Replication sobre storage Dell PowerVault. Testes de restauração periódicos e RPO/RTO definidos para cada workload crítico.",
     specs: ["Veeam B&R v12", "Dell PowerVault ME5", "Backup 3-2-1", "DR Automatizado"],
+    href: "/backup-empresarial-jacarei",
   },
   {
     icon: Network,
