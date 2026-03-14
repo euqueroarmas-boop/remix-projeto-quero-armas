@@ -88,9 +88,9 @@ const ContactSection = () => {
   };
 
   return (
-    <section id="contato" className="py-20 md:py-28 section-dark">
+    <section id="contato" className="py-24 md:py-32 bg-background">
       <div id="orcamento" className="container">
-        <div className="grid lg:grid-cols-2 gap-14 md:gap-20">
+        <div className="grid lg:grid-cols-2 gap-16 md:gap-24">
           {/* Left column — copy & contact info */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -163,11 +163,11 @@ const ContactSection = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="space-y-5 md:space-y-6 bg-card/40 border border-border/40 p-6 md:p-8 lg:p-10"
+            className="space-y-6 md:space-y-7 bg-card border border-border p-7 md:p-9 lg:p-12 shadow-[0_10px_50px_rgba(0,0,0,0.4)]"
             style={{ borderRadius: "var(--radius)" }}
             onSubmit={handleSubmit}
           >
-            <p className="font-mono text-[10px] tracking-[0.3em] uppercase text-primary/70 mb-2">
+            <p className="font-mono text-[10px] tracking-[0.3em] uppercase text-primary/80 mb-1">
               Preencha para receber sua proposta
             </p>
 
@@ -186,7 +186,7 @@ const ContactSection = () => {
                   placeholder={field.placeholder}
                   value={form[field.key]}
                   onChange={(e) => setForm((prev) => ({ ...prev, [field.key]: e.target.value }))}
-                  className="w-full bg-transparent border border-border/40 px-4 py-3 font-body text-sm md:text-base text-foreground placeholder:text-muted-foreground/40 focus:border-primary focus:outline-none transition-colors"
+                  className="w-full bg-input border border-border px-4 py-3.5 font-body text-sm md:text-base text-foreground placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none transition-colors"
                   style={{ borderRadius: "var(--radius)" }}
                 />
               </div>
@@ -199,7 +199,7 @@ const ContactSection = () => {
               <select
                 value={form.interesse}
                 onChange={(e) => setForm((prev) => ({ ...prev, interesse: e.target.value }))}
-                className="w-full bg-transparent border border-border/40 px-4 py-3 font-body text-sm md:text-base text-foreground focus:border-primary focus:outline-none transition-colors"
+                className="w-full bg-input border border-border px-4 py-3.5 font-body text-sm md:text-base text-foreground focus:border-primary focus:outline-none transition-colors"
                 style={{ borderRadius: "var(--radius)" }}
               >
                 <option value="" className="bg-secondary">Selecione o serviço desejado</option>
@@ -218,7 +218,7 @@ const ContactSection = () => {
                 placeholder="Descreva sua necessidade, estrutura atual ou o tipo de solução que sua empresa procura..."
                 value={form.mensagem}
                 onChange={(e) => setForm((prev) => ({ ...prev, mensagem: e.target.value }))}
-                className="w-full bg-transparent border border-border/40 px-4 py-3 font-body text-sm md:text-base text-foreground placeholder:text-muted-foreground/40 focus:border-primary focus:outline-none transition-colors resize-none"
+                className="w-full bg-input border border-border px-4 py-3.5 font-body text-sm md:text-base text-foreground placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none transition-colors resize-none"
                 style={{ borderRadius: "var(--radius)" }}
               />
             </div>
