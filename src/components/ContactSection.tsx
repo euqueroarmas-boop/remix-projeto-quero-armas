@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Send, Loader2 } from "lucide-react";
+import { ArrowRight, Send, Loader2, MessageCircle, Mail, MapPin, Phone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -12,8 +12,12 @@ const serviceOptions = [
   "Montagem de Redes",
   "Locação de Computadores",
   "Suporte de TI",
+  "Terceirização de TI",
   "TI para Cartórios",
+  "TI para Hospitais e Clínicas",
   "Infraestrutura Completa",
+  "Segurança da Informação",
+  "Backup Empresarial",
   "Outro",
 ];
 
@@ -63,10 +67,10 @@ const ContactSection = () => {
 
       if (error) throw error;
 
-      toast({ title: "Mensagem enviada com sucesso! Redirecionando para o WhatsApp..." });
-      
+      toast({ title: "Solicitação enviada com sucesso! Redirecionando para o WhatsApp..." });
+
       const text = `*Solicitação de Orçamento — WMTi*%0A%0A*Nome:* ${encodeURIComponent(form.nome)}%0A*Email:* ${encodeURIComponent(form.email)}%0A*Telefone:* ${encodeURIComponent(form.telefone || "Não informado")}%0A*Empresa:* ${encodeURIComponent(form.empresa || "Não informada")}%0A*Interesse:* ${encodeURIComponent(form.interesse || "Não informado")}%0A%0A*Mensagem:*%0A${encodeURIComponent(form.mensagem)}`;
-      
+
       setTimeout(() => {
         window.open(`https://wa.me/5511963166915?text=${text}`, "_blank");
       }, 1000);
@@ -79,55 +83,97 @@ const ContactSection = () => {
     }
   };
 
+  const handleWhatsApp = () => {
+    window.open("https://wa.me/5511963166915?text=Ol%C3%A1%2C%20gostaria%20de%20solicitar%20um%20or%C3%A7amento.", "_blank");
+  };
+
   return (
-    <section id="contato" className="py-20 md:py-24 section-dark">
+    <section id="contato" className="py-20 md:py-28 section-dark">
       <div id="orcamento" className="container">
-        <div className="grid lg:grid-cols-2 gap-12 md:gap-16">
+        <div className="grid lg:grid-cols-2 gap-14 md:gap-20">
+          {/* Left column — copy & contact info */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
+            className="flex flex-col justify-between"
           >
-            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
-              // Orçamento
-            </p>
-            <h2 className="text-2xl md:text-5xl mb-4 md:mb-6">
-              Projete sua
-              <br />
-              infraestrutura.
-            </h2>
-            <p className="font-body text-gunmetal-foreground/70 text-base md:text-lg max-w-md leading-relaxed mb-6 md:mb-8">
-              Cada ambiente é único. Fale com nossa equipe técnica e receba um
-              projeto detalhado com especificações, prazos e investimento.
-            </p>
-            <div className="space-y-3 font-mono text-sm md:text-base text-gunmetal-foreground/60">
-              <p>
-                <span className="text-primary">email:</span> contato@wmti.com.br
+            <div>
+              <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
+                // Orçamento
               </p>
-              <p>
-                <span className="text-primary">whatsapp:</span>{" "}
-                <a href="https://wa.me/5511963166915" className="hover:text-primary transition-colors">(11) 96316-6915</a>
-              </p>
-              <p>
-                <span className="text-primary">endereço:</span> Rua José Benedito Duarte, 140
+              <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold mb-5 md:mb-6 leading-tight">
+                Solicite seu orçamento
                 <br />
-                <span className="ml-[4.5ch]">Parque Itamarati — Jacareí, SP</span>
+                <span className="text-primary">de infraestrutura.</span>
+              </h2>
+              <p className="font-body text-muted-foreground text-base md:text-lg max-w-lg leading-relaxed mb-8 md:mb-10">
+                Cada projeto exige análise técnica, escopo bem definido e solução
+                adequada à realidade da empresa. Receba uma proposta personalizada
+                para infraestrutura, suporte, segurança ou serviços gerenciados de TI.
               </p>
+            </div>
+
+            {/* Contact channels */}
+            <div className="space-y-4">
+              <p className="font-mono text-[10px] tracking-[0.3em] uppercase text-primary/70 mb-1">
+                Canais de atendimento
+              </p>
+              <a
+                href="mailto:contato@wmti.com.br"
+                className="flex items-center gap-3 group"
+              >
+                <span className="flex items-center justify-center w-9 h-9 rounded-md bg-primary/10 text-primary group-hover:bg-primary/20 transition-colors">
+                  <Mail size={16} />
+                </span>
+                <span className="font-mono text-sm text-muted-foreground group-hover:text-foreground transition-colors">
+                  contato@wmti.com.br
+                </span>
+              </a>
+              <a
+                href="https://wa.me/5511963166915"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 group"
+              >
+                <span className="flex items-center justify-center w-9 h-9 rounded-md bg-primary/10 text-primary group-hover:bg-primary/20 transition-colors">
+                  <Phone size={16} />
+                </span>
+                <span className="font-mono text-sm text-muted-foreground group-hover:text-foreground transition-colors">
+                  (11) 96316-6915
+                </span>
+              </a>
+              <div className="flex items-start gap-3">
+                <span className="flex items-center justify-center w-9 h-9 rounded-md bg-primary/10 text-primary shrink-0">
+                  <MapPin size={16} />
+                </span>
+                <span className="font-mono text-sm text-muted-foreground leading-relaxed">
+                  Rua José Benedito Duarte, 140
+                  <br />
+                  Parque Itamarati — Jacareí, SP
+                </span>
+              </div>
             </div>
           </motion.div>
 
+          {/* Right column — form */}
           <motion.form
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="space-y-5 md:space-y-6"
+            className="space-y-5 md:space-y-6 bg-card/40 border border-border/40 p-6 md:p-8 lg:p-10"
+            style={{ borderRadius: "var(--radius)" }}
             onSubmit={handleSubmit}
           >
+            <p className="font-mono text-[10px] tracking-[0.3em] uppercase text-primary/70 mb-2">
+              Preencha para receber sua proposta
+            </p>
+
             {[
               { label: "Nome *", key: "nome" as const, type: "text", placeholder: "Seu nome completo" },
-              { label: "Email *", key: "email" as const, type: "email", placeholder: "email@empresa.com.br" },
+              { label: "E-mail *", key: "email" as const, type: "email", placeholder: "seuemail@empresa.com.br" },
               { label: "Telefone", key: "telefone" as const, type: "tel", placeholder: "(11) 99999-9999" },
               { label: "Empresa", key: "empresa" as const, type: "text", placeholder: "Nome da empresa" },
             ].map((field) => (
@@ -140,7 +186,8 @@ const ContactSection = () => {
                   placeholder={field.placeholder}
                   value={form[field.key]}
                   onChange={(e) => setForm((prev) => ({ ...prev, [field.key]: e.target.value }))}
-                  className="w-full bg-transparent border border-gunmetal-foreground/20 px-4 py-3 font-body text-sm md:text-base text-gunmetal-foreground placeholder:text-gunmetal-foreground/30 focus:border-primary focus:outline-none transition-colors"
+                  className="w-full bg-transparent border border-border/40 px-4 py-3 font-body text-sm md:text-base text-foreground placeholder:text-muted-foreground/40 focus:border-primary focus:outline-none transition-colors"
+                  style={{ borderRadius: "var(--radius)" }}
                 />
               </div>
             ))}
@@ -152,9 +199,10 @@ const ContactSection = () => {
               <select
                 value={form.interesse}
                 onChange={(e) => setForm((prev) => ({ ...prev, interesse: e.target.value }))}
-                className="w-full bg-transparent border border-gunmetal-foreground/20 px-4 py-3 font-body text-sm md:text-base text-gunmetal-foreground focus:border-primary focus:outline-none transition-colors"
+                className="w-full bg-transparent border border-border/40 px-4 py-3 font-body text-sm md:text-base text-foreground focus:border-primary focus:outline-none transition-colors"
+                style={{ borderRadius: "var(--radius)" }}
               >
-                <option value="" className="bg-secondary">Selecione o serviço</option>
+                <option value="" className="bg-secondary">Selecione o serviço desejado</option>
                 {serviceOptions.map((opt) => (
                   <option key={opt} value={opt} className="bg-secondary">{opt}</option>
                 ))}
@@ -167,26 +215,40 @@ const ContactSection = () => {
               </label>
               <textarea
                 rows={4}
-                placeholder="Descreva sua necessidade de infraestrutura..."
+                placeholder="Descreva sua necessidade, estrutura atual ou o tipo de solução que sua empresa procura..."
                 value={form.mensagem}
                 onChange={(e) => setForm((prev) => ({ ...prev, mensagem: e.target.value }))}
-                className="w-full bg-transparent border border-gunmetal-foreground/20 px-4 py-3 font-body text-sm md:text-base text-gunmetal-foreground placeholder:text-gunmetal-foreground/30 focus:border-primary focus:outline-none transition-colors resize-none"
+                className="w-full bg-transparent border border-border/40 px-4 py-3 font-body text-sm md:text-base text-foreground placeholder:text-muted-foreground/40 focus:border-primary focus:outline-none transition-colors resize-none"
+                style={{ borderRadius: "var(--radius)" }}
               />
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all w-full justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? (
-                <Loader2 size={16} className="animate-spin" />
-              ) : (
-                <Send size={16} />
-              )}
-              {loading ? "Enviando..." : "Enviar e falar no WhatsApp"}
-              {!loading && <ArrowRight size={16} />}
-            </button>
+            {/* CTA buttons */}
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              <button
+                type="submit"
+                disabled={loading}
+                className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all flex-1 justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ borderRadius: "var(--radius)" }}
+              >
+                {loading ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Send size={16} />
+                )}
+                {loading ? "Enviando..." : "Solicitar Orçamento"}
+                {!loading && <ArrowRight size={16} />}
+              </button>
+              <button
+                type="button"
+                onClick={handleWhatsApp}
+                className="inline-flex items-center gap-2 border border-primary/40 text-primary px-6 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:bg-primary/10 transition-all justify-center"
+                style={{ borderRadius: "var(--radius)" }}
+              >
+                <MessageCircle size={16} />
+                Falar no WhatsApp
+              </button>
+            </div>
           </motion.form>
         </div>
       </div>
