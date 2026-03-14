@@ -30,6 +30,7 @@ const services = [
     description:
       "Firewalls pfSense em appliances dedicados com VPN IPsec/OpenVPN, IDS/IPS com Suricata, filtro de conteúdo, balanceamento de carga e failover de links WAN. Segurança sem compromisso.",
     specs: ["VPN IPsec / OpenVPN", "Suricata IDS/IPS", "HAProxy Load Balancer", "Multi-WAN Failover"],
+    href: "/firewall-pfsense-jacarei",
   },
   {
     icon: HardDrive,
