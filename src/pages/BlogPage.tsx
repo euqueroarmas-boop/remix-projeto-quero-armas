@@ -20,9 +20,11 @@ const BlogPage = () => {
     window.scrollTo(0, 0);
   }, []);
 
+  const sorted = [...blogPosts].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   const filtered = activeCategory === "Todos"
-    ? blogPosts
-    : blogPosts.filter((p) => p.category === activeCategory);
+    ? sorted
+    : sorted.filter((p) => p.category === activeCategory);
+  const recentSlugs = new Set(sorted.slice(0, 3).map(p => p.slug));
 
   return (
     <div className="min-h-screen">
@@ -107,6 +109,11 @@ const BlogPage = () => {
 
                 <div className="p-8">
                   <div className="flex items-center gap-3 mb-3 flex-wrap">
+                    {recentSlugs.has(post.slug) && (
+                      <span className="font-mono text-[10px] tracking-[0.15em] uppercase bg-primary text-primary-foreground px-2 py-0.5">
+                        Recente
+                      </span>
+                    )}
                     <span className="font-mono text-[10px] tracking-[0.15em] uppercase text-primary border border-primary/30 px-2 py-0.5">
                       {post.tag}
                     </span>

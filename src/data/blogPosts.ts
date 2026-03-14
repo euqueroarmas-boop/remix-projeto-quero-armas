@@ -1,13 +1,32 @@
+import infraTiEmpresarial from "@/assets/blog/infra-ti-empresarial.jpg";
+import firewallEmpresarial from "@/assets/blog/firewall-empresarial.jpg";
+import servidorManutencao from "@/assets/blog/servidor-manutencao.jpg";
+import custosInfraTi from "@/assets/blog/custos-infra-ti.jpg";
+import suporteTiRegional from "@/assets/blog/suporte-ti-regional.jpg";
+import redeCorporativaCaso from "@/assets/blog/rede-corporativa-caso.jpg";
+
 export type BlogCategory =
   | "Hospitais e Clínicas"
   | "Cartórios"
   | "Escritórios de Advocacia"
   | "Escritórios de Contabilidade"
   | "Empresas Corporativas"
-  | "Tecnologia Empresarial";
+  | "Tecnologia Empresarial"
+  | "Infraestrutura de TI"
+  | "Segurança Digital"
+  | "Problemas de TI"
+  | "Custos de TI"
+  | "Conteúdo Regional"
+  | "Casos de Sucesso";
 
 export const blogCategories: BlogCategory[] = [
   "Tecnologia Empresarial",
+  "Infraestrutura de TI",
+  "Segurança Digital",
+  "Problemas de TI",
+  "Custos de TI",
+  "Conteúdo Regional",
+  "Casos de Sucesso",
   "Hospitais e Clínicas",
   "Cartórios",
   "Escritórios de Advocacia",
@@ -368,6 +387,66 @@ export const blogPosts: BlogPost[] = [
     tag: "Infraestrutura",
     category: "Hospitais e Clínicas",
     image: "https://images.unsplash.com/photo-1581093458791-9d42e3c2fd45?w=800&q=80",
+  },
+  {
+    slug: "guia-completo-infraestrutura-ti-empresas",
+    title: "Guia completo de infraestrutura de TI para empresas",
+    excerpt: "Entenda os principais elementos de uma infraestrutura de TI eficiente e como empresas podem melhorar seus ambientes tecnológicos.",
+    date: "2026-03-14",
+    readTime: "8 min",
+    tag: "Infraestrutura",
+    category: "Infraestrutura de TI",
+    image: infraTiEmpresarial,
+  },
+  {
+    slug: "firewall-empresarial-sua-empresa-precisa",
+    title: "Firewall empresarial: sua empresa realmente precisa?",
+    excerpt: "Entenda como o firewall protege redes corporativas contra ataques e invasões digitais.",
+    date: "2026-03-12",
+    readTime: "6 min",
+    tag: "Firewall",
+    category: "Segurança Digital",
+    image: firewallEmpresarial,
+  },
+  {
+    slug: "servidor-caiu-empresa-o-que-fazer",
+    title: "Servidor caiu na empresa: o que fazer",
+    excerpt: "Veja quais são as causas mais comuns de falhas em servidores empresariais e como evitar esse problema.",
+    date: "2026-03-10",
+    readTime: "5 min",
+    tag: "Servidores",
+    category: "Problemas de TI",
+    image: servidorManutencao,
+  },
+  {
+    slug: "quanto-custa-infraestrutura-ti-empresas",
+    title: "Quanto custa infraestrutura de TI para empresas",
+    excerpt: "Conheça os principais fatores que influenciam o custo de uma infraestrutura de TI empresarial.",
+    date: "2026-03-08",
+    readTime: "5 min",
+    tag: "Custos",
+    category: "Custos de TI",
+    image: custosInfraTi,
+  },
+  {
+    slug: "infraestrutura-ti-empresas-jacarei",
+    title: "Infraestrutura de TI para empresas em Jacareí",
+    excerpt: "Saiba como empresas em Jacareí podem melhorar sua infraestrutura de TI.",
+    date: "2026-03-06",
+    readTime: "5 min",
+    tag: "Regional",
+    category: "Conteúdo Regional",
+    image: suporteTiRegional,
+  },
+  {
+    slug: "como-estabilizamos-rede-escritorio-25-computadores",
+    title: "Como estabilizamos a rede de um escritório com 25 computadores",
+    excerpt: "Veja como melhorias na infraestrutura de rede resolveram problemas de lentidão em um escritório.",
+    date: "2026-03-04",
+    readTime: "5 min",
+    tag: "Caso de Sucesso",
+    category: "Casos de Sucesso",
+    image: redeCorporativaCaso,
   },
 ];
 
@@ -1062,6 +1141,121 @@ export const blogContent: Record<string, BlogPostContent> = {
       { label: "Provimento 213", href: "/cartorios/provimento-213" },
       { label: "Firewall pfSense", href: "/firewall-pfsense-jacarei" },
       { label: "Servidores Dell PowerEdge", href: "/servidor-dell-poweredge-jacarei" },
+    ],
+  },
+  "guia-completo-infraestrutura-ti-empresas": {
+    metaTitle: "Guia Completo de Infraestrutura de TI para Empresas | WMTi",
+    metaDescription: "Entenda os principais elementos de uma infraestrutura de TI eficiente e como empresas podem melhorar seus ambientes tecnológicos.",
+    sections: [
+      { body: "A infraestrutura de TI é a base tecnológica que sustenta as operações de uma empresa moderna. Computadores, servidores, redes corporativas, sistemas e soluções em nuvem trabalham juntos para garantir que processos internos funcionem com eficiência e segurança." },
+      { heading: "Problemas comuns em empresas sem infraestrutura adequada", body: "Empresas que não possuem uma infraestrutura tecnológica bem estruturada frequentemente enfrentam problemas como lentidão nos sistemas, falhas de rede, perda de dados e dificuldades de crescimento." },
+      { heading: "Principais componentes de uma infraestrutura de TI empresarial", body: "Servidores corporativos responsáveis por armazenar dados e executar sistemas. Redes corporativas que conectam computadores e dispositivos dentro da empresa. Segurança digital para proteger dados e sistemas contra ataques. Sistemas de backup para evitar perda de informações. Monitoramento de infraestrutura para identificar problemas antes que causem interrupções." },
+      { heading: "Benefícios de investir em infraestrutura de TI", body: "Investir em infraestrutura de TI permite maior produtividade, segurança e estabilidade operacional. A WMTi Tecnologia da Informação possui mais de 15 anos de experiência ajudando empresas a implantar ambientes tecnológicos confiáveis." },
+    ],
+    faq: [
+      { q: "O que é infraestrutura de TI?", a: "É o conjunto de hardware, software, redes e serviços que sustentam as operações tecnológicas de uma empresa." },
+      { q: "Quais os componentes essenciais?", a: "Servidores, redes corporativas, segurança digital, backup e monitoramento de infraestrutura." },
+      { q: "Por que investir em infraestrutura de TI?", a: "Para garantir produtividade, segurança dos dados e estabilidade operacional da empresa." },
+    ],
+    cta: "Precisa melhorar a infraestrutura de TI da sua empresa? A WMTi oferece soluções completas. Solicite um diagnóstico gratuito.",
+    internalLinks: [
+      { label: "Infraestrutura corporativa", href: "/infraestrutura-corporativa" },
+      { label: "Servidores Dell PowerEdge", href: "/servidor-dell-poweredge-jacarei" },
+      { label: "Firewall pfSense", href: "/firewall-pfsense-jacarei" },
+    ],
+  },
+  "firewall-empresarial-sua-empresa-precisa": {
+    metaTitle: "Firewall Empresarial: Sua Empresa Realmente Precisa? | WMTi",
+    metaDescription: "Entenda como o firewall protege redes corporativas contra ataques e invasões digitais.",
+    sections: [
+      { body: "Com o aumento das ameaças digitais, proteger a rede corporativa tornou-se uma prioridade para empresas de todos os portes. Um firewall empresarial funciona como uma barreira de segurança entre a rede interna da empresa e a internet." },
+      { heading: "Como funciona um firewall empresarial", body: "Ele analisa o tráfego de dados e bloqueia acessos suspeitos ou não autorizados. Sem um firewall corporativo, empresas podem ficar vulneráveis a diversos tipos de ataques." },
+      { heading: "Ameaças bloqueadas pelo firewall", body: "Invasões de rede. Roubo de dados. Ataques ransomware. Acesso indevido a sistemas." },
+      { heading: "Recursos avançados", body: "Firewalls modernos também permitem controle de acesso à internet, monitoramento de tráfego e proteção contra softwares maliciosos. A implementação de um firewall adequado aumenta significativamente a segurança da infraestrutura de TI." },
+    ],
+    faq: [
+      { q: "O que é um firewall empresarial?", a: "É uma solução de segurança que monitora e controla o tráfego de dados entre a rede interna e a internet." },
+      { q: "Minha empresa precisa de um firewall?", a: "Sim. Qualquer empresa conectada à internet está exposta a ameaças que um firewall pode bloquear." },
+      { q: "Qual firewall a WMTi recomenda?", a: "O pfSense é uma das soluções mais confiáveis e utilizadas em ambientes corporativos." },
+    ],
+    cta: "Proteja a rede da sua empresa com um firewall profissional. Fale com a WMTi.",
+    internalLinks: [
+      { label: "Firewall pfSense", href: "/firewall-pfsense-jacarei" },
+      { label: "Segurança de rede", href: "/servicos" },
+    ],
+  },
+  "servidor-caiu-empresa-o-que-fazer": {
+    metaTitle: "Servidor Caiu na Empresa: O Que Fazer | WMTi",
+    metaDescription: "Veja quais são as causas mais comuns de falhas em servidores empresariais e como evitar esse problema.",
+    sections: [
+      { body: "Quando um servidor corporativo para de funcionar, toda a operação da empresa pode ser afetada. Sistemas ficam indisponíveis, arquivos podem ficar inacessíveis e os colaboradores não conseguem trabalhar normalmente." },
+      { heading: "Sinais comuns de falha no servidor", body: "Sistemas que não carregam. Lentidão extrema na rede. Erros ao acessar arquivos. Computadores que não conectam ao servidor." },
+      { heading: "Causas mais comuns", body: "Problemas de hardware. Sobrecarga de processamento. Falhas na rede corporativa. Ataques cibernéticos." },
+      { heading: "Como prevenir falhas", body: "Empresas podem reduzir esse risco com monitoramento de servidores, manutenção preventiva e infraestrutura adequada." },
+    ],
+    faq: [
+      { q: "O que fazer quando o servidor da empresa cai?", a: "Verificar o hardware, checar a rede e acionar suporte técnico especializado imediatamente." },
+      { q: "Como evitar que o servidor pare?", a: "Com monitoramento proativo, manutenção preventiva e infraestrutura de qualidade." },
+    ],
+    cta: "Seu servidor está apresentando problemas? A WMTi pode ajudar. Solicite suporte técnico.",
+    internalLinks: [
+      { label: "Servidores Dell PowerEdge", href: "/servidor-dell-poweredge-jacarei" },
+      { label: "Suporte de TI", href: "/suporte-ti-jacarei" },
+    ],
+  },
+  "quanto-custa-infraestrutura-ti-empresas": {
+    metaTitle: "Quanto Custa Infraestrutura de TI para Empresas | WMTi",
+    metaDescription: "Conheça os principais fatores que influenciam o custo de uma infraestrutura de TI empresarial.",
+    sections: [
+      { body: "O custo de infraestrutura de TI varia conforme as necessidades de cada empresa." },
+      { heading: "Fatores que influenciam o investimento", body: "Quantidade de computadores. Necessidade de servidores. Segurança digital. Backup de dados. Monitoramento de rede." },
+      { heading: "Retorno do investimento", body: "Empresas que investem em infraestrutura tecnológica adequada conseguem melhorar a produtividade e reduzir falhas operacionais." },
+    ],
+    faq: [
+      { q: "Quanto custa montar uma infraestrutura de TI?", a: "Depende do porte da empresa, número de computadores, necessidade de servidores e nível de segurança desejado." },
+      { q: "Vale a pena investir em TI?", a: "Sim. O investimento em infraestrutura reduz falhas, aumenta produtividade e protege dados empresariais." },
+    ],
+    cta: "Quer saber quanto custa melhorar a TI da sua empresa? Solicite um orçamento gratuito à WMTi.",
+    internalLinks: [
+      { label: "Infraestrutura corporativa", href: "/infraestrutura-corporativa" },
+      { label: "Locação de computadores", href: "/locacao-computadores-jacarei" },
+    ],
+  },
+  "infraestrutura-ti-empresas-jacarei": {
+    metaTitle: "Infraestrutura de TI para Empresas em Jacareí | WMTi",
+    metaDescription: "Saiba como empresas em Jacareí podem melhorar sua infraestrutura de TI com soluções especializadas.",
+    sections: [
+      { body: "Empresas em Jacareí dependem cada vez mais de tecnologia para manter suas operações funcionando. Uma infraestrutura de TI bem estruturada permite maior produtividade, estabilidade e segurança para os sistemas empresariais." },
+      { heading: "Principais elementos de infraestrutura tecnológica", body: "Servidores corporativos. Redes empresariais. Segurança digital. Backup de dados. Monitoramento de rede." },
+      { heading: "Soluções especializadas na região", body: "A WMTi Tecnologia da Informação oferece soluções especializadas para empresas da região que precisam melhorar seus ambientes tecnológicos." },
+    ],
+    faq: [
+      { q: "A WMTi atende empresas em Jacareí?", a: "Sim. A WMTi está localizada na região e atende empresas em Jacareí e cidades próximas." },
+      { q: "Quais serviços a WMTi oferece?", a: "Servidores, redes, firewall, backup, Microsoft 365, suporte técnico e terceirização de TI." },
+    ],
+    cta: "Empresa em Jacareí? A WMTi oferece soluções completas de infraestrutura de TI. Fale conosco.",
+    internalLinks: [
+      { label: "Suporte de TI em Jacareí", href: "/suporte-ti-jacarei" },
+      { label: "Infraestrutura corporativa", href: "/infraestrutura-corporativa" },
+    ],
+  },
+  "como-estabilizamos-rede-escritorio-25-computadores": {
+    metaTitle: "Caso de Sucesso: Rede Estabilizada em Escritório | WMTi",
+    metaDescription: "Veja como melhorias na infraestrutura de rede resolveram problemas de lentidão em um escritório com 25 computadores.",
+    sections: [
+      { body: "Uma empresa da região enfrentava problemas constantes de lentidão na rede corporativa. Sistemas demoravam para abrir e o acesso a arquivos compartilhados era instável." },
+      { heading: "Diagnóstico", body: "Após análise da infraestrutura, foram identificados problemas como equipamentos inadequados e falta de monitoramento da rede." },
+      { heading: "Solução implementada", body: "A equipe da WMTi realizou melhorias na infraestrutura, incluindo reorganização da rede e implementação de monitoramento." },
+      { heading: "Resultado", body: "Após a intervenção, a empresa passou a contar com uma rede mais rápida, estável e segura." },
+    ],
+    faq: [
+      { q: "A WMTi resolve problemas de rede lenta?", a: "Sim. A WMTi diagnostica e resolve problemas de rede corporativa, implementando melhorias na infraestrutura." },
+      { q: "Quanto tempo leva para estabilizar a rede?", a: "Depende da complexidade do ambiente, mas melhorias significativas podem ser implementadas em poucos dias." },
+    ],
+    cta: "Sua rede está lenta? A WMTi pode diagnosticar e resolver. Solicite uma análise gratuita.",
+    internalLinks: [
+      { label: "Montagem de redes", href: "/montagem-redes-jacarei" },
+      { label: "Suporte de TI", href: "/suporte-ti-jacarei" },
     ],
   },
 };
