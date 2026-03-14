@@ -2,7 +2,7 @@ import { motion, useInView } from "framer-motion";
 import { useRef, useEffect, useState } from "react";
 
 const metrics = [
-  { value: 10, suffix: "+", label: "Anos de experiência" },
+  { value: 15, suffix: "+", label: "Anos de experiência" },
   { value: 150, suffix: "+", label: "Clientes atendidos" },
   { value: 99.9, suffix: "%", label: "Uptime garantido" },
   { value: 24, suffix: "/7", label: "Suporte técnico" },

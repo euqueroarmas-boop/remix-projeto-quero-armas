@@ -17,6 +17,7 @@ const DynamicSeoPage = lazy(() => import("./pages/DynamicSeoPage.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 const TiHospitaisClinicasPage = lazy(() => import("./pages/TiHospitaisClinicasPage.tsx"));
 const SobrePage = lazy(() => import("./pages/SobrePage.tsx"));
+const InstitucionalPage = lazy(() => import("./pages/InstitucionalPage.tsx"));
 
 const queryClient = new QueryClient();
 
