@@ -13,15 +13,16 @@ const segmentos = [
 ];
 
 const servicos = [
+  { label: "Locação de Computadores", href: "/locacao-de-computadores-para-empresas-jacarei" },
   { label: "Suporte de TI", href: "/suporte-ti-jacarei" },
   { label: "Infraestrutura de TI", href: "/infraestrutura-ti-corporativa-jacarei" },
+  { label: "Terceirização de TI", href: "/terceirizacao-de-mao-de-obra-ti" },
   { label: "Monitoramento de Redes", href: "/montagem-redes-corporativas-jacarei" },
   { label: "Servidores Dell PowerEdge", href: "/servidor-dell-poweredge-jacarei" },
   { label: "Microsoft 365", href: "/microsoft-365-empresas-jacarei" },
   { label: "Firewall pfSense", href: "/firewall-pfsense-jacarei" },
   { label: "Backup Empresarial", href: "/backup-empresarial-jacarei" },
   { label: "Segurança da Informação", href: "/seguranca-informacao-empresarial" },
-  { label: "Locação de Computadores", href: "/locacao-de-computadores-para-empresas-jacarei" },
 ];
 
 type NavLink = {
@@ -76,7 +77,7 @@ const Navbar = () => {
   const isServiceActive = (): boolean => {
     const path = location.pathname;
     return servicos.some(s => path === s.href || path.startsWith(s.href + "/")) ||
-      path === "/servicos" || path.includes("locacao");
+      path === "/servicos" || path.includes("locacao") || path.includes("terceirizacao");
   };
 
   const getActiveIndex = (): number => {
@@ -101,7 +102,6 @@ const Navbar = () => {
 
   const activeIndex = getActiveIndex();
 
-  // Close dropdowns on outside click
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (segDropdownRef.current && !segDropdownRef.current.contains(e.target as Node)) {
@@ -131,6 +131,18 @@ const Navbar = () => {
     return () => window.removeEventListener("resize", updatePill);
   }, [activeIndex, location.pathname, location.hash]);
 
+  const handleOrcamentoClick = () => {
+    setOpen(false);
+    if (isHome) {
+      const el = document.getElementById("contato");
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth" });
+        return;
+      }
+    }
+    window.location.href = "/#contato";
+  };
+
   const renderDropdown = (
     items: { label: string; href: string }[],
     isOpen: boolean,
@@ -149,7 +161,6 @@ const Navbar = () => {
           ref={(el) => { linkRefs.current[index] = el; }}
           onClick={() => {
             setIsOpen(!isOpen);
-            // Close other dropdown
             if (link.label === "Segmentos") setSvcOpen(false);
             if (link.label === "Serviços") setSegOpen(false);
           }}
@@ -161,25 +172,34 @@ const Navbar = () => {
         <AnimatePresence>
           {isOpen && (
             <motion.div
-              initial={{ opacity: 0, y: -4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
-              transition={{ duration: 0.15 }}
-              className="absolute top-full left-0 mt-3 w-64 bg-popover border border-border shadow-lg py-2 z-50"
+              initial={{ opacity: 0, y: -8, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.96 }}
+              transition={{ duration: 0.18, ease: "easeOut" }}
+              className="absolute top-full left-0 mt-4 w-72 bg-card/95 backdrop-blur-md border border-border/60 shadow-2xl shadow-black/30 py-2 z-50 overflow-hidden"
+              style={{ borderRadius: "var(--radius)" }}
             >
-              {items.map((item) => {
+              <div className="px-3 py-2 border-b border-border/40 mb-1">
+                <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-primary/80">
+                  {link.label}
+                </span>
+              </div>
+              {items.map((item, idx) => {
                 const isActive = location.pathname === item.href;
                 return (
                   <Link
                     key={item.href}
                     to={item.href}
                     onClick={() => setIsOpen(false)}
-                    className={`block px-4 py-2.5 font-mono text-xs uppercase tracking-wider transition-colors ${
+                    className={`group flex items-center gap-3 px-4 py-2.5 font-mono text-xs uppercase tracking-wider transition-all duration-150 ${
                       isActive
-                        ? "text-primary bg-muted"
-                        : "text-muted-foreground hover:text-primary hover:bg-muted"
+                        ? "text-primary bg-primary/10"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                     }`}
                   >
+                    <span className={`w-1 h-1 rounded-full transition-colors ${
+                      isActive ? "bg-primary" : "bg-muted-foreground/30 group-hover:bg-primary/60"
+                    }`} />
                     {item.label}
                   </Link>
                 );
@@ -219,13 +239,13 @@ const Navbar = () => {
               transition={{ duration: 0.2 }}
               className="overflow-hidden"
             >
-              <div className="flex flex-col gap-2 pl-4 mt-2">
+              <div className="flex flex-col gap-1 pl-4 mt-2 border-l border-border/40 ml-1">
                 {items.map((item) => (
                   <Link
                     key={item.href}
                     to={item.href}
                     onClick={() => { setOpen(false); setIsOpen(false); }}
-                    className={`font-mono text-xs uppercase tracking-wider py-1 transition-colors ${
+                    className={`font-mono text-xs uppercase tracking-wider py-1.5 transition-colors ${
                       location.pathname === item.href
                         ? "text-primary"
                         : "text-muted-foreground hover:text-primary"
@@ -296,12 +316,12 @@ const Navbar = () => {
             );
           })}
 
-          <a
-            href={isHome ? "#contato" : "/#contato"}
+          <button
+            onClick={handleOrcamentoClick}
             className="font-mono text-xs uppercase tracking-wider transition-colors text-muted-foreground hover:text-primary"
           >
             Orçamento
-          </a>
+          </button>
         </div>
 
         {/* Mobile toggle */}
@@ -342,13 +362,12 @@ const Navbar = () => {
                 </a>
               );
             })}
-            <a
-              href={isHome ? "#contato" : "/#contato"}
-              onClick={() => setOpen(false)}
-              className="font-mono text-sm uppercase tracking-wider transition-colors py-1 text-muted-foreground hover:text-primary"
+            <button
+              onClick={handleOrcamentoClick}
+              className="font-mono text-sm uppercase tracking-wider transition-colors py-1 text-muted-foreground hover:text-primary text-left"
             >
               Orçamento
-            </a>
+            </button>
           </div>
         </div>
       )}

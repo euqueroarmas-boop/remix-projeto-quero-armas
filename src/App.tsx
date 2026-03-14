@@ -18,6 +18,7 @@ const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 const TiHospitaisClinicasPage = lazy(() => import("./pages/TiHospitaisClinicasPage.tsx"));
 const SobrePage = lazy(() => import("./pages/SobrePage.tsx"));
 const InstitucionalPage = lazy(() => import("./pages/InstitucionalPage.tsx"));
+const TerceirizacaoPage = lazy(() => import("./pages/TerceirizacaoPage.tsx"));
 
 const queryClient = new QueryClient();
 
