@@ -4,12 +4,12 @@ import { Menu, X } from "lucide-react";
 import logoWmti from "@/assets/logo-wmti.jpeg";
 
 const navLinks = [
-  { href: "#cartorios", label: "Cartórios" },
+  { href: "#cartorios", mobileHref: "/cartorios", label: "Cartórios" },
   { href: "/provimento-213", label: "Provimento 213", isRoute: true },
-  { href: "#servicos", label: "Serviços" },
-  { href: "#locacao", label: "Locação" },
-  { href: "#infraestrutura", label: "Infraestrutura" },
-  { href: "#seguranca", label: "Segurança" },
+  { href: "#servicos", mobileHref: "/servicos", label: "Serviços" },
+  { href: "#locacao", mobileHref: "/locacao", label: "Locação" },
+  { href: "#infraestrutura", mobileHref: "/infraestrutura", label: "Infraestrutura" },
+  { href: "#seguranca", mobileHref: "/infraestrutura", label: "Segurança" },
   { href: "#contato", label: "Contato" },
 ];
 
