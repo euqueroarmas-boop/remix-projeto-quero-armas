@@ -21,6 +21,7 @@ const services = [
     description:
       "Migração completa para Microsoft 365, configuração de Azure AD, Exchange Online, SharePoint e Teams. Ambientes híbridos com Active Directory on-premises sincronizado com Azure AD Connect.",
     specs: ["Microsoft 365 Business", "Azure AD Connect", "Exchange Online", "Windows Server 2022"],
+    href: "/microsoft-365-para-empresas-jacarei",
   },
   {
     icon: Shield,
