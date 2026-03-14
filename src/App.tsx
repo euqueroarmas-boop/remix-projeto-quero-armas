@@ -58,6 +58,7 @@ const App = () => (
             <Route path="/locacao-de-computadores-para-empresas" element={<Navigate to="/locacao-de-computadores-para-empresas-jacarei" replace />} />
             <Route path="/suporte-ti-empresarial-jacarei" element={<Navigate to="/suporte-ti-jacarei" replace />} />
             <Route path="/infraestrutura-ti-corporativa" element={<Navigate to="/infraestrutura-ti-corporativa-jacarei" replace />} />
+            <Route path="/seguranca-da-informacao-empresarial-jacarei" element={<Navigate to="/seguranca-informacao-empresarial" replace />} />
             {/* Dynamic SEO pages (40+) */}
             <Route path="/:slug" element={<DynamicSeoPage />} />
             <Route path="*" element={<NotFound />} />

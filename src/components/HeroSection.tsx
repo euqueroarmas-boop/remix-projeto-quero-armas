@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import heroImage from "@/assets/hero-server.jpg";
+import heroImage from "@/assets/hero-server.webp";
 import { Award, Shield, Handshake } from "lucide-react";
 
 const HeroSection = () => {
@@ -12,6 +12,8 @@ const HeroSection = () => {
           src={heroImage}
           alt="Infraestrutura de TI corporativa com servidores Dell PowerEdge"
           className="w-full h-full object-cover opacity-30"
+          fetchPriority="high"
+          decoding="async"
         />
         <div className="absolute inset-0 bg-secondary/70" />
       </div>

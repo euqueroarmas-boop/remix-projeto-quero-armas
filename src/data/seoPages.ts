@@ -207,14 +207,14 @@ export const seoPages: SeoPageData[] = [
     ],
     relatedLinks: [
       { label: "Servidores Dell", href: "/servidor-dell-poweredge-jacarei" },
-      { label: "Segurança da informação", href: "/seguranca-da-informacao-empresarial-jacarei" },
+      { label: "Segurança da informação", href: "/seguranca-informacao-empresarial" },
       { label: "Backup para cartórios", href: "/backup-para-cartorios" },
       { label: "Empresa perdeu dados", href: "/empresa-perdeu-dados-o-que-fazer" },
     ],
     localContent: "Implementamos soluções de backup em empresas de Jacareí, São José dos Campos e Vale do Paraíba. Atendimento presencial para instalação de storage e configuração de jobs com suporte contínuo.",
   },
   {
-    slug: "seguranca-da-informacao-empresarial-jacarei",
+    slug: "seguranca-informacao-empresarial",
     metaTitle: "Segurança da Informação para Empresas em Jacareí | WMTi",
     metaDescription: "Segurança da informação empresarial em Jacareí: firewall pfSense, antivírus gerenciado, backup, criptografia e monitoramento 24/7. Proteja sua empresa contra ameaças.",
     tag: "Segurança da Informação",
@@ -749,7 +749,7 @@ export const seoPages: SeoPageData[] = [
       { icon: FileCheck, title: "LGPD", text: "Conformidade documentada." },
     ],
     faq: [{ question: "Vocês atendem escritórios de advocacia?", answer: "Sim, com foco em segurança de dados, backup de processos e acesso remoto para advogados." }],
-    relatedLinks: [{ label: "Segurança", href: "/seguranca-da-informacao-empresarial-jacarei" }, { label: "Suporte de TI", href: "/suporte-ti-jacarei" }],
+    relatedLinks: [{ label: "Segurança", href: "/seguranca-informacao-empresarial" }, { label: "Suporte de TI", href: "/suporte-ti-jacarei" }],
     localContent: "Atendemos escritórios de advocacia em Jacareí, SJC e Vale do Paraíba.",
   },
   {
@@ -905,7 +905,7 @@ export const seoPages: SeoPageData[] = [
       { icon: AlertTriangle, title: "Resposta", text: "Plano de incidentes pronto." },
     ],
     faq: [{ question: "O que é ransomware?", answer: "É um tipo de malware que criptografa todos os dados da empresa e exige pagamento de resgate (ransom) para devolvê-los. Muitas vezes, mesmo pagando, os dados não são recuperados." }],
-    relatedLinks: [{ label: "Firewall pfSense", href: "/firewall-pfsense-jacarei" }, { label: "Backup empresarial", href: "/backup-empresarial-jacarei" }, { label: "Segurança", href: "/seguranca-da-informacao-empresarial-jacarei" }],
+    relatedLinks: [{ label: "Firewall pfSense", href: "/firewall-pfsense-jacarei" }, { label: "Backup empresarial", href: "/backup-empresarial-jacarei" }, { label: "Segurança", href: "/seguranca-informacao-empresarial" }],
     localContent: "Protegemos empresas contra ransomware em Jacareí, SJC e Vale do Paraíba.",
   },
 
@@ -973,7 +973,7 @@ export const seoPages: SeoPageData[] = [
       { icon: DollarSign, title: "Sem licença", text: "Open source sem custo por usuário." },
     ],
     faq: [{ question: "pfSense substitui o roteador?", answer: "Sim, e com vantagens enormes. pfSense faz tudo que um roteador faz, mais firewall, VPN, IDS/IPS e muito mais." }],
-    relatedLinks: [{ label: "Firewall pfSense", href: "/firewall-pfsense-jacarei" }, { label: "Segurança", href: "/seguranca-da-informacao-empresarial-jacarei" }],
+    relatedLinks: [{ label: "Firewall pfSense", href: "/firewall-pfsense-jacarei" }, { label: "Segurança", href: "/seguranca-informacao-empresarial" }],
     localContent: "Substituímos roteadores domésticos por pfSense em empresas de Jacareí, SJC e Vale do Paraíba.",
   },
 
