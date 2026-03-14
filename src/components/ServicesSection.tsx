@@ -12,6 +12,7 @@ const services = [
     description:
       "Implementamos e gerenciamos servidores Dell PowerEdge R750, R650 e T550. Configuração de RAID, iDRAC, clusters de failover com Hyper-V e alta disponibilidade para ambientes de produção.",
     specs: ["PowerEdge R750xs / R650xs", "RAID H755 / H355", "iDRAC9 Enterprise", "Hyper-V Clustering"],
+    href: "/servidor-dell-poweredge-jacarei",
   },
   {
     icon: Cloud,
