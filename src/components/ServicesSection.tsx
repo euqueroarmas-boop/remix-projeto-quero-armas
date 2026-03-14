@@ -48,6 +48,7 @@ const services = [
     description:
       "Switches Dell gerenciáveis, VLANs segmentadas, QoS configurado e monitoramento SNMP. Cabeamento estruturado Cat6A e fibra óptica para ambientes de alta performance.",
     specs: ["Dell Networking N-Series", "VLAN / QoS / STP", "Cat6A / Fibra Óptica", "Zabbix Monitoring"],
+    href: "/montagem-e-monitoramento-de-redes-jacarei",
   },
   {
     icon: MonitorCog,
