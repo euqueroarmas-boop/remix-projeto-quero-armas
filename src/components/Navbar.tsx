@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import logoWmti from "@/assets/logo-wmti.jpeg";
@@ -39,7 +39,7 @@ const navLinks: NavLink[] = [
   { href: "#segmentos", label: "Segmentos", isDropdown: true },
   { href: "#infraestrutura", mobileHref: "/infraestrutura", label: "Infraestrutura" },
   { href: "/blog", label: "Blog", isRoute: true },
-  { href: "#contato", label: "Contato" },
+  { href: "#contato", label: "Contato", isRoute: false },
 ];
 
 const Navbar = () => {
@@ -49,6 +49,7 @@ const Navbar = () => {
   const [mobileSegOpen, setMobileSegOpen] = useState(false);
   const [mobileSvcOpen, setMobileSvcOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const isHome = location.pathname === "/";
   const navRef = useRef<HTMLDivElement>(null);
   const [pillStyle, setPillStyle] = useState<{ left: number; width: number } | null>(null);
@@ -131,16 +132,20 @@ const Navbar = () => {
     return () => window.removeEventListener("resize", updatePill);
   }, [activeIndex, location.pathname, location.hash]);
 
-  const handleOrcamentoClick = () => {
+  const handleAnchorClick = (anchorId: string) => {
     setOpen(false);
     if (isHome) {
-      const el = document.getElementById("contato");
+      const el = document.getElementById(anchorId);
       if (el) {
         el.scrollIntoView({ behavior: "smooth" });
         return;
       }
     }
-    window.location.href = "/#contato";
+    navigate("/");
+    setTimeout(() => {
+      const el = document.getElementById(anchorId);
+      if (el) el.scrollIntoView({ behavior: "smooth" });
+    }, 300);
   };
 
   const renderDropdown = (
@@ -300,19 +305,19 @@ const Navbar = () => {
                 {link.label}
               </Link>
             ) : (
-              <a
+              <button
                 key={link.label}
-                href={href}
                 ref={(el) => { linkRefs.current[i] = el; }}
+                onClick={() => handleAnchorClick(link.href.replace("#", ""))}
                 className={className}
               >
                 {link.label}
-              </a>
+              </button>
             );
           })}
 
           <button
-            onClick={handleOrcamentoClick}
+            onClick={() => handleAnchorClick("contato")}
             className="font-mono text-xs uppercase tracking-wider transition-colors text-muted-foreground hover:text-primary"
           >
             Orçamento
@@ -352,13 +357,17 @@ const Navbar = () => {
                   {link.label}
                 </Link>
               ) : (
-                <a key={link.label} href={href} onClick={() => setOpen(false)} className={baseClass}>
+                <button
+                  key={link.label}
+                  onClick={() => { setOpen(false); handleAnchorClick(link.href.replace("#", "")); }}
+                  className={baseClass}
+                >
                   {link.label}
-                </a>
+                </button>
               );
             })}
             <button
-              onClick={handleOrcamentoClick}
+              onClick={() => handleAnchorClick("contato")}
               className="font-mono text-sm uppercase tracking-wider transition-colors py-1 text-muted-foreground hover:text-primary text-left"
             >
               Orçamento
