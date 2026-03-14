@@ -18,6 +18,7 @@ const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 const TiHospitaisClinicasPage = lazy(() => import("./pages/TiHospitaisClinicasPage.tsx"));
 const SobrePage = lazy(() => import("./pages/SobrePage.tsx"));
 const InstitucionalPage = lazy(() => import("./pages/InstitucionalPage.tsx"));
+const TerceirizacaoPage = lazy(() => import("./pages/TerceirizacaoPage.tsx"));
 
 const queryClient = new QueryClient();
 
@@ -44,6 +45,7 @@ const App = () => (
             {/* Dedicated pages */}
             <Route path="/institucional" element={<InstitucionalPage />} />
             <Route path="/ti-para-hospitais-e-clinicas" element={<TiHospitaisClinicasPage />} />
+            <Route path="/terceirizacao-de-mao-de-obra-ti" element={<TerceirizacaoPage />} />
             <Route path="/sobre" element={<Navigate to="/institucional" replace />} />
             {/* Provimento 213 */}
             <Route path="/provimento-213" element={<Navigate to="/cartorios/provimento-213" replace />} />
