@@ -1,17 +1,18 @@
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
 import ClientLogosSection from "@/components/ClientLogosSection";
-import ServicesSection from "@/components/ServicesSection";
-import CartoriosSection from "@/components/CartoriosSection";
-import ProblemsSection from "@/components/ProblemsSection";
-import InfraSection from "@/components/InfraSection";
-import RentalSection from "@/components/RentalSection";
-import SecuritySection from "@/components/SecuritySection";
 import MetricsSection from "@/components/MetricsSection";
 import TestimonialsSection from "@/components/TestimonialsSection";
 import ContactSection from "@/components/ContactSection";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import {
+  HomeInstitucional,
+  HomeServicos,
+  HomeSegmentos,
+  HomeInfraestrutura,
+  HomeBlog,
+} from "@/components/HomeSections";
 
 const Index = () => {
   return (
@@ -19,14 +20,13 @@ const Index = () => {
       <Navbar />
       <HeroSection />
       <ClientLogosSection />
-      <CartoriosSection />
-      <ServicesSection />
-      <ProblemsSection />
-      <RentalSection />
-      <InfraSection />
-      <SecuritySection />
+      <HomeInstitucional />
       <MetricsSection />
+      <HomeServicos />
+      <HomeSegmentos />
+      <HomeInfraestrutura />
       <TestimonialsSection />
+      <HomeBlog />
       <ContactSection />
       <Footer />
       <WhatsAppButton />
