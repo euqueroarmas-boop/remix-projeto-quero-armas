@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import { Monitor, Wrench, Headphones, RefreshCw, DollarSign, ShieldCheck, ArrowRight, CheckCircle2 } from "lucide-react";
 import optiplexImage from "@/assets/optiplex-desktop.jpg";
 import MobileSummary from "@/components/MobileSummary";
