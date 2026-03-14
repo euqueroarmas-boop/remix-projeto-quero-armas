@@ -21,7 +21,11 @@ export interface SeoPageData {
   faq: { question: string; answer: string }[];
   relatedLinks: { label: string; href: string }[];
   localContent: string;
-  category: "local-service" | "regional" | "cartorio" | "saude" | "escritorio" | "problema" | "comparativo" | "conversao" | "pillar";
+  category: "local-service" | "regional" | "cartorio" | "saude" | "escritorio" | "problema" | "comparativo" | "conversao" | "pillar" | "segment" | "intent" | "problem-page";
+  /** Quality-control fields for programmatic pages */
+  shouldIndex?: boolean;
+  priority?: number;
+  canonicalSlug?: string;
 }
 
 export const seoPages: SeoPageData[] = [
