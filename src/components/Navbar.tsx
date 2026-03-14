@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import logoWmti from "@/assets/logo-wmti.jpeg";
+import logoWmti from "@/assets/logo-wmti-dark.png";
 
 const segmentos = [
   { label: "Cartórios", href: "/ti-para-cartorios" },
@@ -265,7 +265,7 @@ const Navbar = () => {
     <nav className="fixed top-0 left-0 right-0 z-50 bg-secondary/95 backdrop-blur-sm border-b border-border">
       <div className="container flex items-center justify-between h-14 md:h-16">
         <Link to="/" className="flex items-center gap-2">
-          <img src={logoWmti} alt="WMTi Tecnologia da Informação" className="h-8 md:h-10 w-auto" />
+          <img src={logoWmti} alt="WMTi Tecnologia da Informação" className="h-9 md:h-10 w-auto" />
         </Link>
 
         {/* Desktop */}
