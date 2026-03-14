@@ -214,7 +214,7 @@ export const seoPages: SeoPageData[] = [
     localContent: "Implementamos soluções de backup em empresas de Jacareí, São José dos Campos e Vale do Paraíba. Atendimento presencial para instalação de storage e configuração de jobs com suporte contínuo.",
   },
   {
-    slug: "seguranca-da-informacao-empresarial-jacarei",
+    slug: "seguranca-informacao-empresarial",
     metaTitle: "Segurança da Informação para Empresas em Jacareí | WMTi",
     metaDescription: "Segurança da informação empresarial em Jacareí: firewall pfSense, antivírus gerenciado, backup, criptografia e monitoramento 24/7. Proteja sua empresa contra ameaças.",
     tag: "Segurança da Informação",
