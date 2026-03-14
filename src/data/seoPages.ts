@@ -973,7 +973,7 @@ export const seoPages: SeoPageData[] = [
       { icon: DollarSign, title: "Sem licença", text: "Open source sem custo por usuário." },
     ],
     faq: [{ question: "pfSense substitui o roteador?", answer: "Sim, e com vantagens enormes. pfSense faz tudo que um roteador faz, mais firewall, VPN, IDS/IPS e muito mais." }],
-    relatedLinks: [{ label: "Firewall pfSense", href: "/firewall-pfsense-jacarei" }, { label: "Segurança", href: "/seguranca-da-informacao-empresarial-jacarei" }],
+    relatedLinks: [{ label: "Firewall pfSense", href: "/firewall-pfsense-jacarei" }, { label: "Segurança", href: "/seguranca-informacao-empresarial" }],
     localContent: "Substituímos roteadores domésticos por pfSense em empresas de Jacareí, SJC e Vale do Paraíba.",
   },
 
