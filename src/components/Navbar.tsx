@@ -4,12 +4,12 @@ import { Menu, X } from "lucide-react";
 import logoWmti from "@/assets/logo-wmti.jpeg";
 
 const navLinks = [
-  { href: "#cartorios", label: "Cartórios" },
+  { href: "#cartorios", mobileHref: "/cartorios", label: "Cartórios" },
   { href: "/provimento-213", label: "Provimento 213", isRoute: true },
-  { href: "#servicos", label: "Serviços" },
-  { href: "#locacao", label: "Locação" },
-  { href: "#infraestrutura", label: "Infraestrutura" },
-  { href: "#seguranca", label: "Segurança" },
+  { href: "#servicos", mobileHref: "/servicos", label: "Serviços" },
+  { href: "#locacao", mobileHref: "/locacao", label: "Locação" },
+  { href: "#infraestrutura", mobileHref: "/infraestrutura", label: "Infraestrutura" },
+  { href: "#seguranca", mobileHref: "/infraestrutura", label: "Segurança" },
   { href: "#contato", label: "Contato" },
 ];
 
@@ -66,10 +66,10 @@ const Navbar = () => {
         <div className="lg:hidden bg-secondary border-t border-gunmetal-foreground/10 py-4 md:py-6">
           <div className="container flex flex-col gap-3 md:gap-4">
             {navLinks.map((link) =>
-              link.isRoute ? (
+              link.isRoute || link.mobileHref ? (
                 <Link
                   key={link.href}
-                  to={link.href}
+                  to={link.mobileHref || link.href}
                   onClick={() => setOpen(false)}
                   className="font-mono text-sm uppercase tracking-wider text-gunmetal-foreground/60 hover:text-primary transition-colors py-1"
                 >
