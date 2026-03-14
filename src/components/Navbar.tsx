@@ -132,16 +132,20 @@ const Navbar = () => {
     return () => window.removeEventListener("resize", updatePill);
   }, [activeIndex, location.pathname, location.hash]);
 
-  const handleOrcamentoClick = () => {
+  const handleAnchorClick = (anchorId: string) => {
     setOpen(false);
     if (isHome) {
-      const el = document.getElementById("contato");
+      const el = document.getElementById(anchorId);
       if (el) {
         el.scrollIntoView({ behavior: "smooth" });
         return;
       }
     }
-    window.location.href = "/#contato";
+    navigate("/");
+    setTimeout(() => {
+      const el = document.getElementById(anchorId);
+      if (el) el.scrollIntoView({ behavior: "smooth" });
+    }, 300);
   };
 
   const renderDropdown = (
