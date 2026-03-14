@@ -52,8 +52,6 @@ const Navbar = () => {
 
   const activeIndex = getActiveIndex();
   const noNavActive = activeIndex === -1;
-  // If no nav link is active, highlight the CTA "Orçamento"
-  const ctaIsHighlighted = noNavActive;
 
   useEffect(() => {
     const updatePill = () => {
