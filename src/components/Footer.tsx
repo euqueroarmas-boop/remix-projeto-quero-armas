@@ -18,11 +18,11 @@ const footerColumns = [
     title: "Segmentos",
     links: [
       { label: "TI para Cartórios", href: "/ti-para-cartorios" },
-      { label: "Provimento 213", href: "/cartorios/provimento-213" },
-      { label: "TI para Clínicas", href: "/ti-para-hospitais-e-clinicas" },
+      { label: "TI para Hospitais e Clínicas", href: "/ti-para-hospitais-e-clinicas" },
       { label: "TI para Advocacia", href: "/ti-para-escritorios-de-advocacia" },
       { label: "TI para Contabilidades", href: "/ti-para-contabilidades" },
       { label: "TI para Escritórios", href: "/ti-para-escritorios-corporativos" },
+      { label: "TI para Indústrias", href: "/ti-para-industrias" },
     ],
   },
   {
@@ -32,11 +32,14 @@ const footerColumns = [
       { label: "TI em São José dos Campos", href: "/empresa-de-ti-sao-jose-dos-campos" },
       { label: "TI em Taubaté", href: "/empresa-de-ti-taubate" },
       { label: "TI no Vale do Paraíba", href: "/empresa-de-ti-vale-do-paraiba" },
+      { label: "TI no Estado de São Paulo", href: "/empresa-de-ti-sao-paulo" },
+      { label: "TI em Todo o Brasil", href: "/empresa-de-ti-brasil" },
     ],
   },
   {
     title: "Institucional",
     links: [
+      { label: "Sobre a WMTi", href: "/sobre" },
       { label: "Blog", href: "/blog" },
       { label: "Diagnóstico TI", href: "/diagnostico-ti-empresarial" },
       { label: "Contato", href: "/#contato" },
@@ -48,7 +51,6 @@ const Footer = () => {
   return (
     <footer className="bg-secondary py-12 md:py-16">
       <div className="container">
-        {/* Link columns */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
           {footerColumns.map((col) => (
             <div key={col.title}>
@@ -71,8 +73,7 @@ const Footer = () => {
           ))}
         </div>
 
-        {/* Bottom bar */}
-        <div className="border-t border-foreground/10 pt-6 md:pt-8">
+        <div className="border-t border-border pt-6 md:pt-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-3">
               <img src={logoWmti} alt="WMTi" className="h-8 w-auto brightness-200" />
