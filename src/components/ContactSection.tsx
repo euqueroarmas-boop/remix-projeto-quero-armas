@@ -163,11 +163,11 @@ const ContactSection = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="space-y-5 md:space-y-6 bg-card/40 border border-border/40 p-6 md:p-8 lg:p-10"
+            className="space-y-6 md:space-y-7 bg-card border border-border p-7 md:p-9 lg:p-12 shadow-[0_10px_50px_rgba(0,0,0,0.4)]"
             style={{ borderRadius: "var(--radius)" }}
             onSubmit={handleSubmit}
           >
-            <p className="font-mono text-[10px] tracking-[0.3em] uppercase text-primary/70 mb-2">
+            <p className="font-mono text-[10px] tracking-[0.3em] uppercase text-primary/80 mb-1">
               Preencha para receber sua proposta
             </p>
 
