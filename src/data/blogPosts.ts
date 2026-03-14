@@ -1,13 +1,32 @@
+import infraTiEmpresarial from "@/assets/blog/infra-ti-empresarial.jpg";
+import firewallEmpresarial from "@/assets/blog/firewall-empresarial.jpg";
+import servidorManutencao from "@/assets/blog/servidor-manutencao.jpg";
+import custosInfraTi from "@/assets/blog/custos-infra-ti.jpg";
+import suporteTiRegional from "@/assets/blog/suporte-ti-regional.jpg";
+import redeCorporativaCaso from "@/assets/blog/rede-corporativa-caso.jpg";
+
 export type BlogCategory =
   | "Hospitais e Clínicas"
   | "Cartórios"
   | "Escritórios de Advocacia"
   | "Escritórios de Contabilidade"
   | "Empresas Corporativas"
-  | "Tecnologia Empresarial";
+  | "Tecnologia Empresarial"
+  | "Infraestrutura de TI"
+  | "Segurança Digital"
+  | "Problemas de TI"
+  | "Custos de TI"
+  | "Conteúdo Regional"
+  | "Casos de Sucesso";
 
 export const blogCategories: BlogCategory[] = [
   "Tecnologia Empresarial",
+  "Infraestrutura de TI",
+  "Segurança Digital",
+  "Problemas de TI",
+  "Custos de TI",
+  "Conteúdo Regional",
+  "Casos de Sucesso",
   "Hospitais e Clínicas",
   "Cartórios",
   "Escritórios de Advocacia",
