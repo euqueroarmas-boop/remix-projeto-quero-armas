@@ -207,7 +207,7 @@ export const seoPages: SeoPageData[] = [
     ],
     relatedLinks: [
       { label: "Servidores Dell", href: "/servidor-dell-poweredge-jacarei" },
-      { label: "Segurança da informação", href: "/seguranca-da-informacao-empresarial-jacarei" },
+      { label: "Segurança da informação", href: "/seguranca-informacao-empresarial" },
       { label: "Backup para cartórios", href: "/backup-para-cartorios" },
       { label: "Empresa perdeu dados", href: "/empresa-perdeu-dados-o-que-fazer" },
     ],
