@@ -1199,6 +1199,16 @@ cityPages.forEach(({ city, slug }) => {
   }
 });
 
+// ==================== PROGRAMMATIC SERVICE × CITY PAGES ====================
+import { generateProgrammaticPages } from "./seo/generateProgrammaticPages";
+
+const programmaticPages = generateProgrammaticPages();
+programmaticPages.forEach((page) => {
+  if (!seoPages.find((p) => p.slug === page.slug)) {
+    seoPages.push(page);
+  }
+});
+
 export function findPageBySlug(slug: string): SeoPageData | undefined {
   return seoPages.find((p) => p.slug === slug);
 }
