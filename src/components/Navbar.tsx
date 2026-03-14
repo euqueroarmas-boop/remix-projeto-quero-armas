@@ -39,7 +39,7 @@ const navLinks: NavLink[] = [
   { href: "#segmentos", label: "Segmentos", isDropdown: true },
   { href: "#infraestrutura", mobileHref: "/infraestrutura", label: "Infraestrutura" },
   { href: "/blog", label: "Blog", isRoute: true },
-  { href: "#contato", label: "Contato" },
+  { href: "#contato", label: "Contato", isRoute: false },
 ];
 
 const Navbar = () => {
