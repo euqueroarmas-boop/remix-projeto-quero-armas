@@ -266,8 +266,8 @@ const Navbar = () => {
     <nav className="fixed top-0 left-0 right-0 z-50 bg-secondary/95 backdrop-blur-sm border-b border-border">
       <div className="container flex items-center justify-between h-14 md:h-16">
         <Link to="/" className="flex items-center gap-2">
-          <img src={logoWmti} alt="WMTi Tecnologia da Informação" className="h-9 md:h-10 w-auto" />
-        </Link>
+          <img src={logoIcon} alt="WMTi" className="h-8 md:h-9 w-auto" />
+          <img src={logoWmti} alt="WMTi Tecnologia da Informação" className="h-7 md:h-8 w-auto" />
 
         {/* Desktop */}
         <div ref={navRef} className="hidden lg:flex items-center gap-6 xl:gap-8 relative">
