@@ -12,6 +12,8 @@ const HeroSection = () => {
           src={heroImage}
           alt="Infraestrutura de TI corporativa com servidores Dell PowerEdge"
           className="w-full h-full object-cover opacity-30"
+          fetchPriority="high"
+          decoding="async"
         />
         <div className="absolute inset-0 bg-secondary/70" />
       </div>

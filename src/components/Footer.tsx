@@ -81,6 +81,7 @@ const Footer = () => {
                 src={logoFull}
                 alt="WMTi Tecnologia da Informação"
                 className="h-10 md:h-[72px] w-auto"
+                loading="lazy"
               />
             </div>
 
