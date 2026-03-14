@@ -1115,6 +1115,90 @@ export const redirectMap: Record<string, string> = {
   "/infraestrutura-ti-corporativa": "/infraestrutura-ti-corporativa-jacarei",
 };
 
+// ==================== CITY SEO PAGES ====================
+const cityPages: { city: string; slug: string }[] = [
+  { city: "São Paulo", slug: "empresa-ti-sao-paulo" },
+  { city: "Campinas", slug: "empresa-ti-campinas" },
+  { city: "São José dos Campos", slug: "empresa-ti-sao-jose-dos-campos" },
+  { city: "Ribeirão Preto", slug: "empresa-ti-ribeirao-preto" },
+  { city: "Sorocaba", slug: "empresa-ti-sorocaba" },
+  { city: "Santos", slug: "empresa-ti-santos" },
+  { city: "Guarulhos", slug: "empresa-ti-guarulhos" },
+  { city: "Osasco", slug: "empresa-ti-osasco" },
+  { city: "Jundiaí", slug: "empresa-ti-jundiai" },
+  { city: "Piracicaba", slug: "empresa-ti-piracicaba" },
+  { city: "Bauru", slug: "empresa-ti-bauru" },
+  { city: "São José do Rio Preto", slug: "empresa-ti-sao-jose-do-rio-preto" },
+  { city: "Taubaté", slug: "empresa-ti-taubate" },
+  { city: "Jacareí", slug: "empresa-ti-jacarei" },
+  { city: "Mogi das Cruzes", slug: "empresa-ti-mogi-das-cruzes" },
+  { city: "Americana", slug: "empresa-ti-americana" },
+  { city: "Araraquara", slug: "empresa-ti-araraquara" },
+  { city: "Barretos", slug: "empresa-ti-barretos" },
+  { city: "Botucatu", slug: "empresa-ti-botucatu" },
+  { city: "Marília", slug: "empresa-ti-marilia" },
+];
+
+function buildCityPage(city: string, slug: string): SeoPageData {
+  return {
+    slug,
+    metaTitle: `Empresa de TI em ${city} | WMTi Tecnologia da Informação`,
+    metaDescription: `Infraestrutura de TI, servidores Dell, redes corporativas, Microsoft 365 e suporte técnico para empresas em ${city}. Conheça as soluções da WMTi.`,
+    tag: `Empresa de TI em ${city}`,
+    headline: "Empresa de TI em ",
+    headlineHighlight: city,
+    description: `A WMTi Tecnologia da Informação oferece soluções completas de infraestrutura de TI para empresas em ${city} e região. Com mais de 15 anos de experiência em tecnologia da informação, atuamos com servidores Dell PowerEdge, redes corporativas, segurança de rede com firewall, Microsoft 365, locação de computadores e suporte técnico especializado. Se sua empresa em ${city} precisa de infraestrutura tecnológica confiável, a WMTi possui soluções sob medida para ambientes corporativos.`,
+    whatsappMessage: `Olá! Gostaria de conhecer os serviços de TI da WMTi em ${city}.`,
+    category: "local-service",
+    painPoints: [
+      "Rede lenta ou instável prejudicando a operação",
+      "Servidor antigo ou mal configurado",
+      "Sistemas travando constantemente",
+      "Falta de segurança contra ataques cibernéticos",
+      "Falta de suporte técnico confiável",
+      "Equipamentos inadequados para a demanda",
+    ],
+    solutions: [
+      "Infraestrutura de TI corporativa planejada e gerenciada",
+      "Servidores Dell PowerEdge com alta disponibilidade",
+      "Redes empresariais estruturadas e seguras",
+      "Firewall pfSense com proteção avançada",
+      "Microsoft 365 com gestão completa",
+      "Locação de computadores Dell OptiPlex",
+    ],
+    benefits: [
+      { icon: Server, title: "Servidores Dell PowerEdge", text: "Servidores corporativos com redundância, RAID e virtualização." },
+      { icon: Network, title: "Redes corporativas", text: "Cabeamento estruturado, switches gerenciáveis e Wi-Fi empresarial." },
+      { icon: Shield, title: "Segurança de rede", text: "Firewall pfSense, antivírus corporativo e monitoramento contínuo." },
+      { icon: Cloud, title: "Microsoft 365", text: "E-mail corporativo, Teams, SharePoint e armazenamento em nuvem." },
+      { icon: Monitor, title: "Locação de computadores", text: "Estações Dell OptiPlex com manutenção e suporte inclusos." },
+      { icon: Headphones, title: "Suporte especializado", text: "Atendimento remoto e presencial com SLA garantido." },
+    ],
+    faq: [
+      { question: `A WMTi atende empresas em ${city}?`, answer: `Sim. A WMTi atende empresas em ${city} e região com soluções completas de infraestrutura de TI, servidores, redes, segurança e suporte técnico.` },
+      { question: "Quais serviços de TI a WMTi oferece?", answer: "Oferecemos servidores Dell PowerEdge, redes corporativas, firewall pfSense, Microsoft 365, locação de computadores e suporte técnico especializado." },
+      { question: "A WMTi atende pequenas empresas?", answer: "Sim. Atendemos empresas de todos os portes, com planos escaláveis e personalizados para cada necessidade." },
+      { question: "Como solicitar um diagnóstico de TI?", answer: "Entre em contato pelo WhatsApp ou formulário do site para agendar um diagnóstico gratuito da infraestrutura de TI da sua empresa." },
+    ],
+    relatedLinks: [
+      { label: "Infraestrutura de TI", href: "/infraestrutura-ti-corporativa-jacarei" },
+      { label: "Servidores Dell", href: "/servidor-dell-poweredge-jacarei" },
+      { label: "Microsoft 365", href: "/microsoft-365-para-empresas-jacarei" },
+      { label: "Firewall pfSense", href: "/firewall-pfsense-jacarei" },
+      { label: "Locação de computadores", href: "/locacao-de-computadores-para-empresas-jacarei" },
+    ],
+    localContent: `A WMTi Tecnologia da Informação atende empresas em ${city} e região com soluções de infraestrutura de TI corporativa. Com sede em Jacareí/SP e mais de 15 anos de experiência, oferecemos atendimento presencial e remoto para garantir que sua empresa opere com segurança, desempenho e confiabilidade.`,
+  };
+}
+
+// Add generated city pages
+cityPages.forEach(({ city, slug }) => {
+  // Skip if slug already exists (e.g. Jacareí pillar page)
+  if (!seoPages.find((p) => p.slug === slug)) {
+    seoPages.push(buildCityPage(city, slug));
+  }
+});
+
 export function findPageBySlug(slug: string): SeoPageData | undefined {
   return seoPages.find((p) => p.slug === slug);
 }
