@@ -73,27 +73,40 @@ const Footer = () => {
           ))}
         </div>
 
-        <div className="border-t border-border pt-6 md:pt-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-3">
-              <img src={logoFull} alt="WMTi Tecnologia da Informação" className="h-14 md:h-[72px] w-auto" />
-              <p className="font-body text-xs md:text-sm text-muted-foreground">
+        <div className="border-t border-border/60 pt-8 md:pt-10">
+          {/* Branding + Certifications row */}
+          <div className="flex flex-col md:flex-row items-center md:items-end justify-between gap-8">
+            {/* Logo block — stacked vertically, centered */}
+            <div className="flex flex-col items-center md:items-start">
+              <img
+                src={logoFull}
+                alt="WMTi Tecnologia da Informação"
+                className="h-12 md:h-14 w-auto"
+              />
+              <span className="mt-2 font-body text-[11px] md:text-xs tracking-[0.08em] text-muted-foreground/60">
                 Tecnologia da Informação
-              </p>
+              </span>
             </div>
-            <div className="flex flex-wrap items-center justify-center gap-4 md:gap-8">
+
+            {/* Partner certifications */}
+            <div className="flex flex-wrap items-center justify-center md:justify-end gap-5 md:gap-8">
               {["Dell Technologies Partner", "Microsoft Partner", "pfSense Certified"].map((cert) => (
-                <span key={cert} className="font-mono text-[10px] md:text-xs tracking-wider uppercase text-muted-foreground/70">
+                <span
+                  key={cert}
+                  className="font-mono text-[10px] md:text-[11px] tracking-[0.15em] uppercase text-muted-foreground/50"
+                >
                   {cert}
                 </span>
               ))}
             </div>
           </div>
-          <div className="mt-6 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="font-body text-xs md:text-sm text-muted-foreground/70 text-center md:text-left">
+
+          {/* Bottom row — copyright + contact */}
+          <div className="mt-8 pt-6 border-t border-border/30 flex flex-col md:flex-row items-center justify-between gap-3">
+            <p className="font-mono text-[11px] tracking-[0.04em] text-muted-foreground/50 text-center md:text-left">
               © {new Date().getFullYear()} WMTi Tecnologia da Informação. Todos os direitos reservados.
             </p>
-            <p className="font-mono text-xs md:text-sm text-muted-foreground/70">
+            <p className="font-mono text-[11px] tracking-[0.04em] text-muted-foreground/50 text-center md:text-right">
               Jacareí, SP — (11) 96316-6915
             </p>
           </div>
