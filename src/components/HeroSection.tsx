@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import heroImage from "@/assets/hero-server.jpg";
+import heroImage from "@/assets/hero-server.webp";
 import { Award, Shield, Handshake } from "lucide-react";
 
 const HeroSection = () => {

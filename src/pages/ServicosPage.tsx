@@ -20,7 +20,7 @@ const sections = [
       { icon: Shield, label: "Firewall pfSense", desc: "VPN, IDS/IPS Suricata, filtro de conteúdo e failover WAN.", href: "/firewall-pfsense-jacarei" },
       { icon: HardDrive, label: "Backup Empresarial", desc: "Veeam Backup, estratégia 3-2-1, testes de restauração.", href: "/backup-empresarial-jacarei" },
       { icon: Network, label: "Montagem de Redes", desc: "Switches Dell, VLANs, Cat6A, fibra óptica e Zabbix.", href: "/montagem-e-monitoramento-de-redes-jacarei" },
-      { icon: Shield, label: "Segurança da Informação", desc: "Proteção de perímetro, antivírus gerenciado, compliance.", href: "/seguranca-da-informacao-empresarial-jacarei" },
+      { icon: Shield, label: "Segurança da Informação", desc: "Proteção de perímetro, antivírus gerenciado, compliance.", href: "/seguranca-informacao-empresarial" },
       { icon: MonitorCog, label: "Locação de Computadores", desc: "Equipamentos Dell com gestão inclusa e substituição expressa.", href: "/locacao-de-computadores-para-empresas-jacarei" },
       { icon: Server, label: "Infraestrutura Corporativa", desc: "Projeto completo de datacenter, racks, nobreaks e climatização.", href: "/infraestrutura-ti-corporativa-jacarei" },
     ],

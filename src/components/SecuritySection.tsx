@@ -106,7 +106,7 @@ const SecuritySection = () => {
           </div>
 
           <Link
-            to="/seguranca-da-informacao-empresarial-jacarei"
+            to="/seguranca-informacao-empresarial"
             className="inline-flex items-center gap-2 mt-6 font-mono text-xs uppercase tracking-wider text-primary hover:brightness-110 transition-colors"
           >
             Ver soluções de segurança <ArrowRight size={14} />

@@ -11,7 +11,7 @@ const footerColumns = [
       { label: "Firewall pfSense", href: "/firewall-pfsense-jacarei" },
       { label: "Backup Empresarial", href: "/backup-empresarial-jacarei" },
       { label: "Locação de Computadores", href: "/locacao-de-computadores-para-empresas-jacarei" },
-      { label: "Segurança da Informação", href: "/seguranca-da-informacao-empresarial-jacarei" },
+      { label: "Segurança da Informação", href: "/seguranca-informacao-empresarial" },
     ],
   },
   {
