@@ -3,11 +3,12 @@ import { motion } from "framer-motion";
 import {
   Server, Cloud, Shield, HardDrive, Network, MonitorCog,
   Stethoscope, Scale, Building2, Briefcase, BookOpen, Landmark,
-  ArrowRight,
+  ArrowRight, MapPin, Globe,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import brasilCoverage from "@/assets/brasil-coverage.jpg";
 
 const sections = [
   {
@@ -28,7 +29,7 @@ const sections = [
     title: "Segmentos Atendidos",
     items: [
       { icon: Landmark, label: "TI para Cartórios", desc: "Conformidade com Provimento 213 CNJ, segurança e backup.", href: "/ti-para-cartorios" },
-      { icon: Stethoscope, label: "TI para Hospitais e Clínicas", desc: "Infraestrutura segura para sistemas de saúde e prontuários.", href: "/ti-para-hospitais-e-clinicas" },
+      { icon: Stethoscope, label: "TI para Hospitais e Clínicas", desc: "Servidores PACS/DICOM, backup de prontuários, LGPD e suporte 24/7.", href: "/ti-para-hospitais-e-clinicas" },
       { icon: Scale, label: "TI para Advocacia", desc: "Proteção de dados, e-mail seguro e compliance LGPD.", href: "/ti-para-escritorios-de-advocacia" },
       { icon: BookOpen, label: "TI para Contabilidades", desc: "Servidores, backup e conectividade para sistemas contábeis.", href: "/ti-para-contabilidades" },
       { icon: Building2, label: "TI para Escritórios", desc: "Infraestrutura completa para escritórios corporativos.", href: "/ti-para-escritorios-corporativos" },
@@ -38,10 +39,12 @@ const sections = [
   {
     title: "Regiões Atendidas",
     items: [
-      { icon: Building2, label: "TI em Jacareí", desc: "Sede WMTi — atendimento imediato e presencial.", href: "/empresa-de-ti-jacarei" },
-      { icon: Building2, label: "TI em São José dos Campos", desc: "Suporte presencial e remoto para empresas em SJC.", href: "/empresa-de-ti-sao-jose-dos-campos" },
-      { icon: Building2, label: "TI em Taubaté", desc: "Cobertura completa para empresas em Taubaté.", href: "/empresa-de-ti-taubate" },
-      { icon: Building2, label: "TI no Vale do Paraíba", desc: "Atuação regional com equipe certificada.", href: "/empresa-de-ti-vale-do-paraiba" },
+      { icon: MapPin, label: "TI em Jacareí", desc: "Sede WMTi — atendimento imediato e presencial.", href: "/empresa-de-ti-jacarei" },
+      { icon: MapPin, label: "TI em São José dos Campos", desc: "Suporte presencial e remoto para empresas em SJC.", href: "/empresa-de-ti-sao-jose-dos-campos" },
+      { icon: MapPin, label: "TI em Taubaté", desc: "Cobertura completa para empresas em Taubaté.", href: "/empresa-de-ti-taubate" },
+      { icon: MapPin, label: "TI no Vale do Paraíba", desc: "Atuação regional com equipe certificada.", href: "/empresa-de-ti-vale-do-paraiba" },
+      { icon: Building2, label: "TI no Estado de São Paulo", desc: "Atendimento presencial e remoto em todo o estado de SP.", href: "/empresa-de-ti-sao-paulo" },
+      { icon: Globe, label: "TI em Todo o Brasil", desc: "Suporte remoto 24/7 e implantações presenciais em qualquer estado.", href: "/empresa-de-ti-brasil" },
     ],
   },
 ];
@@ -80,6 +83,26 @@ const ServicosPage = () => (
         >
           <div className="container">
             <h2 className="text-2xl md:text-3xl mb-8 md:mb-12">{section.title}</h2>
+
+            {/* Special Brasil banner for regions */}
+            {section.title === "Regiões Atendidas" && (
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="relative mb-8 overflow-hidden"
+              >
+                <img src={brasilCoverage} alt="Cobertura nacional WMTi" className="w-full h-48 md:h-64 object-cover" />
+                <div className="absolute inset-0 bg-secondary/80 flex items-center justify-center">
+                  <div className="text-center">
+                    <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-2">// Cobertura Nacional</p>
+                    <p className="text-xl md:text-3xl font-bold">Atendemos empresas em <span className="text-primary">todo o Brasil</span></p>
+                    <p className="font-body text-sm text-muted-foreground mt-2">Sede em Jacareí (SP) • NOC 24/7 • Equipes de campo em todos os estados</p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-px bg-border">
               {section.items.map((item, i) => (
                 <motion.div
