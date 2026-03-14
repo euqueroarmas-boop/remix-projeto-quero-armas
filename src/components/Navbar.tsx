@@ -115,6 +115,16 @@ const Navbar = () => {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [open]);
+
   useEffect(() => {
     const updatePill = () => {
       if (activeIndex >= 0 && linkRefs.current[activeIndex] && navRef.current) {
@@ -326,54 +336,89 @@ const Navbar = () => {
         {/* Mobile toggle */}
         <button
           onClick={() => setOpen(!open)}
-          className="lg:hidden text-foreground"
+          className="lg:hidden text-foreground relative z-[60]"
           aria-label="Menu de navegação"
         >
           {open ? <X size={20} /> : <Menu size={20} />}
         </button>
       </div>
 
-      {/* Mobile menu */}
-      {open && (
-        <div className="lg:hidden bg-secondary border-t border-border py-4 md:py-6">
-          <div className="container flex flex-col gap-3 md:gap-4">
-            {navLinks.map((link) => {
-              const active = navLinks.indexOf(link) === activeIndex;
-              const baseClass = `font-mono text-sm uppercase tracking-wider transition-colors py-1 ${
-                active ? "text-primary border-l-2 border-primary pl-3" : "text-muted-foreground hover:text-primary"
-              }`;
+      {/* Mobile fullscreen menu */}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="lg:hidden fixed inset-0 w-screen bg-secondary z-[55] flex flex-col"
+            style={{ height: "100dvh" }}
+          >
+            {/* Header with logo + close */}
+            <div className="container flex items-center justify-between h-14">
+              <Link to="/" onClick={() => setOpen(false)} className="flex items-center">
+                <img src={logoFull} alt="WMTi Tecnologia da Informação" className="h-9 w-auto" />
+              </Link>
+              <button
+                onClick={() => setOpen(false)}
+                className="text-foreground"
+                aria-label="Fechar menu"
+              >
+                <X size={20} />
+              </button>
+            </div>
 
-              if (link.isDropdown && link.label === "Segmentos") {
-                return renderMobileDropdown(segmentos, mobileSegOpen, setMobileSegOpen, link, active);
-              }
-              if (link.isDropdown && link.label === "Serviços") {
-                return renderMobileDropdown(servicos, mobileSvcOpen, setMobileSvcOpen, link, active);
-              }
+            {/* Links */}
+            <div className="container flex-1 flex flex-col justify-center gap-5 overflow-y-auto pb-12">
+              {navLinks.map((link) => {
+                const active = navLinks.indexOf(link) === activeIndex;
+                const baseClass = `font-mono text-base uppercase tracking-wider transition-colors py-2 ${
+                  active ? "text-primary border-l-2 border-primary pl-4" : "text-muted-foreground hover:text-primary"
+                }`;
 
-              const href = resolveHref(link, true);
-              return isRouteLink(href) ? (
-                <Link key={link.label} to={href} onClick={() => setOpen(false)} className={baseClass}>
-                  {link.label}
-                </Link>
-              ) : (
-                <button
-                  key={link.label}
-                  onClick={() => { setOpen(false); handleAnchorClick(link.href.replace("#", "")); }}
-                  className={baseClass}
-                >
-                  {link.label}
-                </button>
-              );
-            })}
-            <button
-              onClick={() => handleAnchorClick("orcamento")}
-              className="font-mono text-sm uppercase tracking-wider transition-colors py-1 text-muted-foreground hover:text-primary text-left"
-            >
-              Orçamento
-            </button>
-          </div>
-        </div>
-      )}
+                if (link.isDropdown && link.label === "Segmentos") {
+                  return renderMobileDropdown(segmentos, mobileSegOpen, setMobileSegOpen, link, active);
+                }
+                if (link.isDropdown && link.label === "Serviços") {
+                  return renderMobileDropdown(servicos, mobileSvcOpen, setMobileSvcOpen, link, active);
+                }
+
+                const href = resolveHref(link, true);
+                return isRouteLink(href) ? (
+                  <Link key={link.label} to={href} onClick={() => setOpen(false)} className={baseClass}>
+                    {link.label}
+                  </Link>
+                ) : (
+                  <button
+                    key={link.label}
+                    onClick={() => { setOpen(false); handleAnchorClick(link.href.replace("#", "")); }}
+                    className={`${baseClass} text-left`}
+                  >
+                    {link.label}
+                  </button>
+                );
+              })}
+              <button
+                onClick={() => { setOpen(false); handleAnchorClick("orcamento"); }}
+                className="font-mono text-base uppercase tracking-wider transition-colors py-2 text-muted-foreground hover:text-primary text-left"
+              >
+                Orçamento
+              </button>
+
+              {/* CTA */}
+              <a
+                href="https://wa.me/5511963166915?text=Ol%C3%A1%2C%20gostaria%20de%20falar%20com%20um%20especialista%20em%20TI."
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setOpen(false)}
+                className="mt-4 inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-6 py-4 font-mono text-sm font-bold uppercase tracking-wider"
+              >
+                Falar com Especialista
+              </a>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </nav>
   );
 };
