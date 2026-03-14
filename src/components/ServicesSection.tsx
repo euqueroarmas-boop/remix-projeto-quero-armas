@@ -57,6 +57,7 @@ const services = [
     description:
       "NOC próprio com monitoramento 24/7 via Zabbix e Grafana. SLA definido por criticidade, atendimento remoto e presencial com equipe técnica certificada Dell e Microsoft.",
     specs: ["NOC 24/7", "Zabbix + Grafana", "SLA por Criticidade", "Dell & MS Certified"],
+    href: "/suporte-ti-jacarei",
   },
 ];
 
