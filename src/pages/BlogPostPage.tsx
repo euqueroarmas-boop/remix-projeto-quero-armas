@@ -5,7 +5,21 @@ import { ArrowLeft, Calendar, ArrowRight } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
-import { blogPosts, blogContent as blogContentData } from "@/data/blogPosts";
+import { blogPosts, blogContent as blogContentData, type BlogCategory } from "@/data/blogPosts";
+import catHospitais from "@/assets/blog/cat-hospitais.jpg";
+import catCartorios from "@/assets/blog/cat-cartorios.jpg";
+import catAdvocacia from "@/assets/blog/cat-advocacia.jpg";
+import catEmpresarial from "@/assets/blog/cat-empresarial.jpg";
+import catContabilidade from "@/assets/blog/cat-contabilidade.jpg";
+
+const categoryImages: Record<BlogCategory, string> = {
+  "Hospitais e Clínicas": catHospitais,
+  "Cartórios": catCartorios,
+  "Escritórios de Advocacia": catAdvocacia,
+  "Escritórios de Contabilidade": catContabilidade,
+  "Empresas Corporativas": catEmpresarial,
+  "Tecnologia Empresarial": catEmpresarial,
+};
 
 // Legacy content for original posts
 const legacyContent: Record<string, React.ReactNode> = {
@@ -69,11 +83,23 @@ const BlogPostPage = () => {
   if (!post) return <Navigate to="/blog" replace />;
   if (!structuredContent && !legacy) return <Navigate to="/blog" replace />;
 
+  const featuredImage = categoryImages[post.category];
+
   return (
     <div className="min-h-screen">
       <Navbar />
 
-      <section className="section-dark pt-24 md:pt-28 pb-16 md:pb-20">
+      {/* Featured image banner */}
+      <div className="relative w-full h-48 md:h-64 mt-14 md:mt-16 overflow-hidden">
+        <img
+          src={featuredImage}
+          alt={post.title}
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-secondary via-secondary/60 to-transparent" />
+      </div>
+
+      <section className="section-dark pb-16 md:pb-20 -mt-20 relative z-10">
         <div className="container max-w-3xl">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -88,9 +114,12 @@ const BlogPostPage = () => {
               Voltar ao blog
             </Link>
 
-            <div className="flex items-center gap-3 mb-4">
+            <div className="flex items-center gap-3 mb-4 flex-wrap">
               <span className="font-mono text-[10px] tracking-[0.15em] uppercase text-primary border border-primary/30 px-2 py-0.5">
                 {post.tag}
+              </span>
+              <span className="font-mono text-[10px] tracking-[0.15em] uppercase text-muted-foreground border border-border px-2 py-0.5">
+                {post.category}
               </span>
               <span className="flex items-center gap-1 font-mono text-[10px] text-gunmetal-foreground/50">
                 <Calendar size={10} />
@@ -121,7 +150,6 @@ const BlogPostPage = () => {
                   </div>
                 ))}
 
-                {/* FAQ */}
                 {structuredContent.faq.length > 0 && (
                   <div className="mt-12">
                     <h2>Perguntas Frequentes</h2>
@@ -136,7 +164,6 @@ const BlogPostPage = () => {
                   </div>
                 )}
 
-                {/* Internal Links */}
                 {structuredContent.internalLinks.length > 0 && (
                   <div className="mt-8 p-6 bg-muted/50 border border-border">
                     <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground mb-3">Serviços relacionados</p>

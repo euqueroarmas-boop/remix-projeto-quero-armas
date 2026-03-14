@@ -38,7 +38,6 @@ export interface BlogPostContent {
 }
 
 export const blogPosts: BlogPost[] = [
-  // Original posts
   {
     slug: "vantagens-microsoft-365-para-empresas",
     title: "5 vantagens do Microsoft 365 para empresas que ainda usam email POP/IMAP",
@@ -46,6 +45,7 @@ export const blogPosts: BlogPost[] = [
     date: "2026-03-10",
     readTime: "5 min",
     tag: "Microsoft 365",
+    category: "Tecnologia Empresarial",
   },
   {
     slug: "quando-trocar-servidor-da-empresa",
@@ -54,8 +54,8 @@ export const blogPosts: BlogPost[] = [
     date: "2026-03-05",
     readTime: "6 min",
     tag: "Servidores",
+    category: "Tecnologia Empresarial",
   },
-  // 30 Cybersecurity posts
   {
     slug: "ransomware-em-hospitais-como-proteger",
     title: "Ransomware em hospitais: como proteger sua instituição de saúde",
@@ -63,6 +63,7 @@ export const blogPosts: BlogPost[] = [
     date: "2026-03-14",
     readTime: "7 min",
     tag: "Segurança",
+    category: "Hospitais e Clínicas",
   },
   {
     slug: "vazamento-dados-clinicas-medicas-lgpd",
@@ -71,6 +72,7 @@ export const blogPosts: BlogPost[] = [
     date: "2026-03-13",
     readTime: "6 min",
     tag: "LGPD",
+    category: "Hospitais e Clínicas",
   },
   {
     slug: "backup-para-cartorios-estrategias-seguras",
@@ -79,6 +81,7 @@ export const blogPosts: BlogPost[] = [
     date: "2026-03-12",
     readTime: "6 min",
     tag: "Backup",
+    category: "Cartórios",
   },
   {
     slug: "firewall-pfsense-para-empresas-protecao-completa",
@@ -87,6 +90,7 @@ export const blogPosts: BlogPost[] = [
     date: "2026-03-11",
     readTime: "7 min",
     tag: "Firewall",
+    category: "Tecnologia Empresarial",
   },
   {
     slug: "ataques-ciberneticos-escritorios-advocacia",
@@ -95,6 +99,7 @@ export const blogPosts: BlogPost[] = [
     date: "2026-03-09",
     readTime: "6 min",
     tag: "Segurança",
+    category: "Escritórios de Advocacia",
   },
   {
     slug: "servidores-dell-poweredge-seguranca-dados",
@@ -103,6 +108,7 @@ export const blogPosts: BlogPost[] = [
     date: "2026-03-08",
     readTime: "7 min",
     tag: "Servidores",
+    category: "Empresas Corporativas",
   },
   {
     slug: "lgpd-para-clinicas-e-hospitais-guia-pratico",
@@ -111,6 +117,7 @@ export const blogPosts: BlogPost[] = [
     date: "2026-03-07",
     readTime: "8 min",
     tag: "LGPD",
+    category: "Hospitais e Clínicas",
   },
   {
     slug: "como-ransomware-ataca-cartorios",
@@ -119,6 +126,7 @@ export const blogPosts: BlogPost[] = [
     date: "2026-03-06",
     readTime: "7 min",
     tag: "Segurança",
+    category: "Cartórios",
   },
   {
     slug: "falhas-infraestrutura-ti-hospitais",
@@ -127,6 +135,7 @@ export const blogPosts: BlogPost[] = [
     date: "2026-03-04",
     readTime: "7 min",
     tag: "Infraestrutura",
+    category: "Hospitais e Clínicas",
   },
   {
     slug: "backup-automatizado-clinicas-medicas",
@@ -135,6 +144,7 @@ export const blogPosts: BlogPost[] = [
     date: "2026-03-03",
     readTime: "6 min",
     tag: "Backup",
+    category: "Hospitais e Clínicas",
   },
   {
     slug: "segmentacao-rede-hospitalar-seguranca",
@@ -143,6 +153,7 @@ export const blogPosts: BlogPost[] = [
     date: "2026-03-02",
     readTime: "6 min",
     tag: "Firewall",
+    category: "Hospitais e Clínicas",
   },
   {
     slug: "phishing-em-escritorios-advocacia-como-evitar",
@@ -151,6 +162,7 @@ export const blogPosts: BlogPost[] = [
     date: "2026-03-01",
     readTime: "5 min",
     tag: "Segurança",
+    category: "Escritórios de Advocacia",
   },
   {
     slug: "redundancia-internet-clinicas-hospitais",
@@ -159,6 +171,7 @@ export const blogPosts: BlogPost[] = [
     date: "2026-02-28",
     readTime: "5 min",
     tag: "Infraestrutura",
+    category: "Hospitais e Clínicas",
   },
   {
     slug: "ransomware-wannacry-licoes-para-empresas",
@@ -167,6 +180,7 @@ export const blogPosts: BlogPost[] = [
     date: "2026-02-27",
     readTime: "7 min",
     tag: "Segurança",
+    category: "Tecnologia Empresarial",
   },
   {
     slug: "vpn-segura-para-escritorios-advocacia",
@@ -175,6 +189,7 @@ export const blogPosts: BlogPost[] = [
     date: "2026-02-26",
     readTime: "6 min",
     tag: "Firewall",
+    category: "Escritórios de Advocacia",
   },
   {
     slug: "como-proteger-prontuario-eletronico",
@@ -183,6 +198,7 @@ export const blogPosts: BlogPost[] = [
     date: "2026-02-25",
     readTime: "7 min",
     tag: "LGPD",
+    category: "Hospitais e Clínicas",
   },
   {
     slug: "servidor-dedicado-vs-nuvem-para-empresas",
@@ -191,6 +207,7 @@ export const blogPosts: BlogPost[] = [
     date: "2026-02-24",
     readTime: "8 min",
     tag: "Servidores",
+    category: "Empresas Corporativas",
   },
   {
     slug: "politica-seguranca-informacao-empresas",
@@ -199,6 +216,7 @@ export const blogPosts: BlogPost[] = [
     date: "2026-02-23",
     readTime: "7 min",
     tag: "Segurança",
+    category: "Empresas Corporativas",
   },
   {
     slug: "backup-3-2-1-estrategia-para-empresas",
@@ -207,6 +225,7 @@ export const blogPosts: BlogPost[] = [
     date: "2026-02-22",
     readTime: "6 min",
     tag: "Backup",
+    category: "Tecnologia Empresarial",
   },
   {
     slug: "monitoramento-rede-prevencao-ataques",
@@ -215,6 +234,7 @@ export const blogPosts: BlogPost[] = [
     date: "2026-02-21",
     readTime: "6 min",
     tag: "Infraestrutura",
+    category: "Tecnologia Empresarial",
   },
   {
     slug: "lgpd-para-cartorios-adequacao-necessaria",
@@ -223,6 +243,7 @@ export const blogPosts: BlogPost[] = [
     date: "2026-02-20",
     readTime: "7 min",
     tag: "LGPD",
+    category: "Cartórios",
   },
   {
     slug: "ataques-ddos-como-proteger-empresa",
@@ -231,6 +252,7 @@ export const blogPosts: BlogPost[] = [
     date: "2026-02-19",
     readTime: "6 min",
     tag: "Firewall",
+    category: "Tecnologia Empresarial",
   },
   {
     slug: "ransomware-como-servico-ameaca-crescente",
@@ -239,6 +261,7 @@ export const blogPosts: BlogPost[] = [
     date: "2026-02-18",
     readTime: "7 min",
     tag: "Segurança",
+    category: "Tecnologia Empresarial",
   },
   {
     slug: "recuperacao-desastres-ti-plano-pratico",
@@ -247,6 +270,7 @@ export const blogPosts: BlogPost[] = [
     date: "2026-02-17",
     readTime: "8 min",
     tag: "Backup",
+    category: "Tecnologia Empresarial",
   },
   {
     slug: "seguranca-email-corporativo-ameacas-comuns",
@@ -255,6 +279,7 @@ export const blogPosts: BlogPost[] = [
     date: "2026-02-16",
     readTime: "6 min",
     tag: "Microsoft 365",
+    category: "Escritórios de Contabilidade",
   },
   {
     slug: "virtualizacao-servidores-seguranca-performance",
@@ -263,6 +288,7 @@ export const blogPosts: BlogPost[] = [
     date: "2026-02-15",
     readTime: "7 min",
     tag: "Servidores",
+    category: "Empresas Corporativas",
   },
   {
     slug: "ciberseguranca-para-pequenas-empresas",
@@ -271,6 +297,7 @@ export const blogPosts: BlogPost[] = [
     date: "2026-02-14",
     readTime: "7 min",
     tag: "Segurança",
+    category: "Tecnologia Empresarial",
   },
   {
     slug: "auditoria-seguranca-ti-por-que-fazer",
@@ -279,6 +306,7 @@ export const blogPosts: BlogPost[] = [
     date: "2026-02-13",
     readTime: "6 min",
     tag: "Segurança",
+    category: "Escritórios de Contabilidade",
   },
   {
     slug: "criptografia-dados-empresariais-guia",
@@ -287,6 +315,7 @@ export const blogPosts: BlogPost[] = [
     date: "2026-02-12",
     readTime: "7 min",
     tag: "Segurança",
+    category: "Tecnologia Empresarial",
   },
   {
     slug: "equipamentos-medicos-conectados-riscos-seguranca",
@@ -295,6 +324,7 @@ export const blogPosts: BlogPost[] = [
     date: "2026-02-11",
     readTime: "6 min",
     tag: "Infraestrutura",
+    category: "Hospitais e Clínicas",
   },
 ];
 
