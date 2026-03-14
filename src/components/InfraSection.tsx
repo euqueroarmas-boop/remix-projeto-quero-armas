@@ -1,4 +1,6 @@
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
+import { ArrowRight } from "lucide-react";
 import poweredgeImage from "@/assets/poweredge-server.jpg";
 import serverDetail from "@/assets/server-detail.jpg";
 import MobileSummary from "@/components/MobileSummary";
@@ -94,6 +96,13 @@ const InfraSection = () => {
                   </p>
                 </div>
               </div>
+
+              <Link
+                to="/infraestrutura-ti-corporativa-jacarei"
+                className="inline-flex items-center gap-2 mt-6 font-mono text-xs uppercase tracking-wider text-primary hover:brightness-110 transition-colors"
+              >
+                Ver infraestrutura completa <ArrowRight size={14} />
+              </Link>
             </motion.div>
           </div>
         </div>

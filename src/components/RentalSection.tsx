@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import { Monitor, Wrench, Headphones, RefreshCw, DollarSign, ShieldCheck, ArrowRight, CheckCircle2 } from "lucide-react";
 import optiplexImage from "@/assets/optiplex-desktop.jpg";
 import MobileSummary from "@/components/MobileSummary";
@@ -199,6 +200,12 @@ const RentalSection = () => {
               Quero Alugar
               <ArrowRight size={16} />
             </a>
+            <Link
+              to="/locacao-de-computadores-para-empresas-jacarei"
+              className="inline-flex items-center gap-2 border border-border text-foreground px-8 py-4 font-mono text-sm uppercase tracking-wider hover:border-primary hover:text-primary transition-all"
+            >
+              Saiba mais sobre locação
+            </Link>
           </motion.div>
         </div>
       </div>

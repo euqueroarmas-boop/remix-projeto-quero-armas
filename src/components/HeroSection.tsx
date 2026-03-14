@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import heroImage from "@/assets/hero-server.jpg";
 import { Server, Shield, Cloud } from "lucide-react";
 
@@ -52,12 +53,12 @@ const HeroSection = () => {
               Solicitar Orçamento Gratuito
               <span className="text-lg group-hover:translate-x-1 transition-transform">→</span>
             </a>
-            <a
-              href="#servicos"
+            <Link
+              to="/empresa-de-ti-jacarei"
               className="inline-flex items-center justify-center gap-2 border border-gunmetal-foreground/30 text-gunmetal-foreground px-6 md:px-8 py-3.5 md:py-4 font-mono text-sm font-bold uppercase tracking-wider hover:border-primary hover:text-primary transition-all"
             >
-              Ver Serviços
-            </a>
+              Conheça a WMTi
+            </Link>
           </motion.div>
 
           {/* Status indicators */}

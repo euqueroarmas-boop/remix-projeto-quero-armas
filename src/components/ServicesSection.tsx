@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
-import { Server, Cloud, Shield, HardDrive, Network, MonitorCog } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Server, Cloud, Shield, HardDrive, Network, MonitorCog, ArrowRight } from "lucide-react";
 import datacenterImage from "@/assets/network-datacenter.jpg";
 import MobileSummary from "@/components/MobileSummary";
 
@@ -11,6 +12,7 @@ const services = [
     description:
       "Implementamos e gerenciamos servidores Dell PowerEdge R750, R650 e T550. Configuração de RAID, iDRAC, clusters de failover com Hyper-V e alta disponibilidade para ambientes de produção.",
     specs: ["PowerEdge R750xs / R650xs", "RAID H755 / H355", "iDRAC9 Enterprise", "Hyper-V Clustering"],
+    href: "/servidor-dell-poweredge-jacarei",
   },
   {
     icon: Cloud,
@@ -19,6 +21,7 @@ const services = [
     description:
       "Migração completa para Microsoft 365, configuração de Azure AD, Exchange Online, SharePoint e Teams. Ambientes híbridos com Active Directory on-premises sincronizado com Azure AD Connect.",
     specs: ["Microsoft 365 Business", "Azure AD Connect", "Exchange Online", "Windows Server 2022"],
+    href: "/microsoft-365-para-empresas-jacarei",
   },
   {
     icon: Shield,
@@ -27,6 +30,7 @@ const services = [
     description:
       "Firewalls pfSense em appliances dedicados com VPN IPsec/OpenVPN, IDS/IPS com Suricata, filtro de conteúdo, balanceamento de carga e failover de links WAN. Segurança sem compromisso.",
     specs: ["VPN IPsec / OpenVPN", "Suricata IDS/IPS", "HAProxy Load Balancer", "Multi-WAN Failover"],
+    href: "/firewall-pfsense-jacarei",
   },
   {
     icon: HardDrive,
@@ -35,6 +39,7 @@ const services = [
     description:
       "Estratégias de backup 3-2-1 com Veeam Backup & Replication sobre storage Dell PowerVault. Testes de restauração periódicos e RPO/RTO definidos para cada workload crítico.",
     specs: ["Veeam B&R v12", "Dell PowerVault ME5", "Backup 3-2-1", "DR Automatizado"],
+    href: "/backup-empresarial-jacarei",
   },
   {
     icon: Network,
@@ -43,6 +48,7 @@ const services = [
     description:
       "Switches Dell gerenciáveis, VLANs segmentadas, QoS configurado e monitoramento SNMP. Cabeamento estruturado Cat6A e fibra óptica para ambientes de alta performance.",
     specs: ["Dell Networking N-Series", "VLAN / QoS / STP", "Cat6A / Fibra Óptica", "Zabbix Monitoring"],
+    href: "/montagem-e-monitoramento-de-redes-jacarei",
   },
   {
     icon: MonitorCog,
@@ -51,6 +57,7 @@ const services = [
     description:
       "NOC próprio com monitoramento 24/7 via Zabbix e Grafana. SLA definido por criticidade, atendimento remoto e presencial com equipe técnica certificada Dell e Microsoft.",
     specs: ["NOC 24/7", "Zabbix + Grafana", "SLA por Criticidade", "Dell & MS Certified"],
+    href: "/suporte-ti-jacarei",
   },
 ];
 
@@ -127,7 +134,7 @@ const ServicesSection = () => {
                 <p className="font-body text-sm md:text-base text-muted-foreground leading-relaxed mb-5 md:mb-6">
                   {service.description}
                 </p>
-                <div className="border-t border-border pt-4">
+                <div className="border-t border-border pt-4 mb-4">
                   {service.specs.map((spec) => (
                     <div key={spec} className="flex items-center gap-2 mb-1.5">
                       <span className="w-1 h-1 bg-primary rounded-full flex-shrink-0" />
@@ -135,6 +142,12 @@ const ServicesSection = () => {
                     </div>
                   ))}
                 </div>
+                <Link
+                  to={service.href}
+                  className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-primary hover:brightness-110 transition-colors group-hover:translate-x-1 transition-transform"
+                >
+                  Saiba mais <ArrowRight size={14} />
+                </Link>
               </motion.div>
             ))}
           </div>
