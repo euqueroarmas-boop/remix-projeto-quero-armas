@@ -23,6 +23,7 @@ export interface BlogPost {
   readTime: string;
   tag: string;
   category: BlogCategory;
+  image: string;
 }
 
 export interface BlogPostContent {
