@@ -120,13 +120,8 @@ const Navbar = () => {
           })}
 
           <a
-            ref={ctaRef}
             href={isHome ? "#contato" : "/#contato"}
-            className={`font-mono text-xs uppercase tracking-wider px-5 py-2.5 transition-all ${
-              ctaIsHighlighted
-                ? "bg-primary text-primary-foreground hover:brightness-110"
-                : "bg-muted text-foreground hover:bg-primary hover:text-primary-foreground"
-            }`}
+            className="font-mono text-xs uppercase tracking-wider px-5 py-2.5 transition-all bg-primary text-primary-foreground hover:brightness-110"
           >
             Orçamento
           </a>
