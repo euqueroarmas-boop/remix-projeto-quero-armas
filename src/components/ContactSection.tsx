@@ -167,9 +167,9 @@ const ContactSection = () => {
             style={{ borderRadius: "var(--radius)" }}
             onSubmit={handleSubmit}
           >
-            <p className="font-mono text-[10px] tracking-[0.3em] uppercase text-primary/80 mb-1">
+            <h3 className="font-heading text-xl md:text-2xl font-semibold tracking-wide text-primary mb-6">
               Preencha para receber sua proposta
-            </p>
+            </h3>
 
             {[
               { label: "Nome *", key: "nome" as const, type: "text", placeholder: "Seu nome completo" },
