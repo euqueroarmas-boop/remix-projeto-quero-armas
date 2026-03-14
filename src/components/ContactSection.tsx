@@ -81,7 +81,7 @@ const ContactSection = () => {
 
   return (
     <section id="contato" className="py-20 md:py-24 section-dark">
-      <div className="container">
+      <div id="orcamento" className="container">
         <div className="grid lg:grid-cols-2 gap-12 md:gap-16">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -90,7 +90,7 @@ const ContactSection = () => {
             transition={{ duration: 0.5 }}
           >
             <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
-              // Contato
+              // Orçamento
             </p>
             <h2 className="text-2xl md:text-5xl mb-4 md:mb-6">
               Projete sua
