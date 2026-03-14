@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
-import logoWmti from "@/assets/logo-wmti-dark.png";
-import logoIcon from "@/assets/logo-wmti-icon.png";
+import logoFull from "@/assets/logo-wmti-full.png";
 
 const footerColumns = [
   {
