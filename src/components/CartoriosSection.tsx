@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ShieldCheck, HardDrive, Cloud, Server, Lock, Activity, FileCheck, AlertTriangle } from "lucide-react";
+import MobileSummary from "@/components/MobileSummary";
 
 const requirements = [
   {
@@ -77,201 +78,213 @@ const classes = [
 const CartoriosSection = () => {
   return (
     <section id="cartorios" className="relative">
-      {/* Hero banner */}
-      <div className="section-dark py-24 border-b-4 border-primary">
-        <div className="container">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-            className="max-w-4xl"
-          >
-            <div className="flex items-center gap-3 mb-6">
-              <FileCheck size={20} className="text-primary" />
-              <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary">
-                // Provimento 213/2026 — CNJ
-              </p>
-            </div>
-            <h2 className="text-3xl md:text-5xl lg:text-6xl mb-6">
-              Seu cartório em
-              <br />
-              <span className="text-primary">conformidade total</span>
-              <br />
-              com o CNJ.
-            </h2>
-            <p className="font-body text-lg md:text-xl text-gunmetal-foreground/70 max-w-2xl leading-relaxed mb-8">
-              Somos especialistas em infraestrutura de TI para cartórios.
-              Atendemos serventias de todo o Brasil, garantindo conformidade com
-              todos os requisitos do Provimento 74/2018 do Conselho Nacional de
-              Justiça.
-            </p>
+      {/* Mobile summary */}
+      <MobileSummary
+        tag="Provimento 213/2026 — CNJ"
+        title={<>Seu cartório em <span className="text-primary">conformidade total</span> com o CNJ.</>}
+        description="Somos especialistas em infraestrutura de TI para cartórios. Atendemos serventias de todo o Brasil, garantindo conformidade com todos os requisitos do Provimento 213 do CNJ."
+        to="/cartorios"
+        className="section-dark"
+      />
 
-            <div className="flex flex-wrap gap-4 mb-12">
+      {/* Full content - desktop only */}
+      <div className="hidden md:block">
+        {/* Hero banner */}
+        <div className="section-dark py-24 border-b-4 border-primary">
+          <div className="container">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              className="max-w-4xl"
+            >
+              <div className="flex items-center gap-3 mb-6">
+                <FileCheck size={20} className="text-primary" />
+                <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary">
+                  // Provimento 213/2026 — CNJ
+                </p>
+              </div>
+              <h2 className="text-3xl md:text-5xl lg:text-6xl mb-6">
+                Seu cartório em
+                <br />
+                <span className="text-primary">conformidade total</span>
+                <br />
+                com o CNJ.
+              </h2>
+              <p className="font-body text-lg md:text-xl text-gunmetal-foreground/70 max-w-2xl leading-relaxed mb-8">
+                Somos especialistas em infraestrutura de TI para cartórios.
+                Atendemos serventias de todo o Brasil, garantindo conformidade com
+                todos os requisitos do Provimento 74/2018 do Conselho Nacional de
+                Justiça.
+              </p>
+
+              <div className="flex flex-wrap gap-4 mb-12">
+                <a
+                  href="https://wa.me/5511963166915?text=Olá! Gostaria de um orçamento para adequação do meu cartório ao Provimento 213 do CNJ."
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
+                >
+                  <AlertTriangle size={16} />
+                  Adequar meu cartório
+                </a>
+                <Link
+                  to="/provimento-213"
+                  className="inline-flex items-center gap-2 border border-gunmetal-foreground/30 text-gunmetal-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:border-primary hover:text-primary transition-all"
+                >
+                  Ver Provimento 213 completo
+                </Link>
+              </div>
+
+              {/* Stats */}
+              <div className="grid grid-cols-3 gap-px bg-gunmetal-foreground/10">
+                {[
+                  { value: "100%", label: "Conformidade CNJ" },
+                  { value: "Brasil", label: "Atendimento Nacional" },
+                  { value: "24/7", label: "Monitoramento" },
+                ].map((stat) => (
+                  <div key={stat.label} className="bg-secondary p-5 text-center">
+                    <p className="font-mono text-2xl md:text-3xl font-bold text-primary">
+                      {stat.value}
+                    </p>
+                    <p className="font-body text-xs text-gunmetal-foreground/50 mt-1">
+                      {stat.label}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+        </div>
+
+        {/* Requirements grid */}
+        <div className="section-light py-24">
+          <div className="container">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              className="mb-16"
+            >
+              <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
+                // Requisitos atendidos
+              </p>
+              <h3 className="text-2xl md:text-4xl max-w-2xl">
+                Cada artigo do Provimento 213,
+                <br />
+                <span className="text-primary">implementado e monitorado.</span>
+              </h3>
+            </motion.div>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-px bg-border">
+              {requirements.map((req, i) => (
+                <motion.div
+                  key={req.tag}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4, delay: i * 0.08 }}
+                  className="bg-background p-8 group hover:bg-muted transition-colors"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <req.icon size={18} className="text-primary" strokeWidth={1.5} />
+                    <span className="font-mono text-[9px] tracking-[0.15em] uppercase text-muted-foreground border border-border px-2 py-0.5">
+                      {req.tag}
+                    </span>
+                  </div>
+                  <h4 className="text-base font-mono font-bold mb-3">{req.title}</h4>
+                  <p className="font-body text-sm text-muted-foreground leading-relaxed mb-4">
+                    {req.description}
+                  </p>
+                  <div className="flex items-center gap-2 pt-3 border-t border-border">
+                    <div className="w-2 h-2 rounded-full bg-primary led-pulse" />
+                    <span className="font-mono text-[10px] text-primary uppercase tracking-wider">
+                      {req.compliance}
+                    </span>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Classes */}
+        <div className="section-dark py-24">
+          <div className="container">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              className="mb-16"
+            >
+              <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
+                // Classificação por faturamento
+              </p>
+              <h3 className="text-2xl md:text-4xl max-w-2xl">
+                Adequação por classe
+                <br />
+                de serventia.
+              </h3>
+            </motion.div>
+
+            <div className="grid md:grid-cols-3 gap-px bg-gunmetal-foreground/10">
+              {classes.map((cls, i) => (
+                <motion.div
+                  key={cls.name}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4, delay: i * 0.1 }}
+                  className="bg-secondary p-8"
+                >
+                  <p className="font-mono text-2xl font-bold text-primary mb-1">
+                    {cls.name}
+                  </p>
+                  <p className="font-mono text-xs text-gunmetal-foreground/40 mb-4">
+                    {cls.percentage}
+                  </p>
+                  <p className="font-mono text-sm text-gunmetal-foreground/80 mb-3">
+                    {cls.revenue}
+                  </p>
+                  <p className="font-body text-sm text-gunmetal-foreground/60 leading-relaxed">
+                    {cls.description}
+                  </p>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* CTA */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="mt-16 border border-gunmetal-foreground/20 p-8 md:p-12 text-center"
+            >
+              <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
+                // Diagnóstico gratuito
+              </p>
+              <h3 className="text-xl md:text-3xl mb-4">
+                Não sabe em qual classe sua serventia se enquadra?
+              </h3>
+              <p className="font-body text-gunmetal-foreground/60 max-w-xl mx-auto mb-8">
+                Nossa equipe técnica faz uma análise completa da sua infraestrutura
+                atual e identifica todos os pontos de adequação necessários ao
+                 Provimento 213.
+              </p>
               <a
-                href="https://wa.me/5511963166915?text=Olá! Gostaria de um orçamento para adequação do meu cartório ao Provimento 213 do CNJ."
+                href="https://wa.me/5511963166915?text=Olá! Gostaria de solicitar um diagnóstico gratuito do meu cartório para adequação ao Provimento 213 do CNJ."
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
               >
-                <AlertTriangle size={16} />
-                Adequar meu cartório
+                Falar com especialista via WhatsApp
               </a>
-              <Link
-                to="/provimento-213"
-                className="inline-flex items-center gap-2 border border-gunmetal-foreground/30 text-gunmetal-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:border-primary hover:text-primary transition-all"
-              >
-                Ver Provimento 213 completo
-              </Link>
-            </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-px bg-gunmetal-foreground/10">
-              {[
-                { value: "100%", label: "Conformidade CNJ" },
-                { value: "Brasil", label: "Atendimento Nacional" },
-                { value: "24/7", label: "Monitoramento" },
-              ].map((stat) => (
-                <div key={stat.label} className="bg-secondary p-5 text-center">
-                  <p className="font-mono text-2xl md:text-3xl font-bold text-primary">
-                    {stat.value}
-                  </p>
-                  <p className="font-body text-xs text-gunmetal-foreground/50 mt-1">
-                    {stat.label}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        </div>
-      </div>
-
-      {/* Requirements grid */}
-      <div className="section-light py-24">
-        <div className="container">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-            className="mb-16"
-          >
-            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
-              // Requisitos atendidos
-            </p>
-            <h3 className="text-2xl md:text-4xl max-w-2xl">
-              Cada artigo do Provimento 213,
-              <br />
-              <span className="text-primary">implementado e monitorado.</span>
-            </h3>
-          </motion.div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-px bg-border">
-            {requirements.map((req, i) => (
-              <motion.div
-                key={req.tag}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: i * 0.08 }}
-                className="bg-background p-8 group hover:bg-muted transition-colors"
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <req.icon size={18} className="text-primary" strokeWidth={1.5} />
-                  <span className="font-mono text-[9px] tracking-[0.15em] uppercase text-muted-foreground border border-border px-2 py-0.5">
-                    {req.tag}
-                  </span>
-                </div>
-                <h4 className="text-base font-mono font-bold mb-3">{req.title}</h4>
-                <p className="font-body text-sm text-muted-foreground leading-relaxed mb-4">
-                  {req.description}
-                </p>
-                <div className="flex items-center gap-2 pt-3 border-t border-border">
-                  <div className="w-2 h-2 rounded-full bg-primary led-pulse" />
-                  <span className="font-mono text-[10px] text-primary uppercase tracking-wider">
-                    {req.compliance}
-                  </span>
-                </div>
-              </motion.div>
-            ))}
+            </motion.div>
           </div>
-        </div>
-      </div>
-
-      {/* Classes */}
-      <div className="section-dark py-24">
-        <div className="container">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-            className="mb-16"
-          >
-            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
-              // Classificação por faturamento
-            </p>
-            <h3 className="text-2xl md:text-4xl max-w-2xl">
-              Adequação por classe
-              <br />
-              de serventia.
-            </h3>
-          </motion.div>
-
-          <div className="grid md:grid-cols-3 gap-px bg-gunmetal-foreground/10">
-            {classes.map((cls, i) => (
-              <motion.div
-                key={cls.name}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: i * 0.1 }}
-                className="bg-secondary p-8"
-              >
-                <p className="font-mono text-2xl font-bold text-primary mb-1">
-                  {cls.name}
-                </p>
-                <p className="font-mono text-xs text-gunmetal-foreground/40 mb-4">
-                  {cls.percentage}
-                </p>
-                <p className="font-mono text-sm text-gunmetal-foreground/80 mb-3">
-                  {cls.revenue}
-                </p>
-                <p className="font-body text-sm text-gunmetal-foreground/60 leading-relaxed">
-                  {cls.description}
-                </p>
-              </motion.div>
-            ))}
-          </div>
-
-          {/* CTA */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            className="mt-16 border border-gunmetal-foreground/20 p-8 md:p-12 text-center"
-          >
-            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
-              // Diagnóstico gratuito
-            </p>
-            <h3 className="text-xl md:text-3xl mb-4">
-              Não sabe em qual classe sua serventia se enquadra?
-            </h3>
-            <p className="font-body text-gunmetal-foreground/60 max-w-xl mx-auto mb-8">
-              Nossa equipe técnica faz uma análise completa da sua infraestrutura
-              atual e identifica todos os pontos de adequação necessários ao
-               Provimento 213.
-            </p>
-            <a
-              href="https://wa.me/5511963166915?text=Olá! Gostaria de solicitar um diagnóstico gratuito do meu cartório para adequação ao Provimento 213 do CNJ."
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
-            >
-              Falar com especialista via WhatsApp
-            </a>
-          </motion.div>
         </div>
       </div>
     </section>
