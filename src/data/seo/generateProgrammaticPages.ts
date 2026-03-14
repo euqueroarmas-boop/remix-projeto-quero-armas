@@ -1,11 +1,15 @@
 import {
   Server, Shield, Cloud, Network, Monitor, Wrench, Headphones,
   Lock, Activity, Eye, Cpu, HardDrive,
+  Building2, Scale, Heart, Stethoscope, Landmark, Briefcase,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { SeoPageData } from "@/data/seoPages";
 import { services } from "./services";
 import { cities } from "./cities";
+import { segments } from "./segments";
+import { intents } from "./intents";
+import { problems } from "./problems";
 
 /** Icon map per service slug */
 const serviceIcons: Record<string, { icon: LucideIcon; title: string; text: string }[]> = {
@@ -67,6 +71,35 @@ const serviceIcons: Record<string, { icon: LucideIcon; title: string; text: stri
   ],
 };
 
+/** Segment-specific icons */
+const segmentIcons: Record<string, { icon: LucideIcon; title: string; text: string }[]> = {
+  cartorios: [
+    { icon: Landmark, title: "Conformidade CNJ", text: "Infraestrutura em conformidade com o Provimento 213 do CNJ." },
+    { icon: Shield, title: "Segurança de dados", text: "Proteção de dados cartorários com backup criptografado." },
+    { icon: Server, title: "Servidores dedicados", text: "Servidores dimensionados para sistemas cartorários." },
+  ],
+  hospitais: [
+    { icon: Heart, title: "Alta disponibilidade", text: "Infraestrutura 24/7 para ambientes críticos de saúde." },
+    { icon: Stethoscope, title: "Sistemas HIS/PACS", text: "Integração e suporte para sistemas médicos." },
+    { icon: Lock, title: "LGPD Saúde", text: "Conformidade com LGPD para dados de pacientes." },
+  ],
+  "escritorios-advocacia": [
+    { icon: Scale, title: "Sigilo profissional", text: "Infraestrutura segura para proteção de dados de clientes." },
+    { icon: Lock, title: "VPN e criptografia", text: "Acesso remoto seguro para advogados." },
+    { icon: Shield, title: "Backup jurídico", text: "Backup criptografado de processos e documentos." },
+  ],
+  contabilidade: [
+    { icon: Briefcase, title: "Dados fiscais seguros", text: "Proteção e backup automatizado de dados contábeis." },
+    { icon: Server, title: "Performance", text: "Servidores otimizados para sistemas de contabilidade." },
+    { icon: Shield, title: "Conformidade fiscal", text: "Infraestrutura alinhada com exigências fiscais." },
+  ],
+  industrias: [
+    { icon: Building2, title: "TI industrial", text: "Redes segmentadas e servidores de alta performance para fábricas." },
+    { icon: Activity, title: "Monitoramento 24/7", text: "NOC dedicado para monitoramento da infraestrutura industrial." },
+    { icon: Network, title: "Integração ERP", text: "Rede otimizada para sistemas de gestão industrial." },
+  ],
+};
+
 const defaultPainPoints = [
   "Rede lenta ou instável prejudicando a operação",
   "Servidor antigo ou mal configurado",
@@ -85,64 +118,182 @@ const defaultSolutions = [
   "Suporte técnico especializado com SLA",
 ];
 
-function fill(template: string, city: string): string {
-  return template.replace(/\{city\}/g, city);
+function fill(template: string, replacements: Record<string, string>): string {
+  let result = template;
+  for (const [key, value] of Object.entries(replacements)) {
+    result = result.replace(new RegExp(`\\{${key}\\}`, "g"), value);
+  }
+  return result;
 }
 
 export function generateProgrammaticPages(): SeoPageData[] {
   const pages: SeoPageData[] = [];
+  const usedSlugs = new Set<string>();
 
+  function addPage(page: SeoPageData) {
+    if (!usedSlugs.has(page.slug)) {
+      usedSlugs.add(page.slug);
+      pages.push(page);
+    }
+  }
+
+  // ─── 1. Service × City ───
   for (const service of services) {
     for (const city of cities) {
       const slug = `${service.slug}-${city.slug}`;
+      const r = { city: city.name, service: service.name };
 
       const relatedLinks = service.relatedSlugs.map((rs) => {
         const rel = services.find((s) => s.slug === rs);
-        return {
-          label: rel?.name ?? rs,
-          href: `/${rs}-${city.slug}`,
-        };
+        return { label: rel?.name ?? rs, href: `/${rs}-${city.slug}` };
       });
+      relatedLinks.push({ label: `Empresa de TI em ${city.name}`, href: `/empresa-ti-${city.slug}` });
 
-      // Add city-only page link
-      relatedLinks.push({
-        label: `Empresa de TI em ${city.name}`,
-        href: `/empresa-ti-${city.slug}`,
-      });
-
-      pages.push({
+      addPage({
         slug,
-        metaTitle: fill(service.titleTemplate, city.name),
-        metaDescription: fill(service.descriptionTemplate, city.name),
+        metaTitle: fill(service.titleTemplate, r),
+        metaDescription: fill(service.descriptionTemplate, r),
         tag: `${service.name} em ${city.name}`,
         headline: `${service.h1Prefix}`,
-        headlineHighlight: `${city.name}`,
-        description: fill(service.contentTemplate, city.name),
+        headlineHighlight: city.name,
+        description: fill(service.contentTemplate, r),
         whatsappMessage: `Olá! Gostaria de saber mais sobre ${service.name} para minha empresa em ${city.name}.`,
         category: "local-service",
         painPoints: defaultPainPoints,
         solutions: defaultSolutions,
         benefits: serviceIcons[service.slug] ?? serviceIcons["infraestrutura-ti"],
         faq: [
-          {
-            question: `A WMTi oferece ${service.name.toLowerCase()} em ${city.name}?`,
-            answer: `Sim. A WMTi atende empresas em ${city.name} e região com soluções profissionais de ${service.name.toLowerCase()}, suporte técnico e infraestrutura corporativa.`,
-          },
-          {
-            question: `Quanto custa ${service.name.toLowerCase()} para empresas?`,
-            answer: `O investimento depende do porte e das necessidades da empresa. Entre em contato para um diagnóstico gratuito e uma proposta personalizada.`,
-          },
-          {
-            question: `A WMTi atende pequenas empresas em ${city.name}?`,
-            answer: `Sim. Atendemos empresas de todos os portes em ${city.name}, com planos escaláveis e personalizados.`,
-          },
-          {
-            question: "Como solicitar um orçamento?",
-            answer: "Entre em contato pelo WhatsApp ou formulário do site para agendar um diagnóstico gratuito da infraestrutura de TI da sua empresa.",
-          },
+          { question: `A WMTi oferece ${service.name.toLowerCase()} em ${city.name}?`, answer: `Sim. A WMTi atende empresas em ${city.name} e região com soluções profissionais de ${service.name.toLowerCase()}, suporte técnico e infraestrutura corporativa.` },
+          { question: `Quanto custa ${service.name.toLowerCase()} para empresas?`, answer: `O investimento depende do porte e das necessidades da empresa. Entre em contato para um diagnóstico gratuito e uma proposta personalizada.` },
+          { question: `A WMTi atende pequenas empresas em ${city.name}?`, answer: `Sim. Atendemos empresas de todos os portes em ${city.name}, com planos escaláveis e personalizados.` },
+          { question: "Como solicitar um orçamento?", answer: "Entre em contato pelo WhatsApp ou formulário do site para agendar um diagnóstico gratuito da infraestrutura de TI da sua empresa." },
         ],
         relatedLinks,
         localContent: `A WMTi Tecnologia da Informação atende empresas em ${city.name} (${city.state}) com soluções especializadas de ${service.name.toLowerCase()}. Com sede em Jacareí/SP e mais de 15 anos de experiência, oferecemos atendimento presencial e remoto para garantir que sua empresa opere com segurança, desempenho e confiabilidade.`,
+        shouldIndex: true,
+        priority: 0.7,
+      });
+    }
+  }
+
+  // ─── 2. Service × City × Segment ───
+  for (const service of services) {
+    for (const city of cities) {
+      for (const segment of segments) {
+        const slug = `${service.slug}-${segment.slug}-${city.slug}`;
+
+        const baseBenefits = serviceIcons[service.slug] ?? serviceIcons["infraestrutura-ti"];
+        const segBenefits = segmentIcons[segment.slug] ?? [];
+        const benefits = [...segBenefits, ...baseBenefits.slice(0, 3)];
+
+        const relatedLinks = [
+          { label: `${service.name} em ${city.name}`, href: `/${service.slug}-${city.slug}` },
+          { label: `Empresa de TI em ${city.name}`, href: `/empresa-ti-${city.slug}` },
+          ...service.relatedSlugs.slice(0, 2).map((rs) => ({
+            label: services.find((s) => s.slug === rs)?.name ?? rs,
+            href: `/${rs}-${city.slug}`,
+          })),
+        ];
+
+        addPage({
+          slug,
+          metaTitle: `${service.name} ${segment.titleSuffix} em ${city.name} | WMTi`,
+          metaDescription: `${service.name} ${segment.titleSuffix.toLowerCase()} em ${city.name}. ${segment.descriptionExtra.slice(0, 100)}. WMTi Tecnologia.`,
+          tag: `${service.name} ${segment.titleSuffix}`,
+          headline: `${service.name} ${segment.titleSuffix} em `,
+          headlineHighlight: city.name,
+          description: `A WMTi oferece ${service.name.toLowerCase()} especializada ${segment.titleSuffix.toLowerCase()} em ${city.name}. ${segment.descriptionExtra}`,
+          whatsappMessage: `Olá! Gostaria de saber mais sobre ${service.name} ${segment.titleSuffix.toLowerCase()} em ${city.name}.`,
+          category: "segment",
+          painPoints: [...segment.painPoints, ...defaultPainPoints.slice(0, 3)],
+          solutions: defaultSolutions,
+          benefits,
+          faq: [
+            segment.faqExtra,
+            { question: `Qual o custo de ${service.name.toLowerCase()} ${segment.titleSuffix.toLowerCase()}?`, answer: "O investimento depende do porte e necessidades. Entre em contato para um diagnóstico gratuito." },
+            { question: `A WMTi atende ${segment.name.toLowerCase()} em ${city.name}?`, answer: `Sim. Atendemos ${segment.name.toLowerCase()} em ${city.name} e região com soluções especializadas.` },
+          ],
+          relatedLinks,
+          localContent: `A WMTi atende ${segment.name.toLowerCase()} em ${city.name} (${city.state}) com soluções de ${service.name.toLowerCase()}. Mais de 15 anos de experiência em tecnologia da informação.`,
+          shouldIndex: true,
+          priority: 0.6,
+          canonicalSlug: `${service.slug}-${city.slug}`,
+        });
+      }
+    }
+  }
+
+  // ─── 3. Service × City × Intent ───
+  for (const service of services) {
+    for (const city of cities) {
+      for (const intent of intents) {
+        const slug = `${intent.slug}-${service.slug}-${city.slug}`;
+
+        const relatedLinks = [
+          { label: `${service.name} em ${city.name}`, href: `/${service.slug}-${city.slug}` },
+          { label: `Empresa de TI em ${city.name}`, href: `/empresa-ti-${city.slug}` },
+        ];
+
+        addPage({
+          slug,
+          metaTitle: `${intent.name} de ${service.name} em ${city.name} | WMTi`,
+          metaDescription: `${intent.name} de ${service.name.toLowerCase()} para empresas em ${city.name}. ${intent.descriptionExtra.slice(0, 80)}. WMTi.`,
+          tag: `${intent.name} — ${service.name}`,
+          headline: fill(intent.h1Template, { service: service.name.toLowerCase(), city: city.name }),
+          headlineHighlight: city.name,
+          description: `${intent.descriptionExtra} A WMTi oferece ${service.name.toLowerCase()} para empresas em ${city.name} com mais de 15 anos de experiência.`,
+          whatsappMessage: `Olá! Gostaria de um ${intent.name.toLowerCase()} de ${service.name.toLowerCase()} em ${city.name}.`,
+          category: "intent",
+          painPoints: defaultPainPoints.slice(0, 4),
+          solutions: defaultSolutions.slice(0, 4),
+          benefits: serviceIcons[service.slug]?.slice(0, 4) ?? serviceIcons["infraestrutura-ti"].slice(0, 4),
+          faq: [
+            { question: `Como solicitar ${intent.name.toLowerCase()} de ${service.name.toLowerCase()} em ${city.name}?`, answer: "Entre em contato pelo WhatsApp ou formulário do site. Realizamos um diagnóstico gratuito e apresentamos uma proposta personalizada." },
+            { question: `A WMTi oferece ${intent.name.toLowerCase()} gratuito?`, answer: "Sim. O diagnóstico inicial e a proposta são gratuitos e sem compromisso." },
+          ],
+          relatedLinks,
+          localContent: `Solicite ${intent.name.toLowerCase()} de ${service.name.toLowerCase()} para sua empresa em ${city.name}. Atendimento presencial e remoto com SLA garantido.`,
+          shouldIndex: true,
+          priority: 0.5,
+          canonicalSlug: `${service.slug}-${city.slug}`,
+        });
+      }
+    }
+  }
+
+  // ─── 4. Problem × City ───
+  for (const problem of problems) {
+    for (const city of cities) {
+      const slug = `${problem.slug}-${city.slug}`;
+
+      const relatedLinks = [
+        { label: `Empresa de TI em ${city.name}`, href: `/empresa-ti-${city.slug}` },
+        { label: "Infraestrutura de TI", href: `/infraestrutura-ti-${city.slug}` },
+        { label: "Suporte de TI", href: `/suporte-ti-${city.slug}` },
+        { label: "Segurança de Rede", href: `/seguranca-rede-${city.slug}` },
+      ];
+
+      addPage({
+        slug,
+        metaTitle: `${problem.name} — Soluções de TI em ${city.name} | WMTi`,
+        metaDescription: `${problem.description.slice(0, 130)}. Soluções profissionais em ${city.name}. WMTi.`,
+        tag: problem.name,
+        headline: fill(problem.h1Template, { city: city.name }),
+        headlineHighlight: "",
+        description: `${problem.description}\n\n${problem.solutionIntro}`,
+        whatsappMessage: `Olá! Minha empresa em ${city.name} está com problema de ${problem.name.toLowerCase()}. Podem ajudar?`,
+        category: "problem-page",
+        painPoints: problem.painPoints,
+        solutions: defaultSolutions.slice(0, 4),
+        benefits: serviceIcons["infraestrutura-ti"].slice(0, 4),
+        faq: [
+          { question: `Como resolver ${problem.name.toLowerCase()} na minha empresa em ${city.name}?`, answer: problem.solutionIntro },
+          { question: "A WMTi faz diagnóstico gratuito?", answer: "Sim. Entre em contato para agendar um diagnóstico gratuito da infraestrutura de TI." },
+        ],
+        relatedLinks,
+        localContent: `Se sua empresa em ${city.name} enfrenta ${problem.name.toLowerCase()}, a WMTi pode ajudar. Atendemos ${city.name} e região com soluções profissionais de TI.`,
+        shouldIndex: true,
+        priority: 0.5,
       });
     }
   }
