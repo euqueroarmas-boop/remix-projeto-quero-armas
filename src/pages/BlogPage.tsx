@@ -5,34 +5,9 @@ import { ArrowRight, Calendar } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
-
-export interface BlogPost {
-  slug: string;
-  title: string;
-  excerpt: string;
-  date: string;
-  readTime: string;
-  tag: string;
-}
-
-export const blogPosts: BlogPost[] = [
-  {
-    slug: "vantagens-microsoft-365-para-empresas",
-    title: "5 vantagens do Microsoft 365 para empresas que ainda usam email POP/IMAP",
-    excerpt: "Descubra por que migrar para o Microsoft 365 é essencial para produtividade, segurança e colaboração na sua empresa. Entenda as limitações do email tradicional e os benefícios da nuvem Microsoft.",
-    date: "2026-03-10",
-    readTime: "5 min",
-    tag: "Microsoft 365",
-  },
-  {
-    slug: "quando-trocar-servidor-da-empresa",
-    title: "Quando é hora de trocar o servidor da sua empresa? 7 sinais de alerta",
-    excerpt: "Seu servidor está lento, fazendo ruídos ou apresentando falhas? Conheça os 7 sinais que indicam que é hora de investir em um novo servidor Dell PowerEdge para sua empresa.",
-    date: "2026-03-05",
-    readTime: "6 min",
-    tag: "Servidores",
-  },
-];
+import { blogPosts } from "@/data/blogPosts";
+export type { BlogPost } from "@/data/blogPosts";
+export { blogPosts } from "@/data/blogPosts";
 
 const BlogPage = () => {
   useEffect(() => {

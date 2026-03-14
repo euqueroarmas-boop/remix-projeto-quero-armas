@@ -119,7 +119,7 @@ const Navbar = () => {
 
           <a
             href={isHome ? "#contato" : "/#contato"}
-            className="font-mono text-xs uppercase tracking-wider px-5 py-2.5 transition-all bg-primary text-primary-foreground hover:brightness-110"
+            className="font-mono text-xs uppercase tracking-wider transition-colors text-muted-foreground hover:text-primary"
           >
             Orçamento
           </a>
@@ -159,7 +159,7 @@ const Navbar = () => {
             <a
               href={isHome ? "#contato" : "/#contato"}
               onClick={() => setOpen(false)}
-              className="bg-primary text-primary-foreground font-mono text-sm uppercase tracking-wider px-5 py-3 hover:brightness-110 transition-all text-center mt-2"
+              className="font-mono text-sm uppercase tracking-wider transition-colors py-1 text-muted-foreground hover:text-primary"
             >
               Orçamento
             </a>
