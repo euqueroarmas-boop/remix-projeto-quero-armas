@@ -40,6 +40,16 @@ export interface BlogPostContent {
 
 export const blogPosts: BlogPost[] = [
   {
+    slug: "provimento-213-cnj-desafios-tecnologia-cartorios",
+    title: "O Provimento nº 213 do CNJ e os desafios tecnológicos para os cartórios brasileiros",
+    excerpt: "Entenda como o Provimento 213 do CNJ impacta a infraestrutura de TI dos cartórios e quais medidas são necessárias para garantir conformidade e segurança.",
+    date: "2026-03-14",
+    readTime: "9 min",
+    tag: "Compliance",
+    category: "Cartórios",
+    image: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=800&q=80",
+  },
+  {
     slug: "vantagens-microsoft-365-para-empresas",
     title: "5 vantagens do Microsoft 365 para empresas que ainda usam email POP/IMAP",
     excerpt: "Descubra por que migrar para o Microsoft 365 é essencial para produtividade, segurança e colaboração na sua empresa.",
