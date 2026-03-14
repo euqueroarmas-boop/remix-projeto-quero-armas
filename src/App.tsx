@@ -45,6 +45,7 @@ const App = () => (
             {/* Dedicated pages */}
             <Route path="/institucional" element={<InstitucionalPage />} />
             <Route path="/ti-para-hospitais-e-clinicas" element={<TiHospitaisClinicasPage />} />
+            <Route path="/terceirizacao-de-mao-de-obra-ti" element={<TerceirizacaoPage />} />
             <Route path="/sobre" element={<Navigate to="/institucional" replace />} />
             {/* Provimento 213 */}
             <Route path="/provimento-213" element={<Navigate to="/cartorios/provimento-213" replace />} />
