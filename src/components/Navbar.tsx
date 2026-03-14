@@ -367,7 +367,7 @@ const Navbar = () => {
               );
             })}
             <button
-              onClick={handleOrcamentoClick}
+              onClick={() => handleAnchorClick("contato")}
               className="font-mono text-sm uppercase tracking-wider transition-colors py-1 text-muted-foreground hover:text-primary text-left"
             >
               Orçamento
