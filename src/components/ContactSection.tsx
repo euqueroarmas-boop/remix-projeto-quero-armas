@@ -218,7 +218,7 @@ const ContactSection = () => {
                 placeholder="Descreva sua necessidade, estrutura atual ou o tipo de solução que sua empresa procura..."
                 value={form.mensagem}
                 onChange={(e) => setForm((prev) => ({ ...prev, mensagem: e.target.value }))}
-                className="w-full bg-transparent border border-border/40 px-4 py-3 font-body text-sm md:text-base text-foreground placeholder:text-muted-foreground/40 focus:border-primary focus:outline-none transition-colors resize-none"
+                className="w-full bg-input border border-border px-4 py-3.5 font-body text-sm md:text-base text-foreground placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none transition-colors resize-none"
                 style={{ borderRadius: "var(--radius)" }}
               />
             </div>
