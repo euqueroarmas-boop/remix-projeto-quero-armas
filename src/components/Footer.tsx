@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
-import logoWmti from "@/assets/logo-wmti-dark.png";
-import logoIcon from "@/assets/logo-wmti-icon.png";
+import logoFull from "@/assets/logo-wmti-full.png";
 
 const footerColumns = [
   {
@@ -77,8 +76,7 @@ const Footer = () => {
         <div className="border-t border-border pt-6 md:pt-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-3">
-              <img src={logoIcon} alt="WMTi" className="h-12 md:h-14 w-auto" />
-              <img src={logoWmti} alt="WMTi" className="h-10 md:h-12 w-auto" />
+              <img src={logoFull} alt="WMTi Tecnologia da Informação" className="h-14 md:h-[72px] w-auto" />
               <p className="font-body text-xs md:text-sm text-muted-foreground">
                 Tecnologia da Informação
               </p>
