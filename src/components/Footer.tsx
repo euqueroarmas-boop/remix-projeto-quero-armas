@@ -77,15 +77,12 @@ const Footer = () => {
           {/* Branding + Certifications row */}
           <div className="flex flex-col md:flex-row items-center md:items-end justify-between gap-8">
             {/* Logo block — stacked vertically, centered */}
-            <div className="flex flex-col items-center md:items-start">
+            <div className="flex items-center">
               <img
                 src={logoFull}
                 alt="WMTi Tecnologia da Informação"
-                className="h-12 md:h-14 w-auto"
+                className="h-10 md:h-[72px] w-auto"
               />
-              <span className="mt-2 font-body text-[11px] md:text-xs tracking-[0.08em] text-muted-foreground/60">
-                Tecnologia da Informação
-              </span>
             </div>
 
             {/* Partner certifications */}
