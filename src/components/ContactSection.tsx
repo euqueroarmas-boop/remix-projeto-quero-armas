@@ -186,7 +186,7 @@ const ContactSection = () => {
                   placeholder={field.placeholder}
                   value={form[field.key]}
                   onChange={(e) => setForm((prev) => ({ ...prev, [field.key]: e.target.value }))}
-                  className="w-full bg-transparent border border-border/40 px-4 py-3 font-body text-sm md:text-base text-foreground placeholder:text-muted-foreground/40 focus:border-primary focus:outline-none transition-colors"
+                  className="w-full bg-input border border-border px-4 py-3.5 font-body text-sm md:text-base text-foreground placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none transition-colors"
                   style={{ borderRadius: "var(--radius)" }}
                 />
               </div>
