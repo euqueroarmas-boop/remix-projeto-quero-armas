@@ -1,160 +1,73 @@
 import { useEffect } from "react";
 import { useParams, Link, Navigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Calendar } from "lucide-react";
+import { ArrowLeft, Calendar, ArrowRight } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
-import { blogPosts } from "@/pages/BlogPage";
+import { blogPosts, blogContent as blogContentData } from "@/data/blogPosts";
 
-interface BlogContent {
-  metaTitle: string;
-  metaDescription: string;
-  content: React.ReactNode;
-}
-
-const blogContent: Record<string, BlogContent> = {
-  "vantagens-microsoft-365-para-empresas": {
-    metaTitle: "5 Vantagens do Microsoft 365 para Empresas | Blog WMTi",
-    metaDescription: "Descubra por que migrar para o Microsoft 365 é essencial para produtividade, segurança e colaboração na sua empresa.",
-    content: (
-      <div className="prose-content space-y-6">
-        <p>
-          Muitas empresas ainda dependem de servidores de email locais com protocolos POP3 ou IMAP. 
-          Embora funcionais, essas soluções apresentam limitações significativas em segurança, 
-          colaboração e escalabilidade. O Microsoft 365 resolve essas limitações e vai além.
-        </p>
-
-        <h2>1. Email profissional com Exchange Online</h2>
-        <p>
-          Com o Exchange Online, sua empresa ganha email corporativo com domínio próprio, 
-          calendário compartilhado, salas de reunião virtuais e busca avançada. Tudo sincronizado 
-          entre computador, celular e web — diferente do POP3, que baixa emails apenas em um dispositivo.
-        </p>
-
-        <h2>2. Colaboração em tempo real com Teams e SharePoint</h2>
-        <p>
-          O Microsoft Teams substitui reuniões presenciais improdutivas por videoconferências 
-          organizadas, chat corporativo e compartilhamento de arquivos em tempo real. O SharePoint 
-          centraliza documentos da empresa, eliminando a confusão de versões diferentes em pendrives e emails.
-        </p>
-
-        <h2>3. Segurança empresarial com Azure AD</h2>
-        <p>
-          O Azure Active Directory oferece autenticação multifator (MFA), acesso condicional e 
-          proteção contra ameaças avançadas. Quando um colaborador sai da empresa, você desativa 
-          o acesso a tudo em segundos — email, arquivos, Teams e aplicativos.
-        </p>
-
-        <h2>4. Armazenamento na nuvem com OneDrive</h2>
-        <p>
-          Cada usuário recebe 1TB de armazenamento na nuvem com o OneDrive. Arquivos ficam 
-          acessíveis de qualquer dispositivo, com versionamento automático e recuperação de 
-          arquivos excluídos. Fim da dependência de servidores de arquivo locais vulneráveis.
-        </p>
-
-        <h2>5. Custo previsível e escalável</h2>
-        <p>
-          Com licenciamento mensal por usuário, sua empresa paga apenas pelo que usa. Quando 
-          contrata um novo colaborador, adiciona uma licença em minutos. Quando alguém sai, 
-          remove. Sem investimento em servidores, sem manutenção de hardware, sem custos surpresa.
-        </p>
-
-        <h2>Conclusão</h2>
-        <p>
-          A migração para o Microsoft 365 não é apenas uma troca de email — é uma transformação 
-          na forma como sua empresa se comunica, colabora e protege seus dados. A WMTi realiza 
-          a migração completa sem downtime, com treinamento para sua equipe.
-        </p>
-      </div>
-    ),
-  },
-  "quando-trocar-servidor-da-empresa": {
-    metaTitle: "Quando Trocar o Servidor da Empresa? 7 Sinais de Alerta | Blog WMTi",
-    metaDescription: "Conheça os 7 sinais que indicam que é hora de trocar o servidor da sua empresa. Lentidão, ruídos e falhas podem significar risco para seus dados.",
-    content: (
-      <div className="prose-content space-y-6">
-        <p>
-          O servidor é o coração da infraestrutura de TI da sua empresa. Quando ele começa a 
-          apresentar problemas, toda a operação é impactada. Conheça os sinais de que está na 
-          hora de investir em um novo servidor Dell PowerEdge.
-        </p>
-
-        <h2>1. Lentidão progressiva</h2>
-        <p>
-          Se o servidor está cada vez mais lento para responder, abrir arquivos ou processar 
-          dados, pode ser sinal de hardware subdimensionado ou degradação de componentes. 
-          Processadores antigos e memória insuficiente não acompanham softwares modernos.
-        </p>
-
-        <h2>2. Ruídos anormais</h2>
-        <p>
-          Cliques repetitivos do HD, ventiladores em alta rotação constante ou vibrações 
-          incomuns são sinais de desgaste mecânico. HDs mecânicos têm vida útil de 3-5 anos 
-          em uso contínuo — e quando falham, podem levar dados críticos junto.
-        </p>
-
-        <h2>3. Reinicializações e telas azuis</h2>
-        <p>
-          Reinicializações espontâneas e telas azuis (BSOD) indicam problemas graves: 
-          memória RAM com defeito, superaquecimento ou falha de disco. Cada reinicialização 
-          não planejada pode corromper dados e causar perda de trabalho.
-        </p>
-
-        <h2>4. Sem redundância (RAID)</h2>
-        <p>
-          Se seu servidor tem apenas um disco, a falha desse disco significa perda total dos 
-          dados. Servidores modernos como o Dell PowerEdge R750xs usam RAID com múltiplos 
-          discos para que a falha de um deles não afete a operação.
-        </p>
-
-        <h2>5. Mais de 5 anos de uso</h2>
-        <p>
-          Servidores com mais de 5 anos estão fora da garantia, com peças difíceis de 
-          encontrar e eficiência energética inferior. O custo de manutenção de um servidor 
-          antigo frequentemente supera o de um novo.
-        </p>
-
-        <h2>6. Sistema operacional sem suporte</h2>
-        <p>
-          Se o servidor roda Windows Server 2012 R2 ou anterior, está sem atualizações de 
-          segurança da Microsoft. Isso expõe sua empresa a vulnerabilidades conhecidas e 
-          pode gerar problemas de compliance.
-        </p>
-
-        <h2>7. Crescimento da empresa</h2>
-        <p>
-          Se a empresa cresceu e o servidor não acompanhou — mais usuários, mais dados, 
-          mais aplicações — é hora de dimensionar um novo servidor que atenda a demanda 
-          atual e suporte o crescimento futuro.
-        </p>
-
-        <h2>Conclusão</h2>
-        <p>
-          Se seu servidor apresenta um ou mais desses sinais, é hora de agir antes que uma 
-          falha crítica pare sua operação. A WMTi faz um diagnóstico gratuito do seu 
-          servidor atual e projeta a migração para um Dell PowerEdge novo, sem downtime.
-        </p>
-      </div>
-    ),
-  },
+// Legacy content for original posts
+const legacyContent: Record<string, React.ReactNode> = {
+  "vantagens-microsoft-365-para-empresas": (
+    <div className="prose-content space-y-6">
+      <p>Muitas empresas ainda dependem de servidores de email locais com protocolos POP3 ou IMAP. Embora funcionais, essas soluções apresentam limitações significativas em segurança, colaboração e escalabilidade. O Microsoft 365 resolve essas limitações e vai além.</p>
+      <h2>1. Email profissional com Exchange Online</h2>
+      <p>Com o Exchange Online, sua empresa ganha email corporativo com domínio próprio, calendário compartilhado, salas de reunião virtuais e busca avançada. Tudo sincronizado entre computador, celular e web — diferente do POP3, que baixa emails apenas em um dispositivo.</p>
+      <h2>2. Colaboração em tempo real com Teams e SharePoint</h2>
+      <p>O Microsoft Teams substitui reuniões presenciais improdutivas por videoconferências organizadas, chat corporativo e compartilhamento de arquivos em tempo real. O SharePoint centraliza documentos da empresa, eliminando a confusão de versões diferentes em pendrives e emails.</p>
+      <h2>3. Segurança empresarial com Azure AD</h2>
+      <p>O Azure Active Directory oferece autenticação multifator (MFA), acesso condicional e proteção contra ameaças avançadas. Quando um colaborador sai da empresa, você desativa o acesso a tudo em segundos — email, arquivos, Teams e aplicativos.</p>
+      <h2>4. Armazenamento na nuvem com OneDrive</h2>
+      <p>Cada usuário recebe 1TB de armazenamento na nuvem com o OneDrive. Arquivos ficam acessíveis de qualquer dispositivo, com versionamento automático e recuperação de arquivos excluídos. Fim da dependência de servidores de arquivo locais vulneráveis.</p>
+      <h2>5. Custo previsível e escalável</h2>
+      <p>Com licenciamento mensal por usuário, sua empresa paga apenas pelo que usa. Quando contrata um novo colaborador, adiciona uma licença em minutos. Quando alguém sai, remove. Sem investimento em servidores, sem manutenção de hardware, sem custos surpresa.</p>
+      <h2>Conclusão</h2>
+      <p>A migração para o Microsoft 365 não é apenas uma troca de email — é uma transformação na forma como sua empresa se comunica, colabora e protege seus dados. A WMTi realiza a migração completa sem downtime, com treinamento para sua equipe.</p>
+    </div>
+  ),
+  "quando-trocar-servidor-da-empresa": (
+    <div className="prose-content space-y-6">
+      <p>O servidor é o coração da infraestrutura de TI da sua empresa. Quando ele começa a apresentar problemas, toda a operação é impactada. Conheça os sinais de que está na hora de investir em um novo servidor Dell PowerEdge.</p>
+      <h2>1. Lentidão progressiva</h2>
+      <p>Se o servidor está cada vez mais lento para responder, abrir arquivos ou processar dados, pode ser sinal de hardware subdimensionado ou degradação de componentes. Processadores antigos e memória insuficiente não acompanham softwares modernos.</p>
+      <h2>2. Ruídos anormais</h2>
+      <p>Cliques repetitivos do HD, ventiladores em alta rotação constante ou vibrações incomuns são sinais de desgaste mecânico. HDs mecânicos têm vida útil de 3-5 anos em uso contínuo — e quando falham, podem levar dados críticos junto.</p>
+      <h2>3. Reinicializações e telas azuis</h2>
+      <p>Reinicializações espontâneas e telas azuis (BSOD) indicam problemas graves: memória RAM com defeito, superaquecimento ou falha de disco. Cada reinicialização não planejada pode corromper dados e causar perda de trabalho.</p>
+      <h2>4. Sem redundância (RAID)</h2>
+      <p>Se seu servidor tem apenas um disco, a falha desse disco significa perda total dos dados. Servidores modernos como o Dell PowerEdge R750xs usam RAID com múltiplos discos para que a falha de um deles não afete a operação.</p>
+      <h2>5. Mais de 5 anos de uso</h2>
+      <p>Servidores com mais de 5 anos estão fora da garantia, com peças difíceis de encontrar e eficiência energética inferior. O custo de manutenção de um servidor antigo frequentemente supera o de um novo.</p>
+      <h2>6. Sistema operacional sem suporte</h2>
+      <p>Se o servidor roda Windows Server 2012 R2 ou anterior, está sem atualizações de segurança da Microsoft. Isso expõe sua empresa a vulnerabilidades conhecidas e pode gerar problemas de compliance.</p>
+      <h2>7. Crescimento da empresa</h2>
+      <p>Se a empresa cresceu e o servidor não acompanhou — mais usuários, mais dados, mais aplicações — é hora de dimensionar um novo servidor que atenda a demanda atual e suporte o crescimento futuro.</p>
+      <h2>Conclusão</h2>
+      <p>Se seu servidor apresenta um ou mais desses sinais, é hora de agir antes que uma falha crítica pare sua operação. A WMTi faz um diagnóstico gratuito do seu servidor atual e projeta a migração para um Dell PowerEdge novo, sem downtime.</p>
+    </div>
+  ),
 };
 
 const BlogPostPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const post = blogPosts.find((p) => p.slug === slug);
-  const content = slug ? blogContent[slug] : undefined;
+  const structuredContent = slug ? blogContentData[slug] : undefined;
+  const legacy = slug ? legacyContent[slug] : undefined;
 
   useEffect(() => {
-    if (content) {
-      document.title = content.metaTitle;
+    if (structuredContent) {
+      document.title = structuredContent.metaTitle;
       const desc = document.querySelector('meta[name="description"]');
-      if (desc) desc.setAttribute("content", content.metaDescription);
+      if (desc) desc.setAttribute("content", structuredContent.metaDescription);
+    } else if (post) {
+      document.title = post.title + " | Blog WMTi";
     }
     window.scrollTo(0, 0);
-  }, [content]);
+  }, [structuredContent, post]);
 
-  if (!post || !content) return <Navigate to="/blog" replace />;
+  if (!post) return <Navigate to="/blog" replace />;
+  if (!structuredContent && !legacy) return <Navigate to="/blog" replace />;
 
   return (
     <div className="min-h-screen">
@@ -199,7 +112,50 @@ const BlogPostPage = () => {
       <section className="section-light py-16 md:py-24">
         <div className="container max-w-3xl">
           <div className="font-body text-foreground leading-relaxed [&_h2]:font-heading [&_h2]:text-xl [&_h2]:md:text-2xl [&_h2]:font-bold [&_h2]:mt-8 [&_h2]:mb-3 [&_h2]:text-foreground [&_p]:text-muted-foreground [&_p]:mb-4">
-            {content.content}
+            {legacy ? legacy : structuredContent && (
+              <div className="space-y-6">
+                {structuredContent.sections.map((section, i) => (
+                  <div key={i}>
+                    {section.heading && <h2>{section.heading}</h2>}
+                    <p>{section.body}</p>
+                  </div>
+                ))}
+
+                {/* FAQ */}
+                {structuredContent.faq.length > 0 && (
+                  <div className="mt-12">
+                    <h2>Perguntas Frequentes</h2>
+                    <div className="space-y-6 mt-4">
+                      {structuredContent.faq.map((item, i) => (
+                        <div key={i}>
+                          <h3 className="font-heading text-lg font-semibold text-foreground mb-2">{item.q}</h3>
+                          <p>{item.a}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Internal Links */}
+                {structuredContent.internalLinks.length > 0 && (
+                  <div className="mt-8 p-6 bg-muted/50 border border-border">
+                    <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground mb-3">Serviços relacionados</p>
+                    <div className="flex flex-wrap gap-3">
+                      {structuredContent.internalLinks.map((link, i) => (
+                        <Link
+                          key={i}
+                          to={link.href}
+                          className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                        >
+                          {link.label}
+                          <ArrowRight size={12} />
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* CTA */}
@@ -208,7 +164,7 @@ const BlogPostPage = () => {
               Precisa de ajuda com sua <span className="text-primary">infraestrutura?</span>
             </h3>
             <p className="font-body text-sm text-secondary-foreground/70 max-w-md mx-auto mb-6">
-              Solicite um diagnóstico gratuito. Nossa equipe técnica avalia sua situação e apresenta a melhor solução.
+              {structuredContent?.cta || "Solicite um diagnóstico gratuito. Nossa equipe técnica avalia sua situação e apresenta a melhor solução."}
             </p>
             <a
               href="https://wa.me/5511963166915?text=Olá! Li um artigo no blog da WMTi e gostaria de saber mais."
