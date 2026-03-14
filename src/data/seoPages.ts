@@ -905,7 +905,7 @@ export const seoPages: SeoPageData[] = [
       { icon: AlertTriangle, title: "Resposta", text: "Plano de incidentes pronto." },
     ],
     faq: [{ question: "O que é ransomware?", answer: "É um tipo de malware que criptografa todos os dados da empresa e exige pagamento de resgate (ransom) para devolvê-los. Muitas vezes, mesmo pagando, os dados não são recuperados." }],
-    relatedLinks: [{ label: "Firewall pfSense", href: "/firewall-pfsense-jacarei" }, { label: "Backup empresarial", href: "/backup-empresarial-jacarei" }, { label: "Segurança", href: "/seguranca-da-informacao-empresarial-jacarei" }],
+    relatedLinks: [{ label: "Firewall pfSense", href: "/firewall-pfsense-jacarei" }, { label: "Backup empresarial", href: "/backup-empresarial-jacarei" }, { label: "Segurança", href: "/seguranca-informacao-empresarial" }],
     localContent: "Protegemos empresas contra ransomware em Jacareí, SJC e Vale do Paraíba.",
   },
 
