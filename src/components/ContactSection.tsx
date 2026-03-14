@@ -88,9 +88,9 @@ const ContactSection = () => {
   };
 
   return (
-    <section id="contato" className="py-20 md:py-28 section-dark">
+    <section id="contato" className="py-24 md:py-32 bg-background">
       <div id="orcamento" className="container">
-        <div className="grid lg:grid-cols-2 gap-14 md:gap-20">
+        <div className="grid lg:grid-cols-2 gap-16 md:gap-24">
           {/* Left column — copy & contact info */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
