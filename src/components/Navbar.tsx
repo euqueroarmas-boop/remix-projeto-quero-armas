@@ -179,11 +179,6 @@ const Navbar = () => {
               className="absolute top-full left-0 mt-4 w-72 bg-card/95 backdrop-blur-md border border-border/60 shadow-2xl shadow-black/30 py-2 z-50 overflow-hidden"
               style={{ borderRadius: "var(--radius)" }}
             >
-              <div className="px-3 py-2 border-b border-border/40 mb-1">
-                <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-primary/80">
-                  {link.label}
-                </span>
-              </div>
               {items.map((item, idx) => {
                 const isActive = location.pathname === item.href;
                 return (
