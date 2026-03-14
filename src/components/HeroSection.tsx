@@ -13,7 +13,7 @@ const HeroSection = () => {
           alt="Dell PowerEdge server rack em operação"
           className="w-full h-full object-cover opacity-30"
         />
-        <div className="absolute inset-0 bg-black/85" />
+        <div className="absolute inset-0 bg-secondary/70" />
       </div>
 
       <div className="container relative z-10 py-24">
