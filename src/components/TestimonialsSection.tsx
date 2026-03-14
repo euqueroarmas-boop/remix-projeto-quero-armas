@@ -78,16 +78,23 @@ const TestimonialsSection = () => {
                 "{t.text}"
               </p>
 
-              <div className="border-t border-border pt-4">
-                <p className="font-heading text-sm font-semibold text-foreground">
-                  {t.name}
-                </p>
-                <p className="font-mono text-[10px] md:text-xs text-muted-foreground tracking-wider uppercase">
-                  {t.role}
-                </p>
-                <p className="font-mono text-[10px] md:text-xs text-primary/70 tracking-wider">
-                  {t.company}
-                </p>
+              <div className="border-t border-border pt-4 flex items-center gap-3">
+                <Avatar className="h-10 w-10 border-2 border-primary/30">
+                  <AvatarFallback className="bg-primary/10 text-primary font-mono text-xs font-bold">
+                    {t.initials}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="font-heading text-sm font-semibold text-foreground">
+                    {t.name}
+                  </p>
+                  <p className="font-mono text-[10px] md:text-xs text-muted-foreground tracking-wider uppercase">
+                    {t.role}
+                  </p>
+                  <p className="font-mono text-[10px] md:text-xs text-primary/70 tracking-wider">
+                    {t.company}
+                  </p>
+                </div>
               </div>
             </motion.div>
           ))}
