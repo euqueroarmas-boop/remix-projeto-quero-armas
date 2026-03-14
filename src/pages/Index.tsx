@@ -1,16 +1,14 @@
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
-import ClientLogosSection from "@/components/ClientLogosSection";
+import { HomeAuthority, HomeProblems, HomeDifferentials, HomeFaq, HomeCta } from "@/components/HomeNewSections";
 import MetricsSection from "@/components/MetricsSection";
 import TestimonialsSection from "@/components/TestimonialsSection";
 import ContactSection from "@/components/ContactSection";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import {
-  HomeInstitucional,
   HomeServicos,
   HomeSegmentos,
-  HomeInfraestrutura,
   HomeBlog,
 } from "@/components/HomeSections";
 
@@ -19,14 +17,16 @@ const Index = () => {
     <div className="min-h-screen">
       <Navbar />
       <HeroSection />
-      <ClientLogosSection />
-      <HomeInstitucional />
+      <HomeAuthority />
       <MetricsSection />
+      <HomeProblems />
       <HomeServicos />
       <HomeSegmentos />
-      <HomeInfraestrutura />
+      <HomeDifferentials />
       <TestimonialsSection />
+      <HomeFaq />
       <HomeBlog />
+      <HomeCta />
       <ContactSection />
       <Footer />
       <WhatsAppButton />

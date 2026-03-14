@@ -42,7 +42,6 @@ const footerColumns = [
       { label: "Sobre a WMTi", href: "/sobre" },
       { label: "Blog", href: "/blog" },
       { label: "Diagnóstico TI", href: "/diagnostico-ti-empresarial" },
-      { label: "Contato", href: "/#contato" },
     ],
   },
 ];
