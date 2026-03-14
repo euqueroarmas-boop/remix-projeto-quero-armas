@@ -23,6 +23,7 @@ export interface BlogPost {
   readTime: string;
   tag: string;
   category: BlogCategory;
+  image: string;
 }
 
 export interface BlogPostContent {
@@ -46,6 +47,7 @@ export const blogPosts: BlogPost[] = [
     readTime: "5 min",
     tag: "Microsoft 365",
     category: "Tecnologia Empresarial",
+    image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80",
   },
   {
     slug: "quando-trocar-servidor-da-empresa",
@@ -55,6 +57,7 @@ export const blogPosts: BlogPost[] = [
     readTime: "6 min",
     tag: "Servidores",
     category: "Tecnologia Empresarial",
+    image: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&q=80",
   },
   {
     slug: "ransomware-em-hospitais-como-proteger",
@@ -64,6 +67,7 @@ export const blogPosts: BlogPost[] = [
     readTime: "7 min",
     tag: "Segurança",
     category: "Hospitais e Clínicas",
+    image: "https://images.unsplash.com/photo-1538108149393-fbbd81895907?w=800&q=80",
   },
   {
     slug: "vazamento-dados-clinicas-medicas-lgpd",
@@ -73,6 +77,7 @@ export const blogPosts: BlogPost[] = [
     readTime: "6 min",
     tag: "LGPD",
     category: "Hospitais e Clínicas",
+    image: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&q=80",
   },
   {
     slug: "backup-para-cartorios-estrategias-seguras",
@@ -82,6 +87,7 @@ export const blogPosts: BlogPost[] = [
     readTime: "6 min",
     tag: "Backup",
     category: "Cartórios",
+    image: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=800&q=80",
   },
   {
     slug: "firewall-pfsense-para-empresas-protecao-completa",
@@ -91,6 +97,7 @@ export const blogPosts: BlogPost[] = [
     readTime: "7 min",
     tag: "Firewall",
     category: "Tecnologia Empresarial",
+    image: "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=800&q=80",
   },
   {
     slug: "ataques-ciberneticos-escritorios-advocacia",
@@ -100,6 +107,7 @@ export const blogPosts: BlogPost[] = [
     readTime: "6 min",
     tag: "Segurança",
     category: "Escritórios de Advocacia",
+    image: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=800&q=80",
   },
   {
     slug: "servidores-dell-poweredge-seguranca-dados",
@@ -109,6 +117,7 @@ export const blogPosts: BlogPost[] = [
     readTime: "7 min",
     tag: "Servidores",
     category: "Empresas Corporativas",
+    image: "https://images.unsplash.com/photo-1597852074816-d933c7d2b988?w=800&q=80",
   },
   {
     slug: "lgpd-para-clinicas-e-hospitais-guia-pratico",
@@ -118,6 +127,7 @@ export const blogPosts: BlogPost[] = [
     readTime: "8 min",
     tag: "LGPD",
     category: "Hospitais e Clínicas",
+    image: "https://images.unsplash.com/photo-1530497610245-94d3c16cda28?w=800&q=80",
   },
   {
     slug: "como-ransomware-ataca-cartorios",
@@ -127,6 +137,7 @@ export const blogPosts: BlogPost[] = [
     readTime: "7 min",
     tag: "Segurança",
     category: "Cartórios",
+    image: "https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?w=800&q=80",
   },
   {
     slug: "falhas-infraestrutura-ti-hospitais",
@@ -136,6 +147,7 @@ export const blogPosts: BlogPost[] = [
     readTime: "7 min",
     tag: "Infraestrutura",
     category: "Hospitais e Clínicas",
+    image: "https://images.unsplash.com/photo-1551076805-e1869033e561?w=800&q=80",
   },
   {
     slug: "backup-automatizado-clinicas-medicas",
@@ -145,6 +157,7 @@ export const blogPosts: BlogPost[] = [
     readTime: "6 min",
     tag: "Backup",
     category: "Hospitais e Clínicas",
+    image: "https://images.unsplash.com/photo-1504868584819-f8e8b4b6d7e3?w=800&q=80",
   },
   {
     slug: "segmentacao-rede-hospitalar-seguranca",
@@ -154,6 +167,7 @@ export const blogPosts: BlogPost[] = [
     readTime: "6 min",
     tag: "Firewall",
     category: "Hospitais e Clínicas",
+    image: "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=800&q=80",
   },
   {
     slug: "phishing-em-escritorios-advocacia-como-evitar",
@@ -163,6 +177,7 @@ export const blogPosts: BlogPost[] = [
     readTime: "5 min",
     tag: "Segurança",
     category: "Escritórios de Advocacia",
+    image: "https://images.unsplash.com/photo-1557597774-9d273605dfa9?w=800&q=80",
   },
   {
     slug: "redundancia-internet-clinicas-hospitais",
@@ -172,6 +187,7 @@ export const blogPosts: BlogPost[] = [
     readTime: "5 min",
     tag: "Infraestrutura",
     category: "Hospitais e Clínicas",
+    image: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800&q=80",
   },
   {
     slug: "ransomware-wannacry-licoes-para-empresas",
@@ -181,6 +197,7 @@ export const blogPosts: BlogPost[] = [
     readTime: "7 min",
     tag: "Segurança",
     category: "Tecnologia Empresarial",
+    image: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&q=80",
   },
   {
     slug: "vpn-segura-para-escritorios-advocacia",
@@ -190,6 +207,7 @@ export const blogPosts: BlogPost[] = [
     readTime: "6 min",
     tag: "Firewall",
     category: "Escritórios de Advocacia",
+    image: "https://images.unsplash.com/photo-1551434678-e076c223a692?w=800&q=80",
   },
   {
     slug: "como-proteger-prontuario-eletronico",
@@ -199,6 +217,7 @@ export const blogPosts: BlogPost[] = [
     readTime: "7 min",
     tag: "LGPD",
     category: "Hospitais e Clínicas",
+    image: "https://images.unsplash.com/photo-1584982751601-97dcc096659c?w=800&q=80",
   },
   {
     slug: "servidor-dedicado-vs-nuvem-para-empresas",
@@ -208,6 +227,7 @@ export const blogPosts: BlogPost[] = [
     readTime: "8 min",
     tag: "Servidores",
     category: "Empresas Corporativas",
+    image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&q=80",
   },
   {
     slug: "politica-seguranca-informacao-empresas",
@@ -217,6 +237,7 @@ export const blogPosts: BlogPost[] = [
     readTime: "7 min",
     tag: "Segurança",
     category: "Empresas Corporativas",
+    image: "https://images.unsplash.com/photo-1553877522-43269d4ea984?w=800&q=80",
   },
   {
     slug: "backup-3-2-1-estrategia-para-empresas",
@@ -226,6 +247,7 @@ export const blogPosts: BlogPost[] = [
     readTime: "6 min",
     tag: "Backup",
     category: "Tecnologia Empresarial",
+    image: "https://images.unsplash.com/photo-1484557052118-f32bd25b45b5?w=800&q=80",
   },
   {
     slug: "monitoramento-rede-prevencao-ataques",
@@ -235,6 +257,7 @@ export const blogPosts: BlogPost[] = [
     readTime: "6 min",
     tag: "Infraestrutura",
     category: "Tecnologia Empresarial",
+    image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80",
   },
   {
     slug: "lgpd-para-cartorios-adequacao-necessaria",
@@ -244,6 +267,7 @@ export const blogPosts: BlogPost[] = [
     readTime: "7 min",
     tag: "LGPD",
     category: "Cartórios",
+    image: "https://images.unsplash.com/photo-1568792923760-d70635a89fdc?w=800&q=80",
   },
   {
     slug: "ataques-ddos-como-proteger-empresa",
@@ -253,6 +277,7 @@ export const blogPosts: BlogPost[] = [
     readTime: "6 min",
     tag: "Firewall",
     category: "Tecnologia Empresarial",
+    image: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&q=80",
   },
   {
     slug: "ransomware-como-servico-ameaca-crescente",
@@ -262,6 +287,7 @@ export const blogPosts: BlogPost[] = [
     readTime: "7 min",
     tag: "Segurança",
     category: "Tecnologia Empresarial",
+    image: "https://images.unsplash.com/photo-1510511459019-5dda7724fd87?w=800&q=80",
   },
   {
     slug: "recuperacao-desastres-ti-plano-pratico",
@@ -271,6 +297,7 @@ export const blogPosts: BlogPost[] = [
     readTime: "8 min",
     tag: "Backup",
     category: "Tecnologia Empresarial",
+    image: "https://images.unsplash.com/photo-1504639725590-34d0984388bd?w=800&q=80",
   },
   {
     slug: "seguranca-email-corporativo-ameacas-comuns",
@@ -280,6 +307,7 @@ export const blogPosts: BlogPost[] = [
     readTime: "6 min",
     tag: "Microsoft 365",
     category: "Escritórios de Contabilidade",
+    image: "https://images.unsplash.com/photo-1596526131083-e8c633c948d2?w=800&q=80",
   },
   {
     slug: "virtualizacao-servidores-seguranca-performance",
@@ -289,6 +317,7 @@ export const blogPosts: BlogPost[] = [
     readTime: "7 min",
     tag: "Servidores",
     category: "Empresas Corporativas",
+    image: "https://images.unsplash.com/photo-1600267185393-e158a98703de?w=800&q=80",
   },
   {
     slug: "ciberseguranca-para-pequenas-empresas",
@@ -298,6 +327,7 @@ export const blogPosts: BlogPost[] = [
     readTime: "7 min",
     tag: "Segurança",
     category: "Tecnologia Empresarial",
+    image: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=800&q=80",
   },
   {
     slug: "auditoria-seguranca-ti-por-que-fazer",
@@ -307,6 +337,7 @@ export const blogPosts: BlogPost[] = [
     readTime: "6 min",
     tag: "Segurança",
     category: "Escritórios de Contabilidade",
+    image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80",
   },
   {
     slug: "criptografia-dados-empresariais-guia",
@@ -316,6 +347,7 @@ export const blogPosts: BlogPost[] = [
     readTime: "7 min",
     tag: "Segurança",
     category: "Tecnologia Empresarial",
+    image: "https://images.unsplash.com/photo-1614064641938-3bbee52942c7?w=800&q=80",
   },
   {
     slug: "equipamentos-medicos-conectados-riscos-seguranca",
@@ -325,6 +357,7 @@ export const blogPosts: BlogPost[] = [
     readTime: "6 min",
     tag: "Infraestrutura",
     category: "Hospitais e Clínicas",
+    image: "https://images.unsplash.com/photo-1581093458791-9d42e3c2fd45?w=800&q=80",
   },
 ];
 
