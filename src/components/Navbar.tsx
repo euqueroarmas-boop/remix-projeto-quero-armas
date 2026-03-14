@@ -2,8 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import logoWmti from "@/assets/logo-wmti-dark.png";
-import logoIcon from "@/assets/logo-wmti-icon.png";
+import logoFull from "@/assets/logo-wmti-full.png";
 
 const segmentos = [
   { label: "Cartórios", href: "/ti-para-cartorios" },
