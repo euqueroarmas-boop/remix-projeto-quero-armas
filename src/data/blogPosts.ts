@@ -1,3 +1,20 @@
+export type BlogCategory =
+  | "Hospitais e Clínicas"
+  | "Cartórios"
+  | "Escritórios de Advocacia"
+  | "Escritórios de Contabilidade"
+  | "Empresas Corporativas"
+  | "Tecnologia Empresarial";
+
+export const blogCategories: BlogCategory[] = [
+  "Tecnologia Empresarial",
+  "Hospitais e Clínicas",
+  "Cartórios",
+  "Escritórios de Advocacia",
+  "Escritórios de Contabilidade",
+  "Empresas Corporativas",
+];
+
 export interface BlogPost {
   slug: string;
   title: string;
@@ -5,6 +22,7 @@ export interface BlogPost {
   date: string;
   readTime: string;
   tag: string;
+  category: BlogCategory;
 }
 
 export interface BlogPostContent {
