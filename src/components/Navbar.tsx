@@ -268,6 +268,7 @@ const Navbar = () => {
         <Link to="/" className="flex items-center gap-2">
           <img src={logoIcon} alt="WMTi" className="h-8 md:h-9 w-auto" />
           <img src={logoWmti} alt="WMTi Tecnologia da Informação" className="h-7 md:h-8 w-auto" />
+        </Link>
 
         {/* Desktop */}
         <div ref={navRef} className="hidden lg:flex items-center gap-6 xl:gap-8 relative">
