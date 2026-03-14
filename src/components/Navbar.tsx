@@ -49,6 +49,7 @@ const Navbar = () => {
   const [mobileSegOpen, setMobileSegOpen] = useState(false);
   const [mobileSvcOpen, setMobileSvcOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const isHome = location.pathname === "/";
   const navRef = useRef<HTMLDivElement>(null);
   const [pillStyle, setPillStyle] = useState<{ left: number; width: number } | null>(null);
