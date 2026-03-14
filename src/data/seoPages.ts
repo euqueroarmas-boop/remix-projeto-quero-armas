@@ -749,7 +749,7 @@ export const seoPages: SeoPageData[] = [
       { icon: FileCheck, title: "LGPD", text: "Conformidade documentada." },
     ],
     faq: [{ question: "Vocês atendem escritórios de advocacia?", answer: "Sim, com foco em segurança de dados, backup de processos e acesso remoto para advogados." }],
-    relatedLinks: [{ label: "Segurança", href: "/seguranca-da-informacao-empresarial-jacarei" }, { label: "Suporte de TI", href: "/suporte-ti-jacarei" }],
+    relatedLinks: [{ label: "Segurança", href: "/seguranca-informacao-empresarial" }, { label: "Suporte de TI", href: "/suporte-ti-jacarei" }],
     localContent: "Atendemos escritórios de advocacia em Jacareí, SJC e Vale do Paraíba.",
   },
   {
