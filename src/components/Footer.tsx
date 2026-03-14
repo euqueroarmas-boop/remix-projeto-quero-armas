@@ -81,10 +81,10 @@ const Footer = () => {
               <img
                 src={logoFull}
                 alt="WMTi Tecnologia da Informação"
-                className="h-12 md:h-14 w-auto"
+                className="h-12 md:h-14 w-auto max-w-[180px] md:max-w-[210px] object-contain"
               />
-              <span className="mt-2 font-body text-[11px] md:text-xs tracking-[0.08em] text-muted-foreground/60">
-                Tecnologia da Informação
+              <span className="mt-2.5 font-mono text-[9px] md:text-[10px] uppercase tracking-[0.12em] text-muted-foreground/50 text-center md:text-center w-full max-w-[180px] md:max-w-[210px]">
+                WMTi Tecnologia da Informação
               </span>
             </div>
 
