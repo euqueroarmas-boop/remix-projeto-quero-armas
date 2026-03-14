@@ -305,14 +305,14 @@ const Navbar = () => {
                 {link.label}
               </Link>
             ) : (
-              <a
+              <button
                 key={link.label}
-                href={href}
                 ref={(el) => { linkRefs.current[i] = el; }}
+                onClick={() => handleAnchorClick(link.href.replace("#", ""))}
                 className={className}
               >
                 {link.label}
-              </a>
+              </button>
             );
           })}
 
