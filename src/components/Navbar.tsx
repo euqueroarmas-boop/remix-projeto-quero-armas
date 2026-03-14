@@ -62,10 +62,6 @@ const Navbar = () => {
         const navRect = navRef.current.getBoundingClientRect();
         const elRect = el.getBoundingClientRect();
         setPillStyle({ left: elRect.left - navRect.left, width: elRect.width });
-      } else if (noNavActive && ctaRef.current && navRef.current) {
-        const navRect = navRef.current.getBoundingClientRect();
-        const elRect = ctaRef.current.getBoundingClientRect();
-        setPillStyle({ left: elRect.left - navRect.left, width: elRect.width });
       } else {
         setPillStyle(null);
       }
