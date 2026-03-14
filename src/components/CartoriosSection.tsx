@@ -130,10 +130,16 @@ const CartoriosSection = () => {
                   Adequar meu cartório
                 </a>
                 <Link
-                  to="/provimento-213"
+                  to="/cartorios/provimento-213"
                   className="inline-flex items-center gap-2 border border-gunmetal-foreground/30 text-gunmetal-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:border-primary hover:text-primary transition-all"
                 >
                   Ver Provimento 213 completo
+                </Link>
+                <Link
+                  to="/ti-para-cartorios"
+                  className="inline-flex items-center gap-2 border border-gunmetal-foreground/30 text-gunmetal-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:border-primary hover:text-primary transition-all"
+                >
+                  TI para Cartórios
                 </Link>
               </div>
 

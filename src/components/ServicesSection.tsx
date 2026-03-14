@@ -134,7 +134,7 @@ const ServicesSection = () => {
                 <p className="font-body text-sm md:text-base text-muted-foreground leading-relaxed mb-5 md:mb-6">
                   {service.description}
                 </p>
-                <div className="border-t border-border pt-4">
+                <div className="border-t border-border pt-4 mb-4">
                   {service.specs.map((spec) => (
                     <div key={spec} className="flex items-center gap-2 mb-1.5">
                       <span className="w-1 h-1 bg-primary rounded-full flex-shrink-0" />
@@ -142,6 +142,12 @@ const ServicesSection = () => {
                     </div>
                   ))}
                 </div>
+                <Link
+                  to={service.href}
+                  className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-primary hover:brightness-110 transition-colors group-hover:translate-x-1 transition-transform"
+                >
+                  Saiba mais <ArrowRight size={14} />
+                </Link>
               </motion.div>
             ))}
           </div>

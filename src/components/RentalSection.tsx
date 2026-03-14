@@ -200,6 +200,12 @@ const RentalSection = () => {
               Quero Alugar
               <ArrowRight size={16} />
             </a>
+            <Link
+              to="/locacao-de-computadores-para-empresas-jacarei"
+              className="inline-flex items-center gap-2 border border-border text-foreground px-8 py-4 font-mono text-sm uppercase tracking-wider hover:border-primary hover:text-primary transition-all"
+            >
+              Saiba mais sobre locação
+            </Link>
           </motion.div>
         </div>
       </div>
