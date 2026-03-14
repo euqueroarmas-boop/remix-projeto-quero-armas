@@ -109,6 +109,11 @@ const BlogPage = () => {
 
                 <div className="p-8">
                   <div className="flex items-center gap-3 mb-3 flex-wrap">
+                    {recentSlugs.has(post.slug) && (
+                      <span className="font-mono text-[10px] tracking-[0.15em] uppercase bg-primary text-primary-foreground px-2 py-0.5">
+                        Recente
+                      </span>
+                    )}
                     <span className="font-mono text-[10px] tracking-[0.15em] uppercase text-primary border border-primary/30 px-2 py-0.5">
                       {post.tag}
                     </span>
