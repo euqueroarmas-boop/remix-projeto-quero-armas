@@ -199,7 +199,7 @@ const ContactSection = () => {
               <select
                 value={form.interesse}
                 onChange={(e) => setForm((prev) => ({ ...prev, interesse: e.target.value }))}
-                className="w-full bg-transparent border border-border/40 px-4 py-3 font-body text-sm md:text-base text-foreground focus:border-primary focus:outline-none transition-colors"
+                className="w-full bg-input border border-border px-4 py-3.5 font-body text-sm md:text-base text-foreground focus:border-primary focus:outline-none transition-colors"
                 style={{ borderRadius: "var(--radius)" }}
               >
                 <option value="" className="bg-secondary">Selecione o serviço desejado</option>
