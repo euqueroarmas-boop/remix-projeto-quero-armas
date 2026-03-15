@@ -1,10 +1,12 @@
 import { useState } from "react";
+import { z } from "zod";
 import { motion } from "framer-motion";
 import { ClipboardList, Monitor, Clock, Server, HardDrive, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
 
 export interface DiagnosticData {
   computersCurrent: number;
