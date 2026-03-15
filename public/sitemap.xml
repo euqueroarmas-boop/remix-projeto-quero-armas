@@ -1,56 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://wmti.com.br/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
-  <url><loc>https://wmti.com.br/empresa-de-ti-jacarei</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://wmti.com.br/blog</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
-  <!-- Serviços locais -->
-  <url><loc>https://wmti.com.br/suporte-ti-jacarei</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://wmti.com.br/infraestrutura-ti-corporativa-jacarei</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://wmti.com.br/montagem-e-monitoramento-de-redes-jacarei</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://wmti.com.br/servidor-dell-poweredge-jacarei</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://wmti.com.br/microsoft-365-para-empresas-jacarei</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://wmti.com.br/firewall-pfsense-jacarei</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://wmti.com.br/backup-empresarial-jacarei</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://wmti.com.br/locacao-de-computadores-para-empresas-jacarei</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://wmti.com.br/seguranca-da-informacao-empresarial-jacarei</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <!-- Regional -->
-  <url><loc>https://wmti.com.br/empresa-de-ti-sao-jose-dos-campos</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://wmti.com.br/empresa-de-ti-taubate</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://wmti.com.br/empresa-de-ti-vale-do-paraiba</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://wmti.com.br/suporte-ti-sao-jose-dos-campos</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://wmti.com.br/suporte-ti-taubate</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <!-- Cartórios -->
-  <url><loc>https://wmti.com.br/ti-para-cartorios</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://wmti.com.br/cartorios/provimento-213</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://wmti.com.br/infraestrutura-ti-para-cartorios</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://wmti.com.br/backup-para-cartorios</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://wmti.com.br/seguranca-da-informacao-para-cartorios</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://wmti.com.br/servidor-para-cartorios</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://wmti.com.br/redundancia-e-continuidade-para-cartorios</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <!-- Saúde -->
-  <url><loc>https://wmti.com.br/ti-para-hospitais-e-clinicas</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://wmti.com.br/infraestrutura-ti-para-clinicas-medicas</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://wmti.com.br/backup-para-clinicas-e-hospitais</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://wmti.com.br/seguranca-da-informacao-para-clinicas</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://wmti.com.br/servidor-para-clinicas-medicas</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://wmti.com.br/lgpd-e-ti-para-clinicas</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <!-- Escritórios -->
-  <url><loc>https://wmti.com.br/ti-para-escritorios-de-advocacia</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://wmti.com.br/ti-para-contabilidades</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://wmti.com.br/ti-para-escritorios-corporativos</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <!-- Problemas -->
-  <url><loc>https://wmti.com.br/rede-da-empresa-lenta</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://wmti.com.br/servidor-da-empresa-travando</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://wmti.com.br/empresa-perdeu-dados-o-que-fazer</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://wmti.com.br/backup-da-empresa-nao-funciona</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://wmti.com.br/como-proteger-a-empresa-contra-ransomware</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <!-- Comparativos -->
-  <url><loc>https://wmti.com.br/servidor-local-ou-nuvem-para-empresas</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://wmti.com.br/compra-ou-locacao-de-computadores</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://wmti.com.br/firewall-pfsense-vs-roteador-comum</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <!-- Conversão -->
-  <url><loc>https://wmti.com.br/diagnostico-ti-empresarial</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
-  <!-- Blog -->
-  <url><loc>https://wmti.com.br/blog/vantagens-microsoft-365-para-empresas</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
-  <url><loc>https://wmti.com.br/blog/quando-trocar-servidor-da-empresa</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
-</urlset>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <sitemap><loc>https://wmti.com.br/sitemap-pages.xml</loc></sitemap>
+  <sitemap><loc>https://wmti.com.br/sitemap-blog.xml</loc></sitemap>
+  <sitemap><loc>https://wmti.com.br/sitemap-programmatic.xml</loc></sitemap>
+</sitemapindex>
