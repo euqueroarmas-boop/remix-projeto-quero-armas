@@ -94,8 +94,9 @@ const InvestmentCalculator = ({
                 type="number"
                 min={1}
                 max={500}
-                value={computersQty}
-                onChange={(e) => setComputersQty(Math.max(1, parseInt(e.target.value) || 1))}
+                value={computersInput}
+                onChange={(e) => handleComputersChange(e.target.value)}
+                onBlur={handleComputersBlur}
                 className="h-12 bg-muted border-border text-lg"
               />
             </div>
