@@ -112,7 +112,7 @@ const BlogPostPage = () => {
       <SeoHead
         title={seoTitle}
         description={seoDesc}
-        canonical={pageUrl}
+        canonical={canonicalUrl}
         ogType="article"
         ogImage={post.image.startsWith("http") ? post.image : `${baseUrl}${post.image}`}
       />
