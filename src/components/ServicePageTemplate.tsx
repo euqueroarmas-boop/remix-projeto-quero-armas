@@ -1,11 +1,13 @@
 import { useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, CheckCircle2, MessageCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, MessageCircle, ChevronRight } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import SeoHead from "@/components/SeoHead";
+import JsonLd, { buildFaqSchema, buildBreadcrumbSchema, buildServiceSchema } from "@/components/JsonLd";
 
 interface FAQ {
   question: string;
@@ -26,6 +28,8 @@ interface ServicePageProps {
   relatedLinks: { label: string; href: string }[];
   whatsappMessage: string;
   localContent?: string;
+  canonicalSlug?: string;
+  shouldIndex?: boolean;
 }
 
 const fadeIn = {
@@ -49,29 +53,59 @@ const ServicePageTemplate = ({
   relatedLinks,
   whatsappMessage,
   localContent,
+  canonicalSlug,
+  shouldIndex = true,
 }: ServicePageProps) => {
+  const location = useLocation();
+  const baseUrl = "https://wmti.com.br";
+  const currentPath = location.pathname;
+  const canonicalUrl = canonicalSlug
+    ? `${baseUrl}/${canonicalSlug}`
+    : `${baseUrl}${currentPath}`;
+
   useEffect(() => {
-    document.title = metaTitle;
-    const desc = document.querySelector('meta[name="description"]');
-    if (desc) desc.setAttribute("content", metaDescription);
     window.scrollTo(0, 0);
-  }, [metaTitle, metaDescription]);
+  }, [currentPath]);
+
+  // Breadcrumb items
+  const breadcrumbItems = [
+    { name: "Home", url: `${baseUrl}/` },
+    { name: tag, url: `${baseUrl}${currentPath}` },
+  ];
 
   return (
     <div className="min-h-screen">
+      <SeoHead
+        title={metaTitle}
+        description={metaDescription}
+        canonical={canonicalUrl}
+        noindex={!shouldIndex}
+      />
+      <JsonLd data={buildFaqSchema(faq)} />
+      <JsonLd data={buildBreadcrumbSchema(breadcrumbItems)} />
+      <JsonLd
+        data={buildServiceSchema({
+          name: tag,
+          description: metaDescription,
+          url: canonicalUrl,
+        })}
+      />
       <Navbar />
 
       {/* Hero */}
       <section className="section-dark pt-24 md:pt-28 pb-16 md:pb-24 border-b-4 border-primary">
         <div className="container">
           <motion.div {...fadeIn} className="max-w-4xl">
-            <Link
-              to="/"
-              className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-gunmetal-foreground/50 hover:text-primary transition-colors mb-8"
-            >
-              <ArrowLeft size={14} />
-              Voltar ao início
-            </Link>
+            {/* Breadcrumbs */}
+            <nav aria-label="Breadcrumb" className="mb-6">
+              <ol className="flex items-center gap-1 font-mono text-xs text-gunmetal-foreground/50">
+                <li>
+                  <Link to="/" className="hover:text-primary transition-colors">Home</Link>
+                </li>
+                <ChevronRight size={10} className="shrink-0" />
+                <li className="text-primary truncate" aria-current="page">{tag}</li>
+              </ol>
+            </nav>
 
             <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
               // {tag}

@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowRight, Calendar } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import SeoHead from "@/components/SeoHead";
 import { blogPosts, blogCategories, type BlogCategory } from "@/data/blogPosts";
 
 export type { BlogPost } from "@/data/blogPosts";
@@ -12,13 +13,6 @@ export { blogPosts } from "@/data/blogPosts";
 
 const BlogPage = () => {
   const [activeCategory, setActiveCategory] = useState<BlogCategory | "Todos">("Todos");
-
-  useEffect(() => {
-    document.title = "Blog | WMTi Tecnologia da Informação";
-    const desc = document.querySelector('meta[name="description"]');
-    if (desc) desc.setAttribute("content", "Artigos sobre TI corporativa, servidores Dell, Microsoft 365, segurança de rede, firewall pfSense e infraestrutura para empresas.");
-    window.scrollTo(0, 0);
-  }, []);
 
   const sorted = [...blogPosts].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   const filtered = activeCategory === "Todos"
@@ -28,6 +22,11 @@ const BlogPage = () => {
 
   return (
     <div className="min-h-screen">
+      <SeoHead
+        title="Blog | WMTi Tecnologia da Informação"
+        description="Artigos sobre TI corporativa, servidores Dell, Microsoft 365, segurança de rede, firewall pfSense e infraestrutura para empresas."
+        canonical="https://wmti.com.br/blog"
+      />
       <Navbar />
 
       <section className="section-dark pt-24 md:pt-28 pb-16 md:pb-24">
