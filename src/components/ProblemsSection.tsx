@@ -113,6 +113,7 @@ const ProblemsSection = () => {
                 src={slowComputer}
                 alt="Profissional frustrado com computador lento no escritório"
                 className="w-full h-56 md:h-80 object-cover"
+                loading="lazy"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent" />
             </motion.div>
