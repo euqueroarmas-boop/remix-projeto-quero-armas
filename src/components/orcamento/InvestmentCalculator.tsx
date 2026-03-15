@@ -107,8 +107,9 @@ const InvestmentCalculator = ({
                 type="number"
                 min={1}
                 max={500}
-                value={usersQty}
-                onChange={(e) => setUsersQty(Math.max(1, parseInt(e.target.value) || 1))}
+                value={usersInput}
+                onChange={(e) => handleUsersChange(e.target.value)}
+                onBlur={handleUsersBlur}
                 className="h-12 bg-muted border-border text-lg"
               />
             </div>
