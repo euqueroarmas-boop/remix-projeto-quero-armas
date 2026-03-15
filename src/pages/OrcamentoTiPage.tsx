@@ -245,6 +245,7 @@ const OrcamentoTiPage = () => {
 
       if (contractErr) throw contractErr;
       setContractId((contractRow as any).id);
+      console.log("[WMTi] Contrato gerado com sucesso. ID:", (contractRow as any).id, "Hash:", contractHash);
 
       // Save equipment config for rental
       if (effectivePath === "locacao") {
