@@ -125,14 +125,18 @@ const PlanSelector = ({ selectedPlan, onSelectPlan }: Props) => {
           })}
         </div>
 
-        <motion.p
+        <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          className="text-center text-sm text-muted-foreground mt-8 max-w-xl mx-auto"
+          className="mt-8 max-w-2xl mx-auto"
         >
-          Todas as locações incluem suporte de serviços durante toda a vigência do contrato.
-        </motion.p>
+          <div className="bg-primary/10 border-2 border-primary/30 rounded-xl p-4 text-center">
+            <p className="text-sm font-semibold text-primary">
+              ✓ Todas as locações incluem suporte de serviços durante toda a vigência do contrato, sem cobrança adicional de manutenção.
+            </p>
+          </div>
+        </motion.div>
       </div>
     </section>
   );
