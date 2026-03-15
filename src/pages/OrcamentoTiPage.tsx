@@ -330,7 +330,7 @@ const OrcamentoTiPage = () => {
   );
 
   const handlePaymentSelect = useCallback(
-    async (billingType: "BOLETO" | "CREDIT_CARD"): Promise<string | null> => {
+    async (billingType: "BOLETO" | "CREDIT_CARD" | "PIX"): Promise<string | null> => {
       if (!customerData || !quoteId) return null;
 
       const dueDate = new Date();
