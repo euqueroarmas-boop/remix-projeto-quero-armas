@@ -4,6 +4,7 @@ import { Target, Eye, Heart, Shield, Award, Handshake, Lightbulb, CheckCircle, S
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import SeoHead from "@/components/SeoHead";
 import heroImg from "@/assets/institucional-hero.jpg";
 import dedicationImg from "@/assets/institucional-dedication.jpg";
 
