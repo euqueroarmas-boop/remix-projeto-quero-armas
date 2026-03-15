@@ -84,10 +84,23 @@ Deno.serve(async (req) => {
     });
 
     const paymentData = await paymentRes.json();
+    console.log("[create-asaas-payment] Resposta do Asaas:", JSON.stringify(paymentData));
+
     if (!paymentRes.ok) {
+      console.error("[create-asaas-payment] Falha ao criar cobrança:", JSON.stringify(paymentData));
       return new Response(
         JSON.stringify({ error: "Failed to create payment", details: paymentData }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const invoiceUrl = paymentData.invoiceUrl || paymentData.bankSlipUrl || null;
+
+    if (!invoiceUrl) {
+      console.error("[create-asaas-payment] Asaas não retornou URL de pagamento. Payment ID:", paymentData.id);
+      return new Response(
+        JSON.stringify({ error: "Asaas did not return a payment URL", payment_id: paymentData.id }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -105,16 +118,18 @@ Deno.serve(async (req) => {
           payment_status: paymentData.status || "PENDING",
           billing_type: billing_type,
           due_date: due_date,
-          asaas_invoice_url: paymentData.invoiceUrl || paymentData.bankSlipUrl || null,
+          asaas_invoice_url: invoiceUrl,
         })
         .eq("quote_id", quote_id);
     }
+
+    console.log("[create-asaas-payment] Cobrança criada com sucesso. URL:", invoiceUrl);
 
     return new Response(
       JSON.stringify({
         success: true,
         payment_id: paymentData.id,
-        invoice_url: paymentData.invoiceUrl || paymentData.bankSlipUrl || null,
+        invoice_url: invoiceUrl,
         status: paymentData.status,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }

@@ -55,6 +55,7 @@ const OrcamentoTiPage = () => {
 
   // Payment (new)
   const [paymentComplete, setPaymentComplete] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
   const [invoiceUrl, setInvoiceUrl] = useState<string | null>(null);
 
   const plan = plans.find((p) => p.id === selectedPlan) || plans[1];
@@ -208,6 +209,8 @@ const OrcamentoTiPage = () => {
       setCustomerData(data);
       setCustomerComplete(true);
 
+      console.log("[WMTi] Dados do cliente salvos. Gerando contrato automaticamente...");
+
       // Generate contract HTML
       const contractType = effectivePath === "locacao" ? "locacao" : "suporte";
       const contractHtml = generateContractHtml(
@@ -242,6 +245,7 @@ const OrcamentoTiPage = () => {
 
       if (contractErr) throw contractErr;
       setContractId((contractRow as any).id);
+      console.log("[WMTi] Contrato gerado com sucesso. ID:", (contractRow as any).id, "Hash:", contractHash);
 
       // Save equipment config for rental
       if (effectivePath === "locacao") {
@@ -336,7 +340,11 @@ const OrcamentoTiPage = () => {
       const contractType = effectivePath === "locacao" ? "Locação de Equipamentos" : "Serviços de TI";
       const description = `Contrato WMTi — ${contractType} — ${qualification?.computersQty ?? computersQty} computador(es)`;
 
+      setPaymentError(null);
+
       try {
+        console.log("[WMTi] Criando cobrança no Asaas...", { billingType, monthlyValue, dueDateStr });
+
         const { data, error } = await supabase.functions.invoke("create-asaas-payment", {
           body: {
             customer_name: customerData.razaoSocial,
@@ -350,16 +358,29 @@ const OrcamentoTiPage = () => {
           },
         });
 
-        if (error) throw error;
+        if (error) {
+          console.error("[WMTi] Erro na função de pagamento:", error);
+          throw new Error(error.message || "Erro ao criar cobrança");
+        }
+
+        console.log("[WMTi] Resposta do Asaas:", data);
 
         const url = data?.invoice_url || null;
+
+        if (!url) {
+          console.error("[WMTi] Asaas não retornou URL de pagamento:", data);
+          throw new Error("O sistema de pagamento não retornou um link de cobrança. Tente novamente.");
+        }
+
         setInvoiceUrl(url);
         setPaymentComplete(true);
+        console.log("[WMTi] Cobrança criada com sucesso. URL:", url);
         return url;
       } catch (err) {
-        console.error("Payment error:", err);
-        // Still mark as complete but with no URL — user can pay via WhatsApp
-        setPaymentComplete(true);
+        const message = err instanceof Error ? err.message : "Erro desconhecido ao gerar cobrança";
+        console.error("[WMTi] Falha no pagamento:", message);
+        setPaymentError(message);
+        setPaymentComplete(false);
         setInvoiceUrl(null);
         return null;
       }
@@ -465,6 +486,7 @@ const OrcamentoTiPage = () => {
           onSelectPayment={handlePaymentSelect}
           completed={paymentComplete}
           invoiceUrl={invoiceUrl}
+          error={paymentError}
         />
       </main>
 
