@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowRight, Calendar } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import SeoHead from "@/components/SeoHead";
 import { blogPosts, blogCategories, type BlogCategory } from "@/data/blogPosts";
 
 export type { BlogPost } from "@/data/blogPosts";
