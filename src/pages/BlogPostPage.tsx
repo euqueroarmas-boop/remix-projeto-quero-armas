@@ -249,16 +249,59 @@ const BlogPostPage = () => {
             )}
           </div>
 
+          {/* City-specific local context */}
+          {city && (
+            <div className="mt-10 p-6 md:p-8 bg-muted/30 border border-border rounded-lg">
+              <h2 className="font-heading text-lg font-bold text-foreground mb-3 flex items-center gap-2">
+                <MapPin size={16} className="text-primary" />
+                {post.tag} em {city.name}
+              </h2>
+              <p className="font-body text-sm text-muted-foreground leading-relaxed mb-4">
+                A WMTi Tecnologia da Informação atende empresas em {city.name} ({city.state}), na região de {city.region}, com soluções profissionais de infraestrutura de TI. Com sede em Jacareí/SP e mais de 15 anos de experiência, oferecemos atendimento presencial e remoto com SLA garantido para empresas em {city.name} e cidades vizinhas.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <Link to={`/empresa-ti-${city.slug}`} className="inline-flex items-center gap-1 text-xs text-primary hover:underline font-mono uppercase tracking-wider">
+                  Empresa de TI em {city.name} <ArrowRight size={10} />
+                </Link>
+                <Link to={`/suporte-ti-${city.slug}`} className="inline-flex items-center gap-1 text-xs text-primary hover:underline font-mono uppercase tracking-wider">
+                  Suporte de TI em {city.name} <ArrowRight size={10} />
+                </Link>
+                <Link to={`/infraestrutura-ti-${city.slug}`} className="inline-flex items-center gap-1 text-xs text-primary hover:underline font-mono uppercase tracking-wider">
+                  Infraestrutura de TI em {city.name} <ArrowRight size={10} />
+                </Link>
+              </div>
+            </div>
+          )}
+
+          {/* Related blog posts in other cities */}
+          {city && (
+            <div className="mt-6 p-6 bg-muted/20 border border-border rounded-lg">
+              <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground mb-3">Este artigo em outras cidades</p>
+              <div className="flex flex-wrap gap-2">
+                {cities.filter(c => c.slug !== city.slug).slice(0, 8).map(c => (
+                  <Link
+                    key={c.slug}
+                    to={`/blog/${baseSlug}-${c.slug}`}
+                    className="text-xs text-muted-foreground hover:text-primary transition-colors font-body"
+                  >
+                    {c.name}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* CTA */}
           <div className="mt-12 bg-secondary p-8 md:p-12 text-center border border-border">
             <h3 className="text-xl md:text-2xl text-secondary-foreground mb-3">
-              Precisa de ajuda com sua <span className="text-primary">infraestrutura?</span>
+              Precisa de ajuda com sua <span className="text-primary">infraestrutura{city ? ` em ${city.name}` : ""}?</span>
             </h3>
             <p className="font-body text-sm text-secondary-foreground/70 max-w-md mx-auto mb-6">
               {structuredContent?.cta || "Solicite um diagnóstico gratuito. Nossa equipe técnica avalia sua situação e apresenta a melhor solução."}
+              {city && ` Atendemos empresas em ${city.name} e região de ${city.region}.`}
             </p>
             <a
-              href="https://wa.me/5511963166915?text=Olá! Li um artigo no blog da WMTi e gostaria de saber mais."
+              href={`https://wa.me/5511963166915?text=${encodeURIComponent(`Olá! Li o artigo "${post.title}" no blog da WMTi${city ? ` e gostaria de saber mais sobre os serviços em ${city.name}` : " e gostaria de saber mais"}.`)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
