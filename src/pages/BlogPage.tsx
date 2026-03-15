@@ -97,24 +97,46 @@ const BlogPage = () => {
         </div>
       </section>
 
-      {/* ── Categories ── */}
+      {/* ── Category Filter ── */}
       <section className="sticky top-14 md:top-16 z-30 bg-background/80 backdrop-blur-lg border-b border-border">
-        <div className="container py-3">
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-0.5">
-            {allCategories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={`shrink-0 font-mono text-[11px] uppercase tracking-[0.1em] px-4 py-2 rounded-full border transition-all duration-200 ${
-                  activeCategory === cat
-                    ? "border-primary bg-primary text-primary-foreground shadow-lg shadow-primary/25"
-                    : "border-border text-muted-foreground hover:text-primary hover:border-primary/40"
-                }`}
-              >
-                {cat}
+        <div className="container py-3 flex items-center justify-between gap-4">
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="inline-flex items-center gap-2.5 font-mono text-xs uppercase tracking-[0.1em] px-5 py-2.5 rounded-xl border border-border bg-card hover:border-primary/40 hover:bg-card/80 text-foreground transition-all duration-200 shadow-sm">
+                <Filter size={14} className="text-primary" />
+                <span>{activeCategory === "Todos" ? "Todas as categorias" : activeCategory}</span>
+                <ChevronDown size={14} className="text-muted-foreground" />
               </button>
-            ))}
-          </div>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-64 p-2 bg-card border border-border rounded-xl shadow-xl">
+              <div className="flex flex-col gap-0.5">
+                {allCategories.map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setActiveCategory(cat)}
+                    className={`flex items-center justify-between w-full text-left px-3.5 py-2.5 rounded-lg font-body text-sm transition-all duration-150 ${
+                      activeCategory === cat
+                        ? "bg-primary/10 text-primary font-medium"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    }`}
+                  >
+                    <span>{cat}</span>
+                    {activeCategory === cat && <Check size={14} className="text-primary shrink-0" />}
+                  </button>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          {activeCategory !== "Todos" && (
+            <button
+              onClick={() => setActiveCategory("Todos")}
+              className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors"
+            >
+              <X size={12} />
+              Limpar filtro
+            </button>
+          )}
         </div>
       </section>
 
