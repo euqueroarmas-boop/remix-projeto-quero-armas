@@ -488,6 +488,7 @@ export function generateProgrammaticPages(): SeoPageData[] {
   }
 
   // ─── 4. Problem × City ───
+  const problemSlugs = problems.map((p) => p.slug);
   for (const problem of problems) {
     for (const city of cities) {
       const slug = `${problem.slug}-${city.slug}`;
@@ -499,6 +500,13 @@ export function generateProgrammaticPages(): SeoPageData[] {
         { label: "Suporte de TI", href: `/suporte-ti-${city.slug}` },
         { label: "Segurança de Rede", href: `/seguranca-rede-${city.slug}` },
       ];
+
+      // Cross-problem links (other problems in same city)
+      for (const otherProblem of problems) {
+        if (otherProblem.slug !== problem.slug) {
+          relatedLinks.push({ label: `${otherProblem.name} em ${city.name}`, href: `/${otherProblem.slug}-${city.slug}` });
+        }
+      }
 
       // Add nearby city problem links
       const nearby = nearbyCities[city.slug] ?? [];
