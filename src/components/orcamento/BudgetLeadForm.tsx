@@ -23,7 +23,7 @@ interface Props {
   onContinueToContract?: () => void;
 }
 
-const leadSchema: z.ZodType<LeadFormData> = z.object({
+const leadSchema = z.object({
   companyName: z.string().trim().min(2, "Informe o nome da empresa").max(120, "Nome da empresa muito longo"),
   contactName: z.string().trim().min(2, "Informe o nome do contato").max(120, "Nome do contato muito longo"),
   email: z.string().trim().email("E-mail inválido").max(255, "E-mail muito longo"),
