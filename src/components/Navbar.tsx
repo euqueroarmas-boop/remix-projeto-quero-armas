@@ -398,12 +398,13 @@ const Navbar = () => {
                   </button>
                 );
               })}
-              <button
-                onClick={() => { setOpen(false); handleAnchorClick("orcamento"); }}
+              <Link
+                to="/orcamento-ti"
+                onClick={() => setOpen(false)}
                 className="font-mono text-base uppercase tracking-wider transition-colors py-2 text-muted-foreground hover:text-primary text-left"
               >
                 Orçamento
-              </button>
+              </Link>
 
               {/* CTA */}
               <a
