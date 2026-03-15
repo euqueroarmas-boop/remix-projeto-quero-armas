@@ -135,25 +135,75 @@ const BlogPage = () => {
         <div className="container">
           {/* ── Mobile filter button ── */}
           <div className="lg:hidden mb-6">
-            <Popover>
-              <PopoverTrigger asChild>
-                <button className="inline-flex items-center gap-2.5 font-mono text-xs uppercase tracking-[0.1em] px-5 py-3 rounded-lg border border-border bg-card hover:border-primary/40 text-foreground transition-all duration-200 w-full justify-between">
-                  <span className="flex items-center gap-2">
-                    <Filter size={14} className="text-primary" />
-                    {activeCategory === "Todos" ? "Todas as categorias" : activeCategory}
-                  </span>
-                  <ChevronDown size={14} className="text-muted-foreground" />
-                </button>
-              </PopoverTrigger>
-              <PopoverContent align="start" className="w-[calc(100vw-2rem)] max-w-sm p-2 bg-card border border-border rounded-xl shadow-xl">
-                <div className="flex flex-col gap-0.5 max-h-80 overflow-y-auto">
-                  {allCategories.map((cat) => (
-                    <CategoryItem key={cat} cat={cat} />
-                  ))}
-                </div>
-              </PopoverContent>
-            </Popover>
+            <button
+              onClick={() => setMobileFilterOpen(true)}
+              className="inline-flex items-center gap-2.5 font-mono text-xs uppercase tracking-[0.1em] px-5 py-3 rounded-lg border border-border bg-card hover:border-primary/40 text-foreground transition-all duration-200 w-full justify-between"
+            >
+              <span className="flex items-center gap-2">
+                <Filter size={14} className="text-primary" />
+                {activeCategory === "Todos" ? "Todas as categorias" : activeCategory}
+              </span>
+              <Filter size={14} className="text-muted-foreground" />
+            </button>
           </div>
+
+          {/* ── Mobile Full-Screen Category Overlay ── */}
+          <AnimatePresence>
+            {mobileFilterOpen && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="fixed inset-0 z-50 bg-background flex flex-col lg:hidden"
+              >
+                {/* Header */}
+                <div className="flex items-center justify-between px-6 py-5 border-b border-border">
+                  <div className="flex items-center gap-2">
+                    <Layers size={16} className="text-primary" />
+                    <span className="font-mono text-sm uppercase tracking-[0.15em] text-foreground">
+                      Categorias
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setMobileFilterOpen(false)}
+                    className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                {/* Category list */}
+                <motion.div
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.25, delay: 0.1 }}
+                  className="flex-1 overflow-y-auto px-5 py-4"
+                >
+                  <div className="flex flex-col gap-1">
+                    {allCategories.map((cat) => (
+                      <button
+                        key={cat}
+                        onClick={() => handleCategoryClick(cat)}
+                        className={`flex items-center justify-between w-full text-left px-4 py-4 rounded-xl font-body text-base transition-all duration-150 ${
+                          activeCategory === cat
+                            ? "bg-primary/10 text-primary font-medium border border-primary/20"
+                            : "text-muted-foreground hover:bg-muted/50 hover:text-foreground border border-transparent"
+                        }`}
+                      >
+                        <span>{cat}</span>
+                        <span className={`font-mono text-xs tabular-nums ${
+                          activeCategory === cat ? "text-primary" : "text-muted-foreground/40"
+                        }`}>
+                          {categoryCounts[cat] || 0}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <div className="flex gap-8 lg:gap-10 items-start">
             {/* ── Desktop Sidebar ── */}
