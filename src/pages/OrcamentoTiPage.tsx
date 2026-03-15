@@ -1,13 +1,17 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import SeoHead from "@/components/SeoHead";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import BudgetHero from "@/components/orcamento/BudgetHero";
-import DiagnosticForm, { type DiagnosticData } from "@/components/orcamento/DiagnosticForm";
+import PathSelector, { type CommercialPath } from "@/components/orcamento/PathSelector";
+import QualificationForm, { type QualificationData } from "@/components/orcamento/QualificationForm";
 import PlanSelector, { plans } from "@/components/orcamento/PlanSelector";
 import InvestmentCalculator, { type Addons } from "@/components/orcamento/InvestmentCalculator";
+import SupportCalculator, { calculateSupportTotal } from "@/components/orcamento/SupportCalculator";
+import Recommendation, { getRecommendation } from "@/components/orcamento/Recommendation";
 import IncludedServices from "@/components/orcamento/IncludedServices";
 import BudgetAuthority from "@/components/orcamento/BudgetAuthority";
 import BudgetLeadForm, { type LeadFormData } from "@/components/orcamento/BudgetLeadForm";
@@ -15,11 +19,16 @@ import ContractSection from "@/components/orcamento/ContractSection";
 import PaymentPreparation from "@/components/orcamento/PaymentPreparation";
 
 const OrcamentoTiPage = () => {
-  // Diagnostic
-  const [diagnosticData, setDiagnosticData] = useState<DiagnosticData | null>(null);
-  const [diagnosticComplete, setDiagnosticComplete] = useState(false);
+  const [searchParams] = useSearchParams();
 
-  // Plan & Calculator
+  // Path selection
+  const [selectedPath, setSelectedPath] = useState<CommercialPath | null>(null);
+
+  // Qualification
+  const [qualification, setQualification] = useState<QualificationData | null>(null);
+  const [qualificationComplete, setQualificationComplete] = useState(false);
+
+  // Rental plan & calculator
   const [selectedPlan, setSelectedPlan] = useState("equilibrio");
   const [computersQty, setComputersQty] = useState(5);
   const [usersQty, setUsersQty] = useState(5);
@@ -38,7 +47,24 @@ const OrcamentoTiPage = () => {
   const [contractSigned, setContractSigned] = useState(false);
 
   const plan = plans.find((p) => p.id === selectedPlan) || plans[1];
-  const monthlyValue = plan.price * computersQty;
+  const rentalMonthly = plan.price * computersQty;
+
+  const supportMonthly = useMemo(() => {
+    if (!qualification) return 0;
+    return calculateSupportTotal(qualification).total;
+  }, [qualification]);
+
+  // Determine the effective path after qualification
+  const effectivePath = useMemo(() => {
+    if (selectedPath === "locacao") return "locacao";
+    if (selectedPath === "suporte") return "suporte";
+    if (selectedPath === "ajuda" && qualification) {
+      return getRecommendation(qualification);
+    }
+    return null;
+  }, [selectedPath, qualification]);
+
+  const monthlyValue = effectivePath === "suporte" ? supportMonthly : rentalMonthly;
 
   const scrollToSection = useCallback((id: string) => {
     window.setTimeout(() => {
@@ -46,15 +72,63 @@ const OrcamentoTiPage = () => {
     }, 120);
   }, []);
 
-  const handleDiagnosticComplete = useCallback((data: DiagnosticData) => {
-    setDiagnosticData(data);
-    setDiagnosticComplete(true);
-    setComputersQty(data.computersCurrent || 5);
-    scrollToSection("calculator");
+  // Context from query params
+  const contextTitle = useMemo(() => {
+    const problema = searchParams.get("problema");
+    const servico = searchParams.get("servico");
+    const cidade = searchParams.get("cidade");
+
+    if (problema === "backup") return "Descubra como resolver o backup da sua empresa";
+    if (problema === "rede") return "Resolva os problemas de rede da sua empresa";
+    if (problema === "servidor") return "Resolva os problemas do servidor da sua empresa";
+    if (servico === "locacao-de-computadores") return "Calcule a locação de computadores para sua empresa";
+    if (cidade) return `Orçamento de TI para sua empresa em ${cidade.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}`;
+    return null;
+  }, [searchParams]);
+
+  const handlePathSelect = useCallback((path: CommercialPath) => {
+    setSelectedPath(path);
+    scrollToSection("qualification");
   }, [scrollToSection]);
+
+  const handleQualificationComplete = useCallback((data: QualificationData) => {
+    setQualification(data);
+    setQualificationComplete(true);
+    setComputersQty(data.computersQty || 5);
+    setUsersQty(data.computersQty || 5);
+    setAddons({
+      serverMigration: false,
+      remoteAccess: data.needsRemoteAccess,
+      backup: data.needsBackup,
+    });
+
+    const rec = selectedPath === "ajuda" ? getRecommendation(data) : selectedPath;
+    if (rec === "locacao") {
+      scrollToSection("plans");
+    } else {
+      scrollToSection("support-calculator");
+    }
+  }, [selectedPath, scrollToSection]);
 
   const handleLeadSubmit = useCallback(
     async (formData: LeadFormData) => {
+      const pathLabel = effectivePath === "locacao" ? "Locação" : "Suporte";
+
+      // Build observations with summary
+      const summaryLines = [
+        `Caminho: ${pathLabel}`,
+        `Computadores: ${qualification?.computersQty ?? computersQty}`,
+        `Idade média: ${qualification?.averageAge ?? "N/A"}`,
+        `Core i3+: ${qualification?.isMinCoreI3 ? "Sim" : "Não"}`,
+        `Servidores: ${qualification?.serversQty ?? 0}`,
+        effectivePath === "locacao" ? `Plano: ${plan.name}` : null,
+        `Valor estimado: R$${monthlyValue.toLocaleString("pt-BR")}/mês`,
+        `Backup: ${qualification?.needsBackup ? "Sim" : "Não"}`,
+        `Acesso remoto: ${qualification?.needsRemoteAccess ? "Sim" : "Não"}`,
+        `AD/GPO: ${qualification?.needsActiveDirectory ? "Sim" : "Não"}`,
+        formData.observations ? `Obs: ${formData.observations}` : null,
+      ].filter(Boolean).join("\n");
+
       // 1. Create lead
       const { data: leadRow, error: leadErr } = await supabase
         .from("budget_leads" as any)
@@ -64,7 +138,7 @@ const OrcamentoTiPage = () => {
           email: formData.email,
           phone: formData.phone || null,
           city: formData.city || null,
-          observations: formData.observations || null,
+          observations: summaryLines,
         } as any)
         .select()
         .single();
@@ -77,12 +151,12 @@ const OrcamentoTiPage = () => {
         .from("quotes" as any)
         .insert({
           lead_id: lead.id,
-          selected_plan: selectedPlan,
-          computers_qty: computersQty,
+          selected_plan: effectivePath === "locacao" ? selectedPlan : "suporte-mensal",
+          computers_qty: qualification?.computersQty ?? computersQty,
           users_qty: usersQty,
           needs_server_migration: addons.serverMigration,
-          needs_remote_access: addons.remoteAccess,
-          needs_backup: addons.backup,
+          needs_remote_access: addons.remoteAccess || qualification?.needsRemoteAccess || false,
+          needs_backup: addons.backup || qualification?.needsBackup || false,
           monthly_value: monthlyValue,
           status: "pending",
         } as any)
@@ -94,15 +168,15 @@ const OrcamentoTiPage = () => {
       setQuoteId(quote.id);
       setCompanyName(formData.companyName);
 
-      // 3. Store diagnostic if completed
-      if (diagnosticData) {
+      // 3. Store diagnostic
+      if (qualification) {
         await supabase.from("network_diagnostics" as any).insert({
           quote_id: quote.id,
-          computers_current: diagnosticData.computersCurrent,
-          average_pc_age: diagnosticData.averagePcAge,
-          maintenance_frequency: diagnosticData.maintenanceFrequency,
-          has_server: diagnosticData.hasServer,
-          has_backup: diagnosticData.hasBackup,
+          computers_current: qualification.computersQty,
+          average_pc_age: qualification.averageAge,
+          maintenance_frequency: qualification.frequentMaintenance ? "frequente" : "raramente",
+          has_server: qualification.serversQty > 0,
+          has_backup: qualification.needsBackup,
         } as any);
       }
 
@@ -116,24 +190,21 @@ const OrcamentoTiPage = () => {
       setLeadSubmitted(true);
       scrollToSection("contract-section");
     },
-    [selectedPlan, computersQty, usersQty, addons, monthlyValue, diagnosticData, scrollToSection]
+    [effectivePath, selectedPlan, computersQty, usersQty, addons, monthlyValue, qualification, plan.name, scrollToSection]
   );
 
   const handleContractSign = useCallback(async () => {
     if (!quoteId) return;
 
-    // Get client IP
     let clientIp = "unknown";
     try {
       const res = await fetch("https://api.ipify.org?format=json");
       const data = await res.json();
       clientIp = data.ip;
-    } catch {
-      // fallback
-    }
+    } catch {}
 
-    // Generate contract text
-    const contractText = `Contrato assinado digitalmente — Plano ${plan.name}, ${computersQty} computadores, R$${monthlyValue}/mês`;
+    const pathLabel = effectivePath === "locacao" ? `Locação — Plano ${plan.name}` : "Suporte Mensal";
+    const contractText = `Contrato assinado digitalmente — ${pathLabel}, ${computersQty} computadores, R$${monthlyValue}/mês`;
 
     await supabase
       .from("contracts" as any)
@@ -145,7 +216,6 @@ const OrcamentoTiPage = () => {
       } as any)
       .eq("quote_id", quoteId);
 
-    // Create payment placeholder
     await supabase.from("payments" as any).insert({
       quote_id: quoteId,
       asaas_payment_id: null,
@@ -155,45 +225,83 @@ const OrcamentoTiPage = () => {
 
     setContractSigned(true);
     scrollToSection("payment-section");
-  }, [quoteId, plan.name, computersQty, monthlyValue, scrollToSection]);
+  }, [quoteId, effectivePath, plan.name, computersQty, monthlyValue, scrollToSection]);
+
+  const showRentalFlow = effectivePath === "locacao";
+  const showSupportFlow = effectivePath === "suporte";
 
   return (
     <>
       <SeoHead
         title="Orçamento de Infraestrutura de TI | WMTi"
-        description="Calcule o investimento em infraestrutura de TI para sua empresa. Locação de computadores Dell a partir de R$249/mês com suporte completo."
+        description="Calcule o investimento em infraestrutura de TI para sua empresa. Locação de computadores Dell a partir de R$249/mês ou suporte mensal a partir de R$120/mês."
       />
 
       <Navbar />
 
       <main>
-        <BudgetHero />
-        <DiagnosticForm onComplete={handleDiagnosticComplete} completed={diagnosticComplete} />
-        <PlanSelector selectedPlan={selectedPlan} onSelectPlan={setSelectedPlan} />
-        <InvestmentCalculator
-          selectedPlan={selectedPlan}
-          computersQty={computersQty}
-          setComputersQty={setComputersQty}
-          usersQty={usersQty}
-          setUsersQty={setUsersQty}
-          addons={addons}
-          setAddons={setAddons}
-        />
-        <IncludedServices />
-        <BudgetAuthority />
-        <BudgetLeadForm
-          onSubmit={handleLeadSubmit}
-          submitted={leadSubmitted}
-          onContinueToContract={() => scrollToSection("contract-section")}
-        />
+        <BudgetHero contextTitle={contextTitle} />
+        <PathSelector onSelect={handlePathSelect} selected={selectedPath} />
+
+        {selectedPath && (
+          <QualificationForm
+            onComplete={handleQualificationComplete}
+            completed={qualificationComplete}
+            data={qualification}
+          />
+        )}
+
+        {/* RENTAL PATH */}
+        {qualificationComplete && showRentalFlow && (
+          <>
+            <PlanSelector selectedPlan={selectedPlan} onSelectPlan={setSelectedPlan} />
+            <InvestmentCalculator
+              selectedPlan={selectedPlan}
+              computersQty={computersQty}
+              setComputersQty={setComputersQty}
+              usersQty={usersQty}
+              setUsersQty={setUsersQty}
+              addons={addons}
+              setAddons={setAddons}
+            />
+            <IncludedServices />
+          </>
+        )}
+
+        {/* SUPPORT PATH */}
+        {qualificationComplete && showSupportFlow && qualification && (
+          <SupportCalculator qualification={qualification} />
+        )}
+
+        {/* RECOMMENDATION (always show after qualification) */}
+        {qualificationComplete && qualification && (
+          <Recommendation
+            qualification={qualification}
+            chosenPath={selectedPath!}
+            rentalMonthly={rentalMonthly}
+            supportMonthly={supportMonthly}
+          />
+        )}
+
+        {qualificationComplete && <BudgetAuthority />}
+
+        {qualificationComplete && (
+          <BudgetLeadForm
+            onSubmit={handleLeadSubmit}
+            submitted={leadSubmitted}
+            onContinueToContract={() => scrollToSection("contract-section")}
+          />
+        )}
+
         <ContractSection
           visible={leadSubmitted}
-          selectedPlan={selectedPlan}
-          computersQty={computersQty}
+          selectedPlan={effectivePath === "locacao" ? selectedPlan : "suporte-mensal"}
+          computersQty={qualification?.computersQty ?? computersQty}
           monthlyValue={monthlyValue}
           companyName={companyName}
           onSign={handleContractSign}
           signed={contractSigned}
+          pathLabel={effectivePath === "locacao" ? "Locação" : "Suporte Mensal"}
         />
         <PaymentPreparation
           visible={contractSigned}
