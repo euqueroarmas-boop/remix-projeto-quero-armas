@@ -185,9 +185,18 @@ const BlogPostPage = () => {
               </span>
             </div>
 
-            <h1 className="text-2xl md:text-4xl mb-4">{post.title}</h1>
+            <h1 className="text-2xl md:text-4xl mb-4">{post.title}{cityTitle}</h1>
+            {city && (
+              <div className="flex items-center gap-2 mt-1 mb-2">
+                <MapPin size={14} className="text-primary" />
+                <span className="font-mono text-xs text-primary uppercase tracking-wider">
+                  Conteúdo para empresas em {city.name} — {city.region}
+                </span>
+              </div>
+            )}
             <p className="font-body text-lg text-gunmetal-foreground/70 leading-relaxed">
               {post.excerpt}
+              {city && ` Veja como a WMTi pode ajudar sua empresa em ${city.name}.`}
             </p>
           </motion.div>
         </div>
