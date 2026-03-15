@@ -325,12 +325,12 @@ const Navbar = () => {
             );
           })}
 
-          <button
-            onClick={() => handleAnchorClick("orcamento")}
+          <Link
+            to="/orcamento-ti"
             className="font-mono text-xs uppercase tracking-wider transition-colors text-muted-foreground hover:text-primary"
           >
             Orçamento
-          </button>
+          </Link>
         </div>
 
         {/* Mobile toggle */}
