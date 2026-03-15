@@ -155,7 +155,7 @@ const OrcamentoTiPage = () => {
 
     setContractSigned(true);
     scrollToSection("payment-section");
-  }, [quoteId, plan.name, computersQty, monthlyValue]);
+  }, [quoteId, plan.name, computersQty, monthlyValue, scrollToSection]);
 
   return (
     <>
