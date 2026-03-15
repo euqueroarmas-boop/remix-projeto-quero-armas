@@ -40,11 +40,11 @@ const OrcamentoTiPage = () => {
   const plan = plans.find((p) => p.id === selectedPlan) || plans[1];
   const monthlyValue = plan.price * computersQty;
 
-  const scrollToSection = (id: string) => {
+  const scrollToSection = useCallback((id: string) => {
     window.setTimeout(() => {
       document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 120);
-  };
+  }, []);
 
   const handleDiagnosticComplete = useCallback((data: DiagnosticData) => {
     setDiagnosticData(data);
