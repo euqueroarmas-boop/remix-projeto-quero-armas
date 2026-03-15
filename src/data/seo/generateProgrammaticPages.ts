@@ -100,6 +100,206 @@ const segmentIcons: Record<string, { icon: LucideIcon; title: string; text: stri
   ],
 };
 
+/* ─── Service-specific pain points ─── */
+const servicePainPoints: Record<string, string[]> = {
+  "infraestrutura-ti": [
+    "Rede corporativa instável prejudicando a produtividade diária",
+    "Servidores antigos sem redundância ou virtualização",
+    "Falta de cabeamento estruturado e equipamentos gerenciáveis",
+    "Sem monitoramento proativo da infraestrutura de TI",
+    "Ausência de política de backup e recuperação de desastres",
+    "Equipamentos de rede domésticos sendo usados no ambiente empresarial",
+  ],
+  "suporte-ti": [
+    "Demora excessiva no atendimento de chamados de TI",
+    "Equipe interna sobrecarregada com problemas técnicos recorrentes",
+    "Falta de manutenção preventiva gerando paradas constantes",
+    "Sistemas desatualizados e vulneráveis a falhas de segurança",
+    "Ausência de SLA definido para resolução de incidentes",
+    "Custos altos com técnicos avulsos e sem previsibilidade",
+  ],
+  "monitoramento-rede": [
+    "Problemas de rede descobertos apenas quando já afetam a operação",
+    "Sem visibilidade sobre o consumo de banda e gargalos de tráfego",
+    "Quedas de internet não detectadas em tempo hábil",
+    "Falta de relatórios de disponibilidade e performance da rede",
+    "Equipamentos de rede sem gerenciamento centralizado",
+    "Incapacidade de prever falhas antes que causem interrupções",
+  ],
+  "servidores-dell": [
+    "Servidor com mais de 5 anos sem manutenção preventiva",
+    "Hardware de servidor sem garantia ou suporte do fabricante",
+    "Falta de RAID e redundância de discos no servidor atual",
+    "Servidor subdimensionado para a carga de trabalho da empresa",
+    "Ausência de virtualização desperdiçando recursos de hardware",
+    "Sistema operacional do servidor sem atualizações de segurança",
+  ],
+  "microsoft-365": [
+    "E-mail corporativo ainda baseado em POP3 ou IMAP local",
+    "Arquivos importantes armazenados apenas nos computadores locais",
+    "Sem ferramenta de colaboração em tempo real para equipes",
+    "Licenças de software desatualizadas ou piratas na empresa",
+    "Falta de autenticação multifator nos e-mails corporativos",
+    "Dificuldade de gerenciar acessos quando colaboradores saem da empresa",
+  ],
+  "seguranca-rede": [
+    "Roteador doméstico sendo usado como firewall da empresa",
+    "Ausência de antivírus corporativo com gerenciamento centralizado",
+    "Rede sem segmentação expondo dados sensíveis a todos os usuários",
+    "Sem VPN para acesso remoto seguro de colaboradores",
+    "Vulnerabilidade a ataques ransomware por falta de proteção perimetral",
+    "Funcionários acessando sites maliciosos sem filtragem de conteúdo",
+  ],
+  "locacao-computadores": [
+    "Computadores antigos e lentos reduzindo a produtividade da equipe",
+    "Alto custo com manutenção de máquinas desatualizadas",
+    "Falta de padronização nos equipamentos da empresa",
+    "Investimento alto em compra de computadores sem garantia de troca",
+    "Dificuldade em escalar o parque de máquinas conforme a demanda",
+    "Equipamentos quebrados aguardando semanas para reparo",
+  ],
+};
+
+/* ─── Service-specific solutions ─── */
+const serviceSolutions: Record<string, string[]> = {
+  "infraestrutura-ti": [
+    "Projeto completo de infraestrutura de TI corporativa sob medida",
+    "Servidores Dell PowerEdge com RAID, virtualização e alta disponibilidade",
+    "Cabeamento estruturado com switches gerenciáveis e Wi-Fi corporativo",
+    "Firewall pfSense com proteção perimetral e controle de acesso",
+    "Backup automatizado local e em nuvem com testes de restauração",
+    "Monitoramento 24/7 com NOC especializado e alertas em tempo real",
+  ],
+  "suporte-ti": [
+    "Suporte técnico remoto e presencial com SLA definido por contrato",
+    "Monitoramento proativo de servidores, rede e estações de trabalho",
+    "Manutenção preventiva periódica de todo o parque tecnológico",
+    "Gestão de atualizações de sistema operacional e softwares",
+    "Relatórios mensais de chamados, tempos de resposta e disponibilidade",
+    "Equipe técnica dedicada com conhecimento do ambiente do cliente",
+  ],
+  "monitoramento-rede": [
+    "NOC próprio com monitoramento contínuo 24/7 de toda a infraestrutura",
+    "Alertas automáticos por e-mail e WhatsApp sobre falhas e degradação",
+    "Dashboards de performance com métricas de latência, uptime e tráfego",
+    "Análise preditiva para antecipar problemas antes que afetem a operação",
+    "Monitoramento de links de internet, switches, servidores e firewalls",
+    "Relatórios periódicos de disponibilidade e planejamento de capacidade",
+  ],
+  "servidores-dell": [
+    "Dimensionamento técnico de servidores conforme a demanda da empresa",
+    "Implantação de Dell PowerEdge com RAID, ECC e fontes redundantes",
+    "Virtualização com Hyper-V ou VMware para consolidação de servidores",
+    "Migração de dados e sistemas com planejamento e zero downtime",
+    "Manutenção preventiva com atualização de firmware e monitoramento de hardware",
+    "Suporte especializado Dell com peças e atendimento prioritário",
+  ],
+  "microsoft-365": [
+    "Migração completa para Microsoft 365 sem perda de dados ou downtime",
+    "Configuração de Exchange Online com domínio próprio e políticas de segurança",
+    "Implantação de Microsoft Teams, SharePoint e OneDrive for Business",
+    "Configuração de autenticação multifator e acesso condicional",
+    "Gestão contínua de licenças, usuários e políticas de compliance",
+    "Treinamento da equipe para uso produtivo das ferramentas Microsoft",
+  ],
+  "seguranca-rede": [
+    "Implantação de firewall pfSense com IDS/IPS Suricata e regras personalizadas",
+    "Antivírus corporativo ESET com console de gerenciamento centralizado",
+    "VPN site-to-site e para acesso remoto seguro de colaboradores",
+    "Segmentação de rede por VLANs com políticas de acesso por perfil",
+    "Monitoramento contínuo de ameaças e tentativas de invasão",
+    "Auditoria periódica de vulnerabilidades com relatórios de compliance",
+  ],
+  "locacao-computadores": [
+    "Locação de Dell OptiPlex com monitor, teclado e mouse inclusos",
+    "Manutenção preventiva e corretiva sem custo adicional durante o contrato",
+    "Substituição de equipamento em caso de falha com SLA garantido",
+    "Configuração padronizada com antivírus, sistema operacional e políticas de segurança",
+    "Escalabilidade: aumente ou reduza o parque conforme a necessidade",
+    "Suporte técnico dedicado para equipamentos em locação",
+  ],
+};
+
+/* ─── Blog links per service ─── */
+const blogLinksForService: Record<string, { label: string; href: string }[]> = {
+  "infraestrutura-ti": [
+    { label: "Guia completo de infraestrutura de TI", href: "/blog/guia-completo-infraestrutura-ti-empresas" },
+    { label: "Servidor local ou nuvem?", href: "/blog/servidor-dedicado-vs-nuvem-para-empresas" },
+  ],
+  "suporte-ti": [
+    { label: "Quanto custa infraestrutura de TI", href: "/blog/quanto-custa-infraestrutura-ti-empresas" },
+    { label: "Recuperação de desastres de TI", href: "/blog/recuperacao-desastres-ti-plano-pratico" },
+  ],
+  "monitoramento-rede": [
+    { label: "Monitoramento de rede contra ataques", href: "/blog/monitoramento-rede-prevencao-ataques" },
+    { label: "Ataques DDoS: como proteger sua empresa", href: "/blog/ataques-ddos-como-proteger-empresa" },
+  ],
+  "servidores-dell": [
+    { label: "Quando trocar o servidor da empresa", href: "/blog/quando-trocar-servidor-da-empresa" },
+    { label: "Virtualização de servidores", href: "/blog/virtualizacao-servidores-seguranca-performance" },
+  ],
+  "microsoft-365": [
+    { label: "Vantagens do Microsoft 365", href: "/blog/vantagens-microsoft-365-para-empresas" },
+    { label: "Segurança de e-mail corporativo", href: "/blog/seguranca-email-corporativo-ameacas-comuns" },
+  ],
+  "seguranca-rede": [
+    { label: "Firewall pfSense para empresas", href: "/blog/firewall-pfsense-para-empresas-protecao-completa" },
+    { label: "Política de segurança da informação", href: "/blog/politica-seguranca-informacao-empresas" },
+  ],
+  "locacao-computadores": [
+    { label: "Compra ou locação de computadores?", href: "/blog/compra-ou-locacao-de-computadores" },
+    { label: "Cibersegurança para pequenas empresas", href: "/blog/ciberseguranca-para-pequenas-empresas" },
+  ],
+};
+
+/* ─── City context for richer local content ─── */
+const cityContext: Record<string, string> = {
+  "sao-paulo": "polo econômico do Brasil, com milhares de empresas que dependem de TI estável",
+  "campinas": "um dos maiores polos tecnológicos do interior paulista",
+  "sao-jose-dos-campos": "sede de grandes indústrias aeroespaciais e de tecnologia no Vale do Paraíba",
+  "ribeirao-preto": "centro agroindustrial do interior de São Paulo com crescente demanda por TI corporativa",
+  "sorocaba": "polo industrial em expansão com forte presença de empresas de médio e grande porte",
+  "santos": "principal cidade portuária do país, com demanda crescente por segurança digital e conectividade",
+  "guarulhos": "segunda maior cidade de São Paulo, com grande concentração de empresas e indústrias",
+  "osasco": "importante centro comercial e financeiro da Grande São Paulo",
+  "jundiai": "polo industrial estratégico entre São Paulo e Campinas",
+  "piracicaba": "centro agroindustrial e universitário do interior paulista",
+  "bauru": "entroncamento rodoferroviário com forte atividade comercial e de serviços",
+  "barretos": "polo agroindustrial do norte paulista com empresas em crescimento tecnológico",
+  "botucatu": "cidade universitária com crescente modernização empresarial",
+  "marilia": "centro comercial e industrial do centro-oeste paulista",
+  "taubate": "importante polo industrial do Vale do Paraíba com grande demanda por TI empresarial",
+  "jacarei": "cidade estratégica do Vale do Paraíba, sede da WMTi, com atendimento presencial imediato",
+  "mogi-das-cruzes": "cidade em expansão no Alto Tietê com forte presença de PMEs",
+  "americana": "polo têxtil e industrial da região metropolitana de Campinas",
+  "araraquara": "centro regional do interior paulista com empresas em modernização tecnológica",
+  "sao-jose-do-rio-preto": "polo regional do noroeste paulista com forte setor de serviços e comércio",
+};
+
+/* ─── Nearby cities for interlinking ─── */
+const nearbyCities: Record<string, string[]> = {
+  "sao-paulo": ["guarulhos", "osasco", "santos"],
+  "campinas": ["americana", "piracicaba", "jundiai"],
+  "sao-jose-dos-campos": ["jacarei", "taubate", "mogi-das-cruzes"],
+  "ribeirao-preto": ["araraquara", "barretos", "sao-jose-do-rio-preto"],
+  "sorocaba": ["jundiai", "campinas", "sao-paulo"],
+  "santos": ["sao-paulo", "guarulhos", "osasco"],
+  "guarulhos": ["sao-paulo", "mogi-das-cruzes", "osasco"],
+  "osasco": ["sao-paulo", "guarulhos", "jundiai"],
+  "jundiai": ["campinas", "sorocaba", "osasco"],
+  "piracicaba": ["campinas", "americana", "sorocaba"],
+  "bauru": ["marilia", "botucatu", "araraquara"],
+  "sao-jose-do-rio-preto": ["barretos", "araraquara", "ribeirao-preto"],
+  "taubate": ["sao-jose-dos-campos", "jacarei", "mogi-das-cruzes"],
+  "jacarei": ["sao-jose-dos-campos", "taubate", "mogi-das-cruzes"],
+  "mogi-das-cruzes": ["guarulhos", "sao-jose-dos-campos", "sao-paulo"],
+  "americana": ["campinas", "piracicaba", "jundiai"],
+  "araraquara": ["ribeirao-preto", "sao-jose-do-rio-preto", "bauru"],
+  "barretos": ["ribeirao-preto", "sao-jose-do-rio-preto", "araraquara"],
+  "botucatu": ["bauru", "sorocaba", "piracicaba"],
+  "marilia": ["bauru", "botucatu", "araraquara"],
+};
+
 const defaultPainPoints = [
   "Rede lenta ou instável prejudicando a operação",
   "Servidor antigo ou mal configurado",
@@ -126,6 +326,10 @@ function fill(template: string, replacements: Record<string, string>): string {
   return result;
 }
 
+function getCityName(slug: string): string {
+  return cities.find((c) => c.slug === slug)?.name ?? slug;
+}
+
 export function generateProgrammaticPages(): SeoPageData[] {
   const pages: SeoPageData[] = [];
   const usedSlugs = new Set<string>();
@@ -142,12 +346,23 @@ export function generateProgrammaticPages(): SeoPageData[] {
     for (const city of cities) {
       const slug = `${service.slug}-${city.slug}`;
       const r = { city: city.name, service: service.name };
+      const ctx = cityContext[city.slug] || "região com forte atividade empresarial";
 
       const relatedLinks = service.relatedSlugs.map((rs) => {
         const rel = services.find((s) => s.slug === rs);
         return { label: rel?.name ?? rs, href: `/${rs}-${city.slug}` };
       });
       relatedLinks.push({ label: `Empresa de TI em ${city.name}`, href: `/empresa-ti-${city.slug}` });
+
+      // Add nearby city links
+      const nearby = nearbyCities[city.slug] ?? [];
+      for (const nc of nearby.slice(0, 2)) {
+        relatedLinks.push({ label: `${service.name} em ${getCityName(nc)}`, href: `/${service.slug}-${nc}` });
+      }
+
+      // Add blog links
+      const blogLinks = blogLinksForService[service.slug] ?? [];
+      relatedLinks.push(...blogLinks);
 
       addPage({
         slug,
@@ -159,17 +374,17 @@ export function generateProgrammaticPages(): SeoPageData[] {
         description: fill(service.contentTemplate, r),
         whatsappMessage: `Olá! Gostaria de saber mais sobre ${service.name} para minha empresa em ${city.name}.`,
         category: "local-service",
-        painPoints: defaultPainPoints,
-        solutions: defaultSolutions,
+        painPoints: servicePainPoints[service.slug] ?? defaultPainPoints,
+        solutions: serviceSolutions[service.slug] ?? defaultSolutions,
         benefits: serviceIcons[service.slug] ?? serviceIcons["infraestrutura-ti"],
         faq: [
-          { question: `A WMTi oferece ${service.name.toLowerCase()} em ${city.name}?`, answer: `Sim. A WMTi atende empresas em ${city.name} e região com soluções profissionais de ${service.name.toLowerCase()}, suporte técnico e infraestrutura corporativa.` },
-          { question: `Quanto custa ${service.name.toLowerCase()} para empresas?`, answer: `O investimento depende do porte e das necessidades da empresa. Entre em contato para um diagnóstico gratuito e uma proposta personalizada.` },
-          { question: `A WMTi atende pequenas empresas em ${city.name}?`, answer: `Sim. Atendemos empresas de todos os portes em ${city.name}, com planos escaláveis e personalizados.` },
-          { question: "Como solicitar um orçamento?", answer: "Entre em contato pelo WhatsApp ou formulário do site para agendar um diagnóstico gratuito da infraestrutura de TI da sua empresa." },
+          { question: `A WMTi oferece ${service.name.toLowerCase()} em ${city.name}?`, answer: `Sim. A WMTi atende empresas em ${city.name} e região com soluções profissionais de ${service.name.toLowerCase()}, suporte técnico especializado e infraestrutura corporativa dimensionada para cada necessidade.` },
+          { question: `Quanto custa ${service.name.toLowerCase()} para empresas em ${city.name}?`, answer: `O investimento depende do porte da empresa, da quantidade de equipamentos e das necessidades específicas. Entre em contato para um diagnóstico gratuito e receba uma proposta personalizada para sua empresa em ${city.name}.` },
+          { question: `A WMTi atende pequenas e médias empresas em ${city.name}?`, answer: `Sim. Atendemos empresas de todos os portes em ${city.name}, desde escritórios com 5 computadores até operações com centenas de estações. Nossos planos são escaláveis e personalizados.` },
+          { question: "Como solicitar um orçamento de TI?", answer: "Entre em contato pelo WhatsApp ou formulário do site para agendar um diagnóstico gratuito. Nossa equipe técnica avalia sua infraestrutura atual e apresenta uma proposta detalhada sem compromisso." },
         ],
         relatedLinks,
-        localContent: `A WMTi Tecnologia da Informação atende empresas em ${city.name} (${city.state}) com soluções especializadas de ${service.name.toLowerCase()}. Com sede em Jacareí/SP e mais de 15 anos de experiência, oferecemos atendimento presencial e remoto para garantir que sua empresa opere com segurança, desempenho e confiabilidade.`,
+        localContent: `A WMTi Tecnologia da Informação atende empresas em ${city.name} (${city.state}), ${ctx}, com soluções especializadas de ${service.name.toLowerCase()}. Com sede em Jacareí/SP e mais de 15 anos de experiência no mercado corporativo, oferecemos atendimento presencial e remoto com SLA garantido, garantindo que sua empresa em ${city.name} opere com segurança, desempenho e confiabilidade. Nossos clientes na região contam com suporte técnico dedicado, monitoramento contínuo e projetos de infraestrutura dimensionados para cada necessidade.`,
         shouldIndex: true,
         priority: 0.7,
       });
@@ -185,6 +400,7 @@ export function generateProgrammaticPages(): SeoPageData[] {
         const baseBenefits = serviceIcons[service.slug] ?? serviceIcons["infraestrutura-ti"];
         const segBenefits = segmentIcons[segment.slug] ?? [];
         const benefits = [...segBenefits, ...baseBenefits.slice(0, 3)];
+        const ctx = cityContext[city.slug] || "região com forte atividade empresarial";
 
         const relatedLinks = [
           { label: `${service.name} em ${city.name}`, href: `/${service.slug}-${city.slug}` },
@@ -193,6 +409,7 @@ export function generateProgrammaticPages(): SeoPageData[] {
             label: services.find((s) => s.slug === rs)?.name ?? rs,
             href: `/${rs}-${city.slug}`,
           })),
+          ...(blogLinksForService[service.slug]?.slice(0, 1) ?? []),
         ];
 
         addPage({
@@ -202,19 +419,19 @@ export function generateProgrammaticPages(): SeoPageData[] {
           tag: `${service.name} ${segment.titleSuffix}`,
           headline: `${service.name} ${segment.titleSuffix} em `,
           headlineHighlight: city.name,
-          description: `A WMTi oferece ${service.name.toLowerCase()} especializada ${segment.titleSuffix.toLowerCase()} em ${city.name}. ${segment.descriptionExtra}`,
+          description: `A WMTi oferece ${service.name.toLowerCase()} especializada ${segment.titleSuffix.toLowerCase()} em ${city.name}, ${ctx}. ${segment.descriptionExtra}`,
           whatsappMessage: `Olá! Gostaria de saber mais sobre ${service.name} ${segment.titleSuffix.toLowerCase()} em ${city.name}.`,
           category: "segment",
-          painPoints: [...segment.painPoints, ...defaultPainPoints.slice(0, 3)],
-          solutions: defaultSolutions,
+          painPoints: [...segment.painPoints, ...(servicePainPoints[service.slug]?.slice(0, 3) ?? defaultPainPoints.slice(0, 3))],
+          solutions: serviceSolutions[service.slug] ?? defaultSolutions,
           benefits,
           faq: [
             segment.faqExtra,
-            { question: `Qual o custo de ${service.name.toLowerCase()} ${segment.titleSuffix.toLowerCase()}?`, answer: "O investimento depende do porte e necessidades. Entre em contato para um diagnóstico gratuito." },
-            { question: `A WMTi atende ${segment.name.toLowerCase()} em ${city.name}?`, answer: `Sim. Atendemos ${segment.name.toLowerCase()} em ${city.name} e região com soluções especializadas.` },
+            { question: `Qual o custo de ${service.name.toLowerCase()} ${segment.titleSuffix.toLowerCase()} em ${city.name}?`, answer: `O investimento depende do porte e das necessidades específicas do ${segment.name.toLowerCase()}. Entre em contato para um diagnóstico gratuito e uma proposta personalizada para sua operação em ${city.name}.` },
+            { question: `A WMTi atende ${segment.name.toLowerCase()} em ${city.name}?`, answer: `Sim. Atendemos ${segment.name.toLowerCase()} em ${city.name} e região com soluções especializadas de ${service.name.toLowerCase()}, incluindo infraestrutura, segurança e suporte técnico dedicado.` },
           ],
           relatedLinks,
-          localContent: `A WMTi atende ${segment.name.toLowerCase()} em ${city.name} (${city.state}) com soluções de ${service.name.toLowerCase()}. Mais de 15 anos de experiência em tecnologia da informação.`,
+          localContent: `A WMTi atende ${segment.name.toLowerCase()} em ${city.name} (${city.state}), ${ctx}, com soluções de ${service.name.toLowerCase()} dimensionadas para as necessidades específicas do segmento. Com mais de 15 anos de experiência em tecnologia da informação corporativa, nossa equipe técnica entende as particularidades de ${segment.name.toLowerCase()} e implementa ambientes seguros, confiáveis e em conformidade com as regulamentações do setor.`,
           shouldIndex: true,
           priority: 0.6,
           canonicalSlug: `${service.slug}-${city.slug}`,
@@ -228,31 +445,40 @@ export function generateProgrammaticPages(): SeoPageData[] {
     for (const city of cities) {
       for (const intent of intents) {
         const slug = `${intent.slug}-${service.slug}-${city.slug}`;
+        const ctx = cityContext[city.slug] || "região com forte atividade empresarial";
 
         const relatedLinks = [
           { label: `${service.name} em ${city.name}`, href: `/${service.slug}-${city.slug}` },
           { label: `Empresa de TI em ${city.name}`, href: `/empresa-ti-${city.slug}` },
+          ...(blogLinksForService[service.slug]?.slice(0, 1) ?? []),
         ];
+
+        // Add nearby city intent links
+        const nearby = nearbyCities[city.slug] ?? [];
+        for (const nc of nearby.slice(0, 1)) {
+          relatedLinks.push({ label: `${intent.name} em ${getCityName(nc)}`, href: `/${intent.slug}-${service.slug}-${nc}` });
+        }
 
         addPage({
           slug,
           metaTitle: `${intent.name} de ${service.name} em ${city.name} | WMTi`,
-          metaDescription: `${intent.name} de ${service.name.toLowerCase()} para empresas em ${city.name}. ${intent.descriptionExtra.slice(0, 80)}. WMTi.`,
+          metaDescription: `${intent.name} de ${service.name.toLowerCase()} para empresas em ${city.name}. ${intent.descriptionExtra.slice(0, 80)}. WMTi Tecnologia da Informação.`,
           tag: `${intent.name} — ${service.name}`,
           headline: fill(intent.h1Template, { service: service.name.toLowerCase(), city: city.name }),
           headlineHighlight: city.name,
-          description: `${intent.descriptionExtra} A WMTi oferece ${service.name.toLowerCase()} para empresas em ${city.name} com mais de 15 anos de experiência.`,
-          whatsappMessage: `Olá! Gostaria de um ${intent.name.toLowerCase()} de ${service.name.toLowerCase()} em ${city.name}.`,
+          description: `${intent.descriptionExtra} A WMTi oferece ${service.name.toLowerCase()} para empresas em ${city.name}, ${ctx}, com mais de 15 anos de experiência no mercado corporativo.`,
+          whatsappMessage: `Olá! Gostaria de um ${intent.name.toLowerCase()} de ${service.name.toLowerCase()} para minha empresa em ${city.name}.`,
           category: "intent",
-          painPoints: defaultPainPoints.slice(0, 4),
-          solutions: defaultSolutions.slice(0, 4),
+          painPoints: (servicePainPoints[service.slug] ?? defaultPainPoints).slice(0, 4),
+          solutions: (serviceSolutions[service.slug] ?? defaultSolutions).slice(0, 4),
           benefits: serviceIcons[service.slug]?.slice(0, 4) ?? serviceIcons["infraestrutura-ti"].slice(0, 4),
           faq: [
-            { question: `Como solicitar ${intent.name.toLowerCase()} de ${service.name.toLowerCase()} em ${city.name}?`, answer: "Entre em contato pelo WhatsApp ou formulário do site. Realizamos um diagnóstico gratuito e apresentamos uma proposta personalizada." },
-            { question: `A WMTi oferece ${intent.name.toLowerCase()} gratuito?`, answer: "Sim. O diagnóstico inicial e a proposta são gratuitos e sem compromisso." },
+            { question: `Como solicitar ${intent.name.toLowerCase()} de ${service.name.toLowerCase()} em ${city.name}?`, answer: `Entre em contato pelo WhatsApp ou formulário do site. Nossa equipe técnica realiza um diagnóstico gratuito da sua infraestrutura em ${city.name} e apresenta uma proposta personalizada sem compromisso.` },
+            { question: `A WMTi oferece ${intent.name.toLowerCase()} gratuito?`, answer: "Sim. O diagnóstico inicial e a elaboração da proposta são gratuitos e sem compromisso. Avaliamos sua infraestrutura atual e apresentamos um projeto completo." },
+            { question: `Qual o prazo para ${intent.name.toLowerCase()} em ${city.name}?`, answer: `O prazo depende da complexidade do projeto. Após o diagnóstico inicial, apresentamos um cronograma detalhado. Atendemos ${city.name} e região com equipe técnica dedicada.` },
           ],
           relatedLinks,
-          localContent: `Solicite ${intent.name.toLowerCase()} de ${service.name.toLowerCase()} para sua empresa em ${city.name}. Atendimento presencial e remoto com SLA garantido.`,
+          localContent: `Solicite ${intent.name.toLowerCase()} de ${service.name.toLowerCase()} para sua empresa em ${city.name}, ${ctx}. A WMTi oferece atendimento presencial e remoto com SLA garantido, equipe técnica especializada e projetos dimensionados para cada necessidade.`,
           shouldIndex: true,
           priority: 0.5,
           canonicalSlug: `${service.slug}-${city.slug}`,
@@ -265,6 +491,7 @@ export function generateProgrammaticPages(): SeoPageData[] {
   for (const problem of problems) {
     for (const city of cities) {
       const slug = `${problem.slug}-${city.slug}`;
+      const ctx = cityContext[city.slug] || "região com forte atividade empresarial";
 
       const relatedLinks = [
         { label: `Empresa de TI em ${city.name}`, href: `/empresa-ti-${city.slug}` },
@@ -273,10 +500,29 @@ export function generateProgrammaticPages(): SeoPageData[] {
         { label: "Segurança de Rede", href: `/seguranca-rede-${city.slug}` },
       ];
 
+      // Add nearby city problem links
+      const nearby = nearbyCities[city.slug] ?? [];
+      for (const nc of nearby.slice(0, 1)) {
+        relatedLinks.push({ label: `${problem.name} em ${getCityName(nc)}`, href: `/${problem.slug}-${nc}` });
+      }
+
+      // Add relevant blog link
+      if (problem.slug === "rede-lenta") {
+        relatedLinks.push({ label: "Monitoramento de rede contra ataques", href: "/blog/monitoramento-rede-prevencao-ataques" });
+      } else if (problem.slug === "servidor-travando") {
+        relatedLinks.push({ label: "Quando trocar o servidor", href: "/blog/quando-trocar-servidor-da-empresa" });
+      } else if (problem.slug === "sem-backup") {
+        relatedLinks.push({ label: "Estratégia de backup 3-2-1", href: "/blog/backup-3-2-1-estrategia-para-empresas" });
+      } else if (problem.slug === "ataque-ransomware") {
+        relatedLinks.push({ label: "Como proteger contra ransomware", href: "/blog/como-proteger-a-empresa-contra-ransomware" });
+      } else if (problem.slug === "computadores-lentos") {
+        relatedLinks.push({ label: "Compra ou locação de computadores", href: "/blog/compra-ou-locacao-de-computadores" });
+      }
+
       addPage({
         slug,
         metaTitle: `${problem.name} — Soluções de TI em ${city.name} | WMTi`,
-        metaDescription: `${problem.description.slice(0, 130)}. Soluções profissionais em ${city.name}. WMTi.`,
+        metaDescription: `${problem.description.slice(0, 130)}. Soluções profissionais de TI para empresas em ${city.name}. WMTi Tecnologia.`,
         tag: problem.name,
         headline: fill(problem.h1Template, { city: city.name }),
         headlineHighlight: "",
@@ -284,14 +530,15 @@ export function generateProgrammaticPages(): SeoPageData[] {
         whatsappMessage: `Olá! Minha empresa em ${city.name} está com problema de ${problem.name.toLowerCase()}. Podem ajudar?`,
         category: "problem-page",
         painPoints: problem.painPoints,
-        solutions: defaultSolutions.slice(0, 4),
+        solutions: (serviceSolutions["infraestrutura-ti"] ?? defaultSolutions).slice(0, 4),
         benefits: serviceIcons["infraestrutura-ti"].slice(0, 4),
         faq: [
-          { question: `Como resolver ${problem.name.toLowerCase()} na minha empresa em ${city.name}?`, answer: problem.solutionIntro },
-          { question: "A WMTi faz diagnóstico gratuito?", answer: "Sim. Entre em contato para agendar um diagnóstico gratuito da infraestrutura de TI." },
+          { question: `Como resolver ${problem.name.toLowerCase()} na minha empresa em ${city.name}?`, answer: `${problem.solutionIntro} A WMTi atende empresas em ${city.name}, ${ctx}, com diagnóstico gratuito e soluções profissionais de infraestrutura de TI.` },
+          { question: "A WMTi faz diagnóstico gratuito?", answer: "Sim. Nossa equipe técnica realiza um diagnóstico completo da sua infraestrutura de TI sem custo e sem compromisso. Após a análise, apresentamos um relatório detalhado e uma proposta de solução personalizada." },
+          { question: `Qual o prazo para resolver ${problem.name.toLowerCase()}?`, answer: `O prazo depende da causa do problema. Após o diagnóstico, apresentamos um cronograma de ação. Muitos problemas são resolvidos em poucas horas. Atendemos ${city.name} com equipe técnica dedicada.` },
         ],
         relatedLinks,
-        localContent: `Se sua empresa em ${city.name} enfrenta ${problem.name.toLowerCase()}, a WMTi pode ajudar. Atendemos ${city.name} e região com soluções profissionais de TI.`,
+        localContent: `Se sua empresa em ${city.name}, ${ctx}, enfrenta ${problem.name.toLowerCase()}, a WMTi pode ajudar. Com sede em Jacareí/SP e mais de 15 anos de experiência, atendemos ${city.name} e região com soluções profissionais de infraestrutura de TI, diagnóstico técnico especializado e suporte com SLA garantido.`,
         shouldIndex: true,
         priority: 0.5,
       });
