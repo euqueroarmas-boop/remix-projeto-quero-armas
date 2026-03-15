@@ -150,13 +150,10 @@ const OrcamentoTiPage = () => {
 
   return (
     <>
-      <Helmet>
-        <title>Orçamento de Infraestrutura de TI | WMTi</title>
-        <meta
-          name="description"
-          content="Calcule o investimento em infraestrutura de TI para sua empresa. Locação de computadores Dell a partir de R$249/mês com suporte completo."
-        />
-      </Helmet>
+      <SeoHead
+        title="Orçamento de Infraestrutura de TI | WMTi"
+        description="Calcule o investimento em infraestrutura de TI para sua empresa. Locação de computadores Dell a partir de R$249/mês com suporte completo."
+      />
 
       <Navbar />
 
