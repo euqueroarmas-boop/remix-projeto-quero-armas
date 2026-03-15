@@ -119,7 +119,7 @@ const BudgetLeadForm = ({ onSubmit, submitted, onContinueToContract }: Props) =>
           </h2>
         </motion.div>
 
-        <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-4">
+        <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-4" noValidate>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label className="mb-1.5 block text-sm">Nome da empresa *</Label>
