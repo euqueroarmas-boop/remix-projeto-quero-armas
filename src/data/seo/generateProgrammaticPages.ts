@@ -662,9 +662,9 @@ export function generateProgrammaticPages(): SeoPageData[] {
         relatedLinks.push({ label: `${segment.name} em ${getCityName(nc)}`, href: `/${prefix}-${nc}` });
       }
 
-      // Add service×segment links for this city
+      // Add service links for this city
       for (const svc of services.slice(0, 3)) {
-        relatedLinks.push({ label: `${svc.name} ${segment.titleSuffix}`, href: `/${svc.slug}-${segment.slug}-${city.slug}` });
+        relatedLinks.push({ label: `${svc.name} em ${city.name}`, href: `/${svc.slug}-${city.slug}` });
       }
 
       const segBenefits = segmentIcons[segment.slug] ?? [];
