@@ -419,7 +419,7 @@ export const cities: SeoCity[] = [
   { name: "Paulicéia", slug: "pauliceia", state: "SP", region: "Região Oeste", priority: 0.3 },
   { name: "Ribeirão dos Índios", slug: "ribeirao-dos-indios", state: "SP", region: "Região Oeste", priority: 0.3 },
   { name: "Rosana", slug: "rosana", state: "SP", region: "Região Oeste", priority: 0.3 },
-  { name: "Salmourão", slug: "salmo urao", state: "SP", region: "Região Oeste", priority: 0.3 },
+  { name: "Salmourão", slug: "salmourao-oeste", state: "SP", region: "Região Oeste", priority: 0.3 },
   { name: "Santa Mercedes", slug: "santa-mercedes", state: "SP", region: "Região Oeste", priority: 0.3 },
   { name: "Santo Expedito", slug: "santo-expedito", state: "SP", region: "Região Oeste", priority: 0.3 },
   { name: "Teodoro Sampaio", slug: "teodoro-sampaio", state: "SP", region: "Região Oeste", priority: 0.3 },
