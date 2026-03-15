@@ -22,6 +22,7 @@ interface Props {
 }
 
 const DiagnosticForm = ({ onComplete, completed }: Props) => {
+  const { toast } = useToast();
   const [step, setStep] = useState(0);
   const [data, setData] = useState<DiagnosticData>({
     computersCurrent: 5,
@@ -30,6 +31,7 @@ const DiagnosticForm = ({ onComplete, completed }: Props) => {
     hasServer: false,
     hasBackup: false,
   });
+  const [computersInput, setComputersInput] = useState(String(5));
 
   const steps = [
     {
@@ -75,15 +77,39 @@ const DiagnosticForm = ({ onComplete, completed }: Props) => {
     },
   ];
 
+  const currentStep = steps[step];
+  const computersSchema = z.coerce
+    .number({ invalid_type_error: "Informe um número válido." })
+    .int("Use apenas números inteiros")
+    .min(1, "O mínimo é 1 computador")
+    .max(500, "O máximo é 500 computadores");
+
   const handleNext = () => {
+    let nextData = data;
+
+    if (currentStep.type === "number") {
+      const parsed = computersSchema.safeParse(computersInput.trim());
+
+      if (!parsed.success) {
+        toast({
+          title: "Número inválido",
+          description: parsed.error.issues[0]?.message || "Preencha o campo corretamente.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      nextData = { ...data, computersCurrent: parsed.data };
+      setData(nextData);
+      setComputersInput(String(parsed.data));
+    }
+
     if (step < steps.length - 1) {
       setStep(step + 1);
     } else {
-      onComplete(data);
+      onComplete(nextData);
     }
   };
-
-  const currentStep = steps[step];
 
   if (completed) {
     return (
