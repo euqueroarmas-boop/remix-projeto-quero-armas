@@ -51,7 +51,7 @@ const OrcamentoTiPage = () => {
     setDiagnosticComplete(true);
     setComputersQty(data.computersCurrent || 5);
     scrollToSection("calculator");
-  }, []);
+  }, [scrollToSection]);
 
   const handleLeadSubmit = useCallback(
     async (formData: LeadFormData) => {
