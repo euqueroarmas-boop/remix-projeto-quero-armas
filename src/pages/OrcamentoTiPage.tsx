@@ -55,6 +55,7 @@ const OrcamentoTiPage = () => {
 
   // Payment (new)
   const [paymentComplete, setPaymentComplete] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
   const [invoiceUrl, setInvoiceUrl] = useState<string | null>(null);
 
   const plan = plans.find((p) => p.id === selectedPlan) || plans[1];
