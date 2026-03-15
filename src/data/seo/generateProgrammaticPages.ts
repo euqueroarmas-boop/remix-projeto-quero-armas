@@ -485,52 +485,6 @@ export function generateProgrammaticPages(): SeoPageData[] {
   // Phase 1: Sections 2 (Service×City×Segment) and 3 (Service×City×Intent) removed
   // Only clean service-city, problem-city, segment-city combinations
 
-  // ─── 3. Service × City × Intent ───
-  for (const service of services) {
-    for (const city of cities) {
-      for (const intent of intents) {
-        const slug = `${intent.slug}-${service.slug}-${city.slug}`;
-        const ctx = cityContext[city.slug] || "região com forte atividade empresarial";
-
-        const relatedLinks = [
-          { label: `${service.name} em ${city.name}`, href: `/${service.slug}-${city.slug}` },
-          { label: `Empresa de TI em ${city.name}`, href: `/empresa-ti-${city.slug}` },
-          ...(blogLinksForService[service.slug]?.slice(0, 1) ?? []),
-        ];
-
-        // Add nearby city intent links
-        const nearby = nearbyCities[city.slug] ?? [];
-        for (const nc of nearby.slice(0, 1)) {
-          relatedLinks.push({ label: `${intent.name} em ${getCityName(nc)}`, href: `/${intent.slug}-${service.slug}-${nc}` });
-        }
-
-        addPage({
-          slug,
-          metaTitle: `${intent.name} de ${service.name} em ${city.name} | WMTi`,
-          metaDescription: `${intent.name} de ${service.name.toLowerCase()} para empresas em ${city.name}. ${intent.descriptionExtra.slice(0, 80)}. WMTi Tecnologia da Informação.`,
-          tag: `${intent.name} — ${service.name}`,
-          headline: fill(intent.h1Template, { service: service.name.toLowerCase(), city: city.name }),
-          headlineHighlight: city.name,
-          description: `${intent.descriptionExtra} A WMTi oferece ${service.name.toLowerCase()} para empresas em ${city.name}, ${ctx}, com mais de 15 anos de experiência no mercado corporativo.`,
-          whatsappMessage: `Olá! Gostaria de um ${intent.name.toLowerCase()} de ${service.name.toLowerCase()} para minha empresa em ${city.name}.`,
-          category: "intent",
-          painPoints: (servicePainPoints[service.slug] ?? defaultPainPoints).slice(0, 4),
-          solutions: (serviceSolutions[service.slug] ?? defaultSolutions).slice(0, 4),
-          benefits: serviceIcons[service.slug]?.slice(0, 4) ?? serviceIcons["infraestrutura-ti"].slice(0, 4),
-          faq: [
-            { question: `Como solicitar ${intent.name.toLowerCase()} de ${service.name.toLowerCase()} em ${city.name}?`, answer: `Entre em contato pelo WhatsApp ou formulário do site. Nossa equipe técnica realiza um diagnóstico gratuito da sua infraestrutura em ${city.name} e apresenta uma proposta personalizada sem compromisso.` },
-            { question: `A WMTi oferece ${intent.name.toLowerCase()} gratuito?`, answer: "Sim. O diagnóstico inicial e a elaboração da proposta são gratuitos e sem compromisso. Avaliamos sua infraestrutura atual e apresentamos um projeto completo." },
-            { question: `Qual o prazo para ${intent.name.toLowerCase()} em ${city.name}?`, answer: `O prazo depende da complexidade do projeto. Após o diagnóstico inicial, apresentamos um cronograma detalhado. Atendemos ${city.name} e região com equipe técnica dedicada.` },
-          ],
-          relatedLinks,
-          localContent: `Solicite ${intent.name.toLowerCase()} de ${service.name.toLowerCase()} para sua empresa em ${city.name}, ${ctx}. A WMTi oferece atendimento presencial e remoto com SLA garantido, equipe técnica especializada e projetos dimensionados para cada necessidade na região de ${city.region}.`,
-          shouldIndex: true,
-          priority: city.priority * 0.5,
-          canonicalSlug: `${service.slug}-${city.slug}`,
-        });
-      }
-    }
-  }
 
   // ─── 4. Problem × City ───
   for (const problem of problems) {
