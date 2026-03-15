@@ -14,13 +14,6 @@ export { blogPosts } from "@/data/blogPosts";
 const BlogPage = () => {
   const [activeCategory, setActiveCategory] = useState<BlogCategory | "Todos">("Todos");
 
-  useEffect(() => {
-    document.title = "Blog | WMTi Tecnologia da Informação";
-    const desc = document.querySelector('meta[name="description"]');
-    if (desc) desc.setAttribute("content", "Artigos sobre TI corporativa, servidores Dell, Microsoft 365, segurança de rede, firewall pfSense e infraestrutura para empresas.");
-    window.scrollTo(0, 0);
-  }, []);
-
   const sorted = [...blogPosts].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   const filtered = activeCategory === "Todos"
     ? sorted
