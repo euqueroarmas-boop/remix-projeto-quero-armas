@@ -252,52 +252,128 @@ const blogLinksForService: Record<string, { label: string; href: string }[]> = {
   ],
 };
 
-/* ─── City context for richer local content ─── */
+/* ─── City context for richer local content (all 50 cities) ─── */
 const cityContext: Record<string, string> = {
-  "sao-paulo": "polo econômico do Brasil, com milhares de empresas que dependem de TI estável",
-  "campinas": "um dos maiores polos tecnológicos do interior paulista",
+  // Vale do Paraíba
+  "jacarei": "cidade estratégica do Vale do Paraíba, sede da WMTi, com atendimento presencial imediato",
   "sao-jose-dos-campos": "sede de grandes indústrias aeroespaciais e de tecnologia no Vale do Paraíba",
-  "ribeirao-preto": "centro agroindustrial do interior de São Paulo com crescente demanda por TI corporativa",
-  "sorocaba": "polo industrial em expansão com forte presença de empresas de médio e grande porte",
-  "santos": "principal cidade portuária do país, com demanda crescente por segurança digital e conectividade",
+  "taubate": "importante polo industrial do Vale do Paraíba com grande demanda por TI empresarial",
+  "cacapava": "cidade em crescimento no Vale do Paraíba com empresas buscando modernização tecnológica",
+  "pindamonhangaba": "polo industrial e comercial do Vale do Paraíba com crescente demanda por soluções de TI",
+  "guaratingueta": "centro educacional e comercial do Vale do Paraíba com empresas em expansão tecnológica",
+  "lorena": "cidade universitária do Vale do Paraíba com crescente setor empresarial",
+  "cruzeiro": "município industrial do Vale do Paraíba com necessidade de infraestrutura de TI moderna",
+  // Grande São Paulo
+  "sao-paulo": "polo econômico do Brasil, com milhares de empresas que dependem de TI estável",
   "guarulhos": "segunda maior cidade de São Paulo, com grande concentração de empresas e indústrias",
   "osasco": "importante centro comercial e financeiro da Grande São Paulo",
+  "santo-andre": "polo industrial do ABC Paulista com forte presença de empresas de médio e grande porte",
+  "sao-bernardo-do-campo": "centro industrial do ABC Paulista, sede de grandes montadoras e indústrias",
+  "sao-caetano-do-sul": "cidade com alto IDH e forte atividade empresarial no ABC Paulista",
+  "diadema": "polo industrial do ABC com empresas que demandam infraestrutura de TI confiável",
+  "maua": "cidade industrial do ABC Paulista com crescente modernização tecnológica",
+  "mogi-das-cruzes": "cidade em expansão no Alto Tietê com forte presença de PMEs",
+  "suzano": "polo industrial e comercial do Alto Tietê com empresas em crescimento",
+  "taboao-da-serra": "centro comercial da Grande São Paulo com forte atividade empresarial",
+  "barueri": "polo corporativo e de tecnologia da Grande São Paulo, sede de grandes empresas",
+  "cotia": "cidade em expansão na Grande São Paulo com polo industrial e empresarial diversificado",
+  "itaquaquecetuba": "município em crescimento no Alto Tietê com empresas buscando soluções de TI",
+  // Região de Campinas
+  "campinas": "um dos maiores polos tecnológicos do interior paulista",
   "jundiai": "polo industrial estratégico entre São Paulo e Campinas",
   "piracicaba": "centro agroindustrial e universitário do interior paulista",
-  "bauru": "entroncamento rodoferroviário com forte atividade comercial e de serviços",
-  "barretos": "polo agroindustrial do norte paulista com empresas em crescimento tecnológico",
-  "botucatu": "cidade universitária com crescente modernização empresarial",
-  "marilia": "centro comercial e industrial do centro-oeste paulista",
-  "taubate": "importante polo industrial do Vale do Paraíba com grande demanda por TI empresarial",
-  "jacarei": "cidade estratégica do Vale do Paraíba, sede da WMTi, com atendimento presencial imediato",
-  "mogi-das-cruzes": "cidade em expansão no Alto Tietê com forte presença de PMEs",
   "americana": "polo têxtil e industrial da região metropolitana de Campinas",
-  "araraquara": "centro regional do interior paulista com empresas em modernização tecnológica",
+  "limeira": "polo de joias e metalurgia com empresas em modernização tecnológica",
+  "indaiatuba": "cidade com forte crescimento industrial e empresarial na região de Campinas",
+  "sumare": "polo industrial da região metropolitana de Campinas com empresas diversificadas",
+  "hortolandia": "centro tecnológico na região de Campinas com presença de grandes empresas de TI",
+  "valinhos": "cidade com forte atividade empresarial e qualidade de vida na região de Campinas",
+  "vinhedo": "polo de tecnologia e vinicultura na região de Campinas",
+  // Litoral
+  "santos": "principal cidade portuária do país, com demanda crescente por segurança digital e conectividade",
+  "sao-vicente": "cidade litorânea com empresas que demandam infraestrutura de TI confiável",
+  "praia-grande": "município em crescimento no litoral paulista com setor empresarial em expansão",
+  // Sorocaba
+  "sorocaba": "polo industrial em expansão com forte presença de empresas de médio e grande porte",
+  "itu": "cidade industrial e turística na região de Sorocaba com empresas em modernização",
+  "salto": "município industrial na região de Sorocaba com crescente demanda por TI corporativa",
+  // Interior Noroeste
+  "ribeirao-preto": "centro agroindustrial do interior de São Paulo com crescente demanda por TI corporativa",
   "sao-jose-do-rio-preto": "polo regional do noroeste paulista com forte setor de serviços e comércio",
+  "barretos": "polo agroindustrial do norte paulista com empresas em crescimento tecnológico",
+  "araraquara": "centro regional do interior paulista com empresas em modernização tecnológica",
+  "franca": "polo calçadista e industrial do interior paulista com empresas em modernização",
+  "sertaozinho": "polo sucroalcooleiro e industrial do interior de São Paulo",
+  // Interior Centro
+  "bauru": "entroncamento rodoferroviário com forte atividade comercial e de serviços",
+  "marilia": "centro comercial e industrial do centro-oeste paulista",
+  "botucatu": "cidade universitária com crescente modernização empresarial",
+  "jau": "polo cerâmico e calçadista do interior paulista",
+  // Interior Oeste
+  "presidente-prudente": "centro regional do oeste paulista com forte setor de serviços",
+  "aracatuba": "polo agroindustrial e comercial do noroeste paulista",
 };
 
 /* ─── Nearby cities for interlinking ─── */
 const nearbyCities: Record<string, string[]> = {
-  "sao-paulo": ["guarulhos", "osasco", "santos"],
-  "campinas": ["americana", "piracicaba", "jundiai"],
-  "sao-jose-dos-campos": ["jacarei", "taubate", "mogi-das-cruzes"],
-  "ribeirao-preto": ["araraquara", "barretos", "sao-jose-do-rio-preto"],
-  "sorocaba": ["jundiai", "campinas", "sao-paulo"],
-  "santos": ["sao-paulo", "guarulhos", "osasco"],
-  "guarulhos": ["sao-paulo", "mogi-das-cruzes", "osasco"],
-  "osasco": ["sao-paulo", "guarulhos", "jundiai"],
-  "jundiai": ["campinas", "sorocaba", "osasco"],
-  "piracicaba": ["campinas", "americana", "sorocaba"],
-  "bauru": ["marilia", "botucatu", "araraquara"],
-  "sao-jose-do-rio-preto": ["barretos", "araraquara", "ribeirao-preto"],
-  "taubate": ["sao-jose-dos-campos", "jacarei", "mogi-das-cruzes"],
-  "jacarei": ["sao-jose-dos-campos", "taubate", "mogi-das-cruzes"],
-  "mogi-das-cruzes": ["guarulhos", "sao-jose-dos-campos", "sao-paulo"],
-  "americana": ["campinas", "piracicaba", "jundiai"],
+  // Vale do Paraíba
+  "jacarei": ["sao-jose-dos-campos", "taubate", "cacapava"],
+  "sao-jose-dos-campos": ["jacarei", "taubate", "cacapava"],
+  "taubate": ["sao-jose-dos-campos", "pindamonhangaba", "cacapava"],
+  "cacapava": ["jacarei", "taubate", "sao-jose-dos-campos"],
+  "pindamonhangaba": ["taubate", "guaratingueta", "cacapava"],
+  "guaratingueta": ["pindamonhangaba", "lorena", "taubate"],
+  "lorena": ["guaratingueta", "cruzeiro", "pindamonhangaba"],
+  "cruzeiro": ["lorena", "guaratingueta"],
+  // Grande São Paulo
+  "sao-paulo": ["guarulhos", "osasco", "barueri"],
+  "guarulhos": ["sao-paulo", "mogi-das-cruzes", "itaquaquecetuba"],
+  "osasco": ["sao-paulo", "barueri", "cotia"],
+  "santo-andre": ["sao-bernardo-do-campo", "maua", "diadema"],
+  "sao-bernardo-do-campo": ["santo-andre", "diadema", "sao-caetano-do-sul"],
+  "sao-caetano-do-sul": ["santo-andre", "sao-bernardo-do-campo", "sao-paulo"],
+  "diadema": ["sao-bernardo-do-campo", "santo-andre", "sao-paulo"],
+  "maua": ["santo-andre", "ribeirao-preto", "suzano"],
+  "mogi-das-cruzes": ["suzano", "itaquaquecetuba", "guarulhos"],
+  "suzano": ["mogi-das-cruzes", "itaquaquecetuba", "guarulhos"],
+  "taboao-da-serra": ["osasco", "cotia", "sao-paulo"],
+  "barueri": ["osasco", "cotia", "jundiai"],
+  "cotia": ["taboao-da-serra", "osasco", "barueri"],
+  "itaquaquecetuba": ["mogi-das-cruzes", "suzano", "guarulhos"],
+  // Campinas
+  "campinas": ["americana", "sumare", "indaiatuba"],
+  "jundiai": ["campinas", "indaiatuba", "barueri"],
+  "piracicaba": ["campinas", "limeira", "americana"],
+  "americana": ["campinas", "sumare", "limeira"],
+  "limeira": ["piracicaba", "americana", "campinas"],
+  "indaiatuba": ["campinas", "jundiai", "salto"],
+  "sumare": ["campinas", "americana", "hortolandia"],
+  "hortolandia": ["sumare", "campinas", "americana"],
+  "valinhos": ["campinas", "vinhedo", "jundiai"],
+  "vinhedo": ["valinhos", "campinas", "jundiai"],
+  // Litoral
+  "santos": ["sao-vicente", "praia-grande", "sao-paulo"],
+  "sao-vicente": ["santos", "praia-grande"],
+  "praia-grande": ["santos", "sao-vicente"],
+  // Sorocaba
+  "sorocaba": ["itu", "salto", "jundiai"],
+  "itu": ["sorocaba", "salto", "indaiatuba"],
+  "salto": ["itu", "indaiatuba", "sorocaba"],
+  // Interior Noroeste
+  "ribeirao-preto": ["sertaozinho", "franca", "araraquara"],
+  "sao-jose-do-rio-preto": ["barretos", "araraquara", "aracatuba"],
+  "barretos": ["ribeirao-preto", "sao-jose-do-rio-preto", "franca"],
   "araraquara": ["ribeirao-preto", "sao-jose-do-rio-preto", "bauru"],
-  "barretos": ["ribeirao-preto", "sao-jose-do-rio-preto", "araraquara"],
+  "franca": ["ribeirao-preto", "barretos", "sertaozinho"],
+  "sertaozinho": ["ribeirao-preto", "franca", "araraquara"],
+  // Interior Centro
+  "bauru": ["marilia", "botucatu", "jau"],
+  "marilia": ["bauru", "botucatu", "presidente-prudente"],
   "botucatu": ["bauru", "sorocaba", "piracicaba"],
-  "marilia": ["bauru", "botucatu", "araraquara"],
+  "jau": ["bauru", "botucatu", "araraquara"],
+  // Interior Oeste
+  "presidente-prudente": ["marilia", "aracatuba"],
+  "aracatuba": ["sao-jose-do-rio-preto", "presidente-prudente"],
 };
 
 const defaultPainPoints = [
@@ -329,6 +405,15 @@ function fill(template: string, replacements: Record<string, string>): string {
 function getCityName(slug: string): string {
   return cities.find((c) => c.slug === slug)?.name ?? slug;
 }
+
+/** Segment name-to-slug mapping for URL generation */
+const segmentPagePrefix: Record<string, string> = {
+  cartorios: "ti-para-cartorios",
+  hospitais: "ti-para-hospitais",
+  "escritorios-advocacia": "ti-para-escritorios-de-advocacia",
+  contabilidade: "ti-para-contabilidades",
+  industrias: "ti-para-industrias",
+};
 
 export function generateProgrammaticPages(): SeoPageData[] {
   const pages: SeoPageData[] = [];
@@ -364,6 +449,12 @@ export function generateProgrammaticPages(): SeoPageData[] {
       const blogLinks = blogLinksForService[service.slug] ?? [];
       relatedLinks.push(...blogLinks);
 
+      // Add segment links for this city
+      for (const seg of segments.slice(0, 2)) {
+        const prefix = segmentPagePrefix[seg.slug] || `ti-para-${seg.slug}`;
+        relatedLinks.push({ label: `${seg.name} em ${city.name}`, href: `/${prefix}-${city.slug}` });
+      }
+
       addPage({
         slug,
         metaTitle: fill(service.titleTemplate, r),
@@ -384,9 +475,9 @@ export function generateProgrammaticPages(): SeoPageData[] {
           { question: "Como solicitar um orçamento de TI?", answer: "Entre em contato pelo WhatsApp ou formulário do site para agendar um diagnóstico gratuito. Nossa equipe técnica avalia sua infraestrutura atual e apresenta uma proposta detalhada sem compromisso." },
         ],
         relatedLinks,
-        localContent: `A WMTi Tecnologia da Informação atende empresas em ${city.name} (${city.state}), ${ctx}, com soluções especializadas de ${service.name.toLowerCase()}. Com sede em Jacareí/SP e mais de 15 anos de experiência no mercado corporativo, oferecemos atendimento presencial e remoto com SLA garantido, garantindo que sua empresa em ${city.name} opere com segurança, desempenho e confiabilidade. Nossos clientes na região contam com suporte técnico dedicado, monitoramento contínuo e projetos de infraestrutura dimensionados para cada necessidade.`,
+        localContent: `A WMTi Tecnologia da Informação atende empresas em ${city.name} (${city.state}), ${ctx}, com soluções especializadas de ${service.name.toLowerCase()}. Com sede em Jacareí/SP e mais de 15 anos de experiência no mercado corporativo, oferecemos atendimento presencial e remoto com SLA garantido, garantindo que sua empresa em ${city.name} opere com segurança, desempenho e confiabilidade. Nossos clientes na região de ${city.region} contam com suporte técnico dedicado, monitoramento contínuo e projetos de infraestrutura dimensionados para cada necessidade.`,
         shouldIndex: true,
-        priority: 0.7,
+        priority: city.priority * 0.7,
       });
     }
   }
@@ -431,9 +522,9 @@ export function generateProgrammaticPages(): SeoPageData[] {
             { question: `A WMTi atende ${segment.name.toLowerCase()} em ${city.name}?`, answer: `Sim. Atendemos ${segment.name.toLowerCase()} em ${city.name} e região com soluções especializadas de ${service.name.toLowerCase()}, incluindo infraestrutura, segurança e suporte técnico dedicado.` },
           ],
           relatedLinks,
-          localContent: `A WMTi atende ${segment.name.toLowerCase()} em ${city.name} (${city.state}), ${ctx}, com soluções de ${service.name.toLowerCase()} dimensionadas para as necessidades específicas do segmento. Com mais de 15 anos de experiência em tecnologia da informação corporativa, nossa equipe técnica entende as particularidades de ${segment.name.toLowerCase()} e implementa ambientes seguros, confiáveis e em conformidade com as regulamentações do setor.`,
+          localContent: `A WMTi atende ${segment.name.toLowerCase()} em ${city.name} (${city.state}), ${ctx}, com soluções de ${service.name.toLowerCase()} dimensionadas para as necessidades específicas do segmento. Com mais de 15 anos de experiência em tecnologia da informação corporativa na região de ${city.region}, nossa equipe técnica entende as particularidades de ${segment.name.toLowerCase()} e implementa ambientes seguros, confiáveis e em conformidade com as regulamentações do setor.`,
           shouldIndex: true,
-          priority: 0.6,
+          priority: city.priority * 0.6,
           canonicalSlug: `${service.slug}-${city.slug}`,
         });
       }
@@ -478,9 +569,9 @@ export function generateProgrammaticPages(): SeoPageData[] {
             { question: `Qual o prazo para ${intent.name.toLowerCase()} em ${city.name}?`, answer: `O prazo depende da complexidade do projeto. Após o diagnóstico inicial, apresentamos um cronograma detalhado. Atendemos ${city.name} e região com equipe técnica dedicada.` },
           ],
           relatedLinks,
-          localContent: `Solicite ${intent.name.toLowerCase()} de ${service.name.toLowerCase()} para sua empresa em ${city.name}, ${ctx}. A WMTi oferece atendimento presencial e remoto com SLA garantido, equipe técnica especializada e projetos dimensionados para cada necessidade.`,
+          localContent: `Solicite ${intent.name.toLowerCase()} de ${service.name.toLowerCase()} para sua empresa em ${city.name}, ${ctx}. A WMTi oferece atendimento presencial e remoto com SLA garantido, equipe técnica especializada e projetos dimensionados para cada necessidade na região de ${city.region}.`,
           shouldIndex: true,
-          priority: 0.5,
+          priority: city.priority * 0.5,
           canonicalSlug: `${service.slug}-${city.slug}`,
         });
       }
@@ -488,7 +579,6 @@ export function generateProgrammaticPages(): SeoPageData[] {
   }
 
   // ─── 4. Problem × City ───
-  const problemSlugs = problems.map((p) => p.slug);
   for (const problem of problems) {
     for (const city of cities) {
       const slug = `${problem.slug}-${city.slug}`;
@@ -546,9 +636,63 @@ export function generateProgrammaticPages(): SeoPageData[] {
           { question: `Qual o prazo para resolver ${problem.name.toLowerCase()}?`, answer: `O prazo depende da causa do problema. Após o diagnóstico, apresentamos um cronograma de ação. Muitos problemas são resolvidos em poucas horas. Atendemos ${city.name} com equipe técnica dedicada.` },
         ],
         relatedLinks,
-        localContent: `Se sua empresa em ${city.name}, ${ctx}, enfrenta ${problem.name.toLowerCase()}, a WMTi pode ajudar. Com sede em Jacareí/SP e mais de 15 anos de experiência, atendemos ${city.name} e região com soluções profissionais de infraestrutura de TI, diagnóstico técnico especializado e suporte com SLA garantido.`,
+        localContent: `Se sua empresa em ${city.name}, ${ctx}, enfrenta ${problem.name.toLowerCase()}, a WMTi pode ajudar. Com sede em Jacareí/SP e mais de 15 anos de experiência, atendemos a região de ${city.region} com soluções profissionais de infraestrutura de TI, diagnóstico técnico especializado e suporte com SLA garantido.`,
         shouldIndex: true,
-        priority: 0.5,
+        priority: city.priority * 0.5,
+      });
+    }
+  }
+
+  // ─── 5. Segment × City (standalone segment pages) ───
+  for (const segment of segments) {
+    for (const city of cities) {
+      const prefix = segmentPagePrefix[segment.slug] || `ti-para-${segment.slug}`;
+      const slug = `${prefix}-${city.slug}`;
+      const ctx = cityContext[city.slug] || "região com forte atividade empresarial";
+
+      const relatedLinks = [
+        { label: `Empresa de TI em ${city.name}`, href: `/empresa-ti-${city.slug}` },
+        { label: `Infraestrutura de TI em ${city.name}`, href: `/infraestrutura-ti-${city.slug}` },
+        { label: `Suporte de TI em ${city.name}`, href: `/suporte-ti-${city.slug}` },
+      ];
+
+      // Add nearby city segment links
+      const nearby = nearbyCities[city.slug] ?? [];
+      for (const nc of nearby.slice(0, 2)) {
+        relatedLinks.push({ label: `${segment.name} em ${getCityName(nc)}`, href: `/${prefix}-${nc}` });
+      }
+
+      // Add service×segment links for this city
+      for (const svc of services.slice(0, 3)) {
+        relatedLinks.push({ label: `${svc.name} ${segment.titleSuffix}`, href: `/${svc.slug}-${segment.slug}-${city.slug}` });
+      }
+
+      const segBenefits = segmentIcons[segment.slug] ?? [];
+      const baseBenefits = serviceIcons["infraestrutura-ti"];
+      const benefits = [...segBenefits, ...baseBenefits.slice(0, 3)];
+
+      addPage({
+        slug,
+        metaTitle: `TI ${segment.titleSuffix} em ${city.name} | WMTi Tecnologia`,
+        metaDescription: `Soluções de TI ${segment.titleSuffix.toLowerCase()} em ${city.name}. ${segment.descriptionExtra.slice(0, 120)}. WMTi.`,
+        tag: `TI ${segment.titleSuffix}`,
+        headline: `TI ${segment.titleSuffix} em `,
+        headlineHighlight: city.name,
+        description: `A WMTi oferece soluções completas de TI ${segment.titleSuffix.toLowerCase()} em ${city.name}, ${ctx}. ${segment.descriptionExtra} Com mais de 15 anos de experiência, atendemos ${segment.name.toLowerCase()} com infraestrutura dimensionada, suporte especializado e conformidade com as regulamentações do setor.`,
+        whatsappMessage: `Olá! Preciso de TI ${segment.titleSuffix.toLowerCase()} em ${city.name}.`,
+        category: "segment",
+        painPoints: [...segment.painPoints, ...defaultPainPoints.slice(0, 3)],
+        solutions: defaultSolutions,
+        benefits,
+        faq: [
+          segment.faqExtra,
+          { question: `A WMTi atende ${segment.name.toLowerCase()} em ${city.name}?`, answer: `Sim. Atendemos ${segment.name.toLowerCase()} em ${city.name} e região de ${city.region} com soluções especializadas de TI, incluindo servidores, redes, segurança e suporte técnico dedicado.` },
+          { question: `Qual o custo de TI ${segment.titleSuffix.toLowerCase()} em ${city.name}?`, answer: `O investimento depende do porte e das necessidades específicas. Entre em contato para um diagnóstico gratuito e proposta personalizada.` },
+        ],
+        relatedLinks,
+        localContent: `A WMTi atende ${segment.name.toLowerCase()} em ${city.name} (${city.state}), ${ctx}, com soluções de TI dimensionadas para as necessidades do segmento. Nossa equipe na região de ${city.region} oferece atendimento presencial e remoto com SLA garantido.`,
+        shouldIndex: true,
+        priority: city.priority * 0.6,
       });
     }
   }

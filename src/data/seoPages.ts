@@ -1120,28 +1120,13 @@ export const redirectMap: Record<string, string> = {
 };
 
 // ==================== CITY SEO PAGES ====================
-const cityPages: { city: string; slug: string }[] = [
-  { city: "São Paulo", slug: "empresa-ti-sao-paulo" },
-  { city: "Campinas", slug: "empresa-ti-campinas" },
-  { city: "São José dos Campos", slug: "empresa-ti-sao-jose-dos-campos" },
-  { city: "Ribeirão Preto", slug: "empresa-ti-ribeirao-preto" },
-  { city: "Sorocaba", slug: "empresa-ti-sorocaba" },
-  { city: "Santos", slug: "empresa-ti-santos" },
-  { city: "Guarulhos", slug: "empresa-ti-guarulhos" },
-  { city: "Osasco", slug: "empresa-ti-osasco" },
-  { city: "Jundiaí", slug: "empresa-ti-jundiai" },
-  { city: "Piracicaba", slug: "empresa-ti-piracicaba" },
-  { city: "Bauru", slug: "empresa-ti-bauru" },
-  { city: "São José do Rio Preto", slug: "empresa-ti-sao-jose-do-rio-preto" },
-  { city: "Taubaté", slug: "empresa-ti-taubate" },
-  { city: "Jacareí", slug: "empresa-ti-jacarei" },
-  { city: "Mogi das Cruzes", slug: "empresa-ti-mogi-das-cruzes" },
-  { city: "Americana", slug: "empresa-ti-americana" },
-  { city: "Araraquara", slug: "empresa-ti-araraquara" },
-  { city: "Barretos", slug: "empresa-ti-barretos" },
-  { city: "Botucatu", slug: "empresa-ti-botucatu" },
-  { city: "Marília", slug: "empresa-ti-marilia" },
-];
+// Auto-generate city hub pages from the cities data source
+import { cities as allCities } from "./seo/cities";
+
+const cityPages: { city: string; slug: string }[] = allCities.map((c) => ({
+  city: c.name,
+  slug: `empresa-ti-${c.slug}`,
+}));
 
 function buildCityPage(city: string, slug: string): SeoPageData {
   return {

@@ -1,7 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-// All data replicated from the frontend source to generate sitemaps server-side
-
 const BASE_URL = "https://wmti.com.br";
 
 const services = [
@@ -10,15 +8,39 @@ const services = [
 ];
 
 const cities = [
-  "sao-paulo", "campinas", "sao-jose-dos-campos", "ribeirao-preto", "sorocaba",
-  "santos", "guarulhos", "osasco", "jundiai", "piracicaba", "bauru",
-  "sao-jose-do-rio-preto", "taubate", "jacarei", "mogi-das-cruzes",
-  "americana", "araraquara", "barretos", "botucatu", "marilia",
+  // Vale do Paraíba
+  "jacarei", "sao-jose-dos-campos", "taubate", "cacapava", "pindamonhangaba",
+  "guaratingueta", "lorena", "cruzeiro",
+  // Grande São Paulo
+  "sao-paulo", "guarulhos", "osasco", "santo-andre", "sao-bernardo-do-campo",
+  "sao-caetano-do-sul", "diadema", "maua", "mogi-das-cruzes", "suzano",
+  "taboao-da-serra", "barueri", "cotia", "itaquaquecetuba",
+  // Campinas
+  "campinas", "jundiai", "piracicaba", "americana", "limeira",
+  "indaiatuba", "sumare", "hortolandia", "valinhos", "vinhedo",
+  // Litoral
+  "santos", "sao-vicente", "praia-grande",
+  // Sorocaba
+  "sorocaba", "itu", "salto",
+  // Interior Noroeste
+  "ribeirao-preto", "sao-jose-do-rio-preto", "barretos", "araraquara", "franca", "sertaozinho",
+  // Interior Centro
+  "bauru", "marilia", "botucatu", "jau",
+  // Interior Oeste
+  "presidente-prudente", "aracatuba",
 ];
 
 const segments = ["cartorios", "hospitais", "escritorios-advocacia", "contabilidade", "industrias"];
 const intents = ["orcamento", "terceirizacao", "consultoria", "implantacao"];
 const problems = ["rede-lenta", "servidor-travando", "sem-backup", "ataque-ransomware", "computadores-lentos"];
+
+const segmentPrefixes: Record<string, string> = {
+  cartorios: "ti-para-cartorios",
+  hospitais: "ti-para-hospitais",
+  "escritorios-advocacia": "ti-para-escritorios-de-advocacia",
+  contabilidade: "ti-para-contabilidades",
+  industrias: "ti-para-industrias",
+};
 
 // Static/hand-crafted pages
 const staticPages = [
@@ -64,9 +86,6 @@ const staticPages = [
   { loc: "/compra-ou-locacao-de-computadores", priority: "0.7", changefreq: "monthly" },
   { loc: "/firewall-pfsense-vs-roteador-comum", priority: "0.7", changefreq: "monthly" },
   { loc: "/diagnostico-ti-empresarial", priority: "0.9", changefreq: "monthly" },
-  { loc: "/seguranca-da-informacao-empresarial-jacarei", priority: "0.7", changefreq: "monthly" },
-  { loc: "/suporte-ti-sao-jose-dos-campos", priority: "0.7", changefreq: "monthly" },
-  { loc: "/suporte-ti-taubate", priority: "0.7", changefreq: "monthly" },
 ];
 
 function urlEntry(loc: string, priority: string, changefreq: string): string {
@@ -81,16 +100,16 @@ function buildPagesXml(): string {
 function buildProgrammaticXml(): string {
   const urls: string[] = [];
 
+  // City hub pages
+  for (const city of cities) {
+    urls.push(urlEntry(`/empresa-ti-${city}`, "0.7", "monthly"));
+  }
+
   // Service × City
   for (const svc of services) {
     for (const city of cities) {
       urls.push(urlEntry(`/${svc}-${city}`, "0.7", "monthly"));
     }
-  }
-
-  // City hub pages
-  for (const city of cities) {
-    urls.push(urlEntry(`/empresa-ti-${city}`, "0.7", "monthly"));
   }
 
   // Service × City × Segment
@@ -118,11 +137,18 @@ function buildProgrammaticXml(): string {
     }
   }
 
+  // Segment × City (standalone)
+  for (const seg of segments) {
+    const prefix = segmentPrefixes[seg] || `ti-para-${seg}`;
+    for (const city of cities) {
+      urls.push(urlEntry(`/${prefix}-${city}`, "0.6", "monthly"));
+    }
+  }
+
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join("\n")}\n</urlset>`;
 }
 
 function buildBlogXml(): string {
-  // Blog index + known slugs
   const blogSlugs = [
     "provimento-213-cnj-desafios-tecnologia-cartorios",
     "vantagens-microsoft-365-para-empresas",

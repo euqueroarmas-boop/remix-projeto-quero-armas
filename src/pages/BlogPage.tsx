@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Calendar } from "lucide-react";
+import { ArrowRight, Calendar, ChevronDown } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
@@ -13,12 +13,15 @@ export { blogPosts } from "@/data/blogPosts";
 
 const BlogPage = () => {
   const [activeCategory, setActiveCategory] = useState<BlogCategory | "Todos">("Todos");
+  const [mobileDropdownOpen, setMobileDropdownOpen] = useState(false);
 
   const sorted = [...blogPosts].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   const filtered = activeCategory === "Todos"
     ? sorted
     : sorted.filter((p) => p.category === activeCategory);
   const recentSlugs = new Set(sorted.slice(0, 3).map(p => p.slug));
+
+  const allCategories: (BlogCategory | "Todos")[] = ["Todos", ...blogCategories];
 
   return (
     <div className="min-h-screen">
@@ -51,27 +54,17 @@ const BlogPage = () => {
 
       {/* Category filters */}
       <section className="bg-secondary/95 backdrop-blur-sm border-b border-border sticky top-14 md:top-16 z-30">
-        <div className="container py-4">
+        <div className="container py-3 md:py-4">
           {/* Desktop: horizontal scrollable pills */}
-          <div className="hidden md:flex items-center gap-3 overflow-x-auto no-scrollbar pb-1">
-            <button
-              onClick={() => setActiveCategory("Todos")}
-              className={`font-mono text-xs uppercase tracking-[0.15em] px-5 py-2 rounded-full border-2 transition-all duration-200 whitespace-nowrap ${
-                activeCategory === "Todos"
-                  ? "border-primary text-primary-foreground bg-primary shadow-md shadow-primary/20"
-                  : "border-border text-muted-foreground hover:text-primary hover:border-primary/60 hover:bg-primary/5"
-              }`}
-            >
-              Todos
-            </button>
-            {blogCategories.map((cat) => (
+          <div className="hidden md:flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+            {allCategories.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
-                className={`font-mono text-xs uppercase tracking-[0.15em] px-5 py-2 rounded-full border-2 transition-all duration-200 whitespace-nowrap ${
+                className={`font-mono text-[11px] uppercase tracking-[0.12em] px-4 py-2 rounded-full border transition-all duration-200 whitespace-nowrap ${
                   activeCategory === cat
                     ? "border-primary text-primary-foreground bg-primary shadow-md shadow-primary/20"
-                    : "border-border text-muted-foreground hover:text-primary hover:border-primary/60 hover:bg-primary/5"
+                    : "border-border text-muted-foreground hover:text-primary hover:border-primary/50 hover:bg-primary/5"
                 }`}
               >
                 {cat}
@@ -79,31 +72,42 @@ const BlogPage = () => {
             ))}
           </div>
 
-          {/* Mobile: scrollable chips with larger touch targets */}
-          <div className="flex md:hidden items-center gap-2.5 overflow-x-auto no-scrollbar -mx-4 px-4 pb-1">
+          {/* Mobile: dropdown selector */}
+          <div className="md:hidden relative">
             <button
-              onClick={() => setActiveCategory("Todos")}
-              className={`font-mono text-[11px] uppercase tracking-[0.12em] px-4 py-2.5 rounded-full border-2 transition-all duration-200 whitespace-nowrap flex-shrink-0 ${
-                activeCategory === "Todos"
-                  ? "border-primary text-primary-foreground bg-primary shadow-md shadow-primary/20"
-                  : "border-border text-muted-foreground active:bg-primary/10"
-              }`}
+              onClick={() => setMobileDropdownOpen(!mobileDropdownOpen)}
+              className="w-full flex items-center justify-between gap-2 font-mono text-xs uppercase tracking-[0.12em] px-4 py-3 rounded-lg border border-border bg-background text-foreground"
             >
-              Todos
+              <span className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-primary" />
+                {activeCategory}
+              </span>
+              <ChevronDown size={14} className={`transition-transform text-muted-foreground ${mobileDropdownOpen ? "rotate-180" : ""}`} />
             </button>
-            {blogCategories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={`font-mono text-[11px] uppercase tracking-[0.12em] px-4 py-2.5 rounded-full border-2 transition-all duration-200 whitespace-nowrap flex-shrink-0 ${
-                  activeCategory === cat
-                    ? "border-primary text-primary-foreground bg-primary shadow-md shadow-primary/20"
-                    : "border-border text-muted-foreground active:bg-primary/10"
-                }`}
+            {mobileDropdownOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-xl shadow-black/20 z-50 max-h-[60vh] overflow-y-auto"
               >
-                {cat}
-              </button>
-            ))}
+                {allCategories.map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => { setActiveCategory(cat); setMobileDropdownOpen(false); }}
+                    className={`w-full text-left px-4 py-3 font-mono text-xs uppercase tracking-[0.12em] transition-colors border-b border-border/30 last:border-0 ${
+                      activeCategory === cat
+                        ? "text-primary bg-primary/10"
+                        : "text-muted-foreground active:bg-muted"
+                    }`}
+                  >
+                    <span className="flex items-center gap-2">
+                      <span className={`w-1.5 h-1.5 rounded-full ${activeCategory === cat ? "bg-primary" : "bg-muted-foreground/30"}`} />
+                      {cat}
+                    </span>
+                  </button>
+                ))}
+              </motion.div>
+            )}
           </div>
         </div>
       </section>
