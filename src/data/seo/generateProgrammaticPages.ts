@@ -482,54 +482,8 @@ export function generateProgrammaticPages(): SeoPageData[] {
     }
   }
 
-  // ─── 2. Service × City × Segment ───
-  for (const service of services) {
-    for (const city of cities) {
-      for (const segment of segments) {
-        const slug = `${service.slug}-${segment.slug}-${city.slug}`;
-
-        const baseBenefits = serviceIcons[service.slug] ?? serviceIcons["infraestrutura-ti"];
-        const segBenefits = segmentIcons[segment.slug] ?? [];
-        const benefits = [...segBenefits, ...baseBenefits.slice(0, 3)];
-        const ctx = cityContext[city.slug] || "região com forte atividade empresarial";
-
-        const relatedLinks = [
-          { label: `${service.name} em ${city.name}`, href: `/${service.slug}-${city.slug}` },
-          { label: `Empresa de TI em ${city.name}`, href: `/empresa-ti-${city.slug}` },
-          ...service.relatedSlugs.slice(0, 2).map((rs) => ({
-            label: services.find((s) => s.slug === rs)?.name ?? rs,
-            href: `/${rs}-${city.slug}`,
-          })),
-          ...(blogLinksForService[service.slug]?.slice(0, 1) ?? []),
-        ];
-
-        addPage({
-          slug,
-          metaTitle: `${service.name} ${segment.titleSuffix} em ${city.name} | WMTi`,
-          metaDescription: `${service.name} ${segment.titleSuffix.toLowerCase()} em ${city.name}. ${segment.descriptionExtra.slice(0, 100)}. WMTi Tecnologia.`,
-          tag: `${service.name} ${segment.titleSuffix}`,
-          headline: `${service.name} ${segment.titleSuffix} em `,
-          headlineHighlight: city.name,
-          description: `A WMTi oferece ${service.name.toLowerCase()} especializada ${segment.titleSuffix.toLowerCase()} em ${city.name}, ${ctx}. ${segment.descriptionExtra}`,
-          whatsappMessage: `Olá! Gostaria de saber mais sobre ${service.name} ${segment.titleSuffix.toLowerCase()} em ${city.name}.`,
-          category: "segment",
-          painPoints: [...segment.painPoints, ...(servicePainPoints[service.slug]?.slice(0, 3) ?? defaultPainPoints.slice(0, 3))],
-          solutions: serviceSolutions[service.slug] ?? defaultSolutions,
-          benefits,
-          faq: [
-            segment.faqExtra,
-            { question: `Qual o custo de ${service.name.toLowerCase()} ${segment.titleSuffix.toLowerCase()} em ${city.name}?`, answer: `O investimento depende do porte e das necessidades específicas do ${segment.name.toLowerCase()}. Entre em contato para um diagnóstico gratuito e uma proposta personalizada para sua operação em ${city.name}.` },
-            { question: `A WMTi atende ${segment.name.toLowerCase()} em ${city.name}?`, answer: `Sim. Atendemos ${segment.name.toLowerCase()} em ${city.name} e região com soluções especializadas de ${service.name.toLowerCase()}, incluindo infraestrutura, segurança e suporte técnico dedicado.` },
-          ],
-          relatedLinks,
-          localContent: `A WMTi atende ${segment.name.toLowerCase()} em ${city.name} (${city.state}), ${ctx}, com soluções de ${service.name.toLowerCase()} dimensionadas para as necessidades específicas do segmento. Com mais de 15 anos de experiência em tecnologia da informação corporativa na região de ${city.region}, nossa equipe técnica entende as particularidades de ${segment.name.toLowerCase()} e implementa ambientes seguros, confiáveis e em conformidade com as regulamentações do setor.`,
-          shouldIndex: true,
-          priority: city.priority * 0.6,
-          canonicalSlug: `${service.slug}-${city.slug}`,
-        });
-      }
-    }
-  }
+  // Phase 1: Sections 2 (Service×City×Segment) and 3 (Service×City×Intent) removed
+  // Only clean service-city, problem-city, segment-city combinations
 
   // ─── 3. Service × City × Intent ───
   for (const service of services) {
