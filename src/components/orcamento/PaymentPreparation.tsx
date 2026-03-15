@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
-import { CreditCard, Clock, CheckCircle } from "lucide-react";
+import { CreditCard, Clock, CheckCircle, MessageCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface Props {
   visible: boolean;
@@ -9,6 +10,11 @@ interface Props {
 
 const PaymentPreparation = ({ visible, monthlyValue, companyName }: Props) => {
   if (!visible) return null;
+
+  const whatsappMessage = encodeURIComponent(
+    `Olá! Acabei de assinar o contrato para o plano de infraestrutura de TI. Empresa: ${companyName || "—"}, Valor: R$${monthlyValue.toLocaleString("pt-BR")}/mês. Gostaria de prosseguir com o pagamento.`
+  );
+  const whatsappLink = `https://wa.me/5516988342704?text=${whatsappMessage}`;
 
   return (
     <section className="py-16 section-dark">
@@ -47,19 +53,32 @@ const PaymentPreparation = ({ visible, monthlyValue, companyName }: Props) => {
                 <CheckCircle className="w-4 h-4 text-primary" />
                 <span>Contrato assinado digitalmente</span>
               </div>
-              <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                <Clock className="w-4 h-4" />
-                <span>Aguardando configuração do gateway de pagamento (Asaas)</span>
+              <div className="flex items-center gap-3 text-sm">
+                <Clock className="w-4 h-4 text-primary" />
+                <span>Link de pagamento será enviado em breve</span>
               </div>
               <div className="flex items-center gap-3 text-sm text-muted-foreground">
                 <CreditCard className="w-4 h-4" />
-                <span>Cobrança será ativada após integração</span>
+                <span>Cobrança via Boleto, PIX ou Cartão de Crédito</span>
               </div>
+            </div>
+
+            <div className="pt-4 border-t border-border">
+              <Button
+                asChild
+                size="lg"
+                className="w-full gap-2 text-base font-semibold"
+              >
+                <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
+                  <MessageCircle className="w-5 h-5" />
+                  Solicitar link de pagamento via WhatsApp
+                </a>
+              </Button>
             </div>
           </div>
 
           <p className="text-xs text-muted-foreground mt-4">
-            O link de pagamento será enviado por e-mail após a aprovação da proposta.
+            Após o contato, enviaremos o link de pagamento por e-mail ou WhatsApp.
           </p>
         </motion.div>
       </div>
