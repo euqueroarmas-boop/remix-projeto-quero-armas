@@ -1,8 +1,7 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
-import { ArrowRight, Calendar, Search, X, Filter, ChevronDown, Check, Layers } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowRight, Calendar, Search, X, Filter, Layers } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
