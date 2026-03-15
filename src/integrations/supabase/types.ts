@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      asaas_webhooks: {
+        Row: {
+          created_at: string
+          event: string
+          id: string
+          payload: Json
+          processed: boolean
+        }
+        Insert: {
+          created_at?: string
+          event: string
+          id?: string
+          payload?: Json
+          processed?: boolean
+        }
+        Update: {
+          created_at?: string
+          event?: string
+          id?: string
+          payload?: Json
+          processed?: boolean
+        }
+        Relationships: []
+      }
       budget_leads: {
         Row: {
           city: string | null
@@ -47,35 +71,163 @@ export type Database = {
         }
         Relationships: []
       }
+      contract_equipment: {
+        Row: {
+          computer_model: string
+          contract_id: string | null
+          cpu: string
+          cpu_generation: string
+          created_at: string
+          id: string
+          keyboard_model: string
+          monitor_brand: string
+          monitor_size: string
+          monthly_total: number
+          mouse_model: string
+          network: string
+          quantity: number
+          ram: string
+          ssd: string
+          unit_price: number
+        }
+        Insert: {
+          computer_model?: string
+          contract_id?: string | null
+          cpu: string
+          cpu_generation: string
+          created_at?: string
+          id?: string
+          keyboard_model?: string
+          monitor_brand?: string
+          monitor_size?: string
+          monthly_total: number
+          mouse_model?: string
+          network?: string
+          quantity: number
+          ram?: string
+          ssd?: string
+          unit_price: number
+        }
+        Update: {
+          computer_model?: string
+          contract_id?: string | null
+          cpu?: string
+          cpu_generation?: string
+          created_at?: string
+          id?: string
+          keyboard_model?: string
+          monitor_brand?: string
+          monitor_size?: string
+          monthly_total?: number
+          mouse_model?: string
+          network?: string
+          quantity?: number
+          ram?: string
+          ssd?: string
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_equipment_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contract_signatures: {
+        Row: {
+          contract_hash: string | null
+          contract_id: string
+          id: string
+          ip_address: string | null
+          signature_data: string
+          signed_at: string
+          signer_name: string
+          user_agent: string | null
+        }
+        Insert: {
+          contract_hash?: string | null
+          contract_id: string
+          id?: string
+          ip_address?: string | null
+          signature_data: string
+          signed_at?: string
+          signer_name: string
+          user_agent?: string | null
+        }
+        Update: {
+          contract_hash?: string | null
+          contract_id?: string
+          id?: string
+          ip_address?: string | null
+          signature_data?: string
+          signed_at?: string
+          signer_name?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_signatures_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contracts: {
         Row: {
           client_ip: string | null
+          contract_hash: string | null
           contract_text: string | null
+          contract_type: string | null
           created_at: string
+          customer_id: string | null
           id: string
+          monthly_value: number | null
           quote_id: string | null
           signed: boolean | null
           signed_at: string | null
+          status: string | null
         }
         Insert: {
           client_ip?: string | null
+          contract_hash?: string | null
           contract_text?: string | null
+          contract_type?: string | null
           created_at?: string
+          customer_id?: string | null
           id?: string
+          monthly_value?: number | null
           quote_id?: string | null
           signed?: boolean | null
           signed_at?: string | null
+          status?: string | null
         }
         Update: {
           client_ip?: string | null
+          contract_hash?: string | null
           contract_text?: string | null
+          contract_type?: string | null
           created_at?: string
+          customer_id?: string | null
           id?: string
+          monthly_value?: number | null
           quote_id?: string | null
           signed?: boolean | null
           signed_at?: string | null
+          status?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "contracts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "contracts_quote_id_fkey"
             columns: ["quote_id"]
@@ -84,6 +236,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      customers: {
+        Row: {
+          cep: string | null
+          cidade: string | null
+          cnpj_ou_cpf: string
+          created_at: string
+          email: string
+          endereco: string | null
+          id: string
+          nome_fantasia: string | null
+          razao_social: string
+          responsavel: string
+          telefone: string | null
+        }
+        Insert: {
+          cep?: string | null
+          cidade?: string | null
+          cnpj_ou_cpf: string
+          created_at?: string
+          email: string
+          endereco?: string | null
+          id?: string
+          nome_fantasia?: string | null
+          razao_social: string
+          responsavel: string
+          telefone?: string | null
+        }
+        Update: {
+          cep?: string | null
+          cidade?: string | null
+          cnpj_ou_cpf?: string
+          created_at?: string
+          email?: string
+          endereco?: string | null
+          id?: string
+          nome_fantasia?: string | null
+          razao_social?: string
+          responsavel?: string
+          telefone?: string | null
+        }
+        Relationships: []
       }
       leads: {
         Row: {
@@ -173,24 +367,33 @@ export type Database = {
       }
       payments: {
         Row: {
+          asaas_invoice_url: string | null
           asaas_payment_id: string | null
+          billing_type: string | null
           created_at: string
+          due_date: string | null
           id: string
           payment_method: string | null
           payment_status: string | null
           quote_id: string | null
         }
         Insert: {
+          asaas_invoice_url?: string | null
           asaas_payment_id?: string | null
+          billing_type?: string | null
           created_at?: string
+          due_date?: string | null
           id?: string
           payment_method?: string | null
           payment_status?: string | null
           quote_id?: string | null
         }
         Update: {
+          asaas_invoice_url?: string | null
           asaas_payment_id?: string | null
+          billing_type?: string | null
           created_at?: string
+          due_date?: string | null
           id?: string
           payment_method?: string | null
           payment_status?: string | null
