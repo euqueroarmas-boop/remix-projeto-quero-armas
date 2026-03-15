@@ -192,8 +192,17 @@ function buildBlogXml(): string {
   ];
 
   const urls = [urlEntry("/blog", "0.8", "weekly")];
+
+  // Base blog posts
   for (const slug of blogSlugs) {
     urls.push(urlEntry(`/blog/${slug}`, "0.6", "monthly"));
+  }
+
+  // Blog × City pages
+  for (const slug of blogSlugs) {
+    for (const city of cities) {
+      urls.push(urlEntry(`/blog/${slug}-${city}`, "0.4", "monthly"));
+    }
   }
 
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join("\n")}\n</urlset>`;

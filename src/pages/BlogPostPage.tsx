@@ -1,13 +1,35 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useParams, Link, Navigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Calendar, ArrowRight, ChevronRight } from "lucide-react";
+import { ArrowLeft, Calendar, ArrowRight, ChevronRight, MapPin } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import SeoHead from "@/components/SeoHead";
 import JsonLd, { buildArticleSchema, buildBreadcrumbSchema } from "@/components/JsonLd";
 import { blogPosts, blogContent as blogContentData } from "@/data/blogPosts";
+import { cities } from "@/data/seo/cities";
+
+/** Try to match a slug like "vantagens-microsoft-365-para-empresas-campinas" */
+function resolveBlogSlug(slug: string | undefined) {
+  if (!slug) return { post: undefined, city: undefined, baseSlug: undefined };
+
+  // Direct match first
+  const directPost = blogPosts.find((p) => p.slug === slug);
+  if (directPost) return { post: directPost, city: undefined, baseSlug: slug };
+
+  // Try city suffix match
+  for (const city of cities) {
+    const suffix = `-${city.slug}`;
+    if (slug.endsWith(suffix)) {
+      const base = slug.slice(0, -suffix.length);
+      const post = blogPosts.find((p) => p.slug === base);
+      if (post) return { post, city, baseSlug: base };
+    }
+  }
+
+  return { post: undefined, city: undefined, baseSlug: undefined };
+}
 
 // Legacy content for original posts
 const legacyContent: Record<string, React.ReactNode> = {
@@ -54,14 +76,20 @@ const legacyContent: Record<string, React.ReactNode> = {
 const BlogPostPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const location = useLocation();
-  const post = blogPosts.find((p) => p.slug === slug);
-  const structuredContent = slug ? blogContentData[slug] : undefined;
-  const legacy = slug ? legacyContent[slug] : undefined;
+  const { post, city, baseSlug } = useMemo(() => resolveBlogSlug(slug), [slug]);
+  const structuredContent = baseSlug ? blogContentData[baseSlug] : undefined;
+  const legacy = baseSlug ? legacyContent[baseSlug] : undefined;
 
   const baseUrl = "https://wmti.com.br";
   const pageUrl = `${baseUrl}${location.pathname}`;
-  const seoTitle = structuredContent?.metaTitle || (post ? `${post.title} | Blog WMTi` : "Blog | WMTi");
-  const seoDesc = structuredContent?.metaDescription || post?.excerpt || "";
+
+  const cityTitle = city ? ` em ${city.name}` : "";
+  const seoTitle = city
+    ? `${post?.title}${cityTitle} | Blog WMTi`
+    : structuredContent?.metaTitle || (post ? `${post.title} | Blog WMTi` : "Blog | WMTi");
+  const seoDesc = city
+    ? `${post?.excerpt} Saiba como a WMTi atende empresas em ${city.name} e região de ${city.region}.`
+    : structuredContent?.metaDescription || post?.excerpt || "";
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -70,9 +98,12 @@ const BlogPostPage = () => {
   if (!post) return <Navigate to="/blog" replace />;
   if (!structuredContent && !legacy) return <Navigate to="/blog" replace />;
 
+  const canonicalUrl = city ? `${baseUrl}/blog/${baseSlug}` : pageUrl;
+
   const breadcrumbItems = [
     { name: "Home", url: `${baseUrl}/` },
     { name: "Blog", url: `${baseUrl}/blog` },
+    ...(city ? [{ name: city.name, url: pageUrl }] : []),
     { name: post.title, url: pageUrl },
   ];
 
@@ -81,7 +112,7 @@ const BlogPostPage = () => {
       <SeoHead
         title={seoTitle}
         description={seoDesc}
-        canonical={pageUrl}
+        canonical={canonicalUrl}
         ogType="article"
         ogImage={post.image.startsWith("http") ? post.image : `${baseUrl}${post.image}`}
       />
@@ -154,9 +185,18 @@ const BlogPostPage = () => {
               </span>
             </div>
 
-            <h1 className="text-2xl md:text-4xl mb-4">{post.title}</h1>
+            <h1 className="text-2xl md:text-4xl mb-4">{post.title}{cityTitle}</h1>
+            {city && (
+              <div className="flex items-center gap-2 mt-1 mb-2">
+                <MapPin size={14} className="text-primary" />
+                <span className="font-mono text-xs text-primary uppercase tracking-wider">
+                  Conteúdo para empresas em {city.name} — {city.region}
+                </span>
+              </div>
+            )}
             <p className="font-body text-lg text-gunmetal-foreground/70 leading-relaxed">
               {post.excerpt}
+              {city && ` Veja como a WMTi pode ajudar sua empresa em ${city.name}.`}
             </p>
           </motion.div>
         </div>
@@ -209,16 +249,59 @@ const BlogPostPage = () => {
             )}
           </div>
 
+          {/* City-specific local context */}
+          {city && (
+            <div className="mt-10 p-6 md:p-8 bg-muted/30 border border-border rounded-lg">
+              <h2 className="font-heading text-lg font-bold text-foreground mb-3 flex items-center gap-2">
+                <MapPin size={16} className="text-primary" />
+                {post.tag} em {city.name}
+              </h2>
+              <p className="font-body text-sm text-muted-foreground leading-relaxed mb-4">
+                A WMTi Tecnologia da Informação atende empresas em {city.name} ({city.state}), na região de {city.region}, com soluções profissionais de infraestrutura de TI. Com sede em Jacareí/SP e mais de 15 anos de experiência, oferecemos atendimento presencial e remoto com SLA garantido para empresas em {city.name} e cidades vizinhas.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <Link to={`/empresa-ti-${city.slug}`} className="inline-flex items-center gap-1 text-xs text-primary hover:underline font-mono uppercase tracking-wider">
+                  Empresa de TI em {city.name} <ArrowRight size={10} />
+                </Link>
+                <Link to={`/suporte-ti-${city.slug}`} className="inline-flex items-center gap-1 text-xs text-primary hover:underline font-mono uppercase tracking-wider">
+                  Suporte de TI em {city.name} <ArrowRight size={10} />
+                </Link>
+                <Link to={`/infraestrutura-ti-${city.slug}`} className="inline-flex items-center gap-1 text-xs text-primary hover:underline font-mono uppercase tracking-wider">
+                  Infraestrutura de TI em {city.name} <ArrowRight size={10} />
+                </Link>
+              </div>
+            </div>
+          )}
+
+          {/* Related blog posts in other cities */}
+          {city && (
+            <div className="mt-6 p-6 bg-muted/20 border border-border rounded-lg">
+              <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground mb-3">Este artigo em outras cidades</p>
+              <div className="flex flex-wrap gap-2">
+                {cities.filter(c => c.slug !== city.slug).slice(0, 8).map(c => (
+                  <Link
+                    key={c.slug}
+                    to={`/blog/${baseSlug}-${c.slug}`}
+                    className="text-xs text-muted-foreground hover:text-primary transition-colors font-body"
+                  >
+                    {c.name}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* CTA */}
           <div className="mt-12 bg-secondary p-8 md:p-12 text-center border border-border">
             <h3 className="text-xl md:text-2xl text-secondary-foreground mb-3">
-              Precisa de ajuda com sua <span className="text-primary">infraestrutura?</span>
+              Precisa de ajuda com sua <span className="text-primary">infraestrutura{city ? ` em ${city.name}` : ""}?</span>
             </h3>
             <p className="font-body text-sm text-secondary-foreground/70 max-w-md mx-auto mb-6">
               {structuredContent?.cta || "Solicite um diagnóstico gratuito. Nossa equipe técnica avalia sua situação e apresenta a melhor solução."}
+              {city && ` Atendemos empresas em ${city.name} e região de ${city.region}.`}
             </p>
             <a
-              href="https://wa.me/5511963166915?text=Olá! Li um artigo no blog da WMTi e gostaria de saber mais."
+              href={`https://wa.me/5511963166915?text=${encodeURIComponent(`Olá! Li o artigo "${post.title}" no blog da WMTi${city ? ` e gostaria de saber mais sobre os serviços em ${city.name}` : " e gostaria de saber mais"}.`)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
