@@ -46,14 +46,21 @@ const BudgetLeadForm = ({ onSubmit, submitted, onContinueToContract }: Props) =>
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.companyName || !form.contactName || !form.email) {
-      toast({ title: "Preencha os campos obrigatórios", variant: "destructive" });
+
+    const parsed = leadSchema.safeParse(form);
+    if (!parsed.success) {
+      toast({
+        title: "Revise os dados do formulário",
+        description: parsed.error.issues[0]?.message || "Dados inválidos.",
+        variant: "destructive",
+      });
       return;
     }
+
     setLoading(true);
     try {
-      await onSubmit(form);
-      toast({ title: "Orçamento enviado com sucesso!", description: "Entraremos em contato em breve." });
+      await onSubmit(parsed.data);
+      toast({ title: "Orçamento enviado com sucesso!", description: "Agora você pode revisar e assinar o contrato." });
     } catch {
       toast({ title: "Erro ao enviar", description: "Tente novamente.", variant: "destructive" });
     } finally {
