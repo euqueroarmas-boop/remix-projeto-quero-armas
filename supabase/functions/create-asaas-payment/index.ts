@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const ASAAS_BASE_URL = Deno.env.get("ASAAS_BASE_URL") || "https://sandbox.asaas.com/api/v3";
+    const ASAAS_BASE_URL = Deno.env.get("ASAAS_BASE_URL") || "https://api-sandbox.asaas.com/v3";
 
     const body = await req.json();
     const {

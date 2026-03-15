@@ -93,7 +93,8 @@ export const generateContractHtml = (
   </ul>
 
   <h2 style="font-size: 15px; font-weight: 600; color: #475569; margin-top: 28px;">CLÁUSULA 4 — VIGÊNCIA</h2>
-  <p>O contrato terá vigência mínima de 12 (doze) meses a partir da data de assinatura, podendo ser renovado automaticamente por períodos iguais.</p>
+  <p>O contrato terá vigência mínima de <strong>36 (trinta e seis) meses</strong> a partir da data de assinatura, podendo ser renovado automaticamente por períodos iguais.</p>
+  <p style="margin-top: 8px; font-size: 13px; color: #64748b;"><em>A contratação da WMTi possui prazo mínimo contratual de 36 meses.</em></p>
 
   <h2 style="font-size: 15px; font-weight: 600; color: #475569; margin-top: 28px;">CLÁUSULA 5 — PAGAMENTO</h2>
   <p>O pagamento deverá ser efetuado até o dia 10 de cada mês, via boleto bancário ou cartão de crédito. O primeiro vencimento será em <strong>${dueDate}</strong>.</p>

@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { CreditCard, FileBarChart, Loader2, CheckCircle, ExternalLink, AlertTriangle } from "lucide-react";
+import { CreditCard, FileBarChart, Loader2, CheckCircle, ExternalLink, AlertTriangle, QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-type BillingType = "BOLETO" | "CREDIT_CARD";
+type BillingType = "BOLETO" | "CREDIT_CARD" | "PIX";
 
 interface Props {
   visible: boolean;
@@ -18,12 +18,12 @@ const PaymentSelector = ({ visible, monthlyValue, onSelectPayment, completed, in
   const [selected, setSelected] = useState<BillingType | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Auto-redirect to checkout when invoice URL is available
+  // Auto-redirect to checkout when invoice URL is available (no popup)
   useEffect(() => {
     if (completed && invoiceUrl) {
       console.log("[WMTi] Redirecionando para checkout:", invoiceUrl);
       const timer = setTimeout(() => {
-        window.open(invoiceUrl, "_blank");
+        window.location.href = invoiceUrl;
       }, 1500);
       return () => clearTimeout(timer);
     }
@@ -39,17 +39,17 @@ const PaymentSelector = ({ visible, monthlyValue, onSelectPayment, completed, in
             <CheckCircle className="w-12 h-12 text-primary mx-auto" />
             <h3 className="text-xl font-heading font-bold">Cobrança gerada!</h3>
             <p className="text-muted-foreground text-sm">
-              {selected === "BOLETO"
-                ? "O boleto foi gerado. Você será redirecionado automaticamente."
-                : "O link de pagamento com cartão foi gerado. Você será redirecionado automaticamente."}
+              Você será redirecionado automaticamente para o checkout.
             </p>
+            <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" />
             <Button
               asChild
-              className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground"
+              variant="outline"
+              className="w-full h-12"
             >
-              <a href={invoiceUrl} target="_blank" rel="noopener noreferrer">
+              <a href={invoiceUrl}>
                 <ExternalLink className="w-4 h-4 mr-2" />
-                Acessar pagamento
+                Caso não seja redirecionado, clique aqui
               </a>
             </Button>
           </div>
@@ -88,7 +88,7 @@ const PaymentSelector = ({ visible, monthlyValue, onSelectPayment, completed, in
           </p>
         </motion.div>
 
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-3xl mx-auto">
           {error && (
             <div className="mb-6 p-4 rounded-xl border border-destructive/30 bg-destructive/5 flex items-start gap-3">
               <AlertTriangle className="w-5 h-5 text-destructive mt-0.5 shrink-0" />
@@ -100,7 +100,23 @@ const PaymentSelector = ({ visible, monthlyValue, onSelectPayment, completed, in
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <button
+              type="button"
+              onClick={() => setSelected("PIX")}
+              className={`p-6 rounded-xl border-2 transition-all text-left ${
+                selected === "PIX"
+                  ? "border-primary bg-primary/5 shadow-lg shadow-primary/10"
+                  : "border-border bg-card hover:border-primary/30"
+              }`}
+            >
+              <QrCode className={`w-8 h-8 mb-3 ${selected === "PIX" ? "text-primary" : "text-muted-foreground"}`} />
+              <h3 className="font-heading font-bold text-lg mb-1">PIX</h3>
+              <p className="text-sm text-muted-foreground">
+                Aprovação instantânea. Sem taxas adicionais.
+              </p>
+            </button>
+
             <button
               type="button"
               onClick={() => setSelected("BOLETO")}
