@@ -14,6 +14,77 @@ export type Database = {
   }
   public: {
     Tables: {
+      budget_leads: {
+        Row: {
+          city: string | null
+          company_name: string
+          contact_name: string
+          created_at: string
+          email: string
+          id: string
+          observations: string | null
+          phone: string | null
+        }
+        Insert: {
+          city?: string | null
+          company_name: string
+          contact_name: string
+          created_at?: string
+          email: string
+          id?: string
+          observations?: string | null
+          phone?: string | null
+        }
+        Update: {
+          city?: string | null
+          company_name?: string
+          contact_name?: string
+          created_at?: string
+          email?: string
+          id?: string
+          observations?: string | null
+          phone?: string | null
+        }
+        Relationships: []
+      }
+      contracts: {
+        Row: {
+          client_ip: string | null
+          contract_text: string | null
+          created_at: string
+          id: string
+          quote_id: string | null
+          signed: boolean | null
+          signed_at: string | null
+        }
+        Insert: {
+          client_ip?: string | null
+          contract_text?: string | null
+          created_at?: string
+          id?: string
+          quote_id?: string | null
+          signed?: boolean | null
+          signed_at?: string | null
+        }
+        Update: {
+          client_ip?: string | null
+          contract_text?: string | null
+          created_at?: string
+          id?: string
+          quote_id?: string | null
+          signed?: boolean | null
+          signed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contracts_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           company: string | null
@@ -58,6 +129,132 @@ export type Database = {
           utm_source?: string | null
         }
         Relationships: []
+      }
+      network_diagnostics: {
+        Row: {
+          average_pc_age: string | null
+          computers_current: number | null
+          created_at: string
+          has_backup: boolean | null
+          has_server: boolean | null
+          id: string
+          maintenance_frequency: string | null
+          quote_id: string | null
+        }
+        Insert: {
+          average_pc_age?: string | null
+          computers_current?: number | null
+          created_at?: string
+          has_backup?: boolean | null
+          has_server?: boolean | null
+          id?: string
+          maintenance_frequency?: string | null
+          quote_id?: string | null
+        }
+        Update: {
+          average_pc_age?: string | null
+          computers_current?: number | null
+          created_at?: string
+          has_backup?: boolean | null
+          has_server?: boolean | null
+          id?: string
+          maintenance_frequency?: string | null
+          quote_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "network_diagnostics_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          asaas_payment_id: string | null
+          created_at: string
+          id: string
+          payment_method: string | null
+          payment_status: string | null
+          quote_id: string | null
+        }
+        Insert: {
+          asaas_payment_id?: string | null
+          created_at?: string
+          id?: string
+          payment_method?: string | null
+          payment_status?: string | null
+          quote_id?: string | null
+        }
+        Update: {
+          asaas_payment_id?: string | null
+          created_at?: string
+          id?: string
+          payment_method?: string | null
+          payment_status?: string | null
+          quote_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quotes: {
+        Row: {
+          computers_qty: number | null
+          created_at: string
+          id: string
+          lead_id: string | null
+          monthly_value: number | null
+          needs_backup: boolean | null
+          needs_remote_access: boolean | null
+          needs_server_migration: boolean | null
+          selected_plan: string | null
+          status: string | null
+          users_qty: number | null
+        }
+        Insert: {
+          computers_qty?: number | null
+          created_at?: string
+          id?: string
+          lead_id?: string | null
+          monthly_value?: number | null
+          needs_backup?: boolean | null
+          needs_remote_access?: boolean | null
+          needs_server_migration?: boolean | null
+          selected_plan?: string | null
+          status?: string | null
+          users_qty?: number | null
+        }
+        Update: {
+          computers_qty?: number | null
+          created_at?: string
+          id?: string
+          lead_id?: string | null
+          monthly_value?: number | null
+          needs_backup?: boolean | null
+          needs_remote_access?: boolean | null
+          needs_server_migration?: boolean | null
+          selected_plan?: string | null
+          status?: string | null
+          users_qty?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotes_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "budget_leads"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
