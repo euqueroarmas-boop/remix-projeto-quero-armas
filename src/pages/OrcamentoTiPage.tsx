@@ -486,6 +486,7 @@ const OrcamentoTiPage = () => {
           onSelectPayment={handlePaymentSelect}
           completed={paymentComplete}
           invoiceUrl={invoiceUrl}
+          error={paymentError}
         />
       </main>
 

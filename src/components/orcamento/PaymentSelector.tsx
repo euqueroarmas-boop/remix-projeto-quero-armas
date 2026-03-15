@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { CreditCard, FileBarChart, Loader2, CheckCircle, ExternalLink } from "lucide-react";
+import { CreditCard, FileBarChart, Loader2, CheckCircle, ExternalLink, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type BillingType = "BOLETO" | "CREDIT_CARD";
@@ -11,15 +11,27 @@ interface Props {
   onSelectPayment: (billingType: BillingType) => Promise<string | null>;
   completed: boolean;
   invoiceUrl: string | null;
+  error?: string | null;
 }
 
-const PaymentSelector = ({ visible, monthlyValue, onSelectPayment, completed, invoiceUrl }: Props) => {
+const PaymentSelector = ({ visible, monthlyValue, onSelectPayment, completed, invoiceUrl, error }: Props) => {
   const [selected, setSelected] = useState<BillingType | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // Auto-redirect to checkout when invoice URL is available
+  useEffect(() => {
+    if (completed && invoiceUrl) {
+      console.log("[WMTi] Redirecionando para checkout:", invoiceUrl);
+      const timer = setTimeout(() => {
+        window.open(invoiceUrl, "_blank");
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [completed, invoiceUrl]);
+
   if (!visible) return null;
 
-  if (completed) {
+  if (completed && invoiceUrl) {
     return (
       <section id="payment-selection" className="py-16 bg-card">
         <div className="container mx-auto px-4 text-center">
@@ -28,20 +40,18 @@ const PaymentSelector = ({ visible, monthlyValue, onSelectPayment, completed, in
             <h3 className="text-xl font-heading font-bold">Cobrança gerada!</h3>
             <p className="text-muted-foreground text-sm">
               {selected === "BOLETO"
-                ? "O boleto foi gerado. Acesse pelo link abaixo ou verifique seu e-mail."
-                : "O link de pagamento com cartão foi gerado."}
+                ? "O boleto foi gerado. Você será redirecionado automaticamente."
+                : "O link de pagamento com cartão foi gerado. Você será redirecionado automaticamente."}
             </p>
-            {invoiceUrl && (
-              <Button
-                asChild
-                className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground"
-              >
-                <a href={invoiceUrl} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  Acessar pagamento
-                </a>
-              </Button>
-            )}
+            <Button
+              asChild
+              className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground"
+            >
+              <a href={invoiceUrl} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="w-4 h-4 mr-2" />
+                Acessar pagamento
+              </a>
+            </Button>
           </div>
         </div>
       </section>
@@ -79,6 +89,17 @@ const PaymentSelector = ({ visible, monthlyValue, onSelectPayment, completed, in
         </motion.div>
 
         <div className="max-w-2xl mx-auto">
+          {error && (
+            <div className="mb-6 p-4 rounded-xl border border-destructive/30 bg-destructive/5 flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-destructive mt-0.5 shrink-0" />
+              <div>
+                <p className="text-sm font-semibold text-destructive">Erro ao gerar cobrança</p>
+                <p className="text-sm text-muted-foreground mt-1">{error}</p>
+                <p className="text-xs text-muted-foreground mt-2">Tente novamente ou escolha outra forma de pagamento.</p>
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
             <button
               type="button"
@@ -123,7 +144,7 @@ const PaymentSelector = ({ visible, monthlyValue, onSelectPayment, completed, in
             ) : (
               <CreditCard className="w-5 h-5 mr-2" />
             )}
-            Gerar cobrança
+            {error ? "Tentar novamente" : "Gerar cobrança"}
           </Button>
         </div>
       </div>
