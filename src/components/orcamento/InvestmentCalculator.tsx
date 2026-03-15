@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Calculator, Server, Wifi, HardDrive } from "lucide-react";
 import { Input } from "@/components/ui/input";
