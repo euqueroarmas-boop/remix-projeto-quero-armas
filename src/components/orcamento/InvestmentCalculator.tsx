@@ -31,8 +31,37 @@ const InvestmentCalculator = ({
   addons,
   setAddons,
 }: Props) => {
+  const [computersInput, setComputersInput] = useState(String(computersQty));
+  const [usersInput, setUsersInput] = useState(String(usersQty));
+
   const plan = plans.find((p) => p.id === selectedPlan) || plans[1];
   const monthlyValue = plan.price * computersQty;
+
+  const handleComputersChange = (val: string) => {
+    setComputersInput(val);
+    const num = parseInt(val);
+    if (!isNaN(num) && num >= 1) setComputersQty(num);
+  };
+
+  const handleComputersBlur = () => {
+    const num = parseInt(computersInput);
+    const final = !isNaN(num) && num >= 1 ? Math.min(num, 500) : 1;
+    setComputersQty(final);
+    setComputersInput(String(final));
+  };
+
+  const handleUsersChange = (val: string) => {
+    setUsersInput(val);
+    const num = parseInt(val);
+    if (!isNaN(num) && num >= 1) setUsersQty(num);
+  };
+
+  const handleUsersBlur = () => {
+    const num = parseInt(usersInput);
+    const final = !isNaN(num) && num >= 1 ? Math.min(num, 500) : 1;
+    setUsersQty(final);
+    setUsersInput(String(final));
+  };
 
   return (
     <section id="calculator" className="py-20 bg-card">
