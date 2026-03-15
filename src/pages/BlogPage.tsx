@@ -22,6 +22,11 @@ const BlogPage = () => {
 
   return (
     <div className="min-h-screen">
+      <SeoHead
+        title="Blog | WMTi Tecnologia da Informação"
+        description="Artigos sobre TI corporativa, servidores Dell, Microsoft 365, segurança de rede, firewall pfSense e infraestrutura para empresas."
+        canonical="https://wmti.com.br/blog"
+      />
       <Navbar />
 
       <section className="section-dark pt-24 md:pt-28 pb-16 md:pb-24">
