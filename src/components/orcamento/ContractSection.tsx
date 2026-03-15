@@ -47,7 +47,9 @@ CLÁUSULA 3 — SERVIÇOS INCLUSOS
 ${isRental ? "- Reposição de equipamentos defeituosos\n- Active Directory e controle de usuários" : "- Gestão de servidores Windows Server\n- Consultoria de infraestrutura"}
 
 CLÁUSULA 4 — VIGÊNCIA
-O contrato terá vigência mínima de 12 (doze) meses a partir da data de assinatura, podendo ser renovado automaticamente por períodos iguais.
+O contrato terá vigência mínima de 36 (trinta e seis) meses a partir da data de assinatura, podendo ser renovado automaticamente por períodos iguais.
+
+A contratação da WMTi possui prazo mínimo contratual de 36 meses.
 
 CLÁUSULA 5 — RESCISÃO
 Qualquer das partes poderá rescindir o contrato mediante aviso prévio de 30 (trinta) dias.
