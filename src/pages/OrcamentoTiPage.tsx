@@ -116,7 +116,7 @@ const OrcamentoTiPage = () => {
       setLeadSubmitted(true);
       scrollToSection("contract-section");
     },
-    [selectedPlan, computersQty, usersQty, addons, monthlyValue, diagnosticData]
+    [selectedPlan, computersQty, usersQty, addons, monthlyValue, diagnosticData, scrollToSection]
   );
 
   const handleContractSign = useCallback(async () => {
