@@ -1,13 +1,35 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useParams, Link, Navigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Calendar, ArrowRight, ChevronRight } from "lucide-react";
+import { ArrowLeft, Calendar, ArrowRight, ChevronRight, MapPin } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import SeoHead from "@/components/SeoHead";
 import JsonLd, { buildArticleSchema, buildBreadcrumbSchema } from "@/components/JsonLd";
 import { blogPosts, blogContent as blogContentData } from "@/data/blogPosts";
+import { cities } from "@/data/seo/cities";
+
+/** Try to match a slug like "vantagens-microsoft-365-para-empresas-campinas" */
+function resolveBlogSlug(slug: string | undefined) {
+  if (!slug) return { post: undefined, city: undefined, baseSlug: undefined };
+
+  // Direct match first
+  const directPost = blogPosts.find((p) => p.slug === slug);
+  if (directPost) return { post: directPost, city: undefined, baseSlug: slug };
+
+  // Try city suffix match
+  for (const city of cities) {
+    const suffix = `-${city.slug}`;
+    if (slug.endsWith(suffix)) {
+      const base = slug.slice(0, -suffix.length);
+      const post = blogPosts.find((p) => p.slug === base);
+      if (post) return { post, city, baseSlug: base };
+    }
+  }
+
+  return { post: undefined, city: undefined, baseSlug: undefined };
+}
 
 // Legacy content for original posts
 const legacyContent: Record<string, React.ReactNode> = {
@@ -54,14 +76,20 @@ const legacyContent: Record<string, React.ReactNode> = {
 const BlogPostPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const location = useLocation();
-  const post = blogPosts.find((p) => p.slug === slug);
-  const structuredContent = slug ? blogContentData[slug] : undefined;
-  const legacy = slug ? legacyContent[slug] : undefined;
+  const { post, city, baseSlug } = useMemo(() => resolveBlogSlug(slug), [slug]);
+  const structuredContent = baseSlug ? blogContentData[baseSlug] : undefined;
+  const legacy = baseSlug ? legacyContent[baseSlug] : undefined;
 
   const baseUrl = "https://wmti.com.br";
   const pageUrl = `${baseUrl}${location.pathname}`;
-  const seoTitle = structuredContent?.metaTitle || (post ? `${post.title} | Blog WMTi` : "Blog | WMTi");
-  const seoDesc = structuredContent?.metaDescription || post?.excerpt || "";
+
+  const cityTitle = city ? ` em ${city.name}` : "";
+  const seoTitle = city
+    ? `${post?.title}${cityTitle} | Blog WMTi`
+    : structuredContent?.metaTitle || (post ? `${post.title} | Blog WMTi` : "Blog | WMTi");
+  const seoDesc = city
+    ? `${post?.excerpt} Saiba como a WMTi atende empresas em ${city.name} e região de ${city.region}.`
+    : structuredContent?.metaDescription || post?.excerpt || "";
 
   useEffect(() => {
     window.scrollTo(0, 0);
