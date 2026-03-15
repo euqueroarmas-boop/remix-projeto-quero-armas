@@ -50,15 +50,16 @@ const BlogPage = () => {
       </section>
 
       {/* Category filters */}
-      <section className="bg-secondary border-b border-border sticky top-14 md:top-16 z-30">
-        <div className="container py-3">
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+      <section className="bg-secondary/95 backdrop-blur-sm border-b border-border sticky top-14 md:top-16 z-30">
+        <div className="container py-4">
+          {/* Desktop: horizontal scrollable pills */}
+          <div className="hidden md:flex items-center gap-3 overflow-x-auto no-scrollbar pb-1">
             <button
               onClick={() => setActiveCategory("Todos")}
-              className={`font-mono text-[10px] uppercase tracking-[0.15em] px-3 py-1.5 border transition-colors whitespace-nowrap ${
+              className={`font-mono text-xs uppercase tracking-[0.15em] px-5 py-2 rounded-full border-2 transition-all duration-200 whitespace-nowrap ${
                 activeCategory === "Todos"
-                  ? "border-primary text-primary bg-primary/10"
-                  : "border-border text-muted-foreground hover:text-primary hover:border-primary/50"
+                  ? "border-primary text-primary-foreground bg-primary shadow-md shadow-primary/20"
+                  : "border-border text-muted-foreground hover:text-primary hover:border-primary/60 hover:bg-primary/5"
               }`}
             >
               Todos
@@ -67,10 +68,37 @@ const BlogPage = () => {
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
-                className={`font-mono text-[10px] uppercase tracking-[0.15em] px-3 py-1.5 border transition-colors whitespace-nowrap ${
+                className={`font-mono text-xs uppercase tracking-[0.15em] px-5 py-2 rounded-full border-2 transition-all duration-200 whitespace-nowrap ${
                   activeCategory === cat
-                    ? "border-primary text-primary bg-primary/10"
-                    : "border-border text-muted-foreground hover:text-primary hover:border-primary/50"
+                    ? "border-primary text-primary-foreground bg-primary shadow-md shadow-primary/20"
+                    : "border-border text-muted-foreground hover:text-primary hover:border-primary/60 hover:bg-primary/5"
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+
+          {/* Mobile: scrollable chips with larger touch targets */}
+          <div className="flex md:hidden items-center gap-2.5 overflow-x-auto no-scrollbar -mx-4 px-4 pb-1">
+            <button
+              onClick={() => setActiveCategory("Todos")}
+              className={`font-mono text-[11px] uppercase tracking-[0.12em] px-4 py-2.5 rounded-full border-2 transition-all duration-200 whitespace-nowrap flex-shrink-0 ${
+                activeCategory === "Todos"
+                  ? "border-primary text-primary-foreground bg-primary shadow-md shadow-primary/20"
+                  : "border-border text-muted-foreground active:bg-primary/10"
+              }`}
+            >
+              Todos
+            </button>
+            {blogCategories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={`font-mono text-[11px] uppercase tracking-[0.12em] px-4 py-2.5 rounded-full border-2 transition-all duration-200 whitespace-nowrap flex-shrink-0 ${
+                  activeCategory === cat
+                    ? "border-primary text-primary-foreground bg-primary shadow-md shadow-primary/20"
+                    : "border-border text-muted-foreground active:bg-primary/10"
                 }`}
               >
                 {cat}

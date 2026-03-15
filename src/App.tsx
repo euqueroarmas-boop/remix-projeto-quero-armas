@@ -19,6 +19,14 @@ const TiHospitaisClinicasPage = lazy(() => import("./pages/TiHospitaisClinicasPa
 const SobrePage = lazy(() => import("./pages/SobrePage.tsx"));
 const InstitucionalPage = lazy(() => import("./pages/InstitucionalPage.tsx"));
 const TerceirizacaoPage = lazy(() => import("./pages/TerceirizacaoPage.tsx"));
+const FirewallPfsensePage = lazy(() => import("./pages/FirewallPfsensePage.tsx"));
+const ServidoresDellPage = lazy(() => import("./pages/ServidoresDellPage.tsx"));
+const Microsoft365Page = lazy(() => import("./pages/Microsoft365Page.tsx"));
+const MontagemRedesPage = lazy(() => import("./pages/MontagemRedesPage.tsx"));
+const LocacaoComputadoresPage = lazy(() => import("./pages/LocacaoComputadoresPage.tsx"));
+const SuporteTiPage = lazy(() => import("./pages/SuporteTiPage.tsx"));
+const TiCartoriosPage = lazy(() => import("./pages/TiCartoriosPage.tsx"));
+const InfraestruturaCorporativaPage = lazy(() => import("./pages/InfraestruturaCorporativaPage.tsx"));
 
 const queryClient = new QueryClient();
 
@@ -47,6 +55,16 @@ const App = () => (
             <Route path="/ti-para-hospitais-e-clinicas" element={<TiHospitaisClinicasPage />} />
             <Route path="/terceirizacao-de-mao-de-obra-ti" element={<TerceirizacaoPage />} />
             <Route path="/sobre" element={<Navigate to="/institucional" replace />} />
+            {/* Service dedicated pages */}
+            <Route path="/firewall-pfsense-jacarei" element={<FirewallPfsensePage />} />
+            <Route path="/servidor-dell-poweredge-jacarei" element={<ServidoresDellPage />} />
+            <Route path="/microsoft-365-para-empresas-jacarei" element={<Microsoft365Page />} />
+            <Route path="/montagem-e-monitoramento-de-redes-jacarei" element={<MontagemRedesPage />} />
+            <Route path="/locacao-de-computadores-para-empresas-jacarei" element={<LocacaoComputadoresPage />} />
+            <Route path="/suporte-ti-jacarei" element={<SuporteTiPage />} />
+            <Route path="/infraestrutura-ti-corporativa-jacarei" element={<InfraestruturaCorporativaPage />} />
+            {/* Segment dedicated pages */}
+            <Route path="/ti-para-cartorios" element={<TiCartoriosPage />} />
             {/* Provimento 213 */}
             <Route path="/provimento-213" element={<Navigate to="/cartorios/provimento-213" replace />} />
             <Route path="/cartorios/provimento-213" element={<Provimento213 />} />
@@ -59,6 +77,8 @@ const App = () => (
             <Route path="/suporte-ti-empresarial-jacarei" element={<Navigate to="/suporte-ti-jacarei" replace />} />
             <Route path="/infraestrutura-ti-corporativa" element={<Navigate to="/infraestrutura-ti-corporativa-jacarei" replace />} />
             <Route path="/seguranca-da-informacao-empresarial-jacarei" element={<Navigate to="/seguranca-informacao-empresarial" replace />} />
+            <Route path="/microsoft-365-empresas-jacarei" element={<Navigate to="/microsoft-365-para-empresas-jacarei" replace />} />
+            <Route path="/montagem-redes-corporativas-jacarei" element={<Navigate to="/montagem-e-monitoramento-de-redes-jacarei" replace />} />
             {/* Dynamic SEO pages (40+) */}
             <Route path="/:slug" element={<DynamicSeoPage />} />
             <Route path="*" element={<NotFound />} />
