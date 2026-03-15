@@ -1,1 +1,5 @@
+/sitemap-pages.xml  https://itwsjxijqjximspqtvqk.supabase.co/functions/v1/sitemap?type=pages  200
+/sitemap-blog.xml  https://itwsjxijqjximspqtvqk.supabase.co/functions/v1/sitemap?type=blog  200
+/sitemap-programmatic.xml  https://itwsjxijqjximspqtvqk.supabase.co/functions/v1/sitemap?type=programmatic  200
+/sitemap.xml  https://itwsjxijqjximspqtvqk.supabase.co/functions/v1/sitemap?type=index  200
 /*    /index.html   200
