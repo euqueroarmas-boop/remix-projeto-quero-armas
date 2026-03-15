@@ -1,17 +1,21 @@
 import { motion } from "framer-motion";
-import { CheckCircle, Calculator, MessageCircle } from "lucide-react";
+import { CheckCircle, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const benefits = [
-  "Locação corporativa de computadores",
-  "Active Directory completo",
+  "Locação corporativa de computadores Dell",
+  "Suporte mensal para sua rede atual",
+  "Active Directory e controle de usuários",
   "Backup automático a cada 30 minutos",
   "Migração de dados do servidor antigo",
-  "Controle de usuários por departamento",
   "VPN e segurança com firewall pfSense",
 ];
 
-const BudgetHero = () => {
+interface Props {
+  contextTitle?: string | null;
+}
+
+const BudgetHero = ({ contextTitle }: Props) => {
   const scrollTo = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
   };
@@ -33,12 +37,17 @@ const BudgetHero = () => {
               Orçamento Online
             </span>
             <h1 className="text-3xl md:text-5xl lg:text-6xl font-heading font-bold mb-6 leading-tight">
-              Infraestrutura de TI{" "}
-              <span className="text-primary">previsível</span> para sua empresa
+              {contextTitle || (
+                <>
+                  Infraestrutura de TI{" "}
+                  <span className="text-primary">previsível</span> para sua empresa
+                </>
+              )}
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-3xl mx-auto leading-relaxed">
-              Computadores a partir de <span className="text-primary font-semibold">R$249/mês</span> com
-              implantação completa de servidor Windows sem custo adicional em projetos elegíveis.
+              Locação a partir de <span className="text-primary font-semibold">R$249/mês</span> ou
+              suporte mensal a partir de <span className="text-primary font-semibold">R$120/mês</span> por computador.
+              Escolha o melhor caminho para sua empresa.
             </p>
           </motion.div>
 
@@ -65,10 +74,9 @@ const BudgetHero = () => {
             <Button
               size="lg"
               className="text-base px-8 py-6 bg-primary hover:bg-primary/90 text-primary-foreground"
-              onClick={() => scrollTo("calculator")}
+              onClick={() => scrollTo("path-selector")}
             >
-              <Calculator className="w-5 h-5 mr-2" />
-              Calcular investimento da minha empresa
+              Começar orçamento
             </Button>
             <Button
               size="lg"

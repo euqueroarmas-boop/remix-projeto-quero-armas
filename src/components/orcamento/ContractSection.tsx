@@ -13,31 +13,38 @@ interface Props {
   companyName: string;
   onSign: () => Promise<void>;
   signed: boolean;
+  pathLabel?: string;
 }
 
 const generateContractText = (
   companyName: string,
   planName: string,
   computersQty: number,
-  monthlyValue: number
-) => `
-CONTRATO DE LOCAÇÃO DE EQUIPAMENTOS DE INFORMÁTICA
+  monthlyValue: number,
+  pathLabel: string
+) => {
+  const isRental = pathLabel === "Locação";
+  return `
+CONTRATO DE ${isRental ? "LOCAÇÃO DE EQUIPAMENTOS E SERVIÇOS DE TI" : "PRESTAÇÃO DE SERVIÇOS DE SUPORTE DE TI"}
 
 CONTRATANTE: ${companyName || "[Nome da empresa]"}
 CONTRATADA: WM Tecnologia da Informação LTDA
 
 CLÁUSULA 1 — OBJETO
-A CONTRATADA se compromete a fornecer ${computersQty} (${computersQty > 1 ? computersQty + " unidades" : "uma unidade"}) de computadores Dell OptiPlex — Plano ${planName}, incluindo monitor, teclado e mouse, bem como serviços de suporte técnico durante toda a vigência do contrato.
+${
+  isRental
+    ? `A CONTRATADA se compromete a fornecer ${computersQty} (${computersQty > 1 ? computersQty + " unidades" : "uma unidade"}) de computadores Dell OptiPlex — Plano ${planName}, incluindo monitor, teclado e mouse, bem como serviços de suporte técnico durante toda a vigência do contrato.`
+    : `A CONTRATADA se compromete a prestar serviços de suporte técnico mensal para ${computersQty} computador${computersQty > 1 ? "es" : ""} e infraestrutura de rede da CONTRATANTE.`
+}
 
 CLÁUSULA 2 — VALOR
-O valor mensal da locação será de R$ ${monthlyValue.toLocaleString("pt-BR")},00 (${monthlyValue} reais), correspondente a R$ ${(monthlyValue / computersQty).toFixed(0)}/computador/mês.
+O valor mensal será de R$ ${monthlyValue.toLocaleString("pt-BR")},00 (${monthlyValue} reais).
 
 CLÁUSULA 3 — SERVIÇOS INCLUSOS
-- Active Directory e controle de usuários
-- Backup automatizado a cada 30 minutos
 - Suporte técnico durante vigência do contrato
 - Manutenção preventiva e corretiva
-- Reposição de equipamentos defeituosos
+- Monitoramento da infraestrutura de rede
+${isRental ? "- Reposição de equipamentos defeituosos\n- Active Directory e controle de usuários" : "- Gestão de servidores Windows Server\n- Consultoria de infraestrutura"}
 
 CLÁUSULA 4 — VIGÊNCIA
 O contrato terá vigência mínima de 12 (doze) meses a partir da data de assinatura, podendo ser renovado automaticamente por períodos iguais.
@@ -45,6 +52,7 @@ O contrato terá vigência mínima de 12 (doze) meses a partir da data de assina
 CLÁUSULA 5 — RESCISÃO
 Qualquer das partes poderá rescindir o contrato mediante aviso prévio de 30 (trinta) dias.
 `.trim();
+};
 
 const ContractSection = ({
   visible,
@@ -54,14 +62,15 @@ const ContractSection = ({
   companyName,
   onSign,
   signed,
+  pathLabel = "Locação",
 }: Props) => {
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
 
   if (!visible) return null;
 
-  const plan = plans.find((p) => p.id === selectedPlan) || plans[1];
-  const contractText = generateContractText(companyName, plan.name, computersQty, monthlyValue);
+  const plan = plans.find((p) => p.id === selectedPlan) || { name: "Suporte Mensal" };
+  const contractText = generateContractText(companyName, plan.name, computersQty, monthlyValue, pathLabel);
 
   const handleSign = async () => {
     setLoading(true);
@@ -123,7 +132,7 @@ const ContractSection = ({
               className="mt-0.5"
             />
             <span className="text-sm text-foreground/80">
-              Declaro que li e concordo com os termos do contrato de locação de equipamentos.
+              Declaro que li e concordo com os termos do contrato.
             </span>
           </label>
 
