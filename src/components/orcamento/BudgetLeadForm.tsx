@@ -1,6 +1,7 @@
 import { useState } from "react";
+import { z } from "zod";
 import { motion } from "framer-motion";
-import { Send, Loader2 } from "lucide-react";
+import { Send, Loader2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,9 +20,19 @@ export interface LeadFormData {
 interface Props {
   onSubmit: (data: LeadFormData) => Promise<void>;
   submitted: boolean;
+  onContinueToContract?: () => void;
 }
 
-const BudgetLeadForm = ({ onSubmit, submitted }: Props) => {
+const leadSchema = z.object({
+  companyName: z.string().trim().min(2, "Informe o nome da empresa").max(120, "Nome da empresa muito longo"),
+  contactName: z.string().trim().min(2, "Informe o nome do contato").max(120, "Nome do contato muito longo"),
+  email: z.string().trim().email("E-mail inválido").max(255, "E-mail muito longo"),
+  phone: z.string().trim().max(25, "Telefone muito longo"),
+  city: z.string().trim().max(120, "Cidade muito longa"),
+  observations: z.string().trim().max(1000, "Observações muito longas"),
+});
+
+const BudgetLeadForm = ({ onSubmit, submitted, onContinueToContract }: Props) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState<LeadFormData>({
@@ -35,14 +46,30 @@ const BudgetLeadForm = ({ onSubmit, submitted }: Props) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.companyName || !form.contactName || !form.email) {
-      toast({ title: "Preencha os campos obrigatórios", variant: "destructive" });
+
+    const parsed = leadSchema.safeParse(form);
+    if (!parsed.success) {
+      toast({
+        title: "Revise os dados do formulário",
+        description: parsed.error.issues[0]?.message || "Dados inválidos.",
+        variant: "destructive",
+      });
       return;
     }
+
+    const normalized: LeadFormData = {
+      companyName: form.companyName.trim(),
+      contactName: form.contactName.trim(),
+      email: form.email.trim(),
+      phone: form.phone.trim(),
+      city: form.city.trim(),
+      observations: form.observations.trim(),
+    };
+
     setLoading(true);
     try {
-      await onSubmit(form);
-      toast({ title: "Orçamento enviado com sucesso!", description: "Entraremos em contato em breve." });
+      await onSubmit(normalized);
+      toast({ title: "Orçamento enviado com sucesso!", description: "Agora você pode revisar e assinar o contrato." });
     } catch {
       toast({ title: "Erro ao enviar", description: "Tente novamente.", variant: "destructive" });
     } finally {
@@ -54,14 +81,21 @@ const BudgetLeadForm = ({ onSubmit, submitted }: Props) => {
     return (
       <section id="lead-form" className="py-20 section-dark">
         <div className="container mx-auto px-4 text-center">
-          <div className="max-w-md mx-auto bg-card border border-primary/20 rounded-2xl p-8">
-            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="max-w-md mx-auto bg-card border border-primary/20 rounded-2xl p-8 space-y-4">
+            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
               <Send className="w-8 h-8 text-primary" />
             </div>
-            <h3 className="text-xl font-heading font-bold mb-2">Orçamento recebido!</h3>
+            <h3 className="text-xl font-heading font-bold">Orçamento recebido!</h3>
             <p className="text-muted-foreground text-sm">
               Nosso time analisará sua solicitação e entrará em contato em até 24 horas.
             </p>
+            <Button
+              onClick={onContinueToContract}
+              className="w-full h-12 text-base bg-primary hover:bg-primary/90 text-primary-foreground"
+            >
+              Continuar para contrato
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
           </div>
         </div>
       </section>
@@ -85,7 +119,7 @@ const BudgetLeadForm = ({ onSubmit, submitted }: Props) => {
           </h2>
         </motion.div>
 
-        <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-4">
+        <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-4" noValidate>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label className="mb-1.5 block text-sm">Nome da empresa *</Label>

@@ -74,7 +74,7 @@ const ContractSection = ({
 
   if (signed) {
     return (
-      <section className="py-16 bg-card">
+      <section id="contract-section" className="py-16 bg-card">
         <div className="container mx-auto px-4 text-center">
           <div className="max-w-md mx-auto bg-background border border-primary/20 rounded-2xl p-8">
             <CheckSquare className="w-12 h-12 text-primary mx-auto mb-4" />
@@ -89,7 +89,7 @@ const ContractSection = ({
   }
 
   return (
-    <section className="py-20 bg-card">
+    <section id="contract-section" className="py-20 bg-card">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

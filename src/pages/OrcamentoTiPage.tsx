@@ -40,11 +40,18 @@ const OrcamentoTiPage = () => {
   const plan = plans.find((p) => p.id === selectedPlan) || plans[1];
   const monthlyValue = plan.price * computersQty;
 
+  const scrollToSection = useCallback((id: string) => {
+    window.setTimeout(() => {
+      document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 120);
+  }, []);
+
   const handleDiagnosticComplete = useCallback((data: DiagnosticData) => {
     setDiagnosticData(data);
     setDiagnosticComplete(true);
     setComputersQty(data.computersCurrent || 5);
-  }, []);
+    scrollToSection("calculator");
+  }, [scrollToSection]);
 
   const handleLeadSubmit = useCallback(
     async (formData: LeadFormData) => {
@@ -107,8 +114,9 @@ const OrcamentoTiPage = () => {
       } as any);
 
       setLeadSubmitted(true);
+      scrollToSection("contract-section");
     },
-    [selectedPlan, computersQty, usersQty, addons, monthlyValue, diagnosticData]
+    [selectedPlan, computersQty, usersQty, addons, monthlyValue, diagnosticData, scrollToSection]
   );
 
   const handleContractSign = useCallback(async () => {
@@ -146,7 +154,8 @@ const OrcamentoTiPage = () => {
     } as any);
 
     setContractSigned(true);
-  }, [quoteId, plan.name, computersQty, monthlyValue]);
+    scrollToSection("payment-section");
+  }, [quoteId, plan.name, computersQty, monthlyValue, scrollToSection]);
 
   return (
     <>
@@ -172,7 +181,11 @@ const OrcamentoTiPage = () => {
         />
         <IncludedServices />
         <BudgetAuthority />
-        <BudgetLeadForm onSubmit={handleLeadSubmit} submitted={leadSubmitted} />
+        <BudgetLeadForm
+          onSubmit={handleLeadSubmit}
+          submitted={leadSubmitted}
+          onContinueToContract={() => scrollToSection("contract-section")}
+        />
         <ContractSection
           visible={leadSubmitted}
           selectedPlan={selectedPlan}
