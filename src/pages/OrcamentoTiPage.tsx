@@ -15,8 +15,10 @@ import Recommendation, { getRecommendation } from "@/components/orcamento/Recomm
 import IncludedServices from "@/components/orcamento/IncludedServices";
 import BudgetAuthority from "@/components/orcamento/BudgetAuthority";
 import BudgetLeadForm, { type LeadFormData } from "@/components/orcamento/BudgetLeadForm";
-import ContractSection from "@/components/orcamento/ContractSection";
-import PaymentPreparation from "@/components/orcamento/PaymentPreparation";
+import CustomerDataForm, { type CustomerData } from "@/components/orcamento/CustomerDataForm";
+import ContractPreview, { generateContractHtml } from "@/components/orcamento/ContractPreview";
+import SignatureCanvas from "@/components/orcamento/SignatureCanvas";
+import PaymentSelector from "@/components/orcamento/PaymentSelector";
 
 const OrcamentoTiPage = () => {
   const [searchParams] = useSearchParams();
@@ -40,11 +42,20 @@ const OrcamentoTiPage = () => {
 
   // Lead & submission
   const [leadSubmitted, setLeadSubmitted] = useState(false);
-  const [companyName, setCompanyName] = useState("");
   const [quoteId, setQuoteId] = useState<string | null>(null);
 
-  // Contract
+  // Customer data (new)
+  const [customerData, setCustomerData] = useState<CustomerData | null>(null);
+  const [customerComplete, setCustomerComplete] = useState(false);
+  const [customerId, setCustomerId] = useState<string | null>(null);
+
+  // Contract (new)
+  const [contractId, setContractId] = useState<string | null>(null);
   const [contractSigned, setContractSigned] = useState(false);
+
+  // Payment (new)
+  const [paymentComplete, setPaymentComplete] = useState(false);
+  const [invoiceUrl, setInvoiceUrl] = useState<string | null>(null);
 
   const plan = plans.find((p) => p.id === selectedPlan) || plans[1];
   const rentalMonthly = plan.price * computersQty;
@@ -54,7 +65,6 @@ const OrcamentoTiPage = () => {
     return calculateSupportTotal(qualification).total;
   }, [qualification]);
 
-  // Determine the effective path after qualification
   const effectivePath = useMemo(() => {
     if (selectedPath === "locacao") return "locacao";
     if (selectedPath === "suporte") return "suporte";
@@ -72,12 +82,10 @@ const OrcamentoTiPage = () => {
     }, 120);
   }, []);
 
-  // Context from query params
   const contextTitle = useMemo(() => {
     const problema = searchParams.get("problema");
     const servico = searchParams.get("servico");
     const cidade = searchParams.get("cidade");
-
     if (problema === "backup") return "Descubra como resolver o backup da sua empresa";
     if (problema === "rede") return "Resolva os problemas de rede da sua empresa";
     if (problema === "servidor") return "Resolva os problemas do servidor da sua empresa";
@@ -101,7 +109,6 @@ const OrcamentoTiPage = () => {
       remoteAccess: data.needsRemoteAccess,
       backup: data.needsBackup,
     });
-
     const rec = selectedPath === "ajuda" ? getRecommendation(data) : selectedPath;
     if (rec === "locacao") {
       scrollToSection("plans");
@@ -113,8 +120,6 @@ const OrcamentoTiPage = () => {
   const handleLeadSubmit = useCallback(
     async (formData: LeadFormData) => {
       const pathLabel = effectivePath === "locacao" ? "Locação" : "Suporte";
-
-      // Build observations with summary
       const summaryLines = [
         `Caminho: ${pathLabel}`,
         `Computadores: ${qualification?.computersQty ?? computersQty}`,
@@ -123,13 +128,9 @@ const OrcamentoTiPage = () => {
         `Servidores: ${qualification?.serversQty ?? 0}`,
         effectivePath === "locacao" ? `Plano: ${plan.name}` : null,
         `Valor estimado: R$${monthlyValue.toLocaleString("pt-BR")}/mês`,
-        `Backup: ${qualification?.needsBackup ? "Sim" : "Não"}`,
-        `Acesso remoto: ${qualification?.needsRemoteAccess ? "Sim" : "Não"}`,
-        `AD/GPO: ${qualification?.needsActiveDirectory ? "Sim" : "Não"}`,
         formData.observations ? `Obs: ${formData.observations}` : null,
       ].filter(Boolean).join("\n");
 
-      // 1. Create lead
       const { data: leadRow, error: leadErr } = await supabase
         .from("budget_leads" as any)
         .insert({
@@ -146,7 +147,6 @@ const OrcamentoTiPage = () => {
       if (leadErr) throw leadErr;
       const lead = leadRow as any;
 
-      // 2. Create quote
       const { data: quoteRow, error: quoteErr } = await supabase
         .from("quotes" as any)
         .insert({
@@ -166,9 +166,7 @@ const OrcamentoTiPage = () => {
       if (quoteErr) throw quoteErr;
       const quote = quoteRow as any;
       setQuoteId(quote.id);
-      setCompanyName(formData.companyName);
 
-      // 3. Store diagnostic
       if (qualification) {
         await supabase.from("network_diagnostics" as any).insert({
           quote_id: quote.id,
@@ -180,52 +178,194 @@ const OrcamentoTiPage = () => {
         } as any);
       }
 
-      // 4. Create contract placeholder
-      await supabase.from("contracts" as any).insert({
-        quote_id: quote.id,
-        contract_text: null,
-        signed: false,
-      } as any);
-
       setLeadSubmitted(true);
-      scrollToSection("contract-section");
+      scrollToSection("customer-data");
     },
     [effectivePath, selectedPlan, computersQty, usersQty, addons, monthlyValue, qualification, plan.name, scrollToSection]
   );
 
-  const handleContractSign = useCallback(async () => {
-    if (!quoteId) return;
+  const handleCustomerComplete = useCallback(
+    async (data: CustomerData) => {
+      const { data: row, error } = await supabase
+        .from("customers" as any)
+        .insert({
+          razao_social: data.razaoSocial,
+          nome_fantasia: data.nomeFantasia || null,
+          cnpj_ou_cpf: data.cnpjOuCpf,
+          responsavel: data.responsavel,
+          email: data.email,
+          telefone: data.telefone || null,
+          endereco: data.endereco,
+          cidade: data.cidade,
+          cep: data.cep,
+        } as any)
+        .select()
+        .single();
 
-    let clientIp = "unknown";
-    try {
-      const res = await fetch("https://api.ipify.org?format=json");
-      const data = await res.json();
-      clientIp = data.ip;
-    } catch {}
+      if (error) throw error;
+      const customer = row as any;
+      setCustomerId(customer.id);
+      setCustomerData(data);
+      setCustomerComplete(true);
 
-    const pathLabel = effectivePath === "locacao" ? `Locação — Plano ${plan.name}` : "Suporte Mensal";
-    const contractText = `Contrato assinado digitalmente — ${pathLabel}, ${computersQty} computadores, R$${monthlyValue}/mês`;
+      // Generate contract HTML
+      const contractType = effectivePath === "locacao" ? "locacao" : "suporte";
+      const contractHtml = generateContractHtml(
+        data,
+        contractType as "locacao" | "suporte",
+        effectivePath === "locacao" ? plan : null,
+        qualification?.computersQty ?? computersQty,
+        monthlyValue
+      );
 
-    await supabase
-      .from("contracts" as any)
-      .update({
-        contract_text: contractText,
-        signed: true,
-        signed_at: new Date().toISOString(),
-        client_ip: clientIp,
-      } as any)
-      .eq("quote_id", quoteId);
+      // Hash the contract
+      const encoder = new TextEncoder();
+      const hashBuffer = await crypto.subtle.digest("SHA-256", encoder.encode(contractHtml));
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const contractHash = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 
-    await supabase.from("payments" as any).insert({
-      quote_id: quoteId,
-      asaas_payment_id: null,
-      payment_method: null,
-      payment_status: "pending",
-    } as any);
+      // Create contract record
+      const { data: contractRow, error: contractErr } = await supabase
+        .from("contracts" as any)
+        .insert({
+          quote_id: quoteId,
+          customer_id: customer.id,
+          contract_type: contractType,
+          contract_text: contractHtml,
+          monthly_value: monthlyValue,
+          contract_hash: contractHash,
+          status: "draft",
+          signed: false,
+        } as any)
+        .select()
+        .single();
 
-    setContractSigned(true);
-    scrollToSection("payment-section");
-  }, [quoteId, effectivePath, plan.name, computersQty, monthlyValue, scrollToSection]);
+      if (contractErr) throw contractErr;
+      setContractId((contractRow as any).id);
+
+      // Save equipment config for rental
+      if (effectivePath === "locacao") {
+        const cpuParts = plan.cpu.split(" ");
+        const cpuGen = cpuParts.slice(1).join(" ");
+        await supabase.from("contract_equipment" as any).insert({
+          contract_id: (contractRow as any).id,
+          computer_model: "Dell OptiPlex",
+          cpu: `Core ${cpuParts[0] === "Core" ? cpuParts[1] : cpuParts[0]}`,
+          cpu_generation: cpuGen || plan.cpu,
+          ram: plan.ram.replace(" RAM", ""),
+          ssd: plan.ssd.replace(" SSD", ""),
+          network: "Placa de rede Gigabit",
+          monitor_brand: "Dell",
+          monitor_size: '18.5"',
+          keyboard_model: "Teclado USB ABNT2",
+          mouse_model: "Mouse óptico USB",
+          quantity: qualification?.computersQty ?? computersQty,
+          unit_price: plan.price,
+          monthly_total: monthlyValue,
+        } as any);
+      }
+
+      scrollToSection("contract-preview");
+    },
+    [quoteId, effectivePath, plan, qualification, computersQty, monthlyValue, scrollToSection]
+  );
+
+  const handleSignContract = useCallback(
+    async (signatureData: string, signerName: string) => {
+      if (!contractId) return;
+
+      let clientIp = "unknown";
+      try {
+        const res = await fetch("https://api.ipify.org?format=json");
+        const data = await res.json();
+        clientIp = data.ip;
+      } catch {}
+
+      const userAgent = navigator.userAgent;
+
+      // Get contract hash
+      let contractHash = "";
+      const { data: contractRow } = await supabase
+        .from("contracts" as any)
+        .select("contract_hash")
+        .eq("id", contractId)
+        .single();
+      if (contractRow) contractHash = (contractRow as any).contract_hash || "";
+
+      // Save signature
+      await supabase.from("contract_signatures" as any).insert({
+        contract_id: contractId,
+        signer_name: signerName,
+        signature_data: signatureData,
+        ip_address: clientIp,
+        user_agent: userAgent,
+        contract_hash: contractHash,
+      } as any);
+
+      // Update contract status
+      await supabase
+        .from("contracts" as any)
+        .update({
+          signed: true,
+          signed_at: new Date().toISOString(),
+          client_ip: clientIp,
+          status: "AGUARDANDO PAGAMENTO",
+        } as any)
+        .eq("id", contractId);
+
+      // Create payment placeholder
+      await supabase.from("payments" as any).insert({
+        quote_id: quoteId,
+        payment_status: "pending",
+      } as any);
+
+      setContractSigned(true);
+      scrollToSection("payment-selection");
+    },
+    [contractId, quoteId, scrollToSection]
+  );
+
+  const handlePaymentSelect = useCallback(
+    async (billingType: "BOLETO" | "CREDIT_CARD"): Promise<string | null> => {
+      if (!customerData || !quoteId) return null;
+
+      const dueDate = new Date();
+      dueDate.setDate(dueDate.getDate() + 3);
+      const dueDateStr = dueDate.toISOString().split("T")[0];
+
+      const contractType = effectivePath === "locacao" ? "Locação de Equipamentos" : "Serviços de TI";
+      const description = `Contrato WMTi — ${contractType} — ${qualification?.computersQty ?? computersQty} computador(es)`;
+
+      try {
+        const { data, error } = await supabase.functions.invoke("create-asaas-payment", {
+          body: {
+            customer_name: customerData.razaoSocial,
+            customer_email: customerData.email,
+            customer_cpf_cnpj: customerData.cnpjOuCpf,
+            billing_type: billingType,
+            value: monthlyValue,
+            due_date: dueDateStr,
+            description,
+            quote_id: quoteId,
+          },
+        });
+
+        if (error) throw error;
+
+        const url = data?.invoice_url || null;
+        setInvoiceUrl(url);
+        setPaymentComplete(true);
+        return url;
+      } catch (err) {
+        console.error("Payment error:", err);
+        // Still mark as complete but with no URL — user can pay via WhatsApp
+        setPaymentComplete(true);
+        setInvoiceUrl(null);
+        return null;
+      }
+    },
+    [customerData, quoteId, effectivePath, qualification, computersQty, monthlyValue]
+  );
 
   const showRentalFlow = effectivePath === "locacao";
   const showSupportFlow = effectivePath === "suporte";
@@ -273,7 +413,7 @@ const OrcamentoTiPage = () => {
           <SupportCalculator qualification={qualification} />
         )}
 
-        {/* RECOMMENDATION (always show after qualification) */}
+        {/* RECOMMENDATION */}
         {qualificationComplete && qualification && (
           <Recommendation
             qualification={qualification}
@@ -285,28 +425,46 @@ const OrcamentoTiPage = () => {
 
         {qualificationComplete && <BudgetAuthority />}
 
+        {/* LEAD FORM */}
         {qualificationComplete && (
           <BudgetLeadForm
             onSubmit={handleLeadSubmit}
             submitted={leadSubmitted}
-            onContinueToContract={() => scrollToSection("contract-section")}
+            onContinueToContract={() => scrollToSection("customer-data")}
           />
         )}
 
-        <ContractSection
+        {/* CUSTOMER DATA FORM (new) */}
+        <CustomerDataForm
           visible={leadSubmitted}
-          selectedPlan={effectivePath === "locacao" ? selectedPlan : "suporte-mensal"}
+          onComplete={handleCustomerComplete}
+          completed={customerComplete}
+        />
+
+        {/* CONTRACT PREVIEW (new) */}
+        <ContractPreview
+          visible={customerComplete}
+          customer={customerData}
+          contractType={effectivePath === "locacao" ? "locacao" : "suporte"}
+          plan={effectivePath === "locacao" ? plan : null}
           computersQty={qualification?.computersQty ?? computersQty}
           monthlyValue={monthlyValue}
-          companyName={companyName}
-          onSign={handleContractSign}
-          signed={contractSigned}
-          pathLabel={effectivePath === "locacao" ? "Locação" : "Suporte Mensal"}
         />
-        <PaymentPreparation
+
+        {/* SIGNATURE (new) */}
+        <SignatureCanvas
+          visible={customerComplete}
+          onSign={handleSignContract}
+          signed={contractSigned}
+        />
+
+        {/* PAYMENT SELECTION (new) */}
+        <PaymentSelector
           visible={contractSigned}
           monthlyValue={monthlyValue}
-          companyName={companyName}
+          onSelectPayment={handlePaymentSelect}
+          completed={paymentComplete}
+          invoiceUrl={invoiceUrl}
         />
       </main>
 
