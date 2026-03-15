@@ -72,14 +72,21 @@ const BudgetLeadForm = ({ onSubmit, submitted, onContinueToContract }: Props) =>
     return (
       <section id="lead-form" className="py-20 section-dark">
         <div className="container mx-auto px-4 text-center">
-          <div className="max-w-md mx-auto bg-card border border-primary/20 rounded-2xl p-8">
-            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="max-w-md mx-auto bg-card border border-primary/20 rounded-2xl p-8 space-y-4">
+            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
               <Send className="w-8 h-8 text-primary" />
             </div>
-            <h3 className="text-xl font-heading font-bold mb-2">Orçamento recebido!</h3>
+            <h3 className="text-xl font-heading font-bold">Orçamento recebido!</h3>
             <p className="text-muted-foreground text-sm">
               Nosso time analisará sua solicitação e entrará em contato em até 24 horas.
             </p>
+            <Button
+              onClick={onContinueToContract}
+              className="w-full h-12 text-base bg-primary hover:bg-primary/90 text-primary-foreground"
+            >
+              Continuar para contrato
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
           </div>
         </div>
       </section>
