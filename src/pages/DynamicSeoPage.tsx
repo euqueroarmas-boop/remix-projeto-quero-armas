@@ -4,6 +4,13 @@ import ServicePageTemplate from "@/components/ServicePageTemplate";
 
 const DynamicSeoPage = () => {
   const { slug } = useParams<{ slug: string }>();
+
+  // Redirect /ti-para-clinicas-{city} → /ti-para-hospitais-{city}
+  if (slug?.startsWith("ti-para-clinicas-")) {
+    const city = slug.replace("ti-para-clinicas-", "");
+    return <Navigate to={`/ti-para-hospitais-${city}`} replace />;
+  }
+
   const page = slug ? findPageBySlug(slug) : undefined;
 
   if (!page) return <Navigate to="/" replace />;
