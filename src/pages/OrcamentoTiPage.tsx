@@ -209,6 +209,8 @@ const OrcamentoTiPage = () => {
       setCustomerData(data);
       setCustomerComplete(true);
 
+      console.log("[WMTi] Dados do cliente salvos. Gerando contrato automaticamente...");
+
       // Generate contract HTML
       const contractType = effectivePath === "locacao" ? "locacao" : "suporte";
       const contractHtml = generateContractHtml(
