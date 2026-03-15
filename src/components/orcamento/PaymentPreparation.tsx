@@ -17,7 +17,7 @@ const PaymentPreparation = ({ visible, monthlyValue, companyName }: Props) => {
   const whatsappLink = `https://wa.me/5516988342704?text=${whatsappMessage}`;
 
   return (
-    <section className="py-16 section-dark">
+    <section id="payment-section" className="py-16 section-dark">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
