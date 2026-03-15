@@ -27,9 +27,9 @@ const leadSchema = z.object({
   companyName: z.string().trim().min(2, "Informe o nome da empresa").max(120, "Nome da empresa muito longo"),
   contactName: z.string().trim().min(2, "Informe o nome do contato").max(120, "Nome do contato muito longo"),
   email: z.string().trim().email("E-mail inválido").max(255, "E-mail muito longo"),
-  phone: z.string().trim().max(25, "Telefone muito longo").optional().or(z.literal("")),
-  city: z.string().trim().max(120, "Cidade muito longa").optional().or(z.literal("")),
-  observations: z.string().trim().max(1000, "Observações muito longas").optional().or(z.literal("")),
+  phone: z.string().trim().max(25, "Telefone muito longo"),
+  city: z.string().trim().max(120, "Cidade muito longa"),
+  observations: z.string().trim().max(1000, "Observações muito longas"),
 });
 
 const BudgetLeadForm = ({ onSubmit, submitted, onContinueToContract }: Props) => {
