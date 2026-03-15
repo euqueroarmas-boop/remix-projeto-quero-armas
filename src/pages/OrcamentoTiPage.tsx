@@ -181,7 +181,11 @@ const OrcamentoTiPage = () => {
         />
         <IncludedServices />
         <BudgetAuthority />
-        <BudgetLeadForm onSubmit={handleLeadSubmit} submitted={leadSubmitted} />
+        <BudgetLeadForm
+          onSubmit={handleLeadSubmit}
+          submitted={leadSubmitted}
+          onContinueToContract={() => scrollToSection("contract-section")}
+        />
         <ContractSection
           visible={leadSubmitted}
           selectedPlan={selectedPlan}
