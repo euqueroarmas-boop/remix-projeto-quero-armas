@@ -124,6 +124,7 @@ const InstitucionalPage = () => {
                 src={dedicationImg}
                 alt="Dedicação e excelência no trabalho com tecnologia"
                 className="w-full h-64 md:h-96 object-cover"
+                loading="lazy"
               />
             </motion.div>
             <motion.div
