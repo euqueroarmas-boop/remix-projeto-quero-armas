@@ -114,6 +114,7 @@ const OrcamentoTiPage = () => {
       } as any);
 
       setLeadSubmitted(true);
+      scrollToSection("contract-section");
     },
     [selectedPlan, computersQty, usersQty, addons, monthlyValue, diagnosticData]
   );
