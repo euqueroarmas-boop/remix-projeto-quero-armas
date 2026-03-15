@@ -182,10 +182,17 @@ const DiagnosticForm = ({ onComplete, completed }: Props) => {
                 type="number"
                 min={1}
                 max={500}
-                value={data.computersCurrent}
-                onChange={(e) =>
-                  setData({ ...data, computersCurrent: parseInt(e.target.value) || 1 })
-                }
+                value={computersInput}
+                inputMode="numeric"
+                onChange={(e) => setComputersInput(e.target.value)}
+                onBlur={() => {
+                  if (!computersInput.trim()) return;
+                  const parsed = computersSchema.safeParse(computersInput.trim());
+                  if (parsed.success) {
+                    setData({ ...data, computersCurrent: parsed.data });
+                    setComputersInput(String(parsed.data));
+                  }
+                }}
                 className="text-lg h-14 bg-muted border-border"
               />
             )}
