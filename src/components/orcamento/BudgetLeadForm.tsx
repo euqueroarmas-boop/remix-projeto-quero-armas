@@ -57,9 +57,18 @@ const BudgetLeadForm = ({ onSubmit, submitted, onContinueToContract }: Props) =>
       return;
     }
 
+    const normalized: LeadFormData = {
+      companyName: form.companyName.trim(),
+      contactName: form.contactName.trim(),
+      email: form.email.trim(),
+      phone: form.phone.trim(),
+      city: form.city.trim(),
+      observations: form.observations.trim(),
+    };
+
     setLoading(true);
     try {
-      await onSubmit(parsed.data);
+      await onSubmit(normalized);
       toast({ title: "Orçamento enviado com sucesso!", description: "Agora você pode revisar e assinar o contrato." });
     } catch {
       toast({ title: "Erro ao enviar", description: "Tente novamente.", variant: "destructive" });
