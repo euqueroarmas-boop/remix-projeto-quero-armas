@@ -166,6 +166,7 @@ const TiHospitaisClinicasPage = () => {
                 src={hospitalServerRoom}
                 alt="Sala de servidores para hospitais"
                 className="w-full aspect-[4/3] object-cover"
+                loading="lazy"
               />
               <div className="absolute bottom-0 left-0 right-0 bg-secondary/90 p-4">
                 <p className="font-mono text-xs text-primary">// INFRAESTRUTURA CRÍTICA</p>

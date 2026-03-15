@@ -96,6 +96,7 @@ const RentalSection = () => {
               src={optiplexImage}
               alt="Dell OptiPlex completo com monitor, teclado e mouse em escritório corporativo"
               className="w-full h-56 md:h-80 object-cover"
+              loading="lazy"
             />
             <div className="absolute inset-0 flex items-center">
               <div className="p-6 md:p-12 max-w-lg bg-secondary/80 backdrop-blur-sm">

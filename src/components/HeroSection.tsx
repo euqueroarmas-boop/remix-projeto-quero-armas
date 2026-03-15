@@ -5,6 +5,19 @@ import heroImage from "@/assets/hero-server.webp";
 import { Award, Shield, Handshake } from "lucide-react";
 
 const HeroSection = () => {
+  // Preload hero image for faster LCP
+  useEffect(() => {
+    const existing = document.querySelector('link[rel="preload"][as="image"][data-hero]');
+    if (!existing) {
+      const link = document.createElement("link");
+      link.rel = "preload";
+      link.as = "image";
+      link.href = heroImage;
+      link.setAttribute("data-hero", "true");
+      document.head.appendChild(link);
+    }
+  }, []);
+
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden section-dark">
       {/* Background image */}
