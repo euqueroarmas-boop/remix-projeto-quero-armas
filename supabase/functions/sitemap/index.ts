@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const BASE_URL = "https://wmti.com.br";
+const BASE_URL = "https://www.wmti.com.br";
 
 const services = [
   "infraestrutura-ti", "suporte-ti", "monitoramento-rede",
@@ -31,7 +31,6 @@ const cities = [
 ];
 
 const segments = ["cartorios", "hospitais", "escritorios-advocacia", "contabilidade", "industrias"];
-const intents = ["orcamento", "terceirizacao", "consultoria", "implantacao"];
 const problems = ["rede-lenta", "servidor-travando", "sem-backup", "ataque-ransomware", "computadores-lentos"];
 
 const segmentPrefixes: Record<string, string> = {
@@ -45,6 +44,7 @@ const segmentPrefixes: Record<string, string> = {
 // Static/hand-crafted pages
 const staticPages = [
   { loc: "/", priority: "1.0", changefreq: "weekly" },
+  { loc: "/orcamento-ti", priority: "0.9", changefreq: "monthly" },
   { loc: "/empresa-de-ti-jacarei", priority: "0.9", changefreq: "monthly" },
   { loc: "/blog", priority: "0.8", changefreq: "weekly" },
   { loc: "/institucional", priority: "0.8", changefreq: "monthly" },
@@ -64,16 +64,6 @@ const staticPages = [
   { loc: "/empresa-de-ti-taubate", priority: "0.8", changefreq: "monthly" },
   { loc: "/empresa-de-ti-vale-do-paraiba", priority: "0.7", changefreq: "monthly" },
   { loc: "/ti-para-cartorios", priority: "0.8", changefreq: "monthly" },
-  { loc: "/infraestrutura-ti-para-cartorios", priority: "0.7", changefreq: "monthly" },
-  { loc: "/backup-para-cartorios", priority: "0.7", changefreq: "monthly" },
-  { loc: "/seguranca-da-informacao-para-cartorios", priority: "0.7", changefreq: "monthly" },
-  { loc: "/servidor-para-cartorios", priority: "0.7", changefreq: "monthly" },
-  { loc: "/redundancia-e-continuidade-para-cartorios", priority: "0.7", changefreq: "monthly" },
-  { loc: "/infraestrutura-ti-para-clinicas-medicas", priority: "0.7", changefreq: "monthly" },
-  { loc: "/backup-para-clinicas-e-hospitais", priority: "0.7", changefreq: "monthly" },
-  { loc: "/seguranca-da-informacao-para-clinicas", priority: "0.7", changefreq: "monthly" },
-  { loc: "/servidor-para-clinicas-medicas", priority: "0.7", changefreq: "monthly" },
-  { loc: "/lgpd-e-ti-para-clinicas", priority: "0.7", changefreq: "monthly" },
   { loc: "/ti-para-escritorios-de-advocacia", priority: "0.7", changefreq: "monthly" },
   { loc: "/ti-para-contabilidades", priority: "0.7", changefreq: "monthly" },
   { loc: "/ti-para-escritorios-corporativos", priority: "0.7", changefreq: "monthly" },
@@ -82,9 +72,6 @@ const staticPages = [
   { loc: "/empresa-perdeu-dados-o-que-fazer", priority: "0.7", changefreq: "monthly" },
   { loc: "/backup-da-empresa-nao-funciona", priority: "0.7", changefreq: "monthly" },
   { loc: "/como-proteger-a-empresa-contra-ransomware", priority: "0.7", changefreq: "monthly" },
-  { loc: "/servidor-local-ou-nuvem-para-empresas", priority: "0.7", changefreq: "monthly" },
-  { loc: "/compra-ou-locacao-de-computadores", priority: "0.7", changefreq: "monthly" },
-  { loc: "/firewall-pfsense-vs-roteador-comum", priority: "0.7", changefreq: "monthly" },
   { loc: "/diagnostico-ti-empresarial", priority: "0.9", changefreq: "monthly" },
 ];
 
@@ -100,48 +87,25 @@ function buildPagesXml(): string {
 function buildProgrammaticXml(): string {
   const urls: string[] = [];
 
-  // City hub pages
-  for (const city of cities) {
-    urls.push(urlEntry(`/empresa-ti-${city}`, "0.7", "monthly"));
-  }
-
-  // Service × City
+  // 1. Service × City
   for (const svc of services) {
     for (const city of cities) {
       urls.push(urlEntry(`/${svc}-${city}`, "0.7", "monthly"));
     }
   }
 
-  // Service × City × Segment
-  for (const svc of services) {
-    for (const city of cities) {
-      for (const seg of segments) {
-        urls.push(urlEntry(`/${svc}-${seg}-${city}`, "0.6", "monthly"));
-      }
-    }
-  }
-
-  // Service × City × Intent
-  for (const svc of services) {
-    for (const city of cities) {
-      for (const intent of intents) {
-        urls.push(urlEntry(`/${intent}-${svc}-${city}`, "0.5", "monthly"));
-      }
-    }
-  }
-
-  // Problem × City
-  for (const prob of problems) {
-    for (const city of cities) {
-      urls.push(urlEntry(`/${prob}-${city}`, "0.5", "monthly"));
-    }
-  }
-
-  // Segment × City (standalone)
+  // 2. Segment × City
   for (const seg of segments) {
     const prefix = segmentPrefixes[seg] || `ti-para-${seg}`;
     for (const city of cities) {
       urls.push(urlEntry(`/${prefix}-${city}`, "0.6", "monthly"));
+    }
+  }
+
+  // 3. Problem × City
+  for (const prob of problems) {
+    for (const city of cities) {
+      urls.push(urlEntry(`/${prob}-${city}`, "0.5", "monthly"));
     }
   }
 
@@ -193,16 +157,8 @@ function buildBlogXml(): string {
 
   const urls = [urlEntry("/blog", "0.8", "weekly")];
 
-  // Base blog posts
   for (const slug of blogSlugs) {
     urls.push(urlEntry(`/blog/${slug}`, "0.6", "monthly"));
-  }
-
-  // Blog × City pages
-  for (const slug of blogSlugs) {
-    for (const city of cities) {
-      urls.push(urlEntry(`/blog/${slug}-${city}`, "0.4", "monthly"));
-    }
   }
 
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join("\n")}\n</urlset>`;

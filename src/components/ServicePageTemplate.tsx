@@ -278,10 +278,10 @@ const ServicePageTemplate = ({
                 Falar no WhatsApp
               </a>
               <Link
-                to="/#contato"
+                to="/orcamento-ti"
                 className="inline-flex items-center gap-2 border border-border text-foreground px-8 py-4 font-mono text-sm uppercase tracking-wider hover:border-primary hover:text-primary transition-all"
               >
-                Enviar mensagem
+                Solicitar orçamento online
               </Link>
             </div>
           </motion.div>

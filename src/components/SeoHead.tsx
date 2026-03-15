@@ -22,7 +22,7 @@ const SeoHead = ({
   noindex = false,
   ogTitle,
   ogDescription,
-  ogImage = "https://wmti.com.br/og-image.jpg",
+  ogImage = "https://www.wmti.com.br/wmti-preview.jpg",
   ogType = "website",
 }: SeoHeadProps) => {
   useEffect(() => {
