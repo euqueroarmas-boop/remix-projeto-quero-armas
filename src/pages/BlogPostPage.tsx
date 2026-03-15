@@ -1,10 +1,12 @@
 import { useEffect } from "react";
-import { useParams, Link, Navigate } from "react-router-dom";
+import { useParams, Link, Navigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Calendar, ArrowRight } from "lucide-react";
+import { ArrowLeft, Calendar, ArrowRight, ChevronRight } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import SeoHead from "@/components/SeoHead";
+import JsonLd, { buildArticleSchema, buildBreadcrumbSchema } from "@/components/JsonLd";
 import { blogPosts, blogContent as blogContentData } from "@/data/blogPosts";
 
 // Legacy content for original posts
@@ -51,26 +53,61 @@ const legacyContent: Record<string, React.ReactNode> = {
 
 const BlogPostPage = () => {
   const { slug } = useParams<{ slug: string }>();
+  const location = useLocation();
   const post = blogPosts.find((p) => p.slug === slug);
   const structuredContent = slug ? blogContentData[slug] : undefined;
   const legacy = slug ? legacyContent[slug] : undefined;
 
+  const baseUrl = "https://wmti.com.br";
+  const pageUrl = `${baseUrl}${location.pathname}`;
+  const seoTitle = structuredContent?.metaTitle || (post ? `${post.title} | Blog WMTi` : "Blog | WMTi");
+  const seoDesc = structuredContent?.metaDescription || post?.excerpt || "";
+
   useEffect(() => {
-    if (structuredContent) {
-      document.title = structuredContent.metaTitle;
-      const desc = document.querySelector('meta[name="description"]');
-      if (desc) desc.setAttribute("content", structuredContent.metaDescription);
-    } else if (post) {
-      document.title = post.title + " | Blog WMTi";
-    }
     window.scrollTo(0, 0);
-  }, [structuredContent, post]);
+  }, [slug]);
 
   if (!post) return <Navigate to="/blog" replace />;
   if (!structuredContent && !legacy) return <Navigate to="/blog" replace />;
 
+  const breadcrumbItems = [
+    { name: "Home", url: `${baseUrl}/` },
+    { name: "Blog", url: `${baseUrl}/blog` },
+    { name: post.title, url: pageUrl },
+  ];
+
   return (
     <div className="min-h-screen">
+      <SeoHead
+        title={seoTitle}
+        description={seoDesc}
+        canonical={pageUrl}
+        ogType="article"
+        ogImage={post.image.startsWith("http") ? post.image : `${baseUrl}${post.image}`}
+      />
+      <JsonLd data={buildBreadcrumbSchema(breadcrumbItems)} />
+      <JsonLd
+        data={buildArticleSchema({
+          title: post.title,
+          description: post.excerpt,
+          url: pageUrl,
+          image: post.image.startsWith("http") ? post.image : `${baseUrl}${post.image}`,
+          datePublished: post.date,
+        })}
+      />
+      {structuredContent && structuredContent.faq.length > 0 && (
+        <JsonLd
+          data={{
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: structuredContent.faq.map((item) => ({
+              "@type": "Question",
+              name: item.q,
+              acceptedAnswer: { "@type": "Answer", text: item.a },
+            })),
+          }}
+        />
+      )}
       <Navbar />
 
       {/* Featured image banner */}
@@ -90,13 +127,16 @@ const BlogPostPage = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <Link
-              to="/blog"
-              className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-gunmetal-foreground/50 hover:text-primary transition-colors mb-8"
-            >
-              <ArrowLeft size={14} />
-              Voltar ao blog
-            </Link>
+            {/* Breadcrumbs */}
+            <nav aria-label="Breadcrumb" className="mb-6">
+              <ol className="flex items-center gap-1 font-mono text-xs text-gunmetal-foreground/50">
+                <li><Link to="/" className="hover:text-primary transition-colors">Home</Link></li>
+                <ChevronRight size={10} className="shrink-0" />
+                <li><Link to="/blog" className="hover:text-primary transition-colors">Blog</Link></li>
+                <ChevronRight size={10} className="shrink-0" />
+                <li className="text-primary truncate max-w-[200px]" aria-current="page">{post.title}</li>
+              </ol>
+            </nav>
 
             <div className="flex items-center gap-3 mb-4 flex-wrap">
               <span className="font-mono text-[10px] tracking-[0.15em] uppercase text-primary border border-primary/30 px-2 py-0.5">

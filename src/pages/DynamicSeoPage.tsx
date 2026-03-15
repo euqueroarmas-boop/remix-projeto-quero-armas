@@ -23,6 +23,8 @@ const DynamicSeoPage = () => {
       faq={page.faq}
       relatedLinks={page.relatedLinks}
       localContent={page.localContent}
+      canonicalSlug={page.canonicalSlug}
+      shouldIndex={page.shouldIndex}
     />
   );
 };
