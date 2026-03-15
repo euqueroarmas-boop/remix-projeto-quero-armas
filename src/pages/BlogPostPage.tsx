@@ -98,9 +98,12 @@ const BlogPostPage = () => {
   if (!post) return <Navigate to="/blog" replace />;
   if (!structuredContent && !legacy) return <Navigate to="/blog" replace />;
 
+  const canonicalUrl = city ? `${baseUrl}/blog/${baseSlug}` : pageUrl;
+
   const breadcrumbItems = [
     { name: "Home", url: `${baseUrl}/` },
     { name: "Blog", url: `${baseUrl}/blog` },
+    ...(city ? [{ name: city.name, url: pageUrl }] : []),
     { name: post.title, url: pageUrl },
   ];
 
