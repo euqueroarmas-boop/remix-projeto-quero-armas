@@ -81,6 +81,17 @@ const App = () => (
             <Route path="/locacao-de-computadores-para-empresas-jacarei" element={<LocacaoComputadoresPage />} />
             <Route path="/suporte-ti-jacarei" element={<SuporteTiPage />} />
             <Route path="/infraestrutura-ti-corporativa-jacarei" element={<InfraestruturaCorporativaPage />} />
+            {/* New service pages */}
+            <Route path="/administracao-de-servidores" element={<AdministracaoServidoresPage />} />
+            <Route path="/monitoramento-de-servidores" element={<MonitoramentoServidoresPage />} />
+            <Route path="/backup-corporativo" element={<BackupCorporativoPage />} />
+            <Route path="/seguranca-de-rede" element={<SegurancaDeRedePage />} />
+            <Route path="/monitoramento-de-rede" element={<MonitoramentoDeRedePage />} />
+            <Route path="/suporte-tecnico-emergencial" element={<SuporteEmergencialPage />} />
+            <Route path="/suporte-windows-server" element={<SuporteWindowsServerPage />} />
+            <Route path="/suporte-linux" element={<SuporteLinuxPage />} />
+            <Route path="/manutencao-de-infraestrutura-de-ti" element={<ManutencaoInfraestruturaPage />} />
+            <Route path="/suporte-tecnico-para-redes-corporativas" element={<SuporteRedesCorporativasPage />} />
             {/* Budget system */}
             <Route path="/orcamento-ti" element={<OrcamentoTiPage />} />
             <Route path="/contrato" element={<ContratoPage />} />
