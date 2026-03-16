@@ -156,21 +156,7 @@ Deno.serve(async (req) => {
         firstPaymentId = firstPayment.id;
         invoiceUrl = firstPayment.invoiceUrl || firstPayment.bankSlipUrl || null;
 
-        // Get PIX data if applicable
-        if (billing_type === "PIX" && firstPayment.id) {
-          try {
-            const pixRes = await fetch(`${ASAAS_BASE_URL}/payments/${firstPayment.id}/pixQrCode`, {
-              headers: { access_token: ASAAS_API_KEY },
-            });
-            const pixData = await pixRes.json();
-            if (pixRes.ok) {
-              pixQrCodeImage = normalizeQrImage(pixData.encodedImage);
-              pixCopyPaste = pixData.payload || null;
-            }
-          } catch (pixErr) {
-            console.error("[create-asaas-subscription] Erro ao obter PIX QR:", pixErr);
-          }
-        }
+        // No PIX for subscriptions — skip QR code fetch
       }
     } catch (listErr) {
       console.error("[create-asaas-subscription] Erro ao listar pagamentos da assinatura:", listErr);
