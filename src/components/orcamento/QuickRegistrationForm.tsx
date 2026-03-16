@@ -38,6 +38,7 @@ const registrationSchema = z.object({
 interface Props {
   onComplete: (data: RegistrationData) => Promise<void>;
   loading?: boolean;
+  initialData?: Partial<RegistrationData>;
 }
 
 const formatCnpjCpf = (value: string) => {
