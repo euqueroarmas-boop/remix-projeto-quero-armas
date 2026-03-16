@@ -2,6 +2,7 @@ import {
   Server, Shield, Cloud, Network, Monitor, Wrench, Headphones,
   Lock, Activity, Eye, Cpu, HardDrive,
   Building2, Scale, Heart, Stethoscope, Landmark, Briefcase,
+  AlertTriangle, Clock,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { SeoPageData } from "@/data/seoPages";
@@ -10,6 +11,7 @@ import { cities } from "./cities";
 import { segments } from "./segments";
 import { intents } from "./intents";
 import { problems } from "./problems";
+import { blogPosts } from "@/data/blogPosts";
 
 /** Icon map per service slug */
 const serviceIcons: Record<string, { icon: LucideIcon; title: string; text: string }[]> = {
