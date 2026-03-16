@@ -438,7 +438,8 @@ segmentPagePrefix["serventias-notariais"] = "ti-para-serventias-notariais";
 segmentPagePrefix["hospitais"] = "ti-para-hospitais";
 segmentPagePrefix["escritorios-advocacia"] = "ti-para-escritorios-de-advocacia";
 segmentPagePrefix["contabilidade"] = "ti-para-contabilidades";
-segmentPagePrefix["industrias"] = "ti-para-industrias";
+segmentPagePrefix["industrias-alimenticias"] = "ti-para-industrias-alimenticias";
+segmentPagePrefix["industrias-petroliferas"] = "ti-para-industrias-petroliferas";
 segmentPagePrefix["empresas-corporativas"] = "ti-para-empresas-corporativas";
 
 export function generateProgrammaticPages(): SeoPageData[] {

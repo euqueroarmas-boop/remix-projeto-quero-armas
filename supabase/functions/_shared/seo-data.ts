@@ -32,6 +32,7 @@ export const serviceSlugs: string[] = [
   "suporte-linux",
   "manutencao-ti",
   "suporte-redes-corporativas",
+  "terceirizacao-ti",
 ];
 
 // ─── SEGMENTS (from src/data/seo/segments.ts) ───
@@ -44,7 +45,8 @@ export const segmentEntries: SegmentEntry[] = [
   { slug: "hospitais", prefix: "ti-para-hospitais" },
   { slug: "escritorios-advocacia", prefix: "ti-para-escritorios-de-advocacia" },
   { slug: "contabilidade", prefix: "ti-para-contabilidades" },
-  { slug: "industrias", prefix: "ti-para-industrias" },
+  { slug: "industrias-alimenticias", prefix: "ti-para-industrias-alimenticias" },
+  { slug: "industrias-petroliferas", prefix: "ti-para-industrias-petroliferas" },
   { slug: "empresas-corporativas", prefix: "ti-para-empresas-corporativas" },
 ];
 

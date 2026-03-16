@@ -221,4 +221,16 @@ export const services: SeoService[] = [
     relatedSlugs: ["infraestrutura-rede", "monitoramento-rede", "suporte-ti"],
     dedicatedPage: "/suporte-tecnico-para-redes-corporativas",
   },
+  {
+    slug: "terceirizacao-ti",
+    name: "Terceirização De TI",
+    titleTemplate: "Terceirização de TI em {city} | WMTi Tecnologia da Informação",
+    descriptionTemplate:
+      "Terceirização de mão de obra de TI para empresas em {city}. Equipe técnica dedicada, gestão de infraestrutura e suporte contínuo. WMTi.",
+    h1Prefix: "Terceirização de TI em ",
+    contentTemplate:
+      "A WMTi oferece terceirização de TI para empresas em {city}. Disponibilizamos profissionais especializados para gestão completa da infraestrutura tecnológica, suporte técnico dedicado, administração de servidores, redes e segurança. Reduza custos operacionais e aumente a eficiência da TI da sua empresa em {city} com a WMTi.",
+    relatedSlugs: ["suporte-ti", "infraestrutura-ti", "administracao-servidores"],
+    dedicatedPage: "/terceirizacao-de-mao-de-obra-ti",
+  },
 ];
