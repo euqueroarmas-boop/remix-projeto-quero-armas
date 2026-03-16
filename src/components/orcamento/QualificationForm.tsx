@@ -600,7 +600,7 @@ const RentalQualificationForm = ({ onComplete, completed, data: completedData }:
   );
 };
 
-const LegacyQualificationForm = ({ onComplete, completed, completedData }: Omit<Props, "path">) => {
+const LegacyQualificationForm = ({ onComplete, completed, data: completedData }: Omit<Props, "path">) => {
   const [step, setStep] = useState(0);
   const [data, setData] = useState<QualificationData>({
     computersQty: 5,
