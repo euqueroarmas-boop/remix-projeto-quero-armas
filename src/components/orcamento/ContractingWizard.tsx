@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { FileText, CreditCard, QrCode, FileBarChart, CheckCircle, Loader2, ExternalLink, AlertTriangle, ArrowRight } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
