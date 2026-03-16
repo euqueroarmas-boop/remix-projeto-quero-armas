@@ -581,11 +581,10 @@ const ContractingWizard = ({
                     </div>
                   )}
 
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-2 gap-3">
                     {[
-                      { id: "PIX" as BillingType, icon: QrCode, label: "PIX", desc: "Recorrente" },
-                      { id: "BOLETO" as BillingType, icon: FileBarChart, label: "Boleto", desc: "Recorrente" },
-                      { id: "CREDIT_CARD" as BillingType, icon: CreditCard, label: "Cartão", desc: "Recorrente" },
+                      { id: "BOLETO" as BillingType, icon: FileBarChart, label: "Boleto", desc: "Recorrente mensal" },
+                      { id: "CREDIT_CARD" as BillingType, icon: CreditCard, label: "Cartão de Crédito", desc: "Recorrente mensal" },
                     ].map((method) => (
                       <button
                         key={method.id}
