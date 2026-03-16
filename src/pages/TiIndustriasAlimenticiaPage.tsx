@@ -1,5 +1,6 @@
 import { Server, Network, Shield, HardDrive, Activity, Headphones } from "lucide-react";
 import ServicePageTemplate from "@/components/ServicePageTemplate";
+import heroImg from "@/assets/segments/industrias-alimenticias.jpg";
 
 const TiIndustriasAlimenticiaPage = () => (
   <ServicePageTemplate
@@ -10,6 +11,8 @@ const TiIndustriasAlimenticiaPage = () => (
     headline={<>Infraestrutura de TI para <span className="text-primary">Indústrias Alimentícias</span></>}
     description="A operação de uma indústria alimentícia depende diretamente da estabilidade da infraestrutura tecnológica. Sistemas de produção, controle de estoque, rastreabilidade de lotes e integração logística exigem redes confiáveis e servidores de alto desempenho. A WMTi oferece soluções completas de infraestrutura de TI para indústrias alimentícias, garantindo continuidade operacional e proteção de dados."
     whatsappMessage="Olá! Gostaria de uma análise da infraestrutura de TI da minha indústria alimentícia."
+    heroImage={heroImg}
+    heroImageAlt="Linha de produção de indústria alimentícia com equipamentos modernos"
     painPoints={[
       "Sistemas de produção instáveis comprometendo a operação",
       "Redes industriais sem segmentação adequada",

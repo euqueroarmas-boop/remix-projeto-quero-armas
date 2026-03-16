@@ -30,6 +30,8 @@ interface ServicePageProps {
   localContent?: string;
   canonicalSlug?: string;
   shouldIndex?: boolean;
+  heroImage?: string;
+  heroImageAlt?: string;
 }
 
 const fadeIn = {
@@ -55,6 +57,8 @@ const ServicePageTemplate = ({
   localContent,
   canonicalSlug,
   shouldIndex = true,
+  heroImage,
+  heroImageAlt,
 }: ServicePageProps) => {
   const location = useLocation();
   const baseUrl = "https://wmti.com.br";
@@ -92,48 +96,66 @@ const ServicePageTemplate = ({
       />
       <Navbar />
 
-      {/* Hero */}
       <section className="section-dark pt-24 md:pt-28 pb-16 md:pb-24 border-b-4 border-primary">
         <div className="container">
-          <motion.div {...fadeIn} className="max-w-4xl">
-            {/* Breadcrumbs */}
-            <nav aria-label="Breadcrumb" className="mb-6">
-              <ol className="flex items-center gap-1 font-mono text-xs text-gunmetal-foreground/50">
-                <li>
-                  <Link to="/" className="hover:text-primary transition-colors">Home</Link>
-                </li>
-                <ChevronRight size={10} className="shrink-0" />
-                <li className="text-primary truncate" aria-current="page">{tag}</li>
-              </ol>
-            </nav>
+          <div className={`${heroImage ? 'grid md:grid-cols-2 gap-12 items-center' : ''}`}>
+            <motion.div {...fadeIn} className="max-w-4xl">
+              {/* Breadcrumbs */}
+              <nav aria-label="Breadcrumb" className="mb-6">
+                <ol className="flex items-center gap-1 font-mono text-xs text-gunmetal-foreground/50">
+                  <li>
+                    <Link to="/" className="hover:text-primary transition-colors">Home</Link>
+                  </li>
+                  <ChevronRight size={10} className="shrink-0" />
+                  <li className="text-primary truncate" aria-current="page">{tag}</li>
+                </ol>
+              </nav>
 
-            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
-              // {tag}
-            </p>
-            <h1 className="text-3xl md:text-5xl lg:text-6xl mb-6">{headline}</h1>
-            <p className="font-body text-lg md:text-xl text-gunmetal-foreground/70 max-w-2xl leading-relaxed mb-8">
-              {description}
-            </p>
+              <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
+                // {tag}
+              </p>
+              <h1 className="text-3xl md:text-5xl lg:text-6xl mb-6">{headline}</h1>
+              <p className="font-body text-lg md:text-xl text-gunmetal-foreground/70 max-w-2xl leading-relaxed mb-8">
+                {description}
+              </p>
 
-            <div className="flex flex-wrap gap-4">
-              <Link
-                to="/orcamento-ti"
-                className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
+              <div className="flex flex-wrap gap-4">
+                <Link
+                  to="/orcamento-ti"
+                  className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
+                >
+                  <ArrowRight size={16} />
+                  Contrate este serviço
+                </Link>
+                <a
+                  href={`https://wa.me/5511963166915?text=${encodeURIComponent(whatsappMessage)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 border border-gunmetal-foreground/30 text-gunmetal-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:border-primary hover:text-primary transition-all"
+                >
+                  <MessageCircle size={16} />
+                  Falar com especialista
+                </a>
+              </div>
+            </motion.div>
+
+            {heroImage && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+                className="hidden md:block"
               >
-                <ArrowRight size={16} />
-                Contrate este serviço
-              </Link>
-              <a
-                href={`https://wa.me/5511963166915?text=${encodeURIComponent(whatsappMessage)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 border border-gunmetal-foreground/30 text-gunmetal-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:border-primary hover:text-primary transition-all"
-              >
-                <MessageCircle size={16} />
-                Falar com especialista
-              </a>
-            </div>
-          </motion.div>
+                <img
+                  src={heroImage}
+                  alt={heroImageAlt || tag}
+                  className="w-full h-auto rounded-sm shadow-lg object-cover aspect-[4/3]"
+                  loading="eager"
+                />
+              </motion.div>
+            )}
+          </div>
         </div>
       </section>
 
