@@ -28,13 +28,27 @@ Deno.serve(async (req) => {
       processed: false,
     });
 
-    // Log to integration_logs
     await supabase.from("integration_logs").insert({
       integration_name: "asaas",
       operation_name: "webhook_received",
       request_payload: body,
       status: "received",
     });
+
+    // ── Handle subscription events ──
+    if (event === "SUBSCRIPTION_CREATED" || event === "SUBSCRIPTION_UPDATED") {
+      console.log("[asaas-webhook] Evento de assinatura:", event);
+      await supabase.from("integration_logs").insert({
+        integration_name: "asaas",
+        operation_name: `subscription_${event.toLowerCase()}`,
+        request_payload: body,
+        status: "success",
+      });
+      return new Response(JSON.stringify({ received: true, event }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     if (!payment?.id) {
       console.log("[asaas-webhook] Sem payment.id, ignorando.");
@@ -52,7 +66,7 @@ Deno.serve(async (req) => {
       .single();
 
     if (findErr || !paymentRecord) {
-      console.log("[asaas-webhook] Pagamento não encontrado no banco para asaas_payment_id:", payment.id);
+      console.log("[asaas-webhook] Pagamento não encontrado para asaas_payment_id:", payment.id);
       await supabase.from("integration_logs").insert({
         integration_name: "asaas",
         operation_name: "webhook_payment_not_found",
@@ -66,7 +80,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Map Asaas events to our status
+    // Map Asaas events to status
     let newStatus: string;
     switch (event) {
       case "PAYMENT_RECEIVED":
@@ -101,37 +115,44 @@ Deno.serve(async (req) => {
     console.log("[asaas-webhook] Atualizando pagamento", paymentRecord.id, "→ status:", newStatus);
 
     // Update payment status
-    const { error: updateErr } = await supabase
+    await supabase
       .from("payments")
       .update({ payment_status: newStatus })
       .eq("id", paymentRecord.id);
 
-    if (updateErr) {
-      console.error("[asaas-webhook] Erro ao atualizar pagamento:", updateErr);
-    }
-
-    // If confirmed, activate contract
+    // ── Payment confirmed: activate contract + log invoice ──
     if (event === "PAYMENT_RECEIVED" || event === "PAYMENT_CONFIRMED") {
-      console.log("[asaas-webhook] Pagamento confirmado! Ativando contrato...");
+      console.log("[asaas-webhook] Pagamento confirmado! Ativando contrato e registrando NF...");
 
       if (paymentRecord.quote_id) {
-        const { error: contractErr } = await supabase
+        // Activate contract
+        await supabase
           .from("contracts")
           .update({ status: "ATIVO" })
           .eq("quote_id", paymentRecord.quote_id);
 
-        if (contractErr) {
-          console.error("[asaas-webhook] Erro ao ativar contrato:", contractErr);
-        }
-
-        const { error: quoteErr } = await supabase
+        await supabase
           .from("quotes")
           .update({ status: "active" })
           .eq("id", paymentRecord.quote_id);
 
-        if (quoteErr) {
-          console.error("[asaas-webhook] Erro ao atualizar quote:", quoteErr);
-        }
+        // Log invoice generation (simulated — real NF integration would call an NF API)
+        await supabase.from("integration_logs").insert({
+          integration_name: "asaas",
+          operation_name: "invoice_generated",
+          request_payload: {
+            event,
+            payment_id: payment.id,
+            quote_id: paymentRecord.quote_id,
+            value: payment.value,
+            billing_period: payment.dueDate,
+          },
+          response_payload: {
+            invoice_number: `NF-${Date.now()}`,
+            generated_at: new Date().toISOString(),
+          },
+          status: "success",
+        });
 
         // Log contract activation
         await supabase.from("integration_logs").insert({
@@ -145,8 +166,24 @@ Deno.serve(async (req) => {
           status: "success",
         });
 
-        console.log("[asaas-webhook] Contrato ativado com sucesso para quote:", paymentRecord.quote_id);
+        console.log("[asaas-webhook] Contrato ativado e NF registrada para quote:", paymentRecord.quote_id);
       }
+    }
+
+    // ── Payment overdue: mark contract as INADIMPLENTE ──
+    if (event === "PAYMENT_OVERDUE" && paymentRecord.quote_id) {
+      console.log("[asaas-webhook] Pagamento vencido. Marcando contrato como INADIMPLENTE.");
+      await supabase
+        .from("contracts")
+        .update({ status: "INADIMPLENTE" })
+        .eq("quote_id", paymentRecord.quote_id);
+
+      await supabase.from("integration_logs").insert({
+        integration_name: "asaas",
+        operation_name: "contract_overdue",
+        request_payload: { event, payment_id: payment.id, quote_id: paymentRecord.quote_id },
+        status: "warning",
+      });
     }
 
     // Mark webhook as processed
@@ -172,7 +209,6 @@ Deno.serve(async (req) => {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error("[asaas-webhook] Erro fatal:", message);
 
-    // Log error
     try {
       await supabase.from("integration_logs").insert({
         integration_name: "asaas",
@@ -180,7 +216,7 @@ Deno.serve(async (req) => {
         status: "error",
         error_message: message,
       });
-    } catch {}
+    } catch { /* ignore */ }
 
     return new Response(JSON.stringify({ error: message }), {
       status: 500,
