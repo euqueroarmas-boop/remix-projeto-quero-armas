@@ -14,11 +14,7 @@ import SupportCalculator, { calculateSupportTotal } from "@/components/orcamento
 import Recommendation, { getRecommendation } from "@/components/orcamento/Recommendation";
 import IncludedServices from "@/components/orcamento/IncludedServices";
 import BudgetAuthority from "@/components/orcamento/BudgetAuthority";
-import BudgetLeadForm, { type LeadFormData } from "@/components/orcamento/BudgetLeadForm";
-import CustomerDataForm, { type CustomerData } from "@/components/orcamento/CustomerDataForm";
-import ContractPreview, { generateContractHtml } from "@/components/orcamento/ContractPreview";
-import SignatureCanvas from "@/components/orcamento/SignatureCanvas";
-import PaymentSelector from "@/components/orcamento/PaymentSelector";
+import ContractingWizard from "@/components/orcamento/ContractingWizard";
 
 const OrcamentoTiPage = () => {
   const [searchParams] = useSearchParams();
@@ -40,23 +36,9 @@ const OrcamentoTiPage = () => {
     backup: false,
   });
 
-  // Lead & submission
-  const [leadSubmitted, setLeadSubmitted] = useState(false);
+  // Budget saved (replaces lead form)
+  const [budgetSaved, setBudgetSaved] = useState(false);
   const [quoteId, setQuoteId] = useState<string | null>(null);
-
-  // Customer data (new)
-  const [customerData, setCustomerData] = useState<CustomerData | null>(null);
-  const [customerComplete, setCustomerComplete] = useState(false);
-  const [customerId, setCustomerId] = useState<string | null>(null);
-
-  // Contract (new)
-  const [contractId, setContractId] = useState<string | null>(null);
-  const [contractSigned, setContractSigned] = useState(false);
-
-  // Payment (new)
-  const [paymentComplete, setPaymentComplete] = useState(false);
-  const [paymentError, setPaymentError] = useState<string | null>(null);
-  const [invoiceUrl, setInvoiceUrl] = useState<string | null>(null);
 
   const plan = plans.find((p) => p.id === selectedPlan) || plans[1];
   const rentalMonthly = plan.price * computersQty;
@@ -118,29 +100,24 @@ const OrcamentoTiPage = () => {
     }
   }, [selectedPath, scrollToSection]);
 
-  const handleLeadSubmit = useCallback(
-    async (formData: LeadFormData) => {
-      const pathLabel = effectivePath === "locacao" ? "Locação" : "Suporte";
-      const summaryLines = [
-        `Caminho: ${pathLabel}`,
-        `Computadores: ${qualification?.computersQty ?? computersQty}`,
-        `Idade média: ${qualification?.averageAge ?? "N/A"}`,
-        `Core i3+: ${qualification?.isMinCoreI3 ? "Sim" : "Não"}`,
-        `Servidores: ${qualification?.serversQty ?? 0}`,
-        effectivePath === "locacao" ? `Plano: ${plan.name}` : null,
-        `Valor estimado: R$${monthlyValue.toLocaleString("pt-BR")}/mês`,
-        formData.observations ? `Obs: ${formData.observations}` : null,
-      ].filter(Boolean).join("\n");
+  // Save budget as quote (no redundant lead form)
+  const handleSaveBudget = useCallback(async () => {
+    if (budgetSaved) {
+      scrollToSection("contracting-wizard");
+      return;
+    }
 
+    try {
+      const pathLabel = effectivePath === "locacao" ? "Locação" : "Suporte";
+
+      // Create a budget lead with minimal data (real data comes in the wizard)
       const { data: leadRow, error: leadErr } = await supabase
         .from("budget_leads" as any)
         .insert({
-          company_name: formData.companyName,
-          contact_name: formData.contactName,
-          email: formData.email,
-          phone: formData.phone || null,
-          city: formData.city || null,
-          observations: summaryLines,
+          company_name: "Preenchimento no wizard",
+          contact_name: "Preenchimento no wizard",
+          email: "wizard@pendente.com",
+          observations: `Caminho: ${pathLabel}\nComputadores: ${qualification?.computersQty ?? computersQty}\nValor: R$${monthlyValue}/mês`,
         } as any)
         .select()
         .single();
@@ -165,12 +142,11 @@ const OrcamentoTiPage = () => {
         .single();
 
       if (quoteErr) throw quoteErr;
-      const quote = quoteRow as any;
-      setQuoteId(quote.id);
+      setQuoteId((quoteRow as any).id);
 
       if (qualification) {
         await supabase.from("network_diagnostics" as any).insert({
-          quote_id: quote.id,
+          quote_id: (quoteRow as any).id,
           computers_current: qualification.computersQty,
           average_pc_age: qualification.averageAge,
           maintenance_frequency: qualification.frequentMaintenance ? "frequente" : "raramente",
@@ -179,214 +155,13 @@ const OrcamentoTiPage = () => {
         } as any);
       }
 
-      setLeadSubmitted(true);
-      scrollToSection("customer-data");
-    },
-    [effectivePath, selectedPlan, computersQty, usersQty, addons, monthlyValue, qualification, plan.name, scrollToSection]
-  );
-
-  const handleCustomerComplete = useCallback(
-    async (data: CustomerData) => {
-      const { data: row, error } = await supabase
-        .from("customers" as any)
-        .insert({
-          razao_social: data.razaoSocial,
-          nome_fantasia: data.nomeFantasia || null,
-          cnpj_ou_cpf: data.cnpjOuCpf,
-          responsavel: data.responsavel,
-          email: data.email,
-          telefone: data.telefone || null,
-          endereco: data.endereco,
-          cidade: data.cidade,
-          cep: data.cep,
-        } as any)
-        .select()
-        .single();
-
-      if (error) throw error;
-      const customer = row as any;
-      setCustomerId(customer.id);
-      setCustomerData(data);
-      setCustomerComplete(true);
-
-      console.log("[WMTi] Dados do cliente salvos. Gerando contrato automaticamente...");
-
-      // Generate contract HTML
-      const contractType = effectivePath === "locacao" ? "locacao" : "suporte";
-      const contractHtml = generateContractHtml(
-        data,
-        contractType as "locacao" | "suporte",
-        effectivePath === "locacao" ? plan : null,
-        qualification?.computersQty ?? computersQty,
-        monthlyValue
-      );
-
-      // Hash the contract
-      const encoder = new TextEncoder();
-      const hashBuffer = await crypto.subtle.digest("SHA-256", encoder.encode(contractHtml));
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      const contractHash = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-
-      // Create contract record
-      const { data: contractRow, error: contractErr } = await supabase
-        .from("contracts" as any)
-        .insert({
-          quote_id: quoteId,
-          customer_id: customer.id,
-          contract_type: contractType,
-          contract_text: contractHtml,
-          monthly_value: monthlyValue,
-          contract_hash: contractHash,
-          status: "draft",
-          signed: false,
-        } as any)
-        .select()
-        .single();
-
-      if (contractErr) throw contractErr;
-      setContractId((contractRow as any).id);
-      console.log("[WMTi] Contrato gerado com sucesso. ID:", (contractRow as any).id, "Hash:", contractHash);
-
-      // Save equipment config for rental
-      if (effectivePath === "locacao") {
-        const cpuParts = plan.cpu.split(" ");
-        const cpuGen = cpuParts.slice(1).join(" ");
-        await supabase.from("contract_equipment" as any).insert({
-          contract_id: (contractRow as any).id,
-          computer_model: "Dell OptiPlex",
-          cpu: `Core ${cpuParts[0] === "Core" ? cpuParts[1] : cpuParts[0]}`,
-          cpu_generation: cpuGen || plan.cpu,
-          ram: plan.ram.replace(" RAM", ""),
-          ssd: plan.ssd.replace(" SSD", ""),
-          network: "Placa de rede Gigabit",
-          monitor_brand: "Dell",
-          monitor_size: '18.5"',
-          keyboard_model: "Teclado USB ABNT2",
-          mouse_model: "Mouse óptico USB",
-          quantity: qualification?.computersQty ?? computersQty,
-          unit_price: plan.price,
-          monthly_total: monthlyValue,
-        } as any);
-      }
-
-      scrollToSection("contract-preview");
-    },
-    [quoteId, effectivePath, plan, qualification, computersQty, monthlyValue, scrollToSection]
-  );
-
-  const handleSignContract = useCallback(
-    async (signatureData: string, signerName: string) => {
-      if (!contractId) return;
-
-      let clientIp = "unknown";
-      try {
-        const res = await fetch("https://api.ipify.org?format=json");
-        const data = await res.json();
-        clientIp = data.ip;
-      } catch {}
-
-      const userAgent = navigator.userAgent;
-
-      // Get contract hash
-      let contractHash = "";
-      const { data: contractRow } = await supabase
-        .from("contracts" as any)
-        .select("contract_hash")
-        .eq("id", contractId)
-        .single();
-      if (contractRow) contractHash = (contractRow as any).contract_hash || "";
-
-      // Save signature
-      await supabase.from("contract_signatures" as any).insert({
-        contract_id: contractId,
-        signer_name: signerName,
-        signature_data: signatureData,
-        ip_address: clientIp,
-        user_agent: userAgent,
-        contract_hash: contractHash,
-      } as any);
-
-      // Update contract status
-      await supabase
-        .from("contracts" as any)
-        .update({
-          signed: true,
-          signed_at: new Date().toISOString(),
-          client_ip: clientIp,
-          status: "AGUARDANDO PAGAMENTO",
-        } as any)
-        .eq("id", contractId);
-
-      // Create payment placeholder
-      await supabase.from("payments" as any).insert({
-        quote_id: quoteId,
-        payment_status: "pending",
-      } as any);
-
-      setContractSigned(true);
-      scrollToSection("payment-selection");
-    },
-    [contractId, quoteId, scrollToSection]
-  );
-
-  const handlePaymentSelect = useCallback(
-    async (billingType: "BOLETO" | "CREDIT_CARD" | "PIX"): Promise<string | null> => {
-      if (!customerData || !quoteId) return null;
-
-      const dueDate = new Date();
-      dueDate.setDate(dueDate.getDate() + 3);
-      const dueDateStr = dueDate.toISOString().split("T")[0];
-
-      const contractType = effectivePath === "locacao" ? "Locação de Equipamentos" : "Serviços de TI";
-      const description = `Contrato WMTi — ${contractType} — ${qualification?.computersQty ?? computersQty} computador(es)`;
-
-      setPaymentError(null);
-
-      try {
-        console.log("[WMTi] Criando cobrança no Asaas...", { billingType, monthlyValue, dueDateStr });
-
-        const { data, error } = await supabase.functions.invoke("create-asaas-payment", {
-          body: {
-            customer_name: customerData.razaoSocial,
-            customer_email: customerData.email,
-            customer_cpf_cnpj: customerData.cnpjOuCpf,
-            billing_type: billingType,
-            value: monthlyValue,
-            due_date: dueDateStr,
-            description,
-            quote_id: quoteId,
-          },
-        });
-
-        if (error) {
-          console.error("[WMTi] Erro na função de pagamento:", error);
-          throw new Error(error.message || "Erro ao criar cobrança");
-        }
-
-        console.log("[WMTi] Resposta do Asaas:", data);
-
-        const url = data?.invoice_url || null;
-
-        if (!url) {
-          console.error("[WMTi] Asaas não retornou URL de pagamento:", data);
-          throw new Error("O sistema de pagamento não retornou um link de cobrança. Tente novamente.");
-        }
-
-        setInvoiceUrl(url);
-        setPaymentComplete(true);
-        console.log("[WMTi] Cobrança criada com sucesso. URL:", url);
-        return url;
-      } catch (err) {
-        const message = err instanceof Error ? err.message : "Erro desconhecido ao gerar cobrança";
-        console.error("[WMTi] Falha no pagamento:", message);
-        setPaymentError(message);
-        setPaymentComplete(false);
-        setInvoiceUrl(null);
-        return null;
-      }
-    },
-    [customerData, quoteId, effectivePath, qualification, computersQty, monthlyValue]
-  );
+      setBudgetSaved(true);
+      console.log("[WMTi] Orçamento salvo. Quote ID:", (quoteRow as any).id);
+      scrollToSection("contracting-wizard");
+    } catch (err) {
+      console.error("[WMTi] Erro ao salvar orçamento:", err);
+    }
+  }, [budgetSaved, effectivePath, selectedPlan, computersQty, usersQty, addons, monthlyValue, qualification, scrollToSection]);
 
   const showRentalFlow = effectivePath === "locacao";
   const showSupportFlow = effectivePath === "suporte";
@@ -446,47 +221,43 @@ const OrcamentoTiPage = () => {
 
         {qualificationComplete && <BudgetAuthority />}
 
-        {/* LEAD FORM */}
+        {/* CTA: Contratar agora (replaces old lead form) */}
         {qualificationComplete && (
-          <BudgetLeadForm
-            onSubmit={handleLeadSubmit}
-            submitted={leadSubmitted}
-            onContinueToContract={() => scrollToSection("customer-data")}
-          />
+          <section id="budget-cta" className="py-16 bg-card">
+            <div className="container mx-auto px-4 text-center">
+              <div className="max-w-2xl mx-auto bg-background border border-primary/20 rounded-2xl p-8 space-y-4">
+                <h3 className="text-2xl font-heading font-bold">
+                  {budgetSaved ? "Orçamento salvo!" : "Orçamento pronto!"}
+                </h3>
+                <p className="text-muted-foreground">
+                  {effectivePath === "locacao"
+                    ? `${plan.name} — ${computersQty} computador${computersQty > 1 ? "es" : ""}`
+                    : `Suporte mensal — ${qualification?.computersQty ?? computersQty} computador${(qualification?.computersQty ?? computersQty) > 1 ? "es" : ""}`
+                  }
+                </p>
+                <p className="text-3xl font-bold text-primary">
+                  R$ {monthlyValue.toLocaleString("pt-BR")},00<span className="text-base font-normal text-muted-foreground">/mês</span>
+                </p>
+                <button
+                  onClick={handleSaveBudget}
+                  className="w-full h-14 text-base font-semibold rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground transition-colors"
+                >
+                  {budgetSaved ? "Continuar contratação ↓" : "Contratar agora"}
+                </button>
+              </div>
+            </div>
+          </section>
         )}
 
-        {/* CUSTOMER DATA FORM (new) */}
-        <CustomerDataForm
-          visible={leadSubmitted}
-          onComplete={handleCustomerComplete}
-          completed={customerComplete}
-        />
-
-        {/* CONTRACT PREVIEW (new) */}
-        <ContractPreview
-          visible={customerComplete}
-          customer={customerData}
-          contractType={effectivePath === "locacao" ? "locacao" : "suporte"}
-          plan={effectivePath === "locacao" ? plan : null}
+        {/* CONTRACTING WIZARD (unified: registration + contract + signature + payment) */}
+        <ContractingWizard
+          visible={budgetSaved}
+          effectivePath={effectivePath as "locacao" | "suporte" | null}
+          plan={plan}
+          qualification={qualification}
           computersQty={qualification?.computersQty ?? computersQty}
           monthlyValue={monthlyValue}
-        />
-
-        {/* SIGNATURE (new) */}
-        <SignatureCanvas
-          visible={customerComplete}
-          onSign={handleSignContract}
-          signed={contractSigned}
-        />
-
-        {/* PAYMENT SELECTION (new) */}
-        <PaymentSelector
-          visible={contractSigned}
-          monthlyValue={monthlyValue}
-          onSelectPayment={handlePaymentSelect}
-          completed={paymentComplete}
-          invoiceUrl={invoiceUrl}
-          error={paymentError}
+          quoteId={quoteId}
         />
       </main>
 

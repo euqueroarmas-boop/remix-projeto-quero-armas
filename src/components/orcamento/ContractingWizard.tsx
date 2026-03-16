@@ -652,7 +652,4 @@ const ContractingWizard = ({
   );
 };
 
-// Need this import for the ArrowRight used in Step 1
-import { ArrowRight } from "lucide-react";
-
 export default ContractingWizard;
