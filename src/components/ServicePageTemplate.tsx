@@ -30,6 +30,8 @@ interface ServicePageProps {
   localContent?: string;
   canonicalSlug?: string;
   shouldIndex?: boolean;
+  heroImage?: string;
+  heroImageAlt?: string;
 }
 
 const fadeIn = {
