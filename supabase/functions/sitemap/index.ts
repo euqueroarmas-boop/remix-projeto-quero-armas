@@ -73,6 +73,9 @@ const staticPages = [
   { loc: "/backup-da-empresa-nao-funciona", priority: "0.7", changefreq: "monthly" },
   { loc: "/como-proteger-a-empresa-contra-ransomware", priority: "0.7", changefreq: "monthly" },
   { loc: "/diagnostico-ti-empresarial", priority: "0.9", changefreq: "monthly" },
+  { loc: "/ti-para-serventias-cartoriais", priority: "0.7", changefreq: "monthly" },
+  { loc: "/ti-para-industrias-alimenticias", priority: "0.7", changefreq: "monthly" },
+  { loc: "/ti-para-industrias-petroliferas", priority: "0.7", changefreq: "monthly" },
 ];
 
 function urlEntry(loc: string, priority: string, changefreq: string): string {

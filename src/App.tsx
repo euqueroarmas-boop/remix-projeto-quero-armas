@@ -26,6 +26,9 @@ const MontagemRedesPage = lazy(() => import("./pages/MontagemRedesPage.tsx"));
 const LocacaoComputadoresPage = lazy(() => import("./pages/LocacaoComputadoresPage.tsx"));
 const SuporteTiPage = lazy(() => import("./pages/SuporteTiPage.tsx"));
 const TiCartoriosPage = lazy(() => import("./pages/TiCartoriosPage.tsx"));
+const TiServentiasCartoriaisPage = lazy(() => import("./pages/TiServentiasCartoriaisPage.tsx"));
+const TiIndustriasAlimenticiaPage = lazy(() => import("./pages/TiIndustriasAlimenticiaPage.tsx"));
+const TiIndustriasPetroliferasPage = lazy(() => import("./pages/TiIndustriasPetroliferasPage.tsx"));
 const InfraestruturaCorporativaPage = lazy(() => import("./pages/InfraestruturaCorporativaPage.tsx"));
 const OrcamentoTiPage = lazy(() => import("./pages/OrcamentoTiPage.tsx"));
 const ContratoPage = lazy(() => import("./pages/ContratoPage.tsx"));
@@ -70,6 +73,9 @@ const App = () => (
             <Route path="/contrato" element={<ContratoPage />} />
             {/* Segment dedicated pages */}
             <Route path="/ti-para-cartorios" element={<TiCartoriosPage />} />
+            <Route path="/ti-para-serventias-cartoriais" element={<TiServentiasCartoriaisPage />} />
+            <Route path="/ti-para-industrias-alimenticias" element={<TiIndustriasAlimenticiaPage />} />
+            <Route path="/ti-para-industrias-petroliferas" element={<TiIndustriasPetroliferasPage />} />
             {/* Provimento 213 */}
             <Route path="/provimento-213" element={<Navigate to="/cartorios/provimento-213" replace />} />
             <Route path="/cartorios/provimento-213" element={<Provimento213 />} />
