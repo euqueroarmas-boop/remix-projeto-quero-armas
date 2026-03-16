@@ -162,7 +162,144 @@ const ContractingWizard = ({
     return "pending" as const;
   };
 
-  const handlePayment = async () => {
+  const scrollToWizardTop = () => {
+    setTimeout(() => {
+      wizardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 150);
+  };
+
+  const contractType = effectivePath === "locacao" ? "locacao" : "suporte";
+  const pathLabel = effectivePath === "locacao" ? "Locação de Equipamentos" : "Serviços de TI";
+
+  const handleContinueFromSummary = () => {
+    setCurrentStep("registration");
+    scrollToWizardTop();
+  };
+
+  const handleRegistrationComplete = async (data: RegistrationData) => {
+    setRegistrationLoading(true);
+    try {
+      const fullAddress = [data.endereco, data.numero, data.complemento, data.bairro].filter(Boolean).join(", ");
+
+      const { data: row, error } = await supabase
+        .from("customers" as any)
+        .insert({
+          razao_social: data.razaoSocial,
+          nome_fantasia: data.nomeFantasia || null,
+          cnpj_ou_cpf: data.cnpjOuCpf,
+          responsavel: data.responsavel,
+          email: data.email,
+          telefone: data.telefone || null,
+          endereco: fullAddress,
+          cidade: `${data.cidade}/${data.uf}`,
+          cep: data.cep,
+        } as any)
+        .select()
+        .single();
+
+      if (error) throw error;
+      const customer = row as any;
+      setCustomerId(customer.id);
+      setRegistrationData(data);
+
+      const customerDataForContract: CustomerData = {
+        razaoSocial: data.razaoSocial,
+        nomeFantasia: data.nomeFantasia,
+        cnpjOuCpf: data.cnpjOuCpf,
+        responsavel: data.responsavel,
+        email: data.email,
+        telefone: data.telefone,
+        endereco: fullAddress,
+        cidade: `${data.cidade}/${data.uf}`,
+        cep: data.cep,
+      };
+
+      const html = generateContractHtml(
+        customerDataForContract,
+        contractType as "locacao" | "suporte",
+        effectivePath === "locacao" ? plan : null,
+        computersQty,
+        monthlyValue,
+      );
+
+      const encoder = new TextEncoder();
+      const hashBuffer = await crypto.subtle.digest("SHA-256", encoder.encode(html));
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const contractHash = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+
+      const { data: contractRow, error: contractErr } = await supabase
+        .from("contracts" as any)
+        .insert({
+          quote_id: quoteId,
+          customer_id: customer.id,
+          contract_type: contractType,
+          contract_text: html,
+          monthly_value: monthlyValue,
+          contract_hash: contractHash,
+          status: "draft",
+          signed: false,
+          accepted_minimum_term: false,
+        } as any)
+        .select()
+        .single();
+
+      if (contractErr) throw contractErr;
+      setContractId((contractRow as any).id);
+
+      if (effectivePath === "locacao") {
+        await supabase.from("contract_equipment" as any).insert({
+          contract_id: (contractRow as any).id,
+          computer_model: "Dell OptiPlex",
+          cpu: plan.cpu,
+          cpu_generation: plan.cpu,
+          ram: plan.ram.replace(" RAM", ""),
+          ssd: plan.ssd.replace(" SSD", ""),
+          network: "Placa de rede Gigabit",
+          monitor_brand: "Dell",
+          monitor_size: '18.5"',
+          keyboard_model: "Teclado USB ABNT2",
+          mouse_model: "Mouse óptico USB",
+          quantity: computersQty,
+          unit_price: plan.price,
+          monthly_total: monthlyValue,
+        } as any);
+      }
+
+      await supabase.from("integration_logs" as any).insert({
+        integration_name: "contract",
+        operation_name: "contract_created",
+        request_payload: { contract_id: (contractRow as any).id, customer_id: customer.id, customerId },
+        status: "success",
+      } as any);
+
+      await supabase.from("payments" as any).insert({
+        quote_id: quoteId,
+        payment_status: "pending",
+      } as any);
+
+      setCurrentStep("contract");
+      scrollToWizardTop();
+    } catch (err) {
+      console.error("[WMTi] Erro no cadastro:", err);
+      toast({ title: "Erro ao salvar dados", description: "Tente novamente.", variant: "destructive" });
+    } finally {
+      setRegistrationLoading(false);
+    }
+  };
+
+  const handleOpenContract = () => {
+    if (!contractId) return;
+    window.open(`/contrato?id=${contractId}`, "_blank");
+  };
+
+  const handleRetryPayment = () => {
+    setPaymentComplete(false);
+    setPaymentData(null);
+    setInvoiceUrl(null);
+    setPaymentError(null);
+  };
+
+
     if (!selectedPayment || !registrationData || !quoteId) return;
     setPaymentLoading(true);
     setPaymentError(null);
