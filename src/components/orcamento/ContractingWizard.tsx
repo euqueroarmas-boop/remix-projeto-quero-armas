@@ -168,14 +168,11 @@ const ContractingWizard = ({
     return () => clearInterval(interval);
   }, [currentStep, contractId, contractSigned, toast]);
 
-  // Auto-redirect to Asaas checkout
-  useEffect(() => {
-    if (!paymentComplete || !paymentData || !paymentData.invoiceUrl) return;
-    const timer = window.setTimeout(() => {
-      window.location.href = paymentData.invoiceUrl!;
-    }, 1800);
-    return () => window.clearTimeout(timer);
-  }, [paymentComplete, paymentData]);
+  // Redirect only after confirmed invoiceUrl
+  const handleRedirectToCheckout = useCallback((url: string) => {
+    if (!url) return;
+    window.location.href = url;
+  }, []);
 
 
   // All hooks above — safe to return null now
