@@ -482,66 +482,7 @@ const ContractingWizard = ({
 
             {/* Step 3: Payment */}
             <WizardStepWrapper stepNumber={3} title="Pagamento" subtitle="Escolha a forma e finalize" status={getStepStatus("payment")} isLast>
-              {paymentComplete && paymentData?.billingType === "PIX" ? (
-                <div className="space-y-4">
-                  <div className="bg-card border border-primary/20 rounded-xl p-6 space-y-4">
-                    <div className="text-center space-y-2">
-                      <QrCode className="w-10 h-10 text-primary mx-auto" />
-                      <h4 className="text-lg font-heading font-bold">Pagamento via PIX</h4>
-                      <p className="text-sm text-muted-foreground">Aguardando confirmação do pagamento.</p>
-                      <p className="text-xs uppercase tracking-wide text-primary font-semibold">Status: {paymentData.status}</p>
-                    </div>
-
-                    {paymentData.pixQrCodeImage ? (
-                      <div className="bg-background rounded-xl border border-border p-4 flex justify-center">
-                        <img src={paymentData.pixQrCodeImage} alt="QR Code do PIX" className="w-56 h-56 object-contain" loading="lazy" />
-                      </div>
-                    ) : (
-                      <div className="rounded-xl border border-border bg-background p-4 text-sm text-muted-foreground text-center">
-                        QR Code indisponível no momento. Você ainda pode usar o código copia e cola ou abrir a cobrança.
-                      </div>
-                    )}
-
-                    {paymentData.pixCopyPaste ? (
-                      <div className="space-y-2">
-                        <HelperLabel className="text-sm font-semibold">Código PIX copia e cola</HelperLabel>
-                        <div className="rounded-xl border border-border bg-background p-4 text-sm break-all">{paymentData.pixCopyPaste}</div>
-                      </div>
-                    ) : (
-                      <div className="rounded-xl border border-border bg-background p-4 text-sm text-muted-foreground">
-                        O código copia e cola não foi retornado. Se necessário, abra a cobrança no link abaixo.
-                      </div>
-                    )}
-
-                    {paymentError && (
-                      <div className="p-3 rounded-lg border border-destructive/30 bg-destructive/5 flex items-start gap-2">
-                        <AlertTriangle className="w-4 h-4 text-destructive mt-0.5 shrink-0" />
-                        <div>
-                          <p className="text-sm font-semibold text-destructive">Retorno incompleto do PIX</p>
-                          <p className="text-xs text-muted-foreground mt-1">{paymentError}</p>
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <Button onClick={handleCopyPixCode} disabled={!paymentData.pixCopyPaste} className="h-11 bg-primary hover:bg-primary/90 text-primary-foreground">
-                        <Copy className="w-4 h-4 mr-2" />
-                        Copiar código PIX
-                      </Button>
-                      <Button asChild variant="outline" className="h-11" disabled={!paymentData.invoiceUrl}>
-                        <a href={paymentData.invoiceUrl || "#"} target="_blank" rel="noreferrer">
-                          <ExternalLink className="w-4 h-4 mr-2" />
-                          Abrir cobrança
-                        </a>
-                      </Button>
-                    </div>
-
-                    <Button onClick={handleRetryPayment} variant="outline" className="w-full h-11">
-                      Tentar novamente
-                    </Button>
-                  </div>
-                </div>
-              ) : paymentComplete && paymentData?.invoiceUrl ? (
+              {paymentComplete && paymentData?.invoiceUrl ? (
                 <div className="bg-card border border-primary/20 rounded-xl p-6 space-y-4">
                   <div className="flex flex-col items-center justify-center text-center space-y-3">
                     <CheckCircle className="w-10 h-10 text-primary" />
