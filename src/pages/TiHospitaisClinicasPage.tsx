@@ -10,7 +10,6 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import hospitalTech from "@/assets/hospital-tech.jpg";
-import hospitalImg from "@/assets/segments/hospitais-clinicas.jpg";
 
 const fadeIn = {
   initial: { opacity: 0, y: 20 },
