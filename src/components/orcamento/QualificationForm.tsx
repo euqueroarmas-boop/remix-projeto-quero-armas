@@ -211,9 +211,8 @@ const RentalQualificationForm = ({ onComplete, completed, data: completedData }:
         if (!form.hasAutomaticBackup) return "Informe se a empresa possui backup automático.";
         return null;
       case 4:
-        if (!form.currentSupport) return "Informe como resolve problemas de TI.";
-        if (!form.problemFrequency) return "Informe a frequência dos problemas.";
         if (!form.hasInternalTech) return "Informe se possui técnico interno.";
+        if (!form.problemFrequency) return "Informe a frequência dos problemas.";
         return null;
       case 5:
         if (!form.growthForecast) return "Informe a previsão de crescimento.";
@@ -363,16 +362,12 @@ const RentalQualificationForm = ({ onComplete, completed, data: completedData }:
         return (
           <div className="space-y-5">
             <div>
-              <Label className="mb-2 block text-sm font-medium">Como sua empresa resolve problemas de informática?</Label>
-              <RadioCardGroup name="support" options={currentSupportOptions} value={form.currentSupport || ""} onChange={(v) => updateField("currentSupport", v)} />
+              <Label className="mb-2 block text-sm font-medium">Sua empresa possui técnico de TI interno?</Label>
+              <RadioCardGroup name="hasInternalTech" options={["Sim", "Não"]} value={form.hasInternalTech || ""} onChange={(v) => updateField("hasInternalTech", v)} />
             </div>
             <div>
               <Label className="mb-2 block text-sm font-medium">Com que frequência ocorrem problemas de informática?</Label>
               <RadioCardGroup name="frequency" options={problemFrequencyOptions} value={form.problemFrequency || ""} onChange={(v) => updateField("problemFrequency", v)} />
-            </div>
-            <div>
-              <Label className="mb-2 block text-sm font-medium">Sua empresa possui técnico de TI interno?</Label>
-              <RadioCardGroup name="hasInternalTech" options={["Sim", "Não"]} value={form.hasInternalTech || ""} onChange={(v) => updateField("hasInternalTech", v)} />
             </div>
           </div>
         );
@@ -463,7 +458,7 @@ const RentalQualificationForm = ({ onComplete, completed, data: completedData }:
 
       {/* Wizard Dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden p-0 gap-0 bg-card border-border [&>button]:hidden">
+        <DialogContent className="w-[95vw] max-w-2xl h-[95vh] sm:h-auto sm:max-h-[90vh] overflow-hidden p-0 gap-0 bg-card border-border rounded-xl [&>button]:hidden flex flex-col">
           {/* Header */}
           <div className="flex items-center justify-between px-6 pt-5 pb-3">
             <div className="flex items-center gap-3">
@@ -501,7 +496,7 @@ const RentalQualificationForm = ({ onComplete, completed, data: completedData }:
           </div>
 
           {/* Content */}
-          <div className="px-6 pb-4 overflow-y-auto max-h-[55vh]">
+          <div className="px-6 pb-4 overflow-y-auto flex-1 min-h-0">
             <AnimatePresence mode="wait">
               <motion.div
                 key={blockIndex}
