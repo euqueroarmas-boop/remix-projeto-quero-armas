@@ -44,6 +44,7 @@ const Microsoft365Page = () => (
       { label: "Infraestrutura corporativa", href: "/infraestrutura-ti-corporativa" },
     ]}
     localContent="Implantamos Microsoft 365 em empresas de Jacareí, São José dos Campos, Taubaté e todo o Vale do Paraíba. A migração é realizada presencialmente por nossa equipe certificada Microsoft, com treinamento incluso para seus colaboradores aproveitarem ao máximo as ferramentas de produtividade."
+    showHoursCalculator
   />
 );
 

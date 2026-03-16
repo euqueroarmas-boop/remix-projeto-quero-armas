@@ -46,6 +46,7 @@ const InfraestruturaCorporativaPage = () => (
       { label: "Suporte de TI", href: "/suporte-ti-empresarial-jacarei" },
     ]}
     localContent="A WMTi é referência em infraestrutura de TI corporativa em Jacareí, São José dos Campos, Taubaté e região do Vale do Paraíba. Atendemos empresas de todos os portes e segmentos — de escritórios com 5 estações a indústrias com 200+ colaboradores. Todo o projeto é executado por equipe própria certificada Dell e Microsoft."
+    showHoursCalculator
   />
 );
 

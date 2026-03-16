@@ -44,6 +44,7 @@ const MontagemRedesPage = () => (
       { label: "Suporte de TI", href: "/suporte-ti-empresarial-jacarei" },
     ]}
     localContent="Realizamos projetos de rede em empresas, clínicas, escritórios, indústrias e cartórios em Jacareí, São José dos Campos, Taubaté e todo o Vale do Paraíba. Desde o projeto de cabeamento estruturado até a ativação final com certificação, entregamos uma rede profissional, organizada e documentada."
+    showHoursCalculator
   />
 );
 

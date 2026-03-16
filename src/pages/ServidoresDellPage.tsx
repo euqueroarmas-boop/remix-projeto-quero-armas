@@ -45,6 +45,7 @@ const ServidoresDellPage = () => (
       { label: "Suporte de TI", href: "/suporte-ti-empresarial-jacarei" },
     ]}
     localContent="A WMTi atende empresas de todos os portes em Jacareí, São José dos Campos, Taubaté e região do Vale do Paraíba. Nossos técnicos certificados Dell realizam a implementação presencial de servidores PowerEdge, garantindo instalação profissional com cabeamento estruturado, configuração de rede e integração com sua infraestrutura existente. Atendimento emergencial presencial em até 4 horas para clientes com contrato de suporte."
+    showHoursCalculator
   />
 );
 

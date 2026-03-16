@@ -45,6 +45,7 @@ const SuporteTiPage = () => (
       { label: "Infraestrutura corporativa", href: "/infraestrutura-ti-corporativa" },
     ]}
     localContent="Oferecemos suporte presencial e remoto para empresas em Jacareí, São José dos Campos, Taubaté e todo o Vale do Paraíba. Nossa equipe está a menos de 30 minutos de deslocamento para atendimentos emergenciais na região. Atendemos escritórios, clínicas, lojas, indústrias, cartórios e empresas de todos os segmentos."
+    showHoursCalculator
   />
 );
 
