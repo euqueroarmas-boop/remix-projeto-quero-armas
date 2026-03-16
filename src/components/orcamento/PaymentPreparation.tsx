@@ -45,7 +45,7 @@ const PaymentPreparation = ({ visible, monthlyValue, companyName }: Props) => {
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Método</span>
-              <span className="font-medium">Boleto / PIX / Cartão</span>
+              <span className="font-medium">Boleto / Cartão de Crédito</span>
             </div>
 
             <div className="border-t border-border pt-4 space-y-3">
