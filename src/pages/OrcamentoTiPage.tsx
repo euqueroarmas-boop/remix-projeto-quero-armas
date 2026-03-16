@@ -121,9 +121,14 @@ const OrcamentoTiPage = () => {
 
   const handleSaveBudget = useCallback(async () => {
     if (budgetSaved) {
-      scrollToSection("contracting-wizard");
+      // Already saved, just scroll to wizard
+      window.setTimeout(() => {
+        document.getElementById("contracting-wizard")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 50);
       return;
     }
+
+    setSavingBudget(true);
 
     try {
       const pathLabel = effectivePath === "locacao" ? "Locação" : "Suporte";
@@ -179,11 +184,22 @@ const OrcamentoTiPage = () => {
 
       setBudgetSaved(true);
       console.log("[WMTi] Orçamento salvo. Quote ID:", (quoteRow as any).id);
-      scrollToSection("contracting-wizard");
+
+      // Wait for React to render the wizard section before scrolling
+      window.setTimeout(() => {
+        document.getElementById("contracting-wizard")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 300);
     } catch (err) {
       console.error("[WMTi] Erro ao salvar orçamento:", err);
+      toast({
+        title: "Erro ao salvar orçamento",
+        description: "Ocorreu um problema ao processar seu orçamento. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setSavingBudget(false);
     }
-  }, [addons, budgetSaved, computersQty, effectivePath, monthlyValue, plan.name, qualification, scrollToSection, selectedPlan, usersQty]);
+  }, [addons, budgetSaved, computersQty, effectivePath, monthlyValue, plan.name, qualification, selectedPlan, toast, usersQty]);
 
   const showRentalFlow = effectivePath === "locacao";
   const showSupportFlow = effectivePath === "suporte";
