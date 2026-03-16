@@ -72,7 +72,7 @@ const PathSelector = ({ onSelect, selected }: Props) => {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto md:items-stretch">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto md:items-stretch">
           {paths.map((p, i) => {
             const isSelected = selected === p.id;
             return (
