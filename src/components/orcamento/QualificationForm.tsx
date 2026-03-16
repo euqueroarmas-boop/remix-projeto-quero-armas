@@ -55,6 +55,7 @@ export interface QualificationData {
   currentSupport?: string;
   problemFrequency?: string;
   growthForecast?: string;
+  hasInternalTech?: string;
   cnpj?: string;
   companyName?: string;
   address?: string;
