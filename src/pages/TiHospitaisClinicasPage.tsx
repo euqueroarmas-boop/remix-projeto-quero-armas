@@ -143,8 +143,7 @@ const TiHospitaisClinicasPage = () => {
       {/* Introduction */}
       <section className="section-light py-16 md:py-24">
         <div className="container">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <motion.div {...fadeIn}>
+          <motion.div {...fadeIn} className="max-w-3xl">
               <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">// Por que TI para saúde é crítica</p>
               <h2 className="text-2xl md:text-3xl mb-6">
                 Hospitais e clínicas não podem <span className="text-primary">parar.</span>
@@ -160,20 +159,7 @@ const TiHospitaisClinicasPage = () => {
                   A WMTi é especialista em projetar e manter infraestrutura de TI para o setor de saúde, com foco em disponibilidade contínua, segurança de dados e conformidade com a LGPD.
                 </p>
               </div>
-            </motion.div>
-            <motion.div {...fadeIn} className="relative">
-              <img
-                src={hospitalServerRoom}
-                alt="Sala de servidores para hospitais"
-                className="w-full aspect-[4/3] object-cover"
-                loading="lazy"
-              />
-              <div className="absolute bottom-0 left-0 right-0 bg-secondary/90 p-4">
-                <p className="font-mono text-xs text-primary">// INFRAESTRUTURA CRÍTICA</p>
-                <p className="font-body text-sm text-muted-foreground">Servidores Dell dimensionados para sistemas médicos</p>
-              </div>
-            </motion.div>
-          </div>
+          </motion.div>
         </div>
       </section>
 

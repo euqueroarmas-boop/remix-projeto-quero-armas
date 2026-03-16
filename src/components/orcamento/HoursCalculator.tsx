@@ -1,0 +1,158 @@
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { Minus, Plus, Clock, TrendingDown } from "lucide-react";
+import { Link } from "react-router-dom";
+
+const PRICE_TABLE: Record<number, number> = {
+  1: 200, 2: 190, 3: 180, 4: 170, 5: 160, 6: 155, 7: 150, 8: 145,
+};
+
+const BASE_PRICE = 200;
+
+const fadeIn = {
+  initial: { opacity: 0, y: 20 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true as const },
+  transition: { duration: 0.5 },
+};
+
+interface HoursCalculatorProps {
+  serviceName?: string;
+}
+
+const HoursCalculator = ({ serviceName }: HoursCalculatorProps) => {
+  const [hours, setHours] = useState(1);
+
+  const unitPrice = PRICE_TABLE[Math.min(hours, 8)] ?? 145;
+  const fullPrice = hours * BASE_PRICE;
+  const promoPrice = hours * unitPrice;
+  const savings = fullPrice - promoPrice;
+  const discountPct = hours > 1 ? Math.round(((BASE_PRICE - unitPrice) / BASE_PRICE) * 100) : 0;
+
+  const whatsappMsg = encodeURIComponent(
+    `Olá! Gostaria de contratar ${hours} hora${hours > 1 ? "s" : ""} técnica${hours > 1 ? "s" : ""}${serviceName ? ` de ${serviceName}` : ""}. Valor: R$ ${promoPrice.toLocaleString("pt-BR")}.`
+  );
+
+  return (
+    <section className="section-dark py-16 md:py-24">
+      <div className="container max-w-3xl">
+        <motion.div {...fadeIn}>
+          <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
+            // Calculadora De Horas Técnicas
+          </p>
+          <h2 className="text-2xl md:text-4xl mb-2">
+            Calculadora De <span className="text-primary">Horas Técnicas</span>
+          </h2>
+          <p className="font-body text-muted-foreground mb-2 leading-relaxed">
+            Contrate suporte técnico empresarial sob demanda com desconto progressivo por volume.
+          </p>
+          <p className="font-body text-sm text-muted-foreground/70 mb-10 leading-relaxed">
+            Ideal para manutenção de servidores, suporte emergencial, ajustes de rede, administração de Windows Server, Linux e infraestrutura corporativa.
+          </p>
+
+          {/* Hours control */}
+          <div className="bg-secondary p-8 mb-6">
+            <div className="flex items-center justify-center gap-6 mb-6">
+              <button
+                onClick={() => setHours(Math.max(1, hours - 1))}
+                className="w-12 h-12 flex items-center justify-center border border-muted-foreground/30 text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+                aria-label="Diminuir horas"
+              >
+                <Minus size={20} />
+              </button>
+              <div className="text-center">
+                <span className="text-5xl font-bold text-primary">{hours}</span>
+                <p className="font-mono text-xs text-muted-foreground mt-1">
+                  hora{hours > 1 ? "s" : ""} técnica{hours > 1 ? "s" : ""}
+                </p>
+              </div>
+              <button
+                onClick={() => setHours(Math.min(8, hours + 1))}
+                className="w-12 h-12 flex items-center justify-center border border-muted-foreground/30 text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+                aria-label="Aumentar horas"
+              >
+                <Plus size={20} />
+              </button>
+            </div>
+
+            {/* Price info */}
+            <div className="space-y-3 mb-6">
+              <div className="flex items-center justify-between font-mono text-sm">
+                <span className="flex items-center gap-2 text-muted-foreground">
+                  <Clock size={14} /> Valor por hora
+                </span>
+                <span className="text-foreground">
+                  R$ {unitPrice.toLocaleString("pt-BR")},00
+                  {discountPct > 0 && (
+                    <span className="ml-2 text-xs text-primary">-{discountPct}%</span>
+                  )}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between font-mono text-sm">
+                <span className="text-muted-foreground">Preço cheio</span>
+                <span className="text-muted-foreground/50 line-through">
+                  R$ {fullPrice.toLocaleString("pt-BR")},00
+                </span>
+              </div>
+
+              <div className="h-px bg-muted-foreground/10" />
+
+              <div className="flex items-center justify-between font-mono text-base font-bold">
+                <span className="text-foreground">Preço promocional</span>
+                <span className="text-primary text-xl">
+                  R$ {promoPrice.toLocaleString("pt-BR")},00
+                </span>
+              </div>
+            </div>
+
+            {/* Savings highlight */}
+            {savings > 0 && (
+              <div className="bg-primary/10 border border-primary/30 p-4 flex items-center gap-3">
+                <TrendingDown size={20} className="text-primary shrink-0" />
+                <p className="font-mono text-sm font-bold text-primary">
+                  VOCÊ ESTÁ ECONOMIZANDO R$ {savings.toLocaleString("pt-BR")},00
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Discount table */}
+          <details className="bg-secondary mb-6 group">
+            <summary className="p-4 cursor-pointer font-mono text-xs uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors flex justify-between items-center">
+              Ver tabela de desconto progressivo
+              <Plus size={14} className="text-primary group-open:rotate-45 transition-transform" />
+            </summary>
+            <div className="px-4 pb-4">
+              <div className="grid grid-cols-3 gap-px text-xs font-mono">
+                <div className="bg-secondary p-2 text-muted-foreground/50">Horas</div>
+                <div className="bg-secondary p-2 text-muted-foreground/50">R$/hora</div>
+                <div className="bg-secondary p-2 text-muted-foreground/50">Total</div>
+                {Object.entries(PRICE_TABLE).map(([h, price]) => (
+                  <div key={h} className={`contents ${Number(h) === hours ? "[&>div]:text-primary [&>div]:font-bold" : ""}`}>
+                    <div className="bg-secondary/50 p-2 text-muted-foreground">{h}h</div>
+                    <div className="bg-secondary/50 p-2 text-muted-foreground">R$ {price}</div>
+                    <div className="bg-secondary/50 p-2 text-muted-foreground">R$ {Number(h) * price}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </details>
+
+          {/* Buy button */}
+          <Link
+            to={`/orcamento-ti?servico=${encodeURIComponent(serviceName || "Horas Técnicas")}&horas=${hours}&valor=${promoPrice}`}
+            className="w-full inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all mb-3"
+          >
+            Comprar Horas
+          </Link>
+          <p className="font-body text-xs text-center text-muted-foreground/60">
+            Você será direcionado para preencher seus dados, gerar o contrato e seguir para o pagamento seguro.
+          </p>
+        </motion.div>
+      </div>
+    </section>
+  );
+};
+
+export default HoursCalculator;
