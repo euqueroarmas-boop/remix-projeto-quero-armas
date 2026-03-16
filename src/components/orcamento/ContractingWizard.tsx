@@ -357,17 +357,7 @@ const ContractingWizard = ({
         throw new Error("A assinatura não foi confirmada pelo backend.");
       }
 
-      if (
-        normalized.billingType === "PIX" &&
-        !normalized.invoiceUrl &&
-        !normalized.pixQrCodeImage &&
-        !normalized.pixCopyPaste
-      ) {
-        setPaymentError("A cobrança PIX foi criada, mas os dados vieram incompletos. Você pode tentar novamente sem perder a página.");
-        return;
-      }
-
-      if (normalized.billingType !== "PIX" && !normalized.invoiceUrl) {
+      if (!normalized.invoiceUrl) {
         throw new Error("O sistema de pagamento não retornou um link de cobrança.");
       }
     } catch (err) {
