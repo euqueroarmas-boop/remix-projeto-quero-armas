@@ -61,6 +61,7 @@ const ServicePageTemplate = ({
   shouldIndex = true,
   heroImage,
   heroImageAlt,
+  showHoursCalculator = false,
 }: ServicePageProps) => {
   const location = useLocation();
   const baseUrl = "https://wmti.com.br";
