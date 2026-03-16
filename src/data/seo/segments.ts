@@ -6,6 +6,8 @@ export interface SeoSegment {
   descriptionExtra: string;
   painPoints: string[];
   faqExtra: { question: string; answer: string };
+  /** Dedicated page URL (if exists) */
+  dedicatedPage?: string;
 }
 
 export const segments: SeoSegment[] = [
@@ -25,6 +27,7 @@ export const segments: SeoSegment[] = [
       answer:
         "Sim. Somos especialistas em infraestrutura de TI para cartórios, com soluções homologadas e em conformidade com o Provimento 213 do CNJ.",
     },
+    dedicatedPage: "/ti-para-serventias-cartoriais",
   },
   {
     slug: "hospitais",
@@ -42,6 +45,7 @@ export const segments: SeoSegment[] = [
       answer:
         "Sim. Oferecemos infraestrutura de TI dimensionada para ambientes de saúde com alta disponibilidade, integração com sistemas HIS/PACS e conformidade com a LGPD.",
     },
+    dedicatedPage: "/ti-para-hospitais-e-clinicas",
   },
   {
     slug: "escritorios-advocacia",
@@ -59,6 +63,7 @@ export const segments: SeoSegment[] = [
       answer:
         "Sim. Oferecemos soluções de TI sob medida para escritórios de advocacia, com foco em sigilo, segurança de dados e suporte técnico dedicado.",
     },
+    dedicatedPage: "/ti-para-escritorios-de-advocacia",
   },
   {
     slug: "contabilidade",
@@ -76,6 +81,7 @@ export const segments: SeoSegment[] = [
       answer:
         "Sim. Oferecemos infraestrutura de TI otimizada para escritórios contábeis, com backup automatizado, segurança de dados fiscais e suporte técnico.",
     },
+    dedicatedPage: "/ti-para-contabilidades",
   },
   {
     slug: "industrias",
@@ -93,5 +99,24 @@ export const segments: SeoSegment[] = [
       answer:
         "Sim. Atendemos indústrias com infraestrutura de TI robusta, redes segmentadas, servidores de alta performance e suporte técnico especializado.",
     },
+    dedicatedPage: "/ti-para-industrias-alimenticias",
+  },
+  {
+    slug: "empresas-corporativas",
+    name: "Empresas Corporativas",
+    titleSuffix: "para Empresas Corporativas",
+    descriptionExtra:
+      "Soluções completas de TI corporativa com servidores Dell PowerEdge, redes segmentadas, backup automatizado, firewall e monitoramento 24/7.",
+    painPoints: [
+      "Servidores instáveis comprometendo a operação",
+      "Rede corporativa sem segmentação adequada",
+      "Falta de backup e monitoramento proativo",
+    ],
+    faqExtra: {
+      question: "A WMTi atende empresas corporativas?",
+      answer:
+        "Sim. Oferecemos soluções completas de infraestrutura de TI para empresas de médio e grande porte em todo o Brasil.",
+    },
+    dedicatedPage: "/ti-para-escritorios-corporativos",
   },
 ];
