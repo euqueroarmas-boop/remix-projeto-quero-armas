@@ -292,7 +292,7 @@ const Navbar = () => {
 
           {navLinks.map((link, i) => {
             const active = i === activeIndex;
-            const className = `font-mono text-xs uppercase tracking-wider transition-colors ${
+            const className = `font-mono text-xs uppercase tracking-wider leading-none transition-colors ${
               active ? "text-primary" : "text-muted-foreground hover:text-primary"
             }`;
 
