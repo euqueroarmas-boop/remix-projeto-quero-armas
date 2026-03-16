@@ -168,10 +168,10 @@ const ContractingWizard = ({
     return () => clearInterval(interval);
   }, [currentStep, contractId, contractSigned, toast]);
 
-  // Redirect only after confirmed invoiceUrl
+  // Open checkout in new tab — keeps wizard state intact
   const handleRedirectToCheckout = useCallback((url: string) => {
     if (!url) return;
-    window.location.href = url;
+    window.open(url, "_blank", "noopener,noreferrer");
   }, []);
 
 
