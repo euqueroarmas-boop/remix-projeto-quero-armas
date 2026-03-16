@@ -768,10 +768,10 @@ const LegacyQualificationForm = ({ onComplete, completed, data: completedData }:
 
 const QualificationForm = (props: Props) => {
   if (props.path === "locacao") {
-    return <RentalQualificationForm onComplete={props.onComplete} completed={props.completed} completedData={props.data} />;
+    return <RentalQualificationForm onComplete={props.onComplete} completed={props.completed} data={props.data} />;
   }
 
-  return <LegacyQualificationForm onComplete={props.onComplete} completed={props.completed} completedData={props.data} />;
+  return <LegacyQualificationForm onComplete={props.onComplete} completed={props.completed} data={props.data} />;
 };
 
 export default QualificationForm;
