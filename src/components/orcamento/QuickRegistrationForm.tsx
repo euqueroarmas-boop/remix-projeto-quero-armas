@@ -109,17 +109,14 @@ const QuickRegistrationForm = ({ onComplete, loading: externalLoading, initialDa
   const rawDoc = form.cnpjOuCpf.replace(/\D/g, "");
   const isPJ = rawDoc.length > 11;
 
-  // CNPJ auto-fill via BrasilAPI
-  const fetchCnpj = useCallback(async (cnpj: string) => {
-    const digits = cnpj.replace(/\D/g, "");
-    if (digits.length !== 14) return;
-
-    setCnpjLoading(true);
-    try {
-      const res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${digits}`);
-      if (!res.ok) throw new Error("CNPJ não encontrado");
-      const data = await res.json();
-
+  // CNPJ auto-fill via edge function
+  useEffect(() => {
+    if (rawDoc.length !== 14) return;
+    lookupCnpj(rawDoc).then((data) => {
+      if (!data) {
+        toast({ title: "CNPJ não encontrado", description: "Preencha os dados manualmente.", variant: "destructive" });
+        return;
+      }
       setForm((prev) => ({
         ...prev,
         razaoSocial: data.razao_social || prev.razaoSocial,
@@ -130,64 +127,28 @@ const QuickRegistrationForm = ({ onComplete, loading: externalLoading, initialDa
         cidade: data.municipio || prev.cidade,
         uf: data.uf || prev.uf,
         cep: data.cep ? formatCep(data.cep) : prev.cep,
-        telefone: data.ddd_telefone_1
-          ? formatPhone(data.ddd_telefone_1.replace(/\D/g, ""))
-          : prev.telefone,
+        telefone: data.ddd_telefone_1 ? formatPhone(data.ddd_telefone_1.replace(/\D/g, "")) : prev.telefone,
         isPJ: true,
       }));
-
       toast({ title: "Dados encontrados!", description: `${data.razao_social}` });
-    } catch {
-      toast({
-        title: "CNPJ não encontrado",
-        description: "Preencha os dados manualmente.",
-        variant: "destructive",
-      });
-    } finally {
-      setCnpjLoading(false);
-    }
-  }, [toast]);
+    });
+  }, [rawDoc, lookupCnpj, toast]);
 
-  // CEP auto-fill via ViaCEP
-  const fetchCep = useCallback(async (cep: string) => {
-    const digits = cep.replace(/\D/g, "");
-    if (digits.length !== 8) return;
-
-    setCepLoading(true);
-    try {
-      const res = await fetch(`https://viacep.com.br/ws/${digits}/json/`);
-      if (!res.ok) throw new Error("CEP não encontrado");
-      const data = await res.json();
-      if (data.erro) throw new Error("CEP inválido");
-
-      setForm((prev) => ({
-        ...prev,
-        endereco: data.logradouro || prev.endereco,
-        bairro: data.bairro || prev.bairro,
-        cidade: data.localidade || prev.cidade,
-        uf: data.uf || prev.uf,
-      }));
-    } catch {
-      // Silent fail — user can fill manually
-    } finally {
-      setCepLoading(false);
-    }
-  }, []);
-
-  // Trigger CNPJ lookup
-  useEffect(() => {
-    if (rawDoc.length === 14) {
-      fetchCnpj(rawDoc);
-    }
-  }, [rawDoc, fetchCnpj]);
-
-  // Trigger CEP lookup
+  // CEP auto-fill via edge function
   const rawCep = form.cep.replace(/\D/g, "");
   useEffect(() => {
-    if (rawCep.length === 8) {
-      fetchCep(rawCep);
-    }
-  }, [rawCep, fetchCep]);
+    if (rawCep.length !== 8) return;
+    lookupCep(rawCep).then((data) => {
+      if (!data) return;
+      setForm((prev) => ({
+        ...prev,
+        endereco: data.street || prev.endereco,
+        bairro: data.neighborhood || prev.bairro,
+        cidade: data.city || prev.cidade,
+        uf: data.state || prev.uf,
+      }));
+    });
+  }, [rawCep, lookupCep]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
