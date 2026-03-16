@@ -5,8 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import logoFull from "@/assets/logo-wmti-full.png";
 
 const segmentos = [
-  { label: "Cartórios", href: "/ti-para-cartorios" },
-  { label: "Serventias Cartoriais", href: "/ti-para-serventias-cartoriais" },
+  { label: "Serventias Notariais", href: "/ti-para-serventias-cartoriais" },
   { label: "Hospitais e Clínicas", href: "/ti-para-hospitais-e-clinicas" },
   { label: "Escritórios de Advocacia", href: "/ti-para-escritorios-de-advocacia" },
   { label: "Escritórios de Contabilidade", href: "/ti-para-contabilidades" },
