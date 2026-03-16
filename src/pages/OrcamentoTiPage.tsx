@@ -279,9 +279,15 @@ const OrcamentoTiPage = () => {
                 )}
                 <button
                   onClick={handleSaveBudget}
-                  className="w-full h-14 text-base font-semibold rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground transition-colors"
+                  disabled={savingBudget}
+                  className="w-full h-14 text-base font-semibold rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
                 >
-                  {budgetSaved ? "Continuar contratação" : "Prosseguir para contratação"}
+                  {savingBudget ? (
+                    <>
+                      <span className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+                      Salvando...
+                    </>
+                  ) : budgetSaved ? "Continuar contratação" : "Prosseguir para contratação"}
                 </button>
               </div>
             </div>
