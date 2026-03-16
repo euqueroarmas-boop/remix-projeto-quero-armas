@@ -139,8 +139,8 @@ const OrcamentoTiPage = () => {
 
   const handleGoBackFromSummary = useCallback(() => {
     setShowSummary(false);
-    scrollToSection("plans");
-  }, [scrollToSection]);
+    scrollToSection(effectivePath === "locacao" ? "plans" : "qualification");
+  }, [scrollToSection, effectivePath]);
 
   const handleSaveBudget = useCallback(async () => {
     if (budgetSaved) {
