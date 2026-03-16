@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { z } from "zod";
-import { Loader2, ArrowRight, Search } from "lucide-react";
+import { Loader2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { useBrasilApiLookup } from "@/hooks/useBrasilApiLookup";
 
 export interface RegistrationData {
   razaoSocial: string;
