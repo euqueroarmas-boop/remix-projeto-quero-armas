@@ -631,5 +631,49 @@ export function generateProgrammaticPages(): SeoPageData[] {
     }
   }
 
+  // ─── 6. Blog × City (auto-replication with canonical) ───
+  for (const post of blogPosts) {
+    for (const city of cities) {
+      // Skip Jacareí — original blog post is the canonical
+      if (city.slug === "jacarei") continue;
+      // Only replicate for higher-priority cities to avoid excessive pages
+      if (city.priority < 0.5) continue;
+
+      const slug = `blog-${post.slug}-${city.slug}`;
+      const ctx = cityContext[city.slug] || "região com forte atividade empresarial";
+
+      const relatedLinks = [
+        { label: "Artigo original", href: `/blog/${post.slug}` },
+        { label: `Empresa de TI em ${city.name}`, href: `/empresa-ti-${city.slug}` },
+        { label: `Suporte de TI em ${city.name}`, href: `/suporte-ti-${city.slug}` },
+        { label: `Infraestrutura de TI em ${city.name}`, href: `/infraestrutura-ti-${city.slug}` },
+      ];
+
+      addPage({
+        slug,
+        metaTitle: `${post.title} | TI em ${city.name} | WMTi`,
+        metaDescription: `${post.excerpt.slice(0, 120)}. Soluções de TI para empresas em ${city.name}.`,
+        tag: post.tag,
+        headline: `${post.title} — `,
+        headlineHighlight: city.name,
+        description: `${post.excerpt}\n\nA WMTi atende empresas em ${city.name}, ${ctx}, com soluções profissionais de infraestrutura de TI, suporte técnico e segurança digital.`,
+        whatsappMessage: `Olá! Li o artigo "${post.title}" e gostaria de saber mais sobre TI para minha empresa em ${city.name}.`,
+        category: "local-service",
+        painPoints: defaultPainPoints.slice(0, 4),
+        solutions: defaultSolutions.slice(0, 4),
+        benefits: genericServiceIcons.slice(0, 4),
+        faq: [
+          { question: `A WMTi atende empresas em ${city.name}?`, answer: `Sim. Atendemos empresas em ${city.name} e região de ${city.region} com soluções de infraestrutura de TI, suporte técnico e segurança digital.` },
+          { question: "Como solicitar um orçamento?", answer: "Entre em contato pelo WhatsApp ou formulário do site para um diagnóstico gratuito e proposta personalizada." },
+        ],
+        relatedLinks,
+        localContent: `A WMTi atende empresas em ${city.name} (${city.state}), ${ctx}. Com sede em Jacareí/SP e mais de 15 anos de experiência, oferecemos suporte técnico, servidores Dell, firewall pfSense e backup corporativo para empresas na região de ${city.region}.`,
+        shouldIndex: true,
+        priority: city.priority * 0.4,
+        canonicalSlug: `blog/${post.slug}`,
+      });
+    }
+  }
+
   return pages;
 }
