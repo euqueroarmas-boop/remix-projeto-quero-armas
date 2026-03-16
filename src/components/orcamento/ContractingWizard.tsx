@@ -567,6 +567,9 @@ const ContractingWizard = ({
                   <p className="text-sm text-muted-foreground text-center">
                     Valor mensal: <strong className="text-primary">R$ {monthlyValue.toLocaleString("pt-BR")},00</strong>
                   </p>
+                  <p className="text-xs text-muted-foreground text-center">
+                    Assinatura recorrente mensal — prazo de 36 meses com renovação automática
+                  </p>
 
                   {paymentError && (
                     <div className="p-3 rounded-lg border border-destructive/30 bg-destructive/5 flex items-start gap-2">
@@ -580,8 +583,8 @@ const ContractingWizard = ({
 
                   <div className="grid grid-cols-3 gap-3">
                     {[
-                      { id: "PIX" as BillingType, icon: QrCode, label: "PIX", desc: "Instantâneo" },
-                      { id: "BOLETO" as BillingType, icon: FileBarChart, label: "Boleto", desc: "3 dias úteis" },
+                      { id: "PIX" as BillingType, icon: QrCode, label: "PIX", desc: "Recorrente" },
+                      { id: "BOLETO" as BillingType, icon: FileBarChart, label: "Boleto", desc: "Recorrente" },
                       { id: "CREDIT_CARD" as BillingType, icon: CreditCard, label: "Cartão", desc: "Recorrente" },
                     ].map((method) => (
                       <button
@@ -601,7 +604,7 @@ const ContractingWizard = ({
 
                   <Button onClick={handlePayment} disabled={!selectedPayment || paymentLoading} className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50">
                     {paymentLoading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <CreditCard className="w-4 h-4 mr-2" />}
-                    {paymentError ? "Tentar novamente" : "Gerar cobrança e pagar"}
+                    {paymentError ? "Tentar novamente" : "Criar assinatura e pagar"}
                   </Button>
                 </div>
               )}
