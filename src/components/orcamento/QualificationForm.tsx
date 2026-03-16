@@ -132,30 +132,40 @@ const RadioCardGroup = ({ name, options, value, onChange }: { name: string; opti
   </RadioGroup>
 );
 
-/* ─── Wizard block definitions ─── */
-interface WizardBlock {
+/* ─── Wizard step definitions (one question per step) ─── */
+interface WizardStep {
   id: string;
   title: string;
   icon: React.ElementType;
 }
 
-const wizardBlocks: WizardBlock[] = [
-  { id: "perfil", title: "Perfil da empresa", icon: Building2 },
-  { id: "dimensionamento", title: "Dimensionamento", icon: Monitor },
-  { id: "uso", title: "Perfil de uso", icon: Cpu },
-  { id: "infra", title: "Infraestrutura", icon: Shield },
-  { id: "suporte", title: "Suporte", icon: Wrench },
-  { id: "crescimento", title: "Crescimento", icon: TrendingUp },
-  { id: "dados", title: "Dados da empresa", icon: Mail },
+const wizardSteps: WizardStep[] = [
+  { id: "segment", title: "Segmento da empresa", icon: Building2 },
+  { id: "employees", title: "Funcionários", icon: Users },
+  { id: "dailyUsers", title: "Usuários diários", icon: Monitor },
+  { id: "computersQty", title: "Computadores", icon: Monitor },
+  { id: "equipmentType", title: "Tipo de equipamento", icon: Cpu },
+  { id: "includeMonitor", title: "Monitor incluso", icon: Monitor },
+  { id: "monitorsQty", title: "Quantidade de monitores", icon: Monitor },
+  { id: "activities", title: "Atividades", icon: Cpu },
+  { id: "manyTabs", title: "Uso simultâneo", icon: Cpu },
+  { id: "hasServer", title: "Servidor", icon: Server },
+  { id: "wantsServer", title: "Incluir servidor", icon: Server },
+  { id: "hasFirewall", title: "Firewall", icon: Shield },
+  { id: "hasBackup", title: "Backup automático", icon: HardDrive },
+  { id: "hasInternalTech", title: "Técnico interno", icon: Wrench },
+  { id: "problemFrequency", title: "Frequência de problemas", icon: Wrench },
+  { id: "growthForecast", title: "Crescimento", icon: TrendingUp },
+  { id: "companyData", title: "Dados da empresa", icon: Mail },
 ];
 
 /* ─── RentalQualificationForm (modal wizard) ─── */
 const RentalQualificationForm = ({ onComplete, completed, data: completedData }: Omit<Props, "path">) => {
   const [open, setOpen] = useState(false);
-  const [blockIndex, setBlockIndex] = useState(0);
+  const [stepIndex, setStepIndex] = useState(0);
   const [form, setForm] = useState<QualificationData>({ computersQty: 0, activities: [] });
   const { lookupCnpj, cnpjLoading } = useBrasilApiLookup();
-  const [blockError, setBlockError] = useState<string | null>(null);
+  const [stepError, setStepError] = useState<string | null>(null);
   const rawCnpj = form.cnpj?.replace(/\D/g, "") || "";
 
   useEffect(() => {
@@ -176,7 +186,7 @@ const RentalQualificationForm = ({ onComplete, completed, data: completedData }:
 
   const updateField = (field: keyof QualificationData, value: string | number | string[]) => {
     setForm((prev) => ({ ...prev, [field]: value }));
-    setBlockError(null);
+    setStepError(null);
   };
 
   const toggleActivity = (activity: string, checked: boolean) => {
@@ -184,58 +194,64 @@ const RentalQualificationForm = ({ onComplete, completed, data: completedData }:
       ...prev,
       activities: checked ? [...(prev.activities || []), activity] : (prev.activities || []).filter((item) => item !== activity),
     }));
-    setBlockError(null);
+    setStepError(null);
   };
 
-  const validateBlock = (idx: number): string | null => {
-    switch (idx) {
-      case 0:
-        if (!form.segment) return "Selecione o segmento da empresa.";
-        if (!form.employeesRange) return "Selecione a quantidade de funcionários.";
-        if (!form.dailyUsers || form.dailyUsers < 1) return "Informe quantos usuários usarão computadores.";
-        return null;
-      case 1:
-        if (!form.computersQty || form.computersQty < 1) return "Informe quantos computadores deseja alugar.";
-        if (!form.equipmentType) return "Selecione o tipo de equipamento.";
-        if (!form.includeMonitor) return "Selecione se a locação inclui monitor.";
-        if (form.includeMonitor === "Alguns" && (!form.monitorsQty || form.monitorsQty < 1)) return "Informe quantos monitores.";
-        return null;
-      case 2:
-        if (!form.activities?.length) return "Selecione ao menos uma atividade.";
-        if (!form.manyTabs) return "Selecione o perfil de uso simultâneo.";
-        return null;
-      case 3:
-        if (!form.hasServer) return "Informe se a empresa possui servidor.";
-        if (form.hasServer === "Não" && !form.wantsServer) return "Informe se deseja incluir servidor.";
-        if (!form.hasFirewall) return "Informe se a empresa possui firewall.";
-        if (!form.hasAutomaticBackup) return "Informe se a empresa possui backup automático.";
-        return null;
-      case 4:
-        if (!form.hasInternalTech) return "Informe se possui técnico interno.";
-        if (!form.problemFrequency) return "Informe a frequência dos problemas.";
-        return null;
-      case 5:
-        if (!form.growthForecast) return "Informe a previsão de crescimento.";
-        return null;
-      case 6:
+  // Get visible steps (skip conditional ones that don't apply)
+  const getVisibleSteps = (): WizardStep[] => {
+    return wizardSteps.filter((step) => {
+      if (step.id === "monitorsQty") return form.includeMonitor === "Alguns";
+      if (step.id === "wantsServer") return form.hasServer === "Não";
+      return true;
+    });
+  };
+
+  const visibleSteps = getVisibleSteps();
+  const currentStep = visibleSteps[stepIndex];
+
+  const validateStep = (step: WizardStep): string | null => {
+    switch (step.id) {
+      case "segment": return !form.segment ? "Selecione o segmento da empresa." : null;
+      case "employees": return !form.employeesRange ? "Selecione a quantidade de funcionários." : null;
+      case "dailyUsers": return !form.dailyUsers || form.dailyUsers < 1 ? "Informe quantos usuários usarão computadores." : null;
+      case "computersQty": return !form.computersQty || form.computersQty < 1 ? "Informe quantos computadores deseja alugar." : null;
+      case "equipmentType": return !form.equipmentType ? "Selecione o tipo de equipamento." : null;
+      case "includeMonitor": return !form.includeMonitor ? "Selecione se a locação inclui monitor." : null;
+      case "monitorsQty": return !form.monitorsQty || form.monitorsQty < 1 ? "Informe quantos monitores." : null;
+      case "activities": return !form.activities?.length ? "Selecione ao menos uma atividade." : null;
+      case "manyTabs": return !form.manyTabs ? "Selecione o perfil de uso simultâneo." : null;
+      case "hasServer": return !form.hasServer ? "Informe se a empresa possui servidor." : null;
+      case "wantsServer": return !form.wantsServer ? "Informe se deseja incluir servidor." : null;
+      case "hasFirewall": return !form.hasFirewall ? "Informe se a empresa possui firewall." : null;
+      case "hasBackup": return !form.hasAutomaticBackup ? "Informe se a empresa possui backup automático." : null;
+      case "hasInternalTech": return !form.hasInternalTech ? "Informe se possui técnico interno." : null;
+      case "problemFrequency": return !form.problemFrequency ? "Informe a frequência dos problemas." : null;
+      case "growthForecast": return !form.growthForecast ? "Informe a previsão de crescimento." : null;
+      case "companyData":
         if (rawCnpj.length !== 14) return "Informe um CNPJ válido.";
         if (!form.companyName?.trim()) return "Informe a razão social.";
         if (!form.contactEmail?.trim()) return "Informe o e-mail.";
         return null;
-      default:
-        return null;
+      default: return null;
     }
   };
 
   const handleNext = () => {
-    const error = validateBlock(blockIndex);
-    if (error) {
-      setBlockError(error);
-      return;
-    }
-    setBlockError(null);
-    if (blockIndex < wizardBlocks.length - 1) {
-      setBlockIndex(blockIndex + 1);
+    if (!currentStep) return;
+    const error = validateStep(currentStep);
+    if (error) { setStepError(error); return; }
+    setStepError(null);
+
+    // Recalculate visible steps after this answer (conditional steps may change)
+    const nextVisibleSteps = wizardSteps.filter((s) => {
+      if (s.id === "monitorsQty") return currentStep.id === "includeMonitor" ? form.includeMonitor === "Alguns" : form.includeMonitor === "Alguns";
+      if (s.id === "wantsServer") return currentStep.id === "hasServer" ? form.hasServer === "Não" : form.hasServer === "Não";
+      return true;
+    });
+
+    const currentIdxInNext = nextVisibleSteps.findIndex((s) => s.id === currentStep.id);
+    if (currentIdxInNext < nextVisibleSteps.length - 1) {
+      setStepIndex(currentIdxInNext + 1);
     } else {
       onComplete({
         ...form,
@@ -247,12 +263,11 @@ const RentalQualificationForm = ({ onComplete, completed, data: completedData }:
   };
 
   const handleBack = () => {
-    setBlockError(null);
-    if (blockIndex > 0) setBlockIndex(blockIndex - 1);
+    setStepError(null);
+    if (stepIndex > 0) setStepIndex(stepIndex - 1);
   };
 
-  const currentBlock = wizardBlocks[blockIndex];
-  const progress = ((blockIndex + 1) / wizardBlocks.length) * 100;
+  const progress = visibleSteps.length > 0 ? ((stepIndex + 1) / visibleSteps.length) * 100 : 0;
 
   if (completed && completedData) {
     const recommendedPlan = recommendRentalPlan(completedData);
@@ -272,115 +287,130 @@ const RentalQualificationForm = ({ onComplete, completed, data: completedData }:
     );
   }
 
-  /* ─── Block content renderers ─── */
-  const renderBlock = () => {
-    switch (blockIndex) {
-      case 0:
+  /* ─── Step content renderers ─── */
+  const renderStep = () => {
+    if (!currentStep) return null;
+    switch (currentStep.id) {
+      case "segment":
         return (
-          <div className="space-y-5">
-            <div>
-              <Label className="mb-2 block text-sm font-medium">Qual é o segmento da empresa?</Label>
-              <RadioCardGroup name="segment" options={segmentOptions} value={form.segment || ""} onChange={(v) => updateField("segment", v)} />
-            </div>
-            <div>
-              <Label className="mb-2 block text-sm font-medium">Quantos funcionários trabalham na empresa?</Label>
-              <RadioCardGroup name="employees" options={employeesOptions} value={form.employeesRange || ""} onChange={(v) => updateField("employeesRange", v)} />
-            </div>
-            <div>
-              <Label className="mb-2 block text-sm font-medium">Quantos usuários utilizarão computadores diariamente?</Label>
-              <Input type="number" min={1} value={form.dailyUsers || ""} onChange={(e) => updateField("dailyUsers", Number(e.target.value || 0))} className="h-11 bg-muted border-border" placeholder="Digite a quantidade de usuários" />
+          <div>
+            <Label className="mb-2 block text-sm font-medium">Qual é o segmento da empresa?</Label>
+            <RadioCardGroup name="segment" options={segmentOptions} value={form.segment || ""} onChange={(v) => updateField("segment", v)} />
+          </div>
+        );
+      case "employees":
+        return (
+          <div>
+            <Label className="mb-2 block text-sm font-medium">Quantos funcionários trabalham na empresa?</Label>
+            <RadioCardGroup name="employees" options={employeesOptions} value={form.employeesRange || ""} onChange={(v) => updateField("employeesRange", v)} />
+          </div>
+        );
+      case "dailyUsers":
+        return (
+          <div>
+            <Label className="mb-2 block text-sm font-medium">Quantos usuários utilizarão computadores diariamente?</Label>
+            <Input type="number" min={1} value={form.dailyUsers || ""} onChange={(e) => updateField("dailyUsers", Number(e.target.value || 0))} className="h-11 bg-muted border-border" placeholder="Digite a quantidade de usuários" />
+          </div>
+        );
+      case "computersQty":
+        return (
+          <div>
+            <Label className="mb-2 block text-sm font-medium">Quantos computadores deseja alugar?</Label>
+            <Input type="number" min={1} value={form.computersQty || ""} onChange={(e) => updateField("computersQty", Number(e.target.value || 0))} className="h-11 bg-muted border-border" placeholder="Digite a quantidade de computadores" />
+          </div>
+        );
+      case "equipmentType":
+        return (
+          <div>
+            <Label className="mb-2 block text-sm font-medium">Qual tipo de computador será utilizado?</Label>
+            <RadioCardGroup name="equipment" options={equipmentOptions} value={form.equipmentType || ""} onChange={(v) => updateField("equipmentType", v)} />
+          </div>
+        );
+      case "includeMonitor":
+        return (
+          <div>
+            <Label className="mb-2 block text-sm font-medium">Os computadores precisam incluir monitor?</Label>
+            <RadioCardGroup name="monitor" options={monitorOptions} value={form.includeMonitor || ""} onChange={(v) => updateField("includeMonitor", v)} />
+          </div>
+        );
+      case "monitorsQty":
+        return (
+          <div>
+            <Label className="mb-2 block text-sm font-medium">Quantos monitores precisam ser incluídos?</Label>
+            <Input type="number" min={1} value={form.monitorsQty || ""} onChange={(e) => updateField("monitorsQty", Number(e.target.value || 0))} className="h-11 bg-muted border-border" placeholder="Quantidade de monitores" />
+          </div>
+        );
+      case "activities":
+        return (
+          <div>
+            <Label className="mb-3 block text-sm font-medium">Quais atividades são realizadas nesses computadores?</Label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {activityOptions.map((activity) => (
+                <label key={activity} className="flex items-center gap-3 p-3 rounded-lg border border-border hover:border-primary/40 cursor-pointer transition-colors text-sm">
+                  <Checkbox checked={form.activities?.includes(activity) || false} onCheckedChange={(value) => toggleActivity(activity, value === true)} />
+                  <span>{activity}</span>
+                </label>
+              ))}
             </div>
           </div>
         );
-      case 1:
+      case "manyTabs":
         return (
-          <div className="space-y-5">
-            <div>
-              <Label className="mb-2 block text-sm font-medium">Quantos computadores deseja alugar?</Label>
-              <Input type="number" min={1} value={form.computersQty || ""} onChange={(e) => updateField("computersQty", Number(e.target.value || 0))} className="h-11 bg-muted border-border" placeholder="Digite a quantidade de computadores que deseja alugar." />
-            </div>
-            <div>
-              <Label className="mb-2 block text-sm font-medium">Que tipo de equipamento você deseja?</Label>
-              <RadioCardGroup name="equipment" options={equipmentOptions} value={form.equipmentType || ""} onChange={(v) => updateField("equipmentType", v)} />
-            </div>
-            <div>
-              <Label className="mb-2 block text-sm font-medium">Os computadores precisam incluir monitor?</Label>
-              <RadioCardGroup name="monitor" options={monitorOptions} value={form.includeMonitor || ""} onChange={(v) => updateField("includeMonitor", v)} />
-            </div>
-            {form.includeMonitor === "Alguns" && (
-              <div>
-                <Label className="mb-2 block text-sm font-medium">Quantos monitores precisam ser incluídos?</Label>
-                <Input type="number" min={1} value={form.monitorsQty || ""} onChange={(e) => updateField("monitorsQty", Number(e.target.value || 0))} className="h-11 bg-muted border-border" placeholder="Quantidade de monitores" />
-              </div>
-            )}
+          <div>
+            <Label className="mb-2 block text-sm font-medium">Os usuários costumam utilizar muitos sistemas ou abas ao mesmo tempo?</Label>
+            <RadioCardGroup name="manyTabs" options={manyTabsOptions} value={form.manyTabs || ""} onChange={(v) => updateField("manyTabs", v)} />
           </div>
         );
-      case 2:
+      case "hasServer":
         return (
-          <div className="space-y-5">
-            <div>
-              <Label className="mb-3 block text-sm font-medium">Quais atividades são realizadas nesses computadores?</Label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {activityOptions.map((activity) => (
-                  <label key={activity} className="flex items-center gap-3 p-3 rounded-lg border border-border hover:border-primary/40 cursor-pointer transition-colors text-sm">
-                    <Checkbox checked={form.activities?.includes(activity) || false} onCheckedChange={(value) => toggleActivity(activity, value === true)} />
-                    <span>{activity}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-            <div>
-              <Label className="mb-2 block text-sm font-medium">Os usuários costumam utilizar muitos sistemas ou abas ao mesmo tempo?</Label>
-              <RadioCardGroup name="manyTabs" options={manyTabsOptions} value={form.manyTabs || ""} onChange={(v) => updateField("manyTabs", v)} />
-            </div>
+          <div>
+            <Label className="mb-2 block text-sm font-medium">A empresa possui servidor?</Label>
+            <RadioCardGroup name="hasServer" options={yesNoUnknownOptions} value={form.hasServer || ""} onChange={(v) => updateField("hasServer", v)} />
           </div>
         );
-      case 3:
+      case "wantsServer":
         return (
-          <div className="space-y-5">
-            <div>
-              <Label className="mb-2 block text-sm font-medium">A empresa possui servidor?</Label>
-              <RadioCardGroup name="hasServer" options={yesNoUnknownOptions} value={form.hasServer || ""} onChange={(v) => updateField("hasServer", v)} />
-            </div>
-            {form.hasServer === "Não" && (
-              <div>
-                <Label className="mb-2 block text-sm font-medium">Deseja incluir servidor na solução?</Label>
-                <RadioCardGroup name="wantsServer" options={serverNeedOptions} value={form.wantsServer || ""} onChange={(v) => updateField("wantsServer", v)} />
-              </div>
-            )}
-            <div>
-              <Label className="mb-2 block text-sm font-medium">A empresa possui firewall ou segurança de rede?</Label>
-              <RadioCardGroup name="hasFirewall" options={yesNoUnknownOptions} value={form.hasFirewall || ""} onChange={(v) => updateField("hasFirewall", v)} />
-            </div>
-            <div>
-              <Label className="mb-2 block text-sm font-medium">A empresa possui backup automático?</Label>
-              <RadioCardGroup name="hasBackup" options={yesNoUnknownOptions} value={form.hasAutomaticBackup || ""} onChange={(v) => updateField("hasAutomaticBackup", v)} />
-            </div>
+          <div>
+            <Label className="mb-2 block text-sm font-medium">Deseja incluir servidor na solução?</Label>
+            <RadioCardGroup name="wantsServer" options={serverNeedOptions} value={form.wantsServer || ""} onChange={(v) => updateField("wantsServer", v)} />
           </div>
         );
-      case 4:
+      case "hasFirewall":
         return (
-          <div className="space-y-5">
-            <div>
-              <Label className="mb-2 block text-sm font-medium">Sua empresa possui técnico de TI interno?</Label>
-              <RadioCardGroup name="hasInternalTech" options={["Sim", "Não"]} value={form.hasInternalTech || ""} onChange={(v) => updateField("hasInternalTech", v)} />
-            </div>
-            <div>
-              <Label className="mb-2 block text-sm font-medium">Com que frequência ocorrem problemas de informática?</Label>
-              <RadioCardGroup name="frequency" options={problemFrequencyOptions} value={form.problemFrequency || ""} onChange={(v) => updateField("problemFrequency", v)} />
-            </div>
+          <div>
+            <Label className="mb-2 block text-sm font-medium">A empresa possui firewall ou segurança de rede?</Label>
+            <RadioCardGroup name="hasFirewall" options={yesNoUnknownOptions} value={form.hasFirewall || ""} onChange={(v) => updateField("hasFirewall", v)} />
           </div>
         );
-      case 5:
+      case "hasBackup":
         return (
-          <div className="space-y-5">
-            <div>
-              <Label className="mb-2 block text-sm font-medium">Existe previsão de crescimento da equipe nos próximos 12 meses?</Label>
-              <RadioCardGroup name="growth" options={growthOptions} value={form.growthForecast || ""} onChange={(v) => updateField("growthForecast", v)} />
-            </div>
+          <div>
+            <Label className="mb-2 block text-sm font-medium">A empresa possui backup automático?</Label>
+            <RadioCardGroup name="hasBackup" options={yesNoUnknownOptions} value={form.hasAutomaticBackup || ""} onChange={(v) => updateField("hasAutomaticBackup", v)} />
           </div>
         );
-      case 6:
+      case "hasInternalTech":
+        return (
+          <div>
+            <Label className="mb-2 block text-sm font-medium">Sua empresa possui técnico de TI interno?</Label>
+            <RadioCardGroup name="hasInternalTech" options={["Sim", "Não"]} value={form.hasInternalTech || ""} onChange={(v) => updateField("hasInternalTech", v)} />
+          </div>
+        );
+      case "problemFrequency":
+        return (
+          <div>
+            <Label className="mb-2 block text-sm font-medium">Com que frequência ocorrem problemas de informática?</Label>
+            <RadioCardGroup name="frequency" options={problemFrequencyOptions} value={form.problemFrequency || ""} onChange={(v) => updateField("problemFrequency", v)} />
+          </div>
+        );
+      case "growthForecast":
+        return (
+          <div>
+            <Label className="mb-2 block text-sm font-medium">Existe previsão de crescimento da equipe nos próximos 12 meses?</Label>
+            <RadioCardGroup name="growth" options={growthOptions} value={form.growthForecast || ""} onChange={(v) => updateField("growthForecast", v)} />
+          </div>
+        );
+      case "companyData":
         return (
           <div className="space-y-5">
             <div>
@@ -442,10 +472,10 @@ const RentalQualificationForm = ({ onComplete, completed, data: completedData }:
                 Dimensione sua <span className="text-primary">locação de computadores</span>
               </h2>
               <p className="text-muted-foreground mb-8">
-                Responda 7 perguntas rápidas para gerar sua configuração recomendada.
+                Responda algumas perguntas rápidas para gerar sua configuração recomendada.
               </p>
               <Button
-                onClick={() => { setOpen(true); setBlockIndex(0); setBlockError(null); }}
+                onClick={() => { setOpen(true); setStepIndex(0); setStepError(null); }}
                 className="h-14 px-10 text-base bg-primary hover:bg-primary/90 text-primary-foreground"
               >
                 Iniciar diagnóstico
@@ -463,11 +493,11 @@ const RentalQualificationForm = ({ onComplete, completed, data: completedData }:
           <div className="flex items-center justify-between px-6 pt-5 pb-3">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                <currentBlock.icon className="w-4 h-4 text-primary" />
+                {currentStep && <currentStep.icon className="w-4 h-4 text-primary" />}
               </div>
               <div>
-                <p className="text-xs text-muted-foreground font-medium">Etapa {blockIndex + 1} de {wizardBlocks.length}</p>
-                <h3 className="text-base font-heading font-bold text-foreground">{currentBlock.title}</h3>
+                <p className="text-xs text-muted-foreground font-medium">Etapa {stepIndex + 1} de {visibleSteps.length}</p>
+                <h3 className="text-base font-heading font-bold text-foreground">{currentStep?.title}</h3>
               </div>
             </div>
             <button onClick={() => setOpen(false)} className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
@@ -485,49 +515,41 @@ const RentalQualificationForm = ({ onComplete, completed, data: completedData }:
                 transition={{ duration: 0.3, ease: "easeOut" }}
               />
             </div>
-            {/* Step dots */}
-            <div className="flex justify-between mt-2">
-              {wizardBlocks.map((block, i) => (
-                <div key={block.id} className="flex flex-col items-center">
-                  <div className={`w-2 h-2 rounded-full transition-colors ${i <= blockIndex ? "bg-primary" : "bg-muted-foreground/30"}`} />
-                </div>
-              ))}
-            </div>
           </div>
 
           {/* Content */}
           <div className="px-6 pb-4 overflow-y-auto flex-1 min-h-0">
             <AnimatePresence mode="wait">
               <motion.div
-                key={blockIndex}
+                key={currentStep?.id || stepIndex}
                 initial={{ opacity: 0, x: 30 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -30 }}
                 transition={{ duration: 0.2 }}
               >
-                {renderBlock()}
+                {renderStep()}
               </motion.div>
             </AnimatePresence>
           </div>
 
           {/* Error */}
-          {blockError && (
+          {stepError && (
             <div className="px-6 pb-2">
               <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-sm text-destructive">
                 <AlertTriangle className="w-4 h-4 shrink-0" />
-                <span>{blockError}</span>
+                <span>{stepError}</span>
               </div>
             </div>
           )}
 
           {/* Footer */}
           <div className="flex items-center gap-3 px-6 py-4 border-t border-border">
-            <Button variant="outline" onClick={handleBack} disabled={blockIndex === 0} className="h-11 px-5">
+            <Button variant="outline" onClick={handleBack} disabled={stepIndex === 0} className="h-11 px-5">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Voltar
             </Button>
             <Button onClick={handleNext} className="flex-1 h-11 bg-primary hover:bg-primary/90 text-primary-foreground">
-              {blockIndex < wizardBlocks.length - 1 ? (
+              {stepIndex < visibleSteps.length - 1 ? (
                 <>
                   Próximo
                   <ArrowRight className="w-4 h-4 ml-2" />

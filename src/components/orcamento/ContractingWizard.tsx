@@ -168,14 +168,11 @@ const ContractingWizard = ({
     return () => clearInterval(interval);
   }, [currentStep, contractId, contractSigned, toast]);
 
-  // Auto-redirect to Asaas checkout
-  useEffect(() => {
-    if (!paymentComplete || !paymentData || !paymentData.invoiceUrl) return;
-    const timer = window.setTimeout(() => {
-      window.location.href = paymentData.invoiceUrl!;
-    }, 1800);
-    return () => window.clearTimeout(timer);
-  }, [paymentComplete, paymentData]);
+  // Redirect only after confirmed invoiceUrl
+  const handleRedirectToCheckout = useCallback((url: string) => {
+    if (!url) return;
+    window.location.href = url;
+  }, []);
 
 
   // All hooks above — safe to return null now
@@ -349,17 +346,21 @@ const ContractingWizard = ({
 
       const normalized = normalizePaymentPayload(data, selectedPayment);
 
-      setPaymentData(normalized);
-      setInvoiceUrl(normalized.invoiceUrl);
-      setPaymentComplete(normalized.success);
-
       if (!normalized.success) {
         throw new Error("A assinatura não foi confirmada pelo backend.");
       }
 
       if (!normalized.invoiceUrl) {
-        throw new Error("O sistema de pagamento não retornou um link de cobrança.");
+        throw new Error("O sistema de pagamento não retornou um link de cobrança. Tente novamente.");
       }
+
+      // Only set state and redirect AFTER confirmed URL
+      setPaymentData(normalized);
+      setInvoiceUrl(normalized.invoiceUrl);
+      setPaymentComplete(true);
+
+      // Redirect directly now that we have the URL
+      handleRedirectToCheckout(normalized.invoiceUrl);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Erro desconhecido";
       console.error("[WMTi][payment] Ponto de falha no fluxo:", message);
@@ -459,20 +460,25 @@ const ContractingWizard = ({
 
             {/* Step 3: Payment */}
             <WizardStepWrapper stepNumber={3} title="Pagamento" subtitle="Escolha a forma e finalize" status={getStepStatus("payment")} isLast>
-              {paymentComplete && paymentData?.invoiceUrl ? (
+              {paymentLoading ? (
+                <div className="bg-card border border-primary/20 rounded-xl p-6 space-y-4">
+                  <div className="flex flex-col items-center justify-center text-center space-y-3">
+                    <Loader2 className="w-10 h-10 animate-spin text-primary" />
+                    <h4 className="text-lg font-heading font-bold">Aguarde, estamos preparando seu pagamento...</h4>
+                    <p className="text-sm text-muted-foreground">Não feche esta página.</p>
+                  </div>
+                </div>
+              ) : paymentComplete && paymentData?.invoiceUrl ? (
                 <div className="bg-card border border-primary/20 rounded-xl p-6 space-y-4">
                   <div className="flex flex-col items-center justify-center text-center space-y-3">
                     <CheckCircle className="w-10 h-10 text-primary" />
                     <h4 className="text-lg font-heading font-bold">Cobrança gerada!</h4>
-                    <p className="text-sm text-muted-foreground">Redirecionando para o checkout...</p>
-                    <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                    <p className="text-sm text-muted-foreground">Você será redirecionado para o checkout.</p>
                   </div>
                   <div className="flex flex-col gap-2">
-                    <Button asChild variant="outline" className="w-full h-10">
-                      <a href={paymentData.invoiceUrl} target="_blank" rel="noreferrer">
-                        <ExternalLink className="w-4 h-4 mr-2" />
-                        Caso não seja redirecionado, clique aqui
-                      </a>
+                    <Button onClick={() => handleRedirectToCheckout(paymentData.invoiceUrl!)} className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground">
+                      <ExternalLink className="w-4 h-4 mr-2" />
+                      Ir para pagamento
                     </Button>
                     <Button onClick={handleRetryPayment} variant="ghost" className="w-full h-10 text-muted-foreground">
                       <RotateCcw className="w-4 h-4 mr-2" />
@@ -520,7 +526,7 @@ const ContractingWizard = ({
                   </div>
 
                   <Button onClick={handlePayment} disabled={!selectedPayment || paymentLoading} className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50">
-                    {paymentLoading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <CreditCard className="w-4 h-4 mr-2" />}
+                    <CreditCard className="w-4 h-4 mr-2" />
                     {paymentError ? "Tentar novamente" : "Criar assinatura e pagar"}
                   </Button>
                 </div>
