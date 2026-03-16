@@ -84,22 +84,40 @@ export const segments: SeoSegment[] = [
     dedicatedPage: "/ti-para-contabilidades",
   },
   {
-    slug: "industrias",
-    name: "Indústrias",
-    titleSuffix: "para Indústrias",
+    slug: "industrias-alimenticias",
+    name: "Indústrias Alimentícias",
+    titleSuffix: "para Indústrias Alimentícias",
     descriptionExtra:
-      "Soluções de TI industrial com redes segmentadas, servidores de alta performance, monitoramento 24/7 e integração com sistemas ERP.",
+      "Soluções de TI para indústrias alimentícias com redes segmentadas, servidores de alta performance, monitoramento 24/7, conformidade com normas sanitárias e integração com sistemas ERP.",
     painPoints: [
-      "Rede industrial instável afetando produção",
-      "Falta de integração entre TI e sistemas de produção",
+      "Rede industrial instável afetando linhas de produção",
+      "Falta de integração entre TI e sistemas de rastreabilidade",
       "Ausência de monitoramento proativo da infraestrutura",
     ],
     faqExtra: {
-      question: "A WMTi atende indústrias?",
+      question: "A WMTi atende indústrias alimentícias?",
       answer:
-        "Sim. Atendemos indústrias com infraestrutura de TI robusta, redes segmentadas, servidores de alta performance e suporte técnico especializado.",
+        "Sim. Atendemos indústrias alimentícias com infraestrutura de TI robusta, redes segmentadas, servidores de alta performance e suporte técnico especializado para ambientes de produção.",
     },
     dedicatedPage: "/ti-para-industrias-alimenticias",
+  },
+  {
+    slug: "industrias-petroliferas",
+    name: "Indústrias Petrolíferas",
+    titleSuffix: "para Indústrias Petrolíferas",
+    descriptionExtra:
+      "Soluções de TI para indústrias petrolíferas e de energia com infraestrutura resiliente, segurança de dados, redes industriais segmentadas e conformidade regulatória.",
+    painPoints: [
+      "Infraestrutura de TI vulnerável em ambientes industriais críticos",
+      "Falta de redundância e plano de contingência para operações 24/7",
+      "Ausência de segmentação entre rede corporativa e rede operacional",
+    ],
+    faqExtra: {
+      question: "A WMTi atende indústrias petrolíferas?",
+      answer:
+        "Sim. Oferecemos soluções de TI dimensionadas para indústrias petrolíferas, com infraestrutura resiliente, segurança avançada e suporte técnico especializado para operações contínuas.",
+    },
+    dedicatedPage: "/ti-para-industrias-petroliferas",
   },
   {
     slug: "empresas-corporativas",
