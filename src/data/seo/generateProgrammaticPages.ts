@@ -73,9 +73,19 @@ const serviceIcons: Record<string, { icon: LucideIcon; title: string; text: stri
   ],
 };
 
+/** Generic icons for services without specific mapping */
+const genericServiceIcons: { icon: LucideIcon; title: string; text: string }[] = [
+  { icon: Server, title: "Servidores corporativos", text: "Implantação e gerenciamento de servidores Dell PowerEdge." },
+  { icon: Shield, title: "Segurança", text: "Proteção da infraestrutura com firewall e políticas de segurança." },
+  { icon: Activity, title: "Monitoramento", text: "Monitoramento contínuo para prevenção de falhas." },
+  { icon: HardDrive, title: "Backup", text: "Backup automatizado com recuperação garantida." },
+  { icon: Wrench, title: "Manutenção", text: "Manutenção preventiva e corretiva da infraestrutura." },
+  { icon: Headphones, title: "Suporte técnico", text: "Equipe especializada com SLA garantido." },
+];
+
 /** Segment-specific icons */
 const segmentIcons: Record<string, { icon: LucideIcon; title: string; text: string }[]> = {
-  cartorios: [
+  "serventias-notariais": [
     { icon: Landmark, title: "Conformidade CNJ", text: "Infraestrutura em conformidade com o Provimento 213 do CNJ." },
     { icon: Shield, title: "Segurança de dados", text: "Proteção de dados cartorários com backup criptografado." },
     { icon: Server, title: "Servidores dedicados", text: "Servidores dimensionados para sistemas cartorários." },
@@ -99,6 +109,11 @@ const segmentIcons: Record<string, { icon: LucideIcon; title: string; text: stri
     { icon: Building2, title: "TI industrial", text: "Redes segmentadas e servidores de alta performance para fábricas." },
     { icon: Activity, title: "Monitoramento 24/7", text: "NOC dedicado para monitoramento da infraestrutura industrial." },
     { icon: Network, title: "Integração ERP", text: "Rede otimizada para sistemas de gestão industrial." },
+  ],
+  "empresas-corporativas": [
+    { icon: Building2, title: "TI corporativa", text: "Soluções completas de infraestrutura para empresas." },
+    { icon: Server, title: "Servidores Dell", text: "Servidores Dell PowerEdge com virtualização e alta disponibilidade." },
+    { icon: Network, title: "Redes segmentadas", text: "Redes corporativas com VLANs e switches gerenciáveis." },
   ],
 };
 
