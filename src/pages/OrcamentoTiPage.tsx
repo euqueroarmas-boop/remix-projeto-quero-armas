@@ -20,6 +20,8 @@ import { recommendRentalAddons, recommendRentalPlan } from "@/components/orcamen
 
 const OrcamentoTiPage = () => {
   const [searchParams] = useSearchParams();
+  const { toast } = useToast();
+  const [savingBudget, setSavingBudget] = useState(false);
 
   const [selectedPath, setSelectedPath] = useState<CommercialPath | null>(null);
   const [qualification, setQualification] = useState<QualificationData | null>(null);
