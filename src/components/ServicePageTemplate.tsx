@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, CheckCircle2, MessageCircle, ChevronRight } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import HoursCalculator from "@/components/orcamento/HoursCalculator";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
@@ -32,6 +33,7 @@ interface ServicePageProps {
   shouldIndex?: boolean;
   heroImage?: string;
   heroImageAlt?: string;
+  showHoursCalculator?: boolean;
 }
 
 const fadeIn = {
@@ -59,6 +61,7 @@ const ServicePageTemplate = ({
   shouldIndex = true,
   heroImage,
   heroImageAlt,
+  showHoursCalculator = false,
 }: ServicePageProps) => {
   const location = useLocation();
   const baseUrl = "https://wmti.com.br";
@@ -279,6 +282,9 @@ const ServicePageTemplate = ({
           </div>
         </div>
       </section>
+
+      {/* Hours Calculator */}
+      {showHoursCalculator && <HoursCalculator serviceName={tag} />}
 
       {/* CTA */}
       <section id="contato-servico" className="section-light py-16 md:py-24">

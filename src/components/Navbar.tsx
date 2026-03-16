@@ -15,16 +15,24 @@ const segmentos = [
 ];
 
 const servicos = [
-  { label: "Locação de Computadores", href: "/locacao-de-computadores-para-empresas-jacarei" },
-  { label: "Suporte de TI", href: "/suporte-ti-jacarei" },
-  { label: "Infraestrutura de TI", href: "/infraestrutura-ti-corporativa-jacarei" },
-  { label: "Terceirização de TI", href: "/terceirizacao-de-mao-de-obra-ti" },
-  { label: "Monitoramento de Redes", href: "/montagem-e-monitoramento-de-redes-jacarei" },
+  { label: "Suporte Técnico Empresarial", href: "/suporte-ti-jacarei" },
+  { label: "Suporte Técnico Emergencial", href: "/suporte-tecnico-emergencial" },
+  { label: "Suporte Windows Server", href: "/suporte-windows-server" },
+  { label: "Suporte Linux", href: "/suporte-linux" },
+  { label: "Infraestrutura De TI Para Empresas", href: "/infraestrutura-ti-corporativa-jacarei" },
+  { label: "Administração De Servidores", href: "/administracao-de-servidores" },
+  { label: "Monitoramento De Servidores", href: "/monitoramento-de-servidores" },
   { label: "Servidores Dell PowerEdge", href: "/servidor-dell-poweredge-jacarei" },
-  { label: "Microsoft 365", href: "/microsoft-365-para-empresas-jacarei" },
-  { label: "Firewall pfSense", href: "/firewall-pfsense-jacarei" },
-  { label: "Backup Empresarial", href: "/backup-empresarial-jacarei" },
-  { label: "Segurança da Informação", href: "/seguranca-informacao-empresarial" },
+  { label: "Backup Corporativo", href: "/backup-corporativo" },
+  { label: "Segurança De Rede", href: "/seguranca-de-rede" },
+  { label: "Firewall Corporativo", href: "/firewall-pfsense-jacarei" },
+  { label: "Infraestrutura De Rede Corporativa", href: "/montagem-e-monitoramento-de-redes-jacarei" },
+  { label: "Monitoramento De Rede", href: "/monitoramento-de-rede" },
+  { label: "Suporte Técnico Para Redes Corporativas", href: "/suporte-tecnico-para-redes-corporativas" },
+  { label: "Manutenção De Infraestrutura De TI", href: "/manutencao-de-infraestrutura-de-ti" },
+  { label: "Administração Microsoft 365", href: "/microsoft-365-para-empresas-jacarei" },
+  { label: "Locação de Computadores", href: "/locacao-de-computadores-para-empresas-jacarei" },
+  { label: "Terceirização de TI", href: "/terceirizacao-de-mao-de-obra-ti" },
 ];
 
 type NavLink = {

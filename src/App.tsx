@@ -29,9 +29,22 @@ const TiCartoriosPage = lazy(() => import("./pages/TiCartoriosPage.tsx"));
 const TiServentiasCartoriaisPage = lazy(() => import("./pages/TiServentiasCartoriaisPage.tsx"));
 const TiIndustriasAlimenticiaPage = lazy(() => import("./pages/TiIndustriasAlimenticiaPage.tsx"));
 const TiIndustriasPetroliferasPage = lazy(() => import("./pages/TiIndustriasPetroliferasPage.tsx"));
+const TiEscritoriosAdvocaciaPage = lazy(() => import("./pages/TiEscritoriosAdvocaciaPage.tsx"));
+const TiContabilidadesPage = lazy(() => import("./pages/TiContabilidadesPage.tsx"));
+const TiEscritoriosCorporativosPage = lazy(() => import("./pages/TiEscritoriosCorporativosPage.tsx"));
 const InfraestruturaCorporativaPage = lazy(() => import("./pages/InfraestruturaCorporativaPage.tsx"));
 const OrcamentoTiPage = lazy(() => import("./pages/OrcamentoTiPage.tsx"));
 const ContratoPage = lazy(() => import("./pages/ContratoPage.tsx"));
+const AdministracaoServidoresPage = lazy(() => import("./pages/AdministracaoServidoresPage.tsx"));
+const MonitoramentoServidoresPage = lazy(() => import("./pages/MonitoramentoServidoresPage.tsx"));
+const BackupCorporativoPage = lazy(() => import("./pages/BackupCorporativoPage.tsx"));
+const SegurancaDeRedePage = lazy(() => import("./pages/SegurancaDeRedePage.tsx"));
+const MonitoramentoDeRedePage = lazy(() => import("./pages/MonitoramentoDeRedePage.tsx"));
+const SuporteEmergencialPage = lazy(() => import("./pages/SuporteEmergencialPage.tsx"));
+const SuporteWindowsServerPage = lazy(() => import("./pages/SuporteWindowsServerPage.tsx"));
+const SuporteLinuxPage = lazy(() => import("./pages/SuporteLinuxPage.tsx"));
+const ManutencaoInfraestruturaPage = lazy(() => import("./pages/ManutencaoInfraestruturaPage.tsx"));
+const SuporteRedesCorporativasPage = lazy(() => import("./pages/SuporteRedesCorporativasPage.tsx"));
 
 const queryClient = new QueryClient();
 
@@ -68,6 +81,17 @@ const App = () => (
             <Route path="/locacao-de-computadores-para-empresas-jacarei" element={<LocacaoComputadoresPage />} />
             <Route path="/suporte-ti-jacarei" element={<SuporteTiPage />} />
             <Route path="/infraestrutura-ti-corporativa-jacarei" element={<InfraestruturaCorporativaPage />} />
+            {/* New service pages */}
+            <Route path="/administracao-de-servidores" element={<AdministracaoServidoresPage />} />
+            <Route path="/monitoramento-de-servidores" element={<MonitoramentoServidoresPage />} />
+            <Route path="/backup-corporativo" element={<BackupCorporativoPage />} />
+            <Route path="/seguranca-de-rede" element={<SegurancaDeRedePage />} />
+            <Route path="/monitoramento-de-rede" element={<MonitoramentoDeRedePage />} />
+            <Route path="/suporte-tecnico-emergencial" element={<SuporteEmergencialPage />} />
+            <Route path="/suporte-windows-server" element={<SuporteWindowsServerPage />} />
+            <Route path="/suporte-linux" element={<SuporteLinuxPage />} />
+            <Route path="/manutencao-de-infraestrutura-de-ti" element={<ManutencaoInfraestruturaPage />} />
+            <Route path="/suporte-tecnico-para-redes-corporativas" element={<SuporteRedesCorporativasPage />} />
             {/* Budget system */}
             <Route path="/orcamento-ti" element={<OrcamentoTiPage />} />
             <Route path="/contrato" element={<ContratoPage />} />
@@ -76,6 +100,9 @@ const App = () => (
             <Route path="/ti-para-serventias-cartoriais" element={<TiServentiasCartoriaisPage />} />
             <Route path="/ti-para-industrias-alimenticias" element={<TiIndustriasAlimenticiaPage />} />
             <Route path="/ti-para-industrias-petroliferas" element={<TiIndustriasPetroliferasPage />} />
+            <Route path="/ti-para-escritorios-de-advocacia" element={<TiEscritoriosAdvocaciaPage />} />
+            <Route path="/ti-para-contabilidades" element={<TiContabilidadesPage />} />
+            <Route path="/ti-para-escritorios-corporativos" element={<TiEscritoriosCorporativosPage />} />
             {/* Provimento 213 */}
             <Route path="/provimento-213" element={<Navigate to="/cartorios/provimento-213" replace />} />
             <Route path="/cartorios/provimento-213" element={<Provimento213 />} />

@@ -76,6 +76,16 @@ const staticPages = [
   { loc: "/ti-para-serventias-cartoriais", priority: "0.7", changefreq: "monthly" },
   { loc: "/ti-para-industrias-alimenticias", priority: "0.7", changefreq: "monthly" },
   { loc: "/ti-para-industrias-petroliferas", priority: "0.7", changefreq: "monthly" },
+  { loc: "/administracao-de-servidores", priority: "0.7", changefreq: "monthly" },
+  { loc: "/monitoramento-de-servidores", priority: "0.7", changefreq: "monthly" },
+  { loc: "/backup-corporativo", priority: "0.7", changefreq: "monthly" },
+  { loc: "/seguranca-de-rede", priority: "0.7", changefreq: "monthly" },
+  { loc: "/monitoramento-de-rede", priority: "0.7", changefreq: "monthly" },
+  { loc: "/suporte-tecnico-emergencial", priority: "0.7", changefreq: "monthly" },
+  { loc: "/suporte-windows-server", priority: "0.7", changefreq: "monthly" },
+  { loc: "/suporte-linux", priority: "0.7", changefreq: "monthly" },
+  { loc: "/manutencao-de-infraestrutura-de-ti", priority: "0.7", changefreq: "monthly" },
+  { loc: "/suporte-tecnico-para-redes-corporativas", priority: "0.7", changefreq: "monthly" },
 ];
 
 function urlEntry(loc: string, priority: string, changefreq: string): string {

@@ -45,6 +45,7 @@ const FirewallPfsensePage = () => (
       { label: "Infraestrutura corporativa", href: "/infraestrutura-ti-corporativa" },
     ]}
     localContent="Instalamos firewalls pfSense em empresas de Jacareí, São José dos Campos, Taubaté e toda a região do Vale do Paraíba. Nossos técnicos realizam a implantação presencial com segmentação de rede (VLANs), configuração de regras personalizadas e integração com a infraestrutura existente."
+    showHoursCalculator
   />
 );
 
