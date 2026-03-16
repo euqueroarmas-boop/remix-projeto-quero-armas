@@ -1,5 +1,6 @@
 import { Server, Shield, HardDrive, Activity, Headphones, Lock } from "lucide-react";
 import ServicePageTemplate from "@/components/ServicePageTemplate";
+import heroImg from "@/assets/segments/industrias-petroliferas.jpg";
 
 const TiIndustriasPetroliferasPage = () => (
   <ServicePageTemplate
@@ -10,6 +11,8 @@ const TiIndustriasPetroliferasPage = () => (
     headline={<>Infraestrutura de TI para <span className="text-primary">Indústrias Petrolíferas</span></>}
     description="Empresas do setor petrolífero operam com sistemas críticos que exigem alta disponibilidade e segurança da informação. A WMTi fornece soluções completas de infraestrutura de TI para empresas do setor de combustíveis e operações industriais críticas."
     whatsappMessage="Olá! Gostaria de uma análise da infraestrutura tecnológica da minha empresa do setor petrolífero."
+    heroImage={heroImg}
+    heroImageAlt="Refinaria de petróleo com torres de destilação ao pôr do sol"
     painPoints={[
       "Sistemas operacionais críticos sem alta disponibilidade",
       "Falta de proteção contra ataques cibernéticos",
