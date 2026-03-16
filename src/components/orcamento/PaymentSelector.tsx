@@ -100,23 +100,7 @@ const PaymentSelector = ({ visible, monthlyValue, onSelectPayment, completed, in
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <button
-              type="button"
-              onClick={() => setSelected("PIX")}
-              className={`p-6 rounded-xl border-2 transition-all text-left ${
-                selected === "PIX"
-                  ? "border-primary bg-primary/5 shadow-lg shadow-primary/10"
-                  : "border-border bg-card hover:border-primary/30"
-              }`}
-            >
-              <QrCode className={`w-8 h-8 mb-3 ${selected === "PIX" ? "text-primary" : "text-muted-foreground"}`} />
-              <h3 className="font-heading font-bold text-lg mb-1">PIX</h3>
-              <p className="text-sm text-muted-foreground">
-                Aprovação instantânea. Sem taxas adicionais.
-              </p>
-            </button>
-
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
             <button
               type="button"
               onClick={() => setSelected("BOLETO")}
