@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
-import { FileText, PenTool, CreditCard, QrCode, FileBarChart, User, CheckCircle, Loader2, ExternalLink, AlertTriangle, RotateCcw, Check } from "lucide-react";
+import { FileText, PenTool, CreditCard, QrCode, FileBarChart, CheckCircle, Loader2, ExternalLink, AlertTriangle, RotateCcw, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
