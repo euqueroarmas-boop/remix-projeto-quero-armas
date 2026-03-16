@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import SeoHead from "@/components/SeoHead";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -19,6 +20,8 @@ import { recommendRentalAddons, recommendRentalPlan } from "@/components/orcamen
 
 const OrcamentoTiPage = () => {
   const [searchParams] = useSearchParams();
+  const { toast } = useToast();
+  const [savingBudget, setSavingBudget] = useState(false);
 
   const [selectedPath, setSelectedPath] = useState<CommercialPath | null>(null);
   const [qualification, setQualification] = useState<QualificationData | null>(null);
@@ -118,9 +121,14 @@ const OrcamentoTiPage = () => {
 
   const handleSaveBudget = useCallback(async () => {
     if (budgetSaved) {
-      scrollToSection("contracting-wizard");
+      // Already saved, just scroll to wizard
+      window.setTimeout(() => {
+        document.getElementById("contracting-wizard")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 50);
       return;
     }
+
+    setSavingBudget(true);
 
     try {
       const pathLabel = effectivePath === "locacao" ? "Locação" : "Suporte";
@@ -176,11 +184,22 @@ const OrcamentoTiPage = () => {
 
       setBudgetSaved(true);
       console.log("[WMTi] Orçamento salvo. Quote ID:", (quoteRow as any).id);
-      scrollToSection("contracting-wizard");
+
+      // Wait for React to render the wizard section before scrolling
+      window.setTimeout(() => {
+        document.getElementById("contracting-wizard")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 300);
     } catch (err) {
       console.error("[WMTi] Erro ao salvar orçamento:", err);
+      toast({
+        title: "Erro ao salvar orçamento",
+        description: "Ocorreu um problema ao processar seu orçamento. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setSavingBudget(false);
     }
-  }, [addons, budgetSaved, computersQty, effectivePath, monthlyValue, plan.name, qualification, scrollToSection, selectedPlan, usersQty]);
+  }, [addons, budgetSaved, computersQty, effectivePath, monthlyValue, plan.name, qualification, selectedPlan, toast, usersQty]);
 
   const showRentalFlow = effectivePath === "locacao";
   const showSupportFlow = effectivePath === "suporte";
@@ -260,9 +279,15 @@ const OrcamentoTiPage = () => {
                 )}
                 <button
                   onClick={handleSaveBudget}
-                  className="w-full h-14 text-base font-semibold rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground transition-colors"
+                  disabled={savingBudget}
+                  className="w-full h-14 text-base font-semibold rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
                 >
-                  {budgetSaved ? "Continuar contratação" : "Prosseguir para contratação"}
+                  {savingBudget ? (
+                    <>
+                      <span className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+                      Salvando...
+                    </>
+                  ) : budgetSaved ? "Continuar contratação" : "Prosseguir para contratação"}
                 </button>
               </div>
             </div>
