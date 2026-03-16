@@ -18,14 +18,11 @@ const PaymentSelector = ({ visible, monthlyValue, onSelectPayment, completed, in
   const [selected, setSelected] = useState<BillingType | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Auto-redirect to checkout when invoice URL is available (no popup)
+  // Open checkout in new tab when invoice URL is available
   useEffect(() => {
     if (completed && invoiceUrl) {
-      console.log("[WMTi] Redirecionando para checkout:", invoiceUrl);
-      const timer = setTimeout(() => {
-        window.location.href = invoiceUrl;
-      }, 1500);
-      return () => clearTimeout(timer);
+      console.log("[WMTi] Abrindo checkout em nova aba:", invoiceUrl);
+      window.open(invoiceUrl, "_blank", "noopener,noreferrer");
     }
   }, [completed, invoiceUrl]);
 
