@@ -73,7 +73,7 @@ const formatPhone = (value: string) => {
     .replace(/(\d{5})(\d{1,4})$/, "$1-$2");
 };
 
-const QuickRegistrationForm = ({ onComplete, loading: externalLoading }: Props) => {
+const QuickRegistrationForm = ({ onComplete, loading: externalLoading, initialData }: Props) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [cnpjLoading, setCnpjLoading] = useState(false);
