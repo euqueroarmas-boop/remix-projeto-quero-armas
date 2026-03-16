@@ -67,6 +67,7 @@ const App = () => (
             <Route path="/infraestrutura-ti-corporativa-jacarei" element={<InfraestruturaCorporativaPage />} />
             {/* Budget system */}
             <Route path="/orcamento-ti" element={<OrcamentoTiPage />} />
+            <Route path="/contrato" element={<ContratoPage />} />
             {/* Segment dedicated pages */}
             <Route path="/ti-para-cartorios" element={<TiCartoriosPage />} />
             {/* Provimento 213 */}
