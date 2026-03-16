@@ -34,20 +34,17 @@ const PaymentSelector = ({ visible, monthlyValue, onSelectPayment, completed, in
         <div className="container mx-auto px-4 text-center">
           <div className="max-w-md mx-auto bg-background border border-primary/20 rounded-2xl p-8 space-y-4">
             <CheckCircle className="w-12 h-12 text-primary mx-auto" />
-            <h3 className="text-xl font-heading font-bold">Cobrança gerada!</h3>
+            <h3 className="text-xl font-heading font-bold">Assinatura criada!</h3>
             <p className="text-muted-foreground text-sm">
-              Você será redirecionado automaticamente para o checkout.
+              O checkout foi aberto em uma nova aba. Conclua o pagamento por lá.
             </p>
-            <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" />
             <Button
-              asChild
+              onClick={() => window.open(invoiceUrl, "_blank", "noopener,noreferrer")}
               variant="outline"
               className="w-full h-12"
             >
-              <a href={invoiceUrl}>
-                <ExternalLink className="w-4 h-4 mr-2" />
-                Caso não seja redirecionado, clique aqui
-              </a>
+              <ExternalLink className="w-4 h-4 mr-2" />
+              Abrir checkout novamente
             </Button>
           </div>
         </div>
