@@ -493,7 +493,7 @@ export function generateProgrammaticPages(): SeoPageData[] {
         category: "local-service",
         painPoints: servicePainPoints[service.slug] ?? defaultPainPoints,
         solutions: serviceSolutions[service.slug] ?? defaultSolutions,
-        benefits: serviceIcons[service.slug] ?? serviceIcons["infraestrutura-ti"],
+        benefits: serviceIcons[service.slug] ?? genericServiceIcons,
         faq: [
           { question: `A WMTi oferece ${service.name.toLowerCase()} em ${city.name}?`, answer: `Sim. A WMTi atende empresas em ${city.name} e região com soluções profissionais de ${service.name.toLowerCase()}, suporte técnico especializado e infraestrutura corporativa dimensionada para cada necessidade.` },
           { question: `Quanto custa ${service.name.toLowerCase()} para empresas em ${city.name}?`, answer: `O investimento depende do porte da empresa, da quantidade de equipamentos e das necessidades específicas. Entre em contato para um diagnóstico gratuito e receba uma proposta personalizada para sua empresa em ${city.name}.` },
