@@ -57,7 +57,7 @@ const PathSelector = ({ onSelect, selected }: Props) => {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto md:items-stretch">
           {paths.map((p, i) => {
             const isSelected = selected === p.id;
             return (
@@ -68,25 +68,32 @@ const PathSelector = ({ onSelect, selected }: Props) => {
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
                 onClick={() => onSelect(p.id)}
-                className={`relative text-left cursor-pointer rounded-2xl border-2 p-6 transition-all duration-300 hover:scale-[1.02] ${
+                className={`relative text-left cursor-pointer rounded-2xl border-2 p-6 transition-all duration-300 hover:scale-[1.02] flex flex-col h-full ${
                   isSelected
                     ? "border-primary bg-primary/5 shadow-lg shadow-primary/10"
                     : "border-border bg-background hover:border-primary/30"
                 }`}
               >
+                {/* Icon block */}
                 <div
-                  className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${
+                  className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 shrink-0 ${
                     isSelected ? "bg-primary/20" : "bg-primary/10"
                   }`}
                 >
                   <p.icon className="w-6 h-6 text-primary" />
                 </div>
-                <h3 className="text-lg font-heading font-bold mb-2">{p.title}</h3>
-                <p className="text-sm text-muted-foreground mb-4">{p.description}</p>
-                <div className="flex items-center justify-between">
+
+                {/* Title block — fixed min height */}
+                <h3 className="text-lg font-heading font-bold mb-2 min-h-[3.5rem]">{p.title}</h3>
+
+                {/* Description block — grows to fill */}
+                <p className="text-sm text-muted-foreground mb-4 flex-1">{p.description}</p>
+
+                {/* Highlight + arrow — anchored to bottom */}
+                <div className="flex items-center justify-between mt-auto pt-2">
                   <span className="text-xs font-semibold text-primary">{p.highlight}</span>
                   <ArrowRight
-                    className={`w-4 h-4 transition-colors ${
+                    className={`w-4 h-4 shrink-0 transition-colors ${
                       isSelected ? "text-primary" : "text-muted-foreground"
                     }`}
                   />

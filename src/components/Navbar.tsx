@@ -279,7 +279,7 @@ const Navbar = () => {
         </Link>
 
         {/* Desktop */}
-        <div ref={navRef} className="hidden lg:flex items-center gap-6 xl:gap-8 relative">
+        <div ref={navRef} className="hidden lg:flex items-center gap-6 xl:gap-8 relative leading-none">
           {pillStyle && (
             <motion.div
               className="absolute -bottom-1 h-[3px] bg-primary"
