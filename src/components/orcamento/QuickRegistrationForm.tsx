@@ -77,8 +77,7 @@ const formatPhone = (value: string) => {
 const QuickRegistrationForm = ({ onComplete, loading: externalLoading, initialData }: Props) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [cnpjLoading, setCnpjLoading] = useState(false);
-  const [cepLoading, setCepLoading] = useState(false);
+  const { lookupCnpj, lookupCep, cnpjLoading, cepLoading } = useBrasilApiLookup();
 
   const [form, setForm] = useState<RegistrationData>({
     razaoSocial: "",
