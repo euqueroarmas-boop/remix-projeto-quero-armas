@@ -41,6 +41,9 @@ const navLinks: NavLink[] = [
   { href: "/blog", label: "Blog", isRoute: true },
 ];
 
+/* ─── Shared nav-item class for perfect vertical alignment ─── */
+const NAV_ITEM_CLASS = "font-mono text-xs uppercase tracking-wider flex items-center justify-center h-16 transition-colors";
+
 const Navbar = () => {
   const [open, setOpen] = useState(false);
   const [segOpen, setSegOpen] = useState(false);
@@ -82,10 +85,8 @@ const Navbar = () => {
 
   const getActiveIndex = (): number => {
     const path = location.pathname;
-
     if (isSegmentActive()) return navLinks.findIndex(l => l.label === "Segmentos");
     if (isServiceActive()) return navLinks.findIndex(l => l.label === "Serviços");
-
     for (let i = 0; i < navLinks.length; i++) {
       const link = navLinks[i];
       if (link.isDropdown) continue;
@@ -95,7 +96,6 @@ const Navbar = () => {
       }
       if (href.startsWith("#") && isHome && location.hash === href) return i;
     }
-
     if (path.includes("infraestrutura")) return navLinks.findIndex(l => l.label === "Infraestrutura");
     return -1;
   };
@@ -104,24 +104,16 @@ const Navbar = () => {
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
-      if (segDropdownRef.current && !segDropdownRef.current.contains(e.target as Node)) {
-        setSegOpen(false);
-      }
-      if (svcDropdownRef.current && !svcDropdownRef.current.contains(e.target as Node)) {
-        setSvcOpen(false);
-      }
+      if (segDropdownRef.current && !segDropdownRef.current.contains(e.target as Node)) setSegOpen(false);
+      if (svcDropdownRef.current && !svcDropdownRef.current.contains(e.target as Node)) setSvcOpen(false);
     };
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  // Lock body scroll when mobile menu is open
   useEffect(() => {
-    if (open) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
+    if (open) { document.body.style.overflow = "hidden"; }
+    else { document.body.style.overflow = ""; }
     return () => { document.body.style.overflow = ""; };
   }, [open]);
 
@@ -145,10 +137,7 @@ const Navbar = () => {
     setOpen(false);
     if (isHome) {
       const el = document.getElementById(anchorId);
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth" });
-        return;
-      }
+      if (el) { el.scrollIntoView({ behavior: "smooth" }); return; }
     }
     navigate("/");
     setTimeout(() => {
@@ -165,60 +154,53 @@ const Navbar = () => {
     link: NavLink,
     index: number,
     active: boolean
-  ) => {
-    const className = `font-mono text-xs uppercase tracking-wider transition-colors ${
-      active ? "text-primary" : "text-muted-foreground hover:text-primary"
-    }`;
-    return (
-      <div key={link.label} ref={ref} className="relative">
-        <button
-          ref={(el) => { linkRefs.current[index] = el; }}
-          onClick={() => {
-            setIsOpen(!isOpen);
-            if (link.label === "Segmentos") setSvcOpen(false);
-            if (link.label === "Serviços") setSegOpen(false);
-          }}
-          className={`${className} inline-flex items-center gap-1`}
-        >
-          {link.label}
-          <ChevronDown size={12} className={`transition-transform ${isOpen ? "rotate-180" : ""}`} />
-        </button>
-        <AnimatePresence>
-          {isOpen && (
-            <motion.div
-              initial={{ opacity: 0, y: -8, scale: 0.96 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -8, scale: 0.96 }}
-              transition={{ duration: 0.18, ease: "easeOut" }}
-              className="absolute top-full left-0 mt-4 w-72 bg-card/95 backdrop-blur-md border border-border/60 shadow-2xl shadow-black/30 py-2 z-50 overflow-hidden"
-              style={{ borderRadius: "var(--radius)" }}
-            >
-              {items.map((item, idx) => {
-                const isActive = location.pathname === item.href;
-                return (
-                  <Link
-                    key={item.href}
-                    to={item.href}
-                    onClick={() => setIsOpen(false)}
-                    className={`group flex items-center gap-3 px-4 py-2.5 font-mono text-xs uppercase tracking-wider transition-all duration-150 ${
-                      isActive
-                        ? "text-primary bg-primary/10"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                    }`}
-                  >
-                    <span className={`w-1 h-1 rounded-full transition-colors ${
-                      isActive ? "bg-primary" : "bg-muted-foreground/30 group-hover:bg-primary/60"
-                    }`} />
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    );
-  };
+  ) => (
+    <div key={link.label} ref={ref} className="relative flex items-center h-16">
+      <button
+        ref={(el) => { linkRefs.current[index] = el; }}
+        onClick={() => {
+          setIsOpen(!isOpen);
+          if (link.label === "Segmentos") setSvcOpen(false);
+          if (link.label === "Serviços") setSegOpen(false);
+        }}
+        className={`${NAV_ITEM_CLASS} gap-1 ${active ? "text-primary" : "text-muted-foreground hover:text-primary"}`}
+      >
+        {link.label}
+        <ChevronDown size={12} className={`transition-transform ${isOpen ? "rotate-180" : ""}`} />
+      </button>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -8, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.96 }}
+            transition={{ duration: 0.18, ease: "easeOut" }}
+            className="absolute top-full left-0 mt-0 w-72 bg-card/95 backdrop-blur-md border border-border/60 shadow-2xl shadow-black/30 py-2 z-50 overflow-hidden"
+            style={{ borderRadius: "var(--radius)" }}
+          >
+            {items.map((item) => {
+              const isActive = location.pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  to={item.href}
+                  onClick={() => setIsOpen(false)}
+                  className={`group flex items-center gap-3 px-4 py-2.5 font-mono text-xs uppercase tracking-wider transition-all duration-150 ${
+                    isActive ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  }`}
+                >
+                  <span className={`w-1 h-1 rounded-full transition-colors ${
+                    isActive ? "bg-primary" : "bg-muted-foreground/30 group-hover:bg-primary/60"
+                  }`} />
+                  {item.label}
+                </Link>
+              );
+            })}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
 
   const renderMobileDropdown = (
     items: { label: string; href: string }[],
@@ -255,9 +237,7 @@ const Navbar = () => {
                     to={item.href}
                     onClick={() => { setOpen(false); setIsOpen(false); }}
                     className={`font-mono text-xs uppercase tracking-wider py-1.5 transition-colors ${
-                      location.pathname === item.href
-                        ? "text-primary"
-                        : "text-muted-foreground hover:text-primary"
+                      location.pathname === item.href ? "text-primary" : "text-muted-foreground hover:text-primary"
                     }`}
                   >
                     {item.label}
@@ -273,28 +253,26 @@ const Navbar = () => {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-secondary/95 backdrop-blur-sm border-b border-border">
-      <div className="container flex items-center justify-between h-14 md:h-16">
-        <Link to="/" className="flex items-center">
+      {/* Single header container — fixed height, flex center */}
+      <div className="container flex items-center justify-between h-16">
+        <Link to="/" className="flex items-center h-16">
           <img src={logoFull} alt="WMTi Tecnologia da Informação" className="h-9 md:h-10 w-auto" />
         </Link>
 
-        {/* Desktop */}
-        <div ref={navRef} className="hidden lg:flex items-center gap-6 xl:gap-8 relative leading-none">
+        {/* Desktop nav — all items share h-16 and flex-center */}
+        <div ref={navRef} className="hidden lg:flex items-center gap-6 xl:gap-8 relative h-16">
           {pillStyle && (
             <motion.div
-              className="absolute -bottom-1 h-[3px] bg-primary"
+              className="absolute bottom-0 h-[3px] bg-primary"
               layoutId="nav-pill"
               animate={{ left: pillStyle.left, width: pillStyle.width }}
               transition={{ type: "spring", stiffness: 400, damping: 30 }}
-              style={{ bottom: -1 }}
             />
           )}
 
           {navLinks.map((link, i) => {
             const active = i === activeIndex;
-            const className = `font-mono text-xs uppercase tracking-wider leading-none transition-colors ${
-              active ? "text-primary" : "text-muted-foreground hover:text-primary"
-            }`;
+            const colorClass = active ? "text-primary" : "text-muted-foreground hover:text-primary";
 
             if (link.isDropdown && link.label === "Segmentos") {
               return renderDropdown(segmentos, segOpen, setSegOpen, segDropdownRef, link, i, active);
@@ -309,7 +287,7 @@ const Navbar = () => {
                 key={link.label}
                 to={href}
                 ref={(el) => { linkRefs.current[i] = el; }}
-                className={className}
+                className={`${NAV_ITEM_CLASS} ${colorClass}`}
               >
                 {link.label}
               </Link>
@@ -318,7 +296,7 @@ const Navbar = () => {
                 key={link.label}
                 ref={(el) => { linkRefs.current[i] = el; }}
                 onClick={() => handleAnchorClick(link.href.replace("#", ""))}
-                className={className}
+                className={`${NAV_ITEM_CLASS} ${colorClass}`}
               >
                 {link.label}
               </button>
@@ -327,7 +305,7 @@ const Navbar = () => {
 
           <Link
             to="/orcamento-ti"
-            className="font-mono text-xs uppercase tracking-wider transition-colors text-muted-foreground hover:text-primary"
+            className={`${NAV_ITEM_CLASS} text-muted-foreground hover:text-primary`}
           >
             Orçamento
           </Link>
@@ -336,7 +314,7 @@ const Navbar = () => {
         {/* Mobile toggle */}
         <button
           onClick={() => setOpen(!open)}
-          className="lg:hidden text-foreground relative z-[60]"
+          className="lg:hidden text-foreground relative z-[60] flex items-center justify-center h-16"
           aria-label="Menu de navegação"
         >
           {open ? <X size={20} /> : <Menu size={20} />}
@@ -354,21 +332,15 @@ const Navbar = () => {
             className="lg:hidden fixed inset-0 w-screen bg-secondary z-[55] flex flex-col"
             style={{ height: "100dvh" }}
           >
-            {/* Header with logo + close */}
             <div className="container flex items-center justify-between h-14">
               <Link to="/" onClick={() => setOpen(false)} className="flex items-center">
                 <img src={logoFull} alt="WMTi Tecnologia da Informação" className="h-9 w-auto" />
               </Link>
-              <button
-                onClick={() => setOpen(false)}
-                className="text-foreground"
-                aria-label="Fechar menu"
-              >
+              <button onClick={() => setOpen(false)} className="text-foreground" aria-label="Fechar menu">
                 <X size={20} />
               </button>
             </div>
 
-            {/* Links */}
             <div className="container flex-1 flex flex-col justify-center gap-5 overflow-y-auto pb-12">
               {navLinks.map((link) => {
                 const active = navLinks.indexOf(link) === activeIndex;
@@ -406,7 +378,6 @@ const Navbar = () => {
                 Orçamento
               </Link>
 
-              {/* CTA */}
               <a
                 href="https://wa.me/5511963166915?text=Ol%C3%A1%2C%20gostaria%20de%20falar%20com%20um%20especialista%20em%20TI."
                 target="_blank"

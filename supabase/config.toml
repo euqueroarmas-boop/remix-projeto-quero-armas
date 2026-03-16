@@ -3,6 +3,9 @@ project_id = "itwsjxijqjximspqtvqk"
 [functions.create-asaas-payment]
 verify_jwt = false
 
+[functions.create-asaas-subscription]
+verify_jwt = false
+
 [functions.asaas-webhook]
 verify_jwt = false
 
