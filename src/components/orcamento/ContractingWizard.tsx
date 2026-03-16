@@ -25,7 +25,7 @@ import type { Plan } from "./PlanSelector";
 import type { QualificationData } from "./QualificationForm";
 import type { CustomerData } from "./CustomerDataForm";
 
-type BillingType = "BOLETO" | "CREDIT_CARD" | "PIX";
+type BillingType = "BOLETO" | "CREDIT_CARD";
 
 interface NormalizedPaymentData {
   success: boolean;

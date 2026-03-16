@@ -59,7 +59,7 @@ const PaymentPreparation = ({ visible, monthlyValue, companyName }: Props) => {
               </div>
               <div className="flex items-center gap-3 text-sm text-muted-foreground">
                 <CreditCard className="w-4 h-4" />
-                <span>Cobrança via Boleto, PIX ou Cartão de Crédito</span>
+                <span>Cobrança recorrente via Boleto ou Cartão de Crédito</span>
               </div>
             </div>
 

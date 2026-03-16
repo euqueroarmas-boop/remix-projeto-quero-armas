@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { CreditCard, FileBarChart, Loader2, CheckCircle, ExternalLink, AlertTriangle, QrCode } from "lucide-react";
+import { CreditCard, FileBarChart, Loader2, CheckCircle, ExternalLink, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type BillingType = "BOLETO" | "CREDIT_CARD";
