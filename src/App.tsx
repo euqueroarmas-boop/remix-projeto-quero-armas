@@ -35,6 +35,16 @@ const TiEscritoriosCorporativosPage = lazy(() => import("./pages/TiEscritoriosCo
 const InfraestruturaCorporativaPage = lazy(() => import("./pages/InfraestruturaCorporativaPage.tsx"));
 const OrcamentoTiPage = lazy(() => import("./pages/OrcamentoTiPage.tsx"));
 const ContratoPage = lazy(() => import("./pages/ContratoPage.tsx"));
+const AdministracaoServidoresPage = lazy(() => import("./pages/AdministracaoServidoresPage.tsx"));
+const MonitoramentoServidoresPage = lazy(() => import("./pages/MonitoramentoServidoresPage.tsx"));
+const BackupCorporativoPage = lazy(() => import("./pages/BackupCorporativoPage.tsx"));
+const SegurancaDeRedePage = lazy(() => import("./pages/SegurancaDeRedePage.tsx"));
+const MonitoramentoDeRedePage = lazy(() => import("./pages/MonitoramentoDeRedePage.tsx"));
+const SuporteEmergencialPage = lazy(() => import("./pages/SuporteEmergencialPage.tsx"));
+const SuporteWindowsServerPage = lazy(() => import("./pages/SuporteWindowsServerPage.tsx"));
+const SuporteLinuxPage = lazy(() => import("./pages/SuporteLinuxPage.tsx"));
+const ManutencaoInfraestruturaPage = lazy(() => import("./pages/ManutencaoInfraestruturaPage.tsx"));
+const SuporteRedesCorporativasPage = lazy(() => import("./pages/SuporteRedesCorporativasPage.tsx"));
 
 const queryClient = new QueryClient();
 
