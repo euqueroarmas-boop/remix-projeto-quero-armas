@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
-import { Monitor, Headphones, HelpCircle, ArrowRight } from "lucide-react";
+import { Monitor, Headphones, HelpCircle, ArrowRight, AlertTriangle, Wrench } from "lucide-react";
 
-export type CommercialPath = "locacao" | "suporte" | "ajuda";
+export type CommercialPath = "locacao" | "suporte" | "ajuda" | "emergencial" | "avulso";
 
 interface Props {
   onSelect: (path: CommercialPath) => void;
@@ -9,6 +9,22 @@ interface Props {
 }
 
 const paths = [
+  {
+    id: "emergencial" as CommercialPath,
+    icon: AlertTriangle,
+    title: "Suporte técnico emergencial",
+    description:
+      "Problema urgente na sua empresa? Nossa equipe pode prestar atendimento técnico imediato para restaurar servidores, rede, sistemas ou computadores que pararam de funcionar, em servidores Windows Server, Linux ou estações de trabalho.\n\nPague por hora e use quando quiser. Aproveite a promoção de horas.",
+    highlight: "Atendimento emergencial sob demanda",
+  },
+  {
+    id: "avulso" as CommercialPath,
+    icon: Wrench,
+    title: "Contratar serviço avulso",
+    description:
+      "Solicite atendimento técnico pontual para sua empresa sem necessidade de contrato mensal. Ideal para instalações, configurações, manutenção, melhorias de rede, servidores ou infraestrutura.\n\nPague por hora e use quando quiser. Aproveite a promoção de horas.",
+    highlight: "Serviço técnico sob demanda",
+  },
   {
     id: "locacao" as CommercialPath,
     icon: Monitor,
@@ -34,7 +50,6 @@ const paths = [
     highlight: "Diagnóstico gratuito em 2 minutos",
   },
 ];
-
 const PathSelector = ({ onSelect, selected }: Props) => {
   return (
     <section id="path-selector" className="py-20 bg-card">
