@@ -227,7 +227,7 @@ const RadioCardGroup = ({
   </RadioGroup>
 );
 
-const RentalQualificationForm = ({ onComplete, completed, completedData }: Omit<Props, "path">) => {
+const RentalQualificationForm = ({ onComplete, completed, data: completedData }: Omit<Props, "path">) => {
   const [form, setForm] = useState<QualificationData>({
     computersQty: 0,
     activities: [],
