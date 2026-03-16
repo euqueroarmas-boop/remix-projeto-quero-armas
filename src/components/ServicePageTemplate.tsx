@@ -33,6 +33,7 @@ interface ServicePageProps {
   shouldIndex?: boolean;
   heroImage?: string;
   heroImageAlt?: string;
+  showHoursCalculator?: boolean;
 }
 
 const fadeIn = {
