@@ -171,9 +171,9 @@ const ContractingWizard = ({
     return () => clearInterval(interval);
   }, [currentStep, contractId, contractSigned, toast]);
 
-  // Auto-redirect for non-PIX payments
+  // Auto-redirect to Asaas checkout
   useEffect(() => {
-    if (!paymentComplete || !paymentData || paymentData.billingType === "PIX" || !paymentData.invoiceUrl) return;
+    if (!paymentComplete || !paymentData || !paymentData.invoiceUrl) return;
     const timer = window.setTimeout(() => {
       window.location.href = paymentData.invoiceUrl!;
     }, 1800);
