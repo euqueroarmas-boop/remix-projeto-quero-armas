@@ -16,8 +16,8 @@ export const plans: Plan[] = [
   {
     id: "essencial",
     name: "Essencial",
-    cpu: "Core i5 8ª geração",
-    ram: "16GB RAM",
+    cpu: "Intel Core i3 (8ª à 12ª geração)",
+    ram: "8GB RAM",
     ssd: "240GB SSD",
     extras: ["Placa de rede Gigabit", "Monitor Dell 18.5\"", "Teclado e mouse"],
     price: 249,
@@ -25,7 +25,7 @@ export const plans: Plan[] = [
   {
     id: "equilibrio",
     name: "Equilíbrio",
-    cpu: "Core i5 10ª geração",
+    cpu: "Intel Core i5 (8ª à 13ª geração)",
     ram: "16GB RAM",
     ssd: "240GB SSD",
     extras: ["Placa de rede Gigabit", "Monitor Dell 18.5\"", "Teclado e mouse"],
@@ -35,7 +35,7 @@ export const plans: Plan[] = [
   {
     id: "performance",
     name: "Performance",
-    cpu: "Core i5 13ª geração",
+    cpu: "Intel Core i7 (10ª à 14ª geração)",
     ram: "16GB RAM",
     ssd: "240GB SSD",
     extras: ["Placa de rede Gigabit", "Monitor Dell 18.5\"", "Teclado e mouse"],
@@ -65,7 +65,7 @@ const PlanSelector = ({ selectedPlan, onSelectPlan }: Props) => {
             Escolha a <span className="text-primary">configuração</span> ideal
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Dell OptiPlex — o desktop corporativo mais confiável do mercado.
+            A recomendação automática usa seu perfil de uso, mas você pode ajustar manualmente antes de contratar.
           </p>
         </motion.div>
 
@@ -93,7 +93,7 @@ const PlanSelector = ({ selectedPlan, onSelectPlan }: Props) => {
                 )}
 
                 <h3 className="text-xl font-heading font-bold mb-1">{plan.name}</h3>
-                <p className="text-sm text-muted-foreground mb-4">Dell OptiPlex</p>
+                <p className="text-sm text-muted-foreground mb-4">Configuração corporativa WMTi</p>
 
                 <div className="space-y-2 mb-6">
                   <div className="flex items-center gap-2 text-sm">
@@ -114,9 +114,7 @@ const PlanSelector = ({ selectedPlan, onSelectPlan }: Props) => {
 
                 <div className="border-t border-border pt-4">
                   <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-heading font-bold text-primary">
-                      R${plan.price}
-                    </span>
+                    <span className="text-3xl font-heading font-bold text-primary">R${plan.price}</span>
                     <span className="text-sm text-muted-foreground">/computador/mês</span>
                   </div>
                 </div>
@@ -133,7 +131,7 @@ const PlanSelector = ({ selectedPlan, onSelectPlan }: Props) => {
         >
           <div className="bg-primary/10 border-2 border-primary/30 rounded-xl p-4 text-center">
             <p className="text-sm font-semibold text-primary">
-              ✓ Todas as locações incluem suporte de serviços durante toda a vigência do contrato, sem cobrança adicional de manutenção.
+              ✓ A lógica de preço foi mantida: você recebe apenas uma recomendação automática mais precisa.
             </p>
           </div>
         </motion.div>

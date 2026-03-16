@@ -96,6 +96,11 @@ const QuickRegistrationForm = ({ onComplete, loading: externalLoading, initialDa
     isPJ: false,
   });
 
+  useEffect(() => {
+    if (!initialData) return;
+    setForm((prev) => ({ ...prev, ...initialData }));
+  }, [initialData]);
+
   const update = (field: keyof RegistrationData, value: string | boolean) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };

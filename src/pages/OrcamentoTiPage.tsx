@@ -15,28 +15,24 @@ import Recommendation, { getRecommendation } from "@/components/orcamento/Recomm
 import IncludedServices from "@/components/orcamento/IncludedServices";
 import BudgetAuthority from "@/components/orcamento/BudgetAuthority";
 import ContractingWizard from "@/components/orcamento/ContractingWizard";
+import { recommendRentalAddons, recommendRentalPlan } from "@/components/orcamento/rentalRecommendation";
 
 const OrcamentoTiPage = () => {
   const [searchParams] = useSearchParams();
 
-  // Path selection
   const [selectedPath, setSelectedPath] = useState<CommercialPath | null>(null);
-
-  // Qualification
   const [qualification, setQualification] = useState<QualificationData | null>(null);
   const [qualificationComplete, setQualificationComplete] = useState(false);
 
-  // Rental plan & calculator
   const [selectedPlan, setSelectedPlan] = useState("equilibrio");
-  const [computersQty, setComputersQty] = useState(5);
-  const [usersQty, setUsersQty] = useState(5);
+  const [computersQty, setComputersQty] = useState(1);
+  const [usersQty, setUsersQty] = useState(1);
   const [addons, setAddons] = useState<Addons>({
     serverMigration: false,
     remoteAccess: false,
     backup: false,
   });
 
-  // Budget saved (replaces lead form)
   const [budgetSaved, setBudgetSaved] = useState(false);
   const [quoteId, setQuoteId] = useState<string | null>(null);
 
@@ -79,28 +75,47 @@ const OrcamentoTiPage = () => {
 
   const handlePathSelect = useCallback((path: CommercialPath) => {
     setSelectedPath(path);
+    setQualification(null);
+    setQualificationComplete(false);
+    setBudgetSaved(false);
+    setQuoteId(null);
     scrollToSection("qualification");
   }, [scrollToSection]);
 
   const handleQualificationComplete = useCallback((data: QualificationData) => {
     setQualification(data);
     setQualificationComplete(true);
-    setComputersQty(data.computersQty || 5);
-    setUsersQty(data.computersQty || 5);
+
+    if (selectedPath === "locacao") {
+      const recommendedPlan = recommendRentalPlan(data);
+      const recommendedAddons = recommendRentalAddons(data);
+      const quantity = data.computersQty || 1;
+      const dailyUsers = data.dailyUsers || quantity;
+
+      setSelectedPlan(recommendedPlan);
+      setComputersQty(quantity);
+      setUsersQty(dailyUsers);
+      setAddons(recommendedAddons);
+      scrollToSection("plans");
+      return;
+    }
+
+    setComputersQty(data.computersQty || 1);
+    setUsersQty(data.computersQty || 1);
     setAddons({
       serverMigration: false,
-      remoteAccess: data.needsRemoteAccess,
-      backup: data.needsBackup,
+      remoteAccess: data.needsRemoteAccess ?? false,
+      backup: data.needsBackup ?? false,
     });
+
     const rec = selectedPath === "ajuda" ? getRecommendation(data) : selectedPath;
     if (rec === "locacao") {
       scrollToSection("plans");
     } else {
       scrollToSection("support-calculator");
     }
-  }, [selectedPath, scrollToSection]);
+  }, [scrollToSection, selectedPath]);
 
-  // Save budget as quote (no redundant lead form)
   const handleSaveBudget = useCallback(async () => {
     if (budgetSaved) {
       scrollToSection("contracting-wizard");
@@ -109,15 +124,19 @@ const OrcamentoTiPage = () => {
 
     try {
       const pathLabel = effectivePath === "locacao" ? "Locação" : "Suporte";
+      const isRentalBudget = effectivePath === "locacao";
 
-      // Create a budget lead with minimal data (real data comes in the wizard)
       const { data: leadRow, error: leadErr } = await supabase
         .from("budget_leads" as any)
         .insert({
-          company_name: "Preenchimento no wizard",
-          contact_name: "Preenchimento no wizard",
-          email: "wizard@pendente.com",
-          observations: `Caminho: ${pathLabel}\nComputadores: ${qualification?.computersQty ?? computersQty}\nValor: R$${monthlyValue}/mês`,
+          company_name: qualification?.companyName || "Preenchimento no wizard",
+          contact_name: qualification?.companyName || "Solicitação de orçamento",
+          email: qualification?.contactEmail || "wizard@pendente.com",
+          phone: qualification?.contactPhone || null,
+          city: qualification?.city ? `${qualification.city}${qualification.state ? `/${qualification.state}` : ""}` : null,
+          observations: isRentalBudget
+            ? `Caminho: ${pathLabel}\nSegmento: ${qualification?.segment || "não informado"}\nComputadores: ${qualification?.computersQty ?? computersQty}\nUsuários diários: ${qualification?.dailyUsers ?? usersQty}\nEquipamento: ${qualification?.equipmentType || "não informado"}\nConfiguração recomendada: ${plan.name}\nValor: R$${monthlyValue}/mês`
+            : `Caminho: ${pathLabel}\nComputadores: ${qualification?.computersQty ?? computersQty}\nValor: R$${monthlyValue}/mês`,
         } as any)
         .select()
         .single();
@@ -131,7 +150,7 @@ const OrcamentoTiPage = () => {
           lead_id: lead.id,
           selected_plan: effectivePath === "locacao" ? selectedPlan : "suporte-mensal",
           computers_qty: qualification?.computersQty ?? computersQty,
-          users_qty: usersQty,
+          users_qty: qualification?.dailyUsers ?? usersQty,
           needs_server_migration: addons.serverMigration,
           needs_remote_access: addons.remoteAccess || qualification?.needsRemoteAccess || false,
           needs_backup: addons.backup || qualification?.needsBackup || false,
@@ -148,10 +167,10 @@ const OrcamentoTiPage = () => {
         await supabase.from("network_diagnostics" as any).insert({
           quote_id: (quoteRow as any).id,
           computers_current: qualification.computersQty,
-          average_pc_age: qualification.averageAge,
-          maintenance_frequency: qualification.frequentMaintenance ? "frequente" : "raramente",
-          has_server: qualification.serversQty > 0,
-          has_backup: qualification.needsBackup,
+          average_pc_age: qualification.averageAge || null,
+          maintenance_frequency: qualification.problemFrequency || (qualification.frequentMaintenance ? "frequente" : null),
+          has_server: qualification.hasServer === "Sim" || (qualification.serversQty ?? 0) > 0,
+          has_backup: qualification.hasAutomaticBackup === "Sim" || qualification.needsBackup || false,
         } as any);
       }
 
@@ -161,7 +180,7 @@ const OrcamentoTiPage = () => {
     } catch (err) {
       console.error("[WMTi] Erro ao salvar orçamento:", err);
     }
-  }, [budgetSaved, effectivePath, selectedPlan, computersQty, usersQty, addons, monthlyValue, qualification, scrollToSection]);
+  }, [addons, budgetSaved, computersQty, effectivePath, monthlyValue, plan.name, qualification, scrollToSection, selectedPlan, usersQty]);
 
   const showRentalFlow = effectivePath === "locacao";
   const showSupportFlow = effectivePath === "suporte";
@@ -184,10 +203,10 @@ const OrcamentoTiPage = () => {
             onComplete={handleQualificationComplete}
             completed={qualificationComplete}
             data={qualification}
+            path={selectedPath}
           />
         )}
 
-        {/* RENTAL PATH */}
         {qualificationComplete && showRentalFlow && (
           <>
             <PlanSelector selectedPlan={selectedPlan} onSelectPlan={setSelectedPlan} />
@@ -204,13 +223,11 @@ const OrcamentoTiPage = () => {
           </>
         )}
 
-        {/* SUPPORT PATH */}
         {qualificationComplete && showSupportFlow && qualification && (
           <SupportCalculator qualification={qualification} />
         )}
 
-        {/* RECOMMENDATION */}
-        {qualificationComplete && qualification && (
+        {qualificationComplete && qualification && selectedPath !== "locacao" && (
           <Recommendation
             qualification={qualification}
             chosenPath={selectedPath!}
@@ -221,7 +238,6 @@ const OrcamentoTiPage = () => {
 
         {qualificationComplete && <BudgetAuthority />}
 
-        {/* CTA: Contratar agora (replaces old lead form) */}
         {qualificationComplete && (
           <section id="budget-cta" className="py-16 bg-card">
             <div className="container mx-auto px-4 text-center">
@@ -232,24 +248,27 @@ const OrcamentoTiPage = () => {
                 <p className="text-muted-foreground">
                   {effectivePath === "locacao"
                     ? `${plan.name} — ${computersQty} computador${computersQty > 1 ? "es" : ""}`
-                    : `Suporte mensal — ${qualification?.computersQty ?? computersQty} computador${(qualification?.computersQty ?? computersQty) > 1 ? "es" : ""}`
-                  }
+                    : `Suporte mensal — ${qualification?.computersQty ?? computersQty} computador${(qualification?.computersQty ?? computersQty) > 1 ? "es" : ""}`}
                 </p>
                 <p className="text-3xl font-bold text-primary">
                   R$ {monthlyValue.toLocaleString("pt-BR")},00<span className="text-base font-normal text-muted-foreground">/mês</span>
                 </p>
+                {effectivePath === "locacao" && (
+                  <p className="text-sm text-muted-foreground">
+                    Valor total estimado da locação: <span className="font-semibold text-foreground">R$ {(monthlyValue * 36).toLocaleString("pt-BR")},00</span> em 36 meses.
+                  </p>
+                )}
                 <button
                   onClick={handleSaveBudget}
                   className="w-full h-14 text-base font-semibold rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground transition-colors"
                 >
-                  {budgetSaved ? "Continuar contratação ↓" : "Contratar agora"}
+                  {budgetSaved ? "Continuar contratação" : "Prosseguir para contratação"}
                 </button>
               </div>
             </div>
           </section>
         )}
 
-        {/* CONTRACTING WIZARD (unified: registration + contract + signature + payment) */}
         <ContractingWizard
           visible={budgetSaved}
           effectivePath={effectivePath as "locacao" | "suporte" | null}
@@ -258,6 +277,10 @@ const OrcamentoTiPage = () => {
           computersQty={qualification?.computersQty ?? computersQty}
           monthlyValue={monthlyValue}
           quoteId={quoteId}
+          leadCompanyName={qualification?.companyName}
+          leadEmail={qualification?.contactEmail}
+          leadPhone={qualification?.contactPhone}
+          leadCity={qualification?.city}
         />
       </main>
 

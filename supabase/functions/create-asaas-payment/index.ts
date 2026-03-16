@@ -6,6 +6,17 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const jsonResponse = (body: Record<string, unknown>, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
+const normalizeQrImage = (value: unknown) => {
+  if (typeof value !== "string" || !value) return null;
+  return value.startsWith("data:") ? value : `data:image/png;base64,${value}`;
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -18,10 +29,7 @@ Deno.serve(async (req) => {
   try {
     const ASAAS_API_KEY = Deno.env.get("ASAAS_API_KEY");
     if (!ASAAS_API_KEY) {
-      return new Response(
-        JSON.stringify({ error: "ASAAS_API_KEY not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return jsonResponse({ error: "ASAAS_API_KEY not configured" }, 500);
     }
 
     const ASAAS_BASE_URL = Deno.env.get("ASAAS_BASE_URL") || "https://sandbox.asaas.com/api/v3";
@@ -40,7 +48,6 @@ Deno.serve(async (req) => {
 
     console.log("[create-asaas-payment] Iniciando...", { billing_type, value, quote_id });
 
-    // Log request
     await supabase.from("integration_logs").insert({
       integration_name: "asaas",
       operation_name: "create_payment_start",
@@ -48,7 +55,6 @@ Deno.serve(async (req) => {
       status: "started",
     });
 
-    // 1. Create or find customer in Asaas
     const customerPayload = {
       name: customer_name,
       email: customer_email,
@@ -71,12 +77,10 @@ Deno.serve(async (req) => {
     let asaasCustomerId = customerData.id;
 
     if (!customerRes.ok && !asaasCustomerId) {
-      // Try to find existing customer
       console.log("[create-asaas-payment] Cliente não criado, buscando existente...");
-      const searchRes = await fetch(
-        `${ASAAS_BASE_URL}/customers?cpfCnpj=${customer_cpf_cnpj.replace(/\D/g, "")}`,
-        { headers: { access_token: ASAAS_API_KEY } }
-      );
+      const searchRes = await fetch(`${ASAAS_BASE_URL}/customers?cpfCnpj=${customer_cpf_cnpj.replace(/\D/g, "")}`, {
+        headers: { access_token: ASAAS_API_KEY },
+      });
       const searchData = await searchRes.json();
 
       if (!searchData.data?.[0]?.id) {
@@ -88,15 +92,11 @@ Deno.serve(async (req) => {
           status: "error",
           error_message: "Failed to create/find Asaas customer",
         });
-        return new Response(
-          JSON.stringify({ error: "Failed to create/find Asaas customer", details: customerData }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        return jsonResponse({ error: "Failed to create/find Asaas customer", details: customerData }, 400);
       }
       asaasCustomerId = searchData.data[0].id;
     }
 
-    // Log customer creation
     await supabase.from("integration_logs").insert({
       integration_name: "asaas",
       operation_name: "customer_resolved",
@@ -105,11 +105,10 @@ Deno.serve(async (req) => {
       status: "success",
     });
 
-    // 2. Create payment
     const paymentPayload = {
       customer: asaasCustomerId,
       billingType: billing_type,
-      value: value,
+      value,
       dueDate: due_date,
       description: description || "Contrato WMTi",
     };
@@ -136,31 +135,55 @@ Deno.serve(async (req) => {
         status: "error",
         error_message: `Asaas returned ${paymentRes.status}`,
       });
-      return new Response(
-        JSON.stringify({ error: "Failed to create payment", details: paymentData }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return jsonResponse({ error: "Failed to create payment", details: paymentData }, 400);
+    }
+
+    let pixQrCodeImage: string | null = null;
+    let pixCopyPaste: string | null = null;
+
+    if (billing_type === "PIX" && paymentData.id) {
+      try {
+        const pixQrRes = await fetch(`${ASAAS_BASE_URL}/payments/${paymentData.id}/pixQrCode`, {
+          headers: { access_token: ASAAS_API_KEY },
+        });
+        const pixQrData = await pixQrRes.json();
+        console.log("[create-asaas-payment] Resposta QR Code PIX:", JSON.stringify(pixQrData));
+
+        if (pixQrRes.ok) {
+          pixQrCodeImage = normalizeQrImage(pixQrData.encodedImage);
+          pixCopyPaste = pixQrData.payload || null;
+        }
+      } catch (pixError) {
+        console.error("[create-asaas-payment] Falha ao obter QR Code PIX:", pixError);
+      }
     }
 
     const invoiceUrl = paymentData.invoiceUrl || paymentData.bankSlipUrl || null;
+    const normalizedResponse = {
+      success: true,
+      billingType: billing_type,
+      invoiceUrl,
+      pixQrCodeImage,
+      pixCopyPaste,
+      asaasPaymentId: paymentData.id || null,
+      status: String(paymentData.status || "PENDING").toLowerCase(),
+      invoice_url: invoiceUrl,
+      payment_id: paymentData.id || null,
+    };
 
-    if (!invoiceUrl) {
-      console.error("[create-asaas-payment] Asaas não retornou URL. Payment ID:", paymentData.id);
+    const hasRenderablePaymentData = Boolean(invoiceUrl || pixQrCodeImage || pixCopyPaste);
+    if (!hasRenderablePaymentData) {
+      console.error("[create-asaas-payment] Nenhum dado renderizável retornado. Payment ID:", paymentData.id);
       await supabase.from("integration_logs").insert({
         integration_name: "asaas",
-        operation_name: "create_payment_no_url",
+        operation_name: "create_payment_no_renderable_data",
         request_payload: paymentPayload,
-        response_payload: paymentData,
+        response_payload: { paymentData, pixQrCodeImage: !!pixQrCodeImage, pixCopyPaste: !!pixCopyPaste },
         status: "warning",
-        error_message: "Asaas did not return invoiceUrl",
+        error_message: "Asaas did not return invoiceUrl or PIX details",
       });
-      return new Response(
-        JSON.stringify({ error: "Asaas did not return a payment URL", payment_id: paymentData.id }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
     }
 
-    // 3. Update payment record in database
     if (quote_id) {
       const { error: dbErr } = await supabase
         .from("payments")
@@ -168,8 +191,8 @@ Deno.serve(async (req) => {
           asaas_payment_id: paymentData.id,
           payment_method: billing_type,
           payment_status: paymentData.status || "PENDING",
-          billing_type: billing_type,
-          due_date: due_date,
+          billing_type,
+          due_date,
           asaas_invoice_url: invoiceUrl,
         })
         .eq("quote_id", quote_id);
@@ -179,30 +202,16 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Log success
     await supabase.from("integration_logs").insert({
       integration_name: "asaas",
       operation_name: "create_payment_success",
       request_payload: paymentPayload,
-      response_payload: {
-        payment_id: paymentData.id,
-        invoice_url: invoiceUrl,
-        status: paymentData.status,
-      },
-      status: "success",
+      response_payload: normalizedResponse,
+      status: hasRenderablePaymentData ? "success" : "warning",
     });
 
-    console.log("[create-asaas-payment] Cobrança criada. URL:", invoiceUrl);
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        payment_id: paymentData.id,
-        invoice_url: invoiceUrl,
-        status: paymentData.status,
-      }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    console.log("[create-asaas-payment] Resposta normalizada:", JSON.stringify(normalizedResponse));
+    return jsonResponse(normalizedResponse, 200);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error("[create-asaas-payment] Erro fatal:", message);
@@ -214,11 +223,10 @@ Deno.serve(async (req) => {
         status: "error",
         error_message: message,
       });
-    } catch {}
+    } catch {
+      // ignore log failure
+    }
 
-    return new Response(
-      JSON.stringify({ error: message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return jsonResponse({ error: message }, 500);
   }
 });
