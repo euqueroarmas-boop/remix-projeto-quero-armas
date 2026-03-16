@@ -211,9 +211,8 @@ const RentalQualificationForm = ({ onComplete, completed, data: completedData }:
         if (!form.hasAutomaticBackup) return "Informe se a empresa possui backup automático.";
         return null;
       case 4:
-        if (!form.currentSupport) return "Informe como resolve problemas de TI.";
-        if (!form.problemFrequency) return "Informe a frequência dos problemas.";
         if (!form.hasInternalTech) return "Informe se possui técnico interno.";
+        if (!form.problemFrequency) return "Informe a frequência dos problemas.";
         return null;
       case 5:
         if (!form.growthForecast) return "Informe a previsão de crescimento.";
