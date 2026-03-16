@@ -283,6 +283,9 @@ const ServicePageTemplate = ({
         </div>
       </section>
 
+      {/* Hours Calculator */}
+      {showHoursCalculator && <HoursCalculator serviceName={tag} />}
+
       {/* CTA */}
       <section id="contato-servico" className="section-light py-16 md:py-24">
         <div className="container max-w-3xl text-center">
