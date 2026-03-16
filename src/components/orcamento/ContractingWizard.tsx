@@ -168,10 +168,10 @@ const ContractingWizard = ({
     return () => clearInterval(interval);
   }, [currentStep, contractId, contractSigned, toast]);
 
-  // Redirect only after confirmed invoiceUrl
+  // Open checkout in new tab — keeps wizard state intact
   const handleRedirectToCheckout = useCallback((url: string) => {
     if (!url) return;
-    window.location.href = url;
+    window.open(url, "_blank", "noopener,noreferrer");
   }, []);
 
 
@@ -472,17 +472,19 @@ const ContractingWizard = ({
                 <div className="bg-card border border-primary/20 rounded-xl p-6 space-y-4">
                   <div className="flex flex-col items-center justify-center text-center space-y-3">
                     <CheckCircle className="w-10 h-10 text-primary" />
-                    <h4 className="text-lg font-heading font-bold">Cobrança gerada!</h4>
-                    <p className="text-sm text-muted-foreground">Você será redirecionado para o checkout.</p>
+                    <h4 className="text-lg font-heading font-bold">Assinatura criada com sucesso!</h4>
+                    <p className="text-sm text-muted-foreground">
+                      O checkout foi aberto em uma nova aba. Conclua o pagamento por lá.
+                    </p>
                   </div>
                   <div className="flex flex-col gap-2">
                     <Button onClick={() => handleRedirectToCheckout(paymentData.invoiceUrl!)} className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground">
                       <ExternalLink className="w-4 h-4 mr-2" />
-                      Ir para pagamento
+                      Abrir checkout novamente
                     </Button>
                     <Button onClick={handleRetryPayment} variant="ghost" className="w-full h-10 text-muted-foreground">
                       <RotateCcw className="w-4 h-4 mr-2" />
-                      Voltar para o pagamento
+                      Escolher outra forma de pagamento
                     </Button>
                   </div>
                 </div>
