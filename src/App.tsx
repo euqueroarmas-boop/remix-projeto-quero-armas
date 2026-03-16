@@ -28,6 +28,7 @@ const SuporteTiPage = lazy(() => import("./pages/SuporteTiPage.tsx"));
 const TiCartoriosPage = lazy(() => import("./pages/TiCartoriosPage.tsx"));
 const InfraestruturaCorporativaPage = lazy(() => import("./pages/InfraestruturaCorporativaPage.tsx"));
 const OrcamentoTiPage = lazy(() => import("./pages/OrcamentoTiPage.tsx"));
+const ContratoPage = lazy(() => import("./pages/ContratoPage.tsx"));
 
 const queryClient = new QueryClient();
 
@@ -66,6 +67,7 @@ const App = () => (
             <Route path="/infraestrutura-ti-corporativa-jacarei" element={<InfraestruturaCorporativaPage />} />
             {/* Budget system */}
             <Route path="/orcamento-ti" element={<OrcamentoTiPage />} />
+            <Route path="/contrato" element={<ContratoPage />} />
             {/* Segment dedicated pages */}
             <Route path="/ti-para-cartorios" element={<TiCartoriosPage />} />
             {/* Provimento 213 */}

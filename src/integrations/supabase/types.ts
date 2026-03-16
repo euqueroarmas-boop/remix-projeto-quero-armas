@@ -179,8 +179,10 @@ export type Database = {
       }
       contracts: {
         Row: {
+          accepted_minimum_term: boolean | null
           client_ip: string | null
           contract_hash: string | null
+          contract_pdf_path: string | null
           contract_text: string | null
           contract_type: string | null
           created_at: string
@@ -193,8 +195,10 @@ export type Database = {
           status: string | null
         }
         Insert: {
+          accepted_minimum_term?: boolean | null
           client_ip?: string | null
           contract_hash?: string | null
+          contract_pdf_path?: string | null
           contract_text?: string | null
           contract_type?: string | null
           created_at?: string
@@ -207,8 +211,10 @@ export type Database = {
           status?: string | null
         }
         Update: {
+          accepted_minimum_term?: boolean | null
           client_ip?: string | null
           contract_hash?: string | null
+          contract_pdf_path?: string | null
           contract_text?: string | null
           contract_type?: string | null
           created_at?: string
@@ -276,6 +282,39 @@ export type Database = {
           razao_social?: string
           responsavel?: string
           telefone?: string | null
+        }
+        Relationships: []
+      }
+      integration_logs: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          integration_name: string
+          operation_name: string
+          request_payload: Json | null
+          response_payload: Json | null
+          status: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          integration_name: string
+          operation_name: string
+          request_payload?: Json | null
+          response_payload?: Json | null
+          status?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          integration_name?: string
+          operation_name?: string
+          request_payload?: Json | null
+          response_payload?: Json | null
+          status?: string | null
         }
         Relationships: []
       }
