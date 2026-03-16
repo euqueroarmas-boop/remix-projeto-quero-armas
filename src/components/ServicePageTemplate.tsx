@@ -116,19 +116,20 @@ const ServicePageTemplate = ({
             </p>
 
             <div className="flex flex-wrap gap-4">
+              <Link
+                to="/orcamento-ti"
+                className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
+              >
+                <ArrowRight size={16} />
+                Contrate este serviço
+              </Link>
               <a
                 href={`https://wa.me/5511963166915?text=${encodeURIComponent(whatsappMessage)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
-              >
-                <MessageCircle size={16} />
-                Solicitar Orçamento
-              </a>
-              <a
-                href="#contato-servico"
                 className="inline-flex items-center gap-2 border border-gunmetal-foreground/30 text-gunmetal-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:border-primary hover:text-primary transition-all"
               >
+                <MessageCircle size={16} />
                 Falar com especialista
               </a>
             </div>
