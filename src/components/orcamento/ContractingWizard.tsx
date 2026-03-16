@@ -141,6 +141,17 @@ const ContractingWizard = ({
     return () => window.clearTimeout(timer);
   }, [paymentComplete, paymentData]);
 
+  const handleCopyPixCode = useCallback(async () => {
+    if (!paymentData?.pixCopyPaste) return;
+    try {
+      await navigator.clipboard.writeText(paymentData.pixCopyPaste);
+      toast({ title: "Código PIX copiado", description: "Agora é só colar no app do seu banco." });
+    } catch (error) {
+      console.error("[WMTi][payment] Erro ao copiar código PIX:", error);
+      toast({ title: "Não foi possível copiar", description: "Copie o código manualmente.", variant: "destructive" });
+    }
+  }, [paymentData?.pixCopyPaste, toast]);
+
   if (!visible || !effectivePath) return null;
 
   const getStepStatus = (step: Step) => {
@@ -287,17 +298,6 @@ const ContractingWizard = ({
     setInvoiceUrl(null);
     setPaymentError(null);
   };
-
-  const handleCopyPixCode = useCallback(async () => {
-    if (!paymentData?.pixCopyPaste) return;
-    try {
-      await navigator.clipboard.writeText(paymentData.pixCopyPaste);
-      toast({ title: "Código PIX copiado", description: "Agora é só colar no app do seu banco." });
-    } catch (error) {
-      console.error("[WMTi][payment] Erro ao copiar código PIX:", error);
-      toast({ title: "Não foi possível copiar", description: "Copie o código manualmente.", variant: "destructive" });
-    }
-  }, [paymentData?.pixCopyPaste, toast]);
 
   const handlePayment = async () => {
     if (!selectedPayment || !registrationData || !quoteId) return;

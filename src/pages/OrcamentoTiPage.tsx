@@ -16,6 +16,9 @@ import Recommendation, { getRecommendation } from "@/components/orcamento/Recomm
 import IncludedServices from "@/components/orcamento/IncludedServices";
 import BudgetAuthority from "@/components/orcamento/BudgetAuthority";
 import ContractingWizard from "@/components/orcamento/ContractingWizard";
+import BudgetPopup from "@/components/orcamento/BudgetPopup";
+import BudgetSummaryScreen from "@/components/orcamento/BudgetSummaryScreen";
+import OutsourcingOffer from "@/components/orcamento/OutsourcingOffer";
 import { recommendRentalAddons, recommendRentalPlan } from "@/components/orcamento/rentalRecommendation";
 
 const OrcamentoTiPage = () => {
@@ -38,6 +41,10 @@ const OrcamentoTiPage = () => {
 
   const [budgetSaved, setBudgetSaved] = useState(false);
   const [quoteId, setQuoteId] = useState<string | null>(null);
+
+  // New states for popup + summary flow
+  const [showBudgetPopup, setShowBudgetPopup] = useState(false);
+  const [showSummary, setShowSummary] = useState(false);
 
   const plan = plans.find((p) => p.id === selectedPlan) || plans[1];
   const rentalMonthly = plan.price * computersQty;
@@ -82,6 +89,8 @@ const OrcamentoTiPage = () => {
     setQualificationComplete(false);
     setBudgetSaved(false);
     setQuoteId(null);
+    setShowBudgetPopup(false);
+    setShowSummary(false);
     scrollToSection("qualification");
   }, [scrollToSection]);
 
@@ -119,9 +128,29 @@ const OrcamentoTiPage = () => {
     }
   }, [scrollToSection, selectedPath]);
 
+  // When user finishes configuring rental, show popup
+  const handleShowBudgetPopup = useCallback(() => {
+    setShowBudgetPopup(true);
+  }, []);
+
+  // From popup → summary screen
+  const handleProceedToSummary = useCallback(() => {
+    setShowBudgetPopup(false);
+    setShowSummary(true);
+    window.setTimeout(() => {
+      document.getElementById("budget-summary")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 150);
+  }, []);
+
+  // From summary → go back to edit
+  const handleGoBackFromSummary = useCallback(() => {
+    setShowSummary(false);
+    scrollToSection("plans");
+  }, [scrollToSection]);
+
+  // From summary → save budget + open wizard
   const handleSaveBudget = useCallback(async () => {
     if (budgetSaved) {
-      // Already saved, just scroll to wizard
       window.setTimeout(() => {
         document.getElementById("contracting-wizard")?.scrollIntoView({ behavior: "smooth", block: "start" });
       }, 50);
@@ -183,9 +212,9 @@ const OrcamentoTiPage = () => {
       }
 
       setBudgetSaved(true);
+      setShowSummary(false);
       console.log("[WMTi] Orçamento salvo. Quote ID:", (quoteRow as any).id);
 
-      // Wait for React to render the wizard section before scrolling
       window.setTimeout(() => {
         document.getElementById("contracting-wizard")?.scrollIntoView({ behavior: "smooth", block: "start" });
       }, 300);
@@ -203,6 +232,7 @@ const OrcamentoTiPage = () => {
 
   const showRentalFlow = effectivePath === "locacao";
   const showSupportFlow = effectivePath === "suporte";
+  const showOutsourcingOffer = qualificationComplete && qualification?.hasInternalTech === "Sim";
 
   return (
     <>
@@ -257,13 +287,14 @@ const OrcamentoTiPage = () => {
 
         {qualificationComplete && <BudgetAuthority />}
 
-        {qualificationComplete && (
+        <OutsourcingOffer visible={showOutsourcingOffer} />
+
+        {/* CTA to proceed - opens popup for rental, or goes to summary for support */}
+        {qualificationComplete && !showSummary && !budgetSaved && (
           <section id="budget-cta" className="py-16 bg-card">
             <div className="container mx-auto px-4 text-center">
               <div className="max-w-2xl mx-auto bg-background border border-primary/20 rounded-2xl p-8 space-y-4">
-                <h3 className="text-2xl font-heading font-bold">
-                  {budgetSaved ? "Orçamento salvo!" : "Orçamento pronto!"}
-                </h3>
+                <h3 className="text-2xl font-heading font-bold">Orçamento pronto!</h3>
                 <p className="text-muted-foreground">
                   {effectivePath === "locacao"
                     ? `${plan.name} — ${computersQty} computador${computersQty > 1 ? "es" : ""}`
@@ -278,21 +309,40 @@ const OrcamentoTiPage = () => {
                   </p>
                 )}
                 <button
-                  onClick={handleSaveBudget}
-                  disabled={savingBudget}
-                  className="w-full h-14 text-base font-semibold rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+                  onClick={showRentalFlow ? handleShowBudgetPopup : handleProceedToSummary}
+                  className="w-full h-14 text-base font-semibold rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground transition-colors flex items-center justify-center gap-2"
                 >
-                  {savingBudget ? (
-                    <>
-                      <span className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
-                      Salvando...
-                    </>
-                  ) : budgetSaved ? "Continuar contratação" : "Prosseguir para contratação"}
+                  Prosseguir para contratação
                 </button>
               </div>
             </div>
           </section>
         )}
+
+        {/* Budget Popup (rental only) */}
+        <BudgetPopup
+          open={showBudgetPopup}
+          onClose={() => setShowBudgetPopup(false)}
+          onProceed={handleProceedToSummary}
+          plan={plan}
+          computersQty={computersQty}
+          monthlyValue={monthlyValue}
+        />
+
+        {/* Summary screen before contracting */}
+        <div id="budget-summary">
+          <BudgetSummaryScreen
+            visible={showSummary && !budgetSaved}
+            effectivePath={effectivePath as "locacao" | "suporte" | null}
+            plan={plan}
+            qualification={qualification}
+            computersQty={qualification?.computersQty ?? computersQty}
+            monthlyValue={monthlyValue}
+            onGoBack={handleGoBackFromSummary}
+            onProceed={handleSaveBudget}
+            loading={savingBudget}
+          />
+        </div>
 
         <ContractingWizard
           visible={budgetSaved}

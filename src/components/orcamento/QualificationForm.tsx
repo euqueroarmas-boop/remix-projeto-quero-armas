@@ -55,6 +55,7 @@ export interface QualificationData {
   currentSupport?: string;
   problemFrequency?: string;
   growthForecast?: string;
+  hasInternalTech?: string;
   cnpj?: string;
   companyName?: string;
   address?: string;
@@ -212,6 +213,7 @@ const RentalQualificationForm = ({ onComplete, completed, data: completedData }:
       case 4:
         if (!form.currentSupport) return "Informe como resolve problemas de TI.";
         if (!form.problemFrequency) return "Informe a frequência dos problemas.";
+        if (!form.hasInternalTech) return "Informe se possui técnico interno.";
         return null;
       case 5:
         if (!form.growthForecast) return "Informe a previsão de crescimento.";
@@ -367,6 +369,10 @@ const RentalQualificationForm = ({ onComplete, completed, data: completedData }:
             <div>
               <Label className="mb-2 block text-sm font-medium">Com que frequência ocorrem problemas de informática?</Label>
               <RadioCardGroup name="frequency" options={problemFrequencyOptions} value={form.problemFrequency || ""} onChange={(v) => updateField("problemFrequency", v)} />
+            </div>
+            <div>
+              <Label className="mb-2 block text-sm font-medium">Sua empresa possui técnico de TI interno?</Label>
+              <RadioCardGroup name="hasInternalTech" options={["Sim", "Não"]} value={form.hasInternalTech || ""} onChange={(v) => updateField("hasInternalTech", v)} />
             </div>
           </div>
         );
