@@ -213,6 +213,7 @@ const RentalQualificationForm = ({ onComplete, completed, data: completedData }:
       case 4:
         if (!form.currentSupport) return "Informe como resolve problemas de TI.";
         if (!form.problemFrequency) return "Informe a frequência dos problemas.";
+        if (!form.hasInternalTech) return "Informe se possui técnico interno.";
         return null;
       case 5:
         if (!form.growthForecast) return "Informe a previsão de crescimento.";
