@@ -155,6 +155,12 @@ const ContractingWizard = ({
   if (!visible || !effectivePath) return null;
 
   const getStepStatus = (step: Step) => {
+    const currentIdx = stepOrder.indexOf(currentStep);
+    const stepIdx = stepOrder.indexOf(step);
+    if (stepIdx < currentIdx) return "completed" as const;
+    if (stepIdx === currentIdx) return "active" as const;
+    return "pending" as const;
+  };
 
   const handlePayment = async () => {
     if (!selectedPayment || !registrationData || !quoteId) return;
