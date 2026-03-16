@@ -30,7 +30,7 @@ const OrcamentoTiPage = () => {
   const [selectedPlan, setSelectedPlan] = useState("equilibrio");
   const [computersQty, setComputersQty] = useState(1);
   const [usersQty, setUsersQty] = useState(1);
-  const [addons, setAddons] = useState<Addons>({
+  const [addons, setAddons] = useState({
     serverMigration: false,
     remoteAccess: false,
     backup: false,
