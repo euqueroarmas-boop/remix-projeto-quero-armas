@@ -342,26 +342,23 @@ const ContractingWizard = ({
     setPaymentData(null);
     setInvoiceUrl(null);
 
-    const dueDate = new Date();
-    dueDate.setDate(dueDate.getDate() + 3);
-    const dueDateStr = dueDate.toISOString().split("T")[0];
     const description = `Contrato WMTi — ${pathLabel} — ${computersQty} computador(es)`;
 
     try {
-      const { data, error } = await supabase.functions.invoke("create-asaas-payment", {
+      // Use subscription endpoint for contract-based recurring payments
+      const { data, error } = await supabase.functions.invoke("create-asaas-subscription", {
         body: {
           customer_name: registrationData.razaoSocial,
           customer_email: registrationData.email,
           customer_cpf_cnpj: registrationData.cnpjOuCpf,
           billing_type: selectedPayment,
           value: monthlyValue,
-          due_date: dueDateStr,
           description,
           quote_id: quoteId,
         },
       });
 
-      if (error) throw new Error(error.message || "Erro ao criar cobrança");
+      if (error) throw new Error(error.message || "Erro ao criar assinatura");
 
       const normalized = normalizePaymentPayload(data, selectedPayment);
 
@@ -370,7 +367,7 @@ const ContractingWizard = ({
       setPaymentComplete(normalized.success);
 
       if (!normalized.success) {
-        throw new Error("A cobrança não foi confirmada pelo backend.");
+        throw new Error("A assinatura não foi confirmada pelo backend.");
       }
 
       if (
