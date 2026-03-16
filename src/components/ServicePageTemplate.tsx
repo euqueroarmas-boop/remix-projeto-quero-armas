@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, CheckCircle2, MessageCircle, ChevronRight } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import HoursCalculator from "@/components/orcamento/HoursCalculator";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
