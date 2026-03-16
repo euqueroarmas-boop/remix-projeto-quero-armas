@@ -56,9 +56,9 @@ const WizardStepWrapper = ({ stepNumber, title, subtitle, status, isLast, childr
 
         {status === "active" && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            transition={{ duration: 0.3 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.25 }}
           >
             {children}
           </motion.div>
