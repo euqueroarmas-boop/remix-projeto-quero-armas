@@ -458,7 +458,7 @@ const RentalQualificationForm = ({ onComplete, completed, data: completedData }:
 
       {/* Wizard Dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden p-0 gap-0 bg-card border-border [&>button]:hidden">
+        <DialogContent className="w-[95vw] max-w-2xl h-[95vh] sm:h-auto sm:max-h-[90vh] overflow-hidden p-0 gap-0 bg-card border-border rounded-xl [&>button]:hidden flex flex-col">
           {/* Header */}
           <div className="flex items-center justify-between px-6 pt-5 pb-3">
             <div className="flex items-center gap-3">
