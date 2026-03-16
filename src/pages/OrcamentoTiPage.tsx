@@ -251,52 +251,46 @@ const OrcamentoTiPage = () => {
           />
         )}
 
-        {qualificationComplete && showRentalFlow && (
+        {/* Rental flow: only plan selector + CTA button */}
+        {qualificationComplete && showRentalFlow && !showSummary && !budgetSaved && (
           <>
-            <PlanSelector selectedPlan={selectedPlan} onSelectPlan={setSelectedPlan} />
-            <InvestmentCalculator
-              selectedPlan={selectedPlan}
-              computersQty={computersQty}
-              setComputersQty={setComputersQty}
-              usersQty={usersQty}
-              setUsersQty={setUsersQty}
-              addons={addons}
-              setAddons={setAddons}
-            />
-            <IncludedServices />
+            <PlanSelector selectedPlan={selectedPlan} onSelectPlan={(id) => { setSelectedPlan(id); }} />
+
+            {/* Button appears right after selecting a plan */}
+            <section id="budget-cta" className="py-10">
+              <div className="container mx-auto px-4 text-center">
+                <button
+                  onClick={handleShowBudgetPopup}
+                  className="h-14 px-10 text-base font-semibold rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground transition-colors inline-flex items-center gap-2"
+                >
+                  Ver orçamento completo
+                </button>
+              </div>
+            </section>
           </>
         )}
 
-        {qualificationComplete && showSupportFlow && qualification && (
-          <SupportCalculator qualification={qualification} />
-        )}
-
-        {qualificationComplete && qualification && selectedPath !== "locacao" && (
-          <Recommendation
-            qualification={qualification}
-            chosenPath={selectedPath!}
-            rentalMonthly={rentalMonthly}
-            supportMonthly={supportMonthly}
-          />
-        )}
-
-        {qualificationComplete && <BudgetAuthority />}
-
-        {/* Outsourcing offer — complementary, only after all config, separated from finalization */}
-        <OutsourcingOffer visible={showOutsourcingOffer && !showSummary && !budgetSaved} />
-
-        {/* Simple CTA to proceed — opens popup (rental) or summary (support) */}
-        {qualificationComplete && !showSummary && !budgetSaved && (
-          <section id="budget-cta" className="py-10">
-            <div className="container mx-auto px-4 text-center">
-              <button
-                onClick={showRentalFlow ? handleShowBudgetPopup : handleProceedToSummary}
-                className="h-14 px-10 text-base font-semibold rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground transition-colors inline-flex items-center gap-2"
-              >
-                Ver orçamento completo
-              </button>
-            </div>
-          </section>
+        {/* Support flow */}
+        {qualificationComplete && showSupportFlow && qualification && !showSummary && !budgetSaved && (
+          <>
+            <SupportCalculator qualification={qualification} />
+            <Recommendation
+              qualification={qualification}
+              chosenPath={selectedPath!}
+              rentalMonthly={rentalMonthly}
+              supportMonthly={supportMonthly}
+            />
+            <section id="budget-cta" className="py-10">
+              <div className="container mx-auto px-4 text-center">
+                <button
+                  onClick={handleProceedToSummary}
+                  className="h-14 px-10 text-base font-semibold rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground transition-colors inline-flex items-center gap-2"
+                >
+                  Ver orçamento completo
+                </button>
+              </div>
+            </section>
+          </>
         )}
 
         {/* Budget Popup (rental only) */}
