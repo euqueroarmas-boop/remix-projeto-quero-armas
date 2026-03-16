@@ -10,18 +10,18 @@ export interface SeoSegment {
 
 export const segments: SeoSegment[] = [
   {
-    slug: "cartorios",
-    name: "Cartórios",
-    titleSuffix: "para Cartórios",
+    slug: "serventias-notariais",
+    name: "Serventias Notariais",
+    titleSuffix: "para Serventias Notariais",
     descriptionExtra:
-      "Atendemos cartórios com foco em conformidade com o Provimento 213 do CNJ, garantindo segurança de dados, backup automatizado e infraestrutura homologada.",
+      "Atendemos serventias notariais com foco em conformidade com o Provimento 213 do CNJ, garantindo segurança de dados, backup automatizado e infraestrutura homologada.",
     painPoints: [
       "Dificuldade em se adequar ao Provimento 213 do CNJ",
       "Falta de backup automatizado e seguro",
       "Sistemas lentos prejudicando o atendimento ao público",
     ],
     faqExtra: {
-      question: "A WMTi atende cartórios com adequação ao Provimento 213?",
+      question: "A WMTi atende serventias notariais com adequação ao Provimento 213?",
       answer:
         "Sim. Somos especialistas em infraestrutura de TI para cartórios, com soluções homologadas e em conformidade com o Provimento 213 do CNJ.",
     },
