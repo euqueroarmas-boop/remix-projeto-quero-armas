@@ -363,16 +363,12 @@ const RentalQualificationForm = ({ onComplete, completed, data: completedData }:
         return (
           <div className="space-y-5">
             <div>
-              <Label className="mb-2 block text-sm font-medium">Como sua empresa resolve problemas de informática?</Label>
-              <RadioCardGroup name="support" options={currentSupportOptions} value={form.currentSupport || ""} onChange={(v) => updateField("currentSupport", v)} />
+              <Label className="mb-2 block text-sm font-medium">Sua empresa possui técnico de TI interno?</Label>
+              <RadioCardGroup name="hasInternalTech" options={["Sim", "Não"]} value={form.hasInternalTech || ""} onChange={(v) => updateField("hasInternalTech", v)} />
             </div>
             <div>
               <Label className="mb-2 block text-sm font-medium">Com que frequência ocorrem problemas de informática?</Label>
               <RadioCardGroup name="frequency" options={problemFrequencyOptions} value={form.problemFrequency || ""} onChange={(v) => updateField("problemFrequency", v)} />
-            </div>
-            <div>
-              <Label className="mb-2 block text-sm font-medium">Sua empresa possui técnico de TI interno?</Label>
-              <RadioCardGroup name="hasInternalTech" options={["Sim", "Não"]} value={form.hasInternalTech || ""} onChange={(v) => updateField("hasInternalTech", v)} />
             </div>
           </div>
         );
