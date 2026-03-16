@@ -496,7 +496,7 @@ const RentalQualificationForm = ({ onComplete, completed, data: completedData }:
           </div>
 
           {/* Content */}
-          <div className="px-6 pb-4 overflow-y-auto max-h-[55vh]">
+          <div className="px-6 pb-4 overflow-y-auto flex-1 min-h-0">
             <AnimatePresence mode="wait">
               <motion.div
                 key={blockIndex}

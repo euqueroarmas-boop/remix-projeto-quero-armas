@@ -299,11 +299,11 @@ const OrcamentoTiPage = () => {
           onClose={() => setShowBudgetPopup(false)}
           onProceed={handleProceedToSummary}
           plan={plan}
-          computersQty={computersQty}
+          computersQty={qualification?.computersQty ?? computersQty}
           monthlyValue={monthlyValue}
         />
 
-        {/* Summary screen before contracting */}
+        {/* Summary screen with all answers + config before contracting */}
         <div id="budget-summary">
           <BudgetSummaryScreen
             visible={showSummary && !budgetSaved}
@@ -317,6 +317,9 @@ const OrcamentoTiPage = () => {
             loading={savingBudget}
           />
         </div>
+
+        {/* Outsourcing offer — complementary, after summary, before contracting */}
+        <OutsourcingOffer visible={showOutsourcingOffer && showSummary && !budgetSaved} />
 
         <ContractingWizard
           visible={budgetSaved}
