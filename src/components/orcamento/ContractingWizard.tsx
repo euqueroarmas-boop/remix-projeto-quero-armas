@@ -459,12 +459,12 @@ const ContractingWizard = ({
             </WizardStepWrapper>
 
             {/* Step 3: Payment */}
-            <WizardStepWrapper stepNumber={3} title="Pagamento" subtitle="Escolha a forma e finalize" status={getStepStatus("payment")} isLast>
+            <WizardStepWrapper stepNumber={3} title="Pagamento" subtitle="Ao prosseguir, você será direcionado para a página segura de checkout" status={getStepStatus("payment")} isLast>
               {paymentLoading ? (
                 <div className="bg-card border border-primary/20 rounded-xl p-6 space-y-4">
                   <div className="flex flex-col items-center justify-center text-center space-y-3">
                     <Loader2 className="w-10 h-10 animate-spin text-primary" />
-                    <h4 className="text-lg font-heading font-bold">Aguarde, estamos preparando seu pagamento...</h4>
+                    <h4 className="text-lg font-heading font-bold">Aguarde, estamos conectando você ao checkout...</h4>
                     <p className="text-sm text-muted-foreground">Não feche esta página.</p>
                   </div>
                 </div>
@@ -474,7 +474,7 @@ const ContractingWizard = ({
                     <CheckCircle className="w-10 h-10 text-primary" />
                     <h4 className="text-lg font-heading font-bold">Assinatura criada com sucesso!</h4>
                     <p className="text-sm text-muted-foreground">
-                      O checkout foi aberto em uma nova aba. Conclua o pagamento por lá.
+                      A página segura de pagamento foi aberta em outra aba. Conclua por lá sua contratação.
                     </p>
                   </div>
                   <div className="flex flex-col gap-2">
@@ -490,6 +490,9 @@ const ContractingWizard = ({
                 </div>
               ) : (
                 <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground text-center">
+                    Ao prosseguir, você será direcionado para a página segura de checkout para preencher seus dados e concluir a contratação.
+                  </p>
                   <p className="text-sm text-muted-foreground text-center">
                     Valor mensal: <strong className="text-primary">R$ {monthlyValue.toLocaleString("pt-BR")},00</strong>
                   </p>
@@ -509,7 +512,7 @@ const ContractingWizard = ({
 
                   <div className="grid grid-cols-2 gap-3">
                     {[
-                      { id: "BOLETO" as BillingType, icon: FileBarChart, label: "Boleto", desc: "Recorrente mensal" },
+                      { id: "BOLETO" as BillingType, icon: FileBarChart, label: "Boleto Bancário", desc: "Recorrente mensal" },
                       { id: "CREDIT_CARD" as BillingType, icon: CreditCard, label: "Cartão de Crédito", desc: "Recorrente mensal" },
                     ].map((method) => (
                       <button
@@ -527,9 +530,13 @@ const ContractingWizard = ({
                     ))}
                   </div>
 
-                  <Button onClick={handlePayment} disabled={!selectedPayment || paymentLoading} className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50">
-                    <CreditCard className="w-4 h-4 mr-2" />
-                    {paymentError ? "Tentar novamente" : "Criar assinatura e pagar"}
+                  <p className="text-xs text-muted-foreground text-center italic">
+                    Você será direcionado para a página segura de pagamento.
+                  </p>
+
+                  <Button onClick={handlePayment} disabled={!selectedPayment || paymentLoading} className="w-full h-14 text-base bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50">
+                    <ExternalLink className="w-5 h-5 mr-2" />
+                    {paymentError ? "Tentar novamente" : "PROSSEGUIR PARA PAGAMENTO"}
                   </Button>
                 </div>
               )}
