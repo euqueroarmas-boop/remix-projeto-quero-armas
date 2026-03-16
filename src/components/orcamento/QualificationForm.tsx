@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useBrasilApiLookup } from "@/hooks/useBrasilApiLookup";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Monitor,
@@ -152,35 +153,25 @@ const RentalQualificationForm = ({ onComplete, completed, data: completedData }:
   const [open, setOpen] = useState(false);
   const [blockIndex, setBlockIndex] = useState(0);
   const [form, setForm] = useState<QualificationData>({ computersQty: 0, activities: [] });
-  const [cnpjLoading, setCnpjLoading] = useState(false);
+  const { lookupCnpj, cnpjLoading } = useBrasilApiLookup();
   const [blockError, setBlockError] = useState<string | null>(null);
   const rawCnpj = form.cnpj?.replace(/\D/g, "") || "";
 
   useEffect(() => {
-    const fetchCompanyData = async () => {
-      if (rawCnpj.length !== 14) return;
-      setCnpjLoading(true);
-      try {
-        const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${rawCnpj}`);
-        if (!response.ok) throw new Error("CNPJ não encontrado");
-        const company = await response.json();
-        setForm((prev) => ({
-          ...prev,
-          companyName: company.razao_social || prev.companyName,
-          address: [company.logradouro, company.numero, company.bairro].filter(Boolean).join(", ") || prev.address,
-          city: company.municipio || prev.city,
-          state: company.uf || prev.state,
-          cep: company.cep ? formatCep(company.cep) : prev.cep,
-          contactPhone: company.ddd_telefone_1 ? formatPhone(company.ddd_telefone_1) : prev.contactPhone,
-        }));
-      } catch (error) {
-        console.warn("[WMTi][rental-form] Falha ao consultar CNPJ:", error);
-      } finally {
-        setCnpjLoading(false);
-      }
-    };
-    fetchCompanyData();
-  }, [rawCnpj]);
+    if (rawCnpj.length !== 14) return;
+    lookupCnpj(rawCnpj).then((company) => {
+      if (!company) return;
+      setForm((prev) => ({
+        ...prev,
+        companyName: company.razao_social || prev.companyName,
+        address: [company.logradouro, company.numero, company.bairro].filter(Boolean).join(", ") || prev.address,
+        city: company.municipio || prev.city,
+        state: company.uf || prev.state,
+        cep: company.cep ? formatCep(company.cep) : prev.cep,
+        contactPhone: company.ddd_telefone_1 ? formatPhone(company.ddd_telefone_1) : prev.contactPhone,
+      }));
+    });
+  }, [rawCnpj, lookupCnpj]);
 
   const updateField = (field: keyof QualificationData, value: string | number | string[]) => {
     setForm((prev) => ({ ...prev, [field]: value }));

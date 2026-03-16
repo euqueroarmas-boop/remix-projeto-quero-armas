@@ -71,6 +71,42 @@ export type Database = {
         }
         Relationships: []
       }
+      cep_cache: {
+        Row: {
+          cep: string
+          created_at: string
+          data: Json
+        }
+        Insert: {
+          cep: string
+          created_at?: string
+          data: Json
+        }
+        Update: {
+          cep?: string
+          created_at?: string
+          data?: Json
+        }
+        Relationships: []
+      }
+      cnpj_cache: {
+        Row: {
+          cnpj: string
+          created_at: string
+          data: Json
+        }
+        Insert: {
+          cnpj: string
+          created_at?: string
+          data: Json
+        }
+        Update: {
+          cnpj?: string
+          created_at?: string
+          data?: Json
+        }
+        Relationships: []
+      }
       contract_equipment: {
         Row: {
           computer_model: string
