@@ -4,14 +4,11 @@ import { motion } from "framer-motion";
 import {
   FileText,
   CreditCard,
-  QrCode,
   FileBarChart,
   CheckCircle,
   Loader2,
   ExternalLink,
   AlertTriangle,
-  ArrowRight,
-  Copy,
   RotateCcw,
 } from "lucide-react";
 
