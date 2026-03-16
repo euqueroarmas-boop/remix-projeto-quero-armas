@@ -38,6 +38,7 @@ const registrationSchema = z.object({
 interface Props {
   onComplete: (data: RegistrationData) => Promise<void>;
   loading?: boolean;
+  initialData?: Partial<RegistrationData>;
 }
 
 const formatCnpjCpf = (value: string) => {
@@ -72,7 +73,7 @@ const formatPhone = (value: string) => {
     .replace(/(\d{5})(\d{1,4})$/, "$1-$2");
 };
 
-const QuickRegistrationForm = ({ onComplete, loading: externalLoading }: Props) => {
+const QuickRegistrationForm = ({ onComplete, loading: externalLoading, initialData }: Props) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [cnpjLoading, setCnpjLoading] = useState(false);
@@ -94,6 +95,11 @@ const QuickRegistrationForm = ({ onComplete, loading: externalLoading }: Props) 
     uf: "",
     isPJ: false,
   });
+
+  useEffect(() => {
+    if (!initialData) return;
+    setForm((prev) => ({ ...prev, ...initialData }));
+  }, [initialData]);
 
   const update = (field: keyof RegistrationData, value: string | boolean) => {
     setForm((prev) => ({ ...prev, [field]: value }));

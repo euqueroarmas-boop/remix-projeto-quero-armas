@@ -1,7 +1,18 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { FileText, CreditCard, QrCode, FileBarChart, CheckCircle, Loader2, ExternalLink, AlertTriangle, ArrowRight } from "lucide-react";
+import {
+  FileText,
+  CreditCard,
+  QrCode,
+  FileBarChart,
+  CheckCircle,
+  Loader2,
+  ExternalLink,
+  AlertTriangle,
+  ArrowRight,
+  Copy,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +26,16 @@ import type { QualificationData } from "./QualificationForm";
 import type { CustomerData } from "./CustomerDataForm";
 
 type BillingType = "BOLETO" | "CREDIT_CARD" | "PIX";
+
+interface NormalizedPaymentData {
+  success: boolean;
+  billingType: BillingType;
+  invoiceUrl: string | null;
+  pixQrCodeImage: string | null;
+  pixCopyPaste: string | null;
+  asaasPaymentId: string | null;
+  status: string;
+}
 
 interface Props {
   visible: boolean;
@@ -31,6 +52,24 @@ interface Props {
   leadCity?: string;
 }
 
+const normalizeQrImage = (value: unknown) => {
+  if (typeof value !== "string" || !value) return null;
+  return value.startsWith("data:") ? value : `data:image/png;base64,${value}`;
+};
+
+const normalizePaymentPayload = (raw: any, fallbackBillingType: BillingType): NormalizedPaymentData => {
+  const billingType = (raw?.billingType || raw?.billing_type || fallbackBillingType) as BillingType;
+  return {
+    success: raw?.success !== false,
+    billingType,
+    invoiceUrl: raw?.invoiceUrl || raw?.invoice_url || raw?.bankSlipUrl || raw?.payment?.invoiceUrl || null,
+    pixQrCodeImage: normalizeQrImage(raw?.pixQrCodeImage || raw?.pix_qr_code_image || raw?.pix?.qrCodeImage || raw?.pix?.encodedImage),
+    pixCopyPaste: raw?.pixCopyPaste || raw?.pix_copy_paste || raw?.pix?.copyPaste || raw?.pix?.payload || raw?.payload || null,
+    asaasPaymentId: raw?.asaasPaymentId || raw?.payment_id || raw?.id || null,
+    status: String(raw?.status || "pending").toLowerCase(),
+  };
+};
+
 const ContractingWizard = ({
   visible,
   effectivePath,
@@ -39,6 +78,11 @@ const ContractingWizard = ({
   computersQty,
   monthlyValue,
   quoteId,
+  leadCompanyName,
+  leadContactName,
+  leadEmail,
+  leadPhone,
+  leadCity,
 }: Props) => {
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
@@ -57,12 +101,12 @@ const ContractingWizard = ({
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [invoiceUrl, setInvoiceUrl] = useState<string | null>(null);
   const [paymentComplete, setPaymentComplete] = useState(false);
+  const [paymentData, setPaymentData] = useState<NormalizedPaymentData | null>(null);
 
   const [registrationLoading, setRegistrationLoading] = useState(false);
 
   const wizardRef = useRef<HTMLDivElement>(null);
 
-  // Detect return from contract page
   useEffect(() => {
     const signedId = searchParams.get("contract_signed");
     if (signedId && contractId && signedId === contractId) {
@@ -71,7 +115,6 @@ const ContractingWizard = ({
     }
   }, [searchParams, contractId]);
 
-  // Poll for contract signature when on contract step
   useEffect(() => {
     if (currentStep !== "contract" || !contractId || contractSigned) return;
     const interval = setInterval(async () => {
@@ -89,6 +132,14 @@ const ContractingWizard = ({
     }, 3000);
     return () => clearInterval(interval);
   }, [currentStep, contractId, contractSigned, toast]);
+
+  useEffect(() => {
+    if (!paymentComplete || !paymentData || paymentData.billingType === "PIX" || !paymentData.invoiceUrl) return;
+    const timer = window.setTimeout(() => {
+      window.location.href = paymentData.invoiceUrl!;
+    }, 1800);
+    return () => window.clearTimeout(timer);
+  }, [paymentComplete, paymentData]);
 
   if (!visible || !effectivePath) return null;
 
@@ -109,19 +160,15 @@ const ContractingWizard = ({
   const contractType = effectivePath === "locacao" ? "locacao" : "suporte";
   const pathLabel = effectivePath === "locacao" ? "Locação de Equipamentos" : "Serviços de TI";
 
-  // ─── Step 1: Summary ───
   const handleContinueFromSummary = () => {
     setCurrentStep("registration");
     scrollToWizardTop();
   };
 
-  // ─── Step 2: Registration ───
   const handleRegistrationComplete = async (data: RegistrationData) => {
     setRegistrationLoading(true);
     try {
-      const fullAddress = [data.endereco, data.numero, data.complemento, data.bairro]
-        .filter(Boolean)
-        .join(", ");
+      const fullAddress = [data.endereco, data.numero, data.complemento, data.bairro].filter(Boolean).join(", ");
 
       const { data: row, error } = await supabase
         .from("customers" as any)
@@ -161,7 +208,7 @@ const ContractingWizard = ({
         contractType as "locacao" | "suporte",
         effectivePath === "locacao" ? plan : null,
         computersQty,
-        monthlyValue
+        monthlyValue,
       );
 
       const encoder = new TextEncoder();
@@ -207,15 +254,13 @@ const ContractingWizard = ({
         } as any);
       }
 
-      // Log
       await supabase.from("integration_logs" as any).insert({
         integration_name: "contract",
         operation_name: "contract_created",
-        request_payload: { contract_id: (contractRow as any).id, customer_id: customer.id },
+        request_payload: { contract_id: (contractRow as any).id, customer_id: customer.id, customerId },
         status: "success",
       } as any);
 
-      // Create payment record
       await supabase.from("payments" as any).insert({
         quote_id: quoteId,
         payment_status: "pending",
@@ -231,17 +276,36 @@ const ContractingWizard = ({
     }
   };
 
-  // ─── Step 3: Open contract in separate page ───
   const handleOpenContract = () => {
     if (!contractId) return;
     window.open(`/contrato?id=${contractId}`, "_blank");
   };
 
-  // ─── Step 4: Payment ───
+  const handleRetryPayment = () => {
+    setPaymentComplete(false);
+    setPaymentData(null);
+    setInvoiceUrl(null);
+    setPaymentError(null);
+  };
+
+  const handleCopyPixCode = useCallback(async () => {
+    if (!paymentData?.pixCopyPaste) return;
+    try {
+      await navigator.clipboard.writeText(paymentData.pixCopyPaste);
+      toast({ title: "Código PIX copiado", description: "Agora é só colar no app do seu banco." });
+    } catch (error) {
+      console.error("[WMTi][payment] Erro ao copiar código PIX:", error);
+      toast({ title: "Não foi possível copiar", description: "Copie o código manualmente.", variant: "destructive" });
+    }
+  }, [paymentData?.pixCopyPaste, toast]);
+
   const handlePayment = async () => {
     if (!selectedPayment || !registrationData || !quoteId) return;
     setPaymentLoading(true);
     setPaymentError(null);
+    setPaymentComplete(false);
+    setPaymentData(null);
+    setInvoiceUrl(null);
 
     const dueDate = new Date();
     dueDate.setDate(dueDate.getDate() + 3);
@@ -262,36 +326,76 @@ const ContractingWizard = ({
         },
       });
 
+      console.log("[WMTi][payment] Resposta completa da Edge Function:", data);
       if (error) throw new Error(error.message || "Erro ao criar cobrança");
 
-      const url = data?.invoice_url || null;
-      if (!url) throw new Error("O sistema de pagamento não retornou um link de cobrança.");
+      const normalized = normalizePaymentPayload(data, selectedPayment);
+      console.log("[WMTi][payment] Campos disponíveis:", {
+        billingType: normalized.billingType,
+        invoiceUrl: !!normalized.invoiceUrl,
+        pixQrCodeImage: !!normalized.pixQrCodeImage,
+        pixCopyPaste: !!normalized.pixCopyPaste,
+        status: normalized.status,
+      });
 
-      setInvoiceUrl(url);
-      setPaymentComplete(true);
+      setPaymentData(normalized);
+      setInvoiceUrl(normalized.invoiceUrl);
+      setPaymentComplete(normalized.success);
 
       setTimeout(() => {
-        window.location.href = url;
-      }, 2000);
+        console.log("[WMTi][payment] Estado salvo no componente:", normalized);
+      }, 0);
+
+      if (!normalized.success) {
+        throw new Error("A cobrança não foi confirmada pelo backend.");
+      }
+
+      if (
+        normalized.billingType === "PIX" &&
+        !normalized.invoiceUrl &&
+        !normalized.pixQrCodeImage &&
+        !normalized.pixCopyPaste
+      ) {
+        setPaymentError("A cobrança PIX foi criada, mas os dados vieram incompletos. Você pode tentar novamente sem perder a página.");
+        return;
+      }
+
+      if (normalized.billingType !== "PIX" && !normalized.invoiceUrl) {
+        throw new Error("O sistema de pagamento não retornou um link de cobrança.");
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Erro desconhecido";
-      console.error("[WMTi] Falha no pagamento:", message);
+      console.error("[WMTi][payment] Ponto de falha no fluxo:", message);
       setPaymentError(message);
       setPaymentComplete(false);
       setInvoiceUrl(null);
+      setPaymentData(null);
     } finally {
       setPaymentLoading(false);
     }
   };
 
+  const initialRegistrationData: Partial<RegistrationData> = {
+    razaoSocial: leadCompanyName || "",
+    nomeFantasia: "",
+    cnpjOuCpf: qualification?.cnpj || "",
+    responsavel: leadContactName || "",
+    email: leadEmail || "",
+    telefone: leadPhone || "",
+    cep: qualification?.cep || "",
+    endereco: qualification?.address || "",
+    numero: "",
+    complemento: "",
+    bairro: "",
+    cidade: qualification?.city || leadCity || "",
+    uf: qualification?.state || "",
+    isPJ: true,
+  };
+
   return (
     <section id="contracting-wizard" className="py-16 section-dark" ref={wizardRef}>
       <div className="container mx-auto px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-10"
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-10">
           <span className="inline-block px-4 py-1.5 mb-4 text-xs font-semibold tracking-widest uppercase bg-primary/10 text-primary rounded-full border border-primary/20">
             Contratação
           </span>
@@ -304,13 +408,7 @@ const ContractingWizard = ({
         </motion.div>
 
         <div className="max-w-3xl mx-auto">
-          {/* ─── Step 1: Summary ─── */}
-          <WizardStepWrapper
-            stepNumber={1}
-            title="Resumo do Orçamento"
-            subtitle="Revise o valor e plano escolhido"
-            status={getStepStatus("summary")}
-          >
+          <WizardStepWrapper stepNumber={1} title="Resumo do Orçamento" subtitle="Revise o valor e plano escolhido" status={getStepStatus("summary")}>
             <div className="bg-card border border-border rounded-xl p-5 space-y-3 mb-4">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Modalidade</span>
@@ -328,37 +426,25 @@ const ContractingWizard = ({
               </div>
               <div className="flex justify-between items-center border-t border-border pt-3">
                 <span className="text-sm font-semibold text-foreground">Valor mensal</span>
-                <span className="text-xl font-bold text-primary">
-                  R$ {monthlyValue.toLocaleString("pt-BR")},00
-                </span>
+                <span className="text-xl font-bold text-primary">R$ {monthlyValue.toLocaleString("pt-BR")},00</span>
               </div>
-              <p className="text-xs text-muted-foreground pt-1">
-                Prazo mínimo contratual de 36 meses.
-              </p>
+              <p className="text-xs text-muted-foreground pt-1">Prazo mínimo contratual de 36 meses.</p>
             </div>
-            <Button
-              onClick={handleContinueFromSummary}
-              className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground"
-            >
+            <Button onClick={handleContinueFromSummary} className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground">
               Continuar contratação
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </WizardStepWrapper>
 
-          {/* ─── Step 2: Registration ─── */}
           <WizardStepWrapper
             stepNumber={2}
             title="Dados do Contratante"
             subtitle="Preenchimento automático por CNPJ e CEP"
             status={getStepStatus("registration")}
           >
-            <QuickRegistrationForm
-              onComplete={handleRegistrationComplete}
-              loading={registrationLoading}
-            />
+            <QuickRegistrationForm onComplete={handleRegistrationComplete} loading={registrationLoading} initialData={initialRegistrationData} />
           </WizardStepWrapper>
 
-          {/* ─── Step 3: Contract (opens in separate page) ─── */}
           <WizardStepWrapper
             stepNumber={3}
             title="Contrato e Assinatura"
@@ -381,16 +467,10 @@ const ContractingWizard = ({
                       <p className="text-xs text-muted-foreground">O contrato será aberto em uma página separada com aparência de documento formal.</p>
                     </div>
                   </div>
-                  <p className="text-xs text-muted-foreground mb-3">
-                    Após ler e assinar o contrato, esta página será atualizada automaticamente.
-                  </p>
+                  <p className="text-xs text-muted-foreground mb-3">Após ler e assinar o contrato, esta página será atualizada automaticamente.</p>
                 </div>
 
-                <Button
-                  onClick={handleOpenContract}
-                  disabled={!contractId}
-                  className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground"
-                >
+                <Button onClick={handleOpenContract} disabled={!contractId} className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground">
                   <ExternalLink className="w-4 h-4 mr-2" />
                   Abrir contrato para leitura e assinatura
                 </Button>
@@ -403,22 +483,74 @@ const ContractingWizard = ({
             )}
           </WizardStepWrapper>
 
-          {/* ─── Step 4: Payment ─── */}
-          <WizardStepWrapper
-            stepNumber={4}
-            title="Pagamento"
-            subtitle="Escolha a forma e finalize"
-            status={getStepStatus("payment")}
-            isLast
-          >
-            {paymentComplete && invoiceUrl ? (
+          <WizardStepWrapper stepNumber={4} title="Pagamento" subtitle="Escolha a forma e finalize" status={getStepStatus("payment")} isLast>
+            {paymentComplete && paymentData?.billingType === "PIX" ? (
+              <div className="space-y-4">
+                <div className="bg-card border border-primary/20 rounded-xl p-6 space-y-4">
+                  <div className="text-center space-y-2">
+                    <QrCode className="w-10 h-10 text-primary mx-auto" />
+                    <h4 className="text-lg font-heading font-bold">Pagamento via PIX</h4>
+                    <p className="text-sm text-muted-foreground">Aguardando confirmação do pagamento.</p>
+                    <p className="text-xs uppercase tracking-wide text-primary font-semibold">Status: {paymentData.status}</p>
+                  </div>
+
+                  {paymentData.pixQrCodeImage ? (
+                    <div className="bg-background rounded-xl border border-border p-4 flex justify-center">
+                      <img src={paymentData.pixQrCodeImage} alt="QR Code do PIX" className="w-56 h-56 object-contain" loading="lazy" />
+                    </div>
+                  ) : (
+                    <div className="rounded-xl border border-border bg-background p-4 text-sm text-muted-foreground text-center">
+                      QR Code indisponível no momento. Você ainda pode usar o código copia e cola ou abrir a cobrança.
+                    </div>
+                  )}
+
+                  {paymentData.pixCopyPaste ? (
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold">Código PIX copia e cola</Label>
+                      <div className="rounded-xl border border-border bg-background p-4 text-sm break-all">{paymentData.pixCopyPaste}</div>
+                    </div>
+                  ) : (
+                    <div className="rounded-xl border border-border bg-background p-4 text-sm text-muted-foreground">
+                      O código copia e cola não foi retornado. Se necessário, abra a cobrança no link abaixo.
+                    </div>
+                  )}
+
+                  {paymentError && (
+                    <div className="p-3 rounded-lg border border-destructive/30 bg-destructive/5 flex items-start gap-2">
+                      <AlertTriangle className="w-4 h-4 text-destructive mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-sm font-semibold text-destructive">Retorno incompleto do PIX</p>
+                        <p className="text-xs text-muted-foreground mt-1">{paymentError}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <Button onClick={handleCopyPixCode} disabled={!paymentData.pixCopyPaste} className="h-11 bg-primary hover:bg-primary/90 text-primary-foreground">
+                      <Copy className="w-4 h-4 mr-2" />
+                      Copiar código PIX
+                    </Button>
+                    <Button asChild variant="outline" className="h-11" disabled={!paymentData.invoiceUrl}>
+                      <a href={paymentData.invoiceUrl || "#"} target="_blank" rel="noreferrer">
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        Abrir cobrança
+                      </a>
+                    </Button>
+                  </div>
+
+                  <Button onClick={handleRetryPayment} variant="outline" className="w-full h-11">
+                    Tentar novamente
+                  </Button>
+                </div>
+              </div>
+            ) : paymentComplete && paymentData?.invoiceUrl ? (
               <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-3">
                 <CheckCircle className="w-10 h-10 text-primary mx-auto" />
                 <h4 className="text-lg font-heading font-bold">Cobrança gerada!</h4>
                 <p className="text-sm text-muted-foreground">Redirecionando para o checkout...</p>
                 <Loader2 className="w-5 h-5 animate-spin text-primary mx-auto" />
                 <Button asChild variant="outline" className="w-full h-10 mt-2">
-                  <a href={invoiceUrl}>
+                  <a href={paymentData.invoiceUrl} target="_blank" rel="noreferrer">
                     <ExternalLink className="w-4 h-4 mr-2" />
                     Caso não seja redirecionado, clique aqui
                   </a>
@@ -441,38 +573,28 @@ const ContractingWizard = ({
                 )}
 
                 <div className="grid grid-cols-3 gap-3">
-                  {([
+                  {[
                     { id: "PIX" as BillingType, icon: QrCode, label: "PIX", desc: "Instantâneo" },
                     { id: "BOLETO" as BillingType, icon: FileBarChart, label: "Boleto", desc: "3 dias úteis" },
                     { id: "CREDIT_CARD" as BillingType, icon: CreditCard, label: "Cartão", desc: "Recorrente" },
-                  ]).map((m) => (
+                  ].map((method) => (
                     <button
-                      key={m.id}
+                      key={method.id}
                       type="button"
-                      onClick={() => setSelectedPayment(m.id)}
+                      onClick={() => setSelectedPayment(method.id)}
                       className={`p-4 rounded-xl border-2 transition-all text-center ${
-                        selectedPayment === m.id
-                          ? "border-primary bg-primary/5"
-                          : "border-border bg-card hover:border-primary/30"
+                        selectedPayment === method.id ? "border-primary bg-primary/5" : "border-border bg-card hover:border-primary/30"
                       }`}
                     >
-                      <m.icon className={`w-6 h-6 mx-auto mb-2 ${selectedPayment === m.id ? "text-primary" : "text-muted-foreground"}`} />
-                      <p className="text-sm font-semibold">{m.label}</p>
-                      <p className="text-xs text-muted-foreground">{m.desc}</p>
+                      <method.icon className={`w-6 h-6 mx-auto mb-2 ${selectedPayment === method.id ? "text-primary" : "text-muted-foreground"}`} />
+                      <p className="text-sm font-semibold">{method.label}</p>
+                      <p className="text-xs text-muted-foreground">{method.desc}</p>
                     </button>
                   ))}
                 </div>
 
-                <Button
-                  onClick={handlePayment}
-                  disabled={!selectedPayment || paymentLoading}
-                  className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50"
-                >
-                  {paymentLoading ? (
-                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                  ) : (
-                    <CreditCard className="w-4 h-4 mr-2" />
-                  )}
+                <Button onClick={handlePayment} disabled={!selectedPayment || paymentLoading} className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50">
+                  {paymentLoading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <CreditCard className="w-4 h-4 mr-2" />}
                   {paymentError ? "Tentar novamente" : "Gerar cobrança e pagar"}
                 </Button>
               </div>
@@ -483,5 +605,9 @@ const ContractingWizard = ({
     </section>
   );
 };
+
+const Label = ({ className = "", ...props }: React.LabelHTMLAttributes<HTMLLabelElement>) => (
+  <label className={`block ${className}`.trim()} {...props} />
+);
 
 export default ContractingWizard;

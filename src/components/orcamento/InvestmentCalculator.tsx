@@ -36,6 +36,7 @@ const InvestmentCalculator = ({
 
   const plan = plans.find((p) => p.id === selectedPlan) || plans[1];
   const monthlyValue = plan.price * computersQty;
+  const totalContractValue = monthlyValue * 36;
 
   const handleComputersChange = (val: string) => {
     setComputersInput(val);
@@ -81,7 +82,6 @@ const InvestmentCalculator = ({
         </motion.div>
 
         <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Inputs */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -115,33 +115,27 @@ const InvestmentCalculator = ({
             </div>
 
             <div className="space-y-3 pt-2">
-              <Label className="text-sm font-medium block">Serviços adicionais inclusos</Label>
+              <Label className="text-sm font-medium block">Serviços adicionais recomendados</Label>
               <label className="flex items-center gap-3 p-3 rounded-lg border border-border hover:border-primary/30 cursor-pointer transition-colors">
                 <Checkbox
                   checked={addons.serverMigration}
-                  onCheckedChange={(v) =>
-                    setAddons({ ...addons, serverMigration: v === true })
-                  }
+                  onCheckedChange={(v) => setAddons({ ...addons, serverMigration: v === true })}
                 />
                 <Server className="w-4 h-4 text-primary" />
-                <span className="text-sm">Migração de servidor</span>
+                <span className="text-sm">Servidor / migração de servidor</span>
               </label>
               <label className="flex items-center gap-3 p-3 rounded-lg border border-border hover:border-primary/30 cursor-pointer transition-colors">
                 <Checkbox
                   checked={addons.remoteAccess}
-                  onCheckedChange={(v) =>
-                    setAddons({ ...addons, remoteAccess: v === true })
-                  }
+                  onCheckedChange={(v) => setAddons({ ...addons, remoteAccess: v === true })}
                 />
                 <Wifi className="w-4 h-4 text-primary" />
-                <span className="text-sm">Acesso remoto</span>
+                <span className="text-sm">Acesso remoto e suporte operacional</span>
               </label>
               <label className="flex items-center gap-3 p-3 rounded-lg border border-border hover:border-primary/30 cursor-pointer transition-colors">
                 <Checkbox
                   checked={addons.backup}
-                  onCheckedChange={(v) =>
-                    setAddons({ ...addons, backup: v === true })
-                  }
+                  onCheckedChange={(v) => setAddons({ ...addons, backup: v === true })}
                 />
                 <HardDrive className="w-4 h-4 text-primary" />
                 <span className="text-sm">Backup automatizado</span>
@@ -149,7 +143,6 @@ const InvestmentCalculator = ({
             </div>
           </motion.div>
 
-          {/* Result */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -163,7 +156,7 @@ const InvestmentCalculator = ({
               </h3>
               <div className="mb-4">
                 <p className="text-sm text-muted-foreground">
-                  {computersQty} computador{computersQty > 1 ? "es" : ""} · Plano{" "}
+                  {computersQty} computador{computersQty > 1 ? "es" : ""} · Configuração{" "}
                   <span className="text-primary font-medium">{plan.name}</span>
                 </p>
               </div>
@@ -171,21 +164,18 @@ const InvestmentCalculator = ({
                 R${monthlyValue.toLocaleString("pt-BR")}
               </div>
               <p className="text-muted-foreground text-sm">/mês</p>
+              <p className="text-sm text-muted-foreground mt-3">
+                Valor total estimado da locação: <span className="font-semibold text-foreground">R${totalContractValue.toLocaleString("pt-BR")}</span> em 36 meses.
+              </p>
 
               {(addons.serverMigration || addons.remoteAccess || addons.backup) && (
                 <div className="mt-6 pt-4 border-t border-border space-y-1">
                   <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-2">
-                    Serviços inclusos
+                    Serviços recomendados
                   </p>
-                  {addons.serverMigration && (
-                    <p className="text-sm text-foreground/80">✓ Migração de servidor</p>
-                  )}
-                  {addons.remoteAccess && (
-                    <p className="text-sm text-foreground/80">✓ Acesso remoto</p>
-                  )}
-                  {addons.backup && (
-                    <p className="text-sm text-foreground/80">✓ Backup automatizado</p>
-                  )}
+                  {addons.serverMigration && <p className="text-sm text-foreground/80">✓ Servidor / migração</p>}
+                  {addons.remoteAccess && <p className="text-sm text-foreground/80">✓ Acesso remoto</p>}
+                  {addons.backup && <p className="text-sm text-foreground/80">✓ Backup automatizado</p>}
                 </div>
               )}
             </div>
