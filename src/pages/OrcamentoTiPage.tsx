@@ -42,7 +42,6 @@ const OrcamentoTiPage = () => {
   const [budgetSaved, setBudgetSaved] = useState(false);
   const [quoteId, setQuoteId] = useState<string | null>(null);
 
-  // New states for popup + summary flow
   const [showBudgetPopup, setShowBudgetPopup] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
 
@@ -128,12 +127,11 @@ const OrcamentoTiPage = () => {
     }
   }, [scrollToSection, selectedPath]);
 
-  // When user finishes configuring rental, show popup
+  // Open popup (rental) or go to summary (support)
   const handleShowBudgetPopup = useCallback(() => {
     setShowBudgetPopup(true);
   }, []);
 
-  // From popup → summary screen
   const handleProceedToSummary = useCallback(() => {
     setShowBudgetPopup(false);
     setShowSummary(true);
@@ -142,13 +140,11 @@ const OrcamentoTiPage = () => {
     }, 150);
   }, []);
 
-  // From summary → go back to edit
   const handleGoBackFromSummary = useCallback(() => {
     setShowSummary(false);
     scrollToSection("plans");
   }, [scrollToSection]);
 
-  // From summary → save budget + open wizard
   const handleSaveBudget = useCallback(async () => {
     if (budgetSaved) {
       window.setTimeout(() => {
@@ -213,7 +209,6 @@ const OrcamentoTiPage = () => {
 
       setBudgetSaved(true);
       setShowSummary(false);
-      console.log("[WMTi] Orçamento salvo. Quote ID:", (quoteRow as any).id);
 
       window.setTimeout(() => {
         document.getElementById("contracting-wizard")?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -287,34 +282,19 @@ const OrcamentoTiPage = () => {
 
         {qualificationComplete && <BudgetAuthority />}
 
-        <OutsourcingOffer visible={showOutsourcingOffer} />
+        {/* Outsourcing offer — complementary, only after all config, separated from finalization */}
+        <OutsourcingOffer visible={showOutsourcingOffer && !showSummary && !budgetSaved} />
 
-        {/* CTA to proceed - opens popup for rental, or goes to summary for support */}
+        {/* Simple CTA to proceed — opens popup (rental) or summary (support) */}
         {qualificationComplete && !showSummary && !budgetSaved && (
-          <section id="budget-cta" className="py-16 bg-card">
+          <section id="budget-cta" className="py-10">
             <div className="container mx-auto px-4 text-center">
-              <div className="max-w-2xl mx-auto bg-background border border-primary/20 rounded-2xl p-8 space-y-4">
-                <h3 className="text-2xl font-heading font-bold">Orçamento pronto!</h3>
-                <p className="text-muted-foreground">
-                  {effectivePath === "locacao"
-                    ? `${plan.name} — ${computersQty} computador${computersQty > 1 ? "es" : ""}`
-                    : `Suporte mensal — ${qualification?.computersQty ?? computersQty} computador${(qualification?.computersQty ?? computersQty) > 1 ? "es" : ""}`}
-                </p>
-                <p className="text-3xl font-bold text-primary">
-                  R$ {monthlyValue.toLocaleString("pt-BR")},00<span className="text-base font-normal text-muted-foreground">/mês</span>
-                </p>
-                {effectivePath === "locacao" && (
-                  <p className="text-sm text-muted-foreground">
-                    Valor total estimado da locação: <span className="font-semibold text-foreground">R$ {(monthlyValue * 36).toLocaleString("pt-BR")},00</span> em 36 meses.
-                  </p>
-                )}
-                <button
-                  onClick={showRentalFlow ? handleShowBudgetPopup : handleProceedToSummary}
-                  className="w-full h-14 text-base font-semibold rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground transition-colors flex items-center justify-center gap-2"
-                >
-                  Prosseguir para contratação
-                </button>
-              </div>
+              <button
+                onClick={showRentalFlow ? handleShowBudgetPopup : handleProceedToSummary}
+                className="h-14 px-10 text-base font-semibold rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground transition-colors inline-flex items-center gap-2"
+              >
+                Ver orçamento completo
+              </button>
             </div>
           </section>
         )}

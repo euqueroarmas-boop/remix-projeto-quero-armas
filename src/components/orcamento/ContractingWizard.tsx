@@ -21,6 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 import WizardStepWrapper from "./WizardStepWrapper";
 import QuickRegistrationForm, { type RegistrationData } from "./QuickRegistrationForm";
 import { generateContractHtml } from "./ContractPreview";
+import PostPaymentReport from "./PostPaymentReport";
 import type { Plan } from "./PlanSelector";
 import type { QualificationData } from "./QualificationForm";
 import type { CustomerData } from "./CustomerDataForm";
@@ -87,9 +88,10 @@ const ContractingWizard = ({
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
 
-  type Step = "summary" | "registration" | "contract" | "payment";
-  const [currentStep, setCurrentStep] = useState<Step>("summary");
-  const stepOrder: Step[] = ["summary", "registration", "contract", "payment"];
+  // Steps: registration → contract → payment (no redundant summary step)
+  type Step = "registration" | "contract" | "payment";
+  const [currentStep, setCurrentStep] = useState<Step>("registration");
+  const stepOrder: Step[] = ["registration", "contract", "payment"];
 
   const [registrationData, setRegistrationData] = useState<RegistrationData | null>(null);
   const [customerId, setCustomerId] = useState<string | null>(null);
@@ -152,6 +154,7 @@ const ContractingWizard = ({
     }
   }, [paymentData?.pixCopyPaste, toast]);
 
+  // All hooks above — safe to return null now
   if (!visible || !effectivePath) return null;
 
   const getStepStatus = (step: Step) => {
@@ -170,11 +173,6 @@ const ContractingWizard = ({
 
   const contractType = effectivePath === "locacao" ? "locacao" : "suporte";
   const pathLabel = effectivePath === "locacao" ? "Locação de Equipamentos" : "Serviços de TI";
-
-  const handleContinueFromSummary = () => {
-    setCurrentStep("registration");
-    scrollToWizardTop();
-  };
 
   const handleRegistrationComplete = async (data: RegistrationData) => {
     setRegistrationLoading(true);
@@ -326,25 +324,13 @@ const ContractingWizard = ({
         },
       });
 
-      console.log("[WMTi][payment] Resposta completa da Edge Function:", data);
       if (error) throw new Error(error.message || "Erro ao criar cobrança");
 
       const normalized = normalizePaymentPayload(data, selectedPayment);
-      console.log("[WMTi][payment] Campos disponíveis:", {
-        billingType: normalized.billingType,
-        invoiceUrl: !!normalized.invoiceUrl,
-        pixQrCodeImage: !!normalized.pixQrCodeImage,
-        pixCopyPaste: !!normalized.pixCopyPaste,
-        status: normalized.status,
-      });
 
       setPaymentData(normalized);
       setInvoiceUrl(normalized.invoiceUrl);
       setPaymentComplete(normalized.success);
-
-      setTimeout(() => {
-        console.log("[WMTi][payment] Estado salvo no componente:", normalized);
-      }, 0);
 
       if (!normalized.success) {
         throw new Error("A cobrança não foi confirmada pelo backend.");
@@ -393,220 +379,208 @@ const ContractingWizard = ({
   };
 
   return (
-    <section id="contracting-wizard" className="py-16 section-dark" ref={wizardRef}>
-      <div className="container mx-auto px-4">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-10">
-          <span className="inline-block px-4 py-1.5 mb-4 text-xs font-semibold tracking-widest uppercase bg-primary/10 text-primary rounded-full border border-primary/20">
-            Contratação
-          </span>
-          <h2 className="text-2xl md:text-3xl font-heading font-bold mb-2">
-            Finalize sua <span className="text-primary">contratação</span>
-          </h2>
-          <p className="text-muted-foreground text-sm max-w-xl mx-auto">
-            Preencha os dados uma única vez. Tudo será reaproveitado automaticamente.
-          </p>
-        </motion.div>
+    <>
+      <section id="contracting-wizard" className="py-16 section-dark" ref={wizardRef}>
+        <div className="container mx-auto px-4">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-10">
+            <span className="inline-block px-4 py-1.5 mb-4 text-xs font-semibold tracking-widest uppercase bg-primary/10 text-primary rounded-full border border-primary/20">
+              Contratação
+            </span>
+            <h2 className="text-2xl md:text-3xl font-heading font-bold mb-2">
+              Finalize sua <span className="text-primary">contratação</span>
+            </h2>
+            <p className="text-muted-foreground text-sm max-w-xl mx-auto">
+              Preencha os dados uma única vez. Tudo será reaproveitado automaticamente.
+            </p>
+          </motion.div>
 
-        <div className="max-w-3xl mx-auto">
-          <WizardStepWrapper stepNumber={1} title="Resumo do Orçamento" subtitle="Revise o valor e plano escolhido" status={getStepStatus("summary")}>
-            <div className="bg-card border border-border rounded-xl p-5 space-y-3 mb-4">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Modalidade</span>
-                <span className="font-semibold text-foreground">{pathLabel}</span>
-              </div>
-              {effectivePath === "locacao" && (
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Plano</span>
-                  <span className="font-semibold text-foreground">{plan.name}</span>
+          <div className="max-w-3xl mx-auto">
+            {/* Step 1: Registration */}
+            <WizardStepWrapper
+              stepNumber={1}
+              title="Dados do Contratante"
+              subtitle="Preenchimento automático por CNPJ e CEP"
+              status={getStepStatus("registration")}
+            >
+              <QuickRegistrationForm onComplete={handleRegistrationComplete} loading={registrationLoading} initialData={initialRegistrationData} />
+            </WizardStepWrapper>
+
+            {/* Step 2: Contract */}
+            <WizardStepWrapper
+              stepNumber={2}
+              title="Contrato e Assinatura"
+              subtitle={contractSigned ? "Contrato assinado ✓" : "Leia e assine o contrato em página dedicada"}
+              status={getStepStatus("contract")}
+            >
+              {contractSigned ? (
+                <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-3">
+                  <CheckCircle className="w-10 h-10 text-primary mx-auto" />
+                  <h4 className="text-lg font-heading font-bold">Contrato assinado!</h4>
+                  <p className="text-sm text-muted-foreground">Prossiga para o pagamento abaixo.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="bg-card border border-border rounded-xl p-5">
+                    <div className="flex items-center gap-3 mb-3">
+                      <FileText className="w-6 h-6 text-primary" />
+                      <div>
+                        <p className="font-semibold text-sm">Contrato de {pathLabel}</p>
+                        <p className="text-xs text-muted-foreground">O contrato será aberto em uma página separada com aparência de documento formal.</p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-3">Após ler e assinar o contrato, esta página será atualizada automaticamente.</p>
+                  </div>
+
+                  <Button onClick={handleOpenContract} disabled={!contractId} className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground">
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Abrir contrato para leitura e assinatura
+                  </Button>
+
+                  <p className="text-xs text-muted-foreground text-center">
+                    <Loader2 className="w-3 h-3 animate-spin inline mr-1" />
+                    Aguardando assinatura do contrato...
+                  </p>
                 </div>
               )}
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Computadores</span>
-                <span className="font-semibold text-foreground">{computersQty}</span>
-              </div>
-              <div className="flex justify-between items-center border-t border-border pt-3">
-                <span className="text-sm font-semibold text-foreground">Valor mensal</span>
-                <span className="text-xl font-bold text-primary">R$ {monthlyValue.toLocaleString("pt-BR")},00</span>
-              </div>
-              <p className="text-xs text-muted-foreground pt-1">Prazo mínimo contratual de 36 meses.</p>
-            </div>
-            <Button onClick={handleContinueFromSummary} className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground">
-              Continuar contratação
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-          </WizardStepWrapper>
+            </WizardStepWrapper>
 
-          <WizardStepWrapper
-            stepNumber={2}
-            title="Dados do Contratante"
-            subtitle="Preenchimento automático por CNPJ e CEP"
-            status={getStepStatus("registration")}
-          >
-            <QuickRegistrationForm onComplete={handleRegistrationComplete} loading={registrationLoading} initialData={initialRegistrationData} />
-          </WizardStepWrapper>
-
-          <WizardStepWrapper
-            stepNumber={3}
-            title="Contrato e Assinatura"
-            subtitle={contractSigned ? "Contrato assinado ✓" : "Leia e assine o contrato em página dedicada"}
-            status={getStepStatus("contract")}
-          >
-            {contractSigned ? (
-              <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-3">
-                <CheckCircle className="w-10 h-10 text-primary mx-auto" />
-                <h4 className="text-lg font-heading font-bold">Contrato assinado!</h4>
-                <p className="text-sm text-muted-foreground">Prossiga para o pagamento abaixo.</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="bg-card border border-border rounded-xl p-5">
-                  <div className="flex items-center gap-3 mb-3">
-                    <FileText className="w-6 h-6 text-primary" />
-                    <div>
-                      <p className="font-semibold text-sm">Contrato de {pathLabel}</p>
-                      <p className="text-xs text-muted-foreground">O contrato será aberto em uma página separada com aparência de documento formal.</p>
+            {/* Step 3: Payment */}
+            <WizardStepWrapper stepNumber={3} title="Pagamento" subtitle="Escolha a forma e finalize" status={getStepStatus("payment")} isLast>
+              {paymentComplete && paymentData?.billingType === "PIX" ? (
+                <div className="space-y-4">
+                  <div className="bg-card border border-primary/20 rounded-xl p-6 space-y-4">
+                    <div className="text-center space-y-2">
+                      <QrCode className="w-10 h-10 text-primary mx-auto" />
+                      <h4 className="text-lg font-heading font-bold">Pagamento via PIX</h4>
+                      <p className="text-sm text-muted-foreground">Aguardando confirmação do pagamento.</p>
+                      <p className="text-xs uppercase tracking-wide text-primary font-semibold">Status: {paymentData.status}</p>
                     </div>
+
+                    {paymentData.pixQrCodeImage ? (
+                      <div className="bg-background rounded-xl border border-border p-4 flex justify-center">
+                        <img src={paymentData.pixQrCodeImage} alt="QR Code do PIX" className="w-56 h-56 object-contain" loading="lazy" />
+                      </div>
+                    ) : (
+                      <div className="rounded-xl border border-border bg-background p-4 text-sm text-muted-foreground text-center">
+                        QR Code indisponível no momento. Você ainda pode usar o código copia e cola ou abrir a cobrança.
+                      </div>
+                    )}
+
+                    {paymentData.pixCopyPaste ? (
+                      <div className="space-y-2">
+                        <HelperLabel className="text-sm font-semibold">Código PIX copia e cola</HelperLabel>
+                        <div className="rounded-xl border border-border bg-background p-4 text-sm break-all">{paymentData.pixCopyPaste}</div>
+                      </div>
+                    ) : (
+                      <div className="rounded-xl border border-border bg-background p-4 text-sm text-muted-foreground">
+                        O código copia e cola não foi retornado. Se necessário, abra a cobrança no link abaixo.
+                      </div>
+                    )}
+
+                    {paymentError && (
+                      <div className="p-3 rounded-lg border border-destructive/30 bg-destructive/5 flex items-start gap-2">
+                        <AlertTriangle className="w-4 h-4 text-destructive mt-0.5 shrink-0" />
+                        <div>
+                          <p className="text-sm font-semibold text-destructive">Retorno incompleto do PIX</p>
+                          <p className="text-xs text-muted-foreground mt-1">{paymentError}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <Button onClick={handleCopyPixCode} disabled={!paymentData.pixCopyPaste} className="h-11 bg-primary hover:bg-primary/90 text-primary-foreground">
+                        <Copy className="w-4 h-4 mr-2" />
+                        Copiar código PIX
+                      </Button>
+                      <Button asChild variant="outline" className="h-11" disabled={!paymentData.invoiceUrl}>
+                        <a href={paymentData.invoiceUrl || "#"} target="_blank" rel="noreferrer">
+                          <ExternalLink className="w-4 h-4 mr-2" />
+                          Abrir cobrança
+                        </a>
+                      </Button>
+                    </div>
+
+                    <Button onClick={handleRetryPayment} variant="outline" className="w-full h-11">
+                      Tentar novamente
+                    </Button>
                   </div>
-                  <p className="text-xs text-muted-foreground mb-3">Após ler e assinar o contrato, esta página será atualizada automaticamente.</p>
                 </div>
-
-                <Button onClick={handleOpenContract} disabled={!contractId} className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground">
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  Abrir contrato para leitura e assinatura
-                </Button>
-
-                <p className="text-xs text-muted-foreground text-center">
-                  <Loader2 className="w-3 h-3 animate-spin inline mr-1" />
-                  Aguardando assinatura do contrato...
-                </p>
-              </div>
-            )}
-          </WizardStepWrapper>
-
-          <WizardStepWrapper stepNumber={4} title="Pagamento" subtitle="Escolha a forma e finalize" status={getStepStatus("payment")} isLast>
-            {paymentComplete && paymentData?.billingType === "PIX" ? (
-              <div className="space-y-4">
-                <div className="bg-card border border-primary/20 rounded-xl p-6 space-y-4">
-                  <div className="text-center space-y-2">
-                    <QrCode className="w-10 h-10 text-primary mx-auto" />
-                    <h4 className="text-lg font-heading font-bold">Pagamento via PIX</h4>
-                    <p className="text-sm text-muted-foreground">Aguardando confirmação do pagamento.</p>
-                    <p className="text-xs uppercase tracking-wide text-primary font-semibold">Status: {paymentData.status}</p>
-                  </div>
-
-                  {paymentData.pixQrCodeImage ? (
-                    <div className="bg-background rounded-xl border border-border p-4 flex justify-center">
-                      <img src={paymentData.pixQrCodeImage} alt="QR Code do PIX" className="w-56 h-56 object-contain" loading="lazy" />
-                    </div>
-                  ) : (
-                    <div className="rounded-xl border border-border bg-background p-4 text-sm text-muted-foreground text-center">
-                      QR Code indisponível no momento. Você ainda pode usar o código copia e cola ou abrir a cobrança.
-                    </div>
-                  )}
-
-                  {paymentData.pixCopyPaste ? (
-                    <div className="space-y-2">
-                      <Label className="text-sm font-semibold">Código PIX copia e cola</Label>
-                      <div className="rounded-xl border border-border bg-background p-4 text-sm break-all">{paymentData.pixCopyPaste}</div>
-                    </div>
-                  ) : (
-                    <div className="rounded-xl border border-border bg-background p-4 text-sm text-muted-foreground">
-                      O código copia e cola não foi retornado. Se necessário, abra a cobrança no link abaixo.
-                    </div>
-                  )}
+              ) : paymentComplete && paymentData?.invoiceUrl ? (
+                <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-3">
+                  <CheckCircle className="w-10 h-10 text-primary mx-auto" />
+                  <h4 className="text-lg font-heading font-bold">Cobrança gerada!</h4>
+                  <p className="text-sm text-muted-foreground">Redirecionando para o checkout...</p>
+                  <Loader2 className="w-5 h-5 animate-spin text-primary mx-auto" />
+                  <Button asChild variant="outline" className="w-full h-10 mt-2">
+                    <a href={paymentData.invoiceUrl} target="_blank" rel="noreferrer">
+                      <ExternalLink className="w-4 h-4 mr-2" />
+                      Caso não seja redirecionado, clique aqui
+                    </a>
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Valor mensal: <strong className="text-primary">R$ {monthlyValue.toLocaleString("pt-BR")},00</strong>
+                  </p>
 
                   {paymentError && (
                     <div className="p-3 rounded-lg border border-destructive/30 bg-destructive/5 flex items-start gap-2">
                       <AlertTriangle className="w-4 h-4 text-destructive mt-0.5 shrink-0" />
                       <div>
-                        <p className="text-sm font-semibold text-destructive">Retorno incompleto do PIX</p>
+                        <p className="text-sm font-semibold text-destructive">Erro ao gerar cobrança</p>
                         <p className="text-xs text-muted-foreground mt-1">{paymentError}</p>
                       </div>
                     </div>
                   )}
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <Button onClick={handleCopyPixCode} disabled={!paymentData.pixCopyPaste} className="h-11 bg-primary hover:bg-primary/90 text-primary-foreground">
-                      <Copy className="w-4 h-4 mr-2" />
-                      Copiar código PIX
-                    </Button>
-                    <Button asChild variant="outline" className="h-11" disabled={!paymentData.invoiceUrl}>
-                      <a href={paymentData.invoiceUrl || "#"} target="_blank" rel="noreferrer">
-                        <ExternalLink className="w-4 h-4 mr-2" />
-                        Abrir cobrança
-                      </a>
-                    </Button>
+                  <div className="grid grid-cols-3 gap-3">
+                    {[
+                      { id: "PIX" as BillingType, icon: QrCode, label: "PIX", desc: "Instantâneo" },
+                      { id: "BOLETO" as BillingType, icon: FileBarChart, label: "Boleto", desc: "3 dias úteis" },
+                      { id: "CREDIT_CARD" as BillingType, icon: CreditCard, label: "Cartão", desc: "Recorrente" },
+                    ].map((method) => (
+                      <button
+                        key={method.id}
+                        type="button"
+                        onClick={() => setSelectedPayment(method.id)}
+                        className={`p-4 rounded-xl border-2 transition-all text-center ${
+                          selectedPayment === method.id ? "border-primary bg-primary/5" : "border-border bg-card hover:border-primary/30"
+                        }`}
+                      >
+                        <method.icon className={`w-6 h-6 mx-auto mb-2 ${selectedPayment === method.id ? "text-primary" : "text-muted-foreground"}`} />
+                        <p className="text-sm font-semibold">{method.label}</p>
+                        <p className="text-xs text-muted-foreground">{method.desc}</p>
+                      </button>
+                    ))}
                   </div>
 
-                  <Button onClick={handleRetryPayment} variant="outline" className="w-full h-11">
-                    Tentar novamente
+                  <Button onClick={handlePayment} disabled={!selectedPayment || paymentLoading} className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50">
+                    {paymentLoading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <CreditCard className="w-4 h-4 mr-2" />}
+                    {paymentError ? "Tentar novamente" : "Gerar cobrança e pagar"}
                   </Button>
                 </div>
-              </div>
-            ) : paymentComplete && paymentData?.invoiceUrl ? (
-              <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-3">
-                <CheckCircle className="w-10 h-10 text-primary mx-auto" />
-                <h4 className="text-lg font-heading font-bold">Cobrança gerada!</h4>
-                <p className="text-sm text-muted-foreground">Redirecionando para o checkout...</p>
-                <Loader2 className="w-5 h-5 animate-spin text-primary mx-auto" />
-                <Button asChild variant="outline" className="w-full h-10 mt-2">
-                  <a href={paymentData.invoiceUrl} target="_blank" rel="noreferrer">
-                    <ExternalLink className="w-4 h-4 mr-2" />
-                    Caso não seja redirecionado, clique aqui
-                  </a>
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  Valor mensal: <strong className="text-primary">R$ {monthlyValue.toLocaleString("pt-BR")},00</strong>
-                </p>
-
-                {paymentError && (
-                  <div className="p-3 rounded-lg border border-destructive/30 bg-destructive/5 flex items-start gap-2">
-                    <AlertTriangle className="w-4 h-4 text-destructive mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-sm font-semibold text-destructive">Erro ao gerar cobrança</p>
-                      <p className="text-xs text-muted-foreground mt-1">{paymentError}</p>
-                    </div>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-3 gap-3">
-                  {[
-                    { id: "PIX" as BillingType, icon: QrCode, label: "PIX", desc: "Instantâneo" },
-                    { id: "BOLETO" as BillingType, icon: FileBarChart, label: "Boleto", desc: "3 dias úteis" },
-                    { id: "CREDIT_CARD" as BillingType, icon: CreditCard, label: "Cartão", desc: "Recorrente" },
-                  ].map((method) => (
-                    <button
-                      key={method.id}
-                      type="button"
-                      onClick={() => setSelectedPayment(method.id)}
-                      className={`p-4 rounded-xl border-2 transition-all text-center ${
-                        selectedPayment === method.id ? "border-primary bg-primary/5" : "border-border bg-card hover:border-primary/30"
-                      }`}
-                    >
-                      <method.icon className={`w-6 h-6 mx-auto mb-2 ${selectedPayment === method.id ? "text-primary" : "text-muted-foreground"}`} />
-                      <p className="text-sm font-semibold">{method.label}</p>
-                      <p className="text-xs text-muted-foreground">{method.desc}</p>
-                    </button>
-                  ))}
-                </div>
-
-                <Button onClick={handlePayment} disabled={!selectedPayment || paymentLoading} className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50">
-                  {paymentLoading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <CreditCard className="w-4 h-4 mr-2" />}
-                  {paymentError ? "Tentar novamente" : "Gerar cobrança e pagar"}
-                </Button>
-              </div>
-            )}
-          </WizardStepWrapper>
+              )}
+            </WizardStepWrapper>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+
+      {/* Post-payment report — shown after payment is generated */}
+      <PostPaymentReport
+        visible={paymentComplete}
+        effectivePath={effectivePath}
+        plan={plan}
+        qualification={qualification}
+        registration={registrationData}
+        computersQty={computersQty}
+        monthlyValue={monthlyValue}
+      />
+    </>
   );
 };
 
-const Label = ({ className = "", ...props }: React.LabelHTMLAttributes<HTMLLabelElement>) => (
+const HelperLabel = ({ className = "", ...props }: React.LabelHTMLAttributes<HTMLLabelElement>) => (
   <label className={`block ${className}`.trim()} {...props} />
 );
 
