@@ -79,6 +79,9 @@ const App = () => (
             <Route path="/ti-para-serventias-cartoriais" element={<TiServentiasCartoriaisPage />} />
             <Route path="/ti-para-industrias-alimenticias" element={<TiIndustriasAlimenticiaPage />} />
             <Route path="/ti-para-industrias-petroliferas" element={<TiIndustriasPetroliferasPage />} />
+            <Route path="/ti-para-escritorios-de-advocacia" element={<TiEscritoriosAdvocaciaPage />} />
+            <Route path="/ti-para-contabilidades" element={<TiContabilidadesPage />} />
+            <Route path="/ti-para-escritorios-corporativos" element={<TiEscritoriosCorporativosPage />} />
             {/* Provimento 213 */}
             <Route path="/provimento-213" element={<Navigate to="/cartorios/provimento-213" replace />} />
             <Route path="/cartorios/provimento-213" element={<Provimento213 />} />
