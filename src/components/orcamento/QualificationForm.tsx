@@ -472,10 +472,10 @@ const RentalQualificationForm = ({ onComplete, completed, data: completedData }:
                 Dimensione sua <span className="text-primary">locação de computadores</span>
               </h2>
               <p className="text-muted-foreground mb-8">
-                Responda 7 perguntas rápidas para gerar sua configuração recomendada.
+                Responda algumas perguntas rápidas para gerar sua configuração recomendada.
               </p>
               <Button
-                onClick={() => { setOpen(true); setBlockIndex(0); setBlockError(null); }}
+                onClick={() => { setOpen(true); setStepIndex(0); setStepError(null); }}
                 className="h-14 px-10 text-base bg-primary hover:bg-primary/90 text-primary-foreground"
               >
                 Iniciar diagnóstico
@@ -493,11 +493,11 @@ const RentalQualificationForm = ({ onComplete, completed, data: completedData }:
           <div className="flex items-center justify-between px-6 pt-5 pb-3">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                <currentBlock.icon className="w-4 h-4 text-primary" />
+                {currentStep && <currentStep.icon className="w-4 h-4 text-primary" />}
               </div>
               <div>
-                <p className="text-xs text-muted-foreground font-medium">Etapa {blockIndex + 1} de {wizardBlocks.length}</p>
-                <h3 className="text-base font-heading font-bold text-foreground">{currentBlock.title}</h3>
+                <p className="text-xs text-muted-foreground font-medium">Etapa {stepIndex + 1} de {visibleSteps.length}</p>
+                <h3 className="text-base font-heading font-bold text-foreground">{currentStep?.title}</h3>
               </div>
             </div>
             <button onClick={() => setOpen(false)} className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
@@ -515,49 +515,41 @@ const RentalQualificationForm = ({ onComplete, completed, data: completedData }:
                 transition={{ duration: 0.3, ease: "easeOut" }}
               />
             </div>
-            {/* Step dots */}
-            <div className="flex justify-between mt-2">
-              {wizardBlocks.map((block, i) => (
-                <div key={block.id} className="flex flex-col items-center">
-                  <div className={`w-2 h-2 rounded-full transition-colors ${i <= blockIndex ? "bg-primary" : "bg-muted-foreground/30"}`} />
-                </div>
-              ))}
-            </div>
           </div>
 
           {/* Content */}
           <div className="px-6 pb-4 overflow-y-auto flex-1 min-h-0">
             <AnimatePresence mode="wait">
               <motion.div
-                key={blockIndex}
+                key={currentStep?.id || stepIndex}
                 initial={{ opacity: 0, x: 30 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -30 }}
                 transition={{ duration: 0.2 }}
               >
-                {renderBlock()}
+                {renderStep()}
               </motion.div>
             </AnimatePresence>
           </div>
 
           {/* Error */}
-          {blockError && (
+          {stepError && (
             <div className="px-6 pb-2">
               <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-sm text-destructive">
                 <AlertTriangle className="w-4 h-4 shrink-0" />
-                <span>{blockError}</span>
+                <span>{stepError}</span>
               </div>
             </div>
           )}
 
           {/* Footer */}
           <div className="flex items-center gap-3 px-6 py-4 border-t border-border">
-            <Button variant="outline" onClick={handleBack} disabled={blockIndex === 0} className="h-11 px-5">
+            <Button variant="outline" onClick={handleBack} disabled={stepIndex === 0} className="h-11 px-5">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Voltar
             </Button>
             <Button onClick={handleNext} className="flex-1 h-11 bg-primary hover:bg-primary/90 text-primary-foreground">
-              {blockIndex < wizardBlocks.length - 1 ? (
+              {stepIndex < visibleSteps.length - 1 ? (
                 <>
                   Próximo
                   <ArrowRight className="w-4 h-4 ml-2" />

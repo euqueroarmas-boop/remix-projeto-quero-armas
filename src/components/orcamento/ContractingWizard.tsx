@@ -346,17 +346,21 @@ const ContractingWizard = ({
 
       const normalized = normalizePaymentPayload(data, selectedPayment);
 
-      setPaymentData(normalized);
-      setInvoiceUrl(normalized.invoiceUrl);
-      setPaymentComplete(normalized.success);
-
       if (!normalized.success) {
         throw new Error("A assinatura não foi confirmada pelo backend.");
       }
 
       if (!normalized.invoiceUrl) {
-        throw new Error("O sistema de pagamento não retornou um link de cobrança.");
+        throw new Error("O sistema de pagamento não retornou um link de cobrança. Tente novamente.");
       }
+
+      // Only set state and redirect AFTER confirmed URL
+      setPaymentData(normalized);
+      setInvoiceUrl(normalized.invoiceUrl);
+      setPaymentComplete(true);
+
+      // Redirect directly now that we have the URL
+      handleRedirectToCheckout(normalized.invoiceUrl);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Erro desconhecido";
       console.error("[WMTi][payment] Ponto de falha no fluxo:", message);
