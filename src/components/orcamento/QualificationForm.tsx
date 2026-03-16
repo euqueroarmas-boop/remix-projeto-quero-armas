@@ -227,7 +227,7 @@ const RadioCardGroup = ({
   </RadioGroup>
 );
 
-const RentalQualificationForm = ({ onComplete, completed, completedData }: Omit<Props, "path">) => {
+const RentalQualificationForm = ({ onComplete, completed, data: completedData }: Omit<Props, "path">) => {
   const [form, setForm] = useState<QualificationData>({
     computersQty: 0,
     activities: [],
@@ -600,7 +600,7 @@ const RentalQualificationForm = ({ onComplete, completed, completedData }: Omit<
   );
 };
 
-const LegacyQualificationForm = ({ onComplete, completed, completedData }: Omit<Props, "path">) => {
+const LegacyQualificationForm = ({ onComplete, completed, data: completedData }: Omit<Props, "path">) => {
   const [step, setStep] = useState(0);
   const [data, setData] = useState<QualificationData>({
     computersQty: 5,
@@ -768,10 +768,10 @@ const LegacyQualificationForm = ({ onComplete, completed, completedData }: Omit<
 
 const QualificationForm = (props: Props) => {
   if (props.path === "locacao") {
-    return <RentalQualificationForm onComplete={props.onComplete} completed={props.completed} completedData={props.data} />;
+    return <RentalQualificationForm onComplete={props.onComplete} completed={props.completed} data={props.data} />;
   }
 
-  return <LegacyQualificationForm onComplete={props.onComplete} completed={props.completed} completedData={props.data} />;
+  return <LegacyQualificationForm onComplete={props.onComplete} completed={props.completed} data={props.data} />;
 };
 
 export default QualificationForm;
