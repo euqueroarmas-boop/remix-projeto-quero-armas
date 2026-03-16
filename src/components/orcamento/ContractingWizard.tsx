@@ -299,7 +299,7 @@ const ContractingWizard = ({
     setPaymentError(null);
   };
 
-
+  const handlePayment = async () => {
     if (!selectedPayment || !registrationData || !quoteId) return;
     setPaymentLoading(true);
     setPaymentError(null);
