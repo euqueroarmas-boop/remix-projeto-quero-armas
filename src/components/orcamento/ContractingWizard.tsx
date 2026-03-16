@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   ArrowRight,
   Copy,
+  RotateCcw,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ import WizardStepWrapper from "./WizardStepWrapper";
 import QuickRegistrationForm, { type RegistrationData } from "./QuickRegistrationForm";
 import { generateContractHtml } from "./ContractPreview";
 import PostPaymentReport from "./PostPaymentReport";
+import OutsourcingOffer from "./OutsourcingOffer";
 import type { Plan } from "./PlanSelector";
 import type { QualificationData } from "./QualificationForm";
 import type { CustomerData } from "./CustomerDataForm";
@@ -71,6 +73,28 @@ const normalizePaymentPayload = (raw: any, fallbackBillingType: BillingType): No
   };
 };
 
+/* ─── Session recovery helpers ─── */
+const SESSION_KEY = "orcamentoWMti_session";
+
+const saveSession = (data: Record<string, any>) => {
+  try {
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(data));
+  } catch { /* ignore */ }
+};
+
+const loadSession = (): Record<string, any> | null => {
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
+const clearSession = () => {
+  try { sessionStorage.removeItem(SESSION_KEY); } catch { /* ignore */ }
+};
+
 const ContractingWizard = ({
   visible,
   effectivePath,
@@ -88,7 +112,6 @@ const ContractingWizard = ({
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
 
-  // Steps: registration → contract → payment (no redundant summary step)
   type Step = "registration" | "contract" | "payment";
   const [currentStep, setCurrentStep] = useState<Step>("registration");
   const stepOrder: Step[] = ["registration", "contract", "payment"];
@@ -108,6 +131,19 @@ const ContractingWizard = ({
   const [registrationLoading, setRegistrationLoading] = useState(false);
 
   const wizardRef = useRef<HTMLDivElement>(null);
+
+  // Save session when payment completes (for recovery)
+  useEffect(() => {
+    if (paymentComplete && paymentData) {
+      saveSession({
+        registrationData,
+        contractId,
+        selectedPayment: paymentData.billingType,
+        invoiceUrl: paymentData.invoiceUrl,
+        quoteId,
+      });
+    }
+  }, [paymentComplete, paymentData, registrationData, contractId, quoteId]);
 
   useEffect(() => {
     const signedId = searchParams.get("contract_signed");
@@ -135,6 +171,7 @@ const ContractingWizard = ({
     return () => clearInterval(interval);
   }, [currentStep, contractId, contractSigned, toast]);
 
+  // Auto-redirect for non-PIX payments
   useEffect(() => {
     if (!paymentComplete || !paymentData || paymentData.billingType === "PIX" || !paymentData.invoiceUrl) return;
     const timer = window.setTimeout(() => {
@@ -378,6 +415,8 @@ const ContractingWizard = ({
     isPJ: true,
   };
 
+  const showOutsourcingAfterPayment = paymentComplete && qualification?.hasInternalTech === "Sim";
+
   return (
     <>
       <section id="contracting-wizard" className="py-16 section-dark" ref={wizardRef}>
@@ -506,21 +545,29 @@ const ContractingWizard = ({
                   </div>
                 </div>
               ) : paymentComplete && paymentData?.invoiceUrl ? (
-                <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-3">
-                  <CheckCircle className="w-10 h-10 text-primary mx-auto" />
-                  <h4 className="text-lg font-heading font-bold">Cobrança gerada!</h4>
-                  <p className="text-sm text-muted-foreground">Redirecionando para o checkout...</p>
-                  <Loader2 className="w-5 h-5 animate-spin text-primary mx-auto" />
-                  <Button asChild variant="outline" className="w-full h-10 mt-2">
-                    <a href={paymentData.invoiceUrl} target="_blank" rel="noreferrer">
-                      <ExternalLink className="w-4 h-4 mr-2" />
-                      Caso não seja redirecionado, clique aqui
-                    </a>
-                  </Button>
+                <div className="bg-card border border-primary/20 rounded-xl p-6 space-y-4">
+                  <div className="flex flex-col items-center justify-center text-center space-y-3">
+                    <CheckCircle className="w-10 h-10 text-primary" />
+                    <h4 className="text-lg font-heading font-bold">Cobrança gerada!</h4>
+                    <p className="text-sm text-muted-foreground">Redirecionando para o checkout...</p>
+                    <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <Button asChild variant="outline" className="w-full h-10">
+                      <a href={paymentData.invoiceUrl} target="_blank" rel="noreferrer">
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        Caso não seja redirecionado, clique aqui
+                      </a>
+                    </Button>
+                    <Button onClick={handleRetryPayment} variant="ghost" className="w-full h-10 text-muted-foreground">
+                      <RotateCcw className="w-4 h-4 mr-2" />
+                      Voltar para o pagamento
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-muted-foreground text-center">
                     Valor mensal: <strong className="text-primary">R$ {monthlyValue.toLocaleString("pt-BR")},00</strong>
                   </p>
 
@@ -566,7 +613,7 @@ const ContractingWizard = ({
         </div>
       </section>
 
-      {/* Post-payment report — shown after payment is generated */}
+      {/* Post-payment report */}
       <PostPaymentReport
         visible={paymentComplete}
         effectivePath={effectivePath}
@@ -576,6 +623,9 @@ const ContractingWizard = ({
         computersQty={computersQty}
         monthlyValue={monthlyValue}
       />
+
+      {/* Outsourcing offer — only after payment AND only if has internal tech */}
+      <OutsourcingOffer visible={showOutsourcingAfterPayment} />
     </>
   );
 };

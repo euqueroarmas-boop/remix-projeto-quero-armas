@@ -21,6 +21,64 @@ const getDueDate = () => {
   return formatDate(d);
 };
 
+/* ─── Number to Portuguese words ─── */
+const numberToWords = (n: number): string => {
+  if (n === 0) return "zero";
+
+  const units = ["", "um", "dois", "três", "quatro", "cinco", "seis", "sete", "oito", "nove",
+    "dez", "onze", "doze", "treze", "quatorze", "quinze", "dezesseis", "dezessete", "dezoito", "dezenove"];
+  const tens = ["", "", "vinte", "trinta", "quarenta", "cinquenta", "sessenta", "setenta", "oitenta", "noventa"];
+  const hundreds = ["", "cento", "duzentos", "trezentos", "quatrocentos", "quinhentos",
+    "seiscentos", "setecentos", "oitocentos", "novecentos"];
+
+  const parts: string[] = [];
+
+  if (n >= 1000) {
+    const thousands = Math.floor(n / 1000);
+    if (thousands === 1) {
+      parts.push("mil");
+    } else {
+      parts.push(numberToWords(thousands) + " mil");
+    }
+    n = n % 1000;
+  }
+
+  if (n >= 100) {
+    if (n === 100) {
+      parts.push("cem");
+      n = 0;
+    } else {
+      parts.push(hundreds[Math.floor(n / 100)]);
+      n = n % 100;
+    }
+  }
+
+  if (n >= 20) {
+    const t = tens[Math.floor(n / 10)];
+    const u = n % 10;
+    if (u > 0) {
+      parts.push(t + " e " + units[u]);
+    } else {
+      parts.push(t);
+    }
+  } else if (n > 0) {
+    parts.push(units[n]);
+  }
+
+  return parts.join(" e ");
+};
+
+export const valueToWords = (value: number): string => {
+  const intPart = Math.floor(value);
+  const centPart = Math.round((value - intPart) * 100);
+
+  let result = numberToWords(intPart) + " reais";
+  if (centPart > 0) {
+    result += " e " + numberToWords(centPart) + (centPart === 1 ? " centavo" : " centavos");
+  }
+  return result;
+};
+
 export const generateContractHtml = (
   customer: CustomerData,
   contractType: "locacao" | "suporte",
@@ -32,6 +90,7 @@ export const generateContractHtml = (
   const dueDate = getDueDate();
   const isRental = contractType === "locacao";
   const unitPrice = plan ? plan.price : 0;
+  const valueWords = valueToWords(monthlyValue);
 
   const equipmentDesc = isRental && plan
     ? `${computersQty} Computador(es) Dell OptiPlex com processador ${plan.cpu}, SSD ${plan.ssd}, ${plan.ram} de memória RAM, placa de rede Gigabit onboard, sem sistema operacional, mouse, teclado e monitor 18.5" Dell.`
@@ -141,7 +200,7 @@ export const generateContractHtml = (
 
   <h2 style="font-size: 12pt; font-weight: bold; margin-top: 24px;">DA CONTRAPRESTAÇÃO</h2>
 
-  <p><strong>Cláusula Décima Nona</strong> – Em contraprestação ao presente contrato, o ${isRental ? "LOCATÁRIO" : "CONTRATANTE"} deverá pagar ao ${isRental ? "LOCADOR" : "CONTRATADA"} parcelas iguais de <strong>R$ ${monthlyValue.toLocaleString("pt-BR")},00</strong> (${monthlyValue} reais)${isRental ? `, sendo R$ ${unitPrice},00 por unidade` : ""}, mediante boleto bancário, PIX ou cartão de crédito, vencendo-se a primeira parcela em ${dueDate}.</p>
+  <p><strong>Cláusula Décima Nona</strong> – Em contraprestação ao presente contrato, o ${isRental ? "LOCATÁRIO" : "CONTRATANTE"} deverá pagar ao ${isRental ? "LOCADOR" : "CONTRATADA"} parcelas iguais de <strong>R$ ${monthlyValue.toLocaleString("pt-BR")},00</strong> (${valueWords})${isRental ? `, sendo R$ ${unitPrice},00 por unidade` : ""}, mediante boleto bancário, PIX ou cartão de crédito, vencendo-se a primeira parcela em ${dueDate}.</p>
 
   <p><strong>Cláusula Vigésima</strong> – Todos os tributos e contribuições devidos em decorrência direta ou indireta do presente contrato serão de exclusiva responsabilidade do ${isRental ? "LOCATÁRIO" : "CONTRATANTE"}.</p>
 
@@ -242,7 +301,7 @@ export const generateContractHtml = (
   </div>
 
 </div>
-`.trim();
+`;
 };
 
 const ContractPreview = ({ visible, customer, contractType, plan, computersQty, monthlyValue }: Props) => {
@@ -251,39 +310,18 @@ const ContractPreview = ({ visible, customer, contractType, plan, computersQty, 
   const html = generateContractHtml(customer, contractType, plan, computersQty, monthlyValue);
 
   return (
-    <section id="contract-preview" className="py-20 bg-card">
+    <section className="py-16 bg-card">
       <div className="container mx-auto px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-10"
-        >
-          <span className="inline-block px-4 py-1.5 mb-4 text-xs font-semibold tracking-widest uppercase bg-primary/10 text-primary rounded-full border border-primary/20">
-            Contrato
-          </span>
-          <h2 className="text-2xl md:text-4xl font-heading font-bold mb-3">
-            Revise o <span className="text-primary">contrato</span>
-          </h2>
-          <p className="text-muted-foreground text-sm max-w-2xl mx-auto">
-            Leia atentamente o contrato gerado automaticamente com base nos dados do orçamento.
-          </p>
-        </motion.div>
-
-        <div className="max-w-3xl mx-auto">
-          <div className="bg-background border border-border rounded-xl p-6 md:p-8 max-h-[600px] overflow-y-auto">
-            <div className="flex items-center gap-2 mb-6 pb-4 border-b border-border">
-              <FileText className="w-5 h-5 text-primary" />
-              <span className="font-semibold text-sm">
-                Contrato de {contractType === "locacao" ? "Locação de Equipamentos" : "Serviços de TI"}
-              </span>
-            </div>
-            <div
-              className="prose prose-sm max-w-none text-foreground/80"
-              dangerouslySetInnerHTML={{ __html: html }}
-            />
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto">
+          <div className="flex items-center gap-3 mb-6">
+            <FileText className="w-6 h-6 text-primary" />
+            <h2 className="text-xl font-heading font-bold">Pré-visualização do Contrato</h2>
           </div>
-        </div>
+          <div
+            className="bg-background border border-border rounded-xl p-8 max-h-[70vh] overflow-y-auto prose prose-sm"
+            dangerouslySetInnerHTML={{ __html: html }}
+          />
+        </motion.div>
       </div>
     </section>
   );

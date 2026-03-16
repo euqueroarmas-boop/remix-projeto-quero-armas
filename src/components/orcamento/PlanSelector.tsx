@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
-import { Check, Star } from "lucide-react";
+import { Check, Star, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export interface Plan {
   id: string;
@@ -46,9 +47,10 @@ export const plans: Plan[] = [
 interface Props {
   selectedPlan: string;
   onSelectPlan: (planId: string) => void;
+  onShowBudget?: () => void;
 }
 
-const PlanSelector = ({ selectedPlan, onSelectPlan }: Props) => {
+const PlanSelector = ({ selectedPlan, onSelectPlan, onShowBudget }: Props) => {
   return (
     <section id="plans" className="py-20 section-dark">
       <div className="container mx-auto px-4">
@@ -123,18 +125,22 @@ const PlanSelector = ({ selectedPlan, onSelectPlan }: Props) => {
           })}
         </div>
 
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          className="mt-8 max-w-2xl mx-auto"
-        >
-          <div className="bg-primary/10 border-2 border-primary/30 rounded-xl p-4 text-center">
-            <p className="text-sm font-semibold text-primary">
-              ✓ A lógica de preço foi mantida: você recebe apenas uma recomendação automática mais precisa.
-            </p>
-          </div>
-        </motion.div>
+        {/* CTA button — appears right after cards when a plan is selected */}
+        {selectedPlan && onShowBudget && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-8 max-w-md mx-auto text-center"
+          >
+            <Button
+              onClick={onShowBudget}
+              className="h-14 px-10 text-base bg-primary hover:bg-primary/90 text-primary-foreground"
+            >
+              Ver orçamento completo
+              <ArrowRight className="w-5 h-5 ml-2" />
+            </Button>
+          </motion.div>
+        )}
       </div>
     </section>
   );

@@ -15,7 +15,6 @@ import Recommendation, { getRecommendation } from "@/components/orcamento/Recomm
 import ContractingWizard from "@/components/orcamento/ContractingWizard";
 import BudgetPopup from "@/components/orcamento/BudgetPopup";
 import BudgetSummaryScreen from "@/components/orcamento/BudgetSummaryScreen";
-import OutsourcingOffer from "@/components/orcamento/OutsourcingOffer";
 import { recommendRentalAddons, recommendRentalPlan } from "@/components/orcamento/rentalRecommendation";
 
 const OrcamentoTiPage = () => {
@@ -124,7 +123,6 @@ const OrcamentoTiPage = () => {
     }
   }, [scrollToSection, selectedPath]);
 
-  // Open popup (rental) or go to summary (support)
   const handleShowBudgetPopup = useCallback(() => {
     setShowBudgetPopup(true);
   }, []);
@@ -224,7 +222,6 @@ const OrcamentoTiPage = () => {
 
   const showRentalFlow = effectivePath === "locacao";
   const showSupportFlow = effectivePath === "suporte";
-  const showOutsourcingOffer = qualificationComplete && qualification?.hasInternalTech === "Sim";
 
   return (
     <>
@@ -248,23 +245,13 @@ const OrcamentoTiPage = () => {
           />
         )}
 
-        {/* Rental flow: only plan selector + CTA button */}
+        {/* Rental flow: plan selector with integrated CTA */}
         {qualificationComplete && showRentalFlow && !showSummary && !budgetSaved && (
-          <>
-            <PlanSelector selectedPlan={selectedPlan} onSelectPlan={(id) => { setSelectedPlan(id); }} />
-
-            {/* Button appears right after selecting a plan */}
-            <section id="budget-cta" className="py-10">
-              <div className="container mx-auto px-4 text-center">
-                <button
-                  onClick={handleShowBudgetPopup}
-                  className="h-14 px-10 text-base font-semibold rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground transition-colors inline-flex items-center gap-2"
-                >
-                  Ver orçamento completo
-                </button>
-              </div>
-            </section>
-          </>
+          <PlanSelector
+            selectedPlan={selectedPlan}
+            onSelectPlan={(id) => setSelectedPlan(id)}
+            onShowBudget={handleShowBudgetPopup}
+          />
         )}
 
         {/* Support flow */}
@@ -300,7 +287,7 @@ const OrcamentoTiPage = () => {
           monthlyValue={monthlyValue}
         />
 
-        {/* Summary screen with all answers + config before contracting */}
+        {/* Summary screen */}
         <div id="budget-summary">
           <BudgetSummaryScreen
             visible={showSummary && !budgetSaved}
@@ -315,9 +302,7 @@ const OrcamentoTiPage = () => {
           />
         </div>
 
-        {/* Outsourcing offer — complementary, after summary, before contracting */}
-        <OutsourcingOffer visible={showOutsourcingOffer && showSummary && !budgetSaved} />
-
+        {/* Contracting wizard — no outsourcing offer here */}
         <ContractingWizard
           visible={budgetSaved}
           effectivePath={effectivePath as "locacao" | "suporte" | null}

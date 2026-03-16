@@ -279,7 +279,7 @@ const Navbar = () => {
         </Link>
 
         {/* Desktop */}
-        <div ref={navRef} className="hidden lg:flex items-center gap-6 xl:gap-8 relative">
+        <div ref={navRef} className="hidden lg:flex items-center gap-6 xl:gap-8 relative leading-none">
           {pillStyle && (
             <motion.div
               className="absolute -bottom-1 h-[3px] bg-primary"
@@ -292,7 +292,7 @@ const Navbar = () => {
 
           {navLinks.map((link, i) => {
             const active = i === activeIndex;
-            const className = `font-mono text-xs uppercase tracking-wider transition-colors ${
+            const className = `font-mono text-xs uppercase tracking-wider leading-none transition-colors ${
               active ? "text-primary" : "text-muted-foreground hover:text-primary"
             }`;
 

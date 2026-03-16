@@ -31,7 +31,7 @@ const OutsourcingOffer = ({ visible }: Props) => {
             aumentar segurança e garantir continuidade operacional.
           </p>
           <Button
-            onClick={() => navigate("/terceirizacao-de-ti")}
+            onClick={() => navigate("/terceirizacao-de-mao-de-obra-ti")}
             className="h-12 px-8 bg-primary hover:bg-primary/90 text-primary-foreground"
           >
             Quero conhecer a terceirização de TI
