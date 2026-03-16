@@ -45,6 +45,11 @@ Deno.serve(async (req) => {
       quote_id,
     } = body;
 
+    // PIX is not allowed for recurring subscriptions
+    if (billing_type === "PIX") {
+      return jsonResponse({ error: "PIX não é permitido para assinaturas recorrentes. Use Boleto ou Cartão de Crédito." }, 400);
+    }
+
     console.log("[create-asaas-subscription] Iniciando...", { billing_type, value, quote_id });
 
     await supabase.from("integration_logs").insert({
