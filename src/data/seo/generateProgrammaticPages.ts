@@ -423,14 +423,23 @@ function getCityName(slug: string): string {
   return cities.find((c) => c.slug === slug)?.name ?? slug;
 }
 
-/** Segment name-to-slug mapping for URL generation */
-const segmentPagePrefix: Record<string, string> = {
-  cartorios: "ti-para-cartorios",
-  hospitais: "ti-para-hospitais",
-  "escritorios-advocacia": "ti-para-escritorios-de-advocacia",
-  contabilidade: "ti-para-contabilidades",
-  industrias: "ti-para-industrias",
-};
+/** Segment name-to-slug mapping for URL generation — auto-built from segments */
+const segmentPagePrefix: Record<string, string> = {};
+for (const seg of segments) {
+  if (seg.dedicatedPage) {
+    // Extract prefix pattern from dedicated page for city suffixing
+    segmentPagePrefix[seg.slug] = seg.dedicatedPage.replace(/^\//, "").replace(/-jacarei$/, "");
+  } else {
+    segmentPagePrefix[seg.slug] = `ti-para-${seg.slug}`;
+  }
+}
+// Manual overrides for specific slugs
+segmentPagePrefix["serventias-notariais"] = "ti-para-serventias-notariais";
+segmentPagePrefix["hospitais"] = "ti-para-hospitais";
+segmentPagePrefix["escritorios-advocacia"] = "ti-para-escritorios-de-advocacia";
+segmentPagePrefix["contabilidade"] = "ti-para-contabilidades";
+segmentPagePrefix["industrias"] = "ti-para-industrias";
+segmentPagePrefix["empresas-corporativas"] = "ti-para-empresas-corporativas";
 
 export function generateProgrammaticPages(): SeoPageData[] {
   const pages: SeoPageData[] = [];
