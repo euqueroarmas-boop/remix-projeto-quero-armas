@@ -57,6 +57,8 @@ const ServicePageTemplate = ({
   localContent,
   canonicalSlug,
   shouldIndex = true,
+  heroImage,
+  heroImageAlt,
 }: ServicePageProps) => {
   const location = useLocation();
   const baseUrl = "https://wmti.com.br";
