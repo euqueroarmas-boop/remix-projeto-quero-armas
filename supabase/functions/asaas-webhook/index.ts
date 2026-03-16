@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 Deno.serve(async (req) => {
@@ -11,22 +11,33 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
   try {
     const body = await req.json();
     const { event, payment } = body;
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    console.log("[asaas-webhook] Evento recebido:", event, "Payment ID:", payment?.id);
 
-    // Log webhook
+    // Log webhook event
     await supabase.from("asaas_webhooks").insert({
       event: event,
       payload: body,
       processed: false,
     });
 
+    // Log to integration_logs
+    await supabase.from("integration_logs").insert({
+      integration_name: "asaas",
+      operation_name: "webhook_received",
+      request_payload: body,
+      status: "received",
+    });
+
     if (!payment?.id) {
+      console.log("[asaas-webhook] Sem payment.id, ignorando.");
       return new Response(JSON.stringify({ received: true }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -34,56 +45,107 @@ Deno.serve(async (req) => {
     }
 
     // Find payment record
-    const { data: paymentRecord } = await supabase
+    const { data: paymentRecord, error: findErr } = await supabase
       .from("payments")
       .select("id, quote_id")
       .eq("asaas_payment_id", payment.id)
       .single();
 
-    if (!paymentRecord) {
+    if (findErr || !paymentRecord) {
+      console.log("[asaas-webhook] Pagamento não encontrado no banco para asaas_payment_id:", payment.id);
+      await supabase.from("integration_logs").insert({
+        integration_name: "asaas",
+        operation_name: "webhook_payment_not_found",
+        request_payload: { asaas_payment_id: payment.id, event },
+        status: "warning",
+        error_message: "Payment record not found in database",
+      });
       return new Response(JSON.stringify({ received: true, note: "payment not found" }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    let newStatus = payment.status;
-
     // Map Asaas events to our status
+    let newStatus: string;
     switch (event) {
       case "PAYMENT_RECEIVED":
       case "PAYMENT_CONFIRMED":
         newStatus = "CONFIRMED";
+        break;
+      case "PAYMENT_CREATED":
+        newStatus = "PENDING";
+        break;
+      case "PAYMENT_UPDATED":
+        newStatus = payment.status || "PENDING";
         break;
       case "PAYMENT_OVERDUE":
         newStatus = "OVERDUE";
         break;
       case "PAYMENT_DELETED":
       case "PAYMENT_REFUNDED":
+      case "PAYMENT_REFUND_IN_PROGRESS":
         newStatus = "CANCELLED";
+        break;
+      case "PAYMENT_CHARGEBACK_REQUESTED":
+      case "PAYMENT_CHARGEBACK_DISPUTE":
+        newStatus = "CHARGEBACK";
+        break;
+      case "PAYMENT_AWAITING_RISK_ANALYSIS":
+        newStatus = "AWAITING_RISK_ANALYSIS";
         break;
       default:
         newStatus = payment.status || event;
     }
 
+    console.log("[asaas-webhook] Atualizando pagamento", paymentRecord.id, "→ status:", newStatus);
+
     // Update payment status
-    await supabase
+    const { error: updateErr } = await supabase
       .from("payments")
       .update({ payment_status: newStatus })
       .eq("id", paymentRecord.id);
 
+    if (updateErr) {
+      console.error("[asaas-webhook] Erro ao atualizar pagamento:", updateErr);
+    }
+
     // If confirmed, activate contract
     if (event === "PAYMENT_RECEIVED" || event === "PAYMENT_CONFIRMED") {
+      console.log("[asaas-webhook] Pagamento confirmado! Ativando contrato...");
+
       if (paymentRecord.quote_id) {
-        await supabase
+        const { error: contractErr } = await supabase
           .from("contracts")
           .update({ status: "ATIVO" })
           .eq("quote_id", paymentRecord.quote_id);
 
-        await supabase
+        if (contractErr) {
+          console.error("[asaas-webhook] Erro ao ativar contrato:", contractErr);
+        }
+
+        const { error: quoteErr } = await supabase
           .from("quotes")
           .update({ status: "active" })
           .eq("id", paymentRecord.quote_id);
+
+        if (quoteErr) {
+          console.error("[asaas-webhook] Erro ao atualizar quote:", quoteErr);
+        }
+
+        // Log contract activation
+        await supabase.from("integration_logs").insert({
+          integration_name: "asaas",
+          operation_name: "contract_activated",
+          request_payload: {
+            event,
+            payment_id: payment.id,
+            quote_id: paymentRecord.quote_id,
+          },
+          status: "success",
+        });
+
+        console.log("[asaas-webhook] Contrato ativado com sucesso para quote:", paymentRecord.quote_id);
       }
     }
 
@@ -93,12 +155,33 @@ Deno.serve(async (req) => {
       .update({ processed: true })
       .eq("payload->>id", body.id);
 
+    // Log success
+    await supabase.from("integration_logs").insert({
+      integration_name: "asaas",
+      operation_name: "webhook_processed",
+      request_payload: { event, payment_id: payment.id },
+      response_payload: { new_status: newStatus, payment_record_id: paymentRecord.id },
+      status: "success",
+    });
+
     return new Response(JSON.stringify({ received: true, status: newStatus }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("[asaas-webhook] Erro fatal:", message);
+
+    // Log error
+    try {
+      await supabase.from("integration_logs").insert({
+        integration_name: "asaas",
+        operation_name: "webhook_error",
+        status: "error",
+        error_message: message,
+      });
+    } catch {}
+
     return new Response(JSON.stringify({ error: message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
