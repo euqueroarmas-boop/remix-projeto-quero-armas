@@ -2,6 +2,7 @@ import {
   Server, Shield, Cloud, Network, Monitor, Wrench, Headphones,
   Lock, Activity, Eye, Cpu, HardDrive,
   Building2, Scale, Heart, Stethoscope, Landmark, Briefcase,
+  AlertTriangle, Clock,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { SeoPageData } from "@/data/seoPages";
@@ -10,6 +11,7 @@ import { cities } from "./cities";
 import { segments } from "./segments";
 import { intents } from "./intents";
 import { problems } from "./problems";
+import { blogPosts } from "@/data/blogPosts";
 
 /** Icon map per service slug */
 const serviceIcons: Record<string, { icon: LucideIcon; title: string; text: string }[]> = {
@@ -71,9 +73,19 @@ const serviceIcons: Record<string, { icon: LucideIcon; title: string; text: stri
   ],
 };
 
+/** Generic icons for services without specific mapping */
+const genericServiceIcons: { icon: LucideIcon; title: string; text: string }[] = [
+  { icon: Server, title: "Servidores corporativos", text: "Implantação e gerenciamento de servidores Dell PowerEdge." },
+  { icon: Shield, title: "Segurança", text: "Proteção da infraestrutura com firewall e políticas de segurança." },
+  { icon: Activity, title: "Monitoramento", text: "Monitoramento contínuo para prevenção de falhas." },
+  { icon: HardDrive, title: "Backup", text: "Backup automatizado com recuperação garantida." },
+  { icon: Wrench, title: "Manutenção", text: "Manutenção preventiva e corretiva da infraestrutura." },
+  { icon: Headphones, title: "Suporte técnico", text: "Equipe especializada com SLA garantido." },
+];
+
 /** Segment-specific icons */
 const segmentIcons: Record<string, { icon: LucideIcon; title: string; text: string }[]> = {
-  cartorios: [
+  "serventias-notariais": [
     { icon: Landmark, title: "Conformidade CNJ", text: "Infraestrutura em conformidade com o Provimento 213 do CNJ." },
     { icon: Shield, title: "Segurança de dados", text: "Proteção de dados cartorários com backup criptografado." },
     { icon: Server, title: "Servidores dedicados", text: "Servidores dimensionados para sistemas cartorários." },
@@ -97,6 +109,11 @@ const segmentIcons: Record<string, { icon: LucideIcon; title: string; text: stri
     { icon: Building2, title: "TI industrial", text: "Redes segmentadas e servidores de alta performance para fábricas." },
     { icon: Activity, title: "Monitoramento 24/7", text: "NOC dedicado para monitoramento da infraestrutura industrial." },
     { icon: Network, title: "Integração ERP", text: "Rede otimizada para sistemas de gestão industrial." },
+  ],
+  "empresas-corporativas": [
+    { icon: Building2, title: "TI corporativa", text: "Soluções completas de infraestrutura para empresas." },
+    { icon: Server, title: "Servidores Dell", text: "Servidores Dell PowerEdge com virtualização e alta disponibilidade." },
+    { icon: Network, title: "Redes segmentadas", text: "Redes corporativas com VLANs e switches gerenciáveis." },
   ],
 };
 
@@ -406,14 +423,23 @@ function getCityName(slug: string): string {
   return cities.find((c) => c.slug === slug)?.name ?? slug;
 }
 
-/** Segment name-to-slug mapping for URL generation */
-const segmentPagePrefix: Record<string, string> = {
-  cartorios: "ti-para-cartorios",
-  hospitais: "ti-para-hospitais",
-  "escritorios-advocacia": "ti-para-escritorios-de-advocacia",
-  contabilidade: "ti-para-contabilidades",
-  industrias: "ti-para-industrias",
-};
+/** Segment name-to-slug mapping for URL generation — auto-built from segments */
+const segmentPagePrefix: Record<string, string> = {};
+for (const seg of segments) {
+  if (seg.dedicatedPage) {
+    // Extract prefix pattern from dedicated page for city suffixing
+    segmentPagePrefix[seg.slug] = seg.dedicatedPage.replace(/^\//, "").replace(/-jacarei$/, "");
+  } else {
+    segmentPagePrefix[seg.slug] = `ti-para-${seg.slug}`;
+  }
+}
+// Manual overrides for specific slugs
+segmentPagePrefix["serventias-notariais"] = "ti-para-serventias-notariais";
+segmentPagePrefix["hospitais"] = "ti-para-hospitais";
+segmentPagePrefix["escritorios-advocacia"] = "ti-para-escritorios-de-advocacia";
+segmentPagePrefix["contabilidade"] = "ti-para-contabilidades";
+segmentPagePrefix["industrias"] = "ti-para-industrias";
+segmentPagePrefix["empresas-corporativas"] = "ti-para-empresas-corporativas";
 
 export function generateProgrammaticPages(): SeoPageData[] {
   const pages: SeoPageData[] = [];
@@ -467,7 +493,7 @@ export function generateProgrammaticPages(): SeoPageData[] {
         category: "local-service",
         painPoints: servicePainPoints[service.slug] ?? defaultPainPoints,
         solutions: serviceSolutions[service.slug] ?? defaultSolutions,
-        benefits: serviceIcons[service.slug] ?? serviceIcons["infraestrutura-ti"],
+        benefits: serviceIcons[service.slug] ?? genericServiceIcons,
         faq: [
           { question: `A WMTi oferece ${service.name.toLowerCase()} em ${city.name}?`, answer: `Sim. A WMTi atende empresas em ${city.name} e região com soluções profissionais de ${service.name.toLowerCase()}, suporte técnico especializado e infraestrutura corporativa dimensionada para cada necessidade.` },
           { question: `Quanto custa ${service.name.toLowerCase()} para empresas em ${city.name}?`, answer: `O investimento depende do porte da empresa, da quantidade de equipamentos e das necessidades específicas. Entre em contato para um diagnóstico gratuito e receba uma proposta personalizada para sua empresa em ${city.name}.` },
@@ -601,6 +627,50 @@ export function generateProgrammaticPages(): SeoPageData[] {
         localContent: `A WMTi atende ${segment.name.toLowerCase()} em ${city.name} (${city.state}), ${ctx}, com soluções de TI dimensionadas para as necessidades do segmento. Nossa equipe na região de ${city.region} oferece atendimento presencial e remoto com SLA garantido.`,
         shouldIndex: true,
         priority: city.priority * 0.6,
+      });
+    }
+  }
+
+  // ─── 6. Blog × City (auto-replication with canonical) ───
+  for (const post of blogPosts) {
+    for (const city of cities) {
+      // Skip Jacareí — original blog post is the canonical
+      if (city.slug === "jacarei") continue;
+      // Only replicate for higher-priority cities to avoid excessive pages
+      if (city.priority < 0.5) continue;
+
+      const slug = `blog-${post.slug}-${city.slug}`;
+      const ctx = cityContext[city.slug] || "região com forte atividade empresarial";
+
+      const relatedLinks = [
+        { label: "Artigo original", href: `/blog/${post.slug}` },
+        { label: `Empresa de TI em ${city.name}`, href: `/empresa-ti-${city.slug}` },
+        { label: `Suporte de TI em ${city.name}`, href: `/suporte-ti-${city.slug}` },
+        { label: `Infraestrutura de TI em ${city.name}`, href: `/infraestrutura-ti-${city.slug}` },
+      ];
+
+      addPage({
+        slug,
+        metaTitle: `${post.title} | TI em ${city.name} | WMTi`,
+        metaDescription: `${post.excerpt.slice(0, 120)}. Soluções de TI para empresas em ${city.name}.`,
+        tag: post.tag,
+        headline: `${post.title} — `,
+        headlineHighlight: city.name,
+        description: `${post.excerpt}\n\nA WMTi atende empresas em ${city.name}, ${ctx}, com soluções profissionais de infraestrutura de TI, suporte técnico e segurança digital.`,
+        whatsappMessage: `Olá! Li o artigo "${post.title}" e gostaria de saber mais sobre TI para minha empresa em ${city.name}.`,
+        category: "local-service",
+        painPoints: defaultPainPoints.slice(0, 4),
+        solutions: defaultSolutions.slice(0, 4),
+        benefits: genericServiceIcons.slice(0, 4),
+        faq: [
+          { question: `A WMTi atende empresas em ${city.name}?`, answer: `Sim. Atendemos empresas em ${city.name} e região de ${city.region} com soluções de infraestrutura de TI, suporte técnico e segurança digital.` },
+          { question: "Como solicitar um orçamento?", answer: "Entre em contato pelo WhatsApp ou formulário do site para um diagnóstico gratuito e proposta personalizada." },
+        ],
+        relatedLinks,
+        localContent: `A WMTi atende empresas em ${city.name} (${city.state}), ${ctx}. Com sede em Jacareí/SP e mais de 15 anos de experiência, oferecemos suporte técnico, servidores Dell, firewall pfSense e backup corporativo para empresas na região de ${city.region}.`,
+        shouldIndex: true,
+        priority: city.priority * 0.4,
+        canonicalSlug: `blog/${post.slug}`,
       });
     }
   }
