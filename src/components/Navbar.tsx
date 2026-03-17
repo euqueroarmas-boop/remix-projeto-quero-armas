@@ -1,39 +1,46 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, ChevronDown } from "lucide-react";
+import { Menu, X, ChevronDown, Server, Cloud, Shield, Network, Monitor, Wrench, Headphones, Activity, Eye, Cpu, HardDrive, Lock, Zap, Terminal, RefreshCw, Building2, Scale, Heart, Landmark, Briefcase, Calculator, Factory, Fuel, FileText } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import logoFull from "@/assets/logo-wmti-full.png";
+import type { LucideIcon } from "lucide-react";
 
-const segmentos = [
-  { label: "Serventias Notariais", href: "/ti-para-serventias-cartoriais" },
-  { label: "Hospitais e Clínicas", href: "/ti-para-hospitais-e-clinicas" },
-  { label: "Escritórios de Advocacia", href: "/ti-para-escritorios-de-advocacia" },
-  { label: "Escritórios de Contabilidade", href: "/ti-para-contabilidades" },
-  { label: "Indústrias Alimentícias", href: "/ti-para-industrias-alimenticias" },
-  { label: "Indústrias Petrolíferas", href: "/ti-para-industrias-petroliferas" },
-  { label: "Empresas Corporativas", href: "/ti-para-escritorios-corporativos" },
+interface MegaMenuItem {
+  label: string;
+  href: string;
+  icon: LucideIcon;
+}
+
+const segmentos: MegaMenuItem[] = [
+  { label: "Contabilidade", href: "/ti-para-contabilidades", icon: Calculator },
+  { label: "Empresas Corporativas", href: "/ti-para-escritorios-corporativos", icon: Building2 },
+  { label: "Escritórios De Advocacia", href: "/ti-para-escritorios-de-advocacia", icon: Scale },
+  { label: "Hospitais e Clínicas", href: "/ti-para-hospitais-e-clinicas", icon: Heart },
+  { label: "Indústrias Alimentícias", href: "/ti-para-industrias-alimenticias", icon: Factory },
+  { label: "Indústrias Petrolíferas", href: "/ti-para-industrias-petroliferas", icon: Fuel },
+  { label: "Serventias Notariais", href: "/ti-para-serventias-cartoriais", icon: FileText },
 ];
 
-const servicos = [
-  { label: "Suporte Técnico Empresarial", href: "/suporte-ti-jacarei" },
-  { label: "Suporte Técnico Emergencial", href: "/suporte-tecnico-emergencial" },
-  { label: "Suporte Windows Server", href: "/suporte-windows-server" },
-  { label: "Suporte Linux", href: "/suporte-linux" },
-  { label: "Infraestrutura De TI Para Empresas", href: "/infraestrutura-ti-corporativa-jacarei" },
-  { label: "Administração De Servidores", href: "/administracao-de-servidores" },
-  { label: "Monitoramento De Servidores", href: "/monitoramento-de-servidores" },
-  { label: "Servidores Dell PowerEdge", href: "/servidor-dell-poweredge-jacarei" },
-  { label: "Backup Corporativo", href: "/backup-corporativo" },
-  { label: "Segurança De Rede", href: "/seguranca-de-rede" },
-  { label: "Firewall Corporativo", href: "/firewall-pfsense-jacarei" },
-  { label: "Infraestrutura De Rede Corporativa", href: "/montagem-e-monitoramento-de-redes-jacarei" },
-  { label: "Monitoramento De Rede", href: "/monitoramento-de-rede" },
-  { label: "Suporte Técnico Para Redes Corporativas", href: "/suporte-tecnico-para-redes-corporativas" },
-  { label: "Manutenção De Infraestrutura De TI", href: "/manutencao-de-infraestrutura-de-ti" },
-  { label: "Administração Microsoft 365", href: "/microsoft-365-para-empresas-jacarei" },
-  { label: "Locação de Computadores", href: "/locacao-de-computadores-para-empresas-jacarei" },
-  { label: "Terceirização de TI", href: "/terceirizacao-de-mao-de-obra-ti" },
-];
+const servicos: MegaMenuItem[] = [
+  { label: "Administração De Servidores", href: "/administracao-de-servidores", icon: Server },
+  { label: "Administração Microsoft 365", href: "/microsoft-365-para-empresas-jacarei", icon: Cloud },
+  { label: "Backup Corporativo", href: "/backup-corporativo", icon: HardDrive },
+  { label: "Firewall Corporativo", href: "/firewall-pfsense-jacarei", icon: Shield },
+  { label: "Implantação De Servidores Dell PowerEdge", href: "/servidor-dell-poweredge-jacarei", icon: Cpu },
+  { label: "Infraestrutura De Rede Corporativa", href: "/montagem-e-monitoramento-de-redes-jacarei", icon: Network },
+  { label: "Infraestrutura De Servidores", href: "/infraestrutura-ti-corporativa-jacarei", icon: Server },
+  { label: "Infraestrutura De TI Para Empresas", href: "/infraestrutura-ti-corporativa-jacarei", icon: Building2 },
+  { label: "Locação De Computadores", href: "/locacao-de-computadores-para-empresas-jacarei", icon: Monitor },
+  { label: "Manutenção De Infraestrutura De TI", href: "/manutencao-de-infraestrutura-de-ti", icon: Wrench },
+  { label: "Monitoramento De Rede", href: "/monitoramento-de-rede", icon: Eye },
+  { label: "Monitoramento De Servidores", href: "/monitoramento-de-servidores", icon: Activity },
+  { label: "Suporte Linux", href: "/suporte-linux", icon: Terminal },
+  { label: "Suporte Técnico Emergencial", href: "/suporte-tecnico-emergencial", icon: Zap },
+  { label: "Suporte Técnico Empresarial", href: "/suporte-ti-jacarei", icon: Headphones },
+  { label: "Suporte Técnico Para Redes Corporativas", href: "/suporte-tecnico-para-redes-corporativas", icon: Network },
+  { label: "Suporte Windows Server", href: "/suporte-windows-server", icon: Lock },
+  { label: "Terceirização De TI", href: "/terceirizacao-de-mao-de-obra-ti", icon: RefreshCw },
+].sort((a, b) => a.label.localeCompare(b.label));
 
 type NavLink = {
   href: string;
@@ -156,8 +163,9 @@ const Navbar = () => {
     }, 300);
   };
 
-  const renderDropdown = (
-    items: { label: string; href: string }[],
+  /* ─── MEGA MENU DESKTOP ─── */
+  const renderMegaDropdown = (
+    items: MegaMenuItem[],
     isOpen: boolean,
     setIsOpen: (v: boolean) => void,
     ref: React.RefObject<HTMLDivElement | null>,
@@ -181,39 +189,46 @@ const Navbar = () => {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -8, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.96 }}
-            transition={{ duration: 0.18, ease: "easeOut" }}
-            className="absolute top-full left-0 mt-0 w-72 bg-card/95 backdrop-blur-md border border-border/60 shadow-2xl shadow-black/30 py-2 z-50 overflow-hidden"
-            style={{ borderRadius: "var(--radius)" }}
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            className="fixed left-0 right-0 top-16 z-50 flex justify-center"
           >
-            {items.map((item) => {
-              const isActive = location.pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  to={item.href}
-                  onClick={() => setIsOpen(false)}
-                  className={`group flex items-center gap-3 px-4 py-2.5 font-mono text-xs uppercase tracking-wider transition-all duration-150 ${
-                    isActive ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                  }`}
-                >
-                  <span className={`w-1 h-1 rounded-full transition-colors ${
-                    isActive ? "bg-primary" : "bg-muted-foreground/30 group-hover:bg-primary/60"
-                  }`} />
-                  {item.label}
-                </Link>
-              );
-            })}
+            <div
+              className="w-[90vw] max-w-[1400px] bg-card/98 backdrop-blur-xl border border-border/60 shadow-2xl shadow-black/40 overflow-y-auto"
+              style={{ borderRadius: "var(--radius)", maxHeight: "calc(100vh - 80px)" }}
+            >
+              <div className={`grid gap-x-12 gap-y-2 p-8 ${items.length > 7 ? 'grid-cols-2' : 'grid-cols-2'}`}>
+                {items.map((item) => {
+                  const isActive = location.pathname === item.href;
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.href + item.label}
+                      to={item.href}
+                      onClick={() => setIsOpen(false)}
+                      className={`group flex items-center gap-4 px-6 py-[18px] transition-all duration-150 hover:bg-white/[0.04] ${
+                        isActive ? "text-primary bg-primary/10" : "text-foreground"
+                      }`}
+                      style={{ borderRadius: "10px" }}
+                    >
+                      <Icon size={28} className="text-primary shrink-0" strokeWidth={1.5} />
+                      <span className="text-lg font-semibold">{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
     </div>
   );
 
-  const renderMobileDropdown = (
-    items: { label: string; href: string }[],
+  /* ─── MOBILE MEGA MENU ─── */
+  const renderMobileMegaDropdown = (
+    items: MegaMenuItem[],
     isOpen: boolean,
     setIsOpen: (v: boolean) => void,
     link: NavLink,
@@ -240,19 +255,24 @@ const Navbar = () => {
               transition={{ duration: 0.2 }}
               className="overflow-hidden"
             >
-              <div className="flex flex-col gap-1 pl-4 mt-2 border-l border-border/40 ml-1">
-                {items.map((item) => (
-                  <Link
-                    key={item.href}
-                    to={item.href}
-                    onClick={() => { setOpen(false); setIsOpen(false); }}
-                    className={`font-mono text-xs uppercase tracking-wider py-1.5 transition-colors ${
-                      location.pathname === item.href ? "text-primary" : "text-muted-foreground hover:text-primary"
-                    }`}
-                  >
-                    {item.label}
-                  </Link>
-                ))}
+              <div className="flex flex-col gap-1 pl-2 mt-3 ml-1">
+                {items.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.href + item.label}
+                      to={item.href}
+                      onClick={() => { setOpen(false); setIsOpen(false); }}
+                      className={`flex items-center gap-4 py-3 px-4 transition-colors hover:bg-white/[0.04] ${
+                        location.pathname === item.href ? "text-primary" : "text-muted-foreground hover:text-primary"
+                      }`}
+                      style={{ borderRadius: "10px" }}
+                    >
+                      <Icon size={24} className="text-primary shrink-0" strokeWidth={1.5} />
+                      <span className="font-mono text-sm uppercase tracking-wider">{item.label}</span>
+                    </Link>
+                  );
+                })}
               </div>
             </motion.div>
           )}
@@ -266,7 +286,7 @@ const Navbar = () => {
       {/* Single header container — fixed height, flex center */}
       <div className="container flex items-center justify-between h-16">
         <Link to="/" className="flex items-center h-16">
-          <img src={logoFull} alt="WMTi Tecnologia da Informação" className="h-9 md:h-10 w-auto" />
+          <img src={logoFull} alt="WMTi Tecnologia da Informação" className="h-8 md:h-9 w-auto" />
         </Link>
 
         {/* Desktop nav — all items share h-16 and flex-center */}
@@ -285,10 +305,10 @@ const Navbar = () => {
             const colorClass = active ? "text-primary" : "text-muted-foreground hover:text-primary";
 
             if (link.isDropdown && link.label === "Segmentos") {
-              return renderDropdown(segmentos, segOpen, setSegOpen, segDropdownRef, link, i, active);
+              return renderMegaDropdown(segmentos, segOpen, setSegOpen, segDropdownRef, link, i, active);
             }
             if (link.isDropdown && link.label === "Serviços") {
-              return renderDropdown(servicos, svcOpen, setSvcOpen, svcDropdownRef, link, i, active);
+              return renderMegaDropdown(servicos, svcOpen, setSvcOpen, svcDropdownRef, link, i, active);
             }
 
             const href = resolveHref(link, false);
@@ -344,14 +364,14 @@ const Navbar = () => {
           >
             <div className="container flex items-center justify-between h-14">
               <Link to="/" onClick={() => setOpen(false)} className="flex items-center">
-                <img src={logoFull} alt="WMTi Tecnologia da Informação" className="h-9 w-auto" />
+                <img src={logoFull} alt="WMTi Tecnologia da Informação" className="h-8 w-auto" />
               </Link>
               <button onClick={() => setOpen(false)} className="text-foreground" aria-label="Fechar menu">
                 <X size={20} />
               </button>
             </div>
 
-            <div className="container flex-1 flex flex-col justify-center gap-5 overflow-y-auto pb-12">
+            <div className="container flex-1 flex flex-col justify-start gap-4 overflow-y-auto pb-12 pt-4">
               {navLinks.map((link) => {
                 const active = navLinks.indexOf(link) === activeIndex;
                 const baseClass = `font-mono text-base uppercase tracking-wider transition-colors py-2 ${
@@ -359,10 +379,10 @@ const Navbar = () => {
                 }`;
 
                 if (link.isDropdown && link.label === "Segmentos") {
-                  return renderMobileDropdown(segmentos, mobileSegOpen, setMobileSegOpen, link, active);
+                  return renderMobileMegaDropdown(segmentos, mobileSegOpen, setMobileSegOpen, link, active);
                 }
                 if (link.isDropdown && link.label === "Serviços") {
-                  return renderMobileDropdown(servicos, mobileSvcOpen, setMobileSvcOpen, link, active);
+                  return renderMobileMegaDropdown(servicos, mobileSvcOpen, setMobileSvcOpen, link, active);
                 }
 
                 const href = resolveHref(link, true);
