@@ -45,6 +45,7 @@ const SuporteWindowsServerPage = lazy(() => import("./pages/SuporteWindowsServer
 const SuporteLinuxPage = lazy(() => import("./pages/SuporteLinuxPage.tsx"));
 const ManutencaoInfraestruturaPage = lazy(() => import("./pages/ManutencaoInfraestruturaPage.tsx"));
 const SuporteRedesCorporativasPage = lazy(() => import("./pages/SuporteRedesCorporativasPage.tsx"));
+const ContratarServicoPage = lazy(() => import("./pages/ContratarServicoPage.tsx"));
 
 const queryClient = new QueryClient();
 
