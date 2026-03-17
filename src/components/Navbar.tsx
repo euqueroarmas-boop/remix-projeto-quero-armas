@@ -203,9 +203,7 @@ const Navbar = () => {
         ref={(el) => { linkRefs.current[index] = el; }}
         onClick={(e) => {
           e.stopPropagation();
-          const next = !isOpen;
-          console.log(`[Navbar] ${link.label} clicked, isOpen=${isOpen}, setting to ${next}`);
-          setIsOpen(next);
+          setIsOpen(!isOpen);
           if (link.label === "Segmentos") setSvcOpen(false);
           if (link.label === "Serviços") setSegOpen(false);
         }}
