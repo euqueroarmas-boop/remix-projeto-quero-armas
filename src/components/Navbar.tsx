@@ -61,6 +61,8 @@ const navLinks: NavLink[] = [
 /* ─── Shared nav-item class for perfect vertical alignment ─── */
 const NAV_ITEM_CLASS = "font-mono text-xs uppercase tracking-wider flex items-center justify-center h-16 transition-colors";
 
+const WEBMAIL_URL = "https://sigma.servidor.net.br:2096/cpsess3314771808/webmail/jupiter/mail/clientconf.html?login=1&post_login=62387806819454";
+
 const Navbar = () => {
   const [open, setOpen] = useState(false);
   const [segOpen, setSegOpen] = useState(false);
@@ -75,6 +77,8 @@ const Navbar = () => {
   const linkRefs = useRef<(HTMLElement | null)[]>([]);
   const segDropdownRef = useRef<HTMLDivElement>(null);
   const svcDropdownRef = useRef<HTMLDivElement>(null);
+
+  const megaOpen = segOpen || svcOpen;
 
   const resolveHref = (link: NavLink, isMobile: boolean) => {
     if (link.isRoute) return link.href;
@@ -119,6 +123,12 @@ const Navbar = () => {
 
   const activeIndex = getActiveIndex();
 
+  const closeMegaMenus = useCallback(() => {
+    setSegOpen(false);
+    setSvcOpen(false);
+  }, []);
+
+  // Close on click outside
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (segDropdownRef.current && !segDropdownRef.current.contains(e.target as Node)) setSegOpen(false);
@@ -128,11 +138,21 @@ const Navbar = () => {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
+  // Close on ESC
   useEffect(() => {
-    if (open) { document.body.style.overflow = "hidden"; }
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeMegaMenus();
+    };
+    document.addEventListener("keydown", handleEsc);
+    return () => document.removeEventListener("keydown", handleEsc);
+  }, [closeMegaMenus]);
+
+  // Lock body scroll when mega menu or mobile menu is open
+  useEffect(() => {
+    if (open || megaOpen) { document.body.style.overflow = "hidden"; }
     else { document.body.style.overflow = ""; }
     return () => { document.body.style.overflow = ""; };
-  }, [open]);
+  }, [open, megaOpen]);
 
   useEffect(() => {
     const updatePill = () => {
