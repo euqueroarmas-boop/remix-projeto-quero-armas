@@ -214,8 +214,8 @@ const Navbar = () => {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             className="fixed inset-x-0 top-16 bottom-0 z-50 bg-secondary overflow-y-auto"
+            onClick={(e) => { if (e.target === e.currentTarget) setIsOpen(false); }}
           >
-            <div className="absolute inset-0" onClick={() => setIsOpen(false)} />
             <div className="relative container mx-auto py-12">
               <h2 className="font-mono text-xs uppercase tracking-widest text-muted-foreground mb-8">{link.label}</h2>
               <div className={`grid gap-x-12 gap-y-1 ${items.length > 7 ? 'grid-cols-2 xl:grid-cols-3' : 'grid-cols-2'}`}>
@@ -362,9 +362,8 @@ const Navbar = () => {
             href={WEBMAIL_URL}
             target="_blank"
             rel="noopener"
-            className={`${NAV_ITEM_CLASS} border border-primary text-primary hover:bg-primary hover:text-primary-foreground rounded-md px-4 transition-all duration-200`}
+            className={`${NAV_ITEM_CLASS} text-muted-foreground hover:text-primary`}
           >
-            <Mail size={14} className="mr-1.5" />
             Webmail
           </a>
         </div>
@@ -441,9 +440,8 @@ const Navbar = () => {
                 target="_blank"
                 rel="noopener"
                 onClick={() => setOpen(false)}
-                className="font-mono text-base uppercase tracking-wider transition-colors py-2 text-muted-foreground hover:text-primary text-left inline-flex items-center gap-2"
+                className="font-mono text-base uppercase tracking-wider transition-colors py-2 text-muted-foreground hover:text-primary text-left"
               >
-                <Mail size={16} />
                 Webmail
               </a>
 
