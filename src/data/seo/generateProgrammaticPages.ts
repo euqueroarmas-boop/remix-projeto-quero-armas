@@ -509,8 +509,63 @@ export function generateProgrammaticPages(): SeoPageData[] {
     }
   }
 
-  // Phase 1: Sections 2 (Service×City×Segment) and 3 (Service×City×Intent) removed
-  // Only clean service-city, problem-city, segment-city combinations
+
+  // ─── 3. Service × Segment × City ───
+  for (const service of services) {
+    for (const segment of segments) {
+      for (const city of cities) {
+        // Only generate for higher-priority cities to avoid millions of pages
+        if (city.priority < 0.5) continue;
+
+        const prefix = segmentPagePrefix[segment.slug] || `ti-para-${segment.slug}`;
+        // URL format: /{service-slug}-{segment-slug-short}-{city}
+        const segShort = segment.slug;
+        const slug = `${service.slug}-${segShort}-${city.slug}`;
+        const ctx = cityContext[city.slug] || "região com forte atividade empresarial";
+
+        const relatedLinks = [
+          { label: `${service.name} em ${city.name}`, href: `/${service.slug}-${city.slug}` },
+          { label: `TI ${segment.titleSuffix} em ${city.name}`, href: `/${prefix}-${city.slug}` },
+          { label: `Empresa de TI em ${city.name}`, href: `/empresa-ti-${city.slug}` },
+        ];
+
+        // Add nearby city links
+        const nearby = nearbyCities[city.slug] ?? [];
+        for (const nc of nearby.slice(0, 1)) {
+          relatedLinks.push({ label: `${service.name} ${segment.titleSuffix} em ${getCityName(nc)}`, href: `/${service.slug}-${segShort}-${nc}` });
+        }
+
+        const segBenefits = segmentIcons[segment.slug] ?? [];
+        const svcBenefits = serviceIcons[service.slug] ?? genericServiceIcons;
+        const benefits = [...segBenefits, ...svcBenefits.slice(0, 3)];
+
+        addPage({
+          slug,
+          metaTitle: `${service.name} ${segment.titleSuffix} em ${city.name} | WMTi`,
+          metaDescription: `${service.name} ${segment.titleSuffix.toLowerCase()} em ${city.name}. ${segment.descriptionExtra.slice(0, 100)}. WMTi Tecnologia.`,
+          tag: `${service.name} ${segment.titleSuffix}`,
+          headline: `${service.h1Prefix}${segment.titleSuffix} em `,
+          headlineHighlight: city.name,
+          description: `A WMTi oferece ${service.name.toLowerCase()} ${segment.titleSuffix.toLowerCase()} em ${city.name}, ${ctx}. ${segment.descriptionExtra} ${fill(service.contentTemplate, { city: city.name })}`,
+          whatsappMessage: `Olá! Preciso de ${service.name.toLowerCase()} ${segment.titleSuffix.toLowerCase()} em ${city.name}.`,
+          category: "segment",
+          painPoints: [...segment.painPoints, ...(servicePainPoints[service.slug] ?? defaultPainPoints).slice(0, 3)],
+          solutions: (serviceSolutions[service.slug] ?? defaultSolutions).slice(0, 6),
+          benefits,
+          faq: [
+            segment.faqExtra,
+            { question: `A WMTi oferece ${service.name.toLowerCase()} ${segment.titleSuffix.toLowerCase()} em ${city.name}?`, answer: `Sim. A WMTi atende ${segment.name.toLowerCase()} em ${city.name} com soluções especializadas de ${service.name.toLowerCase()}, suporte técnico dedicado e infraestrutura dimensionada.` },
+            { question: `Quanto custa ${service.name.toLowerCase()} ${segment.titleSuffix.toLowerCase()}?`, answer: `O investimento depende do porte e necessidades específicas. Solicite um diagnóstico gratuito e receba proposta personalizada.` },
+          ],
+          relatedLinks,
+          localContent: `A WMTi atende ${segment.name.toLowerCase()} em ${city.name} (${city.state}), ${ctx}, com soluções de ${service.name.toLowerCase()}. Com sede em Jacareí/SP e mais de 15 anos de experiência, oferecemos atendimento presencial e remoto com SLA garantido na região de ${city.region}.`,
+          shouldIndex: true,
+          priority: city.priority * 0.5,
+        });
+      }
+    }
+  }
+
 
 
   // ─── 4. Problem × City ───
