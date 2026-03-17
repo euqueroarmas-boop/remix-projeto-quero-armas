@@ -211,7 +211,7 @@ const Navbar = () => {
         <ChevronDown size={12} className={`transition-transform ${isOpen ? "rotate-180" : ""}`} />
       </button>
       <AnimatePresence>
-        {isOpen && (
+        {isOpen && createPortal(
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -220,7 +220,7 @@ const Navbar = () => {
             className="fixed inset-x-0 top-16 bottom-0 z-[100] bg-secondary overflow-y-auto"
             onClick={(e) => { if (e.target === e.currentTarget) setIsOpen(false); }}
           >
-            <div className="relative container mx-auto py-12">
+            <div className="container mx-auto py-12">
               <h2 className="font-mono text-xs uppercase tracking-widest text-muted-foreground mb-8">{link.label}</h2>
               <div className={`grid gap-x-12 gap-y-1 ${items.length > 7 ? 'grid-cols-2 xl:grid-cols-3' : 'grid-cols-2'}`}>
                 {items.map((item) => {
@@ -242,7 +242,8 @@ const Navbar = () => {
                 })}
               </div>
             </div>
-          </motion.div>
+          </motion.div>,
+          document.body
         )}
       </AnimatePresence>
     </div>
