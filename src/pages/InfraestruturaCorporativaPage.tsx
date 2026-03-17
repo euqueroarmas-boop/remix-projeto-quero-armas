@@ -1,5 +1,6 @@
 import { Server, Network, Shield, Cloud, Activity, HardDrive } from "lucide-react";
 import ServicePageTemplate from "@/components/ServicePageTemplate";
+import heroImg from "@/assets/dell-infrastructure.webp";
 
 const InfraestruturaCorporativaPage = () => (
   <ServicePageTemplate
@@ -10,6 +11,8 @@ const InfraestruturaCorporativaPage = () => (
     headline={<>Infraestrutura de TI <span className="text-primary">completa</span> para sua empresa.</>}
     description="Projetos completos de infraestrutura de TI: servidores Dell, redes estruturadas, firewall pfSense, backup Veeam, Microsoft 365 e monitoramento 24/7. Da concepção à operação, com equipe certificada."
     whatsappMessage="Olá! Gostaria de um projeto completo de infraestrutura de TI para minha empresa."
+    heroImage={heroImg}
+    heroImageAlt="Infraestrutura corporativa Dell com desktops OptiPlex, workstations e servidores PowerEdge para empresas"
     painPoints={[
       "Infraestrutura de TI desorganizada e sem padrão",
       "Múltiplos fornecedores sem integração entre soluções",
