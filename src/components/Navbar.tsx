@@ -196,8 +196,11 @@ const Navbar = () => {
     <div key={link.label} ref={ref} className="relative flex items-center h-16">
       <button
         ref={(el) => { linkRefs.current[index] = el; }}
-        onClick={() => {
-          setIsOpen(!isOpen);
+        onClick={(e) => {
+          e.stopPropagation();
+          const next = !isOpen;
+          console.log(`[Navbar] ${link.label} clicked, isOpen=${isOpen}, setting to ${next}`);
+          setIsOpen(next);
           if (link.label === "Segmentos") setSvcOpen(false);
           if (link.label === "Serviços") setSegOpen(false);
         }}
