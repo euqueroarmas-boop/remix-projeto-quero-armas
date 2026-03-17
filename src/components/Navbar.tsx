@@ -199,6 +199,7 @@ const Navbar = () => {
     <div key={link.label} ref={ref} className="relative flex items-center h-16">
       <button
         ref={(el) => { linkRefs.current[index] = el; }}
+        onMouseDown={(e) => e.stopPropagation()}
         onClick={(e) => {
           e.stopPropagation();
           setIsOpen(!isOpen);
