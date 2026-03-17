@@ -338,10 +338,10 @@ const Navbar = () => {
             const colorClass = active ? "text-primary" : "text-muted-foreground hover:text-primary";
 
             if (link.isDropdown && link.label === "Segmentos") {
-              return renderMegaDropdown(segmentos, segOpen, setSegOpen, segDropdownRef, link, i, active);
+              return renderMegaButton(link, i, active, segOpen, setSegOpen, segDropdownRef);
             }
             if (link.isDropdown && link.label === "Serviços") {
-              return renderMegaDropdown(servicos, svcOpen, setSvcOpen, svcDropdownRef, link, i, active);
+              return renderMegaButton(link, i, active, svcOpen, setSvcOpen, svcDropdownRef);
             }
 
             const href = resolveHref(link, false);
