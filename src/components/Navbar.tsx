@@ -474,6 +474,13 @@ const Navbar = () => {
         )}
       </AnimatePresence>
     </nav>
+
+    {/* Mega panels rendered OUTSIDE nav to avoid stacking context issues */}
+    <div className="hidden lg:block">
+      {renderMegaPanel(servicos, svcOpen, setSvcOpen, "Serviços")}
+      {renderMegaPanel(segmentos, segOpen, setSegOpen, "Segmentos")}
+    </div>
+    </>
   );
 };
 
