@@ -93,6 +93,8 @@ const App = () => (
             <Route path="/suporte-linux" element={<SuporteLinuxPage />} />
             <Route path="/manutencao-de-infraestrutura-de-ti" element={<ManutencaoInfraestruturaPage />} />
             <Route path="/suporte-tecnico-para-redes-corporativas" element={<SuporteRedesCorporativasPage />} />
+            {/* Service contracting flow */}
+            <Route path="/contratar/:slug" element={<ContratarServicoPage />} />
             {/* Budget system */}
             <Route path="/orcamento-ti" element={<OrcamentoTiPage />} />
             <Route path="/contrato" element={<ContratoPage />} />
