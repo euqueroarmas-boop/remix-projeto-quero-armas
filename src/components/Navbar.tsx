@@ -199,12 +199,13 @@ const Navbar = () => {
     <div key={link.label} ref={ref} className="relative flex items-center h-16">
       <button
         ref={(el) => { linkRefs.current[index] = el; }}
+        onMouseDown={(e) => e.stopPropagation()}
         onClick={(e) => {
           e.stopPropagation();
           setIsOpen(!isOpen);
           if (link.label === "Segmentos") setSvcOpen(false);
           if (link.label === "Serviços") setSegOpen(false);
-        }}
+        }
         className={`${NAV_ITEM_CLASS} gap-1 ${active ? "text-primary" : "text-muted-foreground hover:text-primary"}`}
       >
         {link.label}

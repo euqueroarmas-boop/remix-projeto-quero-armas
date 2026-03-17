@@ -475,8 +475,40 @@ const ContratarServicoPage = () => {
           </WizardStepWrapper>
 
           {/* Step 4: Payment */}
-          <WizardStepWrapper stepNumber={4} title="Pagamento" subtitle="Pagamento único via checkout seguro" status={getStepStatus("payment")} isLast>
-            {paymentLoading ? (
+          <WizardStepWrapper stepNumber={4} title={paymentConfirmed ? "Compra Concluída" : "Pagamento"} subtitle={paymentConfirmed ? "Pagamento confirmado ✓" : "Pagamento único via checkout seguro"} status={paymentConfirmed ? "completed" : getStepStatus("payment")} isLast>
+            {paymentConfirmed ? (
+              <div className="bg-card border border-primary/20 rounded-xl p-8 space-y-6">
+                <div className="flex flex-col items-center text-center space-y-3">
+                  <CheckCircle className="w-14 h-14 text-green-500" />
+                  <h3 className="text-2xl font-heading font-bold">Compra Concluída Com Sucesso!</h3>
+                  <p className="text-muted-foreground">Parabéns! Sua contratação foi realizada com sucesso.</p>
+                  <p className="text-sm text-muted-foreground">Já recebemos seu pagamento e em breve entraremos em contato para dar andamento ao atendimento.</p>
+                </div>
+                <div className="bg-secondary rounded-lg p-5 space-y-3">
+                  <p className="font-mono text-xs uppercase tracking-widest text-primary mb-2">Resumo da compra</p>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between"><span className="text-muted-foreground">Serviço</span><span className="font-semibold">{serviceName}</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Horas</span><span className="font-semibold">{hours}h</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Valor pago</span><span className="font-semibold text-primary">R$ {promoPrice.toFixed(2).replace(".", ",")}</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Status</span><span className="font-bold text-green-500">Confirmado</span></div>
+                    {contractId && <div className="flex justify-between"><span className="text-muted-foreground">Contrato</span><span className="font-mono text-xs">{contractId.slice(0, 8).toUpperCase()}</span></div>}
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Button onClick={() => navigate("/")} variant="outline" className="w-full h-12">
+                    Voltar para o site
+                  </Button>
+                  <a
+                    href={`https://wa.me/5511963166915?text=${encodeURIComponent(`Olá! Acabei de contratar o serviço ${serviceName} (${hours}h) no valor de R$ ${promoPrice.toFixed(2).replace(".", ",")}. Contrato: ${contractId?.slice(0, 8).toUpperCase() || "N/A"}`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full inline-flex items-center justify-center gap-2 h-12 border border-primary/30 text-primary rounded-md hover:bg-primary/5 transition-colors font-mono text-sm"
+                  >
+                    Falar no WhatsApp
+                  </a>
+                </div>
+              </div>
+            ) : paymentLoading ? (
               <div className="bg-card border border-primary/20 rounded-xl p-6 space-y-4">
                 <div className="flex flex-col items-center text-center space-y-3">
                   <Loader2 className="w-10 h-10 animate-spin text-primary" />
@@ -487,9 +519,9 @@ const ContratarServicoPage = () => {
             ) : paymentComplete && invoiceUrl ? (
               <div className="bg-card border border-primary/20 rounded-xl p-6 space-y-4">
                 <div className="flex flex-col items-center text-center space-y-3">
-                  <CheckCircle className="w-10 h-10 text-primary" />
-                  <h4 className="text-lg font-heading font-bold">Cobrança criada com sucesso!</h4>
-                  <p className="text-sm text-muted-foreground">A página segura de pagamento foi aberta em outra aba.</p>
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  <h4 className="text-lg font-heading font-bold">Aguardando confirmação do pagamento...</h4>
+                  <p className="text-sm text-muted-foreground">A página segura de pagamento foi aberta em outra aba. Conclua o pagamento por lá.</p>
                 </div>
                 <div className="flex flex-col gap-2">
                   <Button onClick={() => window.open(invoiceUrl, "_blank", "noopener,noreferrer")} className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground">

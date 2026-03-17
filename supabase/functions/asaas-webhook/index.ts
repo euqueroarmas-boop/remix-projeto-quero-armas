@@ -136,7 +136,24 @@ Deno.serve(async (req) => {
           .update({ status: "active" })
           .eq("id", paymentRecord.quote_id);
 
-        // Log invoice generation (simulated — real NF integration would call an NF API)
+        // Fetch customer data for notification
+        const { data: contractData } = await supabase
+          .from("contracts")
+          .select("customer_id, contract_type, monthly_value")
+          .eq("quote_id", paymentRecord.quote_id)
+          .single();
+
+        let customerInfo: Record<string, unknown> = {};
+        if (contractData?.customer_id) {
+          const { data: customer } = await supabase
+            .from("customers")
+            .select("*")
+            .eq("id", contractData.customer_id)
+            .single();
+          if (customer) customerInfo = customer;
+        }
+
+        // Log invoice generation
         await supabase.from("integration_logs").insert({
           integration_name: "asaas",
           operation_name: "invoice_generated",
@@ -166,7 +183,28 @@ Deno.serve(async (req) => {
           status: "success",
         });
 
-        console.log("[asaas-webhook] Contrato ativado e NF registrada para quote:", paymentRecord.quote_id);
+        // Log payment notification with full details for admin
+        await supabase.from("integration_logs").insert({
+          integration_name: "wmti_notification",
+          operation_name: "payment_confirmed_notification",
+          request_payload: {
+            customer: customerInfo,
+            contract_type: contractData?.contract_type,
+            monthly_value: contractData?.monthly_value || payment.value,
+            payment_id: payment.id,
+            quote_id: paymentRecord.quote_id,
+            billing_type: payment.billingType,
+            payment_date: new Date().toISOString(),
+          },
+          response_payload: {
+            whatsapp_number: "5511963166915",
+            notification_status: "logged",
+            message: `Nova compra confirmada: ${(customerInfo as any)?.razao_social || "Cliente"} - R$ ${contractData?.monthly_value || payment.value} - ${contractData?.contract_type || "serviço"}`,
+          },
+          status: "success",
+        });
+
+        console.log("[asaas-webhook] Contrato ativado, NF registrada e notificação gerada para quote:", paymentRecord.quote_id);
       }
     }
 
