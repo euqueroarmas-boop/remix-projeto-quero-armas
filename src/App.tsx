@@ -45,6 +45,7 @@ const SuporteWindowsServerPage = lazy(() => import("./pages/SuporteWindowsServer
 const SuporteLinuxPage = lazy(() => import("./pages/SuporteLinuxPage.tsx"));
 const ManutencaoInfraestruturaPage = lazy(() => import("./pages/ManutencaoInfraestruturaPage.tsx"));
 const SuporteRedesCorporativasPage = lazy(() => import("./pages/SuporteRedesCorporativasPage.tsx"));
+const ContratarServicoPage = lazy(() => import("./pages/ContratarServicoPage.tsx"));
 
 const queryClient = new QueryClient();
 
@@ -92,6 +93,8 @@ const App = () => (
             <Route path="/suporte-linux" element={<SuporteLinuxPage />} />
             <Route path="/manutencao-de-infraestrutura-de-ti" element={<ManutencaoInfraestruturaPage />} />
             <Route path="/suporte-tecnico-para-redes-corporativas" element={<SuporteRedesCorporativasPage />} />
+            {/* Service contracting flow */}
+            <Route path="/contratar/:slug" element={<ContratarServicoPage />} />
             {/* Budget system */}
             <Route path="/orcamento-ti" element={<OrcamentoTiPage />} />
             <Route path="/contrato" element={<ContratoPage />} />
