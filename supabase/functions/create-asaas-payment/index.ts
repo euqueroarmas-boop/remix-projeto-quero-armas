@@ -105,11 +105,18 @@ Deno.serve(async (req) => {
       status: "success",
     });
 
+    // Asaas requires dueDate — default to tomorrow if not provided
+    const resolvedDueDate = due_date || (() => {
+      const d = new Date();
+      d.setDate(d.getDate() + 1);
+      return d.toISOString().split("T")[0];
+    })();
+
     const paymentPayload = {
       customer: asaasCustomerId,
       billingType: billing_type,
       value,
-      dueDate: due_date,
+      dueDate: resolvedDueDate,
       description: description || "Contrato WMTi",
     };
 
