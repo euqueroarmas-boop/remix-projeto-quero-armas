@@ -188,15 +188,14 @@ const Navbar = () => {
     }, 300);
   };
 
-  /* ─── MEGA MENU DESKTOP — full-screen opaque panel ─── */
-  const renderMegaDropdown = (
-    items: MegaMenuItem[],
+  /* ─── MEGA MENU DESKTOP — renders button only, panel rendered outside nav ─── */
+  const renderMegaButton = (
+    link: NavLink,
+    index: number,
+    active: boolean,
     isOpen: boolean,
     setIsOpen: (v: boolean) => void,
     ref: React.RefObject<HTMLDivElement | null>,
-    link: NavLink,
-    index: number,
-    active: boolean
   ) => (
     <div key={link.label} ref={ref} className="relative flex items-center h-16">
       <button
@@ -212,44 +211,52 @@ const Navbar = () => {
         {link.label}
         <ChevronDown size={12} className={`transition-transform ${isOpen ? "rotate-180" : ""}`} />
       </button>
-      <AnimatePresence>
-        {isOpen && createPortal(
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-x-0 top-16 bottom-0 z-[100] bg-secondary overflow-y-auto"
-            data-mega-panel
-            onClick={(e) => { if (e.target === e.currentTarget) setIsOpen(false); }}
-          >
-            <div className="container mx-auto py-12">
-              <h2 className="font-mono text-xs uppercase tracking-widest text-muted-foreground mb-8">{link.label}</h2>
-              <div className={`grid gap-x-12 gap-y-1 ${items.length > 7 ? 'grid-cols-2 xl:grid-cols-3' : 'grid-cols-2'}`}>
-                {items.map((item) => {
-                  const isActive = location.pathname === item.href;
-                  const Icon = item.icon;
-                  return (
-                    <Link
-                      key={item.href + item.label}
-                      to={item.href}
-                      onClick={() => setIsOpen(false)}
-                      className={`group flex items-center gap-4 px-6 py-4 transition-all duration-150 hover:bg-white/[0.04] rounded-lg ${
-                        isActive ? "text-primary bg-primary/10" : "text-foreground"
-                      }`}
-                    >
-                      <Icon size={28} className="text-primary shrink-0" strokeWidth={1.5} />
-                      <span className="text-lg font-semibold">{item.label}</span>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          </motion.div>,
-          document.body
-        )}
-      </AnimatePresence>
     </div>
+  );
+
+  /* ─── MEGA PANEL — rendered outside nav as sibling ─── */
+  const renderMegaPanel = (
+    items: MegaMenuItem[],
+    isOpen: boolean,
+    setIsOpen: (v: boolean) => void,
+    label: string,
+  ) => (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="fixed inset-x-0 top-16 bottom-0 z-[60] bg-secondary overflow-y-auto"
+          data-mega-panel
+          onClick={(e) => { if (e.target === e.currentTarget) setIsOpen(false); }}
+        >
+          <div className="container mx-auto py-12">
+            <h2 className="font-mono text-xs uppercase tracking-widest text-muted-foreground mb-8">{label}</h2>
+            <div className={`grid gap-x-12 gap-y-1 ${items.length > 7 ? 'grid-cols-2 xl:grid-cols-3' : 'grid-cols-2'}`}>
+              {items.map((item) => {
+                const isActive = location.pathname === item.href;
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.href + item.label}
+                    to={item.href}
+                    onClick={() => setIsOpen(false)}
+                    className={`group flex items-center gap-4 px-6 py-4 transition-all duration-150 hover:bg-white/[0.04] rounded-lg ${
+                      isActive ? "text-primary bg-primary/10" : "text-foreground"
+                    }`}
+                  >
+                    <Icon size={28} className="text-primary shrink-0" strokeWidth={1.5} />
+                    <span className="text-lg font-semibold">{item.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 
   /* ─── MOBILE MEGA MENU ─── */
