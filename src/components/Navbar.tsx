@@ -183,7 +183,7 @@ const Navbar = () => {
     }, 300);
   };
 
-  /* ─── MEGA MENU DESKTOP ─── */
+  /* ─── MEGA MENU DESKTOP — full-screen opaque panel ─── */
   const renderMegaDropdown = (
     items: MegaMenuItem[],
     isOpen: boolean,
@@ -209,17 +209,16 @@ const Navbar = () => {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
-            className="fixed left-0 right-0 top-16 z-50 flex justify-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-x-0 top-16 bottom-0 z-50 bg-secondary overflow-y-auto"
           >
-            <div
-              className="w-[90vw] max-w-[1400px] bg-card/98 backdrop-blur-xl border border-border/60 shadow-2xl shadow-black/40 overflow-y-auto"
-              style={{ borderRadius: "var(--radius)", maxHeight: "calc(100vh - 80px)" }}
-            >
-              <div className={`grid gap-x-12 gap-y-2 p-8 ${items.length > 7 ? 'grid-cols-2' : 'grid-cols-2'}`}>
+            <div className="absolute inset-0" onClick={() => setIsOpen(false)} />
+            <div className="relative container mx-auto py-12">
+              <h2 className="font-mono text-xs uppercase tracking-widest text-muted-foreground mb-8">{link.label}</h2>
+              <div className={`grid gap-x-12 gap-y-1 ${items.length > 7 ? 'grid-cols-2 xl:grid-cols-3' : 'grid-cols-2'}`}>
                 {items.map((item) => {
                   const isActive = location.pathname === item.href;
                   const Icon = item.icon;
@@ -228,10 +227,9 @@ const Navbar = () => {
                       key={item.href + item.label}
                       to={item.href}
                       onClick={() => setIsOpen(false)}
-                      className={`group flex items-center gap-4 px-6 py-[18px] transition-all duration-150 hover:bg-white/[0.04] ${
+                      className={`group flex items-center gap-4 px-6 py-4 transition-all duration-150 hover:bg-white/[0.04] rounded-lg ${
                         isActive ? "text-primary bg-primary/10" : "text-foreground"
                       }`}
-                      style={{ borderRadius: "10px" }}
                     >
                       <Icon size={28} className="text-primary shrink-0" strokeWidth={1.5} />
                       <span className="text-lg font-semibold">{item.label}</span>
