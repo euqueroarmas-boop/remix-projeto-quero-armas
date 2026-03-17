@@ -124,6 +124,7 @@ const ContractingWizard = ({
   const [invoiceUrl, setInvoiceUrl] = useState<string | null>(null);
   const [paymentComplete, setPaymentComplete] = useState(false);
   const [paymentData, setPaymentData] = useState<NormalizedPaymentData | null>(null);
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
 
   const [registrationLoading, setRegistrationLoading] = useState(false);
 
