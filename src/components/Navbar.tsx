@@ -437,6 +437,17 @@ const Navbar = () => {
               </Link>
 
               <a
+                href={WEBMAIL_URL}
+                target="_blank"
+                rel="noopener"
+                onClick={() => setOpen(false)}
+                className="font-mono text-base uppercase tracking-wider transition-colors py-2 text-muted-foreground hover:text-primary text-left inline-flex items-center gap-2"
+              >
+                <Mail size={16} />
+                Webmail
+              </a>
+
+              <a
                 href="https://wa.me/5511963166915?text=Ol%C3%A1%2C%20gostaria%20de%20falar%20com%20um%20especialista%20em%20TI."
                 target="_blank"
                 rel="noopener noreferrer"
