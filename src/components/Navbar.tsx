@@ -362,9 +362,8 @@ const Navbar = () => {
             href={WEBMAIL_URL}
             target="_blank"
             rel="noopener"
-            className={`${NAV_ITEM_CLASS} border border-primary text-primary hover:bg-primary hover:text-primary-foreground rounded-md px-4 transition-all duration-200`}
+            className={`${NAV_ITEM_CLASS} text-muted-foreground hover:text-primary`}
           >
-            <Mail size={14} className="mr-1.5" />
             Webmail
           </a>
         </div>
