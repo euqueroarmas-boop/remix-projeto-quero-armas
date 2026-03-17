@@ -132,8 +132,12 @@ const Navbar = () => {
   // Close on click outside
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
-      if (segDropdownRef.current && !segDropdownRef.current.contains(e.target as Node)) setSegOpen(false);
-      if (svcDropdownRef.current && !svcDropdownRef.current.contains(e.target as Node)) setSvcOpen(false);
+      const target = e.target as Node;
+      // Don't close if clicking inside the portal panel
+      const portalPanel = document.querySelector('[data-mega-panel]');
+      if (portalPanel?.contains(target)) return;
+      if (segDropdownRef.current && !segDropdownRef.current.contains(target)) setSegOpen(false);
+      if (svcDropdownRef.current && !svcDropdownRef.current.contains(target)) setSvcOpen(false);
     };
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
