@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, ChevronDown, Server, Cloud, Shield, Network, Monitor, Wrench, Headphones, Activity, Eye, Cpu, HardDrive, Lock, Zap, Terminal, RefreshCw, Building2, Scale, Heart, Landmark, Briefcase, Calculator, Factory, Fuel, FileText } from "lucide-react";
+import { Menu, X, ChevronDown, Server, Cloud, Shield, Network, Monitor, Wrench, Headphones, Activity, Eye, Cpu, HardDrive, Lock, Zap, Terminal, RefreshCw, Building2, Scale, Heart, Landmark, Briefcase, Calculator, Factory, Fuel, FileText, Mail } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import logoFull from "@/assets/logo-wmti-full.png";
 import type { LucideIcon } from "lucide-react";
@@ -61,6 +61,8 @@ const navLinks: NavLink[] = [
 /* ─── Shared nav-item class for perfect vertical alignment ─── */
 const NAV_ITEM_CLASS = "font-mono text-xs uppercase tracking-wider flex items-center justify-center h-16 transition-colors";
 
+const WEBMAIL_URL = "https://sigma.servidor.net.br:2096/cpsess3314771808/webmail/jupiter/mail/clientconf.html?login=1&post_login=62387806819454";
+
 const Navbar = () => {
   const [open, setOpen] = useState(false);
   const [segOpen, setSegOpen] = useState(false);
@@ -75,6 +77,8 @@ const Navbar = () => {
   const linkRefs = useRef<(HTMLElement | null)[]>([]);
   const segDropdownRef = useRef<HTMLDivElement>(null);
   const svcDropdownRef = useRef<HTMLDivElement>(null);
+
+  const megaOpen = segOpen || svcOpen;
 
   const resolveHref = (link: NavLink, isMobile: boolean) => {
     if (link.isRoute) return link.href;
@@ -119,6 +123,12 @@ const Navbar = () => {
 
   const activeIndex = getActiveIndex();
 
+  const closeMegaMenus = useCallback(() => {
+    setSegOpen(false);
+    setSvcOpen(false);
+  }, []);
+
+  // Close on click outside
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (segDropdownRef.current && !segDropdownRef.current.contains(e.target as Node)) setSegOpen(false);
@@ -128,11 +138,21 @@ const Navbar = () => {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
+  // Close on ESC
   useEffect(() => {
-    if (open) { document.body.style.overflow = "hidden"; }
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeMegaMenus();
+    };
+    document.addEventListener("keydown", handleEsc);
+    return () => document.removeEventListener("keydown", handleEsc);
+  }, [closeMegaMenus]);
+
+  // Lock body scroll when mega menu or mobile menu is open
+  useEffect(() => {
+    if (open || megaOpen) { document.body.style.overflow = "hidden"; }
     else { document.body.style.overflow = ""; }
     return () => { document.body.style.overflow = ""; };
-  }, [open]);
+  }, [open, megaOpen]);
 
   useEffect(() => {
     const updatePill = () => {
@@ -163,7 +183,7 @@ const Navbar = () => {
     }, 300);
   };
 
-  /* ─── MEGA MENU DESKTOP ─── */
+  /* ─── MEGA MENU DESKTOP — full-screen opaque panel ─── */
   const renderMegaDropdown = (
     items: MegaMenuItem[],
     isOpen: boolean,
@@ -189,17 +209,16 @@ const Navbar = () => {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
-            className="fixed left-0 right-0 top-16 z-50 flex justify-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-x-0 top-16 bottom-0 z-50 bg-secondary overflow-y-auto"
           >
-            <div
-              className="w-[90vw] max-w-[1400px] bg-card/98 backdrop-blur-xl border border-border/60 shadow-2xl shadow-black/40 overflow-y-auto"
-              style={{ borderRadius: "var(--radius)", maxHeight: "calc(100vh - 80px)" }}
-            >
-              <div className={`grid gap-x-12 gap-y-2 p-8 ${items.length > 7 ? 'grid-cols-2' : 'grid-cols-2'}`}>
+            <div className="absolute inset-0" onClick={() => setIsOpen(false)} />
+            <div className="relative container mx-auto py-12">
+              <h2 className="font-mono text-xs uppercase tracking-widest text-muted-foreground mb-8">{link.label}</h2>
+              <div className={`grid gap-x-12 gap-y-1 ${items.length > 7 ? 'grid-cols-2 xl:grid-cols-3' : 'grid-cols-2'}`}>
                 {items.map((item) => {
                   const isActive = location.pathname === item.href;
                   const Icon = item.icon;
@@ -208,10 +227,9 @@ const Navbar = () => {
                       key={item.href + item.label}
                       to={item.href}
                       onClick={() => setIsOpen(false)}
-                      className={`group flex items-center gap-4 px-6 py-[18px] transition-all duration-150 hover:bg-white/[0.04] ${
+                      className={`group flex items-center gap-4 px-6 py-4 transition-all duration-150 hover:bg-white/[0.04] rounded-lg ${
                         isActive ? "text-primary bg-primary/10" : "text-foreground"
                       }`}
-                      style={{ borderRadius: "10px" }}
                     >
                       <Icon size={28} className="text-primary shrink-0" strokeWidth={1.5} />
                       <span className="text-lg font-semibold">{item.label}</span>
@@ -339,6 +357,16 @@ const Navbar = () => {
           >
             Orçamento
           </Link>
+
+          <a
+            href={WEBMAIL_URL}
+            target="_blank"
+            rel="noopener"
+            className={`${NAV_ITEM_CLASS} border border-primary text-primary hover:bg-primary hover:text-primary-foreground rounded-md px-4 transition-all duration-200`}
+          >
+            <Mail size={14} className="mr-1.5" />
+            Webmail
+          </a>
         </div>
 
         {/* Mobile toggle */}
@@ -407,6 +435,17 @@ const Navbar = () => {
               >
                 Orçamento
               </Link>
+
+              <a
+                href={WEBMAIL_URL}
+                target="_blank"
+                rel="noopener"
+                onClick={() => setOpen(false)}
+                className="font-mono text-base uppercase tracking-wider transition-colors py-2 text-muted-foreground hover:text-primary text-left inline-flex items-center gap-2"
+              >
+                <Mail size={16} />
+                Webmail
+              </a>
 
               <a
                 href="https://wa.me/5511963166915?text=Ol%C3%A1%2C%20gostaria%20de%20falar%20com%20um%20especialista%20em%20TI."
