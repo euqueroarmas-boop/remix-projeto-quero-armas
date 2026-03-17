@@ -222,6 +222,7 @@ const Navbar = () => {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             className="fixed inset-x-0 top-16 bottom-0 z-[100] bg-secondary overflow-y-auto"
+            data-mega-panel
             onClick={(e) => { if (e.target === e.currentTarget) setIsOpen(false); }}
           >
             <div className="container mx-auto py-12">
