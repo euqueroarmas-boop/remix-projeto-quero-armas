@@ -205,7 +205,7 @@ const Navbar = () => {
           setIsOpen(!isOpen);
           if (link.label === "Segmentos") setSvcOpen(false);
           if (link.label === "Serviços") setSegOpen(false);
-        }
+        }}
         className={`${NAV_ITEM_CLASS} gap-1 ${active ? "text-primary" : "text-muted-foreground hover:text-primary"}`}
       >
         {link.label}
