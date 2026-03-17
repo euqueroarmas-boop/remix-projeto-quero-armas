@@ -240,10 +240,8 @@ const Navbar = () => {
           }}
         >
           <div className="container mx-auto py-12 px-8 xl:px-16">
-            <h2 className="font-mono text-xs uppercase tracking-widest text-muted-foreground mb-10">{label}</h2>
             <div className={`grid gap-6 ${items.length > 7 ? 'grid-cols-2 xl:grid-cols-3' : 'grid-cols-2'}`}>
               {items.map((item) => {
-                const isActive = location.pathname === item.href;
                 const Icon = item.icon;
                 return (
                   <Link
@@ -252,19 +250,19 @@ const Navbar = () => {
                     onClick={() => setIsOpen(false)}
                     className="group flex items-center gap-4 px-5 py-4 rounded-xl transition-all duration-250 ease-out"
                     style={{
-                      background: isActive ? "rgba(255, 90, 31, 0.12)" : "rgba(255, 255, 255, 0.04)",
-                      border: isActive ? "1px solid rgba(255, 90, 31, 0.4)" : "1px solid rgba(255, 255, 255, 0.08)",
+                      background: "rgba(255, 255, 255, 0.04)",
+                      border: "1px solid rgba(255, 255, 255, 0.08)",
                       backdropFilter: "blur(8px)",
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.background = "rgba(255, 90, 31, 0.12)";
-                      e.currentTarget.style.borderColor = "rgba(255, 90, 31, 0.4)";
-                      e.currentTarget.style.transform = "translateY(-2px)";
-                      e.currentTarget.style.boxShadow = "0 10px 25px rgba(0,0,0,0.35)";
+                      e.currentTarget.style.background = "rgba(255, 90, 31, 0.10)";
+                      e.currentTarget.style.borderColor = "rgba(255, 90, 31, 0.45)";
+                      e.currentTarget.style.transform = "translateY(-1px)";
+                      e.currentTarget.style.boxShadow = "0 10px 25px rgba(0,0,0,0.28)";
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.background = isActive ? "rgba(255, 90, 31, 0.12)" : "rgba(255, 255, 255, 0.04)";
-                      e.currentTarget.style.borderColor = isActive ? "rgba(255, 90, 31, 0.4)" : "rgba(255, 255, 255, 0.08)";
+                      e.currentTarget.style.background = "rgba(255, 255, 255, 0.04)";
+                      e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)";
                       e.currentTarget.style.transform = "translateY(0)";
                       e.currentTarget.style.boxShadow = "none";
                     }}
