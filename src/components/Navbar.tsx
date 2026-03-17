@@ -440,9 +440,8 @@ const Navbar = () => {
                 target="_blank"
                 rel="noopener"
                 onClick={() => setOpen(false)}
-                className="font-mono text-base uppercase tracking-wider transition-colors py-2 text-muted-foreground hover:text-primary text-left inline-flex items-center gap-2"
+                className="font-mono text-base uppercase tracking-wider transition-colors py-2 text-muted-foreground hover:text-primary text-left"
               >
-                <Mail size={16} />
                 Webmail
               </a>
 
