@@ -57,6 +57,20 @@ export const problemSlugs: string[] = [
   "sem-backup",
   "ataque-ransomware",
   "computadores-lentos",
+  "servidor-lento-empresa",
+  "rede-corporativa-instavel",
+  "empresa-sem-backup",
+  "empresa-sem-firewall",
+  "empresa-com-virus",
+  "empresa-sem-monitoramento-ti",
+  "empresa-com-servidor-antigo",
+  "empresa-com-problemas-ti",
+  "suporte-ti-urgente",
+  "empresa-precisa-suporte-ti",
+  "empresa-com-problema-rede",
+  "empresa-com-servidor-caindo",
+  "empresa-com-sistema-lento",
+  "empresa-sem-infraestrutura-ti",
 ];
 
 // ─── BLOG POST SLUGS (from src/data/blogPosts.ts) ───
