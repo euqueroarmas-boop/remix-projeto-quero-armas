@@ -224,17 +224,24 @@ const Navbar = () => {
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-          className="fixed inset-x-0 top-16 bottom-0 z-[60] bg-secondary overflow-y-auto"
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.25, ease: "easeOut" }}
+          className="fixed inset-x-0 top-16 bottom-0 z-[60] overflow-y-auto"
           data-mega-panel
           onClick={(e) => { if (e.target === e.currentTarget) setIsOpen(false); }}
+          style={{
+            background: "rgba(10, 18, 28, 0.65)",
+            backdropFilter: "blur(18px) saturate(160%)",
+            WebkitBackdropFilter: "blur(18px) saturate(160%)",
+            borderTop: "1px solid rgba(255, 255, 255, 0.08)",
+            boxShadow: "0 30px 60px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.08)",
+          }}
         >
-          <div className="container mx-auto py-12">
-            <h2 className="font-mono text-xs uppercase tracking-widest text-muted-foreground mb-8">{label}</h2>
-            <div className={`grid gap-x-12 gap-y-1 ${items.length > 7 ? 'grid-cols-2 xl:grid-cols-3' : 'grid-cols-2'}`}>
+          <div className="container mx-auto py-12 px-8 xl:px-16">
+            <h2 className="font-mono text-xs uppercase tracking-widest text-muted-foreground mb-10">{label}</h2>
+            <div className={`grid gap-6 ${items.length > 7 ? 'grid-cols-2 xl:grid-cols-3' : 'grid-cols-2'}`}>
               {items.map((item) => {
                 const isActive = location.pathname === item.href;
                 const Icon = item.icon;
@@ -243,12 +250,27 @@ const Navbar = () => {
                     key={item.href + item.label}
                     to={item.href}
                     onClick={() => setIsOpen(false)}
-                    className={`group flex items-center gap-4 px-6 py-4 transition-all duration-150 hover:bg-white/[0.04] rounded-lg ${
-                      isActive ? "text-primary bg-primary/10" : "text-foreground"
-                    }`}
+                    className="group flex items-center gap-4 px-5 py-4 rounded-xl transition-all duration-250 ease-out"
+                    style={{
+                      background: isActive ? "rgba(255, 90, 31, 0.12)" : "rgba(255, 255, 255, 0.04)",
+                      border: isActive ? "1px solid rgba(255, 90, 31, 0.4)" : "1px solid rgba(255, 255, 255, 0.08)",
+                      backdropFilter: "blur(8px)",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = "rgba(255, 90, 31, 0.12)";
+                      e.currentTarget.style.borderColor = "rgba(255, 90, 31, 0.4)";
+                      e.currentTarget.style.transform = "translateY(-2px)";
+                      e.currentTarget.style.boxShadow = "0 10px 25px rgba(0,0,0,0.35)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = isActive ? "rgba(255, 90, 31, 0.12)" : "rgba(255, 255, 255, 0.04)";
+                      e.currentTarget.style.borderColor = isActive ? "rgba(255, 90, 31, 0.4)" : "rgba(255, 255, 255, 0.08)";
+                      e.currentTarget.style.transform = "translateY(0)";
+                      e.currentTarget.style.boxShadow = "none";
+                    }}
                   >
-                    <Icon size={28} className="text-primary shrink-0" strokeWidth={1.5} />
-                    <span className="text-lg font-semibold">{item.label}</span>
+                    <Icon size={22} className="text-primary shrink-0" strokeWidth={1.5} />
+                    <span className="text-[15px] font-medium tracking-wide text-foreground group-hover:text-white">{item.label}</span>
                   </Link>
                 );
               })}
