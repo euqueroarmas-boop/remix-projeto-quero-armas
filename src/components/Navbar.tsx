@@ -357,6 +357,16 @@ const Navbar = () => {
           >
             Orçamento
           </Link>
+
+          <a
+            href={WEBMAIL_URL}
+            target="_blank"
+            rel="noopener"
+            className={`${NAV_ITEM_CLASS} border border-primary text-primary hover:bg-primary hover:text-primary-foreground rounded-md px-4 transition-all duration-200`}
+          >
+            <Mail size={14} className="mr-1.5" />
+            Webmail
+          </a>
         </div>
 
         {/* Mobile toggle */}
