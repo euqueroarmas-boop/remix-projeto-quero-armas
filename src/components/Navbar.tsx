@@ -216,7 +216,7 @@ const Navbar = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-x-0 top-16 bottom-0 z-50 bg-secondary overflow-y-auto"
+            className="fixed inset-x-0 top-16 bottom-0 z-[100] bg-secondary overflow-y-auto"
             onClick={(e) => { if (e.target === e.currentTarget) setIsOpen(false); }}
           >
             <div className="relative container mx-auto py-12">
