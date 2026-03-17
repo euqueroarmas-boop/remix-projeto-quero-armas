@@ -111,6 +111,24 @@ const ContratarServicoPage = () => {
     return () => clearInterval(interval);
   }, [currentStep, contractId, contractSigned, toast]);
 
+  // Poll for payment confirmation
+  useEffect(() => {
+    if (!paymentComplete || paymentConfirmed || !quoteId) return;
+    const interval = setInterval(async () => {
+      const { data } = await supabase
+        .from("payments")
+        .select("payment_status")
+        .eq("quote_id", quoteId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+      if (data && ((data as any).payment_status === "CONFIRMED" || (data as any).payment_status === "RECEIVED")) {
+        setPaymentConfirmed(true);
+      }
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [paymentComplete, paymentConfirmed, quoteId]);
+
   const scrollToTop = () => {
     setTimeout(() => {
       wizardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
