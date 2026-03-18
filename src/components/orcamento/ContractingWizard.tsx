@@ -585,7 +585,7 @@ const ContractingWizard = ({
                         }`}
                       >
                         <method.icon className={`w-6 h-6 mx-auto mb-2 ${selectedPayment === method.id ? "text-primary" : "text-muted-foreground"}`} />
-                        <p className="text-sm font-semibold">{method.label}</p>
+                        <p className="text-sm font-semibold text-foreground">{method.label}</p>
                         <p className="text-xs text-muted-foreground">{method.desc}</p>
                       </button>
                     ))}

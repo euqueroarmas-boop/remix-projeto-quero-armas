@@ -13,6 +13,7 @@ const ContratoPage = () => {
   const contractId = searchParams.get("id");
 
   const [contractHtml, setContractHtml] = useState("");
+  const [contractType, setContractType] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [agreed, setAgreed] = useState(false);
   const [acceptedTerm, setAcceptedTerm] = useState(false);
@@ -32,13 +33,14 @@ const ContratoPage = () => {
       setLoading(true);
       const { data } = await supabase
         .from("contracts" as any)
-        .select("contract_text, signed, status")
+        .select("contract_text, signed, status, contract_type")
         .eq("id", contractId)
         .single();
 
       if (data) {
         const row = data as any;
         setContractHtml(row.contract_text || "");
+        setContractType(row.contract_type || null);
         if (row.signed) setSigned(true);
       }
       setLoading(false);
@@ -107,8 +109,11 @@ const ContratoPage = () => {
     setHasDrawn(false);
   };
 
+  // Only locacao and suporte contracts require the 36-month term acceptance
+  const requiresMinimumTerm = contractType === "locacao" || contractType === "suporte";
+
   const handleProceedToSignature = () => {
-    if (!agreed || !acceptedTerm) return;
+    if (!agreed || (requiresMinimumTerm && !acceptedTerm)) return;
     setShowSignature(true);
     setTimeout(() => {
       document.getElementById("signature-section")?.scrollIntoView({ behavior: "smooth" });
@@ -230,16 +235,18 @@ const ContratoPage = () => {
 
         {/* Agreement section */}
         <div className="mt-12 pt-8 border-t border-gray-300 space-y-4">
-          <label className="flex items-start gap-3 cursor-pointer">
-            <Checkbox
-              checked={acceptedTerm}
-              onCheckedChange={(v) => setAcceptedTerm(v === true)}
-              className="mt-0.5 border-gray-400"
-            />
-            <span className="text-black text-sm" style={{ fontFamily: "'Times New Roman', Times, serif" }}>
-              Declaro estar ciente de que a contratação da WMTi possui <strong>prazo mínimo de 36 (trinta e seis) meses</strong>.
-            </span>
-          </label>
+          {requiresMinimumTerm && (
+            <label className="flex items-start gap-3 cursor-pointer">
+              <Checkbox
+                checked={acceptedTerm}
+                onCheckedChange={(v) => setAcceptedTerm(v === true)}
+                className="mt-0.5 border-gray-400"
+              />
+              <span className="text-black text-sm" style={{ fontFamily: "'Times New Roman', Times, serif" }}>
+                Declaro estar ciente de que a contratação da WMTi possui <strong>prazo mínimo de 36 (trinta e seis) meses</strong>.
+              </span>
+            </label>
+          )}
 
           <label className="flex items-start gap-3 cursor-pointer">
             <Checkbox
@@ -255,7 +262,7 @@ const ContratoPage = () => {
           {!showSignature && (
             <Button
               onClick={handleProceedToSignature}
-              disabled={!agreed || !acceptedTerm}
+              disabled={!agreed || (requiresMinimumTerm && !acceptedTerm)}
               className="w-full h-12 bg-black hover:bg-gray-800 text-white rounded-none disabled:opacity-50"
               style={{ fontFamily: "'Times New Roman', Times, serif" }}
             >
