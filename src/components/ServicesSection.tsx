@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Server, Cloud, Shield, HardDrive, Network, MonitorCog, ArrowRight } from "lucide-react";
-import datacenterImage from "@/assets/network-datacenter.jpg";
+import datacenterImage from "@/assets/network-datacenter.webp";
 import MobileSummary from "@/components/MobileSummary";
 
 const services = [
