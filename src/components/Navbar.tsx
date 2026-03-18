@@ -40,6 +40,8 @@ const servicos: MegaMenuItem[] = [
   { label: "Suporte Técnico Para Redes Corporativas", href: "/suporte-tecnico-para-redes-corporativas", icon: Network },
   { label: "Suporte Windows Server", href: "/suporte-windows-server", icon: Lock },
   { label: "Terceirização De TI", href: "/terceirizacao-de-mao-de-obra-ti", icon: RefreshCw },
+  { label: "Reestruturação Completa De Rede", href: "/reestruturacao-completa-de-rede-corporativa", icon: Globe },
+  { label: "Desenvolvimento De Sites E Sistemas Web", href: "/desenvolvimento-de-sites-e-sistemas-web", icon: Brain },
 ].sort((a, b) => a.label.localeCompare(b.label));
 
 type NavLink = {

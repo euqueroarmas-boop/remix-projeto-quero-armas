@@ -104,6 +104,8 @@ const App = () => (
             <Route path="/contrato" element={<ContratoPage />} />
             <Route path="/compra-concluida" element={<CompraConcluida />} />
             <Route path="/area-do-cliente" element={<AreaDoClientePage />} />
+            <Route path="/reestruturacao-completa-de-rede-corporativa" element={<ReestruturacaoRedePage />} />
+            <Route path="/desenvolvimento-de-sites-e-sistemas-web" element={<DesenvolvimentoWebPage />} />
             {/* Segment dedicated pages */}
             <Route path="/ti-para-cartorios" element={<TiCartoriosPage />} />
             <Route path="/ti-para-serventias-cartoriais" element={<TiServentiasCartoriaisPage />} />
