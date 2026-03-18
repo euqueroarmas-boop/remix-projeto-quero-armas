@@ -402,6 +402,18 @@ const Navbar = () => {
           >
             Webmail
           </a>
+
+          {/* Área do Cliente — separated, red accent */}
+          <Link
+            to="/area-do-cliente"
+            className={`${NAV_ITEM_CLASS} ml-4 xl:ml-6 transition-colors ${
+              location.pathname === "/area-do-cliente"
+                ? "text-red-500"
+                : "text-muted-foreground hover:text-red-500"
+            }`}
+          >
+            Área do Cliente
+          </Link>
         </div>
 
         {/* Mobile toggle */}
