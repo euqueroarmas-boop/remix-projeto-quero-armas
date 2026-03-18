@@ -247,6 +247,7 @@ const ReestruturacaoRedePage = () => {
   // Calculator state
   const [pcs, setPcs] = useState(5);
   const [includeServer, setIncludeServer] = useState(true);
+  const [showPremiumPopup, setShowPremiumPopup] = useState(false);
 
   // Wizard state
   const [currentStep, setCurrentStep] = useState<FlowStep>("calculator");
