@@ -108,6 +108,7 @@ const ContractingWizard = ({
   leadCity,
 }: Props) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   type Step = "registration" | "contract" | "payment";
