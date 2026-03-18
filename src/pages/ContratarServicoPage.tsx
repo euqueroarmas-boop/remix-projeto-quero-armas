@@ -16,6 +16,7 @@ import SeoHead from "@/components/SeoHead";
 import WizardStepWrapper from "@/components/orcamento/WizardStepWrapper";
 import QuickRegistrationForm, { type RegistrationData } from "@/components/orcamento/QuickRegistrationForm";
 import { generateContractHtml } from "@/components/orcamento/ContractPreview";
+import PurchaseSuccessScreen from "@/components/orcamento/PurchaseSuccessScreen";
 import type { CustomerData } from "@/components/orcamento/CustomerDataForm";
 
 /* ─── Service catalog ─── */
@@ -111,7 +112,7 @@ const ContratarServicoPage = () => {
     return () => clearInterval(interval);
   }, [currentStep, contractId, contractSigned, toast]);
 
-  // Poll for payment confirmation
+  // Poll for payment confirmation + send email
   useEffect(() => {
     if (!paymentComplete || paymentConfirmed || !quoteId) return;
     const interval = setInterval(async () => {
@@ -124,10 +125,26 @@ const ContratarServicoPage = () => {
         .single();
       if (data && ((data as any).payment_status === "CONFIRMED" || (data as any).payment_status === "RECEIVED")) {
         setPaymentConfirmed(true);
+        // Send confirmation email
+        if (registrationData) {
+          supabase.functions.invoke("send-purchase-confirmation", {
+            body: {
+              customer_name: registrationData.razaoSocial,
+              customer_email: registrationData.email,
+              service_name: serviceName,
+              hours,
+              value: promoPrice,
+              payment_method: selectedPayment,
+              contract_ref: contractId?.slice(0, 8).toUpperCase(),
+              purchase_date: new Date().toLocaleDateString("pt-BR"),
+              is_recurring: false,
+            },
+          }).catch(err => console.error("[WMTi] Email error:", err));
+        }
       }
     }, 5000);
     return () => clearInterval(interval);
-  }, [paymentComplete, paymentConfirmed, quoteId]);
+  }, [paymentComplete, paymentConfirmed, quoteId, registrationData, selectedPayment, contractId, serviceName, hours, promoPrice]);
 
   const scrollToTop = () => {
     setTimeout(() => {
@@ -477,37 +494,21 @@ const ContratarServicoPage = () => {
           {/* Step 4: Payment */}
           <WizardStepWrapper stepNumber={4} title={paymentConfirmed ? "Compra Concluída" : "Pagamento"} subtitle={paymentConfirmed ? "Pagamento confirmado ✓" : "Pagamento único via checkout seguro"} status={paymentConfirmed ? "completed" : getStepStatus("payment")} isLast>
             {paymentConfirmed ? (
-              <div className="bg-card border border-primary/20 rounded-xl p-8 space-y-6">
-                <div className="flex flex-col items-center text-center space-y-3">
-                  <CheckCircle className="w-14 h-14 text-green-500" />
-                  <h3 className="text-2xl font-heading font-bold">Compra Concluída Com Sucesso!</h3>
-                  <p className="text-muted-foreground">Parabéns! Sua contratação foi realizada com sucesso.</p>
-                  <p className="text-sm text-muted-foreground">Já recebemos seu pagamento e em breve entraremos em contato para dar andamento ao atendimento.</p>
-                </div>
-                <div className="bg-secondary rounded-lg p-5 space-y-3">
-                  <p className="font-mono text-xs uppercase tracking-widest text-primary mb-2">Resumo da compra</p>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between"><span className="text-muted-foreground">Serviço</span><span className="font-semibold">{serviceName}</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">Horas</span><span className="font-semibold">{hours}h</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">Valor pago</span><span className="font-semibold text-primary">R$ {promoPrice.toFixed(2).replace(".", ",")}</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">Status</span><span className="font-bold text-green-500">Confirmado</span></div>
-                    {contractId && <div className="flex justify-between"><span className="text-muted-foreground">Contrato</span><span className="font-mono text-xs">{contractId.slice(0, 8).toUpperCase()}</span></div>}
-                  </div>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <Button onClick={() => navigate("/")} variant="outline" className="w-full h-12">
-                    Voltar para o site
-                  </Button>
-                  <a
-                    href={`https://wa.me/5511963166915?text=${encodeURIComponent(`Olá! Acabei de contratar o serviço ${serviceName} (${hours}h) no valor de R$ ${promoPrice.toFixed(2).replace(".", ",")}. Contrato: ${contractId?.slice(0, 8).toUpperCase() || "N/A"}`)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full inline-flex items-center justify-center gap-2 h-12 border border-primary/30 text-primary rounded-md hover:bg-primary/5 transition-colors font-mono text-sm"
-                  >
-                    Falar no WhatsApp
-                  </a>
-                </div>
-              </div>
+                <PurchaseSuccessScreen
+                  visible
+                  data={{
+                    serviceName,
+                    hours,
+                    monthlyValue: promoPrice,
+                    isRecurring: false,
+                    customerName: registrationData?.razaoSocial || "",
+                    customerCpfCnpj: registrationData?.cnpjOuCpf || "",
+                    customerEmail: registrationData?.email || "",
+                    paymentMethod: selectedPayment || "CREDIT_CARD",
+                    contractId,
+                    purchaseDate: new Date().toLocaleDateString("pt-BR"),
+                  }}
+                />
             ) : paymentLoading ? (
               <div className="bg-card border border-primary/20 rounded-xl p-6 space-y-4">
                 <div className="flex flex-col items-center text-center space-y-3">

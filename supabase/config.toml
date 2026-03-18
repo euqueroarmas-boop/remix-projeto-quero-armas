@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.notify-lead]
 verify_jwt = false
+
+[functions.send-purchase-confirmation]
+verify_jwt = false
