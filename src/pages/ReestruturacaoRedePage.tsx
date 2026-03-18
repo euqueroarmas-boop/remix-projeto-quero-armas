@@ -776,11 +776,11 @@ const ReestruturacaoRedePage = () => {
                     <div className="flex items-center gap-3 mb-3">
                       <FileText className="w-6 h-6 text-primary" />
                       <div>
-                        <p className="font-semibold text-sm">Contrato de Reestruturação Completa de Rede</p>
-                        <p className="text-xs text-muted-foreground">O contrato será aberto em página separada com aparência de documento formal.</p>
+                        <p className="font-semibold text-sm text-foreground">Contrato de Reestruturação Completa de Rede</p>
+                        <p className="text-xs text-foreground/60">O contrato será aberto em página separada com aparência de documento formal.</p>
                       </div>
                     </div>
-                    <p className="text-xs text-muted-foreground mb-3">Após ler e assinar, esta página será atualizada automaticamente.</p>
+                    <p className="text-xs text-foreground/60 mb-3">Após ler e assinar, esta página será atualizada automaticamente.</p>
                   </div>
                   <Button onClick={handleOpenContract} disabled={!contractId} className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground">
                     <ExternalLink className="w-4 h-4 mr-2" />
