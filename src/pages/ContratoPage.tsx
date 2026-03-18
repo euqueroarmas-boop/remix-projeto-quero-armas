@@ -33,13 +33,14 @@ const ContratoPage = () => {
       setLoading(true);
       const { data } = await supabase
         .from("contracts" as any)
-        .select("contract_text, signed, status")
+        .select("contract_text, signed, status, contract_type")
         .eq("id", contractId)
         .single();
 
       if (data) {
         const row = data as any;
         setContractHtml(row.contract_text || "");
+        setContractType(row.contract_type || null);
         if (row.signed) setSigned(true);
       }
       setLoading(false);
