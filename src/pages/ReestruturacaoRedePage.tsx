@@ -730,7 +730,7 @@ const ReestruturacaoRedePage = () => {
                       })}
                       <div className="contents">
                         <div className="bg-secondary/50 p-2 text-primary font-bold">31+</div>
-                        <div className="bg-secondary/50 p-2 text-primary font-bold" colSpan={2}>Orçamento personalizado</div>
+                        <div className="bg-secondary/50 p-2 text-primary font-bold">Orçamento personalizado</div>
                         <div className="bg-secondary/50 p-2 text-primary font-bold">Sob consulta</div>
                       </div>
                     </div>
