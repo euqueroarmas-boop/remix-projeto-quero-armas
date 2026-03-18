@@ -21,6 +21,7 @@ import QuickRegistrationForm, { type RegistrationData } from "./QuickRegistratio
 import { generateContractHtml } from "./ContractPreview";
 import PostPaymentReport from "./PostPaymentReport";
 import OutsourcingOffer from "./OutsourcingOffer";
+import PurchaseSuccessScreen from "./PurchaseSuccessScreen";
 import type { Plan } from "./PlanSelector";
 import type { QualificationData } from "./QualificationForm";
 import type { CustomerData } from "./CustomerDataForm";
