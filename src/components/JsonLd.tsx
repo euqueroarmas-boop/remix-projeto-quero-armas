@@ -87,7 +87,7 @@ export function buildArticleSchema(opts: {
     author: {
       "@type": "Organization",
       name: "WMTi Tecnologia da Informação",
-      url: "https://wmti.com.br",
+      url: "https://www.wmti.com.br",
     },
     publisher: {
       "@type": "Organization",
