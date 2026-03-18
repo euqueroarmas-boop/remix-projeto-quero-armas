@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, ChevronDown, Server, Cloud, Shield, Network, Monitor, Wrench, Headphones, Activity, Eye, Cpu, HardDrive, Lock, Zap, Terminal, RefreshCw, Building2, Scale, Heart, Landmark, Briefcase, Calculator, Factory, Fuel, FileText, Mail } from "lucide-react";
+import { Menu, X, ChevronDown, Server, Cloud, Shield, Network, Monitor, Wrench, Headphones, Activity, Eye, Cpu, HardDrive, Lock, Zap, Terminal, RefreshCw, Building2, Scale, Heart, Landmark, Briefcase, Calculator, Factory, Fuel, FileText, Mail, Globe, Brain } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import logoFull from "@/assets/logo-wmti-full.webp";
 import type { LucideIcon } from "lucide-react";
@@ -40,6 +40,8 @@ const servicos: MegaMenuItem[] = [
   { label: "Suporte Técnico Para Redes Corporativas", href: "/suporte-tecnico-para-redes-corporativas", icon: Network },
   { label: "Suporte Windows Server", href: "/suporte-windows-server", icon: Lock },
   { label: "Terceirização De TI", href: "/terceirizacao-de-mao-de-obra-ti", icon: RefreshCw },
+  { label: "Reestruturação Completa De Rede", href: "/reestruturacao-completa-de-rede-corporativa", icon: Globe },
+  { label: "Desenvolvimento De Sites E Sistemas Web", href: "/desenvolvimento-de-sites-e-sistemas-web", icon: Brain },
 ].sort((a, b) => a.label.localeCompare(b.label));
 
 type NavLink = {
