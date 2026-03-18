@@ -170,7 +170,7 @@ const ContractingWizard = ({
     return () => clearInterval(interval);
   }, [currentStep, contractId, contractSigned, toast]);
 
-  // Poll for payment confirmation
+  // Poll for payment confirmation + send email
   useEffect(() => {
     if (!paymentComplete || paymentConfirmed || !quoteId) return;
     const interval = setInterval(async () => {
@@ -183,10 +183,26 @@ const ContractingWizard = ({
         .single();
       if (data && ((data as any).payment_status === "CONFIRMED" || (data as any).payment_status === "RECEIVED")) {
         setPaymentConfirmed(true);
+        // Send confirmation email
+        if (registrationData) {
+          supabase.functions.invoke("send-purchase-confirmation", {
+            body: {
+              customer_name: registrationData.razaoSocial,
+              customer_email: registrationData.email,
+              service_name: pathLabel,
+              computers_qty: computersQty,
+              value: monthlyValue,
+              payment_method: selectedPayment,
+              contract_ref: contractId?.slice(0, 8).toUpperCase(),
+              purchase_date: new Date().toLocaleDateString("pt-BR"),
+              is_recurring: true,
+            },
+          }).catch(err => console.error("[WMTi] Email error:", err));
+        }
       }
     }, 5000);
     return () => clearInterval(interval);
-  }, [paymentComplete, paymentConfirmed, quoteId]);
+  }, [paymentComplete, paymentConfirmed, quoteId, registrationData, selectedPayment, contractId, pathLabel, computersQty, monthlyValue]);
 
   // Open checkout in new tab — keeps wizard state intact
   const handleRedirectToCheckout = useCallback((url: string) => {
