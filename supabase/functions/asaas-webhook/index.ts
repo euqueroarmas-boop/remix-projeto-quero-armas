@@ -58,19 +58,41 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Find payment record
-    const { data: paymentRecord, error: findErr } = await supabase
+    // Find payment record — try by payment ID first, then by subscription ID
+    let paymentRecord: { id: string; quote_id: string | null } | null = null;
+
+    const { data: byPaymentId } = await supabase
       .from("payments")
       .select("id, quote_id")
       .eq("asaas_payment_id", payment.id)
-      .single();
+      .maybeSingle();
 
-    if (findErr || !paymentRecord) {
+    paymentRecord = byPaymentId;
+
+    // Fallback: subscription payments may be stored under subscription ID
+    if (!paymentRecord && payment.subscription) {
+      const { data: bySubId } = await supabase
+        .from("payments")
+        .select("id, quote_id")
+        .eq("asaas_payment_id", payment.subscription)
+        .maybeSingle();
+      paymentRecord = bySubId;
+
+      // Update the record with the actual payment ID for future lookups
+      if (paymentRecord) {
+        await supabase
+          .from("payments")
+          .update({ asaas_payment_id: payment.id })
+          .eq("id", paymentRecord.id);
+      }
+    }
+
+    if (!paymentRecord) {
       console.log("[asaas-webhook] Pagamento não encontrado para asaas_payment_id:", payment.id);
       await supabase.from("integration_logs").insert({
         integration_name: "asaas",
         operation_name: "webhook_payment_not_found",
-        request_payload: { asaas_payment_id: payment.id, event },
+        request_payload: { asaas_payment_id: payment.id, subscription: payment.subscription, event },
         status: "warning",
         error_message: "Payment record not found in database",
       });
