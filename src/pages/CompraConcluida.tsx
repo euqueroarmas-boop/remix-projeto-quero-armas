@@ -68,7 +68,7 @@ const CompraConcluida = () => {
 
         // Fetch customer
         let customer: any = null;
-        if (contract?.customer_id) {
+        if ((contract as any)?.customer_id) {
           const { data: cust } = await supabase
             .from("customers" as any)
             .select("*")
