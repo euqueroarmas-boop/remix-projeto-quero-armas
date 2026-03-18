@@ -131,91 +131,55 @@
     ]
     </script>
   </head>
-  <body>
+  <body style="margin:0;background:#0c1220;color:#0c1220">
     <!--
-      Static SEO content — visible to crawlers before JS loads.
+      Static SEO content — hidden from users (same color as bg), visible to crawlers.
       React will mount over #root and replace this with the interactive app.
     -->
     <div id="root">
-      <header style="padding:16px 24px;background:#0f172a;color:#e2e8f0">
-        <a href="/" style="color:#38bdf8;font-size:1.5rem;font-weight:700;text-decoration:none">WMTi Tecnologia da Informação</a>
-        <nav style="margin-top:8px">
-          <a href="/institucional" style="color:#94a3b8;margin-right:16px">Institucional</a>
-          <a href="/servicos" style="color:#94a3b8;margin-right:16px">Serviços</a>
-          <a href="/infraestrutura" style="color:#94a3b8;margin-right:16px">Infraestrutura</a>
-          <a href="/blog" style="color:#94a3b8;margin-right:16px">Blog</a>
-          <a href="/orcamento-ti" style="color:#94a3b8">Orçamento</a>
-        </nav>
-      </header>
-
-      <main style="max-width:960px;margin:0 auto;padding:40px 24px;color:#1e293b;font-family:system-ui,sans-serif">
-        <h1>Infraestrutura de TI Corporativa em Jacareí e Vale do Paraíba</h1>
-        <p>A WMTi é uma empresa de TI especializada em infraestrutura corporativa, servidores Dell PowerEdge, Microsoft 365, firewall pfSense, montagem de redes, locação de computadores e suporte técnico para empresas no Vale do Paraíba — SP.</p>
-
-        <h2>Nossos Serviços de TI</h2>
-        <ul>
-          <li><a href="/suporte-ti-jacarei">Suporte Técnico de TI</a> — Atendimento remoto e presencial para empresas</li>
-          <li><a href="/servidor-dell-poweredge-jacarei">Servidores Dell PowerEdge</a> — Implantação e administração de servidores corporativos</li>
-          <li><a href="/microsoft-365-para-empresas-jacarei">Microsoft 365 para Empresas</a> — Migração, configuração e suporte</li>
-          <li><a href="/firewall-pfsense-jacarei">Firewall pfSense</a> — Segurança de rede e proteção contra ameaças</li>
-          <li><a href="/montagem-e-monitoramento-de-redes-jacarei">Montagem e Monitoramento de Redes</a> — Infraestrutura de rede estruturada</li>
-          <li><a href="/locacao-de-computadores-para-empresas-jacarei">Locação de Computadores</a> — Aluguel de equipamentos Dell para empresas</li>
-          <li><a href="/backup-corporativo">Backup Corporativo</a> — Proteção de dados empresariais</li>
-          <li><a href="/seguranca-de-rede">Segurança de Rede</a> — Proteção contra ransomware e invasões</li>
-          <li><a href="/administracao-de-servidores">Administração de Servidores</a> — Gestão e monitoramento 24/7</li>
-          <li><a href="/infraestrutura-ti-corporativa-jacarei">Infraestrutura de TI Corporativa</a> — Projetos completos de TI</li>
-          <li><a href="/terceirizacao-de-mao-de-obra-ti">Terceirização de TI</a> — Outsourcing de equipe técnica</li>
-        </ul>
-
-        <h2>Segmentos Atendidos</h2>
-        <ul>
-          <li><a href="/ti-para-hospitais-e-clinicas">TI para Hospitais e Clínicas</a></li>
-          <li><a href="/ti-para-cartorios">TI para Cartórios</a></li>
-          <li><a href="/ti-para-serventias-cartoriais">TI para Serventias Cartoriais</a></li>
-          <li><a href="/ti-para-escritorios-de-advocacia">TI para Escritórios de Advocacia</a></li>
-          <li><a href="/ti-para-contabilidades">TI para Contabilidades</a></li>
-          <li><a href="/ti-para-escritorios-corporativos">TI para Escritórios Corporativos</a></li>
-          <li><a href="/ti-para-industrias-alimenticias">TI para Indústrias Alimentícias</a></li>
-          <li><a href="/ti-para-industrias-petroliferas">TI para Indústrias Petrolíferas</a></li>
-        </ul>
-
-        <h2>Cidades Atendidas</h2>
-        <p>Atendemos empresas em <a href="/empresa-de-ti-jacarei">Jacareí</a>, <a href="/empresa-de-ti-sao-jose-dos-campos">São José dos Campos</a>, <a href="/empresa-de-ti-taubate">Taubaté</a> e toda a região do <a href="/empresa-de-ti-vale-do-paraiba">Vale do Paraíba</a>.</p>
-
-        <h2>Por que escolher a WMTi?</h2>
-        <ul>
-          <li>+200 empresas atendidas no Vale do Paraíba</li>
-          <li>Equipe certificada Dell, Microsoft e pfSense</li>
-          <li>Suporte técnico presencial e remoto</li>
-          <li>Monitoramento proativo 24/7 de servidores e redes</li>
-          <li>Atendimento emergencial com SLA garantido</li>
-        </ul>
-
-        <h2>Blog — Artigos sobre TI Corporativa</h2>
-        <ul>
-          <li><a href="/blog/infraestrutura-ti-empresarial">Infraestrutura de TI Empresarial: Guia Completo</a></li>
-          <li><a href="/blog/firewall-empresarial">Firewall Empresarial: Como Proteger sua Rede</a></li>
-          <li><a href="/blog/custos-infra-ti">Custos de Infraestrutura de TI</a></li>
-          <li><a href="/blog/suporte-ti-regional">Suporte de TI Regional</a></li>
-          <li><a href="/blog/servidor-manutencao">Manutenção de Servidores</a></li>
-        </ul>
-
-        <p><a href="/orcamento-ti">Solicitar orçamento gratuito de TI</a> — Diagnóstico sem compromisso para sua empresa.</p>
-
-        <h2>Contato</h2>
-        <p>WMTi Tecnologia da Informação<br/>
-        Rua José Benedito Duarte, 140 — Parque Itamarati, Jacareí/SP — CEP 12322-520<br/>
-        Telefone: (11) 96316-6915 | Email: contato@wmti.com.br</p>
-      </main>
-
-      <footer style="padding:16px 24px;background:#0f172a;color:#64748b;text-align:center;font-size:0.875rem">
-        <p>© 2025 WMTi Tecnologia da Informação. Todos os direitos reservados.</p>
-        <nav style="margin-top:8px">
-          <a href="/institucional" style="color:#64748b;margin-right:12px">Institucional</a>
-          <a href="/blog" style="color:#64748b;margin-right:12px">Blog</a>
-          <a href="/orcamento-ti" style="color:#64748b">Orçamento</a>
-        </nav>
-      </footer>
+      <div aria-hidden="false" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap">
+        <header>
+          <a href="/">WMTi Tecnologia da Informação</a>
+          <nav>
+            <a href="/institucional">Institucional</a>
+            <a href="/servicos">Serviços</a>
+            <a href="/infraestrutura">Infraestrutura</a>
+            <a href="/blog">Blog</a>
+            <a href="/orcamento-ti">Orçamento</a>
+          </nav>
+        </header>
+        <main>
+          <h1>Infraestrutura de TI Corporativa em Jacareí e Vale do Paraíba</h1>
+          <p>A WMTi é uma empresa de TI especializada em infraestrutura corporativa, servidores Dell PowerEdge, Microsoft 365, firewall pfSense, montagem de redes, locação de computadores e suporte técnico para empresas no Vale do Paraíba — SP.</p>
+          <h2>Nossos Serviços de TI</h2>
+          <ul>
+            <li><a href="/suporte-ti-jacarei">Suporte Técnico de TI</a></li>
+            <li><a href="/servidor-dell-poweredge-jacarei">Servidores Dell PowerEdge</a></li>
+            <li><a href="/microsoft-365-para-empresas-jacarei">Microsoft 365 para Empresas</a></li>
+            <li><a href="/firewall-pfsense-jacarei">Firewall pfSense</a></li>
+            <li><a href="/montagem-e-monitoramento-de-redes-jacarei">Montagem e Monitoramento de Redes</a></li>
+            <li><a href="/locacao-de-computadores-para-empresas-jacarei">Locação de Computadores</a></li>
+            <li><a href="/backup-corporativo">Backup Corporativo</a></li>
+            <li><a href="/seguranca-de-rede">Segurança de Rede</a></li>
+            <li><a href="/administracao-de-servidores">Administração de Servidores</a></li>
+            <li><a href="/infraestrutura-ti-corporativa-jacarei">Infraestrutura de TI Corporativa</a></li>
+            <li><a href="/terceirizacao-de-mao-de-obra-ti">Terceirização de TI</a></li>
+          </ul>
+          <h2>Segmentos Atendidos</h2>
+          <ul>
+            <li><a href="/ti-para-hospitais-e-clinicas">TI para Hospitais e Clínicas</a></li>
+            <li><a href="/ti-para-cartorios">TI para Cartórios</a></li>
+            <li><a href="/ti-para-serventias-cartoriais">TI para Serventias Cartoriais</a></li>
+            <li><a href="/ti-para-escritorios-de-advocacia">TI para Escritórios de Advocacia</a></li>
+            <li><a href="/ti-para-contabilidades">TI para Contabilidades</a></li>
+            <li><a href="/ti-para-escritorios-corporativos">TI para Escritórios Corporativos</a></li>
+            <li><a href="/ti-para-industrias-alimenticias">TI para Indústrias Alimentícias</a></li>
+            <li><a href="/ti-para-industrias-petroliferas">TI para Indústrias Petrolíferas</a></li>
+          </ul>
+          <h2>Contato</h2>
+          <p>WMTi Tecnologia da Informação — Rua José Benedito Duarte, 140 — Jacareí/SP — (11) 96316-6915 — contato@wmti.com.br</p>
+        </main>
+      </div>
     </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
