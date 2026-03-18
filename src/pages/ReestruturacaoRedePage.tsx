@@ -1,16 +1,25 @@
-import { useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Monitor, ShieldCheck, Server, HardDrive, Network, FolderLock,
-  CheckCircle2, Star, ArrowRight,
+  CheckCircle2, Star, ArrowRight, Minus, Plus, Calculator,
+  CheckCircle, FileText, CreditCard, FileBarChart, Loader2,
+  ExternalLink, AlertTriangle, RotateCcw,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import SeoHead from "@/components/SeoHead";
 import JsonLd from "@/components/JsonLd";
+import WizardStepWrapper from "@/components/orcamento/WizardStepWrapper";
+import QuickRegistrationForm, { type RegistrationData } from "@/components/orcamento/QuickRegistrationForm";
+import type { CustomerData } from "@/components/orcamento/CustomerDataForm";
 
+/* ─── Deliverables (info section) ─── */
 const deliverables = [
   {
     icon: Monitor,
@@ -69,15 +78,433 @@ const deliverables = [
   },
 ];
 
+/* ─── Pricing ─── */
+const PRICE_PER_PC = 350;
+const SERVER_SETUP_PRICE = 3500;
+
+function calcTotal(pcs: number, includeServer: boolean) {
+  // Volume discounts
+  let pcDiscount = 0;
+  if (pcs >= 20) pcDiscount = 0.20;
+  else if (pcs >= 10) pcDiscount = 0.15;
+  else if (pcs >= 5) pcDiscount = 0.10;
+
+  const pcUnitPrice = PRICE_PER_PC * (1 - pcDiscount);
+  const pcTotal = pcs * pcUnitPrice;
+  const serverTotal = includeServer ? SERVER_SETUP_PRICE : 0;
+  const total = pcTotal + serverTotal;
+  const fullPrice = pcs * PRICE_PER_PC + serverTotal;
+  const savings = fullPrice - total;
+
+  return { pcUnitPrice, pcTotal, serverTotal, total, fullPrice, savings, discountPct: Math.round(pcDiscount * 100) };
+}
+
+/* ─── Contract generator ─── */
+function generateRestructuringContractHtml(
+  customer: CustomerData,
+  pcs: number,
+  includeServer: boolean,
+  pricing: ReturnType<typeof calcTotal>,
+) {
+  const today = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+
+  return `
+<div style="font-family: 'Times New Roman', Times, serif; max-width: 800px; margin: 0 auto; color: #000; line-height: 1.8; font-size: 12pt; text-align: justify;">
+
+  <div style="text-align: center; margin-bottom: 32px; padding-bottom: 16px; border-bottom: 1px solid #000;">
+    <p style="font-size: 14pt; font-weight: bold; margin: 0;">WMTi Tecnologia da Informação</p>
+    <h1 style="font-size: 14pt; font-weight: bold; margin: 16px 0 0 0; text-transform: uppercase;">
+      CONTRATO DE PRESTAÇÃO DE SERVIÇO — REESTRUTURAÇÃO COMPLETA DE REDE CORPORATIVA
+    </h1>
+  </div>
+
+  <h2 style="font-size: 12pt; font-weight: bold; margin-top: 24px;">IDENTIFICAÇÃO DAS PARTES CONTRATANTES</h2>
+
+  <p><strong>CONTRATANTE:</strong> Razão Social: ${customer.razaoSocial}${customer.nomeFantasia ? `, Nome fantasia: ${customer.nomeFantasia}` : ""}, com sede em ${customer.endereco}, CIDADE DE ${customer.cidade}, com CEP ${customer.cep}, inscrita no ${customer.cnpjOuCpf.replace(/\D/g, "").length > 11 ? "CNPJ" : "CPF"} sob o nº ${customer.cnpjOuCpf}, neste ato representada por ${customer.responsavel}, adiante denominado simplesmente CONTRATANTE.${customer.email ? ` E-mail: ${customer.email}.` : ""}${customer.telefone ? ` Telefone: ${customer.telefone}.` : ""}</p>
+
+  <p><strong>CONTRATADA:</strong> WMTI TECNOLOGIA DA INFORMAÇÃO LTDA, pessoa jurídica privada, inscrita no CNPJ sob nº 13.366.668/0001-07, com sede na RUA JOSÉ BENEDITO DUARTE, 140, PARQUE ITAMARATI, CEP: 12.307-200, na CIDADE DE JACAREÍ no ESTADO DE SÃO PAULO, adiante denominada simplesmente como CONTRATADA.</p>
+
+  <h2 style="font-size: 12pt; font-weight: bold; margin-top: 24px;">DO OBJETO DO CONTRATO</h2>
+
+  <p><strong>Cláusula Primeira</strong> – O presente contrato tem como OBJETO a prestação do serviço de <strong>REESTRUTURAÇÃO COMPLETA DE REDE CORPORATIVA — PACOTE PREMIUM SEM LIMITE DE HORAS</strong>, conforme especificações abaixo:</p>
+
+  <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
+    <tr style="background: #f5f5f5;">
+      <td style="border: 1px solid #000; padding: 8px; font-weight: bold;">Serviço</td>
+      <td style="border: 1px solid #000; padding: 8px;">Reestruturação Completa de Rede Corporativa</td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid #000; padding: 8px; font-weight: bold;">Modalidade</td>
+      <td style="border: 1px solid #000; padding: 8px;">PACOTE PREMIUM — SEM LIMITE DE HORAS</td>
+    </tr>
+    <tr style="background: #f5f5f5;">
+      <td style="border: 1px solid #000; padding: 8px; font-weight: bold;">Qtd. Computadores</td>
+      <td style="border: 1px solid #000; padding: 8px;">${pcs} computador${pcs > 1 ? "es" : ""}</td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid #000; padding: 8px; font-weight: bold;">Valor por Computador</td>
+      <td style="border: 1px solid #000; padding: 8px;">R$ ${pricing.pcUnitPrice.toFixed(2).replace(".", ",")}</td>
+    </tr>
+    ${includeServer ? `<tr style="background: #f5f5f5;">
+      <td style="border: 1px solid #000; padding: 8px; font-weight: bold;">Implantação de Servidor</td>
+      <td style="border: 1px solid #000; padding: 8px;">R$ ${SERVER_SETUP_PRICE.toFixed(2).replace(".", ",")}</td>
+    </tr>` : ""}
+    <tr style="background: #f5f5f5;">
+      <td style="border: 1px solid #000; padding: 8px; font-weight: bold;">Valor Total do Projeto</td>
+      <td style="border: 1px solid #000; padding: 8px;"><strong>R$ ${pricing.total.toFixed(2).replace(".", ",")}</strong></td>
+    </tr>
+    ${pricing.savings > 0 ? `<tr>
+      <td style="border: 1px solid #000; padding: 8px; font-weight: bold;">Economia Obtida</td>
+      <td style="border: 1px solid #000; padding: 8px; color: green;">R$ ${pricing.savings.toFixed(2).replace(".", ",")}</td>
+    </tr>` : ""}
+  </table>
+
+  <h2 style="font-size: 12pt; font-weight: bold; margin-top: 24px;">DO ESCOPO DOS SERVIÇOS</h2>
+
+  <p><strong>Cláusula Segunda</strong> – A CONTRATADA executará, sem limite de horas, os seguintes serviços:</p>
+  <p>a) Formatação e padronização de ${pcs} computador${pcs > 1 ? "es" : ""} com Windows 11 Pro;</p>
+  <p>b) Remoção total de vírus, malwares e ameaças ocultas;</p>
+  <p>c) Implantação de antivírus corporativo com proteção ativa;</p>
+  ${includeServer ? `<p>d) Implantação de servidor corporativo com Windows Server 2016, Active Directory, GPO, criação de usuários/grupos e pastas auditadas;</p>` : ""}
+  <p>${includeServer ? "e" : "d"}) Backup completo antes de intervenção e restauração segura;</p>
+  <p>${includeServer ? "f" : "e"}) Reconfiguração completa da rede, instalação de programas, impressoras e sistemas;</p>
+  <p>${includeServer ? "g" : "f"}) Organização de pastas por setor com controle de acesso e permissões granulares.</p>
+
+  <h2 style="font-size: 12pt; font-weight: bold; margin-top: 24px;">DA MODALIDADE DE EXECUÇÃO</h2>
+
+  <p><strong>Cláusula Terceira</strong> – Este contrato opera na modalidade <strong>PACOTE PREMIUM SEM LIMITE DE HORAS</strong>. O CONTRATANTE paga pelo resultado final entregue, não pelo tempo de execução. A CONTRATADA se compromete a concluir todos os serviços descritos na Cláusula Segunda independentemente do número de horas necessárias.</p>
+
+  <h2 style="font-size: 12pt; font-weight: bold; margin-top: 24px;">DO PAGAMENTO</h2>
+
+  <p><strong>Cláusula Quarta</strong> – O CONTRATANTE deverá efetuar o pagamento integral do valor de <strong>R$ ${pricing.total.toFixed(2).replace(".", ",")}</strong> antes do início da prestação dos serviços, por meio de boleto bancário ou cartão de crédito.</p>
+
+  <p><strong>Cláusula Quinta</strong> – O início da prestação dos serviços está condicionado à confirmação do pagamento pela CONTRATADA.</p>
+
+  <h2 style="font-size: 12pt; font-weight: bold; margin-top: 24px;">DAS OBRIGAÇÕES DA CONTRATADA</h2>
+
+  <p><strong>Cláusula Sexta</strong> – A CONTRATADA obriga-se a:</p>
+  <p>a) Executar todos os serviços descritos com diligência e qualidade técnica;</p>
+  <p>b) Concluir o projeto sem limite de horas até a entrega completa;</p>
+  <p>c) Manter sigilo sobre informações obtidas durante a prestação dos serviços;</p>
+  <p>d) Emitir nota fiscal correspondente ao serviço prestado.</p>
+
+  <h2 style="font-size: 12pt; font-weight: bold; margin-top: 24px;">DAS OBRIGAÇÕES DO CONTRATANTE</h2>
+
+  <p><strong>Cláusula Sétima</strong> – O CONTRATANTE obriga-se a:</p>
+  <p>a) Disponibilizar acesso presencial a todos os equipamentos;</p>
+  <p>b) Designar um responsável para acompanhar os serviços;</p>
+  <p>c) Efetuar o pagamento conforme estabelecido neste contrato.</p>
+
+  <h2 style="font-size: 12pt; font-weight: bold; margin-top: 24px;">DO ACEITE ELETRÔNICO</h2>
+
+  <p><strong>Cláusula Oitava</strong> – O presente contrato é celebrado de forma eletrônica, sendo a assinatura digital do CONTRATANTE considerada válida e vinculante para todos os efeitos legais, nos termos da Medida Provisória nº 2.200-2/2001.</p>
+
+  <h2 style="font-size: 12pt; font-weight: bold; margin-top: 24px;">DO FORO</h2>
+
+  <p><strong>Cláusula Nona</strong> – Fica eleito o Foro da Comarca de Jacareí/SP para dirimir quaisquer questões oriundas do presente contrato.</p>
+
+  <p style="margin-top: 32px;">E, por estarem assim justas e contratadas, as partes assinam o presente Contrato eletronicamente.</p>
+
+  <p style="margin-top: 24px; text-align: center;">Jacareí (SP), ${today}</p>
+
+  <div style="margin-top: 48px; display: flex; justify-content: space-between;">
+    <div style="text-align: center; width: 45%;">
+      <div style="border-top: 1px solid #000; padding-top: 8px;">
+        <p style="margin: 0;"><strong>${customer.responsavel}</strong></p>
+        <p style="margin: 0; font-size: 10pt;">${customer.cnpjOuCpf.replace(/\D/g, "").length > 11 ? "CNPJ" : "CPF"}: ${customer.cnpjOuCpf}</p>
+        <p style="margin: 0; font-size: 10pt;">CONTRATANTE</p>
+      </div>
+    </div>
+    <div style="text-align: center; width: 45%;">
+      <div style="border-top: 1px solid #000; padding-top: 8px;">
+        <p style="margin: 0;"><strong>Willian Rodrigues da Silva</strong></p>
+        <p style="margin: 0; font-size: 10pt;">CPF: 377.995.388-99</p>
+        <p style="margin: 0; font-size: 10pt;">CONTRATADA — WMTi</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+`;
+}
+
+/* ─── Types ─── */
+type FlowStep = "calculator" | "registration" | "contract" | "payment";
+type BillingType = "BOLETO" | "CREDIT_CARD";
+
+/* ─── Page Component ─── */
 const ReestruturacaoRedePage = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const wizardRef = useRef<HTMLDivElement>(null);
+  const emailSentRef = useRef(false);
+
   useEffect(() => { window.scrollTo(0, 0); }, []);
+
+  // Calculator state
+  const [pcs, setPcs] = useState(5);
+  const [includeServer, setIncludeServer] = useState(true);
+
+  // Wizard state
+  const [currentStep, setCurrentStep] = useState<FlowStep>("calculator");
+  const [registrationData, setRegistrationData] = useState<RegistrationData | null>(null);
+  const [customerId, setCustomerId] = useState<string | null>(null);
+  const [contractId, setContractId] = useState<string | null>(null);
+  const [contractSigned, setContractSigned] = useState(false);
+  const [quoteId, setQuoteId] = useState<string | null>(null);
+  const [registrationLoading, setRegistrationLoading] = useState(false);
+  const [selectedPayment, setSelectedPayment] = useState<BillingType | null>(null);
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [paymentComplete, setPaymentComplete] = useState(false);
+  const [invoiceUrl, setInvoiceUrl] = useState<string | null>(null);
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
+
+  const pricing = calcTotal(pcs, includeServer);
+
+  // Poll contract signed
+  useEffect(() => {
+    if (currentStep !== "contract" || !contractId || contractSigned) return;
+    const interval = setInterval(async () => {
+      const { data } = await supabase
+        .from("contracts" as any)
+        .select("signed")
+        .eq("id", contractId)
+        .single();
+      if ((data as any)?.signed) {
+        setContractSigned(true);
+        setCurrentStep("payment");
+        scrollToTop();
+        toast({ title: "Contrato assinado!", description: "Prossiga com o pagamento." });
+      }
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [currentStep, contractId, contractSigned, toast]);
+
+  // Poll payment confirmation
+  useEffect(() => {
+    if (!paymentComplete || paymentConfirmed || !quoteId) return;
+    const interval = setInterval(async () => {
+      const { data } = await supabase
+        .from("payments")
+        .select("payment_status")
+        .eq("quote_id", quoteId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+      if (data && ((data as any).payment_status === "CONFIRMED" || (data as any).payment_status === "RECEIVED")) {
+        setPaymentConfirmed(true);
+        if (registrationData && !emailSentRef.current) {
+          emailSentRef.current = true;
+          supabase.functions.invoke("send-purchase-confirmation", {
+            body: {
+              customer_name: registrationData.razaoSocial,
+              customer_email: registrationData.email,
+              service_name: "Reestruturação Completa de Rede Corporativa",
+              computers_qty: pcs,
+              value: pricing.total,
+              payment_method: selectedPayment,
+              contract_ref: contractId?.slice(0, 8).toUpperCase(),
+              purchase_date: new Date().toLocaleDateString("pt-BR"),
+              is_recurring: false,
+            },
+          }).catch(err => console.error("[WMTi] Email error:", err));
+        }
+        const purchaseData = {
+          serviceName: "Reestruturação Completa de Rede Corporativa",
+          computersQty: pcs,
+          monthlyValue: pricing.total,
+          isRecurring: false,
+          customerName: registrationData?.razaoSocial || "",
+          customerCpfCnpj: registrationData?.cnpjOuCpf || "",
+          customerEmail: registrationData?.email || "",
+          paymentMethod: selectedPayment || "CREDIT_CARD",
+          contractId,
+          purchaseDate: new Date().toLocaleDateString("pt-BR"),
+        };
+        try { sessionStorage.setItem("wmti_purchase_data", JSON.stringify(purchaseData)); } catch {}
+        navigate(`/compra-concluida?quote=${quoteId}`);
+      }
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [paymentComplete, paymentConfirmed, quoteId, registrationData, selectedPayment, contractId, pcs, pricing.total]);
+
+  const scrollToTop = () => {
+    setTimeout(() => {
+      wizardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 150);
+  };
+
+  const handleContinue = () => {
+    setCurrentStep("registration");
+    scrollToTop();
+  };
+
+  const handleRegistrationComplete = async (data: RegistrationData) => {
+    setRegistrationLoading(true);
+    try {
+      const fullAddress = [data.endereco, data.numero, data.complemento, data.bairro].filter(Boolean).join(", ");
+
+      const { data: leadRow, error: leadErr } = await supabase
+        .from("budget_leads" as any)
+        .insert({
+          company_name: data.razaoSocial,
+          contact_name: data.responsavel,
+          email: data.email,
+          phone: data.telefone || null,
+          city: data.cidade || null,
+          observations: `Reestruturação de Rede — ${pcs} PCs${includeServer ? " + Servidor" : ""} — R$ ${pricing.total.toFixed(2)}`,
+        } as any)
+        .select()
+        .single();
+
+      if (leadErr) throw leadErr;
+
+      const { data: quoteRow, error: quoteErr } = await supabase
+        .from("quotes" as any)
+        .insert({
+          lead_id: (leadRow as any).id,
+          selected_plan: "reestruturacao-premium",
+          monthly_value: pricing.total,
+          computers_qty: pcs,
+          status: "pending",
+        } as any)
+        .select()
+        .single();
+
+      if (quoteErr) throw quoteErr;
+      setQuoteId((quoteRow as any).id);
+
+      const { data: customerRow, error: custErr } = await supabase
+        .from("customers" as any)
+        .insert({
+          razao_social: data.razaoSocial,
+          nome_fantasia: data.nomeFantasia || null,
+          cnpj_ou_cpf: data.cnpjOuCpf,
+          responsavel: data.responsavel,
+          email: data.email,
+          telefone: data.telefone || null,
+          endereco: fullAddress,
+          cidade: `${data.cidade}/${data.uf}`,
+          cep: data.cep,
+        } as any)
+        .select()
+        .single();
+
+      if (custErr) throw custErr;
+      setCustomerId((customerRow as any).id);
+      setRegistrationData(data);
+
+      const customerDataForContract: CustomerData = {
+        razaoSocial: data.razaoSocial,
+        nomeFantasia: data.nomeFantasia,
+        cnpjOuCpf: data.cnpjOuCpf,
+        responsavel: data.responsavel,
+        email: data.email,
+        telefone: data.telefone,
+        endereco: fullAddress,
+        cidade: `${data.cidade}/${data.uf}`,
+        cep: data.cep,
+      };
+
+      const html = generateRestructuringContractHtml(customerDataForContract, pcs, includeServer, pricing);
+
+      const encoder = new TextEncoder();
+      const hashBuffer = await crypto.subtle.digest("SHA-256", encoder.encode(html));
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const contractHash = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+
+      const { data: contractRow, error: contractErr } = await supabase
+        .from("contracts" as any)
+        .insert({
+          quote_id: (quoteRow as any).id,
+          customer_id: (customerRow as any).id,
+          contract_type: "reestruturacao-premium",
+          contract_text: html,
+          monthly_value: pricing.total,
+          contract_hash: contractHash,
+          status: "draft",
+          signed: false,
+          accepted_minimum_term: false,
+        } as any)
+        .select()
+        .single();
+
+      if (contractErr) throw contractErr;
+      setContractId((contractRow as any).id);
+
+      await supabase.from("payments" as any).insert({
+        quote_id: (quoteRow as any).id,
+        payment_status: "pending",
+      } as any);
+
+      setCurrentStep("contract");
+      scrollToTop();
+    } catch (err) {
+      console.error("[WMTi] Erro no cadastro:", err);
+      toast({ title: "Erro ao salvar dados", description: "Tente novamente.", variant: "destructive" });
+    } finally {
+      setRegistrationLoading(false);
+    }
+  };
+
+  const handleOpenContract = () => {
+    if (!contractId) return;
+    window.open(`/contrato?id=${contractId}`, "_blank");
+  };
+
+  const handlePayment = async () => {
+    if (!selectedPayment || !registrationData || !quoteId) return;
+    setPaymentLoading(true);
+    setPaymentError(null);
+
+    const description = `Reestruturação Completa de Rede — ${pcs} PCs${includeServer ? " + Servidor" : ""}`;
+
+    try {
+      const { data, error } = await supabase.functions.invoke("create-asaas-payment", {
+        body: {
+          customer_name: registrationData.razaoSocial,
+          customer_email: registrationData.email,
+          customer_cpf_cnpj: registrationData.cnpjOuCpf,
+          billing_type: selectedPayment,
+          value: pricing.total,
+          description,
+          quote_id: quoteId,
+        },
+      });
+
+      if (error) throw new Error(error.message || "Erro ao criar cobrança");
+
+      const url = data?.invoiceUrl || data?.invoice_url || data?.bankSlipUrl || data?.payment?.invoiceUrl;
+      if (!url) throw new Error("O sistema de pagamento não retornou um link de cobrança.");
+
+      setInvoiceUrl(url);
+      setPaymentComplete(true);
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Erro desconhecido";
+      console.error("[WMTi][payment]", message);
+      setPaymentError(message);
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+
+  const getStepStatus = (step: FlowStep) => {
+    const order: FlowStep[] = ["calculator", "registration", "contract", "payment"];
+    const currentIdx = order.indexOf(currentStep);
+    const stepIdx = order.indexOf(step);
+    if (stepIdx < currentIdx) return "completed" as const;
+    if (stepIdx === currentIdx) return "active" as const;
+    return "pending" as const;
+  };
 
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Service",
     name: "Reestruturação Completa De Rede Corporativa",
     provider: { "@type": "Organization", name: "WMTi Tecnologia da Informação" },
-    description: "Pacote premium sem limite de horas para reestruturação completa de rede corporativa — servidores, segurança, backup e padronização.",
+    description: "Pacote premium sem limite de horas para reestruturação completa de rede corporativa.",
     areaServed: { "@type": "Country", name: "BR" },
   };
 
@@ -109,20 +536,22 @@ const ReestruturacaoRedePage = () => {
               </p>
 
               <div className="flex flex-wrap gap-4">
+                <button
+                  onClick={() => {
+                    document.getElementById("wizard-section")?.scrollIntoView({ behavior: "smooth" });
+                  }}
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-mono text-sm uppercase tracking-wider hover:brightness-110 transition-all"
+                >
+                  Calcular Investimento <Calculator size={16} />
+                </button>
                 <a
                   href="https://wa.me/5512981156856?text=Olá!%20Tenho%20interesse%20no%20pacote%20de%20Reestruturação%20Completa%20de%20Rede%20Corporativa."
                   target="_blank"
                   rel="noopener"
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-mono text-sm uppercase tracking-wider hover:brightness-110 transition-all"
-                >
-                  Solicitar Proposta <ArrowRight size={16} />
-                </a>
-                <Link
-                  to="/orcamento-ti"
                   className="inline-flex items-center gap-2 px-6 py-3 border border-border text-foreground font-mono text-sm uppercase tracking-wider hover:bg-muted transition-colors"
                 >
-                  Orçamento Online
-                </Link>
+                  Falar com especialista
+                </a>
               </div>
             </motion.div>
           </div>
@@ -185,6 +614,251 @@ const ReestruturacaoRedePage = () => {
                 );
               })}
             </div>
+          </div>
+        </section>
+
+        {/* ═══════════ WIZARD: Calculator → Registration → Contract → Payment ═══════════ */}
+        <section id="wizard-section" className="py-16 md:py-24 border-t border-border" ref={wizardRef}>
+          <div className="container max-w-3xl">
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12">
+              <span className="inline-block px-4 py-1.5 mb-4 text-xs font-semibold tracking-widest uppercase bg-primary/10 text-primary rounded-full border border-primary/20">
+                Calculadora de investimento
+              </span>
+              <h2 className="text-2xl md:text-4xl mb-3">
+                Calcule o valor do seu <span className="text-primary">projeto</span>
+              </h2>
+              <p className="text-muted-foreground max-w-xl mx-auto">
+                Informe a quantidade de computadores para formatação e escolha se deseja incluir a implantação do servidor.
+              </p>
+            </motion.div>
+
+            {/* Step 1: Calculator */}
+            <WizardStepWrapper stepNumber={1} title="Calculadora De Formatação" subtitle="Informe a quantidade de computadores" status={getStepStatus("calculator")}>
+              <div className="space-y-6">
+                {/* PC quantity */}
+                <div className="bg-secondary p-8">
+                  <p className="font-mono text-xs text-muted-foreground mb-4 text-center">Quantidade de computadores para formatação</p>
+                  <div className="flex items-center justify-center gap-6 mb-6">
+                    <button onClick={() => setPcs(Math.max(1, pcs - 1))} className="w-12 h-12 flex items-center justify-center border border-muted-foreground/30 text-muted-foreground hover:border-primary hover:text-primary transition-colors" aria-label="Diminuir">
+                      <Minus size={20} />
+                    </button>
+                    <div className="text-center">
+                      <span className="text-5xl font-bold text-primary">{pcs}</span>
+                      <p className="font-mono text-xs text-muted-foreground mt-1">computador{pcs > 1 ? "es" : ""}</p>
+                    </div>
+                    <button onClick={() => setPcs(Math.min(100, pcs + 1))} className="w-12 h-12 flex items-center justify-center border border-muted-foreground/30 text-muted-foreground hover:border-primary hover:text-primary transition-colors" aria-label="Aumentar">
+                      <Plus size={20} />
+                    </button>
+                  </div>
+
+                  {/* Server toggle */}
+                  <div className="mb-6">
+                    <button
+                      onClick={() => setIncludeServer(!includeServer)}
+                      className={`w-full p-4 border-2 transition-all text-left flex items-center gap-4 ${includeServer ? "border-primary bg-primary/5" : "border-border hover:border-primary/30"}`}
+                    >
+                      <Server size={24} className={includeServer ? "text-primary" : "text-muted-foreground"} />
+                      <div className="flex-1">
+                        <p className="font-semibold text-foreground">Implantação de Servidor Corporativo</p>
+                        <p className="text-xs text-muted-foreground">Windows Server 2016 + Active Directory + GPO</p>
+                      </div>
+                      <div className={`w-6 h-6 rounded border-2 flex items-center justify-center ${includeServer ? "border-primary bg-primary" : "border-muted-foreground/30"}`}>
+                        {includeServer && <CheckCircle2 size={14} className="text-primary-foreground" />}
+                      </div>
+                    </button>
+                  </div>
+
+                  {/* Pricing breakdown */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between font-mono text-sm">
+                      <span className="text-muted-foreground">{pcs} PC{pcs > 1 ? "s" : ""} × R$ {pricing.pcUnitPrice.toFixed(2).replace(".", ",")}</span>
+                      <span className="text-foreground">R$ {pricing.pcTotal.toFixed(2).replace(".", ",")}</span>
+                    </div>
+                    {pricing.discountPct > 0 && (
+                      <div className="flex items-center justify-between font-mono text-xs">
+                        <span className="text-primary">Desconto por volume ({pricing.discountPct}%)</span>
+                        <span className="text-primary">-R$ {pricing.savings.toFixed(2).replace(".", ",")}</span>
+                      </div>
+                    )}
+                    {includeServer && (
+                      <div className="flex items-center justify-between font-mono text-sm">
+                        <span className="text-muted-foreground">Implantação de Servidor</span>
+                        <span className="text-foreground">R$ {SERVER_SETUP_PRICE.toFixed(2).replace(".", ",")}</span>
+                      </div>
+                    )}
+                    <div className="h-px bg-muted-foreground/10" />
+                    <div className="flex items-center justify-between font-mono text-base font-bold">
+                      <span className="text-foreground">Investimento total</span>
+                      <span className="text-primary text-xl">R$ {pricing.total.toFixed(2).replace(".", ",")}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Volume discount info */}
+                <details className="bg-secondary group">
+                  <summary className="p-4 cursor-pointer font-mono text-xs uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors flex justify-between items-center">
+                    Ver tabela de desconto por volume
+                    <Plus size={14} className="text-primary group-open:rotate-45 transition-transform" />
+                  </summary>
+                  <div className="px-4 pb-4">
+                    <div className="grid grid-cols-3 gap-px text-xs font-mono">
+                      <div className="bg-secondary p-2 text-muted-foreground/50">Faixa</div>
+                      <div className="bg-secondary p-2 text-muted-foreground/50">Desconto</div>
+                      <div className="bg-secondary p-2 text-muted-foreground/50">R$/PC</div>
+                      {[
+                        { range: "1-4 PCs", disc: "0%", price: PRICE_PER_PC },
+                        { range: "5-9 PCs", disc: "10%", price: PRICE_PER_PC * 0.9 },
+                        { range: "10-19 PCs", disc: "15%", price: PRICE_PER_PC * 0.85 },
+                        { range: "20+ PCs", disc: "20%", price: PRICE_PER_PC * 0.8 },
+                      ].map((row) => (
+                        <div key={row.range} className="contents">
+                          <div className="bg-secondary/50 p-2 text-muted-foreground">{row.range}</div>
+                          <div className="bg-secondary/50 p-2 text-muted-foreground">{row.disc}</div>
+                          <div className="bg-secondary/50 p-2 text-muted-foreground">R$ {row.price.toFixed(2).replace(".", ",")}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </details>
+
+                <div className="bg-primary/10 border border-primary/30 p-4 flex items-start gap-3">
+                  <Star size={20} className="text-primary shrink-0 mt-0.5" />
+                  <p className="font-body text-sm text-foreground">
+                    <strong>Pacote premium sem limite de horas.</strong> Você paga pelo resultado — não pelo tempo. Todos os serviços listados acima estão inclusos no valor calculado.
+                  </p>
+                </div>
+
+                <button
+                  onClick={handleContinue}
+                  className="w-full inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
+                >
+                  <ArrowRight size={16} />
+                  Continuar Contratação
+                </button>
+                <p className="font-body text-xs text-center text-muted-foreground/60">
+                  Preencha seus dados, assine o contrato e prossiga para o pagamento seguro.
+                </p>
+              </div>
+            </WizardStepWrapper>
+
+            {/* Step 2: Registration */}
+            <WizardStepWrapper stepNumber={2} title="Dados Do Contratante" subtitle="Preenchimento automático por CNPJ e CEP" status={getStepStatus("registration")}>
+              <QuickRegistrationForm onComplete={handleRegistrationComplete} loading={registrationLoading} initialData={{}} />
+            </WizardStepWrapper>
+
+            {/* Step 3: Contract */}
+            <WizardStepWrapper stepNumber={3} title="Contrato e Assinatura" subtitle={contractSigned ? "Contrato assinado ✓" : "Leia e assine o contrato"} status={getStepStatus("contract")}>
+              {contractSigned ? (
+                <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-3">
+                  <CheckCircle className="w-10 h-10 text-primary mx-auto" />
+                  <h4 className="text-lg font-heading font-bold">Contrato assinado!</h4>
+                  <p className="text-sm text-muted-foreground">Prossiga para o pagamento abaixo.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="bg-card border border-border rounded-xl p-5">
+                    <div className="flex items-center gap-3 mb-3">
+                      <FileText className="w-6 h-6 text-primary" />
+                      <div>
+                        <p className="font-semibold text-sm">Contrato de Reestruturação Completa de Rede</p>
+                        <p className="text-xs text-muted-foreground">O contrato será aberto em página separada com aparência de documento formal.</p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-3">Após ler e assinar, esta página será atualizada automaticamente.</p>
+                  </div>
+                  <Button onClick={handleOpenContract} disabled={!contractId} className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground">
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Abrir contrato para leitura e assinatura
+                  </Button>
+                  <p className="text-xs text-muted-foreground text-center">
+                    <Loader2 className="w-3 h-3 animate-spin inline mr-1" />
+                    Aguardando assinatura do contrato...
+                  </p>
+                </div>
+              )}
+            </WizardStepWrapper>
+
+            {/* Step 4: Payment */}
+            <WizardStepWrapper stepNumber={4} title={paymentConfirmed ? "Compra Concluída" : "Pagamento"} subtitle={paymentConfirmed ? "Pagamento confirmado ✓" : "Pagamento único via checkout seguro"} status={paymentConfirmed ? "completed" : getStepStatus("payment")} isLast>
+              {paymentConfirmed ? (
+                <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-3">
+                  <CheckCircle className="w-10 h-10 text-green-500 mx-auto" />
+                  <h4 className="text-lg font-heading font-bold">Pagamento confirmado!</h4>
+                  <p className="text-sm text-muted-foreground">Redirecionando para a página de confirmação...</p>
+                  <Loader2 className="w-5 h-5 animate-spin text-primary mx-auto" />
+                </div>
+              ) : paymentLoading ? (
+                <div className="bg-card border border-primary/20 rounded-xl p-6 space-y-4">
+                  <div className="flex flex-col items-center text-center space-y-3">
+                    <Loader2 className="w-10 h-10 animate-spin text-primary" />
+                    <h4 className="text-lg font-heading font-bold">Conectando ao checkout...</h4>
+                    <p className="text-sm text-muted-foreground">Não feche esta página.</p>
+                  </div>
+                </div>
+              ) : paymentComplete && invoiceUrl ? (
+                <div className="bg-card border border-primary/20 rounded-xl p-6 space-y-4">
+                  <div className="flex flex-col items-center text-center space-y-3">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                    <h4 className="text-lg font-heading font-bold">Aguardando confirmação do pagamento...</h4>
+                    <p className="text-sm text-muted-foreground">A página segura de pagamento foi aberta em outra aba.</p>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <Button onClick={() => window.open(invoiceUrl, "_blank", "noopener,noreferrer")} className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground">
+                      <ExternalLink className="w-4 h-4 mr-2" />
+                      Abrir checkout novamente
+                    </Button>
+                  </div>
+                  <div className="text-center mt-4 space-y-2">
+                    <p className="font-mono text-sm font-bold text-primary">Resumo da compra</p>
+                    <p className="text-sm text-muted-foreground">Serviço: <strong className="text-foreground">Reestruturação Completa de Rede</strong></p>
+                    <p className="text-sm text-muted-foreground">Computadores: <strong className="text-foreground">{pcs}</strong></p>
+                    {includeServer && <p className="text-sm text-muted-foreground">Servidor: <strong className="text-foreground">Incluso</strong></p>}
+                    <p className="text-sm text-muted-foreground">Valor total: <strong className="text-primary">R$ {pricing.total.toFixed(2).replace(".", ",")}</strong></p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground text-center">
+                    Valor total do projeto: <strong className="text-primary">R$ {pricing.total.toFixed(2).replace(".", ",")}</strong> — Pagamento único
+                  </p>
+
+                  {paymentError && (
+                    <div className="p-3 rounded-lg border border-destructive/30 bg-destructive/5 flex items-start gap-2">
+                      <AlertTriangle className="w-4 h-4 text-destructive mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-sm font-semibold text-destructive">Erro ao gerar cobrança</p>
+                        <p className="text-xs text-muted-foreground mt-1">{paymentError}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-3">
+                    {([
+                      { id: "BOLETO" as BillingType, icon: FileBarChart, label: "Boleto Bancário", desc: "Pagamento único" },
+                      { id: "CREDIT_CARD" as BillingType, icon: CreditCard, label: "Cartão de Crédito", desc: "Pagamento único" },
+                    ]).map((method) => (
+                      <button
+                        key={method.id}
+                        type="button"
+                        onClick={() => setSelectedPayment(method.id)}
+                        className={`p-4 rounded-xl border-2 transition-all text-center ${
+                          selectedPayment === method.id ? "border-primary bg-primary/5" : "border-border bg-card hover:border-primary/30"
+                        }`}
+                      >
+                        <method.icon className={`w-6 h-6 mx-auto mb-2 ${selectedPayment === method.id ? "text-primary" : "text-muted-foreground"}`} />
+                        <p className="text-sm font-semibold">{method.label}</p>
+                        <p className="text-xs text-muted-foreground">{method.desc}</p>
+                      </button>
+                    ))}
+                  </div>
+
+                  <Button onClick={handlePayment} disabled={!selectedPayment || paymentLoading} className="w-full h-14 text-base bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50">
+                    <ExternalLink className="w-5 h-5 mr-2" />
+                    {paymentError ? "Tentar novamente" : "PROSSEGUIR PARA PAGAMENTO"}
+                  </Button>
+                </div>
+              )}
+            </WizardStepWrapper>
           </div>
         </section>
 
