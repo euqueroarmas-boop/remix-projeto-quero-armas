@@ -497,32 +497,21 @@ const ContractingWizard = ({
             {/* Step 3: Payment */}
             <WizardStepWrapper stepNumber={3} title={paymentConfirmed ? "Compra Concluída" : "Pagamento"} subtitle={paymentConfirmed ? "Pagamento confirmado ✓" : "Ao prosseguir, você será direcionado para a página segura de checkout"} status={paymentConfirmed ? "completed" : getStepStatus("payment")} isLast>
               {paymentConfirmed ? (
-                <div className="bg-card border border-primary/20 rounded-xl p-8 space-y-6">
-                  <div className="flex flex-col items-center text-center space-y-3">
-                    <CheckCircle className="w-14 h-14 text-green-500" />
-                    <h3 className="text-2xl font-heading font-bold">Compra Concluída Com Sucesso!</h3>
-                    <p className="text-muted-foreground">Parabéns! Sua contratação foi realizada com sucesso.</p>
-                    <p className="text-sm text-muted-foreground">Já recebemos seu pagamento e em breve entraremos em contato para dar andamento ao atendimento.</p>
-                  </div>
-                  <div className="bg-secondary rounded-lg p-5 space-y-3">
-                    <p className="font-mono text-xs uppercase tracking-widest text-primary mb-2">Resumo da compra</p>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between"><span className="text-muted-foreground">Serviço</span><span className="font-semibold">{pathLabel}</span></div>
-                      <div className="flex justify-between"><span className="text-muted-foreground">Computadores</span><span className="font-semibold">{computersQty}</span></div>
-                      <div className="flex justify-between"><span className="text-muted-foreground">Valor mensal</span><span className="font-semibold text-primary">R$ {monthlyValue.toLocaleString("pt-BR")},00</span></div>
-                      <div className="flex justify-between"><span className="text-muted-foreground">Status</span><span className="font-bold text-green-500">Confirmado</span></div>
-                      {contractId && <div className="flex justify-between"><span className="text-muted-foreground">Contrato</span><span className="font-mono text-xs">{contractId.slice(0, 8).toUpperCase()}</span></div>}
-                    </div>
-                  </div>
-                  <a
-                    href={`https://wa.me/5511963166915?text=${encodeURIComponent(`Olá! Acabei de contratar ${pathLabel} (${computersQty} computadores) no valor de R$ ${monthlyValue.toLocaleString("pt-BR")},00/mês. Contrato: ${contractId?.slice(0, 8).toUpperCase() || "N/A"}`)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full inline-flex items-center justify-center gap-2 h-12 border border-primary/30 text-primary rounded-md hover:bg-primary/5 transition-colors font-mono text-sm"
-                  >
-                    Falar no WhatsApp
-                  </a>
-                </div>
+                <PurchaseSuccessScreen
+                  visible
+                  data={{
+                    serviceName: pathLabel,
+                    computersQty,
+                    monthlyValue,
+                    isRecurring: true,
+                    customerName: registrationData?.razaoSocial || "",
+                    customerCpfCnpj: registrationData?.cnpjOuCpf || "",
+                    customerEmail: registrationData?.email || "",
+                    paymentMethod: selectedPayment || "CREDIT_CARD",
+                    contractId,
+                    purchaseDate: new Date().toLocaleDateString("pt-BR"),
+                  }}
+                />
               ) : paymentLoading ? (
                 <div className="bg-card border border-primary/20 rounded-xl p-6 space-y-4">
                   <div className="flex flex-col items-center justify-center text-center space-y-3">
