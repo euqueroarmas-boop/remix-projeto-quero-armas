@@ -861,8 +861,8 @@ const ReestruturacaoRedePage = () => {
                           selectedPayment === method.id ? "border-primary bg-primary/5" : "border-border bg-card hover:border-primary/30"
                         }`}
                       >
-                        <method.icon className={`w-6 h-6 mx-auto mb-2 ${selectedPayment === method.id ? "text-primary" : "text-muted-foreground"}`} />
-                        <p className="text-sm font-semibold">{method.label}</p>
+                       <method.icon className={`w-6 h-6 mx-auto mb-2 ${selectedPayment === method.id ? "text-primary" : "text-muted-foreground"}`} />
+                        <p className="text-sm font-semibold text-foreground">{method.label}</p>
                         <p className="text-xs text-muted-foreground">{method.desc}</p>
                       </button>
                     ))}
