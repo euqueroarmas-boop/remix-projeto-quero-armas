@@ -189,7 +189,7 @@ const ContractingWizard = ({
             body: {
               customer_name: registrationData.razaoSocial,
               customer_email: registrationData.email,
-              service_name: pathLabel,
+              service_name: effectivePath === "locacao" ? "Locação de Equipamentos" : "Serviços de TI",
               computers_qty: computersQty,
               value: monthlyValue,
               payment_method: selectedPayment,
@@ -202,7 +202,7 @@ const ContractingWizard = ({
       }
     }, 5000);
     return () => clearInterval(interval);
-  }, [paymentComplete, paymentConfirmed, quoteId, registrationData, selectedPayment, contractId, pathLabel, computersQty, monthlyValue]);
+  }, [paymentComplete, paymentConfirmed, quoteId, registrationData, selectedPayment, contractId, effectivePath, computersQty, monthlyValue]);
 
   // Open checkout in new tab — keeps wizard state intact
   const handleRedirectToCheckout = useCallback((url: string) => {
