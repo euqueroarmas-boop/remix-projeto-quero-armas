@@ -16,7 +16,7 @@ import SeoHead from "@/components/SeoHead";
 import WizardStepWrapper from "@/components/orcamento/WizardStepWrapper";
 import QuickRegistrationForm, { type RegistrationData } from "@/components/orcamento/QuickRegistrationForm";
 import { generateContractHtml } from "@/components/orcamento/ContractPreview";
-import PurchaseSuccessScreen from "@/components/orcamento/PurchaseSuccessScreen";
+
 import type { CustomerData } from "@/components/orcamento/CustomerDataForm";
 
 /* ─── Service catalog ─── */
