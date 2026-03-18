@@ -7,13 +7,13 @@
 @layer base {
   :root {
     --background: 0 0% 4%;
-    --foreground: 210 20% 93%;
+    --foreground: 0 0% 95%;
 
     --card: 0 0% 7%;
-    --card-foreground: 210 20% 93%;
+    --card-foreground: 0 0% 95%;
 
     --popover: 0 0% 7%;
-    --popover-foreground: 210 20% 93%;
+    --popover-foreground: 0 0% 95%;
 
     --primary: 16 100% 55%;
     --primary-foreground: 0 0% 100%;
@@ -61,7 +61,11 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-heading font-bold tracking-tight;
+    @apply font-heading font-bold tracking-tight text-foreground;
+  }
+
+  p, span, li {
+    color: inherit;
   }
 }
 
