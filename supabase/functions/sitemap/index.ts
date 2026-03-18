@@ -1,4 +1,3 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import {
   serviceSlugs,
   segmentEntries,
@@ -8,6 +7,12 @@ import {
 } from "../_shared/seo-data.ts";
 
 const BASE_URL = "https://www.wmti.com.br";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+};
 
 // ─── Static / hand-crafted pages ───
 const staticPages = [
@@ -147,7 +152,11 @@ function buildSitemapIndex(): string {
   return `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries}\n</sitemapindex>`;
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
   const url = new URL(req.url);
   const type = url.searchParams.get("type") || "index";
 
@@ -174,7 +183,6 @@ serve(async (req) => {
     case "service-segment-cities":
       xml = buildServiceSegmentCityXml();
       break;
-    // Legacy compatibility
     case "programmatic":
       xml = buildServiceCityXml();
       break;
@@ -184,6 +192,7 @@ serve(async (req) => {
 
   return new Response(xml, {
     headers: {
+      ...corsHeaders,
       "Content-Type": "application/xml; charset=utf-8",
       "Cache-Control": "public, max-age=86400, s-maxage=86400",
     },
