@@ -549,7 +549,7 @@ const ReestruturacaoRedePage = () => {
                   Calcular Investimento <Calculator size={16} />
                 </button>
                 <a
-                  href="https://wa.me/5512981156856?text=Olá!%20Tenho%20interesse%20no%20pacote%20de%20Reestruturação%20Completa%20de%20Rede%20Corporativa."
+                  href="https://wa.me/5511963166915?text=Olá!%20Tenho%20interesse%20no%20pacote%20de%20Reestruturação%20Completa%20de%20Rede%20Corporativa."
                   target="_blank"
                   rel="noopener"
                   className="inline-flex items-center gap-2 px-6 py-3 border border-border text-foreground font-mono text-sm uppercase tracking-wider hover:bg-muted transition-colors"
