@@ -904,6 +904,42 @@ const ReestruturacaoRedePage = () => {
         </section>
       </main>
 
+      {/* Premium popup for 31+ PCs */}
+      {showPremiumPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-card border border-primary/30 rounded-2xl p-8 max-w-md w-full shadow-2xl shadow-primary/10 text-center space-y-5"
+          >
+            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+              <Star size={32} className="text-primary" />
+            </div>
+            <h3 className="text-xl font-heading font-bold text-foreground">
+              Orçamento <span className="text-primary">Premium Personalizado</span>
+            </h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Para projetos com <strong className="text-foreground">{pcs} computadores</strong>, oferecemos um orçamento personalizado com condições exclusivas. Fale diretamente com nosso especialista.
+            </p>
+            <a
+              href={`https://wa.me/5511963166915?text=${encodeURIComponent(`Olá! Preciso de um orçamento premium para Reestruturação Completa de Rede Corporativa com ${pcs} computadores${includeServer ? " + implantação de servidor" : ""}. Aguardo proposta personalizada.`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-6 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all rounded-lg"
+            >
+              <ArrowRight size={16} />
+              Solicitar Orçamento Premium
+            </a>
+            <button
+              onClick={() => { setShowPremiumPopup(false); setPcs(30); }}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Voltar para a calculadora (máx. 30 PCs)
+            </button>
+          </motion.div>
+        </div>
+      )}
+
       <Footer />
       <WhatsAppButton />
     </>
