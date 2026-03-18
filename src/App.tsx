@@ -46,6 +46,7 @@ const SuporteLinuxPage = lazy(() => import("./pages/SuporteLinuxPage.tsx"));
 const ManutencaoInfraestruturaPage = lazy(() => import("./pages/ManutencaoInfraestruturaPage.tsx"));
 const SuporteRedesCorporativasPage = lazy(() => import("./pages/SuporteRedesCorporativasPage.tsx"));
 const ContratarServicoPage = lazy(() => import("./pages/ContratarServicoPage.tsx"));
+const CompraConcluida = lazy(() => import("./pages/CompraConcluida.tsx"));
 
 const queryClient = new QueryClient();
 
@@ -98,6 +99,7 @@ const App = () => (
             {/* Budget system */}
             <Route path="/orcamento-ti" element={<OrcamentoTiPage />} />
             <Route path="/contrato" element={<ContratoPage />} />
+            <Route path="/compra-concluida" element={<CompraConcluida />} />
             {/* Segment dedicated pages */}
             <Route path="/ti-para-cartorios" element={<TiCartoriosPage />} />
             <Route path="/ti-para-serventias-cartoriais" element={<TiServentiasCartoriaisPage />} />

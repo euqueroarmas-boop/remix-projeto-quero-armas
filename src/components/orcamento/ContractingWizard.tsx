@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   FileText,
@@ -21,7 +21,7 @@ import QuickRegistrationForm, { type RegistrationData } from "./QuickRegistratio
 import { generateContractHtml } from "./ContractPreview";
 import PostPaymentReport from "./PostPaymentReport";
 import OutsourcingOffer from "./OutsourcingOffer";
-import PurchaseSuccessScreen from "./PurchaseSuccessScreen";
+
 import type { Plan } from "./PlanSelector";
 import type { QualificationData } from "./QualificationForm";
 import type { CustomerData } from "./CustomerDataForm";
@@ -108,6 +108,7 @@ const ContractingWizard = ({
   leadCity,
 }: Props) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   type Step = "registration" | "contract" | "payment";
@@ -201,6 +202,21 @@ const ContractingWizard = ({
             },
           }).catch(err => console.error("[WMTi] Email error:", err));
         }
+        // Save data to session and redirect
+        const purchaseData = {
+          serviceName: effectivePath === "locacao" ? "Locação de Equipamentos" : "Serviços de TI",
+          computersQty,
+          monthlyValue,
+          isRecurring: true,
+          customerName: registrationData?.razaoSocial || "",
+          customerCpfCnpj: registrationData?.cnpjOuCpf || "",
+          customerEmail: registrationData?.email || "",
+          paymentMethod: selectedPayment || "CREDIT_CARD",
+          contractId,
+          purchaseDate: new Date().toLocaleDateString("pt-BR"),
+        };
+        try { sessionStorage.setItem("wmti_purchase_data", JSON.stringify(purchaseData)); } catch {}
+        navigate(`/compra-concluida?quote=${quoteId}`);
       }
     }, 5000);
     return () => clearInterval(interval);
@@ -499,21 +515,12 @@ const ContractingWizard = ({
             {/* Step 3: Payment */}
             <WizardStepWrapper stepNumber={3} title={paymentConfirmed ? "Compra Concluída" : "Pagamento"} subtitle={paymentConfirmed ? "Pagamento confirmado ✓" : "Ao prosseguir, você será direcionado para a página segura de checkout"} status={paymentConfirmed ? "completed" : getStepStatus("payment")} isLast>
               {paymentConfirmed ? (
-                <PurchaseSuccessScreen
-                  visible
-                  data={{
-                    serviceName: pathLabel,
-                    computersQty,
-                    monthlyValue,
-                    isRecurring: true,
-                    customerName: registrationData?.razaoSocial || "",
-                    customerCpfCnpj: registrationData?.cnpjOuCpf || "",
-                    customerEmail: registrationData?.email || "",
-                    paymentMethod: selectedPayment || "CREDIT_CARD",
-                    contractId,
-                    purchaseDate: new Date().toLocaleDateString("pt-BR"),
-                  }}
-                />
+                <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-3">
+                  <CheckCircle className="w-10 h-10 text-green-500 mx-auto" />
+                  <h4 className="text-lg font-heading font-bold">Pagamento confirmado!</h4>
+                  <p className="text-sm text-muted-foreground">Redirecionando para a página de confirmação...</p>
+                  <Loader2 className="w-5 h-5 animate-spin text-primary mx-auto" />
+                </div>
               ) : paymentLoading ? (
                 <div className="bg-card border border-primary/20 rounded-xl p-6 space-y-4">
                   <div className="flex flex-col items-center justify-center text-center space-y-3">
