@@ -47,6 +47,7 @@ const ManutencaoInfraestruturaPage = lazy(() => import("./pages/ManutencaoInfrae
 const SuporteRedesCorporativasPage = lazy(() => import("./pages/SuporteRedesCorporativasPage.tsx"));
 const ContratarServicoPage = lazy(() => import("./pages/ContratarServicoPage.tsx"));
 const CompraConcluida = lazy(() => import("./pages/CompraConcluida.tsx"));
+const AreaDoClientePage = lazy(() => import("./pages/AreaDoClientePage.tsx"));
 
 const queryClient = new QueryClient();
 
