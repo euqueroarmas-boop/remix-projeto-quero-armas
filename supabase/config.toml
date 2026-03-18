@@ -11,3 +11,9 @@ verify_jwt = false
 
 [functions.brasil-api-lookup]
 verify_jwt = false
+
+[functions.sitemap]
+verify_jwt = false
+
+[functions.notify-lead]
+verify_jwt = false
