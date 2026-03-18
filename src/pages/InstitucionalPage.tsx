@@ -5,8 +5,8 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import SeoHead from "@/components/SeoHead";
-import heroImg from "@/assets/institucional-hero.jpg";
-import dedicationImg from "@/assets/institucional-dedication.jpg";
+import heroImg from "@/assets/institucional-hero.webp";
+import dedicationImg from "@/assets/institucional-dedication.webp";
 
 const fadeIn = {
   initial: { opacity: 0, y: 20 },

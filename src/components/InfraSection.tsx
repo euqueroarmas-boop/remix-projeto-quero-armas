@@ -1,8 +1,8 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
-import poweredgeImage from "@/assets/poweredge-server.jpg";
-import serverDetail from "@/assets/server-detail.jpg";
+import poweredgeImage from "@/assets/poweredge-server.webp";
+import serverDetail from "@/assets/server-detail.webp";
 import MobileSummary from "@/components/MobileSummary";
 
 const specs = [

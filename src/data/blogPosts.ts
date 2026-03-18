@@ -1,9 +1,9 @@
-import infraTiEmpresarial from "@/assets/blog/infra-ti-empresarial.jpg";
-import firewallEmpresarial from "@/assets/blog/firewall-empresarial.jpg";
-import servidorManutencao from "@/assets/blog/servidor-manutencao.jpg";
-import custosInfraTi from "@/assets/blog/custos-infra-ti.jpg";
-import suporteTiRegional from "@/assets/blog/suporte-ti-regional.jpg";
-import redeCorporativaCaso from "@/assets/blog/rede-corporativa-caso.jpg";
+import infraTiEmpresarial from "@/assets/blog/infra-ti-empresarial.webp";
+import firewallEmpresarial from "@/assets/blog/firewall-empresarial.webp";
+import servidorManutencao from "@/assets/blog/servidor-manutencao.webp";
+import custosInfraTi from "@/assets/blog/custos-infra-ti.webp";
+import suporteTiRegional from "@/assets/blog/suporte-ti-regional.webp";
+import redeCorporativaCaso from "@/assets/blog/rede-corporativa-caso.webp";
 
 export type BlogCategory =
   | "Hospitais e Clínicas"

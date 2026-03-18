@@ -1,6 +1,6 @@
 import { Server, HardDrive, Shield, Activity, Headphones, Lock } from "lucide-react";
 import ServicePageTemplate from "@/components/ServicePageTemplate";
-import heroImg from "@/assets/segments/escritorios-contabilidade.jpg";
+import heroImg from "@/assets/segments/escritorios-contabilidade.webp";
 
 const TiContabilidadesPage = () => (
   <ServicePageTemplate
