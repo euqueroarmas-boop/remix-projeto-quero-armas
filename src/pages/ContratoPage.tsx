@@ -109,8 +109,11 @@ const ContratoPage = () => {
     setHasDrawn(false);
   };
 
+  // Only locacao and suporte contracts require the 36-month term acceptance
+  const requiresMinimumTerm = contractType === "locacao" || contractType === "suporte";
+
   const handleProceedToSignature = () => {
-    if (!agreed || !acceptedTerm) return;
+    if (!agreed || (requiresMinimumTerm && !acceptedTerm)) return;
     setShowSignature(true);
     setTimeout(() => {
       document.getElementById("signature-section")?.scrollIntoView({ behavior: "smooth" });
