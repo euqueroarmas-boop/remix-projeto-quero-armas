@@ -79,24 +79,27 @@ const deliverables = [
 ];
 
 /* ─── Pricing ─── */
-const PRICE_PER_PC = 350;
-const SERVER_SETUP_PRICE = 3500;
+const BASE_PRICE_PER_PC = 200;
+const SERVER_SETUP_PRICE = 5000;
+
+// Gradual discount: 1-5 PCs = 0%, then linear up to 27.5% at 30 PCs
+function getDiscountPct(pcs: number): number {
+  if (pcs <= 5) return 0;
+  if (pcs >= 30) return 27.5;
+  // Linear interpolation from 6 PCs (starts discounting) to 30 PCs (27.5%)
+  return ((pcs - 5) / (30 - 5)) * 27.5;
+}
 
 function calcTotal(pcs: number, includeServer: boolean) {
-  // Volume discounts
-  let pcDiscount = 0;
-  if (pcs >= 20) pcDiscount = 0.20;
-  else if (pcs >= 10) pcDiscount = 0.15;
-  else if (pcs >= 5) pcDiscount = 0.10;
-
-  const pcUnitPrice = PRICE_PER_PC * (1 - pcDiscount);
+  const discountPct = getDiscountPct(pcs);
+  const pcUnitPrice = BASE_PRICE_PER_PC * (1 - discountPct / 100);
   const pcTotal = pcs * pcUnitPrice;
   const serverTotal = includeServer ? SERVER_SETUP_PRICE : 0;
   const total = pcTotal + serverTotal;
-  const fullPrice = pcs * PRICE_PER_PC + serverTotal;
+  const fullPrice = pcs * BASE_PRICE_PER_PC + serverTotal;
   const savings = fullPrice - total;
 
-  return { pcUnitPrice, pcTotal, serverTotal, total, fullPrice, savings, discountPct: Math.round(pcDiscount * 100) };
+  return { pcUnitPrice, pcTotal, serverTotal, total, fullPrice, savings, discountPct: Math.round(discountPct * 10) / 10 };
 }
 
 /* ─── Contract generator ─── */
