@@ -202,6 +202,21 @@ const ContractingWizard = ({
             },
           }).catch(err => console.error("[WMTi] Email error:", err));
         }
+        // Save data to session and redirect
+        const purchaseData = {
+          serviceName: effectivePath === "locacao" ? "Locação de Equipamentos" : "Serviços de TI",
+          computersQty,
+          monthlyValue,
+          isRecurring: true,
+          customerName: registrationData?.razaoSocial || "",
+          customerCpfCnpj: registrationData?.cnpjOuCpf || "",
+          customerEmail: registrationData?.email || "",
+          paymentMethod: selectedPayment || "CREDIT_CARD",
+          contractId,
+          purchaseDate: new Date().toLocaleDateString("pt-BR"),
+        };
+        try { sessionStorage.setItem("wmti_purchase_data", JSON.stringify(purchaseData)); } catch {}
+        navigate(`/compra-concluida?quote=${quoteId}`);
       }
     }, 5000);
     return () => clearInterval(interval);
