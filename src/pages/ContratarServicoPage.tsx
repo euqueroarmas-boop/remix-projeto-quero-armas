@@ -510,22 +510,13 @@ const ContratarServicoPage = () => {
 
           {/* Step 4: Payment */}
           <WizardStepWrapper stepNumber={4} title={paymentConfirmed ? "Compra Concluída" : "Pagamento"} subtitle={paymentConfirmed ? "Pagamento confirmado ✓" : "Pagamento único via checkout seguro"} status={paymentConfirmed ? "completed" : getStepStatus("payment")} isLast>
-            {paymentConfirmed ? (
-                <PurchaseSuccessScreen
-                  visible
-                  data={{
-                    serviceName,
-                    hours,
-                    monthlyValue: promoPrice,
-                    isRecurring: false,
-                    customerName: registrationData?.razaoSocial || "",
-                    customerCpfCnpj: registrationData?.cnpjOuCpf || "",
-                    customerEmail: registrationData?.email || "",
-                    paymentMethod: selectedPayment || "CREDIT_CARD",
-                    contractId,
-                    purchaseDate: new Date().toLocaleDateString("pt-BR"),
-                  }}
-                />
+             {paymentConfirmed ? (
+                <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-3">
+                  <CheckCircle className="w-10 h-10 text-green-500 mx-auto" />
+                  <h4 className="text-lg font-heading font-bold">Pagamento confirmado!</h4>
+                  <p className="text-sm text-muted-foreground">Redirecionando para a página de confirmação...</p>
+                  <Loader2 className="w-5 h-5 animate-spin text-primary mx-auto" />
+                </div>
             ) : paymentLoading ? (
               <div className="bg-card border border-primary/20 rounded-xl p-6 space-y-4">
                 <div className="flex flex-col items-center text-center space-y-3">
