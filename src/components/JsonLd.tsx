@@ -59,7 +59,7 @@ export function buildServiceSchema(opts: {
     provider: {
       "@type": "Organization",
       name: "WMTi Tecnologia da Informação",
-      url: "https://wmti.com.br",
+      url: "https://www.wmti.com.br",
     },
     ...(opts.areaServed
       ? { areaServed: { "@type": "City", name: opts.areaServed } }
