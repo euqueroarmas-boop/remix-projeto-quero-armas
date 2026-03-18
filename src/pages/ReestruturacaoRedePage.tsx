@@ -650,7 +650,15 @@ const ReestruturacaoRedePage = () => {
                       <span className="text-5xl font-bold text-primary">{pcs}</span>
                       <p className="font-mono text-xs text-muted-foreground mt-1">computador{pcs > 1 ? "es" : ""}</p>
                     </div>
-                    <button onClick={() => setPcs(Math.min(100, pcs + 1))} className="w-12 h-12 flex items-center justify-center border border-muted-foreground/30 text-muted-foreground hover:border-primary hover:text-primary transition-colors" aria-label="Aumentar">
+                    <button
+                      onClick={() => {
+                        const next = pcs + 1;
+                        setPcs(next);
+                        if (next >= 31) setShowPremiumPopup(true);
+                      }}
+                      className="w-12 h-12 flex items-center justify-center border border-muted-foreground/30 text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+                      aria-label="Aumentar"
+                    >
                       <Plus size={20} />
                     </button>
                   </div>
@@ -706,21 +714,25 @@ const ReestruturacaoRedePage = () => {
                   </summary>
                   <div className="px-4 pb-4">
                     <div className="grid grid-cols-3 gap-px text-xs font-mono">
-                      <div className="bg-secondary p-2 text-muted-foreground/50">Faixa</div>
+                      <div className="bg-secondary p-2 text-muted-foreground/50">Qtd. PCs</div>
                       <div className="bg-secondary p-2 text-muted-foreground/50">Desconto</div>
                       <div className="bg-secondary p-2 text-muted-foreground/50">R$/PC</div>
-                      {[
-                        { range: "1-4 PCs", disc: "0%", price: PRICE_PER_PC },
-                        { range: "5-9 PCs", disc: "10%", price: PRICE_PER_PC * 0.9 },
-                        { range: "10-19 PCs", disc: "15%", price: PRICE_PER_PC * 0.85 },
-                        { range: "20+ PCs", disc: "20%", price: PRICE_PER_PC * 0.8 },
-                      ].map((row) => (
-                        <div key={row.range} className="contents">
-                          <div className="bg-secondary/50 p-2 text-muted-foreground">{row.range}</div>
-                          <div className="bg-secondary/50 p-2 text-muted-foreground">{row.disc}</div>
-                          <div className="bg-secondary/50 p-2 text-muted-foreground">R$ {row.price.toFixed(2).replace(".", ",")}</div>
-                        </div>
-                      ))}
+                      {[1, 5, 10, 15, 20, 25, 30].map((n) => {
+                        const d = getDiscountPct(n);
+                        const price = BASE_PRICE_PER_PC * (1 - d / 100);
+                        return (
+                          <div key={n} className={`contents ${n === pcs ? "[&>div]:text-primary [&>div]:font-bold" : ""}`}>
+                            <div className="bg-secondary/50 p-2 text-muted-foreground">{n} PC{n > 1 ? "s" : ""}</div>
+                            <div className="bg-secondary/50 p-2 text-muted-foreground">{d > 0 ? `${Math.round(d * 10) / 10}%` : "—"}</div>
+                            <div className="bg-secondary/50 p-2 text-muted-foreground">R$ {price.toFixed(2).replace(".", ",")}</div>
+                          </div>
+                        );
+                      })}
+                      <div className="contents">
+                        <div className="bg-secondary/50 p-2 text-primary font-bold">31+</div>
+                        <div className="bg-secondary/50 p-2 text-primary font-bold" colSpan={2}>Orçamento personalizado</div>
+                        <div className="bg-secondary/50 p-2 text-primary font-bold">Sob consulta</div>
+                      </div>
                     </div>
                   </div>
                 </details>
