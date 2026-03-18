@@ -13,6 +13,7 @@ const ContratoPage = () => {
   const contractId = searchParams.get("id");
 
   const [contractHtml, setContractHtml] = useState("");
+  const [contractType, setContractType] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [agreed, setAgreed] = useState(false);
   const [acceptedTerm, setAcceptedTerm] = useState(false);
