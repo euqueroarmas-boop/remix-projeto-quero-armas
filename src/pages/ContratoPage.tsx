@@ -215,10 +215,18 @@ const ContratoPage = () => {
       {/* A4-style contract page */}
       <div className="max-w-[210mm] mx-auto py-8 px-8 md:px-16" style={{ fontFamily: "'Times New Roman', Times, serif" }}>
         <div
-          className="text-black leading-relaxed"
-          style={{ fontSize: "12pt", textAlign: "justify" }}
+          className="leading-relaxed"
+          style={{ fontSize: "12pt", textAlign: "justify", color: "#000" }}
           dangerouslySetInnerHTML={{ __html: contractHtml }}
         />
+        <style>{`
+          .max-w-\\[210mm\\] h1, .max-w-\\[210mm\\] h2, .max-w-\\[210mm\\] h3,
+          .max-w-\\[210mm\\] h4, .max-w-\\[210mm\\] h5, .max-w-\\[210mm\\] h6,
+          .max-w-\\[210mm\\] p, .max-w-\\[210mm\\] td, .max-w-\\[210mm\\] th,
+          .max-w-\\[210mm\\] span, .max-w-\\[210mm\\] li, .max-w-\\[210mm\\] strong {
+            color: #000 !important;
+          }
+        `}</style>
 
         {/* Agreement section */}
         <div className="mt-12 pt-8 border-t border-gray-300 space-y-4">
