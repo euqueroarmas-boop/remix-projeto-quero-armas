@@ -79,24 +79,27 @@ const deliverables = [
 ];
 
 /* ─── Pricing ─── */
-const PRICE_PER_PC = 350;
-const SERVER_SETUP_PRICE = 3500;
+const BASE_PRICE_PER_PC = 200;
+const SERVER_SETUP_PRICE = 5000;
+
+// Gradual discount: 1-5 PCs = 0%, then linear up to 27.5% at 30 PCs
+function getDiscountPct(pcs: number): number {
+  if (pcs <= 5) return 0;
+  if (pcs >= 30) return 27.5;
+  // Linear interpolation from 6 PCs (starts discounting) to 30 PCs (27.5%)
+  return ((pcs - 5) / (30 - 5)) * 27.5;
+}
 
 function calcTotal(pcs: number, includeServer: boolean) {
-  // Volume discounts
-  let pcDiscount = 0;
-  if (pcs >= 20) pcDiscount = 0.20;
-  else if (pcs >= 10) pcDiscount = 0.15;
-  else if (pcs >= 5) pcDiscount = 0.10;
-
-  const pcUnitPrice = PRICE_PER_PC * (1 - pcDiscount);
+  const discountPct = getDiscountPct(pcs);
+  const pcUnitPrice = BASE_PRICE_PER_PC * (1 - discountPct / 100);
   const pcTotal = pcs * pcUnitPrice;
   const serverTotal = includeServer ? SERVER_SETUP_PRICE : 0;
   const total = pcTotal + serverTotal;
-  const fullPrice = pcs * PRICE_PER_PC + serverTotal;
+  const fullPrice = pcs * BASE_PRICE_PER_PC + serverTotal;
   const savings = fullPrice - total;
 
-  return { pcUnitPrice, pcTotal, serverTotal, total, fullPrice, savings, discountPct: Math.round(pcDiscount * 100) };
+  return { pcUnitPrice, pcTotal, serverTotal, total, fullPrice, savings, discountPct: Math.round(discountPct * 10) / 10 };
 }
 
 /* ─── Contract generator ─── */
@@ -244,6 +247,7 @@ const ReestruturacaoRedePage = () => {
   // Calculator state
   const [pcs, setPcs] = useState(5);
   const [includeServer, setIncludeServer] = useState(true);
+  const [showPremiumPopup, setShowPremiumPopup] = useState(false);
 
   // Wizard state
   const [currentStep, setCurrentStep] = useState<FlowStep>("calculator");
@@ -545,7 +549,7 @@ const ReestruturacaoRedePage = () => {
                   Calcular Investimento <Calculator size={16} />
                 </button>
                 <a
-                  href="https://wa.me/5512981156856?text=Olá!%20Tenho%20interesse%20no%20pacote%20de%20Reestruturação%20Completa%20de%20Rede%20Corporativa."
+                  href="https://wa.me/5511963166915?text=Olá!%20Tenho%20interesse%20no%20pacote%20de%20Reestruturação%20Completa%20de%20Rede%20Corporativa."
                   target="_blank"
                   rel="noopener"
                   className="inline-flex items-center gap-2 px-6 py-3 border border-border text-foreground font-mono text-sm uppercase tracking-wider hover:bg-muted transition-colors"
@@ -646,7 +650,15 @@ const ReestruturacaoRedePage = () => {
                       <span className="text-5xl font-bold text-primary">{pcs}</span>
                       <p className="font-mono text-xs text-muted-foreground mt-1">computador{pcs > 1 ? "es" : ""}</p>
                     </div>
-                    <button onClick={() => setPcs(Math.min(100, pcs + 1))} className="w-12 h-12 flex items-center justify-center border border-muted-foreground/30 text-muted-foreground hover:border-primary hover:text-primary transition-colors" aria-label="Aumentar">
+                    <button
+                      onClick={() => {
+                        const next = pcs + 1;
+                        setPcs(next);
+                        if (next >= 31) setShowPremiumPopup(true);
+                      }}
+                      className="w-12 h-12 flex items-center justify-center border border-muted-foreground/30 text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+                      aria-label="Aumentar"
+                    >
                       <Plus size={20} />
                     </button>
                   </div>
@@ -702,21 +714,25 @@ const ReestruturacaoRedePage = () => {
                   </summary>
                   <div className="px-4 pb-4">
                     <div className="grid grid-cols-3 gap-px text-xs font-mono">
-                      <div className="bg-secondary p-2 text-muted-foreground/50">Faixa</div>
+                      <div className="bg-secondary p-2 text-muted-foreground/50">Qtd. PCs</div>
                       <div className="bg-secondary p-2 text-muted-foreground/50">Desconto</div>
                       <div className="bg-secondary p-2 text-muted-foreground/50">R$/PC</div>
-                      {[
-                        { range: "1-4 PCs", disc: "0%", price: PRICE_PER_PC },
-                        { range: "5-9 PCs", disc: "10%", price: PRICE_PER_PC * 0.9 },
-                        { range: "10-19 PCs", disc: "15%", price: PRICE_PER_PC * 0.85 },
-                        { range: "20+ PCs", disc: "20%", price: PRICE_PER_PC * 0.8 },
-                      ].map((row) => (
-                        <div key={row.range} className="contents">
-                          <div className="bg-secondary/50 p-2 text-muted-foreground">{row.range}</div>
-                          <div className="bg-secondary/50 p-2 text-muted-foreground">{row.disc}</div>
-                          <div className="bg-secondary/50 p-2 text-muted-foreground">R$ {row.price.toFixed(2).replace(".", ",")}</div>
-                        </div>
-                      ))}
+                      {[1, 5, 10, 15, 20, 25, 30].map((n) => {
+                        const d = getDiscountPct(n);
+                        const price = BASE_PRICE_PER_PC * (1 - d / 100);
+                        return (
+                          <div key={n} className={`contents ${n === pcs ? "[&>div]:text-primary [&>div]:font-bold" : ""}`}>
+                            <div className="bg-secondary/50 p-2 text-muted-foreground">{n} PC{n > 1 ? "s" : ""}</div>
+                            <div className="bg-secondary/50 p-2 text-muted-foreground">{d > 0 ? `${Math.round(d * 10) / 10}%` : "—"}</div>
+                            <div className="bg-secondary/50 p-2 text-muted-foreground">R$ {price.toFixed(2).replace(".", ",")}</div>
+                          </div>
+                        );
+                      })}
+                      <div className="contents">
+                        <div className="bg-secondary/50 p-2 text-primary font-bold">31+</div>
+                        <div className="bg-secondary/50 p-2 text-primary font-bold">Orçamento personalizado</div>
+                        <div className="bg-secondary/50 p-2 text-primary font-bold">Sob consulta</div>
+                      </div>
                     </div>
                   </div>
                 </details>
@@ -876,7 +892,7 @@ const ReestruturacaoRedePage = () => {
                 Segurança, estabilidade, controle de usuários e organização de dados — tudo em padrão corporativo profissional.
               </p>
               <a
-                href="https://wa.me/5512981156856?text=Olá!%20Quero%20saber%20mais%20sobre%20a%20Reestruturação%20Completa%20de%20Rede."
+                href="https://wa.me/5511963166915?text=Olá!%20Quero%20saber%20mais%20sobre%20a%20Reestruturação%20Completa%20de%20Rede."
                 target="_blank"
                 rel="noopener"
                 className="inline-flex items-center gap-2 px-8 py-4 bg-primary text-primary-foreground font-mono text-sm uppercase tracking-wider hover:brightness-110 transition-all"
@@ -887,6 +903,42 @@ const ReestruturacaoRedePage = () => {
           </div>
         </section>
       </main>
+
+      {/* Premium popup for 31+ PCs */}
+      {showPremiumPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-card border border-primary/30 rounded-2xl p-8 max-w-md w-full shadow-2xl shadow-primary/10 text-center space-y-5"
+          >
+            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+              <Star size={32} className="text-primary" />
+            </div>
+            <h3 className="text-xl font-heading font-bold text-foreground">
+              Orçamento <span className="text-primary">Premium Personalizado</span>
+            </h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Para projetos com <strong className="text-foreground">{pcs} computadores</strong>, oferecemos um orçamento personalizado com condições exclusivas. Fale diretamente com nosso especialista.
+            </p>
+            <a
+              href={`https://wa.me/5511963166915?text=${encodeURIComponent(`Olá! Preciso de um orçamento premium para Reestruturação Completa de Rede Corporativa com ${pcs} computadores${includeServer ? " + implantação de servidor" : ""}. Aguardo proposta personalizada.`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-6 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all rounded-lg"
+            >
+              <ArrowRight size={16} />
+              Solicitar Orçamento Premium
+            </a>
+            <button
+              onClick={() => { setShowPremiumPopup(false); setPcs(30); }}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Voltar para a calculadora (máx. 30 PCs)
+            </button>
+          </motion.div>
+        </div>
+      )}
 
       <Footer />
       <WhatsAppButton />
