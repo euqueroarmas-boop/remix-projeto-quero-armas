@@ -94,7 +94,7 @@ export function buildArticleSchema(opts: {
       name: "WMTi Tecnologia da Informação",
       logo: {
         "@type": "ImageObject",
-        url: "https://wmti.com.br/logo-wmti.jpeg",
+        url: "https://www.wmti.com.br/logo-wmti.jpeg",
       },
     },
   };
