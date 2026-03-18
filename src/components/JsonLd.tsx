@@ -59,7 +59,7 @@ export function buildServiceSchema(opts: {
     provider: {
       "@type": "Organization",
       name: "WMTi Tecnologia da Informação",
-      url: "https://wmti.com.br",
+      url: "https://www.wmti.com.br",
     },
     ...(opts.areaServed
       ? { areaServed: { "@type": "City", name: opts.areaServed } }
@@ -87,14 +87,14 @@ export function buildArticleSchema(opts: {
     author: {
       "@type": "Organization",
       name: "WMTi Tecnologia da Informação",
-      url: "https://wmti.com.br",
+      url: "https://www.wmti.com.br",
     },
     publisher: {
       "@type": "Organization",
       name: "WMTi Tecnologia da Informação",
       logo: {
         "@type": "ImageObject",
-        url: "https://wmti.com.br/logo-wmti.jpeg",
+        url: "https://www.wmti.com.br/logo-wmti.jpeg",
       },
     },
   };
