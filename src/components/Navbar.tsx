@@ -493,6 +493,18 @@ const Navbar = () => {
                 Webmail
               </a>
 
+              <Link
+                to="/area-do-cliente"
+                onClick={() => setOpen(false)}
+                className={`font-mono text-base uppercase tracking-wider transition-colors py-2 text-left ${
+                  location.pathname === "/area-do-cliente"
+                    ? "text-red-500 border-l-2 border-red-500 pl-4"
+                    : "text-muted-foreground hover:text-red-500"
+                }`}
+              >
+                Área do Cliente
+              </Link>
+
               <a
                 href="https://wa.me/5511963166915?text=Ol%C3%A1%2C%20gostaria%20de%20falar%20com%20um%20especialista%20em%20TI."
                 target="_blank"

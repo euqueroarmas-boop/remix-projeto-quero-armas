@@ -101,6 +101,7 @@ const App = () => (
             <Route path="/orcamento-ti" element={<OrcamentoTiPage />} />
             <Route path="/contrato" element={<ContratoPage />} />
             <Route path="/compra-concluida" element={<CompraConcluida />} />
+            <Route path="/area-do-cliente" element={<AreaDoClientePage />} />
             {/* Segment dedicated pages */}
             <Route path="/ti-para-cartorios" element={<TiCartoriosPage />} />
             <Route path="/ti-para-serventias-cartoriais" element={<TiServentiasCartoriaisPage />} />
