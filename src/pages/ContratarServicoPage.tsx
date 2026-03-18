@@ -126,8 +126,11 @@ const ContratarServicoPage = () => {
         .single();
       if (data && ((data as any).payment_status === "CONFIRMED" || (data as any).payment_status === "RECEIVED")) {
         setPaymentConfirmed(true);
-        // Send confirmation email
-        if (registrationData) {
+        setCurrentStep("success");
+        scrollToTop();
+        // Send confirmation email (only once)
+        if (registrationData && !emailSentRef.current) {
+          emailSentRef.current = true;
           supabase.functions.invoke("send-purchase-confirmation", {
             body: {
               customer_name: registrationData.razaoSocial,
