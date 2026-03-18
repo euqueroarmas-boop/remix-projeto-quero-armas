@@ -892,7 +892,7 @@ const ReestruturacaoRedePage = () => {
                 Segurança, estabilidade, controle de usuários e organização de dados — tudo em padrão corporativo profissional.
               </p>
               <a
-                href="https://wa.me/5512981156856?text=Olá!%20Quero%20saber%20mais%20sobre%20a%20Reestruturação%20Completa%20de%20Rede."
+                href="https://wa.me/5511963166915?text=Olá!%20Quero%20saber%20mais%20sobre%20a%20Reestruturação%20Completa%20de%20Rede."
                 target="_blank"
                 rel="noopener"
                 className="inline-flex items-center gap-2 px-8 py-4 bg-primary text-primary-foreground font-mono text-sm uppercase tracking-wider hover:brightness-110 transition-all"
