@@ -10,9 +10,10 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ error: "LOVABLE_API_KEY not configured" }), {
+    const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+    if (!RESEND_API_KEY) {
+      console.error("[send-purchase-confirmation] RESEND_API_KEY not configured");
+      return new Response(JSON.stringify({ error: "RESEND_API_KEY not configured" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -39,11 +40,19 @@ Deno.serve(async (req) => {
       });
     }
 
-    const paymentLabel = payment_method === "CREDIT_CARD" ? "Cartão de Crédito" : payment_method === "BOLETO" ? "Boleto Bancário" : payment_method || "N/A";
-    const valueFormatted = `R$ ${Number(value).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    const paymentLabel =
+      payment_method === "CREDIT_CARD"
+        ? "Cartão de Crédito"
+        : payment_method === "BOLETO"
+        ? "Boleto Bancário"
+        : payment_method || "N/A";
 
-    const emailHtml = `
-<!DOCTYPE html>
+    const valueFormatted = `R$ ${Number(value).toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+
+    const emailHtml = `<!DOCTYPE html>
 <html lang="pt-BR">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
 <body style="margin:0;padding:0;background:#f4f4f5;font-family:Arial,Helvetica,sans-serif;">
@@ -114,18 +123,36 @@ Deno.serve(async (req) => {
 </body>
 </html>`;
 
-    // Use Lovable AI gateway to send email via Gemini
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-
-    // Send via notify-lead (reuse existing notification edge function pattern)
-    // We'll use a simple fetch to a mail API or log for now
-    // For production, integrate with a transactional email service
-    
     console.log(`[send-purchase-confirmation] Sending confirmation to ${customer_email}`);
     console.log(`[send-purchase-confirmation] Service: ${service_name}, Value: ${valueFormatted}`);
 
-    // Store the email content for audit
+    // Send email via Resend API
+    const resendResponse = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+      },
+      body: JSON.stringify({
+        from: "WMTi Tecnologia <onboarding@resend.dev>",
+        to: [customer_email],
+        subject: `✅ Pagamento confirmado — ${service_name} — WMTi`,
+        html: emailHtml,
+      }),
+    });
+
+    const resendResult = await resendResponse.json();
+
+    if (!resendResponse.ok) {
+      console.error("[send-purchase-confirmation] Resend error:", JSON.stringify(resendResult));
+      // Log failure but don't throw - still return success to avoid retries
+    } else {
+      console.log("[send-purchase-confirmation] Email sent successfully:", resendResult.id);
+    }
+
+    // Log to integration_logs for audit
     const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const supabase = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
     await supabase.from("integration_logs").insert({
@@ -139,14 +166,26 @@ Deno.serve(async (req) => {
         payment_method,
         contract_ref,
       },
-      response_payload: { email_html_length: emailHtml.length },
-      status: "success",
+      response_payload: {
+        resend_id: resendResult?.id || null,
+        resend_status: resendResponse.ok ? "sent" : "failed",
+        resend_error: !resendResponse.ok ? resendResult : null,
+      },
+      status: resendResponse.ok ? "success" : "error",
+      error_message: !resendResponse.ok ? JSON.stringify(resendResult) : null,
     });
 
-    return new Response(JSON.stringify({ success: true, message: "Confirmation email queued" }), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({
+        success: resendResponse.ok,
+        message: resendResponse.ok ? "Email sent successfully" : "Email send failed but logged",
+        resend_id: resendResult?.id || null,
+      }),
+      {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error("[send-purchase-confirmation] Error:", message);
