@@ -126,8 +126,6 @@ const ContratarServicoPage = () => {
         .single();
       if (data && ((data as any).payment_status === "CONFIRMED" || (data as any).payment_status === "RECEIVED")) {
         setPaymentConfirmed(true);
-        setCurrentStep("success");
-        scrollToTop();
         // Send confirmation email (only once)
         if (registrationData && !emailSentRef.current) {
           emailSentRef.current = true;
@@ -145,6 +143,21 @@ const ContratarServicoPage = () => {
             },
           }).catch(err => console.error("[WMTi] Email error:", err));
         }
+        // Save data to session and redirect to standalone page
+        const purchaseData = {
+          serviceName,
+          hours,
+          monthlyValue: promoPrice,
+          isRecurring: false,
+          customerName: registrationData?.razaoSocial || "",
+          customerCpfCnpj: registrationData?.cnpjOuCpf || "",
+          customerEmail: registrationData?.email || "",
+          paymentMethod: selectedPayment || "CREDIT_CARD",
+          contractId,
+          purchaseDate: new Date().toLocaleDateString("pt-BR"),
+        };
+        try { sessionStorage.setItem("wmti_purchase_data", JSON.stringify(purchaseData)); } catch {}
+        navigate(`/compra-concluida?quote=${quoteId}`);
       }
     }, 5000);
     return () => clearInterval(interval);

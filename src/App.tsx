@@ -99,6 +99,7 @@ const App = () => (
             {/* Budget system */}
             <Route path="/orcamento-ti" element={<OrcamentoTiPage />} />
             <Route path="/contrato" element={<ContratoPage />} />
+            <Route path="/compra-concluida" element={<CompraConcluida />} />
             {/* Segment dedicated pages */}
             <Route path="/ti-para-cartorios" element={<TiCartoriosPage />} />
             <Route path="/ti-para-serventias-cartoriais" element={<TiServentiasCartoriaisPage />} />
