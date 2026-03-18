@@ -1,7 +1,8 @@
 import { motion } from "framer-motion";
-import { CheckCircle, Download, Home, MessageCircle } from "lucide-react";
+import { CheckCircle, Download, Home, MessageCircle, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { generateReceiptPdf } from "./generateReceiptPdf";
 
 interface PurchaseData {
   serviceName: string;
@@ -30,79 +31,18 @@ const PurchaseSuccessScreen = ({ visible, data }: Props) => {
 
   if (!visible) return null;
 
-  const paymentLabel = data.paymentMethod === "CREDIT_CARD" ? "Cartão de Crédito" : data.paymentMethod === "BOLETO" ? "Boleto Bancário" : data.paymentMethod;
-  const contractRef = data.contractId ? data.contractId.slice(0, 8).toUpperCase() : null;
+  const paymentLabel =
+    data.paymentMethod === "CREDIT_CARD"
+      ? "Cartão de Crédito"
+      : data.paymentMethod === "BOLETO"
+      ? "Boleto Bancário"
+      : data.paymentMethod === "PIX"
+      ? "PIX"
+      : data.paymentMethod;
 
-  const handleDownload = () => {
-    const html = `
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<title>Comprovante de Contratação — WMTi</title>
-<style>
-  body { font-family: Arial, Helvetica, sans-serif; max-width: 700px; margin: 40px auto; color: #1a1a1a; line-height: 1.7; padding: 0 20px; }
-  .header { text-align: center; border-bottom: 3px solid #FF5A1F; padding-bottom: 20px; margin-bottom: 30px; }
-  .header h1 { font-size: 22px; margin: 0; color: #FF5A1F; }
-  .header p { margin: 4px 0 0; font-size: 12px; color: #666; }
-  .badge { display: inline-block; background: #e6f9ed; color: #15803d; font-weight: bold; font-size: 13px; padding: 6px 16px; border-radius: 20px; margin: 20px 0; }
-  h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 2px; color: #FF5A1F; border-bottom: 1px solid #eee; padding-bottom: 6px; margin-top: 30px; }
-  table { width: 100%; border-collapse: collapse; margin: 10px 0 20px; }
-  td { padding: 8px 12px; font-size: 13px; border-bottom: 1px solid #f0f0f0; }
-  td:first-child { color: #666; width: 40%; }
-  td:last-child { font-weight: 600; }
-  .footer { margin-top: 40px; text-align: center; font-size: 11px; color: #999; border-top: 1px solid #eee; padding-top: 20px; }
-  @media print { body { margin: 0; } }
-</style>
-</head>
-<body>
-<div class="header">
-  <h1>WMTi Tecnologia da Informação</h1>
-  <p>CNPJ: 13.366.668/0001-07 • Jacareí/SP</p>
-</div>
-
-<div style="text-align:center;">
-  <div class="badge">✓ PAGAMENTO CONFIRMADO</div>
-  <p style="font-size:18px; font-weight:bold; margin:10px 0 0;">Comprovante de Contratação</p>
-</div>
-
-<h2>Dados do Contratante</h2>
-<table>
-  <tr><td>Razão Social / Nome</td><td>${data.customerName}</td></tr>
-  <tr><td>CPF / CNPJ</td><td>${data.customerCpfCnpj}</td></tr>
-  <tr><td>E-mail</td><td>${data.customerEmail}</td></tr>
-</table>
-
-<h2>Detalhes da Contratação</h2>
-<table>
-  <tr><td>Serviço</td><td>${data.serviceName}</td></tr>
-  ${data.hours ? `<tr><td>Quantidade de Horas</td><td>${data.hours}h</td></tr>` : ""}
-  ${data.computersQty ? `<tr><td>Computadores</td><td>${data.computersQty}</td></tr>` : ""}
-  <tr><td>${data.isRecurring ? "Valor Mensal" : "Valor Pago"}</td><td>${formatCurrency(data.monthlyValue)}</td></tr>
-  <tr><td>Forma de Pagamento</td><td>${paymentLabel}</td></tr>
-  <tr><td>Data da Contratação</td><td>${data.purchaseDate}</td></tr>
-  <tr><td>Status</td><td style="color:#15803d;">Pagamento Confirmado</td></tr>
-  ${contractRef ? `<tr><td>Contrato</td><td>${contractRef}</td></tr>` : ""}
-</table>
-
-<div class="footer">
-  <p>WMTi Tecnologia da Informação LTDA — CNPJ 13.366.668/0001-07</p>
-  <p>Rua José Benedito Duarte, 140 — Parque Itamarati — Jacareí/SP — CEP 12.307-200</p>
-  <p>Documento gerado automaticamente em ${new Date().toLocaleString("pt-BR")}</p>
-</div>
-</body>
-</html>`;
-
-    const blob = new Blob([html], { type: "text/html" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `comprovante-wmti-${contractRef || "compra"}.html`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
+  const contractRef = data.contractId
+    ? data.contractId.slice(0, 8).toUpperCase()
+    : null;
 
   const whatsappText = encodeURIComponent(
     `Olá! Acabei de contratar ${data.serviceName}${data.hours ? ` (${data.hours}h)` : ""} no valor de ${formatCurrency(data.monthlyValue)}. ${contractRef ? `Contrato: ${contractRef}` : ""}`
@@ -113,58 +53,125 @@ const PurchaseSuccessScreen = ({ visible, data }: Props) => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="bg-card border border-primary/20 rounded-2xl p-6 md:p-10 space-y-8"
+      className="space-y-6 md:space-y-8 pb-20"
     >
-      {/* Success header */}
-      <div className="flex flex-col items-center text-center space-y-4">
-        <div className="w-20 h-20 rounded-full bg-green-500/10 flex items-center justify-center">
+      {/* ── Success Header ── */}
+      <div className="flex flex-col items-center text-center space-y-4 pt-4">
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: "spring", delay: 0.2, stiffness: 200 }}
+          className="w-20 h-20 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center"
+        >
           <CheckCircle className="w-12 h-12 text-green-500" />
-        </div>
-        <h3 className="text-2xl md:text-3xl font-heading font-bold">
+        </motion.div>
+        <h1 className="text-2xl md:text-3xl font-heading font-bold text-foreground leading-tight">
           Pagamento confirmado com sucesso!
-        </h3>
-        <p className="text-muted-foreground max-w-md">
+        </h1>
+        <p className="text-muted-foreground text-sm md:text-base max-w-md leading-relaxed">
           Sua contratação foi concluída. Agradecemos pela confiança na WMTi.
         </p>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           Em breve entraremos em contato para dar andamento ao atendimento.
         </p>
       </div>
 
-      {/* Purchase summary */}
-      <div className="bg-secondary rounded-xl p-5 md:p-6 space-y-4">
-        <p className="font-mono text-xs uppercase tracking-widest text-primary">
-          Resumo da compra
-        </p>
-        <div className="space-y-3 text-sm">
-          <SummaryRow label="Serviço" value={data.serviceName} />
-          {data.hours && <SummaryRow label="Horas" value={`${data.hours}h`} />}
-          {data.computersQty && <SummaryRow label="Computadores" value={String(data.computersQty)} />}
-          <SummaryRow label={data.isRecurring ? "Valor mensal" : "Valor pago"} value={formatCurrency(data.monthlyValue)} highlight />
-          <SummaryRow label="Contratante" value={data.customerName} />
-          <SummaryRow label="CPF/CNPJ" value={data.customerCpfCnpj} />
-          <SummaryRow label="E-mail" value={data.customerEmail} />
-          <SummaryRow label="Forma de pagamento" value={paymentLabel} />
-          <SummaryRow label="Data" value={data.purchaseDate} />
-          <SummaryRow label="Status" value="Confirmado" status="success" />
-          {contractRef && <SummaryRow label="Contrato" value={contractRef} mono />}
+      {/* ── Receipt Card ── */}
+      <div className="bg-card border border-border rounded-xl overflow-hidden shadow-lg">
+        {/* Card Header */}
+        <div className="bg-muted/50 border-b border-border px-5 py-4 md:px-6 md:py-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-md bg-primary flex items-center justify-center flex-shrink-0">
+              <span className="text-primary-foreground font-heading font-bold text-sm">W</span>
+            </div>
+            <div className="min-w-0">
+              <p className="font-heading font-bold text-foreground text-sm">Comprovante de Compra</p>
+              {contractRef && (
+                <p className="font-mono text-[11px] text-muted-foreground truncate">
+                  Pedido #{contractRef}
+                </p>
+              )}
+            </div>
+          </div>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-semibold whitespace-nowrap self-start sm:self-auto">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+            Confirmado
+          </span>
+        </div>
+
+        {/* Card Body */}
+        <div className="px-5 py-5 md:px-6 md:py-6 space-y-5">
+          {/* Service info */}
+          <div className="space-y-1">
+            <p className="text-[11px] font-mono uppercase tracking-widest text-primary">
+              Serviço contratado
+            </p>
+            <p className="text-foreground font-heading font-bold text-base md:text-lg leading-snug break-words">
+              {data.serviceName}
+            </p>
+          </div>
+
+          {/* Value highlight */}
+          <div className="bg-primary/5 border border-primary/15 rounded-lg px-4 py-3 flex items-center justify-between gap-4 flex-wrap">
+            <span className="text-sm text-muted-foreground">
+              {data.isRecurring ? "Valor mensal" : "Valor pago"}
+            </span>
+            <span className="text-xl md:text-2xl font-heading font-bold text-primary">
+              {formatCurrency(data.monthlyValue)}
+            </span>
+          </div>
+
+          {/* Detail rows */}
+          <div className="border border-border rounded-lg overflow-hidden divide-y divide-border">
+            {data.hours && (
+              <DetailRow label="Horas técnicas" value={`${data.hours}h`} />
+            )}
+            {data.computersQty && (
+              <DetailRow label="Computadores" value={String(data.computersQty)} />
+            )}
+            <DetailRow label="Contratante" value={data.customerName} />
+            <DetailRow label="CPF / CNPJ" value={data.customerCpfCnpj} mono />
+            <DetailRow label="E-mail" value={data.customerEmail} />
+            <DetailRow label="Pagamento" value={paymentLabel} />
+            <DetailRow label="Data" value={data.purchaseDate} />
+            <DetailRow label="Status" value="Confirmado" status="success" />
+            {contractRef && (
+              <DetailRow label="Contrato" value={contractRef} mono />
+            )}
+          </div>
+        </div>
+
+        {/* Email notice */}
+        <div className="border-t border-border bg-muted/30 px-5 py-3 md:px-6">
+          <p className="text-xs text-muted-foreground text-center">
+            📧 Confirmação enviada para{" "}
+            <strong className="text-foreground">{data.customerEmail}</strong>
+          </p>
         </div>
       </div>
 
-      {/* Confirmation email notice */}
-      <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 text-center">
-        <p className="text-sm text-muted-foreground">
-          📧 Um e-mail de confirmação foi enviado para <strong className="text-foreground">{data.customerEmail}</strong>
-        </p>
-      </div>
-
-      {/* Actions */}
-      <div className="flex flex-col gap-3">
-        <Button onClick={handleDownload} variant="outline" className="w-full h-12">
+      {/* ── Action Buttons ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <Button
+          onClick={() => generateReceiptPdf(data)}
+          className="w-full h-12 text-sm font-semibold"
+        >
           <Download className="w-4 h-4 mr-2" />
-          Baixar comprovante da compra
+          Baixar comprovante em PDF
         </Button>
-        <Button onClick={() => navigate("/")} variant="outline" className="w-full h-12">
+        <Button
+          onClick={() => window.print()}
+          variant="outline"
+          className="w-full h-12 text-sm"
+        >
+          <Printer className="w-4 h-4 mr-2" />
+          Imprimir página
+        </Button>
+        <Button
+          onClick={() => navigate("/")}
+          variant="outline"
+          className="w-full h-12 text-sm"
+        >
           <Home className="w-4 h-4 mr-2" />
           Voltar para o site
         </Button>
@@ -172,7 +179,7 @@ const PurchaseSuccessScreen = ({ visible, data }: Props) => {
           href={`https://wa.me/5511963166915?text=${whatsappText}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="w-full inline-flex items-center justify-center gap-2 h-12 border border-primary/30 text-primary rounded-md hover:bg-primary/5 transition-colors font-mono text-sm"
+          className="w-full inline-flex items-center justify-center gap-2 h-12 border border-border text-foreground rounded-md hover:bg-muted transition-colors text-sm"
         >
           <MessageCircle className="w-4 h-4" />
           Falar no WhatsApp
@@ -182,24 +189,27 @@ const PurchaseSuccessScreen = ({ visible, data }: Props) => {
   );
 };
 
-const SummaryRow = ({
+/** Single detail row with responsive label/value layout */
+const DetailRow = ({
   label,
   value,
-  highlight,
-  status,
   mono,
+  status,
 }: {
   label: string;
   value: string;
-  highlight?: boolean;
-  status?: "success";
   mono?: boolean;
+  status?: "success";
 }) => (
-  <div className="flex justify-between items-center">
-    <span className="text-muted-foreground">{label}</span>
+  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-0.5 sm:gap-4 px-4 py-2.5 even:bg-muted/20">
+    <span className="text-xs text-muted-foreground whitespace-nowrap">{label}</span>
     <span
-      className={`font-semibold ${
-        highlight ? "text-primary" : status === "success" ? "text-green-500 font-bold" : mono ? "font-mono text-xs" : ""
+      className={`text-sm font-semibold text-right break-words ${
+        status === "success"
+          ? "text-green-400"
+          : mono
+          ? "font-mono text-xs text-foreground"
+          : "text-foreground"
       }`}
     >
       {value}
