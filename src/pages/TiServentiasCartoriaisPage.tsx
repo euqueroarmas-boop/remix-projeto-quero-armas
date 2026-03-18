@@ -1,6 +1,6 @@
 import { Server, HardDrive, Shield, Activity, Headphones, Lock } from "lucide-react";
 import ServicePageTemplate from "@/components/ServicePageTemplate";
-import heroImg from "@/assets/segments/serventias-cartoriais.jpg";
+import heroImg from "@/assets/segments/serventias-cartoriais.webp";
 
 const TiServentiasCartoriaisPage = () => (
   <ServicePageTemplate

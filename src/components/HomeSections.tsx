@@ -19,8 +19,8 @@ import {
   BookOpen,
 } from "lucide-react";
 import { blogPosts } from "@/data/blogPosts";
-import institucionalHero from "@/assets/institucional-hero.jpg";
-import poweredgeImage from "@/assets/poweredge-server.jpg";
+import institucionalHero from "@/assets/institucional-hero.webp";
+import poweredgeImage from "@/assets/poweredge-server.webp";
 
 const fade = {
   initial: { opacity: 0, y: 24 },

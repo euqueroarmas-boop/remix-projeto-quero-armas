@@ -1,6 +1,6 @@
 import { Server, Network, Shield, HardDrive, Activity, Headphones } from "lucide-react";
 import ServicePageTemplate from "@/components/ServicePageTemplate";
-import heroImg from "@/assets/segments/industrias-alimenticias.jpg";
+import heroImg from "@/assets/segments/industrias-alimenticias.webp";
 
 const TiIndustriasAlimenticiaPage = () => (
   <ServicePageTemplate

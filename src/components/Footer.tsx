@@ -1,4 +1,4 @@
-import logoFull from "@/assets/logo-wmti-full.png";
+import logoFull from "@/assets/logo-wmti-full.webp";
 
 const Footer = () => {
   return (

@@ -11,7 +11,7 @@ import {
   ArrowRight,
   CheckCircle2,
 } from "lucide-react";
-import slowComputer from "@/assets/slow-computer.jpg";
+import slowComputer from "@/assets/slow-computer.webp";
 import MobileSummary from "@/components/MobileSummary";
 
 const problems = [

@@ -9,7 +9,7 @@ import {
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
-import hospitalTech from "@/assets/hospital-tech.jpg";
+import hospitalTech from "@/assets/hospital-tech.webp";
 
 const fadeIn = {
   initial: { opacity: 0, y: 20 },
