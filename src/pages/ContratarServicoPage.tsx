@@ -83,6 +83,7 @@ const ContratarServicoPage = () => {
   const [paymentComplete, setPaymentComplete] = useState(false);
   const [invoiceUrl, setInvoiceUrl] = useState<string | null>(null);
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
+  const emailSentRef = useRef(false);
 
   // Calculations
   const unitPrice = priceTable[Math.min(hours, 8)] ?? (isEmergency ? 217.5 : 145);
@@ -125,8 +126,11 @@ const ContratarServicoPage = () => {
         .single();
       if (data && ((data as any).payment_status === "CONFIRMED" || (data as any).payment_status === "RECEIVED")) {
         setPaymentConfirmed(true);
-        // Send confirmation email
-        if (registrationData) {
+        setCurrentStep("success");
+        scrollToTop();
+        // Send confirmation email (only once)
+        if (registrationData && !emailSentRef.current) {
+          emailSentRef.current = true;
           supabase.functions.invoke("send-purchase-confirmation", {
             body: {
               customer_name: registrationData.razaoSocial,
