@@ -47,7 +47,7 @@ const InstitucionalPage = () => {
             <div className="container pb-12 md:pb-16">
               <motion.div {...fadeIn} className="max-w-3xl">
                 <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">// Institucional</p>
-                <h1 className="text-3xl md:text-5xl lg:text-6xl mb-4">
+                <h1 className="text-3xl md:text-5xl lg:text-6xl mb-4 text-primary-foreground">
                   Sobre a <span className="text-primary">WMTi</span>
                 </h1>
                 <p className="font-body text-lg md:text-xl text-muted-foreground max-w-2xl leading-relaxed">
