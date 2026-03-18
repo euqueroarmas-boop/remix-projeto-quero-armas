@@ -170,7 +170,26 @@ export function generateReceiptPdf(data: ReceiptData): void {
   y += 4;
   doc.text(`Documento gerado em ${new Date().toLocaleString("pt-BR")}`, pageWidth / 2, y, { align: "center" });
 
-  // Save
+  // Save — use blob approach for better mobile compatibility
   const filename = `comprovante-wmti-${contractRef || "compra"}.pdf`;
-  doc.save(filename);
+  
+  try {
+    const blob = doc.output("blob");
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    link.style.display = "none";
+    document.body.appendChild(link);
+    link.click();
+    
+    // Cleanup after a short delay
+    setTimeout(() => {
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }, 250);
+  } catch {
+    // Fallback to standard save
+    doc.save(filename);
+  }
 }
