@@ -148,9 +148,10 @@ Deno.serve(async (req) => {
 
     if (!resendResponse.ok) {
       console.error("[send-purchase-confirmation] Resend error:", JSON.stringify(resendResult));
-      // Log failure but don't throw - still return success to avoid retries
+      await logSistemaBackend({ tipo: "email", status: "error", mensagem: `Falha envio email: ${customer_email}`, payload: resendResult });
     } else {
       console.log("[send-purchase-confirmation] Email sent successfully:", resendResult.id);
+      await logSistemaBackend({ tipo: "email", status: "success", mensagem: `Email enviado: ${customer_email}`, payload: { resend_id: resendResult.id } });
     }
 
     // Log to integration_logs for audit
