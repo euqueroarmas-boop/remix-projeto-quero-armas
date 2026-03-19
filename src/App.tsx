@@ -107,6 +107,7 @@ const App = () => (
             <Route path="/area-do-cliente" element={<AreaDoClientePage />} />
             <Route path="/reestruturacao-completa-de-rede-corporativa" element={<ReestruturacaoRedePage />} />
             <Route path="/desenvolvimento-de-sites-e-sistemas-web" element={<DesenvolvimentoWebPage />} />
+            <Route path="/admin" element={<AdminPage />} />
             {/* Segment dedicated pages */}
             <Route path="/ti-para-cartorios" element={<TiCartoriosPage />} />
             <Route path="/ti-para-serventias-cartoriais" element={<TiServentiasCartoriaisPage />} />

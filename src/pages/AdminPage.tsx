@@ -174,7 +174,7 @@ function LogsTab({ onlyErrors = false }: { onlyErrors?: boolean }) {
     if (filterStatus !== "all") query = query.eq("status", filterStatus);
 
     const { data, count } = await query;
-    setLogs((data as LogRow[]) || []);
+    setLogs((data as unknown as LogRow[]) || []);
     setTotal(count || 0);
     setLoading(false);
   }, [page, filterTipo, filterStatus]);
