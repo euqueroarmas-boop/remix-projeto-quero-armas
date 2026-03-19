@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { logSistemaBackend } from "../_shared/logSistema.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -20,6 +21,7 @@ Deno.serve(async (req) => {
     const { event, payment } = body;
 
     console.log("[asaas-webhook] Evento recebido:", event, "Payment ID:", payment?.id);
+    await logSistemaBackend({ tipo: "webhook", status: "info", mensagem: `Webhook recebido: ${event}`, payload: { event, paymentId: payment?.id } });
 
     // Log webhook event
     await supabase.from("asaas_webhooks").insert({
@@ -268,6 +270,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error("[asaas-webhook] Erro fatal:", message);
+    await logSistemaBackend({ tipo: "webhook", status: "error", mensagem: `Webhook erro fatal: ${message}` });
 
     try {
       await supabase.from("integration_logs").insert({

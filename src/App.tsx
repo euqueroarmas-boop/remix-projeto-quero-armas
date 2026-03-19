@@ -4,6 +4,7 @@ import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Index from "./pages/Index.tsx";
 
 const Provimento213 = lazy(() => import("./pages/Provimento213.tsx"));
@@ -50,6 +51,7 @@ const CompraConcluida = lazy(() => import("./pages/CompraConcluida.tsx"));
 const AreaDoClientePage = lazy(() => import("./pages/AreaDoClientePage.tsx"));
 const ReestruturacaoRedePage = lazy(() => import("./pages/ReestruturacaoRedePage.tsx"));
 const DesenvolvimentoWebPage = lazy(() => import("./pages/DesenvolvimentoWebPage.tsx"));
+const AdminPage = lazy(() => import("./pages/AdminPage.tsx"));
 
 const queryClient = new QueryClient();
 
@@ -60,6 +62,7 @@ const PageLoader = () => (
 );
 
 const App = () => (
+  <ErrorBoundary>
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
@@ -106,6 +109,7 @@ const App = () => (
             <Route path="/area-do-cliente" element={<AreaDoClientePage />} />
             <Route path="/reestruturacao-completa-de-rede-corporativa" element={<ReestruturacaoRedePage />} />
             <Route path="/desenvolvimento-de-sites-e-sistemas-web" element={<DesenvolvimentoWebPage />} />
+            <Route path="/admin" element={<AdminPage />} />
             {/* Segment dedicated pages */}
             <Route path="/ti-para-cartorios" element={<TiCartoriosPage />} />
             <Route path="/ti-para-serventias-cartoriais" element={<TiServentiasCartoriaisPage />} />
@@ -136,6 +140,7 @@ const App = () => (
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;

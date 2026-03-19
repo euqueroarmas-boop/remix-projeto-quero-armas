@@ -1,0 +1,1 @@
+CREATE POLICY "Anyone can read logs" ON public.logs_sistema FOR SELECT TO anon USING (true);

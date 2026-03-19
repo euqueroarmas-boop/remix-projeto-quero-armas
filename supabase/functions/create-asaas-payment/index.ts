@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { logSistemaBackend } from "../_shared/logSistema.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -47,6 +48,7 @@ Deno.serve(async (req) => {
     } = body;
 
     console.log("[create-asaas-payment] Iniciando...", { billing_type, value, quote_id });
+    await logSistemaBackend({ tipo: "checkout", status: "info", mensagem: "Início criação de pagamento", payload: { billing_type, value, quote_id } });
 
     await supabase.from("integration_logs").insert({
       integration_name: "asaas",
@@ -218,10 +220,12 @@ Deno.serve(async (req) => {
     });
 
     console.log("[create-asaas-payment] Resposta normalizada:", JSON.stringify(normalizedResponse));
+    await logSistemaBackend({ tipo: "checkout", status: hasRenderablePaymentData ? "success" : "warning", mensagem: "Pagamento criado", payload: normalizedResponse as any });
     return jsonResponse(normalizedResponse, 200);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error("[create-asaas-payment] Erro fatal:", message);
+    await logSistemaBackend({ tipo: "checkout", status: "error", mensagem: `Erro fatal pagamento: ${message}` });
 
     try {
       await supabase.from("integration_logs").insert({

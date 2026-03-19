@@ -1,3 +1,5 @@
+import { logSistemaBackend } from "../_shared/logSistema.ts";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -125,6 +127,7 @@ Deno.serve(async (req) => {
 
     console.log(`[send-purchase-confirmation] Sending confirmation to ${customer_email}`);
     console.log(`[send-purchase-confirmation] Service: ${service_name}, Value: ${valueFormatted}`);
+    await logSistemaBackend({ tipo: "email", status: "info", mensagem: `Enviando confirmação para ${customer_email}`, payload: { service_name, value } });
 
     // Send email via Resend API
     const resendResponse = await fetch("https://api.resend.com/emails", {
@@ -145,9 +148,10 @@ Deno.serve(async (req) => {
 
     if (!resendResponse.ok) {
       console.error("[send-purchase-confirmation] Resend error:", JSON.stringify(resendResult));
-      // Log failure but don't throw - still return success to avoid retries
+      await logSistemaBackend({ tipo: "email", status: "error", mensagem: `Falha envio email: ${customer_email}`, payload: resendResult });
     } else {
       console.log("[send-purchase-confirmation] Email sent successfully:", resendResult.id);
+      await logSistemaBackend({ tipo: "email", status: "success", mensagem: `Email enviado: ${customer_email}`, payload: { resend_id: resendResult.id } });
     }
 
     // Log to integration_logs for audit
