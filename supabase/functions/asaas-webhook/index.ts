@@ -21,6 +21,7 @@ Deno.serve(async (req) => {
     const { event, payment } = body;
 
     console.log("[asaas-webhook] Evento recebido:", event, "Payment ID:", payment?.id);
+    await logSistemaBackend({ tipo: "webhook", status: "info", mensagem: `Webhook recebido: ${event}`, payload: { event, paymentId: payment?.id } });
 
     // Log webhook event
     await supabase.from("asaas_webhooks").insert({
