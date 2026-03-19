@@ -220,6 +220,7 @@ Deno.serve(async (req) => {
     });
 
     console.log("[create-asaas-payment] Resposta normalizada:", JSON.stringify(normalizedResponse));
+    await logSistemaBackend({ tipo: "checkout", status: hasRenderablePaymentData ? "success" : "warning", mensagem: "Pagamento criado", payload: normalizedResponse as any });
     return jsonResponse(normalizedResponse, 200);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
