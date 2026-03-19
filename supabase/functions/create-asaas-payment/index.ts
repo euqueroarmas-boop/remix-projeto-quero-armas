@@ -48,6 +48,7 @@ Deno.serve(async (req) => {
     } = body;
 
     console.log("[create-asaas-payment] Iniciando...", { billing_type, value, quote_id });
+    await logSistemaBackend({ tipo: "checkout", status: "info", mensagem: "Início criação de pagamento", payload: { billing_type, value, quote_id } });
 
     await supabase.from("integration_logs").insert({
       integration_name: "asaas",
