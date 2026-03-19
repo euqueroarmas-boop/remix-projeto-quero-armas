@@ -399,6 +399,36 @@ export type Database = {
         }
         Relationships: []
       }
+      logs_sistema: {
+        Row: {
+          created_at: string
+          id: string
+          mensagem: string
+          payload: Json | null
+          status: string
+          tipo: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mensagem: string
+          payload?: Json | null
+          status?: string
+          tipo: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mensagem?: string
+          payload?: Json | null
+          status?: string
+          tipo?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       network_diagnostics: {
         Row: {
           average_pc_age: string | null
