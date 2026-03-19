@@ -50,6 +50,7 @@ const CompraConcluida = lazy(() => import("./pages/CompraConcluida.tsx"));
 const AreaDoClientePage = lazy(() => import("./pages/AreaDoClientePage.tsx"));
 const ReestruturacaoRedePage = lazy(() => import("./pages/ReestruturacaoRedePage.tsx"));
 const DesenvolvimentoWebPage = lazy(() => import("./pages/DesenvolvimentoWebPage.tsx"));
+const AdminPage = lazy(() => import("./pages/AdminPage.tsx"));
 
 const queryClient = new QueryClient();
 
