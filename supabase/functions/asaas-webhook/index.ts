@@ -270,6 +270,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error("[asaas-webhook] Erro fatal:", message);
+    await logSistemaBackend({ tipo: "webhook", status: "error", mensagem: `Webhook erro fatal: ${message}` });
 
     try {
       await supabase.from("integration_logs").insert({

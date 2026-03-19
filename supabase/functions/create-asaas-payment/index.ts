@@ -225,6 +225,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error("[create-asaas-payment] Erro fatal:", message);
+    await logSistemaBackend({ tipo: "checkout", status: "error", mensagem: `Erro fatal pagamento: ${message}` });
 
     try {
       await supabase.from("integration_logs").insert({
