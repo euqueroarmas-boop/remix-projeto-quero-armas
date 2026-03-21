@@ -37,7 +37,7 @@ export default function ClientPortal({ customer, onLogout }: Props) {
 
   const renderContent = () => {
     switch (activeTab) {
-      case "overview": return <PortalOverview customer={customer} onNavigate={setActiveTab} />;
+      case "overview": return <PortalOverview customer={customer} onNavigate={(t: string) => setActiveTab(t as TabId)} />;
       case "servicos": return <PortalServicos customer={customer} />;
       case "solicitacoes": return <PortalSolicitacoes customer={customer} />;
       case "financeiro": return <PortalFinanceiro customer={customer} />;
