@@ -89,6 +89,47 @@ export type Database = {
         }
         Relationships: []
       }
+      client_events: {
+        Row: {
+          created_at: string
+          customer_id: string
+          description: string | null
+          event_type: string
+          id: string
+          related_id: string | null
+          related_table: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          description?: string | null
+          event_type: string
+          id?: string
+          related_id?: string | null
+          related_table?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          description?: string | null
+          event_type?: string
+          id?: string
+          related_id?: string | null
+          related_table?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cnpj_cache: {
         Row: {
           cnpj: string
@@ -320,6 +361,73 @@ export type Database = {
           telefone?: string | null
         }
         Relationships: []
+      }
+      fiscal_documents: {
+        Row: {
+          amount: number
+          contract_id: string | null
+          created_at: string
+          customer_id: string
+          document_number: string | null
+          document_type: string
+          file_url: string | null
+          id: string
+          issue_date: string
+          notes: string | null
+          payment_id: string | null
+          status: string
+        }
+        Insert: {
+          amount?: number
+          contract_id?: string | null
+          created_at?: string
+          customer_id: string
+          document_number?: string | null
+          document_type?: string
+          file_url?: string | null
+          id?: string
+          issue_date?: string
+          notes?: string | null
+          payment_id?: string | null
+          status?: string
+        }
+        Update: {
+          amount?: number
+          contract_id?: string | null
+          created_at?: string
+          customer_id?: string
+          document_number?: string | null
+          document_type?: string
+          file_url?: string | null
+          id?: string
+          issue_date?: string
+          notes?: string | null
+          payment_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fiscal_documents_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fiscal_documents_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fiscal_documents_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       integration_logs: {
         Row: {
@@ -560,6 +668,60 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "budget_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_requests: {
+        Row: {
+          created_at: string
+          customer_id: string
+          description: string | null
+          id: string
+          priority: string
+          quote_id: string | null
+          service_type: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          description?: string | null
+          id?: string
+          priority?: string
+          quote_id?: string | null
+          service_type?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          description?: string | null
+          id?: string
+          priority?: string
+          quote_id?: string | null
+          service_type?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_requests_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_requests_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
             referencedColumns: ["id"]
           },
         ]
