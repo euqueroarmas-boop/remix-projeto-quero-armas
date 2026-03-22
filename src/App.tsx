@@ -52,6 +52,7 @@ const AreaDoClientePage = lazy(() => import("./pages/AreaDoClientePage.tsx"));
 const ReestruturacaoRedePage = lazy(() => import("./pages/ReestruturacaoRedePage.tsx"));
 const DesenvolvimentoWebPage = lazy(() => import("./pages/DesenvolvimentoWebPage.tsx"));
 const AdminPage = lazy(() => import("./pages/AdminPage.tsx"));
+const RedefinirSenhaPage = lazy(() => import("./pages/RedefinirSenhaPage.tsx"));
 
 const queryClient = new QueryClient();
 
@@ -107,6 +108,8 @@ const App = () => (
             <Route path="/contrato" element={<ContratoPage />} />
             <Route path="/compra-concluida" element={<CompraConcluida />} />
             <Route path="/area-do-cliente" element={<AreaDoClientePage />} />
+            <Route path="/cliente" element={<Navigate to="/area-do-cliente" replace />} />
+            <Route path="/redefinir-senha" element={<RedefinirSenhaPage />} />
             <Route path="/reestruturacao-completa-de-rede-corporativa" element={<ReestruturacaoRedePage />} />
             <Route path="/desenvolvimento-de-sites-e-sistemas-web" element={<DesenvolvimentoWebPage />} />
             <Route path="/admin" element={<AdminPage />} />

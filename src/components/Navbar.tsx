@@ -58,6 +58,7 @@ const navLinks: NavLink[] = [
   { href: "#segmentos", label: "Segmentos", isDropdown: true },
   { href: "#infraestrutura", mobileHref: "/infraestrutura", label: "Infraestrutura" },
   { href: "/blog", label: "Blog", isRoute: true },
+  { href: "/area-do-cliente", label: "Área do Cliente", isRoute: true },
 ];
 
 /* ─── Shared nav-item class for perfect vertical alignment ─── */

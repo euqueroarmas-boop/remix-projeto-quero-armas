@@ -10,7 +10,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  BarChart3, AlertTriangle, CreditCard, FileText, LogOut, RefreshCw, ChevronLeft, ChevronRight, Eye,
+  BarChart3, AlertTriangle, CreditCard, FileText, LogOut, RefreshCw, ChevronLeft, ChevronRight, Eye, Users, Plus, Loader2, Check, Copy,
 } from "lucide-react";
 
 const ITEMS_PER_PAGE = 20;
@@ -89,7 +89,6 @@ type PaymentRow = {
 };
 
 function StatusBadge({ status }: { status: string }) {
-  const variant = status === "success" ? "default" : status === "error" ? "destructive" : "secondary";
   const color =
     status === "success"
       ? "bg-green-600/20 text-green-400 border-green-600/30"
@@ -196,6 +195,7 @@ function LogsTab({ onlyErrors = false }: { onlyErrors?: boolean }) {
             <SelectItem value="contrato">Contrato</SelectItem>
             <SelectItem value="erro">Erro</SelectItem>
             <SelectItem value="pagamento">Pagamento</SelectItem>
+            <SelectItem value="admin">Admin</SelectItem>
           </SelectContent>
         </Select>
         {!onlyErrors && (
@@ -390,6 +390,204 @@ function PaymentsTab() {
   );
 }
 
+function ClientesTab() {
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [result, setResult] = useState<{ email: string; password: string } | null>(null);
+  const [error, setError] = useState("");
+  const [selectedCustomerId, setSelectedCustomerId] = useState("");
+  const [form, setForm] = useState({ email: "", password: "", name: "" });
+  const [copied, setCopied] = useState("");
+
+  const fetchCustomers = useCallback(async () => {
+    setLoading(true);
+    const { data } = await supabase
+      .from("customers")
+      .select("id, razao_social, nome_fantasia, cnpj_ou_cpf, email, user_id, created_at")
+      .order("created_at", { ascending: false });
+    setCustomers(data || []);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { fetchCustomers(); }, [fetchCustomers]);
+
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.email || !form.password) { setError("E-mail e senha são obrigatórios."); return; }
+    if (form.password.length < 6) { setError("Senha deve ter ao menos 6 caracteres."); return; }
+
+    setCreating(true);
+    setError("");
+
+    try {
+      const adminPwd = prompt("Digite a senha admin para confirmar:") || "";
+      
+      const { data, error: fnErr } = await supabase.functions.invoke("create-client-user", {
+        body: {
+          password: adminPwd,
+          customer_id: selectedCustomerId === "none" ? undefined : selectedCustomerId || undefined,
+          email: form.email,
+          user_password: form.password,
+          name: form.name,
+        },
+      });
+
+      if (fnErr || !data?.success) {
+        setError(data?.error || "Erro ao criar usuário.");
+      } else {
+        setResult({ email: form.email, password: form.password });
+        fetchCustomers();
+      }
+    } catch {
+      setError("Erro inesperado.");
+    }
+    setCreating(false);
+  };
+
+  const copyToClipboard = (text: string, field: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(field);
+    setTimeout(() => setCopied(""), 2000);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-3">
+        <Button variant="outline" size="sm" onClick={fetchCustomers}>
+          <RefreshCw className="h-4 w-4 mr-1" /> Atualizar
+        </Button>
+        <Button size="sm" onClick={() => { setShowForm(!showForm); setResult(null); setError(""); }}>
+          <Plus className="h-4 w-4 mr-1" /> Criar Acesso
+        </Button>
+        <span className="text-sm text-muted-foreground ml-auto">{customers.length} clientes</span>
+      </div>
+
+      {showForm && (
+        <Card className="border-primary/30">
+          <CardContent className="p-5">
+            {result ? (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-emerald-400 mb-2">
+                  <Check size={18} /> <span className="font-bold text-sm">Usuário criado com sucesso!</span>
+                </div>
+                <div className="bg-muted/50 rounded-lg p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-[10px] text-muted-foreground uppercase">E-mail</p>
+                      <p className="text-sm font-mono text-foreground">{result.email}</p>
+                    </div>
+                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => copyToClipboard(result.email, "email")}>
+                      {copied === "email" ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+                    </Button>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-[10px] text-muted-foreground uppercase">Senha</p>
+                      <p className="text-sm font-mono text-foreground">{result.password}</p>
+                    </div>
+                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => copyToClipboard(result.password, "pwd")}>
+                      {copied === "pwd" ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Envie essas credenciais ao cliente. Ele pode acessar em /area-do-cliente</p>
+                </div>
+                <Button size="sm" variant="outline" onClick={() => { setResult(null); setShowForm(false); setForm({ email: "", password: "", name: "" }); }}>
+                  Fechar
+                </Button>
+              </div>
+            ) : (
+              <form onSubmit={handleCreate} className="space-y-4">
+                <h3 className="font-heading font-bold text-sm text-foreground">Criar Acesso para Cliente</h3>
+
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Vincular a Cliente (opcional)</label>
+                  <Select value={selectedCustomerId} onValueChange={setSelectedCustomerId}>
+                    <SelectTrigger className="bg-card"><SelectValue placeholder="Selecione um cliente" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Nenhum (criar sem vínculo)</SelectItem>
+                      {customers.filter((c) => !c.user_id).map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {c.razao_social} ({c.cnpj_ou_cpf})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Nome</label>
+                  <Input placeholder="Nome do usuário" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="bg-card" />
+                </div>
+
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">E-mail *</label>
+                  <Input type="email" placeholder="email@cliente.com" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="bg-card" />
+                </div>
+
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Senha *</label>
+                  <Input type="text" placeholder="Mínimo 6 caracteres" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="bg-card" />
+                </div>
+
+                {error && <p className="text-sm text-destructive">{error}</p>}
+
+                <div className="flex gap-2 justify-end">
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setShowForm(false)}>Cancelar</Button>
+                  <Button type="submit" size="sm" disabled={creating}>
+                    {creating ? <Loader2 size={14} className="animate-spin mr-1" /> : <Plus size={14} className="mr-1" />}
+                    Criar Usuário
+                  </Button>
+                </div>
+              </form>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {loading ? (
+        <div className="text-center py-12 text-muted-foreground">Carregando...</div>
+      ) : customers.length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground">Nenhum cliente cadastrado</div>
+      ) : (
+        <div className="rounded-md border border-border overflow-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Empresa</TableHead>
+                <TableHead>CNPJ/CPF</TableHead>
+                <TableHead>E-mail</TableHead>
+                <TableHead>Acesso Portal</TableHead>
+                <TableHead>Cadastro</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {customers.map((c) => (
+                <TableRow key={c.id}>
+                  <TableCell className="text-sm text-foreground font-medium">{c.nome_fantasia || c.razao_social}</TableCell>
+                  <TableCell className="text-xs font-mono text-muted-foreground">{c.cnpj_ou_cpf}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{c.email}</TableCell>
+                  <TableCell>
+                    {c.user_id ? (
+                      <span className="text-emerald-400 text-xs font-medium">✓ Ativo</span>
+                    ) : (
+                      <span className="text-muted-foreground text-xs">Sem acesso</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                    {new Date(c.created_at).toLocaleDateString("pt-BR")}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AdminPage() {
   const [authed, setAuthed] = useState(!!sessionStorage.getItem("admin_token"));
 
@@ -416,12 +614,14 @@ export default function AdminPage() {
             <TabsTrigger value="logs">Logs</TabsTrigger>
             <TabsTrigger value="errors">Erros</TabsTrigger>
             <TabsTrigger value="payments">Pagamentos</TabsTrigger>
+            <TabsTrigger value="clientes">Clientes</TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard"><Dashboard /></TabsContent>
           <TabsContent value="logs"><LogsTab /></TabsContent>
           <TabsContent value="errors"><LogsTab onlyErrors /></TabsContent>
           <TabsContent value="payments"><PaymentsTab /></TabsContent>
+          <TabsContent value="clientes"><ClientesTab /></TabsContent>
         </Tabs>
       </main>
     </div>

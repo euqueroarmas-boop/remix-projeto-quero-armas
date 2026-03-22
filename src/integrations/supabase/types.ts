@@ -333,6 +333,7 @@ export type Database = {
           razao_social: string
           responsavel: string
           telefone: string | null
+          user_id: string | null
         }
         Insert: {
           cep?: string | null
@@ -346,6 +347,7 @@ export type Database = {
           razao_social: string
           responsavel: string
           telefone?: string | null
+          user_id?: string | null
         }
         Update: {
           cep?: string | null
@@ -359,6 +361,7 @@ export type Database = {
           razao_social?: string
           responsavel?: string
           telefone?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
