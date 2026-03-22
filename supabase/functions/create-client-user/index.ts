@@ -13,8 +13,8 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { password: adminPwd, customer_id, email, password, name } = await req.json();
-
+    const { password: adminPwd, customer_id, email, user_password, name } = await req.json();
+    const password = user_password || "";
     // Validate admin password
     const ADMIN_PASSWORD = Deno.env.get("ADMIN_PASSWORD");
     if (!ADMIN_PASSWORD || adminPwd !== ADMIN_PASSWORD) {
