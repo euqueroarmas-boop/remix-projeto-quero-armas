@@ -422,16 +422,14 @@ function ClientesTab() {
     setError("");
 
     try {
-      const adminToken = sessionStorage.getItem("admin_token");
-      const decoded = adminToken ? atob(adminToken) : "";
-      // We don't use the decoded token directly - we use the admin password approach
+      const adminPwd = prompt("Digite a senha admin para confirmar:") || "";
       
       const { data, error: fnErr } = await supabase.functions.invoke("create-client-user", {
         body: {
-          password: prompt("Digite a senha admin para confirmar:") || "",
-          customer_id: selectedCustomerId || undefined,
+          password: adminPwd,
+          customer_id: selectedCustomerId === "none" ? undefined : selectedCustomerId || undefined,
           email: form.email,
-          password: form.password,
+          user_password: form.password,
           name: form.name,
         },
       });
