@@ -105,48 +105,42 @@ const LocacaoComputadoresPage = () => {
     setLeadLoading(true);
     try {
       // Check for existing lead by whatsapp or email
-      let existingLead: any = null;
-      if (leadForm.whatsapp) {
-        const { data } = await supabase.from("leads").select("id").eq("whatsapp" as any, leadForm.whatsapp).maybeSingle();
-        existingLead = data;
-      }
-      if (!existingLead && leadForm.email) {
+      let existingLeadId: string | null = null;
+      if (leadForm.email) {
         const { data } = await supabase.from("leads").select("id").eq("email", leadForm.email).maybeSingle();
-        existingLead = data;
+        if (data) existingLeadId = (data as any).id;
       }
 
-      if (existingLead) {
-        setLeadId(existingLead.id);
-      } else {
-        const { data: newLead, error } = await supabase.from("leads").insert({
+      let finalLeadId = existingLeadId;
+      if (!finalLeadId) {
+        const insertPayload: Record<string, unknown> = {
           name: leadForm.nome,
           email: leadForm.email || `lead_${Date.now()}@pendente.com`,
           phone: leadForm.whatsapp,
-          whatsapp: leadForm.whatsapp,
           company: leadForm.empresa || null,
           service_interest: "locacao-computadores",
           source_page: "/locacao-de-computadores-para-empresas-jacarei",
           utm_source: searchParams.get("utm_source") || null,
           utm_medium: searchParams.get("utm_medium") || null,
           utm_campaign: searchParams.get("utm_campaign") || null,
-          lead_status: "lead_capturado",
-        } as any).select().single();
-
+        };
+        const { data: newLead, error } = await supabase.from("leads").insert(insertPayload as any).select().single();
         if (error) throw error;
-        setLeadId((newLead as any).id);
+        finalLeadId = (newLead as any).id;
       }
+      setLeadId(finalLeadId);
 
       // Create proposal
-      const { data: proposal, error: propErr } = await supabase.from("proposals" as any).insert({
-        lead_id: existingLead?.id || leadId,
+      const proposalPayload: Record<string, unknown> = {
+        lead_id: finalLeadId,
         plan: selectedPlan,
         computers_qty: qty,
         unit_price: plan.price,
         total_value: totalValue,
         contract_months: 36,
         status: "proposta_gerada",
-      } as any).select().single();
-
+      };
+      const { error: propErr } = await supabase.from("proposals" as any).insert(proposalPayload).select().single();
       if (propErr) throw propErr;
 
       await logSistema({
