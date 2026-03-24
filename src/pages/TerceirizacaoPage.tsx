@@ -181,7 +181,7 @@ const TerceirizacaoPage = () => {
               Fale com a WMTi e descubra como a terceirização da mão de obra em TI pode reduzir custos, eliminar riscos e melhorar a produtividade da sua equipe.
             </p>
             <a
-              href={`https://wa.me/5512981156000?text=${whatsappMsg}`}
+              href={`https://wa.me/${whatsappNumber}?text=${whatsappMsg}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground font-mono text-sm uppercase tracking-wider px-8 py-4 hover:bg-primary/90 transition-colors"
