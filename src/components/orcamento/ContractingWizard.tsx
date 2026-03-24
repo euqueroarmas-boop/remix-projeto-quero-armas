@@ -115,6 +115,7 @@ const ContractingWizard = ({
   const [currentStep, setCurrentStep] = useState<Step>("registration");
   const stepOrder: Step[] = ["registration", "contract", "payment"];
 
+  const [activeQuoteId, setActiveQuoteId] = useState<string | null>(quoteId);
   const [registrationData, setRegistrationData] = useState<RegistrationData | null>(null);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [contractId, setContractId] = useState<string | null>(null);
@@ -133,6 +134,10 @@ const ContractingWizard = ({
 
   const wizardRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    setActiveQuoteId(quoteId);
+  }, [quoteId]);
+
   // Save session when payment completes (for recovery)
   useEffect(() => {
     if (paymentComplete && paymentData) {
@@ -141,10 +146,10 @@ const ContractingWizard = ({
         contractId,
         selectedPayment: paymentData.billingType,
         invoiceUrl: paymentData.invoiceUrl,
-        quoteId,
+        quoteId: activeQuoteId,
       });
     }
-  }, [paymentComplete, paymentData, registrationData, contractId, quoteId]);
+  }, [paymentComplete, paymentData, registrationData, contractId, activeQuoteId]);
 
   useEffect(() => {
     const signedId = searchParams.get("contract_signed");
