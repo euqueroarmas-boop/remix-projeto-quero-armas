@@ -399,7 +399,7 @@ const ContractingWizard = ({
   };
 
   const handlePayment = async () => {
-    if (!selectedPayment || !registrationData || !quoteId) return;
+    if (!selectedPayment || !registrationData || !activeQuoteId) return;
     setPaymentLoading(true);
     setPaymentError(null);
     setPaymentComplete(false);
@@ -409,7 +409,6 @@ const ContractingWizard = ({
     const description = `Contrato WMTi — ${pathLabel} — ${computersQty} computador(es)`;
 
     try {
-      // Use subscription endpoint for contract-based recurring payments
       const { data, error } = await supabase.functions.invoke("create-asaas-subscription", {
         body: {
           customer_name: registrationData.razaoSocial,
@@ -418,7 +417,7 @@ const ContractingWizard = ({
           billing_type: selectedPayment,
           value: monthlyValue,
           description,
-          quote_id: quoteId,
+          quote_id: activeQuoteId,
         },
       });
 
