@@ -581,14 +581,21 @@ const ContractingWizard = ({
                   <div className="flex flex-col items-center justify-center text-center space-y-3">
                     <Loader2 className="w-8 h-8 animate-spin text-primary" />
                     <h4 className="text-lg font-heading font-bold">Aguardando confirmação do pagamento...</h4>
-                    <p className="text-sm text-muted-foreground">
-                      A página segura de pagamento foi aberta em outra aba. Conclua por lá sua contratação.
-                    </p>
+                    {popupBlocked ? (
+                      <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg px-4 py-3 text-left">
+                        <p className="text-sm text-amber-300 font-semibold mb-1">⚠️ O navegador bloqueou a abertura automática</p>
+                        <p className="text-xs text-muted-foreground">Clique no botão abaixo para abrir o checkout manualmente.</p>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        A página segura de pagamento foi aberta em outra aba. Conclua por lá sua contratação.
+                      </p>
+                    )}
                   </div>
                   <div className="flex flex-col gap-2">
                     <Button onClick={() => handleRedirectToCheckout(paymentData.invoiceUrl!)} className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground">
                       <ExternalLink className="w-4 h-4 mr-2" />
-                      Abrir checkout novamente
+                      {popupBlocked ? "Abrir checkout" : "Abrir checkout novamente"}
                     </Button>
                     <Button onClick={handleRetryPayment} variant="ghost" className="w-full h-10 text-muted-foreground">
                       <RotateCcw className="w-4 h-4 mr-2" />
