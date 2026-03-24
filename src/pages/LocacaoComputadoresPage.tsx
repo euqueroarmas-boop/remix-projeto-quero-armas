@@ -309,10 +309,10 @@ const LocacaoComputadoresPage = () => {
           <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
             <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">// A Solução</p>
             <h2 className="text-2xl md:text-4xl mb-4 max-w-3xl">
-              Locação de computadores <span className="text-primary">com tudo incluso</span>
+              A locação da WMTi <span className="text-primary">elimina esse ciclo</span>
             </h2>
             <p className="text-muted-foreground max-w-2xl mb-10">
-              Estação Dell OptiPlex completa com monitor, periféricos, manutenção, troca de peças e suporte 24/7. Zero investimento inicial.
+              Você não compra. Você não se preocupa. Você não perde tempo. Equipamentos atualizados, manutenção incluída, suporte completo e substituição quando necessário.
             </p>
           </motion.div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-px bg-border">
