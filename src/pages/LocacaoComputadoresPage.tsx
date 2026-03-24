@@ -399,8 +399,9 @@ const LocacaoComputadoresPage = () => {
       <section className="section-light py-16 md:py-20">
         <div className="container">
           <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
-            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">// Planos</p>
-            <h2 className="text-2xl md:text-3xl mb-10">Escolha o plano ideal para sua <span className="text-primary">empresa</span></h2>
+            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">// Desktops — contratação online</p>
+            <h2 className="text-2xl md:text-3xl mb-2">Escolha o plano ideal para sua <span className="text-primary">empresa</span></h2>
+            <p className="text-sm text-muted-foreground mb-10">Estações Dell OptiPlex completas. Contrate 100% online — do orçamento ao pagamento.</p>
           </motion.div>
           <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
             {PLANS.map((p) => (
