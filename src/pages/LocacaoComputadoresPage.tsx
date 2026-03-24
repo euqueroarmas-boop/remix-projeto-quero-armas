@@ -709,10 +709,10 @@ const LocacaoComputadoresPage = () => {
       <section className="section-light py-16 md:py-20">
         <div className="container text-center">
           <h2 className="text-2xl md:text-4xl mb-4">
-            A partir de <span className="text-primary">R$ 249/mês</span> por estação completa
+            Você deixa de gastar com máquina e passa a <span className="text-primary">investir no funcionamento</span> da sua empresa
           </h2>
           <p className="text-muted-foreground max-w-xl mx-auto mb-8">
-            Sem investimento inicial, sem dor de cabeça com manutenção, sem surpresas. Foque no que importa: o seu negócio.
+            Equipamentos atualizados, manutenção incluída, suporte completo. Se der problema, resolve. Se ficar defasado, troca. Se precisar expandir, escala. E isso muda completamente o jogo.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Button size="lg" onClick={scrollToCalc} className="h-14 px-8 text-base">
