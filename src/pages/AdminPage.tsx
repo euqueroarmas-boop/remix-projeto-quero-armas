@@ -20,6 +20,8 @@ import AdminAudit from "@/components/admin/AdminAudit";
 import AdminRiskMonitor from "@/components/admin/AdminRiskMonitor";
 import AdminLeadsProposals from "@/components/admin/AdminLeadsProposals";
 import AdminDiagnostics from "@/components/admin/AdminDiagnostics";
+import { lazy } from "react";
+const QAPanel = lazy(() => import("@/components/admin/qa/QAPanel"));
 
 const ITEMS_PER_PAGE = 20;
 
