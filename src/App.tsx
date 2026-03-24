@@ -120,6 +120,7 @@ const App = () => (
             <Route path="/redefinir-senha" element={<RedefinirSenhaPage />} />
             <Route path="/reestruturacao-completa-de-rede-corporativa" element={<ReestruturacaoRedePage />} />
             <Route path="/desenvolvimento-de-sites-e-sistemas-web" element={<DesenvolvimentoWebPage />} />
+            <Route path="/automacao-de-ti-com-inteligencia-artificial" element={<AutomacaoIaPage />} />
             <Route path="/admin" element={<AdminPage />} />
             {/* Segment dedicated pages */}
             <Route path="/ti-para-cartorios" element={<TiCartoriosPage />} />
