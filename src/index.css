@@ -78,6 +78,14 @@
     @apply bg-background text-foreground;
   }
 
+  .btn-glow {
+    box-shadow: 0 0 18px 4px hsl(16 100% 55% / 0.45), 0 0 40px 8px hsl(16 100% 55% / 0.18);
+    transition: box-shadow 0.3s ease;
+  }
+  .btn-glow:hover {
+    box-shadow: 0 0 24px 6px hsl(16 100% 55% / 0.6), 0 0 56px 12px hsl(16 100% 55% / 0.25);
+  }
+
   .led-pulse {
     animation: led-blink 3s ease-in-out infinite;
   }
