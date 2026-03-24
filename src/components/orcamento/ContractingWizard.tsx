@@ -147,6 +147,7 @@ const ContractingWizard = ({
   const emailSentRef = useRef(false);
 
   const [registrationLoading, setRegistrationLoading] = useState(false);
+  const [popupBlocked, setPopupBlocked] = useState(false);
 
   const wizardRef = useRef<HTMLDivElement>(null);
 
