@@ -101,17 +101,17 @@ const ContactSection = () => {
           >
             <div>
               <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
-                // Orçamento
+                // Sem compromisso
               </p>
               <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold mb-5 md:mb-6 leading-tight">
-                Solicite seu orçamento
+                Receba uma proposta
                 <br />
-                <span className="text-primary">de infraestrutura.</span>
+                <span className="text-primary">em até 48 horas.</span>
               </h2>
               <p className="font-body text-muted-foreground text-base md:text-lg max-w-lg leading-relaxed mb-8 md:mb-10">
-                Cada projeto exige análise técnica, escopo bem definido e solução
-                adequada à realidade da empresa. Receba uma proposta personalizada
-                para infraestrutura, suporte, segurança ou serviços gerenciados de TI.
+                Preencha o formulário, conte sua situação e receba um diagnóstico
+                gratuito com proposta de valor fixo mensal. Sem letra miúda,
+                sem surpresas, sem enrolação.
               </p>
             </div>
 
