@@ -15,7 +15,7 @@ const testimonials = [
     name: "Fernanda Oliveira",
     role: "Gerente Administrativa",
     company: "Construtora Horizonte",
-    text: "O serviço de locação de desktops transformou nossa operação. Sem investimento inicial e com suporte técnico incluso, ganhamos agilidade e economia.",
+    text: "Trocamos todos os computadores por locação e economizamos mais de R$40 mil em investimento. Se um PC dá problema, trocam no mesmo dia.",
     stars: 5,
     initials: "FO",
   },
