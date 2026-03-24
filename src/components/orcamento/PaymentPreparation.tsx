@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { CreditCard, Clock, CheckCircle, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { whatsappLink } from "@/lib/whatsapp";
 
 interface Props {
   visible: boolean;
