@@ -208,10 +208,10 @@ const ServicePageTemplate = ({
         <div className="container">
           <motion.div {...fadeIn} className="mb-12">
             <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
-              // Benefícios
+              // O que você ganha
             </p>
             <h2 className="text-2xl md:text-4xl">
-              Por que escolher a <span className="text-primary">WMTi</span>
+              Resultados reais para sua <span className="text-primary">empresa</span>
             </h2>
           </motion.div>
 
