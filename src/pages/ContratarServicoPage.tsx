@@ -90,7 +90,7 @@ const ContratarServicoPage = () => {
   const [paymentComplete, setPaymentComplete] = useState(false);
   const [invoiceUrl, setInvoiceUrl] = useState<string | null>(null);
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
-  const emailSentRef = useRef(false);
+  const [popupBlocked, setPopupBlocked] = useState(false);
 
   // Calculations
   const unitPrice = priceTable[Math.min(hours, 8)] ?? (isEmergency ? 217.5 : 145);
@@ -133,23 +133,7 @@ const ContratarServicoPage = () => {
         .single();
       if (data && ((data as any).payment_status === "CONFIRMED" || (data as any).payment_status === "RECEIVED")) {
         setPaymentConfirmed(true);
-        // Send confirmation email (only once)
-        if (registrationData && !emailSentRef.current) {
-          emailSentRef.current = true;
-          supabase.functions.invoke("send-purchase-confirmation", {
-            body: {
-              customer_name: registrationData.razaoSocial,
-              customer_email: registrationData.email,
-              service_name: serviceName,
-              hours,
-              value: promoPrice,
-              payment_method: selectedPayment,
-              contract_ref: contractId?.slice(0, 8).toUpperCase(),
-              purchase_date: new Date().toLocaleDateString("pt-BR"),
-              is_recurring: false,
-            },
-          }).catch(err => console.error("[WMTi] Email error:", err));
-        }
+        // Email is now sent from webhook after user creation (includes credentials)
         // Save data to session and redirect to standalone page
         const purchaseData = {
           serviceName,
@@ -325,7 +309,12 @@ const ContratarServicoPage = () => {
 
       setInvoiceUrl(url);
       setPaymentComplete(true);
-      window.open(url, "_blank", "noopener,noreferrer");
+      setPopupBlocked(false);
+      const win = window.open(url, "_blank", "noopener,noreferrer");
+      if (!win || win.closed || typeof win.closed === "undefined") {
+        setPopupBlocked(true);
+        console.warn("[WMTi] Popup bloqueado pelo navegador");
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Erro desconhecido";
       console.error("[WMTi][payment]", message);
@@ -619,15 +608,22 @@ const ContratarServicoPage = () => {
               </div>
             ) : paymentComplete && invoiceUrl ? (
               <div className="bg-card border border-primary/20 rounded-xl p-6 space-y-4">
-                <div className="flex flex-col items-center text-center space-y-3">
+               <div className="flex flex-col items-center text-center space-y-3">
                   <Loader2 className="w-8 h-8 animate-spin text-primary" />
                   <h4 className="text-lg font-heading font-bold">Aguardando confirmação do pagamento...</h4>
-                  <p className="text-sm text-muted-foreground">A página segura de pagamento foi aberta em outra aba. Conclua o pagamento por lá.</p>
+                  {popupBlocked ? (
+                    <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg px-4 py-3 text-left">
+                      <p className="text-sm text-amber-300 font-semibold mb-1">⚠️ O navegador bloqueou a abertura automática</p>
+                      <p className="text-xs text-muted-foreground">Clique no botão abaixo para abrir o checkout manualmente.</p>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">A página segura de pagamento foi aberta em outra aba. Conclua o pagamento por lá.</p>
+                  )}
                 </div>
                 <div className="flex flex-col gap-2">
-                  <Button onClick={() => window.open(invoiceUrl, "_blank", "noopener,noreferrer")} className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground">
+                  <Button onClick={() => { setPopupBlocked(false); const w = window.open(invoiceUrl!, "_blank", "noopener,noreferrer"); if (!w) setPopupBlocked(true); }} className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground">
                     <ExternalLink className="w-4 h-4 mr-2" />
-                    Abrir checkout novamente
+                    {popupBlocked ? "Abrir checkout" : "Abrir checkout novamente"}
                   </Button>
                 </div>
                 <div className="text-center mt-4 space-y-2">
