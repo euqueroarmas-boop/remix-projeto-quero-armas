@@ -40,22 +40,22 @@ const HeroSection = () => {
             transition={{ duration: 0.6 }}
           >
             <p className="font-mono text-xs md:text-sm tracking-[0.2em] md:tracking-[0.3em] uppercase text-primary mb-4 md:mb-6">
-              // Infraestrutura. Segurança. Performance.
+              // Sua empresa sem parar. Nunca mais.
             </p>
             <h1 className="text-3xl md:text-5xl lg:text-7xl leading-[1.1] mb-6 md:mb-8">
-              Infraestrutura de TI segura
+              Chega de prejuízo
               <br className="hidden md:block" />
-              {" "}e estável para{" "}
-              <span className="text-primary">empresas.</span>
+              {" "}com TI que{" "}
+              <span className="text-primary">não funciona.</span>
             </h1>
             <p className="font-body text-base md:text-xl text-gunmetal-foreground/70 max-w-2xl mb-4 leading-relaxed">
-              A WMTi Tecnologia da Informação é especialista em infraestrutura
-              corporativa, servidores Dell PowerEdge, redes empresariais,
-              Microsoft 365, Azure e segurança de rede com firewall pfSense.
+              Sua empresa perde dinheiro toda vez que o sistema cai, o servidor
+              trava ou a rede fica lenta. A WMTi elimina esses problemas
+              com infraestrutura profissional que funciona 24/7.
             </p>
             <p className="font-body text-base md:text-xl text-gunmetal-foreground/70 max-w-2xl mb-8 md:mb-12 leading-relaxed">
-              Há mais de 15 anos ajudando empresas a manter seus sistemas
-              funcionando com segurança, desempenho e confiabilidade.
+              Mais de <strong className="text-foreground">150 empresas</strong> já operam sem interrupções.
+              <strong className="text-primary"> A sua pode ser a próxima.</strong>
             </p>
           </motion.div>
 
@@ -69,7 +69,7 @@ const HeroSection = () => {
               href="#contato"
               className="group inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-8 md:px-10 py-4 md:py-5 font-mono text-sm md:text-base font-bold uppercase tracking-wider hover:brightness-110 transition-all shadow-[0_0_30px_hsl(var(--primary)/0.3)] hover:shadow-[0_0_40px_hsl(var(--primary)/0.5)]"
             >
-              Solicitar Diagnóstico de TI
+              Quero um diagnóstico gratuito
               <span className="text-lg group-hover:translate-x-1 transition-transform">→</span>
             </a>
             <a
@@ -78,7 +78,7 @@ const HeroSection = () => {
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 border border-gunmetal-foreground/30 text-gunmetal-foreground px-6 md:px-8 py-3.5 md:py-4 font-mono text-sm font-bold uppercase tracking-wider hover:border-primary hover:text-primary transition-all"
             >
-              Falar com Especialista
+              Resolver agora pelo WhatsApp
             </a>
           </motion.div>
 
@@ -90,9 +90,9 @@ const HeroSection = () => {
             className="mt-12 md:mt-20 flex flex-col sm:flex-row gap-6 sm:gap-12 border-t border-gunmetal-foreground/10 pt-6 md:pt-8"
           >
             {[
-              { icon: Award, label: "Mais de 15 anos", status: "de experiência" },
-              { icon: Shield, label: "Especialistas", status: "em infraestrutura corporativa" },
-              { icon: Handshake, label: "Parceiros", status: "Dell, Microsoft e ESET" },
+              { icon: Award, label: "15+ anos", status: "sem parar empresas" },
+              { icon: Shield, label: "99,9% uptime", status: "garantido em contrato" },
+              { icon: Handshake, label: "Dell · Microsoft · ESET", status: "parceiros oficiais" },
             ].map((item) => (
               <div key={item.label} className="flex items-center gap-3">
                 <div className="w-2 h-2 rounded-full bg-primary led-pulse" />

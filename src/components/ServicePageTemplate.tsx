@@ -168,10 +168,10 @@ const ServicePageTemplate = ({
           <div className="grid md:grid-cols-2 gap-12 md:gap-16">
             <motion.div {...fadeIn}>
               <p className="font-mono text-xs tracking-[0.3em] uppercase text-destructive mb-4">
-                // Problemas comuns
+                // Isso custa caro
               </p>
               <h2 className="text-2xl md:text-3xl mb-6">
-                Sua empresa enfrenta isso?
+                Reconhece algum desses problemas?
               </h2>
               <ul className="space-y-4">
                 {painPoints.map((point) => (
@@ -185,10 +185,10 @@ const ServicePageTemplate = ({
 
             <motion.div {...fadeIn}>
               <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
-                // Nossa solução
+                // A solução que funciona
               </p>
               <h2 className="text-2xl md:text-3xl mb-6">
-                Como a <span className="text-primary">WMTi</span> resolve
+                O que fazemos para <span className="text-primary">eliminar</span> esses problemas
               </h2>
               <ul className="space-y-4">
                 {solutions.map((solution) => (
@@ -208,10 +208,10 @@ const ServicePageTemplate = ({
         <div className="container">
           <motion.div {...fadeIn} className="mb-12">
             <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
-              // Benefícios
+              // O que você ganha
             </p>
             <h2 className="text-2xl md:text-4xl">
-              Por que escolher a <span className="text-primary">WMTi</span>
+              Resultados reais para sua <span className="text-primary">empresa</span>
             </h2>
           </motion.div>
 
@@ -291,10 +291,10 @@ const ServicePageTemplate = ({
         <div className="container max-w-3xl text-center">
           <motion.div {...fadeIn}>
             <h2 className="text-2xl md:text-4xl mb-4">
-              Pronto para melhorar sua <span className="text-primary">infraestrutura?</span>
+              Pare de perder dinheiro com TI <span className="text-primary">que não funciona.</span>
             </h2>
             <p className="font-body text-muted-foreground max-w-xl mx-auto mb-8 leading-relaxed">
-              Solicite um diagnóstico gratuito. Nossa equipe técnica avalia sua infraestrutura atual e apresenta um projeto personalizado.
+              Peça um diagnóstico gratuito. Em até 48h você recebe uma proposta com valor fixo mensal — sem surpresas.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <a
@@ -304,13 +304,13 @@ const ServicePageTemplate = ({
                 className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
               >
                 <MessageCircle size={16} />
-                Falar no WhatsApp
+                Resolver agora pelo WhatsApp
               </a>
               <Link
                 to="/orcamento-ti"
                 className="inline-flex items-center gap-2 border border-border text-foreground px-8 py-4 font-mono text-sm uppercase tracking-wider hover:border-primary hover:text-primary transition-all"
               >
-                Solicitar orçamento online
+                Quero minha proposta online
               </Link>
             </div>
           </motion.div>

@@ -2,10 +2,10 @@ import { motion, useInView } from "framer-motion";
 import { useRef, useEffect, useState } from "react";
 
 const metrics = [
-  { value: 15, suffix: "+", label: "Anos de experiência" },
-  { value: 150, suffix: "+", label: "Clientes atendidos" },
-  { value: 99.9, suffix: "%", label: "Uptime garantido" },
-  { value: 24, suffix: "/7", label: "Suporte técnico" },
+  { value: 15, suffix: "+", label: "Anos sem parar empresas" },
+  { value: 150, suffix: "+", label: "Empresas protegidas" },
+  { value: 99.9, suffix: "%", label: "De tempo sem quedas" },
+  { value: 24, suffix: "/7", label: "Alguém cuidando da sua TI" },
 ];
 
 function AnimatedCounter({ value, suffix, duration = 2 }: { value: number; suffix: string; duration?: number }) {

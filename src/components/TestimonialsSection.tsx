@@ -7,7 +7,7 @@ const testimonials = [
     name: "Maria Angela",
     role: "Tabeliã",
     company: "1º Tabelião de Sorocaba",
-    text: "A WMTi reestruturou toda nossa infraestrutura de rede e servidores. Desde a migração para o PowerEdge, não tivemos nenhuma parada crítica. Atendimento excepcional.",
+    text: "Desde que a WMTi assumiu nossa TI, não tivemos nenhuma parada. Nosso cartório funciona o dia inteiro sem travar. Valeu cada centavo.",
     stars: 5,
     initials: "TP",
   },
@@ -15,7 +15,7 @@ const testimonials = [
     name: "Fernanda Oliveira",
     role: "Gerente Administrativa",
     company: "Construtora Horizonte",
-    text: "O serviço de locação de desktops transformou nossa operação. Sem investimento inicial e com suporte técnico incluso, ganhamos agilidade e economia.",
+    text: "Trocamos todos os computadores por locação e economizamos mais de R$40 mil em investimento. Se um PC dá problema, trocam no mesmo dia.",
     stars: 5,
     initials: "FO",
   },
@@ -23,7 +23,7 @@ const testimonials = [
     name: "Ricardo Santos",
     role: "Sócio-Proprietário",
     company: "Escritório Santos & Associados",
-    text: "A implementação do pfSense com VPN site-to-site conectou nossas 3 unidades com segurança. O monitoramento 24/7 nos dá total tranquilidade.",
+    text: "Conectaram nossas 3 unidades com segurança total. Antes vivíamos com medo de ataque — hoje durmo tranquilo sabendo que está tudo monitorado.",
     stars: 5,
     initials: "RS",
   },
@@ -41,10 +41,10 @@ const TestimonialsSection = () => {
           className="mb-12 md:mb-16"
         >
           <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
-            // Depoimentos
+            // Quem já resolveu
           </p>
           <h2 className="text-2xl md:text-5xl max-w-2xl">
-            Quem confia na <span className="text-primary">WMTi</span>.
+            Veja o que nossos clientes <span className="text-primary">dizem.</span>
           </h2>
         </motion.div>
 
