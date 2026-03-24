@@ -14,42 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      admin_audit_logs: {
-        Row: {
-          action: string
-          admin_id: string | null
-          after_state: Json | null
-          before_state: Json | null
-          created_at: string
-          id: string
-          ip_address: string | null
-          target_id: string | null
-          target_type: string | null
-        }
-        Insert: {
-          action: string
-          admin_id?: string | null
-          after_state?: Json | null
-          before_state?: Json | null
-          created_at?: string
-          id?: string
-          ip_address?: string | null
-          target_id?: string | null
-          target_type?: string | null
-        }
-        Update: {
-          action?: string
-          admin_id?: string | null
-          after_state?: Json | null
-          before_state?: Json | null
-          created_at?: string
-          id?: string
-          ip_address?: string | null
-          target_id?: string | null
-          target_type?: string | null
-        }
-        Relationships: []
-      }
       asaas_webhooks: {
         Row: {
           created_at: string
@@ -306,7 +270,6 @@ export type Database = {
           signed: boolean | null
           signed_at: string | null
           status: string | null
-          updated_at: string | null
         }
         Insert: {
           accepted_minimum_term?: boolean | null
@@ -323,7 +286,6 @@ export type Database = {
           signed?: boolean | null
           signed_at?: string | null
           status?: string | null
-          updated_at?: string | null
         }
         Update: {
           accepted_minimum_term?: boolean | null
@@ -340,7 +302,6 @@ export type Database = {
           signed?: boolean | null
           signed_at?: string | null
           status?: string | null
-          updated_at?: string | null
         }
         Relationships: [
           {
@@ -510,51 +471,42 @@ export type Database = {
           created_at: string
           email: string
           id: string
-          lead_status: string | null
           message: string | null
           name: string
           phone: string | null
           service_interest: string | null
           source_page: string | null
-          updated_at: string | null
           utm_campaign: string | null
           utm_medium: string | null
           utm_source: string | null
-          whatsapp: string | null
         }
         Insert: {
           company?: string | null
           created_at?: string
           email: string
           id?: string
-          lead_status?: string | null
           message?: string | null
           name: string
           phone?: string | null
           service_interest?: string | null
           source_page?: string | null
-          updated_at?: string | null
           utm_campaign?: string | null
           utm_medium?: string | null
           utm_source?: string | null
-          whatsapp?: string | null
         }
         Update: {
           company?: string | null
           created_at?: string
           email?: string
           id?: string
-          lead_status?: string | null
           message?: string | null
           name?: string
           phone?: string | null
           service_interest?: string | null
           source_page?: string | null
-          updated_at?: string | null
           utm_campaign?: string | null
           utm_medium?: string | null
           utm_source?: string | null
-          whatsapp?: string | null
         }
         Relationships: []
       }
@@ -631,7 +583,6 @@ export type Database = {
       }
       payments: {
         Row: {
-          amount: number | null
           asaas_invoice_url: string | null
           asaas_payment_id: string | null
           billing_type: string | null
@@ -641,10 +592,8 @@ export type Database = {
           payment_method: string | null
           payment_status: string | null
           quote_id: string | null
-          updated_at: string | null
         }
         Insert: {
-          amount?: number | null
           asaas_invoice_url?: string | null
           asaas_payment_id?: string | null
           billing_type?: string | null
@@ -654,10 +603,8 @@ export type Database = {
           payment_method?: string | null
           payment_status?: string | null
           quote_id?: string | null
-          updated_at?: string | null
         }
         Update: {
-          amount?: number | null
           asaas_invoice_url?: string | null
           asaas_payment_id?: string | null
           billing_type?: string | null
@@ -667,84 +614,10 @@ export type Database = {
           payment_method?: string | null
           payment_status?: string | null
           quote_id?: string | null
-          updated_at?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "payments_quote_id_fkey"
-            columns: ["quote_id"]
-            isOneToOne: false
-            referencedRelation: "quotes"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      proposals: {
-        Row: {
-          computers_qty: number
-          contract_months: number
-          created_at: string
-          customer_id: string | null
-          id: string
-          lead_id: string | null
-          plan: string
-          quote_id: string | null
-          status: string
-          total_value: number
-          unit_price: number
-          updated_at: string
-          valid_until: string
-          version: number
-        }
-        Insert: {
-          computers_qty?: number
-          contract_months?: number
-          created_at?: string
-          customer_id?: string | null
-          id?: string
-          lead_id?: string | null
-          plan?: string
-          quote_id?: string | null
-          status?: string
-          total_value?: number
-          unit_price?: number
-          updated_at?: string
-          valid_until?: string
-          version?: number
-        }
-        Update: {
-          computers_qty?: number
-          contract_months?: number
-          created_at?: string
-          customer_id?: string | null
-          id?: string
-          lead_id?: string | null
-          plan?: string
-          quote_id?: string | null
-          status?: string
-          total_value?: number
-          unit_price?: number
-          updated_at?: string
-          valid_until?: string
-          version?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "proposals_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "proposals_lead_id_fkey"
-            columns: ["lead_id"]
-            isOneToOne: false
-            referencedRelation: "leads"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "proposals_quote_id_fkey"
             columns: ["quote_id"]
             isOneToOne: false
             referencedRelation: "quotes"
@@ -801,51 +674,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      security_events: {
-        Row: {
-          created_at: string
-          customer_id: string | null
-          description: string
-          event_type: string
-          id: string
-          ip_address: string | null
-          payload: Json | null
-          request_id: string | null
-          route: string | null
-          severity: string
-          user_agent: string | null
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          customer_id?: string | null
-          description: string
-          event_type: string
-          id?: string
-          ip_address?: string | null
-          payload?: Json | null
-          request_id?: string | null
-          route?: string | null
-          severity?: string
-          user_agent?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          customer_id?: string | null
-          description?: string
-          event_type?: string
-          id?: string
-          ip_address?: string | null
-          payload?: Json | null
-          request_id?: string | null
-          route?: string | null
-          severity?: string
-          user_agent?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
       }
       service_requests: {
         Row: {
