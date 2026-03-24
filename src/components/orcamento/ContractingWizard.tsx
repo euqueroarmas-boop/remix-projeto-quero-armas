@@ -114,6 +114,14 @@ const ContractingWizard = ({
   leadEmail,
   leadPhone,
   leadCity,
+  leadCnpj,
+  leadNomeFantasia,
+  leadUf,
+  leadCep,
+  leadEndereco,
+  leadNumero,
+  leadComplemento,
+  leadBairro,
 }: Props) => {
   const { toast } = useToast();
   const navigate = useNavigate();
