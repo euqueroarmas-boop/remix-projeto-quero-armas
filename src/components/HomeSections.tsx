@@ -149,14 +149,14 @@ export const HomeSegmentos = () => (
     <div className="container">
       <motion.div {...fade} className="mb-10 md:mb-14">
         <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
-          // Segmentos
+          // Feito para o seu setor
         </p>
         <h2 className="text-2xl md:text-4xl lg:text-5xl max-w-2xl mb-4">
-          Atendimento <span className="text-primary">especializado</span>.
+          Soluções <span className="text-primary">sob medida</span> para seu negócio.
         </h2>
         <p className="font-body text-muted-foreground text-sm md:text-base max-w-xl leading-relaxed">
-          Cada segmento tem necessidades únicas de infraestrutura. A WMTi adapta
-          soluções específicas para cada tipo de operação.
+          Cartório, clínica, escritório ou indústria — cada setor tem
+          exigências diferentes. Já resolvemos todas elas.
         </p>
       </motion.div>
 
