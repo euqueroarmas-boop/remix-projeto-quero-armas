@@ -115,6 +115,7 @@ const ContractingWizard = ({
   const [currentStep, setCurrentStep] = useState<Step>("registration");
   const stepOrder: Step[] = ["registration", "contract", "payment"];
 
+  const [activeQuoteId, setActiveQuoteId] = useState<string | null>(quoteId);
   const [registrationData, setRegistrationData] = useState<RegistrationData | null>(null);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [contractId, setContractId] = useState<string | null>(null);
@@ -133,6 +134,10 @@ const ContractingWizard = ({
 
   const wizardRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    setActiveQuoteId(quoteId);
+  }, [quoteId]);
+
   // Save session when payment completes (for recovery)
   useEffect(() => {
     if (paymentComplete && paymentData) {
@@ -141,10 +146,10 @@ const ContractingWizard = ({
         contractId,
         selectedPayment: paymentData.billingType,
         invoiceUrl: paymentData.invoiceUrl,
-        quoteId,
+        quoteId: activeQuoteId,
       });
     }
-  }, [paymentComplete, paymentData, registrationData, contractId, quoteId]);
+  }, [paymentComplete, paymentData, registrationData, contractId, activeQuoteId]);
 
   useEffect(() => {
     const signedId = searchParams.get("contract_signed");
@@ -174,18 +179,17 @@ const ContractingWizard = ({
 
   // Poll for payment confirmation + send email
   useEffect(() => {
-    if (!paymentComplete || paymentConfirmed || !quoteId) return;
+    if (!paymentComplete || paymentConfirmed || !activeQuoteId) return;
     const interval = setInterval(async () => {
       const { data } = await supabase
         .from("payments")
         .select("payment_status")
-        .eq("quote_id", quoteId)
+        .eq("quote_id", activeQuoteId)
         .order("created_at", { ascending: false })
         .limit(1)
         .single();
       if (data && ((data as any).payment_status === "CONFIRMED" || (data as any).payment_status === "RECEIVED")) {
         setPaymentConfirmed(true);
-        // Send confirmation email (only once)
         if (registrationData && !emailSentRef.current) {
           emailSentRef.current = true;
           supabase.functions.invoke("send-purchase-confirmation", {
@@ -202,7 +206,6 @@ const ContractingWizard = ({
             },
           }).catch(err => console.error("[WMTi] Email error:", err));
         }
-        // Save data to session and redirect
         const purchaseData = {
           serviceName: effectivePath === "locacao" ? "Locação de Equipamentos" : "Serviços de TI",
           computersQty,
@@ -216,11 +219,11 @@ const ContractingWizard = ({
           purchaseDate: new Date().toLocaleDateString("pt-BR"),
         };
         try { sessionStorage.setItem("wmti_purchase_data", JSON.stringify(purchaseData)); } catch {}
-        navigate(`/compra-concluida?quote=${quoteId}`);
+        navigate(`/compra-concluida?quote=${activeQuoteId}`);
       }
     }, 5000);
     return () => clearInterval(interval);
-  }, [paymentComplete, paymentConfirmed, quoteId, registrationData, selectedPayment, contractId, effectivePath, computersQty, monthlyValue]);
+  }, [paymentComplete, paymentConfirmed, activeQuoteId, registrationData, selectedPayment, contractId, effectivePath, computersQty, monthlyValue]);
 
   // Open checkout in new tab — keeps wizard state intact
   const handleRedirectToCheckout = useCallback((url: string) => {
@@ -275,6 +278,29 @@ const ContractingWizard = ({
       setCustomerId(customer.id);
       setRegistrationData(data);
 
+      let resolvedQuoteId = activeQuoteId;
+
+      if (!resolvedQuoteId) {
+        const { data: createdQuote, error: quoteError } = await supabase
+          .from("quotes" as any)
+          .insert({
+            selected_plan: effectivePath === "locacao" ? plan.id : "suporte-mensal",
+            computers_qty: computersQty,
+            users_qty: qualification?.dailyUsers ?? computersQty,
+            needs_server_migration: false,
+            needs_remote_access: qualification?.needsRemoteAccess || false,
+            needs_backup: qualification?.needsBackup || false,
+            monthly_value: monthlyValue,
+            status: "pending",
+          } as any)
+          .select()
+          .single();
+
+        if (quoteError) throw quoteError;
+        resolvedQuoteId = (createdQuote as any).id;
+        setActiveQuoteId(resolvedQuoteId);
+      }
+
       const customerDataForContract: CustomerData = {
         razaoSocial: data.razaoSocial,
         nomeFantasia: data.nomeFantasia,
@@ -303,7 +329,7 @@ const ContractingWizard = ({
       const { data: contractRow, error: contractErr } = await supabase
         .from("contracts" as any)
         .insert({
-          quote_id: quoteId,
+          quote_id: resolvedQuoteId,
           customer_id: customer.id,
           contract_type: contractType,
           contract_text: html,
@@ -341,12 +367,12 @@ const ContractingWizard = ({
       await supabase.from("integration_logs" as any).insert({
         integration_name: "contract",
         operation_name: "contract_created",
-        request_payload: { contract_id: (contractRow as any).id, customer_id: customer.id, customerId },
+        request_payload: { contract_id: (contractRow as any).id, customer_id: customer.id, customerId, quote_id: resolvedQuoteId },
         status: "success",
       } as any);
 
       await supabase.from("payments" as any).insert({
-        quote_id: quoteId,
+        quote_id: resolvedQuoteId,
         payment_status: "pending",
       } as any);
 
@@ -373,7 +399,7 @@ const ContractingWizard = ({
   };
 
   const handlePayment = async () => {
-    if (!selectedPayment || !registrationData || !quoteId) return;
+    if (!selectedPayment || !registrationData || !activeQuoteId) return;
     setPaymentLoading(true);
     setPaymentError(null);
     setPaymentComplete(false);
@@ -383,7 +409,6 @@ const ContractingWizard = ({
     const description = `Contrato WMTi — ${pathLabel} — ${computersQty} computador(es)`;
 
     try {
-      // Use subscription endpoint for contract-based recurring payments
       const { data, error } = await supabase.functions.invoke("create-asaas-subscription", {
         body: {
           customer_name: registrationData.razaoSocial,
@@ -392,7 +417,7 @@ const ContractingWizard = ({
           billing_type: selectedPayment,
           value: monthlyValue,
           description,
-          quote_id: quoteId,
+          quote_id: activeQuoteId,
         },
       });
 

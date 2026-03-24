@@ -16,6 +16,8 @@ import SeoHead from "@/components/SeoHead";
 import WizardStepWrapper from "@/components/orcamento/WizardStepWrapper";
 import QuickRegistrationForm, { type RegistrationData } from "@/components/orcamento/QuickRegistrationForm";
 import { generateContractHtml } from "@/components/orcamento/ContractPreview";
+import ContractingWizard from "@/components/orcamento/ContractingWizard";
+import { plans } from "@/components/orcamento/PlanSelector";
 
 import type { CustomerData } from "@/components/orcamento/CustomerDataForm";
 
@@ -65,6 +67,11 @@ const ContratarServicoPage = () => {
   const service = SERVICE_CATALOG.find(s => s.slug === slug);
   const serviceName = service?.name || searchParams.get("servico") || "Serviço de TI";
   const isEmergency = service?.isEmergency || false;
+  const isRentalContract = slug === "locacao-de-computadores-para-empresas-jacarei";
+  const selectedRentalPlanId = searchParams.get("plano") || "equilibrio";
+  const selectedRentalQty = Math.max(1, Number(searchParams.get("qty") || 1));
+  const selectedRentalPlan = plans.find((item) => item.id === selectedRentalPlanId) || plans[1];
+  const rentalMonthlyValue = selectedRentalPlan.price * selectedRentalQty;
   const basePrice = isEmergency ? 300 : 200;
   const priceTable = isEmergency ? EMERGENCY_PRICES : STANDARD_PRICES;
 
@@ -337,6 +344,63 @@ const ContratarServicoPage = () => {
     if (stepIdx === currentIdx) return "active" as const;
     return "pending" as const;
   };
+
+  if (isRentalContract) {
+    return (
+      <div className="min-h-screen">
+        <SeoHead
+          title={`Contratar ${serviceName} | WMTi`}
+          description={`Finalize a contratação da locação de computadores da WMTi com plano ${selectedRentalPlan.name} e ${selectedRentalQty} equipamento(s).`}
+        />
+        <Navbar />
+
+        <section className="section-dark pt-24 md:pt-28 pb-8 border-b-4 border-primary">
+          <div className="container">
+            <nav aria-label="Breadcrumb" className="mb-6">
+              <ol className="flex items-center gap-1 font-mono text-xs text-muted-foreground/50">
+                <li><Link to="/" className="hover:text-primary transition-colors">Home</Link></li>
+                <ChevronRight size={10} className="shrink-0" />
+                <li><Link to="/locacao-de-computadores-para-empresas-jacarei" className="hover:text-primary transition-colors">Locação de Computadores</Link></li>
+                <ChevronRight size={10} className="shrink-0" />
+                <li className="text-primary" aria-current="page">Contratar</li>
+              </ol>
+            </nav>
+            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">// Contratação</p>
+            <h1 className="text-2xl md:text-4xl lg:text-5xl mb-4">
+              Contratar <span className="text-primary">Locação de Computadores</span>
+            </h1>
+            <p className="font-body text-lg text-muted-foreground/70 max-w-2xl leading-relaxed">
+              Seu plano já foi definido. Agora siga diretamente para o cadastro, geração do contrato e assinatura eletrônica.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <div className="rounded-lg border border-border bg-card px-4 py-3 text-sm text-foreground">
+                <span className="text-muted-foreground">Plano:</span> <strong className="text-primary">{selectedRentalPlan.name}</strong>
+              </div>
+              <div className="rounded-lg border border-border bg-card px-4 py-3 text-sm text-foreground">
+                <span className="text-muted-foreground">Quantidade:</span> <strong>{selectedRentalQty} computadores</strong>
+              </div>
+              <div className="rounded-lg border border-border bg-card px-4 py-3 text-sm text-foreground">
+                <span className="text-muted-foreground">Valor mensal:</span> <strong className="text-primary">R$ {rentalMonthlyValue.toLocaleString("pt-BR")}</strong>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <ContractingWizard
+          visible={true}
+          effectivePath="locacao"
+          plan={selectedRentalPlan}
+          qualification={null}
+          computersQty={selectedRentalQty}
+          monthlyValue={rentalMonthlyValue}
+          quoteId={null}
+        />
+
+        <Footer />
+        <WhatsAppButton />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">
