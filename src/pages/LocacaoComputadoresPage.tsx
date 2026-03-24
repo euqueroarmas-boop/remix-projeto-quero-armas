@@ -18,9 +18,9 @@ import SeoHead from "@/components/SeoHead";
 
 /* ─── Plans ─── */
 const PLANS = [
-  { id: "essencial", name: "Básico", cpu: "Intel Core i3", price: 249 },
+  { id: "essencial", name: "Básico", cpu: "Intel Core i3", price: 249, popular: false },
   { id: "equilibrio", name: "Intermediário", cpu: "Intel Core i5", price: 299, popular: true },
-  { id: "performance", name: "Avançado", cpu: "Intel Core i7", price: 399 },
+  { id: "performance", name: "Avançado", cpu: "Intel Core i7", price: 399, popular: false },
 ] as const;
 
 /* ─── Pain Points ─── */
