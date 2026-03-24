@@ -236,8 +236,8 @@ const LocacaoComputadoresPage = () => {
   return (
     <div className="min-h-screen">
       <SeoHead
-        title="Locação de Computadores para Empresas em Jacareí | A partir de R$ 249/mês | WMTi"
-        description="Aluguel de computadores Dell OptiPlex para empresas. A partir de R$ 249/mês com manutenção, troca e suporte 24/7 inclusos. Contrato de 36 meses."
+        title="Locação de Computadores para Empresas em Jacareí — Pare de gastar dinheiro com máquinas que só dão problema | WMTi"
+        description="Locação de computadores para empresas em Jacareí. Equipamentos atualizados, manutenção incluída, suporte completo e substituição quando necessário. Pare de gastar com máquina e invista no funcionamento da sua empresa."
         canonical="/locacao-de-computadores-para-empresas-jacarei"
       />
       <Navbar />
