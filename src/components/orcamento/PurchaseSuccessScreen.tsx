@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { CheckCircle, Download, Home, MessageCircle, Printer } from "lucide-react";
+import { CheckCircle, Download, Home, MessageCircle, Printer, KeyRound, ExternalLink, Copy, Check, Loader2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { generateReceiptPdf } from "./generateReceiptPdf";
@@ -18,16 +19,26 @@ interface PurchaseData {
   purchaseDate: string;
 }
 
+interface ClientCredentials {
+  email: string;
+  temp_password: string;
+  password_change_required: boolean;
+}
+
 interface Props {
   visible: boolean;
   data: PurchaseData;
+  credentials?: ClientCredentials | null;
+  credentialsLoading?: boolean;
 }
 
 const formatCurrency = (v: number) =>
   `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-const PurchaseSuccessScreen = ({ visible, data }: Props) => {
+const PurchaseSuccessScreen = ({ visible, data, credentials, credentialsLoading }: Props) => {
   const navigate = useNavigate();
+  const [copied, setCopied] = useState("");
+  const [pdfLoading, setPdfLoading] = useState(false);
 
   if (!visible) return null;
 
@@ -47,6 +58,28 @@ const PurchaseSuccessScreen = ({ visible, data }: Props) => {
   const whatsappText = encodeURIComponent(
     `Olá! Acabei de contratar ${data.serviceName}${data.hours ? ` (${data.hours}h)` : ""} no valor de ${formatCurrency(data.monthlyValue)}. ${contractRef ? `Contrato: ${contractRef}` : ""}`
   );
+
+  const copyToClipboard = (text: string, field: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(field);
+    setTimeout(() => setCopied(""), 2000);
+  };
+
+  const handleDownloadPdf = () => {
+    if (!credentials) return;
+    setPdfLoading(true);
+    try {
+      generateReceiptPdf({
+        ...data,
+        loginEmail: credentials.email,
+        tempPassword: credentials.temp_password,
+      });
+    } catch (err) {
+      console.error("[WMTi] Erro ao gerar PDF:", err);
+    } finally {
+      setPdfLoading(false);
+    }
+  };
 
   return (
     <motion.div
@@ -71,10 +104,79 @@ const PurchaseSuccessScreen = ({ visible, data }: Props) => {
         <p className="text-muted-foreground text-sm md:text-base max-w-md leading-relaxed">
           Sua contratação foi concluída. Agradecemos pela confiança na WMTi.
         </p>
-        <p className="text-xs text-muted-foreground">
-          Em breve entraremos em contato para dar andamento ao atendimento.
-        </p>
       </div>
+
+      {/* ── Client Access Credentials ── */}
+      {credentialsLoading ? (
+        <div className="bg-card border border-primary/20 rounded-xl p-6 flex items-center justify-center gap-3">
+          <Loader2 className="w-5 h-5 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Gerando credenciais de acesso...</p>
+        </div>
+      ) : credentials ? (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="bg-card border-2 border-primary/30 rounded-xl overflow-hidden shadow-lg"
+        >
+          <div className="bg-primary/10 border-b border-primary/20 px-5 py-4 flex items-center gap-3">
+            <KeyRound className="w-5 h-5 text-primary" />
+            <h3 className="font-heading font-bold text-foreground text-sm">Dados de Acesso ao Portal do Cliente</h3>
+          </div>
+          <div className="px-5 py-5 space-y-4">
+            <div className="bg-muted/50 rounded-lg p-4 space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Login (e-mail)</p>
+                  <p className="text-sm font-mono text-foreground truncate">{credentials.email}</p>
+                </div>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8 shrink-0"
+                  onClick={() => copyToClipboard(credentials.email, "login")}
+                >
+                  {copied === "login" ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
+                </Button>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Senha temporária</p>
+                  <p className="text-sm font-mono text-primary font-bold">{credentials.temp_password}</p>
+                </div>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8 shrink-0"
+                  onClick={() => copyToClipboard(credentials.temp_password, "pwd")}
+                >
+                  {copied === "pwd" ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
+                </Button>
+              </div>
+            </div>
+            <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg px-4 py-3 flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
+              <p className="text-xs text-amber-300">
+                <strong>Atenção:</strong> Esta senha é temporária e deverá ser alterada obrigatoriamente no primeiro acesso ao portal.
+              </p>
+            </div>
+            <Button
+              onClick={() => navigate("/area-do-cliente")}
+              className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground"
+            >
+              <ExternalLink className="w-4 h-4 mr-2" />
+              Acessar Portal do Cliente
+            </Button>
+          </div>
+        </motion.div>
+      ) : (
+        <div className="bg-card border border-border rounded-xl p-5 flex items-center gap-3">
+          <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">
+            Aguardando geração do acesso ao portal...
+          </p>
+        </div>
+      )}
 
       {/* ── Receipt Card ── */}
       <div className="bg-card border border-border rounded-xl overflow-hidden shadow-lg">
@@ -153,11 +255,17 @@ const PurchaseSuccessScreen = ({ visible, data }: Props) => {
       {/* ── Action Buttons ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Button
-          onClick={() => generateReceiptPdf(data)}
+          onClick={handleDownloadPdf}
+          disabled={!credentials || pdfLoading}
           className="w-full h-12 text-sm font-semibold"
+          title={!credentials ? "Aguardando confirmação do pagamento para gerar PDF" : ""}
         >
-          <Download className="w-4 h-4 mr-2" />
-          Baixar comprovante em PDF
+          {pdfLoading ? (
+            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+          ) : (
+            <Download className="w-4 h-4 mr-2" />
+          )}
+          {!credentials ? "Gerando PDF..." : "Baixar comprovante em PDF"}
         </Button>
         <Button
           onClick={() => window.print()}

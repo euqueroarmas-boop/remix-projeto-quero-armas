@@ -1,22 +1,29 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Building2, ArrowRight, Loader2, Mail, Lock, KeyRound } from "lucide-react";
+import { Building2, ArrowRight, Loader2, Mail, Lock, KeyRound, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { logSistema } from "@/lib/logSistema";
+import { useNavigate } from "react-router-dom";
 
 interface Props {
   onLogin: () => void;
 }
 
 export default function ClientLogin({ onLogin }: Props) {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [mode, setMode] = useState<"login" | "reset">("login");
+  const [mode, setMode] = useState<"login" | "reset" | "change_password">("login");
   const [resetSent, setResetSent] = useState(false);
+
+  // Password change state
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,7 +32,7 @@ export default function ClientLogin({ onLogin }: Props) {
     setLoading(true);
     setError("");
 
-    const { error: err } = await supabase.auth.signInWithPassword({ email, password });
+    const { data: signInData, error: err } = await supabase.auth.signInWithPassword({ email, password });
 
     setLoading(false);
 
@@ -35,8 +42,57 @@ export default function ClientLogin({ onLogin }: Props) {
       return;
     }
 
+    // Check if password change is required
+    const userMeta = signInData?.user?.user_metadata;
+    if (userMeta?.password_change_required) {
+      setMode("change_password");
+      logSistema({ tipo: "admin", status: "info", mensagem: "Troca de senha obrigatória no primeiro acesso", payload: { email } });
+      return;
+    }
+
     logSistema({ tipo: "admin", status: "success", mensagem: "Login realizado na Área do Cliente", payload: { email } });
     onLogin();
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPassword || !confirmPassword) { setError("Preencha todos os campos."); return; }
+    if (newPassword.length < 6) { setError("A nova senha deve ter ao menos 6 caracteres."); return; }
+    if (newPassword !== confirmPassword) { setError("As senhas não conferem."); return; }
+
+    setChangingPassword(true);
+    setError("");
+
+    try {
+      // Update password
+      const { error: updateErr } = await supabase.auth.updateUser({
+        password: newPassword,
+        data: {
+          password_change_required: false,
+          temp_password: null,
+        },
+      });
+
+      if (updateErr) {
+        setError("Erro ao alterar a senha: " + updateErr.message);
+        setChangingPassword(false);
+        return;
+      }
+
+      logSistema({
+        tipo: "admin",
+        status: "success",
+        mensagem: "Senha alterada com sucesso no primeiro acesso",
+        payload: { email },
+      });
+
+      // Proceed to portal
+      onLogin();
+    } catch {
+      setError("Erro inesperado ao alterar a senha.");
+    } finally {
+      setChangingPassword(false);
+    }
   };
 
   const handleReset = async (e: React.FormEvent) => {
@@ -81,7 +137,56 @@ export default function ClientLogin({ onLogin }: Props) {
           Área do <span className="text-primary">Cliente</span>
         </h1>
 
-        {mode === "login" ? (
+        {mode === "change_password" ? (
+          <>
+            <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg px-4 py-3 mb-6 flex items-start gap-2 text-left">
+              <AlertTriangle className="w-5 h-5 text-amber-400 mt-0.5 shrink-0" />
+              <div>
+                <p className="text-sm font-semibold text-amber-300">Troca de senha obrigatória</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Sua senha atual é temporária. Crie uma nova senha para continuar.
+                </p>
+              </div>
+            </div>
+
+            <form onSubmit={handleChangePassword} className="space-y-4 text-left">
+              <div>
+                <label className="text-sm text-muted-foreground mb-1 block">Nova senha</label>
+                <div className="relative">
+                  <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    type="password"
+                    placeholder="Mínimo 6 caracteres"
+                    value={newPassword}
+                    onChange={(e) => { setNewPassword(e.target.value); setError(""); }}
+                    className="bg-card border-border text-foreground pl-10"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm text-muted-foreground mb-1 block">Confirmar nova senha</label>
+                <div className="relative">
+                  <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    type="password"
+                    placeholder="Repita a nova senha"
+                    value={confirmPassword}
+                    onChange={(e) => { setConfirmPassword(e.target.value); setError(""); }}
+                    className="bg-card border-border text-foreground pl-10"
+                  />
+                </div>
+              </div>
+
+              {error && <p className="text-sm text-destructive">{error}</p>}
+
+              <Button type="submit" className="w-full" disabled={changingPassword}>
+                {changingPassword ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <KeyRound className="h-4 w-4 mr-2" />}
+                Alterar senha e continuar
+              </Button>
+            </form>
+          </>
+        ) : mode === "login" ? (
           <>
             <p className="text-muted-foreground mb-8">Acesse com seu e-mail e senha</p>
 

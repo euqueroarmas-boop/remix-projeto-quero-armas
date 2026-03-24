@@ -470,6 +470,7 @@ function ClientesTab() {
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
   const [form, setForm] = useState({ email: "", password: "", name: "" });
   const [copied, setCopied] = useState("");
+  const [auditLogs, setAuditLogs] = useState<Record<string, any>>({});
 
   const fetchCustomers = useCallback(async () => {
     setLoading(true);
@@ -478,6 +479,22 @@ function ClientesTab() {
       .select("id, razao_social, nome_fantasia, cnpj_ou_cpf, email, user_id, created_at")
       .order("created_at", { ascending: false });
     setCustomers(data || []);
+
+    // Fetch auto-creation audit logs
+    const { data: audits } = await supabase
+      .from("admin_audit_logs")
+      .select("target_id, action, after_state, created_at")
+      .in("action", ["auto_user_created", "auto_user_creation_failed"])
+      .order("created_at", { ascending: false });
+
+    const auditMap: Record<string, any> = {};
+    audits?.forEach((a: any) => {
+      if (a.target_id && !auditMap[a.target_id]) {
+        auditMap[a.target_id] = a;
+      }
+    });
+    setAuditLogs(auditMap);
+
     setLoading(false);
   }, []);
 
@@ -520,6 +537,25 @@ function ClientesTab() {
     navigator.clipboard.writeText(text);
     setCopied(field);
     setTimeout(() => setCopied(""), 2000);
+  };
+
+  const getAccessBadge = (c: any) => {
+    if (c.user_id) {
+      const audit = auditLogs[c.id];
+      if (audit?.action === "auto_user_created") {
+        const pwdChanged = audit.after_state?.password_change_required === false;
+        return (
+          <div className="space-y-1">
+            <Badge variant="outline" className="text-xs border-green-600/30 text-green-400">✓ Ativo (auto)</Badge>
+            {!pwdChanged && (
+              <Badge variant="outline" className="text-xs border-amber-600/30 text-amber-400">Senha temp.</Badge>
+            )}
+          </div>
+        );
+      }
+      return <Badge variant="outline" className="text-xs border-green-600/30 text-green-400">✓ Ativo</Badge>;
+    }
+    return <Badge variant="outline" className="text-xs">Sem acesso</Badge>;
   };
 
   return (
@@ -627,16 +663,17 @@ function ClientesTab() {
               <CardContent className="p-4 space-y-2">
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-sm font-medium text-foreground truncate">{c.nome_fantasia || c.razao_social}</p>
-                  {c.user_id ? (
-                    <Badge variant="outline" className="text-xs border-green-600/30 text-green-400 shrink-0">Ativo</Badge>
-                  ) : (
-                    <Badge variant="outline" className="text-xs shrink-0">Sem acesso</Badge>
-                  )}
+                  {getAccessBadge(c)}
                 </div>
                 <div className="text-xs space-y-1 text-muted-foreground">
                   <p><span className="text-foreground/70">CNPJ/CPF:</span> {c.cnpj_ou_cpf}</p>
                   <p><span className="text-foreground/70">E-mail:</span> {c.email}</p>
                   <p><span className="text-foreground/70">Cadastro:</span> {new Date(c.created_at).toLocaleDateString("pt-BR")}</p>
+                  {auditLogs[c.id] && (
+                    <p className="text-primary text-[11px]">
+                      {auditLogs[c.id].action === "auto_user_created" ? "🤖 Conta criada automaticamente" : "⚠️ Falha na criação automática"}
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -651,6 +688,7 @@ function ClientesTab() {
                 <TableHead>CNPJ/CPF</TableHead>
                 <TableHead>E-mail</TableHead>
                 <TableHead>Acesso Portal</TableHead>
+                <TableHead>Origem</TableHead>
                 <TableHead>Cadastro</TableHead>
               </TableRow>
             </TableHeader>
@@ -660,12 +698,13 @@ function ClientesTab() {
                   <TableCell className="text-sm text-foreground font-medium">{c.nome_fantasia || c.razao_social}</TableCell>
                   <TableCell className="text-xs font-mono text-muted-foreground">{c.cnpj_ou_cpf}</TableCell>
                   <TableCell className="text-xs text-muted-foreground">{c.email}</TableCell>
-                  <TableCell>
-                    {c.user_id ? (
-                      <span className="text-emerald-400 text-xs font-medium">✓ Ativo</span>
-                    ) : (
-                      <span className="text-muted-foreground text-xs">Sem acesso</span>
-                    )}
+                  <TableCell>{getAccessBadge(c)}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">
+                    {auditLogs[c.id]?.action === "auto_user_created"
+                      ? <span className="text-primary">🤖 Auto</span>
+                      : auditLogs[c.id]?.action === "auto_user_creation_failed"
+                      ? <span className="text-destructive">⚠️ Falha</span>
+                      : c.user_id ? "Manual" : "—"}
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                     {new Date(c.created_at).toLocaleDateString("pt-BR")}
