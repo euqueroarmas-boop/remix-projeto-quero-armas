@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { adminQuerySingle, adminQuery } from "@/lib/adminApi";
 import { Button } from "@/components/ui/button";
