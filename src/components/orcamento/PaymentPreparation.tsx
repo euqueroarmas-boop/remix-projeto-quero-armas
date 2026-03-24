@@ -15,7 +15,9 @@ const PaymentPreparation = ({ visible, monthlyValue, companyName }: Props) => {
   const whatsappMessage = encodeURIComponent(
     `Olá! Acabei de assinar o contrato para o plano de infraestrutura de TI. Empresa: ${companyName || "—"}, Valor: R$${monthlyValue.toLocaleString("pt-BR")}/mês. Gostaria de prosseguir com o pagamento.`
   );
-  const whatsappLink = `https://wa.me/5516988342704?text=${whatsappMessage}`;
+  const waLink = whatsappLink(
+    `Olá! Acabei de assinar o contrato para o plano de infraestrutura de TI. Empresa: ${companyName || "—"}, Valor: R$${monthlyValue.toLocaleString("pt-BR")}/mês. Gostaria de prosseguir com o pagamento.`
+  );
 
   return (
     <section id="payment-section" className="py-16 section-dark">
