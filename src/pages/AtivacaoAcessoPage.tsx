@@ -63,7 +63,15 @@ const AtivacaoAcessoPage = () => {
         user_recovered: access.user_recovered,
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha ao liberar o acesso.");
+      const wmtiErr = await logAndPersistError({
+        action: "ativacao_acesso",
+        message: err instanceof Error ? err.message : "Falha ao liberar o acesso.",
+        error: err,
+        quoteId: quoteId || undefined,
+        functionName: "ensure-client-access",
+      });
+      setError(wmtiErr.message);
+      setLastError(wmtiErr);
     } finally {
       setLoading(false);
     }
