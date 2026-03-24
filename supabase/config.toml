@@ -24,5 +24,8 @@ verify_jwt = false
 [functions.send-purchase-confirmation]
 verify_jwt = false
 
+[functions.submit-lead]
+verify_jwt = false
+
 [functions.admin-auth]
 verify_jwt = false
