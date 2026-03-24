@@ -64,7 +64,8 @@ const TerceirizacaoPage = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  const whatsappMsg = encodeURIComponent("Olá! Gostaria de saber mais sobre terceirização de mão de obra em TI pela WMTi.");
+    const whatsappMsg = encodeURIComponent("Olá! Gostaria de saber mais sobre terceirização de mão de obra em TI pela WMTi.");
+    const whatsappNumber = "5511963166915";
 
   return (
     <div className="min-h-screen bg-background text-foreground">
