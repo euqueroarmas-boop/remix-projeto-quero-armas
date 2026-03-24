@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { logSistema } from "@/lib/logSistema";
+import { checkRateLimit, logSecurityEvent } from "@/lib/security";
 
 interface Props {
   onLogin: () => void;
@@ -22,6 +23,15 @@ export default function ClientLogin({ onLogin }: Props) {
     e.preventDefault();
     if (!email || !password) { setError("Preencha e-mail e senha."); return; }
 
+    // Rate limiting: 5 attempts per 5 minutes
+    const rl = checkRateLimit(`login:${email}`, 5, 300000);
+    if (!rl.allowed) {
+      const mins = Math.ceil(rl.cooldownMs / 60000);
+      setError(`Muitas tentativas. Aguarde ${mins} minuto(s).`);
+      logSecurityEvent({ event_type: "brute_force_block", severity: "warning", description: `Login bloqueado por rate limit: ${email}` });
+      return;
+    }
+
     setLoading(true);
     setError("");
 
@@ -32,10 +42,12 @@ export default function ClientLogin({ onLogin }: Props) {
     if (err) {
       setError("E-mail ou senha incorretos.");
       logSistema({ tipo: "admin", status: "error", mensagem: "Login falho na Área do Cliente", payload: { email, error: err.message } });
+      logSecurityEvent({ event_type: "login_failed", severity: "warning", description: `Login falhou: ${email}`, payload: { email } });
       return;
     }
 
     logSistema({ tipo: "admin", status: "success", mensagem: "Login realizado na Área do Cliente", payload: { email } });
+    logSecurityEvent({ event_type: "login_success", severity: "info", description: `Login bem-sucedido: ${email}`, payload: { email } });
     onLogin();
   };
 

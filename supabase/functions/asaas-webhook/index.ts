@@ -144,7 +144,7 @@ Deno.serve(async (req) => {
       .update({ payment_status: newStatus })
       .eq("id", paymentRecord.id);
 
-    // ── Payment confirmed: activate contract + log invoice ──
+    // ── Payment confirmed: activate contract + log invoice + auto-create account ──
     if (event === "PAYMENT_RECEIVED" || event === "PAYMENT_CONFIRMED") {
       console.log("[asaas-webhook] Pagamento confirmado! Ativando contrato e registrando NF...");
 
@@ -175,6 +175,79 @@ Deno.serve(async (req) => {
             .eq("id", contractData.customer_id)
             .single();
           if (customer) customerInfo = customer;
+
+          // ── Auto-create client portal account if not already linked ──
+          if (customer && !customer.user_id && customer.email) {
+            try {
+              console.log("[asaas-webhook] Criando conta automática para:", customer.email);
+
+              // Generate a temporary password — client will reset via email
+              const tempPassword = crypto.randomUUID().slice(0, 12);
+
+              const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+                email: customer.email,
+                password: tempPassword,
+                email_confirm: true,
+                user_metadata: { name: customer.responsavel || customer.razao_social },
+              });
+
+              if (authError) {
+                console.error("[asaas-webhook] Erro ao criar usuário:", authError.message);
+                await logSistemaBackend({
+                  tipo: "admin",
+                  status: "error",
+                  mensagem: "Erro ao criar conta automática pós-pagamento",
+                  payload: { email: customer.email, error: authError.message },
+                });
+              } else if (authData?.user) {
+                // Link user_id to customer
+                await supabase
+                  .from("customers")
+                  .update({ user_id: authData.user.id })
+                  .eq("id", customer.id);
+
+                // Create client event
+                await supabase.from("client_events").insert({
+                  customer_id: customer.id,
+                  event_type: "cadastro",
+                  title: "Conta do portal criada automaticamente",
+                  description: `Acesso criado para ${customer.email} após confirmação de pagamento`,
+                });
+
+                // Send password reset email so client can set their own password
+                const { error: resetError } = await supabase.auth.admin.generateLink({
+                  type: "magiclink",
+                  email: customer.email,
+                  options: {
+                    redirectTo: `${supabaseUrl.replace('.supabase.co', '.lovable.app')}/redefinir-senha`,
+                  },
+                });
+
+                await logSistemaBackend({
+                  tipo: "admin",
+                  status: "success",
+                  mensagem: "Conta do portal criada automaticamente pós-pagamento",
+                  payload: {
+                    email: customer.email,
+                    user_id: authData.user.id,
+                    customer_id: customer.id,
+                    reset_sent: !resetError,
+                  },
+                });
+
+                console.log("[asaas-webhook] Conta criada com sucesso para:", customer.email);
+              }
+            } catch (accountErr) {
+              const errMsg = accountErr instanceof Error ? accountErr.message : "Unknown error";
+              console.error("[asaas-webhook] Falha ao criar conta:", errMsg);
+              await logSistemaBackend({
+                tipo: "admin",
+                status: "error",
+                mensagem: "Exceção ao criar conta automática",
+                payload: { error: errMsg, customer_id: contractData.customer_id },
+              });
+            }
+          }
         }
 
         // Log invoice generation
