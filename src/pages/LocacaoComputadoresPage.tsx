@@ -441,7 +441,7 @@ const LocacaoComputadoresPage = () => {
                   <p className="text-xs text-muted-foreground">Validade: 15 dias a partir de hoje</p>
                 </div>
 
-                <Button onClick={() => navigate("/orcamento-ti?servico=locacao-de-computadores")} className="w-full h-14 text-base">
+                <Button onClick={() => navigate(`/contratar/locacao-de-computadores-para-empresas-jacarei?plano=${selectedPlan}&qty=${qty}&preco=${plan.price}`)} className="w-full h-14 text-base">
                   Avançar para contrato <ArrowRight size={18} className="ml-2" />
                 </Button>
               </div>
