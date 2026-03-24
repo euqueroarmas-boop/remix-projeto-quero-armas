@@ -133,23 +133,7 @@ const ContratarServicoPage = () => {
         .single();
       if (data && ((data as any).payment_status === "CONFIRMED" || (data as any).payment_status === "RECEIVED")) {
         setPaymentConfirmed(true);
-        // Send confirmation email (only once)
-        if (registrationData && !emailSentRef.current) {
-          emailSentRef.current = true;
-          supabase.functions.invoke("send-purchase-confirmation", {
-            body: {
-              customer_name: registrationData.razaoSocial,
-              customer_email: registrationData.email,
-              service_name: serviceName,
-              hours,
-              value: promoPrice,
-              payment_method: selectedPayment,
-              contract_ref: contractId?.slice(0, 8).toUpperCase(),
-              purchase_date: new Date().toLocaleDateString("pt-BR"),
-              is_recurring: false,
-            },
-          }).catch(err => console.error("[WMTi] Email error:", err));
-        }
+        // Email is now sent from webhook after user creation (includes credentials)
         // Save data to session and redirect to standalone page
         const purchaseData = {
           serviceName,
