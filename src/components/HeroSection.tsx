@@ -90,9 +90,9 @@ const HeroSection = () => {
             className="mt-12 md:mt-20 flex flex-col sm:flex-row gap-6 sm:gap-12 border-t border-gunmetal-foreground/10 pt-6 md:pt-8"
           >
             {[
-              { icon: Award, label: "Mais de 15 anos", status: "de experiência" },
-              { icon: Shield, label: "Especialistas", status: "em infraestrutura corporativa" },
-              { icon: Handshake, label: "Parceiros", status: "Dell, Microsoft e ESET" },
+              { icon: Award, label: "15+ anos", status: "sem parar empresas" },
+              { icon: Shield, label: "99,9% uptime", status: "garantido em contrato" },
+              { icon: Handshake, label: "Dell · Microsoft · ESET", status: "parceiros oficiais" },
             ].map((item) => (
               <div key={item.label} className="flex items-center gap-3">
                 <div className="w-2 h-2 rounded-full bg-primary led-pulse" />

@@ -304,13 +304,13 @@ const ServicePageTemplate = ({
                 className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
               >
                 <MessageCircle size={16} />
-                Falar no WhatsApp
+                Resolver agora pelo WhatsApp
               </a>
               <Link
                 to="/orcamento-ti"
                 className="inline-flex items-center gap-2 border border-border text-foreground px-8 py-4 font-mono text-sm uppercase tracking-wider hover:border-primary hover:text-primary transition-all"
               >
-                Solicitar orçamento online
+                Quero minha proposta online
               </Link>
             </div>
           </motion.div>

@@ -236,7 +236,7 @@ const ContactSection = () => {
                 ) : (
                   <Send size={16} />
                 )}
-                {loading ? "Enviando..." : "Solicitar Orçamento"}
+                {loading ? "Enviando..." : "Quero minha proposta"}
                 {!loading && <ArrowRight size={16} />}
               </button>
               <button

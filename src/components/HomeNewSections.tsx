@@ -29,11 +29,12 @@ export const HomeAuthority = () => (
     <div className="container">
       <motion.div {...fade} className="text-center mb-8">
         <h2 className="text-2xl md:text-4xl mb-3">
-          Tecnologia confiável para <span className="text-primary">empresas.</span>
+          Empresas que <span className="text-primary">crescem</span> confiam na WMTi.
         </h2>
         <p className="font-body text-muted-foreground text-sm md:text-base max-w-2xl mx-auto leading-relaxed">
-          A WMTi atua há mais de 15 anos oferecendo soluções de tecnologia para
-          empresas que dependem de infraestrutura confiável para operar.
+          Quando a TI funciona, sua equipe produz mais, seus clientes são
+          atendidos sem falhas e você dorme tranquilo. É isso que entregamos
+          há mais de 15 anos.
         </p>
       </motion.div>
       <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16">
@@ -56,12 +57,12 @@ export const HomeAuthority = () => (
 
 /* ─── PROBLEMAS ─── */
 const problems = [
-  { icon: Wifi, title: "Rede lenta ou instável" },
-  { icon: Server, title: "Servidor antigo ou mal configurado" },
-  { icon: Monitor, title: "Sistemas travando constantemente" },
-  { icon: ShieldAlert, title: "Falta de segurança contra ataques" },
-  { icon: Headphones, title: "Falta de suporte técnico confiável" },
-  { icon: HardDrive, title: "Equipamentos inadequados" },
+  { icon: Wifi, title: "Rede lenta travando vendas" },
+  { icon: Server, title: "Servidor que cai toda semana" },
+  { icon: Monitor, title: "Computadores lentos parando a equipe" },
+  { icon: ShieldAlert, title: "Medo de ataque ou perda de dados" },
+  { icon: Headphones, title: "Sem suporte quando mais precisa" },
+  { icon: HardDrive, title: "Equipamentos ultrapassados" },
 ];
 
 export const HomeProblems = () => (
@@ -69,13 +70,14 @@ export const HomeProblems = () => (
     <div className="container">
       <motion.div {...fade} className="mb-10 md:mb-14">
         <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
-          // Diagnóstico
+          // Isso te parece familiar?
         </p>
         <h2 className="text-2xl md:text-4xl lg:text-5xl max-w-2xl mb-4">
-          Problemas que <span className="text-primary">resolvemos.</span>
+          Quanto sua empresa <span className="text-primary">perde</span> com esses problemas?
         </h2>
         <p className="font-body text-muted-foreground text-sm md:text-base max-w-xl leading-relaxed">
-          Se sua empresa enfrenta algum desses problemas, a WMTi pode ajudar.
+          Cada hora parada custa caro. Cada dado perdido é irrecuperável.
+          Se você se identificou, é hora de agir.
         </p>
       </motion.div>
 
@@ -102,12 +104,12 @@ export const HomeProblems = () => (
 
 /* ─── DIFERENCIAIS ─── */
 const differentials = [
-  { icon: Clock, title: "Mais de 15 anos de experiência" },
-  { icon: Target, title: "Planejamento estratégico de TI" },
-  { icon: Lock, title: "Infraestrutura corporativa segura" },
-  { icon: Activity, title: "Monitoramento de redes" },
-  { icon: Wrench, title: "Suporte técnico especializado" },
-  { icon: TrendingUp, title: "Soluções escaláveis" },
+  { icon: Clock, title: "15+ anos resolvendo TI de empresa" },
+  { icon: Target, title: "Plano sob medida para seu negócio" },
+  { icon: Lock, title: "Segurança que protege seu faturamento" },
+  { icon: Activity, title: "Monitoramento 24/7 — antes de cair, resolvemos" },
+  { icon: Wrench, title: "Suporte rápido quando você mais precisa" },
+  { icon: TrendingUp, title: "TI que cresce junto com a empresa" },
 ];
 
 export const HomeDifferentials = () => (
@@ -115,10 +117,10 @@ export const HomeDifferentials = () => (
     <div className="container">
       <motion.div {...fade} className="mb-10 md:mb-14">
         <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
-          // Diferenciais
+          // Por que a WMTi
         </p>
         <h2 className="text-2xl md:text-4xl lg:text-5xl max-w-2xl mb-4">
-          Por que escolher a <span className="text-primary">WMTi.</span>
+          Resultados que você <span className="text-primary">sente no caixa.</span>
         </h2>
       </motion.div>
 
@@ -148,20 +150,20 @@ export const HomeDifferentials = () => (
 /* ─── FAQ SEO ─── */
 const faqItems = [
   {
-    q: "Quanto custa montar uma infraestrutura de TI?",
-    a: "O custo depende do porte da empresa, quantidade de usuários e nível de segurança necessário. A WMTi realiza um diagnóstico gratuito para apresentar uma proposta personalizada e adequada à realidade de cada negócio.",
+    q: "Quanto custa resolver minha TI de uma vez?",
+    a: "Depende do tamanho da sua operação. Fazemos um diagnóstico gratuito e entregamos uma proposta com valor fixo mensal — sem surpresas. Empresas a partir de 5 computadores já contratam a partir de R$120/mês por máquina.",
   },
   {
-    q: "A WMTi atende pequenas empresas?",
-    a: "Sim. A WMTi atende empresas de todos os portes, desde pequenos escritórios até grandes operações corporativas, sempre com soluções dimensionadas para cada necessidade.",
+    q: "Atende empresas pequenas?",
+    a: "Sim. A maioria dos nossos clientes tem entre 5 e 50 computadores. Montamos soluções proporcionais ao seu porte, sem exageros e sem subestimar riscos.",
   },
   {
-    q: "Vocês oferecem suporte técnico?",
-    a: "Sim. Oferecemos suporte técnico especializado com monitoramento proativo, atendimento remoto e presencial, e SLA personalizado para garantir a continuidade da sua operação.",
+    q: "E se o servidor cair fora do horário comercial?",
+    a: "Nosso monitoramento é 24/7. Se algo acontecer, a equipe já é acionada automaticamente antes de você perceber. E nos planos com SLA, o atendimento emergencial está garantido.",
   },
   {
-    q: "Vocês oferecem locação de computadores?",
-    a: "Sim. A WMTi oferece locação de desktops Dell OptiPlex e notebooks para empresas, com suporte técnico incluso, sem investimento inicial e com substituição garantida em caso de falha.",
+    q: "Posso alugar computadores ao invés de comprar?",
+    a: "Sim. A locação de desktops Dell começa em R$249/mês por unidade, com suporte incluso, troca garantida e sem investimento inicial. Ideal para quem quer previsibilidade financeira.",
   },
 ];
 
@@ -173,10 +175,10 @@ export const HomeFaq = () => {
       <div className="container max-w-3xl">
         <motion.div {...fade} className="mb-10 md:mb-14 text-center">
           <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
-            // FAQ
+            // Tire suas dúvidas
           </p>
           <h2 className="text-2xl md:text-4xl mb-4">
-            Perguntas <span className="text-primary">frequentes.</span>
+            Perguntas que todo gestor faz <span className="text-primary">antes de contratar.</span>
           </h2>
         </motion.div>
 
@@ -239,28 +241,27 @@ export const HomeCta = () => (
     <div className="container">
       <motion.div {...fade} className="text-center max-w-2xl mx-auto">
         <h2 className="text-2xl md:text-4xl lg:text-5xl mb-6">
-          Precisa melhorar a infraestrutura de TI da sua{" "}
-          <span className="text-primary">empresa?</span>
+          Sua TI pode funcionar <span className="text-primary">sem dor de cabeça.</span>
         </h2>
         <p className="font-body text-muted-foreground text-sm md:text-base mb-8 leading-relaxed">
-          Solicite um diagnóstico gratuito e descubra como a WMTi pode ajudar
-          sua empresa a operar com mais segurança, estabilidade e performance.
+          Peça um diagnóstico gratuito e receba uma proposta clara, com preço
+          fixo e sem surpresas. Em 48 horas você sabe exatamente o que precisa.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <a
             href="#contato"
             className="group inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all shadow-[0_0_30px_hsl(var(--primary)/0.3)]"
           >
-            Solicitar Diagnóstico de TI
+            Quero meu diagnóstico gratuito
             <span className="group-hover:translate-x-1 transition-transform">→</span>
           </a>
           <a
-            href="https://wa.me/5511963166915?text=Ol%C3%A1%2C%20gostaria%20de%20falar%20com%20um%20especialista%20em%20TI."
+            href="https://wa.me/5511963166915?text=Ol%C3%A1%2C%20quero%20resolver%20minha%20TI.%20Podem%20me%20ajudar%3F"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center gap-2 border border-primary/40 text-primary px-6 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:bg-primary/10 transition-all"
           >
-            Falar com Especialista
+            Resolver agora pelo WhatsApp
           </a>
         </div>
       </motion.div>

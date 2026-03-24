@@ -23,7 +23,7 @@ const testimonials = [
     name: "Ricardo Santos",
     role: "Sócio-Proprietário",
     company: "Escritório Santos & Associados",
-    text: "A implementação do pfSense com VPN site-to-site conectou nossas 3 unidades com segurança. O monitoramento 24/7 nos dá total tranquilidade.",
+    text: "Conectaram nossas 3 unidades com segurança total. Antes vivíamos com medo de ataque — hoje durmo tranquilo sabendo que está tudo monitorado.",
     stars: 5,
     initials: "RS",
   },

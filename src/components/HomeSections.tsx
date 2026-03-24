@@ -238,14 +238,14 @@ export const HomeBlog = () => {
       <div className="container">
         <motion.div {...fade} className="mb-10 md:mb-14">
           <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
-            // Blog
+            // Conteúdo que educa e converte
           </p>
           <h2 className="text-2xl md:text-4xl lg:text-5xl max-w-2xl mb-4">
-            Conteúdo <span className="text-primary">técnico</span>.
+            Dicas para sua empresa <span className="text-primary">não perder dinheiro</span> com TI.
           </h2>
           <p className="font-body text-muted-foreground text-sm md:text-base max-w-xl leading-relaxed">
-            Artigos sobre segurança da informação, infraestrutura de TI e
-            tendências tecnológicas para empresas.
+            Guias práticos para gestores que querem tomar decisões seguras
+            sobre infraestrutura, segurança e produtividade.
           </p>
         </motion.div>
 
