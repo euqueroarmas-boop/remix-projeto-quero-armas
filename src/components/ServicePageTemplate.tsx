@@ -185,10 +185,10 @@ const ServicePageTemplate = ({
 
             <motion.div {...fadeIn}>
               <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
-                // Nossa solução
+                // A solução que funciona
               </p>
               <h2 className="text-2xl md:text-3xl mb-6">
-                Como a <span className="text-primary">WMTi</span> resolve
+                O que fazemos para <span className="text-primary">eliminar</span> esses problemas
               </h2>
               <ul className="space-y-4">
                 {solutions.map((solution) => (
