@@ -10,8 +10,13 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  BarChart3, AlertTriangle, CreditCard, FileText, LogOut, RefreshCw, ChevronLeft, ChevronRight, Eye, Users, Plus, Loader2, Check, Copy,
+  BarChart3, AlertTriangle, CreditCard, FileText, LogOut, RefreshCw, ChevronLeft, ChevronRight, Eye, Users, Plus, Loader2, Check, Copy, Shield,
 } from "lucide-react";
+import AdminSecurityEvents from "@/components/admin/AdminSecurityEvents";
+import AdminWebhooks from "@/components/admin/AdminWebhooks";
+import AdminAudit from "@/components/admin/AdminAudit";
+import AdminRiskMonitor from "@/components/admin/AdminRiskMonitor";
+import AdminLeadsProposals from "@/components/admin/AdminLeadsProposals";
 
 const ITEMS_PER_PAGE = 20;
 
@@ -609,12 +614,17 @@ export default function AdminPage() {
 
       <main className="max-w-7xl mx-auto p-6 space-y-6">
         <Tabs defaultValue="dashboard">
-          <TabsList className="mb-4">
+          <TabsList className="mb-4 flex-wrap">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="logs">Logs</TabsTrigger>
             <TabsTrigger value="errors">Erros</TabsTrigger>
             <TabsTrigger value="payments">Pagamentos</TabsTrigger>
             <TabsTrigger value="clientes">Clientes</TabsTrigger>
+            <TabsTrigger value="leads">Leads & Propostas</TabsTrigger>
+            <TabsTrigger value="security">Segurança</TabsTrigger>
+            <TabsTrigger value="webhooks">Webhooks</TabsTrigger>
+            <TabsTrigger value="audit">Auditoria</TabsTrigger>
+            <TabsTrigger value="risk">Risco</TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard"><Dashboard /></TabsContent>
@@ -622,6 +632,11 @@ export default function AdminPage() {
           <TabsContent value="errors"><LogsTab onlyErrors /></TabsContent>
           <TabsContent value="payments"><PaymentsTab /></TabsContent>
           <TabsContent value="clientes"><ClientesTab /></TabsContent>
+          <TabsContent value="leads"><AdminLeadsProposals /></TabsContent>
+          <TabsContent value="security"><AdminSecurityEvents /></TabsContent>
+          <TabsContent value="webhooks"><AdminWebhooks /></TabsContent>
+          <TabsContent value="audit"><AdminAudit /></TabsContent>
+          <TabsContent value="risk"><AdminRiskMonitor /></TabsContent>
         </Tabs>
       </main>
     </div>
