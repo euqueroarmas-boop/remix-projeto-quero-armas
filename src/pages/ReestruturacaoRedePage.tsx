@@ -536,7 +536,7 @@ const ReestruturacaoRedePage = () => {
                 <span className="text-primary">Rede Corporativa</span>
               </h1>
               <p className="font-body text-lg md:text-xl text-muted-foreground max-w-2xl mb-8 leading-relaxed">
-                Transformamos sua rede em uma estrutura profissional, segura e altamente confiável. Se sua empresa enfrenta lentidão, vírus constantes, perda de arquivos ou falta de controle — este serviço resolve tudo de forma definitiva.
+                Rede lenta. Vírus toda semana. Arquivo que some. Computador que trava. Servidor que ninguém configurou direito. Se a TI da sua empresa funciona assim, o problema não é um equipamento — é a estrutura inteira. Este serviço resolve tudo de uma vez, sem limite de horas, sem surpresa no preço.
               </p>
 
               <div className="flex flex-wrap gap-4">
