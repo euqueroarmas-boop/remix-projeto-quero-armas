@@ -80,17 +80,17 @@ const TerceirizacaoPage = () => {
               Serviços WMTi
             </span>
             <h1 className="font-display text-3xl md:text-5xl font-bold leading-tight mb-6">
-              Terceirização de Mão de Obra em TI
+              Você gasta tempo gerenciando TI em vez de <span className="text-primary">focar no seu negócio</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground leading-relaxed mb-4">
-              Mantenha a continuidade operacional da sua empresa enquanto transfere a responsabilidade pela administração da equipe de TI para a WMTi.
+              Contratar, treinar, gerenciar e manter uma equipe interna de TI custa mais do que você imagina. E o resultado, na maioria das vezes, é uma equipe sem estrutura, sem processos e sem gestão técnica.
             </p>
             <p className="text-base text-muted-foreground leading-relaxed mb-8">
-              <strong className="text-foreground">Recontratamos ou absorvemos os profissionais de TI já existentes da sua empresa</strong> para dentro da administração da WMTi, assumindo a gestão operacional e reduzindo a responsabilidade direta da contratante sobre essa estrutura.
+              <strong className="text-foreground">A WMTi absorve seus profissionais de TI existentes</strong> para dentro da nossa gestão. Mesmas pessoas, mesmo conhecimento — mas com estrutura, processos e suporte especializado. Você deixa de gerenciar TI e passa a ter TI gerenciada.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <a
-                href={`https://wa.me/5512981156000?text=${whatsappMsg}`}
+                href={`https://wa.me/${whatsappNumber}?text=${whatsappMsg}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground font-mono text-sm uppercase tracking-wider px-6 py-3 hover:bg-primary/90 transition-colors"
