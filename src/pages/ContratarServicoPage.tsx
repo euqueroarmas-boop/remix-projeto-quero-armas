@@ -309,7 +309,12 @@ const ContratarServicoPage = () => {
 
       setInvoiceUrl(url);
       setPaymentComplete(true);
-      window.open(url, "_blank", "noopener,noreferrer");
+      setPopupBlocked(false);
+      const win = window.open(url, "_blank", "noopener,noreferrer");
+      if (!win || win.closed || typeof win.closed === "undefined") {
+        setPopupBlocked(true);
+        console.warn("[WMTi] Popup bloqueado pelo navegador");
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Erro desconhecido";
       console.error("[WMTi][payment]", message);
