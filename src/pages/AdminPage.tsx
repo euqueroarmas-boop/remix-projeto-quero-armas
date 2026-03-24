@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { adminQuerySingle, adminQuery } from "@/lib/adminApi";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,8 @@ import AdminAudit from "@/components/admin/AdminAudit";
 import AdminRiskMonitor from "@/components/admin/AdminRiskMonitor";
 import AdminLeadsProposals from "@/components/admin/AdminLeadsProposals";
 import AdminDiagnostics from "@/components/admin/AdminDiagnostics";
+
+const QAPanel = lazy(() => import("@/components/admin/qa/QAPanel"));
 
 const ITEMS_PER_PAGE = 20;
 
@@ -778,6 +780,7 @@ export default function AdminPage() {
               <TabsTrigger value="audit" className="text-xs md:text-sm px-2.5 md:px-3">Auditoria</TabsTrigger>
               <TabsTrigger value="risk" className="text-xs md:text-sm px-2.5 md:px-3">Risco</TabsTrigger>
               <TabsTrigger value="diagnostics" className="text-xs md:text-sm px-2.5 md:px-3 text-destructive">🔍 Diagnóstico</TabsTrigger>
+              <TabsTrigger value="qa" className="text-xs md:text-sm px-2.5 md:px-3 text-primary">🧪 QA</TabsTrigger>
             </TabsList>
           </div>
 
@@ -792,6 +795,7 @@ export default function AdminPage() {
           <TabsContent value="audit"><AdminAudit /></TabsContent>
           <TabsContent value="risk"><AdminRiskMonitor /></TabsContent>
           <TabsContent value="diagnostics"><AdminDiagnostics /></TabsContent>
+          <TabsContent value="qa"><Suspense fallback={<div className="text-center py-8 text-muted-foreground text-sm">Carregando QA...</div>}><QAPanel /></Suspense></TabsContent>
         </Tabs>
       </main>
     </div>
