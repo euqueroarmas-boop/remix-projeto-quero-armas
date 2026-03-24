@@ -10,8 +10,12 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  BarChart3, AlertTriangle, CreditCard, FileText, LogOut, RefreshCw, ChevronLeft, ChevronRight, Eye, Users, Plus, Loader2, Check, Copy,
+  BarChart3, AlertTriangle, CreditCard, FileText, LogOut, RefreshCw, ChevronLeft, ChevronRight, Eye, Users, Plus, Loader2, Check, Copy, Shield, Webhook, ClipboardList, FileSearch,
 } from "lucide-react";
+import AdminSecurityEvents from "@/components/admin/AdminSecurityEvents";
+import AdminWebhookMonitor from "@/components/admin/AdminWebhookMonitor";
+import AdminLeadsProposals from "@/components/admin/AdminLeadsProposals";
+import AdminAuditLogs from "@/components/admin/AdminAuditLogs";
 
 const ITEMS_PER_PAGE = 20;
 
