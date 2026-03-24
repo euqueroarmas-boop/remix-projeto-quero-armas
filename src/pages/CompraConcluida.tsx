@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
@@ -22,6 +22,12 @@ interface PurchaseInfo {
   purchaseDate: string;
 }
 
+interface ClientCredentials {
+  email: string;
+  temp_password: string;
+  password_change_required: boolean;
+}
+
 const CompraConcluida = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -29,9 +35,12 @@ const CompraConcluida = () => {
   const [data, setData] = useState<PurchaseInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [credentials, setCredentials] = useState<ClientCredentials | null>(null);
+  const [credentialsLoading, setCredentialsLoading] = useState(true);
+  const credentialsPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Fetch purchase data
   useEffect(() => {
-    // Try session fallback first
     const sessionRaw = sessionStorage.getItem("wmti_purchase_data");
     if (sessionRaw) {
       try {
@@ -51,7 +60,6 @@ const CompraConcluida = () => {
 
     const fetchData = async () => {
       try {
-        // Fetch quote
         const { data: quote, error: qErr } = await supabase
           .from("quotes")
           .select("*")
@@ -59,25 +67,22 @@ const CompraConcluida = () => {
           .single();
         if (qErr || !quote) throw new Error("Quote not found");
 
-        // Fetch contract
         const { data: contract } = await supabase
-          .from("contracts" as any)
+          .from("contracts")
           .select("id, contract_type, customer_id")
           .eq("quote_id", quoteId)
           .single();
 
-        // Fetch customer
         let customer: any = null;
-        if ((contract as any)?.customer_id) {
+        if (contract?.customer_id) {
           const { data: cust } = await supabase
-            .from("customers" as any)
+            .from("customers")
             .select("*")
-            .eq("id", (contract as any).customer_id)
+            .eq("id", contract.customer_id)
             .single();
           customer = cust;
         }
 
-        // Fetch payment
         const { data: payment } = await supabase
           .from("payments")
           .select("*")
@@ -86,28 +91,28 @@ const CompraConcluida = () => {
           .limit(1)
           .single();
 
-        const contractType = (contract as any)?.contract_type || "";
+        const contractType = contract?.contract_type || "";
         const isLocacao = contractType === "locacao";
         const isHoras = contractType === "horas-tecnicas";
 
         const serviceName = isLocacao
           ? "Locação de Equipamentos"
           : isHoras
-          ? `Pacote de ${(quote as any).computers_qty || 1} hora(s) técnicas`
-          : (quote as any).selected_plan || "Serviços de TI";
+          ? `Pacote de ${quote.computers_qty || 1} hora(s) técnicas`
+          : quote.selected_plan || "Serviços de TI";
 
         setData({
           serviceName,
-          hours: isHoras ? (quote as any).computers_qty || undefined : undefined,
-          computersQty: isLocacao ? (quote as any).computers_qty || undefined : undefined,
-          monthlyValue: (quote as any).monthly_value || 0,
+          hours: isHoras ? quote.computers_qty || undefined : undefined,
+          computersQty: isLocacao ? quote.computers_qty || undefined : undefined,
+          monthlyValue: quote.monthly_value || 0,
           isRecurring: isLocacao,
           customerName: customer?.razao_social || "Cliente",
           customerCpfCnpj: customer?.cnpj_ou_cpf || "",
           customerEmail: customer?.email || "",
-          paymentMethod: (payment as any)?.billing_type || (payment as any)?.payment_method || "CREDIT_CARD",
-          contractId: (contract as any)?.id || null,
-          purchaseDate: new Date((quote as any).created_at).toLocaleDateString("pt-BR"),
+          paymentMethod: payment?.billing_type || payment?.payment_method || "CREDIT_CARD",
+          contractId: contract?.id || null,
+          purchaseDate: new Date(quote.created_at).toLocaleDateString("pt-BR"),
         });
       } catch (err) {
         console.error("[WMTi] Erro ao carregar dados da compra:", err);
@@ -118,6 +123,62 @@ const CompraConcluida = () => {
     };
 
     fetchData();
+  }, [quoteId]);
+
+  // Poll for client credentials
+  useEffect(() => {
+    if (!quoteId) {
+      setCredentialsLoading(false);
+      return;
+    }
+
+    const fetchCredentials = async () => {
+      try {
+        const { data: result, error: fnErr } = await supabase.functions.invoke("get-client-credentials", {
+          body: { quote_id: quoteId },
+        });
+
+        if (fnErr) {
+          console.error("[WMTi] Erro ao buscar credenciais:", fnErr);
+          return false;
+        }
+
+        if (result?.success && result?.temp_password) {
+          setCredentials({
+            email: result.email,
+            temp_password: result.temp_password,
+            password_change_required: result.password_change_required,
+          });
+          setCredentialsLoading(false);
+          return true;
+        }
+
+        return false;
+      } catch (err) {
+        console.error("[WMTi] Erro ao buscar credenciais:", err);
+        return false;
+      }
+    };
+
+    // Try immediately
+    fetchCredentials().then((found) => {
+      if (found) return;
+
+      // Poll every 5s for up to 2 minutes
+      let attempts = 0;
+      credentialsPollRef.current = setInterval(async () => {
+        attempts++;
+        const found = await fetchCredentials();
+        if (found || attempts >= 24) {
+          if (credentialsPollRef.current) clearInterval(credentialsPollRef.current);
+          setCredentialsLoading(false);
+        }
+      }, 5000);
+    });
+
+    return () => {
+      if (credentialsPollRef.current) clearInterval(credentialsPollRef.current);
+    };
   }, [quoteId]);
 
   return (
@@ -144,7 +205,12 @@ const CompraConcluida = () => {
               </button>
             </div>
           ) : (
-            <PurchaseSuccessScreen visible data={data} />
+            <PurchaseSuccessScreen
+              visible
+              data={data}
+              credentials={credentials}
+              credentialsLoading={credentialsLoading}
+            />
           )}
         </div>
       </section>

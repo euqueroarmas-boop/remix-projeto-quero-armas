@@ -12,6 +12,8 @@ interface ReceiptData {
   paymentMethod: string;
   contractId?: string | null;
   purchaseDate: string;
+  loginEmail?: string;
+  tempPassword?: string;
 }
 
 const formatCurrency = (v: number) =>
@@ -32,12 +34,12 @@ export function generateReceiptPdf(data: ReceiptData): void {
   let y = 20;
 
   // ── Header ──
-  doc.setFillColor(20, 24, 33); // dark bg
+  doc.setFillColor(20, 24, 33);
   doc.rect(0, 0, pageWidth, 52, "F");
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(18);
-  doc.setTextColor(255, 90, 31); // orange
+  doc.setTextColor(255, 90, 31);
   doc.text("WMTi", margin, y + 10);
 
   doc.setFontSize(9);
@@ -132,7 +134,6 @@ export function generateReceiptPdf(data: ReceiptData): void {
   if (contractRef) serviceRows.push(["Contrato", contractRef]);
 
   serviceRows.forEach(([label, value], i) => {
-    // Zebra striping
     if (i % 2 === 0) {
       doc.setFillColor(248, 248, 248);
       doc.rect(margin, y - 4, contentWidth, 8, "F");
@@ -155,10 +156,60 @@ export function generateReceiptPdf(data: ReceiptData): void {
     y += lines.length * 5 + 4;
   });
 
-  y += 8;
+  y += 4;
   doc.setDrawColor(230, 230, 230);
   doc.line(margin, y, pageWidth - margin, y);
-  y += 12;
+  y += 8;
+
+  // ── Client Access Credentials ──
+  if (data.loginEmail && data.tempPassword) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.setTextColor(255, 90, 31);
+    doc.text("DADOS DE ACESSO AO PORTAL DO CLIENTE", margin, y);
+    y += 8;
+
+    const credRows: [string, string][] = [
+      ["Login (e-mail)", data.loginEmail],
+      ["Senha temporária", data.tempPassword],
+      ["Portal", "wmti.com.br/area-do-cliente"],
+    ];
+
+    credRows.forEach(([label, value], i) => {
+      if (i % 2 === 0) {
+        doc.setFillColor(255, 250, 240);
+        doc.rect(margin, y - 4, contentWidth, 8, "F");
+      }
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(120, 120, 120);
+      doc.text(label, margin + 2, y);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(40, 40, 40);
+      doc.text(value, margin + 60, y);
+      y += 8;
+    });
+
+    y += 2;
+
+    // Security warning
+    doc.setFillColor(255, 243, 205);
+    doc.roundedRect(margin, y - 2, contentWidth, 14, 2, 2, "F");
+    doc.setDrawColor(245, 158, 11);
+    doc.setLineWidth(0.5);
+    doc.roundedRect(margin, y - 2, contentWidth, 14, 2, 2, "S");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7.5);
+    doc.setTextColor(120, 70, 0);
+    doc.text("AVISO DE SEGURANÇA:", margin + 4, y + 4);
+    doc.setFont("helvetica", "normal");
+    doc.text("Esta senha é temporária e deverá ser alterada obrigatoriamente no primeiro acesso.", margin + 4, y + 9);
+
+    y += 20;
+    doc.setDrawColor(230, 230, 230);
+    doc.line(margin, y, pageWidth - margin, y);
+    y += 8;
+  }
 
   // ── Footer ──
   doc.setFont("helvetica", "normal");
@@ -170,9 +221,9 @@ export function generateReceiptPdf(data: ReceiptData): void {
   y += 4;
   doc.text(`Documento gerado em ${new Date().toLocaleString("pt-BR")}`, pageWidth / 2, y, { align: "center" });
 
-  // Save — use blob approach for better mobile compatibility
+  // Save
   const filename = `comprovante-wmti-${contractRef || "compra"}.pdf`;
-  
+
   try {
     const blob = doc.output("blob");
     const url = URL.createObjectURL(blob);
@@ -182,14 +233,12 @@ export function generateReceiptPdf(data: ReceiptData): void {
     link.style.display = "none";
     document.body.appendChild(link);
     link.click();
-    
-    // Cleanup after a short delay
+
     setTimeout(() => {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
     }, 250);
   } catch {
-    // Fallback to standard save
     doc.save(filename);
   }
 }
