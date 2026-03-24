@@ -9,7 +9,7 @@ Deno.serve(async (req) => {
   try {
     const { quote_id } = await req.json();
     if (!quote_id) {
-      return new Response(JSON.stringify({ error: "quote_id obrigatório" }), {
+      return new Response(JSON.stringify({ success: false, error: "quote_id obrigatório" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -18,20 +18,27 @@ Deno.serve(async (req) => {
     const supabase = createServiceClient();
     const result = await ensureClientAccess(supabase, quote_id, "access_recovery");
 
-    return new Response(
-      JSON.stringify(result),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    await logSistemaBackend({
+      tipo: "admin",
+      status: result.success ? "success" : "warning",
+      mensagem: result.success ? "Acesso do cliente garantido" : "Acesso do cliente pendente",
+      payload: { quote_id, ...result },
+    });
+
+    return new Response(JSON.stringify(result), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Erro desconhecido";
-    console.error("[get-client-credentials] Erro:", message);
+    const message = error instanceof Error ? error.message : "Erro interno";
     await logSistemaBackend({
       tipo: "erro",
       status: "error",
-      mensagem: "Erro ao buscar credenciais do cliente",
+      mensagem: "Erro ao garantir acesso do cliente",
       payload: { error: message },
     });
-    return new Response(JSON.stringify({ error: "Erro interno" }), {
+
+    return new Response(JSON.stringify({ success: false, error: message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

@@ -35,6 +35,9 @@ Deno.serve(async (req) => {
       is_recurring,
       login_email,
       temp_password,
+      download_url,
+      attachment_filename,
+      attachment_base64,
     } = body;
 
     if (!customer_email || !customer_name || !service_name) {
@@ -120,6 +123,12 @@ Deno.serve(async (req) => {
   </table>
   ` : ''}
 
+  ${download_url ? `
+  <div style="text-align:center;margin:0 0 24px;">
+    <a href="${download_url}" style="display:inline-block;background:#FF5A1F;color:#ffffff;text-decoration:none;padding:12px 22px;border-radius:8px;font-size:14px;font-weight:bold;">Baixar contrato final em PDF</a>
+  </div>
+  ` : ''}
+
   <!-- Next steps -->
   <div style="background:#FFF7ED;border:1px solid #FDBA74;border-radius:8px;padding:16px 20px;margin-bottom:24px;">
     <p style="font-size:13px;font-weight:bold;color:#9A3412;margin:0 0 8px;">Próximos passos:</p>
@@ -164,6 +173,10 @@ Deno.serve(async (req) => {
         to: [customer_email],
         subject: `✅ Pagamento confirmado — ${service_name} — WMTi`,
         html: emailHtml,
+        attachments: attachment_base64 ? [{
+          filename: attachment_filename || "contrato-final.pdf",
+          content: attachment_base64,
+        }] : undefined,
       }),
     });
 

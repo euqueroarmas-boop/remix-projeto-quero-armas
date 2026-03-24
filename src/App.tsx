@@ -49,6 +49,8 @@ const ManutencaoInfraestruturaPage = lazy(() => import("./pages/ManutencaoInfrae
 const SuporteRedesCorporativasPage = lazy(() => import("./pages/SuporteRedesCorporativasPage.tsx"));
 const ContratarServicoPage = lazy(() => import("./pages/ContratarServicoPage.tsx"));
 const CompraConcluida = lazy(() => import("./pages/CompraConcluida.tsx"));
+const AtivacaoAcessoPage = lazy(() => import("./pages/AtivacaoAcessoPage.tsx"));
+const ContratoFinalPage = lazy(() => import("./pages/ContratoFinalPage.tsx"));
 const AreaDoClientePage = lazy(() => import("./pages/AreaDoClientePage.tsx"));
 const ReestruturacaoRedePage = lazy(() => import("./pages/ReestruturacaoRedePage.tsx"));
 const DesenvolvimentoWebPage = lazy(() => import("./pages/DesenvolvimentoWebPage.tsx"));
@@ -109,6 +111,8 @@ const App = () => (
             <Route path="/orcamento-ti" element={<OrcamentoTiPage />} />
             <Route path="/contrato" element={<ContratoPage />} />
             <Route path="/compra-concluida" element={<CompraConcluida />} />
+            <Route path="/ativacao-acesso" element={<AtivacaoAcessoPage />} />
+            <Route path="/contrato-final/:quoteId" element={<ContratoFinalPage />} />
             <Route path="/area-do-cliente" element={<AreaDoClientePage />} />
             <Route path="/cliente" element={<Navigate to="/area-do-cliente" replace />} />
             <Route path="/redefinir-senha" element={<RedefinirSenhaPage />} />

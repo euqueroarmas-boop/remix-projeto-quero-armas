@@ -1,18 +1,12 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { logSistemaBackend } from "../_shared/logSistema.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { ensureClientAccess } from "../_shared/post-purchase.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
-
-function generateTempPassword(length = 10): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#";
-  const array = new Uint8Array(length);
-  crypto.getRandomValues(array);
-  return Array.from(array, (b) => chars[b % chars.length]).join("");
-}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -183,7 +177,7 @@ Deno.serve(async (req) => {
         // Fetch customer data
         const { data: contractData } = await supabase
           .from("contracts")
-          .select("customer_id, contract_type, monthly_value")
+          .select("customer_id, contract_type, monthly_value, id")
           .eq("quote_id", paymentRecord.quote_id)
           .single();
 
@@ -196,130 +190,47 @@ Deno.serve(async (req) => {
             .single();
           if (customer) customerInfo = customer;
 
-          // ── Auto-create client account with temp password ──
-          if (customer && !customer.user_id) {
-            const tempPassword = generateTempPassword();
-            console.log("[asaas-webhook] Criando conta automática para:", customer.email);
-
-            try {
-              const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-                email: customer.email,
-                password: tempPassword,
-                email_confirm: true,
-                user_metadata: {
-                  name: customer.razao_social || customer.email,
-                  password_change_required: true,
-                  temp_password: tempPassword,
-                  auto_created: true,
-                  created_via: "payment_webhook",
-                },
+          try {
+            const accessResult = await ensureClientAccess(supabase, paymentRecord.quote_id, "payment_webhook");
+            if (accessResult.success) {
+              await supabase.from("admin_audit_logs").insert({
+                action: accessResult.user_created ? "auto_user_created" : accessResult.user_recovered ? "auto_user_recovered" : "auto_user_verified",
+                target_type: "customer",
+                target_id: contractData.customer_id,
+                after_state: accessResult,
               });
 
-              if (authError) {
-                console.error("[asaas-webhook] Erro ao criar usuário:", authError.message);
-                await logSistemaBackend({
-                  tipo: "admin",
-                  status: "error",
-                  mensagem: "Erro ao criar conta automática do cliente",
-                  payload: { email: customer.email, error: authError.message, quote_id: paymentRecord.quote_id },
-                });
-
-                // Log audit
-                await supabase.from("admin_audit_logs").insert({
-                  action: "auto_user_creation_failed",
-                  target_type: "customer",
-                  target_id: contractData.customer_id,
-                  after_state: { email: customer.email, error: authError.message },
-                });
-              } else {
-                const userId = authData.user.id;
-
-                // Link user_id to customer
-                await supabase
-                  .from("customers")
-                  .update({ user_id: userId })
-                  .eq("id", contractData.customer_id);
-
-                // Create client event
-                await supabase.from("client_events").insert({
-                  customer_id: contractData.customer_id,
-                  event_type: "cadastro",
-                  title: "Acesso ao portal criado automaticamente",
-                  description: `Credenciais temporárias geradas para ${customer.email}. Troca de senha obrigatória no primeiro acesso.`,
-                });
-
-                // Log audit
-                await supabase.from("admin_audit_logs").insert({
-                  action: "auto_user_created",
-                  target_type: "customer",
-                  target_id: contractData.customer_id,
-                  after_state: {
-                    email: customer.email,
-                    user_id: userId,
-                    temp_password_generated: true,
-                    password_change_required: true,
-                    quote_id: paymentRecord.quote_id,
-                  },
-                });
-
-                await logSistemaBackend({
-                  tipo: "admin",
-                  status: "success",
-                  mensagem: "Conta automática criada com senha temporária",
-                  payload: { email: customer.email, user_id: userId, customer_id: contractData.customer_id },
-                });
-
-                console.log("[asaas-webhook] Conta criada com sucesso para:", customer.email);
-
-                // ── Send confirmation email with credentials ──
-                try {
-                  const quoteData = paymentRecord.quote_id ? await supabase
-                    .from("quotes")
-                    .select("selected_plan, computers_qty, monthly_value")
-                    .eq("id", paymentRecord.quote_id)
-                    .single() : null;
-
-                  await supabase.functions.invoke("send-purchase-confirmation", {
-                    body: {
-                      customer_name: customer.razao_social || customer.email,
-                      customer_email: customer.email,
-                      service_name: contractData.contract_type === "locacao"
-                        ? "Locação de Equipamentos"
-                        : contractData.contract_type === "horas-tecnicas"
-                        ? `Pacote de horas técnicas`
-                        : quoteData?.data?.selected_plan || "Serviços de TI",
-                      computers_qty: quoteData?.data?.computers_qty || null,
-                      value: contractData.monthly_value || payment.value,
-                      payment_method: payment.billingType || "CREDIT_CARD",
-                      contract_ref: paymentRecord.quote_id ? paymentRecord.quote_id.slice(0, 8).toUpperCase() : null,
-                      purchase_date: new Date().toLocaleDateString("pt-BR"),
-                      is_recurring: contractData.contract_type === "locacao",
-                      login_email: customer.email,
-                      temp_password: tempPassword,
-                    },
-                  });
-                  console.log("[asaas-webhook] Email de confirmação enviado com credenciais para:", customer.email);
-                } catch (emailErr) {
-                  console.error("[asaas-webhook] Erro ao enviar email de confirmação:", emailErr);
-                  await logSistemaBackend({
-                    tipo: "email",
-                    status: "error",
-                    mensagem: "Erro ao enviar email pós-pagamento com credenciais",
-                    payload: { email: customer.email, error: String(emailErr) },
-                  });
-                }
-              }
-            } catch (e) {
-              console.error("[asaas-webhook] Exceção ao criar conta:", e);
+              const pdfFunctionUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/generate-paid-contract-pdf`;
+              await fetch(pdfFunctionUrl, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  apikey: Deno.env.get("SUPABASE_ANON_KEY")!,
+                  Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!}`,
+                },
+                body: JSON.stringify({
+                  quote_id: paymentRecord.quote_id,
+                  generate_if_missing: true,
+                  send_email: true,
+                  access_source: "payment_webhook",
+                }),
+              });
+            } else {
               await logSistemaBackend({
-                tipo: "erro",
-                status: "error",
-                mensagem: "Exceção ao criar conta automática",
-                payload: { email: customer.email, error: String(e) },
+                tipo: "admin",
+                status: "warning",
+                mensagem: "Pagamento confirmado, mas acesso ainda não pôde ser liberado automaticamente",
+                payload: { quote_id: paymentRecord.quote_id, result: accessResult },
               });
             }
-          } else if (customer?.user_id) {
-            console.log("[asaas-webhook] Cliente já possui acesso:", customer.email);
+          } catch (e) {
+            console.error("[asaas-webhook] Exceção ao garantir conta:", e);
+            await logSistemaBackend({
+              tipo: "erro",
+              status: "error",
+              mensagem: "Exceção ao garantir conta automática",
+              payload: { email: customer.email, error: String(e) },
+            });
           }
         }
 

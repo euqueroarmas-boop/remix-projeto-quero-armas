@@ -1,32 +1,12 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import SeoHead from "@/components/SeoHead";
 import PurchaseSuccessScreen from "@/components/orcamento/PurchaseSuccessScreen";
 import { Loader2 } from "lucide-react";
-
-interface PurchaseInfo {
-  serviceName: string;
-  hours?: number;
-  computersQty?: number;
-  monthlyValue: number;
-  isRecurring: boolean;
-  customerName: string;
-  customerCpfCnpj: string;
-  customerEmail: string;
-  paymentMethod: string;
-  contractId: string | null;
-  purchaseDate: string;
-}
-
-interface ClientCredentials {
-  email: string;
-  temp_password: string;
-  password_change_required: boolean;
-}
+import { fetchPurchaseInfo, readPurchaseInfoFromSession, resolvePaidContractPdf, type PurchaseInfo } from "@/lib/postPurchase";
 
 const CompraConcluida = () => {
   const [searchParams] = useSearchParams();
@@ -35,21 +15,17 @@ const CompraConcluida = () => {
   const [data, setData] = useState<PurchaseInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [credentials, setCredentials] = useState<ClientCredentials | null>(null);
-  const [credentialsLoading, setCredentialsLoading] = useState(true);
-  const credentialsPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [pdfError, setPdfError] = useState<string | null>(null);
 
   // Fetch purchase data
   useEffect(() => {
-    const sessionRaw = sessionStorage.getItem("wmti_purchase_data");
-    if (sessionRaw) {
-      try {
-        const parsed = JSON.parse(sessionRaw);
-        setData(parsed);
-        setLoading(false);
-        sessionStorage.removeItem("wmti_purchase_data");
-        return;
-      } catch { /* fall through to DB */ }
+    const sessionData = readPurchaseInfoFromSession();
+    if (sessionData) {
+      setData(sessionData);
+      setLoading(false);
+      return;
     }
 
     if (!quoteId) {
@@ -60,60 +36,8 @@ const CompraConcluida = () => {
 
     const fetchData = async () => {
       try {
-        const { data: quote, error: qErr } = await supabase
-          .from("quotes")
-          .select("*")
-          .eq("id", quoteId)
-          .single();
-        if (qErr || !quote) throw new Error("Quote not found");
-
-        const { data: contract } = await supabase
-          .from("contracts")
-          .select("id, contract_type, customer_id")
-          .eq("quote_id", quoteId)
-          .single();
-
-        let customer: any = null;
-        if (contract?.customer_id) {
-          const { data: cust } = await supabase
-            .from("customers")
-            .select("*")
-            .eq("id", contract.customer_id)
-            .single();
-          customer = cust;
-        }
-
-        const { data: payment } = await supabase
-          .from("payments")
-          .select("*")
-          .eq("quote_id", quoteId)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .single();
-
-        const contractType = contract?.contract_type || "";
-        const isLocacao = contractType === "locacao";
-        const isHoras = contractType === "horas-tecnicas";
-
-        const serviceName = isLocacao
-          ? "Locação de Equipamentos"
-          : isHoras
-          ? `Pacote de ${quote.computers_qty || 1} hora(s) técnicas`
-          : quote.selected_plan || "Serviços de TI";
-
-        setData({
-          serviceName,
-          hours: isHoras ? quote.computers_qty || undefined : undefined,
-          computersQty: isLocacao ? quote.computers_qty || undefined : undefined,
-          monthlyValue: quote.monthly_value || 0,
-          isRecurring: isLocacao,
-          customerName: customer?.razao_social || "Cliente",
-          customerCpfCnpj: customer?.cnpj_ou_cpf || "",
-          customerEmail: customer?.email || "",
-          paymentMethod: payment?.billing_type || payment?.payment_method || "CREDIT_CARD",
-          contractId: contract?.id || null,
-          purchaseDate: new Date(quote.created_at).toLocaleDateString("pt-BR"),
-        });
+        const purchase = await fetchPurchaseInfo(quoteId);
+        setData(purchase);
       } catch (err) {
         console.error("[WMTi] Erro ao carregar dados da compra:", err);
         setError(true);
@@ -125,61 +49,39 @@ const CompraConcluida = () => {
     fetchData();
   }, [quoteId]);
 
-  // Poll for client credentials
   useEffect(() => {
-    if (!quoteId) {
-      setCredentialsLoading(false);
-      return;
-    }
+    if (!quoteId) return;
 
-    const fetchCredentials = async () => {
-      try {
-        const { data: result, error: fnErr } = await supabase.functions.invoke("get-client-credentials", {
-          body: { quote_id: quoteId },
-        });
-
-        if (fnErr) {
-          console.error("[WMTi] Erro ao buscar credenciais:", fnErr);
-          return false;
+    resolvePaidContractPdf(quoteId, { generateIfMissing: false })
+      .then((result) => {
+        if (result.success && result.pdf_url) {
+          setPdfUrl(result.pdf_url);
         }
-
-        if (result?.success && result?.temp_password) {
-          setCredentials({
-            email: result.email,
-            temp_password: result.temp_password,
-            password_change_required: result.password_change_required,
-          });
-          setCredentialsLoading(false);
-          return true;
-        }
-
-        return false;
-      } catch (err) {
-        console.error("[WMTi] Erro ao buscar credenciais:", err);
-        return false;
-      }
-    };
-
-    // Try immediately
-    fetchCredentials().then((found) => {
-      if (found) return;
-
-      // Poll every 5s for up to 2 minutes
-      let attempts = 0;
-      credentialsPollRef.current = setInterval(async () => {
-        attempts++;
-        const found = await fetchCredentials();
-        if (found || attempts >= 24) {
-          if (credentialsPollRef.current) clearInterval(credentialsPollRef.current);
-          setCredentialsLoading(false);
-        }
-      }, 5000);
-    });
-
-    return () => {
-      if (credentialsPollRef.current) clearInterval(credentialsPollRef.current);
-    };
+      })
+      .catch((err) => {
+        console.error("[WMTi] Erro ao consultar PDF:", err);
+      });
   }, [quoteId]);
+
+  const handleGeneratePdf = async () => {
+    if (!quoteId) return;
+    setPdfLoading(true);
+    setPdfError(null);
+
+    try {
+      const result = await resolvePaidContractPdf(quoteId, { generateIfMissing: true });
+      if (!result.success || !result.pdf_url) {
+        throw new Error(result.error || "Não foi possível gerar o contrato PDF.");
+      }
+      setPdfUrl(result.pdf_url);
+      window.open(result.pdf_url, "_blank", "noopener,noreferrer");
+    } catch (err) {
+      console.error("[WMTi] Erro ao gerar PDF:", err);
+      setPdfError(err instanceof Error ? err.message : "Falha ao gerar o PDF final.");
+    } finally {
+      setPdfLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen">
@@ -208,8 +110,12 @@ const CompraConcluida = () => {
             <PurchaseSuccessScreen
               visible
               data={data}
-              credentials={credentials}
-              credentialsLoading={credentialsLoading}
+              quoteId={quoteId || ""}
+              pdfUrl={pdfUrl}
+              pdfLoading={pdfLoading}
+              pdfReady={Boolean(pdfUrl)}
+              pdfError={pdfError}
+              onGeneratePdf={handleGeneratePdf}
             />
           )}
         </div>
