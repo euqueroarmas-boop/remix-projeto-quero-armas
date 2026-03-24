@@ -278,6 +278,29 @@ const ContractingWizard = ({
       setCustomerId(customer.id);
       setRegistrationData(data);
 
+      let resolvedQuoteId = activeQuoteId;
+
+      if (!resolvedQuoteId) {
+        const { data: createdQuote, error: quoteError } = await supabase
+          .from("quotes" as any)
+          .insert({
+            selected_plan: effectivePath === "locacao" ? plan.id : "suporte-mensal",
+            computers_qty: computersQty,
+            users_qty: qualification?.dailyUsers ?? computersQty,
+            needs_server_migration: false,
+            needs_remote_access: qualification?.needsRemoteAccess || false,
+            needs_backup: qualification?.needsBackup || false,
+            monthly_value: monthlyValue,
+            status: "pending",
+          } as any)
+          .select()
+          .single();
+
+        if (quoteError) throw quoteError;
+        resolvedQuoteId = (createdQuote as any).id;
+        setActiveQuoteId(resolvedQuoteId);
+      }
+
       const customerDataForContract: CustomerData = {
         razaoSocial: data.razaoSocial,
         nomeFantasia: data.nomeFantasia,
@@ -306,7 +329,7 @@ const ContractingWizard = ({
       const { data: contractRow, error: contractErr } = await supabase
         .from("contracts" as any)
         .insert({
-          quote_id: quoteId,
+          quote_id: resolvedQuoteId,
           customer_id: customer.id,
           contract_type: contractType,
           contract_text: html,
@@ -344,12 +367,12 @@ const ContractingWizard = ({
       await supabase.from("integration_logs" as any).insert({
         integration_name: "contract",
         operation_name: "contract_created",
-        request_payload: { contract_id: (contractRow as any).id, customer_id: customer.id, customerId },
+        request_payload: { contract_id: (contractRow as any).id, customer_id: customer.id, customerId, quote_id: resolvedQuoteId },
         status: "success",
       } as any);
 
       await supabase.from("payments" as any).insert({
-        quote_id: quoteId,
+        quote_id: resolvedQuoteId,
         payment_status: "pending",
       } as any);
 
