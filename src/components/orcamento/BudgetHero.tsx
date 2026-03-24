@@ -84,7 +84,7 @@ const BudgetHero = ({ contextTitle }: Props) => {
               className="text-base px-8 py-6 border-primary/30 hover:bg-primary/10 text-foreground"
               onClick={() =>
                 window.open(
-                  "https://wa.me/5512981156000?text=Olá! Gostaria de falar com um especialista sobre infraestrutura de TI.",
+                  "https://wa.me/5511963166915?text=Olá! Gostaria de falar com um especialista sobre infraestrutura de TI.",
                   "_blank"
                 )
               }

@@ -1,10 +1,11 @@
 import { MessageCircle } from "lucide-react";
 import { motion } from "framer-motion";
+import { WHATSAPP_BASE_URL } from "@/lib/whatsapp";
 
 const WhatsAppButton = () => {
   return (
     <motion.a
-      href="https://wa.me/5511963166915"
+      href={WHATSAPP_BASE_URL}
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Fale conosco pelo WhatsApp"
