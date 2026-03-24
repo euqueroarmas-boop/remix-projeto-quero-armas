@@ -718,7 +718,7 @@ const LocacaoComputadoresPage = () => {
             <Button size="lg" onClick={scrollToCalc} className="h-14 px-8 text-base">
               <Calculator size={18} className="mr-2" /> Calcular agora
             </Button>
-            <a href="https://wa.me/5512981156000?text=Olá! Quero saber mais sobre a locação de computadores." target="_blank" rel="noopener noreferrer">
+            <a href="https://wa.me/5511963166915?text=Olá! Quero saber mais sobre a locação de computadores." target="_blank" rel="noopener noreferrer">
               <Button size="lg" variant="outline" className="h-14 px-8 text-base">
                 Falar pelo WhatsApp
               </Button>
