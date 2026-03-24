@@ -144,7 +144,7 @@ const ContractingWizard = ({
   const [paymentComplete, setPaymentComplete] = useState(false);
   const [paymentData, setPaymentData] = useState<NormalizedPaymentData | null>(null);
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
-  const emailSentRef = useRef(false);
+  
 
   const [registrationLoading, setRegistrationLoading] = useState(false);
   const [popupBlocked, setPopupBlocked] = useState(false);
