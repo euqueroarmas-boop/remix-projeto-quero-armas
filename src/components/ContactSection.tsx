@@ -54,18 +54,26 @@ const ContactSection = () => {
     const utm = getUtmParams();
 
     try {
-      const { error } = await supabase.from("leads").insert({
-        name: form.nome,
-        email: form.email,
-        phone: form.telefone || null,
-        company: form.empresa || null,
-        service_interest: form.interesse || null,
-        message: form.mensagem,
-        source_page: location.pathname,
-        ...utm,
+      const { data, error: fnError } = await supabase.functions.invoke("submit-lead", {
+        body: {
+          name: form.nome,
+          email: form.email,
+          phone: form.telefone || null,
+          company: form.empresa || null,
+          service_interest: form.interesse || null,
+          message: form.mensagem,
+          source_page: location.pathname,
+          ...utm,
+        },
       });
 
-      if (error) throw error;
+      if (fnError) throw fnError;
+      if (data && !data.success) {
+        const msgs = (data.errors as string[]) || ["Erro desconhecido"];
+        toast({ title: msgs.join(". "), variant: "destructive" });
+        setLoading(false);
+        return;
+      }
 
       toast({ title: "Solicitação enviada com sucesso! Redirecionando para o WhatsApp..." });
 
