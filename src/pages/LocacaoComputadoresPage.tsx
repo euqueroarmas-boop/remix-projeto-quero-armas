@@ -27,21 +27,21 @@ const PLANS = [
 
 /* ─── Pain Points ─── */
 const painPoints = [
-  { icon: AlertTriangle, text: "Computadores lentos travando o dia inteiro" },
-  { icon: DollarSign, text: "Manutenção inesperada estourando o orçamento" },
-  { icon: Clock, text: "Equipe parada esperando técnico" },
-  { icon: Ban, text: "Máquinas antigas que não rodam os sistemas" },
-  { icon: TrendingDown, text: "Sem previsibilidade de custos com TI" },
+  { icon: AlertTriangle, text: "Computador fica lento, trava, e ninguém consegue trabalhar direito" },
+  { icon: DollarSign, text: "Manutenção, troca de peça, e o ciclo de gasto nunca acaba" },
+  { icon: Clock, text: "Equipe perdendo tempo e produtividade com equipamento ruim" },
+  { icon: Ban, text: "Máquinas ultrapassadas que viram obstáculo, não ferramenta" },
+  { icon: TrendingDown, text: "Depreciação constante — o equipamento perde valor todo mês" },
 ];
 
 /* ─── Benefits ─── */
 const benefits = [
-  { icon: Monitor, title: "Estação completa", desc: "Dell OptiPlex + monitor + teclado + mouse. Pronto para uso." },
-  { icon: Wrench, title: "Manutenção inclusa", desc: "Preventiva e corretiva sem custo extra." },
-  { icon: RefreshCw, title: "Troca sem custo", desc: "Queimou? Substituímos sem burocracia." },
-  { icon: Headphones, title: "Suporte 24/7", desc: "Atendimento remoto e presencial 24h." },
-  { icon: DollarSign, title: "Economia real", desc: "Sem investimento inicial, sem depreciação." },
-  { icon: ShieldCheck, title: "Sempre atualizado", desc: "Equipamentos renovados periodicamente." },
+  { icon: Monitor, title: "Equipamentos atualizados", desc: "Você recebe máquinas prontas para trabalhar, não para dar problema." },
+  { icon: Wrench, title: "Manutenção incluída", desc: "Deu problema? Resolve. Sem custo extra, sem burocracia." },
+  { icon: RefreshCw, title: "Substituição quando necessário", desc: "Ficou defasado? Troca. Precisa expandir? Escala. Simples." },
+  { icon: Headphones, title: "Suporte completo", desc: "Atendimento remoto e presencial. Você não se preocupa." },
+  { icon: DollarSign, title: "Investimento no funcionamento", desc: "Você deixa de gastar com máquina e passa a investir na sua empresa." },
+  { icon: ShieldCheck, title: "Muda o jogo", desc: "Computador deixa de ser problema e vira ferramenta de verdade." },
 ];
 
 /* ─── Comparisons ─── */
@@ -236,8 +236,8 @@ const LocacaoComputadoresPage = () => {
   return (
     <div className="min-h-screen">
       <SeoHead
-        title="Locação de Computadores para Empresas em Jacareí | A partir de R$ 249/mês | WMTi"
-        description="Aluguel de computadores Dell OptiPlex para empresas. A partir de R$ 249/mês com manutenção, troca e suporte 24/7 inclusos. Contrato de 36 meses."
+        title="Locação de Computadores para Empresas em Jacareí — Pare de gastar dinheiro com máquinas que só dão problema | WMTi"
+        description="Locação de computadores para empresas em Jacareí. Equipamentos atualizados, manutenção incluída, suporte completo e substituição quando necessário. Pare de gastar com máquina e invista no funcionamento da sua empresa."
         canonical="/locacao-de-computadores-para-empresas-jacarei"
       />
       <Navbar />
@@ -251,17 +251,17 @@ const LocacaoComputadoresPage = () => {
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
             <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-6">// Locação de Computadores</p>
             <h1 className="text-3xl md:text-5xl lg:text-6xl max-w-4xl mb-6 leading-tight">
-              Pare de perder dinheiro com computadores <span className="text-primary">lentos</span>, manutenção constante e paradas na operação
+              Pare de gastar dinheiro com máquinas que <span className="text-primary">só dão problema</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mb-8 leading-relaxed">
-              Alugue computadores com suporte incluso, custo mensal previsível e implantação profissional para sua empresa.
+              Comprar computador parece uma decisão inteligente. Até começar a dar problema. Primeiro fica mais lento. Depois começa a travar. Depois alguém reclama que não consegue trabalhar direito. Depois vem manutenção, troca de peça, e então… você precisa trocar tudo de novo. Isso não é investimento — é um ciclo contínuo de gasto.
             </p>
             <div className="flex flex-wrap gap-4">
               <Button size="lg" onClick={scrollToCalc} className="h-14 px-8 text-base">
                 <Calculator size={18} className="mr-2" /> Calcular investimento
               </Button>
               <a
-                href="https://wa.me/5512981156000?text=Olá! Gostaria de saber mais sobre locação de computadores."
+                href="https://wa.me/5511963166915?text=Olá! Gostaria de saber mais sobre locação de computadores."
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -309,10 +309,10 @@ const LocacaoComputadoresPage = () => {
           <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
             <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">// A Solução</p>
             <h2 className="text-2xl md:text-4xl mb-4 max-w-3xl">
-              Locação de computadores <span className="text-primary">com tudo incluso</span>
+              A locação da WMTi <span className="text-primary">elimina esse ciclo</span>
             </h2>
             <p className="text-muted-foreground max-w-2xl mb-10">
-              Estação Dell OptiPlex completa com monitor, periféricos, manutenção, troca de peças e suporte 24/7. Zero investimento inicial.
+              Você não compra. Você não se preocupa. Você não perde tempo. Equipamentos atualizados, manutenção incluída, suporte completo e substituição quando necessário.
             </p>
           </motion.div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-px bg-border">
@@ -709,16 +709,16 @@ const LocacaoComputadoresPage = () => {
       <section className="section-light py-16 md:py-20">
         <div className="container text-center">
           <h2 className="text-2xl md:text-4xl mb-4">
-            A partir de <span className="text-primary">R$ 249/mês</span> por estação completa
+            Você deixa de gastar com máquina e passa a <span className="text-primary">investir no funcionamento</span> da sua empresa
           </h2>
           <p className="text-muted-foreground max-w-xl mx-auto mb-8">
-            Sem investimento inicial, sem dor de cabeça com manutenção, sem surpresas. Foque no que importa: o seu negócio.
+            Equipamentos atualizados, manutenção incluída, suporte completo. Se der problema, resolve. Se ficar defasado, troca. Se precisar expandir, escala. E isso muda completamente o jogo.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Button size="lg" onClick={scrollToCalc} className="h-14 px-8 text-base">
               <Calculator size={18} className="mr-2" /> Calcular agora
             </Button>
-            <a href="https://wa.me/5512981156000?text=Olá! Quero saber mais sobre a locação de computadores." target="_blank" rel="noopener noreferrer">
+            <a href="https://wa.me/5511963166915?text=Olá! Quero saber mais sobre a locação de computadores." target="_blank" rel="noopener noreferrer">
               <Button size="lg" variant="outline" className="h-14 px-8 text-base">
                 Falar pelo WhatsApp
               </Button>

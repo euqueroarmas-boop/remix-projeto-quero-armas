@@ -4,33 +4,33 @@ import ServicePageTemplate from "@/components/ServicePageTemplate";
 const FirewallPfsensePage = () => (
   <ServicePageTemplate
     title="Firewall pfSense em Jacareí"
-    metaTitle="Firewall pfSense para Empresas em Jacareí e São José dos Campos | WMTi"
-    metaDescription="Implantação de firewall pfSense com VPN, IDS/IPS Suricata e multi-WAN para empresas em Jacareí, São José dos Campos e Vale do Paraíba. Segurança de rede corporativa."
+    metaTitle="Firewall PfSense em Jacareí — Sua empresa pode estar vulnerável agora | WMTi"
+    metaDescription="Firewall pfSense em Jacareí. Controle total de acessos, bloqueio de conexões suspeitas, monitoramento constante da rede e VPN segura. Sua empresa pode estar vulnerável agora e você nem sabe."
     tag="Firewall pfSense"
-    headline={<>Firewall pfSense para empresas em <span className="text-primary">Jacareí e região.</span></>}
-    description="Appliances pfSense dedicados com VPN IPsec/OpenVPN, IDS/IPS Suricata, filtro de conteúdo, balanceamento de carga e failover de links. Segurança de perímetro sem licenciamento por usuário."
+    headline={<>Sua empresa pode estar <span className="text-primary">vulnerável agora</span> e você nem sabe</>}
+    description="Sua empresa está conectada à internet o tempo todo. Mas você não vê o que está tentando entrar. E esse é exatamente o problema. Hoje, ataques não acontecem só em grandes empresas. Na verdade, pequenas e médias são as mais vulneráveis — porque normalmente não têm controle de acesso, não têm proteção real, não sabem o que está acontecendo na rede. E o risco não começa com um grande ataque. Começa com pequenas brechas: um acesso indevido, um usuário com permissão errada, um clique em um link malicioso, um equipamento exposto. E quando você percebe… já aconteceu. Dados vazados. Sistema comprometido. Informação sensível acessada. E o prejuízo não é só técnico — é financeiro e reputacional."
     whatsappMessage="Olá! Gostaria de um orçamento para firewall pfSense na minha empresa."
     painPoints={[
-      "Rede corporativa exposta sem firewall profissional",
-      "Ataques de ransomware e malware ameaçando dados da empresa",
-      "Funcionários acessando sites improdutivos ou perigosos",
-      "Queda de internet quando um dos links falha",
-      "Sem VPN segura para trabalho remoto ou conexão entre filiais",
+      "Rede corporativa exposta sem controle de acesso real",
+      "Pequenas brechas que se transformam em problemas graves sem aviso",
+      "Usuários com permissões erradas acessando o que não deveriam",
+      "Equipamentos expostos à internet sem proteção adequada",
+      "Sem visibilidade sobre o que está acontecendo na rede",
     ]}
     solutions={[
-      "Firewall pfSense em appliance dedicado com regras stateful e NAT avançado",
-      "IDS/IPS Suricata com detecção e bloqueio de ameaças em tempo real",
-      "VPN IPsec e OpenVPN com criptografia AES-256-GCM para acesso remoto seguro",
-      "Multi-WAN com failover automático entre links de internet",
-      "Filtro de conteúdo por categoria para controle de acesso web",
+      "Controle total de acessos — você decide o que entra e o que sai da rede",
+      "Bloqueio de conexões suspeitas antes que causem dano",
+      "Monitoramento constante da rede com visibilidade completa",
+      "VPN segura para acesso externo sem comprometer a segurança",
+      "Saída do escuro para visibilidade e controle real da sua rede",
     ]}
     benefits={[
-      { icon: Shield, title: "Segurança avançada", text: "Inspeção profunda de pacotes e bloqueio de ameaças em tempo real." },
-      { icon: Lock, title: "VPN corporativa", text: "Conexão segura entre filiais e para trabalho remoto com criptografia forte." },
-      { icon: Eye, title: "Monitoramento", text: "Dashboards em tempo real com logs de tráfego e alertas de intrusão." },
-      { icon: Wifi, title: "Alta disponibilidade", text: "Multi-WAN com failover automático — zero downtime em falhas de provedor." },
+      { icon: Shield, title: "Barreira real", text: "A WMTi implementa uma barreira real entre sua empresa e o risco. Segurança não é algo que você percebe quando está funcionando — é algo que você só sente falta quando já deu problema." },
+      { icon: Lock, title: "Controle total de acessos", text: "Você decide quem acessa o quê. Sem brechas, sem permissões erradas, sem equipamentos expostos." },
+      { icon: Eye, title: "Visibilidade completa", text: "Você deixa de operar no escuro e passa a ter visibilidade e controle sobre tudo que acontece na rede." },
+      { icon: Wifi, title: "VPN segura", text: "Acesso externo seguro para trabalho remoto ou conexão entre filiais, sem comprometer a rede." },
       { icon: Server, title: "Sem licenciamento", text: "pfSense é open source — sem custo por usuário ou renovação anual de licença." },
-      { icon: Activity, title: "Gestão WMTi", text: "Monitoramento 24/7 do firewall com atualizações de regras e patches." },
+      { icon: Activity, title: "Monitoramento constante", text: "Monitoramento 24/7 do firewall com atualizações de regras e patches pela equipe WMTi." },
     ]}
     faq={[
       { question: "pfSense é seguro para empresas?", answer: "Sim. pfSense é usado por milhares de empresas e órgãos governamentais em todo o mundo. Baseado em FreeBSD, tem excelente histórico de segurança. Com IDS/IPS Suricata integrado, oferece proteção comparável a firewalls proprietários de alto custo." },

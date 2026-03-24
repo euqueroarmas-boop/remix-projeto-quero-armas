@@ -4,32 +4,32 @@ import ServicePageTemplate from "@/components/ServicePageTemplate";
 const MontagemRedesPage = () => (
   <ServicePageTemplate
     title="Montagem e Monitoramento de Redes em Jacareí"
-    metaTitle="Montagem e Monitoramento de Redes em Jacareí e São José dos Campos | WMTi"
-    metaDescription="Montagem de redes corporativas com cabeamento estruturado Cat6A, switches Dell gerenciáveis, VLANs e monitoramento 24/7 em Jacareí, São José dos Campos e Vale do Paraíba."
+    metaTitle="Montagem e Monitoramento de Redes em Jacareí — Sua empresa está perdendo produtividade | WMTi"
+    metaDescription="Montagem e monitoramento de redes em Jacareí. Estrutura correta, distribuição inteligente, estabilidade real e monitoramento constante. Pare de perder produtividade com rede mal estruturada."
     tag="Redes Corporativas"
-    headline={<>Montagem e monitoramento de redes em <span className="text-primary">Jacareí e região.</span></>}
-    description="Projeto e implementação de redes corporativas com cabeamento estruturado Cat6A e fibra óptica, switches Dell gerenciáveis, VLANs segmentadas e monitoramento contínuo via Zabbix."
+    headline={<>Sua empresa está perdendo produtividade com uma <span className="text-primary">rede mal estruturada</span></>}
+    description="Internet lenta não é normal. Rede caindo não é normal. Sistema demorando para responder não é normal. Mas muita empresa se acostumou com isso. E esse é o problema. Porque quando a rede não funciona bem, toda a empresa trava: funcionário esperando, sistema demorando, operação lenta, cliente esperando. E isso vai sendo absorvido como rotina. Mas não deveria. Uma rede bem estruturada não oscila o tempo todo."
     whatsappMessage="Olá! Gostaria de um orçamento para montagem de rede na minha empresa."
     painPoints={[
-      "Rede lenta com cabos desorganizados e sem identificação",
-      "Quedas frequentes de conexão afetando produtividade",
-      "Sem segmentação de rede — todos os dispositivos na mesma rede",
-      "Equipamentos de rede domésticos em ambiente corporativo",
+      "Internet lenta que todo mundo já aceitou como normal",
+      "Rede caindo e ninguém sabe a causa real",
+      "Funcionário esperando, sistema demorando, operação lenta",
+      "Problemas de conectividade absorvidos como rotina do dia a dia",
       "Sem monitoramento — problemas só são descobertos quando param tudo",
     ]}
     solutions={[
-      "Projeto de rede estruturada com cabeamento Cat6A certificado e organizado",
-      "Switches Dell Networking N-Series gerenciáveis com PoE+",
-      "Segmentação por VLANs: separar dados, VoIP, câmeras e visitantes",
-      "Monitoramento 24/7 via Zabbix com alertas proativos por WhatsApp",
-      "Documentação completa com diagramas de rede e identificação de pontos",
+      "Estrutura correta desde a base — rede projetada para funcionar de verdade",
+      "Distribuição inteligente do tráfego para eliminar gargalos",
+      "Estabilidade real — sem oscilações, sem quedas constantes",
+      "Monitoramento constante para identificar e resolver antes de parar",
+      "Ambiente instável vira ambiente confiável — e quando a rede funciona bem, tudo flui melhor",
     ]}
     benefits={[
-      { icon: Network, title: "Cabeamento certificado", text: "Cat6A e fibra óptica com certificação de desempenho e garantia." },
-      { icon: Wifi, title: "Wi-Fi corporativo", text: "Access points enterprise com roaming, autenticação 802.1X e cobertura total." },
-      { icon: Shield, title: "Segmentação", text: "VLANs para separar redes e reduzir superfície de ataque." },
-      { icon: Activity, title: "Monitoramento", text: "Zabbix + Grafana com dashboards em tempo real e alertas automáticos." },
-      { icon: Server, title: "Switches gerenciáveis", text: "Dell Networking com QoS, STP, SNMP e gerenciamento centralizado." },
+      { icon: Network, title: "Estrutura correta", text: "A WMTi organiza sua rede desde a base. Cabeamento certificado, projeto correto, resultado confiável." },
+      { icon: Wifi, title: "Distribuição inteligente", text: "Tráfego distribuído de forma inteligente para que nenhum ponto da rede seja gargalo." },
+      { icon: Shield, title: "Estabilidade real", text: "Rede que não oscila o tempo todo. Ambiente instável vira ambiente confiável." },
+      { icon: Activity, title: "Monitoramento constante", text: "Monitoramento 24/7 para identificar problemas antes que impactem a operação." },
+      { icon: Server, title: "Switches gerenciáveis", text: "Equipamentos corporativos com QoS, segmentação e gerenciamento centralizado." },
       { icon: Wrench, title: "Manutenção preventiva", text: "Revisão periódica de infraestrutura de rede com relatório técnico." },
     ]}
     faq={[

@@ -3,34 +3,34 @@ import ServicePageTemplate from "@/components/ServicePageTemplate";
 
 const SuporteTiPage = () => (
   <ServicePageTemplate
-    title="Suporte de TI Empresarial em Jacareí"
-    metaTitle="Suporte de TI Empresarial em Jacareí e São José dos Campos | WMTi"
-    metaDescription="Suporte técnico de TI para empresas em Jacareí e São José dos Campos. Atendimento remoto e presencial, monitoramento 24/7, SLA definido e equipe certificada Dell e Microsoft."
+    title="Suporte de TI em Jacareí"
+    metaTitle="Suporte de TI em Jacareí — Sua empresa está perdendo dinheiro com problemas técnicos | WMTi"
+    metaDescription="Suporte de TI em Jacareí. Monitoramento contínuo, correção preventiva, atendimento rápido e padronização de ambiente. Pare de perder dinheiro com problemas técnicos todos os dias."
     tag="Suporte de TI"
-    headline={<>Suporte de TI empresarial em <span className="text-primary">Jacareí e região.</span></>}
-    description="Suporte técnico com SLA definido, atendimento remoto e presencial, monitoramento 24/7 e equipe certificada Dell e Microsoft. Resolução rápida para manter sua operação funcionando."
+    headline={<>Sua empresa está perdendo dinheiro com <span className="text-primary">problemas técnicos</span> todos os dias</>}
+    description="Computador travando. Sistema lento. Impressora que não funciona. Funcionário esperando alguém resolver. Isso não é um detalhe técnico — é a sua empresa deixando de produzir. Enquanto um funcionário espera o computador voltar, o salário continua sendo pago. Enquanto o sistema trava, o atendimento atrasa. Enquanto ninguém resolve de verdade, o cliente perde a paciência. E isso acontece mais vezes do que deveria. O problema não é o computador, não é o sistema, não é o usuário. É a falta de estrutura. A maioria das empresas funciona assim: espera dar problema para depois tentar resolver. E nisso, vai acumulando pequenas perdas todos os dias. Só que essas pequenas perdas, somadas, viram um prejuízo grande."
     whatsappMessage="Olá! Gostaria de saber mais sobre os planos de suporte de TI da WMTi."
     painPoints={[
-      "Chamados de TI demoram dias para serem atendidos",
-      "Técnicos generalistas que não resolvem problemas complexos",
-      "Sem SLA definido — não há garantia de tempo de resposta",
-      "Custos imprevisíveis com chamados avulsos de TI",
-      "Nenhum monitoramento — problemas só são detectados quando param tudo",
+      "Computador travando e funcionário parado esperando alguém resolver",
+      "Sistema lento atrasando o atendimento ao cliente",
+      "Impressora que não funciona e ninguém sabe consertar",
+      "Pequenas perdas diárias que somadas viram prejuízo grande",
+      "Nenhum monitoramento — problemas só são tratados quando tudo já parou",
     ]}
     solutions={[
-      "SLA definido por criticidade: resposta em até 1h para incidentes críticos",
-      "Equipe certificada Dell e Microsoft com atendimento presencial e remoto",
-      "Monitoramento proativo 24/7 via Zabbix — identificamos problemas antes de impactar",
-      "Custo fixo mensal previsível — sem surpresas com chamados avulsos",
-      "Relatórios mensais de desempenho, uptime e incidentes resolvidos",
+      "Monitoramento contínuo da sua estrutura — identificamos problemas antes de virar prejuízo",
+      "Correção antes da falha virar parada na operação",
+      "Atendimento rápido quando necessário, remoto ou presencial",
+      "Padronização de todo o ambiente para uma operação previsível",
+      "Saída de um cenário onde tudo depende da sorte para uma operação que funciona como deveria",
     ]}
     benefits={[
-      { icon: Headphones, title: "Suporte dedicado", text: "Canal exclusivo com equipe técnica fixa que conhece seu ambiente." },
-      { icon: Clock, title: "SLA garantido", text: "Tempos de resposta definidos por contrato conforme criticidade." },
-      { icon: Activity, title: "Monitoramento 24/7", text: "NOC próprio com Zabbix e Grafana monitorando toda sua infraestrutura." },
-      { icon: Shield, title: "Segurança inclusa", text: "Atualizações de segurança, patches e antivírus gerenciado." },
-      { icon: Wrench, title: "Manutenção preventiva", text: "Revisões periódicas de hardware e software para evitar falhas." },
-      { icon: Users, title: "Escalável", text: "Planos que crescem com sua empresa, de 5 a 500+ estações." },
+      { icon: Activity, title: "Monitoramento contínuo", text: "A gente organiza, monitora e evita que o problema aconteça. Você sai de um cenário onde tudo depende da sorte." },
+      { icon: Wrench, title: "Correção preventiva", text: "Correção antes da falha virar prejuízo. Empresa não pode parar — e hoje, a sua para mais do que deveria." },
+      { icon: Clock, title: "Atendimento rápido", text: "Quando necessário, suporte remoto ou presencial com tempo de resposta definido por contrato." },
+      { icon: Shield, title: "Padronização do ambiente", text: "Todo o ambiente organizado e padronizado para que as coisas funcionem como deveriam." },
+      { icon: Headphones, title: "Suporte dedicado", text: "Equipe técnica fixa que conhece seu ambiente. Não aparecemos só quando tudo já parou." },
+      { icon: Users, title: "Escalável", text: "Planos que crescem com sua empresa. De 5 a 500+ estações, sem surpresas." },
     ]}
     faq={[
       { question: "Como funciona o suporte remoto?", answer: "Utilizamos ferramentas de acesso remoto seguro. Ao abrir um chamado, nosso técnico acessa sua máquina remotamente (com sua autorização) e resolve o problema em tempo real. Para questões que exigem presença física, deslocamos um técnico." },
