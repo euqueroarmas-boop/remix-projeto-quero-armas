@@ -67,6 +67,11 @@ const ContratarServicoPage = () => {
   const service = SERVICE_CATALOG.find(s => s.slug === slug);
   const serviceName = service?.name || searchParams.get("servico") || "Serviço de TI";
   const isEmergency = service?.isEmergency || false;
+  const isRentalContract = slug === "locacao-de-computadores-para-empresas-jacarei";
+  const selectedRentalPlanId = searchParams.get("plano") || "equilibrio";
+  const selectedRentalQty = Math.max(1, Number(searchParams.get("qty") || 1));
+  const selectedRentalPlan = plans.find((item) => item.id === selectedRentalPlanId) || plans[1];
+  const rentalMonthlyValue = selectedRentalPlan.price * selectedRentalQty;
   const basePrice = isEmergency ? 300 : 200;
   const priceTable = isEmergency ? EMERGENCY_PRICES : STANDARD_PRICES;
 
