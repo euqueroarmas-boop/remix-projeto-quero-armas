@@ -90,7 +90,7 @@ const ContratarServicoPage = () => {
   const [paymentComplete, setPaymentComplete] = useState(false);
   const [invoiceUrl, setInvoiceUrl] = useState<string | null>(null);
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
-  const emailSentRef = useRef(false);
+  const [popupBlocked, setPopupBlocked] = useState(false);
 
   // Calculations
   const unitPrice = priceTable[Math.min(hours, 8)] ?? (isEmergency ? 217.5 : 145);
