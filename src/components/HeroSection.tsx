@@ -40,22 +40,22 @@ const HeroSection = () => {
             transition={{ duration: 0.6 }}
           >
             <p className="font-mono text-xs md:text-sm tracking-[0.2em] md:tracking-[0.3em] uppercase text-primary mb-4 md:mb-6">
-              // Infraestrutura. Segurança. Performance.
+              // Sua empresa sem parar. Nunca mais.
             </p>
             <h1 className="text-3xl md:text-5xl lg:text-7xl leading-[1.1] mb-6 md:mb-8">
-              Infraestrutura de TI segura
+              Chega de prejuízo
               <br className="hidden md:block" />
-              {" "}e estável para{" "}
-              <span className="text-primary">empresas.</span>
+              {" "}com TI que{" "}
+              <span className="text-primary">não funciona.</span>
             </h1>
             <p className="font-body text-base md:text-xl text-gunmetal-foreground/70 max-w-2xl mb-4 leading-relaxed">
-              A WMTi Tecnologia da Informação é especialista em infraestrutura
-              corporativa, servidores Dell PowerEdge, redes empresariais,
-              Microsoft 365, Azure e segurança de rede com firewall pfSense.
+              Sua empresa perde dinheiro toda vez que o sistema cai, o servidor
+              trava ou a rede fica lenta. A WMTi elimina esses problemas
+              com infraestrutura profissional que funciona 24/7.
             </p>
             <p className="font-body text-base md:text-xl text-gunmetal-foreground/70 max-w-2xl mb-8 md:mb-12 leading-relaxed">
-              Há mais de 15 anos ajudando empresas a manter seus sistemas
-              funcionando com segurança, desempenho e confiabilidade.
+              Mais de <strong className="text-foreground">150 empresas</strong> já operam sem interrupções.
+              <strong className="text-primary"> A sua pode ser a próxima.</strong>
             </p>
           </motion.div>
 
