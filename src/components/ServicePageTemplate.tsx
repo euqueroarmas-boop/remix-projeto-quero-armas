@@ -291,10 +291,10 @@ const ServicePageTemplate = ({
         <div className="container max-w-3xl text-center">
           <motion.div {...fadeIn}>
             <h2 className="text-2xl md:text-4xl mb-4">
-              Pronto para melhorar sua <span className="text-primary">infraestrutura?</span>
+              Pare de perder dinheiro com TI <span className="text-primary">que não funciona.</span>
             </h2>
             <p className="font-body text-muted-foreground max-w-xl mx-auto mb-8 leading-relaxed">
-              Solicite um diagnóstico gratuito. Nossa equipe técnica avalia sua infraestrutura atual e apresenta um projeto personalizado.
+              Peça um diagnóstico gratuito. Em até 48h você recebe uma proposta com valor fixo mensal — sem surpresas.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <a
