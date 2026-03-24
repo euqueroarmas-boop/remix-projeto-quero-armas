@@ -440,6 +440,94 @@ const LocacaoComputadoresPage = () => {
         </div>
       </section>
 
+      {/* ══════ NOTEBOOKS SOB CONSULTA ══════ */}
+      <section className="section-dark py-16 md:py-20 border-t border-border">
+        <div className="container max-w-4xl">
+          <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-center mb-10">
+            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">// Notebooks</p>
+            <h2 className="text-2xl md:text-3xl mb-3">Precisa de <span className="text-primary">notebooks</span> ao invés de desktops?</h2>
+            <p className="text-muted-foreground max-w-xl mx-auto text-sm leading-relaxed">
+              Notebooks corporativos exigem configuração personalizada — modelo, tela, autonomia de bateria
+              e perfil de uso variam muito entre empresas. Por isso, montamos propostas sob medida.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="bg-card border-2 border-primary/20 rounded-2xl p-8 md:p-10"
+          >
+            <div className="flex flex-col md:flex-row items-center gap-8">
+              <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
+                <Laptop size={36} className="text-primary" />
+              </div>
+              <div className="flex-1 text-center md:text-left">
+                <h3 className="font-heading text-xl font-bold mb-2">Locação de Notebooks Dell</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed mb-1">
+                  Dell Latitude e Vostro para equipes externas, gerentes e profissionais que precisam de mobilidade.
+                </p>
+                <div className="flex flex-wrap gap-3 mt-4 justify-center md:justify-start">
+                  {["Dell Latitude", "Dell Vostro", "Core i5 / i7", "Tela 14\" ou 15\"", "SSD + 16GB RAM", "Suporte incluso"].map((tag) => (
+                    <span key={tag} className="inline-flex items-center gap-1 px-3 py-1 bg-primary/5 border border-primary/20 rounded-full text-xs text-primary font-medium">
+                      <CheckCircle2 size={10} /> {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-8 pt-6 border-t border-border">
+              <div className="bg-secondary/50 rounded-xl p-5 text-center mb-6">
+                <p className="text-xs font-mono uppercase tracking-wide text-muted-foreground mb-1">Valor</p>
+                <p className="text-2xl font-bold text-foreground">Sob consulta</p>
+                <p className="text-xs text-muted-foreground mt-1">Proposta personalizada em até 24h</p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6 text-center">
+                {[
+                  { label: "Contrato flexível", desc: "12 a 36 meses" },
+                  { label: "Troca garantida", desc: "Em caso de defeito" },
+                  { label: "Suporte 24/7", desc: "Remoto e presencial" },
+                ].map((item) => (
+                  <div key={item.label} className="p-3 bg-background rounded-lg border border-border">
+                    <p className="text-xs font-bold text-foreground">{item.label}</p>
+                    <p className="text-[10px] text-muted-foreground">{item.desc}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <a
+                  href="https://wa.me/5511963166915?text=Ol%C3%A1!%20Preciso%20de%20uma%20proposta%20de%20loca%C3%A7%C3%A3o%20de%20notebooks%20corporativos%20para%20minha%20empresa."
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1"
+                >
+                  <Button size="lg" className="w-full h-14 text-base bg-primary hover:bg-primary/90">
+                    <MessageCircle size={18} className="mr-2" />
+                    Solicitar proposta de notebooks
+                  </Button>
+                </a>
+                <a
+                  href="mailto:contato@wmti.com.br?subject=Proposta%20de%20Loca%C3%A7%C3%A3o%20de%20Notebooks&body=Ol%C3%A1!%20Gostaria%20de%20receber%20uma%20proposta%20de%20loca%C3%A7%C3%A3o%20de%20notebooks%20corporativos."
+                  className="flex-1"
+                >
+                  <Button size="lg" variant="outline" className="w-full h-14 text-base">
+                    Enviar e-mail
+                  </Button>
+                </a>
+              </div>
+            </div>
+          </motion.div>
+
+          <p className="text-xs text-muted-foreground text-center mt-6">
+            💡 <strong>Dica:</strong> Para equipes fixas (escritório), a locação de desktops é mais econômica.
+            Notebooks são ideais para equipes externas ou profissionais que precisam de mobilidade.
+          </p>
+        </div>
+      </section>
+
       {/* ══════ CALCULATOR ══════ */}
       <section id="calculadora" className="section-dark py-16 md:py-20">
         <div className="container max-w-2xl">
