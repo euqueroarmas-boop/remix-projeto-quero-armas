@@ -251,10 +251,10 @@ const LocacaoComputadoresPage = () => {
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
             <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-6">// Locação de Computadores</p>
             <h1 className="text-3xl md:text-5xl lg:text-6xl max-w-4xl mb-6 leading-tight">
-              Pare de perder dinheiro com computadores <span className="text-primary">lentos</span>, manutenção constante e paradas na operação
+              Pare de gastar dinheiro com máquinas que <span className="text-primary">só dão problema</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mb-8 leading-relaxed">
-              Alugue computadores com suporte incluso, custo mensal previsível e implantação profissional para sua empresa.
+              Comprar computador parece uma decisão inteligente. Até começar a dar problema. Primeiro fica mais lento. Depois começa a travar. Depois alguém reclama que não consegue trabalhar direito. Depois vem manutenção, troca de peça, e então… você precisa trocar tudo de novo. Isso não é investimento — é um ciclo contínuo de gasto.
             </p>
             <div className="flex flex-wrap gap-4">
               <Button size="lg" onClick={scrollToCalc} className="h-14 px-8 text-base">
