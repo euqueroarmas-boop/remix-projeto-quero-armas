@@ -270,6 +270,44 @@ Deno.serve(async (req) => {
                 });
 
                 console.log("[asaas-webhook] Conta criada com sucesso para:", customer.email);
+
+                // ── Send confirmation email with credentials ──
+                try {
+                  const quoteData = paymentRecord.quote_id ? await supabase
+                    .from("quotes")
+                    .select("selected_plan, computers_qty, monthly_value")
+                    .eq("id", paymentRecord.quote_id)
+                    .single() : null;
+
+                  await supabase.functions.invoke("send-purchase-confirmation", {
+                    body: {
+                      customer_name: customer.razao_social || customer.email,
+                      customer_email: customer.email,
+                      service_name: contractData.contract_type === "locacao"
+                        ? "Locação de Equipamentos"
+                        : contractData.contract_type === "horas-tecnicas"
+                        ? `Pacote de horas técnicas`
+                        : quoteData?.data?.selected_plan || "Serviços de TI",
+                      computers_qty: quoteData?.data?.computers_qty || null,
+                      value: contractData.monthly_value || payment.value,
+                      payment_method: payment.billingType || "CREDIT_CARD",
+                      contract_ref: paymentRecord.quote_id ? paymentRecord.quote_id.slice(0, 8).toUpperCase() : null,
+                      purchase_date: new Date().toLocaleDateString("pt-BR"),
+                      is_recurring: contractData.contract_type === "locacao",
+                      login_email: customer.email,
+                      temp_password: tempPassword,
+                    },
+                  });
+                  console.log("[asaas-webhook] Email de confirmação enviado com credenciais para:", customer.email);
+                } catch (emailErr) {
+                  console.error("[asaas-webhook] Erro ao enviar email de confirmação:", emailErr);
+                  await logSistemaBackend({
+                    tipo: "email",
+                    status: "error",
+                    mensagem: "Erro ao enviar email pós-pagamento com credenciais",
+                    payload: { email: customer.email, error: String(emailErr) },
+                  });
+                }
               }
             } catch (e) {
               console.error("[asaas-webhook] Exceção ao criar conta:", e);
