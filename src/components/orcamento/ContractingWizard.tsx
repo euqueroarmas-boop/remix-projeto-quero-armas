@@ -51,6 +51,14 @@ interface Props {
   leadEmail?: string;
   leadPhone?: string;
   leadCity?: string;
+  leadCnpj?: string;
+  leadNomeFantasia?: string;
+  leadUf?: string;
+  leadCep?: string;
+  leadEndereco?: string;
+  leadNumero?: string;
+  leadComplemento?: string;
+  leadBairro?: string;
 }
 
 const normalizeQrImage = (value: unknown) => {
@@ -106,6 +114,14 @@ const ContractingWizard = ({
   leadEmail,
   leadPhone,
   leadCity,
+  leadCnpj,
+  leadNomeFantasia,
+  leadUf,
+  leadCep,
+  leadEndereco,
+  leadNumero,
+  leadComplemento,
+  leadBairro,
 }: Props) => {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -454,19 +470,19 @@ const ContractingWizard = ({
 
   const initialRegistrationData: Partial<RegistrationData> = {
     razaoSocial: leadCompanyName || "",
-    nomeFantasia: "",
-    cnpjOuCpf: qualification?.cnpj || "",
+    nomeFantasia: leadNomeFantasia || "",
+    cnpjOuCpf: leadCnpj || qualification?.cnpj || "",
     responsavel: leadContactName || "",
     email: leadEmail || "",
     telefone: leadPhone || "",
-    cep: qualification?.cep || "",
-    endereco: qualification?.address || "",
-    numero: "",
-    complemento: "",
-    bairro: "",
-    cidade: qualification?.city || leadCity || "",
-    uf: qualification?.state || "",
-    isPJ: true,
+    cep: leadCep || qualification?.cep || "",
+    endereco: leadEndereco || qualification?.address || "",
+    numero: leadNumero || "",
+    complemento: leadComplemento || "",
+    bairro: leadBairro || "",
+    cidade: leadCity || qualification?.city || "",
+    uf: leadUf || qualification?.state || "",
+    isPJ: !!(leadCnpj && leadCnpj.replace(/\D/g, "").length > 11),
   };
 
   const showOutsourcingAfterPayment = paymentComplete && qualification?.hasInternalTech === "Sim";

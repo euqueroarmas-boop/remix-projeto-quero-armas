@@ -1,16 +1,18 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Monitor, Wrench, DollarSign, RefreshCw, Headphones, ShieldCheck,
   CheckCircle2, ArrowRight, AlertTriangle, TrendingDown, Clock, Ban,
-  Zap, Building2, Award, ChevronRight, Calculator, Send, Loader2,
+  Zap, Building2, Award, Calculator, Send, Loader2,
   Minus, Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useBrasilApiLookup } from "@/hooks/useBrasilApiLookup";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
@@ -52,9 +54,43 @@ const comparisons = [
   { item: "Atualização", compra: "Comprar novo", locacao: "Troca periódica" },
 ];
 
+/* ─── Format helpers ─── */
+const formatCnpjCpf = (value: string) => {
+  const digits = value.replace(/\D/g, "").slice(0, 14);
+  if (digits.length <= 11) {
+    return digits
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+  }
+  return digits
+    .replace(/(\d{2})(\d)/, "$1.$2")
+    .replace(/(\d{3})(\d)/, "$1.$2")
+    .replace(/(\d{3})(\d)/, "$1/$2")
+    .replace(/(\d{4})(\d{1,2})$/, "$1-$2");
+};
+
+const formatCep = (value: string) => {
+  const digits = value.replace(/\D/g, "").slice(0, 8);
+  return digits.replace(/(\d{5})(\d{1,3})/, "$1-$2");
+};
+
+const formatPhone = (value: string) => {
+  const digits = value.replace(/\D/g, "").slice(0, 11);
+  if (digits.length <= 10) {
+    return digits
+      .replace(/(\d{2})(\d)/, "($1) $2")
+      .replace(/(\d{4})(\d{1,4})$/, "$1-$2");
+  }
+  return digits
+    .replace(/(\d{2})(\d)/, "($1) $2")
+    .replace(/(\d{5})(\d{1,4})$/, "$1-$2");
+};
+
 const LocacaoComputadoresPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { lookupCnpj, lookupCep, cnpjLoading, cepLoading } = useBrasilApiLookup();
 
   /* ── Calculator state ── */
   const [selectedPlan, setSelectedPlan] = useState("equilibrio");
@@ -66,17 +102,73 @@ const LocacaoComputadoresPage = () => {
   const [showLead, setShowLead] = useState(false);
   const [leadSent, setLeadSent] = useState(false);
   const [leadLoading, setLeadLoading] = useState(false);
-  const [lead, setLead] = useState({ nome: "", whatsapp: "", email: "", empresa: "", cidade: "", cnpj: "" });
+  const [lead, setLead] = useState({
+    responsavel: "",
+    whatsapp: "",
+    email: "",
+    empresa: "",
+    nomeFantasia: "",
+    cnpj: "",
+    cidade: "",
+    uf: "",
+    cep: "",
+    endereco: "",
+    numero: "",
+    complemento: "",
+    bairro: "",
+  });
+
+  const rawCnpj = lead.cnpj.replace(/\D/g, "");
+  const rawCep = lead.cep.replace(/\D/g, "");
+
+  // CNPJ auto-fill
+  useEffect(() => {
+    if (rawCnpj.length !== 14) return;
+    lookupCnpj(rawCnpj).then((data) => {
+      if (!data) {
+        toast({ title: "CNPJ não encontrado", description: "Preencha manualmente.", variant: "destructive" });
+        return;
+      }
+      setLead((prev) => ({
+        ...prev,
+        empresa: data.razao_social || prev.empresa,
+        nomeFantasia: data.nome_fantasia || prev.nomeFantasia,
+        endereco: data.logradouro || prev.endereco,
+        numero: data.numero || prev.numero,
+        complemento: data.complemento || prev.complemento,
+        bairro: data.bairro || prev.bairro,
+        cidade: data.municipio || prev.cidade,
+        uf: data.uf || prev.uf,
+        cep: data.cep ? formatCep(data.cep) : prev.cep,
+        whatsapp: !prev.whatsapp && data.ddd_telefone_1 ? formatPhone(data.ddd_telefone_1.replace(/\D/g, "")) : prev.whatsapp,
+      }));
+      toast({ title: "Dados encontrados!", description: data.razao_social || "" });
+    });
+  }, [rawCnpj]);
+
+  // CEP auto-fill
+  useEffect(() => {
+    if (rawCep.length !== 8) return;
+    lookupCep(rawCep).then((data) => {
+      if (!data) return;
+      setLead((prev) => ({
+        ...prev,
+        endereco: data.street || prev.endereco,
+        bairro: data.neighborhood || prev.bairro,
+        cidade: data.city || prev.cidade,
+        uf: data.state || prev.uf,
+      }));
+    });
+  }, [rawCep]);
 
   const handleLeadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!lead.nome.trim() || !lead.whatsapp.trim()) {
+    if (!lead.responsavel.trim() || !lead.whatsapp.trim()) {
       toast({ title: "Preencha nome e WhatsApp", variant: "destructive" });
       return;
     }
     setLeadLoading(true);
     try {
-      // Check for existing lead by whatsapp
       const { data: existing } = await supabase
         .from("leads")
         .select("id")
@@ -85,7 +177,7 @@ const LocacaoComputadoresPage = () => {
 
       if (!existing) {
         await supabase.from("leads").insert({
-          name: lead.nome.trim(),
+          name: lead.responsavel.trim(),
           email: lead.email.trim() || `${lead.whatsapp.replace(/\D/g, "")}@pendente.com`,
           phone: lead.whatsapp.trim(),
           whatsapp: lead.whatsapp.trim(),
@@ -96,7 +188,6 @@ const LocacaoComputadoresPage = () => {
         });
       }
 
-      // Create proposal
       await supabase.from("proposals").insert({
         plan: selectedPlan,
         computers_qty: qty,
@@ -113,6 +204,29 @@ const LocacaoComputadoresPage = () => {
     } finally {
       setLeadLoading(false);
     }
+  };
+
+  const handleAdvanceToContract = () => {
+    // Pass all lead data via URL params so the ContractingWizard can pre-fill
+    const params = new URLSearchParams({
+      plano: selectedPlan,
+      qty: String(qty),
+      preco: String(plan.price),
+      empresa: lead.empresa,
+      nomeFantasia: lead.nomeFantasia,
+      responsavel: lead.responsavel,
+      email: lead.email,
+      whatsapp: lead.whatsapp,
+      cnpj: lead.cnpj,
+      cidade: lead.cidade,
+      uf: lead.uf,
+      cep: lead.cep,
+      endereco: lead.endereco,
+      numero: lead.numero,
+      complemento: lead.complemento,
+      bairro: lead.bairro,
+    });
+    navigate(`/contratar/locacao-de-computadores-para-empresas-jacarei?${params.toString()}`);
   };
 
   const scrollToCalc = () => {
@@ -388,34 +502,86 @@ const LocacaoComputadoresPage = () => {
             )}
 
             {showLead && !leadSent && (
-              <form onSubmit={handleLeadSubmit} className="space-y-3 border-t border-border pt-6">
+              <form onSubmit={handleLeadSubmit} className="space-y-4 border-t border-border pt-6">
                 <p className="text-sm font-heading font-bold text-center mb-4">Preencha para receber sua proposta</p>
+
+                {/* CNPJ first — triggers auto-fill */}
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-1 block">CNPJ</Label>
+                  <div className="relative">
+                    <Input
+                      value={lead.cnpj}
+                      onChange={(e) => setLead({ ...lead, cnpj: formatCnpjCpf(e.target.value) })}
+                      placeholder="00.000.000/0001-00"
+                      className="bg-background pr-10"
+                      maxLength={18}
+                    />
+                    {cnpjLoading && <Loader2 className="w-4 h-4 animate-spin absolute right-3 top-3 text-primary" />}
+                  </div>
+                  {rawCnpj.length === 14 && !cnpjLoading && lead.empresa && (
+                    <p className="text-xs text-primary mt-1">✓ {lead.empresa}</p>
+                  )}
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Nome *</label>
-                    <Input value={lead.nome} onChange={(e) => setLead({ ...lead, nome: e.target.value })} placeholder="Seu nome" className="bg-background" required />
+                    <Label className="text-xs text-muted-foreground mb-1 block">Nome do responsável *</Label>
+                    <Input value={lead.responsavel} onChange={(e) => setLead({ ...lead, responsavel: e.target.value })} placeholder="Seu nome" className="bg-background" required />
                   </div>
                   <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">WhatsApp *</label>
-                    <Input value={lead.whatsapp} onChange={(e) => setLead({ ...lead, whatsapp: e.target.value })} placeholder="(12) 99999-9999" className="bg-background" required />
+                    <Label className="text-xs text-muted-foreground mb-1 block">WhatsApp *</Label>
+                    <Input value={lead.whatsapp} onChange={(e) => setLead({ ...lead, whatsapp: formatPhone(e.target.value) })} placeholder="(12) 99999-9999" className="bg-background" maxLength={15} required />
                   </div>
                   <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">E-mail</label>
+                    <Label className="text-xs text-muted-foreground mb-1 block">E-mail</Label>
                     <Input type="email" value={lead.email} onChange={(e) => setLead({ ...lead, email: e.target.value })} placeholder="email@empresa.com" className="bg-background" />
                   </div>
                   <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Empresa</label>
-                    <Input value={lead.empresa} onChange={(e) => setLead({ ...lead, empresa: e.target.value })} placeholder="Nome da empresa" className="bg-background" />
-                  </div>
-                  <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Cidade</label>
-                    <Input value={lead.cidade} onChange={(e) => setLead({ ...lead, cidade: e.target.value })} placeholder="Jacareí" className="bg-background" />
-                  </div>
-                  <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">CNPJ</label>
-                    <Input value={lead.cnpj} onChange={(e) => setLead({ ...lead, cnpj: e.target.value })} placeholder="Opcional" className="bg-background" />
+                    <Label className="text-xs text-muted-foreground mb-1 block">Empresa</Label>
+                    <Input value={lead.empresa} onChange={(e) => setLead({ ...lead, empresa: e.target.value })} placeholder="Razão social" className="bg-background" />
                   </div>
                 </div>
+
+                {/* Address section - auto-filled by CNPJ or CEP */}
+                <div className="border-t border-border pt-3">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Endereço</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs text-muted-foreground mb-1 block">CEP</Label>
+                      <div className="relative">
+                        <Input
+                          value={lead.cep}
+                          onChange={(e) => setLead({ ...lead, cep: formatCep(e.target.value) })}
+                          placeholder="00000-000"
+                          className="bg-background pr-10"
+                          maxLength={9}
+                        />
+                        {cepLoading && <Loader2 className="w-4 h-4 animate-spin absolute right-3 top-3 text-primary" />}
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground mb-1 block">Cidade</Label>
+                      <Input value={lead.cidade} onChange={(e) => setLead({ ...lead, cidade: e.target.value })} placeholder="Jacareí" className="bg-background" />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground mb-1 block">UF</Label>
+                      <Input value={lead.uf} onChange={(e) => setLead({ ...lead, uf: e.target.value.toUpperCase().slice(0, 2) })} placeholder="SP" className="bg-background" maxLength={2} />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground mb-1 block">Logradouro</Label>
+                      <Input value={lead.endereco} onChange={(e) => setLead({ ...lead, endereco: e.target.value })} placeholder="Rua, Avenida..." className="bg-background" />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground mb-1 block">Número</Label>
+                      <Input value={lead.numero} onChange={(e) => setLead({ ...lead, numero: e.target.value })} placeholder="123" className="bg-background" />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground mb-1 block">Bairro</Label>
+                      <Input value={lead.bairro} onChange={(e) => setLead({ ...lead, bairro: e.target.value })} placeholder="Bairro" className="bg-background" />
+                    </div>
+                  </div>
+                </div>
+
                 <Button type="submit" disabled={leadLoading} className="w-full h-14 text-base">
                   {leadLoading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Send className="w-5 h-5 mr-2" />}
                   Gerar proposta
@@ -441,7 +607,7 @@ const LocacaoComputadoresPage = () => {
                   <p className="text-xs text-muted-foreground">Validade: 15 dias a partir de hoje</p>
                 </div>
 
-                <Button onClick={() => navigate(`/contratar/locacao-de-computadores-para-empresas-jacarei?plano=${selectedPlan}&qty=${qty}&preco=${plan.price}`)} className="w-full h-14 text-base">
+                <Button onClick={handleAdvanceToContract} className="w-full h-14 text-base">
                   Avançar para contrato <ArrowRight size={18} className="ml-2" />
                 </Button>
               </div>
