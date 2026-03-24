@@ -19,6 +19,7 @@ import AdminWebhooks from "@/components/admin/AdminWebhooks";
 import AdminAudit from "@/components/admin/AdminAudit";
 import AdminRiskMonitor from "@/components/admin/AdminRiskMonitor";
 import AdminLeadsProposals from "@/components/admin/AdminLeadsProposals";
+import AdminDiagnostics from "@/components/admin/AdminDiagnostics";
 
 const ITEMS_PER_PAGE = 20;
 
@@ -776,6 +777,7 @@ export default function AdminPage() {
               <TabsTrigger value="webhooks" className="text-xs md:text-sm px-2.5 md:px-3">Webhooks</TabsTrigger>
               <TabsTrigger value="audit" className="text-xs md:text-sm px-2.5 md:px-3">Auditoria</TabsTrigger>
               <TabsTrigger value="risk" className="text-xs md:text-sm px-2.5 md:px-3">Risco</TabsTrigger>
+              <TabsTrigger value="diagnostics" className="text-xs md:text-sm px-2.5 md:px-3 text-destructive">🔍 Diagnóstico</TabsTrigger>
             </TabsList>
           </div>
 
@@ -789,6 +791,7 @@ export default function AdminPage() {
           <TabsContent value="webhooks"><AdminWebhooks /></TabsContent>
           <TabsContent value="audit"><AdminAudit /></TabsContent>
           <TabsContent value="risk"><AdminRiskMonitor /></TabsContent>
+          <TabsContent value="diagnostics"><AdminDiagnostics /></TabsContent>
         </Tabs>
       </main>
     </div>

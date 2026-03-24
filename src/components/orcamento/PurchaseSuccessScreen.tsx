@@ -1,8 +1,11 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { CheckCircle, Download, Home, MessageCircle, Printer, ExternalLink, Loader2, FileText } from "lucide-react";
+import { CheckCircle, Download, Home, MessageCircle, Printer, ExternalLink, Loader2, FileText, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { ErrorBlock } from "@/components/ui/ErrorBlock";
+import { downloadPdf } from "@/lib/pdfDownload";
+import { logAndPersistError, type WmtiError } from "@/lib/errorLogger";
 
 interface PurchaseData {
   serviceName: string;
@@ -34,7 +37,8 @@ const formatCurrency = (v: number) =>
 
 const PurchaseSuccessScreen = ({ visible, data, quoteId, pdfUrl, pdfLoading, pdfReady, pdfError, onGeneratePdf }: Props) => {
   const navigate = useNavigate();
-  const [openingPdf, setOpeningPdf] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [lastError, setLastError] = useState<WmtiError | null>(null);
 
   if (!visible) return null;
 
@@ -55,11 +59,16 @@ const PurchaseSuccessScreen = ({ visible, data, quoteId, pdfUrl, pdfLoading, pdf
     `Olá! Acabei de contratar ${data.serviceName}${data.hours ? ` (${data.hours}h)` : ""} no valor de ${formatCurrency(data.monthlyValue)}. ${contractRef ? `Contrato: ${contractRef}` : ""}`
   );
 
-  const handleOpenPdf = () => {
+  const handleDownloadPdf = async () => {
     if (!pdfUrl) return;
-    setOpeningPdf(true);
-    window.open(pdfUrl, "_blank", "noopener,noreferrer");
-    setTimeout(() => setOpeningPdf(false), 400);
+    setDownloading(true);
+    setLastError(null);
+    const fileName = `contrato-wmti-${contractRef || quoteId.slice(0, 8).toUpperCase()}.pdf`;
+    const result = await downloadPdf(pdfUrl, fileName, { quoteId, contractId: data.contractId || undefined });
+    if (!result.success && result.error) {
+      setLastError(result.error);
+    }
+    setDownloading(false);
   };
 
   return (
@@ -185,11 +194,11 @@ const PurchaseSuccessScreen = ({ visible, data, quoteId, pdfUrl, pdfLoading, pdf
       {/* ── Action Buttons ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Button
-          onClick={pdfReady ? handleOpenPdf : onGeneratePdf}
-          disabled={pdfLoading || openingPdf}
+          onClick={pdfReady ? handleDownloadPdf : onGeneratePdf}
+          disabled={pdfLoading || downloading}
           className="w-full h-12 text-sm font-semibold"
         >
-          {pdfLoading || openingPdf ? (
+          {pdfLoading || downloading ? (
             <Loader2 className="w-4 h-4 animate-spin mr-2" />
           ) : pdfReady ? (
             <Download className="w-4 h-4 mr-2" />
@@ -225,10 +234,13 @@ const PurchaseSuccessScreen = ({ visible, data, quoteId, pdfUrl, pdfLoading, pdf
         </a>
       </div>
 
-      {pdfError && (
-        <div className="rounded-lg border border-destructive/25 bg-destructive/10 px-4 py-3 text-sm text-muted-foreground">
-          {pdfError}
-        </div>
+      {(pdfError || lastError) && (
+        <ErrorBlock
+          message={pdfError || lastError?.message || "Erro ao processar o contrato"}
+          error={lastError}
+          onRetry={pdfReady ? handleDownloadPdf : onGeneratePdf}
+          retryLabel="Tentar novamente"
+        />
       )}
     </motion.div>
   );

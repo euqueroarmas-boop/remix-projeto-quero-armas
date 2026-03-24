@@ -1,5 +1,6 @@
 import React, { Component, ErrorInfo, ReactNode } from "react";
 import { logSistema } from "@/lib/logSistema";
+import { buildWmtiError, formatErrorForClipboard, type WmtiError } from "@/lib/errorLogger";
 
 interface Props {
   children: ReactNode;
@@ -8,19 +9,29 @@ interface Props {
 interface State {
   hasError: boolean;
   error: Error | null;
+  wmtiError: WmtiError | null;
+  copied: boolean;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false, error: null, wmtiError: null, copied: false };
   }
 
-  static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    const wmtiErr = buildWmtiError({
+      action: "ErrorBoundary",
+      message: error.message,
+      error,
+    });
+
+    this.setState({ wmtiError: wmtiErr });
+
     logSistema({
       tipo: "erro",
       status: "error",
@@ -29,9 +40,19 @@ export class ErrorBoundary extends Component<Props, State> {
         stack: error.stack?.substring(0, 2000),
         componentStack: errorInfo.componentStack?.substring(0, 2000),
         url: window.location.href,
+        browser_info: wmtiErr.browserInfo,
       },
     });
   }
+
+  handleCopy = async () => {
+    if (!this.state.wmtiError) return;
+    try {
+      await navigator.clipboard.writeText(formatErrorForClipboard(this.state.wmtiError));
+      this.setState({ copied: true });
+      setTimeout(() => this.setState({ copied: false }), 2000);
+    } catch {}
+  };
 
   render() {
     if (this.state.hasError) {
@@ -43,12 +64,27 @@ export class ErrorBoundary extends Component<Props, State> {
             <p className="text-muted-foreground text-sm">
               Ocorreu um erro inesperado. Tente recarregar a página.
             </p>
-            <button
-              onClick={() => window.location.reload()}
-              className="px-6 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium"
-            >
-              Recarregar página
-            </button>
+            {this.state.error && (
+              <p className="text-xs text-destructive font-mono bg-destructive/10 p-2 rounded break-all">
+                {this.state.error.message}
+              </p>
+            )}
+            <div className="flex flex-col gap-2 items-center">
+              <button
+                onClick={() => window.location.reload()}
+                className="px-6 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium"
+              >
+                Recarregar página
+              </button>
+              {this.state.wmtiError && (
+                <button
+                  onClick={this.handleCopy}
+                  className="px-4 py-2 border border-border text-foreground rounded-md text-xs font-medium hover:bg-muted transition-colors"
+                >
+                  {this.state.copied ? "✓ Copiado!" : "📋 Copiar erro para suporte"}
+                </button>
+              )}
+            </div>
           </div>
         </div>
       );

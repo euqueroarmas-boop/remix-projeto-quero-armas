@@ -6,7 +6,9 @@ import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import SeoHead from "@/components/SeoHead";
 import { Button } from "@/components/ui/button";
+import { ErrorBlock } from "@/components/ui/ErrorBlock";
 import { ensurePortalAccess, fetchPurchaseInfo, type ClientCredentials, type PurchaseInfo } from "@/lib/postPurchase";
+import { logAndPersistError, type WmtiError } from "@/lib/errorLogger";
 
 const AtivacaoAcessoPage = () => {
   const [searchParams] = useSearchParams();
@@ -16,6 +18,7 @@ const AtivacaoAcessoPage = () => {
   const [credentials, setCredentials] = useState<ClientCredentials | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lastError, setLastError] = useState<WmtiError | null>(null);
   const [copied, setCopied] = useState<"email" | "password" | "">("");
 
   const whatsappHref = useMemo(() => {
@@ -38,6 +41,7 @@ const AtivacaoAcessoPage = () => {
 
     setLoading(true);
     setError(null);
+    setLastError(null);
 
     try {
       const [purchaseData, access] = await Promise.all([
@@ -59,7 +63,15 @@ const AtivacaoAcessoPage = () => {
         user_recovered: access.user_recovered,
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha ao liberar o acesso.");
+      const wmtiErr = await logAndPersistError({
+        action: "ativacao_acesso",
+        message: err instanceof Error ? err.message : "Falha ao liberar o acesso.",
+        error: err,
+        quoteId: quoteId || undefined,
+        functionName: "ensure-client-access",
+      });
+      setError(wmtiErr.message);
+      setLastError(wmtiErr);
     } finally {
       setLoading(false);
     }
@@ -101,24 +113,13 @@ const AtivacaoAcessoPage = () => {
                 Validando pagamento, corrigindo o acesso e preparando suas credenciais...
               </div>
             ) : error ? (
-              <div className="space-y-4 rounded-xl border border-destructive/30 bg-destructive/10 p-4">
-                <div className="flex items-start gap-3">
-                  <AlertTriangle className="mt-0.5 h-5 w-5 text-destructive" />
-                  <div>
-                    <p className="font-semibold text-foreground">Não foi possível liberar o acesso agora</p>
-                    <p className="text-sm text-muted-foreground">{error}</p>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-3 sm:flex-row">
-                  <Button onClick={loadAccess} className="sm:flex-1">
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    Gerar acesso agora
-                  </Button>
-                  <Button variant="outline" className="sm:flex-1" onClick={() => navigate(`/compra-concluida?quote=${quoteId}`)}>
-                    Voltar ao comprovante
-                  </Button>
-                </div>
-              </div>
+              <ErrorBlock
+                title="Não foi possível liberar o acesso agora"
+                message={error}
+                error={lastError}
+                onRetry={loadAccess}
+                retryLabel="Gerar acesso agora"
+              />
             ) : credentials ? (
               <div className="space-y-5">
                 <div className="grid gap-4 md:grid-cols-2">
