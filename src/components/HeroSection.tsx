@@ -69,7 +69,7 @@ const HeroSection = () => {
               href="#contato"
               className="group inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-8 md:px-10 py-4 md:py-5 font-mono text-sm md:text-base font-bold uppercase tracking-wider hover:brightness-110 transition-all shadow-[0_0_30px_hsl(var(--primary)/0.3)] hover:shadow-[0_0_40px_hsl(var(--primary)/0.5)]"
             >
-              Solicitar Diagnóstico de TI
+              Quero um diagnóstico gratuito
               <span className="text-lg group-hover:translate-x-1 transition-transform">→</span>
             </a>
             <a
