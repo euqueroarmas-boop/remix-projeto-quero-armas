@@ -8,40 +8,40 @@ const TiServentiasCartoriaisPage = () => (
     metaTitle="Infraestrutura de TI para Serventias Notariais | Provimento 213 CNJ | WMTi"
     metaDescription="Soluções de infraestrutura de TI para serventias notariais em conformidade com o Provimento 213 do CNJ. Servidores Dell PowerEdge, backup Veeam, firewall pfSense e monitoramento 24/7."
     tag="TI para Serventias Notariais"
-    headline={<>Seu cartório em <span className="text-primary">conformidade total</span> com o Provimento 213.</>}
-    description="Somos especialistas em infraestrutura de TI para cartórios. Implementamos todos os requisitos do Provimento 213/2026 do CNJ com servidores Dell PowerEdge, backup Veeam, firewall pfSense e monitoramento 24/7."
+    headline={<>Sua serventia pode estar vulnerável — e o <span className="text-primary">Provimento 213 exige adequação agora</span></>}
+    description="O prazo está correndo. O Provimento 213 do CNJ define requisitos obrigatórios de TIC para todas as serventias extrajudiciais. Backup inadequado, servidor sem redundância, sem firewall, sem plano de continuidade — tudo isso é não-conformidade. E não-conformidade gera sanção. A maioria das serventias sabe que precisa se adequar, mas não tem por onde começar. A WMTi é especialista nisso. Fazemos o diagnóstico, implementamos a infraestrutura e garantimos que sua serventia esteja em conformidade total."
     whatsappMessage="Olá! Gostaria de uma análise da infraestrutura de TI da minha serventia notarial."
     heroImage={heroImg}
     heroImageAlt="Fachada de serventia notarial com arquitetura clássica"
     painPoints={[
-      "Dificuldade em se adequar ao Provimento 213 do CNJ",
+      "Dificuldade em entender e atender os requisitos do Provimento 213",
       "Sistemas cartoriais instáveis comprometendo operações jurídicas",
-      "Falta de backup corporativo com replicação segura",
-      "Ausência de firewall e segmentação de rede",
-      "Servidores sem monitoramento contínuo",
-      "Suporte técnico reativo sem manutenção preventiva",
+      "Backup manual ou inexistente — risco real de perda de acervo",
+      "Sem firewall e sem segmentação de rede",
+      "Servidores sem monitoramento — problemas descobertos pelo usuário",
+      "Suporte reativo que só aparece depois do problema",
     ]}
     solutions={[
-      "Diagnóstico completo de conformidade com o Provimento 213 do CNJ",
-      "Servidores Windows Server configurados para operação contínua e alta disponibilidade",
-      "Backup corporativo com replicação local e em nuvem para recuperação rápida",
-      "Firewalls corporativos com segmentação de rede e políticas de segurança",
-      "Monitoramento contínuo da infraestrutura para identificar falhas preventivamente",
-      "Suporte técnico especializado com manutenção preventiva e resolução rápida",
+      "Diagnóstico completo de conformidade com o Provimento 213",
+      "Servidores Windows Server para operação contínua e alta disponibilidade",
+      "Backup corporativo automatizado com replicação local e em nuvem",
+      "Firewall com segmentação de rede e políticas de segurança",
+      "Monitoramento contínuo para identificar falhas preventivamente",
+      "Suporte especializado com manutenção preventiva programada",
     ]}
     benefits={[
-      { icon: Server, title: "Servidores corporativos", text: "Implantação e gerenciamento de servidores Windows Server para alto desempenho e disponibilidade dos sistemas cartoriais." },
-      { icon: HardDrive, title: "Backup corporativo", text: "Soluções de backup com replicação local e em nuvem, garantindo proteção das informações e recuperação rápida." },
-      { icon: Shield, title: "Segurança de rede", text: "Firewalls corporativos, segmentação de rede e políticas de segurança para prevenir acessos indevidos." },
-      { icon: Activity, title: "Monitoramento contínuo", text: "Monitoramento de servidores e infraestrutura para identificar falhas antes que impactem a operação." },
-      { icon: Lock, title: "Proteção de dados", text: "Proteção de informações sensíveis com criptografia e controle de acesso." },
-      { icon: Headphones, title: "Suporte especializado", text: "Manutenção preventiva, resolução rápida de problemas e estabilidade operacional." },
+      { icon: Server, title: "Servidores profissionais", text: "Windows Server configurado para alto desempenho e disponibilidade dos sistemas cartoriais." },
+      { icon: HardDrive, title: "Backup que funciona", text: "Replicação local e em nuvem com testes periódicos. Não é cópia manual em HD externo." },
+      { icon: Shield, title: "Rede protegida", text: "Firewall, segmentação e políticas de segurança. Dados sigilosos protegidos de verdade." },
+      { icon: Activity, title: "Monitoramento real", text: "Servidores e rede monitorados para agir antes da falha, não depois." },
+      { icon: Lock, title: "Conformidade total", text: "Todos os requisitos do Provimento 213 atendidos e documentados." },
+      { icon: Headphones, title: "Suporte especializado", text: "Equipe que conhece a rotina de serventia e resolve com a urgência necessária." },
     ]}
     faq={[
-      { question: "A WMTi atende serventias notariais com adequação ao Provimento 213?", answer: "Sim. Somos especialistas em infraestrutura de TI para cartórios, com soluções homologadas e em conformidade com o Provimento 213 do CNJ." },
-      { question: "Qual a importância do backup corporativo para serventias notariais?", answer: "A perda de dados em ambientes cartoriais pode gerar graves impactos operacionais e jurídicos. Implementamos backup com replicação local e em nuvem para garantir recuperação rápida." },
-      { question: "Vocês realizam monitoramento contínuo?", answer: "Sim. Realizamos monitoramento contínuo da infraestrutura de TI para identificar falhas antes que impactem a operação da serventia." },
-      { question: "Atendem fora da região de Jacareí?", answer: "Sim. Atendemos serventias em todo o Brasil com suporte remoto e visitas técnicas programadas." },
+      { question: "A WMTi atende serventias notariais com adequação ao Provimento 213?", answer: "Sim. Somos especialistas. Fazemos o diagnóstico, implementamos tudo e garantimos conformidade total. Sem deixar pendência." },
+      { question: "Qual a importância do backup corporativo para serventias?", answer: "Perda de dados em ambiente cartorial pode gerar impactos operacionais e jurídicos graves. Nosso backup é automatizado, replicado e testado. Funciona quando precisa." },
+      { question: "Vocês realizam monitoramento contínuo?", answer: "Sim. 24/7 com alertas automáticos. Problemas detectados e resolvidos antes de impactar a operação." },
+      { question: "Atendem fora da região de Jacareí?", answer: "Sim. Brasil inteiro. Vale do Paraíba com presencial, demais localidades com suporte remoto e visitas técnicas." },
     ]}
     relatedLinks={[
       { label: "TI para Cartórios", href: "/ti-para-cartorios" },

@@ -7,33 +7,33 @@ const MonitoramentoServidoresPage = () => (
     metaTitle="Monitoramento De Servidores 24/7 | Infraestrutura Corporativa | WMTi"
     metaDescription="Monitoramento contínuo de servidores corporativos. Alertas em tempo real, dashboards de performance, prevenção de falhas e suporte técnico especializado."
     tag="Monitoramento De Servidores"
-    headline={<>Monitoramento De <span className="text-primary">Servidores 24/7</span></>}
-    description="O monitoramento contínuo de servidores permite identificar falhas antes que impactem a operação da empresa. A WMTi oferece monitoramento 24/7 com alertas em tempo real e suporte proativo."
+    headline={<>Seu servidor pode parar a qualquer momento — e <span className="text-primary">você só vai saber quando já for tarde</span></>}
+    description="Disco cheio. Memória esgotada. Processo travado consumindo tudo. Temperatura alta. E ninguém viu. Ninguém alertou. Ninguém agiu. Até que o servidor parou. E quando o servidor para, a empresa para. Sem acesso a arquivos, sem sistema, sem operação. E aí vem a correria para resolver às pressas o que poderia ter sido evitado. A WMTi monitora seus servidores 24/7 e age no primeiro sinal de problema — não no último."
     whatsappMessage="Olá! Preciso de monitoramento de servidores corporativos."
     painPoints={[
-      "Falhas em servidores descobertas só quando o sistema para",
-      "Sem visibilidade sobre performance da infraestrutura",
-      "Discos cheios causando paradas inesperadas",
-      "Sem alertas para problemas críticos",
+      "Falhas descobertas só quando o servidor já parou",
+      "Sem visibilidade sobre CPU, memória e disco em tempo real",
+      "Discos enchendo sem aviso até causar parada total",
+      "Nenhum alerta configurado para situações críticas",
     ]}
     solutions={[
-      "Monitoramento 24/7 de CPU, memória, disco e rede",
-      "Alertas em tempo real para situações críticas",
-      "Dashboards de performance para visibilidade completa",
-      "Ações preventivas antes que falhas impactem a operação",
+      "Monitoramento 24/7 de CPU, memória, disco e rede de cada servidor",
+      "Alertas em tempo real quando indicadores atingem níveis críticos",
+      "Dashboards de performance para visibilidade completa da infraestrutura",
+      "Ações preventivas baseadas em tendências — antes da falha, não depois",
     ]}
     benefits={[
-      { icon: Activity, title: "Monitoramento 24/7", text: "Monitoramento contínuo de todos os servidores e recursos críticos." },
-      { icon: AlertTriangle, title: "Alertas em tempo real", text: "Notificações imediatas quando indicadores atingem níveis críticos." },
-      { icon: Eye, title: "Dashboards", text: "Visibilidade completa da saúde da infraestrutura em tempo real." },
-      { icon: Server, title: "Prevenção de falhas", text: "Ações preventivas baseadas em tendências de performance." },
+      { icon: Activity, title: "Monitoramento 24/7", text: "Seus servidores monitorados o tempo todo — não só em horário comercial." },
+      { icon: AlertTriangle, title: "Alertas imediatos", text: "Indicador crítico? Alerta na hora. Ação antes que vire parada." },
+      { icon: Eye, title: "Visibilidade total", text: "Dashboards mostrando a saúde de cada servidor em tempo real." },
+      { icon: Server, title: "Prevenção de falhas", text: "Tendências identificadas antes que se transformem em problemas reais." },
       { icon: Shield, title: "Segurança", text: "Detecção de atividades anômalas e tentativas de acesso indevido." },
-      { icon: Headphones, title: "Suporte proativo", text: "Equipe técnica atuando proativamente para prevenir problemas." },
+      { icon: Headphones, title: "Ação proativa", text: "Equipe que age quando o alerta toca — não quando você liga desesperado." },
     ]}
     faq={[
-      { question: "O que é monitorado nos servidores?", answer: "Monitoramos CPU, memória RAM, espaço em disco, tráfego de rede, serviços críticos e logs de eventos." },
-      { question: "Os alertas são em tempo real?", answer: "Sim. Quando um indicador atinge nível crítico, alertas são enviados imediatamente para nossa equipe atuar." },
-      { question: "Funciona para servidores em nuvem?", answer: "Sim. Monitoramos servidores físicos e virtuais, on-premises e em nuvem." },
+      { question: "O que é monitorado nos servidores?", answer: "CPU, memória RAM, disco, rede, serviços críticos e logs. Tudo que pode indicar um problema antes dele acontecer." },
+      { question: "Os alertas são em tempo real?", answer: "Sim. Indicador crítico dispara alerta imediatamente. A equipe age na hora, não no dia seguinte." },
+      { question: "Funciona para servidores em nuvem?", answer: "Sim. Físicos, virtuais, on-premises e nuvem. Se é servidor, a gente monitora." },
     ]}
     relatedLinks={[
       { label: "Administração de servidores", href: "/administracao-de-servidores" },

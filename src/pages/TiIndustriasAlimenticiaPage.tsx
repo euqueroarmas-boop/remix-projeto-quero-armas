@@ -8,38 +8,38 @@ const TiIndustriasAlimenticiaPage = () => (
     metaTitle="Infraestrutura de TI para Indústrias Alimentícias | Servidores, Redes e Segurança | WMTi"
     metaDescription="Soluções de TI para indústrias alimentícias. Infraestrutura de servidores, redes corporativas, backup, segurança e suporte técnico especializado."
     tag="TI para Indústrias Alimentícias"
-    headline={<>Infraestrutura de TI para <span className="text-primary">Indústrias Alimentícias</span></>}
-    description="A operação de uma indústria alimentícia depende diretamente da estabilidade da infraestrutura tecnológica. Sistemas de produção, controle de estoque, rastreabilidade de lotes e integração logística exigem redes confiáveis e servidores de alto desempenho. A WMTi oferece soluções completas de infraestrutura de TI para indústrias alimentícias, garantindo continuidade operacional e proteção de dados."
+    headline={<>Uma falha de TI na sua indústria pode <span className="text-primary">parar a linha de produção inteira</span></>}
+    description="ERP fora do ar. Sistema de rastreabilidade travado. Balança sem comunicação. Estoque desatualizado. E a linha de produção esperando. Em indústria alimentícia, uma falha de TI não é só inconveniente — é produção perdida, lote comprometido, entrega atrasada. E os custos se acumulam rápido. A infraestrutura de TI precisa funcionar no mesmo ritmo da produção. Sem pausa, sem instabilidade, sem surpresa. A WMTi estrutura a TI da sua indústria para que a tecnologia nunca seja o gargalo."
     whatsappMessage="Olá! Gostaria de uma análise da infraestrutura de TI da minha indústria alimentícia."
     heroImage={heroImg}
     heroImageAlt="Linha de produção de indústria alimentícia com equipamentos modernos"
     painPoints={[
-      "Sistemas de produção instáveis comprometendo a operação",
-      "Redes industriais sem segmentação adequada",
-      "Falta de backup corporativo para dados de produção",
-      "Ausência de firewall e políticas de segurança",
-      "Sem monitoramento contínuo de servidores e rede",
+      "ERP e sistemas de produção instáveis comprometendo a operação",
+      "Rede industrial sem segmentação — produção e escritório misturados",
+      "Sem backup confiável para dados de produção e rastreabilidade",
+      "Sem proteção contra ataques que podem paralisar a fábrica",
+      "Problemas de TI descobertos só quando a produção já parou",
     ]}
     solutions={[
-      "Servidores corporativos para sistemas ERP, controle de produção e gestão logística",
-      "Redes corporativas industriais com comunicação segura entre sistemas",
-      "Firewalls empresariais e políticas de segurança contra ataques cibernéticos",
-      "Backup corporativo e recuperação de desastres para continuidade operacional",
-      "Monitoramento contínuo de servidores e redes para identificar falhas preventivamente",
+      "Servidores corporativos dimensionados para ERP, controle de produção e logística",
+      "Rede industrial segmentada — produção isolada do escritório",
+      "Firewall e políticas de segurança contra ataques cibernéticos",
+      "Backup automatizado com recuperação rápida para continuidade operacional",
+      "Monitoramento contínuo para agir antes da falha, não depois",
     ]}
     benefits={[
-      { icon: Server, title: "Servidores industriais", text: "Implantação e gerenciamento de servidores corporativos para sistemas ERP e controle de produção." },
-      { icon: Network, title: "Redes corporativas", text: "Projeto e implantação de redes para ambientes industriais com comunicação segura." },
-      { icon: Shield, title: "Segurança da informação", text: "Firewalls empresariais e políticas de segurança para proteger a infraestrutura." },
-      { icon: HardDrive, title: "Backup e recuperação", text: "Soluções de backup corporativo e recuperação de desastres para continuidade operacional." },
-      { icon: Activity, title: "Monitoramento contínuo", text: "Monitoramento de servidores e redes para identificar falhas antes de impactar a produção." },
-      { icon: Headphones, title: "Suporte especializado", text: "Equipe técnica especializada em infraestrutura de TI para ambientes industriais." },
+      { icon: Server, title: "Servidores industriais", text: "Servidores dimensionados para ERP pesado e controle de produção em tempo real." },
+      { icon: Network, title: "Rede segmentada", text: "Produção e escritório separados. Problema em um não derruba o outro." },
+      { icon: Shield, title: "Proteção industrial", text: "Firewall e políticas de segurança para proteger a infraestrutura da fábrica." },
+      { icon: HardDrive, title: "Backup de produção", text: "Dados de rastreabilidade e produção protegidos com backup automatizado." },
+      { icon: Activity, title: "Monitoramento contínuo", text: "Falhas detectadas antes de pararem a produção. Proativo, não reativo." },
+      { icon: Headphones, title: "Suporte industrial", text: "Equipe que entende a urgência de ambiente industrial. Resolve rápido." },
     ]}
     faq={[
-      { question: "A WMTi atende indústrias alimentícias?", answer: "Sim. Oferecemos soluções completas de infraestrutura de TI para indústrias alimentícias, incluindo servidores, redes, backup, segurança e suporte técnico." },
-      { question: "Vocês fazem projeto de redes industriais?", answer: "Sim. Realizamos projeto e implantação de redes corporativas para ambientes industriais, garantindo comunicação segura entre sistemas de produção e gestão." },
-      { question: "Como funciona o monitoramento?", answer: "Realizamos monitoramento contínuo de servidores e redes para identificar falhas antes que impactem a produção da sua indústria." },
-      { question: "Atendem fora da região de Jacareí?", answer: "Sim. Atendemos indústrias em todo o estado de São Paulo e realizamos projetos em todo o Brasil." },
+      { question: "A WMTi atende indústrias alimentícias?", answer: "Sim. Entendemos que produção não pode parar. A TI é estruturada para funcionar no ritmo da fábrica." },
+      { question: "Vocês fazem projeto de redes industriais?", answer: "Sim. Rede segmentada para separar produção de escritório, com comunicação segura entre sistemas." },
+      { question: "Como funciona o monitoramento?", answer: "Monitoramento contínuo de servidores e rede. Alerta antes da falha, ação antes da parada." },
+      { question: "Atendem fora da região de Jacareí?", answer: "Sim. São Paulo inteiro e projetos em todo o Brasil." },
     ]}
     relatedLinks={[
       { label: "Infraestrutura corporativa", href: "/infraestrutura-ti-corporativa-jacarei" },

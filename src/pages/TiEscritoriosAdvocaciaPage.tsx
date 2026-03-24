@@ -8,40 +8,40 @@ const TiEscritoriosAdvocaciaPage = () => (
     metaTitle="Infraestrutura de TI para Escritórios de Advocacia | Segurança e Sigilo | WMTi"
     metaDescription="Soluções de infraestrutura de TI para escritórios de advocacia. Servidores seguros, VPN, backup criptografado, firewall corporativo e suporte técnico especializado."
     tag="TI para Escritórios de Advocacia"
-    headline={<>Infraestrutura de TI para <span className="text-primary">Escritórios de Advocacia</span></>}
-    description="Escritórios de advocacia lidam com dados confidenciais de clientes que exigem máxima segurança e sigilo. A WMTi oferece infraestrutura de TI sob medida para escritórios jurídicos, com proteção de dados sensíveis, VPN segura, backup criptografado e suporte técnico dedicado."
+    headline={<>Os dados confidenciais dos seus clientes <span className="text-primary">estão em risco</span> — e você pode nem saber</>}
+    description="Processos salvos no computador de alguém. Acesso remoto sem criptografia. Sem controle de quem vê o quê. Backup que ninguém testa. E dados sigilosos de clientes passando por uma rede sem proteção. Escritório de advocacia lida com informação sensível todos os dias. E se essa informação vazar, não é só problema técnico — é problema ético, jurídico e reputacional. A WMTi protege os dados do seu escritório com infraestrutura que leva sigilo a sério."
     whatsappMessage="Olá! Gostaria de uma análise da infraestrutura de TI do meu escritório de advocacia."
     heroImage={heroImg}
     heroImageAlt="Escritório de advocacia moderno com infraestrutura de TI corporativa"
     painPoints={[
-      "Risco de vazamento de dados confidenciais de clientes",
-      "Falta de VPN segura para acesso remoto a processos",
+      "Dados confidenciais de clientes sem proteção adequada",
+      "Acesso remoto a processos sem VPN segura",
+      "Documentos jurídicos sem backup criptografado",
       "Sistemas jurídicos lentos ou incompatíveis",
-      "Ausência de backup criptografado para documentos",
-      "Sem proteção adequada contra ataques cibernéticos",
-      "Suporte técnico reativo sem manutenção preventiva",
+      "Sem firewall protegendo a rede do escritório",
+      "Equipe sem controle de acesso por perfil",
     ]}
     solutions={[
-      "Servidores corporativos com criptografia e controle de acesso por perfil",
-      "VPN segura para acesso remoto a processos e documentos jurídicos",
+      "Servidores com criptografia e controle de acesso por perfil — quem deve ver, vê",
+      "VPN segura para acessar processos de qualquer lugar sem risco",
       "Backup criptografado com replicação local e em nuvem",
-      "Firewalls corporativos com políticas de segurança avançadas",
-      "Monitoramento contínuo da infraestrutura para identificar falhas",
-      "Suporte técnico especializado com manutenção preventiva",
+      "Firewall corporativo com políticas de segurança avançadas",
+      "Monitoramento contínuo para identificar tentativas de acesso indevido",
+      "Manutenção preventiva para o sistema nunca travar na hora errada",
     ]}
     benefits={[
-      { icon: Lock, title: "Sigilo e proteção", text: "Criptografia e controle de acesso para proteger dados confidenciais de clientes." },
-      { icon: Shield, title: "VPN segura", text: "Acesso remoto seguro a processos e documentos jurídicos de qualquer lugar." },
-      { icon: HardDrive, title: "Backup criptografado", text: "Backup automatizado com criptografia AES-256 e replicação em nuvem." },
-      { icon: Server, title: "Servidores corporativos", text: "Servidores Windows Server configurados para sistemas jurídicos com alta disponibilidade." },
-      { icon: Activity, title: "Monitoramento contínuo", text: "Monitoramento de servidores e rede para evitar interrupções no escritório." },
-      { icon: Headphones, title: "Suporte dedicado", text: "Equipe técnica especializada em infraestrutura de TI para escritórios jurídicos." },
+      { icon: Lock, title: "Sigilo de verdade", text: "Criptografia e controle de acesso granular. Dados dos seus clientes protegidos como devem ser." },
+      { icon: Shield, title: "VPN segura", text: "Acesso remoto criptografado a processos e documentos. De qualquer lugar, com segurança total." },
+      { icon: HardDrive, title: "Backup criptografado", text: "AES-256 com replicação em nuvem. Nunca mais depender da sorte para proteger dados." },
+      { icon: Server, title: "Servidor profissional", text: "Windows Server configurado para sistemas jurídicos com alta disponibilidade." },
+      { icon: Activity, title: "Monitoramento", text: "Servidores e rede monitorados para detectar problemas antes que virem incidentes." },
+      { icon: Headphones, title: "Suporte dedicado", text: "Equipe que entende a rotina de escritório jurídico e a urgência de cada demanda." },
     ]}
     faq={[
-      { question: "A WMTi atende escritórios de advocacia?", answer: "Sim. Oferecemos soluções de TI sob medida para escritórios de advocacia, com foco em sigilo, segurança de dados e suporte técnico dedicado." },
-      { question: "Como funciona a VPN para acesso remoto?", answer: "Implementamos VPN corporativa segura que permite acesso remoto criptografado a processos e documentos do escritório de qualquer localidade." },
-      { question: "Vocês fazem backup de dados jurídicos?", answer: "Sim. Implementamos backup criptografado com replicação local e em nuvem, garantindo proteção total dos dados do escritório." },
-      { question: "Atendem fora da região de Jacareí?", answer: "Sim. Atendemos escritórios em todo o estado de São Paulo e realizamos projetos em todo o Brasil." },
+      { question: "A WMTi atende escritórios de advocacia?", answer: "Sim. Entendemos a criticidade do sigilo profissional e implementamos infraestrutura à altura da responsabilidade que seu escritório carrega." },
+      { question: "Como funciona a VPN para acesso remoto?", answer: "VPN corporativa criptografada que permite acessar processos e documentos do escritório de qualquer lugar — com segurança, não com preocupação." },
+      { question: "Vocês fazem backup de dados jurídicos?", answer: "Sim. Backup criptografado, automatizado, com replicação em nuvem e testes periódicos. Proteção real, não cópia manual." },
+      { question: "Atendem fora da região de Jacareí?", answer: "Sim. São Paulo inteiro e projetos em todo o Brasil." },
     ]}
     relatedLinks={[
       { label: "Infraestrutura corporativa", href: "/infraestrutura-ti-corporativa-jacarei" },
