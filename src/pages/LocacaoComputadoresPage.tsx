@@ -36,12 +36,12 @@ const painPoints = [
 
 /* ─── Benefits ─── */
 const benefits = [
-  { icon: Monitor, title: "Estação completa", desc: "Dell OptiPlex + monitor + teclado + mouse. Pronto para uso." },
-  { icon: Wrench, title: "Manutenção inclusa", desc: "Preventiva e corretiva sem custo extra." },
-  { icon: RefreshCw, title: "Troca sem custo", desc: "Queimou? Substituímos sem burocracia." },
-  { icon: Headphones, title: "Suporte 24/7", desc: "Atendimento remoto e presencial 24h." },
-  { icon: DollarSign, title: "Economia real", desc: "Sem investimento inicial, sem depreciação." },
-  { icon: ShieldCheck, title: "Sempre atualizado", desc: "Equipamentos renovados periodicamente." },
+  { icon: Monitor, title: "Equipamentos atualizados", desc: "Você recebe máquinas prontas para trabalhar, não para dar problema." },
+  { icon: Wrench, title: "Manutenção incluída", desc: "Deu problema? Resolve. Sem custo extra, sem burocracia." },
+  { icon: RefreshCw, title: "Substituição quando necessário", desc: "Ficou defasado? Troca. Precisa expandir? Escala. Simples." },
+  { icon: Headphones, title: "Suporte completo", desc: "Atendimento remoto e presencial. Você não se preocupa." },
+  { icon: DollarSign, title: "Investimento no funcionamento", desc: "Você deixa de gastar com máquina e passa a investir na sua empresa." },
+  { icon: ShieldCheck, title: "Muda o jogo", desc: "Computador deixa de ser problema e vira ferramenta de verdade." },
 ];
 
 /* ─── Comparisons ─── */
