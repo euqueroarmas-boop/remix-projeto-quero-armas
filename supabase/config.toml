@@ -1,5 +1,8 @@
 project_id = "itwsjxijqjximspqtvqk"
 
+[functions.admin-data]
+verify_jwt = false
+
 [functions.create-asaas-payment]
 verify_jwt = false
 
