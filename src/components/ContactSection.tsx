@@ -168,7 +168,7 @@ const ContactSection = () => {
             onSubmit={handleSubmit}
           >
             <h3 className="font-heading text-xl md:text-2xl font-semibold tracking-wide text-primary mb-6">
-              Preencha para receber sua proposta
+              Peça seu diagnóstico gratuito agora
             </h3>
 
             {[
