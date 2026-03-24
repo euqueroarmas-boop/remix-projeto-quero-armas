@@ -39,7 +39,8 @@ const formatCurrency = (v: number) =>
 
 const PurchaseSuccessScreen = ({ visible, data, quoteId, pdfUrl, pdfLoading, pdfReady, pdfError, onGeneratePdf }: Props) => {
   const navigate = useNavigate();
-  const [openingPdf, setOpeningPdf] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [lastError, setLastError] = useState<WmtiError | null>(null);
 
   if (!visible) return null;
 
@@ -60,11 +61,16 @@ const PurchaseSuccessScreen = ({ visible, data, quoteId, pdfUrl, pdfLoading, pdf
     `Olá! Acabei de contratar ${data.serviceName}${data.hours ? ` (${data.hours}h)` : ""} no valor de ${formatCurrency(data.monthlyValue)}. ${contractRef ? `Contrato: ${contractRef}` : ""}`
   );
 
-  const handleOpenPdf = () => {
+  const handleDownloadPdf = async () => {
     if (!pdfUrl) return;
-    setOpeningPdf(true);
-    window.open(pdfUrl, "_blank", "noopener,noreferrer");
-    setTimeout(() => setOpeningPdf(false), 400);
+    setDownloading(true);
+    setLastError(null);
+    const fileName = `contrato-wmti-${contractRef || quoteId.slice(0, 8).toUpperCase()}.pdf`;
+    const result = await downloadPdf(pdfUrl, fileName, { quoteId, contractId: data.contractId || undefined });
+    if (!result.success && result.error) {
+      setLastError(result.error);
+    }
+    setDownloading(false);
   };
 
   return (
