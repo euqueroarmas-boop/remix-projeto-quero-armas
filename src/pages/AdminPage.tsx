@@ -777,6 +777,7 @@ export default function AdminPage() {
               <TabsTrigger value="webhooks" className="text-xs md:text-sm px-2.5 md:px-3">Webhooks</TabsTrigger>
               <TabsTrigger value="audit" className="text-xs md:text-sm px-2.5 md:px-3">Auditoria</TabsTrigger>
               <TabsTrigger value="risk" className="text-xs md:text-sm px-2.5 md:px-3">Risco</TabsTrigger>
+              <TabsTrigger value="diagnostics" className="text-xs md:text-sm px-2.5 md:px-3 text-destructive">🔍 Diagnóstico</TabsTrigger>
             </TabsList>
           </div>
 
