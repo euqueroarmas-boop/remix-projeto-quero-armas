@@ -12,6 +12,7 @@ import {
 import {
   BarChart3, AlertTriangle, CreditCard, FileText, LogOut, RefreshCw, ChevronLeft, ChevronRight, Eye, Users, Plus, Loader2, Check, Copy, Shield,
 } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import AdminSecurityEvents from "@/components/admin/AdminSecurityEvents";
 import AdminWebhooks from "@/components/admin/AdminWebhooks";
 import AdminAudit from "@/components/admin/AdminAudit";
@@ -137,18 +138,18 @@ function Dashboard() {
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
       {cards.map((c) => (
         <Card key={c.title}>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">{c.title}</p>
-                <p className={`text-3xl font-bold ${c.color}`}>
+          <CardContent className="pt-4 pb-4 px-4 md:pt-6">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-xs md:text-sm text-muted-foreground truncate">{c.title}</p>
+                <p className={`text-2xl md:text-3xl font-bold ${c.color}`}>
                   {loading ? "..." : c.value}
                 </p>
               </div>
-              <c.icon className={`h-8 w-8 ${c.color} opacity-50`} />
+              <c.icon className={`h-6 w-6 md:h-8 md:w-8 ${c.color} opacity-50 shrink-0`} />
             </div>
           </CardContent>
         </Card>
@@ -158,6 +159,7 @@ function Dashboard() {
 }
 
 function LogsTab({ onlyErrors = false }: { onlyErrors?: boolean }) {
+  const isMobile = useIsMobile();
   const [logs, setLogs] = useState<LogRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
@@ -189,9 +191,9 @@ function LogsTab({ onlyErrors = false }: { onlyErrors?: boolean }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-3 items-center">
+      <div className="flex flex-wrap gap-2 md:gap-3 items-center">
         <Select value={filterTipo} onValueChange={(v) => { setFilterTipo(v); setPage(0); }}>
-          <SelectTrigger className="w-40"><SelectValue placeholder="Tipo" /></SelectTrigger>
+          <SelectTrigger className="w-32 md:w-40 text-xs md:text-sm"><SelectValue placeholder="Tipo" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos os tipos</SelectItem>
             <SelectItem value="checkout">Checkout</SelectItem>
@@ -205,7 +207,7 @@ function LogsTab({ onlyErrors = false }: { onlyErrors?: boolean }) {
         </Select>
         {!onlyErrors && (
           <Select value={filterStatus} onValueChange={(v) => { setFilterStatus(v); setPage(0); }}>
-            <SelectTrigger className="w-40"><SelectValue placeholder="Status" /></SelectTrigger>
+            <SelectTrigger className="w-28 md:w-40 text-xs md:text-sm"><SelectValue placeholder="Status" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos</SelectItem>
               <SelectItem value="success">Success</SelectItem>
@@ -215,17 +217,46 @@ function LogsTab({ onlyErrors = false }: { onlyErrors?: boolean }) {
             </SelectContent>
           </Select>
         )}
-        <Button variant="outline" size="sm" onClick={fetchLogs}>
-          <RefreshCw className="h-4 w-4 mr-1" /> Atualizar
+        <Button variant="outline" size="sm" onClick={fetchLogs} className="text-xs">
+          <RefreshCw className="h-3 w-3 md:h-4 md:w-4 mr-1" /> Atualizar
         </Button>
-        <span className="text-sm text-muted-foreground ml-auto">{total} registros</span>
+        <span className="text-xs text-muted-foreground ml-auto">{total} registros</span>
       </div>
 
       {loading ? (
         <div className="text-center py-12 text-muted-foreground">Carregando...</div>
       ) : logs.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">Nenhum log encontrado</div>
+      ) : isMobile ? (
+        /* Mobile: card layout */
+        <div className="space-y-3">
+          {logs.map((log) => (
+            <Card key={log.id} className={log.status === "error" ? "border-destructive/30" : ""}>
+              <CardContent className="p-4 space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <Badge variant="outline" className="text-xs">{log.tipo}</Badge>
+                  <StatusBadge status={log.status} />
+                </div>
+                <p className="text-sm text-foreground line-clamp-2">{log.mensagem}</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">
+                    {new Date(log.created_at).toLocaleString("pt-BR")}
+                  </span>
+                  <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => setExpandedId(expandedId === log.id ? null : log.id)}>
+                    <Eye className="h-3 w-3" />
+                  </Button>
+                </div>
+                {expandedId === log.id && (
+                  <pre className="text-xs text-muted-foreground bg-muted/50 p-3 rounded overflow-auto max-h-40 mt-2">
+                    {JSON.stringify(log.payload, null, 2)}
+                  </pre>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       ) : (
+        /* Desktop: table layout */
         <div className="rounded-md border border-border overflow-auto">
           <Table>
             <TableHeader>
@@ -289,6 +320,7 @@ function LogsTab({ onlyErrors = false }: { onlyErrors?: boolean }) {
 }
 
 function PaymentsTab() {
+  const isMobile = useIsMobile();
   const [payments, setPayments] = useState<PaymentRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
@@ -326,17 +358,49 @@ function PaymentsTab() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <Button variant="outline" size="sm" onClick={fetchPayments}>
-          <RefreshCw className="h-4 w-4 mr-1" /> Atualizar
+      <div className="flex items-center gap-2 md:gap-3">
+        <Button variant="outline" size="sm" onClick={fetchPayments} className="text-xs">
+          <RefreshCw className="h-3 w-3 md:h-4 md:w-4 mr-1" /> Atualizar
         </Button>
-        <span className="text-sm text-muted-foreground ml-auto">{total} pagamentos</span>
+        <span className="text-xs text-muted-foreground ml-auto">{total} pagamentos</span>
       </div>
 
       {loading ? (
         <div className="text-center py-12 text-muted-foreground">Carregando...</div>
       ) : payments.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">Nenhum pagamento encontrado</div>
+      ) : isMobile ? (
+        <div className="space-y-3">
+          {payments.map((p) => (
+            <Card key={p.id}>
+              <CardContent className="p-4 space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <Badge variant="outline" className="text-xs">{p.billing_type || p.payment_method || "—"}</Badge>
+                  <StatusBadge status={p.payment_status || "pending"} />
+                </div>
+                <div className="text-xs space-y-1">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Data:</span>
+                    <span className="text-foreground">{new Date(p.created_at).toLocaleString("pt-BR")}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Asaas ID:</span>
+                    <span className="font-mono text-foreground text-[11px]">{p.asaas_payment_id?.slice(0, 16) || "—"}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Webhook:</span>
+                    <span>{p.asaas_payment_id && webhookIds.has(p.asaas_payment_id) ? "✓ Recebido" : "—"}</span>
+                  </div>
+                </div>
+                {p.asaas_invoice_url && (
+                  <a href={p.asaas_invoice_url} target="_blank" rel="noopener noreferrer" className="text-primary text-xs underline block text-right">
+                    Abrir Invoice
+                  </a>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       ) : (
         <div className="rounded-md border border-border overflow-auto">
           <Table>
@@ -396,6 +460,7 @@ function PaymentsTab() {
 }
 
 function ClientesTab() {
+  const isMobile = useIsMobile();
   const [customers, setCustomers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -459,19 +524,19 @@ function ClientesTab() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <Button variant="outline" size="sm" onClick={fetchCustomers}>
-          <RefreshCw className="h-4 w-4 mr-1" /> Atualizar
+      <div className="flex flex-wrap items-center gap-2 md:gap-3">
+        <Button variant="outline" size="sm" onClick={fetchCustomers} className="text-xs">
+          <RefreshCw className="h-3 w-3 md:h-4 md:w-4 mr-1" /> Atualizar
         </Button>
-        <Button size="sm" onClick={() => { setShowForm(!showForm); setResult(null); setError(""); }}>
-          <Plus className="h-4 w-4 mr-1" /> Criar Acesso
+        <Button size="sm" onClick={() => { setShowForm(!showForm); setResult(null); setError(""); }} className="text-xs">
+          <Plus className="h-3 w-3 md:h-4 md:w-4 mr-1" /> Criar Acesso
         </Button>
-        <span className="text-sm text-muted-foreground ml-auto">{customers.length} clientes</span>
+        <span className="text-xs text-muted-foreground ml-auto">{customers.length} clientes</span>
       </div>
 
       {showForm && (
         <Card className="border-primary/30">
-          <CardContent className="p-5">
+          <CardContent className="p-4 md:p-5">
             {result ? (
               <div className="space-y-4">
                 <div className="flex items-center gap-2 text-emerald-400 mb-2">
@@ -479,11 +544,11 @@ function ClientesTab() {
                 </div>
                 <div className="bg-muted/50 rounded-lg p-4 space-y-3">
                   <div className="flex items-center justify-between">
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-[10px] text-muted-foreground uppercase">E-mail</p>
-                      <p className="text-sm font-mono text-foreground">{result.email}</p>
+                      <p className="text-sm font-mono text-foreground truncate">{result.email}</p>
                     </div>
-                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => copyToClipboard(result.email, "email")}>
+                    <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => copyToClipboard(result.email, "email")}>
                       {copied === "email" ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
                     </Button>
                   </div>
@@ -492,7 +557,7 @@ function ClientesTab() {
                       <p className="text-[10px] text-muted-foreground uppercase">Senha</p>
                       <p className="text-sm font-mono text-foreground">{result.password}</p>
                     </div>
-                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => copyToClipboard(result.password, "pwd")}>
+                    <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => copyToClipboard(result.password, "pwd")}>
                       {copied === "pwd" ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
                     </Button>
                   </div>
@@ -509,7 +574,7 @@ function ClientesTab() {
                 <div>
                   <label className="text-xs text-muted-foreground mb-1 block">Vincular a Cliente (opcional)</label>
                   <Select value={selectedCustomerId} onValueChange={setSelectedCustomerId}>
-                    <SelectTrigger className="bg-card"><SelectValue placeholder="Selecione um cliente" /></SelectTrigger>
+                    <SelectTrigger className="bg-card text-xs md:text-sm"><SelectValue placeholder="Selecione um cliente" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">Nenhum (criar sem vínculo)</SelectItem>
                       {customers.filter((c) => !c.user_id).map((c) => (
@@ -555,6 +620,28 @@ function ClientesTab() {
         <div className="text-center py-12 text-muted-foreground">Carregando...</div>
       ) : customers.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">Nenhum cliente cadastrado</div>
+      ) : isMobile ? (
+        <div className="space-y-3">
+          {customers.map((c) => (
+            <Card key={c.id}>
+              <CardContent className="p-4 space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-medium text-foreground truncate">{c.nome_fantasia || c.razao_social}</p>
+                  {c.user_id ? (
+                    <Badge variant="outline" className="text-xs border-green-600/30 text-green-400 shrink-0">Ativo</Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-xs shrink-0">Sem acesso</Badge>
+                  )}
+                </div>
+                <div className="text-xs space-y-1 text-muted-foreground">
+                  <p><span className="text-foreground/70">CNPJ/CPF:</span> {c.cnpj_ou_cpf}</p>
+                  <p><span className="text-foreground/70">E-mail:</span> {c.email}</p>
+                  <p><span className="text-foreground/70">Cadastro:</span> {new Date(c.created_at).toLocaleDateString("pt-BR")}</p>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       ) : (
         <div className="rounded-md border border-border overflow-auto">
           <Table>
@@ -595,6 +682,7 @@ function ClientesTab() {
 
 export default function AdminPage() {
   const [authed, setAuthed] = useState(!!sessionStorage.getItem("admin_token"));
+  const isMobile = useIsMobile();
 
   if (!authed) return <AdminLogin onLogin={() => setAuthed(true)} />;
 
@@ -605,27 +693,29 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border px-6 py-4 flex items-center justify-between">
-        <h1 className="text-lg font-bold text-foreground">🛡️ Admin — WMTi</h1>
-        <Button variant="ghost" size="sm" onClick={handleLogout}>
+      <header className="border-b border-border px-4 md:px-6 py-3 md:py-4 flex items-center justify-between gap-2">
+        <h1 className="text-sm md:text-lg font-bold text-foreground truncate">🛡️ Admin — WMTi</h1>
+        <Button variant="ghost" size="sm" onClick={handleLogout} className="shrink-0 text-xs md:text-sm">
           <LogOut className="h-4 w-4 mr-1" /> Sair
         </Button>
       </header>
 
-      <main className="max-w-7xl mx-auto p-6 space-y-6">
+      <main className="max-w-7xl mx-auto p-3 md:p-6 space-y-4 md:space-y-6">
         <Tabs defaultValue="dashboard">
-          <TabsList className="mb-4 flex-wrap">
-            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-            <TabsTrigger value="logs">Logs</TabsTrigger>
-            <TabsTrigger value="errors">Erros</TabsTrigger>
-            <TabsTrigger value="payments">Pagamentos</TabsTrigger>
-            <TabsTrigger value="clientes">Clientes</TabsTrigger>
-            <TabsTrigger value="leads">Leads & Propostas</TabsTrigger>
-            <TabsTrigger value="security">Segurança</TabsTrigger>
-            <TabsTrigger value="webhooks">Webhooks</TabsTrigger>
-            <TabsTrigger value="audit">Auditoria</TabsTrigger>
-            <TabsTrigger value="risk">Risco</TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto -mx-3 px-3 md:mx-0 md:px-0 pb-1">
+            <TabsList className="mb-4 inline-flex w-max min-w-full md:min-w-0 gap-0.5">
+              <TabsTrigger value="dashboard" className="text-xs md:text-sm px-2.5 md:px-3">Dashboard</TabsTrigger>
+              <TabsTrigger value="logs" className="text-xs md:text-sm px-2.5 md:px-3">Logs</TabsTrigger>
+              <TabsTrigger value="errors" className="text-xs md:text-sm px-2.5 md:px-3">Erros</TabsTrigger>
+              <TabsTrigger value="payments" className="text-xs md:text-sm px-2.5 md:px-3">Pgtos</TabsTrigger>
+              <TabsTrigger value="clientes" className="text-xs md:text-sm px-2.5 md:px-3">Clientes</TabsTrigger>
+              <TabsTrigger value="leads" className="text-xs md:text-sm px-2.5 md:px-3">Leads</TabsTrigger>
+              <TabsTrigger value="security" className="text-xs md:text-sm px-2.5 md:px-3">Segurança</TabsTrigger>
+              <TabsTrigger value="webhooks" className="text-xs md:text-sm px-2.5 md:px-3">Webhooks</TabsTrigger>
+              <TabsTrigger value="audit" className="text-xs md:text-sm px-2.5 md:px-3">Auditoria</TabsTrigger>
+              <TabsTrigger value="risk" className="text-xs md:text-sm px-2.5 md:px-3">Risco</TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="dashboard"><Dashboard /></TabsContent>
           <TabsContent value="logs"><LogsTab /></TabsContent>
