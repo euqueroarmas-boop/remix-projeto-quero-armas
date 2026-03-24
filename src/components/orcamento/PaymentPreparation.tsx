@@ -72,7 +72,7 @@ const PaymentPreparation = ({ visible, monthlyValue, companyName }: Props) => {
                 size="lg"
                 className="w-full gap-2 text-base font-semibold"
               >
-                <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
+                <a href={waLink} target="_blank" rel="noopener noreferrer">
                   <MessageCircle className="w-5 h-5" />
                   Solicitar link de pagamento via WhatsApp
                 </a>
