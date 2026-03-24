@@ -608,15 +608,22 @@ const ContratarServicoPage = () => {
               </div>
             ) : paymentComplete && invoiceUrl ? (
               <div className="bg-card border border-primary/20 rounded-xl p-6 space-y-4">
-                <div className="flex flex-col items-center text-center space-y-3">
+               <div className="flex flex-col items-center text-center space-y-3">
                   <Loader2 className="w-8 h-8 animate-spin text-primary" />
                   <h4 className="text-lg font-heading font-bold">Aguardando confirmação do pagamento...</h4>
-                  <p className="text-sm text-muted-foreground">A página segura de pagamento foi aberta em outra aba. Conclua o pagamento por lá.</p>
+                  {popupBlocked ? (
+                    <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg px-4 py-3 text-left">
+                      <p className="text-sm text-amber-300 font-semibold mb-1">⚠️ O navegador bloqueou a abertura automática</p>
+                      <p className="text-xs text-muted-foreground">Clique no botão abaixo para abrir o checkout manualmente.</p>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">A página segura de pagamento foi aberta em outra aba. Conclua o pagamento por lá.</p>
+                  )}
                 </div>
                 <div className="flex flex-col gap-2">
-                  <Button onClick={() => window.open(invoiceUrl, "_blank", "noopener,noreferrer")} className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground">
+                  <Button onClick={() => { setPopupBlocked(false); const w = window.open(invoiceUrl!, "_blank", "noopener,noreferrer"); if (!w) setPopupBlocked(true); }} className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground">
                     <ExternalLink className="w-4 h-4 mr-2" />
-                    Abrir checkout novamente
+                    {popupBlocked ? "Abrir checkout" : "Abrir checkout novamente"}
                   </Button>
                 </div>
                 <div className="text-center mt-4 space-y-2">
