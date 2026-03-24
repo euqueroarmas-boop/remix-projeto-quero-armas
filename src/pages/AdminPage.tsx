@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { adminQuerySingle, adminQuery } from "@/lib/adminApi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -113,19 +114,23 @@ function Dashboard() {
       const now = new Date();
       const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
 
-      const [logsRes, errorsRes, webhooksRes, paymentsRes] = await Promise.all([
-        supabase.from("logs_sistema" as any).select("id", { count: "exact", head: true }),
-        supabase.from("logs_sistema" as any).select("id", { count: "exact", head: true }).eq("status", "error").gte("created_at", yesterday),
-        supabase.from("asaas_webhooks").select("id", { count: "exact", head: true }),
-        supabase.from("payments").select("id", { count: "exact", head: true }),
-      ]);
+      try {
+        const results = await adminQuery([
+          { table: "logs_sistema", select: "id", count: true, limit: 0 },
+          { table: "logs_sistema", select: "id", count: true, limit: 0, filters: [{ column: "status", op: "eq", value: "error" }, { column: "created_at", op: "gte", value: yesterday }] },
+          { table: "asaas_webhooks", select: "id", count: true, limit: 0 },
+          { table: "payments", select: "id", count: true, limit: 0 },
+        ]);
 
-      setStats({
-        totalLogs: logsRes.count || 0,
-        errors24h: errorsRes.count || 0,
-        webhooks: webhooksRes.count || 0,
-        payments: paymentsRes.count || 0,
-      });
+        setStats({
+          totalLogs: results[0].count || 0,
+          errors24h: results[1].count || 0,
+          webhooks: results[2].count || 0,
+          payments: results[3].count || 0,
+        });
+      } catch (err) {
+        console.error("Dashboard fetch error:", err);
+      }
       setLoading(false);
     })();
   }, []);
@@ -170,18 +175,24 @@ function LogsTab({ onlyErrors = false }: { onlyErrors?: boolean }) {
 
   const fetchLogs = useCallback(async () => {
     setLoading(true);
-    let query = supabase
-      .from("logs_sistema" as any)
-      .select("*", { count: "exact" })
-      .order("created_at", { ascending: false })
-      .range(page * ITEMS_PER_PAGE, (page + 1) * ITEMS_PER_PAGE - 1);
+    const filters: any[] = [];
+    if (filterTipo !== "all") filters.push({ column: "tipo", op: "eq", value: filterTipo });
+    if (filterStatus !== "all") filters.push({ column: "status", op: "eq", value: filterStatus });
 
-    if (filterTipo !== "all") query = query.eq("tipo", filterTipo);
-    if (filterStatus !== "all") query = query.eq("status", filterStatus);
-
-    const { data, count } = await query;
-    setLogs((data as unknown as LogRow[]) || []);
-    setTotal(count || 0);
+    try {
+      const result = await adminQuerySingle({
+        table: "logs_sistema",
+        select: "*",
+        count: true,
+        filters,
+        order: { column: "created_at", ascending: false },
+        range: { from: page * ITEMS_PER_PAGE, to: (page + 1) * ITEMS_PER_PAGE - 1 },
+      });
+      setLogs((result.data as LogRow[]) || []);
+      setTotal(result.count || 0);
+    } catch (err) {
+      console.error("Logs fetch error:", err);
+    }
     setLoading(false);
   }, [page, filterTipo, filterStatus]);
 
@@ -228,7 +239,6 @@ function LogsTab({ onlyErrors = false }: { onlyErrors?: boolean }) {
       ) : logs.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">Nenhum log encontrado</div>
       ) : isMobile ? (
-        /* Mobile: card layout */
         <div className="space-y-3">
           {logs.map((log) => (
             <Card key={log.id} className={log.status === "error" ? "border-destructive/30" : ""}>
@@ -256,7 +266,6 @@ function LogsTab({ onlyErrors = false }: { onlyErrors?: boolean }) {
           ))}
         </div>
       ) : (
-        /* Desktop: table layout */
         <div className="rounded-md border border-border overflow-auto">
           <Table>
             <TableHeader>
@@ -328,31 +337,39 @@ function PaymentsTab() {
 
   const fetchPayments = useCallback(async () => {
     setLoading(true);
-    const { data, count } = await supabase
-      .from("payments")
-      .select("*", { count: "exact" })
-      .order("created_at", { ascending: false })
-      .range(page * ITEMS_PER_PAGE, (page + 1) * ITEMS_PER_PAGE - 1);
+    try {
+      const results = await adminQuery([
+        {
+          table: "payments",
+          select: "*",
+          count: true,
+          order: { column: "created_at", ascending: false },
+          range: { from: page * ITEMS_PER_PAGE, to: (page + 1) * ITEMS_PER_PAGE - 1 },
+        },
+        {
+          table: "asaas_webhooks",
+          select: "payload",
+        },
+      ]);
 
-    setPayments((data as PaymentRow[]) || []);
-    setTotal(count || 0);
+      setPayments((results[0].data as PaymentRow[]) || []);
+      setTotal(results[0].count || 0);
+
+      const ids = new Set<string>();
+      ((results[1].data as any[]) || []).forEach((w: any) => {
+        const paymentId = w.payload?.payment?.id;
+        if (paymentId) ids.add(paymentId);
+      });
+      setWebhookIds(ids);
+    } catch (err) {
+      console.error("Payments fetch error:", err);
+    }
     setLoading(false);
   }, [page]);
 
   useEffect(() => { fetchPayments(); }, [fetchPayments]);
 
   const [webhookIds, setWebhookIds] = useState<Set<string>>(new Set());
-  useEffect(() => {
-    (async () => {
-      const { data } = await supabase.from("asaas_webhooks").select("payload");
-      const ids = new Set<string>();
-      data?.forEach((w: any) => {
-        const paymentId = w.payload?.payment?.id;
-        if (paymentId) ids.add(paymentId);
-      });
-      setWebhookIds(ids);
-    })();
-  }, []);
 
   const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
 
@@ -474,27 +491,33 @@ function ClientesTab() {
 
   const fetchCustomers = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from("customers")
-      .select("id, razao_social, nome_fantasia, cnpj_ou_cpf, email, user_id, created_at")
-      .order("created_at", { ascending: false });
-    setCustomers(data || []);
+    try {
+      const results = await adminQuery([
+        {
+          table: "customers",
+          select: "id, razao_social, nome_fantasia, cnpj_ou_cpf, email, user_id, created_at",
+          order: { column: "created_at", ascending: false },
+        },
+        {
+          table: "admin_audit_logs",
+          select: "target_id, action, after_state, created_at",
+          filters: [{ column: "action", op: "in", value: ["auto_user_created", "auto_user_creation_failed"] }],
+          order: { column: "created_at", ascending: false },
+        },
+      ]);
 
-    // Fetch auto-creation audit logs
-    const { data: audits } = await supabase
-      .from("admin_audit_logs")
-      .select("target_id, action, after_state, created_at")
-      .in("action", ["auto_user_created", "auto_user_creation_failed"])
-      .order("created_at", { ascending: false });
+      setCustomers((results[0].data as any[]) || []);
 
-    const auditMap: Record<string, any> = {};
-    audits?.forEach((a: any) => {
-      if (a.target_id && !auditMap[a.target_id]) {
-        auditMap[a.target_id] = a;
-      }
-    });
-    setAuditLogs(auditMap);
-
+      const auditMap: Record<string, any> = {};
+      ((results[1].data as any[]) || []).forEach((a: any) => {
+        if (a.target_id && !auditMap[a.target_id]) {
+          auditMap[a.target_id] = a;
+        }
+      });
+      setAuditLogs(auditMap);
+    } catch (err) {
+      console.error("Customers fetch error:", err);
+    }
     setLoading(false);
   }, []);
 

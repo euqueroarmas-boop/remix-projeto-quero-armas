@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { adminQuerySingle } from "@/lib/adminApi";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,25 +27,31 @@ export default function AdminSecurityEvents() {
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
 
-  const fetch = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
-    let q = supabase
-      .from("security_events")
-      .select("*", { count: "exact" })
-      .order("created_at", { ascending: false })
-      .range(page * ITEMS, (page + 1) * ITEMS - 1);
+    const filters: any[] = [];
+    if (filterType !== "all") filters.push({ column: "event_type", op: "eq", value: filterType });
+    if (filterSev !== "all") filters.push({ column: "severity", op: "eq", value: filterSev });
+    if (search) filters.push({ column: "description", op: "ilike", value: `%${search}%` });
 
-    if (filterType !== "all") q = q.eq("event_type", filterType);
-    if (filterSev !== "all") q = q.eq("severity", filterSev);
-    if (search) q = q.ilike("description", `%${search}%`);
-
-    const { data, count } = await q;
-    setEvents(data || []);
-    setTotal(count || 0);
+    try {
+      const result = await adminQuerySingle({
+        table: "security_events",
+        select: "*",
+        count: true,
+        filters,
+        order: { column: "created_at", ascending: false },
+        range: { from: page * ITEMS, to: (page + 1) * ITEMS - 1 },
+      });
+      setEvents((result.data as any[]) || []);
+      setTotal(result.count || 0);
+    } catch (err) {
+      console.error("Security events fetch error:", err);
+    }
     setLoading(false);
   }, [page, filterType, filterSev, search]);
 
-  useEffect(() => { fetch(); }, [fetch]);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   const pages = Math.ceil(total / ITEMS);
 
@@ -85,7 +91,7 @@ export default function AdminSecurityEvents() {
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input placeholder="Buscar..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }} className="pl-9 bg-card" />
         </div>
-        <Button variant="outline" size="sm" onClick={fetch}><RefreshCw className="h-4 w-4 mr-1" /> Atualizar</Button>
+        <Button variant="outline" size="sm" onClick={fetchData}><RefreshCw className="h-4 w-4 mr-1" /> Atualizar</Button>
         <span className="text-sm text-muted-foreground ml-auto">{total} eventos</span>
       </div>
 

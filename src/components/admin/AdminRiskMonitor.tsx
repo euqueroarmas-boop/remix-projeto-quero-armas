@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { adminQuerySingle } from "@/lib/adminApi";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, RefreshCw, Shield } from "lucide-react";
@@ -17,32 +17,60 @@ export default function AdminRiskMonitor() {
   const [deniedAccess, setDeniedAccess] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  const fetch = async () => {
+  const fetchData = async () => {
     setLoading(true);
     const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
-    const [failedRes, tokenRes, deniedRes] = await Promise.all([
-      supabase.from("security_events").select("ip_address, user_id, event_type").eq("event_type", "login_failed").gte("created_at", since),
-      supabase.from("security_events").select("id", { count: "exact", head: true }).eq("event_type", "invalid_token").gte("created_at", since),
-      supabase.from("security_events").select("id", { count: "exact", head: true }).eq("event_type", "unauthorized_access").gte("created_at", since),
-    ]);
+    try {
+      const [failedRes, tokenRes, deniedRes] = await Promise.all([
+        adminQuerySingle({
+          table: "security_events",
+          select: "ip_address, user_id, event_type",
+          filters: [
+            { column: "event_type", op: "eq", value: "login_failed" },
+            { column: "created_at", op: "gte", value: since },
+          ],
+        }),
+        adminQuerySingle({
+          table: "security_events",
+          select: "id",
+          count: true,
+          limit: 0,
+          filters: [
+            { column: "event_type", op: "eq", value: "invalid_token" },
+            { column: "created_at", op: "gte", value: since },
+          ],
+        }),
+        adminQuerySingle({
+          table: "security_events",
+          select: "id",
+          count: true,
+          limit: 0,
+          filters: [
+            { column: "event_type", op: "eq", value: "unauthorized_access" },
+            { column: "created_at", op: "gte", value: since },
+          ],
+        }),
+      ]);
 
-    // Aggregate by IP
-    const ipMap: Record<string, number> = {};
-    const userMap: Record<string, number> = {};
-    (failedRes.data || []).forEach((e: any) => {
-      if (e.ip_address) ipMap[e.ip_address] = (ipMap[e.ip_address] || 0) + 1;
-      if (e.user_id) userMap[e.user_id] = (userMap[e.user_id] || 0) + 1;
-    });
+      const ipMap: Record<string, number> = {};
+      const userMap: Record<string, number> = {};
+      ((failedRes.data as any[]) || []).forEach((e: any) => {
+        if (e.ip_address) ipMap[e.ip_address] = (ipMap[e.ip_address] || 0) + 1;
+        if (e.user_id) userMap[e.user_id] = (userMap[e.user_id] || 0) + 1;
+      });
 
-    setFailedIPs(Object.entries(ipMap).map(([key, count]) => ({ key, count, type: "IP" })).sort((a, b) => b.count - a.count).slice(0, 10));
-    setFailedUsers(Object.entries(userMap).map(([key, count]) => ({ key, count, type: "User" })).sort((a, b) => b.count - a.count).slice(0, 10));
-    setInvalidTokens(tokenRes.count || 0);
-    setDeniedAccess(deniedRes.count || 0);
+      setFailedIPs(Object.entries(ipMap).map(([key, count]) => ({ key, count, type: "IP" })).sort((a, b) => b.count - a.count).slice(0, 10));
+      setFailedUsers(Object.entries(userMap).map(([key, count]) => ({ key, count, type: "User" })).sort((a, b) => b.count - a.count).slice(0, 10));
+      setInvalidTokens(tokenRes.count || 0);
+      setDeniedAccess(deniedRes.count || 0);
+    } catch (err) {
+      console.error("Risk monitor fetch error:", err);
+    }
     setLoading(false);
   };
 
-  useEffect(() => { fetch(); }, []);
+  useEffect(() => { fetchData(); }, []);
 
   const cards = [
     { title: "Logins Falhos (24h)", value: failedIPs.reduce((s, i) => s + i.count, 0), color: "text-yellow-400" },
@@ -58,7 +86,7 @@ export default function AdminRiskMonitor() {
           <AlertTriangle size={20} className="text-primary" />
           <h2 className="font-heading font-bold text-lg">Monitor de Risco</h2>
         </div>
-        <Button variant="outline" size="sm" onClick={fetch}><RefreshCw className="h-4 w-4 mr-1" /> Atualizar</Button>
+        <Button variant="outline" size="sm" onClick={fetchData}><RefreshCw className="h-4 w-4 mr-1" /> Atualizar</Button>
       </div>
 
       {loading ? (

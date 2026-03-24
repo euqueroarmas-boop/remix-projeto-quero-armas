@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { adminQuerySingle } from "@/lib/adminApi";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -14,19 +14,25 @@ export default function AdminAudit() {
   const [total, setTotal] = useState(0);
   const [expanded, setExpanded] = useState<string | null>(null);
 
-  const fetch = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
-    const { data, count } = await supabase
-      .from("admin_audit_logs")
-      .select("*", { count: "exact" })
-      .order("created_at", { ascending: false })
-      .range(page * ITEMS, (page + 1) * ITEMS - 1);
-    setLogs(data || []);
-    setTotal(count || 0);
+    try {
+      const result = await adminQuerySingle({
+        table: "admin_audit_logs",
+        select: "*",
+        count: true,
+        order: { column: "created_at", ascending: false },
+        range: { from: page * ITEMS, to: (page + 1) * ITEMS - 1 },
+      });
+      setLogs((result.data as any[]) || []);
+      setTotal(result.count || 0);
+    } catch (err) {
+      console.error("Audit fetch error:", err);
+    }
     setLoading(false);
   }, [page]);
 
-  useEffect(() => { fetch(); }, [fetch]);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   const pages = Math.ceil(total / ITEMS);
 
@@ -38,7 +44,7 @@ export default function AdminAudit() {
       </div>
 
       <div className="flex items-center gap-3">
-        <Button variant="outline" size="sm" onClick={fetch}><RefreshCw className="h-4 w-4 mr-1" /> Atualizar</Button>
+        <Button variant="outline" size="sm" onClick={fetchData}><RefreshCw className="h-4 w-4 mr-1" /> Atualizar</Button>
         <span className="text-sm text-muted-foreground ml-auto">{total} registros</span>
       </div>
 

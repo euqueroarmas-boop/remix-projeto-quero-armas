@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { adminQuerySingle } from "@/lib/adminApi";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -39,17 +39,29 @@ function LeadsList() {
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState("");
 
-  const fetch = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
-    let q = supabase.from("leads").select("*", { count: "exact" }).order("created_at", { ascending: false }).range(page * ITEMS, (page + 1) * ITEMS - 1);
-    if (search) q = q.or(`name.ilike.%${search}%,email.ilike.%${search}%,company.ilike.%${search}%,whatsapp.ilike.%${search}%`);
-    const { data: d, count } = await q;
-    setData(d || []);
-    setTotal(count || 0);
+    const filters: any[] = [];
+    if (search) filters.push({ column: "", op: "or", value: `name.ilike.%${search}%,email.ilike.%${search}%,company.ilike.%${search}%,whatsapp.ilike.%${search}%` });
+
+    try {
+      const result = await adminQuerySingle({
+        table: "leads",
+        select: "*",
+        count: true,
+        filters,
+        order: { column: "created_at", ascending: false },
+        range: { from: page * ITEMS, to: (page + 1) * ITEMS - 1 },
+      });
+      setData((result.data as any[]) || []);
+      setTotal(result.count || 0);
+    } catch (err) {
+      console.error("Leads fetch error:", err);
+    }
     setLoading(false);
   }, [page, search]);
 
-  useEffect(() => { fetch(); }, [fetch]);
+  useEffect(() => { fetchData(); }, [fetchData]);
   const pages = Math.ceil(total / ITEMS);
 
   return (
@@ -59,7 +71,7 @@ function LeadsList() {
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input placeholder="Buscar por nome, email, empresa, WhatsApp..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }} className="pl-9 bg-card" />
         </div>
-        <Button variant="outline" size="sm" onClick={fetch}><RefreshCw className="h-4 w-4 mr-1" /> Atualizar</Button>
+        <Button variant="outline" size="sm" onClick={fetchData}><RefreshCw className="h-4 w-4 mr-1" /> Atualizar</Button>
         <span className="text-sm text-muted-foreground">{total} leads</span>
       </div>
 
@@ -102,8 +114,15 @@ function ProposalsList() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.from("proposals").select("*").order("created_at", { ascending: false }).limit(50)
-      .then(({ data: d }) => { setData(d || []); setLoading(false); });
+    adminQuerySingle({
+      table: "proposals",
+      select: "*",
+      order: { column: "created_at", ascending: false },
+      limit: 50,
+    }).then((result) => {
+      setData((result.data as any[]) || []);
+      setLoading(false);
+    }).catch(() => setLoading(false));
   }, []);
 
   return loading ? <div className="text-center py-12 text-muted-foreground">Carregando...</div> : data.length === 0 ? <div className="text-center py-12 text-muted-foreground">Nenhuma proposta</div> : (
@@ -135,8 +154,15 @@ function ContractsList() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.from("contracts").select("*, customers(razao_social, cnpj_ou_cpf, email)").order("created_at", { ascending: false }).limit(50)
-      .then(({ data: d }) => { setData(d || []); setLoading(false); });
+    adminQuerySingle({
+      table: "contracts",
+      select: "*, customers(razao_social, cnpj_ou_cpf, email)",
+      order: { column: "created_at", ascending: false },
+      limit: 50,
+    }).then((result) => {
+      setData((result.data as any[]) || []);
+      setLoading(false);
+    }).catch(() => setLoading(false));
   }, []);
 
   return loading ? <div className="text-center py-12 text-muted-foreground">Carregando...</div> : data.length === 0 ? <div className="text-center py-12 text-muted-foreground">Nenhum contrato</div> : (
