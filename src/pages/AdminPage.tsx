@@ -791,6 +791,7 @@ export default function AdminPage() {
           <TabsContent value="webhooks"><AdminWebhooks /></TabsContent>
           <TabsContent value="audit"><AdminAudit /></TabsContent>
           <TabsContent value="risk"><AdminRiskMonitor /></TabsContent>
+          <TabsContent value="diagnostics"><AdminDiagnostics /></TabsContent>
         </Tabs>
       </main>
     </div>
