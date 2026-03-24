@@ -179,18 +179,17 @@ const ContractingWizard = ({
 
   // Poll for payment confirmation + send email
   useEffect(() => {
-    if (!paymentComplete || paymentConfirmed || !quoteId) return;
+    if (!paymentComplete || paymentConfirmed || !activeQuoteId) return;
     const interval = setInterval(async () => {
       const { data } = await supabase
         .from("payments")
         .select("payment_status")
-        .eq("quote_id", quoteId)
+        .eq("quote_id", activeQuoteId)
         .order("created_at", { ascending: false })
         .limit(1)
         .single();
       if (data && ((data as any).payment_status === "CONFIRMED" || (data as any).payment_status === "RECEIVED")) {
         setPaymentConfirmed(true);
-        // Send confirmation email (only once)
         if (registrationData && !emailSentRef.current) {
           emailSentRef.current = true;
           supabase.functions.invoke("send-purchase-confirmation", {
@@ -207,7 +206,6 @@ const ContractingWizard = ({
             },
           }).catch(err => console.error("[WMTi] Email error:", err));
         }
-        // Save data to session and redirect
         const purchaseData = {
           serviceName: effectivePath === "locacao" ? "Locação de Equipamentos" : "Serviços de TI",
           computersQty,
@@ -221,11 +219,11 @@ const ContractingWizard = ({
           purchaseDate: new Date().toLocaleDateString("pt-BR"),
         };
         try { sessionStorage.setItem("wmti_purchase_data", JSON.stringify(purchaseData)); } catch {}
-        navigate(`/compra-concluida?quote=${quoteId}`);
+        navigate(`/compra-concluida?quote=${activeQuoteId}`);
       }
     }, 5000);
     return () => clearInterval(interval);
-  }, [paymentComplete, paymentConfirmed, quoteId, registrationData, selectedPayment, contractId, effectivePath, computersQty, monthlyValue]);
+  }, [paymentComplete, paymentConfirmed, activeQuoteId, registrationData, selectedPayment, contractId, effectivePath, computersQty, monthlyValue]);
 
   // Open checkout in new tab — keeps wizard state intact
   const handleRedirectToCheckout = useCallback((url: string) => {
