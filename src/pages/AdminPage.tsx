@@ -613,12 +613,16 @@ export default function AdminPage() {
 
       <main className="max-w-7xl mx-auto p-6 space-y-6">
         <Tabs defaultValue="dashboard">
-          <TabsList className="mb-4">
+          <TabsList className="mb-4 flex-wrap">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="logs">Logs</TabsTrigger>
             <TabsTrigger value="errors">Erros</TabsTrigger>
             <TabsTrigger value="payments">Pagamentos</TabsTrigger>
             <TabsTrigger value="clientes">Clientes</TabsTrigger>
+            <TabsTrigger value="leads">Leads & Propostas</TabsTrigger>
+            <TabsTrigger value="security">Segurança</TabsTrigger>
+            <TabsTrigger value="webhooks">Webhooks</TabsTrigger>
+            <TabsTrigger value="audit">Auditoria</TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard"><Dashboard /></TabsContent>
@@ -626,6 +630,10 @@ export default function AdminPage() {
           <TabsContent value="errors"><LogsTab onlyErrors /></TabsContent>
           <TabsContent value="payments"><PaymentsTab /></TabsContent>
           <TabsContent value="clientes"><ClientesTab /></TabsContent>
+          <TabsContent value="leads"><AdminLeadsProposals /></TabsContent>
+          <TabsContent value="security"><AdminSecurityEvents /></TabsContent>
+          <TabsContent value="webhooks"><AdminWebhookMonitor /></TabsContent>
+          <TabsContent value="audit"><AdminAuditLogs /></TabsContent>
         </Tabs>
       </main>
     </div>
