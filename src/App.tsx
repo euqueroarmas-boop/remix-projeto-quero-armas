@@ -5,6 +5,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import FloatingCtaBar from "@/components/FloatingCtaBar";
 import Index from "./pages/Index.tsx";
 
 const Provimento213 = lazy(() => import("./pages/Provimento213.tsx"));
