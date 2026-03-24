@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { logSistema } from "@/lib/logSistema";
+import { checkRateLimit, logSecurityEvent } from "@/lib/security";
 
 interface Props {
   onLogin: () => void;
