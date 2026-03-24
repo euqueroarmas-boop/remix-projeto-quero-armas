@@ -1,6 +1,11 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { CheckCircle, Download, Home, MessageCircle, Printer, ExternalLink, Loader2, FileText } from "lucide-react";
+import { CheckCircle, Download, Home, MessageCircle, Printer, ExternalLink, Loader2, FileText, Copy, Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { ErrorBlock } from "@/components/ui/ErrorBlock";
+import { downloadPdf } from "@/lib/pdfDownload";
+import { logAndPersistError, type WmtiError } from "@/lib/errorLogger";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
