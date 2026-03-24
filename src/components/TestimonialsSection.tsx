@@ -7,7 +7,7 @@ const testimonials = [
     name: "Maria Angela",
     role: "Tabeliã",
     company: "1º Tabelião de Sorocaba",
-    text: "A WMTi reestruturou toda nossa infraestrutura de rede e servidores. Desde a migração para o PowerEdge, não tivemos nenhuma parada crítica. Atendimento excepcional.",
+    text: "Desde que a WMTi assumiu nossa TI, não tivemos nenhuma parada. Nosso cartório funciona o dia inteiro sem travar. Valeu cada centavo.",
     stars: 5,
     initials: "TP",
   },
