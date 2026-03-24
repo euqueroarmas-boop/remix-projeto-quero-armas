@@ -33,6 +33,8 @@ Deno.serve(async (req) => {
       contract_ref,
       purchase_date,
       is_recurring,
+      login_email,
+      temp_password,
     } = body;
 
     if (!customer_email || !customer_name || !service_name) {
@@ -98,10 +100,31 @@ Deno.serve(async (req) => {
     </td></tr>
   </table>
 
+  ${login_email && temp_password ? `
+  <!-- Client Access Credentials -->
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#FFF7ED;border:2px solid #FF5A1F;border-radius:8px;padding:20px;margin-bottom:24px;">
+    <tr><td style="padding:8px 16px;font-size:12px;text-transform:uppercase;letter-spacing:2px;color:#FF5A1F;font-weight:bold;">🔐 Dados de Acesso ao Portal do Cliente</td></tr>
+    <tr><td style="padding:0 16px;">
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr><td style="padding:8px 0;font-size:13px;color:#666;border-bottom:1px solid #FDBA74;">Login (e-mail)</td><td style="padding:8px 0;font-size:13px;font-weight:600;text-align:right;border-bottom:1px solid #FDBA74;font-family:monospace;">${login_email}</td></tr>
+        <tr><td style="padding:8px 0;font-size:13px;color:#666;border-bottom:1px solid #FDBA74;">Senha temporária</td><td style="padding:8px 0;font-size:14px;font-weight:bold;text-align:right;color:#FF5A1F;font-family:monospace;">${temp_password}</td></tr>
+        <tr><td style="padding:8px 0;font-size:13px;color:#666;">Portal</td><td style="padding:8px 0;font-size:13px;font-weight:600;text-align:right;">wmti.com.br/area-do-cliente</td></tr>
+      </table>
+    </td></tr>
+    <tr><td style="padding:12px 16px 8px;">
+      <div style="background:#FEF3C7;border:1px solid #F59E0B;border-radius:6px;padding:10px 14px;">
+        <p style="font-size:12px;color:#92400E;margin:0;font-weight:bold;">⚠️ AVISO DE SEGURANÇA:</p>
+        <p style="font-size:12px;color:#92400E;margin:4px 0 0;">Esta senha é temporária e deverá ser alterada obrigatoriamente no primeiro acesso ao portal.</p>
+      </div>
+    </td></tr>
+  </table>
+  ` : ''}
+
   <!-- Next steps -->
   <div style="background:#FFF7ED;border:1px solid #FDBA74;border-radius:8px;padding:16px 20px;margin-bottom:24px;">
     <p style="font-size:13px;font-weight:bold;color:#9A3412;margin:0 0 8px;">Próximos passos:</p>
     <ul style="font-size:13px;color:#9A3412;margin:0;padding:0 0 0 20px;line-height:1.8;">
+      ${login_email ? '<li>Acesse o portal do cliente em wmti.com.br/area-do-cliente com as credenciais acima.</li>' : ''}
       <li>Nossa equipe técnica entrará em contato em breve para agendar o atendimento.</li>
       <li>Guarde este e-mail como comprovante da sua contratação.</li>
       <li>Em caso de dúvidas, fale conosco pelo WhatsApp: (11) 96316-6915</li>
