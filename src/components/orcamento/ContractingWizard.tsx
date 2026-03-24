@@ -242,10 +242,15 @@ const ContractingWizard = ({
     return () => clearInterval(interval);
   }, [paymentComplete, paymentConfirmed, activeQuoteId, registrationData, selectedPayment, contractId, effectivePath, computersQty, monthlyValue]);
 
-  // Open checkout in new tab — keeps wizard state intact
+  // Open checkout in new tab — detects popup blocker
   const handleRedirectToCheckout = useCallback((url: string) => {
     if (!url) return;
-    window.open(url, "_blank", "noopener,noreferrer");
+    setPopupBlocked(false);
+    const win = window.open(url, "_blank", "noopener,noreferrer");
+    if (!win || win.closed || typeof win.closed === "undefined") {
+      setPopupBlocked(true);
+      console.warn("[WMTi] Popup bloqueado pelo navegador");
+    }
   }, []);
 
 
