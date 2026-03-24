@@ -196,11 +196,11 @@ const PurchaseSuccessScreen = ({ visible, data, quoteId, pdfUrl, pdfLoading, pdf
       {/* ── Action Buttons ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Button
-          onClick={pdfReady ? handleOpenPdf : onGeneratePdf}
-          disabled={pdfLoading || openingPdf}
+          onClick={pdfReady ? handleDownloadPdf : onGeneratePdf}
+          disabled={pdfLoading || downloading}
           className="w-full h-12 text-sm font-semibold"
         >
-          {pdfLoading || openingPdf ? (
+          {pdfLoading || downloading ? (
             <Loader2 className="w-4 h-4 animate-spin mr-2" />
           ) : pdfReady ? (
             <Download className="w-4 h-4 mr-2" />
@@ -236,10 +236,13 @@ const PurchaseSuccessScreen = ({ visible, data, quoteId, pdfUrl, pdfLoading, pdf
         </a>
       </div>
 
-      {pdfError && (
-        <div className="rounded-lg border border-destructive/25 bg-destructive/10 px-4 py-3 text-sm text-muted-foreground">
-          {pdfError}
-        </div>
+      {(pdfError || lastError) && (
+        <ErrorBlock
+          message={pdfError || lastError?.message || "Erro ao processar o contrato"}
+          error={lastError}
+          onRetry={pdfReady ? handleDownloadPdf : onGeneratePdf}
+          retryLabel="Tentar novamente"
+        />
       )}
     </motion.div>
   );

@@ -113,24 +113,13 @@ const AtivacaoAcessoPage = () => {
                 Validando pagamento, corrigindo o acesso e preparando suas credenciais...
               </div>
             ) : error ? (
-              <div className="space-y-4 rounded-xl border border-destructive/30 bg-destructive/10 p-4">
-                <div className="flex items-start gap-3">
-                  <AlertTriangle className="mt-0.5 h-5 w-5 text-destructive" />
-                  <div>
-                    <p className="font-semibold text-foreground">Não foi possível liberar o acesso agora</p>
-                    <p className="text-sm text-muted-foreground">{error}</p>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-3 sm:flex-row">
-                  <Button onClick={loadAccess} className="sm:flex-1">
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    Gerar acesso agora
-                  </Button>
-                  <Button variant="outline" className="sm:flex-1" onClick={() => navigate(`/compra-concluida?quote=${quoteId}`)}>
-                    Voltar ao comprovante
-                  </Button>
-                </div>
-              </div>
+              <ErrorBlock
+                title="Não foi possível liberar o acesso agora"
+                message={error}
+                error={lastError}
+                onRetry={loadAccess}
+                retryLabel="Gerar acesso agora"
+              />
             ) : credentials ? (
               <div className="space-y-5">
                 <div className="grid gap-4 md:grid-cols-2">
