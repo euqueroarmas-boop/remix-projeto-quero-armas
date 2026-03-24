@@ -346,6 +346,21 @@ const ContratarServicoPage = () => {
   };
 
   if (isRentalContract) {
+    // Read lead data from URL params (passed from LocacaoComputadoresPage)
+    const leadCompany = searchParams.get("empresa") || "";
+    const leadNomeFantasia = searchParams.get("nomeFantasia") || "";
+    const leadResponsavel = searchParams.get("responsavel") || "";
+    const leadEmail = searchParams.get("email") || "";
+    const leadWhatsapp = searchParams.get("whatsapp") || "";
+    const leadCnpj = searchParams.get("cnpj") || "";
+    const leadCidade = searchParams.get("cidade") || "";
+    const leadUf = searchParams.get("uf") || "";
+    const leadCep = searchParams.get("cep") || "";
+    const leadEndereco = searchParams.get("endereco") || "";
+    const leadNumero = searchParams.get("numero") || "";
+    const leadComplemento = searchParams.get("complemento") || "";
+    const leadBairro = searchParams.get("bairro") || "";
+
     return (
       <div className="min-h-screen">
         <SeoHead
@@ -394,6 +409,19 @@ const ContratarServicoPage = () => {
           computersQty={selectedRentalQty}
           monthlyValue={rentalMonthlyValue}
           quoteId={null}
+          leadCompanyName={leadCompany}
+          leadContactName={leadResponsavel}
+          leadEmail={leadEmail}
+          leadPhone={leadWhatsapp}
+          leadCity={leadCidade}
+          leadCnpj={leadCnpj}
+          leadNomeFantasia={leadNomeFantasia}
+          leadUf={leadUf}
+          leadCep={leadCep}
+          leadEndereco={leadEndereco}
+          leadNumero={leadNumero}
+          leadComplemento={leadComplemento}
+          leadBairro={leadBairro}
         />
 
         <Footer />
