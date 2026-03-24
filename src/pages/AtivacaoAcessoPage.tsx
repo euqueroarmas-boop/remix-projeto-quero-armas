@@ -6,7 +6,9 @@ import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import SeoHead from "@/components/SeoHead";
 import { Button } from "@/components/ui/button";
+import { ErrorBlock } from "@/components/ui/ErrorBlock";
 import { ensurePortalAccess, fetchPurchaseInfo, type ClientCredentials, type PurchaseInfo } from "@/lib/postPurchase";
+import { logAndPersistError, type WmtiError } from "@/lib/errorLogger";
 
 const AtivacaoAcessoPage = () => {
   const [searchParams] = useSearchParams();
