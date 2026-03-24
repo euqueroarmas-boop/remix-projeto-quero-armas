@@ -51,6 +51,14 @@ interface Props {
   leadEmail?: string;
   leadPhone?: string;
   leadCity?: string;
+  leadCnpj?: string;
+  leadNomeFantasia?: string;
+  leadUf?: string;
+  leadCep?: string;
+  leadEndereco?: string;
+  leadNumero?: string;
+  leadComplemento?: string;
+  leadBairro?: string;
 }
 
 const normalizeQrImage = (value: unknown) => {
