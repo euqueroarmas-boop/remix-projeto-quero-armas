@@ -38,7 +38,7 @@ export default function ClientLogin({ onLogin }: Props) {
 
     if (err) {
       setError("E-mail ou senha incorretos.");
-      logSistema({ tipo: "admin", status: "error", mensagem: "Login falho na Área do Cliente", payload: { email, error: err.message } });
+      logSistema({ tipo: "admin", status: "error", mensagem: "Login falho na Área do Cliente", payload: { email_hash: email ? email.substring(0, 3) + "***" : "unknown" } });
       return;
     }
 
