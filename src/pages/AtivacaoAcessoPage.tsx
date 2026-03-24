@@ -18,6 +18,7 @@ const AtivacaoAcessoPage = () => {
   const [credentials, setCredentials] = useState<ClientCredentials | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lastError, setLastError] = useState<WmtiError | null>(null);
   const [copied, setCopied] = useState<"email" | "password" | "">("");
 
   const whatsappHref = useMemo(() => {
