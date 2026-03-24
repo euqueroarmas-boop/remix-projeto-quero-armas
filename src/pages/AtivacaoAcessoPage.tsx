@@ -41,6 +41,7 @@ const AtivacaoAcessoPage = () => {
 
     setLoading(true);
     setError(null);
+    setLastError(null);
 
     try {
       const [purchaseData, access] = await Promise.all([
