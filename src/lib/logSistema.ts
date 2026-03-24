@@ -13,14 +13,10 @@ interface LogParams {
 
 export async function logSistema({ tipo, status, mensagem, payload, user_id }: LogParams) {
   try {
-    const { error } = await supabase.from("logs_sistema" as any).insert({
-      tipo,
-      status,
-      mensagem,
-      payload: payload || {},
-      user_id: user_id || null,
+    const { error } = await supabase.functions.invoke("register-log", {
+      body: { tipo, status, mensagem, payload: payload || {}, user_id: user_id || null },
     });
-    if (error) console.error("[logSistema] insert error:", error.message);
+    if (error) console.error("[logSistema] edge fn error:", error.message);
   } catch (e) {
     console.error("[logSistema] failed:", e);
   }
