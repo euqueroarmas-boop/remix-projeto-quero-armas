@@ -89,14 +89,14 @@ export const HomeServicos = () => (
     <div className="container">
       <motion.div {...fade} className="mb-10 md:mb-14">
         <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
-          // Serviços
+          // O que fazemos por você
         </p>
         <h2 className="text-2xl md:text-4xl lg:text-5xl max-w-2xl mb-4">
-          Soluções completas em <span className="text-primary">TI</span>.
+          Tudo que sua empresa precisa para <span className="text-primary">nunca parar.</span>
         </h2>
         <p className="font-body text-muted-foreground text-sm md:text-base max-w-xl leading-relaxed">
-          Da locação de equipamentos à gestão completa de infraestrutura — tudo
-          que sua empresa precisa para operar com segurança e performance.
+          Locação de equipamentos, suporte dedicado, segurança e infraestrutura
+          completa — com preço fixo mensal e sem surpresas.
         </p>
       </motion.div>
 
