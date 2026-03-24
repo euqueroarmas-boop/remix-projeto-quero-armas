@@ -27,11 +27,11 @@ const PLANS = [
 
 /* ─── Pain Points ─── */
 const painPoints = [
-  { icon: AlertTriangle, text: "Computadores lentos travando o dia inteiro" },
-  { icon: DollarSign, text: "Manutenção inesperada estourando o orçamento" },
-  { icon: Clock, text: "Equipe parada esperando técnico" },
-  { icon: Ban, text: "Máquinas antigas que não rodam os sistemas" },
-  { icon: TrendingDown, text: "Sem previsibilidade de custos com TI" },
+  { icon: AlertTriangle, text: "Computador fica lento, trava, e ninguém consegue trabalhar direito" },
+  { icon: DollarSign, text: "Manutenção, troca de peça, e o ciclo de gasto nunca acaba" },
+  { icon: Clock, text: "Equipe perdendo tempo e produtividade com equipamento ruim" },
+  { icon: Ban, text: "Máquinas ultrapassadas que viram obstáculo, não ferramenta" },
+  { icon: TrendingDown, text: "Depreciação constante — o equipamento perde valor todo mês" },
 ];
 
 /* ─── Benefits ─── */
