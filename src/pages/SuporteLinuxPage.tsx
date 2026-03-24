@@ -7,35 +7,35 @@ const SuporteLinuxPage = () => (
     metaTitle="Suporte Linux Corporativo | Ubuntu, CentOS, Debian | WMTi"
     metaDescription="Suporte técnico especializado em servidores Linux. Ubuntu Server, CentOS, Debian, firewall iptables, containers Docker e administração de serviços."
     tag="Suporte Linux"
-    headline={<>Suporte <span className="text-primary">Linux Corporativo</span></>}
-    description="A WMTi oferece suporte técnico especializado em servidores Linux para ambientes corporativos, incluindo Ubuntu Server, CentOS, Debian, firewalls, containers e serviços de rede."
+    headline={<>Seu servidor Linux está funcionando — mas <span className="text-primary">ninguém sabe o que acontece</span> dentro dele</>}
+    description="Ele roda. Ele responde. Mas ninguém olha os logs. Ninguém aplica patches. Ninguém verifica se tem processo consumindo memória. Ninguém sabe se o firewall está configurado certo. E quando algo falha num servidor Linux sem administração, a recuperação é difícil — porque ninguém documentou nada. A WMTi administra seu ambiente Linux com quem entende de verdade. Sem improvisação."
     whatsappMessage="Olá! Preciso de suporte para servidores Linux."
     painPoints={[
-      "Servidor Linux sem administração profissional",
-      "Serviços de rede instáveis em ambiente Linux",
-      "Firewall iptables/nftables mal configurado",
-      "Sem atualizações de segurança aplicadas",
-      "Containers Docker sem gerenciamento adequado",
+      "Servidor Linux rodando sem ninguém administrando de verdade",
+      "Serviços de rede instáveis e sem diagnóstico claro",
+      "Firewall iptables/nftables configurado por tentativa e erro",
+      "Meses sem atualizações de segurança aplicadas",
+      "Containers Docker rodando sem gerenciamento adequado",
     ]}
     solutions={[
       "Administração profissional de Ubuntu Server, CentOS e Debian",
-      "Configuração e manutenção de serviços de rede em Linux",
-      "Firewall iptables/nftables com regras otimizadas",
-      "Gerenciamento de containers Docker e Docker Compose",
-      "Hardening e aplicação de patches de segurança",
+      "Serviços de rede estáveis com configuração documentada",
+      "Firewall iptables/nftables com regras otimizadas e auditáveis",
+      "Containers Docker gerenciados com boas práticas de produção",
+      "Hardening real e patches de segurança aplicados regularmente",
     ]}
     benefits={[
-      { icon: Server, title: "Servidores Linux", text: "Administração de Ubuntu Server, CentOS, Debian e derivados." },
-      { icon: Shield, title: "Firewall", text: "Configuração de iptables/nftables com regras otimizadas." },
-      { icon: Lock, title: "Hardening", text: "Hardening de segurança e aplicação de patches de segurança." },
-      { icon: Activity, title: "Monitoramento", text: "Monitoramento de serviços e performance de servidores Linux." },
-      { icon: Wrench, title: "Containers", text: "Gerenciamento de Docker e Docker Compose para aplicações." },
-      { icon: Headphones, title: "Suporte dedicado", text: "Equipe com expertise em administração de ambientes Linux." },
+      { icon: Server, title: "Linux de verdade", text: "Administração feita por quem vive Linux — não por quem googla o comando na hora." },
+      { icon: Shield, title: "Firewall profissional", text: "iptables/nftables configurado com regras que fazem sentido para sua operação." },
+      { icon: Lock, title: "Hardening real", text: "Servidor protegido de verdade — não só com as configurações padrão." },
+      { icon: Activity, title: "Monitoramento", text: "Serviços e performance monitorados para agir antes da falha." },
+      { icon: Wrench, title: "Docker gerenciado", text: "Containers rodando com orquestração, logs e manutenção adequada." },
+      { icon: Headphones, title: "Suporte especializado", text: "Equipe que resolve problema em Linux sem precisar reiniciar tudo." },
     ]}
     faq={[
-      { question: "Quais distribuições vocês suportam?", answer: "Ubuntu Server, CentOS, Debian, Rocky Linux e outras distribuições enterprise." },
-      { question: "Vocês gerenciam containers Docker?", answer: "Sim. Administramos ambientes Docker e Docker Compose para aplicações corporativas." },
-      { question: "Fazem migração de Windows para Linux?", answer: "Sim. Realizamos migrações planejadas de ambientes Windows para Linux quando aplicável." },
+      { question: "Quais distribuições vocês suportam?", answer: "Ubuntu Server, CentOS, Debian, Rocky Linux e outras enterprise. Se roda Linux, a gente gerencia." },
+      { question: "Vocês gerenciam containers Docker?", answer: "Sim. Docker e Docker Compose em produção, com monitoramento, logs e boas práticas de segurança." },
+      { question: "Fazem migração de Windows para Linux?", answer: "Sim. Quando faz sentido para o ambiente, migramos com planejamento e sem impacto na operação." },
     ]}
     relatedLinks={[
       { label: "Suporte Windows Server", href: "/suporte-windows-server" },

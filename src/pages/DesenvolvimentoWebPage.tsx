@@ -110,11 +110,10 @@ const DesenvolvimentoWebPage = () => {
             <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
               <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">// Tecnologia Premium + Integrações + IA</p>
               <h1 className="text-3xl md:text-5xl lg:text-6xl max-w-4xl mb-6">
-                Desenvolvimento De Sites E{" "}
-                <span className="text-primary">Sistemas Web Profissionais</span>
+                Sua empresa ainda não tem <span className="text-primary">presença digital profissional</span> — e está perdendo clientes
               </h1>
               <p className="font-body text-lg md:text-xl text-muted-foreground max-w-2xl mb-8 leading-relaxed">
-                Criamos muito mais que sites. Desenvolvemos plataformas completas de negócio — modernas, rápidas, seguras e preparadas para escalar.
+                Site amador. Sistema improvisado. Processos manuais que poderiam ser automáticos. Enquanto isso, seus concorrentes estão vendendo, atendendo e operando no digital. A WMTi desenvolve plataformas completas de negócio — não só sites bonitos, mas ferramentas que fazem sua empresa funcionar melhor.
               </p>
 
               <div className="flex flex-wrap gap-4">

@@ -113,11 +113,10 @@ const TiHospitaisClinicasPage = () => {
             </Link>
             <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">// TI para Saúde</p>
             <h1 className="text-3xl md:text-5xl lg:text-6xl mb-6">
-              Infraestrutura de TI para Hospitais e{" "}
-              <span className="text-primary">Clínicas Médicas</span>
+              Sua clínica depende de sistemas que <span className="text-primary">não podem falhar</span> — mas estão falhando
             </h1>
             <p className="font-body text-lg md:text-xl text-muted-foreground max-w-2xl leading-relaxed mb-8">
-              Tecnologia segura e estável para garantir continuidade do atendimento, proteção de dados médicos e operação sem interrupções.
+              Prontuário travando. Sistema de imagens lento. Backup que ninguém sabe se funciona. Na saúde, uma falha de TI não é inconveniente — é risco para o atendimento. A WMTi estrutura a TI da sua clínica para que a tecnologia nunca seja o problema.
             </p>
             <div className="flex flex-wrap gap-4">
               <a

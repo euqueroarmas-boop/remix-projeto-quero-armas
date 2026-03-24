@@ -7,35 +7,35 @@ const AdministracaoServidoresPage = () => (
     metaTitle="Administração De Servidores Corporativos | Windows Server e Linux | WMTi"
     metaDescription="Serviços profissionais de administração de servidores corporativos. Gerenciamento de Windows Server, Linux, Active Directory, GPOs e virtualização Hyper-V."
     tag="Administração De Servidores"
-    headline={<>Administração De <span className="text-primary">Servidores Corporativos</span></>}
-    description="A administração profissional de servidores é essencial para garantir desempenho, segurança e disponibilidade da infraestrutura corporativa. A WMTi realiza gerenciamento completo de servidores Windows Server e Linux."
+    headline={<>Seu servidor está rodando sem <span className="text-primary">ninguém cuidando dele</span> de verdade</>}
+    description="Ele liga. Ele funciona. Até o dia que não funciona mais. E quando para, para tudo — arquivos, sistemas, acesso, operação inteira travada. Servidor corporativo não é algo que você liga e esquece. Ele precisa de atualização, monitoramento, manutenção e alguém que saiba o que está fazendo. A maioria das empresas só descobre isso quando já perdeu dados ou ficou horas parada. A WMTi administra seus servidores para que isso nunca aconteça."
     whatsappMessage="Olá! Preciso de serviços de administração de servidores corporativos."
     painPoints={[
-      "Servidores sem gerenciamento profissional",
-      "Active Directory e GPOs desconfigurados",
-      "Falta de atualizações de segurança",
-      "Virtualização mal dimensionada",
-      "Sem monitoramento de performance",
+      "Servidor rodando sem monitoramento nem manutenção há meses",
+      "Active Directory e GPOs desconfigurados causando falhas diárias",
+      "Sem atualizações de segurança — vulnerabilidades acumulando",
+      "Virtualização mal dimensionada consumindo recursos e travando",
+      "Ninguém sabe o que acontece dentro do servidor até dar problema",
     ]}
     solutions={[
-      "Gerenciamento completo de Windows Server e Linux",
-      "Configuração e manutenção de Active Directory e GPOs",
-      "Aplicação de patches e atualizações de segurança",
-      "Virtualização Hyper-V otimizada para performance",
-      "Monitoramento contínuo de recursos e performance",
+      "Gerenciamento contínuo de Windows Server e Linux com rotinas definidas",
+      "Active Directory e GPOs configurados corretamente para sua operação",
+      "Atualizações de segurança aplicadas antes que virem vulnerabilidades",
+      "Virtualização Hyper-V dimensionada para usar os recursos certos",
+      "Monitoramento real de CPU, memória, disco e rede — antes da falha",
     ]}
     benefits={[
-      { icon: Server, title: "Windows Server", text: "Gerenciamento completo de ambientes Windows Server com Active Directory e GPOs." },
-      { icon: Shield, title: "Segurança", text: "Aplicação de patches, hardening e políticas de segurança nos servidores." },
-      { icon: Activity, title: "Monitoramento", text: "Monitoramento contínuo de CPU, memória, disco e rede dos servidores." },
-      { icon: HardDrive, title: "Virtualização", text: "Gerenciamento de ambientes Hyper-V com alocação otimizada de recursos." },
-      { icon: Wrench, title: "Manutenção preventiva", text: "Rotinas programadas de manutenção para evitar falhas." },
-      { icon: Headphones, title: "Suporte dedicado", text: "Equipe especializada em administração de servidores corporativos." },
+      { icon: Server, title: "Gestão completa", text: "Alguém cuida do seu servidor de verdade — não só quando dá problema." },
+      { icon: Shield, title: "Segurança real", text: "Patches aplicados, hardening feito, vulnerabilidades corrigidas antes de serem exploradas." },
+      { icon: Activity, title: "Visibilidade total", text: "Você sabe o que está acontecendo no servidor antes que vire um problema." },
+      { icon: HardDrive, title: "Virtualização eficiente", text: "Hyper-V dimensionado para não desperdiçar recurso nem travar." },
+      { icon: Wrench, title: "Manutenção preventiva", text: "Rotinas programadas que evitam surpresas e paradas inesperadas." },
+      { icon: Headphones, title: "Suporte direto", text: "Equipe que conhece seu ambiente e resolve rápido." },
     ]}
     faq={[
-      { question: "Vocês administram servidores Windows Server?", answer: "Sim. Gerenciamos ambientes Windows Server com Active Directory, GPOs, DNS, DHCP e virtualização Hyper-V." },
-      { question: "Administram servidores Linux também?", answer: "Sim. Oferecemos gerenciamento de servidores Linux para aplicações corporativas, firewalls e serviços de rede." },
-      { question: "Como funciona o monitoramento?", answer: "Monitoramos CPU, memória, disco e rede dos servidores para identificar problemas antes que impactem a operação." },
+      { question: "Vocês administram servidores Windows Server?", answer: "Sim. Cuidamos de todo o ambiente — Active Directory, GPOs, DNS, DHCP, File Server e Hyper-V. De verdade, não só quando dá problema." },
+      { question: "Administram servidores Linux também?", answer: "Sim. Ubuntu Server, CentOS, Debian — firewalls, serviços de rede, containers. Se roda Linux, a gente gerencia." },
+      { question: "Como funciona o monitoramento?", answer: "Monitoramos CPU, memória, disco e rede em tempo real. Se algo sair do normal, a gente age antes de virar problema." },
     ]}
     relatedLinks={[
       { label: "Servidores Dell", href: "/servidor-dell-poweredge-jacarei" },

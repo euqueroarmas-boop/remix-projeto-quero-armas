@@ -7,33 +7,33 @@ const SegurancaDeRedePage = () => (
     metaTitle="Segurança De Rede Corporativa | Firewall e Proteção | WMTi"
     metaDescription="Soluções de segurança de rede para empresas. Firewall corporativo, IDS/IPS, segmentação por VLANs, VPN e políticas de segurança da informação."
     tag="Segurança De Rede"
-    headline={<>Segurança De <span className="text-primary">Rede Corporativa</span></>}
-    description="A segurança da rede corporativa é fundamental para proteger dados sensíveis e garantir a continuidade das operações. A WMTi implementa firewalls, IDS/IPS, segmentação de rede e políticas de segurança."
+    headline={<>Sua rede corporativa está exposta — e <span className="text-primary">você pode nem saber disso</span></>}
+    description="Sem firewall configurado. Sem segmentação. Sem controle de quem acessa o quê. Sem VPN para acesso remoto. E enquanto isso, qualquer dispositivo conectado pode ser uma porta de entrada. Um clique errado. Um pendrive infectado. Um acesso remoto mal configurado. E pronto — dados vazados, sistema comprometido, operação parada. Segurança de rede não é algo que você nota quando funciona. É algo que você só sente falta quando já deu problema. A WMTi protege sua rede para que esse dia nunca chegue."
     whatsappMessage="Olá! Preciso de soluções de segurança de rede para minha empresa."
     painPoints={[
-      "Rede sem firewall ou proteção contra invasões",
-      "Falta de segmentação de rede entre departamentos",
-      "Sem VPN segura para acesso remoto",
-      "Vulnerável a ataques ransomware e phishing",
+      "Rede sem firewall real — só o roteador da operadora",
+      "Todos na mesma rede, sem separação entre departamentos",
+      "Acesso remoto sem VPN — qualquer um pode tentar entrar",
+      "Vulnerável a ransomware, phishing e ataques internos",
     ]}
     solutions={[
-      "Firewall corporativo com IDS/IPS para detecção de intrusões",
-      "Segmentação de rede por VLANs para isolamento de tráfego",
-      "VPN segura para acesso remoto criptografado",
-      "Políticas de segurança e controle de acesso por perfil",
+      "Firewall pfSense com IDS/IPS para bloquear ameaças em tempo real",
+      "Segmentação de rede por VLANs — cada departamento isolado",
+      "VPN segura para acesso remoto criptografado de verdade",
+      "Políticas de segurança e controle de acesso por perfil de usuário",
     ]}
     benefits={[
-      { icon: Shield, title: "Firewall corporativo", text: "Firewall pfSense com regras personalizadas e IDS/IPS Suricata." },
-      { icon: Lock, title: "VPN segura", text: "Acesso remoto criptografado para colaboradores e filiais." },
-      { icon: Eye, title: "Detecção de intrusões", text: "IDS/IPS para identificar e bloquear tentativas de invasão." },
-      { icon: Server, title: "Segmentação de rede", text: "VLANs para isolamento de tráfego entre departamentos." },
-      { icon: Activity, title: "Monitoramento", text: "Monitoramento contínuo de logs e alertas de segurança." },
-      { icon: Headphones, title: "Suporte especializado", text: "Equipe técnica em segurança da informação corporativa." },
+      { icon: Shield, title: "Firewall de verdade", text: "pfSense com regras personalizadas e IDS/IPS Suricata — não só o roteador da operadora." },
+      { icon: Lock, title: "VPN segura", text: "Acesso remoto criptografado para quem precisa, bloqueado para quem não precisa." },
+      { icon: Eye, title: "Detecção de intrusões", text: "IDS/IPS identificando e bloqueando tentativas de invasão em tempo real." },
+      { icon: Server, title: "Rede segmentada", text: "VLANs separando departamentos — um problema em um setor não derruba tudo." },
+      { icon: Activity, title: "Logs e auditoria", text: "Monitoramento contínuo de logs para saber exatamente o que acontece na rede." },
+      { icon: Headphones, title: "Equipe de segurança", text: "Profissionais que entendem de segurança da informação, não só de cabos e switches." },
     ]}
     faq={[
-      { question: "Qual firewall vocês utilizam?", answer: "Utilizamos pfSense com Suricata IDS/IPS, solução open-source robusta e confiável." },
-      { question: "Vocês fazem segmentação de rede?", answer: "Sim. Implementamos VLANs para segmentação e isolamento de tráfego entre departamentos." },
-      { question: "Como funciona a VPN?", answer: "Configuramos VPN OpenVPN ou WireGuard para acesso remoto seguro e criptografado." },
+      { question: "Qual firewall vocês utilizam?", answer: "pfSense com Suricata IDS/IPS. Solução robusta, confiável e que usamos em produção há anos. Não é roteador de operadora." },
+      { question: "Vocês fazem segmentação de rede?", answer: "Sim. VLANs para separar departamentos, visitantes e dispositivos IoT. Um problema em um setor não afeta os outros." },
+      { question: "Como funciona a VPN?", answer: "OpenVPN ou WireGuard — acesso remoto criptografado, autenticado e controlado. Só quem deve acessar, acessa." },
     ]}
     relatedLinks={[
       { label: "Firewall pfSense", href: "/firewall-pfsense-jacarei" },

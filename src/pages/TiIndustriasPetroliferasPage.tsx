@@ -8,38 +8,38 @@ const TiIndustriasPetroliferasPage = () => (
     metaTitle="Infraestrutura de TI para Indústrias Petrolíferas | Segurança e Monitoramento | WMTi"
     metaDescription="Infraestrutura de TI para indústrias petrolíferas e empresas do setor de combustíveis. Servidores corporativos, segurança de rede, backup e monitoramento."
     tag="TI para Indústrias Petrolíferas"
-    headline={<>Infraestrutura de TI para <span className="text-primary">Indústrias Petrolíferas</span></>}
-    description="Empresas do setor petrolífero operam com sistemas críticos que exigem alta disponibilidade e segurança da informação. A WMTi fornece soluções completas de infraestrutura de TI para empresas do setor de combustíveis e operações industriais críticas."
+    headline={<>Sua operação crítica depende de uma infraestrutura que <span className="text-primary">não foi projetada para falhar</span> — mas pode</>}
+    description="Sistemas operacionais críticos rodando 24 horas. Dados sensíveis de operação trafegando pela rede. E uma infraestrutura de TI que ninguém revisou há meses. No setor petrolífero, uma falha de TI pode significar interrupção de operação crítica, exposição de dados sensíveis ou comprometimento de sistemas de controle. O risco não é teórico — é real e acontece. A WMTi implementa infraestrutura de TI com a robustez e a segurança que operações críticas exigem."
     whatsappMessage="Olá! Gostaria de uma análise da infraestrutura tecnológica da minha empresa do setor petrolífero."
     heroImage={heroImg}
     heroImageAlt="Refinaria de petróleo com torres de destilação ao pôr do sol"
     painPoints={[
-      "Sistemas operacionais críticos sem alta disponibilidade",
-      "Falta de proteção contra ataques cibernéticos",
-      "Ausência de backup corporativo para dados operacionais",
-      "Sem monitoramento contínuo de servidores e rede",
-      "Suporte técnico inadequado para ambientes críticos",
+      "Sistemas operacionais críticos sem alta disponibilidade real",
+      "Infraestrutura exposta a ataques cibernéticos sem proteção adequada",
+      "Dados operacionais sem backup seguro e recuperação garantida",
+      "Sem monitoramento 24h de servidores e rede",
+      "Suporte técnico que não entende a criticidade do ambiente",
     ]}
     solutions={[
-      "Servidores corporativos de alta disponibilidade para sistemas operacionais críticos",
-      "Firewalls corporativos e políticas avançadas de segurança",
-      "Backup corporativo seguro para proteção de informações operacionais",
-      "Monitoramento 24 horas de servidores e rede para evitar interrupções",
-      "Equipe especializada em ambientes de infraestrutura tecnológica crítica",
+      "Servidores de alta disponibilidade com redundância para operação contínua",
+      "Firewall corporativo com políticas avançadas contra ameaças sofisticadas",
+      "Backup seguro com criptografia e recuperação garantida",
+      "Monitoramento 24h de servidores e rede com alertas em tempo real",
+      "Equipe especializada em ambientes de infraestrutura crítica",
     ]}
     benefits={[
-      { icon: Server, title: "Alta disponibilidade", text: "Servidores corporativos para suportar sistemas operacionais críticos com redundância." },
-      { icon: Shield, title: "Segurança avançada", text: "Firewalls corporativos e políticas avançadas de segurança contra ataques cibernéticos." },
-      { icon: HardDrive, title: "Backup seguro", text: "Proteção de informações operacionais com soluções de backup corporativo." },
-      { icon: Activity, title: "Monitoramento 24h", text: "Monitoramento contínuo de servidores e rede para evitar interrupções operacionais." },
-      { icon: Lock, title: "Proteção de dados", text: "Criptografia e controle de acesso para informações sensíveis do setor." },
-      { icon: Headphones, title: "Suporte especializado", text: "Equipe especializada em ambientes de infraestrutura tecnológica crítica." },
+      { icon: Server, title: "Alta disponibilidade", text: "Servidores com redundância para operação que não pode parar. Nunca." },
+      { icon: Shield, title: "Segurança avançada", text: "Firewall e políticas contra ameaças sofisticadas. Proteção proporcional ao risco." },
+      { icon: HardDrive, title: "Backup seguro", text: "Dados operacionais protegidos com criptografia e recuperação garantida." },
+      { icon: Activity, title: "Monitoramento 24h", text: "Servidores e rede monitorados o tempo todo. Alerta antes, ação antes." },
+      { icon: Lock, title: "Dados protegidos", text: "Criptografia e controle de acesso para informações sensíveis do setor." },
+      { icon: Headphones, title: "Equipe especializada", text: "Profissionais que entendem a criticidade e agem com a urgência necessária." },
     ]}
     faq={[
-      { question: "A WMTi atende indústrias petrolíferas?", answer: "Sim. Fornecemos soluções completas de infraestrutura de TI para empresas do setor de combustíveis e operações industriais críticas." },
-      { question: "Vocês oferecem monitoramento 24 horas?", answer: "Sim. Realizamos monitoramento contínuo de servidores e rede para evitar interrupções operacionais." },
-      { question: "Como funciona a segurança de rede?", answer: "Implementamos firewalls corporativos e políticas avançadas de segurança para proteger a infraestrutura contra ataques cibernéticos." },
-      { question: "Atendem em todo o Brasil?", answer: "Sim. Atendemos empresas do setor petrolífero em todo o Brasil com suporte remoto e visitas técnicas programadas." },
+      { question: "A WMTi atende indústrias petrolíferas?", answer: "Sim. Implementamos infraestrutura com a robustez que operações críticas exigem. Sem improviso." },
+      { question: "Vocês oferecem monitoramento 24 horas?", answer: "Sim. Monitoramento contínuo com alertas em tempo real. Operação crítica exige vigilância constante." },
+      { question: "Como funciona a segurança de rede?", answer: "Firewall corporativo com políticas avançadas, segmentação de rede e controle de acesso. Proteção proporcional ao risco." },
+      { question: "Atendem em todo o Brasil?", answer: "Sim. Suporte remoto contínuo e visitas técnicas programadas em qualquer localidade." },
     ]}
     relatedLinks={[
       { label: "Infraestrutura corporativa", href: "/infraestrutura-ti-corporativa-jacarei" },
