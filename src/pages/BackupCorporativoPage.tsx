@@ -3,31 +3,33 @@ import ServicePageTemplate from "@/components/ServicePageTemplate";
 
 const BackupCorporativoPage = () => (
   <ServicePageTemplate
-    title="Backup Corporativo"
-    metaTitle="Backup Corporativo | Proteção De Dados Empresariais | WMTi"
-    metaDescription="Soluções de backup corporativo com Veeam, replicação local e em nuvem, estratégia 3-2-1 e recuperação rápida de dados para empresas."
+    title="Backup Corporativo em Jacareí"
+    metaTitle="Backup Corporativo em Jacareí — Se você perder tudo hoje, sua empresa continua? | WMTi"
+    metaDescription="Backup corporativo em Jacareí. Backup automático, versionamento seguro, armazenamento confiável e recuperação rápida. Se você perder tudo hoje, sua empresa continua funcionando?"
     tag="Backup Corporativo"
-    headline={<>Backup Corporativo para <span className="text-primary">proteção total dos seus dados</span></>}
-    description="A perda de dados pode comprometer a operação da sua empresa. A WMTi implementa soluções de backup corporativo com Veeam, replicação local e em nuvem, e testes de restauração periódicos."
+    headline={<>Se você perder tudo hoje, sua empresa <span className="text-primary">continua funcionando?</span></>}
+    description="Vamos direto ao ponto. Se hoje você perder todos os seus dados… sua empresa continua amanhã? Se a resposta for não, você está operando em risco. E esse risco não é raro. Erro humano acontece. Sistema falha. Equipamento queima. Vírus entra. Ataque acontece. E quando acontece… não dá tempo de correr atrás. A maioria das empresas acredita que 'nunca vai acontecer'. Até acontecer. E aí já é tarde. Backup não é copiar arquivo de vez em quando. Isso é falsa sensação de segurança. Backup de verdade é estrutura."
     whatsappMessage="Olá! Preciso de soluções de backup corporativo para minha empresa."
     painPoints={[
-      "Dados críticos sem backup automatizado",
-      "Backup em mídia externa sem verificação",
-      "Sem estratégia de recuperação de desastres",
-      "Dados na nuvem sem proteção adequada",
+      "Dados críticos sem backup automatizado — operando em risco",
+      "Backup manual em mídia externa sem verificação real",
+      "Falsa sensação de segurança copiando arquivo de vez em quando",
+      "Sem estratégia de recuperação quando o problema acontecer",
+      "A maioria acredita que 'nunca vai acontecer' — até acontecer",
     ]}
     solutions={[
-      "Backup automatizado com Veeam Backup & Replication",
-      "Estratégia 3-2-1: três cópias, dois tipos de mídia, uma cópia externa",
-      "Replicação em nuvem Azure para recuperação de desastres",
-      "Testes de restauração mensais para garantir integridade dos dados",
+      "Backup automático — sem depender de alguém lembrar de fazer",
+      "Versionamento seguro dos dados com histórico de alterações",
+      "Armazenamento confiável com redundância real",
+      "Recuperação rápida quando o problema acontecer",
+      "Saída da dependência da sorte para ter garantia real dos dados",
     ]}
     benefits={[
-      { icon: HardDrive, title: "Veeam Backup", text: "Backup automatizado com Veeam para servidores, VMs e estações de trabalho." },
-      { icon: Cloud, title: "Replicação em nuvem", text: "Cópia segura dos dados na nuvem Azure para recuperação de desastres." },
-      { icon: Shield, title: "Criptografia", text: "Dados criptografados AES-256 em trânsito e em repouso." },
-      { icon: Server, title: "Estratégia 3-2-1", text: "Três cópias dos dados em dois tipos de mídia com uma cópia externa." },
-      { icon: Activity, title: "Testes mensais", text: "Testes de restauração mensais para garantir que os dados são recuperáveis." },
+      { icon: HardDrive, title: "Backup automático", text: "A WMTi implementa backup automático. Você deixa de depender da sorte e passa a ter garantia. Porque quando o problema acontece, não existe plano B sem backup." },
+      { icon: Cloud, title: "Armazenamento confiável", text: "Cópia segura dos dados com redundância real. Não é copiar arquivo de vez em quando — é estrutura." },
+      { icon: Shield, title: "Versionamento seguro", text: "Histórico completo de alterações. Se algo corromper ou for excluído, você volta ao ponto certo." },
+      { icon: Server, title: "Recuperação rápida", text: "Quando o problema acontece, recuperação em minutos, não em dias. Sua empresa não para." },
+      { icon: Activity, title: "Verificação contínua", text: "Testes periódicos de restauração para garantir que os dados são realmente recuperáveis." },
       { icon: Headphones, title: "Suporte especializado", text: "Equipe técnica para gerenciamento e suporte do ambiente de backup." },
     ]}
     faq={[

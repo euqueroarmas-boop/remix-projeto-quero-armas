@@ -3,32 +3,32 @@ import ServicePageTemplate from "@/components/ServicePageTemplate";
 
 const ServidoresDellPage = () => (
   <ServicePageTemplate
-    title="Servidores Dell PowerEdge em Jacareí"
-    metaTitle="Servidores Dell PowerEdge em Jacareí e São José dos Campos | WMTi"
-    metaDescription="Implantação e gerenciamento de servidores Dell PowerEdge R750, R650 e T550 em Jacareí, São José dos Campos e Vale do Paraíba. RAID, Hyper-V, iDRAC e suporte 24/7."
+    title="Servidor Dell PowerEdge em Jacareí"
+    metaTitle="Servidor Dell PowerEdge em Jacareí — Sua empresa está rodando no limite | WMTi"
+    metaDescription="Servidor Dell PowerEdge em Jacareí. Servidores profissionais, configuração correta, segurança de dados e performance estável. Sua empresa está rodando no limite e isso vai virar problema."
     tag="Dell PowerEdge"
-    headline={<>Servidores Dell PowerEdge para sua empresa em <span className="text-primary">Jacareí e região.</span></>}
-    description="Implantamos e gerenciamos servidores Dell PowerEdge para virtualização, bancos de dados e aplicações de missão crítica. Configuração de RAID, iDRAC, clustering Hyper-V e alta disponibilidade."
+    headline={<>Sua empresa está rodando no <span className="text-primary">limite</span> e isso vai virar problema</>}
+    description="Sistema lento não é só incômodo — é sintoma. Quando sua empresa começa a travar, demorar, apresentar falhas ou instabilidade, isso não acontece por acaso. Isso acontece porque a estrutura não está acompanhando o crescimento. E isso é perigoso. Porque você continua operando… até o dia que algo para. E quando para, para tudo: acesso aos arquivos, sistemas internos, operação da equipe, atendimento ao cliente. E aí o prejuízo é imediato. A maioria das empresas trabalha no limite da infraestrutura. Até o dia que não aguenta mais."
     whatsappMessage="Olá! Gostaria de um orçamento para servidores Dell PowerEdge para minha empresa."
     painPoints={[
-      "Servidor atual apresenta lentidão e travamentos frequentes",
-      "Dados críticos em risco por falta de redundância (sem RAID)",
-      "Custo alto com manutenções emergenciais em hardware antigo",
-      "Downtime não planejado impactando produtividade da equipe",
-      "Falta de monitoramento remoto e alertas proativos",
+      "Sistema lento — sintoma de estrutura que não acompanha o crescimento",
+      "Travamentos e instabilidade constantes na operação",
+      "Risco de parada total: arquivos, sistemas e atendimento inacessíveis",
+      "Empresa trabalhando no limite da infraestrutura sem saber",
+      "Prejuízo imediato quando a estrutura finalmente não aguenta mais",
     ]}
     solutions={[
-      "Servidores Dell PowerEdge R750xs e R650xs com processadores Intel Xeon de 4ª geração",
-      "RAID com controladora H755/H355 para proteção total dos dados",
-      "Gerenciamento remoto via iDRAC9 Enterprise — acesso de qualquer lugar",
-      "Clustering Hyper-V para alta disponibilidade e failover automático",
-      "Monitoramento 24/7 com alertas proativos via Zabbix e Grafana",
+      "Servidores profissionais dimensionados para o crescimento da empresa",
+      "Configuração correta desde o início — sem improvisos",
+      "Segurança de dados com redundância e proteção real",
+      "Performance estável para que a operação funcione sem sustos",
+      "Saída de um ambiente instável e imprevisível para uma estrutura preparada para crescer",
     ]}
     benefits={[
-      { icon: Server, title: "Hardware enterprise", text: "Servidores projetados para operação contínua 24/7 com componentes hot-swap." },
-      { icon: Shield, title: "Redundância total", text: "RAID, fontes redundantes e clustering para zero downtime não planejado." },
-      { icon: Cpu, title: "Performance superior", text: "Intel Xeon Scalable de 4ª geração com até 2TB de memória DDR5." },
-      { icon: HardDrive, title: "Storage escalável", text: "Até 24 baías NVMe/SAS/SATA para crescimento sob demanda." },
+      { icon: Server, title: "Servidores profissionais", text: "A WMTi estrutura sua empresa para não chegar no ponto de parada. Servidores projetados para operação contínua 24/7." },
+      { icon: Shield, title: "Segurança de dados", text: "Redundância total com RAID, fontes redundantes e clustering para zero downtime não planejado." },
+      { icon: Cpu, title: "Performance estável", text: "Crescer sem estrutura não é crescimento — é risco acumulado. Performance dimensionada para o futuro." },
+      { icon: HardDrive, title: "Configuração correta", text: "Ambiente instável e imprevisível vira estrutura preparada para crescer sob demanda." },
       { icon: Activity, title: "Monitoramento contínuo", text: "NOC 24/7 com alertas automáticos e resposta imediata a incidentes." },
       { icon: Wrench, title: "Suporte especializado", text: "Equipe certificada Dell com atendimento presencial e remoto." },
     ]}
