@@ -41,10 +41,10 @@ const TestimonialsSection = () => {
           className="mb-12 md:mb-16"
         >
           <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
-            // Depoimentos
+            // Quem já resolveu
           </p>
           <h2 className="text-2xl md:text-5xl max-w-2xl">
-            Quem confia na <span className="text-primary">WMTi</span>.
+            Veja o que nossos clientes <span className="text-primary">dizem.</span>
           </h2>
         </motion.div>
 
