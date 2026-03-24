@@ -168,10 +168,10 @@ const ServicePageTemplate = ({
           <div className="grid md:grid-cols-2 gap-12 md:gap-16">
             <motion.div {...fadeIn}>
               <p className="font-mono text-xs tracking-[0.3em] uppercase text-destructive mb-4">
-                // Problemas comuns
+                // Isso custa caro
               </p>
               <h2 className="text-2xl md:text-3xl mb-6">
-                Sua empresa enfrenta isso?
+                Reconhece algum desses problemas?
               </h2>
               <ul className="space-y-4">
                 {painPoints.map((point) => (
