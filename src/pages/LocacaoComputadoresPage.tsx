@@ -261,7 +261,7 @@ const LocacaoComputadoresPage = () => {
                 <Calculator size={18} className="mr-2" /> Calcular investimento
               </Button>
               <a
-                href="https://wa.me/5512981156000?text=Olá! Gostaria de saber mais sobre locação de computadores."
+                href="https://wa.me/5511963166915?text=Olá! Gostaria de saber mais sobre locação de computadores."
                 target="_blank"
                 rel="noopener noreferrer"
               >
