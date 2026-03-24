@@ -33,6 +33,8 @@ Deno.serve(async (req) => {
       contract_ref,
       purchase_date,
       is_recurring,
+      login_email,
+      temp_password,
     } = body;
 
     if (!customer_email || !customer_name || !service_name) {
