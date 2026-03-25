@@ -33,7 +33,7 @@ const sections = [
       { icon: Scale, label: "TI para Advocacia", desc: "Proteção de dados, e-mail seguro e compliance LGPD.", href: "/ti-para-escritorios-de-advocacia" },
       { icon: BookOpen, label: "TI para Contabilidades", desc: "Servidores, backup e conectividade para sistemas contábeis.", href: "/ti-para-contabilidades" },
       { icon: Building2, label: "TI para Escritórios", desc: "Infraestrutura completa para escritórios corporativos.", href: "/ti-para-escritorios-corporativos" },
-      { icon: Briefcase, label: "TI para Indústrias", desc: "Redes industriais, servidores de produção e monitoramento.", href: "/ti-para-industrias" },
+      { icon: Briefcase, label: "TI para Indústrias", desc: "Redes industriais, servidores de produção e monitoramento.", href: "/ti-para-industrias-alimenticias" },
     ],
   },
   {

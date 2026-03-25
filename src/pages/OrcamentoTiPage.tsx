@@ -82,7 +82,7 @@ const OrcamentoTiPage = () => {
     // Hour-based services redirect to WhatsApp
     if (path === "emergencial") {
       window.open(
-        "https://wa.me/5512981156000?text=Ol%C3%A1!%20Preciso%20de%20suporte%20t%C3%A9cnico%20emergencial%20para%20minha%20empresa.",
+        `https://wa.me/${WHATSAPP_NUMBER}?text=Ol%C3%A1!%20Preciso%20de%20suporte%20t%C3%A9cnico%20emergencial%20para%20minha%20empresa.`,
         "_blank",
         "noopener,noreferrer"
       );
@@ -90,7 +90,7 @@ const OrcamentoTiPage = () => {
     }
     if (path === "avulso") {
       window.open(
-        "https://wa.me/5512981156000?text=Ol%C3%A1!%20Gostaria%20de%20contratar%20um%20servi%C3%A7o%20t%C3%A9cnico%20avulso%20para%20minha%20empresa.",
+        `https://wa.me/${WHATSAPP_NUMBER}?text=Ol%C3%A1!%20Gostaria%20de%20contratar%20um%20servi%C3%A7o%20t%C3%A9cnico%20avulso%20para%20minha%20empresa.`,
         "_blank",
         "noopener,noreferrer"
       );
