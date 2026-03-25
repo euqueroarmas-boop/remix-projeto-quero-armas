@@ -361,12 +361,18 @@ export function generateLocalPage(entity: SeoEntity, city: SeoCity): SeoPageData
     const painPoints = servicePainPoints[svc.slug] ?? defaultPainPoints;
     const solutions = serviceSolutions[svc.slug] ?? defaultSolutions;
 
-    // Build related links
+    // Build related links — always include city for local SEO consistency
     const relatedLinks = svc.relatedSlugs.map((rs) => {
       const rel = services.find((s) => s.slug === rs);
-      return { label: rel?.name ?? rs, href: `/${rs}-em-${city.slug}` };
+      const relName = rel?.name ?? rs;
+      return { label: `${relName} em ${city.name}`, href: `/${rs}-em-${city.slug}` };
     });
-    relatedLinks.push({ label: `Empresa de TI em ${city.name}`, href: `/empresa-ti-${city.slug}` });
+    // Add cross-type links (segments) for interlinking
+    const topSegments = segments.slice(0, 2);
+    for (const seg of topSegments) {
+      const prefix = segmentPrefixMap[seg.slug] || `ti-para-${seg.slug}`;
+      relatedLinks.push({ label: `TI ${seg.titleSuffix} em ${city.name}`, href: `/${prefix}-em-${city.slug}` });
+    }
 
     return {
       slug: canonicalSlug,
@@ -381,6 +387,8 @@ export function generateLocalPage(entity: SeoEntity, city: SeoCity): SeoPageData
       painPoints,
       solutions,
       benefits: icons,
+      cityName: city.name,
+      citySlug: city.slug,
       faq: [
         { question: `A WMTi oferece ${svc.name.toLowerCase()} em ${city.name}?`, answer: `Sim. A WMTi atende empresas em ${city.name} e região com soluções profissionais de ${svc.name.toLowerCase()}, suporte técnico especializado e infraestrutura corporativa.` },
         { question: `Quanto custa ${svc.name.toLowerCase()} em ${city.name}?`, answer: `O investimento depende do porte da empresa e das necessidades específicas. Entre em contato para um diagnóstico gratuito e proposta personalizada para sua empresa em ${city.name}.` },
@@ -402,20 +410,29 @@ export function generateLocalPage(entity: SeoEntity, city: SeoCity): SeoPageData
     const baseBenefits = serviceIcons["infraestrutura-ti"] ?? genericIcons;
     const benefits = [...segBenefits, ...baseBenefits.slice(0, 3)];
 
+    // Build related links — services localized to this city
     const relatedLinks = [
-      { label: `Empresa de TI em ${city.name}`, href: `/empresa-ti-${city.slug}` },
       { label: `Infraestrutura de TI em ${city.name}`, href: `/infraestrutura-ti-em-${city.slug}` },
-      { label: `Suporte de TI em ${city.name}`, href: `/suporte-ti-em-${city.slug}` },
+      { label: `Suporte Técnico em ${city.name}`, href: `/suporte-ti-em-${city.slug}` },
+      { label: `Segurança de Rede em ${city.name}`, href: `/seguranca-rede-em-${city.slug}` },
+      { label: `Monitoramento de Rede em ${city.name}`, href: `/monitoramento-rede-em-${city.slug}` },
+      { label: `Locação de Computadores em ${city.name}`, href: `/locacao-computadores-em-${city.slug}` },
     ];
-    if (seg.dedicatedPage) {
-      relatedLinks.push({ label: `${seg.name} (página principal)`, href: seg.dedicatedPage });
+    // Add other segments from the same city
+    for (const otherSeg of segments) {
+      if (otherSeg.slug !== seg.slug) {
+        const otherPrefix = segmentPrefixMap[otherSeg.slug] || `ti-para-${otherSeg.slug}`;
+        relatedLinks.push({ label: `TI ${otherSeg.titleSuffix} em ${city.name}`, href: `/${otherPrefix}-em-${city.slug}` });
+      }
     }
 
     return {
       slug: canonicalSlug,
       metaTitle: `TI ${seg.titleSuffix} em ${city.name} | WMTi Tecnologia`,
       metaDescription: `Soluções de TI ${seg.titleSuffix.toLowerCase()} em ${city.name}. ${seg.descriptionExtra.slice(0, 120)}. WMTi.`,
-      tag: `TI ${seg.titleSuffix}`,
+      tag: `TI ${seg.titleSuffix} em ${city.name}`,
+      cityName: city.name,
+      citySlug: city.slug,
       headline: `TI ${seg.titleSuffix} em `,
       headlineHighlight: city.name,
       description: `A WMTi oferece soluções completas de TI ${seg.titleSuffix.toLowerCase()} em ${city.name}. ${seg.descriptionExtra}`,
