@@ -299,6 +299,38 @@ const serviceSolutions: Record<string, string[]> = {
     "Escalabilidade: aumente ou reduza o parque conforme a necessidade",
     "Suporte técnico dedicado para equipamentos em locação",
   ],
+  "automacao-ia": [
+    "Automação de atendimento inicial e qualificação de leads com IA",
+    "Fluxos automáticos de envio de propostas e orçamentos",
+    "Integração entre WhatsApp, formulários, e-mail e sistemas internos",
+    "Notificações automáticas internas e acompanhamento de processos",
+    "Organização automática de informações e dados operacionais",
+    "Redução de retrabalho com fluxos inteligentes e validados",
+  ],
+  "automacao-alexa": [
+    "Análise técnica do local e auditoria de conectividade Wi-Fi",
+    "Integração multi-marca de dispositivos smart com Alexa",
+    "Criação de rotinas e cenários personalizados por voz e horário",
+    "Infraestrutura de rede dimensionada para dispositivos IoT",
+    "Instalação e configuração profissional de todos os dispositivos",
+    "Suporte técnico contínuo para manutenção e evolução do ecossistema",
+  ],
+  "reestruturacao-rede": [
+    "Projeto completo de reestruturação com cabeamento Cat6A certificado",
+    "Substituição de equipamentos domésticos por switches Dell gerenciáveis",
+    "Segmentação por VLANs para separação de setores e dispositivos",
+    "Wi-Fi empresarial com cobertura otimizada e roaming",
+    "Firewall pfSense com controle de acesso e monitoramento",
+    "Documentação técnica completa da nova infraestrutura de rede",
+  ],
+  "desenvolvimento-web": [
+    "Sites e landing pages de alta conversão com tecnologia moderna",
+    "Portais corporativos com área do cliente e painéis administrativos",
+    "Sistemas integrados com banco de dados e automações",
+    "Integrações com WhatsApp, pagamento, e-mail e sistemas de gestão",
+    "Performance otimizada com SEO técnico e responsividade total",
+    "Suporte contínuo com manutenção, atualizações e evolução do sistema",
+  ],
 };
 
 /* ─── Blog links per service ─── */
