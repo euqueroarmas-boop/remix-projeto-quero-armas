@@ -56,6 +56,7 @@ const AreaDoClientePage = lazyRetry(() => import("./pages/AreaDoClientePage.tsx"
 const ReestruturacaoRedePage = lazyRetry(() => import("./pages/ReestruturacaoRedePage.tsx"), "ReestruturacaoRedePage");
 const DesenvolvimentoWebPage = lazyRetry(() => import("./pages/DesenvolvimentoWebPage.tsx"), "DesenvolvimentoWebPage");
 const AutomacaoIaPage = lazyRetry(() => import("./pages/AutomacaoIaPage.tsx"), "AutomacaoIaPage");
+const AutomacaoAlexaPage = lazyRetry(() => import("./pages/AutomacaoAlexaPage.tsx"), "AutomacaoAlexaPage");
 const AdminPage = lazyRetry(() => import("./pages/AdminPage.tsx"), "AdminPage");
 const RedefinirSenhaPage = lazyRetry(() => import("./pages/RedefinirSenhaPage.tsx"), "RedefinirSenhaPage");
 
