@@ -26,6 +26,9 @@ export interface SeoPageData {
   shouldIndex?: boolean;
   priority?: number;
   canonicalSlug?: string;
+  /** City context for local pages — used to propagate city across all sections */
+  cityName?: string;
+  citySlug?: string;
 }
 
 export const seoPages: SeoPageData[] = [

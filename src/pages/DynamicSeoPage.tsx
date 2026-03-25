@@ -45,6 +45,8 @@ const DynamicSeoPage = () => {
       localContent={page.localContent}
       canonicalSlug={page.canonicalSlug}
       shouldIndex={page.shouldIndex}
+      cityName={page.cityName}
+      citySlug={page.citySlug}
     />
   );
 };

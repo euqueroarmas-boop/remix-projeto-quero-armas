@@ -558,14 +558,15 @@ export function generateProgrammaticPages(): SeoPageData[] {
 
       const relatedLinks = service.relatedSlugs.map((rs) => {
         const rel = services.find((s) => s.slug === rs);
-        return { label: rel?.name ?? rs, href: `/${rs}-${city.slug}` };
+        const relName = rel?.name ?? rs;
+        return { label: `${relName} em ${city.name}`, href: `/${rs}-em-${city.slug}` };
       });
-      relatedLinks.push({ label: `Empresa de TI em ${city.name}`, href: `/empresa-ti-${city.slug}` });
+      relatedLinks.push({ label: `Infraestrutura de TI em ${city.name}`, href: `/infraestrutura-ti-em-${city.slug}` });
 
       // Add nearby city links
       const nearby = nearbyCities[city.slug] ?? [];
       for (const nc of nearby.slice(0, 2)) {
-        relatedLinks.push({ label: `${service.name} em ${getCityName(nc)}`, href: `/${service.slug}-${nc}` });
+        relatedLinks.push({ label: `${service.name} em ${getCityName(nc)}`, href: `/${service.slug}-em-${nc}` });
       }
 
       // Add blog links
@@ -575,7 +576,7 @@ export function generateProgrammaticPages(): SeoPageData[] {
       // Add segment links for this city
       for (const seg of segments.slice(0, 2)) {
         const prefix = segmentPagePrefix[seg.slug] || `ti-para-${seg.slug}`;
-        relatedLinks.push({ label: `${seg.name} em ${city.name}`, href: `/${prefix}-${city.slug}` });
+        relatedLinks.push({ label: `${seg.name} em ${city.name}`, href: `/${prefix}-em-${city.slug}` });
       }
 
       addPage({
@@ -620,9 +621,9 @@ export function generateProgrammaticPages(): SeoPageData[] {
         const ctx = cityContext[city.slug] || "região com forte atividade empresarial";
 
         const relatedLinks = [
-          { label: `${service.name} em ${city.name}`, href: `/${service.slug}-${city.slug}` },
-          { label: `TI ${segment.titleSuffix} em ${city.name}`, href: `/${prefix}-${city.slug}` },
-          { label: `Empresa de TI em ${city.name}`, href: `/empresa-ti-${city.slug}` },
+          { label: `${service.name} em ${city.name}`, href: `/${service.slug}-em-${city.slug}` },
+          { label: `TI ${segment.titleSuffix} em ${city.name}`, href: `/${prefix}-em-${city.slug}` },
+          { label: `Infraestrutura de TI em ${city.name}`, href: `/infraestrutura-ti-em-${city.slug}` },
         ];
 
         // Add nearby city links
@@ -671,23 +672,22 @@ export function generateProgrammaticPages(): SeoPageData[] {
       const ctx = cityContext[city.slug] || "região com forte atividade empresarial";
 
       const relatedLinks = [
-        { label: `Empresa de TI em ${city.name}`, href: `/empresa-ti-${city.slug}` },
-        { label: "Infraestrutura de TI", href: `/infraestrutura-ti-${city.slug}` },
-        { label: "Suporte de TI", href: `/suporte-ti-${city.slug}` },
-        { label: "Segurança de Rede", href: `/seguranca-rede-${city.slug}` },
+        { label: `Infraestrutura de TI em ${city.name}`, href: `/infraestrutura-ti-em-${city.slug}` },
+        { label: `Suporte Técnico em ${city.name}`, href: `/suporte-ti-em-${city.slug}` },
+        { label: `Segurança de Rede em ${city.name}`, href: `/seguranca-rede-em-${city.slug}` },
       ];
 
       // Cross-problem links (other problems in same city)
       for (const otherProblem of problems) {
         if (otherProblem.slug !== problem.slug) {
-          relatedLinks.push({ label: `${otherProblem.name} em ${city.name}`, href: `/${otherProblem.slug}-${city.slug}` });
+          relatedLinks.push({ label: `${otherProblem.name} em ${city.name}`, href: `/${otherProblem.slug}-em-${city.slug}` });
         }
       }
 
       // Add nearby city problem links
       const nearby = nearbyCities[city.slug] ?? [];
       for (const nc of nearby.slice(0, 1)) {
-        relatedLinks.push({ label: `${problem.name} em ${getCityName(nc)}`, href: `/${problem.slug}-${nc}` });
+        relatedLinks.push({ label: `${problem.name} em ${getCityName(nc)}`, href: `/${problem.slug}-em-${nc}` });
       }
 
       // Add relevant blog link
@@ -737,20 +737,20 @@ export function generateProgrammaticPages(): SeoPageData[] {
       const ctx = cityContext[city.slug] || "região com forte atividade empresarial";
 
       const relatedLinks = [
-        { label: `Empresa de TI em ${city.name}`, href: `/empresa-ti-${city.slug}` },
-        { label: `Infraestrutura de TI em ${city.name}`, href: `/infraestrutura-ti-${city.slug}` },
-        { label: `Suporte de TI em ${city.name}`, href: `/suporte-ti-${city.slug}` },
+        { label: `Infraestrutura de TI em ${city.name}`, href: `/infraestrutura-ti-em-${city.slug}` },
+        { label: `Suporte Técnico em ${city.name}`, href: `/suporte-ti-em-${city.slug}` },
+        { label: `Segurança de Rede em ${city.name}`, href: `/seguranca-rede-em-${city.slug}` },
       ];
 
       // Add nearby city segment links
       const nearby = nearbyCities[city.slug] ?? [];
       for (const nc of nearby.slice(0, 2)) {
-        relatedLinks.push({ label: `${segment.name} em ${getCityName(nc)}`, href: `/${prefix}-${nc}` });
+        relatedLinks.push({ label: `${segment.name} em ${getCityName(nc)}`, href: `/${prefix}-em-${nc}` });
       }
 
       // Add service links for this city
       for (const svc of services.slice(0, 3)) {
-        relatedLinks.push({ label: `${svc.name} em ${city.name}`, href: `/${svc.slug}-${city.slug}` });
+        relatedLinks.push({ label: `${svc.name} em ${city.name}`, href: `/${svc.slug}-em-${city.slug}` });
       }
 
       const segBenefits = segmentIcons[segment.slug] ?? [];
@@ -796,9 +796,9 @@ export function generateProgrammaticPages(): SeoPageData[] {
 
       const relatedLinks = [
         { label: "Artigo original", href: `/blog/${post.slug}` },
-        { label: `Empresa de TI em ${city.name}`, href: `/empresa-ti-${city.slug}` },
-        { label: `Suporte de TI em ${city.name}`, href: `/suporte-ti-${city.slug}` },
-        { label: `Infraestrutura de TI em ${city.name}`, href: `/infraestrutura-ti-${city.slug}` },
+        { label: `Suporte Técnico em ${city.name}`, href: `/suporte-ti-em-${city.slug}` },
+        { label: `Infraestrutura de TI em ${city.name}`, href: `/infraestrutura-ti-em-${city.slug}` },
+        { label: `Segurança de Rede em ${city.name}`, href: `/seguranca-rede-em-${city.slug}` },
       ];
 
       addPage({

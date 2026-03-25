@@ -34,6 +34,9 @@ interface ServicePageProps {
   heroImage?: string;
   heroImageAlt?: string;
   showHoursCalculator?: boolean;
+  /** City context for local pages */
+  cityName?: string;
+  citySlug?: string;
 }
 
 const fadeIn = {
@@ -62,6 +65,8 @@ const ServicePageTemplate = ({
   heroImage,
   heroImageAlt,
   showHoursCalculator = false,
+  cityName,
+  citySlug,
 }: ServicePageProps) => {
   const location = useLocation();
   const baseUrl = "https://wmti.com.br";
@@ -211,7 +216,7 @@ const ServicePageTemplate = ({
               // O que você ganha
             </p>
             <h2 className="text-2xl md:text-4xl">
-              Resultados reais para sua <span className="text-primary">empresa</span>
+              Resultados reais para sua <span className="text-primary">empresa{cityName ? ` em ${cityName}` : ''}</span>
             </h2>
           </motion.div>
 
@@ -291,10 +296,12 @@ const ServicePageTemplate = ({
         <div className="container max-w-3xl text-center">
           <motion.div {...fadeIn}>
             <h2 className="text-2xl md:text-4xl mb-4">
-              Pare de perder dinheiro com TI <span className="text-primary">que não funciona.</span>
+              Pare de perder dinheiro com TI <span className="text-primary">que não funciona{cityName ? ` em ${cityName}` : ''}.</span>
             </h2>
             <p className="font-body text-muted-foreground max-w-xl mx-auto mb-8 leading-relaxed">
-              Peça um diagnóstico gratuito. Em até 48h você recebe uma proposta com valor fixo mensal — sem surpresas.
+              {cityName
+                ? `Peça um diagnóstico gratuito para sua empresa em ${cityName}. Em até 48h você recebe uma proposta com valor fixo mensal — sem surpresas.`
+                : 'Peça um diagnóstico gratuito. Em até 48h você recebe uma proposta com valor fixo mensal — sem surpresas.'}
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <a
@@ -322,7 +329,7 @@ const ServicePageTemplate = ({
         <section className="section-dark py-12 border-t border-gunmetal-foreground/10">
           <div className="container">
             <p className="font-mono text-xs tracking-[0.3em] uppercase text-muted-foreground mb-6">
-              // Serviços relacionados
+              // {cityName ? `Serviços relacionados em ${cityName}` : 'Serviços relacionados'}
             </p>
             <div className="flex flex-wrap gap-3">
               {relatedLinks.map((link) => (
