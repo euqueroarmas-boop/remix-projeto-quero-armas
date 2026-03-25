@@ -147,6 +147,38 @@ const segmentIcons: Record<string, { icon: LucideIcon; title: string; text: stri
     { icon: Server, title: "Servidores Dell", text: "Servidores Dell PowerEdge com virtualização e alta disponibilidade." },
     { icon: Network, title: "Redes segmentadas", text: "Redes corporativas com VLANs e switches gerenciáveis." },
   ],
+  "automacao-ia": [
+    "Equipe inteira presa em tarefas manuais repetitivas",
+    "Cliente esperando resposta porque ninguém viu a solicitação",
+    "Retrabalho constante por falta de fluxos automatizados",
+    "Informações espalhadas entre planilhas, e-mails e WhatsApp",
+    "Processos que dependem de intervenção humana para tudo",
+    "Perda de velocidade e escala por operação no braço",
+  ],
+  "automacao-alexa": [
+    "Vários dispositivos smart que não se comunicam entre si",
+    "Wi-Fi fraco que derruba automações constantemente",
+    "Rotinas que nunca funcionam quando você mais precisa",
+    "Equipamentos caros subutilizados por má configuração",
+    "Comandos de voz que falham ou não reconhecem dispositivos",
+    "Investimento alto em smart home sem retorno real",
+  ],
+  "reestruturacao-rede": [
+    "Rede montada com equipamentos domésticos e sem padrão",
+    "Quedas constantes de conexão na rede interna",
+    "Cabeamento sem certificação comprometendo a performance",
+    "Switches e roteadores antigos sem gerenciamento",
+    "Wi-Fi corporativo com cobertura deficiente e instável",
+    "Sem segmentação de rede entre setores da empresa",
+  ],
+  "desenvolvimento-web": [
+    "Site da empresa desatualizado e sem gerar resultados",
+    "Nenhuma presença digital profissional para a empresa",
+    "Landing pages que não convertem visitantes em clientes",
+    "Sistema interno manual que deveria ser automatizado",
+    "Sem integração entre site, WhatsApp e sistema de gestão",
+    "Dependência de plataformas genéricas sem personalização",
+  ],
 };
 
 /* ─── Service-specific pain points ─── */
