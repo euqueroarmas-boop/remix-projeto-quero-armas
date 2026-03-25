@@ -2,7 +2,7 @@ import {
   Server, Shield, Cloud, Network, Monitor, Wrench, Headphones,
   Lock, Activity, Eye, Cpu, HardDrive,
   Building2, Scale, Heart, Stethoscope, Landmark, Briefcase,
-  AlertTriangle, Clock,
+  AlertTriangle, Clock, Bot, Zap, Home, Lightbulb, Globe, Workflow,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { SeoPageData } from "@/data/seoPages";
