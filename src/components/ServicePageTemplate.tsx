@@ -34,6 +34,9 @@ interface ServicePageProps {
   heroImage?: string;
   heroImageAlt?: string;
   showHoursCalculator?: boolean;
+  /** City context for local pages */
+  cityName?: string;
+  citySlug?: string;
 }
 
 const fadeIn = {
@@ -62,6 +65,8 @@ const ServicePageTemplate = ({
   heroImage,
   heroImageAlt,
   showHoursCalculator = false,
+  cityName,
+  citySlug,
 }: ServicePageProps) => {
   const location = useLocation();
   const baseUrl = "https://wmti.com.br";
