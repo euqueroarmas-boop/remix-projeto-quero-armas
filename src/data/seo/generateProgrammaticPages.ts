@@ -558,9 +558,10 @@ export function generateProgrammaticPages(): SeoPageData[] {
 
       const relatedLinks = service.relatedSlugs.map((rs) => {
         const rel = services.find((s) => s.slug === rs);
-        return { label: rel?.name ?? rs, href: `/${rs}-${city.slug}` };
+        const relName = rel?.name ?? rs;
+        return { label: `${relName} em ${city.name}`, href: `/${rs}-em-${city.slug}` };
       });
-      relatedLinks.push({ label: `Empresa de TI em ${city.name}`, href: `/empresa-ti-${city.slug}` });
+      relatedLinks.push({ label: `Infraestrutura de TI em ${city.name}`, href: `/infraestrutura-ti-em-${city.slug}` });
 
       // Add nearby city links
       const nearby = nearbyCities[city.slug] ?? [];
