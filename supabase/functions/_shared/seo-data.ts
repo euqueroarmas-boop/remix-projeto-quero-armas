@@ -33,6 +33,10 @@ export const serviceSlugs: string[] = [
   "manutencao-ti",
   "suporte-redes-corporativas",
   "terceirizacao-ti",
+  "automacao-ia",
+  "automacao-alexa",
+  "reestruturacao-rede",
+  "desenvolvimento-web",
 ];
 
 // ─── SEGMENTS (from src/data/seo/segments.ts) ───

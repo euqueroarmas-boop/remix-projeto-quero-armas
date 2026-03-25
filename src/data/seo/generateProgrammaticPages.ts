@@ -2,7 +2,7 @@ import {
   Server, Shield, Cloud, Network, Monitor, Wrench, Headphones,
   Lock, Activity, Eye, Cpu, HardDrive,
   Building2, Scale, Heart, Stethoscope, Landmark, Briefcase,
-  AlertTriangle, Clock,
+  AlertTriangle, Clock, Bot, Zap, Home, Lightbulb, Globe, Workflow,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { SeoPageData } from "@/data/seoPages";
@@ -70,6 +70,38 @@ const serviceIcons: Record<string, { icon: LucideIcon; title: string; text: stri
     { icon: Shield, title: "Segurança padronizada", text: "Configuração padrão com antivírus e políticas de segurança." },
     { icon: Cloud, title: "Microsoft 365 integrado", text: "Estações pré-configuradas com ambiente Microsoft completo." },
     { icon: Headphones, title: "Suporte dedicado", text: "Atendimento prioritário para equipamentos em locação." },
+  ],
+  "automacao-ia": [
+    { icon: Bot, title: "Automação inteligente", text: "Fluxos automatizados com IA para processos operacionais." },
+    { icon: Zap, title: "Velocidade operacional", text: "Respostas instantâneas e processos que rodam sozinhos." },
+    { icon: Workflow, title: "Integração de sistemas", text: "Conexão entre WhatsApp, formulários, e-mail e sistemas." },
+    { icon: Activity, title: "Monitoramento de fluxos", text: "Acompanhamento em tempo real das automações ativas." },
+    { icon: Shield, title: "Segurança de dados", text: "Automações com proteção e conformidade de dados." },
+    { icon: Headphones, title: "Suporte dedicado", text: "Equipe técnica para ajustes e evolução contínua." },
+  ],
+  "automacao-alexa": [
+    { icon: Home, title: "Casa inteligente", text: "Iluminação, câmeras, fechaduras e climatização integrados." },
+    { icon: Lightbulb, title: "Rotinas automáticas", text: "Cenários e rotinas personalizadas por voz ou horário." },
+    { icon: Network, title: "Rede Wi-Fi estável", text: "Infraestrutura de rede dimensionada para IoT." },
+    { icon: Shield, title: "Segurança integrada", text: "Câmeras, sensores e fechaduras com controle centralizado." },
+    { icon: Building2, title: "Empresa inteligente", text: "Automação de ambientes corporativos com Alexa." },
+    { icon: Headphones, title: "Suporte técnico", text: "Instalação, configuração e suporte contínuo." },
+  ],
+  "reestruturacao-rede": [
+    { icon: Network, title: "Rede profissional", text: "Cabeamento Cat6A e switches Dell gerenciáveis." },
+    { icon: Shield, title: "Segurança de rede", text: "Firewall pfSense e segmentação por VLANs." },
+    { icon: Activity, title: "Monitoramento", text: "Monitoramento contínuo de performance e disponibilidade." },
+    { icon: Server, title: "Infraestrutura", text: "Servidores e storage dimensionados para a demanda." },
+    { icon: Wrench, title: "Substituição total", text: "Troca de equipamentos domésticos por corporativos." },
+    { icon: Headphones, title: "Suporte dedicado", text: "Equipe técnica com SLA garantido." },
+  ],
+  "desenvolvimento-web": [
+    { icon: Globe, title: "Sites profissionais", text: "Landing pages e portais corporativos de alta conversão." },
+    { icon: Zap, title: "Alta performance", text: "Aplicações rápidas com tecnologia moderna." },
+    { icon: Shield, title: "Segurança", text: "HTTPS, proteção contra ataques e backup automático." },
+    { icon: Workflow, title: "Integrações", text: "Conexão com WhatsApp, pagamento e sistemas internos." },
+    { icon: Activity, title: "Analytics", text: "Métricas de conversão e performance em tempo real." },
+    { icon: Headphones, title: "Suporte contínuo", text: "Manutenção, atualizações e evolução do sistema." },
   ],
 };
 
@@ -175,6 +207,38 @@ const servicePainPoints: Record<string, string[]> = {
     "Dificuldade em escalar o parque de máquinas conforme a demanda",
     "Equipamentos quebrados aguardando semanas para reparo",
   ],
+  "automacao-ia": [
+    "Equipe inteira presa em tarefas manuais repetitivas",
+    "Cliente esperando resposta porque ninguém viu a solicitação",
+    "Retrabalho constante por falta de fluxos automatizados",
+    "Informações espalhadas entre planilhas, e-mails e WhatsApp",
+    "Processos que dependem de intervenção humana para tudo",
+    "Perda de velocidade e escala por operação no braço",
+  ],
+  "automacao-alexa": [
+    "Vários dispositivos smart que não se comunicam entre si",
+    "Wi-Fi fraco que derruba automações constantemente",
+    "Rotinas que nunca funcionam quando você mais precisa",
+    "Equipamentos caros subutilizados por má configuração",
+    "Comandos de voz que falham ou não reconhecem dispositivos",
+    "Investimento alto em smart home sem retorno real",
+  ],
+  "reestruturacao-rede": [
+    "Rede montada com equipamentos domésticos e sem padrão",
+    "Quedas constantes de conexão na rede interna",
+    "Cabeamento sem certificação comprometendo a performance",
+    "Switches e roteadores antigos sem gerenciamento",
+    "Wi-Fi corporativo com cobertura deficiente e instável",
+    "Sem segmentação de rede entre setores da empresa",
+  ],
+  "desenvolvimento-web": [
+    "Site da empresa desatualizado e sem gerar resultados",
+    "Nenhuma presença digital profissional para a empresa",
+    "Landing pages que não convertem visitantes em clientes",
+    "Sistema interno manual que deveria ser automatizado",
+    "Sem integração entre site, WhatsApp e sistema de gestão",
+    "Dependência de plataformas genéricas sem personalização",
+  ],
 };
 
 /* ─── Service-specific solutions ─── */
@@ -234,6 +298,38 @@ const serviceSolutions: Record<string, string[]> = {
     "Configuração padronizada com antivírus, sistema operacional e políticas de segurança",
     "Escalabilidade: aumente ou reduza o parque conforme a necessidade",
     "Suporte técnico dedicado para equipamentos em locação",
+  ],
+  "automacao-ia": [
+    "Automação de atendimento inicial e qualificação de leads com IA",
+    "Fluxos automáticos de envio de propostas e orçamentos",
+    "Integração entre WhatsApp, formulários, e-mail e sistemas internos",
+    "Notificações automáticas internas e acompanhamento de processos",
+    "Organização automática de informações e dados operacionais",
+    "Redução de retrabalho com fluxos inteligentes e validados",
+  ],
+  "automacao-alexa": [
+    "Análise técnica do local e auditoria de conectividade Wi-Fi",
+    "Integração multi-marca de dispositivos smart com Alexa",
+    "Criação de rotinas e cenários personalizados por voz e horário",
+    "Infraestrutura de rede dimensionada para dispositivos IoT",
+    "Instalação e configuração profissional de todos os dispositivos",
+    "Suporte técnico contínuo para manutenção e evolução do ecossistema",
+  ],
+  "reestruturacao-rede": [
+    "Projeto completo de reestruturação com cabeamento Cat6A certificado",
+    "Substituição de equipamentos domésticos por switches Dell gerenciáveis",
+    "Segmentação por VLANs para separação de setores e dispositivos",
+    "Wi-Fi empresarial com cobertura otimizada e roaming",
+    "Firewall pfSense com controle de acesso e monitoramento",
+    "Documentação técnica completa da nova infraestrutura de rede",
+  ],
+  "desenvolvimento-web": [
+    "Sites e landing pages de alta conversão com tecnologia moderna",
+    "Portais corporativos com área do cliente e painéis administrativos",
+    "Sistemas integrados com banco de dados e automações",
+    "Integrações com WhatsApp, pagamento, e-mail e sistemas de gestão",
+    "Performance otimizada com SEO técnico e responsividade total",
+    "Suporte contínuo com manutenção, atualizações e evolução do sistema",
   ],
 };
 
