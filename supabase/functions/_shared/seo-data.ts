@@ -123,6 +123,7 @@ export const blogSlugs: string[] = [
 // ─── SERVICE ALIASES (long dedicated-page slugs) ───
 export const serviceAliases: Record<string, string> = {
   "automacao-alexa-casa-empresa-inteligente": "automacao-alexa",
+  "automacao-de-ti-com-inteligencia-artificial": "automacao-ia",
 };
 
 // ─── CITIES (from src/data/seo/cities.ts — 665 municípios de SP) ───
