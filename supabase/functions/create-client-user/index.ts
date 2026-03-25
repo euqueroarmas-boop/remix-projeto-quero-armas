@@ -4,8 +4,16 @@ import { logSistemaBackend } from "../_shared/logSistema.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+    "authorization, x-client-info, apikey, content-type, x-admin-token, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+async function hmacVerify(secret: string, message: string, signature: string): Promise<boolean> {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey("raw", enc.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const sig = await crypto.subtle.sign("HMAC", key, enc.encode(message));
+  const expected = Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, "0")).join("");
+  return expected === signature;
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -15,9 +23,34 @@ Deno.serve(async (req) => {
   try {
     const { password: adminPwd, customer_id, email, user_password, name } = await req.json();
     const password = user_password || "";
-    // Validate admin password
+
     const ADMIN_PASSWORD = Deno.env.get("ADMIN_PASSWORD");
-    if (!ADMIN_PASSWORD || adminPwd !== ADMIN_PASSWORD) {
+    if (!ADMIN_PASSWORD) {
+      return new Response(JSON.stringify({ error: "ADMIN_PASSWORD not configured" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Accept either HMAC token (preferred) or legacy password
+    const adminToken = req.headers.get("x-admin-token");
+    let authorized = false;
+
+    if (adminToken) {
+      try {
+        const [ts, sig] = adminToken.split(".");
+        const timestamp = parseInt(ts, 10);
+        if (Date.now() - timestamp <= 8 * 60 * 60 * 1000) {
+          authorized = await hmacVerify(ADMIN_PASSWORD, `admin:${ts}`, sig);
+        }
+      } catch { /* invalid token format */ }
+    }
+
+    if (!authorized && adminPwd) {
+      authorized = adminPwd === ADMIN_PASSWORD;
+    }
+
+    if (!authorized) {
       return new Response(JSON.stringify({ error: "Não autorizado" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
