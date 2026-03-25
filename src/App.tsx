@@ -140,12 +140,19 @@ const App = () => (
             <Route path="/blog/:slug" element={<BlogPostPage />} />
             {/* Legacy redirects */}
             <Route path="/servidores-dell-poweredge-jacarei" element={<Navigate to="/servidor-dell-poweredge-jacarei" replace />} />
+            <Route path="/servidores-dell-poweredge" element={<Navigate to="/servidor-dell-poweredge-jacarei" replace />} />
             <Route path="/locacao-de-computadores-para-empresas" element={<Navigate to="/locacao-de-computadores-para-empresas-jacarei" replace />} />
+            <Route path="/locacao-computadores-jacarei" element={<Navigate to="/locacao-de-computadores-para-empresas-jacarei" replace />} />
             <Route path="/suporte-ti-empresarial-jacarei" element={<Navigate to="/suporte-ti-jacarei" replace />} />
             <Route path="/infraestrutura-ti-corporativa" element={<Navigate to="/infraestrutura-ti-corporativa-jacarei" replace />} />
+            <Route path="/infraestrutura-corporativa" element={<Navigate to="/infraestrutura-ti-corporativa-jacarei" replace />} />
             <Route path="/seguranca-da-informacao-empresarial-jacarei" element={<Navigate to="/seguranca-informacao-empresarial" replace />} />
             <Route path="/microsoft-365-empresas-jacarei" element={<Navigate to="/microsoft-365-para-empresas-jacarei" replace />} />
+            <Route path="/microsoft-365-para-empresas" element={<Navigate to="/microsoft-365-para-empresas-jacarei" replace />} />
             <Route path="/montagem-redes-corporativas-jacarei" element={<Navigate to="/montagem-e-monitoramento-de-redes-jacarei" replace />} />
+            <Route path="/montagem-redes-estruturadas-jacarei" element={<Navigate to="/montagem-e-monitoramento-de-redes-jacarei" replace />} />
+            <Route path="/montagem-redes-jacarei" element={<Navigate to="/montagem-e-monitoramento-de-redes-jacarei" replace />} />
+            <Route path="/ti-para-industrias" element={<Navigate to="/ti-para-industrias-alimenticias" replace />} />
             {/* Dynamic SEO pages (40+) */}
             <Route path="/:slug" element={<DynamicSeoPage />} />
             <Route path="*" element={<NotFound />} />

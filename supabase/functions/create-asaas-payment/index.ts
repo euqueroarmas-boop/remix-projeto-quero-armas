@@ -201,7 +201,7 @@ Deno.serve(async (req) => {
           payment_method: billing_type,
           payment_status: paymentData.status || "PENDING",
           billing_type,
-          due_date,
+          due_date: resolvedDueDate,
           asaas_invoice_url: invoiceUrl,
         })
         .eq("quote_id", quote_id);

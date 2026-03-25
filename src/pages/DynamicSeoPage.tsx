@@ -1,4 +1,5 @@
-import { useParams } from "react-router-dom";
+import { useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { findPageBySlug } from "@/data/seoPages";
 import { resolveLocalPage } from "@/data/seo/engine";
 import ServicePageTemplate from "@/components/ServicePageTemplate";
@@ -6,16 +7,19 @@ import NotFound from "@/pages/NotFound";
 
 const DynamicSeoPage = () => {
   const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
 
-  if (!slug) return <NotFound />;
+  // 1. Redirect /ti-para-clinicas-{city} → /ti-para-hospitais-e-clinicas-em-{city}
+  const isClinicRedirect = slug?.startsWith("ti-para-clinicas-");
+  const clinicCity = isClinicRedirect ? slug!.replace("ti-para-clinicas-", "") : null;
 
-  // 1. Redirect /ti-para-clinicas-{city} → /ti-para-hospitais-{city}
-  if (slug.startsWith("ti-para-clinicas-")) {
-    const city = slug.replace("ti-para-clinicas-", "");
-    // Use window.location for SEO redirect
-    window.location.replace(`/ti-para-hospitais-${city}`);
-    return null;
-  }
+  useEffect(() => {
+    if (isClinicRedirect && clinicCity) {
+      navigate(`/ti-para-hospitais-e-clinicas-em-${clinicCity}`, { replace: true });
+    }
+  }, [isClinicRedirect, clinicCity, navigate]);
+
+  if (!slug || isClinicRedirect) return null;
 
   // 2. Try the central SEO engine first (handles -em- and old patterns)
   const enginePage = resolveLocalPage(slug);

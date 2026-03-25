@@ -535,16 +535,17 @@ function ClientesTab() {
     setError("");
 
     try {
-      const adminPwd = prompt("Digite a senha admin para confirmar:") || "";
+      const adminToken = sessionStorage.getItem("admin_token");
+      if (!adminToken) { setError("Sessão admin expirada. Faça login novamente."); setCreating(false); return; }
       
       const { data, error: fnErr } = await supabase.functions.invoke("create-client-user", {
         body: {
-          password: adminPwd,
           customer_id: selectedCustomerId === "none" ? undefined : selectedCustomerId || undefined,
           email: form.email,
           user_password: form.password,
           name: form.name,
         },
+        headers: { "x-admin-token": adminToken },
       });
 
       if (fnErr || !data?.success) {
