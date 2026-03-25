@@ -120,7 +120,13 @@ export const blogSlugs: string[] = [
   "como-estabilizamos-rede-escritorio-25-computadores",
 ];
 
-// ─── CITIES (from src/data/seo/cities.ts — 645+ municípios de SP) ───
+// ─── SERVICE ALIASES (long dedicated-page slugs) ───
+export const serviceAliases: Record<string, string> = {
+  "automacao-alexa-casa-empresa-inteligente": "automacao-alexa",
+};
+
+// ─── CITIES (from src/data/seo/cities.ts — 665 municípios de SP) ───
+// Auto-synced with IBGE official list for São Paulo state
 export const citySlugs: string[] = [
   // Vale do Paraíba
   "jacarei","sao-jose-dos-campos","taubate","cacapava","pindamonhangaba",
@@ -129,7 +135,7 @@ export const citySlugs: string[] = [
   "jambeiro","lagoinha","lavrinhas","monteiro-lobato","natividade-da-serra",
   "paraibuna","potim","queluz","redencao-da-serra","roseira",
   "santa-branca","santo-antonio-do-pinhal","sao-bento-do-sapucai","sao-luiz-do-paraitinga","sao-sebastiao",
-  "silveiras","tremembe","ubatuba","arapei","areias","bananal",
+  "silveiras","tremembe","ubatuba","arapei","areias","bananal","canas","piquete","sao-jose-do-barreiro",
   // Grande São Paulo
   "sao-paulo","guarulhos","osasco","santo-andre","sao-bernardo-do-campo",
   "sao-caetano-do-sul","diadema","maua","mogi-das-cruzes","suzano",
@@ -138,11 +144,11 @@ export const citySlugs: string[] = [
   "franco-da-rocha","itapecerica-da-serra","jandira","mairipora","poa",
   "ribeirao-pires","rio-grande-da-serra","santana-de-parnaiba","aruja","biritiba-mirim",
   "caieiras","cajamar","guararema","juquitiba","pirapora-do-bom-jesus",
-  "salesopolis","sao-lourenco-da-serra","vargem-grande-paulista",
+  "salesopolis","sao-lourenco-da-serra","vargem-grande-paulista","santa-isabel",
   // Região de Campinas
   "campinas","jundiai","piracicaba","americana","limeira",
   "indaiatuba","sumare","hortolandia","valinhos","vinhedo",
-  "santa-barbara-doeste","itatiba","nova-odessa","paulinia","cosmopolis",
+  "santa-barbara-doeste","santa-barbara-d-oeste","itatiba","nova-odessa","paulinia","cosmopolis",
   "artur-nogueira","engenheiro-coelho","holambra","jaguariuna","monte-mor",
   "pedreira","morungaba","louveira","amparo","serra-negra",
   "aguas-de-lindoia","lindoia","monte-alegre-do-sul","pinhalzinho","socorro",
@@ -150,7 +156,8 @@ export const citySlugs: string[] = [
   "itapira","conchal","estiva-gerbi","cordeiropolis","ipeuna",
   "iracemapolis","santa-gertrudes","charqueada","saltinho","sao-pedro",
   "aguas-de-sao-pedro","santa-maria-da-serra","capivari","elias-fausto","rafard",
-  "rio-das-pedras","mombuca",
+  "rio-das-pedras","mombuca","aguas-da-prata","caconde","santo-antonio-de-posse",
+  "santo-antonio-do-jardim","sao-sebastiao-da-grama","tapiratiba","santa-cruz-da-conceicao",
   // Litoral Paulista
   "santos","sao-vicente","praia-grande","guaruja","cubatao",
   "bertioga","mongagua","itanhaem","peruibe","registro",
@@ -163,7 +170,7 @@ export const citySlugs: string[] = [
   "piedade","sao-roque","mairinque","aluminio","aracariguama",
   "capela-do-alto","cesario-lange","ibiuna","ipero","jumirim",
   "laranjal-paulista","pereiras","porangaba","quadra","salto-de-pirapora",
-  "sarapui","sao-miguel-arcanjo","pilar-do-sul",
+  "sarapui","sao-miguel-arcanjo","pilar-do-sul","alambari","torre-de-pedra","guarei",
   // Região de Ribeirão Preto
   "ribeirao-preto","franca","sertaozinho","araraquara","sao-carlos",
   "jaboticabal","bebedouro","batatais","cravinhos","brodowski",
@@ -173,12 +180,21 @@ export const citySlugs: string[] = [
   "morro-agudo","nuporanga","sales-oliveira","descalvado","ibate",
   "porto-ferreira","santa-rita-do-passa-quatro","matao","ibitinga","itapolis",
   "americo-brasiliense","santa-lucia","rincao","gaviao-peixoto","motuca",
+  "colombia","guaira","ipua","jaborandi","pirangi","serrana","taquaral",
+  "santa-cruz-da-esperanca",
   // Região de São José do Rio Preto
   "sao-jose-do-rio-preto","barretos","catanduva","votuporanga","fernandopolis",
   "mirassol","olimpia","tanabi","novo-horizonte","jose-bonifacio",
   "monte-aprazivel","jales","santa-fe-do-sul","ilha-solteira","pereira-barreto",
   "colina","guapiacu","potirendaba","bady-bassitt","cedral",
   "uchoa","tabapua","novais","palmares-paulista",
+  "adolfo","aparecida-d-oeste","aspasia","balsamo","dirce-reis",
+  "estrela-d-oeste","guarani-d-oeste","guzolandia","ipigua","macedonia",
+  "marinopolis","mesopolis","mirassolandia","nova-alianca","nova-canaa-paulista",
+  "nova-castilho","nova-granada","nova-luzitania","onda-verde","palestina",
+  "palmeira-d-oeste","paranapua","pindorama","pontalinda","rubineia",
+  "santa-albertina","santa-clara-d-oeste","santa-rita-d-oeste","santa-salete",
+  "santana-da-ponte-pensa","sao-joao-das-duas-pontes","sao-joao-de-iracema","urupes",
   // Região de Bauru
   "bauru","marilia","botucatu","jau","lins",
   "avare","garca","tupa","ourinhos","assis",
@@ -194,60 +210,69 @@ export const citySlugs: string[] = [
   "taguai","itaporanga","itapetininga","itapeva","capao-bonito",
   "angatuba","apiai","buri","guapiara","ribeirao-branco",
   "ribeira","riversul","taquarivai",
-  // Região Oeste
+  "balbinos","boraceia","borebi","guaimbe","iacanga","itaju","itapui",
+  "julio-mesquita","lucianopolis","paranapanema","paulistania","pratania",
+  "presidente-alves","ubirajara","uru",
+  // Região Oeste / Presidente Prudente
   "presidente-prudente","aracatuba","presidente-venceslau","presidente-epitacio","adamantina",
   "dracena","lucelia","osvaldo-cruz","martinopolis","rancharia",
-  "regente-feijo","alvares-machado","birigui","penapolis-oeste","andradina",
+  "regente-feijo","alvares-machado","birigui","andradina",
   "valparaiso","castilho","mirandopolis","guararapes","buritama",
-  "birigui-cidade","coroados","gabriel-monteiro","glicerio","clementina",
+  "coroados","gabriel-monteiro","glicerio","clementina",
   "santo-antonio-do-aracangua","auriflama","general-salgado","gastao-vidigal","nhandeara",
+  "panorama","ouro-verde","pauliceia","ribeirao-dos-indios","rosana",
+  "santa-mercedes","santo-expedito","teodoro-sampaio","tupi-paulista",
+  "flora-rica","florida-paulista","inubia-paulista","mariapolis","monte-castelo",
+  "alfredo-marcondes","caiua","euclides-da-cunha-paulista","irapuru","maraba-paulista",
+  "nova-guataporanga","piquerobi","sao-joao-do-pau-d-alho","santo-anastacio",
+  // Região de Araçatuba
+  "bento-de-abreu","brejo-alegre","guaracai","itapura","lavinia",
+  "murutinga-do-sul","nova-independencia","sud-mennucci","suzanapolis",
   // Sudoeste Paulista
   "itarare","taquarituba","fartura","sao-pedro-do-turvo","tejupa",
   "sarutaia","barao-de-antonina","coronel-macedo","itabera","nova-campina",
-  // Região Oeste extras
-  "panorama","ouro-verde","pauliceia","ribeirao-dos-indios","rosana",
-  "salmourao-oeste","santa-mercedes","santo-expedito","teodoro-sampaio","tupi-paulista",
-  "flora-rica","florida-paulista","inubia-paulista","mariapolis","monte-castelo",
+  "barra-do-chapeu","campina-do-monte-alegre","itapirapua-paulista","ribeirao-grande",
+  "alambari",
   // Interior Centro-Leste
   "sao-joao-da-boa-vista","mococa","casa-branca","tambau","sao-jose-do-rio-pardo",
   "espirito-santo-do-pinhal","aguai","vargem-grande-do-sul","divinolandia","itobi",
-  "santa-cruz-das-palmeiras","pirassununga","leme-icl","analandia","corumbatai",
-  // Cidades extras diversas
-  "votuporanga-ext","tupa-ext","marilia-ext","presidente-prudente-ext",
+  "santa-cruz-das-palmeiras","pirassununga","analandia","corumbatai","itirapina",
   // Região de Franca
   "restinga","cristais-paulista","ribeirao-corrente","buritizal","aramina",
-  "jeriquara","rifaina","sao-jose-da-bela-vista","itirapua","claraval",
+  "jeriquara","rifaina","sao-jose-da-bela-vista","itirapua",
   // Centro-Oeste Paulista
-  "avai","pirajui","reginopolis","guaranta","cafelandia-co",
+  "avai","pirajui","reginopolis","guaranta",
   "pongai","sabino","avanhandava","barbosa","brauna",
   "luiziania","bilac","rubiacea","santopolis-do-aguapei","piacatu",
-  "turiuba","alto-alegre","lourdes","nova-lusitania",
+  "turiuba","alto-alegre","lourdes",
   // Alta Paulista
   "rinopolis","herculandia","quintana","iacri","bastos",
   "queiroz","arco-iris","parapua","pracinha","sagres","salmourao",
   // Região de Marília extras
   "taruma","lutecia","platina","maracai","cruzalia","florinea","pedrinhas-paulista",
+  "alvinlandia","fernao","galia","lupercio","campos-novos-paulista",
+  "espirito-santo-do-turvo","ibirarema","ribeirao-do-sul","salto-grande",
   // Noroeste Paulista
-  "cardoso","estrela-doeste","meridiano","ouroeste","populina",
+  "cardoso","meridiano","ouroeste","populina",
   "pontes-gestal","riolandia","sao-francisco","turmalina","valentim-gentil",
-  "dolcinopolis","guarani-doeste","indiapora","mira-estrela","parisi",
+  "dolcinopolis","indiapora","mira-estrela","parisi",
   "paulo-de-faria","pedranopolis","sebastianopolis-do-sul","tres-fronteiras","urania",
   "vitoria-brasil","alvares-florence","americo-de-campos","cosmorama","floreal",
   "magda","neves-paulista","macaubal","moncoes","poloni",
   "ubarana","uniao-paulista","zacarias","mendonca","planalto",
   "nipoa","ibira","catigua","elisiario","embauba",
   "irapua","itajobi","marapoama","sales","severinia",
-  "ariranha","cajobi","monte-azul-paulista-nw","paraiso","vista-alegre-do-alto",
+  "ariranha","cajobi","paraiso","vista-alegre-do-alto",
   "terra-roxa","altair","guaraci","icem","orindiuva","jaci",
   // Região de Assis extras
-  "taruma-as","quata","bora","lutecia-as","joao-ramalho",
+  "quata","bora","joao-ramalho",
   "nantes","narandiba","sandovalina","taciba","tarabai",
   "emilianopolis","caiabu","anhumas",
   // Complemento diversas regiões
   "timburi","oleo","canitar","aguas-de-santa-barbara","iaras","arandu",
   "torrinha","dourado","ribeirao-bonito","trabiju","boa-esperanca-do-sul",
   "tabatinga","nova-europa","borborema","fernando-prestes","candido-rodrigues",
-  "santa-adelia","santa-ernestina","taquaritinga-rp","monte-alto","taiacu",
+  "santa-adelia","santa-ernestina","monte-alto","taiacu",
   "taiuva","guariba","pradopolis","guatapara","dumont",
   "santa-rosa-de-viterbo","cajuru","cassia-dos-coqueiros","altinopolis",
   "santo-antonio-da-alegria","serra-azul","luis-antonio","sao-simao","dobrada",

@@ -39,6 +39,11 @@ export interface SeoEntity {
 const entityByPrefix = new Map<string, SeoEntity>();
 const entityByOldSlug = new Map<string, SeoEntity>(); // for backward compat {slug}-{city}
 
+// Alias map: alternative URL prefixes that map to the canonical service slug
+const serviceAliases: Record<string, string> = {
+  "automacao-alexa-casa-empresa-inteligente": "automacao-alexa",
+};
+
 // Register services
 for (const svc of services) {
   const entity: SeoEntity = {
@@ -50,6 +55,15 @@ for (const svc of services) {
   };
   entityByPrefix.set(svc.slug, entity);
   entityByOldSlug.set(svc.slug, entity);
+}
+
+// Register service aliases (long dedicated-page slugs → same entity)
+for (const [alias, canonicalSlug] of Object.entries(serviceAliases)) {
+  const entity = entityByPrefix.get(canonicalSlug);
+  if (entity) {
+    entityByPrefix.set(alias, { ...entity, urlPrefix: alias });
+    entityByOldSlug.set(alias, { ...entity, urlPrefix: alias });
+  }
 }
 
 // Segment prefix mapping
