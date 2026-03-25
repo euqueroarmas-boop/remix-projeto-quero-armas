@@ -233,4 +233,52 @@ export const services: SeoService[] = [
     relatedSlugs: ["suporte-ti", "infraestrutura-ti", "administracao-servidores"],
     dedicatedPage: "/terceirizacao-de-mao-de-obra-ti",
   },
+  {
+    slug: "automacao-ia",
+    name: "Automação De TI Com Inteligência Artificial",
+    titleTemplate: "Automação de TI com IA em {city} | WMTi Tecnologia da Informação",
+    descriptionTemplate:
+      "Automação de TI com inteligência artificial para empresas em {city}. Elimine tarefas manuais, reduza retrabalho e ganhe velocidade operacional. WMTi.",
+    h1Prefix: "Automação de TI com IA em ",
+    contentTemplate:
+      "A WMTi implementa automação de TI com inteligência artificial para empresas em {city}. Transformamos processos manuais em fluxos automáticos e inteligentes: atendimento, qualificação de leads, envio de propostas, organização de informações e integração entre sistemas. Sua empresa em {city} ganha velocidade, escala e previsibilidade operacional.",
+    relatedSlugs: ["suporte-ti", "infraestrutura-ti", "desenvolvimento-web"],
+    dedicatedPage: "/automacao-de-ti-com-inteligencia-artificial",
+  },
+  {
+    slug: "automacao-alexa",
+    name: "Automação Com Alexa",
+    titleTemplate: "Automação com Alexa em {city} | Casa e Empresa Inteligente | WMTi",
+    descriptionTemplate:
+      "Projetos de automação com Alexa para casas e empresas em {city}. Iluminação, câmeras, climatização e rotinas inteligentes com infraestrutura profissional. WMTi.",
+    h1Prefix: "Automação com Alexa em ",
+    contentTemplate:
+      "A WMTi implementa projetos de automação com Alexa para residências e empresas em {city}. Integramos iluminação, câmeras, fechaduras, climatização, sensores e rotinas inteligentes em um ecossistema funcional e confiável. Análise técnica do local, auditoria de conectividade, instalação, configuração e suporte contínuo para sua casa ou empresa em {city}.",
+    relatedSlugs: ["infraestrutura-rede", "seguranca-rede", "suporte-ti"],
+    dedicatedPage: "/automacao-alexa-casa-empresa-inteligente",
+  },
+  {
+    slug: "reestruturacao-rede",
+    name: "Reestruturação De Rede Corporativa",
+    titleTemplate: "Reestruturação de Rede Corporativa em {city} | WMTi",
+    descriptionTemplate:
+      "Reestruturação completa de rede corporativa em {city}. Cabeamento, switches gerenciáveis, VLANs, Wi-Fi empresarial e segurança. WMTi.",
+    h1Prefix: "Reestruturação de Rede em ",
+    contentTemplate:
+      "A WMTi realiza reestruturação completa de redes corporativas para empresas em {city}. Substituímos equipamentos domésticos por infraestrutura profissional: cabeamento Cat6A, switches Dell gerenciáveis, segmentação por VLANs, Wi-Fi empresarial e firewall pfSense. Rede estável, segura e dimensionada para sua empresa em {city}.",
+    relatedSlugs: ["infraestrutura-rede", "monitoramento-rede", "seguranca-rede"],
+    dedicatedPage: "/reestruturacao-completa-de-rede-corporativa",
+  },
+  {
+    slug: "desenvolvimento-web",
+    name: "Desenvolvimento De Sites e Sistemas Web",
+    titleTemplate: "Desenvolvimento de Sites e Sistemas Web em {city} | WMTi",
+    descriptionTemplate:
+      "Desenvolvimento de sites e sistemas web para empresas em {city}. Landing pages, portais corporativos, sistemas integrados e automações. WMTi.",
+    h1Prefix: "Desenvolvimento Web em ",
+    contentTemplate:
+      "A WMTi desenvolve sites e sistemas web para empresas em {city}. Landing pages de alta conversão, portais corporativos, sistemas integrados com banco de dados, automações e integrações com WhatsApp, e-mail e pagamento. Tecnologia moderna, performance e segurança para sua empresa em {city}.",
+    relatedSlugs: ["automacao-ia", "suporte-ti", "infraestrutura-ti"],
+    dedicatedPage: "/desenvolvimento-de-sites-e-sistemas-web",
+  },
 ];
