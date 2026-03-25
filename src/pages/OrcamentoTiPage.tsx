@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo } from "react";
+import { WHATSAPP_NUMBER } from "@/lib/whatsapp";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
