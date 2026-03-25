@@ -566,7 +566,7 @@ export function generateProgrammaticPages(): SeoPageData[] {
       // Add nearby city links
       const nearby = nearbyCities[city.slug] ?? [];
       for (const nc of nearby.slice(0, 2)) {
-        relatedLinks.push({ label: `${service.name} em ${getCityName(nc)}`, href: `/${service.slug}-${nc}` });
+        relatedLinks.push({ label: `${service.name} em ${getCityName(nc)}`, href: `/${service.slug}-em-${nc}` });
       }
 
       // Add blog links
@@ -576,7 +576,7 @@ export function generateProgrammaticPages(): SeoPageData[] {
       // Add segment links for this city
       for (const seg of segments.slice(0, 2)) {
         const prefix = segmentPagePrefix[seg.slug] || `ti-para-${seg.slug}`;
-        relatedLinks.push({ label: `${seg.name} em ${city.name}`, href: `/${prefix}-${city.slug}` });
+        relatedLinks.push({ label: `${seg.name} em ${city.name}`, href: `/${prefix}-em-${city.slug}` });
       }
 
       addPage({
