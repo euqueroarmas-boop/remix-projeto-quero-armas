@@ -42,6 +42,7 @@ const entityByOldSlug = new Map<string, SeoEntity>(); // for backward compat {sl
 // Alias map: alternative URL prefixes that map to the canonical service slug
 const serviceAliases: Record<string, string> = {
   "automacao-alexa-casa-empresa-inteligente": "automacao-alexa",
+  "automacao-de-ti-com-inteligencia-artificial": "automacao-ia",
 };
 
 // Register services
