@@ -59,6 +59,10 @@ const staticPages = [
   { loc: "/suporte-linux", priority: "0.7", changefreq: "monthly" },
   { loc: "/manutencao-de-infraestrutura-de-ti", priority: "0.7", changefreq: "monthly" },
   { loc: "/suporte-tecnico-para-redes-corporativas", priority: "0.7", changefreq: "monthly" },
+  { loc: "/automacao-de-ti-com-inteligencia-artificial", priority: "0.7", changefreq: "monthly" },
+  { loc: "/automacao-alexa-casa-empresa-inteligente", priority: "0.7", changefreq: "monthly" },
+  { loc: "/reestruturacao-completa-de-rede-corporativa", priority: "0.7", changefreq: "monthly" },
+  { loc: "/desenvolvimento-de-sites-e-sistemas-web", priority: "0.7", changefreq: "monthly" },
 ];
 
 function urlEntry(loc: string, priority: string, changefreq: string): string {
@@ -83,31 +87,34 @@ function buildBlogXml(): string {
   return wrapUrlset(urls);
 }
 
+/** Service × City with canonical -em- pattern */
 function buildServiceCityXml(): string {
   const urls: string[] = [];
   for (const svc of serviceSlugs) {
     for (const city of citySlugs) {
-      urls.push(urlEntry(`/${svc}-${city}`, "0.7", "monthly"));
+      urls.push(urlEntry(`/${svc}-em-${city}`, "0.7", "monthly"));
     }
   }
   return wrapUrlset(urls);
 }
 
+/** Segment × City with canonical -em- pattern */
 function buildSegmentCityXml(): string {
   const urls: string[] = [];
   for (const seg of segmentEntries) {
     for (const city of citySlugs) {
-      urls.push(urlEntry(`/${seg.prefix}-${city}`, "0.6", "monthly"));
+      urls.push(urlEntry(`/${seg.prefix}-em-${city}`, "0.6", "monthly"));
     }
   }
   return wrapUrlset(urls);
 }
 
+/** Problem × City with -em- pattern */
 function buildProblemCityXml(): string {
   const urls: string[] = [];
   for (const prob of problemSlugs) {
     for (const city of citySlugs) {
-      urls.push(urlEntry(`/${prob}-${city}`, "0.5", "monthly"));
+      urls.push(urlEntry(`/${prob}-em-${city}`, "0.5", "monthly"));
     }
   }
   return wrapUrlset(urls);
@@ -137,7 +144,6 @@ function buildServiceSegmentCityXml(): string {
 
 function buildSitemapIndex(): string {
   const now = new Date().toISOString().split("T")[0];
-  // Point directly to edge function URLs to avoid _redirects/Cloudflare proxy issues
   const FUNC_BASE = "https://itwsjxijqjximspqtvqk.supabase.co/functions/v1/sitemap";
   const sitemaps = [
     { type: "pages", name: "sitemap-pages.xml" },
