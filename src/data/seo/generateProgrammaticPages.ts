@@ -71,6 +71,38 @@ const serviceIcons: Record<string, { icon: LucideIcon; title: string; text: stri
     { icon: Cloud, title: "Microsoft 365 integrado", text: "Estações pré-configuradas com ambiente Microsoft completo." },
     { icon: Headphones, title: "Suporte dedicado", text: "Atendimento prioritário para equipamentos em locação." },
   ],
+  "automacao-ia": [
+    { icon: Bot, title: "Automação inteligente", text: "Fluxos automatizados com IA para processos operacionais." },
+    { icon: Zap, title: "Velocidade operacional", text: "Respostas instantâneas e processos que rodam sozinhos." },
+    { icon: Workflow, title: "Integração de sistemas", text: "Conexão entre WhatsApp, formulários, e-mail e sistemas." },
+    { icon: Activity, title: "Monitoramento de fluxos", text: "Acompanhamento em tempo real das automações ativas." },
+    { icon: Shield, title: "Segurança de dados", text: "Automações com proteção e conformidade de dados." },
+    { icon: Headphones, title: "Suporte dedicado", text: "Equipe técnica para ajustes e evolução contínua." },
+  ],
+  "automacao-alexa": [
+    { icon: Home, title: "Casa inteligente", text: "Iluminação, câmeras, fechaduras e climatização integrados." },
+    { icon: Lightbulb, title: "Rotinas automáticas", text: "Cenários e rotinas personalizadas por voz ou horário." },
+    { icon: Network, title: "Rede Wi-Fi estável", text: "Infraestrutura de rede dimensionada para IoT." },
+    { icon: Shield, title: "Segurança integrada", text: "Câmeras, sensores e fechaduras com controle centralizado." },
+    { icon: Building2, title: "Empresa inteligente", text: "Automação de ambientes corporativos com Alexa." },
+    { icon: Headphones, title: "Suporte técnico", text: "Instalação, configuração e suporte contínuo." },
+  ],
+  "reestruturacao-rede": [
+    { icon: Network, title: "Rede profissional", text: "Cabeamento Cat6A e switches Dell gerenciáveis." },
+    { icon: Shield, title: "Segurança de rede", text: "Firewall pfSense e segmentação por VLANs." },
+    { icon: Activity, title: "Monitoramento", text: "Monitoramento contínuo de performance e disponibilidade." },
+    { icon: Server, title: "Infraestrutura", text: "Servidores e storage dimensionados para a demanda." },
+    { icon: Wrench, title: "Substituição total", text: "Troca de equipamentos domésticos por corporativos." },
+    { icon: Headphones, title: "Suporte dedicado", text: "Equipe técnica com SLA garantido." },
+  ],
+  "desenvolvimento-web": [
+    { icon: Globe, title: "Sites profissionais", text: "Landing pages e portais corporativos de alta conversão." },
+    { icon: Zap, title: "Alta performance", text: "Aplicações rápidas com tecnologia moderna." },
+    { icon: Shield, title: "Segurança", text: "HTTPS, proteção contra ataques e backup automático." },
+    { icon: Workflow, title: "Integrações", text: "Conexão com WhatsApp, pagamento e sistemas internos." },
+    { icon: Activity, title: "Analytics", text: "Métricas de conversão e performance em tempo real." },
+    { icon: Headphones, title: "Suporte contínuo", text: "Manutenção, atualizações e evolução do sistema." },
+  ],
 };
 
 /** Generic icons for services without specific mapping */
