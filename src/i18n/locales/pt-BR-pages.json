@@ -1903,6 +1903,22 @@
     }
   },
   "custom": {
+    "cartorioCalc": {
+      "tag": "Calculadora de Prejuízo",
+      "title1": "Quanto custa seu cartório ",
+      "titleHighlight": "parado?",
+      "title2": "",
+      "subtitle": "Simule o prejuízo financeiro de uma parada no seu cartório. Preencha os campos e veja o impacto real.",
+      "fieldServices": "Atendimentos por dia",
+      "fieldAvgValue": "Valor médio por ato (R$)",
+      "fieldHours": "Horas de parada",
+      "resultPerHour": "Prejuízo por hora",
+      "resultDowntime": "Prejuízo em {{hours}}h parado",
+      "resultDaily": "Faturamento diário em risco",
+      "callout": "Esse é o dinheiro que você perde cada vez que o sistema falha. Quanto mais demora para agir, maior o prejuízo acumulado.",
+      "cta": "Proteger meu cartório agora",
+      "whatsappMessage": "Olá! Usei a calculadora de prejuízo do site e quero proteger meu cartório contra paradas. Preciso de um orçamento."
+    },
     "institutional": {
       "heroTag": "Institucional",
       "heroTitlePrefix": "Sobre a ",

@@ -1903,6 +1903,22 @@
     }
   },
   "custom": {
+    "cartorioCalc": {
+      "tag": "Downtime Cost Calculator",
+      "title1": "How much does your registry lose ",
+      "titleHighlight": "when it stops?",
+      "title2": "",
+      "subtitle": "Simulate the financial impact of downtime at your registry. Fill in the fields and see the real cost.",
+      "fieldServices": "Daily services",
+      "fieldAvgValue": "Avg. value per act (R$)",
+      "fieldHours": "Hours of downtime",
+      "resultPerHour": "Loss per hour",
+      "resultDowntime": "Loss in {{hours}}h of downtime",
+      "resultDaily": "Daily revenue at risk",
+      "callout": "This is how much money you lose every time the system fails. The longer you wait to act, the greater the accumulated damage.",
+      "cta": "Protect my registry now",
+      "whatsappMessage": "Hi! I used the downtime cost calculator on your website and I want to protect my registry against shutdowns. I need a quote."
+    },
     "institutional": {
       "heroTag": "Institutional",
       "heroTitlePrefix": "About ",
