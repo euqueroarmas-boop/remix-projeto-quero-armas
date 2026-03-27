@@ -45,12 +45,7 @@ const CartorioDowntimeCalculator = () => {
         </div>
 
         <div className="max-w-3xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="bg-background border border-border rounded-2xl p-6 md:p-10"
-          >
+          <div className="bg-background border border-border rounded-2xl p-6 md:p-10">
             <div className="grid md:grid-cols-2 gap-6 mb-6">
               <div>
                 <label className="block text-sm font-medium mb-2 text-foreground">
