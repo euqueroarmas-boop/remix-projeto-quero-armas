@@ -148,7 +148,7 @@ const CartorioDowntimeCalculator = () => {
                   {t("custom.cartorioCalc.callout")}
                 </p>
                 <a
-                  href={whatsappLink(t("custom.cartorioCalc.whatsappMessage"))}
+                  href={whatsappLink(buildContextualWhatsAppMessage({ pageTitle: t("custom.cartorioCalc.title"), intent: "diagnosis" }))}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
