@@ -8,7 +8,7 @@ import SeoHead from "@/components/SeoHead";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BudgetHero from "@/components/orcamento/BudgetHero";
-import PathSelector, { type CommercialPath } from "@/components/orcamento/PathSelector";
+import OrcamentoLeadHero from "@/components/orcamento/OrcamentoLeadHero";
 import QualificationForm, { type QualificationData } from "@/components/orcamento/QualificationForm";
 import PlanSelector, { plans } from "@/components/orcamento/PlanSelector";
 import SupportCalculator, { calculateSupportTotal } from "@/components/orcamento/SupportCalculator";
