@@ -473,7 +473,69 @@
     "posts": {
       "provimento-213-cnj-desafios-tecnologia-cartorios": {
         "title": "CNJ Provision 213 and the technological challenges for Brazilian notary offices",
-        "excerpt": "Understand how CNJ Provision 213 impacts notary office IT infrastructure and what measures are needed to ensure compliance and security."
+        "excerpt": "Understand how CNJ Provision 213 impacts notary office IT infrastructure and what measures are needed to ensure compliance and security.",
+        "metaTitle": "CNJ Provision 213: IT Challenges for Notary Offices | WMTi",
+        "metaDescription": "Understand how CNJ Provision 213 impacts notary office IT infrastructure and what measures are needed for compliance and security.",
+        "sections": [
+          {
+            "body": "The digital transformation has been profoundly impacting the operation of notary offices in Brazil. In recent years, the National Council of Justice (CNJ) has published several provisions aimed at modernizing, standardizing, and increasing the security of services provided by notary offices. Among these initiatives, Provision 213 represents an important milestone by reinforcing guidelines related to technological modernization, system integration, and information security in notarial and registry activities. For many notary offices, implementing these guidelines brings a major challenge: adapting technological infrastructure to ensure compliance, security, and operational continuity."
+          },
+          {
+            "heading": "What is CNJ Provision 213",
+            "body": "CNJ Provision 213 establishes guidelines for technological modernization and integration of notary services, reinforcing the need for digitization, system interoperability, and information security measures. The central objective is to ensure that Brazilian notary offices operate within technological standards capable of offering: greater legal certainty, greater operational efficiency, standardization of procedures, system integration, and protection of data and digital documents."
+          },
+          {
+            "heading": "The importance of IT infrastructure in notary offices",
+            "body": "Notary offices deal daily with sensitive information and documents of high legal value. Any technological failure can generate serious impacts, such as system unavailability, data loss, compromise of digital documents, service interruption to the public, and legal and operational risks. That is why information technology infrastructure has become one of the pillars for the secure operation of notary offices."
+          },
+          {
+            "heading": "Information security: a growing requirement",
+            "body": "Another essential point related to Provision 213 is the need to ensure high levels of information security. Notary offices work with public records, personal data, and electronic documents that need to be protected against cyber attacks, system intrusions, information leaks, operational failures, and file loss. Solutions such as corporate firewalls, enterprise antivirus, network monitoring, and digital security policies become essential."
+          },
+          {
+            "heading": "Operational continuity and technological stability",
+            "body": "Another challenge faced by many notary offices is ensuring that systems function continuously and stably. System unavailability can cause service paralysis, procedural delays, operational losses, and user dissatisfaction. For this reason, notary offices must rely on reliable servers, structured networks, and specialized technical support."
+          },
+          {
+            "heading": "Technological modernization in notary offices",
+            "body": "The advancement of electronic platforms, service centers, and digital systems requires notary offices to be prepared to operate in increasingly technological environments. Key technological needs include: high-performance corporate servers, structured and secure networks, backup and data recovery environments, digital security solutions, and professional IT infrastructure management."
+          },
+          {
+            "heading": "Technology as an ally of notarial and registry activity",
+            "body": "The digitization of notary services should be seen not only as a regulatory obligation but as an opportunity to improve management and increase operational efficiency. With proper use of technology, it is possible to reduce operational risks, increase team productivity, improve document security, ensure greater service availability, and strengthen the reliability of the office."
+          },
+          {
+            "heading": "The importance of specialized IT support for notary offices",
+            "body": "IT infrastructure management requires specialized technical knowledge. Many notary offices choose to work with companies specialized in information technology to ensure their systems are always updated, protected, and functioning correctly. This support includes activities such as server monitoring, network management, digital security implementation, preventive maintenance, and specialized technical support."
+          },
+          {
+            "heading": "WMTi Information Technology: IT infrastructure for notary offices",
+            "body": "WMTi Information Technology has over 15 years of experience in technological infrastructure solutions for companies and institutions that depend on secure and reliable environments. Services offered include: corporate server deployment, enterprise network infrastructure, network security with firewall, Microsoft 365 solutions, and monitoring and specialized technical support."
+          },
+          {
+            "heading": "Conclusion",
+            "body": "CNJ Provision 213 reinforces the importance of technological modernization in notary offices. To meet regulatory requirements and ensure service continuity, notary offices need to invest in secure, stable, and professionally managed IT infrastructure. Technology has become an essential element to ensure efficiency, legal certainty, and quality in public service."
+          }
+        ],
+        "faq": [
+          {
+            "q": "What is CNJ Provision 213?",
+            "a": "It is a provision from the National Council of Justice that establishes guidelines for technological modernization, system integration, and information security for notary offices in Brazil."
+          },
+          {
+            "q": "What are the main technological requirements for notary offices?",
+            "a": "Reliable servers, stable corporate networks, backup systems, firewall, access control, and constant IT environment monitoring."
+          },
+          {
+            "q": "Does WMTi serve notary offices?",
+            "a": "Yes. WMTi has over 15 years of experience in IT infrastructure and serves notary offices with server, network, security, and specialized technical support solutions."
+          },
+          {
+            "q": "How to ensure technological compliance for my notary office?",
+            "a": "By working with a specialized company that evaluates your current infrastructure, identifies improvement points, and implements solutions appropriate to regulatory requirements."
+          }
+        ],
+        "cta": "Does your notary office need secure and reliable IT infrastructure? WMTi specializes in technology solutions for notary offices. Request a free assessment."
       },
       "vantagens-microsoft-365-para-empresas": {
         "title": "5 advantages of Microsoft 365 for companies still using POP/IMAP email",
@@ -485,147 +547,1479 @@
       },
       "ransomware-em-hospitais-como-proteger": {
         "title": "Ransomware in hospitals: how to protect your healthcare institution",
-        "excerpt": "Hospitals are the primary target of ransomware attacks in Brazil. Learn how to protect electronic health records and ensure continuity of care."
+        "excerpt": "Hospitals are the primary target of ransomware attacks in Brazil. Learn how to protect electronic health records and ensure continuity of care.",
+        "metaTitle": "Ransomware in Hospitals: How to Protect Your Institution | WMTi",
+        "metaDescription": "Hospitals are the primary target of ransomware attacks. Learn how to protect medical records, medical systems, and ensure continuity of care.",
+        "sections": [
+          {
+            "body": "Hospitals and healthcare institutions have become the preferred target of digital criminals. According to security reports, the healthcare sector experienced a 74% increase in ransomware attacks in the last two years. The reason is simple: hospitals cannot stop, and therefore are more likely to pay ransoms to recover their data."
+          },
+          {
+            "heading": "Why hospitals are priority targets",
+            "body": "Hospitals operate 24 hours a day, 7 days a week. An interruption in systems can mean delays in surgeries, loss of access to electronic health records, and inability to issue medical reports. Criminals know that the pressure for continuity of care makes hospitals more vulnerable to extortion. Additionally, medical data is worth up to 10 times more than financial data on the black market."
+          },
+          {
+            "heading": "How ransomware enters the hospital network",
+            "body": "The most common attack vectors are phishing emails targeting employees, exploitation of vulnerabilities in outdated systems, and poorly configured remote access. Once inside the network, the malware spreads laterally, encrypting servers, workstations, and even backup systems connected to the network."
+          },
+          {
+            "heading": "Essential protection measures",
+            "body": "Protection against ransomware requires a layered approach: pfSense firewall with IDS/IPS to block malicious traffic, network segmentation to isolate medical equipment, automated offline backup with periodic verification, constant updating of operating systems and applications, and team training to identify phishing attempts."
+          },
+          {
+            "heading": "The role of backup in recovery",
+            "body": "A well-structured backup is the last line of defense against ransomware. The 3-2-1 strategy (3 copies, 2 different media, 1 offsite) ensures that even if ransomware compromises the local backup, there is a secure copy outside the network. WMTi implements automated backup with integrity verification and periodic restoration tests."
+          },
+          {
+            "heading": "Incident response plan",
+            "body": "Every hospital needs a documented ransomware incident response plan. The plan should include immediate isolation of infected machines, communication with IT team and management, scope assessment of the attack, restoration from verified backup, and forensic analysis to prevent recurrence."
+          }
+        ],
+        "faq": [
+          {
+            "q": "Should hospitals pay the ransomware ransom?",
+            "a": "Security experts and authorities recommend not paying. Payment funds crime and does not guarantee data recovery. The best protection is having up-to-date and tested backup."
+          },
+          {
+            "q": "How long does it take to recover a hospital from a ransomware attack?",
+            "a": "With adequate backup, recovery can take 24 to 72 hours. Without backup, the process can take weeks or result in permanent data loss."
+          },
+          {
+            "q": "Which hospital systems are most targeted?",
+            "a": "Electronic health records (EHR), PACS (medical images), hospital management systems (ERP), and file servers are the main targets."
+          }
+        ],
+        "cta": "Is your healthcare institution protected against ransomware? WMTi performs security diagnostics for hospitals and clinics, identifying vulnerabilities and implementing layered protections."
       },
       "vazamento-dados-clinicas-medicas-lgpd": {
         "title": "Data breaches in medical clinics: risks and how to prevent them",
-        "excerpt": "Medical clinics handle sensitive patient data. Understand the risks of data leaks and how LGPD requires adequate protection."
+        "excerpt": "Medical clinics handle sensitive patient data. Understand the risks of data leaks and how LGPD requires adequate protection.",
+        "metaTitle": "Data Breaches in Medical Clinics: Risks and LGPD | WMTi",
+        "metaDescription": "Medical clinics handle sensitive patient data. Understand the risks of data leaks and how to comply with LGPD.",
+        "sections": [
+          {
+            "body": "Medical clinics store extremely sensitive information: diagnoses, test results, treatment histories, and personal patient data. The General Data Protection Law (LGPD) classifies health data as sensitive, requiring enhanced protection measures."
+          },
+          {
+            "heading": "Sensitive medical data under LGPD",
+            "body": "LGPD defines health data as sensitive personal data (Art. 5, II). This means clinics need a specific legal basis for processing this data, technical and administrative security measures, and may face fines of up to 2% of revenue in case of a breach."
+          },
+          {
+            "heading": "Main causes of data leaks in clinics",
+            "body": "The most common leaks occur due to weak or shared passwords among employees, lack of encryption on workstations and servers, improper disposal of equipment containing data, uncontrolled access to electronic health records, and absence of firewall and network segmentation."
+          },
+          {
+            "heading": "Consequences of a medical data breach",
+            "body": "Besides ANPD fines, a breach can result in damage to the clinic reputation, lawsuits from affected patients, loss of insurance contracts and partnerships, and direct impact on patient trust."
+          },
+          {
+            "heading": "How to protect patient data",
+            "body": "Adequate protection involves role-based access control (RBAC), data encryption in transit and at rest, pfSense firewall with audit logs, encrypted backup with external storage, strong password policy with multi-factor authentication, and regular staff training."
+          }
+        ],
+        "faq": [
+          {
+            "q": "Do small clinics also need to comply with LGPD?",
+            "a": "Yes. LGPD applies to any organization that processes personal data, regardless of size. Small clinics need the same protection measures."
+          },
+          {
+            "q": "What is the fine for medical data breaches?",
+            "a": "ANPD can apply fines of up to 2% of the company revenue, limited to R$50 million per violation, plus sanctions such as data blocking."
+          },
+          {
+            "q": "How to prove LGPD compliance?",
+            "a": "Through documentation of security policies, data processing records, impact reports (RIPD), and evidence of implemented technical measures."
+          }
+        ],
+        "cta": "Need to protect patient data in your clinic? WMTi implements information security infrastructure in compliance with LGPD."
       },
       "backup-para-cartorios-estrategias-seguras": {
         "title": "Backup for notary offices: secure strategies to protect digital archives",
-        "excerpt": "Notary offices need reliable backup to protect notarial acts and records. Discover the best strategies."
+        "excerpt": "Notary offices need reliable backup to protect notarial acts and records. Discover the best strategies.",
+        "metaTitle": "Backup for Notary Offices: Secure Strategies for Digital Archives | WMTi",
+        "metaDescription": "Notary offices need reliable backup to protect notarial acts and records. Discover the best strategies.",
+        "sections": [
+          {
+            "body": "Notary offices are responsible for the custody and preservation of documents with public faith. The digitization of archives and the use of electronic systems have made backup a critical necessity, especially considering the requirements of CNJ Provision 74."
+          },
+          {
+            "heading": "Legal backup requirements for notary offices",
+            "body": "CNJ Provision 74 requires notary offices to maintain backup copies of digital archives, stored in a location different from the office. CNJ Provision 213 reinforces these requirements, establishing minimum information security standards for notary offices."
+          },
+          {
+            "heading": "Risks of not having adequate backup",
+            "body": "Data loss in a notary office can mean destruction of notarial acts without possibility of recovery, service interruption to the population, personal liability of the notary or registrar, and administrative sanctions from the court of justice."
+          },
+          {
+            "heading": "3-2-1 backup strategy for notary offices",
+            "body": "WMTi recommends the 3-2-1 strategy adapted for notary offices: 3 copies of data (original + 2 backups), 2 different media (RAID server + external storage), 1 offsite copy (encrypted cloud backup or external vault). All backups are automated, encrypted, and verified daily."
+          },
+          {
+            "heading": "Local backup with Dell PowerEdge server",
+            "body": "The Dell PowerEdge server with RAID provides the first layer of protection, with disk redundancy that protects against hardware failure. WMTi configures automatic snapshots that allow restoring data from any point in time."
+          },
+          {
+            "heading": "Periodic restoration tests",
+            "body": "A backup that has never been tested is not reliable. WMTi performs periodic restoration tests to ensure data can be effectively recovered when needed. Test reports are documented for audit purposes."
+          }
+        ],
+        "faq": [
+          {
+            "q": "How often should a notary office backup be performed?",
+            "a": "Incremental backup should be daily, with weekly full backup. For high-volume notary offices, backup can be done every hour."
+          },
+          {
+            "q": "Is cloud backup safe for notary offices?",
+            "a": "Yes, as long as it uses AES-256 encryption, TLS transmission, and certified datacenter storage. WMTi configures cloud backup with all these protection layers."
+          },
+          {
+            "q": "How to ensure backup is working?",
+            "a": "Through automated monitoring with failure alerts and periodic restoration tests. WMTi monitors client backups and notifies immediately in case of failure."
+          }
+        ],
+        "cta": "Does your notary office need a reliable backup strategy? WMTi implements automated backup solutions with encryption and restoration tests."
       },
       "firewall-pfsense-para-empresas-protecao-completa": {
         "title": "pfSense firewall for businesses: complete protection against intrusions",
-        "excerpt": "pfSense is an enterprise-grade open-source firewall solution that protects your network against external and internal threats."
+        "excerpt": "pfSense is an enterprise-grade open-source firewall solution that protects your network against external and internal threats.",
+        "metaTitle": "pfSense Firewall for Businesses: Complete Protection | WMTi",
+        "metaDescription": "pfSense is an enterprise firewall solution that protects your network against intrusions, ransomware, and unauthorized access.",
+        "sections": [
+          {
+            "body": "The firewall is the first line of defense for the corporate network. pfSense is an enterprise-grade open-source solution that offers advanced security features without the prohibitive costs of proprietary firewalls like Cisco ASA or Fortinet."
+          },
+          {
+            "heading": "What is pfSense",
+            "body": "pfSense is a FreeBSD-based firewall operating system used by companies of all sizes worldwide. It offers stateful firewall, VPN, IDS/IPS, proxy, load balancing, and much more, with an intuitive web interface for management."
+          },
+          {
+            "heading": "pfSense security features",
+            "body": "Key features include: deep packet inspection (DPI), intrusion detection and prevention system (IDS/IPS) with Snort or Suricata, country-based traffic blocking (GeoIP), web content filtering, site-to-site and client-to-site VPN, and complete audit logs."
+          },
+          {
+            "heading": "pfSense vs proprietary firewalls",
+            "body": "While proprietary firewalls charge annual licenses of R$5,000 to R$50,000, pfSense is free and offers equivalent functionality. WMTi deploys pfSense on dedicated appliances with ongoing support and monitoring."
+          },
+          {
+            "heading": "Corporate use cases",
+            "body": "pfSense is ideal for protecting hospital networks (medical equipment segmentation), notary offices (Provision 213 compliance), law firms (confidential data protection), and businesses in general (access control and VPN for remote work)."
+          }
+        ],
+        "faq": [
+          {
+            "q": "Is pfSense reliable for business use?",
+            "a": "Yes. pfSense is used by thousands of companies worldwide, including government and military organizations. Its FreeBSD base is recognized for stability and security."
+          },
+          {
+            "q": "Do I need dedicated hardware for pfSense?",
+            "a": "Yes, we recommend dedicated appliances to ensure performance and reliability. WMTi provides and configures appropriate hardware for your network size."
+          },
+          {
+            "q": "Does pfSense replace antivirus?",
+            "a": "No. pfSense protects the network perimeter, while antivirus protects endpoints. Both are necessary for effective layered security."
+          }
+        ],
+        "cta": "Protect your network with pfSense configured by specialists. WMTi deploys, monitors, and maintains your corporate firewall."
       },
       "ataques-ciberneticos-escritorios-advocacia": {
         "title": "Cyber attacks on law firms: how to protect yourself",
-        "excerpt": "Law firms are frequent targets of hackers due to handling confidential information. See how to shield your operations."
+        "excerpt": "Law firms are frequent targets of hackers due to handling confidential information. See how to shield your operations.",
+        "metaTitle": "Cyber Attacks on Law Firms | WMTi",
+        "metaDescription": "Law firms are frequent targets of hackers. Learn how to protect confidential data and ensure digital security.",
+        "sections": [
+          {
+            "body": "Law firms are attractive targets for digital criminals because they handle highly confidential information: contracts, court cases, client financial data, and confidential legal strategies. A successful attack can compromise the firm reputation and professional activity."
+          },
+          {
+            "heading": "Why law firms are vulnerable",
+            "body": "Most law firms invest little in IT security. Outdated computers, weak passwords, no firewall, and irregular backup are common problems. Additionally, lawyers frequently access files from public Wi-Fi networks without VPN."
+          },
+          {
+            "heading": "Most common attack types",
+            "body": "The most frequent attacks against legal offices include: targeted phishing (spear phishing) with fake court emails, ransomware that encrypts cases and documents, interception of communications on unsecured networks, and social engineering to gain system access."
+          },
+          {
+            "heading": "Impact of an attack on a law firm",
+            "body": "The consequences can be devastating: loss of essential cases and documents, breach of professional confidentiality, liability for client damages, OAB and ANPD fines, and irreparable loss of professional credibility."
+          },
+          {
+            "heading": "Recommended protection measures",
+            "body": "WMTi recommends: pfSense firewall with VPN for secure remote access, encrypted automated backup, Microsoft 365 with advanced email protection, document access control by confidentiality level, disk encryption on notebooks and desktops, and team training to recognize threats."
+          }
+        ],
+        "faq": [
+          {
+            "q": "Do small firms also suffer cyber attacks?",
+            "a": "Yes. Small firms are even easier targets because they generally have fewer protections implemented. The size of the firm does not reduce the value of the data it holds."
+          },
+          {
+            "q": "How to protect confidential legal documents?",
+            "a": "With data encryption, permission-based access control, encrypted backup, VPN for remote access, and firewall to protect the network perimeter."
+          },
+          {
+            "q": "Are lawyers required to protect client data under LGPD?",
+            "a": "Yes. Lawyers are controllers of their clients personal data and need to implement technical and administrative protection measures as required by LGPD."
+          }
+        ],
+        "cta": "Protect your law firm against cyber attacks. WMTi implements secure infrastructure with firewall, VPN, and backup for legal offices."
       },
       "servidores-dell-poweredge-seguranca-dados": {
         "title": "Dell PowerEdge servers: data security for businesses",
-        "excerpt": "Discover how Dell PowerEdge servers offer native security features like TPM, Secure Boot, and iDRAC to protect your data."
+        "excerpt": "Discover how Dell PowerEdge servers offer native security features like TPM, Secure Boot, and iDRAC to protect your data.",
+        "metaTitle": "Dell PowerEdge Servers: Data Security for Businesses | WMTi",
+        "metaDescription": "Discover how Dell PowerEdge servers offer native security features to protect corporate data.",
+        "sections": [
+          {
+            "body": "Dell PowerEdge servers are designed with security as a priority. From firmware to hardware, each layer includes protection features that ensure the integrity of corporate data against physical and digital threats."
+          },
+          {
+            "heading": "Hardware-level security",
+            "body": "Dell PowerEdge servers include TPM 2.0 (Trusted Platform Module) for hardware encryption, Secure Boot that prevents execution of unauthorized firmware, chassis with intrusion detection, and Silicon Root of Trust that verifies BIOS integrity at every startup."
+          },
+          {
+            "heading": "iDRAC: secure remote management",
+            "body": "iDRAC (Integrated Dell Remote Access Controller) allows secure remote server management, including console access even with the operating system frozen, automated firmware updates, temperature, ventilation, and power monitoring, and automatic hardware failure alerts."
+          },
+          {
+            "heading": "RAID for data protection",
+            "body": "Dell PERC RAID controllers protect against disk failure with mirroring (RAID 1) or distributed parity (RAID 5/6). In case of a disk failure, the server continues operating normally while the disk is hot-swapped."
+          },
+          {
+            "heading": "Dell PowerEdge for different segments",
+            "body": "WMTi recommends the appropriate model for each scenario: PowerEdge T350 for small businesses and offices, PowerEdge R750xs for hospitals and clinics with virtualization, PowerEdge R650 for notary offices with high data volume, and PowerEdge T550 for companies that need a robust tower server."
+          }
+        ],
+        "faq": [
+          {
+            "q": "What is the lifespan of a Dell PowerEdge server?",
+            "a": "With proper maintenance, a Dell PowerEdge server can operate for 7 to 10 years. Dell offers up to 5 years of warranty with ProSupport."
+          },
+          {
+            "q": "Do I need a climate-controlled room for the server?",
+            "a": "Yes, servers need an environment with controlled temperature (18-27°C) and adequate ventilation to ensure performance and longevity."
+          },
+          {
+            "q": "Does WMTi install and configure Dell servers?",
+            "a": "Yes. WMTi handles sizing, provisioning, installation, configuration, and data migration for Dell PowerEdge servers."
+          }
+        ],
+        "cta": "Need a secure server for your business? WMTi sizes, installs, and configures Dell PowerEdge servers focused on security and performance."
       },
       "lgpd-para-clinicas-e-hospitais-guia-pratico": {
         "title": "LGPD for clinics and hospitals: practical compliance guide",
-        "excerpt": "Clinics and hospitals must adapt their IT infrastructure to comply with LGPD. See the step-by-step guide to ensure compliance."
+        "excerpt": "Clinics and hospitals must adapt their IT infrastructure to comply with LGPD. See the step-by-step guide to ensure compliance.",
+        "metaTitle": "LGPD for Clinics and Hospitals: Practical Guide | WMTi",
+        "metaDescription": "Practical compliance guide with LGPD for clinics and hospitals. Learn how to adapt your IT infrastructure.",
+        "sections": [
+          {
+            "body": "LGPD imposes specific obligations on healthcare institutions that process sensitive personal data. Clinics and hospitals need to adapt not only administrative processes but especially their IT infrastructure to ensure technical protection of patient data."
+          },
+          {
+            "heading": "Sensitive data in healthcare",
+            "body": "LGPD classifies as sensitive all health-related data: medical records, exam results, prescriptions, diagnoses, treatment information, and hospitalization history. Processing this data requires specific consent or qualified legal justification."
+          },
+          {
+            "heading": "LGPD technical requirements for IT",
+            "body": "From an infrastructure standpoint, LGPD requires: data encryption at rest and in transit, granular access control to systems, audit logs for personal data access, backup with protection against accidental or intentional loss, and ability to fulfill data subject requests (access, correction, deletion)."
+          },
+          {
+            "heading": "Compliant IT infrastructure",
+            "body": "WMTi implements IT infrastructure that meets LGPD requirements: Dell PowerEdge servers with native encryption, pfSense firewall with audit logs, Active Directory with role-based access control, automated encrypted backup, and 24/7 monitoring with security alerts."
+          },
+          {
+            "heading": "Data Protection Impact Report (RIPD)",
+            "body": "Clinics and hospitals must prepare a RIPD for high-risk processing activities. Adequate IT infrastructure provides the technical evidence needed for this report, demonstrating the security measures implemented."
+          }
+        ],
+        "faq": [
+          {
+            "q": "Can clinics be fined under LGPD?",
+            "a": "Yes. ANPD can apply fines of up to 2% of revenue, limited to R$50 million per violation, plus sanctions such as data blocking and public disclosure of the infraction."
+          },
+          {
+            "q": "How to adapt electronic health records to LGPD?",
+            "a": "The electronic health record system must have profile-based access control, audit logs, encryption, backup, and ability to fulfill patient requests about their data."
+          },
+          {
+            "q": "Does WMTi help with LGPD compliance?",
+            "a": "Yes. WMTi implements the technical layer of data protection: servers, firewall, backup, encryption, and access control as required by LGPD."
+          }
+        ],
+        "cta": "Need to adapt your clinic IT to LGPD? WMTi implements secure infrastructure in compliance with data protection legislation."
       },
       "como-ransomware-ataca-cartorios": {
         "title": "How ransomware attacks notary offices and what to do for protection",
-        "excerpt": "Notary offices are among the most vulnerable targets for ransomware. Understand the attack vector and protection measures."
+        "excerpt": "Notary offices are among the most vulnerable targets for ransomware. Understand the attack vector and protection measures.",
+        "metaTitle": "How Ransomware Attacks Notary Offices and How to Protect | WMTi",
+        "metaDescription": "Notary offices are vulnerable targets for ransomware. Understand the attack vector and essential protection measures.",
+        "sections": [
+          {
+            "body": "Notary offices hold invaluable digital archives: deeds, certificates, powers of attorney, and notarial acts. Losing this data to a ransomware attack can have irreversible legal consequences and compromise the public faith of the acts."
+          },
+          {
+            "heading": "Notary offices in the crosshairs of cybercrime",
+            "body": "Notary offices are attractive targets for three reasons: they possess high-value data, they generally invest little in IT security, and they cannot stop operating. These characteristics make notary offices prone to paying ransoms to recover encrypted data."
+          },
+          {
+            "heading": "Most common attack vectors",
+            "body": "Attacks on notary offices usually start with phishing emails with malicious attachments disguised as summons or official letters, exploitation of RDP ports exposed to the internet, contaminated USB drives brought by employees, and vulnerabilities in outdated software."
+          },
+          {
+            "heading": "Multi-layered protection for notary offices",
+            "body": "WMTi implements layered protection: pfSense firewall with IDS/IPS and external RDP blocking, managed antivirus on all workstations, network segmentation separating critical systems, offline backup with media rotation, and team training to identify threats."
+          },
+          {
+            "heading": "Compliance with Provision 213",
+            "body": "CNJ Provision 213 requires notary offices to implement information security measures. WMTi solutions fully meet these requirements, including firewall, backup, access control, and monitoring."
+          }
+        ],
+        "faq": [
+          {
+            "q": "What to do if the notary office is attacked by ransomware?",
+            "a": "Immediately disconnect equipment from the network, do not pay the ransom, contact the IT team, and restore data from offline backup."
+          },
+          {
+            "q": "Does cloud backup protect against ransomware?",
+            "a": "Partially. Backup must be isolated from the main network so ransomware cannot reach it. Cloud backup with versioning is an additional protection layer."
+          },
+          {
+            "q": "Does Provision 213 require a firewall?",
+            "a": "Yes. Provision 213 requires perimeter protection measures, including a configured and monitored firewall."
+          }
+        ],
+        "cta": "Protect your notary office against ransomware. WMTi implements layered protection in compliance with CNJ Provision 213."
       },
       "falhas-infraestrutura-ti-hospitais": {
         "title": "IT infrastructure failures in hospitals: risks and solutions",
-        "excerpt": "A server failure in a hospital can compromise patient care. Learn about risks and how to implement high availability."
+        "excerpt": "A server failure in a hospital can compromise patient care. Learn about risks and how to implement high availability.",
+        "metaTitle": "IT Infrastructure Failures in Hospitals: Risks and Solutions | WMTi",
+        "metaDescription": "Server failures in hospitals compromise patient care. Learn about risks and how to implement high availability.",
+        "sections": [
+          {
+            "body": "In a hospital, IT infrastructure is not just operational support — it is a critical element for patient safety. When a server fails, the consequences go beyond business interruption: they can directly affect patient care and treatment."
+          },
+          {
+            "heading": "Critical hospital systems",
+            "body": "Systems that cannot go down include: Electronic Health Record (EHR), PACS (medical image storage and distribution), Hospital Management System (ERP), pharmacy system with prescription control, and laboratory system with exam results."
+          },
+          {
+            "heading": "Impact of IT failures on hospital care",
+            "body": "When a server goes down in a hospital: doctors lose access to patient history, surgeries may be postponed, prescriptions cannot be verified electronically, imaging exams become unavailable, and patient admission and discharge stop."
+          },
+          {
+            "heading": "Causes of failures in hospital infrastructure",
+            "body": "The most common causes are: outdated servers without RAID redundancy, overloaded network without proper segmentation, lack of UPS (uninterruptible power supply), absent or insufficient backup, and lack of preventive maintenance."
+          },
+          {
+            "heading": "High availability solutions",
+            "body": "WMTi implements high-availability infrastructure for hospitals: Dell PowerEdge servers with RAID and redundant power supplies, network with structured cabling and redundancy, pfSense firewall with automatic failover, automated backup with verified restoration, and 24/7 monitoring with prioritized alerts."
+          }
+        ],
+        "faq": [
+          {
+            "q": "How to prevent server failure in a hospital?",
+            "a": "With servers with RAID redundancy, preventive maintenance, 24/7 monitoring, and tested backup. WMTi implements all these layers."
+          },
+          {
+            "q": "What to do when the hospital server goes down?",
+            "a": "Activate the incident response plan, communicate with clinical teams, initiate restoration from backup, and investigate the root cause."
+          },
+          {
+            "q": "Does the hospital need a secondary server?",
+            "a": "For critical environments, yes. Virtualization with automatic failover ensures that a secondary server takes over immediately in case of primary failure."
+          }
+        ],
+        "cta": "Ensure IT availability in your hospital. WMTi implements high-availability infrastructure with monitoring and verified backup."
       },
       "backup-automatizado-clinicas-medicas": {
         "title": "Automated backup for medical clinics: protect exams and medical records",
-        "excerpt": "Medical images and electronic health records need automated and tested backup. Learn how to implement it in your clinic."
+        "excerpt": "Medical images and electronic health records need automated and tested backup. Learn how to implement it in your clinic.",
+        "metaTitle": "Automated Backup for Medical Clinics: Protect Exams and Records | WMTi",
+        "metaDescription": "Medical images and electronic records need automated and tested backup. Learn how to implement it in your clinic.",
+        "sections": [
+          {
+            "body": "Medical clinics generate critical data daily: clinical images, medical reports, exam results, and patient records. The loss of this data can have legal, financial, and reputational consequences for the clinic."
+          },
+          {
+            "heading": "Types of data that need backup in a clinic",
+            "body": "Critical data includes: DICOM images (X-rays, ultrasounds, CT scans), electronic health records, clinical reports and prescriptions, financial and billing data, and employee and payroll records."
+          },
+          {
+            "heading": "Risks of not having automated backup",
+            "body": "Without automated backup: human error can leave the clinic without a recent copy, ransomware can encrypt all data including manual backup, equipment failure can destroy irreplaceable data, and the clinic may violate LGPD for not protecting patient data."
+          },
+          {
+            "heading": "Automated backup implementation",
+            "body": "WMTi configures automated backup for clinics: daily incremental backup with minimal impact on performance, weekly full backup for complete restoration, encrypted backup on external storage (onsite), encrypted cloud backup (offsite), and automated monitoring with failure alerts."
+          },
+          {
+            "heading": "Backup for DICOM images",
+            "body": "Medical images in DICOM format require special attention: large files that demand adequate storage, long retention (minimum 20 years per CFM), need for integrity verification, and access compatibility with PACS systems."
+          }
+        ],
+        "faq": [
+          {
+            "q": "How much storage is needed for clinic backup?",
+            "a": "It depends on exam volume. Clinics with X-ray and CT generate more data. WMTi sizes storage according to each clinic profile."
+          },
+          {
+            "q": "Can backup slow down the clinic systems?",
+            "a": "No, if properly configured. Incremental backup during off-peak hours has minimal impact on performance."
+          },
+          {
+            "q": "How long should patient records be kept?",
+            "a": "CFM establishes that medical records must be kept for at least 20 years. Backup must consider this long-term retention."
+          }
+        ],
+        "cta": "Protect your institution electronic health records. WMTi implements secure infrastructure with access control and encrypted backup."
       },
       "segmentacao-rede-hospitalar-seguranca": {
         "title": "Hospital network segmentation: why it is essential for security",
-        "excerpt": "Unsegmented hospital networks expose medical equipment and patient data. Understand how segmentation protects your institution."
+        "excerpt": "Unsegmented hospital networks expose medical equipment and patient data. Understand how segmentation protects your institution.",
+        "metaTitle": "Hospital Network Segmentation: Essential for Security | WMTi",
+        "metaDescription": "Unsegmented hospital networks expose medical equipment and patient data. Learn how segmentation protects your institution.",
+        "sections": [
+          {
+            "body": "Hospital networks are complex environments with thousands of connected devices: computers, medical equipment, IP cameras, access control, and IoT devices. Without proper segmentation, a security breach in one device can compromise the entire network."
+          },
+          {
+            "heading": "Why hospital networks need segmentation",
+            "body": "In an unsegmented network: a compromised computer can access medical equipment, ransomware can spread to all connected devices, medical IoT devices are exposed to external attacks, and there is no traffic isolation between different departments."
+          },
+          {
+            "heading": "Hospital VLAN architecture",
+            "body": "WMTi implements VLAN architecture for hospitals: administrative VLAN (computers and printers), medical VLAN (medical systems and records), IoMT VLAN (connected medical equipment), guest VLAN (visitors and patients), and management VLAN (servers and network equipment)."
+          },
+          {
+            "heading": "Firewall between segments",
+            "body": "pfSense controls traffic between VLANs: only necessary communication is allowed between segments, all inter-VLAN traffic is logged, IDS/IPS rules detect anomalies, and automatic alerts for suspicious traffic."
+          },
+          {
+            "heading": "Benefits of segmentation",
+            "body": "A segmented network provides: ransomware containment (does not spread to the entire network), protection of medical equipment against external attacks, regulatory compliance (LGPD, ANVISA), simplified traffic monitoring, and better network performance."
+          }
+        ],
+        "faq": [
+          {
+            "q": "Is network segmentation mandatory for hospitals?",
+            "a": "There is no specific law requiring it, but information security best practices and LGPD compliance requirements make segmentation practically essential for hospitals."
+          },
+          {
+            "q": "Does segmentation affect network speed?",
+            "a": "No. When properly implemented, segmentation can actually improve performance by reducing broadcast traffic on each segment."
+          },
+          {
+            "q": "Can segmentation be done on an existing network?",
+            "a": "Yes. WMTi plans and executes segmentation in existing networks without interrupting hospital operations."
+          }
+        ],
+        "cta": "Protect your hospital network with professional segmentation. WMTi implements VLAN architecture with pfSense firewall."
       },
       "phishing-em-escritorios-advocacia-como-evitar": {
         "title": "Phishing in law firms: how to avoid email scams",
-        "excerpt": "Phishing attacks are the gateway for intrusions in legal offices. Learn to identify and block these threats."
+        "excerpt": "Phishing attacks are the gateway for intrusions in legal offices. Learn to identify and block these threats.",
+        "metaTitle": "Phishing in Law Firms: How to Avoid Scams | WMTi",
+        "metaDescription": "Phishing attacks are the gateway for intrusions in legal offices. Learn to identify and block these threats.",
+        "sections": [
+          {
+            "body": "Phishing is the most common cyber attack against law firms. Criminals send emails that appear to come from courts, bar associations, or clients, inducing lawyers and staff to click malicious links or open contaminated attachments."
+          },
+          {
+            "heading": "How phishing targets law firms",
+            "body": "Attacks targeting law firms are sophisticated: emails mimicking court notifications with case numbers, fake bar association messages requesting credential updates, emails from supposed clients with contaminated document attachments, and fake invoices from actual suppliers."
+          },
+          {
+            "heading": "Consequences of a successful phishing attack",
+            "body": "When a law firm employee falls for phishing: credentials can be stolen and used to access case systems, ransomware can be installed encrypting all firm files, confidential client data can be exfiltrated, and the firm may be held liable for data breaches under LGPD."
+          },
+          {
+            "heading": "Technical protection measures",
+            "body": "WMTi implements technical protections against phishing: Microsoft 365 with Advanced Threat Protection, pfSense firewall with malicious URL filtering, DNS filtering to block known phishing domains, email authentication (SPF, DKIM, DMARC), and centralized antivirus with automatic updates."
+          },
+          {
+            "heading": "Team training",
+            "body": "Technology alone is not enough. WMTi recommends: periodic training to identify phishing emails, phishing simulations to test team awareness, clear reporting procedures for suspicious emails, and security culture reinforced by firm management."
+          }
+        ],
+        "faq": [
+          {
+            "q": "How to identify a phishing email?",
+            "a": "Check the sender (often a similar domain), urgency in the message, suspicious links (hover to see the real URL), and unexpected attachments."
+          },
+          {
+            "q": "Does antivirus protect against phishing?",
+            "a": "Partially. Antivirus can block known malware, but advanced phishing attacks may evade detection. Layered protection is necessary."
+          },
+          {
+            "q": "What to do if I clicked a phishing link?",
+            "a": "Change your passwords immediately, notify the IT team, scan the computer for malware, and monitor for suspicious activity in your accounts."
+          }
+        ],
+        "cta": "Protect your law firm against phishing. WMTi implements email security with Microsoft 365 and pfSense firewall."
       },
       "redundancia-internet-clinicas-hospitais": {
         "title": "Internet redundancy in clinics and hospitals: why it is mandatory",
-        "excerpt": "An internet outage in a hospital can paralyze critical systems. See how to implement redundancy with automatic failover."
+        "excerpt": "An internet outage in a hospital can paralyze critical systems. See how to implement redundancy with automatic failover.",
+        "metaTitle": "Internet Redundancy in Clinics and Hospitals: Mandatory | WMTi",
+        "metaDescription": "An internet outage in a hospital can paralyze critical systems. See how to implement redundancy with automatic failover.",
+        "sections": [
+          {
+            "body": "Modern clinics and hospitals depend on internet for virtually every operation: electronic health record access, telemedicine, integration with insurance companies, cloud systems, and digital communications. A single internet link represents a critical point of failure."
+          },
+          {
+            "heading": "What depends on internet in a hospital",
+            "body": "Critical systems that depend on connectivity: cloud electronic health records, telemedicine platforms, integration with insurance companies and SUS, cloud-based laboratory systems, pharmaceutical supply systems, and inter-unit communication (VoIP, Teams)."
+          },
+          {
+            "heading": "Risks of internet outage",
+            "body": "When the internet goes down in a hospital: cloud systems become inaccessible, telemedicine consultations are interrupted, insurance authorizations cannot be processed, electronic prescriptions cannot be sent, and patient check-in and discharge are delayed."
+          },
+          {
+            "heading": "Redundancy implementation with pfSense",
+            "body": "WMTi configures internet redundancy with pfSense: two or more internet links from different providers, automatic failover (less than 30 seconds), load balancing during normal operation, automatic alerts in case of link failure, and monitoring of link quality (latency, packet loss)."
+          },
+          {
+            "heading": "Choosing providers",
+            "body": "For effective redundancy: use providers with different technologies (fiber + radio, or fiber + satellite), with independent physical paths, different entry points in the building, and contracts with guaranteed SLA."
+          }
+        ],
+        "faq": [
+          {
+            "q": "How much does internet redundancy cost?",
+            "a": "The cost of a second link varies, but is a fraction of the loss caused by an outage. WMTi helps choose the best cost-benefit option."
+          },
+          {
+            "q": "Does the switchover cause any disruption?",
+            "a": "With pfSense configured by WMTi, failover occurs in less than 30 seconds. Most users do not even notice the switch."
+          },
+          {
+            "q": "Can I use 4G/5G as backup?",
+            "a": "Yes. A 4G/5G link can serve as emergency backup. WMTi configures pfSense to automatically switch to mobile in case of fixed link failure."
+          }
+        ],
+        "cta": "Ensure uninterrupted internet in your clinic. WMTi implements redundancy with automatic failover using pfSense."
       },
       "ransomware-wannacry-licoes-para-empresas": {
         "title": "WannaCry: lessons from the largest ransomware attack for Brazilian companies",
-        "excerpt": "WannaCry affected hospitals and businesses worldwide. Learn the lessons from this attack and how to prevent it from happening to your company."
+        "excerpt": "WannaCry affected hospitals and businesses worldwide. Learn the lessons from this attack and how to prevent it from happening to your company.",
+        "metaTitle": "WannaCry: Lessons from the Largest Ransomware Attack | WMTi",
+        "metaDescription": "WannaCry affected hospitals and businesses worldwide. Learn the lessons and how to prevent it.",
+        "sections": [
+          {
+            "body": "In May 2017, WannaCry ransomware infected over 200,000 computers in 150 countries in just a few hours. Hospitals, factories, telecommunications companies, and governments were paralyzed. The attack exploited a known Windows vulnerability that had a patch available for two months."
+          },
+          {
+            "heading": "How WannaCry worked",
+            "body": "WannaCry exploited the EternalBlue vulnerability in Windows SMB protocol. It spread automatically across the network without requiring user action. Each infected computer scanned the network for other vulnerable machines, creating an exponential cascade of infections."
+          },
+          {
+            "heading": "Impact on hospitals",
+            "body": "The UK National Health Service (NHS) was one of the hardest hit: 80 healthcare organizations affected, surgeries cancelled, ambulances redirected, and patients without access to test results. The estimated cost exceeded £92 million."
+          },
+          {
+            "heading": "Lessons for Brazilian companies",
+            "body": "WannaCry exposed critical failures: systems without security updates are easy targets, internal network segmentation could have limited the spread, offline backup would have allowed recovery without paying ransom, and firewalls with IDS/IPS could have detected the spread."
+          },
+          {
+            "heading": "How to protect against the next WannaCry",
+            "body": "WMTi implements the lessons from WannaCry: automated updates on all workstations and servers, pfSense firewall with IDS/IPS to detect exploits, network segmentation to contain lateral spread, offline backup immune to network attacks, and 24/7 monitoring to detect anomalous behavior."
+          }
+        ],
+        "faq": [
+          {
+            "q": "Can WannaCry still infect computers?",
+            "a": "Yes. There are still computers with unpatched Windows connected to the internet. WannaCry variants continue circulating and exploiting the same vulnerability."
+          },
+          {
+            "q": "Do updated systems still need a firewall?",
+            "a": "Yes. Updates fix known vulnerabilities, but new ones are discovered daily. The firewall is an additional protection layer."
+          },
+          {
+            "q": "Did WannaCry affect companies in Brazil?",
+            "a": "Yes. Brazilian companies in the healthcare, telecommunications, and industrial sectors were affected, including hospitals that had to revert to paper processes."
+          }
+        ],
+        "cta": "Protect your company against the next cyber attack. WMTi implements the lessons from WannaCry with layered security."
       },
       "vpn-segura-para-escritorios-advocacia": {
         "title": "Secure VPN for law firms: protected remote access",
-        "excerpt": "Lawyers need to access cases and documents remotely with security. See how to implement corporate VPN with pfSense."
+        "excerpt": "Lawyers need to access cases and documents remotely with security. See how to implement corporate VPN with pfSense.",
+        "metaTitle": "Secure VPN for Law Firms: Protected Remote Access | WMTi",
+        "metaDescription": "Lawyers need secure remote access to cases and documents. See how to implement corporate VPN with pfSense.",
+        "sections": [
+          {
+            "body": "Remote work became a reality for law firms. Lawyers need to access case systems, documents, and databases from home, courts, and during travel. Without a VPN, this access occurs over unprotected connections, exposing confidential data."
+          },
+          {
+            "heading": "Why lawyers need VPN",
+            "body": "Lawyers routinely access confidential data from external locations: court hearings where they need to check processes, client meetings requiring document access, home office work, and travel between court branches. Without VPN, this data travels unencrypted over public networks."
+          },
+          {
+            "heading": "Risks of access without VPN",
+            "body": "Without VPN: data can be intercepted on public Wi-Fi networks, credentials can be captured by man-in-the-middle attacks, confidential documents can be exposed, and the firm may violate LGPD for not protecting data in transit."
+          },
+          {
+            "heading": "VPN implementation with pfSense",
+            "body": "WMTi configures corporate VPN with pfSense: OpenVPN or IPsec with military-grade encryption, individual certificates for each user, two-factor authentication (2FA), access log for compliance, and automatic connection on firm-managed devices."
+          },
+          {
+            "heading": "Security best practices for remote access",
+            "body": "Beyond VPN, WMTi recommends: disk encryption on notebooks, screen lock policy after inactivity, prohibition of saving firm files on personal devices, security training for remote access, and 24/7 monitoring of VPN connections."
+          }
+        ],
+        "faq": [
+          {
+            "q": "Does VPN slow down the connection?",
+            "a": "Minimally. With pfSense and adequate hardware, the speed reduction is imperceptible for normal use like document access and email."
+          },
+          {
+            "q": "Can I use VPN on my cell phone?",
+            "a": "Yes. WMTi configures VPN for iOS and Android, allowing secure access from mobile devices."
+          },
+          {
+            "q": "Is VPN mandatory for LGPD compliance?",
+            "a": "LGPD requires technical measures to protect personal data. VPN is one of the recommended measures for protecting data in transit."
+          }
+        ],
+        "cta": "Implement secure VPN for your law firm. WMTi configures VPN with pfSense and advanced protection for remote access."
       },
       "como-proteger-prontuario-eletronico": {
         "title": "How to protect electronic patient records against attacks",
-        "excerpt": "Electronic health records contain sensitive data protected by LGPD. Learn how to secure access and ensure data integrity."
+        "excerpt": "Electronic health records contain sensitive data protected by LGPD. Learn how to secure access and ensure data integrity.",
+        "metaTitle": "How to Protect Electronic Patient Records | WMTi",
+        "metaDescription": "Electronic health records contain sensitive LGPD-protected data. Learn how to secure access and ensure data integrity.",
+        "sections": [
+          {
+            "body": "The electronic health record (EHR) is the most critical and sensitive system in any healthcare institution. It contains complete patient histories: diagnoses, treatments, exams, prescriptions, and personal information. Protecting this data is both a legal obligation and an ethical responsibility."
+          },
+          {
+            "heading": "Why EHR is a prime target",
+            "body": "Medical data has high value on the black market: complete health records are worth up to 10x more than credit card data, they can be used for identity fraud and insurance scams, and once leaked, they cannot be changed (unlike a password)."
+          },
+          {
+            "heading": "Most common vulnerabilities",
+            "body": "The most frequent EHR vulnerabilities include: shared login among multiple professionals, absence of access logs, EHR accessible from any computer without restrictions, unencrypted local database, and backup without encryption or access control."
+          },
+          {
+            "heading": "Multi-layered protection",
+            "body": "WMTi implements comprehensive EHR protection: Active Directory with individual login per professional, role-based access control (doctor, nurse, receptionist), complete audit logs (who accessed what and when), database encryption at rest and in transit, and pfSense firewall with network segmentation."
+          },
+          {
+            "heading": "Backup and disaster recovery for EHR",
+            "body": "The EHR needs special backup: automated daily incremental backup, weekly full backup with integrity verification, encrypted offsite copy, periodic restoration tests, and minimum 20-year retention as required by CFM."
+          }
+        ],
+        "faq": [
+          {
+            "q": "Can EHR be accessed remotely?",
+            "a": "Yes, but only through VPN with encryption and two-factor authentication. WMTi configures secure remote access for physicians."
+          },
+          {
+            "q": "What to do if patient data is leaked?",
+            "a": "Notify the ANPD and affected patients, investigate the root cause, implement corrective measures, and document the entire process."
+          },
+          {
+            "q": "How long should electronic records be kept?",
+            "a": "CFM establishes that medical records must be kept for at least 20 years. Backup must consider this long-term retention."
+          }
+        ],
+        "cta": "Protect your institution electronic health records. WMTi implements secure infrastructure with access control and encrypted backup."
       },
       "servidor-dedicado-vs-nuvem-para-empresas": {
         "title": "Dedicated server vs cloud: which is better for your business?",
-        "excerpt": "Find out when to choose a local Dell PowerEdge server or the cloud, considering security, performance, and costs."
+        "excerpt": "Find out when to choose a local Dell PowerEdge server or the cloud, considering security, performance, and costs.",
+        "metaTitle": "Dedicated Server vs Cloud: Which Is Better? | WMTi",
+        "metaDescription": "Find out when to choose a local server or cloud, considering security, performance, and costs.",
+        "sections": [
+          {
+            "body": "The choice between a dedicated local server and cloud infrastructure is one of the most important IT decisions for any company. Each option has advantages and disadvantages that must be evaluated according to the business profile and needs."
+          },
+          {
+            "heading": "Advantages of a dedicated local server",
+            "body": "A local server offers total control over hardware and data, predictable performance without internet dependency, fixed cost without consumption surprises, and facilitated compliance with regulations requiring data on national territory. It is ideal for companies with systems that require low latency and high performance."
+          },
+          {
+            "heading": "Advantages of cloud infrastructure",
+            "body": "The cloud offers on-demand scalability, native geographic redundancy, no hardware investment, and access from anywhere. It is ideal for companies with remote teams that need flexibility."
+          },
+          {
+            "heading": "Hybrid model: the best of both worlds",
+            "body": "For many companies, the best option is the hybrid model: local Dell PowerEdge server for critical systems (ERP, database), Microsoft 365 in the cloud for email and collaboration, and cloud backup as a second protection layer. WMTi designs custom hybrid architectures."
+          },
+          {
+            "heading": "Total cost of ownership analysis (TCO)",
+            "body": "A local server has high acquisition cost and predictable maintenance. The cloud has monthly costs that can grow with usage. Over a 5-year horizon, the local server is generally more economical for constant workloads, while the cloud is more advantageous for variable loads."
+          }
+        ],
+        "faq": [
+          {
+            "q": "Is a local server more secure than the cloud?",
+            "a": "Not necessarily. Security depends on configuration and maintenance. A poorly configured local server is more vulnerable than a well-managed cloud, and vice versa."
+          },
+          {
+            "q": "Can I migrate from local server to cloud later?",
+            "a": "Yes. Migration can be done gradually. WMTi plans migrations without downtime, maintaining normal operations during the process."
+          },
+          {
+            "q": "What option does WMTi recommend?",
+            "a": "It depends on the company profile. WMTi performs a technical and financial assessment to recommend the best architecture for each case."
+          }
+        ],
+        "cta": "Need to decide between local server and cloud? WMTi performs technical and financial analysis to recommend the best solution."
       },
       "politica-seguranca-informacao-empresas": {
         "title": "Information security policy: how to create one for your company",
-        "excerpt": "An information security policy is the first step to protecting corporate data. See how to create yours."
+        "excerpt": "An information security policy is the first step to protecting corporate data. See how to create yours.",
+        "metaTitle": "Information Security Policy for Businesses | WMTi",
+        "metaDescription": "An information security policy is the first step to protecting corporate data. See how to create yours.",
+        "sections": [
+          {
+            "body": "An information security policy (ISP) is the document that defines rules, procedures, and responsibilities for protecting company data and systems. Without an ISP, each employee acts according to their own criteria, creating security gaps."
+          },
+          {
+            "heading": "Why your company needs an ISP",
+            "body": "An ISP establishes behavioral standards for all employees, defines responsibilities in case of incidents, meets LGPD and sector regulation requirements, reduces risks of data leaks and attacks, and facilitates decision-making in crisis situations."
+          },
+          {
+            "heading": "What the ISP should contain",
+            "body": "An effective ISP covers: password policy (complexity, periodic changes, sharing prohibition), access policy (who accesses what, principle of least privilege), backup policy (frequency, testing, storage), device usage policy (BYOD, mobile devices), incident response procedures, and information classification (public, internal, confidential, restricted)."
+          },
+          {
+            "heading": "Technical implementation of the ISP",
+            "body": "The ISP needs technical support to work: Active Directory with GPOs to enforce password policies, pfSense firewall to enforce internet access policies, automated backup per defined policy, managed antivirus on all workstations, and compliance monitoring."
+          },
+          {
+            "heading": "Training and awareness",
+            "body": "The ISP only works if employees know and understand it. WMTi recommends initial training for all staff, annual refresher courses, phishing simulations to test awareness, and clear communication of consequences for non-compliance."
+          }
+        ],
+        "faq": [
+          {
+            "q": "Do small companies need an ISP?",
+            "a": "Yes. Companies of any size handle data that needs protection. A simple and objective ISP is better than none."
+          },
+          {
+            "q": "Who should prepare the ISP?",
+            "a": "The ISP should be prepared by the IT team with management support. WMTi assists in defining the technical layer of the ISP."
+          },
+          {
+            "q": "Does the ISP need to be updated?",
+            "a": "Yes. The ISP should be reviewed annually or whenever there are significant changes in the infrastructure or company processes."
+          }
+        ],
+        "cta": "Need to implement a security policy with technical support? WMTi configures the infrastructure that sustains your ISP."
       },
       "backup-3-2-1-estrategia-para-empresas": {
         "title": "3-2-1 backup strategy: the gold standard for data protection",
-        "excerpt": "The 3-2-1 backup rule ensures your data survives any disaster. Learn how to apply it in your business."
+        "excerpt": "The 3-2-1 backup rule ensures your data survives any disaster. Learn how to apply it in your business.",
+        "metaTitle": "3-2-1 Backup Strategy: Data Protection | WMTi",
+        "metaDescription": "The 3-2-1 rule ensures your data survives any disaster. Learn how to apply it in your business.",
+        "sections": [
+          {
+            "body": "The 3-2-1 backup strategy is considered the gold standard for data protection by security experts worldwide. Simple to understand and highly effective, this rule ensures your data survives virtually any type of disaster."
+          },
+          {
+            "heading": "What is the 3-2-1 rule",
+            "body": "The rule is simple: 3 copies of data (original + 2 backups), 2 different media (e.g., RAID server + external storage), 1 offsite copy (outside the physical location of the company). This combination protects against hardware failure, human error, ransomware attacks, and physical disasters."
+          },
+          {
+            "heading": "The first copy: protected original data",
+            "body": "Original data should be on a server with RAID for disk failure protection. WMTi uses Dell PowerEdge servers with RAID 1, 5, or 6 depending on the required protection level."
+          },
+          {
+            "heading": "The second copy: local backup",
+            "body": "Local backup on separate storage allows quick restoration. It should be automated with integrity verification, and ideally on equipment physically separated from the main server."
+          },
+          {
+            "heading": "The third copy: offsite backup",
+            "body": "Offsite backup protects against fire, theft, or flooding at the location. It can be encrypted cloud or external vault. WMTi implements automated offsite backup with AES-256 encryption."
+          },
+          {
+            "heading": "Evolution: the 3-2-1-1-0 rule",
+            "body": "The modern version of the rule adds: 1 offline copy (disconnected from the network, immune to ransomware) and 0 restoration errors (verified periodic tests). WMTi implements this advanced version for clients who need maximum protection."
+          }
+        ],
+        "faq": [
+          {
+            "q": "Is the 3-2-1 rule sufficient against ransomware?",
+            "a": "The basic rule may not be, as ransomware can reach network-connected backups. The 3-2-1-1-0 version includes an offline copy that is immune to ransomware."
+          },
+          {
+            "q": "How much does it cost to implement 3-2-1 backup?",
+            "a": "The cost varies according to data volume. WMTi sizes the solution according to the company needs and budget."
+          },
+          {
+            "q": "How often should backup be tested?",
+            "a": "Restoration tests should be done at least monthly. WMTi automates and documents these tests."
+          }
+        ],
+        "cta": "Implement 3-2-1 backup in your company. WMTi configures automated backup with verification and restoration tests."
       },
       "monitoramento-rede-prevencao-ataques": {
         "title": "Network monitoring: how to prevent attacks before they happen",
-        "excerpt": "Proactive monitoring identifies threats and anomalies before they cause damage. Learn about essential tools and practices."
+        "excerpt": "Proactive monitoring identifies threats and anomalies before they cause damage. Learn about essential tools and practices.",
+        "metaTitle": "Network Monitoring: Prevent Attacks | WMTi",
+        "metaDescription": "Proactive monitoring identifies threats before they cause damage. Learn about essential practices.",
+        "sections": [
+          {
+            "body": "Proactive network monitoring is the ability to identify and resolve problems before they impact business operations. Instead of reacting to failures, the IT team anticipates problems and acts preventively."
+          },
+          {
+            "heading": "Reactive vs proactive monitoring",
+            "body": "In the reactive model, the IT team only acts when something stops working. In the proactive model, automatic alerts identify anomalies before failure: disks with defective sectors before complete failure, abnormal bandwidth consumption indicating a possible attack, SSL certificates about to expire, and services with increasing memory consumption."
+          },
+          {
+            "heading": "What to monitor on the corporate network",
+            "body": "Critical monitoring items include: server health (CPU, RAM, disk, temperature), backup status (success/failure), internet link availability, firewall logs (intrusion attempts), printer and network equipment status, and license and certificate validity."
+          },
+          {
+            "heading": "Monitoring tools",
+            "body": "WMTi uses professional tools like Zabbix and Grafana for real-time visual monitoring, email and SMS alerts, historical performance reports, and personalized dashboards per client."
+          },
+          {
+            "heading": "Incident response",
+            "body": "When monitoring identifies a problem, the response process includes: automatic alert to the technical team, severity classification, remote corrective action when possible, escalation to on-site service if necessary, and documentation of the incident and solution."
+          }
+        ],
+        "faq": [
+          {
+            "q": "Does monitoring work 24 hours?",
+            "a": "Yes. The monitoring system operates 24/7, with automatic alerts to the on-call team for critical incidents outside business hours."
+          },
+          {
+            "q": "Do I need special software for monitoring?",
+            "a": "Yes. WMTi installs and configures monitoring agents on client equipment at no additional licensing cost."
+          },
+          {
+            "q": "How much does the monitoring service cost?",
+            "a": "Monitoring is generally included in WMTi IT support contracts. Contact us for a personalized quote."
+          }
+        ],
+        "cta": "Monitor your network 24/7 with WMTi. Identify problems before they affect your operations."
       },
       "lgpd-para-cartorios-adequacao-necessaria": {
         "title": "LGPD for notary offices: necessary compliance for data protection",
-        "excerpt": "Notary offices handle sensitive personal data and need to comply with LGPD. See what changes in the IT infrastructure."
+        "excerpt": "Notary offices handle sensitive personal data and need to comply with LGPD. See what changes in the IT infrastructure.",
+        "metaTitle": "LGPD for Notary Offices: Required Compliance | WMTi",
+        "metaDescription": "Notary offices handle sensitive personal data and need to comply with LGPD. See what changes in IT.",
+        "sections": [
+          {
+            "body": "Notary offices process thousands of citizens personal and sensitive data daily: ID numbers, birth, marriage, and death certificates, property deeds, and powers of attorney. LGPD and CNJ provisions require rigorous technical protection of this data."
+          },
+          {
+            "heading": "Personal data in notary offices",
+            "body": "Notary offices are large-scale personal data controllers. They process identification data (name, ID), biometric data (fingerprints), property data (deeds, contracts), and civil status data (certificates). LGPD requires these data be protected with technical measures proportional to the risk."
+          },
+          {
+            "heading": "Provision 213 and LGPD: convergence",
+            "body": "CNJ Provision 213 converged information security requirements for notary offices with LGPD principles, requiring: information security policy, system access control, encrypted backup, firewall and antivirus, and processing activity records."
+          },
+          {
+            "heading": "Technical measures for compliance",
+            "body": "WMTi implements the technical compliance layer: Dell PowerEdge server with encryption and RAID, pfSense firewall with audit logs, Active Directory with profile-based access control, automated encrypted backup (3-2-1), and 24/7 security monitoring."
+          },
+          {
+            "heading": "Risks of non-compliance",
+            "body": "Notary offices that do not comply with LGPD face: ANPD fines up to R$50 million, court of justice sanctions, lawsuits from data subjects, severe reputational damage, and possible loss of delegation."
+          }
+        ],
+        "faq": [
+          {
+            "q": "Do notary offices need a DPO?",
+            "a": "CNJ recommends that notary offices designate a data protection officer (DPO), which can be the principal or a designated professional."
+          },
+          {
+            "q": "Does Provision 213 replace LGPD?",
+            "a": "No. Provision 213 complements LGPD with specific requirements for notary offices. Both must be complied with."
+          },
+          {
+            "q": "What is the compliance deadline?",
+            "a": "LGPD is already in force and sanctions can be applied. Provision 213 also has specific deadlines that should be verified with the local court of justice."
+          }
+        ],
+        "cta": "Comply your notary office IT with LGPD and Provision 213. WMTi implements all necessary infrastructure."
       },
       "ataques-ddos-como-proteger-empresa": {
         "title": "DDoS attacks: how to protect your company against downtime",
-        "excerpt": "DDoS attacks can take down your company services for hours. Learn how a properly configured firewall can block these threats."
+        "excerpt": "DDoS attacks can take down your company services for hours. Learn how a properly configured firewall can block these threats.",
+        "metaTitle": "DDoS Attacks: How to Protect Your Company | WMTi",
+        "metaDescription": "DDoS attacks can take down your company services. Learn how a configured firewall blocks these threats.",
+        "sections": [
+          {
+            "body": "Distributed denial of service (DDoS) attacks overwhelm company infrastructure with malicious traffic, making services unavailable to customers and employees. Companies that depend on internet to operate are especially vulnerable."
+          },
+          {
+            "heading": "How a DDoS attack works",
+            "body": "In a DDoS attack, thousands of infected computers (botnet) send simultaneous requests to the target. The traffic volume is so large that the server or internet link cannot process it, causing unavailability."
+          },
+          {
+            "heading": "Business impact",
+            "body": "A DDoS attack can cause: unavailability of websites and web systems, email and online service interruption, loss of sales and productivity, damage to company reputation, and costs with emergency mitigation."
+          },
+          {
+            "heading": "Protection with pfSense",
+            "body": "pfSense offers features to mitigate DDoS attacks: connection rate limiting per IP, country-based traffic blocking (GeoIP), firewall rules to filter malformed packets, syncookies for SYN flood protection, and integration with IP reputation lists."
+          },
+          {
+            "heading": "Complementary strategies",
+            "body": "For more robust protection, WMTi recommends: CDN with DDoS protection for public websites, internet link redundancy, traffic monitoring with anomaly alerts, and DDoS incident response plan."
+          }
+        ],
+        "faq": [
+          {
+            "q": "Do small companies suffer DDoS attacks?",
+            "a": "Yes. DDoS attacks are increasingly cheap to execute and can target companies of any size, including as a form of extortion."
+          },
+          {
+            "q": "Can pfSense block all DDoS attacks?",
+            "a": "pfSense mitigates most attacks. For very large volumetric attacks, additional protection at the ISP layer may be necessary."
+          },
+          {
+            "q": "How to know if I am under a DDoS attack?",
+            "a": "Signs include extreme internet slowness, service unavailability without apparent reason, and high bandwidth consumption on the firewall."
+          }
+        ],
+        "cta": "Protect your company against DDoS attacks. WMTi configures pfSense firewall with denial of service protection."
       },
       "ransomware-como-servico-ameaca-crescente": {
         "title": "Ransomware as a Service (RaaS): the growing threat to businesses",
-        "excerpt": "The RaaS model allows criminals without technical knowledge to launch ransomware attacks. Understand this threat and how to defend against it."
+        "excerpt": "The RaaS model allows criminals without technical knowledge to launch ransomware attacks. Understand this threat and how to defend against it.",
+        "metaTitle": "Ransomware as a Service (RaaS): Growing Threat | WMTi",
+        "metaDescription": "The RaaS model enables ransomware attacks by non-technical criminals. Understand and defend yourself.",
+        "sections": [
+          {
+            "body": "Ransomware as a Service (RaaS) has democratized cybercrime. Just as legitimate companies offer Software as a Service (SaaS), criminal groups now sell ready-to-use ransomware kits with control panels, technical support, and profit sharing."
+          },
+          {
+            "heading": "How the RaaS model works",
+            "body": "RaaS developers create the ransomware and make it available on the dark web. Affiliates (attackers) pay a subscription or share a percentage of ransoms collected. The model includes: ready-to-use ransomware with a control panel, instructions for distributing the malware, technical support for affiliates, and automatic cryptocurrency payment processing."
+          },
+          {
+            "heading": "Why RaaS is more dangerous",
+            "body": "Before RaaS, ransomware attacks required advanced technical knowledge. Now anyone with basic computer skills can launch an attack. This has multiplied the number of attackers and victims exponentially."
+          },
+          {
+            "heading": "Most active RaaS groups",
+            "body": "Groups like LockBit, BlackCat (ALPHV), and Cl0p have been responsible for major attacks globally. They target companies of all sizes, including hospitals, law firms, and notary offices."
+          },
+          {
+            "heading": "How to protect against RaaS",
+            "body": "Protection against RaaS follows the same principles as any ransomware: pfSense firewall with IDS/IPS, network segmentation, 3-2-1-1-0 backup with offline copy, email security with advanced phishing protection, employee training, and 24/7 monitoring."
+          }
+        ],
+        "faq": [
+          {
+            "q": "How much does a RaaS kit cost?",
+            "a": "On the dark web, kits range from $40 to thousands of dollars, or operate on a profit-sharing model (typically 20-30% for the developer)."
+          },
+          {
+            "q": "Can law enforcement shut down RaaS groups?",
+            "a": "International operations have disrupted some groups, but new ones emerge quickly. Technical protection remains the best defense."
+          },
+          {
+            "q": "Are Brazilian companies being targeted by RaaS?",
+            "a": "Yes. Brazil is among the most attacked countries in Latin America, with companies in healthcare, legal, and financial sectors being priority targets."
+          }
+        ],
+        "cta": "Protect your company against Ransomware as a Service. WMTi implements layered security to block these threats."
       },
       "recuperacao-desastres-ti-plano-pratico": {
         "title": "IT disaster recovery: how to create a practical plan",
-        "excerpt": "A disaster recovery plan ensures your company is back up and running quickly after incidents. See how to create yours."
+        "excerpt": "A disaster recovery plan ensures your company is back up and running quickly after incidents. See how to create yours.",
+        "metaTitle": "IT Disaster Recovery: Practical Plan | WMTi",
+        "metaDescription": "A disaster recovery plan ensures your company is back quickly after incidents. See how to create yours.",
+        "sections": [
+          {
+            "body": "A disaster recovery plan (DRP) is a documented set of procedures that enable a company to resume IT operations after a critical incident. Without a DRP, a server failure, ransomware attack, or natural disaster can paralyze the company for days or weeks."
+          },
+          {
+            "heading": "What constitutes an IT disaster",
+            "body": "IT disasters include: ransomware or malware attacks, complete server failure, fire or flooding in the server room, theft of IT equipment, prolonged power outages, and accidental or malicious data corruption."
+          },
+          {
+            "heading": "Essential DRP elements",
+            "body": "An effective DRP must define: recovery time objective (RTO) — maximum acceptable downtime, recovery point objective (RPO) — maximum acceptable data loss, team roles and responsibilities, step-by-step recovery procedures, and internal and external communication plan."
+          },
+          {
+            "heading": "DRP technical infrastructure",
+            "body": "WMTi implements the technical infrastructure to support the DRP: verified automated backup (3-2-1-1-0), server virtualization with snapshots, infrastructure documentation updated, redundant internet with automatic failover, and tested restoration environment."
+          },
+          {
+            "heading": "Testing and updating the DRP",
+            "body": "A DRP that has never been tested is unreliable. WMTi recommends: semi-annual restoration simulations, annual review of the plan, update after any significant infrastructure change, and documentation of all tests and results."
+          }
+        ],
+        "faq": [
+          {
+            "q": "Do all companies need a DRP?",
+            "a": "Any company that depends on IT to operate needs a DRP. The plan complexity should be proportional to the business size and criticality."
+          },
+          {
+            "q": "What is the difference between DRP and backup?",
+            "a": "Backup is one component of the DRP. The plan also includes procedures, responsibilities, communications, and recovery objectives."
+          },
+          {
+            "q": "How long does it take to create a DRP?",
+            "a": "An initial DRP can be created in 2 to 4 weeks. WMTi assists in creating and testing the plan."
+          }
+        ],
+        "cta": "Create a disaster recovery plan for your company. WMTi implements the infrastructure and procedures to ensure quick recovery."
       },
       "seguranca-email-corporativo-ameacas-comuns": {
         "title": "Corporate email security: common threats and how to fight them",
-        "excerpt": "Corporate email is the attack vector most exploited by hackers. Learn about the most common threats and how to protect your company."
+        "excerpt": "Corporate email is the attack vector most exploited by hackers. Learn about the most common threats and how to protect your company.",
+        "metaTitle": "Corporate Email Security: Common Threats | WMTi",
+        "metaDescription": "Corporate email is the most exploited attack vector. Learn about common threats and how to protect your company.",
+        "sections": [
+          {
+            "body": "Corporate email remains the primary entry point for cyber attacks. Over 90% of successful attacks begin with a phishing email. Protecting corporate email is not optional — it is a fundamental security necessity."
+          },
+          {
+            "heading": "Most common email threats",
+            "body": "Main threats include: phishing (fake messages to steal credentials), spear phishing (personalized attacks targeting specific individuals), business email compromise (BEC) impersonating executives, malware attachments disguised as invoices or documents, and malicious links to credential-harvesting sites."
+          },
+          {
+            "heading": "Specific risks for accounting firms",
+            "body": "Accounting firms are particularly vulnerable: they receive files from multiple clients, handle financial data and tax information, have predictable deadlines (tax submissions) that attackers exploit, and a successful attack can compromise data from all clients."
+          },
+          {
+            "heading": "Protection with Microsoft 365",
+            "body": "Microsoft 365 offers advanced email protection: Exchange Online Protection (EOP) for spam and malware filtering, Advanced Threat Protection (ATP) for zero-day threat analysis, Safe Links that scan URLs in real time, Safe Attachments that detonate files in sandbox, and Data Loss Prevention (DLP) to prevent leaks."
+          },
+          {
+            "heading": "Complementary measures",
+            "body": "Beyond Microsoft 365, WMTi implements: SPF, DKIM, and DMARC for email authentication, pfSense firewall with DNS-level malicious URL blocking, periodic phishing training and simulations, and email access policies (2FA, managed devices only)."
+          }
+        ],
+        "faq": [
+          {
+            "q": "Is free email (Gmail, Outlook.com) secure for businesses?",
+            "a": "No. Free email does not offer the security and management features needed for the corporate environment. Microsoft 365 Business provides advanced protection."
+          },
+          {
+            "q": "What is multi-factor authentication (MFA)?",
+            "a": "MFA requires a second verification factor beyond the password (code by SMS, app, or key). It blocks 99.9% of automated attacks."
+          },
+          {
+            "q": "How to train employees against phishing?",
+            "a": "With periodic training, real-case examples, phishing simulations, and a clear reporting culture for suspicious emails."
+          }
+        ],
+        "cta": "Protect your company email with Microsoft 365 and pfSense. WMTi implements advanced security for corporate communications."
       },
       "virtualizacao-servidores-seguranca-performance": {
         "title": "Server virtualization: more security and performance for your company",
-        "excerpt": "Virtualization allows running multiple servers on a single hardware, with isolation and snapshots for quick recovery."
+        "excerpt": "Virtualization allows running multiple servers on a single hardware, with isolation and snapshots for quick recovery.",
+        "metaTitle": "Server Virtualization: Security and Performance | WMTi",
+        "metaDescription": "Virtualization allows running multiple servers on a single hardware, with isolation and snapshots for quick recovery.",
+        "sections": [
+          {
+            "body": "Server virtualization allows running multiple virtual servers (VMs) on a single physical hardware. Each VM operates independently, with its own operating system and resources, providing isolation, flexibility, and efficiency."
+          },
+          {
+            "heading": "Benefits of virtualization",
+            "body": "Virtualization offers: better utilization of physical hardware resources, isolation between services (ERP, email, files), instant snapshots for quick recovery, facilitated migration between physical servers, and reduction in hardware quantity and energy consumption."
+          },
+          {
+            "heading": "Virtualization and security",
+            "body": "Virtualization enhances security: isolation between VMs prevents one compromised service from affecting others, snapshots allow quick rollback after incidents, it is possible to create isolated test environments, and network segmentation between VMs adds an extra protection layer."
+          },
+          {
+            "heading": "Recommended platforms",
+            "body": "WMTi works with leading virtualization platforms: Proxmox VE (open-source, enterprise-grade), VMware vSphere (market leader), and Microsoft Hyper-V (integrated with Windows Server). The choice depends on the client profile, budget, and requirements."
+          },
+          {
+            "heading": "Virtualization on Dell PowerEdge",
+            "body": "Dell PowerEdge servers are ideal for virtualization: powerful multi-core processors, high-capacity RAM (up to 2TB in some models), RAID storage for VM data protection, iDRAC for remote management, and compatibility with all major hypervisors."
+          }
+        ],
+        "faq": [
+          {
+            "q": "Is virtualization secure?",
+            "a": "Yes. Virtualization adds security layers through isolation between VMs and quick recovery capabilities through snapshots."
+          },
+          {
+            "q": "Can I virtualize my current server?",
+            "a": "In most cases, yes. WMTi evaluates the current server and plans the migration to a virtual environment without downtime."
+          },
+          {
+            "q": "Does virtualization affect performance?",
+            "a": "With proper hardware sizing, the impact is minimal. Modern hypervisors are highly optimized and can even improve performance through better resource management."
+          }
+        ],
+        "cta": "Virtualize your company servers. WMTi designs, implements, and manages virtual environments on Dell PowerEdge."
       },
       "ciberseguranca-para-pequenas-empresas": {
         "title": "Cybersecurity for small businesses: essential protection guide",
-        "excerpt": "Small businesses are easy targets because they invest little in security. See essential measures that fit your budget."
+        "excerpt": "Small businesses are easy targets because they invest little in security. See essential measures that fit your budget.",
+        "metaTitle": "Cybersecurity for Small Businesses: Essential Guide | WMTi",
+        "metaDescription": "Small businesses are easy targets for investing little in security. See essential measures that fit your budget.",
+        "sections": [
+          {
+            "body": "Small businesses are increasingly becoming targets of cyber attacks. The misconception that hackers only target large corporations puts thousands of small businesses at risk every day. In reality, 43% of cyber attacks target small businesses, and 60% of those attacked close within six months."
+          },
+          {
+            "heading": "Why small businesses are targets",
+            "body": "Small businesses are attractive targets because: they invest little in security, creating easy entry points, they often lack dedicated IT staff, employees receive no cybersecurity training, backup is often non-existent or untested, and they can serve as a gateway to attack larger partner companies."
+          },
+          {
+            "heading": "Essential measures for small budgets",
+            "body": "Effective cybersecurity does not require large investments. Essential measures include: pfSense firewall (free software with WMTi configuration and support), strong password policy with multi-factor authentication, automated and tested backup (3-2-1 rule), operating system and application updates, and basic security training for all employees."
+          },
+          {
+            "heading": "Quick wins in security",
+            "body": "Measures that can be implemented immediately: enable MFA on all accounts (email, banking, systems), remove admin access from employee computers, configure automatic updates on all machines, implement the 3-2-1 backup rule, and install and configure pfSense firewall."
+          },
+          {
+            "heading": "When to seek professional help",
+            "body": "Some situations require professional IT support: setting up and monitoring the firewall, implementing network segmentation, configuring automated enterprise backup, evaluating and hardening existing infrastructure, and incident response and forensic investigation."
+          }
+        ],
+        "faq": [
+          {
+            "q": "How much does cybersecurity cost for a small business?",
+            "a": "Essential measures like pfSense (free), MFA (free), and automated backup can be implemented with minimal investment. WMTi offers affordable plans for small businesses."
+          },
+          {
+            "q": "Can I handle security internally?",
+            "a": "Basic measures yes, but firewall configuration, monitoring, and incident response require specialized knowledge. Outsourcing this service is more cost-effective for small businesses."
+          },
+          {
+            "q": "What is the most common attack on small businesses?",
+            "a": "Phishing (fraudulent emails) is the most common attack, followed by ransomware. Both can be mitigated with training and technical protections."
+          }
+        ],
+        "cta": "Protect your small business against cyber attacks. WMTi offers affordable security solutions sized for your business."
       },
       "auditoria-seguranca-ti-por-que-fazer": {
         "title": "IT security audit: why your company needs to do it",
-        "excerpt": "A security audit identifies vulnerabilities before they are exploited. Understand the process and benefits."
+        "excerpt": "A security audit identifies vulnerabilities before they are exploited. Understand the process and benefits.",
+        "metaTitle": "IT Security Audit: Why Your Company Needs It | WMTi",
+        "metaDescription": "A security audit identifies vulnerabilities before they are exploited. Understand the process and benefits.",
+        "sections": [
+          {
+            "body": "An IT security audit is a systematic evaluation of the company technological infrastructure to identify vulnerabilities, misconfigurations, and compliance gaps. It is the most effective way to understand the real state of your company security."
+          },
+          {
+            "heading": "What the audit evaluates",
+            "body": "A comprehensive audit covers: firewall configuration and effectiveness, network segmentation and access controls, backup status and restoration tests, operating system and application updates, password policies and access management, compliance with LGPD and sector regulations, and physical security of IT equipment."
+          },
+          {
+            "heading": "Benefits of a security audit",
+            "body": "An audit provides: clear view of existing vulnerabilities, prioritized action plan for corrections, baseline for measuring security improvements, compliance evidence for audits and certifications, and risk reduction through proactive identification."
+          },
+          {
+            "heading": "What happens after the audit",
+            "body": "WMTi delivers a detailed report with: identified vulnerabilities classified by severity, specific remediation recommendations, estimated cost and effort for each correction, implementation timeline, and comparison with industry best practices."
+          },
+          {
+            "heading": "Audit frequency",
+            "body": "WMTi recommends: annual comprehensive audit, quarterly vulnerability assessments, post-incident review audits, and audits before major infrastructure changes."
+          }
+        ],
+        "faq": [
+          {
+            "q": "How long does a security audit take?",
+            "a": "A comprehensive audit typically takes 1 to 2 weeks, depending on the infrastructure size and complexity."
+          },
+          {
+            "q": "Will the audit interrupt company operations?",
+            "a": "No. The audit is conducted with minimal impact on daily operations. Most evaluations are non-intrusive."
+          },
+          {
+            "q": "Is the audit mandatory?",
+            "a": "It is not legally mandatory for most companies, but LGPD requires periodic evaluation of security measures, making the audit practically essential."
+          }
+        ],
+        "cta": "Discover the real state of your company IT security. WMTi performs comprehensive audits with detailed reports and action plans."
       },
       "criptografia-dados-empresariais-guia": {
         "title": "Enterprise data encryption: practical implementation guide",
-        "excerpt": "Encryption protects data in transit and at rest from unauthorized access. See how to implement it in your infrastructure."
+        "excerpt": "Encryption protects data in transit and at rest from unauthorized access. See how to implement it in your infrastructure.",
+        "metaTitle": "Enterprise Data Encryption: Implementation Guide | WMTi",
+        "metaDescription": "Encryption protects data in transit and at rest from unauthorized access. See how to implement it.",
+        "sections": [
+          {
+            "body": "Data encryption is one of the most effective measures for protecting corporate information. It transforms readable data into an unintelligible code that can only be decoded with the correct key. Even if data is stolen, it remains inaccessible without the decryption key."
+          },
+          {
+            "heading": "Types of encryption for businesses",
+            "body": "Companies need encryption at multiple levels: encryption at rest (data stored on servers, disks, and backups), encryption in transit (data traveling over the network and internet), full disk encryption (protection in case of theft or loss of equipment), and database encryption (specific protection for sensitive records)."
+          },
+          {
+            "heading": "Encryption at rest",
+            "body": "Data stored on servers, NAS, and backup must be encrypted. Dell PowerEdge servers offer Self-Encrypting Drives (SED) with automatic hardware encryption. For backup, WMTi implements AES-256 encryption before sending data to external storage or cloud."
+          },
+          {
+            "heading": "Encryption in transit",
+            "body": "Data traveling over the network must be protected: VPN with IPsec or OpenVPN encryption for remote access, TLS/SSL for web connections and email, HTTPS for all internal and external web applications, and WPA3 for corporate wireless networks."
+          },
+          {
+            "heading": "Implementing encryption in your company",
+            "body": "WMTi implements encryption at all levels: BitLocker or LUKS for disk encryption on workstations, Dell SED for server disk encryption, pfSense VPN with military-grade encryption, TLS certificates for internal and external services, and encrypted backup with controlled key management."
+          }
+        ],
+        "faq": [
+          {
+            "q": "Does encryption affect performance?",
+            "a": "With modern hardware, the performance impact is minimal. Dell PowerEdge servers with SED drives perform encryption at the hardware level without CPU overhead."
+          },
+          {
+            "q": "Is encryption mandatory under LGPD?",
+            "a": "LGPD requires appropriate technical measures to protect personal data. Encryption is one of the most recommended and effective measures."
+          },
+          {
+            "q": "What happens if I lose the encryption key?",
+            "a": "Without the key, data is permanently inaccessible. WMTi implements key management procedures with secure backup of encryption keys."
+          }
+        ],
+        "cta": "Implement data encryption in your company. WMTi configures encryption at rest, in transit, and backup with professional management."
       },
       "equipamentos-medicos-conectados-riscos-seguranca": {
         "title": "Connected medical equipment: security risks in hospitals",
-        "excerpt": "Medical IoT equipment expands the attack surface in hospitals. Know the risks and how to segment the network for protection."
+        "excerpt": "Medical IoT equipment expands the attack surface in hospitals. Know the risks and how to segment the network for protection.",
+        "metaTitle": "Connected Medical Equipment: Security Risks in Hospitals | WMTi",
+        "metaDescription": "Medical IoT equipment expands the attack surface in hospitals. Know the risks and how to segment the network.",
+        "sections": [
+          {
+            "body": "The Internet of Medical Things (IoMT) has brought extraordinary advances to healthcare, but also created new security risks. Patient monitors, infusion pumps, MRI machines, and CT scanners connected to the network significantly expand the attack surface in hospitals."
+          },
+          {
+            "heading": "The IoMT landscape in hospitals",
+            "body": "A modern hospital may have hundreds of network-connected medical devices: ICU multiparameter monitors, smart infusion pumps, imaging devices (digital X-ray, CT scanner, MRI), mechanical ventilators with telemetry, and digital electrocardiographs."
+          },
+          {
+            "heading": "IoMT security risks",
+            "body": "Connected medical devices present specific risks: many run outdated operating systems without patches, firmware is rarely updated by the manufacturer, default credentials are frequently not changed, communication protocols may not be encrypted, and the attack surface grows with each connected device."
+          },
+          {
+            "heading": "Consequences of an attack on medical equipment",
+            "body": "An attack on connected medical equipment can: interrupt patient monitoring in ICU, alter dosages on infusion pumps, make imaging devices unavailable, serve as an entry point for ransomware on the network, and compromise patient exam data."
+          },
+          {
+            "heading": "Protection: segmentation is key",
+            "body": "The most important measure is network segmentation: medical equipment should be on an isolated VLAN, pfSense firewall controlling traffic between segments, only necessary communication allowed between VLANs, anomalous traffic monitoring on the IoMT network, and updated inventory of all connected devices."
+          }
+        ],
+        "faq": [
+          {
+            "q": "Can medical equipment be hacked?",
+            "a": "Yes. Security researchers have already demonstrated vulnerabilities in infusion pumps, pacemakers, and imaging devices. Network segmentation is essential to mitigate this risk."
+          },
+          {
+            "q": "Is the equipment manufacturer responsible for security?",
+            "a": "Partially. The manufacturer is responsible for firmware patches, but the security of the network where the equipment operates is the hospital responsibility."
+          },
+          {
+            "q": "How to monitor IoMT equipment?",
+            "a": "With network monitoring tools that identify devices, monitor traffic, and alert about anomalous behavior."
+          }
+        ],
+        "cta": "Protect your hospital medical equipment. WMTi implements network segmentation and monitoring for IoMT."
       },
       "guia-completo-infraestrutura-ti-empresas": {
         "title": "Complete guide to IT infrastructure for businesses",
-        "excerpt": "Understand the main elements of an efficient IT infrastructure and how companies can improve their technological environments."
+        "excerpt": "Understand the main elements of an efficient IT infrastructure and how companies can improve their technological environments.",
+        "metaTitle": "Complete Guide to IT Infrastructure for Businesses | WMTi",
+        "metaDescription": "Understand the main elements of an efficient IT infrastructure and how companies can improve their technological environments.",
+        "sections": [
+          {
+            "body": "IT infrastructure is the technological foundation that supports a modern company operations. Computers, servers, corporate networks, systems, and cloud solutions work together to ensure internal processes function efficiently and securely."
+          },
+          {
+            "heading": "Common problems in companies without adequate infrastructure",
+            "body": "Companies that do not have a well-structured technological infrastructure frequently face problems such as system slowness, network failures, data loss, and growth difficulties."
+          },
+          {
+            "heading": "Main components of business IT infrastructure",
+            "body": "Corporate servers responsible for storing data and running systems. Corporate networks that connect computers and devices within the company. Digital security to protect data and systems against attacks. Backup systems to prevent information loss. Infrastructure monitoring to identify problems before they cause disruptions."
+          },
+          {
+            "heading": "Benefits of investing in IT infrastructure",
+            "body": "Investing in IT infrastructure enables greater productivity, security, and operational stability. WMTi Information Technology has over 15 years of experience helping companies implement reliable technological environments."
+          }
+        ],
+        "faq": [
+          {
+            "q": "What is IT infrastructure?",
+            "a": "It is the set of hardware, software, networks, and services that support a company technological operations."
+          },
+          {
+            "q": "What are the essential components?",
+            "a": "Servers, corporate networks, digital security, backup, and infrastructure monitoring."
+          },
+          {
+            "q": "Why invest in IT infrastructure?",
+            "a": "To ensure productivity, data security, and operational stability for the company."
+          }
+        ],
+        "cta": "Need to improve your company IT infrastructure? WMTi offers complete solutions. Request a free assessment."
       },
       "firewall-empresarial-sua-empresa-precisa": {
         "title": "Business firewall: does your company really need one?",
-        "excerpt": "Understand how firewalls protect corporate networks against attacks and digital intrusions."
+        "excerpt": "Understand how firewalls protect corporate networks against attacks and digital intrusions.",
+        "metaTitle": "Business Firewall: Does Your Company Really Need One? | WMTi",
+        "metaDescription": "Understand how firewalls protect corporate networks against attacks and digital intrusions.",
+        "sections": [
+          {
+            "body": "With the increase in digital threats, protecting the corporate network has become a priority for companies of all sizes. A business firewall functions as a security barrier between the company internal network and the internet."
+          },
+          {
+            "heading": "How a business firewall works",
+            "body": "It analyzes data traffic and blocks suspicious or unauthorized access. Without a corporate firewall, companies can be vulnerable to various types of attacks."
+          },
+          {
+            "heading": "Threats blocked by the firewall",
+            "body": "Network intrusions. Data theft. Ransomware attacks. Unauthorized system access."
+          },
+          {
+            "heading": "Advanced features",
+            "body": "Modern firewalls also allow internet access control, traffic monitoring, and protection against malicious software. Implementing an adequate firewall significantly increases IT infrastructure security."
+          }
+        ],
+        "faq": [
+          {
+            "q": "What is a business firewall?",
+            "a": "It is a security solution that monitors and controls data traffic between the internal network and the internet."
+          },
+          {
+            "q": "Does my company need a firewall?",
+            "a": "Yes. Any company connected to the internet is exposed to threats that a firewall can block."
+          },
+          {
+            "q": "Which firewall does WMTi recommend?",
+            "a": "pfSense is one of the most reliable and widely used solutions in corporate environments."
+          }
+        ],
+        "cta": "Protect your company network with a professional firewall. Talk to WMTi."
       },
       "servidor-caiu-empresa-o-que-fazer": {
         "title": "Server crashed at your company: what to do",
-        "excerpt": "See the most common causes of failures in business servers and how to avoid this problem."
+        "excerpt": "See the most common causes of failures in business servers and how to avoid this problem.",
+        "metaTitle": "Server Crashed at Your Company: What to Do | WMTi",
+        "metaDescription": "See the most common causes of failures in business servers and how to avoid this problem.",
+        "sections": [
+          {
+            "body": "When a corporate server stops working, the entire company operation can be affected. Systems become unavailable, files may be inaccessible, and employees cannot work normally."
+          },
+          {
+            "heading": "Common signs of server failure",
+            "body": "Systems that do not load. Extreme network slowness. Errors when accessing files. Computers that cannot connect to the server."
+          },
+          {
+            "heading": "Most common causes",
+            "body": "Hardware problems. Processing overload. Corporate network failures. Cyber attacks."
+          },
+          {
+            "heading": "How to prevent failures",
+            "body": "Companies can reduce this risk with server monitoring, preventive maintenance, and adequate infrastructure."
+          }
+        ],
+        "faq": [
+          {
+            "q": "What to do when the company server goes down?",
+            "a": "Check the hardware, verify the network, and contact specialized technical support immediately."
+          },
+          {
+            "q": "How to prevent server downtime?",
+            "a": "With proactive monitoring, preventive maintenance, and quality infrastructure."
+          }
+        ],
+        "cta": "Is your server having problems? WMTi can help. Request technical support."
       },
       "quanto-custa-infraestrutura-ti-empresas": {
         "title": "How much does IT infrastructure cost for businesses",
-        "excerpt": "Learn about the main factors that influence the cost of business IT infrastructure."
+        "excerpt": "Learn about the main factors that influence the cost of business IT infrastructure.",
+        "metaTitle": "How Much Does IT Infrastructure Cost for Businesses | WMTi",
+        "metaDescription": "Learn about the main factors that influence the cost of business IT infrastructure.",
+        "sections": [
+          {
+            "body": "The cost of IT infrastructure varies according to each company needs."
+          },
+          {
+            "heading": "Factors that influence investment",
+            "body": "Number of computers. Need for servers. Digital security. Data backup. Network monitoring."
+          },
+          {
+            "heading": "Return on investment",
+            "body": "Companies that invest in adequate technological infrastructure can improve productivity and reduce operational failures."
+          }
+        ],
+        "faq": [
+          {
+            "q": "How much does it cost to set up an IT infrastructure?",
+            "a": "It depends on the company size, number of computers, need for servers, and desired security level."
+          },
+          {
+            "q": "Is it worth investing in IT?",
+            "a": "Yes. Investing in infrastructure reduces failures, increases productivity, and protects business data."
+          }
+        ],
+        "cta": "Want to know how much it costs to improve your company IT? Request a free quote from WMTi."
       },
       "infraestrutura-ti-empresas-jacarei": {
         "title": "IT infrastructure for businesses in Jacareí",
-        "excerpt": "Learn how businesses in Jacareí can improve their IT infrastructure."
+        "excerpt": "Learn how businesses in Jacareí can improve their IT infrastructure.",
+        "metaTitle": "IT Infrastructure for Businesses in Jacareí | WMTi",
+        "metaDescription": "Learn how businesses in Jacareí can improve their IT infrastructure with specialized solutions.",
+        "sections": [
+          {
+            "body": "Companies in Jacareí increasingly depend on technology to keep their operations running. A well-structured IT infrastructure enables greater productivity, stability, and security for business systems."
+          },
+          {
+            "heading": "Key elements of technological infrastructure",
+            "body": "Corporate servers. Business networks. Digital security. Data backup. Network monitoring."
+          },
+          {
+            "heading": "Specialized solutions in the region",
+            "body": "WMTi Information Technology offers specialized solutions for companies in the region that need to improve their technological environments."
+          }
+        ],
+        "faq": [
+          {
+            "q": "Does WMTi serve companies in Jacareí?",
+            "a": "Yes. WMTi is located in the region and serves companies in Jacareí and nearby cities."
+          },
+          {
+            "q": "What services does WMTi offer?",
+            "a": "Servers, networks, firewall, backup, Microsoft 365, technical support, and IT outsourcing."
+          }
+        ],
+        "cta": "Company in Jacareí? WMTi offers complete IT infrastructure solutions. Contact us."
       },
       "como-estabilizamos-rede-escritorio-25-computadores": {
         "title": "How we stabilized an office network with 25 computers",
-        "excerpt": "See how network infrastructure improvements solved slowness issues in an office."
+        "excerpt": "See how network infrastructure improvements solved slowness issues in an office.",
+        "metaTitle": "Success Story: Network Stabilized in an Office | WMTi",
+        "metaDescription": "See how network infrastructure improvements solved slowness issues in an office with 25 computers.",
+        "sections": [
+          {
+            "body": "A company in the region faced constant problems with corporate network slowness. Systems took too long to open and access to shared files was unstable."
+          },
+          {
+            "heading": "Diagnosis",
+            "body": "After analyzing the infrastructure, problems such as inadequate equipment and lack of network monitoring were identified."
+          },
+          {
+            "heading": "Implemented solution",
+            "body": "The WMTi team made infrastructure improvements, including network reorganization and monitoring implementation."
+          },
+          {
+            "heading": "Result",
+            "body": "After the intervention, the company had a faster, more stable, and secure network."
+          }
+        ],
+        "faq": [
+          {
+            "q": "Does WMTi fix slow network problems?",
+            "a": "Yes. WMTi diagnoses and fixes corporate network problems, implementing infrastructure improvements."
+          },
+          {
+            "q": "How long does it take to stabilize the network?",
+            "a": "It depends on environment complexity, but significant improvements can be implemented in a few days."
+          }
+        ],
+        "cta": "Is your network slow? WMTi can diagnose and fix it. Request a free analysis."
       }
     }
   },
