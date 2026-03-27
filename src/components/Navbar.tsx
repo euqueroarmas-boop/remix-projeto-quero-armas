@@ -210,12 +210,12 @@ const Navbar = () => {
         onClick={(e) => {
           e.stopPropagation();
           setIsOpen(!isOpen);
-          if (link.label === "Segmentos") setSvcOpen(false);
-          if (link.label === "Serviços") setSegOpen(false);
-        }}
-        className={`${NAV_ITEM_CLASS} gap-1 ${active ? "text-primary" : "text-muted-foreground hover:text-primary"}`}
-      >
-        {link.label}
+           if (link.label === "nav.segmentos") setSvcOpen(false);
+           if (link.label === "nav.servicos") setSegOpen(false);
+         }}
+         className={`${NAV_ITEM_CLASS} gap-1 ${active ? "text-primary" : "text-muted-foreground hover:text-primary"}`}
+       >
+         {t(link.label)}
         <ChevronDown size={12} className={`transition-transform ${isOpen ? "rotate-180" : ""}`} />
       </button>
     </div>
