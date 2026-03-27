@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ChevronUp } from "lucide-react";
 import { getCtaItemsForPath } from "@/lib/ctaContext";
@@ -18,6 +19,7 @@ const HIDDEN_ROUTES = [
 const FloatingCtaBar = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
@@ -26,10 +28,8 @@ const FloatingCtaBar = () => {
     HIDDEN_ROUTES.some((r) => location.pathname.startsWith(r)) ||
     location.pathname.startsWith("/contratar/");
 
-  // Get contextual CTA items based on current page
   const ctaItems = getCtaItemsForPath(location.pathname);
 
-  // Show after scroll
   useEffect(() => {
     setDismissed(false);
     setCollapsed(false);
@@ -56,7 +56,6 @@ const FloatingCtaBar = () => {
 
   return (
     <AnimatePresence>
-      {/* ── Mobile: bottom sticky bar ── */}
       <motion.div
         key="cta-mobile"
         initial={{ y: 80, opacity: 0 }}
@@ -80,7 +79,7 @@ const FloatingCtaBar = () => {
             <button
               onClick={() => setDismissed(true)}
               className="p-2 text-muted-foreground hover:text-foreground transition-colors shrink-0"
-              aria-label="Fechar barra de ações"
+              aria-label={t("floatingCta.fechar")}
             >
               <X size={16} />
             </button>
@@ -88,7 +87,6 @@ const FloatingCtaBar = () => {
         </div>
       </motion.div>
 
-      {/* ── Desktop: side floating panel ── */}
       <motion.div
         key="cta-desktop"
         initial={{ x: 80, opacity: 0 }}
@@ -124,7 +122,7 @@ const FloatingCtaBar = () => {
         <button
           onClick={() => setCollapsed((c) => !c)}
           className="w-10 h-10 rounded-full bg-card border border-border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary transition-all shadow-lg"
-          aria-label={collapsed ? "Expandir ações" : "Recolher ações"}
+          aria-label={collapsed ? t("floatingCta.expandir") : t("floatingCta.recolher")}
         >
           <ChevronUp
             size={18}
