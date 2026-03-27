@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-
+import { useTranslation } from "react-i18next";
 const clients = [
   "Dell Technologies",
   "Microsoft",
