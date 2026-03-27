@@ -447,12 +447,12 @@ const Navbar = () => {
           <LanguageSwitcher />
         </div>
 
-        {/* Mobile header controls — inside the fixed navbar */}
-        <div className="lg:hidden flex items-center gap-2">
+        {/* Mobile header controls — aeroglass style, no overlap */}
+        <div className="lg:hidden flex items-center gap-3 shrink-0">
           <LanguageSwitcher compact />
           <button
             onClick={toggleMobileMenu}
-            className="text-foreground flex items-center justify-center h-10 w-10 rounded-full border border-border/70 bg-background/80 shadow-sm backdrop-blur-sm"
+            className="text-foreground flex items-center justify-center h-10 w-10 shrink-0 rounded-full border border-border/70 bg-background/80 shadow-sm backdrop-blur-sm transition-colors hover:border-primary/60"
             aria-label={menuOpen ? t("nav.fecharMenu") : t("nav.menuLabel")}
           >
             {menuOpen ? <X size={20} /> : <Menu size={20} />}
@@ -474,11 +474,16 @@ const Navbar = () => {
               aria-label={t("nav.fecharMenu")}
             />
             <motion.div
-              initial={{ x: "-100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "-100%" }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-              className="lg:hidden fixed top-16 left-0 w-full h-[calc(100dvh-4rem)] bg-secondary z-[55] overflow-y-auto"
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+              className="lg:hidden fixed top-16 left-0 w-full h-[calc(100dvh-4rem)] z-[55] overflow-y-auto border-t border-white/[0.08]"
+              style={{
+                background: "rgba(10, 18, 28, 0.85)",
+                backdropFilter: "blur(18px) saturate(160%)",
+                WebkitBackdropFilter: "blur(18px) saturate(160%)",
+              }}
             >
               <div className="container flex flex-col gap-4 py-6 pb-12">
                 {navLinks.map((link) => {
