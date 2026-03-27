@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Calendar, ArrowRight, ChevronRight, MapPin } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import WhatsAppButton from "@/components/WhatsAppButton";
 import SeoHead from "@/components/SeoHead";
 import JsonLd, { buildArticleSchema, buildBreadcrumbSchema } from "@/components/JsonLd";
 import { blogPosts, blogContent as blogContentData } from "@/data/blogPosts";
@@ -306,7 +305,6 @@ const BlogPostPage = () => {
       </section>
 
       <Footer />
-      <WhatsAppButton />
     </div>
   );
 };

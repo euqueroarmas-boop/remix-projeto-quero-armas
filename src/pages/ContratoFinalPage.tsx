@@ -3,7 +3,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Download, Loader2, Mail, RefreshCw, FileText, Eye, AlertTriangle } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import WhatsAppButton from "@/components/WhatsAppButton";
 import SeoHead from "@/components/SeoHead";
 import { Button } from "@/components/ui/button";
 import { ErrorBlock } from "@/components/ui/ErrorBlock";
@@ -225,7 +224,6 @@ const ContratoFinalPage = () => {
       </main>
 
       <Footer />
-      <WhatsAppButton />
     </div>
   );
 };

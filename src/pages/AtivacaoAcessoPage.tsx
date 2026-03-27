@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { AlertTriangle, Check, Copy, ExternalLink, KeyRound, Loader2, MessageCircle, RefreshCw } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import WhatsAppButton from "@/components/WhatsAppButton";
 import SeoHead from "@/components/SeoHead";
 import { Button } from "@/components/ui/button";
 import { ErrorBlock } from "@/components/ui/ErrorBlock";
@@ -175,7 +174,6 @@ const AtivacaoAcessoPage = () => {
       </main>
 
       <Footer />
-      <WhatsAppButton />
     </div>
   );
 };

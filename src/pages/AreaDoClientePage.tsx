@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import WhatsAppButton from "@/components/WhatsAppButton";
 import SeoHead from "@/components/SeoHead";
 import ClientLogin from "@/components/area-cliente/ClientLogin";
 import ClientPortal from "@/components/area-cliente/ClientPortal";
@@ -121,7 +120,6 @@ const AreaDoClientePage = () => {
         )}
       </main>
       {!session && <Footer />}
-      <WhatsAppButton />
     </>
   );
 };

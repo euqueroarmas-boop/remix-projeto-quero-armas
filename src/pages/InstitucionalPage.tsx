@@ -4,7 +4,6 @@ import { Target, Eye, Heart, Shield, Award, Handshake, Lightbulb, CheckCircle, S
 import { useTranslation } from "react-i18next";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import WhatsAppButton from "@/components/WhatsAppButton";
 import SeoHead from "@/components/SeoHead";
 import heroImg from "@/assets/institucional-hero.webp";
 import dedicationImg from "@/assets/institucional-dedication.webp";
@@ -144,7 +143,6 @@ const InstitucionalPage = () => {
       </section>
 
       <Footer />
-      <WhatsAppButton />
     </div>
   );
 };

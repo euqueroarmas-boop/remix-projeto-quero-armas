@@ -5,7 +5,6 @@ import { ArrowRight, Calendar, Search, X, Filter, Layers, ChevronLeft, ChevronRi
 import { useTranslation } from "react-i18next";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import WhatsAppButton from "@/components/WhatsAppButton";
 import SeoHead from "@/components/SeoHead";
 import { blogPosts, blogCategories, type BlogCategory } from "@/data/blogPosts";
 import { useLocalizedBlogPosts, useLocalizedCategories } from "@/hooks/useBlogLocalized";
@@ -477,7 +476,6 @@ const BlogPage = () => {
       </section>
 
       <Footer />
-      <WhatsAppButton />
     </div>
   );
 };

@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import WhatsAppButton from "@/components/WhatsAppButton";
 import SeoHead from "@/components/SeoHead";
 import PurchaseSuccessScreen from "@/components/orcamento/PurchaseSuccessScreen";
 import { Loader2 } from "lucide-react";
@@ -122,7 +121,6 @@ const CompraConcluida = () => {
       </section>
 
       <Footer />
-      <WhatsAppButton />
     </div>
   );
 };

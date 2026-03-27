@@ -12,7 +12,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import WhatsAppButton from "@/components/WhatsAppButton";
 import SeoHead from "@/components/SeoHead";
 import WizardStepWrapper from "@/components/orcamento/WizardStepWrapper";
 import QuickRegistrationForm, { type RegistrationData } from "@/components/orcamento/QuickRegistrationForm";
@@ -416,7 +415,6 @@ const ContratarServicoPage = () => {
         />
 
         <Footer />
-        <WhatsAppButton />
       </div>
     );
   }
@@ -682,7 +680,6 @@ const ContratarServicoPage = () => {
       </div>
 
       <Footer />
-      <WhatsAppButton />
     </div>
   );
 };

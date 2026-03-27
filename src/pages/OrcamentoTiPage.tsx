@@ -7,7 +7,6 @@ import { useToast } from "@/hooks/use-toast";
 import SeoHead from "@/components/SeoHead";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import WhatsAppButton from "@/components/WhatsAppButton";
 import BudgetHero from "@/components/orcamento/BudgetHero";
 import PathSelector, { type CommercialPath } from "@/components/orcamento/PathSelector";
 import QualificationForm, { type QualificationData } from "@/components/orcamento/QualificationForm";
@@ -339,7 +338,6 @@ const OrcamentoTiPage = () => {
       </main>
 
       <Footer />
-      <WhatsAppButton />
     </>
   );
 };
