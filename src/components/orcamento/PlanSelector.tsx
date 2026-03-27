@@ -137,7 +137,7 @@ const PlanSelector = ({ selectedPlan, onSelectPlan, onShowBudget }: Props) => {
               onClick={onShowBudget}
               className="h-14 px-10 text-base bg-primary hover:bg-primary/90 text-primary-foreground"
             >
-              Ver orçamento completo
+              {t("contratar.verOrcamento")}
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
           </motion.div>
