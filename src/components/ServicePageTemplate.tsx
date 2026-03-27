@@ -438,6 +438,9 @@ const ServicePageTemplate = ({
       {/* ══ Hours Calculator ══ */}
       {showHoursCalculator && <HoursCalculator serviceName={tag} />}
 
+      {/* ══ Extra Sections (e.g. downtime calculator) ══ */}
+      {extraSections}
+
       {/* ══ CTA FINAL FORTE ══ */}
       <section id="contato-servico" className="section-dark py-16 md:py-24 border-t-4 border-primary">
         <div className="container max-w-3xl text-center">
