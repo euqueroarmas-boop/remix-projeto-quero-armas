@@ -1,0 +1,726 @@
+{
+  "p": {
+    "suporteTi": {
+      "title": "IT Support in Jacareí",
+      "metaTitle": "IT Support in Jacareí — Your business is bleeding money on tech issues | WMTi",
+      "metaDescription": "IT Support in Jacareí. Continuous monitoring, preventive fixes, fast response and environment standardization. Stop bleeding money on daily tech failures.",
+      "tag": "IT Support",
+      "headline1": "Your business is bleeding money on ",
+      "headlineHighlight": "tech issues",
+      "headline2": " every single day",
+      "description": "Computer freezing. Slow systems. Printer that won't work. Employees waiting for someone to fix it. This isn't a minor tech annoyance — it's your business failing to produce. While an employee waits for the computer to come back, payroll keeps running. While the system crashes, customer service falls behind. Every day your team absorbs small losses that add up to massive waste.",
+      "whatsappMessage": "Hi! I'd like to learn more about WMTi's IT support plans.",
+      "painPoints": ["Computers freezing and employees sitting idle waiting for a fix","Slow systems delaying customer service","Printers that don't work and nobody can troubleshoot","Small daily losses that compound into serious financial damage","Zero monitoring — problems only addressed when everything is already down"],
+      "solutions": ["Continuous monitoring of your environment — we catch problems before they cost you","Fixes applied before failures become operational shutdowns","Fast response when needed, remote or on-site","Full environment standardization for predictable operations","Moving from luck-based IT to structured, reliable operations"],
+      "benefits": [
+        {"title":"Continuous monitoring","text":"We organize, monitor, and prevent problems before they happen. No more running on luck."},
+        {"title":"Preventive fixes","text":"We fix issues before they become costly shutdowns. Your business can't afford to stop — and right now, it stops too often."},
+        {"title":"Fast response","text":"Remote or on-site support with contractually defined response times when you need it most."},
+        {"title":"Standardized environment","text":"Your entire IT environment organized and standardized so everything works as it should."},
+        {"title":"Dedicated support","text":"A fixed technical team that knows your environment. We don't show up only when everything has already crashed."},
+        {"title":"Scalable","text":"Plans that grow with your business. From 5 to 500+ workstations, no surprises."}
+      ],
+      "faq": [
+        {"question":"How does remote support work?","answer":"We use secure remote access tools. When you open a ticket, our technician connects to your machine remotely (with your authorization) and resolves the issue in real time. For issues requiring physical presence, we dispatch a technician."},
+        {"question":"Do you provide after-hours support?","answer":"Yes. Our plans include 24/7 support for critical incidents. Scheduled maintenance can be performed during off-hours to avoid impacting operations."},
+        {"question":"What's the monthly cost of support?","answer":"It depends on the number of workstations, servers, and environment complexity. We offer plans starting at $10/workstation/month for full support. Request a custom proposal."},
+        {"question":"Can I get one-time support?","answer":"Yes, we handle individual calls. However, monthly contracts offer better value with proactive monitoring, preventive maintenance, and priority response."}
+      ],
+      "relatedLabels": ["Computer leasing","Microsoft 365","Network setup","Corporate infrastructure"],
+      "localContent": "We offer on-site and remote support for businesses in Jacareí, São José dos Campos, Taubaté and the entire Paraíba Valley region. Our team is within 30 minutes for emergency on-site calls."
+    },
+    "backup": {
+      "title": "Corporate Backup in Jacareí",
+      "metaTitle": "Corporate Backup in Jacareí — If you lost everything today, would your business survive? | WMTi",
+      "metaDescription": "Corporate backup in Jacareí. Automated backup, secure versioning, reliable storage and fast recovery. If you lost everything today, would your business survive?",
+      "tag": "Corporate Backup",
+      "headline1": "If you lost everything today, would your business ",
+      "headlineHighlight": "keep running?",
+      "headline2": "",
+      "description": "Let's get straight to the point. If you lost all your data today… does your business survive tomorrow? If the answer is no, you're operating at risk. And that risk isn't rare. Human error happens. Systems fail. Equipment burns out. Viruses get in. Attacks happen. Real backup isn't copying files occasionally — that's a false sense of security. Real backup is infrastructure.",
+      "whatsappMessage": "Hi! I need corporate backup solutions for my business.",
+      "painPoints": ["Critical data without automated backup — operating at risk","Manual backup on external media with no real verification","False sense of security from occasional file copies","No recovery strategy when disaster strikes","Most believe 'it'll never happen' — until it does"],
+      "solutions": ["Automated backup — no relying on someone remembering to do it","Secure data versioning with full change history","Reliable storage with real redundancy","Fast recovery when disaster strikes","Moving from luck to guaranteed data protection"],
+      "benefits": [
+        {"title":"Automated backup","text":"WMTi implements automated backup. Stop relying on luck and start having guarantees. When disaster strikes, there's no plan B without backup."},
+        {"title":"Reliable storage","text":"Secure data copies with real redundancy. Not occasional file copying — this is infrastructure."},
+        {"title":"Secure versioning","text":"Complete change history. If something corrupts or gets deleted, you roll back to the exact right point."},
+        {"title":"Fast recovery","text":"When disaster strikes, recovery in minutes, not days. Your business doesn't stop."},
+        {"title":"Continuous verification","text":"Periodic restore tests to ensure data is actually recoverable."},
+        {"title":"Specialized support","text":"Technical team for backup environment management and support."}
+      ],
+      "faq": [
+        {"question":"What is the 3-2-1 backup strategy?","answer":"Maintain three copies of data, on two different media types, with one copy stored off-site (cloud)."},
+        {"question":"What backup software do you use?","answer":"We use Veeam Backup & Replication, the market leader in corporate backup."},
+        {"question":"Are backups tested?","answer":"Yes. We perform monthly restore tests to ensure data is recoverable."}
+      ],
+      "relatedLabels": ["Dell servers","Network security","Corporate infrastructure"],
+      "localContent": "We implement corporate backup for businesses in Jacareí, Paraíba Valley and across Brazil."
+    },
+    "firewall": {
+      "title": "pfSense Firewall in Jacareí",
+      "metaTitle": "pfSense Firewall in Jacareí — Your business could be vulnerable right now | WMTi",
+      "metaDescription": "pfSense firewall in Jacareí. Full access control, suspicious connection blocking, constant network monitoring and secure VPN.",
+      "tag": "pfSense Firewall",
+      "headline1": "Your business could be ",
+      "headlineHighlight": "vulnerable right now",
+      "headline2": " and you don't even know it",
+      "description": "Your business is connected to the internet all the time. But you can't see what's trying to get in. And that's exactly the problem. Today, attacks don't just target large enterprises. Small and mid-size companies are actually more vulnerable — because they typically have no access control, no real protection, and no visibility into what's happening on their network.",
+      "whatsappMessage": "Hi! I'd like a quote for a pfSense firewall for my business.",
+      "painPoints": ["Corporate network exposed with no real access control","Small vulnerabilities turning into major incidents without warning","Users with incorrect permissions accessing what they shouldn't","Equipment exposed to the internet without proper protection","Zero visibility into what's happening on your network"],
+      "solutions": ["Full access control — you decide what enters and exits your network","Suspicious connections blocked before they cause damage","Constant network monitoring with complete visibility","Secure VPN for external access without compromising security","Moving from darkness to full visibility and real control"],
+      "benefits": [
+        {"title":"Real barrier","text":"WMTi implements a real barrier between your business and risk. Security is something you only miss when it's already too late."},
+        {"title":"Full access control","text":"You decide who accesses what. No gaps, no wrong permissions, no exposed equipment."},
+        {"title":"Complete visibility","text":"Stop operating in the dark. Gain visibility and control over everything happening on your network."},
+        {"title":"Secure VPN","text":"Safe external access for remote work or branch connections without compromising the network."},
+        {"title":"No licensing fees","text":"pfSense is open source — no per-user costs or annual license renewals."},
+        {"title":"Constant monitoring","text":"24/7 firewall monitoring with rule updates and patches by the WMTi team."}
+      ],
+      "faq": [
+        {"question":"Is pfSense secure for businesses?","answer":"Yes. pfSense is used by thousands of companies and government agencies worldwide. With integrated Suricata IDS/IPS, it offers protection comparable to high-cost proprietary firewalls."},
+        {"question":"How much does pfSense deployment cost?","answer":"Investment depends on network size. For small businesses (up to 30 users), appliances start around $600 including installation."},
+        {"question":"Can I use pfSense VPN for remote work?","answer":"Yes. We configure OpenVPN or IPsec so your employees can work from home with secure access to the company network, with individual credentials and two-factor authentication."},
+        {"question":"Does pfSense replace commercial routers?","answer":"Yes, with significant advantages. pfSense offers stateful firewall, VPN, IDS/IPS, load balancing and monitoring — features commercial routers don't have or charge extra for."}
+      ],
+      "relatedLabels": ["Network setup","Dell servers","IT Support","Corporate infrastructure"],
+      "localContent": "We install pfSense firewalls for businesses in Jacareí, São José dos Campos, Taubaté and across the Paraíba Valley region."
+    },
+    "adminServidores": {
+      "title": "Server Administration",
+      "metaTitle": "Corporate Server Administration | Windows Server & Linux | WMTi",
+      "metaDescription": "Professional corporate server administration. Windows Server, Linux, Active Directory, GPOs and Hyper-V virtualization management.",
+      "tag": "Server Administration",
+      "headline1": "Your server is running with ",
+      "headlineHighlight": "nobody actually managing it",
+      "headline2": "",
+      "description": "It boots. It runs. Until the day it doesn't. And when it stops, everything stops — files, systems, access, the entire operation frozen. Corporate servers aren't something you set up and forget. They need updates, monitoring, maintenance and someone who knows what they're doing. WMTi manages your servers so this never happens.",
+      "whatsappMessage": "Hi! I need corporate server administration services.",
+      "painPoints": ["Server running without monitoring or maintenance for months","Misconfigured Active Directory and GPOs causing daily failures","No security updates — vulnerabilities piling up","Poorly sized virtualization consuming resources and crashing","Nobody knows what's happening inside the server until it fails"],
+      "solutions": ["Continuous Windows Server and Linux management with defined routines","Active Directory and GPOs properly configured for your operation","Security updates applied before they become vulnerabilities","Right-sized Hyper-V virtualization using proper resources","Real-time monitoring of CPU, memory, disk and network — before failure"],
+      "benefits": [
+        {"title":"Complete management","text":"Someone actually takes care of your server — not just when it breaks."},
+        {"title":"Real security","text":"Patches applied, hardening done, vulnerabilities fixed before exploitation."},
+        {"title":"Full visibility","text":"You know what's happening on your server before it becomes a problem."},
+        {"title":"Efficient virtualization","text":"Hyper-V properly sized — no wasted resources, no crashes."},
+        {"title":"Preventive maintenance","text":"Scheduled routines that prevent surprises and unplanned downtime."},
+        {"title":"Direct support","text":"A team that knows your environment and resolves issues fast."}
+      ],
+      "faq": [
+        {"question":"Do you manage Windows Server?","answer":"Yes. We handle the entire environment — Active Directory, GPOs, DNS, DHCP, File Server and Hyper-V. Properly, not just when things break."},
+        {"question":"Do you manage Linux servers too?","answer":"Yes. Ubuntu Server, CentOS, Debian — firewalls, network services, containers. If it runs Linux, we manage it."},
+        {"question":"How does monitoring work?","answer":"We monitor CPU, memory, disk and network in real time. If anything goes abnormal, we act before it becomes a problem."}
+      ],
+      "relatedLabels": ["Dell servers","IT Support","Corporate infrastructure"],
+      "localContent": "We manage corporate servers in Jacareí, Paraíba Valley and across Brazil."
+    },
+    "linux": {
+      "title": "Linux Support",
+      "metaTitle": "Corporate Linux Support | Ubuntu, CentOS, Debian | WMTi",
+      "metaDescription": "Specialized Linux server support. Ubuntu Server, CentOS, Debian, iptables firewall, Docker containers and service administration.",
+      "tag": "Linux Support",
+      "headline1": "Your Linux server is running — but ",
+      "headlineHighlight": "nobody knows what's happening",
+      "headline2": " inside it",
+      "description": "It runs. It responds. But nobody checks the logs. Nobody applies patches. Nobody verifies if a process is eating all the memory. WMTi manages your Linux environment with real expertise. No improvisation.",
+      "whatsappMessage": "Hi! I need support for Linux servers.",
+      "painPoints": ["Linux server running without anyone actually managing it","Unstable network services with no clear diagnosis","iptables/nftables configured by trial and error","Months without security updates applied","Docker containers running without proper management"],
+      "solutions": ["Professional administration of Ubuntu Server, CentOS and Debian","Stable network services with documented configuration","Optimized and auditable iptables/nftables firewall rules","Docker containers managed with production best practices","Real hardening and regular security patches"],
+      "benefits": [
+        {"title":"Real Linux expertise","text":"Administration by people who live Linux — not someone googling commands on the spot."},
+        {"title":"Professional firewall","text":"iptables/nftables configured with rules that make sense for your operation."},
+        {"title":"Real hardening","text":"Server actually protected — not just running default configurations."},
+        {"title":"Monitoring","text":"Services and performance monitored to act before failure."},
+        {"title":"Managed Docker","text":"Containers running with orchestration, logging and proper maintenance."},
+        {"title":"Specialized support","text":"A team that solves Linux problems without having to restart everything."}
+      ],
+      "faq": [
+        {"question":"Which distributions do you support?","answer":"Ubuntu Server, CentOS, Debian, Rocky Linux and other enterprise distros. If it runs Linux, we manage it."},
+        {"question":"Do you manage Docker containers?","answer":"Yes. Docker and Docker Compose in production, with monitoring, logging and security best practices."},
+        {"question":"Do you do Windows to Linux migrations?","answer":"Yes. When it makes sense for the environment, we migrate with planning and zero operational impact."}
+      ],
+      "relatedLabels": ["Windows Server Support","Server administration","pfSense Firewall"],
+      "localContent": "Linux server support in Jacareí, Paraíba Valley and across Brazil."
+    },
+    "redesCorp": {
+      "title": "Corporate Network Support",
+      "metaTitle": "Corporate Network Support | WMTi",
+      "metaDescription": "Specialized corporate network support. Diagnosis, maintenance, optimization and monitoring of switches, access points and structured cabling.",
+      "tag": "Corporate Network Support",
+      "headline1": "Your network crashes, drops, and ",
+      "headlineHighlight": "nobody actually fixes it",
+      "headline2": "",
+      "description": "Internet fluctuates. Wi-Fi disappears. Systems lag. And every day someone complains. You've already called someone to 'take a look.' They swapped a cable, rebooted the router, and said it was working. Until it dropped again. The problem isn't the cable. It's that nobody looked at the network as a whole. WMTi diagnoses, fixes and keeps your network running for real.",
+      "whatsappMessage": "Hi! I need technical support for my corporate network.",
+      "painPoints": ["Slow corporate network and nobody can diagnose why","Switches and access points unmanaged — running on autopilot","Disorganized, patched cabling with no certification","Connectivity issues that appear and vanish without explanation"],
+      "solutions": ["Complete network diagnosis — for real, not just 'taking a look'","Managed switches and access points with centralized configuration","Certified, organized and documented structured cabling","Ongoing support for connectivity and performance issues"],
+      "benefits": [
+        {"title":"Real diagnosis","text":"Complete analysis with professional tools — no guessing. Real diagnosis."},
+        {"title":"Managed equipment","text":"Switches and access points configured and monitored, not on autopilot."},
+        {"title":"Stable performance","text":"Network optimized to stop fluctuating and work as it should."},
+        {"title":"Certified cabling","text":"Cat6A installed, tested and certified. No workarounds."},
+        {"title":"Continuous monitoring","text":"Full network visibility — know what's happening before it becomes a problem."},
+        {"title":"Expert support","text":"A team that understands corporate networking and fixes the root cause, not just the symptom."}
+      ],
+      "faq": [
+        {"question":"Do you diagnose network issues?","answer":"Yes. With professional tools, not just 'ping'. We identify bottlenecks, failures and the real root cause."},
+        {"question":"What kind of networks do you support?","answer":"Wired and corporate Wi-Fi with managed switches and professional access points. Residential networking isn't our focus."},
+        {"question":"Do you certify cabling?","answer":"Yes. Cat6A certified with test reports. Cabling that works and is documented."}
+      ],
+      "relatedLabels": ["Network setup","Network monitoring","IT Support"],
+      "localContent": "Corporate network support in Jacareí, Paraíba Valley and across Brazil."
+    },
+    "windows": {
+      "title": "Windows Server Support",
+      "metaTitle": "Windows Server Support | Administration & Maintenance | WMTi",
+      "metaDescription": "Specialized Windows Server support. Active Directory, GPOs, Hyper-V, DNS, DHCP, File Server and preventive maintenance.",
+      "tag": "Windows Server Support",
+      "headline1": "Your Windows Server is running ",
+      "headlineHighlight": "on pure luck",
+      "headline2": "",
+      "description": "Active Directory with issues. GPOs that won't apply. DNS failing. DHCP conflicting. And nobody knows exactly what's configured, why, or when someone last actually looked at it. Your Windows Server works — but on luck. And luck runs out. When it does, everything stops. WMTi takes care of your Windows Server so it runs on competence, not luck.",
+      "whatsappMessage": "Hi! I need support for Windows Server.",
+      "painPoints": ["Unstable Active Directory with unknown configuration","GPOs that won't apply and nobody can figure out why","DNS and DHCP failures affecting the entire network","Hyper-V crashing due to poor sizing","Months without security updates on the server"],
+      "solutions": ["Active Directory and GPOs configured, documented and working","Stable, well-configured DNS, DHCP and File Server","Right-sized and optimized Hyper-V for your workload","Regular security patches and updates","Scheduled preventive maintenance — not just when things break"],
+      "benefits": [
+        {"title":"AD that works","text":"Active Directory, GPOs, users and permissions configured by experts."},
+        {"title":"Secure server","text":"Patches applied, hardening done, server properly protected."},
+        {"title":"Stable Hyper-V","text":"Virtualization sized to run without crashing or wasting resources."},
+        {"title":"Real monitoring","text":"Critical Windows Server services monitored — before failure, not after."},
+        {"title":"Preventive maintenance","text":"Scheduled routines that prevent the 'everything stopped and nobody knows why.'"},
+        {"title":"Certified team","text":"Real Microsoft support — not someone who'll google it on the spot."}
+      ],
+      "faq": [
+        {"question":"Do you manage Active Directory?","answer":"Yes. Complete AD — GPOs, users, groups, permissions and policies. Configured and documented to actually work."},
+        {"question":"Which Windows Server versions do you support?","answer":"2016, 2019 and 2022. Including version migrations with planning and minimal downtime."},
+        {"question":"Do you handle Hyper-V virtualization?","answer":"Yes. VM creation, maintenance and optimization. Sized for your actual workload, not guesswork."}
+      ],
+      "relatedLabels": ["Linux Support","Dell servers","Server administration"],
+      "localContent": "Windows Server support in Jacareí, Paraíba Valley and across Brazil."
+    },
+    "emergencial": {
+      "title": "Emergency Technical Support",
+      "metaTitle": "Emergency Technical Support | Immediate Response | WMTi",
+      "metaDescription": "Emergency technical support for businesses. Immediate response for servers, networks and systems that stopped working. Pay per hour.",
+      "tag": "Emergency Technical Support",
+      "headline1": "Everything stopped. Nobody knows what to do. ",
+      "headlineHighlight": "The losses have already started.",
+      "headline2": "",
+      "description": "Server down. Network crashed. System won't open. Entire team sitting idle. Every minute that passes is money lost — payroll running without production, customers waiting, operations frozen. WMTi handles emergencies with maximum priority — remote or on-site, no runaround.",
+      "whatsappMessage": "Hi! I need emergency technical support for my business.",
+      "painPoints": ["Server crashed and the entire operation is frozen","Network down and nobody can work","Ransomware attack or virus compromising systems","Critical failure and your company has no IT team"],
+      "solutions": ["Immediate emergency response — remote and on-site","Instant Windows Server and Linux server restoration","Network and corporate connectivity recovery","Rapid response to security incidents and ransomware"],
+      "benefits": [
+        {"title":"Immediate response","text":"When everything stops, we spring into action. Maximum priority for critical situations."},
+        {"title":"Pay per hour","text":"No mandatory monthly contract. Use when you need it, pay for what you use."},
+        {"title":"Servers","text":"Urgent restoration of Windows Server and Linux servers that went down."},
+        {"title":"Security","text":"Ransomware, virus and security incident response with rapid containment."},
+        {"title":"Infrastructure","text":"Network, switch, firewall and connectivity restoration."},
+        {"title":"Team ready","text":"Dell and Microsoft certified technicians ready to resolve immediately."}
+      ],
+      "faq": [
+        {"question":"How does emergency support work?","answer":"You call, we start. Immediate remote diagnosis. If on-site is needed, we dispatch a technician. No bureaucracy."},
+        {"question":"Do I need a monthly contract?","answer":"No. Emergency support is on-demand. You pay per technical hour and use it when needed."},
+        {"question":"What's the response time?","answer":"Remote: immediate. On-site: up to 4 hours in the Jacareí region. Because when things stop, every minute counts."}
+      ],
+      "relatedLabels": ["Monthly IT support","Dell servers","Corporate infrastructure"],
+      "localContent": "Emergency support in Jacareí, Paraíba Valley and across the state of São Paulo."
+    },
+    "redes": {
+      "title": "Network Setup and Monitoring in Jacareí",
+      "metaTitle": "Network Setup and Monitoring in Jacareí — Your business is losing productivity | WMTi",
+      "metaDescription": "Network setup and monitoring in Jacareí. Proper infrastructure, smart traffic distribution, real stability and constant monitoring.",
+      "tag": "Corporate Networks",
+      "headline1": "Your business is losing productivity with a ",
+      "headlineHighlight": "poorly structured network",
+      "headline2": "",
+      "description": "Slow internet isn't normal. Network dropping isn't normal. System delays aren't normal. But many businesses have gotten used to it. And that's the problem. A properly structured network doesn't fluctuate constantly.",
+      "whatsappMessage": "Hi! I'd like a quote for network setup at my business.",
+      "painPoints": ["Slow internet that everyone has accepted as normal","Network dropping with no one knowing the real cause","Employees waiting, systems lagging, operations slow","Connectivity issues absorbed as daily routine","No monitoring — problems only discovered when everything stops"],
+      "solutions": ["Proper structure from the ground up — network designed to actually work","Smart traffic distribution to eliminate bottlenecks","Real stability — no fluctuations, no constant drops","Constant monitoring to identify and resolve before downtime","Unstable environment becomes reliable — when the network works, everything flows"],
+      "benefits": [
+        {"title":"Proper structure","text":"WMTi organizes your network from the ground up. Certified cabling, correct design, reliable results."},
+        {"title":"Smart distribution","text":"Traffic distributed intelligently so no point on the network becomes a bottleneck."},
+        {"title":"Real stability","text":"Network that doesn't fluctuate constantly. Unstable becomes reliable."},
+        {"title":"Constant monitoring","text":"24/7 monitoring to identify problems before they impact operations."},
+        {"title":"Managed switches","text":"Corporate equipment with QoS, segmentation and centralized management."},
+        {"title":"Preventive maintenance","text":"Periodic network infrastructure reviews with technical reports."}
+      ],
+      "faq": [
+        {"question":"How much does it cost to set up a corporate network?","answer":"Depends on the number of points, distances and complexity. For 10-20 point offices, projects start around $1,000 including cabling, patch panel, switch and rack organization."},
+        {"question":"What's the difference between Cat5e and Cat6A?","answer":"Cat6A supports speeds up to 10Gbps at distances up to 100m, while Cat5e is limited to 1Gbps. For new infrastructure, we always recommend Cat6A."},
+        {"question":"Do you maintain existing networks?","answer":"Yes. We diagnose, reorganize cabling, replace equipment, certify connections and optimize installed networks."},
+        {"question":"Is monitoring really 24/7?","answer":"Yes. Our NOC continuously monitors the network. We receive automatic alerts for any anomaly and act proactively."}
+      ],
+      "relatedLabels": ["pfSense Firewall","Dell servers","IT Support"],
+      "localContent": "We deliver network projects for businesses, clinics, offices, industries and notary offices in Jacareí, São José dos Campos, Taubaté and the entire Paraíba Valley."
+    },
+    "monRede": {
+      "title": "Corporate Network Monitoring",
+      "metaTitle": "24/7 Corporate Network Monitoring — You don't know what's happening on your network right now | WMTi",
+      "metaDescription": "24/7 corporate network monitoring in Jacareí. Real-time alerts, traffic analysis, failure detection and proactive support.",
+      "tag": "Network Monitoring",
+      "headline1": "You don't know what's happening ",
+      "headlineHighlight": "on your network right now",
+      "headline2": " — and it's going to cost you",
+      "description": "How many devices are connected? Which link is overloaded? Is someone accessing what they shouldn't? Is equipment about to fail? If you can't answer, you're operating blind. WMTi monitors your network 24/7 and acts before the problem happens.",
+      "whatsappMessage": "Hi! I need corporate network monitoring.",
+      "painPoints": ["Slow network with no one able to identify the cause — invisible daily losses","Connectivity failures that appear without warning and halt the entire operation","No visibility into who uses what — vulnerabilities accumulating","Network equipment running on autopilot for months","Problems discovered only when everyone is already down and complaining"],
+      "solutions": ["24/7 monitoring of switches, access points and routers — before failure, not after","Real-time traffic analysis and bandwidth usage by device","Automatic alerts for failures and performance degradation — immediate action","Centralized management of all network equipment","Moving from darkness to full visibility"],
+      "benefits": [
+        {"title":"24/7 monitoring","text":"Your entire network monitored in real time — not just when someone complains."},
+        {"title":"Full visibility","text":"Know exactly what's consuming bandwidth and where the bottleneck is."},
+        {"title":"Pre-failure alerts","text":"Automatic notifications when something goes abnormal — before everything stops."},
+        {"title":"Real-time dashboards","text":"Visual panels showing network health at any time."},
+        {"title":"Network security","text":"Detection of unauthorized devices connected to your network."},
+        {"title":"Proactive support","text":"A team that acts when the alert fires — not when you call complaining."}
+      ],
+      "faq": [
+        {"question":"What is monitored on the network?","answer":"Everything: switches, access points, routers, internet links, traffic and service availability."},
+        {"question":"Do you detect problems before they cause downtime?","answer":"Yes. Monitoring identifies trends and anomalies that indicate future failures."},
+        {"question":"Does it work with any equipment?","answer":"Yes. We monitor any manufacturer's equipment that supports SNMP or standard network protocols."},
+        {"question":"What's the difference between monitoring and not monitoring?","answer":"Without monitoring, you discover the problem when everyone stops working. With monitoring, we resolve it before anyone notices."}
+      ],
+      "relatedLabels": ["Network setup","Network security","IT Support"],
+      "localContent": "We monitor corporate networks in Jacareí, São José dos Campos, Taubaté and the entire Paraíba Valley."
+    },
+    "monServidores": {
+      "title": "Corporate Server Monitoring",
+      "metaTitle": "24/7 Server Monitoring — Your server could stop at any moment | WMTi",
+      "metaDescription": "24/7 corporate server monitoring in Jacareí. Real-time alerts, performance dashboards, failure prevention.",
+      "tag": "Server Monitoring",
+      "headline1": "Your server could stop at any moment — and ",
+      "headlineHighlight": "you'll only know when it's too late",
+      "headline2": "",
+      "description": "Full disk. Exhausted memory. A stuck process consuming everything. High temperature. And nobody saw it. Nobody alerted. Nobody acted. Until the server stopped. WMTi monitors your servers 24/7 and acts at the first sign of trouble.",
+      "whatsappMessage": "Hi! I need corporate server monitoring.",
+      "painPoints": ["Failures discovered only when the server is already down — immediate losses","No real-time visibility into CPU, memory and disk — operating blind","Disks filling up without warning until total shutdown","No alerts configured for critical situations","Hidden cost of outages that could have been prevented"],
+      "solutions": ["24/7 monitoring of CPU, memory, disk and network for each server","Real-time alerts when indicators reach critical levels","Performance dashboards for complete visibility","Preventive actions based on trends","Moving from reactive to preventive mode"],
+      "benefits": [
+        {"title":"24/7 monitoring","text":"Your servers monitored around the clock — not just during business hours."},
+        {"title":"Immediate alerts","text":"Critical indicator? Alert right away. Action before it becomes downtime."},
+        {"title":"Full visibility","text":"Dashboards showing the health of each server in real time."},
+        {"title":"Failure prevention","text":"Trends identified before they become real problems."},
+        {"title":"Security","text":"Detection of anomalous activities and unauthorized access attempts."},
+        {"title":"Proactive action","text":"A team that acts when the alert fires — not when you call desperate."}
+      ],
+      "faq": [
+        {"question":"What is monitored on servers?","answer":"CPU, RAM, disk, network, critical services and logs."},
+        {"question":"Are alerts in real time?","answer":"Yes. Critical indicators trigger alerts immediately. The team acts right away."},
+        {"question":"Does it work for cloud servers?","answer":"Yes. Physical, virtual, on-premises and cloud."},
+        {"question":"What's the difference between having or not having monitoring?","answer":"Without monitoring, you discover the problem when everyone stops. With monitoring, we resolve it before anyone notices."}
+      ],
+      "relatedLabels": ["Server administration","Dell servers","IT Support"],
+      "localContent": "We monitor servers for businesses in Jacareí, São José dos Campos, Taubaté and the entire Paraíba Valley."
+    },
+    "segRede": {
+      "title": "Corporate Network Security",
+      "metaTitle": "Corporate Network Security — Your network is exposed and you may not even know | WMTi",
+      "metaDescription": "Corporate network security in Jacareí. pfSense firewall, IDS/IPS, VLANs, VPN and security policies.",
+      "tag": "Network Security",
+      "headline1": "Your corporate network is exposed — and ",
+      "headlineHighlight": "you may not even know it",
+      "headline2": "",
+      "description": "No configured firewall. No segmentation. No control over who accesses what. No VPN for remote access. WMTi protects your network so that day never comes.",
+      "whatsappMessage": "Hi! I need network security solutions for my business.",
+      "painPoints": ["Network with no real firewall — just the ISP router pretending to protect","Everyone on the same network with no department separation","Remote access without VPN — anyone can try to get in","Vulnerable to ransomware, phishing and insider threats","No visibility into what's happening"],
+      "solutions": ["pfSense firewall with IDS/IPS to block threats in real time","Network segmentation with VLANs — departments isolated","Secure VPN for encrypted remote access","Security policies and access control by user profile","Moving from an exposed environment to a controlled, protected network"],
+      "benefits": [
+        {"title":"Real firewall","text":"pfSense with custom rules and Suricata IDS/IPS — real protection."},
+        {"title":"Secure VPN","text":"Encrypted remote access for those who need it, blocked for those who don't."},
+        {"title":"Intrusion detection","text":"IDS/IPS identifying and blocking intrusion attempts in real time."},
+        {"title":"Segmented network","text":"VLANs separating departments — one issue in one area doesn't take down the whole company."},
+        {"title":"Logs and auditing","text":"Continuous log monitoring to know exactly what's happening on the network."},
+        {"title":"Security team","text":"Professionals who understand information security, not just cables and switches."}
+      ],
+      "faq": [
+        {"question":"Which firewall do you use?","answer":"pfSense with Suricata IDS/IPS. Robust and reliable solution."},
+        {"question":"Do you do network segmentation?","answer":"Yes. VLANs to separate departments, guests and IoT devices."},
+        {"question":"How does the VPN work?","answer":"OpenVPN or WireGuard — encrypted, authenticated and controlled remote access."},
+        {"question":"My company is small, do I need network security?","answer":"Yes. Small businesses are the preferred targets of attacks because they typically lack protection."}
+      ],
+      "relatedLabels": ["pfSense Firewall","Network setup","Corporate infrastructure"],
+      "localContent": "We implement network security for businesses in Jacareí, São José dos Campos, Taubaté and the entire Paraíba Valley."
+    },
+    "manutencao": {
+      "title": "IT Infrastructure Maintenance",
+      "metaTitle": "IT Infrastructure Maintenance — Problems are piling up | WMTi",
+      "metaDescription": "Preventive and corrective IT infrastructure maintenance in Jacareí. Servers, networks, firewalls and corporate equipment.",
+      "tag": "Infrastructure Maintenance",
+      "headline1": "Your IT infrastructure is aging without care — and ",
+      "headlineHighlight": "problems are piling up",
+      "headline2": "",
+      "description": "Equipment without updates. Outdated firmware. Logs nobody checks. Performance slowly degrading. And you keep getting used to it. WMTi keeps your infrastructure running before it decides to stop.",
+      "whatsappMessage": "Hi! I need IT infrastructure maintenance for my business.",
+      "painPoints": ["Equipment without preventive maintenance for months","Recurring failures nobody fixes at the root cause","Servers with gradually declining performance","Network with frequent issues being 'absorbed'","Hidden cost of neglect: outages, emergencies and forced replacements"],
+      "solutions": ["Scheduled preventive maintenance — with routines, checklists and documented results","Firmware and software updates before they become vulnerabilities","Periodic server and network performance optimization","Equipment replacement planning before they break","Moving from reactive to preventive mode"],
+      "benefits": [
+        {"title":"Real preventive care","text":"Scheduled maintenance with actual routines — not just when things break."},
+        {"title":"Maintained servers","text":"Dell PowerEdge, Windows Server, Linux — maintained by experts."},
+        {"title":"Always updated","text":"Security patches and firmware applied before they become risks."},
+        {"title":"Performance maintained","text":"Servers and network performing like day one — every month."},
+        {"title":"Longer equipment life","text":"Switches, firewalls, access points and storage with extended useful life."},
+        {"title":"Technical team","text":"Certified professionals who know your infrastructure."}
+      ],
+      "faq": [
+        {"question":"What does preventive maintenance include?","answer":"Hardware checks, log cleanup, firmware updates, performance analysis and backup testing."},
+        {"question":"How often is it performed?","answer":"Monthly for corporate environments. Waiting for problems is the most expensive way to maintain IT."},
+        {"question":"Do you handle emergencies?","answer":"Yes. Beyond preventive care, we have emergency support. But the goal is that you never need it."},
+        {"question":"How much does NOT doing maintenance cost?","answer":"Much more than doing it. A server outage can cost thousands in lost hours."}
+      ],
+      "relatedLabels": ["IT Support","Server monitoring","Corporate infrastructure"],
+      "localContent": "IT infrastructure maintenance in Jacareí, São José dos Campos, Taubaté and the entire Paraíba Valley."
+    },
+    "m365": {
+      "title": "Microsoft 365 for Business in Jacareí",
+      "metaTitle": "Microsoft 365 for Business in Jacareí — Still using free email? It's costing you | WMTi",
+      "metaDescription": "Microsoft 365 migration and management for businesses in Jacareí. Exchange Online, Teams, SharePoint, Azure AD.",
+      "tag": "Microsoft 365 & Azure",
+      "headline1": "Your business still relies on free email or a self-hosted server — and ",
+      "headlineHighlight": "it's costing you dearly",
+      "headline2": "",
+      "description": "Email that goes down. Full inbox. Spam flooding in. Collaboration via WhatsApp. Files saved on someone's PC. An email server nobody knows how to maintain. Microsoft 365 solves all of this at once. And WMTi handles the complete migration — hassle-free.",
+      "whatsappMessage": "Hi! I'd like to learn more about Microsoft 365 for my business.",
+      "painPoints": ["Unstable corporate email hosted on a home server","Teams without real-time collaboration tools","Important data saved on someone's PC with no backup","Irregular licenses exposing the company to legal risks","No access control or user permission management"],
+      "solutions": ["Complete migration to Exchange Online with custom domain","Microsoft Teams for real communication and collaboration","SharePoint and OneDrive for secure, centralized storage","Azure AD with multi-factor authentication","Official Microsoft 365 licensing with ongoing WMTi management"],
+      "benefits": [
+        {"title":"Microsoft Cloud","text":"Secure data in Azure cloud with 99.9% uptime."},
+        {"title":"Professional email","text":"Exchange Online with custom domain, anti-spam and calendar."},
+        {"title":"Real collaboration","text":"Teams, SharePoint and OneDrive integrated."},
+        {"title":"Security","text":"Azure AD with MFA and conditional access."},
+        {"title":"1TB per user","text":"1TB storage with versioning and recovery."},
+        {"title":"Centralized management","text":"Dashboard to manage all users and licenses in one place."}
+      ],
+      "faq": [
+        {"question":"How much does Microsoft 365 cost per user?","answer":"Business Basic starts at $6/month per user. Business Standard with desktop apps, $12.50/month."},
+        {"question":"How is email migration done?","answer":"Zero downtime. We transfer everything — emails, contacts, calendars — from the old server to Exchange Online."},
+        {"question":"Do I need a local server with Microsoft 365?","answer":"In most cases, no. For hybrid environments with local Active Directory, we configure Azure AD Connect."},
+        {"question":"Do you provide post-deployment support?","answer":"Yes. Ongoing license management, user creation, security policies and technical support."}
+      ],
+      "relatedLabels": ["Dell servers","IT Support","Corporate infrastructure"],
+      "localContent": "We deploy Microsoft 365 for businesses in Jacareí, São José dos Campos, Taubaté and the entire Paraíba Valley."
+    },
+    "infraCorp": {
+      "title": "Corporate IT Infrastructure",
+      "metaTitle": "Corporate IT Infrastructure in Jacareí and São José dos Campos | WMTi",
+      "metaDescription": "Complete corporate IT infrastructure projects in Jacareí and Paraíba Valley. Servers, networks, security, backup, cloud and 24/7 monitoring.",
+      "tag": "Corporate Infrastructure",
+      "headline1": "Your business grew, but ",
+      "headlineHighlight": "IT got left behind",
+      "headline2": "",
+      "description": "More people, more computers, more systems, more demand. But the same network from when you had half the employees. WMTi designs and implements the infrastructure your business needs to operate — and grow — without crashing.",
+      "whatsappMessage": "Hi! I'd like a complete IT infrastructure project for my business.",
+      "painPoints": ["IT assembled piecemeal with no design or standards","Multiple vendors that don't communicate with each other","No documentation — nobody knows what's configured","Infrastructure that can't keep up with business pace","Security issues from lack of unified policy"],
+      "solutions": ["Integrated project: server + network + security + backup + cloud","Single vendor for all IT — less complexity, more results","Complete documentation: network topology, inventory, BCP and DRP","Scalable architecture that grows with your business","Unified 24/7 monitoring of all infrastructure"],
+      "benefits": [
+        {"title":"Dell servers","text":"Enterprise PowerEdge with RAID, redundancy and virtualization."},
+        {"title":"Professional network","text":"Cat6A cabling, Dell managed switches and VLANs."},
+        {"title":"Integrated security","text":"pfSense, VPN, IDS/IPS, managed antivirus."},
+        {"title":"Microsoft Cloud","text":"Microsoft 365, Azure AD, Exchange Online and cloud backup."},
+        {"title":"3-2-1 Backup","text":"Veeam + local storage + cloud with restore testing."},
+        {"title":"24/7 NOC","text":"Continuous monitoring with alerts and SLA."}
+      ],
+      "faq": [
+        {"question":"Does WMTi do the complete IT project?","answer":"Yes. From assessment to continuous monitoring."},
+        {"question":"How long does it take to set up complete infrastructure?","answer":"2-4 weeks for 10-50 workstations. Larger projects 4-8 weeks."},
+        {"question":"Do you serve industrial facilities?","answer":"Yes. Industries, offices, clinics, notary offices — any business that needs IT that actually works."},
+        {"question":"Can I contract just part of the services?","answer":"Yes. Each service works independently. But integrated projects deliver more results for less investment."}
+      ],
+      "relatedLabels": ["Dell servers","Network setup","pfSense Firewall","Microsoft 365","IT Support"],
+      "localContent": "WMTi is the reference in corporate IT infrastructure in Jacareí, São José dos Campos, Taubaté and Paraíba Valley."
+    },
+    "dell": {
+      "title": "Dell PowerEdge Server in Jacareí",
+      "metaTitle": "Dell PowerEdge Server in Jacareí — Your business is running at the limit | WMTi",
+      "metaDescription": "Dell PowerEdge servers in Jacareí. Professional servers, proper configuration, data security and stable performance.",
+      "tag": "Dell PowerEdge",
+      "headline1": "Your business is running at the ",
+      "headlineHighlight": "limit",
+      "headline2": " and it's about to become a problem",
+      "description": "A slow system isn't just annoying — it's a symptom. When your business starts to freeze, lag, crash or become unstable, it's not random. Your infrastructure can't keep up with growth. And that's dangerous. Most businesses operate at their infrastructure limit. Until the day it can't take any more.",
+      "whatsappMessage": "Hi! I'd like a quote for Dell PowerEdge servers for my business.",
+      "painPoints": ["Slow systems — symptom of infrastructure not keeping up with growth","Constant crashes and instability in operations","Risk of total shutdown: files, systems and service inaccessible","Business operating at infrastructure limit without knowing","Immediate losses when the infrastructure finally gives out"],
+      "solutions": ["Professional servers sized for business growth","Correct configuration from the start — no improvisation","Data security with redundancy and real protection","Stable performance so operations run without surprises","Moving from an unstable environment to infrastructure built to grow"],
+      "benefits": [
+        {"title":"Professional servers","text":"Servers designed for continuous 24/7 operation."},
+        {"title":"Data security","text":"Full redundancy with RAID, redundant power supplies and clustering."},
+        {"title":"Stable performance","text":"Performance sized for the future."},
+        {"title":"Correct configuration","text":"Unstable environment becomes infrastructure built to grow."},
+        {"title":"Continuous monitoring","text":"24/7 NOC with automatic alerts and immediate response."},
+        {"title":"Specialized support","text":"Dell-certified team with on-site and remote service."}
+      ],
+      "faq": [
+        {"question":"Which Dell server is right for my business?","answer":"Depends on data volume, number of users and applications. We do a free assessment to recommend the ideal model."},
+        {"question":"How much does a Dell PowerEdge server cost?","answer":"Investment varies by configuration. We offer servers starting at $3,000 including installation and setup."},
+        {"question":"Do you handle full installation and setup?","answer":"Yes. We handle the entire project: sizing, procurement, physical installation, OS configuration, RAID, network, backup and monitoring."},
+        {"question":"Do you serve businesses in São José dos Campos?","answer":"Yes. We serve businesses in Jacareí, São José dos Campos, Taubaté and the entire Paraíba Valley."}
+      ],
+      "relatedLabels": ["Microsoft 365","pfSense Firewall","Corporate infrastructure","IT Support"],
+      "localContent": "WMTi serves businesses of all sizes in Jacareí, São José dos Campos, Taubaté and the Paraíba Valley region."
+    },
+    "autoIA": {
+      "title": "IT Automation with Artificial Intelligence",
+      "metaTitle": "IT Automation with AI in Jacareí | WMTi",
+      "metaDescription": "IT automation with AI for businesses in Jacareí. Eliminate manual tasks, reduce rework and gain operational speed with intelligent workflows.",
+      "tag": "IT Automation with AI",
+      "headline1": "Your business is stuck because everything still depends on someone. ",
+      "headlineHighlight": "That costs you every single day.",
+      "headline2": "",
+      "description": "Answering customers, building quotes, organizing information, tracking processes, following up, updating spreadsheets. If all of this still depends on your team, your business is slower than it should be. WMTi implements IT automation with artificial intelligence to transform manual processes into automatic, intelligent workflows.",
+      "whatsappMessage": "I want to automate my business with artificial intelligence",
+      "painPoints": ["Entire team stuck on repetitive tasks that don't generate revenue","Customers waiting for responses because nobody saw the request yet","Quotes and proposals built manually, one by one, with risk of errors","Processes that stop when an employee is absent or leaves","Information scattered across spreadsheets, emails and WhatsApp","Daily rework because nobody knows what's been done or answered"],
+      "solutions": ["AI-powered initial customer service and lead qualification","Automatic generation of quotes, proposals and intelligent responses","Integration between website, WhatsApp, forms and internal systems","Automated follow-up, billing and notification workflows","Elimination of repetitive manual steps","Real-time dashboards and control"],
+      "benefits": [
+        {"title":"Automatic responses","text":"Answer customers in seconds, 24/7."},
+        {"title":"Operational speed","text":"Processes that took hours now run in minutes."},
+        {"title":"End of rework","text":"Intelligent workflows eliminate duplicate tasks and manual errors."},
+        {"title":"Scale without hiring","text":"Gain operational capacity without growing your team."},
+        {"title":"Total integration","text":"Website, WhatsApp, forms, CRM and internal systems connected."},
+        {"title":"More conversions","text":"Faster response means more sales. Automation turns speed into revenue."}
+      ],
+      "faq": [
+        {"question":"What exactly do you automate?","answer":"Initial customer service, lead qualification, proposal sending, quote generation, internal notifications and multi-channel integration."},
+        {"question":"Do I need to replace my current systems?","answer":"No. Automation integrates with the systems you already use."},
+        {"question":"How long does implementation take?","answer":"Simple automations are ready in days. Complex workflows take weeks. Everything starts with a free assessment."},
+        {"question":"Does this replace my team?","answer":"No. It frees your team from repetitive tasks so they can focus on what truly matters."},
+        {"question":"What if I don't know what to automate?","answer":"That's why we start with an assessment. We map your operation and identify the bottlenecks."}
+      ],
+      "relatedLabels": ["IT Support","Corporate Infrastructure","IT Outsourcing","Web Development","Network Monitoring"],
+      "localContent": "Service in Jacareí, São José dos Campos, Taubaté and the entire Paraíba Valley."
+    },
+    "autoAlexa": {
+      "title": "Alexa Automation for Smart Home & Smart Business",
+      "metaTitle": "Alexa Automation for Smart Home & Business in Jacareí | WMTi",
+      "metaDescription": "Alexa automation projects for homes and businesses in Jacareí. Lighting, cameras, smart locks, climate control and intelligent routines with professional infrastructure.",
+      "tag": "Alexa Automation",
+      "headline1": "Alexa Automation for Smart Home and Smart Business — ",
+      "headlineHighlight": "Stop wasting money on smart devices that don't work right",
+      "headline2": "",
+      "description": "You buy smart bulbs, cameras, smart plugs, Alexa, automated gates, Wi-Fi air conditioners, smart locks… and it ends up a mess. A different app for each thing. Commands that fail. Bad internet dropping everything. WMTi delivers real automation — integrated, stable and professional.",
+      "whatsappMessage": "I want to automate my home or business with Alexa",
+      "painPoints": ["Multiple smart devices that don't communicate with each other","Alexa that doesn't recognize devices or takes too long to respond","Weak Wi-Fi that drops automations mid-routine","A different app for each device — total chaos","Routines that never work at the right time","Family or employees frustrated with failing commands","Expensive equipment underutilized because nobody configured it properly","High tech investment that becomes shelf decoration"],
+      "solutions": ["Technical analysis of the location and complete connectivity audit","Custom residential or commercial automation planning","Professional installation and configuration of all devices","Creation of integrated intelligent routines","Integration between Alexa, cameras, locks, sensors and gates","Stable Wi-Fi network infrastructure to support all devices","Complete functionality testing before delivery","Ongoing post-implementation technical support"],
+      "benefits": [
+        {"title":"Real Smart Home","text":"Lighting, climate, TV, cameras, locks and gates controlled by voice or automatic routines — truly integrated."},
+        {"title":"Smart Business","text":"Automate opening, closing, climate control, reception and meeting rooms."},
+        {"title":"Truly Stable Network","text":"Without strong Wi-Fi, no automation works. We deliver the network infrastructure."},
+        {"title":"Integrated Security","text":"Cameras, presence sensors, smart locks and automatic alerts."},
+        {"title":"Time Savings","text":"Automatic routines eliminate repetitive tasks."},
+        {"title":"Real Productivity","text":"Environments that automatically prepare for meetings or relaxation."}
+      ],
+      "faq": [
+        {"question":"How does Alexa automation work?","answer":"We analyze the environment, verify the network, select compatible devices and configure everything to work integrated."},
+        {"question":"Which devices can be integrated?","answer":"Smart bulbs, smart plugs, security cameras, smart locks, presence sensors, air conditioners, TVs, automated gates, motorized curtains and much more."},
+        {"question":"Does Alexa work in businesses?","answer":"Yes. We automate lighting, climate control, opening/closing routines, reception areas and meeting rooms."},
+        {"question":"Do I need to upgrade my Wi-Fi first?","answer":"In most cases, yes. We include connectivity auditing in the project."},
+        {"question":"Is it worth automating a home or office?","answer":"Absolutely. Well-implemented automation reduces energy consumption, increases security and eliminates repetitive tasks."},
+        {"question":"What if my devices are from different brands?","answer":"WMTi works with multi-brand integration. We configure devices from different manufacturers to work together in the same Alexa ecosystem."}
+      ],
+      "relatedLabels": ["Network Infrastructure","Network Security","Technical Support","IT Automation with AI","Network Monitoring"],
+      "localContent": "WMTi serves Jacareí, São José dos Campos, Taubaté, Caçapava, Pindamonhangaba and the entire Paraíba Valley region."
+    },
+    "tiCartorios": {
+      "title": "IT for Notary Offices — CNJ Provision 213",
+      "metaTitle": "IT for Notary Offices | CNJ Provision 213 Compliance | WMTi",
+      "metaDescription": "IT infrastructure for notary offices in compliance with CNJ Provision 213.",
+      "tag": "IT for Notary Offices",
+      "headline1": "Your notary office may be out of compliance — and ",
+      "headlineHighlight": "the deadline is running",
+      "headline2": "",
+      "description": "Provision 213 isn't a suggestion. It's mandatory. And the deadlines are already ticking. WMTi specializes in IT for notary offices. We assess, implement everything and guarantee full compliance.",
+      "whatsappMessage": "Hi! I'd like a quote for adapting my notary office to CNJ Provision 213.",
+      "painPoints": ["Notary office out of compliance with CNJ requirements","Manual or nonexistent backup — risk of total archive loss","No firewall protecting clients' confidential data","No business continuity plan (BCP) or disaster recovery plan (DRP)","Legacy server without redundancy threatening availability"],
+      "solutions": ["Complete compliance assessment for Provision 213","Dell PowerEdge servers with redundant RAID and hot-swap power supplies","Automated 3-2-1 backup: Veeam + Dell PowerVault + Azure Cloud","pfSense firewall with Suricata IDS/IPS","Development of BCP, DRP and Information Security Policy"],
+      "benefits": [
+        {"title":"100% compliant","text":"All Provision 213 requirements met — Classes 1, 2 and 3."},
+        {"title":"Dell PowerEdge","text":"Enterprise servers with RAID and redundancy."},
+        {"title":"3-2-1 Backup","text":"Veeam + local storage + Azure cloud with defined RPO and RTO."},
+        {"title":"pfSense + Suricata","text":"Stateful firewall with IDS/IPS and VPN."},
+        {"title":"AES-256 encryption","text":"Data protected in transit and at rest."},
+        {"title":"24/7 NOC","text":"Continuous monitoring with automatic alerts."}
+      ],
+      "faq": [
+        {"question":"What is CNJ Provision 213?","answer":"It replaces Provision 74/2018 and defines mandatory ICT requirements for all extrajudicial registries in Brazil."},
+        {"question":"How do I know which class my office falls into?","answer":"Class 1: up to R$100k in semi-annual revenue. Class 2: R$100k-R$500k. Class 3: above R$500k. We do a free assessment."},
+        {"question":"Do you serve offices outside Jacareí?","answer":"Yes. We serve offices across Brazil."},
+        {"question":"How much does it cost to bring my office into compliance?","answer":"Depends on the class and current infrastructure. We offer customized projects with installment plans."}
+      ],
+      "relatedLabels": ["Full Provision 213","Dell servers","pfSense Firewall","Corporate infrastructure"],
+      "localContent": "We are the reference in IT for notary offices in the Paraíba Valley, serving registries in Jacareí, São José dos Campos, Taubaté and the region."
+    },
+    "tiContab": {
+      "title": "IT Infrastructure for Accounting Firms",
+      "metaTitle": "IT Infrastructure for Accounting Firms | Fiscal Security | WMTi",
+      "metaDescription": "IT solutions for accounting firms. Secure servers, automated fiscal backup, accounting system integration.",
+      "tag": "IT for Accounting Firms",
+      "headline1": "Your accounting firm relies on systems that ",
+      "headlineHighlight": "could fail at any moment",
+      "headline2": "",
+      "description": "Tax filing season. System crashing. Slow server. Missing files. Backup nobody's sure is working. WMTi structures your firm's IT so the system is never the bottleneck.",
+      "whatsappMessage": "Hi! I'd like an IT infrastructure analysis for my accounting firm.",
+      "painPoints": ["Tax data loss due to unreliable backup","Accounting system crashing during closing periods","Client financial data without adequate protection","Legacy server without preventive maintenance","Slow network compromising team productivity","No firewall protecting sensitive information"],
+      "solutions": ["Automated fiscal backup with local and cloud replication","Servers sized to handle closing periods without crashing","Encryption and access control for financial data","Corporate firewall with security policies","Continuous monitoring to prevent failures during critical periods","Scheduled preventive maintenance"],
+      "benefits": [
+        {"title":"Secure fiscal backup","text":"Automated fiscal data backup with secure replication."},
+        {"title":"Server that handles it","text":"Windows Server sized for heavy accounting systems."},
+        {"title":"Protected data","text":"Encryption and access control."},
+        {"title":"Corporate firewall","text":"Network protection with professional firewall."},
+        {"title":"Continuous monitoring","text":"Servers and network monitored for stability."},
+        {"title":"Support that understands","text":"Team that knows the accounting firm routine."}
+      ],
+      "faq": [
+        {"question":"Does WMTi serve accounting firms?","answer":"Yes. We understand the tax filing routine and data criticality."},
+        {"question":"How does fiscal backup work?","answer":"Automated, with local and cloud replication. Periodically tested."},
+        {"question":"Do you guarantee performance during closing periods?","answer":"Yes. We size servers and network for peak loads."},
+        {"question":"Do you serve outside the Jacareí region?","answer":"Yes. All of São Paulo state and projects across Brazil."}
+      ],
+      "relatedLabels": ["Corporate infrastructure","Dell servers","Microsoft 365","IT Support"],
+      "localContent": "Request an IT infrastructure analysis for your firm. We serve Jacareí, Paraíba Valley and all of São Paulo state."
+    },
+    "tiAdvocacia": {
+      "title": "IT Infrastructure for Law Firms",
+      "metaTitle": "IT Infrastructure for Law Firms | Security & Confidentiality | WMTi",
+      "metaDescription": "IT infrastructure solutions for law firms. Secure servers, VPN, encrypted backup, corporate firewall.",
+      "tag": "IT for Law Firms",
+      "headline1": "Your clients' confidential data ",
+      "headlineHighlight": "is at risk",
+      "headline2": " — and you may not even know it",
+      "description": "Case files saved on someone's computer. Remote access without encryption. No control over who sees what. WMTi protects your firm's data with infrastructure that takes confidentiality seriously.",
+      "whatsappMessage": "Hi! I'd like an IT infrastructure analysis for my law firm.",
+      "painPoints": ["Confidential client data without adequate protection","Remote access to cases without secure VPN","Legal documents without encrypted backup","Slow or incompatible legal systems","No firewall protecting the firm's network","Staff without profile-based access control"],
+      "solutions": ["Servers with encryption and profile-based access control","Secure VPN to access cases from anywhere","Encrypted backup with local and cloud replication","Corporate firewall with advanced security policies","Continuous monitoring for unauthorized access attempts","Preventive maintenance so systems never crash at the wrong time"],
+      "benefits": [
+        {"title":"Real confidentiality","text":"Encryption and granular access control."},
+        {"title":"Secure VPN","text":"Encrypted remote access to cases and documents."},
+        {"title":"Encrypted backup","text":"AES-256 with cloud replication."},
+        {"title":"Professional server","text":"Windows Server configured for legal systems."},
+        {"title":"Monitoring","text":"Servers and network monitored."},
+        {"title":"Dedicated support","text":"Team that understands the legal firm routine."}
+      ],
+      "faq": [
+        {"question":"Does WMTi serve law firms?","answer":"Yes. We understand the criticality of professional secrecy."},
+        {"question":"How does VPN for remote access work?","answer":"Encrypted corporate VPN for accessing cases and documents from anywhere."},
+        {"question":"Do you backup legal data?","answer":"Yes. Encrypted, automated backup with cloud replication and periodic testing."},
+        {"question":"Do you serve outside the Jacareí region?","answer":"Yes. All of São Paulo and projects across Brazil."}
+      ],
+      "relatedLabels": ["Corporate infrastructure","pfSense Firewall","Microsoft 365","IT Support"],
+      "localContent": "Request an IT infrastructure analysis for your firm. We serve Jacareí, Paraíba Valley and all of São Paulo state."
+    },
+    "tiCorp": {
+      "title": "IT Infrastructure for Corporate Businesses",
+      "metaTitle": "IT Infrastructure for Corporate Businesses | Servers & Networks | WMTi",
+      "metaDescription": "Complete IT infrastructure solutions for corporate businesses.",
+      "tag": "IT for Corporate Businesses",
+      "headline1": "Your company's IT is holding back growth — and ",
+      "headlineHighlight": "the problem isn't lack of people",
+      "headline2": "",
+      "description": "More employees. More demand. More systems. And the same IT from two years ago. WMTi builds the IT your business needs to grow without crashing.",
+      "whatsappMessage": "Hi! I'd like an IT infrastructure analysis for my company.",
+      "painPoints": ["Unstable servers compromising daily operations","Slow corporate network with no segmentation","Backup that nobody knows if it works","No firewall — exposed network","Zero monitoring — problems discovered by end users","Reactive support that only shows up after the problem"],
+      "solutions": ["Dell PowerEdge servers sized for your actual operation","Segmented network with managed switches and VLANs","Automated backup with replication and periodic testing","Corporate firewall with IDS/IPS","24/7 monitoring of servers, network and critical devices","Technical support with defined SLA"],
+      "benefits": [
+        {"title":"Real servers","text":"Dell PowerEdge with virtualization and high availability."},
+        {"title":"Professional network","text":"Managed switches and VLANs. Network that works and scales."},
+        {"title":"Backup that works","text":"Automated, replicated and tested."},
+        {"title":"Real security","text":"Firewall with IDS/IPS and policies."},
+        {"title":"24/7 monitoring","text":"Problems identified before they become outages."},
+        {"title":"SLA support","text":"Response time defined by contract."}
+      ],
+      "faq": [
+        {"question":"Does WMTi serve corporate businesses?","answer":"Yes. Mid-size and enterprise, any industry."},
+        {"question":"Do you do corporate network projects?","answer":"Yes. Complete project with managed switches, VLANs, structured cabling and documentation."},
+        {"question":"What's the support response time?","answer":"SLA defined by contract."},
+        {"question":"Do you serve outside the Jacareí region?","answer":"Yes. All of São Paulo and projects across Brazil."}
+      ],
+      "relatedLabels": ["Corporate infrastructure","Dell servers","pfSense Firewall","Network setup"],
+      "localContent": "Request an IT infrastructure analysis for your company. We serve Jacareí, Paraíba Valley and across Brazil."
+    },
+    "tiAlim": {
+      "title": "IT Infrastructure for Food Industries",
+      "metaTitle": "IT Infrastructure for Food Industries | WMTi",
+      "metaDescription": "IT solutions for food industries. Server infrastructure, networks, backup and security.",
+      "tag": "IT for Food Industries",
+      "headline1": "An IT failure in your factory can ",
+      "headlineHighlight": "shut down the entire production line",
+      "headline2": "",
+      "description": "ERP down. Traceability system frozen. Scales not communicating. Inventory outdated. In food manufacturing, an IT failure means lost production. WMTi structures your factory's IT so technology is never the bottleneck.",
+      "whatsappMessage": "Hi! I'd like an IT infrastructure analysis for my food industry.",
+      "painPoints": ["Unstable ERP and production systems","Industrial network with no segmentation","No reliable backup for production data","No protection against cyberattacks","IT problems discovered only when production has already stopped"],
+      "solutions": ["Corporate servers sized for ERP and production control","Segmented industrial network — production isolated from office","Firewall and security policies against cyberattacks","Automated backup with fast recovery","Continuous monitoring to act before failure"],
+      "benefits": [
+        {"title":"Industrial servers","text":"Servers sized for heavy ERP and real-time production control."},
+        {"title":"Segmented network","text":"Production and office separated."},
+        {"title":"Industrial protection","text":"Firewall and security policies to protect factory infrastructure."},
+        {"title":"Production backup","text":"Traceability and production data protected with automated backup."},
+        {"title":"Continuous monitoring","text":"Failures detected before they halt production."},
+        {"title":"Industrial support","text":"Team that understands the urgency of industrial environments."}
+      ],
+      "faq": [
+        {"question":"Does WMTi serve food industries?","answer":"Yes. We understand that production can't stop."},
+        {"question":"Do you do industrial network projects?","answer":"Yes. Segmented network to separate production from office."},
+        {"question":"How does monitoring work?","answer":"Continuous server and network monitoring. Alert before failure."},
+        {"question":"Do you serve outside the Jacareí region?","answer":"Yes. All of São Paulo and projects across Brazil."}
+      ],
+      "relatedLabels": ["Corporate infrastructure","Network setup","Dell servers","pfSense Firewall"],
+      "localContent": "Request an IT infrastructure analysis for your factory. We serve Jacareí, Paraíba Valley and all of São Paulo state."
+    },
+    "tiPetro": {
+      "title": "IT Infrastructure for Oil & Gas Industries",
+      "metaTitle": "IT Infrastructure for Oil & Gas Industries | WMTi",
+      "metaDescription": "IT infrastructure for oil & gas industries and fuel sector companies.",
+      "tag": "IT for Oil & Gas Industries",
+      "headline1": "Your critical operation depends on infrastructure that ",
+      "headlineHighlight": "wasn't designed to fail",
+      "headline2": " — but it can",
+      "description": "Critical operational systems running 24 hours. Sensitive data traveling across the network. In the oil sector, an IT failure can mean critical operation interruption. WMTi implements infrastructure with the robustness that critical operations demand.",
+      "whatsappMessage": "Hi! I'd like a technology infrastructure analysis for my oil & gas company.",
+      "painPoints": ["Critical systems without real high availability","Infrastructure exposed to cyberattacks","Operational data without secure backup","No 24-hour server and network monitoring","Technical support that doesn't understand criticality"],
+      "solutions": ["High-availability servers with redundancy for continuous operation","Corporate firewall with advanced threat policies","Secure backup with encryption and guaranteed recovery","24-hour server and network monitoring with real-time alerts","Specialized team for critical infrastructure environments"],
+      "benefits": [
+        {"title":"High availability","text":"Servers with redundancy for operations that cannot stop."},
+        {"title":"Advanced security","text":"Firewall and policies against sophisticated threats."},
+        {"title":"Secure backup","text":"Operational data protected with encryption."},
+        {"title":"24h monitoring","text":"Servers and network monitored around the clock."},
+        {"title":"Protected data","text":"Encryption and access control for sensitive sector information."},
+        {"title":"Specialized team","text":"Professionals who understand criticality and act with the necessary urgency."}
+      ],
+      "faq": [
+        {"question":"Does WMTi serve oil & gas industries?","answer":"Yes. We implement infrastructure with the robustness that critical operations demand."},
+        {"question":"Do you offer 24-hour monitoring?","answer":"Yes. Continuous monitoring with real-time alerts."},
+        {"question":"How does network security work?","answer":"Corporate firewall with advanced policies, network segmentation and access control."},
+        {"question":"Do you serve across Brazil?","answer":"Yes. Continuous remote support and scheduled technical visits anywhere."}
+      ],
+      "relatedLabels": ["Corporate infrastructure","pfSense Firewall","Dell servers","IT Support"],
+      "localContent": "Request a technology infrastructure analysis for your company. We serve Jacareí, Paraíba Valley and across Brazil."
+    },
+    "tiServentias": {
+      "title": "IT Infrastructure for Notarial Registries",
+      "metaTitle": "IT Infrastructure for Notarial Registries | CNJ Provision 213 | WMTi",
+      "metaDescription": "IT infrastructure solutions for notarial registries in compliance with CNJ Provision 213.",
+      "tag": "IT for Notarial Registries",
+      "headline1": "Your registry may be vulnerable — and ",
+      "headlineHighlight": "Provision 213 requires compliance now",
+      "headline2": "",
+      "description": "The deadline is running. CNJ Provision 213 defines mandatory ICT requirements for all extrajudicial registries. WMTi specializes in this. We assess, implement infrastructure and guarantee full compliance.",
+      "whatsappMessage": "Hi! I'd like an IT infrastructure analysis for my notarial registry.",
+      "painPoints": ["Difficulty understanding Provision 213 requirements","Unstable registry systems","Manual or nonexistent backup","No firewall or network segmentation","Servers without monitoring","Reactive support"],
+      "solutions": ["Complete Provision 213 compliance assessment","Windows Server for continuous operation","Automated corporate backup with replication","Firewall with network segmentation","Continuous monitoring","Specialized support with preventive maintenance"],
+      "benefits": [
+        {"title":"Professional servers","text":"Windows Server configured for high-performance registry systems."},
+        {"title":"Backup that works","text":"Local and cloud replication with periodic testing."},
+        {"title":"Protected network","text":"Firewall, segmentation and security policies."},
+        {"title":"Real monitoring","text":"Servers and network monitored to act before failure."},
+        {"title":"Full compliance","text":"All Provision 213 requirements met and documented."},
+        {"title":"Specialized support","text":"Team that knows the registry routine."}
+      ],
+      "faq": [
+        {"question":"Does WMTi help notarial registries comply with Provision 213?","answer":"Yes. We specialize in this. Assessment, implementation and guaranteed full compliance."},
+        {"question":"Why is corporate backup important for registries?","answer":"Data loss in a registry environment can cause severe operational and legal impacts."},
+        {"question":"Do you provide continuous monitoring?","answer":"Yes. 24/7 with automatic alerts."},
+        {"question":"Do you serve outside the Jacareí region?","answer":"Yes. Across Brazil."}
+      ],
+      "relatedLabels": ["IT for Notary Offices","Provision 213","Dell servers","pfSense Firewall"],
+      "localContent": "Request an IT infrastructure analysis for your notarial registry. We serve Jacareí, Paraíba Valley and across Brazil."
+    }
+  }
+}
