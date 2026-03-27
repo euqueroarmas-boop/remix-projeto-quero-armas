@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 
 interface MobileSummaryProps {
   tag: string;
@@ -11,6 +12,8 @@ interface MobileSummaryProps {
 }
 
 const MobileSummary = ({ tag, title, description, to, className = "" }: MobileSummaryProps) => {
+  const { t } = useTranslation();
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -31,7 +34,7 @@ const MobileSummary = ({ tag, title, description, to, className = "" }: MobileSu
           to={to}
           className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 font-mono text-xs font-bold uppercase tracking-wider hover:brightness-110 transition-all"
         >
-          Saiba mais
+          {t("cta.learnMore")}
           <ArrowRight size={16} />
         </Link>
       </div>

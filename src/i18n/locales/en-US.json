@@ -268,7 +268,7 @@
     "backup": "Corporate Backup",
     "firewall": "Corporate Firewall",
     "dell": "Dell PowerEdge Server Deployment",
-    "redesCorp": "Corporate Network Infrastructure",
+    "infraRede": "Corporate Network Infrastructure",
     "infraServidores": "Server Infrastructure",
     "infraTI": "Enterprise IT Infrastructure",
     "locacao": "Computer Leasing",
@@ -278,7 +278,7 @@
     "linux": "Linux Support",
     "emergencial": "Emergency Technical Support",
     "suporteTI": "Enterprise IT Support",
-    "redesCorp": "Corporate Network Support",
+    "suporteRedes": "Corporate Network Support",
     "windows": "Windows Server Support",
     "terceirizacao": "IT Outsourcing",
     "reestruturacao": "Complete Network Restructuring",
@@ -318,7 +318,8 @@
     "dimensionar": "Size",
     "projeto": "Project",
     "calcular": "Calculate",
-    "locacaoShort": "Leasing"
+    "locacaoShort": "Leasing",
+    "learnMore": "Learn more"
   },
   "metrics": {
     "years": "Years keeping businesses running",

@@ -13,40 +13,40 @@ interface MegaMenuItem {
   icon: LucideIcon;
 }
 
-const segmentos: MegaMenuItem[] = [
-  { label: "Contabilidade", href: "/ti-para-contabilidades", icon: Calculator },
-  { label: "Empresas Corporativas", href: "/ti-para-escritorios-corporativos", icon: Building2 },
-  { label: "Escritórios De Advocacia", href: "/ti-para-escritorios-de-advocacia", icon: Scale },
-  { label: "Hospitais e Clínicas", href: "/ti-para-hospitais-e-clinicas", icon: Heart },
-  { label: "Indústrias Alimentícias", href: "/ti-para-industrias-alimenticias", icon: Factory },
-  { label: "Indústrias Petrolíferas", href: "/ti-para-industrias-petroliferas", icon: Fuel },
-  { label: "Serventias Notariais", href: "/ti-para-serventias-cartoriais", icon: FileText },
-];
+const segmentosBase = [
+  { labelKey: "segments.contabilidade", href: "/ti-para-contabilidades", icon: Calculator },
+  { labelKey: "segments.corporativos", href: "/ti-para-escritorios-corporativos", icon: Building2 },
+  { labelKey: "segments.advocacia", href: "/ti-para-escritorios-de-advocacia", icon: Scale },
+  { labelKey: "segments.hospitais", href: "/ti-para-hospitais-e-clinicas", icon: Heart },
+  { labelKey: "segments.alimenticias", href: "/ti-para-industrias-alimenticias", icon: Factory },
+  { labelKey: "segments.petroliferas", href: "/ti-para-industrias-petroliferas", icon: Fuel },
+  { labelKey: "segments.notariais", href: "/ti-para-serventias-cartoriais", icon: FileText },
+] as const;
 
-const servicos: MegaMenuItem[] = [
-  { label: "Administração De Servidores", href: "/administracao-de-servidores", icon: Server },
-  { label: "Administração Microsoft 365", href: "/microsoft-365-para-empresas-jacarei", icon: Cloud },
-  { label: "Backup Corporativo", href: "/backup-corporativo", icon: HardDrive },
-  { label: "Firewall Corporativo", href: "/firewall-pfsense-jacarei", icon: Shield },
-  { label: "Implantação De Servidores Dell PowerEdge", href: "/servidor-dell-poweredge-jacarei", icon: Cpu },
-  { label: "Infraestrutura De Rede Corporativa", href: "/montagem-e-monitoramento-de-redes-jacarei", icon: Network },
-  { label: "Infraestrutura De Servidores", href: "/infraestrutura-ti-corporativa-jacarei", icon: Server },
-  { label: "Infraestrutura De TI Para Empresas", href: "/infraestrutura-ti-corporativa-jacarei", icon: Building2 },
-  { label: "Locação De Computadores", href: "/locacao-de-computadores-para-empresas-jacarei", icon: Monitor },
-  { label: "Manutenção De Infraestrutura De TI", href: "/manutencao-de-infraestrutura-de-ti", icon: Wrench },
-  { label: "Monitoramento De Rede", href: "/monitoramento-de-rede", icon: Eye },
-  { label: "Monitoramento De Servidores", href: "/monitoramento-de-servidores", icon: Activity },
-  { label: "Suporte Linux", href: "/suporte-linux", icon: Terminal },
-  { label: "Suporte Técnico Emergencial", href: "/suporte-tecnico-emergencial", icon: Zap },
-  { label: "Suporte Técnico Empresarial", href: "/suporte-ti-jacarei", icon: Headphones },
-  { label: "Suporte Técnico Para Redes Corporativas", href: "/suporte-tecnico-para-redes-corporativas", icon: Network },
-  { label: "Suporte Windows Server", href: "/suporte-windows-server", icon: Lock },
-  { label: "Terceirização De TI", href: "/terceirizacao-de-mao-de-obra-ti", icon: RefreshCw },
-  { label: "Reestruturação Completa De Rede", href: "/reestruturacao-completa-de-rede-corporativa", icon: Globe },
-  { label: "Desenvolvimento De Sites E Sistemas Web", href: "/desenvolvimento-de-sites-e-sistemas-web", icon: Brain },
-  { label: "Automação De TI Com IA", href: "/automacao-de-ti-com-inteligencia-artificial", icon: Bot },
-  { label: "Automação Com Alexa", href: "/automacao-alexa-casa-empresa-inteligente", icon: Home },
-].sort((a, b) => a.label.localeCompare(b.label));
+const servicosBase = [
+  { labelKey: "services.adminServidores", href: "/administracao-de-servidores", icon: Server },
+  { labelKey: "services.microsoft365", href: "/microsoft-365-para-empresas-jacarei", icon: Cloud },
+  { labelKey: "services.backup", href: "/backup-corporativo", icon: HardDrive },
+  { labelKey: "services.firewall", href: "/firewall-pfsense-jacarei", icon: Shield },
+  { labelKey: "services.dell", href: "/servidor-dell-poweredge-jacarei", icon: Cpu },
+  { labelKey: "services.infraRede", href: "/montagem-e-monitoramento-de-redes-jacarei", icon: Network },
+  { labelKey: "services.infraServidores", href: "/infraestrutura-ti-corporativa-jacarei", icon: Server },
+  { labelKey: "services.infraTI", href: "/infraestrutura-ti-corporativa-jacarei", icon: Building2 },
+  { labelKey: "services.locacao", href: "/locacao-de-computadores-para-empresas-jacarei", icon: Monitor },
+  { labelKey: "services.manutencao", href: "/manutencao-de-infraestrutura-de-ti", icon: Wrench },
+  { labelKey: "services.monRede", href: "/monitoramento-de-rede", icon: Eye },
+  { labelKey: "services.monServidores", href: "/monitoramento-de-servidores", icon: Activity },
+  { labelKey: "services.linux", href: "/suporte-linux", icon: Terminal },
+  { labelKey: "services.emergencial", href: "/suporte-tecnico-emergencial", icon: Zap },
+  { labelKey: "services.suporteTI", href: "/suporte-ti-jacarei", icon: Headphones },
+  { labelKey: "services.suporteRedes", href: "/suporte-tecnico-para-redes-corporativas", icon: Network },
+  { labelKey: "services.windows", href: "/suporte-windows-server", icon: Lock },
+  { labelKey: "services.terceirizacao", href: "/terceirizacao-de-mao-de-obra-ti", icon: RefreshCw },
+  { labelKey: "services.reestruturacao", href: "/reestruturacao-completa-de-rede-corporativa", icon: Globe },
+  { labelKey: "services.devWeb", href: "/desenvolvimento-de-sites-e-sistemas-web", icon: Brain },
+  { labelKey: "services.autoIA", href: "/automacao-de-ti-com-inteligencia-artificial", icon: Bot },
+  { labelKey: "services.alexa", href: "/automacao-alexa-casa-empresa-inteligente", icon: Home },
+] as const;
 
 type NavLink = {
   href: string;
@@ -71,6 +71,12 @@ const WEBMAIL_URL = "https://sigma.servidor.net.br:2096/cpsess3314771808/webmail
 
 const Navbar = () => {
   const { t } = useTranslation();
+  const segmentos: MegaMenuItem[] = [...segmentosBase]
+    .map((item) => ({ ...item, label: t(item.labelKey) }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+  const servicos: MegaMenuItem[] = [...servicosBase]
+    .map((item) => ({ ...item, label: t(item.labelKey) }))
+    .sort((a, b) => a.label.localeCompare(b.label));
   const [open, setOpen] = useState(false);
   const [segOpen, setSegOpen] = useState(false);
   const [svcOpen, setSvcOpen] = useState(false);
@@ -113,8 +119,8 @@ const Navbar = () => {
 
   const getActiveIndex = (): number => {
     const path = location.pathname;
-    if (isSegmentActive()) return navLinks.findIndex(l => l.label === "Segmentos");
-    if (isServiceActive()) return navLinks.findIndex(l => l.label === "Serviços");
+    if (isSegmentActive()) return navLinks.findIndex(l => l.label === "nav.segmentos");
+    if (isServiceActive()) return navLinks.findIndex(l => l.label === "nav.servicos");
     for (let i = 0; i < navLinks.length; i++) {
       const link = navLinks[i];
       if (link.isDropdown) continue;
@@ -124,7 +130,7 @@ const Navbar = () => {
       }
       if (href.startsWith("#") && isHome && location.hash === href) return i;
     }
-    if (path.includes("infraestrutura")) return navLinks.findIndex(l => l.label === "Infraestrutura");
+    if (path.includes("infraestrutura")) return navLinks.findIndex(l => l.label === "nav.infraestrutura");
     return -1;
   };
 
@@ -425,14 +431,16 @@ const Navbar = () => {
           </Link>
         </div>
 
-        {/* Mobile toggle */}
-        <button
-          onClick={() => setOpen(!open)}
-          className="lg:hidden text-foreground relative z-[60] flex items-center justify-center h-16"
-          aria-label={t("nav.menuLabel")}
-        >
-          {open ? <X size={20} /> : <Menu size={20} />}
-        </button>
+        <div className="lg:hidden relative z-[60] flex items-center gap-2">
+          <LanguageSwitcher compact />
+          <button
+            onClick={() => setOpen(!open)}
+            className="text-foreground flex items-center justify-center h-10 w-10 rounded-full border border-border/70 bg-background/80 shadow-sm backdrop-blur-sm"
+            aria-label={t("nav.menuLabel")}
+          >
+            {open ? <X size={20} /> : <Menu size={20} />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile fullscreen menu */}
@@ -450,9 +458,12 @@ const Navbar = () => {
               <Link to="/" onClick={() => setOpen(false)} className="flex items-center">
                 <img src={logoFull} alt="WMTi Tecnologia da Informação" className="h-8 w-auto" />
               </Link>
-              <button onClick={() => setOpen(false)} className="text-foreground" aria-label={t("nav.fecharMenu")}>
-                <X size={20} />
-              </button>
+              <div className="flex items-center gap-2">
+                <LanguageSwitcher compact />
+                <button onClick={() => setOpen(false)} className="text-foreground" aria-label={t("nav.fecharMenu")}>
+                  <X size={20} />
+                </button>
+              </div>
             </div>
 
             <div className="container flex-1 flex flex-col justify-start gap-4 overflow-y-auto pb-12 pt-4">
@@ -514,10 +525,6 @@ const Navbar = () => {
                 {t("nav.areaCliente")}
               </Link>
 
-              <div className="flex items-center gap-4 mt-4">
-                <LanguageSwitcher />
-              </div>
-
               <a
                 href="https://wa.me/5511963166915?text=Ol%C3%A1%2C%20gostaria%20de%20falar%20com%20um%20especialista%20em%20TI."
                 target="_blank"
@@ -534,7 +541,7 @@ const Navbar = () => {
     </nav>
 
     {/* Mega panels rendered OUTSIDE nav to avoid stacking context issues */}
-    <div className="hidden lg:block">
+      <div className="hidden lg:block">
       {renderMegaPanel(servicos, svcOpen, setSvcOpen, "Serviços")}
       {renderMegaPanel(segmentos, segOpen, setSegOpen, "Segmentos")}
     </div>
