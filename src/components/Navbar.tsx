@@ -429,7 +429,7 @@ const Navbar = () => {
         <button
           onClick={() => setOpen(!open)}
           className="lg:hidden text-foreground relative z-[60] flex items-center justify-center h-16"
-          aria-label="Menu de navegação"
+          aria-label={t("nav.menuLabel")}
         >
           {open ? <X size={20} /> : <Menu size={20} />}
         </button>
@@ -450,7 +450,7 @@ const Navbar = () => {
               <Link to="/" onClick={() => setOpen(false)} className="flex items-center">
                 <img src={logoFull} alt="WMTi Tecnologia da Informação" className="h-8 w-auto" />
               </Link>
-              <button onClick={() => setOpen(false)} className="text-foreground" aria-label="Fechar menu">
+              <button onClick={() => setOpen(false)} className="text-foreground" aria-label={t("nav.fecharMenu")}>
                 <X size={20} />
               </button>
             </div>
@@ -462,17 +462,17 @@ const Navbar = () => {
                   active ? "text-primary border-l-2 border-primary pl-4" : "text-muted-foreground hover:text-primary"
                 }`;
 
-                if (link.isDropdown && link.label === "Segmentos") {
+                if (link.isDropdown && link.label === "nav.segmentos") {
                   return renderMobileMegaDropdown(segmentos, mobileSegOpen, setMobileSegOpen, link, active);
                 }
-                if (link.isDropdown && link.label === "Serviços") {
+                if (link.isDropdown && link.label === "nav.servicos") {
                   return renderMobileMegaDropdown(servicos, mobileSvcOpen, setMobileSvcOpen, link, active);
                 }
 
                 const href = resolveHref(link, true);
                 return isRouteLink(href) ? (
                   <Link key={link.label} to={href} onClick={() => setOpen(false)} className={baseClass}>
-                    {link.label}
+                    {t(link.label)}
                   </Link>
                 ) : (
                   <button
@@ -480,7 +480,7 @@ const Navbar = () => {
                     onClick={() => { setOpen(false); handleAnchorClick(link.href.replace("#", "")); }}
                     className={`${baseClass} text-left`}
                   >
-                    {link.label}
+                    {t(link.label)}
                   </button>
                 );
               })}
@@ -489,7 +489,7 @@ const Navbar = () => {
                 onClick={() => setOpen(false)}
                 className="font-mono text-base uppercase tracking-wider transition-colors py-2 text-muted-foreground hover:text-primary text-left"
               >
-                Orçamento
+                {t("nav.orcamento")}
               </Link>
 
               <a
@@ -499,7 +499,7 @@ const Navbar = () => {
                 onClick={() => setOpen(false)}
                 className="font-mono text-base uppercase tracking-wider transition-colors py-2 text-muted-foreground hover:text-primary text-left"
               >
-                Webmail
+                {t("nav.webmail")}
               </a>
 
               <Link
@@ -511,7 +511,7 @@ const Navbar = () => {
                     : "text-muted-foreground hover:text-red-500"
                 }`}
               >
-                Área do Cliente
+                {t("nav.areaCliente")}
               </Link>
 
               <a
@@ -521,7 +521,7 @@ const Navbar = () => {
                 onClick={() => setOpen(false)}
                 className="mt-4 inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-6 py-4 font-mono text-sm font-bold uppercase tracking-wider"
               >
-                Falar com Especialista
+                {t("nav.falarEspecialista")}
               </a>
             </div>
           </motion.div>
