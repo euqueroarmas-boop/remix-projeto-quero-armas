@@ -14,7 +14,7 @@ const ClientLogosSection = () => {
     <section className="py-12 md:py-16 bg-background border-y border-border">
       <div className="container">
         <p className="font-mono text-xs tracking-[0.3em] uppercase text-muted-foreground text-center mb-8">
-          // Parceiros & Tecnologias
+          {t("clientLogos.tag")}
         </p>
         <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16">
           {clients.map((name, i) => (
