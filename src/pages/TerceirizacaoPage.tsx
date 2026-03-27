@@ -66,7 +66,7 @@ const TerceirizacaoPage = () => {
               >
                 {t("custom.outsourcing.primaryCta")}
                 <ArrowRight size={16} />
-              </a>
+              </button>
               <Link
                 to="/suporte-ti-jacarei"
                 className="inline-flex items-center justify-center gap-2 border border-border text-foreground font-mono text-sm uppercase tracking-wider px-6 py-3 hover:border-primary/50 hover:text-primary transition-colors"
