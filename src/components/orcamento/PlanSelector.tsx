@@ -52,6 +52,7 @@ interface Props {
 }
 
 const PlanSelector = ({ selectedPlan, onSelectPlan, onShowBudget }: Props) => {
+  const { t } = useTranslation();
   return (
     <section id="plans" className="py-20 section-dark">
       <div className="container mx-auto px-4">
