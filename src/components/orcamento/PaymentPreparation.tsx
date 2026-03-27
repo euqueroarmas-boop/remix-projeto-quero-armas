@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { CreditCard, Clock, CheckCircle, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { whatsappLink } from "@/lib/whatsapp";
+import { openWhatsAppRaw } from "@/lib/whatsapp";
 
 interface Props {
   visible: boolean;
@@ -12,12 +12,7 @@ interface Props {
 const PaymentPreparation = ({ visible, monthlyValue, companyName }: Props) => {
   if (!visible) return null;
 
-  const whatsappMessage = encodeURIComponent(
-    `Olá! Acabei de assinar o contrato para o plano de infraestrutura de TI. Empresa: ${companyName || "—"}, Valor: R$${monthlyValue.toLocaleString("pt-BR")}/mês. Gostaria de prosseguir com o pagamento.`
-  );
-  const waLink = whatsappLink(
-    `Olá! Acabei de assinar o contrato para o plano de infraestrutura de TI. Empresa: ${companyName || "—"}, Valor: R$${monthlyValue.toLocaleString("pt-BR")}/mês. Gostaria de prosseguir com o pagamento.`
-  );
+  const paymentMessage = `Olá! Acabei de assinar o contrato para o plano de infraestrutura de TI. Empresa: ${companyName || "—"}, Valor: R$${monthlyValue.toLocaleString("pt-BR")}/mês. Gostaria de prosseguir com o pagamento.`;
 
   return (
     <section id="payment-section" className="py-16 section-dark">
@@ -68,14 +63,12 @@ const PaymentPreparation = ({ visible, monthlyValue, companyName }: Props) => {
 
             <div className="pt-4 border-t border-border">
               <Button
-                asChild
                 size="lg"
                 className="w-full gap-2 text-base font-semibold"
+                onClick={() => openWhatsAppRaw(paymentMessage)}
               >
-                <a href={waLink} target="_blank" rel="noopener noreferrer">
-                  <MessageCircle className="w-5 h-5" />
-                  Solicitar link de pagamento via WhatsApp
-                </a>
+                <MessageCircle className="w-5 h-5" />
+                Solicitar link de pagamento via WhatsApp
               </Button>
             </div>
           </div>

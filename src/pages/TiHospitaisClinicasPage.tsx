@@ -234,7 +234,7 @@ const TiHospitaisClinicasPage = () => {
               </button>
               <button onClick={() => openWhatsApp({ pageTitle: "TI para Hospitais e Clínicas", intent: "specialist" })} className="inline-flex items-center gap-2 border border-border text-foreground px-8 py-4 font-mono text-sm uppercase tracking-wider hover:border-primary hover:text-primary transition-all">
                 {t(`${k}.ctaWhatsapp`)}
-              </a>
+              </button>
             </div>
           </motion.div>
         </div>
