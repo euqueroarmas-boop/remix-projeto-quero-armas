@@ -10,7 +10,7 @@ import SeoHead from "@/components/SeoHead";
 import JsonLd, { buildArticleSchema, buildBreadcrumbSchema } from "@/components/JsonLd";
 import { blogPosts, blogContent as blogContentData } from "@/data/blogPosts";
 import { cities } from "@/data/seo/cities";
-import { useLocalizedContent } from "@/hooks/useLocalizedContent";
+import { useLocalizedBlogPosts, useLocalizedBlogContent } from "@/hooks/useBlogLocalized";
 
 /** Try to match a slug like "vantagens-microsoft-365-para-empresas-campinas" */
 function resolveBlogSlug(slug: string | undefined) {
@@ -67,10 +67,11 @@ const BlogPostPage = () => {
   const location = useLocation();
   const { post, city, baseSlug } = useMemo(() => resolveBlogSlug(slug), [slug]);
   const structuredContent = baseSlug ? blogContentData[baseSlug] : undefined;
-  const legacy = baseSlug ? legacyContent[baseSlug] : undefined;
-  const localizedPost = useLocalizedContent(post);
-  const localizedStructuredContent = useLocalizedContent(structuredContent);
-  const localizedLegacy = useLocalizedContent(legacy);
+  const legacy = baseSlug ? (legacyContent as Record<string, any>)[baseSlug] : undefined;
+  const localizedPosts = useLocalizedBlogPosts(post ? [post] : []);
+  const localizedPost = localizedPosts[0] || post;
+  const localizedStructuredContent = useLocalizedBlogContent(structuredContent, baseSlug);
+  const localizedLegacy = legacy; // legacy content stays in PT (only 2 old posts)
 
   const baseUrl = "https://wmti.com.br";
   const pageUrl = `${baseUrl}${location.pathname}`;

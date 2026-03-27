@@ -20,7 +20,7 @@ import {
   BookOpen,
 } from "lucide-react";
 import { blogPosts } from "@/data/blogPosts";
-import { useLocalizedContent } from "@/hooks/useLocalizedContent";
+import { useLocalizedBlogPosts } from "@/hooks/useBlogLocalized";
 import institucionalHero from "@/assets/institucional-hero.webp";
 import poweredgeImage from "@/assets/poweredge-server.webp";
 
@@ -237,7 +237,7 @@ export const HomeInfraestrutura = () => {
 /* ─── BLOG ─── */
 export const HomeBlog = () => {
   const { t } = useTranslation();
-  const recentPosts = useLocalizedContent(blogPosts).slice(0, 3);
+  const recentPosts = useLocalizedBlogPosts(blogPosts).slice(0, 3);
 
   return (
     <section className="py-16 md:py-24 section-dark">

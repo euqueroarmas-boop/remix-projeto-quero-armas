@@ -19,7 +19,7 @@ import JsonLd from "@/components/JsonLd";
 import WizardStepWrapper from "@/components/orcamento/WizardStepWrapper";
 import QuickRegistrationForm, { type RegistrationData } from "@/components/orcamento/QuickRegistrationForm";
 import type { CustomerData } from "@/components/orcamento/CustomerDataForm";
-import { useLocalizedContent } from "@/hooks/useLocalizedContent";
+
 
 /* ─── Deliverables (info section) ─── */
 const deliverables = [
@@ -268,7 +268,7 @@ const ReestruturacaoRedePage = () => {
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
 
   const pricing = calcTotal(pcs, includeServer);
-  const localizedDeliverables = useLocalizedContent(deliverables);
+  const localizedDeliverables = deliverables;
 
   // Poll contract signed
   useEffect(() => {
