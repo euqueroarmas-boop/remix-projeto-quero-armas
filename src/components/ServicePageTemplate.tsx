@@ -196,6 +196,7 @@ const ServicePageTemplate = ({
   showHoursCalculator = false,
   cityName,
   citySlug,
+  extraSections,
 }: ServicePageProps) => {
   const { t } = useTranslation();
   const location = useLocation();
