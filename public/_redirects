@@ -6,6 +6,7 @@
 /sitemap-segments.xml  https://itwsjxijqjximspqtvqk.supabase.co/functions/v1/sitemap?type=segments  200
 /sitemap-problems.xml  https://itwsjxijqjximspqtvqk.supabase.co/functions/v1/sitemap?type=problems  200
 /sitemap-blog-cities.xml  https://itwsjxijqjximspqtvqk.supabase.co/functions/v1/sitemap?type=blog-cities  200
+/sitemap-cities.xml  https://itwsjxijqjximspqtvqk.supabase.co/functions/v1/sitemap?type=cities  200
 /sitemap-service-segment-cities.xml  https://itwsjxijqjximspqtvqk.supabase.co/functions/v1/sitemap?type=service-segment-cities  200
 
 # SPA fallback — must be last

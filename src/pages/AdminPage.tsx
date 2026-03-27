@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from "react";
+import SeoHead from "@/components/SeoHead";
 import { supabase } from "@/integrations/supabase/client";
 import { adminQuerySingle, adminQuery } from "@/lib/adminApi";
 import { Button } from "@/components/ui/button";
@@ -759,6 +760,7 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <SeoHead title="Admin | WMTi" description="Painel administrativo WMTi" noindex />
       <header className="border-b border-border px-4 md:px-6 py-3 md:py-4 flex items-center justify-between gap-2">
         <h1 className="text-sm md:text-lg font-bold text-foreground truncate">🛡️ Admin — WMTi</h1>
         <Button variant="ghost" size="sm" onClick={handleLogout} className="shrink-0 text-xs md:text-sm">
