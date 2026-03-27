@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 
 interface SeoHeadProps {
   title: string;
@@ -12,6 +13,7 @@ interface SeoHeadProps {
 }
 
 const OG_FALLBACK = "https://www.wmti.com.br/og-image.jpg";
+const BASE_URL = "https://www.wmti.com.br";
 
 /**
  * Sets document head meta tags for SEO.
@@ -27,6 +29,9 @@ const SeoHead = ({
   ogImage,
   ogType = "website",
 }: SeoHeadProps) => {
+  const { i18n } = useTranslation();
+  const currentLang = i18n.language;
+
   useEffect(() => {
     document.title = title;
 
@@ -41,20 +46,33 @@ const SeoHead = ({
       el.setAttribute(attr, value);
     };
 
+    const setLink = (rel: string, extra: Record<string, string>) => {
+      const selectorParts = Object.entries(extra).map(([k, v]) => `[${k}="${v}"]`).join("");
+      const selector = `link[rel="${rel}"]${selectorParts}`;
+      let el = document.querySelector(selector) as HTMLLinkElement | null;
+      if (!el) {
+        el = document.createElement("link");
+        el.setAttribute("rel", rel);
+        Object.entries(extra).forEach(([k, v]) => el!.setAttribute(k, v));
+        document.head.appendChild(el);
+      }
+      return el;
+    };
+
     // Resolve OG image: use provided, absolutize relative paths, fallback
     const resolvedImage = (() => {
       if (!ogImage) return OG_FALLBACK;
       if (ogImage.startsWith("http")) return ogImage;
       // Vite-bundled assets start with /assets/ or data:
       if (ogImage.startsWith("/assets/") || ogImage.startsWith("data:")) {
-        return `https://www.wmti.com.br${ogImage}`;
+        return `${BASE_URL}${ogImage}`;
       }
       // Public folder paths
-      if (ogImage.startsWith("/")) return `https://www.wmti.com.br${ogImage}`;
+      if (ogImage.startsWith("/")) return `${BASE_URL}${ogImage}`;
       return OG_FALLBACK;
     })();
 
-    const resolvedUrl = canonical || `https://www.wmti.com.br${window.location.pathname}`;
+    const resolvedUrl = canonical || `${BASE_URL}${window.location.pathname}`;
 
     // Basic meta
     setMeta('meta[name="description"]', "content", description);
@@ -75,6 +93,20 @@ const SeoHead = ({
       link.setAttribute("href", resolvedUrl);
     }
 
+    // Hreflang tags for international SEO
+    const path = window.location.pathname;
+    const ptUrl = `${BASE_URL}${path}`;
+    const enUrl = `${BASE_URL}${path}`; // same URL, content switches client-side
+
+    const hrefPt = setLink("alternate", { hreflang: "pt-BR" });
+    hrefPt.setAttribute("href", ptUrl);
+
+    const hrefEn = setLink("alternate", { hreflang: "en-US" });
+    hrefEn.setAttribute("href", enUrl);
+
+    const hrefDefault = setLink("alternate", { hreflang: "x-default" });
+    hrefDefault.setAttribute("href", ptUrl);
+
     // Open Graph
     setMeta('meta[property="og:title"]', "content", ogTitle || title);
     setMeta('meta[property="og:description"]', "content", ogDescription || description);
@@ -84,14 +116,18 @@ const SeoHead = ({
     setMeta('meta[property="og:type"]', "content", ogType);
     setMeta('meta[property="og:url"]', "content", resolvedUrl);
     setMeta('meta[property="og:site_name"]', "content", "WMTi Tecnologia da Informação");
-    setMeta('meta[property="og:locale"]', "content", document.documentElement.lang || "pt_BR");
+    setMeta('meta[property="og:locale"]', "content", currentLang === "en-US" ? "en_US" : "pt_BR");
+    setMeta('meta[property="og:locale:alternate"]', "content", currentLang === "en-US" ? "pt_BR" : "en_US");
 
     // Twitter Card
     setMeta('meta[name="twitter:card"]', "content", "summary_large_image");
     setMeta('meta[name="twitter:title"]', "content", ogTitle || title);
     setMeta('meta[name="twitter:description"]', "content", ogDescription || description);
     setMeta('meta[name="twitter:image"]', "content", resolvedImage);
-  }, [title, description, canonical, noindex, ogTitle, ogDescription, ogImage, ogType]);
+
+    // Content-Language
+    setMeta('meta[http-equiv="content-language"]', "content", currentLang === "en-US" ? "en" : "pt-BR");
+  }, [title, description, canonical, noindex, ogTitle, ogDescription, ogImage, ogType, currentLang]);
 
   return null;
 };

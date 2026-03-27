@@ -22,6 +22,19 @@ const deepMerge = <T extends Record<string, unknown>>(base: T, override: Record<
   return output as T;
 };
 
+/** Map i18n language codes to BCP-47 / HTML lang values */
+const LANG_MAP: Record<string, string> = {
+  "pt-BR": "pt-BR",
+  "en-US": "en",
+};
+
+function syncHtmlLang(lng: string) {
+  if (typeof document === "undefined") return;
+  const htmlLang = LANG_MAP[lng] || lng;
+  document.documentElement.lang = htmlLang;
+  document.documentElement.dir = "ltr";
+}
+
 i18n
   .use(LanguageDetector)
   .use(initReactI18next)
@@ -42,5 +55,9 @@ i18n
       caches: ["localStorage"],
     },
   });
+
+// Sync HTML lang on init and on every language change
+syncHtmlLang(i18n.language);
+i18n.on("languageChanged", syncHtmlLang);
 
 export default i18n;
