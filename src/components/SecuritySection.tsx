@@ -30,14 +30,6 @@ const features = [
 const SecuritySection = () => {
   return (
     <section id="seguranca" className="section-light">
-      {/* Mobile summary - hidden since InfraSection already links to /infraestrutura */}
-      <MobileSummary
-        tag="Segurança"
-        title={<>Perímetro blindado. <span className="text-primary">pfSense</span> como espinha dorsal.</>}
-        description="Firewalls pfSense com VPN IPsec/OpenVPN, IDS/IPS Suricata, balanceamento de carga e failover automático de links WAN. Segurança sem compromisso."
-        to="/infraestrutura"
-        className="section-light"
-      />
 
       {/* Full content */}
       <div className="py-20 md:py-24">

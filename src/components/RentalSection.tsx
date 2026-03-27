@@ -17,14 +17,6 @@ const RentalSection = () => {
 
   return (
     <section id="locacao" className="section-light">
-      {/* Mobile summary */}
-      <MobileSummary
-        tag={t("custom.rentalSection.mobileTag")}
-        title={<>{t("custom.rentalSection.mobileTitle1")}<span className="text-primary">{t("custom.rentalSection.mobileHighlight")}</span></>}
-        description={t("custom.rentalSection.mobileDescription")}
-        to="/locacao"
-        className="section-light"
-      />
 
       {/* Full content */}
       <div className="py-20 md:py-24">

@@ -17,14 +17,6 @@ const specs = [
 const InfraSection = () => {
   return (
     <section id="infraestrutura" className="section-dark">
-      {/* Mobile summary */}
-      <MobileSummary
-        tag="Dell PowerEdge"
-        title={<>Hardware que não falha. <span className="text-primary">R750xs.</span></>}
-        description="Servidores rack 2U com processadores Intel Xeon de 4ª geração, projetados para virtualização, bancos de dados e aplicações de missão crítica. Firewall pfSense como espinha dorsal de segurança."
-        to="/infraestrutura"
-        className="section-dark"
-      />
 
       {/* Full content */}
       <div className="py-20 md:py-24">

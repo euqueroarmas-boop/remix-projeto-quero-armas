@@ -64,14 +64,6 @@ const services = [
 const ServicesSection = () => {
   return (
     <section id="servicos" className="section-light">
-      {/* Mobile summary */}
-      <MobileSummary
-        tag="Serviços"
-        title={<>Engenharia de sistemas, não <span className="text-primary">consultoria genérica.</span></>}
-        description="Implementamos e gerenciamos servidores Dell PowerEdge, Microsoft 365, firewalls pfSense, backup Veeam, redes estruturadas e monitoramento 24/7 com equipe certificada."
-        to="/servicos"
-        className="section-light"
-      />
 
       {/* Full content */}
       <div className="py-20 md:py-24">

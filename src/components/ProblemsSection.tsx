@@ -22,13 +22,6 @@ const ProblemsSection = () => {
   const problems = (t("problems.items", { returnObjects: true }) as { title: string; desc: string; solution: string }[]).map((p, i) => ({ ...p, icon: problemIcons[i] }));
   return (
     <section id="problemas" className="bg-background">
-      {/* Mobile summary */}
-      <MobileSummary
-        tag={t("problems.mobileSummaryTag")}
-        title={<>{t("problems.mobileSummaryTitle1")} <span className="text-primary">{t("problems.mobileSummaryTitle2")}</span></>}
-        description={t("problems.mobileSummaryDesc")}
-        to="/servicos"
-      />
 
       {/* Full content */}
       <div className="py-20 md:py-24">
