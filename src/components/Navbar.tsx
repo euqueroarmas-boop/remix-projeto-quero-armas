@@ -454,7 +454,7 @@ const Navbar = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.2 }}
-            className="lg:hidden fixed top-16 left-0 right-0 bottom-0 bg-secondary z-[45] overflow-y-auto"
+            className="lg:hidden fixed top-16 left-0 right-0 bottom-0 bg-secondary z-[55] overflow-y-auto"
           >
             <div className="container flex flex-col gap-4 py-6 pb-12">
               {navLinks.map((link) => {
