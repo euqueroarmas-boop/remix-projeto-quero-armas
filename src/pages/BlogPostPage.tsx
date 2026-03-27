@@ -145,7 +145,7 @@ const BlogPostPage = () => {
       </div>
 
       <section className="section-dark pb-16 md:pb-20 -mt-20 relative z-10">
-        <div className="container max-w-3xl">
+        <div className="container max-w-3xl px-5 md:px-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -196,7 +196,7 @@ const BlogPostPage = () => {
       </section>
 
       <section className="section-light py-16 md:py-24">
-        <div className="container max-w-3xl">
+        <div className="container max-w-3xl px-5 md:px-6">
           <div className="font-body text-foreground leading-relaxed [&_h2]:font-heading [&_h2]:text-xl [&_h2]:md:text-2xl [&_h2]:font-bold [&_h2]:mt-8 [&_h2]:mb-3 [&_h2]:text-foreground [&_p]:text-muted-foreground [&_p]:mb-4">
             {(localizedLegacy || localizedStructuredContent) && (
               <div className="space-y-6">
