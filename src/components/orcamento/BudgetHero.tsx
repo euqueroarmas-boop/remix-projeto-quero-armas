@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { CheckCircle, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
-import { whatsappLink } from "@/lib/whatsapp";
+import { whatsappLink, buildContextualWhatsAppMessage } from "@/lib/whatsapp";
 import { trackWhatsApp } from "@/lib/tracking";
 
 interface Props {
@@ -81,7 +81,7 @@ const BudgetHero = ({ contextTitle }: Props) => {
               onClick={() => {
                 trackWhatsApp("budget-hero", "especialista-ti");
                 window.open(
-                  whatsappLink(t("budgetHero.whatsappMessage", { defaultValue: "Olá! Gostaria de falar com um especialista sobre infraestrutura de TI." })),
+                  whatsappLink(buildContextualWhatsAppMessage({ pageTitle: t("budgetHero.tag"), intent: "specialist" })),
                   "_blank"
                 );
               }}
