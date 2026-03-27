@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import heroImage from "@/assets/hero-server.webp";
 import { Award, Shield, Handshake } from "lucide-react";
-import { whatsappLink } from "@/lib/whatsapp";
+import { whatsappLink, buildContextualWhatsAppMessage } from "@/lib/whatsapp";
 import { trackWhatsApp, trackCta } from "@/lib/tracking";
 
 const HeroSection = () => {
@@ -74,7 +74,7 @@ const HeroSection = () => {
               <span className="text-lg group-hover:translate-x-1 transition-transform">→</span>
             </a>
             <a
-              href={whatsappLink(t("hero.whatsappMessage", { defaultValue: "Olá, gostaria de falar com um especialista em TI." }))}
+              href={whatsappLink(buildContextualWhatsAppMessage({ pageTitle: t("hero.tag"), intent: "specialist" }))}
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => trackWhatsApp("home-hero", "especialista")}
