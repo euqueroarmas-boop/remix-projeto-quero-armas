@@ -216,7 +216,7 @@ const ServicePageTemplate = ({
     { name: tag, url: `${baseUrl}${currentPath}` },
   ];
 
-  const contractHref = `/contratar/${currentPath.replace(/^\//, "")}`;
+  const contractHref = "/orcamento-ti";
 
   return (
     <div className="min-h-screen">
@@ -269,7 +269,7 @@ const ServicePageTemplate = ({
                   {t("service.ctaContract")}
                 </Link>
                 <a
-                  href={`https://wa.me/5511963166915?text=${encodeURIComponent(whatsappMessage)}`}
+                  href={whatsappLink(whatsappMessage)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 border border-gunmetal-foreground/30 text-gunmetal-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:border-primary hover:text-primary transition-all"
@@ -460,7 +460,7 @@ const ServicePageTemplate = ({
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <a
-                href={`https://wa.me/5511963166915?text=${encodeURIComponent(whatsappMessage)}`}
+                href={whatsappLink(whatsappMessage)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all btn-glow rounded"
