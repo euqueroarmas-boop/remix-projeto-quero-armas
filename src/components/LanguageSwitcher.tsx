@@ -13,12 +13,12 @@ const LanguageSwitcher = () => {
   return (
     <button
       onClick={() => i18n.changeLanguage(next)}
-      className="flex items-center gap-1.5 font-mono text-xs uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors h-16"
+      className="flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors h-16 min-h-[44px] min-w-[44px] justify-center"
       aria-label={`Switch to ${flags[next].label}`}
       title={flags[next].label}
     >
-      <span className="text-base leading-none">{flags[current].emoji}</span>
-      <span className="hidden xl:inline">{current === "pt-BR" ? "PT" : "EN"}</span>
+      <span className="text-lg leading-none">{flags[current].emoji}</span>
+      <span>{current === "pt-BR" ? "PT" : "EN"}</span>
     </button>
   );
 };

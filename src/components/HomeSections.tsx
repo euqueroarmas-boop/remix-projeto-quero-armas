@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   Building2,
   Server,
@@ -30,207 +31,211 @@ const fade = {
 };
 
 /* ─── INSTITUCIONAL ─── */
-export const HomeInstitucional = () => (
-  <section className="py-16 md:py-24 section-dark">
-    <div className="container">
-      <div className="grid lg:grid-cols-2 gap-10 md:gap-16 items-center">
-        <motion.div {...fade}>
-          <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
-            // Institucional
-          </p>
-          <h2 className="text-2xl md:text-4xl lg:text-5xl mb-4 md:mb-6">
-            Quem é a <span className="text-primary">WMTi</span>.
-          </h2>
-          <p className="font-body text-muted-foreground text-sm md:text-base leading-relaxed mb-4">
-            Há mais de 15 anos construímos infraestrutura de TI segura e
-            confiável para empresas de todos os portes. Nossa missão é garantir
-            estabilidade operacional, proteção de dados e continuidade dos
-            negócios.
-          </p>
-          <p className="font-body text-muted-foreground/70 text-sm leading-relaxed mb-8">
-            Somos referência no Vale do Paraíba em servidores Dell PowerEdge,
-            Microsoft 365, firewalls pfSense e suporte técnico especializado.
-          </p>
-          <Link
-            to="/institucional"
-            className="group inline-flex items-center gap-2 font-mono text-sm uppercase tracking-wider text-primary hover:brightness-110 transition-all"
-          >
-            Conheça a WMTi
-            <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-          </Link>
-        </motion.div>
-        <motion.div {...fade} transition={{ duration: 0.5, delay: 0.15 }}>
-          <img
-            src={institucionalHero}
-            alt="Equipe WMTi em ambiente corporativo de TI"
-            className="w-full aspect-[4/3] object-cover border border-border"
-            loading="lazy"
-          />
-        </motion.div>
+export const HomeInstitucional = () => {
+  const { t } = useTranslation();
+  return (
+    <section className="py-16 md:py-24 section-dark">
+      <div className="container">
+        <div className="grid lg:grid-cols-2 gap-10 md:gap-16 items-center">
+          <motion.div {...fade}>
+            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
+              {t("home.institucionalTag")}
+            </p>
+            <h2 className="text-2xl md:text-4xl lg:text-5xl mb-4 md:mb-6">
+              {t("home.institucionalTitle")} <span className="text-primary">{t("home.institucionalTitleHighlight")}</span>.
+            </h2>
+            <p className="font-body text-muted-foreground text-sm md:text-base leading-relaxed mb-4">
+              {t("home.institucionalDesc1")}
+            </p>
+            <p className="font-body text-muted-foreground/70 text-sm leading-relaxed mb-8">
+              {t("home.institucionalDesc2")}
+            </p>
+            <Link
+              to="/institucional"
+              className="group inline-flex items-center gap-2 font-mono text-sm uppercase tracking-wider text-primary hover:brightness-110 transition-all"
+            >
+              {t("home.institucionalCta")}
+              <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </motion.div>
+          <motion.div {...fade} transition={{ duration: 0.5, delay: 0.15 }}>
+            <img
+              src={institucionalHero}
+              alt="Equipe WMTi em ambiente corporativo de TI"
+              className="w-full aspect-[4/3] object-cover border border-border"
+              loading="lazy"
+            />
+          </motion.div>
+        </div>
       </div>
-    </div>
-  </section>
-);
+    </section>
+  );
+};
 
 /* ─── SERVIÇOS ─── */
 const serviceSummary = [
-  { icon: Monitor, label: "Locação de Computadores", href: "/locacao-de-computadores-para-empresas-jacarei" },
-  { icon: Server, label: "Suporte de TI", href: "/suporte-ti-jacarei" },
-  { icon: Network, label: "Infraestrutura de TI", href: "/infraestrutura-ti-corporativa-jacarei" },
-  { icon: Users, label: "Terceirização de TI", href: "/terceirizacao-de-mao-de-obra-ti" },
-  { icon: HardDrive, label: "Servidores Dell", href: "/servidor-dell-poweredge-jacarei" },
-  { icon: Cloud, label: "Microsoft 365", href: "/microsoft-365-empresas-jacarei" },
-  { icon: Shield, label: "Firewall pfSense", href: "/firewall-pfsense-jacarei" },
+  { icon: Monitor, labelKey: "services.locacao", href: "/locacao-de-computadores-para-empresas-jacarei" },
+  { icon: Server, labelKey: "services.suporteTI", href: "/suporte-ti-jacarei" },
+  { icon: Network, labelKey: "services.infraTI", href: "/infraestrutura-ti-corporativa-jacarei" },
+  { icon: Users, labelKey: "services.terceirizacao", href: "/terceirizacao-de-mao-de-obra-ti" },
+  { icon: HardDrive, labelKey: "services.dell", href: "/servidor-dell-poweredge-jacarei" },
+  { icon: Cloud, labelKey: "services.microsoft365", href: "/microsoft-365-empresas-jacarei" },
+  { icon: Shield, labelKey: "services.firewall", href: "/firewall-pfsense-jacarei" },
   { icon: Lock, label: "Segurança da Informação", href: "/seguranca-informacao-empresarial" },
 ];
 
-export const HomeServicos = () => (
-  <section id="servicos" className="py-16 md:py-24 bg-background">
-    <div className="container">
-      <motion.div {...fade} className="mb-10 md:mb-14">
-        <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
-          // O que fazemos por você
-        </p>
-        <h2 className="text-2xl md:text-4xl lg:text-5xl max-w-2xl mb-4">
-          Tudo que sua empresa precisa para <span className="text-primary">nunca parar.</span>
-        </h2>
-        <p className="font-body text-muted-foreground text-sm md:text-base max-w-xl leading-relaxed">
-          Locação de equipamentos, suporte dedicado, segurança e infraestrutura
-          completa — com preço fixo mensal e sem surpresas.
-        </p>
-      </motion.div>
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-border">
-        {serviceSummary.map((s, i) => (
-          <motion.div
-            key={s.label}
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4, delay: i * 0.05 }}
-          >
-            <Link
-              to={s.href}
-              className="flex flex-col items-start gap-3 p-5 md:p-8 bg-background hover:bg-muted/50 transition-colors group h-full"
-            >
-              <s.icon size={24} className="text-primary" strokeWidth={1.5} />
-              <span className="font-mono text-xs md:text-sm uppercase tracking-wider text-foreground group-hover:text-primary transition-colors">
-                {s.label}
-              </span>
-            </Link>
-          </motion.div>
-        ))}
-      </div>
-
-      <motion.div {...fade} className="mt-8 md:mt-10 text-center">
-        <Link
-          to="/servicos"
-          className="group inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
-        >
-          Ver todos os serviços
-          <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-        </Link>
-      </motion.div>
-    </div>
-  </section>
-);
-
-/* ─── SEGMENTOS ─── */
-const segmentSummary = [
-  { icon: Scale, label: "Cartórios", href: "/ti-para-cartorios" },
-  { icon: Heart, label: "Hospitais e Clínicas", href: "/ti-para-hospitais-e-clinicas" },
-  { icon: Briefcase, label: "Escritórios de Advocacia", href: "/ti-para-escritorios-de-advocacia" },
-  { icon: Calculator, label: "Contabilidades", href: "/ti-para-contabilidades" },
-  { icon: Factory, label: "Empresas Corporativas", href: "/ti-para-escritorios-corporativos" },
-];
-
-export const HomeSegmentos = () => (
-  <section id="segmentos" className="py-16 md:py-24 section-dark">
-    <div className="container">
-      <motion.div {...fade} className="mb-10 md:mb-14">
-        <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
-          // Feito para o seu setor
-        </p>
-        <h2 className="text-2xl md:text-4xl lg:text-5xl max-w-2xl mb-4">
-          Soluções <span className="text-primary">sob medida</span> para seu negócio.
-        </h2>
-        <p className="font-body text-muted-foreground text-sm md:text-base max-w-xl leading-relaxed">
-          Cartório, clínica, escritório ou indústria — cada setor tem
-          exigências diferentes. Já resolvemos todas elas.
-        </p>
-      </motion.div>
-
-      <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6">
-        {segmentSummary.map((s, i) => (
-          <motion.div
-            key={s.label}
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4, delay: i * 0.08 }}
-          >
-            <Link
-              to={s.href}
-              className="flex flex-col items-center gap-4 p-6 md:p-8 border border-border hover:border-primary/40 bg-background/50 hover:bg-muted/30 transition-all group text-center h-full"
-            >
-              <div className="w-12 h-12 flex items-center justify-center border border-primary/30 bg-primary/5 group-hover:bg-primary/10 transition-colors">
-                <s.icon size={22} className="text-primary" strokeWidth={1.5} />
-              </div>
-              <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground group-hover:text-primary transition-colors">
-                {s.label}
-              </span>
-            </Link>
-          </motion.div>
-        ))}
-      </div>
-    </div>
-  </section>
-);
-
-/* ─── INFRAESTRUTURA ─── */
-export const HomeInfraestrutura = () => (
-  <section id="infraestrutura" className="py-16 md:py-24 bg-background">
-    <div className="container">
-      <div className="grid lg:grid-cols-2 gap-10 md:gap-16 items-center">
-        <motion.div {...fade} transition={{ duration: 0.5, delay: 0.1 }}>
-          <img
-            src={poweredgeImage}
-            alt="Servidor Dell PowerEdge em rack corporativo"
-            className="w-full aspect-[4/3] object-cover border border-border"
-            loading="lazy"
-          />
-        </motion.div>
-        <motion.div {...fade}>
+export const HomeServicos = () => {
+  const { t } = useTranslation();
+  return (
+    <section id="servicos" className="py-16 md:py-24 bg-background">
+      <div className="container">
+        <motion.div {...fade} className="mb-10 md:mb-14">
           <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
-            // Infraestrutura
+            {t("home.servicosTag")}
           </p>
-          <h2 className="text-2xl md:text-4xl lg:text-5xl mb-4 md:mb-6">
-            Hardware <span className="text-primary">enterprise</span>.
+          <h2 className="text-2xl md:text-4xl lg:text-5xl max-w-2xl mb-4">
+            {t("home.servicosTitle")} <span className="text-primary">{t("home.servicosTitleHighlight")}</span>
           </h2>
-          <p className="font-body text-muted-foreground text-sm md:text-base leading-relaxed mb-4">
-            Servidores Dell PowerEdge, redes corporativas, firewalls pfSense e
-            soluções de backup. Projetamos e implementamos ambientes que garantem
-            alta disponibilidade e desempenho.
+          <p className="font-body text-muted-foreground text-sm md:text-base max-w-xl leading-relaxed">
+            {t("home.servicosDesc")}
           </p>
-          <p className="font-body text-muted-foreground/70 text-sm leading-relaxed mb-8">
-            Infraestrutura dimensionada sob medida para a realidade de cada empresa,
-            com monitoramento 24/7 e suporte técnico especializado.
-          </p>
+        </motion.div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-border">
+          {serviceSummary.map((s, i) => (
+            <motion.div
+              key={s.href}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: i * 0.05 }}
+            >
+              <Link
+                to={s.href}
+                className="flex flex-col items-start gap-3 p-5 md:p-8 bg-background hover:bg-muted/50 transition-colors group h-full"
+              >
+                <s.icon size={24} className="text-primary" strokeWidth={1.5} />
+                <span className="font-mono text-xs md:text-sm uppercase tracking-wider text-foreground group-hover:text-primary transition-colors">
+                  {s.labelKey ? t(s.labelKey) : (s as any).label}
+                </span>
+              </Link>
+            </motion.div>
+          ))}
+        </div>
+
+        <motion.div {...fade} className="mt-8 md:mt-10 text-center">
           <Link
-            to="/infraestrutura"
+            to="/servicos"
             className="group inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
           >
-            Ver soluções de infraestrutura
+            {t("home.servicosVerTodos")}
             <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
           </Link>
         </motion.div>
       </div>
-    </div>
-  </section>
-);
+    </section>
+  );
+};
+
+/* ─── SEGMENTOS ─── */
+const segmentSummary = [
+  { icon: Scale, labelKey: "segments.cartorios", href: "/ti-para-cartorios" },
+  { icon: Heart, labelKey: "segments.hospitais", href: "/ti-para-hospitais-e-clinicas" },
+  { icon: Briefcase, labelKey: "segments.advocacia", href: "/ti-para-escritorios-de-advocacia" },
+  { icon: Calculator, labelKey: "segments.contabilidade", href: "/ti-para-contabilidades" },
+  { icon: Factory, labelKey: "segments.corporativos", href: "/ti-para-escritorios-corporativos" },
+];
+
+export const HomeSegmentos = () => {
+  const { t } = useTranslation();
+  return (
+    <section id="segmentos" className="py-16 md:py-24 section-dark">
+      <div className="container">
+        <motion.div {...fade} className="mb-10 md:mb-14">
+          <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
+            {t("home.segmentosTag")}
+          </p>
+          <h2 className="text-2xl md:text-4xl lg:text-5xl max-w-2xl mb-4">
+            {t("home.segmentosTitle")} <span className="text-primary">{t("home.segmentosTitleHighlight")}</span> {t("home.segmentosTitleEnd")}
+          </h2>
+          <p className="font-body text-muted-foreground text-sm md:text-base max-w-xl leading-relaxed">
+            {t("home.segmentosDesc")}
+          </p>
+        </motion.div>
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6">
+          {segmentSummary.map((s, i) => (
+            <motion.div
+              key={s.href}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: i * 0.08 }}
+            >
+              <Link
+                to={s.href}
+                className="flex flex-col items-center gap-4 p-6 md:p-8 border border-border hover:border-primary/40 bg-background/50 hover:bg-muted/30 transition-all group text-center h-full"
+              >
+                <div className="w-12 h-12 flex items-center justify-center border border-primary/30 bg-primary/5 group-hover:bg-primary/10 transition-colors">
+                  <s.icon size={22} className="text-primary" strokeWidth={1.5} />
+                </div>
+                <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground group-hover:text-primary transition-colors">
+                  {t(s.labelKey)}
+                </span>
+              </Link>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+/* ─── INFRAESTRUTURA ─── */
+export const HomeInfraestrutura = () => {
+  const { t } = useTranslation();
+  return (
+    <section id="infraestrutura" className="py-16 md:py-24 bg-background">
+      <div className="container">
+        <div className="grid lg:grid-cols-2 gap-10 md:gap-16 items-center">
+          <motion.div {...fade} transition={{ duration: 0.5, delay: 0.1 }}>
+            <img
+              src={poweredgeImage}
+              alt="Servidor Dell PowerEdge em rack corporativo"
+              className="w-full aspect-[4/3] object-cover border border-border"
+              loading="lazy"
+            />
+          </motion.div>
+          <motion.div {...fade}>
+            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
+              {t("home.infraTag")}
+            </p>
+            <h2 className="text-2xl md:text-4xl lg:text-5xl mb-4 md:mb-6">
+              {t("home.infraTitle")} <span className="text-primary">{t("home.infraTitleHighlight")}</span>.
+            </h2>
+            <p className="font-body text-muted-foreground text-sm md:text-base leading-relaxed mb-4">
+              {t("home.infraDesc1")}
+            </p>
+            <p className="font-body text-muted-foreground/70 text-sm leading-relaxed mb-8">
+              {t("home.infraDesc2")}
+            </p>
+            <Link
+              to="/infraestrutura"
+              className="group inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
+            >
+              {t("home.infraCta")}
+              <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </motion.div>
+        </div>
+      </div>
+    </section>
+  );
+};
 
 /* ─── BLOG ─── */
 export const HomeBlog = () => {
+  const { t } = useTranslation();
   const recentPosts = blogPosts.slice(0, 3);
 
   return (
@@ -238,14 +243,13 @@ export const HomeBlog = () => {
       <div className="container">
         <motion.div {...fade} className="mb-10 md:mb-14">
           <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
-            // Conteúdo que educa e converte
+            {t("home.blogTag")}
           </p>
           <h2 className="text-2xl md:text-4xl lg:text-5xl max-w-2xl mb-4">
-            Dicas para sua empresa <span className="text-primary">não perder dinheiro</span> com TI.
+            {t("home.blogTitle")} <span className="text-primary">{t("home.blogTitleHighlight")}</span> {t("home.blogTitleEnd")}
           </h2>
           <p className="font-body text-muted-foreground text-sm md:text-base max-w-xl leading-relaxed">
-            Guias práticos para gestores que querem tomar decisões seguras
-            sobre infraestrutura, segurança e produtividade.
+            {t("home.blogDesc")}
           </p>
         </motion.div>
 
@@ -297,7 +301,7 @@ export const HomeBlog = () => {
             to="/blog"
             className="group inline-flex items-center gap-2 border border-primary text-primary px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:bg-primary hover:text-primary-foreground transition-all"
           >
-            Acessar blog
+            {t("home.blogCta")}
             <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
           </Link>
         </motion.div>
