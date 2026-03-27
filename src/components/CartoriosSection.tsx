@@ -87,14 +87,6 @@ const CartoriosSection = () => {
 
   return (
     <section id="cartorios" className="relative">
-      {/* Mobile summary */}
-      <MobileSummary
-        tag={t("custom.cartoriosHome.mobileTag")}
-        title={<>{t("custom.cartoriosHome.mobileTitle1")}<span className="text-primary">{t("custom.cartoriosHome.mobileHighlight")}</span>{t("custom.cartoriosHome.mobileTitle2")}</>}
-        description={t("custom.cartoriosHome.mobileDescription")}
-        to="/cartorios"
-        className="section-dark"
-      />
 
       {/* Full content */}
       <div>
