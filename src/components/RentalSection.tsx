@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Monitor, Wrench, Headphones, RefreshCw, DollarSign, ShieldCheck, ArrowRight, CheckCircle2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import optiplexImage from "@/assets/optiplex-desktop.webp";
-import { whatsappLink } from "@/lib/whatsapp";
+import { whatsappLink, buildContextualWhatsAppMessage } from "@/lib/whatsapp";
 import { trackWhatsApp } from "@/lib/tracking";
 
 
