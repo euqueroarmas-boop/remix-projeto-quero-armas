@@ -37,6 +37,7 @@ interface ServicePageProps {
   showHoursCalculator?: boolean;
   cityName?: string;
   citySlug?: string;
+  extraSections?: React.ReactNode;
 }
 
 const fadeIn = {
