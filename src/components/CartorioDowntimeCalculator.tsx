@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { whatsappLink, buildContextualWhatsAppMessage } from "@/lib/whatsapp";
+import { openWhatsApp } from "@/lib/whatsapp";
 
 const HOURS_PER_DAY = 8;
 
@@ -147,15 +147,13 @@ const CartorioDowntimeCalculator = () => {
                 <p className="text-sm text-muted-foreground mb-4">
                   {t("custom.cartorioCalc.callout")}
                 </p>
-                <a
-                  href={whatsappLink(buildContextualWhatsAppMessage({ pageTitle: t("custom.cartorioCalc.title"), intent: "diagnosis" }))}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <Button
+                  size="lg"
+                  className="font-bold btn-glow"
+                  onClick={() => openWhatsApp({ pageTitle: t("custom.cartorioCalc.title"), intent: "diagnosis", detail: `Prejuízo estimado: R$${result.totalLoss.toLocaleString("pt-BR")} por ${downtimeHours}h parado` })}
                 >
-                  <Button size="lg" className="font-bold btn-glow">
-                    {t("custom.cartorioCalc.cta")}
-                  </Button>
-                </a>
+                  {t("custom.cartorioCalc.cta")}
+                </Button>
               </div>
             </div>
           </div>

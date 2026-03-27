@@ -15,6 +15,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SeoHead from "@/components/SeoHead";
 import JsonLd from "@/components/JsonLd";
+import { openWhatsApp } from "@/lib/whatsapp";
 import WizardStepWrapper from "@/components/orcamento/WizardStepWrapper";
 import QuickRegistrationForm, { type RegistrationData } from "@/components/orcamento/QuickRegistrationForm";
 import type { CustomerData } from "@/components/orcamento/CustomerDataForm";
@@ -550,14 +551,12 @@ const ReestruturacaoRedePage = () => {
                 >
                   {t("restructuring.calculateInvestment")} <Calculator size={16} />
                 </button>
-                <a
-                  href="https://wa.me/5511963166915?text=Olá!%20Tenho%20interesse%20no%20pacote%20de%20Reestruturação%20Completa%20de%20Rede%20Corporativa."
-                  target="_blank"
-                  rel="noopener"
+                <button
+                  onClick={() => openWhatsApp({ pageTitle: "Reestruturação de Rede Corporativa", intent: "specialist" })}
                   className="inline-flex items-center gap-2 px-6 py-3 border border-border text-foreground font-mono text-sm uppercase tracking-wider hover:bg-muted transition-colors"
                 >
                    {t("restructuring.talkSpecialist")}
-                </a>
+                </button>
               </div>
             </motion.div>
           </div>
@@ -893,14 +892,12 @@ const ReestruturacaoRedePage = () => {
               <p className="font-body text-base text-muted-foreground mb-8">
                  {t("restructuring.finalDescription")}
               </p>
-              <a
-                href="https://wa.me/5511963166915?text=Olá!%20Quero%20saber%20mais%20sobre%20a%20Reestruturação%20Completa%20de%20Rede."
-                target="_blank"
-                rel="noopener"
+              <button
+                onClick={() => openWhatsApp({ pageTitle: "Reestruturação de Rede Corporativa", intent: "proposal" })}
                 className="inline-flex items-center gap-2 px-8 py-4 bg-primary text-primary-foreground font-mono text-sm uppercase tracking-wider hover:brightness-110 transition-all"
               >
                  {t("restructuring.talkSpecialist")} <ArrowRight size={16} />
-              </a>
+              </button>
             </motion.div>
           </div>
         </section>
@@ -923,15 +920,13 @@ const ReestruturacaoRedePage = () => {
             <p className="text-sm text-muted-foreground leading-relaxed">
                {t("restructuring.premiumDescription", { count: pcs })}
             </p>
-            <a
-              href={`https://wa.me/5511963166915?text=${encodeURIComponent(`Olá! Preciso de um orçamento premium para Reestruturação Completa de Rede Corporativa com ${pcs} computadores${includeServer ? " + implantação de servidor" : ""}. Aguardo proposta personalizada.`)}`}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              onClick={() => openWhatsApp({ pageTitle: "Reestruturação de Rede Corporativa", intent: "proposal", detail: `${pcs} computadores${includeServer ? " + implantação de servidor" : ""}` })}
               className="w-full inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-6 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all rounded-lg"
             >
               <ArrowRight size={16} />
                {t("restructuring.requestPremiumQuote")}
-            </a>
+            </button>
             <button
               onClick={() => { setShowPremiumPopup(false); setPcs(30); }}
               className="text-xs text-muted-foreground hover:text-foreground transition-colors"

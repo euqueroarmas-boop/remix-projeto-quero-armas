@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ErrorBlock } from "@/components/ui/ErrorBlock";
 import { ensurePortalAccess, fetchPurchaseInfo, type ClientCredentials, type PurchaseInfo } from "@/lib/postPurchase";
 import { logAndPersistError, type WmtiError } from "@/lib/errorLogger";
-import { whatsappLink } from "@/lib/whatsapp";
+import { openWhatsAppRaw } from "@/lib/whatsapp";
 
 const AtivacaoAcessoPage = () => {
   const [searchParams] = useSearchParams();
@@ -21,9 +21,9 @@ const AtivacaoAcessoPage = () => {
   const [lastError, setLastError] = useState<WmtiError | null>(null);
   const [copied, setCopied] = useState<"email" | "password" | "">("");
 
-  const whatsappHref = useMemo(() => {
-    return whatsappLink("Olá! Preciso de ajuda com a liberação do meu acesso ao portal do cliente.");
-  }, []);
+  const handleWhatsAppHelp = () => {
+    openWhatsAppRaw("Olá! Preciso de ajuda com a liberação do meu acesso ao portal do cliente.");
+  };
 
   const copyValue = async (value: string, field: "email" | "password") => {
     await navigator.clipboard.writeText(value);
@@ -162,10 +162,10 @@ const AtivacaoAcessoPage = () => {
                   <Button variant="outline" onClick={() => copyValue(credentials.email, "email")} className="w-full">
                     Copiar login
                   </Button>
-                  <a href={whatsappHref} target="_blank" rel="noreferrer" className="inline-flex h-10 items-center justify-center rounded-md border border-border px-4 text-sm font-medium hover:bg-muted">
+                  <button onClick={handleWhatsAppHelp} className="inline-flex h-10 items-center justify-center rounded-md border border-border px-4 text-sm font-medium hover:bg-muted">
                     <MessageCircle className="mr-2 h-4 w-4" />
                     WhatsApp
-                  </a>
+                  </button>
                 </div>
               </div>
             ) : null}

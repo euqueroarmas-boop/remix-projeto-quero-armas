@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ChevronUp } from "lucide-react";
 import { getCtaItemsForPath } from "@/lib/ctaContext";
-import { whatsappLink, buildContextualWhatsAppMessage } from "@/lib/whatsapp";
+import { openWhatsApp } from "@/lib/whatsapp";
 import { trackCta, trackWhatsApp } from "@/lib/tracking";
 
 /** Pages where the CTA bar should NOT appear */
@@ -47,9 +47,8 @@ const FloatingCtaBar = () => {
       const intent = href.includes("diagnóstico") || href.includes("diagnostic") ? "diagnosis"
         : href.includes("proposta") || href.includes("proposal") ? "proposal"
         : "specialist";
-      const msg = buildContextualWhatsAppMessage({ intent });
-      trackWhatsApp(location.pathname, msg);
-      window.open(whatsappLink(msg), "_blank", "noopener,noreferrer");
+      trackWhatsApp(location.pathname, label);
+      openWhatsApp({ intent });
       return;
     }
     trackCta(label, href);

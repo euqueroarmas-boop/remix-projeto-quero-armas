@@ -10,6 +10,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SeoHead from "@/components/SeoHead";
 import JsonLd from "@/components/JsonLd";
+import { openWhatsApp } from "@/lib/whatsapp";
 
 const deliverableIcons = [Zap, ShieldCheck, Mail, CreditCard, Link2, Brain, Workflow];
 
@@ -58,14 +59,12 @@ const DesenvolvimentoWebPage = () => {
               </p>
 
               <div className="flex flex-wrap gap-4">
-                <a
-                  href="https://wa.me/5511963166915?text=Olá!%20Tenho%20interesse%20em%20desenvolvimento%20de%20site%20ou%20sistema%20web%20profissional."
-                  target="_blank"
-                  rel="noopener"
+                <button
+                  onClick={() => openWhatsApp({ pageTitle: "Desenvolvimento Web", intent: "specialist" })}
                   className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-mono text-sm uppercase tracking-wider hover:brightness-110 transition-all"
                 >
                   {t("custom.devWeb.primaryCta")} <ArrowRight size={16} />
-                </a>
+                </button>
                 <Link
                   to="/orcamento-ti"
                   className="inline-flex items-center gap-2 px-6 py-3 border border-border text-foreground font-mono text-sm uppercase tracking-wider hover:bg-muted transition-colors"
@@ -133,14 +132,12 @@ const DesenvolvimentoWebPage = () => {
               <p className="font-body text-base text-muted-foreground mb-8 leading-relaxed">
                 {t("custom.devWeb.resultDescription")}
               </p>
-              <a
-                href="https://wa.me/5511963166915?text=Olá!%20Quero%20saber%20mais%20sobre%20desenvolvimento%20de%20sites%20e%20sistemas%20web."
-                target="_blank"
-                rel="noopener"
+              <button
+                onClick={() => openWhatsApp({ pageTitle: "Desenvolvimento Web", intent: "proposal" })}
                 className="inline-flex items-center gap-2 px-8 py-4 bg-primary text-primary-foreground font-mono text-sm uppercase tracking-wider hover:brightness-110 transition-all"
               >
                   {t("custom.devWeb.finalCta")} <ArrowRight size={16} />
-              </a>
+              </button>
             </motion.div>
           </div>
         </section>

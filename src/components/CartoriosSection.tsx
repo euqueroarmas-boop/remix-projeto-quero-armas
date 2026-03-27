@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ShieldCheck, HardDrive, Cloud, Server, Lock, Activity, FileCheck, AlertTriangle } from "lucide-react";
-
+import { openWhatsApp } from "@/lib/whatsapp";
 
 const requirements = [
   {
@@ -118,15 +118,13 @@ const CartoriosSection = () => {
               </p>
 
               <div className="flex flex-wrap gap-4 mb-12">
-                <a
-                  href="https://wa.me/5511963166915?text=Olá! Gostaria de um orçamento para adequação do meu cartório ao Provimento 213 do CNJ."
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  onClick={() => openWhatsApp({ pageTitle: "Adequação Cartório Provimento 213", intent: "proposal" })}
                   className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
                 >
                   <AlertTriangle size={16} />
                   {t("custom.cartoriosHome.primaryCta")}
-                </a>
+                </button>
                 <Link
                   to="/cartorios/provimento-213"
                   className="inline-flex items-center gap-2 border border-gunmetal-foreground/30 text-gunmetal-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:border-primary hover:text-primary transition-all"
@@ -273,14 +271,12 @@ const CartoriosSection = () => {
               <p className="font-body text-gunmetal-foreground/60 max-w-xl mx-auto mb-8">
                  {t("custom.cartoriosHome.finalDescription")}
               </p>
-              <a
-                href="https://wa.me/5511963166915?text=Olá! Gostaria de solicitar um diagnóstico gratuito do meu cartório para adequação ao Provimento 213 do CNJ."
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                onClick={() => openWhatsApp({ pageTitle: "Diagnóstico Cartório Provimento 213", intent: "diagnosis" })}
                 className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
               >
                  {t("custom.cartoriosHome.finalCta")}
-              </a>
+              </button>
             </motion.div>
           </div>
         </div>

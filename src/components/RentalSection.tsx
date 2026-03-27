@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Monitor, Wrench, Headphones, RefreshCw, DollarSign, ShieldCheck, ArrowRight, CheckCircle2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import optiplexImage from "@/assets/optiplex-desktop.webp";
-import { whatsappLink, buildContextualWhatsAppMessage } from "@/lib/whatsapp";
+import { openWhatsApp } from "@/lib/whatsapp";
 import { trackWhatsApp } from "@/lib/tracking";
 
 
@@ -62,15 +62,16 @@ const RentalSection = () => {
                 <h3 className="text-xl md:text-3xl text-foreground mb-3 md:mb-4">
                    {t("custom.rentalSection.heroOverlayTitle")}
                 </h3>
-                <a
-                  href={whatsappLink(buildContextualWhatsAppMessage({ pageTitle: t("custom.rentalSection.heroOverlayTitle"), intent: "proposal" }))}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  onClick={() => {
+                    trackWhatsApp("rental-hero", "proposta");
+                    openWhatsApp({ pageTitle: t("custom.rentalSection.heroOverlayTitle"), intent: "proposal" });
+                  }}
                   className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 font-mono text-xs md:text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
                 >
                    {t("custom.rentalSection.heroOverlayCta")}
                   <ArrowRight size={16} />
-                </a>
+                </button>
               </div>
             </div>
           </motion.div>
@@ -149,15 +150,16 @@ const RentalSection = () => {
             <p className="font-body text-sm md:text-base text-secondary-foreground/70 max-w-xl mx-auto mb-6 md:mb-8 leading-relaxed">
                {t("custom.rentalSection.finalDescription")}
             </p>
-            <a
-              href={whatsappLink(buildContextualWhatsAppMessage({ pageTitle: t("custom.rentalSection.heroOverlayTitle"), intent: "proposal" }))}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              onClick={() => {
+                trackWhatsApp("rental-section", "proposta");
+                openWhatsApp({ pageTitle: t("custom.rentalSection.heroOverlayTitle"), intent: "proposal" });
+              }}
               className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
             >
                {t("custom.rentalSection.finalCta")}
               <ArrowRight size={16} />
-            </a>
+            </button>
             <Link
               to="/locacao-de-computadores-para-empresas-jacarei"
               className="inline-flex items-center gap-2 border border-border text-foreground px-8 py-4 font-mono text-sm uppercase tracking-wider hover:border-primary hover:text-primary transition-all"
