@@ -365,10 +365,10 @@ const Navbar = () => {
             const active = i === activeIndex;
             const colorClass = active ? "text-primary" : "text-muted-foreground hover:text-primary";
 
-            if (link.isDropdown && link.label === "Segmentos") {
+            if (link.isDropdown && link.label === "nav.segmentos") {
               return renderMegaButton(link, i, active, segOpen, setSegOpen, segDropdownRef);
             }
-            if (link.isDropdown && link.label === "Serviços") {
+            if (link.isDropdown && link.label === "nav.servicos") {
               return renderMegaButton(link, i, active, svcOpen, setSvcOpen, svcDropdownRef);
             }
 
@@ -380,7 +380,7 @@ const Navbar = () => {
                 ref={(el) => { linkRefs.current[i] = el; }}
                 className={`${NAV_ITEM_CLASS} ${colorClass}`}
               >
-                {link.label}
+                {t(link.label)}
               </Link>
             ) : (
               <button
@@ -389,7 +389,7 @@ const Navbar = () => {
                 onClick={() => handleAnchorClick(link.href.replace("#", ""))}
                 className={`${NAV_ITEM_CLASS} ${colorClass}`}
               >
-                {link.label}
+                {t(link.label)}
               </button>
             );
           })}
@@ -398,7 +398,7 @@ const Navbar = () => {
             to="/orcamento-ti"
             className={`${NAV_ITEM_CLASS} text-muted-foreground hover:text-primary`}
           >
-            Orçamento
+            {t("nav.orcamento")}
           </Link>
 
           <a
@@ -407,8 +407,10 @@ const Navbar = () => {
             rel="noopener"
             className={`${NAV_ITEM_CLASS} text-muted-foreground hover:text-primary`}
           >
-            Webmail
+            {t("nav.webmail")}
           </a>
+
+          <LanguageSwitcher />
 
           {/* Área do Cliente — separated, red accent */}
           <Link
@@ -419,7 +421,7 @@ const Navbar = () => {
                 : "text-muted-foreground hover:text-red-500"
             }`}
           >
-            Área do Cliente
+            {t("nav.areaCliente")}
           </Link>
         </div>
 
