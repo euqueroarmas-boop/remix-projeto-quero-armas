@@ -28,12 +28,8 @@ const CartorioDowntimeCalculator = () => {
   return (
     <section className="py-16 md:py-24 bg-card border-y border-border">
       <div className="container mx-auto px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-10"
-        >
+        <div className="text-center mb-10">
+
           <span className="inline-block px-4 py-1.5 mb-4 text-xs font-semibold tracking-widest uppercase bg-destructive/10 text-destructive rounded-full border border-destructive/20">
             <AlertTriangle className="inline w-3 h-3 mr-1 -mt-0.5" />
             {t("custom.cartorioCalc.tag")}
