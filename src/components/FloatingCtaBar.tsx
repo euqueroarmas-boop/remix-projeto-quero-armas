@@ -76,7 +76,7 @@ const FloatingCtaBar = () => {
               <button
                 key={item.id}
                 onClick={() => handleClick(item.href, item.shortLabel)}
-                className={`flex-1 flex flex-col items-center gap-1 rounded-lg py-2 px-1 text-[10px] font-bold uppercase tracking-wide transition-all ${item.color}`}
+                className={`flex-1 flex flex-col items-center gap-1 rounded-lg py-2 px-1 text-[10px] font-bold uppercase tracking-wide transition-all no-glow ${item.color}`}
               >
                 <item.icon size={18} />
                 {item.shortLabel}
@@ -116,7 +116,7 @@ const FloatingCtaBar = () => {
                   animate={{ x: 0, opacity: 1 }}
                   transition={{ delay: i * 0.05 }}
                   onClick={() => handleClick(item.href, item.label)}
-                  className={`group flex items-center gap-3 rounded-lg shadow-lg px-4 py-3 font-mono text-xs font-bold uppercase tracking-wider transition-all ${item.color}`}
+                  className={`group flex items-center gap-3 rounded-lg shadow-lg px-4 py-3 font-mono text-xs font-bold uppercase tracking-wider transition-all no-glow ${item.color}`}
                 >
                   <item.icon size={18} className="shrink-0" />
                   <span className="whitespace-nowrap">{item.label}</span>
