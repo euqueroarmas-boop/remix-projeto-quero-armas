@@ -7,30 +7,30 @@ type LanguageSwitcherProps = {
 const LanguageSwitcher = ({ compact = false }: LanguageSwitcherProps) => {
   const { i18n } = useTranslation();
   const current = i18n.language?.startsWith("en") ? "en-US" : "pt-BR";
-
-  const base = compact
-    ? "w-8 h-8 rounded-full border flex items-center justify-center text-lg transition-all"
-    : "w-9 h-9 rounded-full border flex items-center justify-center text-lg transition-all";
+  const next = current === "pt-BR" ? "en-US" : "pt-BR";
 
   return (
-    <div className={`inline-flex items-center gap-1 ${!compact ? "h-16" : ""}`}>
-      <button
-        onClick={() => i18n.changeLanguage("pt-BR")}
-        className={`${base} ${current === "pt-BR" ? "border-primary bg-primary/10 shadow-sm" : "border-transparent opacity-50 hover:opacity-80"}`}
-        aria-label="Português"
-        title="Português"
-      >
-        🇧🇷
-      </button>
-      <button
-        onClick={() => i18n.changeLanguage("en-US")}
-        className={`${base} ${current === "en-US" ? "border-primary bg-primary/10 shadow-sm" : "border-transparent opacity-50 hover:opacity-80"}`}
-        aria-label="English"
-        title="English"
-      >
-        🇺🇸
-      </button>
-    </div>
+    <button
+      onClick={() => i18n.changeLanguage(next)}
+      className={compact
+        ? "inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-background/80 px-2.5 py-1.5 text-[11px] uppercase tracking-wider text-foreground shadow-sm backdrop-blur-sm transition-colors hover:border-primary/60 hover:text-primary min-h-[36px]"
+        : "inline-flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors h-16 justify-center"
+      }
+      aria-label={current === "pt-BR" ? "Switch to English" : "Mudar para Português"}
+      title={current === "pt-BR" ? "Switch to English" : "Mudar para Português"}
+    >
+      <span className="inline-flex items-center gap-1.5 leading-none font-mono">
+        <span className={`inline-flex items-center gap-1 ${current === "pt-BR" ? "text-foreground font-semibold" : "text-muted-foreground/50"}`}>
+          <img src="/flags/br.svg" alt="BR" className="w-4 h-3 rounded-[2px] object-cover" />
+          PT
+        </span>
+        <span className="text-muted-foreground/40">/</span>
+        <span className={`inline-flex items-center gap-1 ${current === "en-US" ? "text-foreground font-semibold" : "text-muted-foreground/50"}`}>
+          <img src="/flags/us.svg" alt="US" className="w-4 h-3 rounded-[2px] object-cover" />
+          EN
+        </span>
+      </span>
+    </button>
   );
 };
 
