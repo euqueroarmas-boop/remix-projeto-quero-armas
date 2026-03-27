@@ -42,7 +42,7 @@ const CartorioDowntimeCalculator = () => {
           <p className="text-muted-foreground max-w-xl mx-auto">
             {t("custom.cartorioCalc.subtitle")}
           </p>
-        </motion.div>
+        </div>
 
         <div className="max-w-3xl mx-auto">
           <motion.div
