@@ -70,6 +70,7 @@ const NAV_ITEM_CLASS = "font-mono text-xs uppercase tracking-wider flex items-ce
 const WEBMAIL_URL = "https://sigma.servidor.net.br:2096/cpsess3314771808/webmail/jupiter/mail/clientconf.html?login=1&post_login=62387806819454";
 
 const Navbar = () => {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [segOpen, setSegOpen] = useState(false);
   const [svcOpen, setSvcOpen] = useState(false);
