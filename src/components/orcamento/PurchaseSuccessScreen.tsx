@@ -56,9 +56,7 @@ const PurchaseSuccessScreen = ({ visible, data, quoteId, pdfUrl, pdfLoading, pdf
     ? data.contractId.slice(0, 8).toUpperCase()
     : null;
 
-  const whatsappText = encodeURIComponent(
-    `Olá! Acabei de contratar ${data.serviceName}${data.hours ? ` (${data.hours}h)` : ""} no valor de ${formatCurrency(data.monthlyValue)}. ${contractRef ? `Contrato: ${contractRef}` : ""}`
-  );
+  const whatsappRawMsg = `Olá! Acabei de contratar ${data.serviceName}${data.hours ? ` (${data.hours}h)` : ""} no valor de ${formatCurrency(data.monthlyValue)}. ${contractRef ? `Contrato: ${contractRef}` : ""}`;
 
   const handleDownloadPdf = async () => {
     if (!pdfUrl) return;
@@ -224,15 +222,13 @@ const PurchaseSuccessScreen = ({ visible, data, quoteId, pdfUrl, pdfLoading, pdf
           <Home className="w-4 h-4 mr-2" />
           Voltar para o site
         </Button>
-        <a
-          href={`https://wa.me/5511963166915?text=${whatsappText}`}
-          target="_blank"
-          rel="noopener noreferrer"
+        <button
+          onClick={() => openWhatsAppRaw(whatsappRawMsg)}
           className="w-full inline-flex items-center justify-center gap-2 h-12 border border-border text-foreground rounded-md hover:bg-muted transition-colors text-sm"
         >
           <MessageCircle className="w-4 h-4" />
           Falar no WhatsApp
-        </a>
+        </button>
       </div>
 
       {(pdfError || lastError) && (
