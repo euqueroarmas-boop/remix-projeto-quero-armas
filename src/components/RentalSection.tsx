@@ -150,7 +150,7 @@ const RentalSection = () => {
                {t("custom.rentalSection.finalDescription")}
             </p>
             <a
-              href={whatsappLink(t("custom.rentalSection.whatsappMessage2", { defaultValue: "Olá! Quero saber mais sobre a locação de computadores a partir de R$249/mês." }))}
+              href={whatsappLink(buildContextualWhatsAppMessage({ pageTitle: t("custom.rentalSection.heroOverlayTitle"), intent: "proposal" }))}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"

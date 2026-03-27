@@ -550,7 +550,7 @@ const Navbar = () => {
                 </Link>
 
                 <a
-                  href={whatsappLink(t("nav.whatsappMessage", { defaultValue: "Olá, gostaria de falar com um especialista em TI." }))}
+                  href={whatsappLink(buildContextualWhatsAppMessage({ intent: "specialist" }))}
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => { closeMobileMenu(); trackWhatsApp("navbar-mobile", "especialista"); }}
