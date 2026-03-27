@@ -2,6 +2,7 @@ import React, { Component, ErrorInfo, ReactNode } from "react";
 import { logSistema } from "@/lib/logSistema";
 import { buildWmtiError, formatErrorForClipboard, type WmtiError } from "@/lib/errorLogger";
 import { isChunkError } from "@/lib/lazyRetry";
+import i18n from "@/i18n";
 
 interface Props {
   children: ReactNode;
@@ -64,18 +65,17 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       const { isChunkError: isChunk } = this.state;
+      const t = i18n.t.bind(i18n);
 
       return (
         <div className="min-h-screen flex items-center justify-center bg-background p-6">
           <div className="max-w-md text-center space-y-4">
             <div className="text-5xl">{isChunk ? "🔄" : "⚠️"}</div>
             <h1 className="text-xl font-bold text-foreground">
-              {isChunk ? "Atualização detectada" : "Algo deu errado"}
+              {isChunk ? t("errors.updateDetected") : t("errors.somethingWrong")}
             </h1>
             <p className="text-muted-foreground text-sm">
-              {isChunk
-                ? "Uma nova versão do site foi publicada. Recarregue a página para continuar navegando."
-                : "Ocorreu um erro inesperado. Tente recarregar a página."}
+              {isChunk ? t("errors.updateDesc") : t("errors.errorDesc")}
             </p>
             {!isChunk && this.state.error && (
               <p className="text-xs text-destructive font-mono bg-destructive/10 p-2 rounded break-all">
@@ -87,7 +87,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 onClick={this.handleReload}
                 className="px-6 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium"
               >
-                Recarregar página
+                {t("errors.reload")}
               </button>
               {this.state.wmtiError && (
                 <button
