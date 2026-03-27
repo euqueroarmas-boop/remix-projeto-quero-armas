@@ -28,7 +28,7 @@ const FloatingCtaBar = () => {
     HIDDEN_ROUTES.some((r) => location.pathname.startsWith(r)) ||
     location.pathname.startsWith("/contratar/");
 
-  const ctaItems = getCtaItemsForPath(location.pathname);
+  const ctaItems = getCtaItemsForPath(location.pathname, t);
 
   useEffect(() => {
     setDismissed(false);
@@ -39,7 +39,7 @@ const FloatingCtaBar = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, [location.pathname]);
 
-  if (isHidden || !visible || dismissed) return null;
+  if (isHidden || !visible || dismissed || ctaItems.length === 0) return null;
 
   const handleClick = (href: string) => {
     if (href.startsWith("whatsapp:")) {
