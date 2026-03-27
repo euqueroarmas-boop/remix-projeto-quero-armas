@@ -253,6 +253,7 @@ const OrcamentoTiPage = () => {
       <Navbar />
 
       <main>
+        <OrcamentoLeadHero />
         <BudgetHero contextTitle={contextTitle} />
         <PathSelector onSelect={handlePathSelect} selected={selectedPath} />
 
