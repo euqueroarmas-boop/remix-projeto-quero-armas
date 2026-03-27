@@ -13,7 +13,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import slowComputer from "@/assets/slow-computer.webp";
-import MobileSummary from "@/components/MobileSummary";
+
 
 const problemIcons = [Thermometer, HardDrive, Bug, Wifi, Clock, ShieldX, Cpu, AlertTriangle];
 
@@ -22,16 +22,9 @@ const ProblemsSection = () => {
   const problems = (t("problems.items", { returnObjects: true }) as { title: string; desc: string; solution: string }[]).map((p, i) => ({ ...p, icon: problemIcons[i] }));
   return (
     <section id="problemas" className="bg-background">
-      {/* Mobile summary */}
-      <MobileSummary
-        tag={t("problems.mobileSummaryTag")}
-        title={<>{t("problems.mobileSummaryTitle1")} <span className="text-primary">{t("problems.mobileSummaryTitle2")}</span></>}
-        description={t("problems.mobileSummaryDesc")}
-        to="/servicos"
-      />
 
-      {/* Full content - desktop only */}
-      <div className="hidden md:block py-20 md:py-24">
+      {/* Full content */}
+      <div className="py-20 md:py-24">
         <div className="container">
           {/* Hero with image */}
           <div className="grid lg:grid-cols-2 gap-8 md:gap-12 items-center mb-12 md:mb-16">

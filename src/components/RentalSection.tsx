@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Monitor, Wrench, Headphones, RefreshCw, DollarSign, ShieldCheck, ArrowRight, CheckCircle2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import optiplexImage from "@/assets/optiplex-desktop.webp";
-import MobileSummary from "@/components/MobileSummary";
+
 
 const benefitIcons = [Monitor, Wrench, RefreshCw, Headphones, DollarSign, ShieldCheck];
 
@@ -17,17 +17,9 @@ const RentalSection = () => {
 
   return (
     <section id="locacao" className="section-light">
-      {/* Mobile summary */}
-      <MobileSummary
-        tag={t("custom.rentalSection.mobileTag")}
-        title={<>{t("custom.rentalSection.mobileTitle1")}<span className="text-primary">{t("custom.rentalSection.mobileHighlight")}</span></>}
-        description={t("custom.rentalSection.mobileDescription")}
-        to="/locacao"
-        className="section-light"
-      />
 
-      {/* Full content - desktop only */}
-      <div className="hidden md:block py-20 md:py-24">
+      {/* Full content */}
+      <div className="py-20 md:py-24">
         <div className="container">
           {/* Header */}
           <motion.div

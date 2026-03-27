@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Server, Cloud, Shield, HardDrive, Network, MonitorCog, ArrowRight } from "lucide-react";
 import datacenterImage from "@/assets/network-datacenter.webp";
-import MobileSummary from "@/components/MobileSummary";
+
 
 const services = [
   {
@@ -64,17 +64,9 @@ const services = [
 const ServicesSection = () => {
   return (
     <section id="servicos" className="section-light">
-      {/* Mobile summary */}
-      <MobileSummary
-        tag="Serviços"
-        title={<>Engenharia de sistemas, não <span className="text-primary">consultoria genérica.</span></>}
-        description="Implementamos e gerenciamos servidores Dell PowerEdge, Microsoft 365, firewalls pfSense, backup Veeam, redes estruturadas e monitoramento 24/7 com equipe certificada."
-        to="/servicos"
-        className="section-light"
-      />
 
-      {/* Full content - desktop only */}
-      <div className="hidden md:block py-20 md:py-24">
+      {/* Full content */}
+      <div className="py-20 md:py-24">
         <div className="container">
           <div className="grid lg:grid-cols-2 gap-8 md:gap-12 items-center mb-12 md:mb-16">
             <motion.div

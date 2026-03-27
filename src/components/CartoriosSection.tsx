@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ShieldCheck, HardDrive, Cloud, Server, Lock, Activity, FileCheck, AlertTriangle } from "lucide-react";
-import MobileSummary from "@/components/MobileSummary";
+
 
 const requirements = [
   {
@@ -87,17 +87,9 @@ const CartoriosSection = () => {
 
   return (
     <section id="cartorios" className="relative">
-      {/* Mobile summary */}
-      <MobileSummary
-        tag={t("custom.cartoriosHome.mobileTag")}
-        title={<>{t("custom.cartoriosHome.mobileTitle1")}<span className="text-primary">{t("custom.cartoriosHome.mobileHighlight")}</span>{t("custom.cartoriosHome.mobileTitle2")}</>}
-        description={t("custom.cartoriosHome.mobileDescription")}
-        to="/cartorios"
-        className="section-dark"
-      />
 
-      {/* Full content - desktop only */}
-      <div className="hidden md:block">
+      {/* Full content */}
+      <div>
         {/* Hero banner */}
         <div className="section-dark py-24 border-b-4 border-primary">
           <div className="container">

@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import poweredgeImage from "@/assets/poweredge-server.webp";
 import serverDetail from "@/assets/server-detail.webp";
-import MobileSummary from "@/components/MobileSummary";
+
 
 const specs = [
   { label: "Processador", value: "Intel Xeon Scalable 4ª Geração" },
@@ -17,17 +17,9 @@ const specs = [
 const InfraSection = () => {
   return (
     <section id="infraestrutura" className="section-dark">
-      {/* Mobile summary */}
-      <MobileSummary
-        tag="Dell PowerEdge"
-        title={<>Hardware que não falha. <span className="text-primary">R750xs.</span></>}
-        description="Servidores rack 2U com processadores Intel Xeon de 4ª geração, projetados para virtualização, bancos de dados e aplicações de missão crítica. Firewall pfSense como espinha dorsal de segurança."
-        to="/infraestrutura"
-        className="section-dark"
-      />
 
-      {/* Full content - desktop only */}
-      <div className="hidden md:block py-20 md:py-24">
+      {/* Full content */}
+      <div className="py-20 md:py-24">
         <div className="container">
           <div className="grid lg:grid-cols-12 gap-8 md:gap-16 items-start">
             {/* Left: Server image */}

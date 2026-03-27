@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Shield, Lock, Eye, Wifi, ArrowRight } from "lucide-react";
 import firewallImage from "@/assets/firewall-security.webp";
-import MobileSummary from "@/components/MobileSummary";
+
 
 const features = [
   {
@@ -30,17 +30,9 @@ const features = [
 const SecuritySection = () => {
   return (
     <section id="seguranca" className="section-light">
-      {/* Mobile summary - hidden since InfraSection already links to /infraestrutura */}
-      <MobileSummary
-        tag="Segurança"
-        title={<>Perímetro blindado. <span className="text-primary">pfSense</span> como espinha dorsal.</>}
-        description="Firewalls pfSense com VPN IPsec/OpenVPN, IDS/IPS Suricata, balanceamento de carga e failover automático de links WAN. Segurança sem compromisso."
-        to="/infraestrutura"
-        className="section-light"
-      />
 
-      {/* Full content - desktop only */}
-      <div className="hidden md:block py-20 md:py-24">
+      {/* Full content */}
+      <div className="py-20 md:py-24">
         <div className="container">
           <div className="grid lg:grid-cols-2 gap-8 md:gap-12 items-center mb-12 md:mb-16">
             <motion.div
