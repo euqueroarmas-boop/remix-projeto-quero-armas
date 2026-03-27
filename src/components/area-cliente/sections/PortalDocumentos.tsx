@@ -8,6 +8,7 @@ import SectionHeader from "../shared/SectionHeader";
 import StatusBadge from "../shared/StatusBadge";
 import LoadingSkeleton from "../shared/LoadingSkeleton";
 import EmptyState from "../shared/EmptyState";
+import { useTranslation } from "react-i18next";
 
 const categories = ["todos", "contratos", "fiscais"] as const;
 
@@ -16,6 +17,7 @@ function formatDate(d: string) {
 }
 
 export default function PortalDocumentos({ customer }: { customer: CustomerData }) {
+  const { t } = useTranslation();
   const { contracts, loading: cl } = useClientContracts(customer.id);
   const { docs: fiscalDocs, loading: fl } = useClientFiscalDocs(customer.id);
   const [cat, setCat] = useState<string>("todos");
@@ -25,10 +27,10 @@ export default function PortalDocumentos({ customer }: { customer: CustomerData 
   const contractDocs = contracts.map((c) => ({
     id: c.id,
     type: "contrato" as const,
-    title: c.contract_type === "locacao" ? "Contrato de Locação" :
-           c.contract_type === "suporte" ? "Contrato de Suporte" :
-           c.contract_type === "horas" ? "Contrato de Horas" :
-           "Contrato",
+      title: c.contract_type === "locacao" ? t("clientPortal.documents.contractLease") :
+           c.contract_type === "suporte" ? t("clientPortal.documents.contractSupport") :
+           c.contract_type === "horas" ? t("clientPortal.documents.contractHours") :
+           t("clientPortal.documents.contract"),
     status: c.signed ? "Assinado" : c.status || "draft",
     date: c.signed_at || c.created_at,
     url: c.contract_pdf_path,
@@ -37,7 +39,7 @@ export default function PortalDocumentos({ customer }: { customer: CustomerData 
   const fiscalItems = fiscalDocs.map((d) => ({
     id: d.id,
     type: "fiscal" as const,
-    title: d.document_type === "nota_fiscal" ? "Nota Fiscal" : d.document_type === "recibo" ? "Recibo" : d.document_type,
+      title: d.document_type === "nota_fiscal" ? t("clientPortal.documents.invoice") : d.document_type === "recibo" ? t("clientPortal.documents.receipt") : d.document_type,
     status: d.status,
     date: d.issue_date || d.created_at,
     url: d.file_url,
@@ -50,12 +52,12 @@ export default function PortalDocumentos({ customer }: { customer: CustomerData 
 
   return (
     <div className="space-y-6">
-      <SectionHeader icon={FolderOpen} title="Contratos e Documentos" description="Todos os documentos centralizados" />
+      <SectionHeader icon={FolderOpen} title={t("clientPortal.tabs.documentos")} description={t("clientPortal.documents.description")} />
 
       <div className="flex flex-wrap gap-2">
         {categories.map((c) => (
           <Button key={c} size="sm" variant={cat === c ? "default" : "outline"} className="text-xs capitalize" onClick={() => setCat(c)}>
-            {c === "todos" ? "Todos" : c === "contratos" ? "Contratos" : "Fiscais"}
+            {c === "todos" ? t("clientPortal.documents.filters.todos") : c === "contratos" ? t("clientPortal.documents.filters.contratos") : t("clientPortal.documents.filters.fiscais")}
           </Button>
         ))}
       </div>
@@ -63,7 +65,7 @@ export default function PortalDocumentos({ customer }: { customer: CustomerData 
       {loading ? (
         <LoadingSkeleton rows={4} />
       ) : allDocs.length === 0 ? (
-        <EmptyState icon={FolderOpen} title="Nenhum documento" description="Contratos, notas fiscais e outros documentos aparecerão aqui." />
+        <EmptyState icon={FolderOpen} title={t("clientPortal.documents.emptyTitle")} description={t("clientPortal.documents.emptyDescription")} />
       ) : (
         <div className="space-y-2">
           {allDocs.map((d) => (

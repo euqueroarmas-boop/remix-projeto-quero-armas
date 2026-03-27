@@ -9,6 +9,7 @@ import ClientPortal from "@/components/area-cliente/ClientPortal";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import { logSistema } from "@/lib/logSistema";
+import { useTranslation } from "react-i18next";
 
 export interface CustomerData {
   id: string;
@@ -24,6 +25,7 @@ export interface CustomerData {
 }
 
 const AreaDoClientePage = () => {
+  const { t } = useTranslation();
   const [customer, setCustomer] = useState<CustomerData | null>(null);
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -112,9 +114,9 @@ const AreaDoClientePage = () => {
           <ClientPortal customer={customer} onLogout={handleLogout} />
         ) : (
           <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-4">
-            <p className="text-foreground text-center">Sua conta não está vinculada a nenhuma empresa.</p>
-            <p className="text-sm text-muted-foreground text-center">Entre em contato com a WMTi para vincular seu acesso.</p>
-            <button onClick={handleLogout} className="text-primary text-sm hover:underline">Sair</button>
+             <p className="text-foreground text-center">{t("clientPortal.unlinkedTitle")}</p>
+             <p className="text-sm text-muted-foreground text-center">{t("clientPortal.unlinkedDescription")}</p>
+             <button onClick={handleLogout} className="text-primary text-sm hover:underline">{t("clientPortal.logout")}</button>
           </div>
         )}
       </main>

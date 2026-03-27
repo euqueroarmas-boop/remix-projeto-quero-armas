@@ -6,6 +6,7 @@ import SectionHeader from "../shared/SectionHeader";
 import StatusBadge from "../shared/StatusBadge";
 import LoadingSkeleton from "../shared/LoadingSkeleton";
 import EmptyState from "../shared/EmptyState";
+import { useTranslation } from "react-i18next";
 
 const eventIcons: Record<string, string> = {
   contrato: "📄", pagamento: "💳", cobranca: "🧾", servico: "📦",
@@ -22,6 +23,7 @@ interface Props {
 }
 
 export default function PortalOverview({ customer, onNavigate }: Props) {
+  const { t, i18n } = useTranslation();
   const { contracts, loading: cl } = useClientContracts(customer.id);
   const { payments, loading: pl } = useClientPayments(customer.id);
   const { requests, loading: rl } = useClientServiceRequests(customer.id);
@@ -32,17 +34,17 @@ export default function PortalOverview({ customer, onNavigate }: Props) {
   const openRequests = requests.filter((r) => !["concluido", "concluído", "cancelado"].includes(r.status));
 
   const cards = [
-    { icon: Package, label: "Serviços Ativos", value: activeContracts.length, color: "text-emerald-400", tab: "servicos" },
-    { icon: MessageSquare, label: "Solicitações Abertas", value: openRequests.length, color: "text-blue-400", tab: "solicitacoes" },
-    { icon: DollarSign, label: "Cobranças Pendentes", value: pendingPayments.length, color: "text-yellow-400", tab: "financeiro" },
-    { icon: FolderOpen, label: "Contratos", value: contracts.length, color: "text-primary", tab: "documentos" },
+    { icon: Package, label: t("clientPortal.overview.activeServices"), value: activeContracts.length, color: "text-emerald-400", tab: "servicos" },
+    { icon: MessageSquare, label: t("clientPortal.overview.openRequests"), value: openRequests.length, color: "text-blue-400", tab: "solicitacoes" },
+    { icon: DollarSign, label: t("clientPortal.overview.pendingCharges"), value: pendingPayments.length, color: "text-yellow-400", tab: "financeiro" },
+    { icon: FolderOpen, label: t("clientPortal.overview.contracts"), value: contracts.length, color: "text-primary", tab: "documentos" },
   ];
 
   const loading = cl || pl || rl;
 
   return (
     <div className="space-y-8">
-      <SectionHeader icon={LayoutDashboard} title="Visão Geral" description={`Bem-vindo, ${customer.responsavel}`} />
+      <SectionHeader icon={LayoutDashboard} title={t("clientPortal.tabs.overview")} description={t("clientPortal.overview.welcome", { name: customer.responsavel })} />
 
       {loading ? (
         <LoadingSkeleton rows={4} />
@@ -70,14 +72,14 @@ export default function PortalOverview({ customer, onNavigate }: Props) {
           {/* Recent payments */}
           {payments.length > 0 && (
             <div>
-              <h3 className="font-heading text-sm font-bold text-foreground mb-3">Últimos Pagamentos</h3>
+               <h3 className="font-heading text-sm font-bold text-foreground mb-3">{t("clientPortal.overview.latestPayments")}</h3>
               <div className="space-y-2">
                 {payments.slice(0, 3).map((p) => (
                   <Card key={p.id}>
                     <CardContent className="p-4 flex items-center justify-between">
                       <div>
-                        <p className="text-sm text-foreground font-medium">{p.billing_type || p.payment_method || "Pagamento"}</p>
-                        <p className="text-xs text-muted-foreground">{formatDate(p.created_at)}</p>
+                         <p className="text-sm text-foreground font-medium">{p.billing_type || p.payment_method || t("clientPortal.overview.payment")}</p>
+                         <p className="text-xs text-muted-foreground">{new Date(p.created_at).toLocaleDateString(i18n.language === "en-US" ? "en-US" : "pt-BR", { day: "2-digit", month: "short", year: "numeric" })}</p>
                       </div>
                       <StatusBadge status={p.payment_status} />
                     </CardContent>
@@ -90,12 +92,12 @@ export default function PortalOverview({ customer, onNavigate }: Props) {
           {/* Timeline */}
           <div>
             <h3 className="font-heading text-sm font-bold text-foreground mb-3 flex items-center gap-2">
-              <Clock size={14} className="text-primary" /> Linha do Tempo
+               <Clock size={14} className="text-primary" /> {t("clientPortal.overview.timeline")}
             </h3>
             {el ? (
               <LoadingSkeleton rows={3} />
             ) : events.length === 0 ? (
-              <EmptyState icon={Clock} title="Nenhum evento" description="Os eventos do seu histórico aparecerão aqui." />
+               <EmptyState icon={Clock} title={t("clientPortal.overview.noEvents")} description={t("clientPortal.overview.noEventsDescription")} />
             ) : (
               <div className="space-y-2">
                 {events.slice(0, 8).map((ev) => (

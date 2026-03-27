@@ -12,6 +12,7 @@ import SectionHeader from "../shared/SectionHeader";
 import StatusBadge from "../shared/StatusBadge";
 import LoadingSkeleton from "../shared/LoadingSkeleton";
 import EmptyState from "../shared/EmptyState";
+import { useTranslation } from "react-i18next";
 
 const serviceTypes = [
   { value: "suporte", label: "Suporte Técnico" },
@@ -28,6 +29,7 @@ function formatDate(d: string) {
 }
 
 export default function PortalSolicitacoes({ customer }: { customer: CustomerData }) {
+  const { t } = useTranslation();
   const { requests, loading, setRequests } = useClientServiceRequests(customer.id);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -55,7 +57,7 @@ export default function PortalSolicitacoes({ customer }: { customer: CustomerDat
       await supabase.from("client_events").insert({
         customer_id: customer.id,
         event_type: "solicitacao",
-        title: "Nova solicitação aberta",
+         title: t("clientPortal.requests.newRequestOpened"),
         description: form.title,
         related_id: data.id,
         related_table: "service_requests",
@@ -71,11 +73,11 @@ export default function PortalSolicitacoes({ customer }: { customer: CustomerDat
     <div className="space-y-6">
       <SectionHeader
         icon={MessageSquare}
-        title="Solicitações"
-        description="Abra e acompanhe chamados técnicos"
+        title={t("clientPortal.tabs.solicitacoes")}
+        description={t("clientPortal.requests.description")}
         action={
           <Button size="sm" onClick={() => setShowForm(!showForm)}>
-            <Plus size={14} className="mr-1" /> Nova Solicitação
+            <Plus size={14} className="mr-1" /> {t("clientPortal.requests.newRequest")}
           </Button>
         }
       />
@@ -85,7 +87,7 @@ export default function PortalSolicitacoes({ customer }: { customer: CustomerDat
           <CardContent className="p-5">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Tipo de Serviço</label>
+                 <label className="text-xs text-muted-foreground mb-1 block">{t("clientPortal.requests.serviceType")}</label>
                 <Select value={form.service_type} onValueChange={(v) => setForm({ ...form, service_type: v })}>
                   <SelectTrigger className="bg-card"><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -94,18 +96,18 @@ export default function PortalSolicitacoes({ customer }: { customer: CustomerDat
                 </Select>
               </div>
               <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Título</label>
-                <Input placeholder="Resumo da solicitação" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="bg-card" />
+                 <label className="text-xs text-muted-foreground mb-1 block">{t("clientPortal.requests.title")}</label>
+                 <Input placeholder={t("clientPortal.requests.titlePlaceholder")} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="bg-card" />
               </div>
               <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Descrição</label>
-                <Textarea placeholder="Descreva o problema ou necessidade..." value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="bg-card" rows={4} />
+                 <label className="text-xs text-muted-foreground mb-1 block">{t("clientPortal.requests.descriptionLabel")}</label>
+                 <Textarea placeholder={t("clientPortal.requests.descriptionPlaceholder")} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="bg-card" rows={4} />
               </div>
               <div className="flex gap-2 justify-end">
-                <Button type="button" variant="ghost" size="sm" onClick={() => setShowForm(false)}>Cancelar</Button>
+                 <Button type="button" variant="ghost" size="sm" onClick={() => setShowForm(false)}>{t("clientPortal.cancel")}</Button>
                 <Button type="submit" size="sm" disabled={saving || !form.title.trim()}>
                   {saving ? <Loader2 size={14} className="animate-spin mr-1" /> : <Send size={14} className="mr-1" />}
-                  Enviar
+                  {t("clientPortal.send")}
                 </Button>
               </div>
             </form>
@@ -116,7 +118,7 @@ export default function PortalSolicitacoes({ customer }: { customer: CustomerDat
       {loading ? (
         <LoadingSkeleton rows={4} />
       ) : requests.length === 0 ? (
-        <EmptyState icon={MessageSquare} title="Nenhuma solicitação" description="Abra uma nova solicitação para receber suporte técnico." />
+         <EmptyState icon={MessageSquare} title={t("clientPortal.requests.emptyTitle")} description={t("clientPortal.requests.emptyDescription")} />
       ) : (
         <div className="space-y-2">
           {requests.map((r) => (

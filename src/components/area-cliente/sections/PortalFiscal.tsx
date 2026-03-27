@@ -7,6 +7,7 @@ import SectionHeader from "../shared/SectionHeader";
 import StatusBadge from "../shared/StatusBadge";
 import LoadingSkeleton from "../shared/LoadingSkeleton";
 import EmptyState from "../shared/EmptyState";
+import { useTranslation } from "react-i18next";
 
 const docTypeLabels: Record<string, string> = {
   nota_fiscal: "Nota Fiscal",
@@ -26,16 +27,17 @@ function formatCurrency(v: number | null) {
 }
 
 export default function PortalFiscal({ customer }: { customer: CustomerData }) {
+  const { t } = useTranslation();
   const { docs, loading } = useClientFiscalDocs(customer.id);
 
   return (
     <div className="space-y-6">
-      <SectionHeader icon={FileText} title="Fiscal" description="Documentos fiscais emitidos" />
+      <SectionHeader icon={FileText} title={t("clientPortal.tabs.fiscal")} description={t("clientPortal.fiscal.description")} />
 
       {loading ? (
         <LoadingSkeleton rows={4} />
       ) : docs.length === 0 ? (
-        <EmptyState icon={FileText} title="Nenhum documento fiscal" description="Notas fiscais, recibos e faturas emitidos aparecerão aqui." />
+        <EmptyState icon={FileText} title={t("clientPortal.fiscal.emptyTitle")} description={t("clientPortal.fiscal.emptyDescription")} />
       ) : (
         <div className="space-y-2">
           {docs.map((d) => (
@@ -50,16 +52,16 @@ export default function PortalFiscal({ customer }: { customer: CustomerData }) {
                       <StatusBadge status={d.status} />
                     </div>
                     <div className="flex flex-wrap gap-x-4 text-xs text-muted-foreground">
-                      {d.document_number && <span>Nº {d.document_number}</span>}
-                      <span>Emissão: {formatDate(d.issue_date)}</span>
-                      <span>Valor: {formatCurrency(d.amount)}</span>
+                       {d.document_number && <span>{t("clientPortal.fiscal.number", { value: d.document_number })}</span>}
+                       <span>{t("clientPortal.fiscal.issueDate", { date: formatDate(d.issue_date) })}</span>
+                       <span>{t("clientPortal.fiscal.amount", { value: formatCurrency(d.amount) })}</span>
                     </div>
                     {d.notes && <p className="text-xs text-muted-foreground mt-1">{d.notes}</p>}
                   </div>
                   {d.file_url && (
                     <a href={d.file_url} target="_blank" rel="noopener noreferrer">
                       <Button size="sm" variant="outline" className="text-xs">
-                        <Download size={12} className="mr-1" /> Baixar
+                         <Download size={12} className="mr-1" /> {t("clientPortal.download")}
                       </Button>
                     </a>
                   )}

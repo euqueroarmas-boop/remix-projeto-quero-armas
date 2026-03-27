@@ -8,8 +8,10 @@ import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SeoHead from "@/components/SeoHead";
+import { useTranslation } from "react-i18next";
 
 export default function RedefinirSenhaPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -36,8 +38,8 @@ export default function RedefinirSenhaPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password.length < 6) { setError("A senha deve ter pelo menos 6 caracteres."); return; }
-    if (password !== confirm) { setError("As senhas não coincidem."); return; }
+    if (password.length < 6) { setError(t("resetPassword.errors.passwordLength")); return; }
+    if (password !== confirm) { setError(t("resetPassword.errors.passwordMismatch")); return; }
 
     setLoading(true);
     setError("");
@@ -47,7 +49,7 @@ export default function RedefinirSenhaPage() {
     setLoading(false);
 
     if (err) {
-      setError("Erro ao atualizar a senha. Tente novamente.");
+      setError(t("resetPassword.errors.update"));
       return;
     }
 
@@ -57,7 +59,7 @@ export default function RedefinirSenhaPage() {
 
   return (
     <>
-      <SeoHead title="Redefinir Senha | WMTi" description="Defina sua nova senha de acesso." />
+      <SeoHead title={t("resetPassword.seoTitle")} description={t("resetPassword.seoDescription")} />
       <Navbar />
       <section className="min-h-screen flex items-center justify-center py-24 px-4">
         <motion.div
@@ -70,33 +72,33 @@ export default function RedefinirSenhaPage() {
           </div>
 
           <h1 className="text-2xl font-heading font-bold text-foreground mb-2">
-            {success ? "Senha Atualizada!" : "Definir Nova Senha"}
+            {success ? t("resetPassword.updated") : t("resetPassword.title")}
           </h1>
 
           {success ? (
             <div className="space-y-4">
               <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-4 flex items-center gap-2 text-emerald-400">
-                <Check size={18} /> Sua senha foi atualizada com sucesso.
+                <Check size={18} /> {t("resetPassword.success")}
               </div>
-              <p className="text-sm text-muted-foreground">Redirecionando para a Área do Cliente...</p>
+              <p className="text-sm text-muted-foreground">{t("resetPassword.redirecting")}</p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4 text-left mt-6">
               <div>
-                <label className="text-sm text-muted-foreground mb-1 block">Nova Senha</label>
+                 <label className="text-sm text-muted-foreground mb-1 block">{t("resetPassword.newPassword")}</label>
                 <Input
                   type="password"
-                  placeholder="Mínimo 6 caracteres"
+                   placeholder={t("resetPassword.newPasswordPlaceholder")}
                   value={password}
                   onChange={(e) => { setPassword(e.target.value); setError(""); }}
                   className="bg-card border-border text-foreground"
                 />
               </div>
               <div>
-                <label className="text-sm text-muted-foreground mb-1 block">Confirmar Senha</label>
+                 <label className="text-sm text-muted-foreground mb-1 block">{t("resetPassword.confirmPassword")}</label>
                 <Input
                   type="password"
-                  placeholder="Repita a senha"
+                   placeholder={t("resetPassword.confirmPasswordPlaceholder")}
                   value={confirm}
                   onChange={(e) => { setConfirm(e.target.value); setError(""); }}
                   className="bg-card border-border text-foreground"
@@ -107,7 +109,7 @@ export default function RedefinirSenhaPage() {
 
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                Salvar Nova Senha
+                {t("resetPassword.save")}
               </Button>
             </form>
           )}

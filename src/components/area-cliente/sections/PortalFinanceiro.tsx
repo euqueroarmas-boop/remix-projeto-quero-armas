@@ -8,6 +8,7 @@ import SectionHeader from "../shared/SectionHeader";
 import StatusBadge from "../shared/StatusBadge";
 import LoadingSkeleton from "../shared/LoadingSkeleton";
 import EmptyState from "../shared/EmptyState";
+import { useTranslation } from "react-i18next";
 
 const filters = ["todos", "pending", "confirmed", "overdue", "cancelled"] as const;
 const filterLabels: Record<string, string> = {
@@ -25,6 +26,7 @@ function paymentMethodLabel(m: string | null) {
 }
 
 export default function PortalFinanceiro({ customer }: { customer: CustomerData }) {
+  const { t } = useTranslation();
   const { payments, loading } = useClientPayments(customer.id);
   const [filter, setFilter] = useState<string>("todos");
 
@@ -34,7 +36,7 @@ export default function PortalFinanceiro({ customer }: { customer: CustomerData 
 
   return (
     <div className="space-y-6">
-      <SectionHeader icon={DollarSign} title="Financeiro" description="Cobranças e pagamentos" />
+      <SectionHeader icon={DollarSign} title={t("clientPortal.tabs.financeiro")} description={t("clientPortal.finance.description")} />
 
       <div className="flex flex-wrap gap-2">
         {filters.map((f) => (
@@ -45,7 +47,7 @@ export default function PortalFinanceiro({ customer }: { customer: CustomerData 
             className="text-xs"
             onClick={() => setFilter(f)}
           >
-            {filterLabels[f]}
+            {t(`clientPortal.finance.filters.${f}`)}
           </Button>
         ))}
       </div>
@@ -53,7 +55,7 @@ export default function PortalFinanceiro({ customer }: { customer: CustomerData 
       {loading ? (
         <LoadingSkeleton rows={5} />
       ) : filtered.length === 0 ? (
-        <EmptyState icon={DollarSign} title="Nenhuma cobrança" description="Suas cobranças e pagamentos aparecerão aqui." />
+        <EmptyState icon={DollarSign} title={t("clientPortal.finance.emptyTitle")} description={t("clientPortal.finance.emptyDescription")} />
       ) : (
         <div className="space-y-2">
           {filtered.map((p) => (
@@ -63,20 +65,20 @@ export default function PortalFinanceiro({ customer }: { customer: CustomerData 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <h4 className="text-sm font-heading font-bold text-foreground">
-                        {p.billing_type || "Cobrança"}
+                         {p.billing_type || t("clientPortal.finance.charge")}
                       </h4>
                       <StatusBadge status={p.payment_status} />
                     </div>
                     <div className="flex flex-wrap gap-x-4 text-xs text-muted-foreground">
                       <span>{paymentMethodLabel(p.payment_method)}</span>
-                      {p.due_date && <span>Vencimento: {formatDate(p.due_date)}</span>}
-                      <span>Criado: {formatDate(p.created_at)}</span>
+                       {p.due_date && <span>{t("clientPortal.finance.dueDate", { date: formatDate(p.due_date) })}</span>}
+                       <span>{t("clientPortal.finance.createdAt", { date: formatDate(p.created_at) })}</span>
                     </div>
                   </div>
                   {p.asaas_invoice_url && (
                     <a href={p.asaas_invoice_url} target="_blank" rel="noopener noreferrer">
                       <Button size="sm" variant="outline" className="text-xs">
-                        <ExternalLink size={12} className="mr-1" /> Ver Cobrança
+                         <ExternalLink size={12} className="mr-1" /> {t("clientPortal.finance.viewCharge")}
                       </Button>
                     </a>
                   )}

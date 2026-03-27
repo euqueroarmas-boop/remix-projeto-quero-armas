@@ -2,27 +2,32 @@ import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Calendar, Search, X, Filter, Layers } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import SeoHead from "@/components/SeoHead";
 import { blogPosts, blogCategories, type BlogCategory } from "@/data/blogPosts";
+import { useLocalizedContent } from "@/hooks/useLocalizedContent";
 
 export type { BlogPost } from "@/data/blogPosts";
 export { blogPosts } from "@/data/blogPosts";
 
 const BlogPage = () => {
+  const { t, i18n } = useTranslation();
   const [activeCategory, setActiveCategory] = useState<BlogCategory | "Todos">("Todos");
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+  const localizedPosts = useLocalizedContent(blogPosts);
+  const localizedCategories = useLocalizedContent(blogCategories);
 
   const sorted = useMemo(
-    () => [...blogPosts].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
-    []
+    () => [...localizedPosts].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+    [localizedPosts]
   );
 
   const filtered = useMemo(() => {
-    let results = activeCategory === "Todos" ? sorted : sorted.filter((p) => p.category === activeCategory);
+    let results = activeCategory === "Todos" ? sorted : sorted.filter((p) => p.category === activeCategory || blogPosts.find((base) => base.slug === p.slug)?.category === activeCategory);
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       results = results.filter(
@@ -39,6 +44,13 @@ const BlogPage = () => {
   const restPosts = filtered.slice(1);
   const recentSlugs = new Set(sorted.slice(0, 3).map((p) => p.slug));
   const allCategories: (BlogCategory | "Todos")[] = ["Todos", ...blogCategories];
+  const categoryLabelMap = useMemo(() => {
+    const map = new Map<BlogCategory, string>();
+    blogCategories.forEach((category, index) => {
+      map.set(category, localizedCategories[index] || category);
+    });
+    return map;
+  }, [localizedCategories]);
 
   // Count posts per category
   const categoryCounts = useMemo(() => {
@@ -64,7 +76,7 @@ const BlogPage = () => {
           : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
       }`}
     >
-      <span className="truncate">{cat}</span>
+      <span className="truncate">{cat === "Todos" ? t("blogPage.allCategories") : categoryLabelMap.get(cat as BlogCategory) || cat}</span>
       <span className={`font-mono text-[10px] tabular-nums shrink-0 ml-2 ${
         activeCategory === cat ? "text-primary" : "text-muted-foreground/50"
       }`}>
@@ -88,13 +100,13 @@ const BlogPage = () => {
         <div className="container relative z-10 max-w-4xl mx-auto text-center">
           <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
             <span className="inline-block font-mono text-[11px] tracking-[0.3em] uppercase text-primary mb-5 border border-primary/20 rounded-full px-4 py-1.5">
-              // Blog
+              {t("blogPage.tag")}
             </span>
             <h1 className="text-4xl md:text-6xl font-bold leading-[1.1] mb-5">
-              Blog <span className="text-primary">WMTi</span>
+              {t("blogPage.title")} <span className="text-primary">WMTi</span>
             </h1>
             <p className="font-body text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              Conteúdos sobre infraestrutura de TI, servidores, redes corporativas, Microsoft 365, segurança da informação e tecnologia para empresas.
+              {t("blogPage.description")}
             </p>
           </motion.div>
 
@@ -112,7 +124,7 @@ const BlogPage = () => {
               />
               <input
                 type="text"
-                placeholder="Buscar artigos..."
+                placeholder={t("blogPage.searchPlaceholder")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-11 pr-10 py-3.5 rounded-xl bg-card border border-border text-foreground placeholder:text-muted-foreground/60 font-body text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/60 transition-all"
@@ -141,7 +153,7 @@ const BlogPage = () => {
             >
               <span className="flex items-center gap-2">
                 <Filter size={14} className="text-primary" />
-                {activeCategory === "Todos" ? "Todas as categorias" : activeCategory}
+                  {activeCategory === "Todos" ? t("blogPage.allCategories") : categoryLabelMap.get(activeCategory as BlogCategory) || activeCategory}
               </span>
               <Filter size={14} className="text-muted-foreground" />
             </button>
@@ -162,7 +174,7 @@ const BlogPage = () => {
                   <div className="flex items-center gap-2">
                     <Layers size={16} className="text-primary" />
                     <span className="font-mono text-sm uppercase tracking-[0.15em] text-foreground">
-                      Categorias
+                      {t("blogPage.categories")}
                     </span>
                   </div>
                   <button
@@ -191,7 +203,7 @@ const BlogPage = () => {
                             : "text-muted-foreground hover:bg-muted/50 hover:text-foreground border border-transparent"
                         }`}
                       >
-                        <span>{cat}</span>
+                        <span>{cat === "Todos" ? t("blogPage.allCategories") : categoryLabelMap.get(cat as BlogCategory) || cat}</span>
                         <span className={`font-mono text-xs tabular-nums ${
                           activeCategory === cat ? "text-primary" : "text-muted-foreground/40"
                         }`}>
@@ -212,7 +224,7 @@ const BlogPage = () => {
                 <div className="flex items-center gap-2 px-3 mb-3">
                   <Layers size={14} className="text-primary" />
                   <span className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
-                    Categorias
+                      {t("blogPage.categories")}
                   </span>
                 </div>
                 <div className="flex flex-col gap-0.5">
@@ -229,12 +241,12 @@ const BlogPage = () => {
               {(activeCategory !== "Todos" || searchQuery) && (
                 <div className="flex items-center justify-between mb-6">
                   <p className="font-mono text-xs text-muted-foreground">
-                    {filtered.length} artigo{filtered.length !== 1 ? "s" : ""}
+                    {t("blogPage.resultsCount", { count: filtered.length })}
                     {activeCategory !== "Todos" && (
-                      <> em <span className="text-primary">{activeCategory}</span></>
+                      <> {t("blogPage.inCategory")} <span className="text-primary">{categoryLabelMap.get(activeCategory as BlogCategory) || activeCategory}</span></>
                     )}
                     {searchQuery && (
-                      <> para &ldquo;<span className="text-primary">{searchQuery}</span>&rdquo;</>
+                      <> {t("blogPage.forQuery")} &ldquo;<span className="text-primary">{searchQuery}</span>&rdquo;</>
                     )}
                   </p>
                   <button
@@ -242,19 +254,19 @@ const BlogPage = () => {
                     className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors"
                   >
                     <X size={12} />
-                    Limpar
+                    {t("blogPage.clear")}
                   </button>
                 </div>
               )}
 
               {filtered.length === 0 && (
                 <div className="text-center py-20">
-                  <p className="text-muted-foreground font-body text-lg">Nenhum artigo encontrado.</p>
+                  <p className="text-muted-foreground font-body text-lg">{t("blogPage.noArticles")}</p>
                   <button
                     onClick={() => { setActiveCategory("Todos"); setSearchQuery(""); }}
                     className="mt-4 font-mono text-xs uppercase tracking-wider text-primary hover:underline"
                   >
-                    Limpar filtros
+                    {t("blogPage.clearFilters")}
                   </button>
                 </div>
               )}
@@ -282,18 +294,18 @@ const BlogPage = () => {
                         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent md:bg-gradient-to-r md:from-transparent md:via-transparent md:to-black/10" />
                         {recentSlugs.has(featuredPost.slug) && (
                           <span className="absolute top-4 left-4 font-mono text-[10px] tracking-[0.15em] uppercase bg-primary text-primary-foreground px-3 py-1 rounded-full">
-                            Recente
+                            {t("blogPage.recent")}
                           </span>
                         )}
                       </div>
                       <div className="p-6 md:p-8 flex flex-col justify-center">
                         <div className="flex items-center gap-3 mb-4 flex-wrap">
                           <span className="font-mono text-[10px] tracking-[0.15em] uppercase text-primary border border-primary/30 px-2.5 py-1 rounded-full">
-                            {featuredPost.category}
+                            {categoryLabelMap.get((blogPosts.find((base) => base.slug === featuredPost.slug)?.category || featuredPost.category) as BlogCategory) || featuredPost.category}
                           </span>
                           <span className="flex items-center gap-1.5 font-mono text-[10px] text-muted-foreground">
                             <Calendar size={10} />
-                            {new Date(featuredPost.date).toLocaleDateString("pt-BR")}
+                            {new Date(featuredPost.date).toLocaleDateString(i18n.language === "en-US" ? "en-US" : "pt-BR")}
                           </span>
                           <span className="font-mono text-[10px] text-muted-foreground">
                             {featuredPost.readTime}
@@ -306,7 +318,7 @@ const BlogPage = () => {
                           {featuredPost.excerpt}
                         </p>
                         <span className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-primary group-hover:gap-3 transition-all">
-                          Ler artigo
+                          {t("blogPage.readArticle")}
                           <ArrowRight size={14} />
                         </span>
                       </div>
@@ -339,7 +351,7 @@ const BlogPage = () => {
                           />
                           {recentSlugs.has(post.slug) && (
                             <span className="absolute top-3 left-3 font-mono text-[9px] tracking-[0.15em] uppercase bg-primary text-primary-foreground px-2.5 py-0.5 rounded-full">
-                              Recente
+                              {t("blogPage.recent")}
                             </span>
                           )}
                         </div>
@@ -347,11 +359,11 @@ const BlogPage = () => {
                         <div className="p-5 flex flex-col">
                           <div className="flex items-center gap-2 mb-3 flex-wrap">
                             <span className="font-mono text-[10px] tracking-[0.12em] uppercase text-primary border border-primary/25 px-2 py-0.5 rounded-full">
-                              {post.category}
+                              {categoryLabelMap.get((blogPosts.find((base) => base.slug === post.slug)?.category || post.category) as BlogCategory) || post.category}
                             </span>
                             <span className="flex items-center gap-1 font-mono text-[10px] text-muted-foreground">
                               <Calendar size={9} />
-                              {new Date(post.date).toLocaleDateString("pt-BR")}
+                              {new Date(post.date).toLocaleDateString(i18n.language === "en-US" ? "en-US" : "pt-BR")}
                             </span>
                           </div>
 
@@ -364,7 +376,7 @@ const BlogPage = () => {
                           </p>
 
                           <span className="inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider text-primary group-hover:gap-3 transition-all mt-auto">
-                            Ler artigo
+                            {t("blogPage.readArticle")}
                             <ArrowRight size={12} />
                           </span>
                         </div>

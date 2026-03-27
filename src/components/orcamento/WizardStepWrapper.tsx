@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Check, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 interface Props {
   stepNumber: number;
@@ -12,6 +13,7 @@ interface Props {
 }
 
 const WizardStepWrapper = ({ stepNumber, title, subtitle, status, isLast, children }: Props) => {
+  const { t } = useTranslation();
   return (
     <div className="flex gap-4 md:gap-6">
       {/* Step indicator line */}
@@ -66,7 +68,7 @@ const WizardStepWrapper = ({ stepNumber, title, subtitle, status, isLast, childr
 
         {status === "completed" && (
           <div className="text-sm text-muted-foreground flex items-center gap-1.5">
-            <Check className="w-4 h-4 text-primary" /> Concluído
+            <Check className="w-4 h-4 text-primary" /> {t("wizard.completed")}
           </div>
         )}
       </div>

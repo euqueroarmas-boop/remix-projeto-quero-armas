@@ -6,6 +6,7 @@ import SectionHeader from "../shared/SectionHeader";
 import StatusBadge from "../shared/StatusBadge";
 import LoadingSkeleton from "../shared/LoadingSkeleton";
 import EmptyState from "../shared/EmptyState";
+import { useTranslation } from "react-i18next";
 
 function formatDate(d: string) {
   return new Date(d).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
@@ -17,16 +18,17 @@ function formatCurrency(v: number | null) {
 }
 
 export default function PortalServicos({ customer }: { customer: CustomerData }) {
+  const { t } = useTranslation();
   const { contracts, loading } = useClientContracts(customer.id);
 
   return (
     <div className="space-y-6">
-      <SectionHeader icon={Package} title="Meus Serviços" description="Serviços contratados e solicitados" />
+      <SectionHeader icon={Package} title={t("clientPortal.tabs.servicos")} description={t("clientPortal.services.description")} />
 
       {loading ? (
         <LoadingSkeleton rows={4} />
       ) : contracts.length === 0 ? (
-        <EmptyState icon={Package} title="Nenhum serviço encontrado" description="Seus serviços contratados aparecerão aqui." />
+        <EmptyState icon={Package} title={t("clientPortal.services.emptyTitle")} description={t("clientPortal.services.emptyDescription")} />
       ) : (
         <div className="space-y-3">
           {contracts.map((c) => (
@@ -36,17 +38,17 @@ export default function PortalServicos({ customer }: { customer: CustomerData })
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="text-sm font-heading font-bold text-foreground">
-                        {c.contract_type === "locacao" ? "Locação de Equipamentos" :
-                         c.contract_type === "suporte" ? "Suporte Técnico" :
-                         c.contract_type === "horas" ? "Horas Técnicas" :
-                         c.contract_type === "reestruturacao" ? "Reestruturação de Rede" :
-                         c.contract_type || "Serviço"}
+                        {c.contract_type === "locacao" ? t("clientPortal.services.types.locacao") :
+                         c.contract_type === "suporte" ? t("clientPortal.services.types.suporte") :
+                         c.contract_type === "horas" ? t("clientPortal.services.types.horas") :
+                         c.contract_type === "reestruturacao" ? t("clientPortal.services.types.reestruturacao") :
+                         c.contract_type || t("clientPortal.services.types.default")}
                       </h3>
                       <StatusBadge status={c.signed ? "active" : c.status} />
                     </div>
                     <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                      <span>Contratado em {formatDate(c.created_at)}</span>
-                      {c.monthly_value && <span>Valor: {formatCurrency(c.monthly_value)}/mês</span>}
+                       <span>{t("clientPortal.services.hiredAt", { date: formatDate(c.created_at) })}</span>
+                       {c.monthly_value && <span>{t("clientPortal.services.value", { value: formatCurrency(c.monthly_value) })}</span>}
                     </div>
                   </div>
                 </div>
@@ -54,16 +56,16 @@ export default function PortalServicos({ customer }: { customer: CustomerData })
                 {c.quotes && (
                   <div className="mt-3 pt-3 border-t border-border grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
                     {c.quotes.computers_qty && (
-                      <div><span className="text-muted-foreground">Computadores:</span> <span className="text-foreground font-medium">{c.quotes.computers_qty}</span></div>
+                       <div><span className="text-muted-foreground">{t("clientPortal.services.computers")}</span> <span className="text-foreground font-medium">{c.quotes.computers_qty}</span></div>
                     )}
                     {c.quotes.users_qty && (
-                      <div><span className="text-muted-foreground">Usuários:</span> <span className="text-foreground font-medium">{c.quotes.users_qty}</span></div>
+                       <div><span className="text-muted-foreground">{t("clientPortal.services.users")}</span> <span className="text-foreground font-medium">{c.quotes.users_qty}</span></div>
                     )}
                     {c.quotes.selected_plan && (
-                      <div><span className="text-muted-foreground">Plano:</span> <span className="text-foreground font-medium capitalize">{c.quotes.selected_plan}</span></div>
+                       <div><span className="text-muted-foreground">{t("clientPortal.services.plan")}</span> <span className="text-foreground font-medium capitalize">{c.quotes.selected_plan}</span></div>
                     )}
                     {c.quotes.needs_backup && (
-                      <div><span className="text-muted-foreground">Backup:</span> <span className="text-emerald-400 font-medium">Sim</span></div>
+                       <div><span className="text-muted-foreground">{t("clientPortal.services.backup")}</span> <span className="text-emerald-400 font-medium">{t("clientPortal.yes")}</span></div>
                     )}
                   </div>
                 )}

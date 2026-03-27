@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   Monitor, ShieldCheck, Server, HardDrive, Network, FolderLock,
   CheckCircle2, Star, ArrowRight, Minus, Plus, Calculator,
@@ -18,6 +19,7 @@ import JsonLd from "@/components/JsonLd";
 import WizardStepWrapper from "@/components/orcamento/WizardStepWrapper";
 import QuickRegistrationForm, { type RegistrationData } from "@/components/orcamento/QuickRegistrationForm";
 import type { CustomerData } from "@/components/orcamento/CustomerDataForm";
+import { useLocalizedContent } from "@/hooks/useLocalizedContent";
 
 /* ─── Deliverables (info section) ─── */
 const deliverables = [
@@ -237,6 +239,7 @@ type BillingType = "BOLETO" | "CREDIT_CARD";
 
 /* ─── Page Component ─── */
 const ReestruturacaoRedePage = () => {
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { toast } = useToast();
   const wizardRef = useRef<HTMLDivElement>(null);
@@ -265,6 +268,7 @@ const ReestruturacaoRedePage = () => {
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
 
   const pricing = calcTotal(pcs, includeServer);
+  const localizedDeliverables = useLocalizedContent(deliverables);
 
   // Poll contract signed
   useEffect(() => {
@@ -279,7 +283,7 @@ const ReestruturacaoRedePage = () => {
         setContractSigned(true);
         setCurrentStep("payment");
         scrollToTop();
-        toast({ title: "Contrato assinado!", description: "Prossiga com o pagamento." });
+         toast({ title: t("restructuring.contractSigned"), description: t("restructuring.proceedPayment") });
       }
     }, 3000);
     return () => clearInterval(interval);
@@ -446,7 +450,7 @@ const ReestruturacaoRedePage = () => {
       scrollToTop();
     } catch (err) {
       console.error("[WMTi] Erro no cadastro:", err);
-      toast({ title: "Erro ao salvar dados", description: "Tente novamente.", variant: "destructive" });
+       toast({ title: t("errors.erroSalvar"), description: t("errors.tenteNovamente"), variant: "destructive" });
     } finally {
       setRegistrationLoading(false);
     }
@@ -515,8 +519,8 @@ const ReestruturacaoRedePage = () => {
   return (
     <>
       <SeoHead
-        title="Reestruturação Completa De Rede Corporativa | WMTi"
-        description="Pacote premium sem limite de horas. Servidores, Active Directory, backup, antivírus, padronização e reconfiguração completa da rede corporativa."
+        title={t("restructuring.seoTitle")}
+        description={t("restructuring.seoDescription")}
         canonical="/reestruturacao-completa-de-rede-corporativa"
       />
       <JsonLd data={jsonLd} />
@@ -530,13 +534,12 @@ const ReestruturacaoRedePage = () => {
           </div>
           <div className="container relative z-10">
             <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
-              <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">// Pacote Premium — Sem Limite De Horas</p>
+              <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">{t("restructuring.tag")}</p>
               <h1 className="text-3xl md:text-5xl lg:text-6xl max-w-4xl mb-6">
-                Reestruturação Completa De{" "}
-                <span className="text-primary">Rede Corporativa</span>
+                {t("restructuring.titlePrefix")} <span className="text-primary">{t("restructuring.titleHighlight")}</span>
               </h1>
               <p className="font-body text-lg md:text-xl text-muted-foreground max-w-2xl mb-8 leading-relaxed">
-                Rede lenta. Vírus toda semana. Arquivo que some. Computador que trava. Servidor que ninguém configurou direito. Se a TI da sua empresa funciona assim, o problema não é um equipamento — é a estrutura inteira. Este serviço resolve tudo de uma vez, sem limite de horas, sem surpresa no preço.
+                {t("restructuring.heroDescription")}
               </p>
 
               <div className="flex flex-wrap gap-4">
@@ -546,7 +549,7 @@ const ReestruturacaoRedePage = () => {
                   }}
                   className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-mono text-sm uppercase tracking-wider hover:brightness-110 transition-all"
                 >
-                  Calcular Investimento <Calculator size={16} />
+                  {t("restructuring.calculateInvestment")} <Calculator size={16} />
                 </button>
                 <a
                   href="https://wa.me/5511963166915?text=Olá!%20Tenho%20interesse%20no%20pacote%20de%20Reestruturação%20Completa%20de%20Rede%20Corporativa."
@@ -554,7 +557,7 @@ const ReestruturacaoRedePage = () => {
                   rel="noopener"
                   className="inline-flex items-center gap-2 px-6 py-3 border border-border text-foreground font-mono text-sm uppercase tracking-wider hover:bg-muted transition-colors"
                 >
-                  Falar com especialista
+                   {t("restructuring.talkSpecialist")}
                 </a>
               </div>
             </motion.div>
@@ -572,13 +575,13 @@ const ReestruturacaoRedePage = () => {
             >
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/30 bg-primary/5 mb-6">
                 <Star size={16} className="text-primary" />
-                <span className="font-mono text-xs uppercase tracking-wider text-primary">Diferencial Absoluto</span>
+                 <span className="font-mono text-xs uppercase tracking-wider text-primary">{t("restructuring.differentialTag")}</span>
               </div>
               <h2 className="text-2xl md:text-4xl mb-4">
-                Pacote fechado — <span className="text-primary">sem limite de horas.</span>
+                 {t("restructuring.differentialTitlePrefix")} <span className="text-primary">{t("restructuring.differentialTitleHighlight")}</span>
               </h2>
               <p className="font-body text-lg text-muted-foreground leading-relaxed">
-                Você não paga por tempo. <strong className="text-foreground">Você paga pelo resultado.</strong> Nosso objetivo é colocar sua empresa dentro dos padrões mais exigentes de segurança, estabilidade e controle.
+                 {t("restructuring.differentialDescriptionPrefix")} <strong className="text-foreground">{t("restructuring.differentialDescriptionHighlight")}</strong> {t("restructuring.differentialDescriptionSuffix")}
               </p>
             </motion.div>
           </div>
@@ -587,11 +590,11 @@ const ReestruturacaoRedePage = () => {
         {/* O que entregamos */}
         <section className="py-16 md:py-20 border-t border-border">
           <div className="container">
-            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">// O Que Entregamos</p>
-            <h2 className="text-2xl md:text-4xl mb-12">Escopo completo do serviço</h2>
+             <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">{t("restructuring.deliverablesTag")}</p>
+             <h2 className="text-2xl md:text-4xl mb-12">{t("restructuring.deliverablesTitle")}</h2>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-px bg-border">
-              {deliverables.map((block, i) => {
+               {localizedDeliverables.map((block, i) => {
                 const Icon = block.icon;
                 return (
                   <motion.div
@@ -626,29 +629,29 @@ const ReestruturacaoRedePage = () => {
           <div className="container max-w-3xl">
             <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12">
               <span className="inline-block px-4 py-1.5 mb-4 text-xs font-semibold tracking-widest uppercase bg-primary/10 text-primary rounded-full border border-primary/20">
-                Calculadora de investimento
+                 {t("restructuring.calculatorBadge")}
               </span>
               <h2 className="text-2xl md:text-4xl mb-3">
-                Calcule o valor do seu <span className="text-primary">projeto</span>
+                 {t("restructuring.calculatorTitlePrefix")} <span className="text-primary">{t("restructuring.calculatorTitleHighlight")}</span>
               </h2>
               <p className="text-muted-foreground max-w-xl mx-auto">
-                Informe a quantidade de computadores para formatação e escolha se deseja incluir a implantação do servidor.
+                 {t("restructuring.calculatorDescription")}
               </p>
             </motion.div>
 
             {/* Step 1: Calculator */}
-            <WizardStepWrapper stepNumber={1} title="Calculadora De Formatação" subtitle="Informe a quantidade de computadores" status={getStepStatus("calculator")}>
+             <WizardStepWrapper stepNumber={1} title={t("restructuring.step1Title")} subtitle={t("restructuring.step1Subtitle")} status={getStepStatus("calculator")}>
               <div className="space-y-6">
                 {/* PC quantity */}
                 <div className="bg-secondary p-8">
-                  <p className="font-mono text-xs text-muted-foreground mb-4 text-center">Quantidade de computadores para formatação</p>
+                   <p className="font-mono text-xs text-muted-foreground mb-4 text-center">{t("restructuring.computerQuantity")}</p>
                   <div className="flex items-center justify-center gap-6 mb-6">
                     <button onClick={() => setPcs(Math.max(1, pcs - 1))} className="w-12 h-12 flex items-center justify-center border border-muted-foreground/30 text-muted-foreground hover:border-primary hover:text-primary transition-colors" aria-label="Diminuir">
                       <Minus size={20} />
                     </button>
                     <div className="text-center">
                       <span className="text-5xl font-bold text-primary">{pcs}</span>
-                      <p className="font-mono text-xs text-muted-foreground mt-1">computador{pcs > 1 ? "es" : ""}</p>
+                       <p className="font-mono text-xs text-muted-foreground mt-1">{t("restructuring.computers", { count: pcs })}</p>
                     </div>
                     <button
                       onClick={() => {
@@ -671,8 +674,8 @@ const ReestruturacaoRedePage = () => {
                     >
                       <Server size={24} className={includeServer ? "text-primary" : "text-muted-foreground"} />
                       <div className="flex-1">
-                        <p className="font-semibold text-foreground">Implantação de Servidor Corporativo</p>
-                        <p className="text-xs text-muted-foreground">Windows Server 2016 + Active Directory + GPO</p>
+                         <p className="font-semibold text-foreground">{t("restructuring.serverDeployment")}</p>
+                         <p className="text-xs text-muted-foreground">{t("restructuring.serverDeploymentDesc")}</p>
                       </div>
                       <div className={`w-6 h-6 rounded border-2 flex items-center justify-center ${includeServer ? "border-primary bg-primary" : "border-muted-foreground/30"}`}>
                         {includeServer && <CheckCircle2 size={14} className="text-primary-foreground" />}
@@ -694,13 +697,13 @@ const ReestruturacaoRedePage = () => {
                     )}
                     {includeServer && (
                       <div className="flex items-center justify-between font-mono text-sm">
-                        <span className="text-muted-foreground">Implantação de Servidor</span>
+                       <span className="text-muted-foreground">{t("restructuring.serverImplantation")}</span>
                         <span className="text-foreground">R$ {SERVER_SETUP_PRICE.toFixed(2).replace(".", ",")}</span>
                       </div>
                     )}
                     <div className="h-px bg-muted-foreground/10" />
                     <div className="flex items-center justify-between font-mono text-base font-bold">
-                      <span className="text-foreground">Investimento total</span>
+                       <span className="text-foreground">{t("restructuring.totalInvestment")}</span>
                       <span className="text-primary text-xl">R$ {pricing.total.toFixed(2).replace(".", ",")}</span>
                     </div>
                   </div>
@@ -709,7 +712,7 @@ const ReestruturacaoRedePage = () => {
                 {/* Volume discount info */}
                 <details className="bg-secondary group">
                   <summary className="p-4 cursor-pointer font-mono text-xs uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors flex justify-between items-center">
-                    Ver tabela de desconto por volume
+                     {t("restructuring.volumeDiscountTable")}
                     <Plus size={14} className="text-primary group-open:rotate-45 transition-transform" />
                   </summary>
                   <div className="px-4 pb-4">
@@ -740,7 +743,7 @@ const ReestruturacaoRedePage = () => {
                 <div className="bg-primary/10 border border-primary/30 p-4 flex items-start gap-3">
                   <Star size={20} className="text-primary shrink-0 mt-0.5" />
                   <p className="font-body text-sm text-foreground">
-                    <strong>Pacote premium sem limite de horas.</strong> Você paga pelo resultado — não pelo tempo. Todos os serviços listados acima estão inclusos no valor calculado.
+                     <strong>{t("restructuring.premiumNoHours")}</strong> {t("restructuring.premiumDescription")}
                   </p>
                 </div>
 
@@ -749,26 +752,26 @@ const ReestruturacaoRedePage = () => {
                   className="w-full inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
                 >
                   <ArrowRight size={16} />
-                  Continuar Contratação
+                   {t("restructuring.continueHiring")}
                 </button>
                 <p className="font-body text-xs text-center text-muted-foreground/60">
-                  Preencha seus dados, assine o contrato e prossiga para o pagamento seguro.
+                   {t("restructuring.continueDescription")}
                 </p>
               </div>
             </WizardStepWrapper>
 
             {/* Step 2: Registration */}
-            <WizardStepWrapper stepNumber={2} title="Dados Do Contratante" subtitle="Preenchimento automático por CNPJ e CEP" status={getStepStatus("registration")}>
+             <WizardStepWrapper stepNumber={2} title={t("restructuring.step2Title")} subtitle={t("restructuring.step2Subtitle")} status={getStepStatus("registration")}>
               <QuickRegistrationForm onComplete={handleRegistrationComplete} loading={registrationLoading} initialData={{}} />
             </WizardStepWrapper>
 
             {/* Step 3: Contract */}
-            <WizardStepWrapper stepNumber={3} title="Contrato e Assinatura" subtitle={contractSigned ? "Contrato assinado ✓" : "Leia e assine o contrato"} status={getStepStatus("contract")}>
+             <WizardStepWrapper stepNumber={3} title={t("restructuring.step3Title")} subtitle={contractSigned ? t("restructuring.step3Signed") : t("restructuring.step3Subtitle")} status={getStepStatus("contract")}>
               {contractSigned ? (
                 <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-3">
                   <CheckCircle className="w-10 h-10 text-primary mx-auto" />
-                  <h4 className="text-lg font-heading font-bold">Contrato assinado!</h4>
-                  <p className="text-sm text-muted-foreground">Prossiga para o pagamento abaixo.</p>
+                   <h4 className="text-lg font-heading font-bold">{t("restructuring.contractSigned")}</h4>
+                   <p className="text-sm text-muted-foreground">{t("restructuring.proceedPayment")}</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -776,73 +779,73 @@ const ReestruturacaoRedePage = () => {
                     <div className="flex items-center gap-3 mb-3">
                       <FileText className="w-6 h-6 text-primary" />
                       <div>
-                        <p className="font-semibold text-sm text-foreground">Contrato de Reestruturação Completa de Rede</p>
-                        <p className="text-xs text-foreground/60">O contrato será aberto em página separada com aparência de documento formal.</p>
+                         <p className="font-semibold text-sm text-foreground">{t("restructuring.contractCardTitle")}</p>
+                         <p className="text-xs text-foreground/60">{t("restructuring.contractCardDescription")}</p>
                       </div>
                     </div>
-                    <p className="text-xs text-foreground/60 mb-3">Após ler e assinar, esta página será atualizada automaticamente.</p>
+                     <p className="text-xs text-foreground/60 mb-3">{t("restructuring.contractCardHint")}</p>
                   </div>
                   <Button onClick={handleOpenContract} disabled={!contractId} className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground">
                     <ExternalLink className="w-4 h-4 mr-2" />
-                    Abrir contrato para leitura e assinatura
+                     {t("restructuring.openContract")}
                   </Button>
                   <p className="text-xs text-muted-foreground text-center">
                     <Loader2 className="w-3 h-3 animate-spin inline mr-1" />
-                    Aguardando assinatura do contrato...
+                     {t("restructuring.waitingContract")}
                   </p>
                 </div>
               )}
             </WizardStepWrapper>
 
             {/* Step 4: Payment */}
-            <WizardStepWrapper stepNumber={4} title={paymentConfirmed ? "Compra Concluída" : "Pagamento"} subtitle={paymentConfirmed ? "Pagamento confirmado ✓" : "Pagamento único via checkout seguro"} status={paymentConfirmed ? "completed" : getStepStatus("payment")} isLast>
+             <WizardStepWrapper stepNumber={4} title={paymentConfirmed ? t("restructuring.purchaseCompleted") : t("restructuring.payment")} subtitle={paymentConfirmed ? t("restructuring.paymentConfirmed") : t("restructuring.paymentSubtitle")} status={paymentConfirmed ? "completed" : getStepStatus("payment")} isLast>
               {paymentConfirmed ? (
                 <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-3">
                   <CheckCircle className="w-10 h-10 text-green-500 mx-auto" />
-                  <h4 className="text-lg font-heading font-bold">Pagamento confirmado!</h4>
-                  <p className="text-sm text-muted-foreground">Redirecionando para a página de confirmação...</p>
+                   <h4 className="text-lg font-heading font-bold">{t("restructuring.paymentConfirmed")}</h4>
+                   <p className="text-sm text-muted-foreground">{t("restructuring.redirectingConfirmation")}</p>
                   <Loader2 className="w-5 h-5 animate-spin text-primary mx-auto" />
                 </div>
               ) : paymentLoading ? (
                 <div className="bg-card border border-primary/20 rounded-xl p-6 space-y-4">
                   <div className="flex flex-col items-center text-center space-y-3">
                     <Loader2 className="w-10 h-10 animate-spin text-primary" />
-                    <h4 className="text-lg font-heading font-bold">Conectando ao checkout...</h4>
-                    <p className="text-sm text-muted-foreground">Não feche esta página.</p>
+                     <h4 className="text-lg font-heading font-bold">{t("restructuring.connectingCheckout")}</h4>
+                     <p className="text-sm text-muted-foreground">{t("restructuring.doNotClose")}</p>
                   </div>
                 </div>
               ) : paymentComplete && invoiceUrl ? (
                 <div className="bg-card border border-primary/20 rounded-xl p-6 space-y-4">
                   <div className="flex flex-col items-center text-center space-y-3">
                     <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                    <h4 className="text-lg font-heading font-bold">Aguardando confirmação do pagamento...</h4>
-                    <p className="text-sm text-muted-foreground">A página segura de pagamento foi aberta em outra aba.</p>
+                     <h4 className="text-lg font-heading font-bold">{t("restructuring.waitingPayment")}</h4>
+                     <p className="text-sm text-muted-foreground">{t("restructuring.securePageOpened")}</p>
                   </div>
                   <div className="flex flex-col gap-2">
                     <Button onClick={() => window.open(invoiceUrl, "_blank", "noopener,noreferrer")} className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground">
                       <ExternalLink className="w-4 h-4 mr-2" />
-                      Abrir checkout novamente
+                       {t("restructuring.openCheckoutAgain")}
                     </Button>
                   </div>
                   <div className="text-center mt-4 space-y-2">
-                    <p className="font-mono text-sm font-bold text-primary">Resumo da compra</p>
-                    <p className="text-sm text-muted-foreground">Serviço: <strong className="text-foreground">Reestruturação Completa de Rede</strong></p>
-                    <p className="text-sm text-muted-foreground">Computadores: <strong className="text-foreground">{pcs}</strong></p>
-                    {includeServer && <p className="text-sm text-muted-foreground">Servidor: <strong className="text-foreground">Incluso</strong></p>}
-                    <p className="text-sm text-muted-foreground">Valor total: <strong className="text-primary">R$ {pricing.total.toFixed(2).replace(".", ",")}</strong></p>
+                     <p className="font-mono text-sm font-bold text-primary">{t("restructuring.purchaseSummary")}</p>
+                     <p className="text-sm text-muted-foreground">{t("restructuring.serviceSummary")}: <strong className="text-foreground">{t("restructuring.titleHighlight")}</strong></p>
+                     <p className="text-sm text-muted-foreground">{t("restructuring.computersSummary")}: <strong className="text-foreground">{pcs}</strong></p>
+                     {includeServer && <p className="text-sm text-muted-foreground">{t("restructuring.serverSummary")}: <strong className="text-foreground">{t("restructuring.included")}</strong></p>}
+                     <p className="text-sm text-muted-foreground">{t("restructuring.totalSummary")}: <strong className="text-primary">R$ {pricing.total.toFixed(2).replace(".", ",")}</strong></p>
                   </div>
                 </div>
               ) : (
                 <div className="space-y-4">
                   <p className="text-sm text-muted-foreground text-center">
-                    Valor total do projeto: <strong className="text-primary">R$ {pricing.total.toFixed(2).replace(".", ",")}</strong> — Pagamento único
+                     {t("restructuring.projectTotal")}: <strong className="text-primary">R$ {pricing.total.toFixed(2).replace(".", ",")}</strong> — {t("restructuring.singlePayment")}
                   </p>
 
                   {paymentError && (
                     <div className="p-3 rounded-lg border border-destructive/30 bg-destructive/5 flex items-start gap-2">
                       <AlertTriangle className="w-4 h-4 text-destructive mt-0.5 shrink-0" />
                       <div>
-                        <p className="text-sm font-semibold text-destructive">Erro ao gerar cobrança</p>
+                         <p className="text-sm font-semibold text-destructive">{t("errors.erroCobranca")}</p>
                         <p className="text-xs text-muted-foreground mt-1">{paymentError}</p>
                       </div>
                     </div>
@@ -850,8 +853,8 @@ const ReestruturacaoRedePage = () => {
 
                   <div className="grid grid-cols-2 gap-3">
                     {([
-                      { id: "BOLETO" as BillingType, icon: FileBarChart, label: "Boleto Bancário", desc: "Pagamento único" },
-                      { id: "CREDIT_CARD" as BillingType, icon: CreditCard, label: "Cartão de Crédito", desc: "Pagamento único" },
+                       { id: "BOLETO" as BillingType, icon: FileBarChart, label: t("restructuring.paymentMethods.boleto"), desc: t("restructuring.singlePayment") },
+                       { id: "CREDIT_CARD" as BillingType, icon: CreditCard, label: t("restructuring.paymentMethods.creditCard"), desc: t("restructuring.singlePayment") },
                     ]).map((method) => (
                       <button
                         key={method.id}
@@ -870,7 +873,7 @@ const ReestruturacaoRedePage = () => {
 
                   <Button onClick={handlePayment} disabled={!selectedPayment || paymentLoading} className="w-full h-14 text-base bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50">
                     <ExternalLink className="w-5 h-5 mr-2" />
-                    {paymentError ? "Tentar novamente" : "PROSSEGUIR PARA PAGAMENTO"}
+                     {paymentError ? t("restructuring.tryAgain") : t("restructuring.proceedPaymentUpper")}
                   </Button>
                 </div>
               )}
@@ -887,9 +890,9 @@ const ReestruturacaoRedePage = () => {
               viewport={{ once: true }}
               className="max-w-3xl mx-auto text-center"
             >
-              <h2 className="text-2xl md:text-4xl mb-4">Após esse serviço, a forma como sua empresa trabalha <span className="text-primary">muda completamente.</span></h2>
+               <h2 className="text-2xl md:text-4xl mb-4">{t("restructuring.finalTitlePrefix")} <span className="text-primary">{t("restructuring.finalTitleHighlight")}</span></h2>
               <p className="font-body text-base text-muted-foreground mb-8">
-                Segurança, estabilidade, controle de usuários e organização de dados — tudo em padrão corporativo profissional.
+                 {t("restructuring.finalDescription")}
               </p>
               <a
                 href="https://wa.me/5511963166915?text=Olá!%20Quero%20saber%20mais%20sobre%20a%20Reestruturação%20Completa%20de%20Rede."
@@ -897,7 +900,7 @@ const ReestruturacaoRedePage = () => {
                 rel="noopener"
                 className="inline-flex items-center gap-2 px-8 py-4 bg-primary text-primary-foreground font-mono text-sm uppercase tracking-wider hover:brightness-110 transition-all"
               >
-                Fale com um especialista <ArrowRight size={16} />
+                 {t("restructuring.talkSpecialist")} <ArrowRight size={16} />
               </a>
             </motion.div>
           </div>
@@ -916,10 +919,10 @@ const ReestruturacaoRedePage = () => {
               <Star size={32} className="text-primary" />
             </div>
             <h3 className="text-xl font-heading font-bold text-foreground">
-              Orçamento <span className="text-primary">Premium Personalizado</span>
+               {t("restructuring.premiumTitlePrefix")} <span className="text-primary">{t("restructuring.premiumTitleHighlight")}</span>
             </h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Para projetos com <strong className="text-foreground">{pcs} computadores</strong>, oferecemos um orçamento personalizado com condições exclusivas. Fale diretamente com nosso especialista.
+               {t("restructuring.premiumDescription", { count: pcs })}
             </p>
             <a
               href={`https://wa.me/5511963166915?text=${encodeURIComponent(`Olá! Preciso de um orçamento premium para Reestruturação Completa de Rede Corporativa com ${pcs} computadores${includeServer ? " + implantação de servidor" : ""}. Aguardo proposta personalizada.`)}`}
@@ -928,13 +931,13 @@ const ReestruturacaoRedePage = () => {
               className="w-full inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-6 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all rounded-lg"
             >
               <ArrowRight size={16} />
-              Solicitar Orçamento Premium
+               {t("restructuring.requestPremiumQuote")}
             </a>
             <button
               onClick={() => { setShowPremiumPopup(false); setPcs(30); }}
               className="text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
-              Voltar para a calculadora (máx. 30 PCs)
+               {t("restructuring.backToCalculator")}
             </button>
           </motion.div>
         </div>
