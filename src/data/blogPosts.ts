@@ -4,6 +4,7 @@ import servidorManutencao from "@/assets/blog/servidor-manutencao.webp";
 import custosInfraTi from "@/assets/blog/custos-infra-ti.webp";
 import suporteTiRegional from "@/assets/blog/suporte-ti-regional.webp";
 import redeCorporativaCaso from "@/assets/blog/rede-corporativa-caso.webp";
+import medicalIotSecurity from "@/assets/blog/medical-iot-security.jpg";
 
 export type BlogCategory =
   | "Hospitais e Clínicas"
@@ -386,7 +387,7 @@ export const blogPosts: BlogPost[] = [
     readTime: "6 min",
     tag: "Infraestrutura",
     category: "Hospitais e Clínicas",
-    image: "https://images.unsplash.com/photo-1581093458791-9d42e3c2fd45?w=800&q=80",
+    image: medicalIotSecurity,
   },
   {
     slug: "guia-completo-infraestrutura-ti-empresas",

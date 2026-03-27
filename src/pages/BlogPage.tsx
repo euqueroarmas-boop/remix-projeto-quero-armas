@@ -1,7 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Calendar, Search, X, Filter, Layers } from "lucide-react";
+import { ArrowRight, Calendar, Search, X, Filter, Layers, ChevronLeft, ChevronRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -12,6 +12,23 @@ import { useLocalizedBlogPosts, useLocalizedCategories } from "@/hooks/useBlogLo
 
 export type { BlogPost } from "@/data/blogPosts";
 export { blogPosts } from "@/data/blogPosts";
+
+const PLACEHOLDER = "/placeholder.svg";
+
+const BlogImage = ({ src, alt, className, loading = "lazy" as const, ...props }: React.ImgHTMLAttributes<HTMLImageElement>) => (
+  <img
+    src={src || PLACEHOLDER}
+    alt={alt}
+    className={className}
+    loading={loading}
+    onError={(e) => { (e.target as HTMLImageElement).src = PLACEHOLDER; }}
+    {...props}
+  />
+);
+
+/* ── Featured Carousel ── */
+const CAROUSEL_COUNT = 5;
+const CAROUSEL_INTERVAL = 5000;
 
 const BlogPage = () => {
   const { t, i18n } = useTranslation();
@@ -40,9 +57,34 @@ const BlogPage = () => {
     return results;
   }, [activeCategory, searchQuery, sorted]);
 
-  const featuredPost = filtered[0];
-  const restPosts = filtered.slice(1);
+  /* Carousel items = top N from filtered */
+  const carouselPosts = useMemo(() => filtered.slice(0, Math.min(CAROUSEL_COUNT, filtered.length)), [filtered]);
+  const restPosts = useMemo(() => filtered.slice(carouselPosts.length), [filtered, carouselPosts.length]);
   const recentSlugs = new Set(sorted.slice(0, 3).map((p) => p.slug));
+
+  /* Carousel state */
+  const [activeSlide, setActiveSlide] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Reset slide when carousel posts change
+  useEffect(() => { setActiveSlide(0); }, [carouselPosts.length]);
+
+  const goNext = useCallback(() => {
+    setActiveSlide((prev) => (prev + 1) % carouselPosts.length);
+  }, [carouselPosts.length]);
+
+  const goPrev = useCallback(() => {
+    setActiveSlide((prev) => (prev - 1 + carouselPosts.length) % carouselPosts.length);
+  }, [carouselPosts.length]);
+
+  // Autoplay
+  useEffect(() => {
+    if (isPaused || carouselPosts.length <= 1) return;
+    timerRef.current = setInterval(goNext, CAROUSEL_INTERVAL);
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [isPaused, goNext, carouselPosts.length]);
+
   const allCategories: (BlogCategory | "Todos")[] = ["Todos", ...blogCategories];
   const categoryLabelMap = useMemo(() => {
     const map = new Map<BlogCategory, string>();
@@ -52,7 +94,6 @@ const BlogPage = () => {
     return map;
   }, [localizedCategories]);
 
-  // Count posts per category
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = { Todos: sorted.length };
     for (const post of sorted) {
@@ -66,7 +107,6 @@ const BlogPage = () => {
     setMobileFilterOpen(false);
   };
 
-  /* ── Sidebar category item ── */
   const CategoryItem = ({ cat }: { cat: BlogCategory | "Todos" }) => (
     <button
       onClick={() => handleCategoryClick(cat)}
@@ -84,6 +124,8 @@ const BlogPage = () => {
       </span>
     </button>
   );
+
+  const currentFeatured = carouselPosts[activeSlide];
 
   return (
     <div className="min-h-screen bg-background">
@@ -110,7 +152,7 @@ const BlogPage = () => {
             </p>
           </motion.div>
 
-          {/* ── Search ── */}
+          {/* Search */}
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
@@ -145,7 +187,7 @@ const BlogPage = () => {
       {/* ── Two-Column Layout ── */}
       <section className="pb-16 md:pb-24">
         <div className="container">
-          {/* ── Mobile filter button ── */}
+          {/* Mobile filter button */}
           <div className="lg:hidden mb-6">
             <button
               onClick={() => setMobileFilterOpen(true)}
@@ -153,13 +195,13 @@ const BlogPage = () => {
             >
               <span className="flex items-center gap-2">
                 <Filter size={14} className="text-primary" />
-                  {activeCategory === "Todos" ? t("blogPage.allCategories") : categoryLabelMap.get(activeCategory as BlogCategory) || activeCategory}
+                {activeCategory === "Todos" ? t("blogPage.allCategories") : categoryLabelMap.get(activeCategory as BlogCategory) || activeCategory}
               </span>
               <Filter size={14} className="text-muted-foreground" />
             </button>
           </div>
 
-          {/* ── Mobile Full-Screen Category Overlay ── */}
+          {/* Mobile Full-Screen Category Overlay */}
           <AnimatePresence>
             {mobileFilterOpen && (
               <motion.div
@@ -169,7 +211,6 @@ const BlogPage = () => {
                 transition={{ duration: 0.2 }}
                 className="fixed inset-0 z-50 bg-background flex flex-col lg:hidden"
               >
-                {/* Header */}
                 <div className="flex items-center justify-between px-6 py-5 border-b border-border">
                   <div className="flex items-center gap-2">
                     <Layers size={16} className="text-primary" />
@@ -184,8 +225,6 @@ const BlogPage = () => {
                     <X size={20} />
                   </button>
                 </div>
-
-                {/* Category list */}
                 <motion.div
                   initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -218,13 +257,13 @@ const BlogPage = () => {
           </AnimatePresence>
 
           <div className="flex gap-8 lg:gap-10 items-start">
-            {/* ── Desktop Sidebar ── */}
+            {/* Desktop Sidebar */}
             <aside className="hidden lg:block w-64 shrink-0 sticky top-20">
               <div className="bg-card border border-border rounded-xl p-4">
                 <div className="flex items-center gap-2 px-3 mb-3">
                   <Layers size={14} className="text-primary" />
                   <span className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
-                      {t("blogPage.categories")}
+                    {t("blogPage.categories")}
                   </span>
                 </div>
                 <div className="flex flex-col gap-0.5">
@@ -235,7 +274,7 @@ const BlogPage = () => {
               </div>
             </aside>
 
-            {/* ── Main Content ── */}
+            {/* Main Content */}
             <div className="flex-1 min-w-0">
               {/* Result count */}
               {(activeCategory !== "Todos" || searchQuery) && (
@@ -271,60 +310,107 @@ const BlogPage = () => {
                 </div>
               )}
 
-              {/* ── Featured Post ── */}
-              {featuredPost && (
-                <motion.article
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5 }}
-                  className="mb-10"
+              {/* ── Featured Carousel ── */}
+              {currentFeatured && (
+                <div
+                  className="mb-10 relative"
+                  onMouseEnter={() => setIsPaused(true)}
+                  onMouseLeave={() => setIsPaused(false)}
                 >
-                  <Link
-                    to={`/blog/${featuredPost.slug}`}
-                    className="group block rounded-xl overflow-hidden bg-card border border-border hover:border-primary/30 transition-all duration-300"
-                  >
-                    <div className="grid md:grid-cols-2">
-                      <div className="relative aspect-[16/10] md:aspect-auto md:min-h-[320px] overflow-hidden">
-                        <img
-                          src={featuredPost.image}
-                          alt={featuredPost.title}
-                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                          loading="eager"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent md:bg-gradient-to-r md:from-transparent md:via-transparent md:to-black/10" />
-                        {recentSlugs.has(featuredPost.slug) && (
-                          <span className="absolute top-4 left-4 font-mono text-[10px] tracking-[0.15em] uppercase bg-primary text-primary-foreground px-3 py-1 rounded-full">
-                            {t("blogPage.recent")}
-                          </span>
-                        )}
-                      </div>
-                      <div className="p-6 md:p-8 flex flex-col justify-center">
-                        <div className="flex items-center gap-3 mb-4 flex-wrap">
-                          <span className="font-mono text-[10px] tracking-[0.15em] uppercase text-primary border border-primary/30 px-2.5 py-1 rounded-full">
-                            {categoryLabelMap.get((blogPosts.find((base) => base.slug === featuredPost.slug)?.category || featuredPost.category) as BlogCategory) || featuredPost.category}
-                          </span>
-                          <span className="flex items-center gap-1.5 font-mono text-[10px] text-muted-foreground">
-                            <Calendar size={10} />
-                            {new Date(featuredPost.date).toLocaleDateString(i18n.language === "en-US" ? "en-US" : "pt-BR")}
-                          </span>
-                          <span className="font-mono text-[10px] text-muted-foreground">
-                            {featuredPost.readTime}
-                          </span>
+                  <AnimatePresence mode="wait">
+                    <motion.article
+                      key={currentFeatured.slug}
+                      initial={{ opacity: 0, x: 30 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -30 }}
+                      transition={{ duration: 0.4, ease: "easeInOut" }}
+                    >
+                      <Link
+                        to={`/blog/${currentFeatured.slug}`}
+                        className="group block rounded-xl overflow-hidden bg-card border border-border hover:border-primary/30 transition-all duration-300"
+                      >
+                        <div className="grid md:grid-cols-2">
+                          <div className="relative aspect-[16/10] md:aspect-auto md:min-h-[320px] overflow-hidden">
+                            <BlogImage
+                              src={currentFeatured.image}
+                              alt={currentFeatured.title}
+                              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                              loading="eager"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent md:bg-gradient-to-r md:from-transparent md:via-transparent md:to-black/10" />
+                            {recentSlugs.has(currentFeatured.slug) && (
+                              <span className="absolute top-4 left-4 font-mono text-[10px] tracking-[0.15em] uppercase bg-primary text-primary-foreground px-3 py-1 rounded-full">
+                                {t("blogPage.recent")}
+                              </span>
+                            )}
+                          </div>
+                          <div className="p-6 md:p-8 flex flex-col justify-center">
+                            <div className="flex items-center gap-3 mb-4 flex-wrap">
+                              <span className="font-mono text-[10px] tracking-[0.15em] uppercase text-primary border border-primary/30 px-2.5 py-1 rounded-full">
+                                {categoryLabelMap.get((blogPosts.find((base) => base.slug === currentFeatured.slug)?.category || currentFeatured.category) as BlogCategory) || currentFeatured.category}
+                              </span>
+                              <span className="flex items-center gap-1.5 font-mono text-[10px] text-muted-foreground">
+                                <Calendar size={10} />
+                                {new Date(currentFeatured.date).toLocaleDateString(i18n.language === "en-US" ? "en-US" : "pt-BR")}
+                              </span>
+                              <span className="font-mono text-[10px] text-muted-foreground">
+                                {currentFeatured.readTime}
+                              </span>
+                            </div>
+                            <h2 className="text-xl md:text-2xl font-bold leading-tight mb-3 group-hover:text-primary transition-colors">
+                              {currentFeatured.title}
+                            </h2>
+                            <p className="font-body text-sm text-muted-foreground leading-relaxed mb-5 line-clamp-3">
+                              {currentFeatured.excerpt}
+                            </p>
+                            <span className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-primary group-hover:gap-3 transition-all">
+                              {t("blogPage.readArticle")}
+                              <ArrowRight size={14} />
+                            </span>
+                          </div>
                         </div>
-                        <h2 className="text-xl md:text-2xl font-bold leading-tight mb-3 group-hover:text-primary transition-colors">
-                          {featuredPost.title}
-                        </h2>
-                        <p className="font-body text-sm text-muted-foreground leading-relaxed mb-5 line-clamp-3">
-                          {featuredPost.excerpt}
-                        </p>
-                        <span className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-primary group-hover:gap-3 transition-all">
-                          {t("blogPage.readArticle")}
-                          <ArrowRight size={14} />
-                        </span>
+                      </Link>
+                    </motion.article>
+                  </AnimatePresence>
+
+                  {/* Carousel controls */}
+                  {carouselPosts.length > 1 && (
+                    <div className="flex items-center justify-between mt-4">
+                      {/* Dots */}
+                      <div className="flex items-center gap-2">
+                        {carouselPosts.map((_, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => setActiveSlide(idx)}
+                            className={`rounded-full transition-all duration-300 ${
+                              idx === activeSlide
+                                ? "w-6 h-2 bg-primary"
+                                : "w-2 h-2 bg-muted-foreground/30 hover:bg-muted-foreground/60"
+                            }`}
+                            aria-label={`Slide ${idx + 1}`}
+                          />
+                        ))}
+                      </div>
+                      {/* Arrows */}
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={goPrev}
+                          className="p-2 rounded-lg border border-border bg-card hover:border-primary/40 hover:text-primary text-muted-foreground transition-all"
+                          aria-label="Previous"
+                        >
+                          <ChevronLeft size={16} />
+                        </button>
+                        <button
+                          onClick={goNext}
+                          className="p-2 rounded-lg border border-border bg-card hover:border-primary/40 hover:text-primary text-muted-foreground transition-all"
+                          aria-label="Next"
+                        >
+                          <ChevronRight size={16} />
+                        </button>
                       </div>
                     </div>
-                  </Link>
-                </motion.article>
+                  )}
+                </div>
               )}
 
               {/* ── Post Grid ── */}
@@ -343,7 +429,7 @@ const BlogPage = () => {
                         className="group block h-full rounded-xl overflow-hidden bg-card border border-border hover:border-primary/30 hover:shadow-xl hover:shadow-primary/[0.05] transition-all duration-300"
                       >
                         <div className="relative aspect-[16/10] overflow-hidden">
-                          <img
+                          <BlogImage
                             src={post.image}
                             alt={post.title}
                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
