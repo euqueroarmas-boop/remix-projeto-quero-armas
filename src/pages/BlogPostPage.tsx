@@ -75,6 +75,7 @@ const legacyContent: Record<string, React.ReactNode> = {
 };
 
 const BlogPostPage = () => {
+  const { t } = useTranslation();
   const { slug } = useParams<{ slug: string }>();
   const location = useLocation();
   const { post, city, baseSlug } = useMemo(() => resolveBlogSlug(slug), [slug]);

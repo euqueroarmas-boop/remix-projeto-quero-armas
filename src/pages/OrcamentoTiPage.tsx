@@ -20,6 +20,7 @@ import BudgetSummaryScreen from "@/components/orcamento/BudgetSummaryScreen";
 import { recommendRentalAddons, recommendRentalPlan } from "@/components/orcamento/rentalRecommendation";
 
 const OrcamentoTiPage = () => {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const [savingBudget, setSavingBudget] = useState(false);
