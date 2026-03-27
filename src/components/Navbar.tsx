@@ -79,7 +79,7 @@ const Navbar = () => {
   const servicos: MegaMenuItem[] = [...servicosBase]
     .map((item) => ({ ...item, label: t(item.labelKey) }))
     .sort((a, b) => a.label.localeCompare(b.label));
-  const [open, setOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [segOpen, setSegOpen] = useState(false);
   const [svcOpen, setSvcOpen] = useState(false);
   const [mobileSegOpen, setMobileSegOpen] = useState(false);
@@ -94,6 +94,16 @@ const Navbar = () => {
   const svcDropdownRef = useRef<HTMLDivElement>(null);
 
   const megaOpen = segOpen || svcOpen;
+
+  const closeMobileMenu = useCallback(() => {
+    setMenuOpen(false);
+    setMobileSegOpen(false);
+    setMobileSvcOpen(false);
+  }, []);
+
+  const toggleMobileMenu = useCallback(() => {
+    setMenuOpen((prev) => !prev);
+  }, []);
 
   const resolveHref = (link: NavLink, isMobile: boolean) => {
     if (link.isRoute) return link.href;
@@ -160,18 +170,21 @@ const Navbar = () => {
   // Close on ESC
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closeMegaMenus();
+      if (e.key === "Escape") {
+        closeMegaMenus();
+        closeMobileMenu();
+      }
     };
     document.addEventListener("keydown", handleEsc);
     return () => document.removeEventListener("keydown", handleEsc);
-  }, [closeMegaMenus]);
+  }, [closeMegaMenus, closeMobileMenu]);
 
   // Lock body scroll when mega menu or mobile menu is open
   useEffect(() => {
-    if (open || megaOpen) { document.body.style.overflow = "hidden"; }
+    if (menuOpen || megaOpen) { document.body.style.overflow = "hidden"; }
     else { document.body.style.overflow = ""; }
     return () => { document.body.style.overflow = ""; };
-  }, [open, megaOpen]);
+  }, [menuOpen, megaOpen]);
 
   useEffect(() => {
     const updatePill = () => {
