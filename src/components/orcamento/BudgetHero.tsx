@@ -1,24 +1,19 @@
 import { motion } from "framer-motion";
 import { CheckCircle, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-const benefits = [
-  "Locação corporativa de computadores Dell",
-  "Suporte mensal para sua rede atual",
-  "Active Directory e controle de usuários",
-  "Backup automático a cada 30 minutos",
-  "Migração de dados do servidor antigo",
-  "VPN e segurança com firewall pfSense",
-];
+import { useTranslation } from "react-i18next";
 
 interface Props {
   contextTitle?: string | null;
 }
 
 const BudgetHero = ({ contextTitle }: Props) => {
+  const { t } = useTranslation();
   const scrollTo = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
   };
+
+  const benefits = t("budgetHero.benefits", { returnObjects: true }) as string[];
 
   return (
     <section className="relative min-h-[90vh] flex items-center section-dark overflow-hidden">
@@ -34,20 +29,19 @@ const BudgetHero = ({ contextTitle }: Props) => {
             transition={{ duration: 0.6 }}
           >
             <span className="inline-block px-4 py-1.5 mb-6 text-xs font-semibold tracking-widest uppercase bg-primary/10 text-primary rounded-full border border-primary/20">
-              Orçamento Online
+              {t("budgetHero.tag")}
             </span>
             <h1 className="text-3xl md:text-5xl lg:text-6xl font-heading font-bold mb-6 leading-tight">
               {contextTitle || (
                 <>
-                  Infraestrutura de TI{" "}
-                  <span className="text-primary">previsível</span> para sua empresa
+                  {t("budgetHero.title1")}{" "}
+                  <span className="text-primary">{t("budgetHero.titleHighlight")}</span>{" "}
+                  {t("budgetHero.title2")}
                 </>
               )}
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-3xl mx-auto leading-relaxed">
-              Locação a partir de <span className="text-primary font-semibold">R$249/mês</span> ou
-              suporte mensal a partir de <span className="text-primary font-semibold">R$120/mês</span> por computador.
-              Escolha o melhor caminho para sua empresa.
+              {t("budgetHero.desc")}
             </p>
           </motion.div>
 
@@ -76,7 +70,7 @@ const BudgetHero = ({ contextTitle }: Props) => {
               className="text-base px-8 py-6 bg-primary hover:bg-primary/90 text-primary-foreground"
               onClick={() => scrollTo("path-selector")}
             >
-              Começar orçamento
+              {t("budgetHero.ctaStart")}
             </Button>
             <Button
               size="lg"
@@ -90,7 +84,7 @@ const BudgetHero = ({ contextTitle }: Props) => {
               }
             >
               <MessageCircle className="w-5 h-5 mr-2" />
-              Falar com especialista
+              {t("budgetHero.ctaSpecialist")}
             </Button>
           </motion.div>
         </div>

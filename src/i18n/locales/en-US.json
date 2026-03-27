@@ -326,5 +326,22 @@
     "companies": "Companies protected",
     "uptime": "Uptime guaranteed",
     "support": "Someone watching your IT"
+  },
+  "budgetHero": {
+    "tag": "Online Quote",
+    "title1": "Predictable IT",
+    "titleHighlight": "infrastructure",
+    "title2": "for your business",
+    "desc": "Computer leasing from $50/mo or monthly support from $25/mo per workstation. Choose the best path for your company.",
+    "benefits": [
+      "Dell corporate computer leasing",
+      "Monthly support for your current network",
+      "Active Directory and user management",
+      "Automatic backup every 30 minutes",
+      "Data migration from legacy servers",
+      "VPN and security with pfSense firewall"
+    ],
+    "ctaStart": "Start quote",
+    "ctaSpecialist": "Talk to a specialist"
   }
 }

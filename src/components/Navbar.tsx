@@ -416,8 +416,6 @@ const Navbar = () => {
             {t("nav.webmail")}
           </a>
 
-          <LanguageSwitcher />
-
           {/* Área do Cliente — separated, red accent */}
           <Link
             to="/area-do-cliente"
@@ -429,6 +427,8 @@ const Navbar = () => {
           >
             {t("nav.areaCliente")}
           </Link>
+
+          <LanguageSwitcher />
         </div>
 
         <div className="lg:hidden relative z-[60] flex items-center gap-2">
