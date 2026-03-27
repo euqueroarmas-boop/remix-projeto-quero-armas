@@ -3,9 +3,54 @@ export const WHATSAPP_NUMBER = "5511963166915";
 export const WHATSAPP_DISPLAY = "(11) 96316-6915";
 export const WHATSAPP_BASE_URL = `https://wa.me/${WHATSAPP_NUMBER}`;
 
+const OPEN_GUARD_WINDOW_MS = 1200;
+
+let lastOpenedUrl = "";
+let lastOpenedAt = 0;
+
 export function whatsappLink(message?: string): string {
   if (!message) return WHATSAPP_BASE_URL;
   return `${WHATSAPP_BASE_URL}?text=${encodeURIComponent(message)}`;
+}
+
+function dedupeRepeatedText(message: string): string {
+  const normalized = message
+    .replace(/\r\n/g, "\n")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+  const paragraphs = normalized
+    .split(/\n\n+/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  const uniqueParagraphs: string[] = [];
+  const seen = new Set<string>();
+
+  for (const paragraph of paragraphs) {
+    const key = paragraph.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    uniqueParagraphs.push(paragraph);
+  }
+
+  const firstLinkIndex = uniqueParagraphs.findIndex((part) => part.startsWith("Link da página:"));
+
+  return uniqueParagraphs
+    .filter((part, index) => !part.startsWith("Link da página:") || index === firstLinkIndex)
+    .join("\n\n")
+    .trim();
+}
+
+function shouldBlockDuplicateOpen(url: string): boolean {
+  const now = Date.now();
+  const isDuplicate = lastOpenedUrl === url && now - lastOpenedAt < OPEN_GUARD_WINDOW_MS;
+
+  lastOpenedUrl = url;
+  lastOpenedAt = now;
+
+  return isDuplicate;
 }
 
 /* ------------------------------------------------------------------ */
@@ -74,47 +119,41 @@ export function buildContextualWhatsAppMessage(options: WhatsAppMessageOptions =
   const name = getCleanPageName(pageTitle);
   const url = getSiteUrl();
 
-  let base: string;
+  let intro: string;
 
   switch (intent) {
     case "specialist":
-      base = `Olá, estou vendo a página "${name}" no site da WMTi e desejo contratar os serviços da empresa. Poderiam falar comigo sobre esta solução?`;
+      intro = `Olá, estou vendo a página "${name}" no site da WMTi e quero falar com um especialista para contratar este serviço.`;
       break;
     case "diagnosis":
-      base = `Olá, estou vendo a página "${name}" no site da WMTi e quero solicitar um diagnóstico técnico.`;
+      intro = `Olá, estou vendo a página "${name}" no site da WMTi e quero solicitar um diagnóstico técnico.`;
       break;
     case "proposal":
-      base = `Olá, estou vendo a página "${name}" no site da WMTi e quero montar uma proposta para minha empresa.`;
+      intro = `Olá, estou vendo a página "${name}" no site da WMTi e quero montar uma proposta para minha empresa.`;
       break;
     case "blog":
-      base = `Olá, estou lendo a página "${name}" no site da WMTi e quero entender como a WMTi pode me ajudar com essa demanda.`;
+      intro = `Olá, estou lendo a página "${name}" no site da WMTi e quero entender como a WMTi pode me ajudar com essa demanda.`;
       break;
     case "segment":
-      base = `Olá, estou vendo a página "${name}" no site da WMTi e desejo contratar os serviços da empresa para este segmento. Poderiam falar comigo?`;
+      intro = `Olá, estou vendo a página "${name}" no site da WMTi e desejo contratar os serviços da empresa para este segmento. Poderiam falar comigo?`;
       break;
     case "emergencial":
-      base = `Olá! Preciso de suporte técnico emergencial para minha empresa.`;
+      intro = `Olá! Preciso de suporte técnico emergencial para minha empresa.`;
       break;
     case "avulso":
-      base = `Olá! Gostaria de contratar um serviço técnico avulso para minha empresa.`;
+      intro = `Olá! Gostaria de contratar um serviço técnico avulso para minha empresa.`;
       break;
     default:
-      base = `Olá, estou vendo a página "${name}" no site da WMTi e desejo contratar os serviços da empresa. Poderiam falar comigo sobre esta solução?`;
+      intro = `Olá, estou vendo a página "${name}" no site da WMTi e desejo contratar os serviços da empresa. Poderiam falar comigo sobre esta solução?`;
   }
 
   if (city) {
-    base = base.replace("no site da WMTi", `em ${city} no site da WMTi`);
+    intro = intro.replace("no site da WMTi", `em ${city} no site da WMTi`);
   }
 
-  if (detail) {
-    base += `\n\n${detail}`;
-  }
+  const parts = [intro, detail?.trim(), url ? `Link da página: ${url}` : undefined].filter(Boolean) as string[];
 
-  if (url) {
-    base += `\n\nLink da página: ${url}`;
-  }
-
-  return base;
+  return dedupeRepeatedText(parts.join("\n\n"));
 }
 
 /**
@@ -122,8 +161,10 @@ export function buildContextualWhatsAppMessage(options: WhatsAppMessageOptions =
  * Handles iframe/preview contexts by forcing top-level navigation as fallback.
  */
 export function openWhatsApp(options: WhatsAppMessageOptions = {}): void {
-  const message = buildContextualWhatsAppMessage(options);
+  const message = dedupeRepeatedText(buildContextualWhatsAppMessage(options));
   const url = whatsappLink(message);
+
+  if (shouldBlockDuplicateOpen(url)) return;
 
   // Try window.open first (works in most contexts)
   const win = window.open(url, "_blank", "noopener,noreferrer");
@@ -146,7 +187,8 @@ export function openWhatsApp(options: WhatsAppMessageOptions = {}): void {
 
 /** Open WhatsApp with a raw pre-built message (for special cases like payment) */
 export function openWhatsAppRaw(message: string): void {
-  const url = whatsappLink(message);
+  const url = whatsappLink(dedupeRepeatedText(message));
+  if (shouldBlockDuplicateOpen(url)) return;
   const win = window.open(url, "_blank", "noopener,noreferrer");
   if (!win) {
     if (window.top && window.top !== window) {
