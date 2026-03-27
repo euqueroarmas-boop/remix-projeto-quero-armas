@@ -1,34 +1,9 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calculator, Monitor, FileText, X, ChevronUp } from "lucide-react";
-
-const CTA_ITEMS = [
-  {
-    id: "calcular",
-    label: "Calcular TI",
-    shortLabel: "Calcular",
-    icon: Calculator,
-    href: "/orcamento-ti",
-    color: "bg-primary hover:bg-primary/90 text-primary-foreground",
-  },
-  {
-    id: "locacao",
-    label: "Simular Locação",
-    shortLabel: "Locação",
-    icon: Monitor,
-    href: "/locacao-de-computadores-para-empresas-jacarei",
-    color: "bg-emerald-600 hover:bg-emerald-700 text-white",
-  },
-  {
-    id: "proposta",
-    label: "Solicitar Proposta",
-    shortLabel: "Proposta",
-    icon: FileText,
-    href: "/orcamento-ti",
-    color: "bg-sky-600 hover:bg-sky-700 text-white",
-  },
-];
+import { X, ChevronUp } from "lucide-react";
+import { getCtaItemsForPath } from "@/lib/ctaContext";
+import { whatsappLink } from "@/lib/whatsapp";
 
 /** Pages where the CTA bar should NOT appear */
 const HIDDEN_ROUTES = [
@@ -51,6 +26,9 @@ const FloatingCtaBar = () => {
     HIDDEN_ROUTES.some((r) => location.pathname.startsWith(r)) ||
     location.pathname.startsWith("/contratar/");
 
+  // Get contextual CTA items based on current page
+  const ctaItems = getCtaItemsForPath(location.pathname);
+
   // Show after scroll
   useEffect(() => {
     setDismissed(false);
@@ -64,6 +42,15 @@ const FloatingCtaBar = () => {
   if (isHidden || !visible || dismissed) return null;
 
   const handleClick = (href: string) => {
+    if (href.startsWith("whatsapp:")) {
+      const msg = href.replace("whatsapp:", "");
+      window.open(whatsappLink(msg), "_blank", "noopener,noreferrer");
+      return;
+    }
+    if (href === "contratar") {
+      navigate(`/contratar${location.pathname}`);
+      return;
+    }
     navigate(href);
   };
 
@@ -80,7 +67,7 @@ const FloatingCtaBar = () => {
       >
         <div className="bg-card/95 backdrop-blur-md border-t border-border px-3 py-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))]">
           <div className="flex items-center gap-2">
-            {CTA_ITEMS.map((item) => (
+            {ctaItems.map((item) => (
               <button
                 key={item.id}
                 onClick={() => handleClick(item.href)}
@@ -118,7 +105,7 @@ const FloatingCtaBar = () => {
               exit={{ opacity: 0, scale: 0.9 }}
               className="flex flex-col gap-2"
             >
-              {CTA_ITEMS.map((item, i) => (
+              {ctaItems.map((item, i) => (
                 <motion.button
                   key={item.id}
                   initial={{ x: 40, opacity: 0 }}

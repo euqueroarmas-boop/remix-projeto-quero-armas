@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, CheckCircle2, MessageCircle, ChevronRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, MessageCircle, ChevronRight, ShieldCheck, Building2, Award, Zap, AlertTriangle, Clock } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import HoursCalculator from "@/components/orcamento/HoursCalculator";
 import Navbar from "@/components/Navbar";
@@ -34,7 +34,6 @@ interface ServicePageProps {
   heroImage?: string;
   heroImageAlt?: string;
   showHoursCalculator?: boolean;
-  /** City context for local pages */
   cityName?: string;
   citySlug?: string;
 }
@@ -45,6 +44,126 @@ const fadeIn = {
   viewport: { once: true as const },
   transition: { duration: 0.5 },
 };
+
+/* ── Micro-CTA reusable block ── */
+const MicroCta = ({ href, whatsappMessage, cityName }: { href: string; whatsappMessage: string; cityName?: string }) => (
+  <motion.div {...fadeIn} className="py-8 md:py-10">
+    <div className="container">
+      <div className="bg-primary/5 border border-primary/20 rounded-lg p-6 md:p-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div>
+          <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-1">// Próximo passo</p>
+          <p className="font-body text-sm md:text-base text-foreground">
+            Quanto mais tempo sem agir, maior o risco{cityName ? ` para sua empresa em ${cityName}` : ''}.
+          </p>
+        </div>
+        <div className="flex gap-3 shrink-0">
+          <Link
+            to={href}
+            className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-5 py-3 font-mono text-xs font-bold uppercase tracking-wider hover:brightness-110 transition-all btn-glow rounded"
+          >
+            Solicitar análise
+          </Link>
+          <a
+            href={`https://wa.me/5511963166915?text=${encodeURIComponent(whatsappMessage)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 border border-border text-foreground px-5 py-3 font-mono text-xs uppercase tracking-wider hover:border-primary hover:text-primary transition-all rounded"
+          >
+            <MessageCircle size={14} />
+            WhatsApp
+          </a>
+        </div>
+      </div>
+    </div>
+  </motion.div>
+);
+
+/* ── Authority bar ── */
+const AuthorityBar = () => (
+  <section className="section-light py-8 md:py-10 border-b border-border">
+    <div className="container">
+      <div className="flex flex-wrap items-center justify-center gap-6 md:gap-10">
+        {[
+          { icon: Award, text: "15+ anos no mercado" },
+          { icon: Building2, text: "150+ empresas atendidas" },
+          { icon: ShieldCheck, text: "Parceiro Dell & Microsoft" },
+          { icon: Zap, text: "SLA com resposta garantida" },
+        ].map((a) => (
+          <div key={a.text} className="flex items-center gap-2">
+            <a.icon size={16} className="text-primary shrink-0" />
+            <span className="text-xs md:text-sm font-mono font-bold text-muted-foreground">{a.text}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+);
+
+/* ── "What your company avoids" block ── */
+const AvoidanceBlock = ({ cityName }: { cityName?: string }) => (
+  <section className="section-light py-16 md:py-20">
+    <div className="container max-w-4xl">
+      <motion.div {...fadeIn}>
+        <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
+          // O que sua empresa evita
+        </p>
+        <h2 className="text-2xl md:text-3xl mb-8">
+          Com a WMTi, sua empresa{cityName ? ` em ${cityName}` : ''} <span className="text-primary">para de perder</span>:
+        </h2>
+        <div className="grid sm:grid-cols-2 gap-4">
+          {[
+            { icon: AlertTriangle, text: "Paradas inesperadas que custam milhares por hora" },
+            { icon: Clock, text: "Horas da equipe perdidas esperando TI resolver" },
+            { icon: ShieldCheck, text: "Dados sensíveis expostos por falta de proteção real" },
+            { icon: Building2, text: "Contratos e clientes perdidos por falha operacional" },
+          ].map((item) => (
+            <div key={item.text} className="flex items-start gap-3 p-4 bg-destructive/5 border border-destructive/10 rounded-lg">
+              <item.icon size={18} className="text-destructive mt-0.5 shrink-0" />
+              <p className="font-body text-sm text-foreground leading-relaxed">{item.text}</p>
+            </div>
+          ))}
+        </div>
+      </motion.div>
+    </div>
+  </section>
+);
+
+/* ── Urgency block ── */
+const UrgencyBlock = ({ whatsappMessage, currentPath, cityName }: { whatsappMessage: string; currentPath: string; cityName?: string }) => (
+  <section className="py-12 md:py-16 bg-destructive/5 border-y border-destructive/10">
+    <div className="container max-w-3xl text-center">
+      <motion.div {...fadeIn}>
+        <p className="font-mono text-xs tracking-[0.3em] uppercase text-destructive mb-4">
+          // Atenção
+        </p>
+        <h2 className="text-2xl md:text-3xl mb-4">
+          Cada dia sem resolver <span className="text-destructive">custa dinheiro</span>
+        </h2>
+        <p className="font-body text-muted-foreground max-w-xl mx-auto mb-6 leading-relaxed">
+          Uma hora de parada pode custar mais que um mês inteiro de serviço profissional.
+          {cityName ? ` Empresas em ${cityName} que agiram antes já operam sem interrupções.` : ' Empresas que agiram antes já operam sem interrupções.'}
+        </p>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <a
+            href={`https://wa.me/5511963166915?text=${encodeURIComponent(whatsappMessage)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all btn-glow rounded"
+          >
+            <MessageCircle size={16} />
+            Resolver agora
+          </a>
+          <Link
+            to={`/contratar/${currentPath.replace(/^\//, "")}`}
+            className="inline-flex items-center gap-2 border border-border text-foreground px-8 py-4 font-mono text-sm uppercase tracking-wider hover:border-primary hover:text-primary transition-all rounded"
+          >
+            Contratar este serviço
+          </Link>
+        </div>
+      </motion.div>
+    </div>
+  </section>
+);
 
 const ServicePageTemplate = ({
   title,
@@ -79,11 +198,12 @@ const ServicePageTemplate = ({
     window.scrollTo(0, 0);
   }, [currentPath]);
 
-  // Breadcrumb items
   const breadcrumbItems = [
     { name: "Home", url: `${baseUrl}/` },
     { name: tag, url: `${baseUrl}${currentPath}` },
   ];
+
+  const contractHref = `/contratar/${currentPath.replace(/^\//, "")}`;
 
   return (
     <div className="min-h-screen">
@@ -104,11 +224,11 @@ const ServicePageTemplate = ({
       />
       <Navbar />
 
+      {/* ══ HERO ══ */}
       <section className="section-dark pt-24 md:pt-28 pb-16 md:pb-24 border-b-4 border-primary">
         <div className="container">
           <div className={`${heroImage ? 'grid md:grid-cols-2 gap-12 items-center' : ''}`}>
             <motion.div {...fadeIn} className="max-w-4xl">
-              {/* Breadcrumbs */}
               <nav aria-label="Breadcrumb" className="mb-6">
                 <ol className="flex items-center gap-1 font-mono text-xs text-gunmetal-foreground/50">
                   <li>
@@ -129,7 +249,7 @@ const ServicePageTemplate = ({
 
               <div className="flex flex-wrap gap-4">
                 <Link
-                  to={`/contratar/${currentPath.replace(/^\//, "")}`}
+                  to={contractHref}
                   className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all btn-glow"
                 >
                   <ArrowRight size={16} />
@@ -167,7 +287,10 @@ const ServicePageTemplate = ({
         </div>
       </section>
 
-      {/* Pain Points & Solutions */}
+      {/* ══ AUTHORITY BAR ══ */}
+      <AuthorityBar />
+
+      {/* ══ Pain Points & Solutions ══ */}
       <section className="section-light py-16 md:py-24">
         <div className="container">
           <div className="grid md:grid-cols-2 gap-12 md:gap-16">
@@ -208,7 +331,10 @@ const ServicePageTemplate = ({
         </div>
       </section>
 
-      {/* Benefits */}
+      {/* ══ MICRO-CTA 1 ══ */}
+      <MicroCta href="/orcamento-ti" whatsappMessage={whatsappMessage} cityName={cityName} />
+
+      {/* ══ Benefits ══ */}
       <section className="section-dark py-16 md:py-24">
         <div className="container">
           <motion.div {...fadeIn} className="mb-12">
@@ -239,7 +365,10 @@ const ServicePageTemplate = ({
         </div>
       </section>
 
-      {/* Local SEO content */}
+      {/* ══ WHAT YOUR COMPANY AVOIDS ══ */}
+      <AvoidanceBlock cityName={cityName} />
+
+      {/* ══ Local SEO content ══ */}
       {localContent && (
         <section className="section-light py-16 md:py-24">
           <div className="container max-w-3xl">
@@ -255,7 +384,13 @@ const ServicePageTemplate = ({
         </section>
       )}
 
-      {/* FAQ */}
+      {/* ══ MICRO-CTA 2 ══ */}
+      <MicroCta href={contractHref} whatsappMessage={whatsappMessage} cityName={cityName} />
+
+      {/* ══ URGENCY BLOCK ══ */}
+      <UrgencyBlock whatsappMessage={whatsappMessage} currentPath={currentPath} cityName={cityName} />
+
+      {/* ══ FAQ ══ */}
       <section className="section-dark py-16 md:py-24">
         <div className="container max-w-3xl">
           <motion.div {...fadeIn} className="mb-12">
@@ -288,34 +423,40 @@ const ServicePageTemplate = ({
         </div>
       </section>
 
-      {/* Hours Calculator */}
+      {/* ══ Hours Calculator ══ */}
       {showHoursCalculator && <HoursCalculator serviceName={tag} />}
 
-      {/* CTA */}
-      <section id="contato-servico" className="section-light py-16 md:py-24">
+      {/* ══ CTA FINAL FORTE ══ */}
+      <section id="contato-servico" className="section-dark py-16 md:py-24 border-t-4 border-primary">
         <div className="container max-w-3xl text-center">
           <motion.div {...fadeIn}>
+            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
+              // Decisão
+            </p>
             <h2 className="text-2xl md:text-4xl mb-4">
-              Pare de perder dinheiro com TI <span className="text-primary">que não funciona{cityName ? ` em ${cityName}` : ''}.</span>
+              Sua empresa{cityName ? ` em ${cityName}` : ''} pode continuar <span className="text-destructive">perdendo dinheiro</span> com TI que não funciona.
             </h2>
+            <h3 className="text-lg md:text-xl text-muted-foreground mb-2">
+              Ou pode resolver <span className="text-primary font-bold">agora</span>.
+            </h3>
             <p className="font-body text-muted-foreground max-w-xl mx-auto mb-8 leading-relaxed">
               {cityName
-                ? `Peça um diagnóstico gratuito para sua empresa em ${cityName}. Em até 48h você recebe uma proposta com valor fixo mensal — sem surpresas.`
-                : 'Peça um diagnóstico gratuito. Em até 48h você recebe uma proposta com valor fixo mensal — sem surpresas.'}
+                ? `Diagnóstico gratuito para sua empresa em ${cityName}. Em até 48h você recebe uma proposta com valor fixo mensal — sem surpresas, sem amarras.`
+                : 'Diagnóstico gratuito. Em até 48h você recebe uma proposta com valor fixo mensal — sem surpresas, sem amarras.'}
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <a
                 href={`https://wa.me/5511963166915?text=${encodeURIComponent(whatsappMessage)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
+                className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all btn-glow rounded"
               >
                 <MessageCircle size={16} />
                 Resolver agora pelo WhatsApp
               </a>
               <Link
                 to="/orcamento-ti"
-                className="inline-flex items-center gap-2 border border-border text-foreground px-8 py-4 font-mono text-sm uppercase tracking-wider hover:border-primary hover:text-primary transition-all"
+                className="inline-flex items-center gap-2 border border-border text-foreground px-8 py-4 font-mono text-sm uppercase tracking-wider hover:border-primary hover:text-primary transition-all rounded"
               >
                 Quero minha proposta online
               </Link>
@@ -324,7 +465,7 @@ const ServicePageTemplate = ({
         </div>
       </section>
 
-      {/* Related services */}
+      {/* ══ Related services ══ */}
       {relatedLinks.length > 0 && (
         <section className="section-dark py-12 border-t border-gunmetal-foreground/10">
           <div className="container">
