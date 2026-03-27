@@ -113,12 +113,10 @@ const ProblemsSection = () => {
             className="bg-secondary border border-border/30 p-8 md:p-12 text-center"
           >
             <h3 className="text-xl md:text-3xl text-secondary-foreground mb-3 md:mb-4">
-              Não espere o problema parar sua empresa
+              {t("problems.ctaTitle")}
             </h3>
             <p className="font-body text-sm md:text-base text-muted-foreground max-w-xl mx-auto mb-6 md:mb-8 leading-relaxed">
-              Solicite um diagnóstico gratuito da sua infraestrutura. Nossa equipe
-              técnica identifica gargalos, riscos e oportunidades de melhoria —
-              sem compromisso.
+              {t("problems.ctaDesc")}
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-4">
               <a
@@ -127,14 +125,14 @@ const ProblemsSection = () => {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 md:px-8 py-3 md:py-4 font-mono text-xs md:text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all w-full sm:w-auto justify-center"
               >
-                Diagnóstico Gratuito
+                {t("problems.ctaDiagnostico")}
                 <ArrowRight size={16} />
               </a>
               <a
                 href="#contato"
                 className="inline-flex items-center gap-2 border border-primary/40 text-primary px-6 md:px-8 py-3 md:py-4 font-mono text-xs md:text-sm uppercase tracking-wider hover:bg-primary/10 transition-all w-full sm:w-auto justify-center"
               >
-                Solicitar Orçamento
+                {t("problems.ctaOrcamento")}
               </a>
             </div>
           </motion.div>
