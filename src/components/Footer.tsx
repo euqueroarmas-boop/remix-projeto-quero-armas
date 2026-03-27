@@ -1,11 +1,13 @@
+import { useTranslation } from "react-i18next";
 import logoFull from "@/assets/logo-wmti-full.webp";
 
 const Footer = () => {
+  const { t } = useTranslation();
+
   return (
     <footer className="bg-secondary py-12 md:py-16">
       <div className="container">
         <div className="border-t border-border/60 pt-8 md:pt-10">
-          {/* Branding + Certifications row */}
           <div className="flex flex-col md:flex-row items-center md:items-end justify-between gap-8">
             <div className="flex items-center">
               <img
@@ -28,13 +30,12 @@ const Footer = () => {
             </div>
           </div>
 
-          {/* Bottom row — copyright + contact */}
           <div className="mt-8 pt-6 border-t border-border/30 flex flex-col md:flex-row items-center justify-between gap-3">
             <p className="font-mono text-[11px] tracking-[0.04em] text-muted-foreground/50 text-center md:text-left">
-              © {new Date().getFullYear()} WMTi Tecnologia da Informação. Todos os direitos reservados.
+              © {new Date().getFullYear()} WMTi Tecnologia da Informação. {t("footer.rights")}
             </p>
             <p className="font-mono text-[11px] tracking-[0.04em] text-muted-foreground/50 text-center md:text-right">
-              Jacareí, SP — (11) 96316-6915
+              {t("footer.location")}
             </p>
           </div>
         </div>

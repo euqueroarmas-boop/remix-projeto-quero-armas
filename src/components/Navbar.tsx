@@ -2,7 +2,9 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X, ChevronDown, Server, Cloud, Shield, Network, Monitor, Wrench, Headphones, Activity, Eye, Cpu, HardDrive, Lock, Zap, Terminal, RefreshCw, Building2, Scale, Heart, Landmark, Briefcase, Calculator, Factory, Fuel, FileText, Mail, Globe, Brain, Bot, Home } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import logoFull from "@/assets/logo-wmti-full.webp";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 import type { LucideIcon } from "lucide-react";
 
 interface MegaMenuItem {
@@ -55,11 +57,11 @@ type NavLink = {
 };
 
 const navLinks: NavLink[] = [
-  { href: "/institucional", label: "Institucional", isRoute: true },
-  { href: "#servicos", label: "Serviços", isDropdown: true },
-  { href: "#segmentos", label: "Segmentos", isDropdown: true },
-  { href: "#infraestrutura", mobileHref: "/infraestrutura", label: "Infraestrutura" },
-  { href: "/blog", label: "Blog", isRoute: true },
+  { href: "/institucional", label: "nav.institucional", isRoute: true },
+  { href: "#servicos", label: "nav.servicos", isDropdown: true },
+  { href: "#segmentos", label: "nav.segmentos", isDropdown: true },
+  { href: "#infraestrutura", mobileHref: "/infraestrutura", label: "nav.infraestrutura" },
+  { href: "/blog", label: "nav.blog", isRoute: true },
 ];
 
 /* ─── Shared nav-item class for perfect vertical alignment ─── */
@@ -68,6 +70,7 @@ const NAV_ITEM_CLASS = "font-mono text-xs uppercase tracking-wider flex items-ce
 const WEBMAIL_URL = "https://sigma.servidor.net.br:2096/cpsess3314771808/webmail/jupiter/mail/clientconf.html?login=1&post_login=62387806819454";
 
 const Navbar = () => {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [segOpen, setSegOpen] = useState(false);
   const [svcOpen, setSvcOpen] = useState(false);
@@ -207,12 +210,12 @@ const Navbar = () => {
         onClick={(e) => {
           e.stopPropagation();
           setIsOpen(!isOpen);
-          if (link.label === "Segmentos") setSvcOpen(false);
-          if (link.label === "Serviços") setSegOpen(false);
-        }}
-        className={`${NAV_ITEM_CLASS} gap-1 ${active ? "text-primary" : "text-muted-foreground hover:text-primary"}`}
-      >
-        {link.label}
+           if (link.label === "nav.segmentos") setSvcOpen(false);
+           if (link.label === "nav.servicos") setSegOpen(false);
+         }}
+         className={`${NAV_ITEM_CLASS} gap-1 ${active ? "text-primary" : "text-muted-foreground hover:text-primary"}`}
+       >
+         {t(link.label)}
         <ChevronDown size={12} className={`transition-transform ${isOpen ? "rotate-180" : ""}`} />
       </button>
     </div>
@@ -300,7 +303,7 @@ const Navbar = () => {
           onClick={() => setIsOpen(!isOpen)}
           className={`${baseClass} inline-flex items-center gap-2 w-full text-left`}
         >
-          {link.label}
+          {t(link.label)}
           <ChevronDown size={14} className={`transition-transform flex-shrink-0 ${isOpen ? "rotate-180" : ""}`} />
         </button>
         <AnimatePresence>
@@ -362,10 +365,10 @@ const Navbar = () => {
             const active = i === activeIndex;
             const colorClass = active ? "text-primary" : "text-muted-foreground hover:text-primary";
 
-            if (link.isDropdown && link.label === "Segmentos") {
+            if (link.isDropdown && link.label === "nav.segmentos") {
               return renderMegaButton(link, i, active, segOpen, setSegOpen, segDropdownRef);
             }
-            if (link.isDropdown && link.label === "Serviços") {
+            if (link.isDropdown && link.label === "nav.servicos") {
               return renderMegaButton(link, i, active, svcOpen, setSvcOpen, svcDropdownRef);
             }
 
@@ -377,7 +380,7 @@ const Navbar = () => {
                 ref={(el) => { linkRefs.current[i] = el; }}
                 className={`${NAV_ITEM_CLASS} ${colorClass}`}
               >
-                {link.label}
+                {t(link.label)}
               </Link>
             ) : (
               <button
@@ -386,7 +389,7 @@ const Navbar = () => {
                 onClick={() => handleAnchorClick(link.href.replace("#", ""))}
                 className={`${NAV_ITEM_CLASS} ${colorClass}`}
               >
-                {link.label}
+                {t(link.label)}
               </button>
             );
           })}
@@ -395,7 +398,7 @@ const Navbar = () => {
             to="/orcamento-ti"
             className={`${NAV_ITEM_CLASS} text-muted-foreground hover:text-primary`}
           >
-            Orçamento
+            {t("nav.orcamento")}
           </Link>
 
           <a
@@ -404,8 +407,10 @@ const Navbar = () => {
             rel="noopener"
             className={`${NAV_ITEM_CLASS} text-muted-foreground hover:text-primary`}
           >
-            Webmail
+            {t("nav.webmail")}
           </a>
+
+          <LanguageSwitcher />
 
           {/* Área do Cliente — separated, red accent */}
           <Link
@@ -416,7 +421,7 @@ const Navbar = () => {
                 : "text-muted-foreground hover:text-red-500"
             }`}
           >
-            Área do Cliente
+            {t("nav.areaCliente")}
           </Link>
         </div>
 
@@ -424,7 +429,7 @@ const Navbar = () => {
         <button
           onClick={() => setOpen(!open)}
           className="lg:hidden text-foreground relative z-[60] flex items-center justify-center h-16"
-          aria-label="Menu de navegação"
+          aria-label={t("nav.menuLabel")}
         >
           {open ? <X size={20} /> : <Menu size={20} />}
         </button>
@@ -445,7 +450,7 @@ const Navbar = () => {
               <Link to="/" onClick={() => setOpen(false)} className="flex items-center">
                 <img src={logoFull} alt="WMTi Tecnologia da Informação" className="h-8 w-auto" />
               </Link>
-              <button onClick={() => setOpen(false)} className="text-foreground" aria-label="Fechar menu">
+              <button onClick={() => setOpen(false)} className="text-foreground" aria-label={t("nav.fecharMenu")}>
                 <X size={20} />
               </button>
             </div>
@@ -457,17 +462,17 @@ const Navbar = () => {
                   active ? "text-primary border-l-2 border-primary pl-4" : "text-muted-foreground hover:text-primary"
                 }`;
 
-                if (link.isDropdown && link.label === "Segmentos") {
+                if (link.isDropdown && link.label === "nav.segmentos") {
                   return renderMobileMegaDropdown(segmentos, mobileSegOpen, setMobileSegOpen, link, active);
                 }
-                if (link.isDropdown && link.label === "Serviços") {
+                if (link.isDropdown && link.label === "nav.servicos") {
                   return renderMobileMegaDropdown(servicos, mobileSvcOpen, setMobileSvcOpen, link, active);
                 }
 
                 const href = resolveHref(link, true);
                 return isRouteLink(href) ? (
                   <Link key={link.label} to={href} onClick={() => setOpen(false)} className={baseClass}>
-                    {link.label}
+                    {t(link.label)}
                   </Link>
                 ) : (
                   <button
@@ -475,7 +480,7 @@ const Navbar = () => {
                     onClick={() => { setOpen(false); handleAnchorClick(link.href.replace("#", "")); }}
                     className={`${baseClass} text-left`}
                   >
-                    {link.label}
+                    {t(link.label)}
                   </button>
                 );
               })}
@@ -484,7 +489,7 @@ const Navbar = () => {
                 onClick={() => setOpen(false)}
                 className="font-mono text-base uppercase tracking-wider transition-colors py-2 text-muted-foreground hover:text-primary text-left"
               >
-                Orçamento
+                {t("nav.orcamento")}
               </Link>
 
               <a
@@ -494,7 +499,7 @@ const Navbar = () => {
                 onClick={() => setOpen(false)}
                 className="font-mono text-base uppercase tracking-wider transition-colors py-2 text-muted-foreground hover:text-primary text-left"
               >
-                Webmail
+                {t("nav.webmail")}
               </a>
 
               <Link
@@ -506,7 +511,7 @@ const Navbar = () => {
                     : "text-muted-foreground hover:text-red-500"
                 }`}
               >
-                Área do Cliente
+                {t("nav.areaCliente")}
               </Link>
 
               <a
@@ -516,7 +521,7 @@ const Navbar = () => {
                 onClick={() => setOpen(false)}
                 className="mt-4 inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-6 py-4 font-mono text-sm font-bold uppercase tracking-wider"
               >
-                Falar com Especialista
+                {t("nav.falarEspecialista")}
               </a>
             </div>
           </motion.div>
