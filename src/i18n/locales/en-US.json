@@ -456,7 +456,178 @@
     "ctaTitleCitySuffix": " in {{city}}",
     "ctaDesc": "Request a free assessment. Our technical team evaluates your situation and presents the best solution.",
     "ctaCitySuffix": " We serve companies in {{city}} and the {{region}} area.",
-    "ctaBtn": "Talk to a specialist"
+    "ctaBtn": "Talk to a specialist",
+    "tags": {
+      "Compliance": "Compliance",
+      "Microsoft 365": "Microsoft 365",
+      "Servidores": "Servers",
+      "Segurança": "Security",
+      "LGPD": "LGPD (Data Protection)",
+      "Backup": "Backup",
+      "Firewall": "Firewall",
+      "Infraestrutura": "Infrastructure",
+      "Custos": "Costs",
+      "Regional": "Regional",
+      "Caso de Sucesso": "Success Story"
+    },
+    "posts": {
+      "provimento-213-cnj-desafios-tecnologia-cartorios": {
+        "title": "CNJ Provision 213 and the technological challenges for Brazilian notary offices",
+        "excerpt": "Understand how CNJ Provision 213 impacts notary office IT infrastructure and what measures are needed to ensure compliance and security."
+      },
+      "vantagens-microsoft-365-para-empresas": {
+        "title": "5 advantages of Microsoft 365 for companies still using POP/IMAP email",
+        "excerpt": "Discover why migrating to Microsoft 365 is essential for productivity, security, and collaboration in your business."
+      },
+      "quando-trocar-servidor-da-empresa": {
+        "title": "When is it time to replace your company server? 7 warning signs",
+        "excerpt": "Know the 7 signs that indicate it is time to invest in a new Dell PowerEdge server for your business."
+      },
+      "ransomware-em-hospitais-como-proteger": {
+        "title": "Ransomware in hospitals: how to protect your healthcare institution",
+        "excerpt": "Hospitals are the primary target of ransomware attacks in Brazil. Learn how to protect electronic health records and ensure continuity of care."
+      },
+      "vazamento-dados-clinicas-medicas-lgpd": {
+        "title": "Data breaches in medical clinics: risks and how to prevent them",
+        "excerpt": "Medical clinics handle sensitive patient data. Understand the risks of data leaks and how LGPD requires adequate protection."
+      },
+      "backup-para-cartorios-estrategias-seguras": {
+        "title": "Backup for notary offices: secure strategies to protect digital archives",
+        "excerpt": "Notary offices need reliable backup to protect notarial acts and records. Discover the best strategies."
+      },
+      "firewall-pfsense-para-empresas-protecao-completa": {
+        "title": "pfSense firewall for businesses: complete protection against intrusions",
+        "excerpt": "pfSense is an enterprise-grade open-source firewall solution that protects your network against external and internal threats."
+      },
+      "ataques-ciberneticos-escritorios-advocacia": {
+        "title": "Cyber attacks on law firms: how to protect yourself",
+        "excerpt": "Law firms are frequent targets of hackers due to handling confidential information. See how to shield your operations."
+      },
+      "servidores-dell-poweredge-seguranca-dados": {
+        "title": "Dell PowerEdge servers: data security for businesses",
+        "excerpt": "Discover how Dell PowerEdge servers offer native security features like TPM, Secure Boot, and iDRAC to protect your data."
+      },
+      "lgpd-para-clinicas-e-hospitais-guia-pratico": {
+        "title": "LGPD for clinics and hospitals: practical compliance guide",
+        "excerpt": "Clinics and hospitals must adapt their IT infrastructure to comply with LGPD. See the step-by-step guide to ensure compliance."
+      },
+      "como-ransomware-ataca-cartorios": {
+        "title": "How ransomware attacks notary offices and what to do for protection",
+        "excerpt": "Notary offices are among the most vulnerable targets for ransomware. Understand the attack vector and protection measures."
+      },
+      "falhas-infraestrutura-ti-hospitais": {
+        "title": "IT infrastructure failures in hospitals: risks and solutions",
+        "excerpt": "A server failure in a hospital can compromise patient care. Learn about risks and how to implement high availability."
+      },
+      "backup-automatizado-clinicas-medicas": {
+        "title": "Automated backup for medical clinics: protect exams and medical records",
+        "excerpt": "Medical images and electronic health records need automated and tested backup. Learn how to implement it in your clinic."
+      },
+      "segmentacao-rede-hospitalar-seguranca": {
+        "title": "Hospital network segmentation: why it is essential for security",
+        "excerpt": "Unsegmented hospital networks expose medical equipment and patient data. Understand how segmentation protects your institution."
+      },
+      "phishing-em-escritorios-advocacia-como-evitar": {
+        "title": "Phishing in law firms: how to avoid email scams",
+        "excerpt": "Phishing attacks are the gateway for intrusions in legal offices. Learn to identify and block these threats."
+      },
+      "redundancia-internet-clinicas-hospitais": {
+        "title": "Internet redundancy in clinics and hospitals: why it is mandatory",
+        "excerpt": "An internet outage in a hospital can paralyze critical systems. See how to implement redundancy with automatic failover."
+      },
+      "ransomware-wannacry-licoes-para-empresas": {
+        "title": "WannaCry: lessons from the largest ransomware attack for Brazilian companies",
+        "excerpt": "WannaCry affected hospitals and businesses worldwide. Learn the lessons from this attack and how to prevent it from happening to your company."
+      },
+      "vpn-segura-para-escritorios-advocacia": {
+        "title": "Secure VPN for law firms: protected remote access",
+        "excerpt": "Lawyers need to access cases and documents remotely with security. See how to implement corporate VPN with pfSense."
+      },
+      "como-proteger-prontuario-eletronico": {
+        "title": "How to protect electronic patient records against attacks",
+        "excerpt": "Electronic health records contain sensitive data protected by LGPD. Learn how to secure access and ensure data integrity."
+      },
+      "servidor-dedicado-vs-nuvem-para-empresas": {
+        "title": "Dedicated server vs cloud: which is better for your business?",
+        "excerpt": "Find out when to choose a local Dell PowerEdge server or the cloud, considering security, performance, and costs."
+      },
+      "politica-seguranca-informacao-empresas": {
+        "title": "Information security policy: how to create one for your company",
+        "excerpt": "An information security policy is the first step to protecting corporate data. See how to create yours."
+      },
+      "backup-3-2-1-estrategia-para-empresas": {
+        "title": "3-2-1 backup strategy: the gold standard for data protection",
+        "excerpt": "The 3-2-1 backup rule ensures your data survives any disaster. Learn how to apply it in your business."
+      },
+      "monitoramento-rede-prevencao-ataques": {
+        "title": "Network monitoring: how to prevent attacks before they happen",
+        "excerpt": "Proactive monitoring identifies threats and anomalies before they cause damage. Learn about essential tools and practices."
+      },
+      "lgpd-para-cartorios-adequacao-necessaria": {
+        "title": "LGPD for notary offices: necessary compliance for data protection",
+        "excerpt": "Notary offices handle sensitive personal data and need to comply with LGPD. See what changes in the IT infrastructure."
+      },
+      "ataques-ddos-como-proteger-empresa": {
+        "title": "DDoS attacks: how to protect your company against downtime",
+        "excerpt": "DDoS attacks can take down your company services for hours. Learn how a properly configured firewall can block these threats."
+      },
+      "ransomware-como-servico-ameaca-crescente": {
+        "title": "Ransomware as a Service (RaaS): the growing threat to businesses",
+        "excerpt": "The RaaS model allows criminals without technical knowledge to launch ransomware attacks. Understand this threat and how to defend against it."
+      },
+      "recuperacao-desastres-ti-plano-pratico": {
+        "title": "IT disaster recovery: how to create a practical plan",
+        "excerpt": "A disaster recovery plan ensures your company is back up and running quickly after incidents. See how to create yours."
+      },
+      "seguranca-email-corporativo-ameacas-comuns": {
+        "title": "Corporate email security: common threats and how to fight them",
+        "excerpt": "Corporate email is the attack vector most exploited by hackers. Learn about the most common threats and how to protect your company."
+      },
+      "virtualizacao-servidores-seguranca-performance": {
+        "title": "Server virtualization: more security and performance for your company",
+        "excerpt": "Virtualization allows running multiple servers on a single hardware, with isolation and snapshots for quick recovery."
+      },
+      "ciberseguranca-para-pequenas-empresas": {
+        "title": "Cybersecurity for small businesses: essential protection guide",
+        "excerpt": "Small businesses are easy targets because they invest little in security. See essential measures that fit your budget."
+      },
+      "auditoria-seguranca-ti-por-que-fazer": {
+        "title": "IT security audit: why your company needs to do it",
+        "excerpt": "A security audit identifies vulnerabilities before they are exploited. Understand the process and benefits."
+      },
+      "criptografia-dados-empresariais-guia": {
+        "title": "Enterprise data encryption: practical implementation guide",
+        "excerpt": "Encryption protects data in transit and at rest from unauthorized access. See how to implement it in your infrastructure."
+      },
+      "equipamentos-medicos-conectados-riscos-seguranca": {
+        "title": "Connected medical equipment: security risks in hospitals",
+        "excerpt": "Medical IoT equipment expands the attack surface in hospitals. Know the risks and how to segment the network for protection."
+      },
+      "guia-completo-infraestrutura-ti-empresas": {
+        "title": "Complete guide to IT infrastructure for businesses",
+        "excerpt": "Understand the main elements of an efficient IT infrastructure and how companies can improve their technological environments."
+      },
+      "firewall-empresarial-sua-empresa-precisa": {
+        "title": "Business firewall: does your company really need one?",
+        "excerpt": "Understand how firewalls protect corporate networks against attacks and digital intrusions."
+      },
+      "servidor-caiu-empresa-o-que-fazer": {
+        "title": "Server crashed at your company: what to do",
+        "excerpt": "See the most common causes of failures in business servers and how to avoid this problem."
+      },
+      "quanto-custa-infraestrutura-ti-empresas": {
+        "title": "How much does IT infrastructure cost for businesses",
+        "excerpt": "Learn about the main factors that influence the cost of business IT infrastructure."
+      },
+      "infraestrutura-ti-empresas-jacarei": {
+        "title": "IT infrastructure for businesses in Jacareí",
+        "excerpt": "Learn how businesses in Jacareí can improve their IT infrastructure."
+      },
+      "como-estabilizamos-rede-escritorio-25-computadores": {
+        "title": "How we stabilized an office network with 25 computers",
+        "excerpt": "See how network infrastructure improvements solved slowness issues in an office."
+      }
+    }
   },
   "blogPage": {
     "tag": "// Blog",
@@ -722,7 +893,7 @@
     "totalInvestment": "Total investment",
     "volumeDiscountTable": "View volume discount table",
     "premiumNoHours": "Premium package with no hour limit.",
-    "premiumDescription": "You pay for the outcome — not for the time. All services listed above are included in the calculated amount.",
+    "premiumDescription": "For projects with {{count}} computers, we offer a personalized quote with exclusive terms. Speak directly with our specialist.",
     "continueHiring": "Continue Hiring",
     "continueDescription": "Fill in your data, sign the contract, and proceed to secure payment.",
     "step2Title": "Contracting Party Details",
@@ -766,7 +937,6 @@
     "finalDescription": "Security, stability, user control, and data organization — all at a professional corporate standard.",
     "premiumTitlePrefix": "Custom",
     "premiumTitleHighlight": "Premium Quote",
-    "premiumDescription": "For projects with {{count}} computers, we offer a personalized quote with exclusive terms. Speak directly with our specialist.",
     "requestPremiumQuote": "Request Premium Quote",
     "backToCalculator": "Back to calculator (max. 30 PCs)"
   },
