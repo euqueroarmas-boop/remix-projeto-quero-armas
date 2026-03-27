@@ -95,19 +95,11 @@ const SeoHead = ({
       link.setAttribute("href", resolvedUrl);
     }
 
-    // Hreflang tags for international SEO
-    const path = window.location.pathname;
-    const ptUrl = `${BASE_URL}${path}`;
-    const enUrl = `${BASE_URL}${path}`; // same URL, content switches client-side
-
-    const hrefPt = setLink("alternate", { hreflang: "pt-BR" });
-    hrefPt.setAttribute("href", ptUrl);
-
-    const hrefEn = setLink("alternate", { hreflang: "en-US" });
-    hrefEn.setAttribute("href", enUrl);
-
-    const hrefDefault = setLink("alternate", { hreflang: "x-default" });
-    hrefDefault.setAttribute("href", ptUrl);
+    // Hreflang: removed because the site uses a single URL with client-side
+    // language switching. Pointing both pt-BR and en-US to the same URL
+    // violates Google guidelines. Only canonical is kept.
+    // Clean up any previously injected hreflang links.
+    document.querySelectorAll('link[rel="alternate"][hreflang]').forEach((el) => el.remove());
 
     // Open Graph
     setMeta('meta[property="og:title"]', "content", ogTitle || title);
