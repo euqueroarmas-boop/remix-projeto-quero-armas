@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import {
   Server, Cloud, Shield, HardDrive, Network, MonitorCog,
   Stethoscope, Scale, Building2, Briefcase, BookOpen, Landmark,
@@ -49,7 +50,18 @@ const sections = [
   },
 ];
 
-const ServicosPage = () => (
+const ServicosPage = () => {
+  const { t } = useTranslation();
+  const translatedSections = (t("custom.servicesPage.sections", { returnObjects: true }) as { title: string; items: { label: string; desc: string }[] }[]).map((section, sectionIndex) => ({
+    ...section,
+    items: sections[sectionIndex].items.map((item, itemIndex) => ({
+      ...item,
+      label: section.items[itemIndex]?.label ?? item.label,
+      desc: section.items[itemIndex]?.desc ?? item.desc,
+    })),
+  }));
+
+  return (
   <div className="min-h-screen">
     <Navbar />
     <div className="pt-14 md:pt-16">
@@ -62,21 +74,20 @@ const ServicosPage = () => (
             transition={{ duration: 0.5 }}
           >
             <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
-              // Todos os Serviços
+              // {t("custom.servicesPage.heroTag")}
             </p>
             <h1 className="text-3xl md:text-5xl max-w-3xl mb-4">
-              Soluções completas de TI para{" "}
-              <span className="text-primary">sua empresa.</span>
+              {t("custom.servicesPage.heroTitle1")}<span className="text-primary">{t("custom.servicesPage.heroHighlight")}</span>
             </h1>
             <p className="font-body text-base md:text-lg text-muted-foreground max-w-2xl">
-              Servidores, redes, segurança, nuvem e suporte — tudo com equipe certificada Dell e Microsoft.
+              {t("custom.servicesPage.heroDescription")}
             </p>
           </motion.div>
         </div>
       </section>
 
       {/* Sections */}
-      {sections.map((section, si) => (
+      {translatedSections.map((section, si) => (
         <section
           key={section.title}
           className={si % 2 === 0 ? "section-light py-16 md:py-20" : "section-dark py-16 md:py-20"}
@@ -85,7 +96,7 @@ const ServicosPage = () => (
             <h2 className="text-2xl md:text-3xl mb-8 md:mb-12">{section.title}</h2>
 
             {/* Special Brasil banner for regions */}
-            {section.title === "Regiões Atendidas" && (
+            {section.title === t("custom.servicesPage.sections.2.title") && (
               <motion.div
                 initial={{ opacity: 0, y: 16 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -96,9 +107,9 @@ const ServicosPage = () => (
                 <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/70 to-background/50" />
                 <div className="relative z-10 flex items-center justify-center h-full px-4">
                   <div className="text-center">
-                    <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-3">// Cobertura Nacional</p>
-                    <p className="text-2xl md:text-4xl font-bold text-foreground">Atendemos empresas em <span className="text-primary">todo o Brasil</span></p>
-                    <p className="font-body text-sm md:text-base text-muted-foreground mt-3">Sede em Jacareí (SP) • NOC 24/7 • Equipes de campo em todos os estados</p>
+                    <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-3">// {t("custom.servicesPage.regionsBannerTag")}</p>
+                    <p className="text-2xl md:text-4xl font-bold text-foreground">{t("custom.servicesPage.regionsBannerTitle1")}<span className="text-primary">{t("custom.servicesPage.regionsBannerHighlight")}</span></p>
+                    <p className="font-body text-sm md:text-base text-muted-foreground mt-3">{t("custom.servicesPage.regionsBannerDescription")}</p>
                   </div>
                 </div>
               </motion.div>
@@ -127,7 +138,7 @@ const ServicosPage = () => (
                       {item.desc}
                     </p>
                     <span className="inline-flex items-center gap-1.5 font-mono text-xs uppercase tracking-wider text-primary group-hover:translate-x-1 transition-transform">
-                      Saiba mais <ArrowRight size={13} />
+                      {t("custom.servicesPage.learnMore")} <ArrowRight size={13} />
                     </span>
                   </Link>
                 </motion.div>
@@ -140,6 +151,7 @@ const ServicosPage = () => (
     <Footer />
     <WhatsAppButton />
   </div>
-);
+  );
+};
 
 export default ServicosPage;

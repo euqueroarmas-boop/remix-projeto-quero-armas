@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { ShieldCheck, HardDrive, Cloud, Server, Lock, Activity, FileCheck, AlertTriangle } from "lucide-react";
 import MobileSummary from "@/components/MobileSummary";
 
@@ -76,13 +77,18 @@ const classes = [
 ];
 
 const CartoriosSection = () => {
+  const { t } = useTranslation();
+  const translatedRequirements = t("custom.cartoriosHome.requirements", { returnObjects: true }) as { tag: string; title: string; description: string; compliance: string }[];
+  const translatedClasses = t("custom.cartoriosHome.classes", { returnObjects: true }) as { name: string; revenue: string; description: string; percentage: string }[];
+  const translatedStats = t("custom.cartoriosHome.stats", { returnObjects: true }) as { value: string; label: string }[];
+
   return (
     <section id="cartorios" className="relative">
       {/* Mobile summary */}
       <MobileSummary
-        tag="Provimento 213/2026 — CNJ"
-        title={<>Seu cartório em <span className="text-primary">conformidade total</span> com o CNJ.</>}
-        description="Somos especialistas em infraestrutura de TI para cartórios. Atendemos serventias de todo o Brasil, garantindo conformidade com todos os requisitos do Provimento 213 do CNJ."
+        tag={t("custom.cartoriosHome.mobileTag")}
+        title={<>{t("custom.cartoriosHome.mobileTitle1")}<span className="text-primary">{t("custom.cartoriosHome.mobileHighlight")}</span>{t("custom.cartoriosHome.mobileTitle2")}</>}
+        description={t("custom.cartoriosHome.mobileDescription")}
         to="/cartorios"
         className="section-dark"
       />
@@ -102,21 +108,18 @@ const CartoriosSection = () => {
               <div className="flex items-center gap-3 mb-6">
                 <FileCheck size={20} className="text-primary" />
                 <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary">
-                  // Provimento 213/2026 — CNJ
+                  // {t("custom.cartoriosHome.heroTag")}
                 </p>
               </div>
               <h2 className="text-3xl md:text-5xl lg:text-6xl mb-6">
-                Seu cartório em
+                {t("custom.cartoriosHome.heroTitle1").split("\n")[0]}
                 <br />
-                <span className="text-primary">conformidade total</span>
+                <span className="text-primary">{t("custom.cartoriosHome.heroHighlight")}</span>
                 <br />
-                com o CNJ.
+                {t("custom.cartoriosHome.heroTitle2").replaceAll("\n", "")}
               </h2>
               <p className="font-body text-lg md:text-xl text-gunmetal-foreground/70 max-w-2xl leading-relaxed mb-8">
-                Somos especialistas em infraestrutura de TI para cartórios.
-                Atendemos serventias de todo o Brasil, garantindo conformidade com
-                todos os requisitos do Provimento 74/2018 do Conselho Nacional de
-                Justiça.
+                {t("custom.cartoriosHome.heroDescription")}
               </p>
 
               <div className="flex flex-wrap gap-4 mb-12">
@@ -127,29 +130,25 @@ const CartoriosSection = () => {
                   className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
                 >
                   <AlertTriangle size={16} />
-                  Adequar meu cartório
+                  {t("custom.cartoriosHome.primaryCta")}
                 </a>
                 <Link
                   to="/cartorios/provimento-213"
                   className="inline-flex items-center gap-2 border border-gunmetal-foreground/30 text-gunmetal-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:border-primary hover:text-primary transition-all"
                 >
-                  Ver Provimento 213 completo
+                  {t("custom.cartoriosHome.secondaryCta")}
                 </Link>
                 <Link
                   to="/ti-para-cartorios"
                   className="inline-flex items-center gap-2 border border-gunmetal-foreground/30 text-gunmetal-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:border-primary hover:text-primary transition-all"
                 >
-                  TI para Cartórios
+                  {t("custom.cartoriosHome.tertiaryCta")}
                 </Link>
               </div>
 
               {/* Stats */}
               <div className="grid grid-cols-3 gap-px bg-gunmetal-foreground/10">
-                {[
-                  { value: "100%", label: "Conformidade CNJ" },
-                  { value: "Brasil", label: "Atendimento Nacional" },
-                  { value: "24/7", label: "Monitoramento" },
-                ].map((stat) => (
+                {translatedStats.map((stat) => (
                   <div key={stat.label} className="bg-secondary p-5 text-center">
                     <p className="font-mono text-2xl md:text-3xl font-bold text-primary">
                       {stat.value}
@@ -175,17 +174,17 @@ const CartoriosSection = () => {
               className="mb-16"
             >
               <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
-                // Requisitos atendidos
+                 // {t("custom.cartoriosHome.requirementsTag")}
               </p>
               <h3 className="text-2xl md:text-4xl max-w-2xl">
-                Cada artigo do Provimento 213,
-                <br />
-                <span className="text-primary">implementado e monitorado.</span>
+                 {t("custom.cartoriosHome.requirementsTitle1").split("\n")[0]}
+                 <br />
+                 <span className="text-primary">{t("custom.cartoriosHome.requirementsHighlight")}</span>
               </h3>
             </motion.div>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-px bg-border">
-              {requirements.map((req, i) => (
+               {translatedRequirements.map((req, i) => (
                 <motion.div
                   key={req.tag}
                   initial={{ opacity: 0, y: 20 }}
@@ -227,17 +226,17 @@ const CartoriosSection = () => {
               className="mb-16"
             >
               <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
-                // Classificação por faturamento
+                 // {t("custom.cartoriosHome.classesTag")}
               </p>
               <h3 className="text-2xl md:text-4xl max-w-2xl">
-                Adequação por classe
-                <br />
-                de serventia.
+                 {t("custom.cartoriosHome.classesTitle1").split("\n")[0]}
+                 <br />
+                 {t("custom.cartoriosHome.classesTitle1").split("\n")[1]}
               </h3>
             </motion.div>
 
             <div className="grid md:grid-cols-3 gap-px bg-gunmetal-foreground/10">
-              {classes.map((cls, i) => (
+               {translatedClasses.map((cls, i) => (
                 <motion.div
                   key={cls.name}
                   initial={{ opacity: 0, y: 20 }}
@@ -271,15 +270,13 @@ const CartoriosSection = () => {
               className="mt-16 border border-gunmetal-foreground/20 p-8 md:p-12 text-center"
             >
               <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
-                // Diagnóstico gratuito
+                 // {t("custom.cartoriosHome.finalTag")}
               </p>
               <h3 className="text-xl md:text-3xl mb-4">
-                Não sabe em qual classe sua serventia se enquadra?
+                 {t("custom.cartoriosHome.finalTitle")}
               </h3>
               <p className="font-body text-gunmetal-foreground/60 max-w-xl mx-auto mb-8">
-                Nossa equipe técnica faz uma análise completa da sua infraestrutura
-                atual e identifica todos os pontos de adequação necessários ao
-                 Provimento 213.
+                 {t("custom.cartoriosHome.finalDescription")}
               </p>
               <a
                 href="https://wa.me/5511963166915?text=Olá! Gostaria de solicitar um diagnóstico gratuito do meu cartório para adequação ao Provimento 213 do CNJ."
@@ -287,7 +284,7 @@ const CartoriosSection = () => {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
               >
-                Falar com especialista via WhatsApp
+                 {t("custom.cartoriosHome.finalCta")}
               </a>
             </motion.div>
           </div>

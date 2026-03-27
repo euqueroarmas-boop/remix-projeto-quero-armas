@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import {
   Users, ShieldCheck, TrendingUp, Briefcase, RefreshCcw,
   HeadphonesIcon, BarChart3, Building2, ArrowRight
@@ -16,45 +17,10 @@ const fadeIn = {
   transition: { duration: 0.5 },
 };
 
-const benefits = [
-  { icon: RefreshCcw, title: "Continuidade operacional", desc: "Seus processos seguem funcionando sem interrupção, com os mesmos profissionais que já conhecem sua operação." },
-  { icon: ShieldCheck, title: "Redução de responsabilidade", desc: "A responsabilidade trabalhista e administrativa sobre a equipe de TI passa a ser da WMTi." },
-  { icon: Users, title: "Reaproveitamento de talentos", desc: "Profissionais já existentes na empresa são absorvidos pela WMTi, preservando o conhecimento interno." },
-  { icon: Briefcase, title: "Gestão especializada", desc: "Equipe gerenciada por especialistas em TI com processos estruturados e metas definidas." },
-  { icon: BarChart3, title: "Previsibilidade de custos", desc: "Custos fixos e planejáveis, sem surpresas com encargos, rescisões ou passivos trabalhistas." },
-  { icon: TrendingUp, title: "Ganho de produtividade", desc: "Com gestão técnica centralizada, a equipe opera com mais foco, eficiência e suporte contínuo." },
-  { icon: HeadphonesIcon, title: "Suporte estruturado", desc: "A WMTi oferece estrutura completa de suporte, ferramentas e processos para a equipe gerenciada." },
-  { icon: Building2, title: "Foco no core business", desc: "Sua empresa se concentra no que faz de melhor, enquanto a WMTi cuida da operação de TI." },
-];
-
-const sections = [
-  {
-    title: "Como funciona a terceirização de mão de obra em TI",
-    content: "A WMTi assume a gestão completa dos profissionais de TI da sua empresa. Recontratamos ou absorvemos os colaboradores já existentes para dentro da nossa estrutura administrativa e operacional, mantendo a continuidade dos serviços e eliminando a complexidade de gestão de pessoas na área de tecnologia."
-  },
-  {
-    title: "Reaproveitamento de profissionais já existentes",
-    content: "Diferente de modelos tradicionais de terceirização, a WMTi valoriza os profissionais que já conhecem sua operação. Esses colaboradores são absorvidos pela WMTi, garantindo que o conhecimento dos processos internos, sistemas e rotinas da empresa seja preservado integralmente."
-  },
-  {
-    title: "Redução de encargos administrativos e operacionais",
-    content: "Ao transferir a equipe de TI para a gestão da WMTi, sua empresa elimina a responsabilidade direta sobre folha de pagamento, encargos trabalhistas, férias, benefícios e todas as obrigações administrativas relacionadas a esses profissionais."
-  },
-  {
-    title: "Continuidade do conhecimento interno",
-    content: "A transição é transparente para a operação. Os mesmos profissionais continuam atuando nos mesmos processos, com o mesmo conhecimento — mas agora sob uma gestão técnica especializada que potencializa seus resultados."
-  },
-  {
-    title: "Gestão técnica e administrativa centralizada",
-    content: "A WMTi oferece gestão integrada que combina administração de pessoas, acompanhamento de desempenho, treinamento contínuo e suporte técnico especializado — tudo centralizado para garantir eficiência máxima."
-  },
-  {
-    title: "Mais previsibilidade, controle e suporte especializado",
-    content: "Com um contrato claro e custos previsíveis, sua empresa ganha controle sobre o investimento em TI. A WMTi fornece relatórios, indicadores de desempenho e suporte contínuo para toda a equipe gerenciada."
-  },
-];
+const benefitIcons = [RefreshCcw, ShieldCheck, Users, Briefcase, BarChart3, TrendingUp, HeadphonesIcon, Building2];
 
 const TerceirizacaoPage = () => {
+  const { t } = useTranslation();
   useEffect(() => {
     document.title = "Terceirização de Mão de Obra em TI | WMTi";
     const meta = document.querySelector('meta[name="description"]');
@@ -64,7 +30,13 @@ const TerceirizacaoPage = () => {
     window.scrollTo(0, 0);
   }, []);
 
-    const whatsappMsg = encodeURIComponent("Olá! Gostaria de saber mais sobre terceirização de mão de obra em TI pela WMTi.");
+  const benefits = (t("custom.outsourcing.benefits", { returnObjects: true }) as { title: string; desc: string }[]).map((item, index) => ({
+    ...item,
+    icon: benefitIcons[index],
+  }));
+  const sections = t("custom.outsourcing.sections", { returnObjects: true }) as { title: string; content: string }[];
+
+    const whatsappMsg = encodeURIComponent(t("custom.outsourcing.whatsappMessage"));
     const whatsappNumber = "5511963166915";
 
   return (
@@ -77,16 +49,16 @@ const TerceirizacaoPage = () => {
         <div className="container relative z-10">
           <motion.div {...fadeIn} className="max-w-3xl">
             <span className="inline-block font-mono text-xs uppercase tracking-[0.2em] text-primary mb-4">
-              Serviços WMTi
+              {t("custom.outsourcing.heroTag")}
             </span>
             <h1 className="font-display text-3xl md:text-5xl font-bold leading-tight mb-6">
-              Você gasta tempo gerenciando TI em vez de <span className="text-primary">focar no seu negócio</span>
+              {t("custom.outsourcing.heroTitle1")}<span className="text-primary">{t("custom.outsourcing.heroHighlight")}</span>{t("custom.outsourcing.heroTitle2")}
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground leading-relaxed mb-4">
-              Contratar, treinar, gerenciar e manter uma equipe interna de TI custa mais do que você imagina. E o resultado, na maioria das vezes, é uma equipe sem estrutura, sem processos e sem gestão técnica.
+              {t("custom.outsourcing.intro1")}
             </p>
             <p className="text-base text-muted-foreground leading-relaxed mb-8">
-              <strong className="text-foreground">A WMTi absorve seus profissionais de TI existentes</strong> para dentro da nossa gestão. Mesmas pessoas, mesmo conhecimento — mas com estrutura, processos e suporte especializado. Você deixa de gerenciar TI e passa a ter TI gerenciada.
+              <strong className="text-foreground">{t("custom.outsourcing.intro2")}</strong>
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <a
@@ -95,14 +67,14 @@ const TerceirizacaoPage = () => {
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground font-mono text-sm uppercase tracking-wider px-6 py-3 hover:bg-primary/90 transition-colors"
               >
-                Solicitar análise da operação
+                {t("custom.outsourcing.primaryCta")}
                 <ArrowRight size={16} />
               </a>
               <Link
                 to="/suporte-ti-jacarei"
                 className="inline-flex items-center justify-center gap-2 border border-border text-foreground font-mono text-sm uppercase tracking-wider px-6 py-3 hover:border-primary/50 hover:text-primary transition-colors"
               >
-                Conheça nosso suporte
+                {t("custom.outsourcing.secondaryCta")}
               </Link>
             </div>
           </motion.div>
@@ -143,10 +115,10 @@ const TerceirizacaoPage = () => {
         <div className="container">
           <motion.div {...fadeIn} className="text-center mb-12">
             <span className="inline-block font-mono text-xs uppercase tracking-[0.2em] text-primary mb-3">
-              Vantagens
+              {t("custom.outsourcing.benefitsTag")}
             </span>
             <h2 className="font-display text-2xl md:text-3xl font-bold">
-              Benefícios da terceirização com a WMTi
+              {t("custom.outsourcing.benefitsTitle")}
             </h2>
           </motion.div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -175,10 +147,10 @@ const TerceirizacaoPage = () => {
         <div className="container">
           <motion.div {...fadeIn} className="max-w-2xl mx-auto text-center">
             <h2 className="font-display text-2xl md:text-3xl font-bold mb-4">
-              Solicite uma análise da sua operação de TI
+              {t("custom.outsourcing.finalTitle")}
             </h2>
             <p className="text-muted-foreground mb-8 leading-relaxed">
-              Fale com a WMTi e descubra como a terceirização da mão de obra em TI pode reduzir custos, eliminar riscos e melhorar a produtividade da sua equipe.
+              {t("custom.outsourcing.finalDesc")}
             </p>
             <a
               href={`https://wa.me/${whatsappNumber}?text=${whatsappMsg}`}
@@ -186,7 +158,7 @@ const TerceirizacaoPage = () => {
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground font-mono text-sm uppercase tracking-wider px-8 py-4 hover:bg-primary/90 transition-colors"
             >
-              Fale com a WMTi sobre terceirização
+              {t("custom.outsourcing.finalCta")}
               <ArrowRight size={16} />
             </a>
           </motion.div>

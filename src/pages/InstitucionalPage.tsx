@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { Target, Eye, Heart, Shield, Award, Handshake, Lightbulb, CheckCircle, Search } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
@@ -15,19 +16,18 @@ const fadeIn = {
   transition: { duration: 0.5 },
 };
 
-const valores = [
-  { icon: Shield, title: "Compromisso com a segurança" },
-  { icon: Award, title: "Excelência técnica" },
-  { icon: CheckCircle, title: "Confiabilidade" },
-  { icon: Search, title: "Transparência" },
-  { icon: Lightbulb, title: "Inovação" },
-  { icon: Handshake, title: "Parceria com o cliente" },
-];
+const valueIcons = [Shield, Award, CheckCircle, Search, Lightbulb, Handshake];
 
 const InstitucionalPage = () => {
+  const { t } = useTranslation();
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  const valores = (t("custom.institutional.values", { returnObjects: true }) as string[]).map((title, index) => ({
+    icon: valueIcons[index],
+    title,
+  }));
 
   return (
     <div className="min-h-screen">
@@ -46,12 +46,12 @@ const InstitucionalPage = () => {
           <div className="absolute inset-0 flex items-end">
             <div className="container pb-12 md:pb-16">
               <motion.div {...fadeIn} className="max-w-3xl">
-                <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">// Institucional</p>
+                <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">// {t("custom.institutional.heroTag")}</p>
                 <h1 className="text-3xl md:text-5xl lg:text-6xl mb-4 text-primary-foreground">
-                  Sobre a <span className="text-primary">WMTi</span>
+                  {t("custom.institutional.heroTitlePrefix")}<span className="text-primary">{t("custom.institutional.heroTitleHighlight")}</span>
                 </h1>
                 <p className="font-body text-lg md:text-xl text-muted-foreground max-w-2xl leading-relaxed">
-                  Conheça a história, os princípios e o compromisso da WMTi com soluções seguras e confiáveis em tecnologia da informação para empresas.
+                  {t("custom.institutional.heroDescription")}
                 </p>
               </motion.div>
             </div>
@@ -63,8 +63,8 @@ const InstitucionalPage = () => {
       <section className="section-dark py-16 md:py-24">
         <div className="container">
           <motion.div {...fadeIn} className="text-center mb-16">
-            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">// Quem somos</p>
-            <h2 className="text-2xl md:text-4xl">Missão, Visão e Valores</h2>
+            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">// {t("custom.institutional.aboutTag")}</p>
+            <h2 className="text-2xl md:text-4xl">{t("custom.institutional.aboutTitle")}</h2>
           </motion.div>
 
           <div className="grid md:grid-cols-3 gap-px bg-border">
@@ -73,9 +73,9 @@ const InstitucionalPage = () => {
               <div className="w-14 h-14 bg-primary/10 flex items-center justify-center mb-6">
                 <Target size={24} className="text-primary" />
               </div>
-              <h3 className="font-mono text-sm font-bold uppercase tracking-wider mb-4 text-primary">Missão</h3>
+              <h3 className="font-mono text-sm font-bold uppercase tracking-wider mb-4 text-primary">{t("custom.institutional.missionTitle")}</h3>
               <p className="font-body text-sm text-muted-foreground leading-relaxed">
-                Fornecer soluções de tecnologia da informação seguras, eficientes e confiáveis para empresas, garantindo estabilidade operacional, proteção de dados e continuidade dos negócios por meio de infraestrutura robusta e suporte técnico especializado.
+                {t("custom.institutional.missionText")}
               </p>
             </motion.div>
 
@@ -84,9 +84,9 @@ const InstitucionalPage = () => {
               <div className="w-14 h-14 bg-primary/10 flex items-center justify-center mb-6">
                 <Eye size={24} className="text-primary" />
               </div>
-              <h3 className="font-mono text-sm font-bold uppercase tracking-wider mb-4 text-primary">Visão</h3>
+              <h3 className="font-mono text-sm font-bold uppercase tracking-wider mb-4 text-primary">{t("custom.institutional.visionTitle")}</h3>
               <p className="font-body text-sm text-muted-foreground leading-relaxed">
-                Ser reconhecida como uma referência em infraestrutura de tecnologia da informação no Vale do Paraíba e no Brasil, destacando-se pela confiabilidade das soluções, excelência técnica e compromisso com a segurança digital das empresas.
+                {t("custom.institutional.visionText")}
               </p>
             </motion.div>
 
@@ -95,7 +95,7 @@ const InstitucionalPage = () => {
               <div className="w-14 h-14 bg-primary/10 flex items-center justify-center mb-6">
                 <Heart size={24} className="text-primary" />
               </div>
-              <h3 className="font-mono text-sm font-bold uppercase tracking-wider mb-4 text-primary">Valores</h3>
+              <h3 className="font-mono text-sm font-bold uppercase tracking-wider mb-4 text-primary">{t("custom.institutional.valuesTitle")}</h3>
               <ul className="space-y-3">
                 {valores.map((v) => (
                   <li key={v.title} className="flex items-center gap-3 font-body text-sm text-muted-foreground">
@@ -133,11 +133,11 @@ const InstitucionalPage = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: 0.15 }}
             >
-              <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-6">// Nosso propósito</p>
+              <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-6">// {t("custom.institutional.purposeTag")}</p>
               <blockquote className="text-xl md:text-2xl lg:text-3xl italic text-foreground leading-relaxed mb-6 border-l-4 border-primary pl-6">
-                "Tudo o que fizerem, façam de todo o coração, como para o Senhor e não para os homens."
+                "{t("custom.institutional.quote")}" 
               </blockquote>
-              <p className="font-mono text-sm text-primary tracking-wider">— Colossenses 3:23</p>
+              <p className="font-mono text-sm text-primary tracking-wider">{t("custom.institutional.quoteAuthor")}</p>
             </motion.div>
           </div>
         </div>
