@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { useTranslation } from "react-i18next";
+
 const clients = [
   "Dell Technologies",
   "Microsoft",
@@ -10,12 +10,11 @@ const clients = [
 ];
 
 const ClientLogosSection = () => {
-  const { t } = useTranslation();
   return (
     <section className="py-12 md:py-16 bg-background border-y border-border">
       <div className="container">
         <p className="font-mono text-xs tracking-[0.3em] uppercase text-muted-foreground text-center mb-8">
-          {t("clientLogos.tag")}
+          // Parceiros & Tecnologias
         </p>
         <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16">
           {clients.map((name, i) => (

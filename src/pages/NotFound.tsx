@@ -1,11 +1,8 @@
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
-import SeoHead from "@/components/SeoHead";
 
 const NotFound = () => {
   return (
-    <>
-    <SeoHead title="Página não encontrada | WMTi" description="A página que você procura não existe." noindex />
     <div className="flex min-h-screen items-center justify-center section-dark">
       <div className="text-center container">
         <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
@@ -24,7 +21,6 @@ const NotFound = () => {
         </Link>
       </div>
     </div>
-    </>
   );
 };
 

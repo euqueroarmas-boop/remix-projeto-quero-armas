@@ -137,8 +137,10 @@ const ContactSection = () => {
                 <span className="flex items-center justify-center w-9 h-9 rounded-md bg-primary/10 text-primary shrink-0">
                   <MapPin size={16} />
                 </span>
-                <span className="font-mono text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
-                  {t("contact.address")}
+                <span className="font-mono text-sm text-muted-foreground leading-relaxed">
+                  Rua José Benedito Duarte, 140
+                  <br />
+                  Parque Itamarati — Jacareí, SP
                 </span>
               </div>
             </div>

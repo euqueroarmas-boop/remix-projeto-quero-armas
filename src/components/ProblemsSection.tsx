@@ -36,15 +36,17 @@ const ProblemsSection = () => {
               transition={{ duration: 0.5 }}
             >
               <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
-                {t("problems.heroTag")}
+                // Diagnóstico
               </p>
               <h2 className="text-2xl md:text-4xl lg:text-5xl text-foreground mb-4 md:mb-6">
-                {t("problems.heroTitle1")}
+                Seu computador está lento?
                 <br />
-                <span className="text-primary">{t("problems.heroTitleHighlight")}</span>
+                <span className="text-primary">Nós resolvemos.</span>
               </h2>
               <p className="font-body text-sm md:text-lg text-muted-foreground max-w-xl leading-relaxed">
-                {t("problems.heroDesc")}
+                A maioria dos problemas de performance e falhas em computadores, notebooks
+                e redes acontecem por falta de manutenção adequada. Conheça os vilões
+                mais comuns e como a WMTi elimina cada um deles.
               </p>
             </motion.div>
 
@@ -57,7 +59,7 @@ const ProblemsSection = () => {
             >
               <img
                 src={slowComputer}
-                alt={t("problems.heroImageAlt")}
+                alt="Profissional frustrado com computador lento no escritório"
                 className="w-full h-56 md:h-80 object-cover"
                 loading="lazy"
               />

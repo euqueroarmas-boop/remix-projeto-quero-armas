@@ -142,16 +142,6 @@ function buildServiceSegmentCityXml(): string {
   return wrapUrlset(urls);
 }
 
-/** Dedicated cities sitemap — top-priority cities get their own entries */
-function buildCitiesXml(): string {
-  const urls: string[] = [];
-  for (const city of citySlugs) {
-    urls.push(urlEntry(`/infraestrutura-ti-em-${city}`, "0.7", "monthly"));
-    urls.push(urlEntry(`/suporte-ti-em-${city}`, "0.7", "monthly"));
-  }
-  return wrapUrlset(urls);
-}
-
 function buildSitemapIndex(): string {
   const now = new Date().toISOString().split("T")[0];
   const sitemaps = [
@@ -160,7 +150,6 @@ function buildSitemapIndex(): string {
     "sitemap-services.xml",
     "sitemap-segments.xml",
     "sitemap-problems.xml",
-    "sitemap-cities.xml",
     "sitemap-blog-cities.xml",
     "sitemap-service-segment-cities.xml",
   ];
@@ -197,9 +186,6 @@ Deno.serve(async (req) => {
       break;
     case "blog-cities":
       xml = buildBlogCityXml();
-      break;
-    case "cities":
-      xml = buildCitiesXml();
       break;
     case "service-segment-cities":
       xml = buildServiceSegmentCityXml();

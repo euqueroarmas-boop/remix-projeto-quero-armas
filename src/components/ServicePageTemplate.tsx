@@ -196,7 +196,7 @@ const ServicePageTemplate = ({
 }: ServicePageProps) => {
   const { t } = useTranslation();
   const location = useLocation();
-  const baseUrl = "https://www.wmti.com.br";
+  const baseUrl = "https://wmti.com.br";
   const currentPath = location.pathname;
   const canonicalUrl = canonicalSlug
     ? `${baseUrl}/${canonicalSlug}`
@@ -229,7 +229,6 @@ const ServicePageTemplate = ({
           name: tag,
           description: metaDescription,
           url: canonicalUrl,
-          areaServed: cityName,
         })}
       />
       <Navbar />
@@ -350,7 +349,7 @@ const ServicePageTemplate = ({
               {t("service.benefitsTag")}
             </p>
             <h2 className="text-2xl md:text-4xl">
-              {t("service.benefitsTitle")} <span className="text-primary">{t("service.benefitsTitleHighlight")}{cityName ? ` ${t("service.inCity", { city: cityName })}` : ''}</span>
+              {t("service.benefitsTitle")} <span className="text-primary">{t("service.benefitsTitleHighlight")}{cityName ? ` em ${cityName}` : ''}</span>
             </h2>
           </motion.div>
 

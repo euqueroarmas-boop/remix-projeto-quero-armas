@@ -84,7 +84,7 @@ const CompraConcluida = () => {
 
   return (
     <div className="min-h-screen">
-      <SeoHead title="Compra Concluída | WMTi" description="Sua contratação foi concluída com sucesso." noindex />
+      <SeoHead title="Compra Concluída | WMTi" description="Sua contratação foi concluída com sucesso." />
       <Navbar />
 
       <section className="section-dark pt-24 md:pt-28 pb-16">

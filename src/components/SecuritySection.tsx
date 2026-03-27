@@ -1,20 +1,37 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { useTranslation } from "react-i18next";
 import { Shield, Lock, Eye, Wifi, ArrowRight } from "lucide-react";
 import firewallImage from "@/assets/firewall-security.webp";
 
-const featureIcons = [Shield, Lock, Eye, Wifi];
+
+const features = [
+  {
+    icon: Shield,
+    title: "Firewall pfSense",
+    desc: "Appliances dedicados com regras stateful, NAT avançado e inspeção profunda de pacotes. Sem licenciamento por usuário.",
+  },
+  {
+    icon: Lock,
+    title: "VPN Site-to-Site",
+    desc: "Túneis IPsec e OpenVPN com criptografia AES-256-GCM. Conexão segura entre filiais e ambientes cloud Azure.",
+  },
+  {
+    icon: Eye,
+    title: "IDS/IPS Suricata",
+    desc: "Detecção e prevenção de intrusão em tempo real com regras ET Open e Snort. Alertas integrados ao NOC.",
+  },
+  {
+    icon: Wifi,
+    title: "Multi-WAN Failover",
+    desc: "Balanceamento de carga entre múltiplos links com failover automático. Zero downtime em falhas de provedor.",
+  },
+];
 
 const SecuritySection = () => {
-  const { t } = useTranslation();
-  const features = (t("security.features", { returnObjects: true }) as { title: string; desc: string }[]).map((f, i) => ({
-    ...f,
-    icon: featureIcons[i],
-  }));
-
   return (
     <section id="seguranca" className="section-light">
+
+      {/* Full content */}
       <div className="py-20 md:py-24">
         <div className="container">
           <div className="grid lg:grid-cols-2 gap-8 md:gap-12 items-center mb-12 md:mb-16">
@@ -25,12 +42,12 @@ const SecuritySection = () => {
               transition={{ duration: 0.5 }}
             >
               <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
-                {t("security.tag")}
+                // Segurança
               </p>
               <h2 className="text-2xl md:text-5xl max-w-3xl">
-                {t("security.title1")}
+                Perímetro blindado.
                 <br />
-                <span className="text-primary">{t("security.titleHighlight")}</span>{t("security.title2")}
+                <span className="text-primary">pfSense</span> como espinha dorsal.
               </h2>
             </motion.div>
 
@@ -43,13 +60,13 @@ const SecuritySection = () => {
             >
               <img
                 src={firewallImage}
-                alt={t("security.firewallAlt")}
+                alt="Appliance de firewall pfSense com cabos de rede conectados em data center"
                 className="w-full h-48 md:h-72 object-cover"
                 loading="lazy"
               />
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/70 to-transparent p-4 md:p-6">
                 <p className="font-mono text-xs text-primary">
-                  {t("security.firewallStatus")}
+                  FIREWALL STATUS: ACTIVE // THREATS BLOCKED
                 </p>
               </div>
             </motion.div>
@@ -84,9 +101,10 @@ const SecuritySection = () => {
             to="/seguranca-informacao-empresarial"
             className="inline-flex items-center gap-2 mt-6 font-mono text-xs uppercase tracking-wider text-primary hover:brightness-110 transition-colors"
           >
-            {t("security.linkText")} <ArrowRight size={14} />
+            Ver soluções de segurança <ArrowRight size={14} />
           </Link>
 
+          {/* Network diagram */}
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
@@ -95,7 +113,7 @@ const SecuritySection = () => {
             className="mt-12 md:mt-16 border border-border p-6 md:p-12"
           >
             <p className="font-mono text-[10px] md:text-xs tracking-[0.2em] uppercase text-muted-foreground mb-6">
-              {t("security.diagramTitle")}
+              // Diagrama de Rede Simplificado
             </p>
             <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8 font-mono text-xs">
               <div className="border border-border px-4 py-3 text-center w-full md:w-auto">

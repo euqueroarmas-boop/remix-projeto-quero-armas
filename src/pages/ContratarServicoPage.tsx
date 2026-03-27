@@ -356,7 +356,6 @@ const ContratarServicoPage = () => {
         <SeoHead
           title={`Contratar ${serviceName} | WMTi`}
           description={`Finalize a contratação da locação de computadores da WMTi com plano ${selectedRentalPlan.name} e ${selectedRentalQty} equipamento(s).`}
-          noindex
         />
         <Navbar />
 
@@ -425,7 +424,6 @@ const ContratarServicoPage = () => {
       <SeoHead
         title={`Contratar ${serviceName} | WMTi`}
         description={`Contrate ${serviceName} com a WMTi. Calculadora de horas técnicas com desconto progressivo.`}
-        noindex
       />
       <Navbar />
 

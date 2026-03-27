@@ -103,8 +103,7 @@ const AreaDoClientePage = () => {
       <SeoHead
         title="Área do Cliente | WMTi Tecnologia da Informação"
         description="Portal do cliente WMTi — acompanhe serviços, chamados, financeiro, contratos e documentos fiscais."
-        canonical="https://www.wmti.com.br/area-do-cliente"
-        noindex
+        canonical="/area-do-cliente"
       />
       {!session && <Navbar />}
       <main className="min-h-screen bg-background">

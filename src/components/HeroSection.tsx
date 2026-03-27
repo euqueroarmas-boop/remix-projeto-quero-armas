@@ -27,7 +27,7 @@ const HeroSection = () => {
       <div className="absolute inset-0">
         <img
           src={heroImage}
-          alt={t("hero.imageAlt", { defaultValue: "Corporate IT infrastructure with Dell PowerEdge servers" })}
+          alt="Infraestrutura de TI corporativa com servidores Dell PowerEdge"
           className="w-full h-full object-cover opacity-30"
           fetchPriority="high"
           decoding="async"

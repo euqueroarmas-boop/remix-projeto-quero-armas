@@ -8,7 +8,6 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import SeoHead from "@/components/SeoHead";
 import brasilCoverage from "@/assets/brasil-coverage.webp";
 
 const sections = [
@@ -63,11 +62,6 @@ const ServicosPage = () => {
 
   return (
   <div className="min-h-screen">
-    <SeoHead
-      title="Serviços de TI Corporativa | WMTi Tecnologia da Informação"
-      description="Conheça todos os serviços de TI da WMTi: suporte técnico, servidores Dell, Microsoft 365, firewall pfSense, backup empresarial, montagem de redes e locação de computadores."
-      canonical="https://www.wmti.com.br/servicos"
-    />
     <Navbar />
     <div className="pt-14 md:pt-16">
       {/* Hero */}
