@@ -140,7 +140,7 @@ const ContratoFinalPage = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <SeoHead title="Contrato final | WMTi" description="Geração e download do contrato final após pagamento confirmado." />
+      <SeoHead title="Contrato final | WMTi" description="Geração e download do contrato final após pagamento confirmado." noindex />
       <Navbar />
 
       <main className="section-dark pt-24 md:pt-28 pb-20">

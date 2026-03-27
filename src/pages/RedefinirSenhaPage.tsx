@@ -59,7 +59,7 @@ export default function RedefinirSenhaPage() {
 
   return (
     <>
-      <SeoHead title={t("resetPassword.seoTitle")} description={t("resetPassword.seoDescription")} />
+      <SeoHead title={t("resetPassword.seoTitle")} description={t("resetPassword.seoDescription")} noindex />
       <Navbar />
       <section className="min-h-screen flex items-center justify-center py-24 px-4">
         <motion.div
