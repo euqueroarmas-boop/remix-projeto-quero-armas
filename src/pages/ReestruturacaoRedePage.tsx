@@ -920,15 +920,13 @@ const ReestruturacaoRedePage = () => {
             <p className="text-sm text-muted-foreground leading-relaxed">
                {t("restructuring.premiumDescription", { count: pcs })}
             </p>
-            <a
-              href={`https://wa.me/5511963166915?text=${encodeURIComponent(`Olá! Preciso de um orçamento premium para Reestruturação Completa de Rede Corporativa com ${pcs} computadores${includeServer ? " + implantação de servidor" : ""}. Aguardo proposta personalizada.`)}`}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              onClick={() => openWhatsApp({ pageTitle: "Reestruturação de Rede Corporativa", intent: "proposal", detail: `${pcs} computadores${includeServer ? " + implantação de servidor" : ""}` })}
               className="w-full inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-6 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all rounded-lg"
             >
               <ArrowRight size={16} />
                {t("restructuring.requestPremiumQuote")}
-            </a>
+            </button>
             <button
               onClick={() => { setShowPremiumPopup(false); setPcs(30); }}
               className="text-xs text-muted-foreground hover:text-foreground transition-colors"

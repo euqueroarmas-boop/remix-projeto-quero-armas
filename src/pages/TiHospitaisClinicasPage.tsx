@@ -10,6 +10,7 @@ import {
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import hospitalTech from "@/assets/hospital-tech.jpg";
+import { openWhatsApp } from "@/lib/whatsapp";
 
 const fadeIn = {
   initial: { opacity: 0, y: 20 },
@@ -64,9 +65,9 @@ const TiHospitaisClinicasPage = () => {
               {t(`${k}.heroDescription`)}
             </p>
             <div className="flex flex-wrap gap-4">
-              <a href={`https://wa.me/5511963166915?text=${encodeURIComponent(whatsappMsg)}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all">
+              <button onClick={() => openWhatsApp({ pageTitle: "TI para Hospitais e Clínicas", intent: "diagnosis" })} className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all">
                 <MessageCircle size={16} /> {t(`${k}.ctaDiag`)}
-              </a>
+              </button>
               <a href="#contato-saude" className="inline-flex items-center gap-2 border border-muted-foreground/30 text-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:border-primary hover:text-primary transition-all">
                 {t(`${k}.ctaSpecialist`)}
               </a>
@@ -228,10 +229,10 @@ const TiHospitaisClinicasPage = () => {
             </h2>
             <p className="font-body text-muted-foreground max-w-xl mx-auto mb-8 leading-relaxed">{t(`${k}.ctaDescription`)}</p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <a href={`https://wa.me/5511963166915?text=${encodeURIComponent(whatsappMsg)}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all">
+              <button onClick={() => openWhatsApp({ pageTitle: "TI para Hospitais e Clínicas", intent: "diagnosis" })} className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all">
                 <MessageCircle size={16} /> {t(`${k}.ctaDiagBtn`)}
-              </a>
-              <a href="https://wa.me/5511963166915" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 border border-border text-foreground px-8 py-4 font-mono text-sm uppercase tracking-wider hover:border-primary hover:text-primary transition-all">
+              </button>
+              <button onClick={() => openWhatsApp({ pageTitle: "TI para Hospitais e Clínicas", intent: "specialist" })} className="inline-flex items-center gap-2 border border-border text-foreground px-8 py-4 font-mono text-sm uppercase tracking-wider hover:border-primary hover:text-primary transition-all">
                 {t(`${k}.ctaWhatsapp`)}
               </a>
             </div>
