@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import { Monitor, Headphones, HelpCircle, ArrowRight, AlertTriangle, Wrench } from "lucide-react";
 
 import imgEmergencial from "@/assets/orcamento/path-emergencial.webp";
@@ -14,54 +15,16 @@ interface Props {
   selected: CommercialPath | null;
 }
 
-const paths = [
-  {
-    id: "emergencial" as CommercialPath,
-    icon: AlertTriangle,
-    image: imgEmergencial,
-    title: "Suporte técnico emergencial",
-    description:
-      "Problema urgente na sua empresa? Nossa equipe pode prestar atendimento técnico imediato para restaurar servidores, rede, sistemas ou computadores que pararam de funcionar, em servidores Windows Server, Linux ou estações de trabalho.\n\nPague por hora e use quando quiser. Aproveite a promoção de horas.",
-    highlight: "Atendimento emergencial sob demanda",
-  },
-  {
-    id: "avulso" as CommercialPath,
-    icon: Wrench,
-    image: imgAvulso,
-    title: "Contratar serviço avulso",
-    description:
-      "Solicite atendimento técnico pontual para sua empresa sem necessidade de contrato mensal. Ideal para instalações, configurações, manutenção, melhorias de rede, servidores ou infraestrutura.\n\nPague por hora e use quando quiser. Aproveite a promoção de horas.",
-    highlight: "Serviço técnico sob demanda",
-  },
-  {
-    id: "locacao" as CommercialPath,
-    icon: Monitor,
-    image: imgLocacao,
-    title: "Alugar computadores com suporte incluso",
-    description:
-      "Computadores Dell OptiPlex novos com manutenção, backup e suporte técnico durante todo o contrato. Sem investimento inicial.",
-    highlight: "A partir de R$249/mês por computador",
-  },
-  {
-    id: "suporte" as CommercialPath,
-    icon: Headphones,
-    image: imgSuporte,
-    title: "Contratar apenas o suporte mensal para minha rede atual",
-    description:
-      "Mantenha seus computadores atuais e conte com nossa equipe de TI para cuidar da infraestrutura, servidores e segurança.",
-    highlight: "A partir de R$120/mês por computador",
-  },
-  {
-    id: "ajuda" as CommercialPath,
-    icon: HelpCircle,
-    image: imgAjuda,
-    title: "Ainda não tenho certeza, quero entender qual opção compensa mais",
-    description:
-      "Responda algumas perguntas rápidas sobre sua empresa e nós vamos recomendar a melhor opção para o seu caso.",
-    highlight: "Diagnóstico gratuito em 2 minutos",
-  },
+const pathMeta = [
+  { id: "emergencial" as CommercialPath, icon: AlertTriangle, image: imgEmergencial, titleKey: "pathSelector.emergencialTitle", descKey: "pathSelector.emergencialDesc", highlightKey: "pathSelector.emergencialHighlight" },
+  { id: "avulso" as CommercialPath, icon: Wrench, image: imgAvulso, titleKey: "pathSelector.avulsoTitle", descKey: "pathSelector.avulsoDesc", highlightKey: "pathSelector.avulsoHighlight" },
+  { id: "locacao" as CommercialPath, icon: Monitor, image: imgLocacao, titleKey: "pathSelector.locacaoTitle", descKey: "pathSelector.locacaoDesc", highlightKey: "pathSelector.locacaoHighlight" },
+  { id: "suporte" as CommercialPath, icon: Headphones, image: imgSuporte, titleKey: "pathSelector.suporteTitle", descKey: "pathSelector.suporteDesc", highlightKey: "pathSelector.suporteHighlight" },
+  { id: "ajuda" as CommercialPath, icon: HelpCircle, image: imgAjuda, titleKey: "pathSelector.ajudaTitle", descKey: "pathSelector.ajudaDesc", highlightKey: "pathSelector.ajudaHighlight" },
 ];
+
 const PathSelector = ({ onSelect, selected }: Props) => {
+  const { t } = useTranslation();
   return (
     <section id="path-selector" className="py-20 bg-card">
       <div className="container mx-auto px-4">
@@ -72,19 +35,18 @@ const PathSelector = ({ onSelect, selected }: Props) => {
           className="text-center mb-12"
         >
           <span className="inline-block px-4 py-1.5 mb-4 text-xs font-semibold tracking-widest uppercase bg-primary/10 text-primary rounded-full border border-primary/20">
-            Como podemos ajudar?
+            {t("pathSelector.tag")}
           </span>
           <h2 className="text-2xl md:text-4xl font-heading font-bold text-foreground mb-3">
-            O que sua empresa <span className="text-primary">precisa</span> hoje?
+            {t("pathSelector.title1")} <span className="text-primary">{t("pathSelector.titleHighlight")}</span> {t("pathSelector.title2")}
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Escolha a opção que mais se aproxima da sua necessidade. Vamos montar
-            um orçamento personalizado.
+            {t("pathSelector.desc")}
           </p>
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto md:items-stretch">
-          {paths.map((p, i) => {
+          {pathMeta.map((p, i) => {
             const isSelected = selected === p.id;
             return (
               <motion.button
@@ -104,7 +66,7 @@ const PathSelector = ({ onSelect, selected }: Props) => {
                 <div className="relative h-40 w-full overflow-hidden">
                   <img
                     src={p.image}
-                    alt={p.title}
+                    alt={t(p.titleKey)}
                     loading="lazy"
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
@@ -117,15 +79,10 @@ const PathSelector = ({ onSelect, selected }: Props) => {
                 </div>
 
                 <div className="p-6 flex flex-col flex-1">
-                  {/* Title */}
-                  <h3 className="text-lg font-heading font-bold text-foreground mb-2 min-h-[3.5rem]">{p.title}</h3>
-
-                  {/* Description */}
-                  <p className="text-sm text-muted-foreground mb-4 flex-1">{p.description}</p>
-
-                  {/* Highlight + arrow */}
+                  <h3 className="text-lg font-heading font-bold text-foreground mb-2 min-h-[3.5rem]">{t(p.titleKey)}</h3>
+                  <p className="text-sm text-muted-foreground mb-4 flex-1">{t(p.descKey)}</p>
                   <div className="flex items-center justify-between mt-auto pt-2">
-                    <span className="text-xs font-semibold text-primary">{p.highlight}</span>
+                    <span className="text-xs font-semibold text-primary">{t(p.highlightKey)}</span>
                     <ArrowRight
                       className={`w-4 h-4 shrink-0 transition-colors ${
                         isSelected ? "text-primary" : "text-muted-foreground"

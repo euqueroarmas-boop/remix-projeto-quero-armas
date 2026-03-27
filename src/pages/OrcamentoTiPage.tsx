@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { WHATSAPP_NUMBER } from "@/lib/whatsapp";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,6 +20,7 @@ import BudgetSummaryScreen from "@/components/orcamento/BudgetSummaryScreen";
 import { recommendRentalAddons, recommendRentalPlan } from "@/components/orcamento/rentalRecommendation";
 
 const OrcamentoTiPage = () => {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const [savingBudget, setSavingBudget] = useState(false);
@@ -71,11 +73,11 @@ const OrcamentoTiPage = () => {
     const problema = searchParams.get("problema");
     const servico = searchParams.get("servico");
     const cidade = searchParams.get("cidade");
-    if (problema === "backup") return "Descubra como resolver o backup da sua empresa";
-    if (problema === "rede") return "Resolva os problemas de rede da sua empresa";
-    if (problema === "servidor") return "Resolva os problemas do servidor da sua empresa";
-    if (servico === "locacao-de-computadores") return "Calcule a locação de computadores para sua empresa";
-    if (cidade) return `Orçamento de TI para sua empresa em ${cidade.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}`;
+    if (problema === "backup") return t("orcamento.ctxBackup");
+    if (problema === "rede") return t("orcamento.ctxRede");
+    if (problema === "servidor") return t("orcamento.ctxServidor");
+    if (servico === "locacao-de-computadores") return t("orcamento.ctxLocacao");
+    if (cidade) return t("orcamento.ctxCidade", { city: cidade.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()) });
     return null;
   }, [searchParams]);
 
@@ -229,8 +231,8 @@ const OrcamentoTiPage = () => {
     } catch (err) {
       console.error("[WMTi] Erro ao salvar orçamento:", err);
       toast({
-        title: "Erro ao salvar orçamento",
-        description: "Ocorreu um problema ao processar seu orçamento. Tente novamente.",
+        title: t("errors.erroOrcamento"),
+        description: t("errors.erroOrcamentoDesc"),
         variant: "destructive",
       });
     } finally {
@@ -244,8 +246,8 @@ const OrcamentoTiPage = () => {
   return (
     <>
       <SeoHead
-        title="Orçamento de Infraestrutura de TI | WMTi"
-        description="Calcule o investimento em infraestrutura de TI para sua empresa. Locação de computadores Dell a partir de R$249/mês ou suporte mensal a partir de R$120/mês."
+        title={t("orcamento.seoTitle")}
+        description={t("orcamento.seoDesc")}
       />
 
       <Navbar />
@@ -288,7 +290,7 @@ const OrcamentoTiPage = () => {
                   onClick={handleProceedToSummary}
                   className="h-14 px-10 text-base font-semibold rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground transition-colors inline-flex items-center gap-2"
                 >
-                  Ver orçamento completo
+                  {t("contratar.verOrcamento")}
                 </button>
               </div>
             </section>

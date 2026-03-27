@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import { Check, Star, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -51,6 +52,7 @@ interface Props {
 }
 
 const PlanSelector = ({ selectedPlan, onSelectPlan, onShowBudget }: Props) => {
+  const { t } = useTranslation();
   return (
     <section id="plans" className="py-20 section-dark">
       <div className="container mx-auto px-4">
@@ -136,7 +138,7 @@ const PlanSelector = ({ selectedPlan, onSelectPlan, onShowBudget }: Props) => {
               onClick={onShowBudget}
               className="h-14 px-10 text-base bg-primary hover:bg-primary/90 text-primary-foreground"
             >
-              Ver orçamento completo
+              {t("contratar.verOrcamento")}
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
           </motion.div>

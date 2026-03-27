@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useParams, Link, Navigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, Calendar, ArrowRight, ChevronRight, MapPin } from "lucide-react";
@@ -74,6 +75,7 @@ const legacyContent: Record<string, React.ReactNode> = {
 };
 
 const BlogPostPage = () => {
+  const { t } = useTranslation();
   const { slug } = useParams<{ slug: string }>();
   const location = useLocation();
   const { post, city, baseSlug } = useMemo(() => resolveBlogSlug(slug), [slug]);
@@ -294,11 +296,11 @@ const BlogPostPage = () => {
           {/* CTA */}
           <div className="mt-12 bg-secondary p-8 md:p-12 text-center border border-border">
             <h3 className="text-xl md:text-2xl text-secondary-foreground mb-3">
-              Precisa de ajuda com sua <span className="text-primary">infraestrutura{city ? ` em ${city.name}` : ""}?</span>
+              {t("blog.ctaTitle")} <span className="text-primary">{t("blog.ctaTitleHighlight")}{city ? t("blog.ctaTitleCitySuffix", { city: city.name }) : ""}?</span>
             </h3>
             <p className="font-body text-sm text-secondary-foreground/70 max-w-md mx-auto mb-6">
-              {structuredContent?.cta || "Solicite um diagnóstico gratuito. Nossa equipe técnica avalia sua situação e apresenta a melhor solução."}
-              {city && ` Atendemos empresas em ${city.name} e região de ${city.region}.`}
+              {structuredContent?.cta || t("blog.ctaDesc")}
+              {city && t("blog.ctaCitySuffix", { city: city.name, region: city.region })}
             </p>
             <a
               href={`https://wa.me/5511963166915?text=${encodeURIComponent(`Olá! Li o artigo "${post.title}" no blog da WMTi${city ? ` e gostaria de saber mais sobre os serviços em ${city.name}` : " e gostaria de saber mais"}.`)}`}
@@ -306,7 +308,7 @@ const BlogPostPage = () => {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
             >
-              Falar com especialista
+              {t("blog.ctaBtn")}
             </a>
           </div>
         </div>

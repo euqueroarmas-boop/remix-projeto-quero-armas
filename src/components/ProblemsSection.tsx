@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import {
   Thermometer,
   HardDrive,
@@ -14,65 +15,18 @@ import {
 import slowComputer from "@/assets/slow-computer.webp";
 import MobileSummary from "@/components/MobileSummary";
 
-const problems = [
-  {
-    icon: Thermometer,
-    title: "Superaquecimento",
-    desc: "Pasta térmica ressecada e coolers obstruídos por poeira causam travamentos, desligamentos e reduzem a vida útil do processador.",
-    solution: "Limpeza interna preventiva + troca de pasta térmica profissional.",
-  },
-  {
-    icon: HardDrive,
-    title: "HD Lento ou Defeituoso",
-    desc: "Discos rígidos mecânicos degradam com o tempo, causando lentidão extrema na inicialização e abertura de programas.",
-    solution: "Upgrade para SSD NVMe — até 10x mais velocidade.",
-  },
-  {
-    icon: Bug,
-    title: "Vírus e Malware",
-    desc: "Sistemas sem antivírus corporativo ficam vulneráveis a ransomware, roubo de dados e lentidão por processos ocultos.",
-    solution: "Implantação de endpoint protection com monitoramento 24/7.",
-  },
-  {
-    icon: Wifi,
-    title: "Rede Instável",
-    desc: "Cabos deteriorados, switches domésticos e roteadores mal configurados causam quedas constantes e perda de produtividade.",
-    solution: "Projeto de rede estruturada com switches gerenciáveis.",
-  },
-  {
-    icon: Clock,
-    title: "Sistema Operacional Corrompido",
-    desc: "Atualizações ignoradas e softwares piratas degradam o Windows, causando telas azuis e erros constantes.",
-    solution: "Reinstalação limpa com licenciamento original Microsoft.",
-  },
-  {
-    icon: ShieldX,
-    title: "Sem Backup",
-    desc: "Dados críticos armazenados apenas no computador local — um HD queimado significa perda total e irreversível.",
-    solution: "Backup automatizado local + nuvem com verificação diária.",
-  },
-  {
-    icon: Cpu,
-    title: "Hardware Subdimensionado",
-    desc: "Memória RAM insuficiente e processadores defasados não suportam softwares modernos, causando travamentos.",
-    solution: "Diagnóstico técnico + upgrade sob medida para sua operação.",
-  },
-  {
-    icon: AlertTriangle,
-    title: "Falta de Manutenção Preventiva",
-    desc: "Equipamentos sem revisão periódica acumulam problemas silenciosos até uma falha crítica paralisar a operação.",
-    solution: "Contrato de manutenção preventiva mensal com relatórios.",
-  },
-];
+const problemIcons = [Thermometer, HardDrive, Bug, Wifi, Clock, ShieldX, Cpu, AlertTriangle];
 
 const ProblemsSection = () => {
+  const { t } = useTranslation();
+  const problems = (t("problems.items", { returnObjects: true }) as { title: string; desc: string; solution: string }[]).map((p, i) => ({ ...p, icon: problemIcons[i] }));
   return (
     <section id="problemas" className="bg-background">
       {/* Mobile summary */}
       <MobileSummary
-        tag="Diagnóstico"
-        title={<>Seu computador está lento? <span className="text-primary">Nós resolvemos.</span></>}
-        description="Superaquecimento, HD lento, vírus, rede instável — identificamos e resolvemos os problemas mais comuns de performance. Solicite um diagnóstico gratuito."
+        tag={t("problems.mobileSummaryTag")}
+        title={<>{t("problems.mobileSummaryTitle1")} <span className="text-primary">{t("problems.mobileSummaryTitle2")}</span></>}
+        description={t("problems.mobileSummaryDesc")}
         to="/servicos"
       />
 
@@ -159,12 +113,10 @@ const ProblemsSection = () => {
             className="bg-secondary border border-border/30 p-8 md:p-12 text-center"
           >
             <h3 className="text-xl md:text-3xl text-secondary-foreground mb-3 md:mb-4">
-              Não espere o problema parar sua empresa
+              {t("problems.ctaTitle")}
             </h3>
             <p className="font-body text-sm md:text-base text-muted-foreground max-w-xl mx-auto mb-6 md:mb-8 leading-relaxed">
-              Solicite um diagnóstico gratuito da sua infraestrutura. Nossa equipe
-              técnica identifica gargalos, riscos e oportunidades de melhoria —
-              sem compromisso.
+              {t("problems.ctaDesc")}
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-4">
               <a
@@ -173,14 +125,14 @@ const ProblemsSection = () => {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 md:px-8 py-3 md:py-4 font-mono text-xs md:text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all w-full sm:w-auto justify-center"
               >
-                Diagnóstico Gratuito
+                {t("problems.ctaDiagnostico")}
                 <ArrowRight size={16} />
               </a>
               <a
                 href="#contato"
                 className="inline-flex items-center gap-2 border border-primary/40 text-primary px-6 md:px-8 py-3 md:py-4 font-mono text-xs md:text-sm uppercase tracking-wider hover:bg-primary/10 transition-all w-full sm:w-auto justify-center"
               >
-                Solicitar Orçamento
+                {t("problems.ctaOrcamento")}
               </a>
             </div>
           </motion.div>
