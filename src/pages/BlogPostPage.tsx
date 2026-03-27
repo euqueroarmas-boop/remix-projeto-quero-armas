@@ -10,6 +10,7 @@ import JsonLd, { buildArticleSchema, buildBreadcrumbSchema } from "@/components/
 import { blogPosts, blogContent as blogContentData } from "@/data/blogPosts";
 import { cities } from "@/data/seo/cities";
 import { useLocalizedBlogPosts, useLocalizedBlogContent } from "@/hooks/useBlogLocalized";
+import { openWhatsApp } from "@/lib/whatsapp";
 
 /** Try to match a slug like "vantagens-microsoft-365-para-empresas-campinas" */
 function resolveBlogSlug(slug: string | undefined) {
