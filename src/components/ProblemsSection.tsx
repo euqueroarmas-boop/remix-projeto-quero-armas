@@ -13,7 +13,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import slowComputer from "@/assets/slow-computer.webp";
-import MobileSummary from "@/components/MobileSummary";
+
 
 const problemIcons = [Thermometer, HardDrive, Bug, Wifi, Clock, ShieldX, Cpu, AlertTriangle];
 

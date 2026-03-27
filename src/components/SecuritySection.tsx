@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Shield, Lock, Eye, Wifi, ArrowRight } from "lucide-react";
 import firewallImage from "@/assets/firewall-security.webp";
-import MobileSummary from "@/components/MobileSummary";
+
 
 const features = [
   {
