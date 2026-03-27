@@ -1353,70 +1353,80 @@
     },
     "tiCartorios": {
       "title": "TI para Cartórios — Provimento 213 CNJ",
-      "metaTitle": "TI para Cartórios | Conformidade Provimento 213 CNJ | WMTi",
-      "metaDescription": "Infraestrutura de TI para cartórios em conformidade com o Provimento 213 do CNJ.",
+      "metaTitle": "TI para Cartórios | Seu cartório pode parar e o problema será seu | WMTi",
+      "metaDescription": "Infraestrutura de TI para cartórios em conformidade com o Provimento 213 do CNJ. Evite paradas, perda de faturamento e questionamentos da corregedoria.",
       "tag": "TI para Cartórios",
-      "headline1": "Seu cartório pode estar fora de conformidade — e ",
-      "headlineHighlight": "o prazo está correndo",
+      "headline1": "Seu cartório pode parar. E o problema ",
+      "headlineHighlight": "não será técnico. Será seu.",
       "headline2": "",
-      "description": "O Provimento 213 não é sugestão. É obrigação. E os prazos já estão correndo. A WMTi é especialista em TI para cartórios. Fazemos o diagnóstico, implementamos tudo e garantimos a conformidade total.",
-      "whatsappMessage": "Olá! Gostaria de um orçamento para adequação do meu cartório ao Provimento 213 do CNJ.",
+      "description": "Uma falha de sistema hoje não significa apenas atraso. Significa perda de faturamento, risco sobre os atos e possível questionamento pela corregedoria. Cartório hoje não depende mais de papel. Depende de internet, sistemas, videoconferência, assinatura digital e armazenamento de dados. Se qualquer um desses falhar, o cartório para. E quem responde é o titular.",
+      "whatsappMessage": "Olá! Preciso proteger meu cartório contra paradas e adequar ao Provimento 213 do CNJ. Quero falar com um especialista.",
       "painPoints": [
-        "Cartório fora de conformidade com os requisitos do CNJ",
-        "Backup manual ou inexistente — risco de perda total do acervo",
-        "Sem firewall protegendo dados sigilosos de clientes",
-        "Sem plano de continuidade (PCN) nem recuperação de desastres (PRD)",
-        "Servidor antigo sem redundância ameaçando a disponibilidade"
+        "1 hora parado = prejuízo direto no faturamento do cartório",
+        "1 dia parado = impacto devastador na receita e perda de clientes",
+        "Backup que nunca foi testado — você só vai descobrir na hora da crise",
+        "Apenas 1 link de internet sem contingência — uma queda e tudo para",
+        "Login compartilhado entre funcionários — sem rastreabilidade de atos",
+        "Falta de conformidade pode gerar sanção da corregedoria e do juiz corregedor"
       ],
       "solutions": [
-        "Diagnóstico completo de conformidade com o Provimento 213",
-        "Servidores Dell PowerEdge com RAID redundante e fontes hot-swap",
-        "Backup automatizado 3-2-1: Veeam + Dell PowerVault + Azure Cloud",
-        "Firewall pfSense com IDS/IPS Suricata",
-        "Elaboração de PCN, PRD e Política de Segurança da Informação"
+        "Firewall profissional pfSense com IDS/IPS — controle total de acesso",
+        "Backup automatizado com restauração testada periodicamente",
+        "Redundância de internet — se uma cai, a outra assume instantaneamente",
+        "Controle de acesso individual com rastreabilidade completa de atos",
+        "Auditoria completa para conformidade com o Provimento 213 do CNJ",
+        "Padronização operacional — cada estação, servidor e processo documentado"
       ],
       "benefits": [
         {
-          "title": "100% conforme",
-          "text": "Todos os requisitos do Provimento 213 atendidos — Classes 1, 2 e 3."
+          "title": "Conformidade total CNJ",
+          "text": "Todos os requisitos do Provimento 213 atendidos — Classes 1, 2 e 3. Sem risco de sanção."
         },
         {
-          "title": "Dell PowerEdge",
-          "text": "Servidores enterprise com RAID e redundância."
+          "title": "Dell PowerEdge + RAID",
+          "text": "Servidores enterprise com redundância total. Falha de hardware não para seu cartório."
         },
         {
-          "title": "Backup 3-2-1",
-          "text": "Veeam + storage local + nuvem Azure com RPO e RTO definidos."
+          "title": "Backup que funciona de verdade",
+          "text": "Veeam + storage local + nuvem Azure. Testado periodicamente. RPO e RTO definidos por contrato."
         },
         {
-          "title": "pfSense + Suricata",
-          "text": "Firewall stateful com IDS/IPS e VPN."
+          "title": "Firewall + IDS/IPS",
+          "text": "pfSense com Suricata. VPN segura. Nenhum acesso não autorizado entra na sua rede."
         },
         {
           "title": "Criptografia AES-256",
-          "text": "Dados em trânsito e repouso protegidos."
+          "text": "Dados em trânsito e em repouso protegidos. Exigência do Provimento 213 atendida."
         },
         {
-          "title": "NOC 24/7",
-          "text": "Monitoramento contínuo com alertas automáticos."
+          "title": "Monitoramento 24/7",
+          "text": "NOC ativo com alertas automáticos. Agimos antes da falha virar parada."
         }
       ],
       "faq": [
         {
-          "question": "O que é o Provimento 213 do CNJ?",
-          "answer": "Substitui o Provimento 74/2018. Define requisitos obrigatórios de TIC para todas as serventias extrajudiciais do Brasil."
+          "question": "O que acontece se meu cartório não se adequar ao Provimento 213?",
+          "answer": "O Provimento 213 é obrigatório. A não conformidade pode gerar advertências, multas e até sanções pela corregedoria. A responsabilidade é pessoal do titular, mesmo com TI terceirizada."
         },
         {
-          "question": "Como saber em qual classe meu cartório se enquadra?",
-          "answer": "Classe 1: até R$ 100 mil. Classe 2: R$ 100 mil a R$ 500 mil. Classe 3: acima de R$ 500 mil. Fazemos o diagnóstico gratuito."
+          "question": "Quanto meu cartório perde por hora parado?",
+          "answer": "Depende do volume de atendimento. Um cartório com 80 atos/dia a R$120 por ato perde mais de R$1.200 por hora parado. Use nossa calculadora acima para estimar seu prejuízo."
+        },
+        {
+          "question": "Meu backup está funcionando. Preciso me preocupar?",
+          "answer": "Backup que nunca foi testado é o mesmo que não ter backup. Mais de 60% dos backups falham na hora da restauração. Testamos periodicamente e garantimos por contrato."
         },
         {
           "question": "Vocês atendem cartórios fora de Jacareí?",
-          "answer": "Sim. Atendemos em todo o Brasil."
+          "answer": "Sim. Atendemos serventias em todo o Brasil com projetos completos de adequação."
         },
         {
-          "question": "Quanto custa adequar meu cartório?",
-          "answer": "Depende da classe e infraestrutura atual. Oferecemos projetos personalizados com parcelamento."
+          "question": "Quanto custa adequar meu cartório ao Provimento 213?",
+          "answer": "Depende da classe e da infraestrutura atual. Fazemos diagnóstico gratuito e projeto personalizado com parcelamento."
+        },
+        {
+          "question": "A responsabilidade é minha mesmo com TI terceirizada?",
+          "answer": "Sim. O Provimento 213 deixa claro: a responsabilidade é pessoal do titular da serventia. Terceirizar a TI não transfere a responsabilidade legal."
         }
       ],
       "relatedLabels": [
@@ -1425,7 +1435,7 @@
         "Firewall pfSense",
         "Infraestrutura corporativa"
       ],
-      "localContent": "Somos referência em TI para cartórios no Vale do Paraíba, atendendo serventias em Jacareí, São José dos Campos, Taubaté e região."
+      "localContent": "Somos referência em TI para cartórios no Vale do Paraíba e em todo o Brasil. Atendemos serventias em Jacareí, São José dos Campos, Taubaté, Sorocaba, Campinas e região."
     },
     "tiContab": {
       "title": "Infraestrutura de TI para Escritórios de Contabilidade",
@@ -1815,72 +1825,72 @@
     },
     "tiServentias": {
       "title": "Infraestrutura de TI para Serventias Notariais",
-      "metaTitle": "Infraestrutura de TI para Serventias Notariais | Provimento 213 CNJ | WMTi",
-      "metaDescription": "Soluções de infraestrutura de TI para serventias notariais em conformidade com o Provimento 213 do CNJ.",
+      "metaTitle": "TI para Serventias Notariais | Seu cartório pode parar — e a responsabilidade é sua | WMTi",
+      "metaDescription": "Infraestrutura de TI para serventias notariais em conformidade com o Provimento 213 do CNJ. Evite paradas, sanções e perda de faturamento.",
       "tag": "TI para Serventias Notariais",
-      "headline1": "Sua serventia pode estar vulnerável — e o ",
-      "headlineHighlight": "Provimento 213 exige adequação agora",
+      "headline1": "Sua serventia pode parar. ",
+      "headlineHighlight": "E a responsabilidade é do titular.",
       "headline2": "",
-      "description": "O prazo está correndo. O Provimento 213 do CNJ define requisitos obrigatórios de TIC para todas as serventias extrajudiciais. A WMTi é especialista nisso. Fazemos o diagnóstico, implementamos a infraestrutura e garantimos conformidade total.",
-      "whatsappMessage": "Olá! Gostaria de uma análise da infraestrutura de TI da minha serventia notarial.",
+      "description": "Não existe problema técnico em cartório. Existe responsabilidade do titular. O Provimento 213 do CNJ exige continuidade, segurança, integridade e rastreabilidade. Se houver falha: atendimento para, faturamento é perdido, atos podem ser comprometidos. E isso pode gerar problema com a corregedoria e o juiz corregedor.",
+      "whatsappMessage": "Olá! Preciso adequar a infraestrutura de TI da minha serventia notarial ao Provimento 213. Quero falar com um especialista.",
       "painPoints": [
-        "Dificuldade em entender os requisitos do Provimento 213",
-        "Sistemas cartoriais instáveis",
-        "Backup manual ou inexistente",
-        "Sem firewall e sem segmentação de rede",
-        "Servidores sem monitoramento",
-        "Suporte reativo"
+        "Sistemas cartoriais instáveis que travam no meio do atendimento",
+        "Backup manual ou que nunca foi testado — risco de perda total",
+        "Sem firewall — dados sigilosos de clientes expostos",
+        "Apenas 1 link de internet sem redundância",
+        "Login compartilhado — impossível rastrear quem fez o quê",
+        "Falhas podem gerar sanções — a responsabilidade recai sobre o titular"
       ],
       "solutions": [
         "Diagnóstico completo de conformidade com o Provimento 213",
-        "Servidores Windows Server para operação contínua",
-        "Backup corporativo automatizado com replicação",
-        "Firewall com segmentação de rede",
-        "Monitoramento contínuo",
-        "Suporte especializado com manutenção preventiva"
+        "Servidores Windows Server com RAID redundante para operação contínua",
+        "Backup corporativo automatizado com replicação local e nuvem",
+        "Firewall pfSense com segmentação de rede e IDS/IPS",
+        "Monitoramento 24/7 com alertas automáticos",
+        "Suporte especializado com manutenção preventiva programada"
       ],
       "benefits": [
         {
-          "title": "Servidores profissionais",
-          "text": "Windows Server configurado para alto desempenho dos sistemas cartoriais."
+          "title": "Servidores de alta disponibilidade",
+          "text": "Windows Server com RAID e redundância. Seu sistema cartorial nunca mais trava no meio do atendimento."
         },
         {
-          "title": "Backup que funciona",
-          "text": "Replicação local e em nuvem com testes periódicos."
+          "title": "Backup com restauração garantida",
+          "text": "Replicação local e nuvem com testes periódicos. Na hora da crise, funciona de verdade."
         },
         {
-          "title": "Rede protegida",
-          "text": "Firewall, segmentação e políticas de segurança."
+          "title": "Rede blindada",
+          "text": "Firewall pfSense, segmentação de rede e políticas de segurança que protegem dados sigilosos."
         },
         {
-          "title": "Monitoramento real",
-          "text": "Servidores e rede monitorados para agir antes da falha."
+          "title": "Monitoramento antes da falha",
+          "text": "Servidores e rede monitorados 24/7. Agimos antes do problema virar parada."
         },
         {
-          "title": "Conformidade total",
-          "text": "Todos os requisitos do Provimento 213 atendidos e documentados."
+          "title": "Conformidade documentada",
+          "text": "Todos os requisitos do Provimento 213 atendidos, documentados e auditáveis."
         },
         {
-          "title": "Suporte especializado",
-          "text": "Equipe que conhece a rotina de serventia."
+          "title": "Suporte que conhece cartório",
+          "text": "Equipe especializada na rotina de serventias. Não aparecemos só quando tudo já parou."
         }
       ],
       "faq": [
         {
-          "question": "A WMTi atende serventias notariais com adequação ao Provimento 213?",
-          "answer": "Sim. Somos especialistas. Fazemos o diagnóstico, implementamos tudo e garantimos conformidade total."
+          "question": "A WMTi garante conformidade total com o Provimento 213?",
+          "answer": "Sim. Fazemos diagnóstico, implementamos toda a infraestrutura e entregamos documentação de conformidade para todas as classes."
         },
         {
-          "question": "Qual a importância do backup corporativo para serventias?",
-          "answer": "Perda de dados em ambiente cartorial pode gerar impactos operacionais e jurídicos graves."
+          "question": "O que acontece se minha serventia não se adequar?",
+          "answer": "O Provimento 213 é obrigatório. A não conformidade pode gerar advertências, multas e sanções pela corregedoria. A responsabilidade é pessoal do titular."
         },
         {
-          "question": "Vocês realizam monitoramento contínuo?",
-          "answer": "Sim. 24/7 com alertas automáticos."
+          "question": "Meu backup está configurado. Preciso me preocupar?",
+          "answer": "Se nunca foi testado, é o mesmo que não ter. Mais de 60% dos backups falham na restauração. Testamos periodicamente."
         },
         {
-          "question": "Atendem fora da região de Jacareí?",
-          "answer": "Sim. Brasil inteiro."
+          "question": "Atendem serventias fora do Vale do Paraíba?",
+          "answer": "Sim. Atendemos serventias notariais em todo o Brasil."
         }
       ],
       "relatedLabels": [
@@ -1889,7 +1899,7 @@
         "Servidores Dell",
         "Firewall pfSense"
       ],
-      "localContent": "Solicite uma análise da infraestrutura de TI da sua serventia notarial. Atendemos em Jacareí, Vale do Paraíba e em todo o Brasil."
+      "localContent": "Atendemos serventias notariais em Jacareí, São José dos Campos, Taubaté, Sorocaba, Campinas e em todo o Brasil."
     }
   },
   "custom": {
