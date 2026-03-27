@@ -1,59 +1,27 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Monitor, Wrench, Headphones, RefreshCw, DollarSign, ShieldCheck, ArrowRight, CheckCircle2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import optiplexImage from "@/assets/optiplex-desktop.webp";
 import MobileSummary from "@/components/MobileSummary";
 
-const benefits = [
-  {
-    icon: Monitor,
-    title: "Estação completa",
-    desc: "Computador Dell OptiPlex + monitor + teclado + mouse. Tudo incluso, pronto para uso.",
-  },
-  {
-    icon: Wrench,
-    title: "Manutenção em comodato",
-    desc: "Todas as manutenções preventivas e corretivas estão inclusas no valor da locação. Sem custos extras.",
-  },
-  {
-    icon: RefreshCw,
-    title: "Troca sem custo",
-    desc: "Queimou o teclado, mouse, monitor ou até a CPU? Trocamos sem custo adicional. Sem burocracia.",
-  },
-  {
-    icon: Headphones,
-    title: "Suporte 24/7",
-    desc: "Equipe técnica disponível 24 horas, 7 dias por semana. Atendimento remoto e presencial.",
-  },
-  {
-    icon: DollarSign,
-    title: "Economia real",
-    desc: "Sem investimento inicial alto. Sem depreciação. Sem custos com técnicos avulsos. Previsibilidade total.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Sempre atualizado",
-    desc: "Equipamentos renovados periodicamente. Sua empresa sempre com hardware moderno e produtivo.",
-  },
-];
-
-const comparisons = [
-  { item: "Investimento inicial", compra: "R$ 4.000+", locacao: "R$ 0" },
-  { item: "Manutenção", compra: "Por sua conta", locacao: "Inclusa" },
-  { item: "Troca de peças", compra: "Custo extra", locacao: "Sem custo" },
-  { item: "Depreciação", compra: "Sim, perde valor", locacao: "Não se aplica" },
-  { item: "Suporte técnico", compra: "Contratar à parte", locacao: "24/7 incluso" },
-  { item: "Atualização", compra: "Comprar novo", locacao: "Troca periódica" },
-];
+const benefitIcons = [Monitor, Wrench, RefreshCw, Headphones, DollarSign, ShieldCheck];
 
 const RentalSection = () => {
+  const { t } = useTranslation();
+  const benefits = (t("custom.rentalSection.benefits", { returnObjects: true }) as { title: string; desc: string }[]).map((item, index) => ({
+    ...item,
+    icon: benefitIcons[index],
+  }));
+  const comparisons = t("custom.rentalSection.comparisons", { returnObjects: true }) as { item: string; compra: string; locacao: string }[];
+
   return (
     <section id="locacao" className="section-light">
       {/* Mobile summary */}
       <MobileSummary
-        tag="Locação de Computadores"
-        title={<>Computador completo a partir de <span className="text-primary">R$ 249/mês.</span></>}
-        description="Estação Dell OptiPlex completa com monitor, teclado e mouse. Manutenções inclusas, trocas sem custo e suporte 24/7. Sem investimento inicial."
+        tag={t("custom.rentalSection.mobileTag")}
+        title={<>{t("custom.rentalSection.mobileTitle1")}<span className="text-primary">{t("custom.rentalSection.mobileHighlight")}</span></>}
+        description={t("custom.rentalSection.mobileDescription")}
         to="/locacao"
         className="section-light"
       />
@@ -69,18 +37,14 @@ const RentalSection = () => {
             transition={{ duration: 0.5 }}
             className="mb-12 md:mb-16"
           >
-            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
-              // Locação de Computadores
-            </p>
+             <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">// {t("custom.rentalSection.desktopTag")}</p>
             <h2 className="text-3xl md:text-5xl max-w-3xl mb-6">
-              Computador completo
-              <br />
-              a partir de <span className="text-primary">R$ 249/mês.</span>
+               {t("custom.rentalSection.desktopTitle1").split("\n")[0]}
+               <br />
+               {t("custom.rentalSection.desktopTitle1").split("\n")[1]}<span className="text-primary">{t("custom.rentalSection.desktopHighlight")}</span>
             </h2>
             <p className="font-body text-base md:text-lg text-muted-foreground max-w-2xl leading-relaxed">
-              Locação sem dor de cabeça. Estação Dell OptiPlex completa com monitor, 
-              teclado e mouse. Todas as manutenções inclusas. Trocas de hardware sem custo. 
-              Suporte 24/7.
+               {t("custom.rentalSection.desktopDescription")}
             </p>
           </motion.div>
 
@@ -100,9 +64,9 @@ const RentalSection = () => {
             />
             <div className="absolute inset-0 flex items-center">
               <div className="p-6 md:p-12 max-w-lg bg-secondary/80 backdrop-blur-sm">
-                <p className="font-mono text-xs md:text-sm text-primary mb-2">DELL OPTIPLEX</p>
+                 <p className="font-mono text-xs md:text-sm text-primary mb-2">{t("custom.rentalSection.heroOverlayTag")}</p>
                 <h3 className="text-xl md:text-3xl text-foreground mb-3 md:mb-4">
-                  Produtividade sem investimento inicial.
+                   {t("custom.rentalSection.heroOverlayTitle")}
                 </h3>
                 <a
                   href="https://wa.me/5511963166915?text=Olá! Gostaria de saber mais sobre a locação de computadores."
@@ -110,7 +74,7 @@ const RentalSection = () => {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 font-mono text-xs md:text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
                 >
-                  Solicitar Orçamento
+                   {t("custom.rentalSection.heroOverlayCta")}
                   <ArrowRight size={16} />
                 </a>
               </div>
@@ -150,15 +114,15 @@ const RentalSection = () => {
             className="mb-12 md:mb-16"
           >
             <h3 className="text-xl md:text-2xl mb-6">
-              Comprar vs. <span className="text-primary">Locar</span>
+               {t("custom.rentalSection.comparisonTitle1")}<span className="text-primary">{t("custom.rentalSection.comparisonHighlight")}</span>
             </h3>
             <div className="border border-border overflow-x-auto">
               <table className="w-full min-w-[400px]">
                 <thead>
                   <tr className="bg-muted">
                     <th className="text-left font-mono text-xs md:text-sm uppercase tracking-wider p-3 md:p-4 text-muted-foreground"></th>
-                    <th className="text-left font-mono text-xs md:text-sm uppercase tracking-wider p-3 md:p-4 text-muted-foreground">Comprar</th>
-                    <th className="text-left font-mono text-xs md:text-sm uppercase tracking-wider p-3 md:p-4 text-primary">Locar com WMTi</th>
+                     <th className="text-left font-mono text-xs md:text-sm uppercase tracking-wider p-3 md:p-4 text-muted-foreground">{t("custom.rentalSection.comparisonHeaders.buy")}</th>
+                     <th className="text-left font-mono text-xs md:text-sm uppercase tracking-wider p-3 md:p-4 text-primary">{t("custom.rentalSection.comparisonHeaders.lease")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -186,11 +150,10 @@ const RentalSection = () => {
             className="bg-secondary p-8 md:p-12 text-center"
           >
             <h3 className="text-xl md:text-3xl text-secondary-foreground mb-3 md:mb-4">
-              A partir de <span className="text-primary">R$ 249/mês</span> por estação completa.
+               {t("custom.rentalSection.finalTitle1")}<span className="text-primary">{t("custom.rentalSection.finalHighlight")}</span>{t("custom.rentalSection.finalTitle2")}
             </h3>
             <p className="font-body text-sm md:text-base text-secondary-foreground/70 max-w-xl mx-auto mb-6 md:mb-8 leading-relaxed">
-              Sem investimento inicial, sem dor de cabeça com manutenção, sem surpresas. 
-              Foque no que importa: o seu negócio.
+               {t("custom.rentalSection.finalDescription")}
             </p>
             <a
               href="https://wa.me/5511963166915?text=Olá! Quero saber mais sobre a locação de computadores a partir de R$249/mês."
@@ -198,14 +161,14 @@ const RentalSection = () => {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
             >
-              Quero Alugar
+               {t("custom.rentalSection.finalCta")}
               <ArrowRight size={16} />
             </a>
             <Link
               to="/locacao-de-computadores-para-empresas-jacarei"
               className="inline-flex items-center gap-2 border border-border text-foreground px-8 py-4 font-mono text-sm uppercase tracking-wider hover:border-primary hover:text-primary transition-all"
             >
-              Saiba mais sobre locação
+               {t("custom.rentalSection.finalLink")}
             </Link>
           </motion.div>
         </div>

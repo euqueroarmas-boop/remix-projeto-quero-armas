@@ -268,7 +268,7 @@
     "backup": "Backup Corporativo",
     "firewall": "Firewall Corporativo",
     "dell": "Implantação De Servidores Dell PowerEdge",
-    "redesCorp": "Infraestrutura De Rede Corporativa",
+    "infraRede": "Infraestrutura De Rede Corporativa",
     "infraServidores": "Infraestrutura De Servidores",
     "infraTI": "Infraestrutura De TI Para Empresas",
     "locacao": "Locação De Computadores",
@@ -278,7 +278,7 @@
     "linux": "Suporte Linux",
     "emergencial": "Suporte Técnico Emergencial",
     "suporteTI": "Suporte Técnico Empresarial",
-    "redesCorp": "Suporte Técnico Para Redes Corporativas",
+    "suporteRedes": "Suporte Técnico Para Redes Corporativas",
     "windows": "Suporte Windows Server",
     "terceirizacao": "Terceirização De TI",
     "reestruturacao": "Reestruturação Completa De Rede",
@@ -318,7 +318,8 @@
     "dimensionar": "Dimensionar",
     "projeto": "Projeto",
     "calcular": "Calcular",
-    "locacaoShort": "Locação"
+    "locacaoShort": "Locação",
+    "learnMore": "Saiba mais"
   },
   "metrics": {
     "years": "Anos sem parar empresas",

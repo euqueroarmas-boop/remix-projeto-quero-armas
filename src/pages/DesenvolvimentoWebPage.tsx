@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   Globe, Zap, ShieldCheck, Mail, CreditCard, Link2, Brain, Workflow,
   CheckCircle2, Star, ArrowRight,
@@ -11,75 +12,16 @@ import WhatsAppButton from "@/components/WhatsAppButton";
 import SeoHead from "@/components/SeoHead";
 import JsonLd from "@/components/JsonLd";
 
-const deliverables = [
-  {
-    icon: Zap,
-    title: "Tecnologia De Alto Nível",
-    items: [
-      "Aplicações modernas com alta performance",
-      "Arquitetura escalável",
-      "SEO técnico avançado",
-      "Interface profissional e responsiva",
-    ],
-  },
-  {
-    icon: ShieldCheck,
-    title: "Infraestrutura E Segurança",
-    items: [
-      "Configuração completa de hospedagem",
-      "Integração com servidores dedicados",
-      "Proteção avançada com Cloudflare (firewall, cache, proteção contra ataques)",
-    ],
-  },
-  {
-    icon: Mail,
-    title: "Automação De E-mails",
-    items: [
-      "Envio automático de confirmações, notificações e comunicações",
-      "Integração com sistemas profissionais de entrega de e-mail",
-    ],
-  },
-  {
-    icon: CreditCard,
-    title: "Sistema Financeiro Completo",
-    items: [
-      "Integração com plataformas de pagamento",
-      "Cobranças recorrentes",
-      "Emissão de notas fiscais",
-      "Automação de recebimentos",
-    ],
-  },
-  {
-    icon: Link2,
-    title: "Integração Com APIs",
-    items: [
-      "Conectamos seu sistema com ERPs, CRMs, sistemas externos e serviços diversos",
-    ],
-  },
-  {
-    icon: Brain,
-    title: "Inteligência Artificial Personalizada",
-    items: [
-      "Criação de IAs treinadas para o seu negócio",
-      "Automação de atendimento",
-      "Análise de dados",
-      "Geração de conteúdo e apoio na tomada de decisão",
-    ],
-  },
-  {
-    icon: Workflow,
-    title: "Automação De Processos",
-    items: [
-      "Fluxos automáticos",
-      "Geração de contratos",
-      "Gestão de clientes",
-      "Sistemas internos personalizados",
-    ],
-  },
-];
+const deliverableIcons = [Zap, ShieldCheck, Mail, CreditCard, Link2, Brain, Workflow];
 
 const DesenvolvimentoWebPage = () => {
+  const { t } = useTranslation();
   useEffect(() => { window.scrollTo(0, 0); }, []);
+
+  const deliverables = (t("custom.devWeb.deliverables", { returnObjects: true }) as { title: string; items: string[] }[]).map((item, index) => ({
+    ...item,
+    icon: deliverableIcons[index],
+  }));
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -108,12 +50,12 @@ const DesenvolvimentoWebPage = () => {
           </div>
           <div className="container relative z-10">
             <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
-              <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">// Tecnologia Premium + Integrações + IA</p>
+              <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">// {t("custom.devWeb.heroTag")}</p>
               <h1 className="text-3xl md:text-5xl lg:text-6xl max-w-4xl mb-6">
-                Sua empresa ainda não tem <span className="text-primary">presença digital profissional</span> — e está perdendo clientes
+                {t("custom.devWeb.heroTitle1")}<span className="text-primary">{t("custom.devWeb.heroHighlight")}</span>{t("custom.devWeb.heroTitle2")}
               </h1>
               <p className="font-body text-lg md:text-xl text-muted-foreground max-w-2xl mb-8 leading-relaxed">
-                Site amador. Sistema improvisado. Processos manuais que poderiam ser automáticos. Enquanto isso, seus concorrentes estão vendendo, atendendo e operando no digital. A WMTi desenvolve plataformas completas de negócio — não só sites bonitos, mas ferramentas que fazem sua empresa funcionar melhor.
+                {t("custom.devWeb.heroDescription")}
               </p>
 
               <div className="flex flex-wrap gap-4">
@@ -123,13 +65,13 @@ const DesenvolvimentoWebPage = () => {
                   rel="noopener"
                   className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-mono text-sm uppercase tracking-wider hover:brightness-110 transition-all"
                 >
-                  Solicitar Proposta <ArrowRight size={16} />
+                  {t("custom.devWeb.primaryCta")} <ArrowRight size={16} />
                 </a>
                 <Link
                   to="/orcamento-ti"
                   className="inline-flex items-center gap-2 px-6 py-3 border border-border text-foreground font-mono text-sm uppercase tracking-wider hover:bg-muted transition-colors"
                 >
-                  Orçamento Online
+                  {t("custom.devWeb.secondaryCta")}
                 </Link>
               </div>
             </motion.div>
@@ -139,8 +81,8 @@ const DesenvolvimentoWebPage = () => {
         {/* O que entregamos */}
         <section className="py-16 md:py-20 border-t border-border">
           <div className="container">
-            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">// O Que Entregamos</p>
-            <h2 className="text-2xl md:text-4xl mb-12">Tudo que sua empresa precisa no digital</h2>
+            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">// {t("custom.devWeb.deliverablesTag")}</p>
+            <h2 className="text-2xl md:text-4xl mb-12">{t("custom.devWeb.deliverablesTitle")}</h2>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-px bg-border">
               {deliverables.map((block, i) => {
@@ -184,14 +126,13 @@ const DesenvolvimentoWebPage = () => {
             >
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/30 bg-primary/5 mb-6">
                 <Star size={16} className="text-primary" />
-                <span className="font-mono text-xs uppercase tracking-wider text-primary">Resultado Final</span>
+                <span className="font-mono text-xs uppercase tracking-wider text-primary">{t("custom.devWeb.resultBadge")}</span>
               </div>
               <h2 className="text-2xl md:text-4xl mb-4">
-                Você não recebe apenas um site. Você recebe uma{" "}
-                <span className="text-primary">plataforma completa.</span>
+                {t("custom.devWeb.resultTitle1")}<span className="text-primary">{t("custom.devWeb.resultHighlight")}</span>
               </h2>
               <p className="font-body text-base text-muted-foreground mb-8 leading-relaxed">
-                Automatizada e pronta para crescer. Desenvolvemos tecnologia para empresas que querem sair do amador e operar em nível profissional.
+                {t("custom.devWeb.resultDescription")}
               </p>
               <a
                 href="https://wa.me/5511963166915?text=Olá!%20Quero%20saber%20mais%20sobre%20desenvolvimento%20de%20sites%20e%20sistemas%20web."
@@ -199,7 +140,7 @@ const DesenvolvimentoWebPage = () => {
                 rel="noopener"
                 className="inline-flex items-center gap-2 px-8 py-4 bg-primary text-primary-foreground font-mono text-sm uppercase tracking-wider hover:brightness-110 transition-all"
               >
-                Fale com um especialista <ArrowRight size={16} />
+                  {t("custom.devWeb.finalCta")} <ArrowRight size={16} />
               </a>
             </motion.div>
           </div>
