@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useBrasilApiLookup } from "@/hooks/useBrasilApiLookup";
+import { useTranslation } from "react-i18next";
 
 export interface RegistrationData {
   razaoSocial: string;
@@ -75,6 +76,7 @@ const formatPhone = (value: string) => {
 };
 
 const QuickRegistrationForm = ({ onComplete, loading: externalLoading, initialData }: Props) => {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const { lookupCnpj, lookupCep, cnpjLoading, cepLoading } = useBrasilApiLookup();
@@ -114,7 +116,7 @@ const QuickRegistrationForm = ({ onComplete, loading: externalLoading, initialDa
     if (rawDoc.length !== 14) return;
     lookupCnpj(rawDoc).then((data) => {
       if (!data) {
-        toast({ title: "CNPJ não encontrado", description: "Preencha os dados manualmente.", variant: "destructive" });
+        toast({ title: t("forms.quickRegistration.cnpjNotFound"), description: t("forms.quickRegistration.fillManually"), variant: "destructive" });
         return;
       }
       setForm((prev) => ({
@@ -130,7 +132,7 @@ const QuickRegistrationForm = ({ onComplete, loading: externalLoading, initialDa
         telefone: data.ddd_telefone_1 ? formatPhone(data.ddd_telefone_1.replace(/\D/g, "")) : prev.telefone,
         isPJ: true,
       }));
-      toast({ title: "Dados encontrados!", description: `${data.razao_social}` });
+      toast({ title: t("forms.quickRegistration.dataFound"), description: `${data.razao_social}` });
     });
   }, [rawDoc, lookupCnpj, toast]);
 
@@ -156,8 +158,8 @@ const QuickRegistrationForm = ({ onComplete, loading: externalLoading, initialDa
     const parsed = registrationSchema.safeParse(form);
     if (!parsed.success) {
       toast({
-        title: "Revise os dados",
-        description: parsed.error.issues[0]?.message || "Dados inválidos.",
+          title: t("forms.quickRegistration.reviewData"),
+          description: parsed.error.issues[0]?.message || t("forms.quickRegistration.invalidData"),
         variant: "destructive",
       });
       return;
@@ -165,9 +167,9 @@ const QuickRegistrationForm = ({ onComplete, loading: externalLoading, initialDa
 
     setLoading(true);
     try {
-      await onComplete({ ...form, isPJ });
+       await onComplete({ ...form, isPJ });
     } catch {
-      toast({ title: "Erro ao salvar", description: "Tente novamente.", variant: "destructive" });
+       toast({ title: t("forms.quickRegistration.errorSaving"), description: t("forms.quickRegistration.tryAgain"), variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -179,7 +181,7 @@ const QuickRegistrationForm = ({ onComplete, loading: externalLoading, initialDa
     <form onSubmit={handleSubmit} className="space-y-4" noValidate>
       {/* Document field — primary trigger */}
       <div>
-        <Label className="mb-1.5 block text-sm">CPF ou CNPJ *</Label>
+         <Label className="mb-1.5 block text-sm">{t("forms.quickRegistration.document")} *</Label>
         <div className="relative">
           <Input
             value={form.cnpjOuCpf}
@@ -194,55 +196,55 @@ const QuickRegistrationForm = ({ onComplete, loading: externalLoading, initialDa
           )}
         </div>
         {isPJ && (
-          <p className="text-xs text-primary mt-1">Pessoa Jurídica detectada — dados serão preenchidos automaticamente</p>
+           <p className="text-xs text-primary mt-1">{t("forms.quickRegistration.companyDetected")}</p>
         )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <Label className="mb-1.5 block text-sm">{isPJ ? "Razão Social" : "Nome Completo"} *</Label>
+           <Label className="mb-1.5 block text-sm">{isPJ ? t("forms.quickRegistration.companyName") : t("forms.quickRegistration.fullName")} *</Label>
           <Input
             value={form.razaoSocial}
             onChange={(e) => update("razaoSocial", e.target.value)}
             className="h-12 bg-card border-border"
-            placeholder={isPJ ? "Empresa LTDA" : "Seu nome completo"}
+             placeholder={isPJ ? t("forms.quickRegistration.companyNamePlaceholder") : t("forms.quickRegistration.fullNamePlaceholder")}
             required
           />
         </div>
         {isPJ && (
           <div>
-            <Label className="mb-1.5 block text-sm">Nome Fantasia</Label>
+             <Label className="mb-1.5 block text-sm">{t("forms.quickRegistration.tradeName")}</Label>
             <Input
               value={form.nomeFantasia}
               onChange={(e) => update("nomeFantasia", e.target.value)}
               className="h-12 bg-card border-border"
-              placeholder="Nome comercial"
+               placeholder={t("forms.quickRegistration.tradeNamePlaceholder")}
             />
           </div>
         )}
         <div>
-          <Label className="mb-1.5 block text-sm">Responsável *</Label>
+           <Label className="mb-1.5 block text-sm">{t("forms.quickRegistration.contact")} *</Label>
           <Input
             value={form.responsavel}
             onChange={(e) => update("responsavel", e.target.value)}
             className="h-12 bg-card border-border"
-            placeholder="Nome do responsável"
+             placeholder={t("forms.quickRegistration.contactPlaceholder")}
             required
           />
         </div>
         <div>
-          <Label className="mb-1.5 block text-sm">E-mail *</Label>
+           <Label className="mb-1.5 block text-sm">{t("forms.quickRegistration.email")} *</Label>
           <Input
             type="email"
             value={form.email}
             onChange={(e) => update("email", e.target.value)}
             className="h-12 bg-card border-border"
-            placeholder="email@empresa.com"
+             placeholder={t("forms.quickRegistration.emailPlaceholder")}
             required
           />
         </div>
         <div>
-          <Label className="mb-1.5 block text-sm">Telefone</Label>
+           <Label className="mb-1.5 block text-sm">{t("forms.quickRegistration.phone")}</Label>
           <Input
             value={form.telefone}
             onChange={(e) => update("telefone", formatPhone(e.target.value))}
@@ -255,7 +257,7 @@ const QuickRegistrationForm = ({ onComplete, loading: externalLoading, initialDa
 
       {/* Address */}
       <div className="pt-2 border-t border-border">
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Endereço</p>
+         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">{t("forms.quickRegistration.addressSection")}</p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <Label className="mb-1.5 block text-sm">CEP *</Label>

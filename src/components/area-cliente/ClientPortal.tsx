@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import {
   LayoutDashboard, Package, MessageSquare, DollarSign,
   FileText, FolderOpen, Building2, LogOut, Menu, X
@@ -32,8 +33,10 @@ interface Props {
 }
 
 export default function ClientPortal({ customer, onLogout }: Props) {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<TabId>("overview");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const localizedTabs = tabs.map((tab) => ({ ...tab, label: t(`clientPortal.tabs.${tab.id}`) }));
 
   const renderContent = () => {
     switch (activeTab) {
@@ -52,12 +55,12 @@ export default function ClientPortal({ customer, onLogout }: Props) {
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex flex-col w-64 border-r border-border bg-sidebar-background p-4 sticky top-0 h-screen">
         <div className="mb-8">
-          <h2 className="font-heading text-lg font-bold text-foreground">Portal do Cliente</h2>
+          <h2 className="font-heading text-lg font-bold text-foreground">{t("clientPortal.title")}</h2>
           <p className="text-xs text-muted-foreground truncate mt-1">{customer.nome_fantasia || customer.razao_social}</p>
         </div>
 
         <nav className="flex-1 space-y-1">
-          {tabs.map((tab) => {
+          {localizedTabs.map((tab) => {
             const Icon = tab.icon;
             const active = activeTab === tab.id;
             return (
@@ -78,14 +81,14 @@ export default function ClientPortal({ customer, onLogout }: Props) {
         </nav>
 
         <Button variant="ghost" size="sm" onClick={onLogout} className="mt-4 text-muted-foreground hover:text-destructive">
-          <LogOut size={16} className="mr-2" /> Sair
+          <LogOut size={16} className="mr-2" /> {t("clientPortal.logout")}
         </Button>
       </aside>
 
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 inset-x-0 z-50 bg-background border-b border-border px-4 py-3 flex items-center justify-between">
         <div>
-          <h2 className="font-heading text-sm font-bold text-foreground">Portal do Cliente</h2>
+          <h2 className="font-heading text-sm font-bold text-foreground">{t("clientPortal.title")}</h2>
           <p className="text-[10px] text-muted-foreground truncate max-w-[200px]">{customer.nome_fantasia || customer.razao_social}</p>
         </div>
         <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="text-foreground">
@@ -103,7 +106,7 @@ export default function ClientPortal({ customer, onLogout }: Props) {
             className="lg:hidden fixed inset-0 z-40 bg-background/95 backdrop-blur-sm pt-16"
           >
             <nav className="p-4 space-y-1">
-              {tabs.map((tab) => {
+              {localizedTabs.map((tab) => {
                 const Icon = tab.icon;
                 const active = activeTab === tab.id;
                 return (
@@ -120,7 +123,7 @@ export default function ClientPortal({ customer, onLogout }: Props) {
                 );
               })}
               <button onClick={onLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10">
-                <LogOut size={18} /> Sair
+                <LogOut size={18} /> {t("clientPortal.logout")}
               </button>
             </nav>
           </motion.div>

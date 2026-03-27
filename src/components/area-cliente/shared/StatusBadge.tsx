@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { useTranslation } from "react-i18next";
 
 const statusColors: Record<string, string> = {
   // payments
@@ -61,9 +62,10 @@ const statusLabels: Record<string, string> = {
 };
 
 export default function StatusBadge({ status }: { status: string | null }) {
+  const { t } = useTranslation();
   const s = status || "pending";
   const color = statusColors[s] || "bg-muted text-muted-foreground border-border";
-  const label = statusLabels[s] || s;
+  const label = t(`status.${s}`, { defaultValue: statusLabels[s] || s });
   return (
     <Badge variant="outline" className={`${color} text-[11px] font-mono uppercase tracking-wider border`}>
       {label}

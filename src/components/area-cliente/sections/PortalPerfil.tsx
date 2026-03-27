@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import type { CustomerData } from "@/pages/AreaDoClientePage";
 import SectionHeader from "../shared/SectionHeader";
+import { useTranslation } from "react-i18next";
 
 function formatCnpj(v: string) {
   if (v.length === 14) return v.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5");
@@ -14,6 +15,7 @@ function formatCnpj(v: string) {
 }
 
 export default function PortalPerfil({ customer }: { customer: CustomerData }) {
+  const { t } = useTranslation();
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -35,32 +37,32 @@ export default function PortalPerfil({ customer }: { customer: CustomerData }) {
   };
 
   const fields = [
-    { label: "Razão Social", value: customer.razao_social, readonly: true },
-    { label: "Nome Fantasia", value: customer.nome_fantasia || "—", readonly: true },
-    { label: "CNPJ/CPF", value: formatCnpj(customer.cnpj_ou_cpf), readonly: true },
-    { label: "Responsável", value: customer.responsavel, readonly: true },
-    { label: "E-mail", value: form.email, key: "email" as const },
-    { label: "Telefone", value: form.telefone, key: "telefone" as const },
-    { label: "Endereço", value: form.endereco, key: "endereco" as const },
-    { label: "Cidade", value: form.cidade, key: "cidade" as const },
-    { label: "CEP", value: form.cep, key: "cep" as const },
+    { label: t("clientPortal.profile.fields.companyName"), value: customer.razao_social, readonly: true },
+    { label: t("clientPortal.profile.fields.tradeName"), value: customer.nome_fantasia || "—", readonly: true },
+    { label: t("clientPortal.profile.fields.document"), value: formatCnpj(customer.cnpj_ou_cpf), readonly: true },
+    { label: t("clientPortal.profile.fields.contact"), value: customer.responsavel, readonly: true },
+    { label: t("clientPortal.profile.fields.email"), value: form.email, key: "email" as const },
+    { label: t("clientPortal.profile.fields.phone"), value: form.telefone, key: "telefone" as const },
+    { label: t("clientPortal.profile.fields.address"), value: form.endereco, key: "endereco" as const },
+    { label: t("clientPortal.profile.fields.city"), value: form.cidade, key: "cidade" as const },
+    { label: t("clientPortal.profile.fields.zip"), value: form.cep, key: "cep" as const },
   ];
 
   return (
     <div className="space-y-6">
       <SectionHeader
         icon={Building2}
-        title="Perfil da Empresa"
-        description="Dados cadastrais"
+        title={t("clientPortal.tabs.perfil")}
+        description={t("clientPortal.profile.description")}
         action={
           !editing ? (
-            <Button size="sm" variant="outline" onClick={() => setEditing(true)}>Editar</Button>
+             <Button size="sm" variant="outline" onClick={() => setEditing(true)}>{t("clientPortal.edit")}</Button>
           ) : (
             <div className="flex gap-2">
-              <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>Cancelar</Button>
+               <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>{t("clientPortal.cancel")}</Button>
               <Button size="sm" onClick={handleSave} disabled={saving}>
                 {saving ? <Loader2 size={14} className="animate-spin mr-1" /> : <Save size={14} className="mr-1" />}
-                Salvar
+                 {t("clientPortal.save")}
               </Button>
             </div>
           )
@@ -69,7 +71,7 @@ export default function PortalPerfil({ customer }: { customer: CustomerData }) {
 
       {saved && (
         <div className="flex items-center gap-2 text-sm text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-4 py-2">
-          <Check size={16} /> Dados atualizados com sucesso
+          <Check size={16} /> {t("clientPortal.profile.saved")}
         </div>
       )}
 

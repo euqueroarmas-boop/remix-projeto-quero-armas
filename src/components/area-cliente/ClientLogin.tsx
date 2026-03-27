@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { logSistema } from "@/lib/logSistema";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 interface Props {
   onLogin: () => void;
@@ -13,6 +14,7 @@ interface Props {
 
 export default function ClientLogin({ onLogin }: Props) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -27,7 +29,7 @@ export default function ClientLogin({ onLogin }: Props) {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) { setError("Preencha e-mail e senha."); return; }
+    if (!email || !password) { setError(t("clientPortal.login.errors.fillEmailPassword")); return; }
 
     setLoading(true);
     setError("");
@@ -37,7 +39,7 @@ export default function ClientLogin({ onLogin }: Props) {
     setLoading(false);
 
     if (err) {
-      setError("E-mail ou senha incorretos.");
+      setError(t("clientPortal.login.errors.invalidCredentials"));
       logSistema({ tipo: "admin", status: "error", mensagem: "Login falho na Área do Cliente", payload: { email_hash: email ? email.substring(0, 3) + "***" : "unknown" } });
       return;
     }
@@ -56,9 +58,9 @@ export default function ClientLogin({ onLogin }: Props) {
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newPassword || !confirmPassword) { setError("Preencha todos os campos."); return; }
-    if (newPassword.length < 6) { setError("A nova senha deve ter ao menos 6 caracteres."); return; }
-    if (newPassword !== confirmPassword) { setError("As senhas não conferem."); return; }
+    if (!newPassword || !confirmPassword) { setError(t("clientPortal.login.errors.fillAllFields")); return; }
+    if (newPassword.length < 6) { setError(t("clientPortal.login.errors.passwordLength")); return; }
+    if (newPassword !== confirmPassword) { setError(t("clientPortal.login.errors.passwordMismatch")); return; }
 
     setChangingPassword(true);
     setError("");
@@ -74,7 +76,7 @@ export default function ClientLogin({ onLogin }: Props) {
       });
 
       if (updateErr) {
-        setError("Erro ao alterar a senha: " + updateErr.message);
+        setError(`${t("clientPortal.login.errors.changePassword")}: ${updateErr.message}`);
         setChangingPassword(false);
         return;
       }
@@ -89,7 +91,7 @@ export default function ClientLogin({ onLogin }: Props) {
       // Proceed to portal
       onLogin();
     } catch {
-      setError("Erro inesperado ao alterar a senha.");
+      setError(t("clientPortal.login.errors.unexpectedPasswordChange"));
     } finally {
       setChangingPassword(false);
     }
@@ -97,7 +99,7 @@ export default function ClientLogin({ onLogin }: Props) {
 
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) { setError("Informe o e-mail cadastrado."); return; }
+    if (!email) { setError(t("clientPortal.login.errors.informEmail")); return; }
 
     setLoading(true);
     setError("");
@@ -109,7 +111,7 @@ export default function ClientLogin({ onLogin }: Props) {
     setLoading(false);
 
     if (err) {
-      setError("Erro ao enviar e-mail de recuperação.");
+      setError(t("clientPortal.login.errors.resetEmail"));
       return;
     }
 
@@ -134,7 +136,7 @@ export default function ClientLogin({ onLogin }: Props) {
         </div>
 
         <h1 className="text-3xl md:text-4xl font-heading font-bold text-foreground mb-2">
-          Área do <span className="text-primary">Cliente</span>
+          {t("clientPortal.login.titlePrefix")} <span className="text-primary">{t("clientPortal.login.titleHighlight")}</span>
         </h1>
 
         {mode === "change_password" ? (
@@ -142,21 +144,21 @@ export default function ClientLogin({ onLogin }: Props) {
             <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg px-4 py-3 mb-6 flex items-start gap-2 text-left">
               <AlertTriangle className="w-5 h-5 text-amber-400 mt-0.5 shrink-0" />
               <div>
-                <p className="text-sm font-semibold text-amber-300">Troca de senha obrigatória</p>
+                 <p className="text-sm font-semibold text-amber-300">{t("clientPortal.login.changePasswordRequired")}</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Sua senha atual é temporária. Crie uma nova senha para continuar.
+                   {t("clientPortal.login.changePasswordDescription")}
                 </p>
               </div>
             </div>
 
             <form onSubmit={handleChangePassword} className="space-y-4 text-left">
               <div>
-                <label className="text-sm text-muted-foreground mb-1 block">Nova senha</label>
+                 <label className="text-sm text-muted-foreground mb-1 block">{t("clientPortal.login.newPassword")}</label>
                 <div className="relative">
                   <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     type="password"
-                    placeholder="Mínimo 6 caracteres"
+                     placeholder={t("clientPortal.login.newPasswordPlaceholder")}
                     value={newPassword}
                     onChange={(e) => { setNewPassword(e.target.value); setError(""); }}
                     className="bg-card border-border text-foreground pl-10"
@@ -165,12 +167,12 @@ export default function ClientLogin({ onLogin }: Props) {
               </div>
 
               <div>
-                <label className="text-sm text-muted-foreground mb-1 block">Confirmar nova senha</label>
+                 <label className="text-sm text-muted-foreground mb-1 block">{t("clientPortal.login.confirmNewPassword")}</label>
                 <div className="relative">
                   <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     type="password"
-                    placeholder="Repita a nova senha"
+                     placeholder={t("clientPortal.login.confirmNewPasswordPlaceholder")}
                     value={confirmPassword}
                     onChange={(e) => { setConfirmPassword(e.target.value); setError(""); }}
                     className="bg-card border-border text-foreground pl-10"
@@ -182,22 +184,22 @@ export default function ClientLogin({ onLogin }: Props) {
 
               <Button type="submit" className="w-full" disabled={changingPassword}>
                 {changingPassword ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <KeyRound className="h-4 w-4 mr-2" />}
-                Alterar senha e continuar
+                 {t("clientPortal.login.changePasswordAndContinue")}
               </Button>
             </form>
           </>
         ) : mode === "login" ? (
           <>
-            <p className="text-muted-foreground mb-8">Acesse com seu e-mail e senha</p>
+             <p className="text-muted-foreground mb-8">{t("clientPortal.login.description")}</p>
 
             <form onSubmit={handleLogin} className="space-y-4 text-left">
               <div>
-                <label className="text-sm text-muted-foreground mb-1 block">E-mail</label>
+                 <label className="text-sm text-muted-foreground mb-1 block">{t("clientPortal.login.email")}</label>
                 <div className="relative">
                   <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     type="email"
-                    placeholder="seu@email.com"
+                     placeholder={t("clientPortal.login.emailPlaceholder")}
                     value={email}
                     onChange={(e) => { setEmail(e.target.value); setError(""); }}
                     className="bg-card border-border text-foreground pl-10"
@@ -206,7 +208,7 @@ export default function ClientLogin({ onLogin }: Props) {
               </div>
 
               <div>
-                <label className="text-sm text-muted-foreground mb-1 block">Senha</label>
+                 <label className="text-sm text-muted-foreground mb-1 block">{t("clientPortal.login.password")}</label>
                 <div className="relative">
                   <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                   <Input
@@ -223,7 +225,7 @@ export default function ClientLogin({ onLogin }: Props) {
 
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ArrowRight className="h-4 w-4 mr-2" />}
-                Entrar
+                 {t("clientPortal.login.enter")}
               </Button>
 
               <button
@@ -231,7 +233,7 @@ export default function ClientLogin({ onLogin }: Props) {
                 onClick={() => { setMode("reset"); setError(""); }}
                 className="w-full text-sm text-primary hover:underline mt-2"
               >
-                Esqueci minha senha
+                 {t("clientPortal.login.forgotPassword")}
               </button>
             </form>
           </>
@@ -239,19 +241,19 @@ export default function ClientLogin({ onLogin }: Props) {
           <>
             <p className="text-muted-foreground mb-8">
               {resetSent
-                ? "Enviamos um link de recuperação para seu e-mail."
-                : "Informe seu e-mail para recuperar a senha"}
+                 ? t("clientPortal.login.resetSent")
+                 : t("clientPortal.login.resetDescription")}
             </p>
 
             {!resetSent ? (
               <form onSubmit={handleReset} className="space-y-4 text-left">
                 <div>
-                  <label className="text-sm text-muted-foreground mb-1 block">E-mail</label>
+                   <label className="text-sm text-muted-foreground mb-1 block">{t("clientPortal.login.email")}</label>
                   <div className="relative">
                     <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                     <Input
                       type="email"
-                      placeholder="seu@email.com"
+                       placeholder={t("clientPortal.login.emailPlaceholder")}
                       value={email}
                       onChange={(e) => { setEmail(e.target.value); setError(""); }}
                       className="bg-card border-border text-foreground pl-10"
@@ -263,12 +265,12 @@ export default function ClientLogin({ onLogin }: Props) {
 
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <KeyRound className="h-4 w-4 mr-2" />}
-                  Enviar Link de Recuperação
+                  {t("clientPortal.login.sendRecoveryLink")}
                 </Button>
               </form>
             ) : (
               <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-4 text-sm text-emerald-400">
-                Verifique sua caixa de entrada e spam. O link expira em 1 hora.
+                 {t("clientPortal.login.checkInbox")}
               </div>
             )}
 
@@ -277,13 +279,13 @@ export default function ClientLogin({ onLogin }: Props) {
               onClick={() => { setMode("login"); setError(""); setResetSent(false); }}
               className="w-full text-sm text-primary hover:underline mt-4"
             >
-              Voltar para o login
+               {t("clientPortal.login.backToLogin")}
             </button>
           </>
         )}
 
         <p className="text-xs text-muted-foreground mt-6">
-          Acesso exclusivo para clientes WMTi com cadastro ativo.
+          {t("clientPortal.login.footer")}
         </p>
       </motion.div>
     </section>
