@@ -478,7 +478,7 @@ const Navbar = () => {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
               className="lg:hidden fixed top-16 left-0 right-0 bottom-0 z-[54]"
-              style={{ background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)" }}
+              style={{ background: "rgba(0,0,0,0.6)" }}
               onClick={closeMobileMenu}
               aria-label={t("nav.fecharMenu")}
             />
@@ -487,11 +487,9 @@ const Navbar = () => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.25, ease: "easeOut" }}
-              className="lg:hidden fixed top-16 left-0 w-full h-[calc(100dvh-4rem)] z-[55] overflow-y-auto border-t border-white/[0.08]"
+              className="lg:hidden fixed top-16 left-0 w-full h-[calc(100dvh-4rem)] z-[55] overflow-y-auto border-t border-white/[0.06]"
               style={{
-                background: "rgba(10, 18, 28, 0.85)",
-                backdropFilter: "blur(18px) saturate(160%)",
-                WebkitBackdropFilter: "blur(18px) saturate(160%)",
+                background: "rgba(7, 10, 15, 0.97)",
               }}
             >
               <div className="container flex flex-col gap-4 py-6 pb-12">
