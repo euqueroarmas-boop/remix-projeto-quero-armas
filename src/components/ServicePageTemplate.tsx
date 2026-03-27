@@ -349,7 +349,7 @@ const ServicePageTemplate = ({
               {t("service.benefitsTag")}
             </p>
             <h2 className="text-2xl md:text-4xl">
-              {t("service.benefitsTitle")} <span className="text-primary">{t("service.benefitsTitleHighlight")}{cityName ? ` em ${cityName}` : ''}</span>
+              {t("service.benefitsTitle")} <span className="text-primary">{t("service.benefitsTitleHighlight")}{cityName ? ` ${t("service.inCity", { city: cityName })}` : ''}</span>
             </h2>
           </motion.div>
 
