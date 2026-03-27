@@ -326,5 +326,22 @@
     "companies": "Empresas protegidas",
     "uptime": "De tempo sem quedas",
     "support": "Alguém cuidando da sua TI"
+  },
+  "budgetHero": {
+    "tag": "Orçamento Online",
+    "title1": "Infraestrutura de TI",
+    "titleHighlight": "previsível",
+    "title2": "para sua empresa",
+    "desc": "Locação a partir de R$249/mês ou suporte mensal a partir de R$120/mês por computador. Escolha o melhor caminho para sua empresa.",
+    "benefits": [
+      "Locação corporativa de computadores Dell",
+      "Suporte mensal para sua rede atual",
+      "Active Directory e controle de usuários",
+      "Backup automático a cada 30 minutos",
+      "Migração de dados do servidor antigo",
+      "VPN e segurança com firewall pfSense"
+    ],
+    "ctaStart": "Começar orçamento",
+    "ctaSpecialist": "Falar com especialista"
   }
 }
