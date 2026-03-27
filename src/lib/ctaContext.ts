@@ -48,6 +48,33 @@ const CTA_CONTEXTS: CtaContextConfig[] = [
       { id: "falar-loc", label: "Falar com especialista", shortLabel: "Especialista", icon: Headphones, href: "whatsapp:Quero saber mais sobre locação de computadores para minha empresa.", color: "bg-sky-600 hover:bg-sky-700 text-white" },
     ],
   },
+  // Monitoramento
+  {
+    patterns: ["/monitoramento"],
+    items: [
+      { id: "diag-mon", label: "Solicitar diagnóstico", shortLabel: "Diagnóstico", icon: Wrench, href: "/orcamento-ti", color: "bg-primary hover:bg-primary/90 text-primary-foreground" },
+      { id: "falar-mon", label: "Falar com especialista", shortLabel: "Especialista", icon: Headphones, href: "whatsapp:Preciso de monitoramento para minha infraestrutura.", color: "bg-emerald-600 hover:bg-emerald-700 text-white" },
+      { id: "contratar-mon", label: "Contratar monitoramento", shortLabel: "Contratar", icon: FileText, href: "contratar", color: "bg-sky-600 hover:bg-sky-700 text-white" },
+    ],
+  },
+  // Manutenção
+  {
+    patterns: ["/manutencao"],
+    items: [
+      { id: "diag-man", label: "Solicitar diagnóstico", shortLabel: "Diagnóstico", icon: Wrench, href: "/orcamento-ti", color: "bg-primary hover:bg-primary/90 text-primary-foreground" },
+      { id: "falar-man", label: "Falar com especialista", shortLabel: "Especialista", icon: Headphones, href: "whatsapp:Preciso de manutenção preventiva para minha infraestrutura de TI.", color: "bg-emerald-600 hover:bg-emerald-700 text-white" },
+      { id: "contratar-man", label: "Contratar manutenção", shortLabel: "Contratar", icon: FileText, href: "contratar", color: "bg-sky-600 hover:bg-sky-700 text-white" },
+    ],
+  },
+  // Microsoft 365
+  {
+    patterns: ["/microsoft-365"],
+    items: [
+      { id: "diag-365", label: "Solicitar proposta", shortLabel: "Proposta", icon: FileText, href: "/orcamento-ti", color: "bg-primary hover:bg-primary/90 text-primary-foreground" },
+      { id: "falar-365", label: "Falar com especialista", shortLabel: "Especialista", icon: Headphones, href: "whatsapp:Quero saber mais sobre Microsoft 365 para minha empresa.", color: "bg-emerald-600 hover:bg-emerald-700 text-white" },
+      { id: "contratar-365", label: "Contratar Microsoft 365", shortLabel: "Contratar", icon: FileText, href: "contratar", color: "bg-sky-600 hover:bg-sky-700 text-white" },
+    ],
+  },
   // Redes / Montagem / Infraestrutura
   {
     patterns: ["/montagem", "/rede", "/infraestrutura", "/reestruturacao"],
