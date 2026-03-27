@@ -1,27 +1,15 @@
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { ArrowRight, Send, Loader2, MessageCircle, Mail, MapPin, Phone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
-const serviceOptions = [
-  "Servidores Dell PowerEdge",
-  "Microsoft 365",
-  "Firewall pfSense",
-  "Montagem de Redes",
-  "Locação de Computadores",
-  "Suporte de TI",
-  "Terceirização de TI",
-  "TI para Cartórios",
-  "TI para Hospitais e Clínicas",
-  "Infraestrutura Completa",
-  "Segurança da Informação",
-  "Backup Empresarial",
-  "Outro",
-];
-
 const ContactSection = () => {
+  const { t } = useTranslation();
+  const serviceOptions = t("contact.serviceOptions", { returnObjects: true }) as string[];
+
   const [form, setForm] = useState({
     nome: "",
     email: "",
@@ -46,7 +34,7 @@ const ContactSection = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.nome || !form.email || !form.mensagem) {
-      toast({ title: "Preencha todos os campos obrigatórios.", variant: "destructive" });
+      toast({ title: t("contact.preencherCampos"), variant: "destructive" });
       return;
     }
 
@@ -75,7 +63,7 @@ const ContactSection = () => {
         return;
       }
 
-      toast({ title: "Solicitação enviada com sucesso! Redirecionando para o WhatsApp..." });
+      toast({ title: t("contact.sucesso") });
 
       const text = `*Solicitação de Orçamento — WMTi*%0A%0A*Nome:* ${encodeURIComponent(form.nome)}%0A*Email:* ${encodeURIComponent(form.email)}%0A*Telefone:* ${encodeURIComponent(form.telefone || "Não informado")}%0A*Empresa:* ${encodeURIComponent(form.empresa || "Não informada")}%0A*Interesse:* ${encodeURIComponent(form.interesse || "Não informado")}%0A%0A*Mensagem:*%0A${encodeURIComponent(form.mensagem)}`;
 
@@ -85,7 +73,7 @@ const ContactSection = () => {
 
       setForm({ nome: "", email: "", telefone: "", empresa: "", interesse: "", mensagem: "" });
     } catch {
-      toast({ title: "Erro ao enviar. Tente novamente ou fale via WhatsApp.", variant: "destructive" });
+      toast({ title: t("contact.erro"), variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -99,7 +87,6 @@ const ContactSection = () => {
     <section id="contato" className="py-24 md:py-32 bg-background">
       <div id="orcamento" className="container">
         <div className="grid lg:grid-cols-2 gap-16 md:gap-24">
-          {/* Left column — copy & contact info */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -109,29 +96,23 @@ const ContactSection = () => {
           >
             <div>
               <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
-                // Sem compromisso
+                {t("contact.tag")}
               </p>
               <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold mb-5 md:mb-6 leading-tight">
-                Receba uma proposta
+                {t("contact.title1")}
                 <br />
-                <span className="text-primary">em até 48 horas.</span>
+                <span className="text-primary">{t("contact.title2")}</span>
               </h2>
               <p className="font-body text-muted-foreground text-base md:text-lg max-w-lg leading-relaxed mb-8 md:mb-10">
-                Preencha o formulário, conte sua situação e receba um diagnóstico
-                gratuito com proposta de valor fixo mensal. Sem letra miúda,
-                sem surpresas, sem enrolação.
+                {t("contact.desc")}
               </p>
             </div>
 
-            {/* Contact channels */}
             <div className="space-y-4">
               <p className="font-mono text-[10px] tracking-[0.3em] uppercase text-primary/70 mb-1">
-                Canais de atendimento
+                {t("contact.channels")}
               </p>
-              <a
-                href="mailto:contato@wmti.com.br"
-                className="flex items-center gap-3 group"
-              >
+              <a href="mailto:contato@wmti.com.br" className="flex items-center gap-3 group">
                 <span className="flex items-center justify-center w-9 h-9 rounded-md bg-primary/10 text-primary group-hover:bg-primary/20 transition-colors">
                   <Mail size={16} />
                 </span>
@@ -139,12 +120,7 @@ const ContactSection = () => {
                   contato@wmti.com.br
                 </span>
               </a>
-              <a
-                href="https://wa.me/5511963166915"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 group"
-              >
+              <a href="https://wa.me/5511963166915" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 group">
                 <span className="flex items-center justify-center w-9 h-9 rounded-md bg-primary/10 text-primary group-hover:bg-primary/20 transition-colors">
                   <Phone size={16} />
                 </span>
@@ -165,7 +141,6 @@ const ContactSection = () => {
             </div>
           </motion.div>
 
-          {/* Right column — form */}
           <motion.form
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -176,14 +151,14 @@ const ContactSection = () => {
             onSubmit={handleSubmit}
           >
             <h3 className="font-heading text-xl md:text-2xl font-semibold tracking-wide text-primary mb-6">
-              Peça seu diagnóstico gratuito agora
+              {t("contact.formTitle")}
             </h3>
 
             {[
-              { label: "Nome *", key: "nome" as const, type: "text", placeholder: "Seu nome completo" },
-              { label: "E-mail *", key: "email" as const, type: "email", placeholder: "seuemail@empresa.com.br" },
-              { label: "Telefone", key: "telefone" as const, type: "tel", placeholder: "(11) 99999-9999" },
-              { label: "Empresa", key: "empresa" as const, type: "text", placeholder: "Nome da empresa" },
+              { label: t("contact.nome"), key: "nome" as const, type: "text", placeholder: t("contact.nomePlaceholder") },
+              { label: t("contact.email"), key: "email" as const, type: "email", placeholder: t("contact.emailPlaceholder") },
+              { label: t("contact.telefone"), key: "telefone" as const, type: "tel", placeholder: t("contact.telefonePlaceholder") },
+              { label: t("contact.empresa"), key: "empresa" as const, type: "text", placeholder: t("contact.empresaPlaceholder") },
             ].map((field) => (
               <div key={field.key}>
                 <label className="font-mono text-xs tracking-[0.2em] uppercase text-primary mb-2 block">
@@ -202,7 +177,7 @@ const ContactSection = () => {
 
             <div>
               <label className="font-mono text-xs tracking-[0.2em] uppercase text-primary mb-2 block">
-                Interesse
+                {t("contact.interesse")}
               </label>
               <select
                 value={form.interesse}
@@ -210,7 +185,7 @@ const ContactSection = () => {
                 className="w-full bg-input border border-border px-4 py-3.5 font-body text-sm md:text-base text-foreground focus:border-primary focus:outline-none transition-colors"
                 style={{ borderRadius: "var(--radius)" }}
               >
-                <option value="" className="bg-secondary">Selecione o serviço desejado</option>
+                <option value="" className="bg-secondary">{t("contact.interesseDefault")}</option>
                 {serviceOptions.map((opt) => (
                   <option key={opt} value={opt} className="bg-secondary">{opt}</option>
                 ))}
@@ -219,11 +194,11 @@ const ContactSection = () => {
 
             <div>
               <label className="font-mono text-xs tracking-[0.2em] uppercase text-primary mb-2 block">
-                Mensagem *
+                {t("contact.mensagem")}
               </label>
               <textarea
                 rows={4}
-                placeholder="Descreva sua necessidade, estrutura atual ou o tipo de solução que sua empresa procura..."
+                placeholder={t("contact.mensagemPlaceholder")}
                 value={form.mensagem}
                 onChange={(e) => setForm((prev) => ({ ...prev, mensagem: e.target.value }))}
                 className="w-full bg-input border border-border px-4 py-3.5 font-body text-sm md:text-base text-foreground placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none transition-colors resize-none"
@@ -231,7 +206,6 @@ const ContactSection = () => {
               />
             </div>
 
-            {/* CTA buttons */}
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <button
                 type="submit"
@@ -244,7 +218,7 @@ const ContactSection = () => {
                 ) : (
                   <Send size={16} />
                 )}
-                {loading ? "Enviando..." : "Quero minha proposta"}
+                {loading ? t("contact.btnEnviando") : t("contact.btnEnviar")}
                 {!loading && <ArrowRight size={16} />}
               </button>
               <button
@@ -254,7 +228,7 @@ const ContactSection = () => {
                 style={{ borderRadius: "var(--radius)" }}
               >
                 <MessageCircle size={16} />
-                Falar no WhatsApp
+                {t("contact.btnWhatsapp")}
               </button>
             </div>
           </motion.form>

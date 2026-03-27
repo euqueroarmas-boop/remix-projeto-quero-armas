@@ -1,35 +1,19 @@
 import { motion } from "framer-motion";
 import { Star, Quote } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
-const testimonials = [
-  {
-    name: "Maria Angela",
-    role: "Tabeliã",
-    company: "1º Tabelião de Sorocaba",
-    text: "Desde que a WMTi assumiu nossa TI, não tivemos nenhuma parada. Nosso cartório funciona o dia inteiro sem travar. Valeu cada centavo.",
-    stars: 5,
-    initials: "TP",
-  },
-  {
-    name: "Fernanda Oliveira",
-    role: "Gerente Administrativa",
-    company: "Construtora Horizonte",
-    text: "Trocamos todos os computadores por locação e economizamos mais de R$40 mil em investimento. Se um PC dá problema, trocam no mesmo dia.",
-    stars: 5,
-    initials: "FO",
-  },
-  {
-    name: "Ricardo Santos",
-    role: "Sócio-Proprietário",
-    company: "Escritório Santos & Associados",
-    text: "Conectaram nossas 3 unidades com segurança total. Antes vivíamos com medo de ataque — hoje durmo tranquilo sabendo que está tudo monitorado.",
-    stars: 5,
-    initials: "RS",
-  },
-];
-
 const TestimonialsSection = () => {
+  const { t } = useTranslation();
+  const items = t("testimonials.items", { returnObjects: true }) as {
+    name: string;
+    role: string;
+    company: string;
+    text: string;
+  }[];
+
+  const initials = ["TP", "FO", "RS"];
+
   return (
     <section className="py-20 md:py-24 section-dark">
       <div className="container">
@@ -41,17 +25,17 @@ const TestimonialsSection = () => {
           className="mb-12 md:mb-16"
         >
           <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
-            // Quem já resolveu
+            {t("testimonials.tag")}
           </p>
           <h2 className="text-2xl md:text-5xl max-w-2xl">
-            Veja o que nossos clientes <span className="text-primary">dizem.</span>
+            {t("testimonials.title")} <span className="text-primary">{t("testimonials.titleHighlight")}</span>
           </h2>
         </motion.div>
 
         <div className="grid md:grid-cols-3 gap-px bg-border">
-          {testimonials.map((t, i) => (
+          {items.map((item, i) => (
             <motion.div
-              key={t.name}
+              key={item.name}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -65,35 +49,25 @@ const TestimonialsSection = () => {
               />
 
               <div className="flex gap-0.5 mb-4">
-                {Array.from({ length: t.stars }).map((_, idx) => (
-                  <Star
-                    key={idx}
-                    size={14}
-                    className="text-primary fill-primary"
-                  />
+                {Array.from({ length: 5 }).map((_, idx) => (
+                  <Star key={idx} size={14} className="text-primary fill-primary" />
                 ))}
               </div>
 
               <p className="font-body text-sm md:text-base text-muted-foreground leading-relaxed mb-6 flex-1">
-                "{t.text}"
+                "{item.text}"
               </p>
 
               <div className="border-t border-border pt-4 flex items-center gap-3">
                 <Avatar className="h-10 w-10 border-2 border-primary/30">
                   <AvatarFallback className="bg-primary/10 text-primary font-mono text-xs font-bold">
-                    {t.initials}
+                    {initials[i] || item.name.charAt(0)}
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="font-heading text-sm font-semibold text-foreground">
-                    {t.name}
-                  </p>
-                  <p className="font-mono text-[10px] md:text-xs text-muted-foreground tracking-wider uppercase">
-                    {t.role}
-                  </p>
-                  <p className="font-mono text-[10px] md:text-xs text-primary/70 tracking-wider">
-                    {t.company}
-                  </p>
+                  <p className="font-heading text-sm font-semibold text-foreground">{item.name}</p>
+                  <p className="font-mono text-[10px] md:text-xs text-muted-foreground tracking-wider uppercase">{item.role}</p>
+                  <p className="font-mono text-[10px] md:text-xs text-primary/70 tracking-wider">{item.company}</p>
                 </div>
               </div>
             </motion.div>
