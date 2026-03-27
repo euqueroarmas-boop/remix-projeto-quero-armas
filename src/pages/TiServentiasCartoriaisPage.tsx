@@ -1,7 +1,8 @@
 import { useTranslation } from "react-i18next";
 import { Server, HardDrive, Shield, Activity, Headphones, Lock } from "lucide-react";
 import ServicePageTemplate from "@/components/ServicePageTemplate";
-import heroImg from "@/assets/segments/serventias-cartoriais.webp";
+import CartorioDowntimeCalculator from "@/components/CartorioDowntimeCalculator";
+import heroImg from "@/assets/segments/cartorio-moderno.jpg";
 
 const icons = [Server, HardDrive, Shield, Activity, Lock, Headphones];
 
@@ -12,23 +13,26 @@ const TiServentiasCartoriaisPage = () => {
   const relatedLabels = t(`${k}.relatedLabels`, { returnObjects: true }) as string[];
 
   return (
-    <ServicePageTemplate
-      title={t(`${k}.title`)} metaTitle={t(`${k}.metaTitle`)} metaDescription={t(`${k}.metaDescription`)} tag={t(`${k}.tag`)}
-      headline={<>{t(`${k}.headline1`)}<span className="text-primary">{t(`${k}.headlineHighlight`)}</span>{t(`${k}.headline2`)}</>}
-      description={t(`${k}.description`)} whatsappMessage={t(`${k}.whatsappMessage`)}
-      heroImage={heroImg} heroImageAlt="Notarial registry building"
-      painPoints={t(`${k}.painPoints`, { returnObjects: true }) as string[]}
-      solutions={t(`${k}.solutions`, { returnObjects: true }) as string[]}
-      benefits={benefits}
-      faq={t(`${k}.faq`, { returnObjects: true }) as { question: string; answer: string }[]}
-      relatedLinks={[
-        { label: relatedLabels[0], href: "/ti-para-cartorios" },
-        { label: relatedLabels[1], href: "/cartorios/provimento-213" },
-        { label: relatedLabels[2], href: "/servidor-dell-poweredge-jacarei" },
-        { label: relatedLabels[3], href: "/firewall-pfsense-jacarei" },
-      ]}
-      localContent={t(`${k}.localContent`)}
-    />
+    <>
+      <ServicePageTemplate
+        title={t(`${k}.title`)} metaTitle={t(`${k}.metaTitle`)} metaDescription={t(`${k}.metaDescription`)} tag={t(`${k}.tag`)}
+        headline={<>{t(`${k}.headline1`)}<span className="text-primary">{t(`${k}.headlineHighlight`)}</span>{t(`${k}.headline2`)}</>}
+        description={t(`${k}.description`)} whatsappMessage={t(`${k}.whatsappMessage`)}
+        heroImage={heroImg} heroImageAlt="Modern notary office with technology"
+        painPoints={t(`${k}.painPoints`, { returnObjects: true }) as string[]}
+        solutions={t(`${k}.solutions`, { returnObjects: true }) as string[]}
+        benefits={benefits}
+        faq={t(`${k}.faq`, { returnObjects: true }) as { question: string; answer: string }[]}
+        relatedLinks={[
+          { label: relatedLabels[0], href: "/ti-para-cartorios" },
+          { label: relatedLabels[1], href: "/cartorios/provimento-213" },
+          { label: relatedLabels[2], href: "/servidor-dell-poweredge-jacarei" },
+          { label: relatedLabels[3], href: "/firewall-pfsense-jacarei" },
+        ]}
+        localContent={t(`${k}.localContent`)}
+        extraSections={<CartorioDowntimeCalculator />}
+      />
+    </>
   );
 };
 

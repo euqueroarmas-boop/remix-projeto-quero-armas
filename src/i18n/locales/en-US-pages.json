@@ -1353,70 +1353,80 @@
     },
     "tiCartorios": {
       "title": "IT for Notary Offices — CNJ Provision 213",
-      "metaTitle": "IT for Notary Offices | CNJ Provision 213 Compliance | WMTi",
-      "metaDescription": "IT infrastructure for notary offices in compliance with CNJ Provision 213.",
+      "metaTitle": "IT for Notary Offices | Your registry could shut down — and it's on you | WMTi",
+      "metaDescription": "IT infrastructure for notary offices in compliance with CNJ Provision 213. Prevent shutdowns, revenue loss and regulatory penalties.",
       "tag": "IT for Notary Offices",
-      "headline1": "Your notary office may be out of compliance — and ",
-      "headlineHighlight": "the deadline is running",
+      "headline1": "Your registry could shut down. And the problem ",
+      "headlineHighlight": "won't be technical. It'll be yours.",
       "headline2": "",
-      "description": "Provision 213 isn't a suggestion. It's mandatory. And the deadlines are already ticking. WMTi specializes in IT for notary offices. We assess, implement everything and guarantee full compliance.",
-      "whatsappMessage": "Hi! I'd like a quote for adapting my notary office to CNJ Provision 213.",
+      "description": "A system failure today doesn't just mean delays. It means lost revenue, compromised legal acts, and potential scrutiny from the regulatory authority. Modern registries depend on internet, systems, video conferencing, digital signatures and data storage. If any of these fail, the registry stops. And the holder is personally liable.",
+      "whatsappMessage": "Hi! I need to protect my registry against downtime and comply with CNJ Provision 213. I'd like to speak with a specialist.",
       "painPoints": [
-        "Notary office out of compliance with CNJ requirements",
-        "Manual or nonexistent backup — risk of total archive loss",
-        "No firewall protecting clients' confidential data",
-        "No business continuity plan (BCP) or disaster recovery plan (DRP)",
-        "Legacy server without redundancy threatening availability"
+        "1 hour of downtime = direct revenue loss for your registry",
+        "1 day of downtime = devastating impact on income and client loss",
+        "Backup that was never tested — you'll only find out during a crisis",
+        "Only 1 internet link with no failover — one outage shuts everything down",
+        "Shared logins across staff — no traceability of legal acts",
+        "Non-compliance can trigger sanctions from the regulatory authority"
       ],
       "solutions": [
-        "Complete compliance assessment for Provision 213",
-        "Dell PowerEdge servers with redundant RAID and hot-swap power supplies",
-        "Automated 3-2-1 backup: Veeam + Dell PowerVault + Azure Cloud",
-        "pfSense firewall with Suricata IDS/IPS",
-        "Development of BCP, DRP and Information Security Policy"
+        "Professional pfSense firewall with IDS/IPS — full access control",
+        "Automated backup with periodically tested restoration",
+        "Internet redundancy — if one link drops, the other takes over instantly",
+        "Individual access control with full act traceability",
+        "Complete audit for CNJ Provision 213 compliance",
+        "Operational standardization — every workstation, server and process documented"
       ],
       "benefits": [
         {
-          "title": "100% compliant",
-          "text": "All Provision 213 requirements met — Classes 1, 2 and 3."
+          "title": "Full CNJ compliance",
+          "text": "All Provision 213 requirements met — Classes 1, 2 and 3. Zero sanction risk."
         },
         {
-          "title": "Dell PowerEdge",
-          "text": "Enterprise servers with RAID and redundancy."
+          "title": "Dell PowerEdge + RAID",
+          "text": "Enterprise servers with total redundancy. Hardware failure won't shut down your registry."
         },
         {
-          "title": "3-2-1 Backup",
-          "text": "Veeam + local storage + Azure cloud with defined RPO and RTO."
+          "title": "Backup that actually works",
+          "text": "Veeam + local storage + Azure cloud. Periodically tested. RPO and RTO defined by contract."
         },
         {
-          "title": "pfSense + Suricata",
-          "text": "Stateful firewall with IDS/IPS and VPN."
+          "title": "Firewall + IDS/IPS",
+          "text": "pfSense with Suricata. Secure VPN. No unauthorized access enters your network."
         },
         {
           "title": "AES-256 encryption",
-          "text": "Data protected in transit and at rest."
+          "text": "Data protected in transit and at rest. Provision 213 requirement fulfilled."
         },
         {
-          "title": "24/7 NOC",
-          "text": "Continuous monitoring with automatic alerts."
+          "title": "24/7 monitoring",
+          "text": "Active NOC with automatic alerts. We act before failure becomes downtime."
         }
       ],
       "faq": [
         {
-          "question": "What is CNJ Provision 213?",
-          "answer": "It replaces Provision 74/2018 and defines mandatory ICT requirements for all extrajudicial registries in Brazil."
+          "question": "What happens if my registry doesn't comply with Provision 213?",
+          "answer": "Provision 213 is mandatory. Non-compliance can trigger warnings, fines and sanctions from the regulatory authority. Liability is personal to the holder, even with outsourced IT."
         },
         {
-          "question": "How do I know which class my office falls into?",
-          "answer": "Class 1: up to R$100k in semi-annual revenue. Class 2: R$100k-R$500k. Class 3: above R$500k. We do a free assessment."
+          "question": "How much does my registry lose per hour of downtime?",
+          "answer": "Depends on your volume. A registry handling 80 acts/day at R$120 per act loses over R$1,200 per hour of downtime. Use our calculator above to estimate your loss."
         },
         {
-          "question": "Do you serve offices outside Jacareí?",
-          "answer": "Yes. We serve offices across Brazil."
+          "question": "My backup is working. Should I worry?",
+          "answer": "A backup that was never tested is the same as having no backup. Over 60% of backups fail during restoration. We test periodically and guarantee it by contract."
         },
         {
-          "question": "How much does it cost to bring my office into compliance?",
-          "answer": "Depends on the class and current infrastructure. We offer customized projects with installment plans."
+          "question": "Do you serve registries outside Jacareí?",
+          "answer": "Yes. We serve notary offices across Brazil with complete compliance projects."
+        },
+        {
+          "question": "How much does Provision 213 compliance cost?",
+          "answer": "Depends on the class and current infrastructure. We offer free assessment and customized projects with installment plans."
+        },
+        {
+          "question": "Am I liable even with outsourced IT?",
+          "answer": "Yes. Provision 213 makes it clear: liability is personal to the registry holder. Outsourcing IT does not transfer legal responsibility."
         }
       ],
       "relatedLabels": [
@@ -1425,7 +1435,7 @@
         "pfSense Firewall",
         "Corporate infrastructure"
       ],
-      "localContent": "We are the reference in IT for notary offices in the Paraíba Valley, serving registries in Jacareí, São José dos Campos, Taubaté and the region."
+      "localContent": "We are the reference in IT for notary offices in the Paraíba Valley and across Brazil. Serving registries in Jacareí, São José dos Campos, Taubaté, Sorocaba, Campinas and the region."
     },
     "tiContab": {
       "title": "IT Infrastructure for Accounting Firms",
@@ -1815,72 +1825,72 @@
     },
     "tiServentias": {
       "title": "IT Infrastructure for Notarial Registries",
-      "metaTitle": "IT Infrastructure for Notarial Registries | CNJ Provision 213 | WMTi",
-      "metaDescription": "IT infrastructure solutions for notarial registries in compliance with CNJ Provision 213.",
+      "metaTitle": "IT for Notarial Registries | Your registry could shut down — and it's on you | WMTi",
+      "metaDescription": "IT infrastructure for notarial registries in compliance with CNJ Provision 213. Prevent shutdowns, sanctions and revenue loss.",
       "tag": "IT for Notarial Registries",
-      "headline1": "Your registry may be vulnerable — and ",
-      "headlineHighlight": "Provision 213 requires compliance now",
+      "headline1": "Your registry could shut down. ",
+      "headlineHighlight": "And the holder is personally liable.",
       "headline2": "",
-      "description": "The deadline is running. CNJ Provision 213 defines mandatory ICT requirements for all extrajudicial registries. WMTi specializes in this. We assess, implement infrastructure and guarantee full compliance.",
-      "whatsappMessage": "Hi! I'd like an IT infrastructure analysis for my notarial registry.",
+      "description": "There's no such thing as a 'technical issue' in a registry. There's only holder liability. CNJ Provision 213 demands continuity, security, integrity and traceability. When systems fail: service stops, revenue is lost, legal acts may be compromised. And this can trigger action from the regulatory authority.",
+      "whatsappMessage": "Hi! I need to adapt my notarial registry's IT infrastructure to Provision 213. I'd like to speak with a specialist.",
       "painPoints": [
-        "Difficulty understanding Provision 213 requirements",
-        "Unstable registry systems",
-        "Manual or nonexistent backup",
-        "No firewall or network segmentation",
-        "Servers without monitoring",
-        "Reactive support"
+        "Unstable registry systems that freeze during customer service",
+        "Manual backup or never tested — risk of total data loss",
+        "No firewall — confidential client data exposed",
+        "Only 1 internet link with no redundancy",
+        "Shared logins — impossible to trace who did what",
+        "Failures can trigger sanctions — liability falls on the holder"
       ],
       "solutions": [
         "Complete Provision 213 compliance assessment",
-        "Windows Server for continuous operation",
-        "Automated corporate backup with replication",
-        "Firewall with network segmentation",
-        "Continuous monitoring",
-        "Specialized support with preventive maintenance"
+        "Windows Server with redundant RAID for continuous operation",
+        "Automated corporate backup with local and cloud replication",
+        "pfSense firewall with network segmentation and IDS/IPS",
+        "24/7 monitoring with automatic alerts",
+        "Specialized support with scheduled preventive maintenance"
       ],
       "benefits": [
         {
-          "title": "Professional servers",
-          "text": "Windows Server configured for high-performance registry systems."
+          "title": "High-availability servers",
+          "text": "Windows Server with RAID and redundancy. Your registry system never freezes during service again."
         },
         {
-          "title": "Backup that works",
-          "text": "Local and cloud replication with periodic testing."
+          "title": "Backup with guaranteed restoration",
+          "text": "Local and cloud replication with periodic testing. When crisis hits, it actually works."
         },
         {
-          "title": "Protected network",
-          "text": "Firewall, segmentation and security policies."
+          "title": "Armored network",
+          "text": "pfSense firewall, network segmentation and security policies that protect confidential data."
         },
         {
-          "title": "Real monitoring",
-          "text": "Servers and network monitored to act before failure."
+          "title": "Monitoring before failure",
+          "text": "Servers and network monitored 24/7. We act before the problem becomes downtime."
         },
         {
-          "title": "Full compliance",
-          "text": "All Provision 213 requirements met and documented."
+          "title": "Documented compliance",
+          "text": "All Provision 213 requirements met, documented and auditable."
         },
         {
-          "title": "Specialized support",
-          "text": "Team that knows the registry routine."
+          "title": "Support that knows registries",
+          "text": "Team specialized in notarial operations. We don't show up only after everything has stopped."
         }
       ],
       "faq": [
         {
-          "question": "Does WMTi help notarial registries comply with Provision 213?",
-          "answer": "Yes. We specialize in this. Assessment, implementation and guaranteed full compliance."
+          "question": "Does WMTi guarantee full Provision 213 compliance?",
+          "answer": "Yes. We assess, implement all infrastructure and deliver compliance documentation for all classes."
         },
         {
-          "question": "Why is corporate backup important for registries?",
-          "answer": "Data loss in a registry environment can cause severe operational and legal impacts."
+          "question": "What happens if my registry doesn't comply?",
+          "answer": "Provision 213 is mandatory. Non-compliance can trigger warnings, fines and sanctions. Liability is personal to the holder."
         },
         {
-          "question": "Do you provide continuous monitoring?",
-          "answer": "Yes. 24/7 with automatic alerts."
+          "question": "My backup is set up. Should I worry?",
+          "answer": "If it's never been tested, it's the same as having none. Over 60% of backups fail during restoration. We test periodically."
         },
         {
-          "question": "Do you serve outside the Jacareí region?",
-          "answer": "Yes. Across Brazil."
+          "question": "Do you serve registries outside the Paraíba Valley?",
+          "answer": "Yes. We serve notarial registries across Brazil."
         }
       ],
       "relatedLabels": [
@@ -1889,10 +1899,26 @@
         "Dell servers",
         "pfSense Firewall"
       ],
-      "localContent": "Request an IT infrastructure analysis for your notarial registry. We serve Jacareí, Paraíba Valley and across Brazil."
+      "localContent": "We serve notarial registries in Jacareí, São José dos Campos, Taubaté, Sorocaba, Campinas and across Brazil."
     }
   },
   "custom": {
+    "cartorioCalc": {
+      "tag": "Downtime Cost Calculator",
+      "title1": "How much does your registry lose ",
+      "titleHighlight": "when it stops?",
+      "title2": "",
+      "subtitle": "Simulate the financial impact of downtime at your registry. Fill in the fields and see the real cost.",
+      "fieldServices": "Daily services",
+      "fieldAvgValue": "Avg. value per act (R$)",
+      "fieldHours": "Hours of downtime",
+      "resultPerHour": "Loss per hour",
+      "resultDowntime": "Loss in {{hours}}h of downtime",
+      "resultDaily": "Daily revenue at risk",
+      "callout": "This is how much money you lose every time the system fails. The longer you wait to act, the greater the accumulated damage.",
+      "cta": "Protect my registry now",
+      "whatsappMessage": "Hi! I used the downtime cost calculator on your website and I want to protect my registry against shutdowns. I need a quote."
+    },
     "institutional": {
       "heroTag": "Institutional",
       "heroTitlePrefix": "About ",
@@ -2267,19 +2293,19 @@
     },
     "cartoriosHome": {
       "mobileTag": "Provision 213/2026 — CNJ",
-      "mobileTitle1": "Your notary office in ",
-      "mobileHighlight": "full compliance",
-      "mobileTitle2": " with CNJ.",
-      "mobileDescription": "We specialize in IT infrastructure for notary offices. We serve registries across Brazil, ensuring compliance with every requirement of CNJ Provision 213.",
+      "mobileTitle1": "Your registry could ",
+      "mobileHighlight": "shut down any moment",
+      "mobileTitle2": ".",
+      "mobileDescription": "A system failure isn't a technical detail. It's lost revenue, compromised legal acts and personal liability for the holder. WMTi secures and protects your registry.",
       "heroTag": "Provision 213/2026 — CNJ",
-      "heroTitle1": "Your notary office in\n",
-      "heroHighlight": "full compliance",
-      "heroTitle2": "\nwith CNJ.",
-      "heroDescription": "We specialize in IT infrastructure for notary offices. We support registries across Brazil, ensuring compliance with every requirement of CNJ Provision 213.",
-      "primaryCta": "Make my registry compliant",
-      "secondaryCta": "Read full Provision 213",
+      "heroTitle1": "Your registry could shut down.\n",
+      "heroHighlight": "And it'll be on you.",
+      "heroTitle2": "",
+      "heroDescription": "A system failure today doesn't mean a delay. It means lost revenue, compromised legal acts, and potential scrutiny from the regulatory authority. Liability is personal to the holder. WMTi eliminates that risk.",
+      "primaryCta": "Protect my registry",
+      "secondaryCta": "Read Provision 213",
       "tertiaryCta": "IT for Notary Offices",
-      "whatsappMessage": "Hi! I would like a quote to adapt my notary office to CNJ Provision 213.",
+      "whatsappMessage": "Hi! I need to protect my registry against downtime and comply with Provision 213. I'd like to speak with a specialist.",
       "stats": [
         {
           "value": "100%",
