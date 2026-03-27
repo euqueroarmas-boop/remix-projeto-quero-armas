@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, CheckCircle2, MessageCircle, ChevronRight, ShieldCheck, Building2, Award, Zap, AlertTriangle, Clock } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -46,124 +47,132 @@ const fadeIn = {
 };
 
 /* ── Micro-CTA reusable block ── */
-const MicroCta = ({ href, whatsappMessage, cityName }: { href: string; whatsappMessage: string; cityName?: string }) => (
-  <motion.div {...fadeIn} className="py-8 md:py-10">
-    <div className="container">
-      <div className="bg-primary/5 border border-primary/20 rounded-lg p-6 md:p-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div>
-          <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-1">// Próximo passo</p>
-          <p className="font-body text-sm md:text-base text-foreground">
-            Quanto mais tempo sem agir, maior o risco{cityName ? ` para sua empresa em ${cityName}` : ''}.
-          </p>
-        </div>
-        <div className="flex gap-3 shrink-0">
-          <Link
-            to={href}
-            className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-5 py-3 font-mono text-xs font-bold uppercase tracking-wider hover:brightness-110 transition-all btn-glow rounded"
-          >
-            Solicitar análise
-          </Link>
-          <a
-            href={`https://wa.me/5511963166915?text=${encodeURIComponent(whatsappMessage)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 border border-border text-foreground px-5 py-3 font-mono text-xs uppercase tracking-wider hover:border-primary hover:text-primary transition-all rounded"
-          >
-            <MessageCircle size={14} />
-            WhatsApp
-          </a>
+const MicroCta = ({ href, whatsappMessage, cityName }: { href: string; whatsappMessage: string; cityName?: string }) => {
+  const { t } = useTranslation();
+  return (
+    <motion.div {...fadeIn} className="py-8 md:py-10">
+      <div className="container">
+        <div className="bg-primary/5 border border-primary/20 rounded-lg p-6 md:p-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div>
+            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-1">{t("service.microCtaTag")}</p>
+            <p className="font-body text-sm md:text-base text-foreground">
+              {cityName ? t("service.microCtaTextCity", { city: cityName }) : `${t("service.microCtaText")}.`}
+            </p>
+          </div>
+          <div className="flex gap-3 shrink-0">
+            <Link
+              to={href}
+              className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-5 py-3 font-mono text-xs font-bold uppercase tracking-wider hover:brightness-110 transition-all btn-glow rounded"
+            >
+              {t("service.microCtaBtn")}
+            </Link>
+            <a
+              href={`https://wa.me/5511963166915?text=${encodeURIComponent(whatsappMessage)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 border border-border text-foreground px-5 py-3 font-mono text-xs uppercase tracking-wider hover:border-primary hover:text-primary transition-all rounded"
+            >
+              <MessageCircle size={14} />
+              WhatsApp
+            </a>
+          </div>
         </div>
       </div>
-    </div>
-  </motion.div>
-);
+    </motion.div>
+  );
+};
 
 /* ── Authority bar ── */
-const AuthorityBar = () => (
-  <section className="section-light py-8 md:py-10 border-b border-border">
-    <div className="container">
-      <div className="flex flex-wrap items-center justify-center gap-6 md:gap-10">
-        {[
-          { icon: Award, text: "15+ anos no mercado" },
-          { icon: Building2, text: "150+ empresas atendidas" },
-          { icon: ShieldCheck, text: "Parceiro Dell & Microsoft" },
-          { icon: Zap, text: "SLA com resposta garantida" },
-        ].map((a) => (
-          <div key={a.text} className="flex items-center gap-2">
-            <a.icon size={16} className="text-primary shrink-0" />
-            <span className="text-xs md:text-sm font-mono font-bold text-muted-foreground">{a.text}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  </section>
-);
-
-/* ── "What your company avoids" block ── */
-const AvoidanceBlock = ({ cityName }: { cityName?: string }) => (
-  <section className="section-light py-16 md:py-20">
-    <div className="container max-w-4xl">
-      <motion.div {...fadeIn}>
-        <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
-          // O que sua empresa evita
-        </p>
-        <h2 className="text-2xl md:text-3xl mb-8">
-          Com a WMTi, sua empresa{cityName ? ` em ${cityName}` : ''} <span className="text-primary">para de perder</span>:
-        </h2>
-        <div className="grid sm:grid-cols-2 gap-4">
+const AuthorityBar = () => {
+  const { t } = useTranslation();
+  return (
+    <section className="section-light py-8 md:py-10 border-b border-border">
+      <div className="container">
+        <div className="flex flex-wrap items-center justify-center gap-6 md:gap-10">
           {[
-            { icon: AlertTriangle, text: "Paradas inesperadas que custam milhares por hora" },
-            { icon: Clock, text: "Horas da equipe perdidas esperando TI resolver" },
-            { icon: ShieldCheck, text: "Dados sensíveis expostos por falta de proteção real" },
-            { icon: Building2, text: "Contratos e clientes perdidos por falha operacional" },
-          ].map((item) => (
-            <div key={item.text} className="flex items-start gap-3 p-4 bg-destructive/5 border border-destructive/10 rounded-lg">
-              <item.icon size={18} className="text-destructive mt-0.5 shrink-0" />
-              <p className="font-body text-sm text-foreground leading-relaxed">{item.text}</p>
+            { icon: Award, text: t("authority.years") },
+            { icon: Building2, text: t("authority.clients") },
+            { icon: ShieldCheck, text: t("authority.partners") },
+            { icon: Zap, text: t("authority.sla") },
+          ].map((a) => (
+            <div key={a.text} className="flex items-center gap-2">
+              <a.icon size={16} className="text-primary shrink-0" />
+              <span className="text-xs md:text-sm font-mono font-bold text-muted-foreground">{a.text}</span>
             </div>
           ))}
         </div>
-      </motion.div>
-    </div>
-  </section>
-);
+      </div>
+    </section>
+  );
+};
+
+/* ── "What your company avoids" block ── */
+const AvoidanceBlock = ({ cityName }: { cityName?: string }) => {
+  const { t } = useTranslation();
+  const avoidItems = t("service.avoidItems", { returnObjects: true }) as string[];
+  return (
+    <section className="section-light py-16 md:py-20">
+      <div className="container max-w-4xl">
+        <motion.div {...fadeIn}>
+          <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
+            {t("service.avoidTag")}
+          </p>
+          <h2 className="text-2xl md:text-3xl mb-8">
+            {cityName ? t("service.avoidTitleCity", { city: cityName }) : t("service.avoidTitle")} <span className="text-primary">{t("service.avoidTitleHighlight")}</span>:
+          </h2>
+          <div className="grid sm:grid-cols-2 gap-4">
+            {[AlertTriangle, Clock, ShieldCheck, Building2].map((Icon, i) => (
+              <div key={i} className="flex items-start gap-3 p-4 bg-destructive/5 border border-destructive/10 rounded-lg">
+                <Icon size={18} className="text-destructive mt-0.5 shrink-0" />
+                <p className="font-body text-sm text-foreground leading-relaxed">{avoidItems[i]}</p>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  );
+};
 
 /* ── Urgency block ── */
-const UrgencyBlock = ({ whatsappMessage, currentPath, cityName }: { whatsappMessage: string; currentPath: string; cityName?: string }) => (
-  <section className="py-12 md:py-16 bg-destructive/5 border-y border-destructive/10">
-    <div className="container max-w-3xl text-center">
-      <motion.div {...fadeIn}>
-        <p className="font-mono text-xs tracking-[0.3em] uppercase text-destructive mb-4">
-          // Atenção
-        </p>
-        <h2 className="text-2xl md:text-3xl mb-4">
-          Cada dia sem resolver <span className="text-destructive">custa dinheiro</span>
-        </h2>
-        <p className="font-body text-muted-foreground max-w-xl mx-auto mb-6 leading-relaxed">
-          Uma hora de parada pode custar mais que um mês inteiro de serviço profissional.
-          {cityName ? ` Empresas em ${cityName} que agiram antes já operam sem interrupções.` : ' Empresas que agiram antes já operam sem interrupções.'}
-        </p>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <a
-            href={`https://wa.me/5511963166915?text=${encodeURIComponent(whatsappMessage)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all btn-glow rounded"
-          >
-            <MessageCircle size={16} />
-            Resolver agora
-          </a>
-          <Link
-            to={`/contratar/${currentPath.replace(/^\//, "")}`}
-            className="inline-flex items-center gap-2 border border-border text-foreground px-8 py-4 font-mono text-sm uppercase tracking-wider hover:border-primary hover:text-primary transition-all rounded"
-          >
-            Contratar este serviço
-          </Link>
-        </div>
-      </motion.div>
-    </div>
-  </section>
-);
+const UrgencyBlock = ({ whatsappMessage, currentPath, cityName }: { whatsappMessage: string; currentPath: string; cityName?: string }) => {
+  const { t } = useTranslation();
+  return (
+    <section className="py-12 md:py-16 bg-destructive/5 border-y border-destructive/10">
+      <div className="container max-w-3xl text-center">
+        <motion.div {...fadeIn}>
+          <p className="font-mono text-xs tracking-[0.3em] uppercase text-destructive mb-4">
+            {t("service.urgencyTag")}
+          </p>
+          <h2 className="text-2xl md:text-3xl mb-4">
+            {t("service.urgencyTitle")} <span className="text-destructive">{t("service.urgencyTitleHighlight")}</span>
+          </h2>
+          <p className="font-body text-muted-foreground max-w-xl mx-auto mb-6 leading-relaxed">
+            {t("service.urgencyDesc")}
+            {" "}{cityName ? t("service.urgencyDescCity", { city: cityName }) : t("service.urgencyDescGeneric")}
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <a
+              href={`https://wa.me/5511963166915?text=${encodeURIComponent(whatsappMessage)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all btn-glow rounded"
+            >
+              <MessageCircle size={16} />
+              {t("service.urgencyCta")}
+            </a>
+            <Link
+              to={`/contratar/${currentPath.replace(/^\//, "")}`}
+              className="inline-flex items-center gap-2 border border-border text-foreground px-8 py-4 font-mono text-sm uppercase tracking-wider hover:border-primary hover:text-primary transition-all rounded"
+            >
+              {t("service.urgencyCtaContract")}
+            </Link>
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  );
+};
 
 const ServicePageTemplate = ({
   title,
@@ -187,6 +196,7 @@ const ServicePageTemplate = ({
   cityName,
   citySlug,
 }: ServicePageProps) => {
+  const { t } = useTranslation();
   const location = useLocation();
   const baseUrl = "https://wmti.com.br";
   const currentPath = location.pathname;
@@ -199,7 +209,7 @@ const ServicePageTemplate = ({
   }, [currentPath]);
 
   const breadcrumbItems = [
-    { name: "Home", url: `${baseUrl}/` },
+    { name: t("service.breadcrumbHome"), url: `${baseUrl}/` },
     { name: tag, url: `${baseUrl}${currentPath}` },
   ];
 
@@ -232,7 +242,7 @@ const ServicePageTemplate = ({
               <nav aria-label="Breadcrumb" className="mb-6">
                 <ol className="flex items-center gap-1 font-mono text-xs text-gunmetal-foreground/50">
                   <li>
-                    <Link to="/" className="hover:text-primary transition-colors">Home</Link>
+                    <Link to="/" className="hover:text-primary transition-colors">{t("service.breadcrumbHome")}</Link>
                   </li>
                   <ChevronRight size={10} className="shrink-0" />
                   <li className="text-primary truncate" aria-current="page">{tag}</li>
@@ -240,7 +250,7 @@ const ServicePageTemplate = ({
               </nav>
 
               <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
-                // {tag}
+                {t("service.tagPrefix")} {tag}
               </p>
               <h1 className="text-3xl md:text-5xl lg:text-6xl mb-6">{headline}</h1>
               <p className="font-body text-lg md:text-xl text-gunmetal-foreground/70 max-w-2xl leading-relaxed mb-8">
@@ -253,7 +263,7 @@ const ServicePageTemplate = ({
                   className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all btn-glow"
                 >
                   <ArrowRight size={16} />
-                  Contrate este serviço
+                  {t("service.ctaContract")}
                 </Link>
                 <a
                   href={`https://wa.me/5511963166915?text=${encodeURIComponent(whatsappMessage)}`}
@@ -262,7 +272,7 @@ const ServicePageTemplate = ({
                   className="inline-flex items-center gap-2 border border-gunmetal-foreground/30 text-gunmetal-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:border-primary hover:text-primary transition-all"
                 >
                   <MessageCircle size={16} />
-                  Falar com especialista
+                  {t("service.ctaSpecialist")}
                 </a>
               </div>
             </motion.div>
@@ -296,10 +306,10 @@ const ServicePageTemplate = ({
           <div className="grid md:grid-cols-2 gap-12 md:gap-16">
             <motion.div {...fadeIn}>
               <p className="font-mono text-xs tracking-[0.3em] uppercase text-destructive mb-4">
-                // Isso custa caro
+                {t("service.painTag")}
               </p>
               <h2 className="text-2xl md:text-3xl mb-6">
-                Reconhece algum desses problemas?
+                {t("service.painTitle")}
               </h2>
               <ul className="space-y-4">
                 {painPoints.map((point) => (
@@ -313,10 +323,10 @@ const ServicePageTemplate = ({
 
             <motion.div {...fadeIn}>
               <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
-                // A solução que funciona
+                {t("service.solutionTag")}
               </p>
               <h2 className="text-2xl md:text-3xl mb-6">
-                O que fazemos para <span className="text-primary">eliminar</span> esses problemas
+                {t("service.solutionTitle")} <span className="text-primary">{t("service.solutionTitleHighlight")}</span> {t("service.solutionTitleEnd")}
               </h2>
               <ul className="space-y-4">
                 {solutions.map((solution) => (
@@ -339,10 +349,10 @@ const ServicePageTemplate = ({
         <div className="container">
           <motion.div {...fadeIn} className="mb-12">
             <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
-              // O que você ganha
+              {t("service.benefitsTag")}
             </p>
             <h2 className="text-2xl md:text-4xl">
-              Resultados reais para sua <span className="text-primary">empresa{cityName ? ` em ${cityName}` : ''}</span>
+              {t("service.benefitsTitle")} <span className="text-primary">{t("service.benefitsTitleHighlight")}{cityName ? ` em ${cityName}` : ''}</span>
             </h2>
           </motion.div>
 
@@ -374,7 +384,7 @@ const ServicePageTemplate = ({
           <div className="container max-w-3xl">
             <motion.div {...fadeIn}>
               <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
-                // Atendimento regional
+                {t("service.localTag")}
               </p>
               <div className="font-body text-muted-foreground leading-relaxed space-y-4">
                 <p>{localContent}</p>
@@ -395,9 +405,9 @@ const ServicePageTemplate = ({
         <div className="container max-w-3xl">
           <motion.div {...fadeIn} className="mb-12">
             <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
-              // Perguntas frequentes
+              {t("service.faqTag")}
             </p>
-            <h2 className="text-2xl md:text-4xl">FAQ</h2>
+            <h2 className="text-2xl md:text-4xl">{t("service.faqTitle")}</h2>
           </motion.div>
 
           <div className="space-y-px">
@@ -431,18 +441,16 @@ const ServicePageTemplate = ({
         <div className="container max-w-3xl text-center">
           <motion.div {...fadeIn}>
             <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
-              // Decisão
+              {t("service.finalTag")}
             </p>
             <h2 className="text-2xl md:text-4xl mb-4">
-              Sua empresa{cityName ? ` em ${cityName}` : ''} pode continuar <span className="text-destructive">perdendo dinheiro</span> com TI que não funciona.
+              {cityName ? t("service.finalTitleCity", { city: cityName }) : t("service.finalTitle")} <span className="text-destructive">{t("service.finalTitleHighlight")}</span> {t("service.finalTitleEnd")}
             </h2>
             <h3 className="text-lg md:text-xl text-muted-foreground mb-2">
-              Ou pode resolver <span className="text-primary font-bold">agora</span>.
+              {t("service.finalSubtitle")} <span className="text-primary font-bold">{t("service.finalSubtitleHighlight")}</span>.
             </h3>
             <p className="font-body text-muted-foreground max-w-xl mx-auto mb-8 leading-relaxed">
-              {cityName
-                ? `Diagnóstico gratuito para sua empresa em ${cityName}. Em até 48h você recebe uma proposta com valor fixo mensal — sem surpresas, sem amarras.`
-                : 'Diagnóstico gratuito. Em até 48h você recebe uma proposta com valor fixo mensal — sem surpresas, sem amarras.'}
+              {cityName ? t("service.finalDescCity", { city: cityName }) : t("service.finalDesc")}
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <a
@@ -452,13 +460,13 @@ const ServicePageTemplate = ({
                 className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all btn-glow rounded"
               >
                 <MessageCircle size={16} />
-                Resolver agora pelo WhatsApp
+                {t("service.finalCtaWhatsapp")}
               </a>
               <Link
                 to="/orcamento-ti"
                 className="inline-flex items-center gap-2 border border-border text-foreground px-8 py-4 font-mono text-sm uppercase tracking-wider hover:border-primary hover:text-primary transition-all rounded"
               >
-                Quero minha proposta online
+                {t("service.finalCtaOnline")}
               </Link>
             </div>
           </motion.div>
@@ -470,7 +478,7 @@ const ServicePageTemplate = ({
         <section className="section-dark py-12 border-t border-gunmetal-foreground/10">
           <div className="container">
             <p className="font-mono text-xs tracking-[0.3em] uppercase text-muted-foreground mb-6">
-              // {cityName ? `Serviços relacionados em ${cityName}` : 'Serviços relacionados'}
+              // {cityName ? t("service.relatedTagCity", { city: cityName }) : t("service.relatedTag")}
             </p>
             <div className="flex flex-wrap gap-3">
               {relatedLinks.map((link) => (
