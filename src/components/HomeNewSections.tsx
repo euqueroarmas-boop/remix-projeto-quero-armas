@@ -15,7 +15,7 @@ import {
   TrendingUp,
   ChevronDown,
 } from "lucide-react";
-import { whatsappLink } from "@/lib/whatsapp";
+import { whatsappLink, buildContextualWhatsAppMessage } from "@/lib/whatsapp";
 import { trackWhatsApp } from "@/lib/tracking";
 import { useState } from "react";
 import type { LucideIcon } from "lucide-react";
@@ -246,7 +246,7 @@ export const HomeCta = () => {
               <span className="group-hover:translate-x-1 transition-transform">→</span>
             </a>
             <a
-              href={whatsappLink(t("home.ctaWhatsappMessage", { defaultValue: "Olá, quero resolver minha TI. Podem me ajudar?" }))}
+              href={whatsappLink(buildContextualWhatsAppMessage({ intent: "general" }))}
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => trackWhatsApp("home-cta", "resolver-ti")}
