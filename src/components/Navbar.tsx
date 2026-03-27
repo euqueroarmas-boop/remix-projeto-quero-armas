@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import logoFull from "@/assets/logo-wmti-full.webp";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
-import { whatsappLink, buildContextualWhatsAppMessage } from "@/lib/whatsapp";
+import { openWhatsApp } from "@/lib/whatsapp";
 import { trackWhatsApp } from "@/lib/tracking";
 import type { LucideIcon } from "lucide-react";
 
