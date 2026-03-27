@@ -145,14 +145,14 @@ const BlogPostPage = () => {
       </div>
 
       <section className="section-dark pb-16 md:pb-20 -mt-20 relative z-10">
-        <div className="container max-w-3xl px-5 md:px-6">
+        <div className="container max-w-3xl px-5 md:px-6 pt-8 md:pt-12">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
             {/* Breadcrumbs */}
-            <nav aria-label="Breadcrumb" className="mb-6">
+            <nav aria-label="Breadcrumb" className="mb-5 md:mb-6">
               <ol className="flex items-center gap-1 font-mono text-xs text-gunmetal-foreground/50">
                 <li><Link to="/" className="hover:text-primary transition-colors">Home</Link></li>
                 <ChevronRight size={10} className="shrink-0" />
@@ -162,7 +162,7 @@ const BlogPostPage = () => {
               </ol>
             </nav>
 
-            <div className="flex items-center gap-3 mb-4 flex-wrap">
+            <div className="flex items-center gap-3 mb-5 flex-wrap">
               <span className="font-mono text-[10px] tracking-[0.15em] uppercase text-primary border border-primary/30 px-2 py-0.5">
                 {localizedPost.tag}
               </span>
@@ -178,7 +178,7 @@ const BlogPostPage = () => {
               </span>
             </div>
 
-            <h1 className="text-2xl md:text-4xl mb-4">{localizedPost.title}{cityTitle}</h1>
+            <h1 className="text-2xl md:text-4xl mb-5 md:mb-6">{localizedPost.title}{cityTitle}</h1>
             {city && (
               <div className="flex items-center gap-2 mt-1 mb-2">
                 <MapPin size={14} className="text-primary" />
