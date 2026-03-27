@@ -2,7 +2,9 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X, ChevronDown, Server, Cloud, Shield, Network, Monitor, Wrench, Headphones, Activity, Eye, Cpu, HardDrive, Lock, Zap, Terminal, RefreshCw, Building2, Scale, Heart, Landmark, Briefcase, Calculator, Factory, Fuel, FileText, Mail, Globe, Brain, Bot, Home } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import logoFull from "@/assets/logo-wmti-full.webp";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 import type { LucideIcon } from "lucide-react";
 
 interface MegaMenuItem {
@@ -55,11 +57,11 @@ type NavLink = {
 };
 
 const navLinks: NavLink[] = [
-  { href: "/institucional", label: "Institucional", isRoute: true },
-  { href: "#servicos", label: "Serviços", isDropdown: true },
-  { href: "#segmentos", label: "Segmentos", isDropdown: true },
-  { href: "#infraestrutura", mobileHref: "/infraestrutura", label: "Infraestrutura" },
-  { href: "/blog", label: "Blog", isRoute: true },
+  { href: "/institucional", label: "nav.institucional", isRoute: true },
+  { href: "#servicos", label: "nav.servicos", isDropdown: true },
+  { href: "#segmentos", label: "nav.segmentos", isDropdown: true },
+  { href: "#infraestrutura", mobileHref: "/infraestrutura", label: "nav.infraestrutura" },
+  { href: "/blog", label: "nav.blog", isRoute: true },
 ];
 
 /* ─── Shared nav-item class for perfect vertical alignment ─── */
