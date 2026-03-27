@@ -400,7 +400,9 @@ const Navbar = () => {
                 to={href}
                 className={`${NAV_ITEM_CLASS} ${colorClass}`}
               >
-                {t(link.label)}
+                <span ref={(el) => { linkRefs.current[i] = el; }} className="inline-flex items-center justify-center h-full">
+                  {t(link.label)}
+                </span>
               </Link>
             ) : (
               <button
