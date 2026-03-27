@@ -4,6 +4,8 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import heroImage from "@/assets/hero-server.webp";
 import { Award, Shield, Handshake } from "lucide-react";
+import { whatsappLink } from "@/lib/whatsapp";
+import { trackWhatsApp, trackCta } from "@/lib/tracking";
 
 const HeroSection = () => {
   const { t } = useTranslation();
@@ -72,9 +74,10 @@ const HeroSection = () => {
               <span className="text-lg group-hover:translate-x-1 transition-transform">→</span>
             </a>
             <a
-              href="https://wa.me/5511963166915?text=Ol%C3%A1%2C%20gostaria%20de%20falar%20com%20um%20especialista%20em%20TI."
+              href={whatsappLink(t("hero.whatsappMessage", { defaultValue: "Olá, gostaria de falar com um especialista em TI." }))}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => trackWhatsApp("home-hero", "especialista")}
               className="inline-flex items-center justify-center gap-2 border border-gunmetal-foreground/30 text-gunmetal-foreground px-6 md:px-8 py-3.5 md:py-4 font-mono text-sm font-bold uppercase tracking-wider hover:border-primary hover:text-primary transition-all"
             >
               {t("hero.ctaWhatsapp")}

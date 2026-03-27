@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ErrorBlock } from "@/components/ui/ErrorBlock";
 import { ensurePortalAccess, fetchPurchaseInfo, type ClientCredentials, type PurchaseInfo } from "@/lib/postPurchase";
 import { logAndPersistError, type WmtiError } from "@/lib/errorLogger";
+import { whatsappLink } from "@/lib/whatsapp";
 
 const AtivacaoAcessoPage = () => {
   const [searchParams] = useSearchParams();
@@ -22,8 +23,7 @@ const AtivacaoAcessoPage = () => {
   const [copied, setCopied] = useState<"email" | "password" | "">("");
 
   const whatsappHref = useMemo(() => {
-    const text = encodeURIComponent("Olá! Preciso de ajuda com a liberação do meu acesso ao portal do cliente.");
-    return `https://wa.me/5511963166915?text=${text}`;
+    return whatsappLink("Olá! Preciso de ajuda com a liberação do meu acesso ao portal do cliente.");
   }, []);
 
   const copyValue = async (value: string, field: "email" | "password") => {

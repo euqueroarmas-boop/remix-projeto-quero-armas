@@ -5,6 +5,8 @@ import { motion } from "framer-motion";
 import { ArrowRight, Send, Loader2, MessageCircle, Mail, MapPin, Phone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { whatsappLink, WHATSAPP_BASE_URL } from "@/lib/whatsapp";
+import { trackWhatsApp, track } from "@/lib/tracking";
 
 const ContactSection = () => {
   const { t } = useTranslation();
@@ -65,10 +67,12 @@ const ContactSection = () => {
 
       toast({ title: t("contact.sucesso") });
 
-      const text = `*Solicitação de Orçamento — WMTi*%0A%0A*Nome:* ${encodeURIComponent(form.nome)}%0A*Email:* ${encodeURIComponent(form.email)}%0A*Telefone:* ${encodeURIComponent(form.telefone || "Não informado")}%0A*Empresa:* ${encodeURIComponent(form.empresa || "Não informada")}%0A*Interesse:* ${encodeURIComponent(form.interesse || "Não informado")}%0A%0A*Mensagem:*%0A${encodeURIComponent(form.mensagem)}`;
+      const waMsg = `*Solicitação de Orçamento — WMTi*\n\n*Nome:* ${form.nome}\n*Email:* ${form.email}\n*Telefone:* ${form.telefone || "Não informado"}\n*Empresa:* ${form.empresa || "Não informada"}\n*Interesse:* ${form.interesse || "Não informado"}\n\n*Mensagem:*\n${form.mensagem}`;
 
+      track("form_submit", "contact-form", { interesse: form.interesse });
       setTimeout(() => {
-        window.open(`https://wa.me/5511963166915?text=${text}`, "_blank");
+        trackWhatsApp("contact-form", "orcamento");
+        window.open(whatsappLink(waMsg), "_blank");
       }, 1000);
 
       setForm({ nome: "", email: "", telefone: "", empresa: "", interesse: "", mensagem: "" });
@@ -80,7 +84,8 @@ const ContactSection = () => {
   };
 
   const handleWhatsApp = () => {
-    window.open("https://wa.me/5511963166915?text=Ol%C3%A1%2C%20gostaria%20de%20solicitar%20um%20or%C3%A7amento.", "_blank");
+    trackWhatsApp("contact-section", "orcamento");
+    window.open(whatsappLink(t("contact.whatsappMessage", { defaultValue: "Olá, gostaria de solicitar um orçamento." })), "_blank");
   };
 
   return (
@@ -120,7 +125,7 @@ const ContactSection = () => {
                   contato@wmti.com.br
                 </span>
               </a>
-              <a href="https://wa.me/5511963166915" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 group">
+              <a href={WHATSAPP_BASE_URL} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 group">
                 <span className="flex items-center justify-center w-9 h-9 rounded-md bg-primary/10 text-primary group-hover:bg-primary/20 transition-colors">
                   <Phone size={16} />
                 </span>
