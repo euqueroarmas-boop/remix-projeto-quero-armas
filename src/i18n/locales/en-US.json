@@ -2450,5 +2450,72 @@
       "Web Development",
       "Other"
     ]
+  },
+  "servicesSection": {
+    "tag": "Services",
+    "title1": "Systems engineering,",
+    "title2": "not generic consulting.",
+    "imageAlt": "IT technician working on server rack in data center",
+    "imageBadge": "CERTIFIED TEAM // DELL & MICROSOFT",
+    "items": {
+      "dell": {
+        "tag": "DELL POWEREDGE",
+        "title": "Server Infrastructure",
+        "description": "We deploy and manage Dell PowerEdge R750, R650 and T550 servers. RAID configuration, iDRAC, failover clusters with Hyper-V and high availability for production environments.",
+        "specs": ["PowerEdge R750xs / R650xs", "RAID H755 / H355", "iDRAC9 Enterprise", "Hyper-V Clustering"]
+      },
+      "m365": {
+        "tag": "MICROSOFT 365",
+        "title": "Microsoft & Azure Ecosystem",
+        "description": "Complete migration to Microsoft 365, Azure AD configuration, Exchange Online, SharePoint and Teams. Hybrid environments with on-premises Active Directory synchronized via Azure AD Connect.",
+        "specs": ["Microsoft 365 Business", "Azure AD Connect", "Exchange Online", "Windows Server 2022"]
+      },
+      "pfsense": {
+        "tag": "PFSENSE",
+        "title": "Perimeter Security",
+        "description": "pfSense firewalls on dedicated appliances with IPsec/OpenVPN VPN, IDS/IPS with Suricata, content filtering, load balancing and WAN link failover. Security without compromise.",
+        "specs": ["VPN IPsec / OpenVPN", "Suricata IDS/IPS", "HAProxy Load Balancer", "Multi-WAN Failover"]
+      },
+      "backup": {
+        "tag": "BACKUP",
+        "title": "Backup & Recovery",
+        "description": "3-2-1 backup strategies with Veeam Backup & Replication on Dell PowerVault storage. Periodic restore tests and defined RPO/RTO for each critical workload.",
+        "specs": ["Veeam B&R v12", "Dell PowerVault ME5", "Backup 3-2-1", "Automated DR"]
+      },
+      "redes": {
+        "tag": "NETWORKS",
+        "title": "Network Infrastructure",
+        "description": "Dell managed switches, segmented VLANs, configured QoS and SNMP monitoring. Cat6A structured cabling and fiber optics for high-performance environments.",
+        "specs": ["Dell Networking N-Series", "VLAN / QoS / STP", "Cat6A / Fiber Optics", "Zabbix Monitoring"]
+      },
+      "suporte": {
+        "tag": "SUPPORT",
+        "title": "Management & Monitoring",
+        "description": "In-house NOC with 24/7 monitoring via Zabbix and Grafana. SLA defined by criticality, remote and on-site support with Dell and Microsoft certified technical team.",
+        "specs": ["NOC 24/7", "Zabbix + Grafana", "SLA by Criticality", "Dell & MS Certified"]
+      }
+    }
+  },
+  "infraSection": {
+    "imageAlt": "Dell PowerEdge servers in data center rack with orange LEDs",
+    "title1": "Hardware that doesn't fail.",
+    "titleHighlight": "R750xs.",
+    "description": "2U rack servers with 4th generation Intel Xeon processors, designed for virtualization workloads, databases, and mission-critical applications.",
+    "detailAlt": "Dell PowerEdge server detail with status LEDs",
+    "cta": "View full infrastructure",
+    "specs": {
+      "processor": { "label": "Processor", "value": "Intel Xeon Scalable 4th Gen" },
+      "memory": { "label": "Memory", "value": "Up to 2TB DDR5 RDIMM" },
+      "storage": { "label": "Storage", "value": "24x NVMe / SAS / SATA" },
+      "network": { "label": "Network", "value": "2x 25GbE + OCP 3.0" },
+      "management": { "label": "Management", "value": "iDRAC9 Enterprise" },
+      "redundancy": { "label": "Redundancy", "value": "PSU Hot-Plug 2+1" }
+    }
+  },
+  "hero": {
+    "imageAlt": "Corporate IT infrastructure with Dell PowerEdge servers"
+  },
+  "service": {
+    "inCity": "in {{city}}"
   }
 }
