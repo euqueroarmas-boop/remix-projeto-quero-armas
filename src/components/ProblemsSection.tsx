@@ -13,6 +13,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import slowComputer from "@/assets/slow-computer.webp";
+import { openWhatsApp } from "@/lib/whatsapp";
 
 
 const problemIcons = [Thermometer, HardDrive, Bug, Wifi, Clock, ShieldX, Cpu, AlertTriangle];
@@ -113,7 +114,7 @@ const ProblemsSection = () => {
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-4">
               <button
-                onClick={() => { const { openWhatsApp } = require("@/lib/whatsapp"); openWhatsApp({ intent: "diagnosis" }); }}
+                onClick={() => openWhatsApp({ intent: "diagnosis" })}
                 className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 md:px-8 py-3 md:py-4 font-mono text-xs md:text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all w-full sm:w-auto justify-center"
               >
                 {t("problems.ctaDiagnostico")}
