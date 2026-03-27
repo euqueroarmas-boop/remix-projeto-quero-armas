@@ -319,5 +319,11 @@
     "projeto": "Project",
     "calcular": "Calculate",
     "locacaoShort": "Leasing"
+  },
+  "metrics": {
+    "years": "Years keeping businesses running",
+    "companies": "Companies protected",
+    "uptime": "Uptime guaranteed",
+    "support": "Someone watching your IT"
   }
 }

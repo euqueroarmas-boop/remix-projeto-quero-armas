@@ -514,12 +514,16 @@ const Navbar = () => {
                 {t("nav.areaCliente")}
               </Link>
 
+              <div className="flex items-center gap-4 mt-4">
+                <LanguageSwitcher />
+              </div>
+
               <a
                 href="https://wa.me/5511963166915?text=Ol%C3%A1%2C%20gostaria%20de%20falar%20com%20um%20especialista%20em%20TI."
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => setOpen(false)}
-                className="mt-4 inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-6 py-4 font-mono text-sm font-bold uppercase tracking-wider"
+                className="mt-2 inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-6 py-4 font-mono text-sm font-bold uppercase tracking-wider"
               >
                 {t("nav.falarEspecialista")}
               </a>

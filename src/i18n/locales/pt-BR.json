@@ -319,5 +319,11 @@
     "projeto": "Projeto",
     "calcular": "Calcular",
     "locacaoShort": "Locação"
+  },
+  "metrics": {
+    "years": "Anos sem parar empresas",
+    "companies": "Empresas protegidas",
+    "uptime": "De tempo sem quedas",
+    "support": "Alguém cuidando da sua TI"
   }
 }

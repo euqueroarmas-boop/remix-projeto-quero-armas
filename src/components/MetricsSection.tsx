@@ -1,12 +1,6 @@
 import { motion, useInView } from "framer-motion";
 import { useRef, useEffect, useState } from "react";
-
-const metrics = [
-  { value: 15, suffix: "+", label: "Anos sem parar empresas" },
-  { value: 150, suffix: "+", label: "Empresas protegidas" },
-  { value: 99.9, suffix: "%", label: "De tempo sem quedas" },
-  { value: 24, suffix: "/7", label: "Alguém cuidando da sua TI" },
-];
+import { useTranslation } from "react-i18next";
 
 function AnimatedCounter({ value, suffix, duration = 2 }: { value: number; suffix: string; duration?: number }) {
   const [count, setCount] = useState(0);
@@ -39,13 +33,21 @@ function AnimatedCounter({ value, suffix, duration = 2 }: { value: number; suffi
 }
 
 const MetricsSection = () => {
+  const { t } = useTranslation();
+  const metrics = [
+    { value: 15, suffix: "+", labelKey: "metrics.years" },
+    { value: 150, suffix: "+", labelKey: "metrics.companies" },
+    { value: 99.9, suffix: "%", labelKey: "metrics.uptime" },
+    { value: 24, suffix: "/7", labelKey: "metrics.support" },
+  ];
+
   return (
     <section className="py-16 md:py-20 bg-secondary">
       <div className="container">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-4">
           {metrics.map((m, i) => (
             <motion.div
-              key={m.label}
+              key={m.labelKey}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -54,7 +56,7 @@ const MetricsSection = () => {
             >
               <AnimatedCounter value={m.value} suffix={m.suffix} />
               <p className="font-mono text-xs md:text-sm text-muted-foreground tracking-wider uppercase mt-2">
-                {m.label}
+                {t(m.labelKey)}
               </p>
             </motion.div>
           ))}
