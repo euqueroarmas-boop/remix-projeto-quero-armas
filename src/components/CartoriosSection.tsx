@@ -78,7 +78,10 @@ const classes = [
 
 const CartoriosSection = () => {
   const { t } = useTranslation();
-  const translatedRequirements = t("custom.cartoriosHome.requirements", { returnObjects: true }) as { tag: string; title: string; description: string; compliance: string }[];
+  const translatedRequirements = (t("custom.cartoriosHome.requirements", { returnObjects: true }) as { tag: string; title: string; description: string; compliance: string }[]).map((item, index) => ({
+    ...item,
+    icon: requirements[index].icon,
+  }));
   const translatedClasses = t("custom.cartoriosHome.classes", { returnObjects: true }) as { name: string; revenue: string; description: string; percentage: string }[];
   const translatedStats = t("custom.cartoriosHome.stats", { returnObjects: true }) as { value: string; label: string }[];
 
@@ -116,7 +119,7 @@ const CartoriosSection = () => {
                 <br />
                 <span className="text-primary">{t("custom.cartoriosHome.heroHighlight")}</span>
                 <br />
-                {t("custom.cartoriosHome.heroTitle2").replaceAll("\n", "")}
+                {t("custom.cartoriosHome.heroTitle2").replace(/\n/g, "")}
               </h2>
               <p className="font-body text-lg md:text-xl text-gunmetal-foreground/70 max-w-2xl leading-relaxed mb-8">
                 {t("custom.cartoriosHome.heroDescription")}
