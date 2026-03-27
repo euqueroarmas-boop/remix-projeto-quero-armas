@@ -48,7 +48,7 @@ const fadeIn = {
 };
 
 /* ── Micro-CTA reusable block ── */
-const MicroCta = ({ href, whatsappMessage, cityName }: { href: string; whatsappMessage: string; cityName?: string }) => {
+const MicroCta = ({ href, cityName, pageTitle }: { href: string; whatsappMessage: string; cityName?: string; pageTitle?: string }) => {
   const { t } = useTranslation();
   return (
     <motion.div {...fadeIn} className="py-8 md:py-10">
@@ -68,7 +68,7 @@ const MicroCta = ({ href, whatsappMessage, cityName }: { href: string; whatsappM
               {t("service.microCtaBtn")}
             </Link>
             <a
-              href={whatsappLink(whatsappMessage)}
+              href={whatsappLink(buildContextualWhatsAppMessage({ pageTitle, intent: "specialist" }))}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 border border-border text-foreground px-5 py-3 font-mono text-xs uppercase tracking-wider hover:border-primary hover:text-primary transition-all rounded"
