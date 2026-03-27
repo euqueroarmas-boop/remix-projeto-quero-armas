@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, ChevronUp } from "lucide-react";
 import { getCtaItemsForPath } from "@/lib/ctaContext";
 import { whatsappLink } from "@/lib/whatsapp";
+import { trackCta, trackWhatsApp } from "@/lib/tracking";
 
 /** Pages where the CTA bar should NOT appear */
 const HIDDEN_ROUTES = [
@@ -41,12 +42,14 @@ const FloatingCtaBar = () => {
 
   if (isHidden || !visible || dismissed || ctaItems.length === 0) return null;
 
-  const handleClick = (href: string) => {
+  const handleClick = (href: string, label: string) => {
     if (href.startsWith("whatsapp:")) {
       const msg = href.replace("whatsapp:", "");
+      trackWhatsApp(location.pathname, msg);
       window.open(whatsappLink(msg), "_blank", "noopener,noreferrer");
       return;
     }
+    trackCta(label, href);
     if (href === "contratar") {
       navigate(`/contratar${location.pathname}`);
       return;
@@ -69,7 +72,7 @@ const FloatingCtaBar = () => {
             {ctaItems.map((item) => (
               <button
                 key={item.id}
-                onClick={() => handleClick(item.href)}
+                onClick={() => handleClick(item.href, item.shortLabel)}
                 className={`flex-1 flex flex-col items-center gap-1 rounded-lg py-2 px-1 text-[10px] font-bold uppercase tracking-wide transition-all ${item.color}`}
               >
                 <item.icon size={18} />
@@ -109,7 +112,7 @@ const FloatingCtaBar = () => {
                   initial={{ x: 40, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
                   transition={{ delay: i * 0.05 }}
-                  onClick={() => handleClick(item.href)}
+                  onClick={() => handleClick(item.href, item.label)}
                   className={`group flex items-center gap-3 rounded-lg shadow-lg px-4 py-3 font-mono text-xs font-bold uppercase tracking-wider transition-all ${item.color}`}
                 >
                   <item.icon size={18} className="shrink-0" />
