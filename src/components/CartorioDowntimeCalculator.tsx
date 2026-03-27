@@ -150,7 +150,7 @@ const CartorioDowntimeCalculator = () => {
                 <Button
                   size="lg"
                   className="font-bold btn-glow"
-                  onClick={() => openWhatsApp({ pageTitle: t("custom.cartorioCalc.title"), intent: "diagnosis", detail: `Prejuízo estimado: R$${totalLoss.toLocaleString("pt-BR")} por ${downtimeHours}h parado` })}
+                  onClick={() => openWhatsApp({ pageTitle: t("custom.cartorioCalc.title"), intent: "diagnosis", detail: `Prejuízo estimado: R$${result.totalLoss.toLocaleString("pt-BR")} por ${downtimeHours}h parado` })}
                 >
                   {t("custom.cartorioCalc.cta")}
                 </Button>
