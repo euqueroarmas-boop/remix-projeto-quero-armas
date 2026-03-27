@@ -303,7 +303,7 @@ const Navbar = () => {
           onClick={() => setIsOpen(!isOpen)}
           className={`${baseClass} inline-flex items-center gap-2 w-full text-left`}
         >
-          {link.label}
+          {t(link.label)}
           <ChevronDown size={14} className={`transition-transform flex-shrink-0 ${isOpen ? "rotate-180" : ""}`} />
         </button>
         <AnimatePresence>
