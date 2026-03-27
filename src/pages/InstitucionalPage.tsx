@@ -33,7 +33,7 @@ const InstitucionalPage = () => {
       <SeoHead
         title="Institucional | WMTi Tecnologia da Informação"
         description="Conheça a missão, visão e valores da WMTi, empresa especializada em infraestrutura de TI, segurança digital e soluções tecnológicas para empresas."
-        canonical="https://wmti.com.br/institucional"
+        canonical="https://www.wmti.com.br/institucional"
       />
       <Navbar />
 

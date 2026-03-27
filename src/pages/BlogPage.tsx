@@ -131,7 +131,7 @@ const BlogPage = () => {
       <SeoHead
         title="Blog | WMTi Tecnologia da Informação"
         description="Artigos sobre TI corporativa, servidores Dell, Microsoft 365, segurança de rede, firewall pfSense e infraestrutura para empresas."
-        canonical="https://wmti.com.br/blog"
+        canonical="https://www.wmti.com.br/blog"
       />
       <Navbar />
 
