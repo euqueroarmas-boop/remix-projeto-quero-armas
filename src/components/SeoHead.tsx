@@ -11,6 +11,8 @@ interface SeoHeadProps {
   ogType?: string;
 }
 
+const OG_FALLBACK = "https://www.wmti.com.br/og-image.jpg";
+
 /**
  * Sets document head meta tags for SEO.
  * Manages title, description, canonical, OG, Twitter, and robots.
@@ -22,7 +24,7 @@ const SeoHead = ({
   noindex = false,
   ogTitle,
   ogDescription,
-  ogImage = "https://www.wmti.com.br/wmti-preview.jpg",
+  ogImage,
   ogType = "website",
 }: SeoHeadProps) => {
   useEffect(() => {
@@ -38,6 +40,21 @@ const SeoHead = ({
       }
       el.setAttribute(attr, value);
     };
+
+    // Resolve OG image: use provided, absolutize relative paths, fallback
+    const resolvedImage = (() => {
+      if (!ogImage) return OG_FALLBACK;
+      if (ogImage.startsWith("http")) return ogImage;
+      // Vite-bundled assets start with /assets/ or data:
+      if (ogImage.startsWith("/assets/") || ogImage.startsWith("data:")) {
+        return `https://www.wmti.com.br${ogImage}`;
+      }
+      // Public folder paths
+      if (ogImage.startsWith("/")) return `https://www.wmti.com.br${ogImage}`;
+      return OG_FALLBACK;
+    })();
+
+    const resolvedUrl = canonical || `https://www.wmti.com.br${window.location.pathname}`;
 
     // Basic meta
     setMeta('meta[name="description"]', "content", description);
@@ -55,20 +72,25 @@ const SeoHead = ({
       }
       link.setAttribute("href", canonical);
     } else if (link) {
-      link.setAttribute("href", window.location.origin + window.location.pathname);
+      link.setAttribute("href", resolvedUrl);
     }
 
     // Open Graph
     setMeta('meta[property="og:title"]', "content", ogTitle || title);
     setMeta('meta[property="og:description"]', "content", ogDescription || description);
-    setMeta('meta[property="og:image"]', "content", ogImage);
+    setMeta('meta[property="og:image"]', "content", resolvedImage);
+    setMeta('meta[property="og:image:width"]', "content", "1200");
+    setMeta('meta[property="og:image:height"]', "content", "630");
     setMeta('meta[property="og:type"]', "content", ogType);
-    setMeta('meta[property="og:url"]', "content", canonical || window.location.origin + window.location.pathname);
+    setMeta('meta[property="og:url"]', "content", resolvedUrl);
+    setMeta('meta[property="og:site_name"]', "content", "WMTi Tecnologia da Informação");
+    setMeta('meta[property="og:locale"]', "content", document.documentElement.lang || "pt_BR");
 
-    // Twitter
+    // Twitter Card
+    setMeta('meta[name="twitter:card"]', "content", "summary_large_image");
     setMeta('meta[name="twitter:title"]', "content", ogTitle || title);
     setMeta('meta[name="twitter:description"]', "content", ogDescription || description);
-    setMeta('meta[name="twitter:image"]', "content", ogImage);
+    setMeta('meta[name="twitter:image"]', "content", resolvedImage);
   }, [title, description, canonical, noindex, ogTitle, ogDescription, ogImage, ogType]);
 
   return null;

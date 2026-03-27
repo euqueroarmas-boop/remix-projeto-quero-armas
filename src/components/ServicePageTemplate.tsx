@@ -225,6 +225,7 @@ const ServicePageTemplate = ({
         description={metaDescription}
         canonical={canonicalUrl}
         noindex={!shouldIndex}
+        ogImage={heroImage}
       />
       <JsonLd data={buildFaqSchema(faq)} />
       <JsonLd data={buildBreadcrumbSchema(breadcrumbItems)} />

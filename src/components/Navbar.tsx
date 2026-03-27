@@ -477,7 +477,8 @@ const Navbar = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="lg:hidden fixed top-16 left-0 right-0 bottom-0 z-[54] bg-black/40"
+              className="lg:hidden fixed top-16 left-0 right-0 bottom-0 z-[54]"
+              style={{ background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)" }}
               onClick={closeMobileMenu}
               aria-label={t("nav.fecharMenu")}
             />
