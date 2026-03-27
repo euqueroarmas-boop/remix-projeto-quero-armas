@@ -20,12 +20,14 @@ const LanguageSwitcher = ({ compact = false }: LanguageSwitcherProps) => {
       title={current === "pt-BR" ? "Switch to English" : "Mudar para Português"}
     >
       <span className="inline-flex items-center gap-1.5 leading-none font-mono">
-        <span className={`inline-flex items-center gap-0.5 ${current === "pt-BR" ? "text-foreground font-semibold" : "text-muted-foreground/50"}`}>
-          🇧🇷 PT
+        <span className={`inline-flex items-center gap-1 ${current === "pt-BR" ? "text-foreground font-semibold" : "text-muted-foreground/50"}`}>
+          <img src="/flags/br.svg" alt="BR" className="w-4 h-3 rounded-[2px] object-cover" />
+          PT
         </span>
         <span className="text-muted-foreground/40">/</span>
-        <span className={`inline-flex items-center gap-0.5 ${current === "en-US" ? "text-foreground font-semibold" : "text-muted-foreground/50"}`}>
-          🇺🇸 EN
+        <span className={`inline-flex items-center gap-1 ${current === "en-US" ? "text-foreground font-semibold" : "text-muted-foreground/50"}`}>
+          <img src="/flags/us.svg" alt="US" className="w-4 h-3 rounded-[2px] object-cover" />
+          EN
         </span>
       </span>
     </button>

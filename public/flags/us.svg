@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480">
+  <path fill="#bd3d44" d="M0 0h640v37h-640zm0 73.9h640v37h-640zm0 73.8h640v37h-640zm0 73.8h640v37h-640zm0 74h640v36.8h-640zm0 73.7h640v37h-640zm0 73.9h640v37h-640z"/>
+  <path fill="#fff" d="M0 37h640v36.9h-640zm0 73.8h640v36.9h-640zm0 73.8h640v37h-640zm0 73.9h640v37h-640zm0 73.8h640v37h-640zm0 73.8h640v37h-640z"/>
+  <path fill="#192f5d" d="M0 0h256v258.5h-256z"/>
+  <g fill="#fff">
+    <g id="s18"><g id="s9"><g id="s5"><g id="s4"><path id="s" d="M25 7.5l1.6 5h5.2l-4.2 3 1.6 5-4.2-3-4.2 3 1.6-5-4.2-3h5.2z"/><use href="#s" y="42"/></g><use href="#s4" y="84"/><use href="#s" y="168"/></g><use href="#s4" x="42" y="21"/><use href="#s" x="42" y="105"/><use href="#s4" x="42" y="147"/></g><use href="#s9" x="84"/></g><use href="#s18" x="168"/><use href="#s9" x="336"/><use href="#s" x="168" y="189"/><use href="#s" x="210" y="189"/><use href="#s" x="252" y="189"/><use href="#s" x="294" y="189"/><use href="#s" x="168" y="231"/><use href="#s" x="210" y="231"/>
+  </g>
+</svg>
