@@ -162,10 +162,10 @@ const AtivacaoAcessoPage = () => {
                   <Button variant="outline" onClick={() => copyValue(credentials.email, "email")} className="w-full">
                     Copiar login
                   </Button>
-                  <a href={whatsappHref} target="_blank" rel="noreferrer" className="inline-flex h-10 items-center justify-center rounded-md border border-border px-4 text-sm font-medium hover:bg-muted">
+                  <button onClick={handleWhatsAppHelp} className="inline-flex h-10 items-center justify-center rounded-md border border-border px-4 text-sm font-medium hover:bg-muted">
                     <MessageCircle className="mr-2 h-4 w-4" />
                     WhatsApp
-                  </a>
+                  </button>
                 </div>
               </div>
             ) : null}
