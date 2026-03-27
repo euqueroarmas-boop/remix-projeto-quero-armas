@@ -10,6 +10,7 @@ import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import SeoHead from "@/components/SeoHead";
 import JsonLd, { buildFaqSchema, buildBreadcrumbSchema, buildServiceSchema } from "@/components/JsonLd";
+import { whatsappLink } from "@/lib/whatsapp";
 
 interface FAQ {
   question: string;
@@ -68,7 +69,7 @@ const MicroCta = ({ href, whatsappMessage, cityName }: { href: string; whatsappM
               {t("service.microCtaBtn")}
             </Link>
             <a
-              href={`https://wa.me/5511963166915?text=${encodeURIComponent(whatsappMessage)}`}
+              href={whatsappLink(whatsappMessage)}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 border border-border text-foreground px-5 py-3 font-mono text-xs uppercase tracking-wider hover:border-primary hover:text-primary transition-all rounded"
@@ -136,7 +137,7 @@ const AvoidanceBlock = ({ cityName }: { cityName?: string }) => {
 };
 
 /* ── Urgency block ── */
-const UrgencyBlock = ({ whatsappMessage, currentPath, cityName }: { whatsappMessage: string; currentPath: string; cityName?: string }) => {
+const UrgencyBlock = ({ whatsappMessage, cityName }: { whatsappMessage: string; currentPath: string; cityName?: string }) => {
   const { t } = useTranslation();
   return (
     <section className="py-12 md:py-16 bg-destructive/5 border-y border-destructive/10">
@@ -154,7 +155,7 @@ const UrgencyBlock = ({ whatsappMessage, currentPath, cityName }: { whatsappMess
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <a
-              href={`https://wa.me/5511963166915?text=${encodeURIComponent(whatsappMessage)}`}
+              href={whatsappLink(whatsappMessage)}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all btn-glow rounded"
@@ -163,7 +164,7 @@ const UrgencyBlock = ({ whatsappMessage, currentPath, cityName }: { whatsappMess
               {t("service.urgencyCta")}
             </a>
             <Link
-              to={`/contratar/${currentPath.replace(/^\//, "")}`}
+              to="/orcamento-ti"
               className="inline-flex items-center gap-2 border border-border text-foreground px-8 py-4 font-mono text-sm uppercase tracking-wider hover:border-primary hover:text-primary transition-all rounded"
             >
               {t("service.urgencyCtaContract")}
