@@ -81,7 +81,7 @@ const serviceSummary = [
   { icon: HardDrive, labelKey: "services.dell", href: "/servidor-dell-poweredge-jacarei" },
   { icon: Cloud, labelKey: "services.microsoft365", href: "/microsoft-365-empresas-jacarei" },
   { icon: Shield, labelKey: "services.firewall", href: "/firewall-pfsense-jacarei" },
-  { icon: Lock, label: "Segurança da Informação", href: "/seguranca-informacao-empresarial" },
+  { icon: Lock, labelKey: "cta.segurancaInfo", href: "/seguranca-informacao-empresarial" },
 ];
 
 export const HomeServicos = () => {
