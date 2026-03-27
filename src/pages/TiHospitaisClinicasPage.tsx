@@ -49,7 +49,7 @@ const TiHospitaisClinicasPage = () => {
       {/* Hero */}
       <section className="relative pt-14 md:pt-16 overflow-hidden">
         <div className="absolute inset-0">
-          <img src={hospitalTech} alt={t(`${k}.imgAlt`)} className="w-full h-full object-cover" />
+          <img src={hospitalTech} alt={t(`${k}.imgAlt`)} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).src = "/placeholder.svg"; }} />
           <div className="absolute inset-0 bg-secondary/90" />
         </div>
         <div className="relative container py-20 md:py-32">
