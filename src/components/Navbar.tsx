@@ -367,10 +367,8 @@ const Navbar = () => {
     <nav
       className="fixed top-0 left-0 right-0 z-50 border-b border-white/[0.08]"
       style={{
-        background: "rgba(10, 18, 28, 0.65)",
-        backdropFilter: "blur(18px) saturate(160%)",
-        WebkitBackdropFilter: "blur(18px) saturate(160%)",
-        boxShadow: "0 4px 30px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.06)",
+        background: "#050505",
+        boxShadow: "0 4px 30px rgba(0,0,0,0.25)",
       }}
     >
       {/* Single header container — fixed height, flex center */}
@@ -478,7 +476,7 @@ const Navbar = () => {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
               className="lg:hidden fixed top-16 left-0 right-0 bottom-0 z-[54]"
-              style={{ background: "rgba(0,0,0,0.6)" }}
+              style={{ background: "#050505" }}
               onClick={closeMobileMenu}
               aria-label={t("nav.fecharMenu")}
             />
@@ -487,9 +485,9 @@ const Navbar = () => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.25, ease: "easeOut" }}
-              className="lg:hidden fixed top-16 left-0 w-full h-[calc(100dvh-4rem)] z-[55] overflow-y-auto border-t border-white/[0.06]"
+               className="lg:hidden fixed top-16 left-0 w-full h-[calc(100dvh-4rem)] z-[55] overflow-y-auto border-t border-white/[0.06]"
               style={{
-                background: "rgba(7, 10, 15, 0.97)",
+                background: "#050505",
               }}
             >
               <div className="container flex flex-col gap-4 py-6 pb-12">
