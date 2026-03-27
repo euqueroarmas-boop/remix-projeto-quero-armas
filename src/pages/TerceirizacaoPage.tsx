@@ -149,15 +149,13 @@ const TerceirizacaoPage = () => {
             <p className="text-muted-foreground mb-8 leading-relaxed">
               {t("custom.outsourcing.finalDesc")}
             </p>
-            <a
-              href={`https://wa.me/${whatsappNumber}?text=${whatsappMsg}`}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              onClick={() => openWhatsApp({ pageTitle: "Terceirização de TI", intent: "proposal" })}
               className="inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground font-mono text-sm uppercase tracking-wider px-8 py-4 hover:bg-primary/90 transition-colors"
             >
               {t("custom.outsourcing.finalCta")}
               <ArrowRight size={16} />
-            </a>
+            </button>
           </motion.div>
         </div>
       </section>

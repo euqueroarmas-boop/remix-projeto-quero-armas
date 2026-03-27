@@ -271,14 +271,12 @@ const CartoriosSection = () => {
               <p className="font-body text-gunmetal-foreground/60 max-w-xl mx-auto mb-8">
                  {t("custom.cartoriosHome.finalDescription")}
               </p>
-              <a
-                href="https://wa.me/5511963166915?text=Olá! Gostaria de solicitar um diagnóstico gratuito do meu cartório para adequação ao Provimento 213 do CNJ."
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                onClick={() => openWhatsApp({ pageTitle: "Diagnóstico Cartório Provimento 213", intent: "diagnosis" })}
                 className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
               >
                  {t("custom.cartoriosHome.finalCta")}
-              </a>
+              </button>
             </motion.div>
           </div>
         </div>

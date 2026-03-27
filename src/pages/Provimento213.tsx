@@ -56,9 +56,9 @@ const Provimento213 = () => {
               {t(`${k}.heroDescription`)}
             </p>
             <div className="flex flex-wrap gap-4 mb-12">
-              <a href={`https://wa.me/5511963166915?text=${encodeURIComponent(t(`${k}.whatsappMessage`))}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all">
+              <button onClick={() => openWhatsApp({ pageTitle: "Provimento 213 CNJ", intent: "proposal" })} className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all">
                 <MessageCircle size={16} /> {t(`${k}.primaryCta`)}
-              </a>
+              </button>
               <a href="https://atos.cnj.jus.br/atos/detalhar/6734" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 border border-gunmetal-foreground/30 text-gunmetal-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:border-primary hover:text-primary transition-all">
                 {t(`${k}.secondaryCta`)}
               </a>
@@ -232,9 +232,9 @@ const Provimento213 = () => {
             </h2>
             <p className="font-body text-muted-foreground max-w-2xl mx-auto mb-8 leading-relaxed">{t(`${k}.finalDescription`)}</p>
             <div className="flex flex-wrap justify-center gap-4">
-              <a href={`https://wa.me/5511963166915?text=${encodeURIComponent(t(`${k}.finalWhatsappMessage`))}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all">
+              <button onClick={() => openWhatsApp({ pageTitle: "Provimento 213 CNJ", intent: "specialist" })} className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all">
                 <MessageCircle size={16} /> {t(`${k}.finalCta`)}
-              </a>
+              </button>
               <a href={`mailto:${t(`${k}.finalEmail`)}`} className="inline-flex items-center gap-2 border border-border text-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:border-primary hover:text-primary transition-all">
                 {t(`${k}.finalEmail`)}
               </a>
