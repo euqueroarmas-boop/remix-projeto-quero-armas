@@ -76,7 +76,7 @@ const FloatingCtaBar = () => {
               <button
                 key={item.id}
                 onClick={() => handleClick(item.href, item.shortLabel)}
-                className={`flex-1 flex flex-col items-center gap-1 rounded-lg py-2 px-1 text-[10px] font-bold uppercase tracking-wide transition-all ${item.color}`}
+                className={`flex-1 flex flex-col items-center gap-1 rounded-lg py-2 px-1 text-[10px] font-bold uppercase tracking-wide transition-all no-glow ${item.color}`}
               >
                 <item.icon size={18} />
                 {item.shortLabel}
