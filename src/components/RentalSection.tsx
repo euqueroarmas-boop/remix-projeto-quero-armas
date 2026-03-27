@@ -26,8 +26,8 @@ const RentalSection = () => {
         className="section-light"
       />
 
-      {/* Full content - desktop only */}
-      <div className="hidden md:block py-20 md:py-24">
+      {/* Full content */}
+      <div className="py-20 md:py-24">
         <div className="container">
           {/* Header */}
           <motion.div

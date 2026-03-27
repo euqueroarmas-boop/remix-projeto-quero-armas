@@ -96,8 +96,8 @@ const CartoriosSection = () => {
         className="section-dark"
       />
 
-      {/* Full content - desktop only */}
-      <div className="hidden md:block">
+      {/* Full content */}
+      <div>
         {/* Hero banner */}
         <div className="section-dark py-24 border-b-4 border-primary">
           <div className="container">

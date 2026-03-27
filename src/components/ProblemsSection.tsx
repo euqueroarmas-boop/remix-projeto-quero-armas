@@ -30,8 +30,8 @@ const ProblemsSection = () => {
         to="/servicos"
       />
 
-      {/* Full content - desktop only */}
-      <div className="hidden md:block py-20 md:py-24">
+      {/* Full content */}
+      <div className="py-20 md:py-24">
         <div className="container">
           {/* Hero with image */}
           <div className="grid lg:grid-cols-2 gap-8 md:gap-12 items-center mb-12 md:mb-16">

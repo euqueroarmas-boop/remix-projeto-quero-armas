@@ -26,8 +26,8 @@ const InfraSection = () => {
         className="section-dark"
       />
 
-      {/* Full content - desktop only */}
-      <div className="hidden md:block py-20 md:py-24">
+      {/* Full content */}
+      <div className="py-20 md:py-24">
         <div className="container">
           <div className="grid lg:grid-cols-12 gap-8 md:gap-16 items-start">
             {/* Left: Server image */}
