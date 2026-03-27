@@ -71,7 +71,7 @@ const RentalSection = () => {
                 >
                    {t("custom.rentalSection.heroOverlayCta")}
                   <ArrowRight size={16} />
-                </a>
+                </button>
               </div>
             </div>
           </motion.div>

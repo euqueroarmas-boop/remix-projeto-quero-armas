@@ -132,7 +132,7 @@ const ContactSection = () => {
                 <span className="font-mono text-sm text-muted-foreground group-hover:text-foreground transition-colors">
                   (11) 96316-6915
                 </span>
-              </a>
+              </button>
               <div className="flex items-start gap-3">
                 <span className="flex items-center justify-center w-9 h-9 rounded-md bg-primary/10 text-primary shrink-0">
                   <MapPin size={16} />
