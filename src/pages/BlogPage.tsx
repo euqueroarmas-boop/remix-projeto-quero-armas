@@ -8,7 +8,7 @@ import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import SeoHead from "@/components/SeoHead";
 import { blogPosts, blogCategories, type BlogCategory } from "@/data/blogPosts";
-import { useLocalizedContent } from "@/hooks/useLocalizedContent";
+import { useLocalizedBlogPosts, useLocalizedCategories } from "@/hooks/useBlogLocalized";
 
 export type { BlogPost } from "@/data/blogPosts";
 export { blogPosts } from "@/data/blogPosts";
@@ -18,8 +18,8 @@ const BlogPage = () => {
   const [activeCategory, setActiveCategory] = useState<BlogCategory | "Todos">("Todos");
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
-  const localizedPosts = useLocalizedContent(blogPosts);
-  const localizedCategories = useLocalizedContent(blogCategories);
+  const localizedPosts = useLocalizedBlogPosts(blogPosts);
+  const localizedCategories = useLocalizedCategories(blogCategories);
 
   const sorted = useMemo(
     () => [...localizedPosts].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
