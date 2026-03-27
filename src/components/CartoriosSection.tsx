@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ShieldCheck, HardDrive, Cloud, Server, Lock, Activity, FileCheck, AlertTriangle } from "lucide-react";
-
+import { openWhatsApp } from "@/lib/whatsapp";
 
 const requirements = [
   {
@@ -119,7 +119,7 @@ const CartoriosSection = () => {
 
               <div className="flex flex-wrap gap-4 mb-12">
                 <button
-                  onClick={() => { const { openWhatsApp } = require_wa(); openWhatsApp({ pageTitle: "Adequação Cartório Provimento 213", intent: "proposal" }); }}
+                  onClick={() => openWhatsApp({ pageTitle: "Adequação Cartório Provimento 213", intent: "proposal" })}
                   className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
                 >
                   <AlertTriangle size={16} />

@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { openWhatsApp } from "@/lib/whatsapp";
 
 const fadeIn = {
   initial: { opacity: 0, y: 24 },

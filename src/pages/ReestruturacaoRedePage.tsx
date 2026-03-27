@@ -15,6 +15,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SeoHead from "@/components/SeoHead";
 import JsonLd from "@/components/JsonLd";
+import { openWhatsApp } from "@/lib/whatsapp";
 import WizardStepWrapper from "@/components/orcamento/WizardStepWrapper";
 import QuickRegistrationForm, { type RegistrationData } from "@/components/orcamento/QuickRegistrationForm";
 import type { CustomerData } from "@/components/orcamento/CustomerDataForm";

@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { ErrorBlock } from "@/components/ui/ErrorBlock";
 import { downloadPdf } from "@/lib/pdfDownload";
 import { logAndPersistError, type WmtiError } from "@/lib/errorLogger";
+import { openWhatsAppRaw } from "@/lib/whatsapp";
 
 interface PurchaseData {
   serviceName: string;
