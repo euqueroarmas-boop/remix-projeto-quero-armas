@@ -62,10 +62,11 @@ const RentalSection = () => {
                 <h3 className="text-xl md:text-3xl text-foreground mb-3 md:mb-4">
                    {t("custom.rentalSection.heroOverlayTitle")}
                 </h3>
-                <a
-                  href={whatsappLink(buildContextualWhatsAppMessage({ pageTitle: t("custom.rentalSection.heroOverlayTitle"), intent: "proposal" }))}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  onClick={() => {
+                    trackWhatsApp("rental-hero", "proposta");
+                    openWhatsApp({ pageTitle: t("custom.rentalSection.heroOverlayTitle"), intent: "proposal" });
+                  }}
                   className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 font-mono text-xs md:text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
                 >
                    {t("custom.rentalSection.heroOverlayCta")}

@@ -125,7 +125,7 @@ const ContactSection = () => {
                   contato@wmti.com.br
                 </span>
               </a>
-              <a href={WHATSAPP_BASE_URL} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 group">
+              <button onClick={() => openWhatsApp({ intent: "general" })} className="flex items-center gap-3 group">
                 <span className="flex items-center justify-center w-9 h-9 rounded-md bg-primary/10 text-primary group-hover:bg-primary/20 transition-colors">
                   <Phone size={16} />
                 </span>

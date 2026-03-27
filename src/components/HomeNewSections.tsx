@@ -15,7 +15,7 @@ import {
   TrendingUp,
   ChevronDown,
 } from "lucide-react";
-import { whatsappLink, buildContextualWhatsAppMessage } from "@/lib/whatsapp";
+import { openWhatsApp } from "@/lib/whatsapp";
 import { trackWhatsApp } from "@/lib/tracking";
 import { useState } from "react";
 import type { LucideIcon } from "lucide-react";
