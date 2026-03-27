@@ -203,7 +203,7 @@ const Navbar = () => {
   }, [activeIndex, location.pathname, location.hash]);
 
   const handleAnchorClick = (anchorId: string) => {
-    setOpen(false);
+    closeMobileMenu();
     if (isHome) {
       const el = document.getElementById(anchorId);
       if (el) { el.scrollIntoView({ behavior: "smooth" }); return; }
@@ -343,7 +343,7 @@ const Navbar = () => {
                     <Link
                       key={item.href + item.label}
                       to={item.href}
-                      onClick={() => { setOpen(false); setIsOpen(false); }}
+                      onClick={() => { closeMobileMenu(); setIsOpen(false); }}
                       className={`flex items-center gap-4 py-3 px-4 transition-colors hover:bg-white/[0.04] ${
                         location.pathname === item.href ? "text-primary" : "text-muted-foreground hover:text-primary"
                       }`}
@@ -398,7 +398,6 @@ const Navbar = () => {
               <Link
                 key={link.label}
                 to={href}
-                ref={(el) => { linkRefs.current[i] = el; }}
                 className={`${NAV_ITEM_CLASS} ${colorClass}`}
               >
                 {t(link.label)}
@@ -446,96 +445,106 @@ const Navbar = () => {
           <LanguageSwitcher />
         </div>
 
-        {/* Mobile header controls — inside the fixed navbar, no absolute/fixed positioning */}
+        {/* Mobile header controls — inside the fixed navbar */}
         <div className="lg:hidden flex items-center gap-2">
           <LanguageSwitcher compact />
           <button
-            onClick={() => setOpen(!open)}
+            onClick={toggleMobileMenu}
             className="text-foreground flex items-center justify-center h-10 w-10 rounded-full border border-border/70 bg-background/80 shadow-sm backdrop-blur-sm"
-            aria-label={t("nav.menuLabel")}
+            aria-label={menuOpen ? t("nav.fecharMenu") : t("nav.menuLabel")}
           >
-            {open ? <X size={20} /> : <Menu size={20} />}
+            {menuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
       </div>
 
-      {/* Mobile menu — opens BELOW the fixed header (top-16 = 64px header height) */}
       <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.2 }}
-            className="lg:hidden fixed top-16 left-0 right-0 bottom-0 bg-secondary z-[55] overflow-y-auto"
-          >
-            <div className="container flex flex-col gap-4 py-6 pb-12">
-              {navLinks.map((link) => {
-                const active = navLinks.indexOf(link) === activeIndex;
-                const baseClass = `font-mono text-base uppercase tracking-wider transition-colors py-2 ${
-                  active ? "text-primary border-l-2 border-primary pl-4" : "text-muted-foreground hover:text-primary"
-                }`;
+        {menuOpen && (
+          <>
+            <motion.button
+              type="button"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="lg:hidden fixed top-16 left-0 right-0 bottom-0 z-[54] bg-black/40"
+              onClick={closeMobileMenu}
+              aria-label={t("nav.fecharMenu")}
+            />
+            <motion.div
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="lg:hidden fixed top-16 left-0 w-full h-[calc(100dvh-4rem)] bg-secondary z-[55] overflow-y-auto"
+            >
+              <div className="container flex flex-col gap-4 py-6 pb-12">
+                {navLinks.map((link) => {
+                  const active = navLinks.indexOf(link) === activeIndex;
+                  const baseClass = `font-mono text-base uppercase tracking-wider transition-colors py-2 ${
+                    active ? "text-primary border-l-2 border-primary pl-4" : "text-muted-foreground hover:text-primary"
+                  }`;
 
-                if (link.isDropdown && link.label === "nav.segmentos") {
-                  return renderMobileMegaDropdown(segmentos, mobileSegOpen, setMobileSegOpen, link, active);
-                }
-                if (link.isDropdown && link.label === "nav.servicos") {
-                  return renderMobileMegaDropdown(servicos, mobileSvcOpen, setMobileSvcOpen, link, active);
-                }
+                  if (link.isDropdown && link.label === "nav.segmentos") {
+                    return renderMobileMegaDropdown(segmentos, mobileSegOpen, setMobileSegOpen, link, active);
+                  }
+                  if (link.isDropdown && link.label === "nav.servicos") {
+                    return renderMobileMegaDropdown(servicos, mobileSvcOpen, setMobileSvcOpen, link, active);
+                  }
 
-                const href = resolveHref(link, true);
-                return isRouteLink(href) ? (
-                  <Link key={link.label} to={href} onClick={() => setOpen(false)} className={baseClass}>
-                    {t(link.label)}
-                  </Link>
-                ) : (
-                  <button
-                    key={link.label}
-                    onClick={() => { setOpen(false); handleAnchorClick(link.href.replace("#", "")); }}
-                    className={`${baseClass} text-left`}
-                  >
-                    {t(link.label)}
-                  </button>
-                );
-              })}
-              <Link
-                to="/orcamento-ti"
-                onClick={() => setOpen(false)}
-                className="font-mono text-base uppercase tracking-wider transition-colors py-2 text-muted-foreground hover:text-primary text-left"
-              >
-                {t("nav.orcamento")}
-              </Link>
+                  const href = resolveHref(link, true);
+                  return isRouteLink(href) ? (
+                    <Link key={link.label} to={href} onClick={closeMobileMenu} className={baseClass}>
+                      {t(link.label)}
+                    </Link>
+                  ) : (
+                    <button
+                      key={link.label}
+                      onClick={() => { closeMobileMenu(); handleAnchorClick(link.href.replace("#", "")); }}
+                      className={`${baseClass} text-left`}
+                    >
+                      {t(link.label)}
+                    </button>
+                  );
+                })}
+                <Link
+                  to="/orcamento-ti"
+                  onClick={closeMobileMenu}
+                  className="font-mono text-base uppercase tracking-wider transition-colors py-2 text-muted-foreground hover:text-primary text-left"
+                >
+                  {t("nav.orcamento")}
+                </Link>
 
-              <a
-                href={WEBMAIL_URL}
-                target="_blank"
-                rel="noopener"
-                onClick={() => setOpen(false)}
-                className="font-mono text-base uppercase tracking-wider transition-colors py-2 text-muted-foreground hover:text-primary text-left"
-              >
-                {t("nav.webmail")}
-              </a>
+                <a
+                  href={WEBMAIL_URL}
+                  target="_blank"
+                  rel="noopener"
+                  onClick={closeMobileMenu}
+                  className="font-mono text-base uppercase tracking-wider transition-colors py-2 text-muted-foreground hover:text-primary text-left"
+                >
+                  {t("nav.webmail")}
+                </a>
 
-              <Link
-                to="/area-do-cliente"
-                onClick={() => setOpen(false)}
-                className={`font-mono text-base uppercase tracking-wider transition-colors py-2 text-left ${
-                  location.pathname === "/area-do-cliente"
-                    ? "text-red-500 border-l-2 border-red-500 pl-4"
-                    : "text-muted-foreground hover:text-red-500"
-                }`}
-              >
-                {t("nav.areaCliente")}
-              </Link>
+                <Link
+                  to="/area-do-cliente"
+                  onClick={closeMobileMenu}
+                  className={`font-mono text-base uppercase tracking-wider transition-colors py-2 text-left ${
+                    location.pathname === "/area-do-cliente"
+                      ? "text-red-500 border-l-2 border-red-500 pl-4"
+                      : "text-muted-foreground hover:text-red-500"
+                  }`}
+                >
+                  {t("nav.areaCliente")}
+                </Link>
 
-              <a
-                href={whatsappLink(t("nav.whatsappMessage", { defaultValue: "Olá, gostaria de falar com um especialista em TI." }))}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => { setOpen(false); trackWhatsApp("navbar-mobile", "especialista"); }}
-                className="mt-2 inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-6 py-4 font-mono text-sm font-bold uppercase tracking-wider"
-              >
-                {t("nav.falarEspecialista")}
+                <a
+                  href={whatsappLink(t("nav.whatsappMessage", { defaultValue: "Olá, gostaria de falar com um especialista em TI." }))}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => { closeMobileMenu(); trackWhatsApp("navbar-mobile", "especialista"); }}
+                  className="mt-2 inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-6 py-4 font-mono text-sm font-bold uppercase tracking-wider"
+                >
+                  {t("nav.falarEspecialista")}
               </a>
             </div>
           </motion.div>
