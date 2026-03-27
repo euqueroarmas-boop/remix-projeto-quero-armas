@@ -1,4 +1,12 @@
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /area-do-cliente
+Disallow: /contrato
+Disallow: /contrato-final/
+Disallow: /contratar/
+Disallow: /compra-concluida
+Disallow: /ativacao-acesso
+Disallow: /redefinir-senha
 
 Sitemap: https://www.wmti.com.br/sitemap.xml

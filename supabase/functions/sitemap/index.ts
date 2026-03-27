@@ -144,18 +144,17 @@ function buildServiceSegmentCityXml(): string {
 
 function buildSitemapIndex(): string {
   const now = new Date().toISOString().split("T")[0];
-  const FUNC_BASE = "https://itwsjxijqjximspqtvqk.supabase.co/functions/v1/sitemap";
   const sitemaps = [
-    { type: "pages", name: "sitemap-pages.xml" },
-    { type: "blog", name: "sitemap-blog.xml" },
-    { type: "services", name: "sitemap-services.xml" },
-    { type: "segments", name: "sitemap-segments.xml" },
-    { type: "problems", name: "sitemap-problems.xml" },
-    { type: "blog-cities", name: "sitemap-blog-cities.xml" },
-    { type: "service-segment-cities", name: "sitemap-service-segment-cities.xml" },
+    "sitemap-pages.xml",
+    "sitemap-blog.xml",
+    "sitemap-services.xml",
+    "sitemap-segments.xml",
+    "sitemap-problems.xml",
+    "sitemap-blog-cities.xml",
+    "sitemap-service-segment-cities.xml",
   ];
   const entries = sitemaps
-    .map((s) => `  <sitemap><loc>${FUNC_BASE}?type=${s.type}</loc><lastmod>${now}</lastmod></sitemap>`)
+    .map((s) => `  <sitemap><loc>${BASE_URL}/${s}</loc><lastmod>${now}</lastmod></sitemap>`)
     .join("\n");
   return `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries}\n</sitemapindex>`;
 }
