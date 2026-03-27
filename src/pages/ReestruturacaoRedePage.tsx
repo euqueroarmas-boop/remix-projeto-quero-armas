@@ -268,7 +268,7 @@ const ReestruturacaoRedePage = () => {
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
 
   const pricing = calcTotal(pcs, includeServer);
-  const localizedDeliverables = useLocalizedContent(deliverables);
+  const localizedDeliverables = deliverables;
 
   // Poll contract signed
   useEffect(() => {
