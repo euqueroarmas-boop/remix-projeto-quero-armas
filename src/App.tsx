@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import FloatingCtaBar from "@/components/FloatingCtaBar";
+import RouteTracker from "@/components/RouteTracker";
 import { lazyRetry } from "@/lib/lazyRetry";
 import Index from "./pages/Index.tsx";
 
@@ -75,6 +76,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <RouteTracker />
         <FloatingCtaBar />
         <Suspense fallback={<PageLoader />}>
           <Routes>
