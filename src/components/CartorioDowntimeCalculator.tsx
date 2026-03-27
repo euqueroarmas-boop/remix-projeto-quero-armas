@@ -1,9 +1,13 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Calculator, AlertTriangle, TrendingDown } from "lucide-react";
+import { Calculator, AlertTriangle, TrendingDown, Info } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
+import { whatsappLink } from "@/lib/whatsapp";
+
+const HOURS_PER_DAY = 8;
 
 const CartorioDowntimeCalculator = () => {
   const { t } = useTranslation();
@@ -12,12 +16,14 @@ const CartorioDowntimeCalculator = () => {
   const [downtimeHours, setDowntimeHours] = useState(4);
 
   const result = useMemo(() => {
-    const hourlyRevenue = (dailyServices * avgValue) / 8;
-    const loss = hourlyRevenue * downtimeHours;
-    const dailyLoss = dailyServices * avgValue;
-    const weeklyLoss = loss * 2;
-    return { hourlyLoss: hourlyRevenue, totalLoss: loss, dailyLoss, weeklyLoss };
+    const dailyRevenue = dailyServices * avgValue;
+    const hourlyRevenue = dailyRevenue / HOURS_PER_DAY;
+    const totalLoss = hourlyRevenue * downtimeHours;
+    return { hourlyLoss: hourlyRevenue, totalLoss, dailyRevenue };
   }, [dailyServices, avgValue, downtimeHours]);
+
+  const exampleDaily = dailyServices * avgValue;
+  const exampleHourly = exampleDaily / HOURS_PER_DAY;
 
   return (
     <section className="py-16 md:py-24 bg-card border-y border-border">
@@ -49,7 +55,7 @@ const CartorioDowntimeCalculator = () => {
             viewport={{ once: true }}
             className="bg-background border border-border rounded-2xl p-6 md:p-10"
           >
-            <div className="grid md:grid-cols-3 gap-6 mb-8">
+            <div className="grid md:grid-cols-2 gap-6 mb-6">
               <div>
                 <label className="block text-sm font-medium mb-2 text-foreground">
                   {t("custom.cartorioCalc.fieldServices")}
@@ -60,6 +66,7 @@ const CartorioDowntimeCalculator = () => {
                   value={dailyServices}
                   onChange={(e) => setDailyServices(Math.max(1, Number(e.target.value)))}
                   className="bg-muted border-border text-foreground placeholder:text-muted-foreground"
+                  placeholder="Ex: 80"
                 />
               </div>
               <div>
@@ -72,26 +79,50 @@ const CartorioDowntimeCalculator = () => {
                   value={avgValue}
                   onChange={(e) => setAvgValue(Math.max(1, Number(e.target.value)))}
                   className="bg-muted border-border text-foreground placeholder:text-muted-foreground"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2 text-foreground">
-                  {t("custom.cartorioCalc.fieldHours")}
-                </label>
-                <Input
-                  type="number"
-                  min={1}
-                  max={24}
-                  value={downtimeHours}
-                  onChange={(e) => setDowntimeHours(Math.min(24, Math.max(1, Number(e.target.value))))}
-                  className="bg-muted border-border text-foreground placeholder:text-muted-foreground"
+                  placeholder="Ex: 120"
                 />
               </div>
             </div>
 
+            {/* Slider for downtime hours */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium mb-2 text-foreground">
+                {t("custom.cartorioCalc.fieldHours")}
+              </label>
+              <div className="flex items-center gap-4">
+                <Slider
+                  value={[downtimeHours]}
+                  onValueChange={(v) => setDowntimeHours(v[0])}
+                  min={1}
+                  max={HOURS_PER_DAY}
+                  step={1}
+                  className="flex-1"
+                />
+                <span className="text-lg font-heading font-bold text-foreground min-w-[3ch] text-center">
+                  {downtimeHours}h
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                {t("custom.cartorioCalc.fieldHoursHelp")}
+              </p>
+            </div>
+
+            {/* Example explanation */}
+            <div className="bg-muted/50 border border-border rounded-lg p-4 mb-6 flex items-start gap-3">
+              <Info className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                {t("custom.cartorioCalc.example", {
+                  services: dailyServices,
+                  value: avgValue,
+                  daily: exampleDaily.toLocaleString("pt-BR", { maximumFractionDigits: 0 }),
+                  hourly: exampleHourly.toLocaleString("pt-BR", { maximumFractionDigits: 0 }),
+                })}
+              </p>
+            </div>
+
             {/* Results */}
             <div className="border-t border-border pt-6">
-              <div className="grid md:grid-cols-3 gap-6 mb-6">
+              <div className="grid md:grid-cols-3 gap-6 mb-4">
                 <div className="text-center p-4 bg-destructive/5 rounded-xl border border-destructive/10">
                   <TrendingDown className="w-5 h-5 text-destructive mx-auto mb-2" />
                   <p className="text-xs text-muted-foreground mb-1">{t("custom.cartorioCalc.resultPerHour")}</p>
@@ -112,21 +143,25 @@ const CartorioDowntimeCalculator = () => {
                   <Calculator className="w-5 h-5 text-destructive mx-auto mb-2" />
                   <p className="text-xs text-muted-foreground mb-1">{t("custom.cartorioCalc.resultDaily")}</p>
                   <p className="text-2xl font-heading font-bold text-destructive">
-                    R$ {result.dailyLoss.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}
+                    R$ {result.dailyRevenue.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}
                   </p>
                 </div>
               </div>
+
+              <p className="text-xs text-muted-foreground text-center mb-6">
+                {t("custom.cartorioCalc.disclaimer")}
+              </p>
 
               <div className="text-center">
                 <p className="text-sm text-muted-foreground mb-4">
                   {t("custom.cartorioCalc.callout")}
                 </p>
                 <a
-                  href={`https://wa.me/5511963166915?text=${encodeURIComponent(t("custom.cartorioCalc.whatsappMessage"))}`}
+                  href={whatsappLink(t("custom.cartorioCalc.whatsappMessage"))}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <Button size="lg" className="font-bold">
+                  <Button size="lg" className="font-bold btn-glow">
                     {t("custom.cartorioCalc.cta")}
                   </Button>
                 </a>
