@@ -545,9 +545,10 @@ const Navbar = () => {
                   className="mt-2 inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-6 py-4 font-mono text-sm font-bold uppercase tracking-wider"
                 >
                   {t("nav.falarEspecialista")}
-              </a>
-            </div>
-          </motion.div>
+                </a>
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </nav>
