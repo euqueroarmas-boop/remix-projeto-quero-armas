@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, Send, Loader2, MessageCircle, Mail, MapPin, Phone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { whatsappLink, buildContextualWhatsAppMessage, WHATSAPP_BASE_URL } from "@/lib/whatsapp";
+import { openWhatsApp, openWhatsAppRaw, WHATSAPP_DISPLAY } from "@/lib/whatsapp";
 import { trackWhatsApp, track } from "@/lib/tracking";
 
 const ContactSection = () => {
@@ -72,7 +72,7 @@ const ContactSection = () => {
       track("form_submit", "contact-form", { interesse: form.interesse });
       setTimeout(() => {
         trackWhatsApp("contact-form", "orcamento");
-        window.open(whatsappLink(waMsg), "_blank");
+        openWhatsAppRaw(waMsg);
       }, 1000);
 
       setForm({ nome: "", email: "", telefone: "", empresa: "", interesse: "", mensagem: "" });
@@ -85,7 +85,7 @@ const ContactSection = () => {
 
   const handleWhatsApp = () => {
     trackWhatsApp("contact-section", "orcamento");
-    window.open(whatsappLink(buildContextualWhatsAppMessage({ intent: "general" })), "_blank");
+    openWhatsApp({ intent: "general" });
   };
 
   return (

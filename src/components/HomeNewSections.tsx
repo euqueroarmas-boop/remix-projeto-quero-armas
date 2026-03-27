@@ -245,15 +245,15 @@ export const HomeCta = () => {
               {t("home.ctaBtn")}
               <span className="group-hover:translate-x-1 transition-transform">→</span>
             </a>
-            <a
-              href={whatsappLink(buildContextualWhatsAppMessage({ intent: "general" }))}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => trackWhatsApp("home-cta", "resolver-ti")}
+            <button
+              onClick={() => {
+                trackWhatsApp("home-cta", "resolver-ti");
+                openWhatsApp({ intent: "general" });
+              }}
               className="inline-flex items-center justify-center gap-2 border border-primary/40 text-primary px-6 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:bg-primary/10 transition-all"
             >
               {t("home.ctaWhatsapp")}
-            </a>
+            </button>
           </div>
         </motion.div>
       </div>
