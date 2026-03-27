@@ -36,8 +36,7 @@ const TerceirizacaoPage = () => {
   }));
   const sections = t("custom.outsourcing.sections", { returnObjects: true }) as { title: string; content: string }[];
 
-    const whatsappMsg = encodeURIComponent(t("custom.outsourcing.whatsappMessage"));
-    const whatsappNumber = "5511963166915";
+    const whatsappMsg = t("custom.outsourcing.whatsappMessage");
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -61,10 +60,8 @@ const TerceirizacaoPage = () => {
               <strong className="text-foreground">{t("custom.outsourcing.intro2")}</strong>
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <a
-                href={`https://wa.me/${whatsappNumber}?text=${whatsappMsg}`}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                onClick={() => openWhatsApp({ pageTitle: "Terceirização de TI", intent: "specialist" })}
                 className="inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground font-mono text-sm uppercase tracking-wider px-6 py-3 hover:bg-primary/90 transition-colors"
               >
                 {t("custom.outsourcing.primaryCta")}

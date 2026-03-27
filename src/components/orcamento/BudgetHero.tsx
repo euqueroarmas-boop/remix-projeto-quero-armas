@@ -80,10 +80,7 @@ const BudgetHero = ({ contextTitle }: Props) => {
               className="text-base px-8 py-6 border-primary/30 hover:bg-primary/10 text-foreground"
               onClick={() => {
                 trackWhatsApp("budget-hero", "especialista-ti");
-                window.open(
-                  whatsappLink(buildContextualWhatsAppMessage({ pageTitle: t("budgetHero.tag"), intent: "specialist" })),
-                  "_blank"
-                );
+                openWhatsApp({ pageTitle: t("budgetHero.tag"), intent: "specialist" });
               }}
             >
               <MessageCircle className="w-5 h-5 mr-2" />
