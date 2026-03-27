@@ -10,6 +10,7 @@ const clients = [
 ];
 
 const ClientLogosSection = () => {
+  const { t } = useTranslation();
   return (
     <section className="py-12 md:py-16 bg-background border-y border-border">
       <div className="container">
