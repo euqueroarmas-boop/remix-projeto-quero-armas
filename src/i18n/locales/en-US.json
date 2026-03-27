@@ -14,23 +14,9 @@
     "fecharMenu": "Close menu"
   },
   "hero": {
-    "tag": "// Your business. Never down. Ever.",
-    "title1": "Stop losing money",
-    "title2": "on IT that",
-    "title3": "doesn't work.",
-    "desc1": "Your company loses money every time a system crashes, a server freezes, or the network slows down. WMTi eliminates these problems with professional infrastructure that runs 24/7.",
-    "desc2_1": "Over",
-    "desc2_2": "150 companies",
-    "desc2_3": "already operate without interruptions.",
-    "desc2_4": "Yours could be next.",
-    "ctaDiag": "Get a free assessment",
-    "ctaWhatsapp": "Resolve now via WhatsApp",
-    "auth_years": "15+ years",
-    "auth_years_desc": "keeping businesses running",
-    "auth_uptime": "99.9% uptime",
-    "auth_uptime_desc": "guaranteed by contract",
-    "auth_partners": "Dell · Microsoft · ESET",
-    "auth_partners_desc": "official partners"
+    "imageAlt": "Corporate IT infrastructure with Dell PowerEdge servers",
+    "metaTitle": "WMTi Information Technology | Corporate IT Support & Infrastructure",
+    "metaDescription": "Technical support, corporate infrastructure, Dell servers, pfSense firewall and computer leasing for businesses in Jacareí and Vale do Paraíba."
   },
   "contact": {
     "tag": "// No strings attached",
@@ -71,7 +57,8 @@
       "Information Security",
       "Enterprise Backup",
       "Other"
-    ]
+    ],
+    "address": "Rua José Benedito Duarte, 140\nParque Itamarati — Jacareí, SP"
   },
   "footer": {
     "rights": "All rights reserved.",
@@ -86,57 +73,7 @@
     "recolher": "Collapse actions"
   },
   "service": {
-    "breadcrumbHome": "Home",
-    "tagPrefix": "//",
-    "ctaContract": "Hire this service",
-    "ctaSpecialist": "Talk to a specialist",
-    "painTag": "// This is costing you",
-    "painTitle": "Do any of these sound familiar?",
-    "solutionTag": "// The solution that works",
-    "solutionTitle": "What we do to",
-    "solutionTitleHighlight": "eliminate",
-    "solutionTitleEnd": "these problems",
-    "microCtaTag": "// Next step",
-    "microCtaText": "The longer you wait, the greater the risk",
-    "microCtaTextCity": "The longer you wait, the greater the risk for your company in {{city}}.",
-    "microCtaBtn": "Request assessment",
-    "benefitsTag": "// What you get",
-    "benefitsTitle": "Real results for your",
-    "benefitsTitleHighlight": "company",
-    "avoidTag": "// What your company avoids",
-    "avoidTitle": "With WMTi, your company",
-    "avoidTitleCity": "With WMTi, your company in {{city}}",
-    "avoidTitleHighlight": "stops losing",
-    "avoidItems": [
-      "Unexpected downtime costing thousands per hour",
-      "Team hours wasted waiting for IT to fix things",
-      "Sensitive data exposed due to lack of real protection",
-      "Contracts and clients lost due to operational failures"
-    ],
-    "localTag": "// Regional coverage",
-    "urgencyTag": "// Warning",
-    "urgencyTitle": "Every day without fixing this",
-    "urgencyTitleHighlight": "costs money",
-    "urgencyDesc": "One hour of downtime can cost more than an entire month of professional service.",
-    "urgencyDescCity": "Companies in {{city}} that acted sooner are already operating without interruptions.",
-    "urgencyDescGeneric": "Companies that acted sooner are already operating without interruptions.",
-    "urgencyCta": "Fix it now",
-    "urgencyCtaContract": "Hire this service",
-    "faqTag": "// Frequently asked questions",
-    "faqTitle": "FAQ",
-    "finalTag": "// Decision time",
-    "finalTitle": "Your company can keep",
-    "finalTitleCity": "Your company in {{city}} can keep",
-    "finalTitleHighlight": "losing money",
-    "finalTitleEnd": "on IT that doesn't work.",
-    "finalSubtitle": "Or you can fix it",
-    "finalSubtitleHighlight": "now",
-    "finalDesc": "Free assessment. Within 48h you'll receive a proposal with a fixed monthly rate — no surprises, no strings attached.",
-    "finalDescCity": "Free assessment for your company in {{city}}. Within 48h you'll receive a proposal with a fixed monthly rate — no surprises, no strings attached.",
-    "finalCtaWhatsapp": "Fix it now via WhatsApp",
-    "finalCtaOnline": "Get my online proposal",
-    "relatedTag": "Related services",
-    "relatedTagCity": "Related services in {{city}}"
+    "inCity": "in {{city}}"
   },
   "authority": {
     "years": "15+ years in the market",
@@ -396,7 +333,12 @@
     "ctaTitle": "Don't wait for the problem to shut down your business",
     "ctaDesc": "Request a free infrastructure assessment. Our technical team identifies bottlenecks, risks, and improvement opportunities — no commitment.",
     "ctaDiagnostico": "Free Assessment",
-    "ctaOrcamento": "Request a Quote"
+    "ctaOrcamento": "Request a Quote",
+    "heroTag": "// Diagnostics",
+    "heroTitle1": "Is your computer slow?",
+    "heroTitleHighlight": "We fix it.",
+    "heroDesc": "Most performance issues and failures in computers, notebooks and networks happen due to lack of proper maintenance. Learn about the most common culprits and how WMTi eliminates each one.",
+    "heroImageAlt": "Professional frustrated with slow computer at office"
   },
   "pathSelector": {
     "tag": "How can we help?",
@@ -2462,37 +2404,67 @@
         "tag": "DELL POWEREDGE",
         "title": "Server Infrastructure",
         "description": "We deploy and manage Dell PowerEdge R750, R650 and T550 servers. RAID configuration, iDRAC, failover clusters with Hyper-V and high availability for production environments.",
-        "specs": ["PowerEdge R750xs / R650xs", "RAID H755 / H355", "iDRAC9 Enterprise", "Hyper-V Clustering"]
+        "specs": [
+          "PowerEdge R750xs / R650xs",
+          "RAID H755 / H355",
+          "iDRAC9 Enterprise",
+          "Hyper-V Clustering"
+        ]
       },
       "m365": {
         "tag": "MICROSOFT 365",
         "title": "Microsoft & Azure Ecosystem",
         "description": "Complete migration to Microsoft 365, Azure AD configuration, Exchange Online, SharePoint and Teams. Hybrid environments with on-premises Active Directory synchronized via Azure AD Connect.",
-        "specs": ["Microsoft 365 Business", "Azure AD Connect", "Exchange Online", "Windows Server 2022"]
+        "specs": [
+          "Microsoft 365 Business",
+          "Azure AD Connect",
+          "Exchange Online",
+          "Windows Server 2022"
+        ]
       },
       "pfsense": {
         "tag": "PFSENSE",
         "title": "Perimeter Security",
         "description": "pfSense firewalls on dedicated appliances with IPsec/OpenVPN VPN, IDS/IPS with Suricata, content filtering, load balancing and WAN link failover. Security without compromise.",
-        "specs": ["VPN IPsec / OpenVPN", "Suricata IDS/IPS", "HAProxy Load Balancer", "Multi-WAN Failover"]
+        "specs": [
+          "VPN IPsec / OpenVPN",
+          "Suricata IDS/IPS",
+          "HAProxy Load Balancer",
+          "Multi-WAN Failover"
+        ]
       },
       "backup": {
         "tag": "BACKUP",
         "title": "Backup & Recovery",
         "description": "3-2-1 backup strategies with Veeam Backup & Replication on Dell PowerVault storage. Periodic restore tests and defined RPO/RTO for each critical workload.",
-        "specs": ["Veeam B&R v12", "Dell PowerVault ME5", "Backup 3-2-1", "Automated DR"]
+        "specs": [
+          "Veeam B&R v12",
+          "Dell PowerVault ME5",
+          "Backup 3-2-1",
+          "Automated DR"
+        ]
       },
       "redes": {
         "tag": "NETWORKS",
         "title": "Network Infrastructure",
         "description": "Dell managed switches, segmented VLANs, configured QoS and SNMP monitoring. Cat6A structured cabling and fiber optics for high-performance environments.",
-        "specs": ["Dell Networking N-Series", "VLAN / QoS / STP", "Cat6A / Fiber Optics", "Zabbix Monitoring"]
+        "specs": [
+          "Dell Networking N-Series",
+          "VLAN / QoS / STP",
+          "Cat6A / Fiber Optics",
+          "Zabbix Monitoring"
+        ]
       },
       "suporte": {
         "tag": "SUPPORT",
         "title": "Management & Monitoring",
         "description": "In-house NOC with 24/7 monitoring via Zabbix and Grafana. SLA defined by criticality, remote and on-site support with Dell and Microsoft certified technical team.",
-        "specs": ["NOC 24/7", "Zabbix + Grafana", "SLA by Criticality", "Dell & MS Certified"]
+        "specs": [
+          "NOC 24/7",
+          "Zabbix + Grafana",
+          "SLA by Criticality",
+          "Dell & MS Certified"
+        ]
       }
     }
   },
@@ -2504,18 +2476,61 @@
     "detailAlt": "Dell PowerEdge server detail with status LEDs",
     "cta": "View full infrastructure",
     "specs": {
-      "processor": { "label": "Processor", "value": "Intel Xeon Scalable 4th Gen" },
-      "memory": { "label": "Memory", "value": "Up to 2TB DDR5 RDIMM" },
-      "storage": { "label": "Storage", "value": "24x NVMe / SAS / SATA" },
-      "network": { "label": "Network", "value": "2x 25GbE + OCP 3.0" },
-      "management": { "label": "Management", "value": "iDRAC9 Enterprise" },
-      "redundancy": { "label": "Redundancy", "value": "PSU Hot-Plug 2+1" }
+      "processor": {
+        "label": "Processor",
+        "value": "Intel Xeon Scalable 4th Gen"
+      },
+      "memory": {
+        "label": "Memory",
+        "value": "Up to 2TB DDR5 RDIMM"
+      },
+      "storage": {
+        "label": "Storage",
+        "value": "24x NVMe / SAS / SATA"
+      },
+      "network": {
+        "label": "Network",
+        "value": "2x 25GbE + OCP 3.0"
+      },
+      "management": {
+        "label": "Management",
+        "value": "iDRAC9 Enterprise"
+      },
+      "redundancy": {
+        "label": "Redundancy",
+        "value": "PSU Hot-Plug 2+1"
+      }
     }
   },
-  "hero": {
-    "imageAlt": "Corporate IT infrastructure with Dell PowerEdge servers"
+  "security": {
+    "tag": "// Security",
+    "title1": "Armored perimeter.",
+    "titleHighlight": "pfSense",
+    "title2": " as the backbone.",
+    "features": [
+      {
+        "title": "pfSense Firewall",
+        "desc": "Dedicated appliances with stateful rules, advanced NAT and deep packet inspection. No per-user licensing."
+      },
+      {
+        "title": "Site-to-Site VPN",
+        "desc": "IPsec and OpenVPN tunnels with AES-256-GCM encryption. Secure connection between branches and Azure cloud environments."
+      },
+      {
+        "title": "IDS/IPS Suricata",
+        "desc": "Real-time intrusion detection and prevention with ET Open and Snort rules. Alerts integrated with NOC."
+      },
+      {
+        "title": "Multi-WAN Failover",
+        "desc": "Load balancing across multiple links with automatic failover. Zero downtime on provider failures."
+      }
+    ],
+    "linkText": "See security solutions",
+    "diagramTitle": "// Simplified Network Diagram",
+    "firewallStatus": "FIREWALL STATUS: ACTIVE // THREATS BLOCKED",
+    "firewallAlt": "pfSense firewall appliance with network cables connected in data center"
   },
-  "service": {
-    "inCity": "in {{city}}"
+  "clientLogos": {
+    "tag": "// Partners & Technologies"
   }
 }
