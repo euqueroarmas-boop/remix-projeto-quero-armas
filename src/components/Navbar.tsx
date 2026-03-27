@@ -364,7 +364,15 @@ const Navbar = () => {
 
   return (
     <>
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-secondary/95 backdrop-blur-sm border-b border-border">
+    <nav
+      className="fixed top-0 left-0 right-0 z-50 border-b border-white/[0.08]"
+      style={{
+        background: "rgba(10, 18, 28, 0.65)",
+        backdropFilter: "blur(18px) saturate(160%)",
+        WebkitBackdropFilter: "blur(18px) saturate(160%)",
+        boxShadow: "0 4px 30px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.06)",
+      }}
+    >
       {/* Single header container — fixed height, flex center */}
       <div className="container flex items-center justify-between h-16">
         <Link to="/" className="flex items-center h-16">
