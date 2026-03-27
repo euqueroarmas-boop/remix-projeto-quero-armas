@@ -9,22 +9,53 @@ export function whatsappLink(message?: string): string {
 }
 
 /**
+ * Extract a clean, human-readable page name from an H1, a passed title,
+ * or the current pathname – never the raw document.title (which contains
+ * SEO separators, slogans, etc.).
+ */
+function getCleanPageName(pageTitle?: string): string {
+  // 1. If the caller already passed a short label, use it
+  if (pageTitle) return pageTitle;
+
+  // 2. Try the first <h1> on the page (best commercial name)
+  if (typeof document !== "undefined") {
+    const h1 = document.querySelector("h1");
+    if (h1?.textContent) {
+      const text = h1.textContent.trim();
+      // Only use if it's reasonably short (not a full paragraph)
+      if (text.length <= 120) return text;
+    }
+  }
+
+  // 3. Derive from pathname: /ti-para-serventias-cartoriais → TI para Serventias Cartoriais
+  if (typeof window !== "undefined") {
+    const slug = window.location.pathname.replace(/^\//, "").split("?")[0];
+    if (slug) {
+      return slug
+        .replace(/-/g, " ")
+        .replace(/\b\w/g, (l) => l.toUpperCase());
+    }
+  }
+
+  return "WMTi";
+}
+
+/**
  * Build a contextual WhatsApp message based on the current page.
- * Automatically includes the page title and URL.
+ * Produces a SHORT, clean message — no preview URLs, no SEO titles.
  */
 export function buildContextualWhatsAppMessage(options: {
   pageTitle?: string;
   intent?: "specialist" | "diagnosis" | "proposal" | "general";
 }): string {
   const { pageTitle, intent = "general" } = options;
-  const url = typeof window !== "undefined" ? window.location.href : "";
-  const name = pageTitle || document.title || "WMTi";
+  const name = getCleanPageName(pageTitle);
 
   const intents: Record<string, string> = {
-    specialist: `Olá, estou vendo a página "${name}" no site da WMTi e quero falar com um especialista.\nLink: ${url}`,
-    diagnosis: `Olá, estou vendo a página "${name}" no site da WMTi e quero solicitar um diagnóstico técnico.\nLink: ${url}`,
-    proposal: `Olá, estou vendo a página "${name}" no site da WMTi e quero montar uma proposta para minha empresa.\nLink: ${url}`,
-    general: `Olá, estou vendo a página "${name}" no site da WMTi e quero um orçamento.\nLink: ${url}`,
+    specialist: `Olá, estou vendo a página de ${name} no site da WMTi e quero falar com um especialista.`,
+    diagnosis: `Olá, estou vendo a página de ${name} no site da WMTi e quero solicitar um diagnóstico técnico.`,
+    proposal: `Olá, estou vendo a página de ${name} no site da WMTi e quero montar uma proposta para minha empresa.`,
+    general: `Olá, estou vendo a página de ${name} no site da WMTi e quero um orçamento.`,
   };
 
   return intents[intent] || intents.general;

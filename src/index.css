@@ -78,47 +78,16 @@
     @apply bg-background text-foreground;
   }
 
+  /* btn-glow: kept as class name for compatibility, no glow effect */
   :is(button, a, [role="button"]).bg-primary.text-primary-foreground,
   .btn-glow {
     position: relative;
-    isolation: isolate;
-    box-shadow:
-      0 0 0 1px hsl(var(--primary) / 0.18),
-      0 0 18px hsl(var(--primary) / 0.85),
-      0 0 38px hsl(var(--primary) / 0.5),
-      0 0 72px hsl(var(--primary) / 0.32);
-    transition: box-shadow 0.28s ease, filter 0.28s ease;
-  }
-
-  :is(button, a, [role="button"]).bg-primary.text-primary-foreground::before,
-  .btn-glow::before {
-    content: "";
-    position: absolute;
-    inset: -10px;
-    border-radius: inherit;
-    background: hsl(var(--primary) / 0.42);
-    filter: blur(20px);
-    opacity: 0.95;
-    z-index: -1;
-    pointer-events: none;
-    transition: opacity 0.28s ease, filter 0.28s ease, inset 0.28s ease;
+    transition: filter 0.28s ease;
   }
 
   :is(button, a, [role="button"]).bg-primary.text-primary-foreground:hover,
   .btn-glow:hover {
-    box-shadow:
-      0 0 0 1px hsl(var(--primary) / 0.24),
-      0 0 24px hsl(var(--primary) / 1),
-      0 0 52px hsl(var(--primary) / 0.62),
-      0 0 92px hsl(var(--primary) / 0.42);
-    filter: brightness(1.04);
-  }
-
-  :is(button, a, [role="button"]).bg-primary.text-primary-foreground:hover::before,
-  .btn-glow:hover::before {
-    inset: -12px;
-    filter: blur(24px);
-    opacity: 1;
+    filter: brightness(1.08);
   }
 
   .led-pulse {
