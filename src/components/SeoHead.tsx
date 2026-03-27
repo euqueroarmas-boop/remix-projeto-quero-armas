@@ -46,18 +46,6 @@ const SeoHead = ({
       el.setAttribute(attr, value);
     };
 
-    const setLink = (rel: string, extra: Record<string, string>) => {
-      const selectorParts = Object.entries(extra).map(([k, v]) => `[${k}="${v}"]`).join("");
-      const selector = `link[rel="${rel}"]${selectorParts}`;
-      let el = document.querySelector(selector) as HTMLLinkElement | null;
-      if (!el) {
-        el = document.createElement("link");
-        el.setAttribute("rel", rel);
-        Object.entries(extra).forEach(([k, v]) => el!.setAttribute(k, v));
-        document.head.appendChild(el);
-      }
-      return el;
-    };
 
     // Resolve OG image: use provided, absolutize relative paths, fallback
     const resolvedImage = (() => {
