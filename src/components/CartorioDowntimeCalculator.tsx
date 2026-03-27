@@ -158,7 +158,7 @@ const CartorioDowntimeCalculator = () => {
                 </a>
               </div>
             </div>
-          </motion.div>
+          </div>
         </div>
       </div>
     </section>
