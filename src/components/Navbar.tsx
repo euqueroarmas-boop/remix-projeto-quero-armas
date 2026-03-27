@@ -433,7 +433,8 @@ const Navbar = () => {
           <LanguageSwitcher />
         </div>
 
-        <div className="lg:hidden relative z-[60] flex items-center gap-2">
+        {/* Mobile header controls — inside the fixed navbar, no absolute/fixed positioning */}
+        <div className="lg:hidden flex items-center gap-2">
           <LanguageSwitcher compact />
           <button
             onClick={() => setOpen(!open)}
@@ -445,30 +446,17 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Mobile fullscreen menu */}
+      {/* Mobile menu — opens BELOW the fixed header (top-16 = 64px header height) */}
       <AnimatePresence>
         {open && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            className="lg:hidden fixed inset-0 w-screen bg-secondary z-[55] flex flex-col"
-            style={{ height: "100dvh" }}
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2 }}
+            className="lg:hidden fixed top-16 left-0 right-0 bottom-0 bg-secondary z-[45] overflow-y-auto"
           >
-            <div className="container flex items-center justify-between h-14">
-              <Link to="/" onClick={() => setOpen(false)} className="flex items-center">
-                <img src={logoFull} alt="WMTi Tecnologia da Informação" className="h-8 w-auto" />
-              </Link>
-              <div className="flex items-center gap-2">
-                <LanguageSwitcher compact />
-                <button onClick={() => setOpen(false)} className="text-foreground" aria-label={t("nav.fecharMenu")}>
-                  <X size={20} />
-                </button>
-              </div>
-            </div>
-
-            <div className="container flex-1 flex flex-col justify-start gap-4 overflow-y-auto pb-12 pt-4">
+            <div className="container flex flex-col gap-4 py-6 pb-12">
               {navLinks.map((link) => {
                 const active = navLinks.indexOf(link) === activeIndex;
                 const baseClass = `font-mono text-base uppercase tracking-wider transition-colors py-2 ${
