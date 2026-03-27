@@ -67,15 +67,13 @@ const MicroCta = ({ href, cityName, pageTitle }: { href: string; whatsappMessage
             >
               {t("service.microCtaBtn")}
             </Link>
-            <a
-              href={whatsappLink(buildContextualWhatsAppMessage({ pageTitle, intent: "specialist" }))}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              onClick={() => openWhatsApp({ pageTitle, intent: "specialist" })}
               className="inline-flex items-center gap-2 border border-border text-foreground px-5 py-3 font-mono text-xs uppercase tracking-wider hover:border-primary hover:text-primary transition-all rounded"
             >
               <MessageCircle size={14} />
               WhatsApp
-            </a>
+            </button>
           </div>
         </div>
       </div>
@@ -153,15 +151,13 @@ const UrgencyBlock = ({ cityName, pageTitle }: { whatsappMessage: string; curren
             {" "}{cityName ? t("service.urgencyDescCity", { city: cityName }) : t("service.urgencyDescGeneric")}
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a
-              href={whatsappLink(buildContextualWhatsAppMessage({ pageTitle, intent: "specialist" }))}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              onClick={() => openWhatsApp({ pageTitle, intent: "specialist" })}
               className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all btn-glow rounded"
             >
               <MessageCircle size={16} />
               {t("service.urgencyCta")}
-            </a>
+            </button>
             <Link
               to="/orcamento-ti"
               className="inline-flex items-center gap-2 border border-border text-foreground px-8 py-4 font-mono text-sm uppercase tracking-wider hover:border-primary hover:text-primary transition-all rounded"
@@ -268,15 +264,13 @@ const ServicePageTemplate = ({
                   <ArrowRight size={16} />
                   {t("service.ctaContract")}
                 </Link>
-                <a
-                  href={whatsappLink(buildContextualWhatsAppMessage({ pageTitle: title, intent: "specialist" }))}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  onClick={() => openWhatsApp({ pageTitle: title, intent: "specialist" })}
                   className="inline-flex items-center gap-2 border border-gunmetal-foreground/30 text-gunmetal-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:border-primary hover:text-primary transition-all"
                 >
                   <MessageCircle size={16} />
                   {t("service.ctaSpecialist")}
-                </a>
+                </button>
               </div>
             </motion.div>
 
@@ -459,15 +453,13 @@ const ServicePageTemplate = ({
               {cityName ? t("service.finalDescCity", { city: cityName }) : t("service.finalDesc")}
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <a
-                href={whatsappLink(buildContextualWhatsAppMessage({ pageTitle: title, intent: "proposal" }))}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                onClick={() => openWhatsApp({ pageTitle: title, intent: "proposal" })}
                 className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all btn-glow rounded"
               >
                 <MessageCircle size={16} />
                 {t("service.finalCtaWhatsapp")}
-              </a>
+              </button>
               <Link
                 to="/orcamento-ti"
                 className="inline-flex items-center gap-2 border border-border text-foreground px-8 py-4 font-mono text-sm uppercase tracking-wider hover:border-primary hover:text-primary transition-all rounded"
