@@ -112,15 +112,13 @@ const ProblemsSection = () => {
               {t("problems.ctaDesc")}
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-4">
-              <a
-                href="https://wa.me/5511963166915?text=Olá!%20Gostaria%20de%20solicitar%20um%20diagnóstico%20gratuito%20da%20minha%20infraestrutura."
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                onClick={() => { const { openWhatsApp } = require("@/lib/whatsapp"); openWhatsApp({ intent: "diagnosis" }); }}
                 className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 md:px-8 py-3 md:py-4 font-mono text-xs md:text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all w-full sm:w-auto justify-center"
               >
                 {t("problems.ctaDiagnostico")}
                 <ArrowRight size={16} />
-              </a>
+              </button>
               <a
                 href="#contato"
                 className="inline-flex items-center gap-2 border border-primary/40 text-primary px-6 md:px-8 py-3 md:py-4 font-mono text-xs md:text-sm uppercase tracking-wider hover:bg-primary/10 transition-all w-full sm:w-auto justify-center"
