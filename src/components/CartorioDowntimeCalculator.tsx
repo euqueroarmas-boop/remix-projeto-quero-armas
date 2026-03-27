@@ -51,7 +51,7 @@ const CartorioDowntimeCalculator = () => {
           >
             <div className="grid md:grid-cols-3 gap-6 mb-8">
               <div>
-                <label className="block text-sm font-medium mb-2">
+                <label className="block text-sm font-medium mb-2 text-foreground">
                   {t("custom.cartorioCalc.fieldServices")}
                 </label>
                 <Input
@@ -59,10 +59,11 @@ const CartorioDowntimeCalculator = () => {
                   min={1}
                   value={dailyServices}
                   onChange={(e) => setDailyServices(Math.max(1, Number(e.target.value)))}
+                  className="bg-muted border-border text-foreground placeholder:text-muted-foreground"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">
+                <label className="block text-sm font-medium mb-2 text-foreground">
                   {t("custom.cartorioCalc.fieldAvgValue")}
                 </label>
                 <Input
@@ -70,10 +71,11 @@ const CartorioDowntimeCalculator = () => {
                   min={1}
                   value={avgValue}
                   onChange={(e) => setAvgValue(Math.max(1, Number(e.target.value)))}
+                  className="bg-muted border-border text-foreground placeholder:text-muted-foreground"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">
+                <label className="block text-sm font-medium mb-2 text-foreground">
                   {t("custom.cartorioCalc.fieldHours")}
                 </label>
                 <Input
@@ -82,6 +84,7 @@ const CartorioDowntimeCalculator = () => {
                   max={24}
                   value={downtimeHours}
                   onChange={(e) => setDowntimeHours(Math.min(24, Math.max(1, Number(e.target.value))))}
+                  className="bg-muted border-border text-foreground placeholder:text-muted-foreground"
                 />
               </div>
             </div>
