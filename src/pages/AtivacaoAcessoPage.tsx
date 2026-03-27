@@ -84,7 +84,7 @@ const AtivacaoAcessoPage = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <SeoHead title={t("ativacao.title")} description={t("ativacao.metaDescription")} />
+      <SeoHead title={t("ativacao.title")} description={t("ativacao.metaDescription")} noindex />
       <Navbar />
 
       <main className="section-dark pt-24 md:pt-28 pb-20">
