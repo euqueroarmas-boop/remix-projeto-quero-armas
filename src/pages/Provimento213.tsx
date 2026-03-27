@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import SeoHead from "@/components/SeoHead";
 import { openWhatsApp } from "@/lib/whatsapp";
 
 const fadeIn = {
@@ -34,6 +35,11 @@ const Provimento213 = () => {
 
   return (
     <div className="min-h-screen">
+      <SeoHead
+        title="Provimento 213 CNJ — Adequação de TI para Cartórios | WMTi"
+        description="Guia completo do Provimento 213 do CNJ: requisitos de backup, segurança, firewall e infraestrutura obrigatória para serventias extrajudiciais."
+        canonical="https://www.wmti.com.br/cartorios/provimento-213"
+      />
       <Navbar />
 
       {/* Hero */}

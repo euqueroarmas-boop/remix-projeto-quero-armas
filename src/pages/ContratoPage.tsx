@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, PenTool, RotateCcw, CheckCircle } from "lucide-react";
+import SeoHead from "@/components/SeoHead";
 
 const ContratoPage = () => {
   const [searchParams] = useSearchParams();
@@ -217,6 +218,7 @@ const ContratoPage = () => {
 
   return (
     <div className="min-h-screen bg-white">
+      <SeoHead title="Contrato | WMTi" description="Assinatura digital de contrato WMTi." noindex />
       {/* A4-style contract page */}
       <div className="max-w-[210mm] mx-auto py-8 px-8 md:px-16" style={{ fontFamily: "'Times New Roman', Times, serif" }}>
         <div

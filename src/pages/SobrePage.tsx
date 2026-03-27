@@ -5,6 +5,7 @@ import { Target, Eye, Heart, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import SeoHead from "@/components/SeoHead";
 
 const fadeIn = {
   initial: { opacity: 0, y: 20 },
@@ -19,14 +20,16 @@ const SobrePage = () => {
   const values = t(`${k}.values`, { returnObjects: true }) as { title: string; desc: string }[];
 
   useEffect(() => {
-    document.title = t(`${k}.metaTitle`);
-    const desc = document.querySelector('meta[name="description"]');
-    if (desc) desc.setAttribute("content", t(`${k}.metaDesc`));
     window.scrollTo(0, 0);
-  }, [t]);
+  }, []);
 
   return (
     <div className="min-h-screen">
+      <SeoHead
+        title={t(`${k}.metaTitle`)}
+        description={t(`${k}.metaDesc`)}
+        canonical="https://www.wmti.com.br/institucional"
+      />
       <Navbar />
 
       {/* Hero */}

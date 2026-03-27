@@ -72,7 +72,9 @@ const SeoHead = ({
       return OG_FALLBACK;
     })();
 
-    const resolvedUrl = canonical || `${BASE_URL}${window.location.pathname}`;
+    const resolvedUrl = canonical
+      ? (canonical.startsWith("http") ? canonical : `${BASE_URL}${canonical}`)
+      : `${BASE_URL}${window.location.pathname}`;
 
     // Basic meta
     setMeta('meta[name="description"]', "content", description);
