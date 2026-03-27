@@ -134,9 +134,9 @@ const LocacaoComputadoresPage = () => {
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mb-8 leading-relaxed">{t(`${k}.heroDescription`)}</p>
             <div className="flex flex-wrap gap-4">
               <Button size="lg" onClick={scrollToCalc} className="h-14 px-8 text-base"><Calculator size={18} className="mr-2" /> {t(`${k}.ctaCalc`)}</Button>
-              <a href="https://wa.me/5511963166915?text=Olá! Gostaria de saber mais sobre locação de computadores." target="_blank" rel="noopener noreferrer">
+              <button onClick={() => openWhatsApp({ pageTitle: "Locação de Computadores", intent: "specialist" })}>
                 <Button size="lg" variant="outline" className="h-14 px-8 text-base">{t(`${k}.ctaSpecialist`)}</Button>
-              </a>
+              </button>
             </div>
           </motion.div>
         </div>
@@ -287,9 +287,9 @@ const LocacaoComputadoresPage = () => {
                 ))}
               </div>
               <div className="flex flex-col sm:flex-row gap-3">
-                <a href="https://wa.me/5511963166915?text=Ol%C3%A1!%20Preciso%20de%20uma%20proposta%20de%20loca%C3%A7%C3%A3o%20de%20notebooks%20corporativos%20para%20minha%20empresa." target="_blank" rel="noopener noreferrer" className="flex-1">
+                <button onClick={() => openWhatsApp({ pageTitle: "Locação de Notebooks Corporativos", intent: "proposal" })} className="flex-1">
                   <Button size="lg" className="w-full h-14 text-base bg-primary hover:bg-primary/90"><MessageCircle size={18} className="mr-2" />{t(`${k}.nbCta`)}</Button>
-                </a>
+                </button>
                 <a href="mailto:contato@wmti.com.br?subject=Proposta%20de%20Loca%C3%A7%C3%A3o%20de%20Notebooks&body=Ol%C3%A1!%20Gostaria%20de%20receber%20uma%20proposta%20de%20loca%C3%A7%C3%A3o%20de%20notebooks%20corporativos." className="flex-1">
                   <Button size="lg" variant="outline" className="w-full h-14 text-base">{t(`${k}.nbEmail`)}</Button>
                 </a>
@@ -400,9 +400,9 @@ const LocacaoComputadoresPage = () => {
           <p className="text-muted-foreground max-w-xl mx-auto mb-8">{t(`${k}.finalDescription`)}</p>
           <div className="flex flex-wrap justify-center gap-4">
             <Button size="lg" onClick={scrollToCalc} className="h-14 px-8 text-base"><Calculator size={18} className="mr-2" /> {t(`${k}.finalCalc`)}</Button>
-            <a href="https://wa.me/5511963166915?text=Olá! Quero saber mais sobre a locação de computadores." target="_blank" rel="noopener noreferrer">
+            <button onClick={() => openWhatsApp({ pageTitle: "Locação de Computadores", intent: "proposal" })}>
               <Button size="lg" variant="outline" className="h-14 px-8 text-base">{t(`${k}.finalWhatsapp`)}</Button>
-            </a>
+            </button>
           </div>
         </div>
       </section>

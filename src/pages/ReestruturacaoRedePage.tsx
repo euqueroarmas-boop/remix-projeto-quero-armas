@@ -551,14 +551,12 @@ const ReestruturacaoRedePage = () => {
                 >
                   {t("restructuring.calculateInvestment")} <Calculator size={16} />
                 </button>
-                <a
-                  href="https://wa.me/5511963166915?text=Olá!%20Tenho%20interesse%20no%20pacote%20de%20Reestruturação%20Completa%20de%20Rede%20Corporativa."
-                  target="_blank"
-                  rel="noopener"
+                <button
+                  onClick={() => openWhatsApp({ pageTitle: "Reestruturação de Rede Corporativa", intent: "specialist" })}
                   className="inline-flex items-center gap-2 px-6 py-3 border border-border text-foreground font-mono text-sm uppercase tracking-wider hover:bg-muted transition-colors"
                 >
                    {t("restructuring.talkSpecialist")}
-                </a>
+                </button>
               </div>
             </motion.div>
           </div>
@@ -894,14 +892,12 @@ const ReestruturacaoRedePage = () => {
               <p className="font-body text-base text-muted-foreground mb-8">
                  {t("restructuring.finalDescription")}
               </p>
-              <a
-                href="https://wa.me/5511963166915?text=Olá!%20Quero%20saber%20mais%20sobre%20a%20Reestruturação%20Completa%20de%20Rede."
-                target="_blank"
-                rel="noopener"
+              <button
+                onClick={() => openWhatsApp({ pageTitle: "Reestruturação de Rede Corporativa", intent: "proposal" })}
                 className="inline-flex items-center gap-2 px-8 py-4 bg-primary text-primary-foreground font-mono text-sm uppercase tracking-wider hover:brightness-110 transition-all"
               >
                  {t("restructuring.talkSpecialist")} <ArrowRight size={16} />
-              </a>
+              </button>
             </motion.div>
           </div>
         </section>

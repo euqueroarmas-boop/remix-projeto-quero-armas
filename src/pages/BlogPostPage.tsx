@@ -292,10 +292,8 @@ const BlogPostPage = () => {
                {localizedStructuredContent?.cta || t("blog.ctaDesc")}
               {city && t("blog.ctaCitySuffix", { city: city.name, region: city.region })}
             </p>
-            <a
-               href={`https://wa.me/5511963166915?text=${encodeURIComponent(t("blogPost.whatsappMessage", { title: localizedPost.title, city: city?.name || "" }))}`}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+               onClick={() => openWhatsApp({ pageTitle: localizedPost.title, intent: "blog", city: city?.name })}
               className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
             >
               {t("blog.ctaBtn")}
