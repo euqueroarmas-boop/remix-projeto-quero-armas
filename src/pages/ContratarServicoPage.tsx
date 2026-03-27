@@ -362,31 +362,31 @@ const ContratarServicoPage = () => {
 
         <section className="section-dark pt-24 md:pt-28 pb-8 border-b-4 border-primary">
           <div className="container">
-            <nav aria-label="Breadcrumb" className="mb-6">
+             <nav aria-label="Breadcrumb" className="mb-6">
               <ol className="flex items-center gap-1 font-mono text-xs text-muted-foreground/50">
-                <li><Link to="/" className="hover:text-primary transition-colors">Home</Link></li>
+                <li><Link to="/" className="hover:text-primary transition-colors">{t("contratar.breadcrumbHome")}</Link></li>
                 <ChevronRight size={10} className="shrink-0" />
-                <li><Link to="/locacao-de-computadores-para-empresas-jacarei" className="hover:text-primary transition-colors">Locação de Computadores</Link></li>
+                <li><Link to="/locacao-de-computadores-para-empresas-jacarei" className="hover:text-primary transition-colors">{t("services.locacao")}</Link></li>
                 <ChevronRight size={10} className="shrink-0" />
-                <li className="text-primary" aria-current="page">Contratar</li>
+                <li className="text-primary" aria-current="page">{t("contratar.breadcrumbContratar")}</li>
               </ol>
             </nav>
-            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">// Contratação</p>
+            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">{t("contratar.tag")}</p>
             <h1 className="text-2xl md:text-4xl lg:text-5xl mb-4">
-              Contratar <span className="text-primary">Locação de Computadores</span>
+              {t("contratar.titlePrefix")} <span className="text-primary">{t("services.locacao")}</span>
             </h1>
             <p className="font-body text-lg text-muted-foreground/70 max-w-2xl leading-relaxed">
-              Seu plano já foi definido. Agora siga diretamente para o cadastro, geração do contrato e assinatura eletrônica.
+              {t("contratar.locacaoDesc")}
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <div className="rounded-lg border border-border bg-card px-4 py-3 text-sm text-foreground">
-                <span className="text-muted-foreground">Plano:</span> <strong className="text-primary">{selectedRentalPlan.name}</strong>
+                <span className="text-muted-foreground">{t("contratar.planoLabel")}</span> <strong className="text-primary">{selectedRentalPlan.name}</strong>
               </div>
               <div className="rounded-lg border border-border bg-card px-4 py-3 text-sm text-foreground">
-                <span className="text-muted-foreground">Quantidade:</span> <strong>{selectedRentalQty} computadores</strong>
+                <span className="text-muted-foreground">{t("contratar.qtdLabel")}</span> <strong>{selectedRentalQty} {t("contratar.computadores")}</strong>
               </div>
               <div className="rounded-lg border border-border bg-card px-4 py-3 text-sm text-foreground">
-                <span className="text-muted-foreground">Valor mensal:</span> <strong className="text-primary">R$ {rentalMonthlyValue.toLocaleString("pt-BR")}</strong>
+                <span className="text-muted-foreground">{t("contratar.valorMensalLabel")}</span> <strong className="text-primary">R$ {rentalMonthlyValue.toLocaleString("pt-BR")}</strong>
               </div>
             </div>
           </div>
@@ -441,17 +441,17 @@ const ContratarServicoPage = () => {
                   <ChevronRight size={10} className="shrink-0" />
                 </>
               )}
-              <li className="text-primary" aria-current="page">Contratar</li>
+              <li className="text-primary" aria-current="page">{t("contratar.breadcrumbContratar")}</li>
             </ol>
           </nav>
-          <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">// Contratação</p>
+          <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">{t("contratar.tag")}</p>
           <h1 className="text-2xl md:text-4xl lg:text-5xl mb-4">
-            Contratar <span className="text-primary">{serviceName}</span>
+            {t("contratar.titlePrefix")} <span className="text-primary">{serviceName}</span>
           </h1>
           <p className="font-body text-lg text-muted-foreground/70 max-w-2xl leading-relaxed">
             {isEmergency
-              ? "Atendimento emergencial com prioridade máxima. Valor base: R$ 300,00/hora."
-              : "Suporte técnico sob demanda com desconto progressivo. Valor base: R$ 200,00/hora."}
+              ? t("contratar.emergencialDesc")
+              : t("contratar.avulsoDesc")}
           </p>
         </div>
       </section>
@@ -460,16 +460,16 @@ const ContratarServicoPage = () => {
         <div className="container max-w-3xl">
 
           {/* Step 1: Calculator */}
-          <WizardStepWrapper stepNumber={1} title="Calculadora De Horas Técnicas" subtitle="Escolha a quantidade de horas" status={getStepStatus("calculator")}>
+          <WizardStepWrapper stepNumber={1} title={t("contratar.stepCalculator")} subtitle={t("contratar.stepCalculatorSub")} status={getStepStatus("calculator")}>
             <div className="space-y-6">
               {/* Service badge */}
               <div className="bg-secondary p-4 flex items-center justify-between">
                 <div>
-                  <p className="font-mono text-xs text-muted-foreground">Serviço selecionado</p>
+                  <p className="font-mono text-xs text-muted-foreground">{t("contratar.servicoSelecionado")}</p>
                   <p className="font-bold text-foreground">{serviceName}</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-mono text-xs text-muted-foreground">{isEmergency ? "Emergencial" : "Avulso"}</p>
+                  <p className="font-mono text-xs text-muted-foreground">{isEmergency ? t("contratar.emergencial") : t("contratar.avulso")}</p>
                   <p className="font-bold text-primary">R$ {basePrice.toFixed(2).replace(".", ",")}/h</p>
                 </div>
               </div>
@@ -482,7 +482,7 @@ const ContratarServicoPage = () => {
                   </button>
                   <div className="text-center">
                     <span className="text-5xl font-bold text-primary">{hours}</span>
-                    <p className="font-mono text-xs text-muted-foreground mt-1">hora{hours > 1 ? "s" : ""} técnica{hours > 1 ? "s" : ""}</p>
+                    <p className="font-mono text-xs text-muted-foreground mt-1">{hours} {t("contratar.horasTecnicas")}</p>
                   </div>
                   <button onClick={() => setHours(Math.min(8, hours + 1))} className="w-12 h-12 flex items-center justify-center border border-muted-foreground/30 text-muted-foreground hover:border-primary hover:text-primary transition-colors" aria-label="Aumentar horas">
                     <Plus size={20} />
@@ -491,19 +491,19 @@ const ContratarServicoPage = () => {
 
                 <div className="space-y-3 mb-6">
                   <div className="flex items-center justify-between font-mono text-sm">
-                    <span className="flex items-center gap-2 text-muted-foreground"><Clock size={14} /> Valor por hora</span>
+                    <span className="flex items-center gap-2 text-muted-foreground"><Clock size={14} /> {t("contratar.valorPorHora")}</span>
                     <span className="text-foreground">
                       R$ {unitPrice.toFixed(2).replace(".", ",")}
                       {discountPct > 0 && <span className="ml-2 text-xs text-primary">-{discountPct}%</span>}
                     </span>
                   </div>
                   <div className="flex items-center justify-between font-mono text-sm">
-                    <span className="text-muted-foreground">Preço cheio</span>
+                    <span className="text-muted-foreground">{t("contratar.precoCheio")}</span>
                     <span className="text-muted-foreground/50 line-through">R$ {fullPrice.toFixed(2).replace(".", ",")}</span>
                   </div>
                   <div className="h-px bg-muted-foreground/10" />
                   <div className="flex items-center justify-between font-mono text-base font-bold">
-                    <span className="text-foreground">Preço promocional</span>
+                    <span className="text-foreground">{t("contratar.precoPromocional")}</span>
                     <span className="text-primary text-xl">R$ {promoPrice.toFixed(2).replace(".", ",")}</span>
                   </div>
                 </div>
@@ -512,7 +512,7 @@ const ContratarServicoPage = () => {
                   <div className="bg-primary/10 border border-primary/30 p-4 flex items-center gap-3">
                     <TrendingDown size={20} className="text-primary shrink-0" />
                     <p className="font-mono text-sm font-bold text-primary">
-                      VOCÊ ESTÁ ECONOMIZANDO R$ {savings.toFixed(2).replace(".", ",")}
+                      {t("contratar.economizando")} R$ {savings.toFixed(2).replace(".", ",")}
                     </p>
                   </div>
                 )}
@@ -521,14 +521,14 @@ const ContratarServicoPage = () => {
               {/* Discount table */}
               <details className="bg-secondary group">
                 <summary className="p-4 cursor-pointer font-mono text-xs uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors flex justify-between items-center">
-                  Ver tabela de desconto progressivo
+                  {t("contratar.verTabela")}
                   <Plus size={14} className="text-primary group-open:rotate-45 transition-transform" />
                 </summary>
                 <div className="px-4 pb-4">
                   <div className="grid grid-cols-3 gap-px text-xs font-mono">
-                    <div className="bg-secondary p-2 text-muted-foreground/50">Horas</div>
-                    <div className="bg-secondary p-2 text-muted-foreground/50">R$/hora</div>
-                    <div className="bg-secondary p-2 text-muted-foreground/50">Total</div>
+                    <div className="bg-secondary p-2 text-muted-foreground/50">{t("contratar.tabelaHoras")}</div>
+                    <div className="bg-secondary p-2 text-muted-foreground/50">R$/h</div>
+                    <div className="bg-secondary p-2 text-muted-foreground/50">{t("contratar.tabelaTotal")}</div>
                     {Object.entries(priceTable).map(([h, price]) => (
                       <div key={h} className={`contents ${Number(h) === hours ? "[&>div]:text-primary [&>div]:font-bold" : ""}`}>
                         <div className="bg-secondary/50 p-2 text-muted-foreground">{h}h</div>
@@ -546,16 +546,16 @@ const ContratarServicoPage = () => {
                 className="w-full inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
               >
                 <ArrowRight size={16} />
-                Continuar Contratação
+                {t("contratar.continuarContratacao")}
               </button>
               <p className="font-body text-xs text-center text-muted-foreground/60">
-                Você será direcionado para preencher seus dados, gerar o contrato e seguir para o pagamento seguro.
+                {t("contratar.continuarDesc")}
               </p>
             </div>
           </WizardStepWrapper>
 
           {/* Step 2: Registration */}
-          <WizardStepWrapper stepNumber={2} title="Dados Do Contratante" subtitle="Preenchimento automático por CNPJ e CEP" status={getStepStatus("registration")}>
+          <WizardStepWrapper stepNumber={2} title={t("contratar.stepRegistration")} subtitle={t("contratar.stepRegistrationSub")} status={getStepStatus("registration")}>
             <QuickRegistrationForm onComplete={handleRegistrationComplete} loading={registrationLoading} initialData={{}} />
           </WizardStepWrapper>
 
