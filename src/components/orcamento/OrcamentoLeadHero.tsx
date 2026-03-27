@@ -6,36 +6,22 @@ import { Send, Loader2, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-const SERVICE_OPTIONS = [
-  "Suporte de TI",
-  "Locação de Computadores",
-  "Administração de Servidores",
-  "Backup Corporativo",
-  "Firewall / Segurança de Rede",
-  "Infraestrutura de TI",
-  "TI para Cartórios / Serventias",
-  "TI para Escritórios",
-  "TI para Hospitais e Clínicas",
-  "Automação com IA",
-  "Microsoft 365",
-  "Desenvolvimento Web",
-  "Outro",
-];
-
 const OrcamentoLeadHero = () => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
-  const initialInterest = searchParams.get("interesse") || searchParams.get("servico") || "";
+  const serviceOptions = t("orcamentoHero.serviceOptions", { returnObjects: true }) as string[];
+  const rawInterest = searchParams.get("interesse") || searchParams.get("servico") || "";
+  const initialInterest = rawInterest
+    ? serviceOptions.find((o) => o.toLowerCase().includes(rawInterest.toLowerCase())) || rawInterest
+    : "";
 
   const [form, setForm] = useState({
     nome: "",
     email: "",
     telefone: "",
     empresa: "",
-    interesse: initialInterest
-      ? SERVICE_OPTIONS.find((o) => o.toLowerCase().includes(initialInterest.toLowerCase())) || initialInterest
-      : "",
+    interesse: initialInterest,
     mensagem: "",
   });
   const [loading, setLoading] = useState(false);
@@ -44,7 +30,7 @@ const OrcamentoLeadHero = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.nome || !form.email || !form.mensagem) {
-      toast({ title: "Preencha os campos obrigatórios.", variant: "destructive" });
+      toast({ title: t("orcamentoHero.errorRequired"), variant: "destructive" });
       return;
     }
     setLoading(true);
@@ -62,9 +48,9 @@ const OrcamentoLeadHero = () => {
       });
       if (error) throw error;
       setSubmitted(true);
-      toast({ title: "Solicitação enviada com sucesso!" });
+      toast({ title: t("orcamentoHero.successToast") });
     } catch {
-      toast({ title: "Erro ao enviar. Tente novamente.", variant: "destructive" });
+      toast({ title: t("orcamentoHero.errorSubmit"), variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -131,9 +117,9 @@ const OrcamentoLeadHero = () => {
                 <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
                   <Send className="w-8 h-8 text-primary" />
                 </div>
-                <h3 className="text-xl font-heading font-bold">Solicitação recebida!</h3>
+                <h3 className="text-xl font-heading font-bold">{t("orcamentoHero.successTitle")}</h3>
                 <p className="text-muted-foreground text-sm">
-                  Nosso time entrará em contato em até 48 horas com sua proposta.
+                  {t("orcamentoHero.successDesc")}
                 </p>
               </div>
             ) : (
@@ -141,48 +127,46 @@ const OrcamentoLeadHero = () => {
                 onSubmit={handleSubmit}
                 className="bg-card border border-border rounded-lg p-7 md:p-9 space-y-5"
               >
-                <h3 className="font-heading text-lg font-semibold text-primary mb-2">
-                  {t("orcamentoHero.formTitle", { defaultValue: "Solicite seu orçamento" })}
-                </h3>
+                <h3 className="font-heading text-lg font-semibold text-primary mb-2">{t("orcamentoHero.formTitle")}</h3>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="font-mono text-xs tracking-[0.2em] uppercase text-primary mb-1.5 block">
-                      Nome *
+                      {t("orcamentoHero.labelNome")} *
                     </label>
-                    <input className={inputCls} value={form.nome} onChange={(e) => set("nome", e.target.value)} placeholder="Seu nome" required />
+                    <input className={inputCls} value={form.nome} onChange={(e) => set("nome", e.target.value)} placeholder={t("orcamentoHero.placeholderNome")} required />
                   </div>
                   <div>
                     <label className="font-mono text-xs tracking-[0.2em] uppercase text-primary mb-1.5 block">
-                      E-mail *
+                      {t("orcamentoHero.labelEmail")} *
                     </label>
-                    <input type="email" className={inputCls} value={form.email} onChange={(e) => set("email", e.target.value)} placeholder="email@empresa.com" required />
+                    <input type="email" className={inputCls} value={form.email} onChange={(e) => set("email", e.target.value)} placeholder={t("orcamentoHero.placeholderEmail")} required />
                   </div>
                   <div>
                     <label className="font-mono text-xs tracking-[0.2em] uppercase text-primary mb-1.5 block">
-                      Telefone
+                      {t("orcamentoHero.labelTelefone")}
                     </label>
-                    <input className={inputCls} value={form.telefone} onChange={(e) => set("telefone", e.target.value)} placeholder="(11) 99999-9999" />
+                    <input className={inputCls} value={form.telefone} onChange={(e) => set("telefone", e.target.value)} placeholder={t("orcamentoHero.placeholderTelefone")} />
                   </div>
                   <div>
                     <label className="font-mono text-xs tracking-[0.2em] uppercase text-primary mb-1.5 block">
-                      Empresa
+                      {t("orcamentoHero.labelEmpresa")}
                     </label>
-                    <input className={inputCls} value={form.empresa} onChange={(e) => set("empresa", e.target.value)} placeholder="Nome da empresa" />
+                    <input className={inputCls} value={form.empresa} onChange={(e) => set("empresa", e.target.value)} placeholder={t("orcamentoHero.placeholderEmpresa")} />
                   </div>
                 </div>
 
                 <div>
                   <label className="font-mono text-xs tracking-[0.2em] uppercase text-primary mb-1.5 block">
-                    Interesse
+                    {t("orcamentoHero.labelInteresse")}
                   </label>
                   <select
                     className={inputCls}
                     value={form.interesse}
                     onChange={(e) => set("interesse", e.target.value)}
                   >
-                    <option value="">Selecione o serviço</option>
-                    {SERVICE_OPTIONS.map((o) => (
+                    <option value="">{t("orcamentoHero.placeholderInteresse")}</option>
+                    {serviceOptions.map((o) => (
                       <option key={o} value={o}>{o}</option>
                     ))}
                   </select>
@@ -190,14 +174,14 @@ const OrcamentoLeadHero = () => {
 
                 <div>
                   <label className="font-mono text-xs tracking-[0.2em] uppercase text-primary mb-1.5 block">
-                    Mensagem *
+                    {t("orcamentoHero.labelMensagem")} *
                   </label>
                   <textarea
                     rows={3}
                     className={`${inputCls} resize-none`}
                     value={form.mensagem}
                     onChange={(e) => set("mensagem", e.target.value)}
-                    placeholder="Descreva sua necessidade..."
+                    placeholder={t("orcamentoHero.placeholderMensagem")}
                     required
                   />
                 </div>
@@ -208,7 +192,7 @@ const OrcamentoLeadHero = () => {
                   className="w-full inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all rounded disabled:opacity-50"
                 >
                   {loading ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-                  {loading ? "Enviando..." : "Solicitar proposta"}
+                  {loading ? t("orcamentoHero.submitting") : t("orcamentoHero.submitBtn")}
                 </button>
               </form>
             )}
