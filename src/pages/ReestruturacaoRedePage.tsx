@@ -13,7 +13,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import WhatsAppButton from "@/components/WhatsAppButton";
 import SeoHead from "@/components/SeoHead";
 import JsonLd from "@/components/JsonLd";
 import WizardStepWrapper from "@/components/orcamento/WizardStepWrapper";
@@ -944,7 +943,6 @@ const ReestruturacaoRedePage = () => {
       )}
 
       <Footer />
-      <WhatsAppButton />
     </>
   );
 };

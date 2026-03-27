@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Monitor, Wrench, Headphones, RefreshCw, DollarSign, ShieldCheck, ArrowRight, CheckCircle2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import optiplexImage from "@/assets/optiplex-desktop.webp";
-import { whatsappLink } from "@/lib/whatsapp";
+import { whatsappLink, buildContextualWhatsAppMessage } from "@/lib/whatsapp";
 import { trackWhatsApp } from "@/lib/tracking";
 
 
@@ -63,7 +63,7 @@ const RentalSection = () => {
                    {t("custom.rentalSection.heroOverlayTitle")}
                 </h3>
                 <a
-                  href={whatsappLink(t("custom.rentalSection.whatsappMessage1", { defaultValue: "Olá! Gostaria de saber mais sobre a locação de computadores." }))}
+                  href={whatsappLink(buildContextualWhatsAppMessage({ pageTitle: t("custom.rentalSection.heroOverlayTitle"), intent: "proposal" }))}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 font-mono text-xs md:text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
@@ -150,7 +150,7 @@ const RentalSection = () => {
                {t("custom.rentalSection.finalDescription")}
             </p>
             <a
-              href={whatsappLink(t("custom.rentalSection.whatsappMessage2", { defaultValue: "Olá! Quero saber mais sobre a locação de computadores a partir de R$249/mês." }))}
+              href={whatsappLink(buildContextualWhatsAppMessage({ pageTitle: t("custom.rentalSection.heroOverlayTitle"), intent: "proposal" }))}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"

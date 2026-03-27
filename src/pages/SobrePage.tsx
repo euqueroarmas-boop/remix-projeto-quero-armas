@@ -5,7 +5,6 @@ import { Target, Eye, Heart, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import WhatsAppButton from "@/components/WhatsAppButton";
 
 const fadeIn = {
   initial: { opacity: 0, y: 20 },
@@ -123,7 +122,6 @@ const SobrePage = () => {
       </section>
 
       <Footer />
-      <WhatsAppButton />
     </div>
   );
 };

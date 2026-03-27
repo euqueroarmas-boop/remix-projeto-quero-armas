@@ -7,10 +7,9 @@ import type { LucideIcon } from "lucide-react";
 import HoursCalculator from "@/components/orcamento/HoursCalculator";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import WhatsAppButton from "@/components/WhatsAppButton";
 import SeoHead from "@/components/SeoHead";
 import JsonLd, { buildFaqSchema, buildBreadcrumbSchema, buildServiceSchema } from "@/components/JsonLd";
-import { whatsappLink } from "@/lib/whatsapp";
+import { whatsappLink, buildContextualWhatsAppMessage } from "@/lib/whatsapp";
 
 interface FAQ {
   question: string;
@@ -49,7 +48,7 @@ const fadeIn = {
 };
 
 /* ── Micro-CTA reusable block ── */
-const MicroCta = ({ href, whatsappMessage, cityName }: { href: string; whatsappMessage: string; cityName?: string }) => {
+const MicroCta = ({ href, cityName, pageTitle }: { href: string; whatsappMessage: string; cityName?: string; pageTitle?: string }) => {
   const { t } = useTranslation();
   return (
     <motion.div {...fadeIn} className="py-8 md:py-10">
@@ -69,7 +68,7 @@ const MicroCta = ({ href, whatsappMessage, cityName }: { href: string; whatsappM
               {t("service.microCtaBtn")}
             </Link>
             <a
-              href={whatsappLink(whatsappMessage)}
+              href={whatsappLink(buildContextualWhatsAppMessage({ pageTitle, intent: "specialist" }))}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 border border-border text-foreground px-5 py-3 font-mono text-xs uppercase tracking-wider hover:border-primary hover:text-primary transition-all rounded"
@@ -137,7 +136,7 @@ const AvoidanceBlock = ({ cityName }: { cityName?: string }) => {
 };
 
 /* ── Urgency block ── */
-const UrgencyBlock = ({ whatsappMessage, cityName }: { whatsappMessage: string; currentPath: string; cityName?: string }) => {
+const UrgencyBlock = ({ cityName, pageTitle }: { whatsappMessage: string; currentPath: string; cityName?: string; pageTitle?: string }) => {
   const { t } = useTranslation();
   return (
     <section className="py-12 md:py-16 bg-destructive/5 border-y border-destructive/10">
@@ -155,7 +154,7 @@ const UrgencyBlock = ({ whatsappMessage, cityName }: { whatsappMessage: string; 
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <a
-              href={whatsappLink(whatsappMessage)}
+              href={whatsappLink(buildContextualWhatsAppMessage({ pageTitle, intent: "specialist" }))}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all btn-glow rounded"
@@ -270,7 +269,7 @@ const ServicePageTemplate = ({
                   {t("service.ctaContract")}
                 </Link>
                 <a
-                  href={whatsappLink(whatsappMessage)}
+                  href={whatsappLink(buildContextualWhatsAppMessage({ pageTitle: title, intent: "specialist" }))}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 border border-gunmetal-foreground/30 text-gunmetal-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:border-primary hover:text-primary transition-all"
@@ -346,7 +345,7 @@ const ServicePageTemplate = ({
       </section>
 
       {/* ══ MICRO-CTA 1 ══ */}
-      <MicroCta href="/orcamento-ti" whatsappMessage={whatsappMessage} cityName={cityName} />
+      <MicroCta href="/orcamento-ti" whatsappMessage={whatsappMessage} cityName={cityName} pageTitle={title} />
 
       {/* ══ Benefits ══ */}
       <section className="section-dark py-16 md:py-24">
@@ -399,10 +398,10 @@ const ServicePageTemplate = ({
       )}
 
       {/* ══ MICRO-CTA 2 ══ */}
-      <MicroCta href={contractHref} whatsappMessage={whatsappMessage} cityName={cityName} />
+      <MicroCta href={contractHref} whatsappMessage={whatsappMessage} cityName={cityName} pageTitle={title} />
 
       {/* ══ URGENCY BLOCK ══ */}
-      <UrgencyBlock whatsappMessage={whatsappMessage} currentPath={currentPath} cityName={cityName} />
+      <UrgencyBlock whatsappMessage={whatsappMessage} currentPath={currentPath} cityName={cityName} pageTitle={title} />
 
       {/* ══ FAQ ══ */}
       <section className="section-dark py-16 md:py-24">
@@ -461,7 +460,7 @@ const ServicePageTemplate = ({
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <a
-                href={whatsappLink(whatsappMessage)}
+                href={whatsappLink(buildContextualWhatsAppMessage({ pageTitle: title, intent: "proposal" }))}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all btn-glow rounded"
@@ -504,7 +503,6 @@ const ServicePageTemplate = ({
       )}
 
       <Footer />
-      <WhatsAppButton />
     </div>
   );
 };

@@ -8,7 +8,6 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import WhatsAppButton from "@/components/WhatsAppButton";
 import brasilCoverage from "@/assets/brasil-coverage.webp";
 
 const sections = [
@@ -149,7 +148,6 @@ const ServicosPage = () => {
       ))}
     </div>
     <Footer />
-    <WhatsAppButton />
   </div>
   );
 };

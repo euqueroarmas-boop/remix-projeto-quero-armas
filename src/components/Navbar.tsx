@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import logoFull from "@/assets/logo-wmti-full.webp";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
-import { whatsappLink } from "@/lib/whatsapp";
+import { whatsappLink, buildContextualWhatsAppMessage } from "@/lib/whatsapp";
 import { trackWhatsApp } from "@/lib/tracking";
 import type { LucideIcon } from "lucide-react";
 
@@ -550,7 +550,7 @@ const Navbar = () => {
                 </Link>
 
                 <a
-                  href={whatsappLink(t("nav.whatsappMessage", { defaultValue: "Olá, gostaria de falar com um especialista em TI." }))}
+                  href={whatsappLink(buildContextualWhatsAppMessage({ intent: "specialist" }))}
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => { closeMobileMenu(); trackWhatsApp("navbar-mobile", "especialista"); }}

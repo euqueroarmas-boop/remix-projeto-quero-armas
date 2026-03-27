@@ -5,7 +5,6 @@ import MetricsSection from "@/components/MetricsSection";
 import TestimonialsSection from "@/components/TestimonialsSection";
 import ContactSection from "@/components/ContactSection";
 import Footer from "@/components/Footer";
-import WhatsAppButton from "@/components/WhatsAppButton";
 import {
   HomeServicos,
   HomeSegmentos,
@@ -29,7 +28,6 @@ const Index = () => {
       <HomeCta />
       <ContactSection />
       <Footer />
-      <WhatsAppButton />
     </div>
   );
 };

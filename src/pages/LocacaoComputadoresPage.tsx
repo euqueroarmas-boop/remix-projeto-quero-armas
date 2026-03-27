@@ -16,7 +16,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useBrasilApiLookup } from "@/hooks/useBrasilApiLookup";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import WhatsAppButton from "@/components/WhatsAppButton";
 import SeoHead from "@/components/SeoHead";
 
 /* ─── Plans (prices stay fixed) ─── */
@@ -415,7 +414,6 @@ const LocacaoComputadoresPage = () => {
       </section>
 
       <Footer />
-      <WhatsAppButton />
     </div>
   );
 };

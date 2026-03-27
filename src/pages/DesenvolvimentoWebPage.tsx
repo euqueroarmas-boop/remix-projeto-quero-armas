@@ -8,7 +8,6 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import WhatsAppButton from "@/components/WhatsAppButton";
 import SeoHead from "@/components/SeoHead";
 import JsonLd from "@/components/JsonLd";
 
@@ -148,7 +147,6 @@ const DesenvolvimentoWebPage = () => {
       </main>
 
       <Footer />
-      <WhatsAppButton />
     </>
   );
 };

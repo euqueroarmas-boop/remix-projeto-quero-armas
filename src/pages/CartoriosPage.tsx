@@ -1,7 +1,6 @@
 import Navbar from "@/components/Navbar";
 import CartoriosSection from "@/components/CartoriosSection";
 import Footer from "@/components/Footer";
-import WhatsAppButton from "@/components/WhatsAppButton";
 
 const CartoriosPage = () => (
   <div className="min-h-screen">
@@ -10,7 +9,6 @@ const CartoriosPage = () => (
       <CartoriosSection />
     </div>
     <Footer />
-    <WhatsAppButton />
   </div>
 );
 

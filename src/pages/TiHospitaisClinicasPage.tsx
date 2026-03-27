@@ -9,7 +9,6 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import WhatsAppButton from "@/components/WhatsAppButton";
 import hospitalTech from "@/assets/hospital-tech.jpg";
 
 const fadeIn = {
@@ -255,7 +254,6 @@ const TiHospitaisClinicasPage = () => {
       </section>
 
       <Footer />
-      <WhatsAppButton />
     </div>
   );
 };

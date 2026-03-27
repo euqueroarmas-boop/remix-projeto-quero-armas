@@ -1,7 +1,6 @@
 import Navbar from "@/components/Navbar";
 import RentalSection from "@/components/RentalSection";
 import Footer from "@/components/Footer";
-import WhatsAppButton from "@/components/WhatsAppButton";
 
 const LocacaoPage = () => (
   <div className="min-h-screen">
@@ -10,7 +9,6 @@ const LocacaoPage = () => (
       <RentalSection />
     </div>
     <Footer />
-    <WhatsAppButton />
   </div>
 );
 

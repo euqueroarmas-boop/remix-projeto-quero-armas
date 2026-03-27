@@ -8,7 +8,6 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import WhatsAppButton from "@/components/WhatsAppButton";
 
 const fadeIn = {
   initial: { opacity: 0, y: 24 },
@@ -166,7 +165,6 @@ const TerceirizacaoPage = () => {
       </section>
 
       <Footer />
-      <WhatsAppButton />
     </div>
   );
 };

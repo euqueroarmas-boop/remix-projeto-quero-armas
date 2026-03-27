@@ -2,7 +2,6 @@ import Navbar from "@/components/Navbar";
 import InfraSection from "@/components/InfraSection";
 import SecuritySection from "@/components/SecuritySection";
 import Footer from "@/components/Footer";
-import WhatsAppButton from "@/components/WhatsAppButton";
 
 const InfraestruturaPage = () => (
   <div className="min-h-screen">
@@ -12,7 +11,6 @@ const InfraestruturaPage = () => (
       <SecuritySection />
     </div>
     <Footer />
-    <WhatsAppButton />
   </div>
 );
 
