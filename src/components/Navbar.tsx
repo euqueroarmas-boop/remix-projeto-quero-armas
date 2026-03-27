@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import logoFull from "@/assets/logo-wmti-full.webp";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { whatsappLink } from "@/lib/whatsapp";
+import { trackWhatsApp } from "@/lib/tracking";
 import type { LucideIcon } from "lucide-react";
 
 interface MegaMenuItem {
@@ -526,10 +528,10 @@ const Navbar = () => {
               </Link>
 
               <a
-                href="https://wa.me/5511963166915?text=Ol%C3%A1%2C%20gostaria%20de%20falar%20com%20um%20especialista%20em%20TI."
+                href={whatsappLink(t("nav.whatsappMessage", { defaultValue: "Olá, gostaria de falar com um especialista em TI." }))}
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={() => setOpen(false)}
+                onClick={() => { setOpen(false); trackWhatsApp("navbar-mobile", "especialista"); }}
                 className="mt-2 inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-6 py-4 font-mono text-sm font-bold uppercase tracking-wider"
               >
                 {t("nav.falarEspecialista")}
