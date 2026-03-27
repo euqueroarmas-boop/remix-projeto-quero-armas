@@ -20,11 +20,8 @@ const SobrePage = () => {
   const values = t(`${k}.values`, { returnObjects: true }) as { title: string; desc: string }[];
 
   useEffect(() => {
-    document.title = t(`${k}.metaTitle`);
-    const desc = document.querySelector('meta[name="description"]');
-    if (desc) desc.setAttribute("content", t(`${k}.metaDesc`));
     window.scrollTo(0, 0);
-  }, [t]);
+  }, []);
 
   return (
     <div className="min-h-screen">
