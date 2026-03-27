@@ -14,7 +14,9 @@
     "fecharMenu": "Close menu"
   },
   "hero": {
-    "imageAlt": "Corporate IT infrastructure with Dell PowerEdge servers"
+    "imageAlt": "Corporate IT infrastructure with Dell PowerEdge servers",
+    "metaTitle": "WMTi Information Technology | Corporate IT Support & Infrastructure",
+    "metaDescription": "Technical support, corporate infrastructure, Dell servers, pfSense firewall and computer leasing for businesses in Jacareí and Vale do Paraíba."
   },
   "contact": {
     "tag": "// No strings attached",

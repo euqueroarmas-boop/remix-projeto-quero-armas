@@ -14,7 +14,9 @@
     "fecharMenu": "Fechar menu"
   },
   "hero": {
-    "imageAlt": "Infraestrutura de TI corporativa com servidores Dell PowerEdge"
+    "imageAlt": "Infraestrutura de TI corporativa com servidores Dell PowerEdge",
+    "metaTitle": "WMTi Tecnologia da Informação | Suporte e Infraestrutura de TI Corporativa",
+    "metaDescription": "Suporte técnico, infraestrutura corporativa, servidores Dell, firewall pfSense e locação de computadores para empresas em Jacareí e Vale do Paraíba."
   },
   "contact": {
     "tag": "// Sem compromisso",
