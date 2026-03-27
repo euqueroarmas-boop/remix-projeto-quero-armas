@@ -10,7 +10,6 @@ const LocacaoPage = () => (
       <RentalSection />
     </div>
     <Footer />
-    <WhatsAppButton />
   </div>
 );
 

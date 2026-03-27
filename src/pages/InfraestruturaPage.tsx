@@ -12,7 +12,6 @@ const InfraestruturaPage = () => (
       <SecuritySection />
     </div>
     <Footer />
-    <WhatsAppButton />
   </div>
 );
 

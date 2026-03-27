@@ -10,7 +10,6 @@ const CartoriosPage = () => (
       <CartoriosSection />
     </div>
     <Footer />
-    <WhatsAppButton />
   </div>
 );
 

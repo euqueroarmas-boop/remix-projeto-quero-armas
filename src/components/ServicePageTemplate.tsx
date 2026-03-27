@@ -7,7 +7,6 @@ import type { LucideIcon } from "lucide-react";
 import HoursCalculator from "@/components/orcamento/HoursCalculator";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import WhatsAppButton from "@/components/WhatsAppButton";
 import SeoHead from "@/components/SeoHead";
 import JsonLd, { buildFaqSchema, buildBreadcrumbSchema, buildServiceSchema } from "@/components/JsonLd";
 import { whatsappLink } from "@/lib/whatsapp";
@@ -504,7 +503,6 @@ const ServicePageTemplate = ({
       )}
 
       <Footer />
-      <WhatsAppButton />
     </div>
   );
 };
