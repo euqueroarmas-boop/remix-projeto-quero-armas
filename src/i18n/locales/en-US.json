@@ -319,7 +319,8 @@
     "projeto": "Project",
     "calcular": "Calculate",
     "locacaoShort": "Leasing",
-    "learnMore": "Learn more"
+    "learnMore": "Learn more",
+    "segurancaInfo": "Information Security"
   },
   "metrics": {
     "years": "Years keeping businesses running",
@@ -343,5 +344,139 @@
     ],
     "ctaStart": "Start quote",
     "ctaSpecialist": "Talk to a specialist"
+  },
+  "problems": {
+    "mobileSummaryTag": "Assessment",
+    "mobileSummaryTitle1": "Is your computer slow?",
+    "mobileSummaryTitle2": "We fix it.",
+    "mobileSummaryDesc": "Overheating, slow drives, viruses, unstable network — we diagnose and fix the most common performance issues. Request a free assessment.",
+    "items": [
+      {
+        "title": "Overheating",
+        "desc": "Dried thermal paste and dust-clogged fans cause freezing, shutdowns, and reduce processor lifespan.",
+        "solution": "Preventive internal cleaning + professional thermal paste replacement."
+      },
+      {
+        "title": "Slow or Failing Drive",
+        "desc": "Mechanical hard drives degrade over time, causing extreme slowness during boot and program loading.",
+        "solution": "Upgrade to NVMe SSD — up to 10x faster."
+      },
+      {
+        "title": "Viruses & Malware",
+        "desc": "Systems without corporate antivirus are vulnerable to ransomware, data theft, and slowdowns from hidden processes.",
+        "solution": "Endpoint protection deployment with 24/7 monitoring."
+      },
+      {
+        "title": "Unstable Network",
+        "desc": "Deteriorated cables, consumer-grade switches, and misconfigured routers cause constant drops and lost productivity.",
+        "solution": "Structured network design with managed switches."
+      },
+      {
+        "title": "Corrupted Operating System",
+        "desc": "Ignored updates and pirated software degrade Windows, causing blue screens and constant errors.",
+        "solution": "Clean reinstallation with original Microsoft licensing."
+      },
+      {
+        "title": "No Backup",
+        "desc": "Critical data stored only on local computers — a burned drive means total and irreversible data loss.",
+        "solution": "Automated local + cloud backup with daily verification."
+      },
+      {
+        "title": "Undersized Hardware",
+        "desc": "Insufficient RAM and outdated processors can't handle modern software, causing freezes and crashes.",
+        "solution": "Technical assessment + custom upgrade for your operations."
+      },
+      {
+        "title": "No Preventive Maintenance",
+        "desc": "Equipment without regular check-ups accumulates silent issues until a critical failure shuts down operations.",
+        "solution": "Monthly preventive maintenance contract with reports."
+      }
+    ],
+    "ctaTitle": "Don't wait for the problem to shut down your business",
+    "ctaDesc": "Request a free infrastructure assessment. Our technical team identifies bottlenecks, risks, and improvement opportunities — no commitment.",
+    "ctaDiagnostico": "Free Assessment",
+    "ctaOrcamento": "Request a Quote"
+  },
+  "pathSelector": {
+    "tag": "How can we help?",
+    "title1": "What does your company",
+    "titleHighlight": "need",
+    "title2": "today?",
+    "desc": "Choose the option that best matches your needs. We'll build a personalized quote.",
+    "emergencialTitle": "Emergency technical support",
+    "emergencialDesc": "Urgent problem at your company? Our team can provide immediate technical assistance to restore servers, networks, systems, or computers that have stopped working.\n\nPay per hour and use when you need. Take advantage of our hourly promotion.",
+    "emergencialHighlight": "On-demand emergency support",
+    "avulsoTitle": "Hire a one-time service",
+    "avulsoDesc": "Request one-time technical assistance without a monthly contract. Ideal for installations, configurations, maintenance, network improvements, or infrastructure.\n\nPay per hour and use when you need. Take advantage of our hourly promotion.",
+    "avulsoHighlight": "On-demand technical service",
+    "locacaoTitle": "Lease computers with support included",
+    "locacaoDesc": "Brand new Dell OptiPlex computers with maintenance, backup, and technical support throughout the contract. No upfront investment.",
+    "locacaoHighlight": "Starting at $50/mo per computer",
+    "suporteTitle": "Hire monthly support for my current network",
+    "suporteDesc": "Keep your current computers and count on our IT team to manage infrastructure, servers, and security.",
+    "suporteHighlight": "Starting at $25/mo per computer",
+    "ajudaTitle": "I'm not sure yet, I want to understand which option is best",
+    "ajudaDesc": "Answer a few quick questions about your company and we'll recommend the best option for your case.",
+    "ajudaHighlight": "Free assessment in 2 minutes"
+  },
+  "contratar": {
+    "breadcrumbHome": "Home",
+    "breadcrumbContratar": "Hire",
+    "tag": "// Contracting",
+    "titlePrefix": "Hire",
+    "locacaoDesc": "Your plan has been set. Now proceed directly to registration, contract generation, and electronic signature.",
+    "planoLabel": "Plan:",
+    "qtdLabel": "Quantity:",
+    "computadores": "computers",
+    "valorMensalLabel": "Monthly value:",
+    "emergencialDesc": "Emergency support with maximum priority. Base rate: $60/hour.",
+    "avulsoDesc": "On-demand technical support with progressive discount. Base rate: $40/hour.",
+    "stepCalculator": "Technical Hours Calculator",
+    "stepCalculatorSub": "Choose the number of hours",
+    "servicoSelecionado": "Selected service",
+    "emergencial": "Emergency",
+    "avulso": "On-demand",
+    "horasTecnicas": "technical hour(s)",
+    "valorPorHora": "Hourly rate",
+    "precoCheio": "Full price",
+    "precoPromocional": "Promotional price",
+    "economizando": "YOU ARE SAVING",
+    "verTabela": "View progressive discount table",
+    "tabelaHoras": "Hours",
+    "tabelaTotal": "Total",
+    "continuarContratacao": "Continue Contracting",
+    "continuarDesc": "You'll be directed to fill in your details, generate the contract, and proceed to secure payment.",
+    "stepRegistration": "Contractor Details",
+    "stepRegistrationSub": "Auto-fill by Tax ID and Zip Code",
+    "verOrcamento": "View full quote"
+  },
+  "blog": {
+    "ctaTitle": "Need help with your",
+    "ctaTitleHighlight": "infrastructure",
+    "ctaTitleCitySuffix": " in {{city}}",
+    "ctaDesc": "Request a free assessment. Our technical team evaluates your situation and presents the best solution.",
+    "ctaCitySuffix": " We serve companies in {{city}} and the {{region}} area.",
+    "ctaBtn": "Talk to a specialist"
+  },
+  "errors": {
+    "updateDetected": "Update detected",
+    "somethingWrong": "Something went wrong",
+    "updateDesc": "A new version of the site has been published. Reload the page to continue browsing.",
+    "errorDesc": "An unexpected error occurred. Try reloading the page.",
+    "reload": "Reload page",
+    "erroSalvar": "Error saving data",
+    "tenteNovamente": "Please try again.",
+    "erroCobranca": "Error generating payment",
+    "erroOrcamento": "Error saving quote",
+    "erroOrcamentoDesc": "There was a problem processing your quote. Please try again."
+  },
+  "orcamento": {
+    "seoTitle": "IT Infrastructure Quote | WMTi",
+    "seoDesc": "Calculate the IT infrastructure investment for your business. Dell computer leasing from $50/mo or monthly support from $25/mo per workstation.",
+    "ctxBackup": "Discover how to fix your company's backup",
+    "ctxRede": "Fix your company's network problems",
+    "ctxServidor": "Fix your company's server problems",
+    "ctxLocacao": "Calculate computer leasing for your business",
+    "ctxCidade": "IT Quote for your company in {{city}}"
   }
 }

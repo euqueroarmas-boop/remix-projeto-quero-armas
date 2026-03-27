@@ -319,7 +319,8 @@
     "projeto": "Projeto",
     "calcular": "Calcular",
     "locacaoShort": "Locação",
-    "learnMore": "Saiba mais"
+    "learnMore": "Saiba mais",
+    "segurancaInfo": "Segurança da Informação"
   },
   "metrics": {
     "years": "Anos sem parar empresas",
@@ -343,5 +344,139 @@
     ],
     "ctaStart": "Começar orçamento",
     "ctaSpecialist": "Falar com especialista"
+  },
+  "problems": {
+    "mobileSummaryTag": "Diagnóstico",
+    "mobileSummaryTitle1": "Seu computador está lento?",
+    "mobileSummaryTitle2": "Nós resolvemos.",
+    "mobileSummaryDesc": "Superaquecimento, HD lento, vírus, rede instável — identificamos e resolvemos os problemas mais comuns de performance. Solicite um diagnóstico gratuito.",
+    "items": [
+      {
+        "title": "Superaquecimento",
+        "desc": "Pasta térmica ressecada e coolers obstruídos por poeira causam travamentos, desligamentos e reduzem a vida útil do processador.",
+        "solution": "Limpeza interna preventiva + troca de pasta térmica profissional."
+      },
+      {
+        "title": "HD Lento ou Defeituoso",
+        "desc": "Discos rígidos mecânicos degradam com o tempo, causando lentidão extrema na inicialização e abertura de programas.",
+        "solution": "Upgrade para SSD NVMe — até 10x mais velocidade."
+      },
+      {
+        "title": "Vírus e Malware",
+        "desc": "Sistemas sem antivírus corporativo ficam vulneráveis a ransomware, roubo de dados e lentidão por processos ocultos.",
+        "solution": "Implantação de endpoint protection com monitoramento 24/7."
+      },
+      {
+        "title": "Rede Instável",
+        "desc": "Cabos deteriorados, switches domésticos e roteadores mal configurados causam quedas constantes e perda de produtividade.",
+        "solution": "Projeto de rede estruturada com switches gerenciáveis."
+      },
+      {
+        "title": "Sistema Operacional Corrompido",
+        "desc": "Atualizações ignoradas e softwares piratas degradam o Windows, causando telas azuis e erros constantes.",
+        "solution": "Reinstalação limpa com licenciamento original Microsoft."
+      },
+      {
+        "title": "Sem Backup",
+        "desc": "Dados críticos armazenados apenas no computador local — um HD queimado significa perda total e irreversível.",
+        "solution": "Backup automatizado local + nuvem com verificação diária."
+      },
+      {
+        "title": "Hardware Subdimensionado",
+        "desc": "Memória RAM insuficiente e processadores defasados não suportam softwares modernos, causando travamentos.",
+        "solution": "Diagnóstico técnico + upgrade sob medida para sua operação."
+      },
+      {
+        "title": "Falta de Manutenção Preventiva",
+        "desc": "Equipamentos sem revisão periódica acumulam problemas silenciosos até uma falha crítica paralisar a operação.",
+        "solution": "Contrato de manutenção preventiva mensal com relatórios."
+      }
+    ],
+    "ctaTitle": "Não espere o problema parar sua empresa",
+    "ctaDesc": "Solicite um diagnóstico gratuito da sua infraestrutura. Nossa equipe técnica identifica gargalos, riscos e oportunidades de melhoria — sem compromisso.",
+    "ctaDiagnostico": "Diagnóstico Gratuito",
+    "ctaOrcamento": "Solicitar Orçamento"
+  },
+  "pathSelector": {
+    "tag": "Como podemos ajudar?",
+    "title1": "O que sua empresa",
+    "titleHighlight": "precisa",
+    "title2": "hoje?",
+    "desc": "Escolha a opção que mais se aproxima da sua necessidade. Vamos montar um orçamento personalizado.",
+    "emergencialTitle": "Suporte técnico emergencial",
+    "emergencialDesc": "Problema urgente na sua empresa? Nossa equipe pode prestar atendimento técnico imediato para restaurar servidores, rede, sistemas ou computadores que pararam de funcionar, em servidores Windows Server, Linux ou estações de trabalho.\n\nPague por hora e use quando quiser. Aproveite a promoção de horas.",
+    "emergencialHighlight": "Atendimento emergencial sob demanda",
+    "avulsoTitle": "Contratar serviço avulso",
+    "avulsoDesc": "Solicite atendimento técnico pontual para sua empresa sem necessidade de contrato mensal. Ideal para instalações, configurações, manutenção, melhorias de rede, servidores ou infraestrutura.\n\nPague por hora e use quando quiser. Aproveite a promoção de horas.",
+    "avulsoHighlight": "Serviço técnico sob demanda",
+    "locacaoTitle": "Alugar computadores com suporte incluso",
+    "locacaoDesc": "Computadores Dell OptiPlex novos com manutenção, backup e suporte técnico durante todo o contrato. Sem investimento inicial.",
+    "locacaoHighlight": "A partir de R$249/mês por computador",
+    "suporteTitle": "Contratar apenas o suporte mensal para minha rede atual",
+    "suporteDesc": "Mantenha seus computadores atuais e conte com nossa equipe de TI para cuidar da infraestrutura, servidores e segurança.",
+    "suporteHighlight": "A partir de R$120/mês por computador",
+    "ajudaTitle": "Ainda não tenho certeza, quero entender qual opção compensa mais",
+    "ajudaDesc": "Responda algumas perguntas rápidas sobre sua empresa e nós vamos recomendar a melhor opção para o seu caso.",
+    "ajudaHighlight": "Diagnóstico gratuito em 2 minutos"
+  },
+  "contratar": {
+    "breadcrumbHome": "Home",
+    "breadcrumbContratar": "Contratar",
+    "tag": "// Contratação",
+    "titlePrefix": "Contratar",
+    "locacaoDesc": "Seu plano já foi definido. Agora siga diretamente para o cadastro, geração do contrato e assinatura eletrônica.",
+    "planoLabel": "Plano:",
+    "qtdLabel": "Quantidade:",
+    "computadores": "computadores",
+    "valorMensalLabel": "Valor mensal:",
+    "emergencialDesc": "Atendimento emergencial com prioridade máxima. Valor base: R$ 300,00/hora.",
+    "avulsoDesc": "Suporte técnico sob demanda com desconto progressivo. Valor base: R$ 200,00/hora.",
+    "stepCalculator": "Calculadora De Horas Técnicas",
+    "stepCalculatorSub": "Escolha a quantidade de horas",
+    "servicoSelecionado": "Serviço selecionado",
+    "emergencial": "Emergencial",
+    "avulso": "Avulso",
+    "horasTecnicas": "hora(s) técnica(s)",
+    "valorPorHora": "Valor por hora",
+    "precoCheio": "Preço cheio",
+    "precoPromocional": "Preço promocional",
+    "economizando": "VOCÊ ESTÁ ECONOMIZANDO",
+    "verTabela": "Ver tabela de desconto progressivo",
+    "tabelaHoras": "Horas",
+    "tabelaTotal": "Total",
+    "continuarContratacao": "Continuar Contratação",
+    "continuarDesc": "Você será direcionado para preencher seus dados, gerar o contrato e seguir para o pagamento seguro.",
+    "stepRegistration": "Dados Do Contratante",
+    "stepRegistrationSub": "Preenchimento automático por CNPJ e CEP",
+    "verOrcamento": "Ver orçamento completo"
+  },
+  "blog": {
+    "ctaTitle": "Precisa de ajuda com sua",
+    "ctaTitleHighlight": "infraestrutura",
+    "ctaTitleCitySuffix": " em {{city}}",
+    "ctaDesc": "Solicite um diagnóstico gratuito. Nossa equipe técnica avalia sua situação e apresenta a melhor solução.",
+    "ctaCitySuffix": " Atendemos empresas em {{city}} e região de {{region}}.",
+    "ctaBtn": "Falar com especialista"
+  },
+  "errors": {
+    "updateDetected": "Atualização detectada",
+    "somethingWrong": "Algo deu errado",
+    "updateDesc": "Uma nova versão do site foi publicada. Recarregue a página para continuar navegando.",
+    "errorDesc": "Ocorreu um erro inesperado. Tente recarregar a página.",
+    "reload": "Recarregar página",
+    "erroSalvar": "Erro ao salvar dados",
+    "tenteNovamente": "Tente novamente.",
+    "erroCobranca": "Erro ao gerar cobrança",
+    "erroOrcamento": "Erro ao salvar orçamento",
+    "erroOrcamentoDesc": "Ocorreu um problema ao processar seu orçamento. Tente novamente."
+  },
+  "orcamento": {
+    "seoTitle": "Orçamento de Infraestrutura de TI | WMTi",
+    "seoDesc": "Calcule o investimento em infraestrutura de TI para sua empresa. Locação de computadores Dell a partir de R$249/mês ou suporte mensal a partir de R$120/mês.",
+    "ctxBackup": "Descubra como resolver o backup da sua empresa",
+    "ctxRede": "Resolva os problemas de rede da sua empresa",
+    "ctxServidor": "Resolva os problemas do servidor da sua empresa",
+    "ctxLocacao": "Calcule a locação de computadores para sua empresa",
+    "ctxCidade": "Orçamento de TI para sua empresa em {{city}}"
   }
 }
