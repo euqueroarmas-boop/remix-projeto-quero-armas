@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -18,120 +19,57 @@ const fadeIn = {
   transition: { duration: 0.5 },
 };
 
-const whatsappMsg = "Olá! Gostaria de um diagnóstico de infraestrutura de TI para minha clínica/hospital.";
-
-const painPoints = [
-  { icon: Monitor, text: "Sistemas médicos lentos ou travando" },
-  { icon: Database, text: "Perda de exames e prontuários eletrônicos" },
-  { icon: AlertTriangle, text: "Ataques ransomware em instituições de saúde" },
-  { icon: Server, text: "Falta de redundância de servidores e internet" },
-  { icon: HardDrive, text: "Falhas de backup sem recuperação garantida" },
-  { icon: Lock, text: "Risco de vazamento de dados médicos (LGPD)" },
-];
-
-const solutions = [
-  {
-    icon: Server,
-    title: "Infraestrutura de Servidores",
-    desc: "Servidores Dell PowerEdge com virtualização e alta disponibilidade, dimensionados para sistemas médicos como HIS, PACS e RIS.",
-    specs: ["Dell PowerEdge R750xs / T550", "Virtualização Hyper-V", "Alta disponibilidade e clustering", "Performance para PACS/DICOM"],
-  },
-  {
-    icon: Shield,
-    title: "Segurança da Rede",
-    desc: "Firewall pfSense com IDS/IPS Suricata, segmentação de rede por VLANs, VPN segura e proteção contra ransomware.",
-    specs: ["Firewall pfSense + Suricata", "Segmentação por VLANs", "VPN site-to-site e remota", "Proteção anti-ransomware"],
-  },
-  {
-    icon: HardDrive,
-    title: "Backup Médico Automatizado",
-    desc: "Backup local e externo com Veeam, estratégia 3-2-1, recuperação rápida de dados e testes de restauração periódicos.",
-    specs: ["Veeam Backup & Replication", "Backup local + nuvem Azure", "RPO e RTO definidos", "Testes de restauração mensais"],
-  },
-  {
-    icon: Activity,
-    title: "Monitoramento da Infraestrutura",
-    desc: "Monitoramento preventivo 24/7 com Zabbix e alertas automáticos para identificação rápida de falhas.",
-    specs: ["Monitoramento Zabbix 24/7", "Alertas automáticos", "NOC próprio", "Suporte técnico especializado"],
-  },
-  {
-    icon: Cloud,
-    title: "Microsoft 365 para Equipes Médicas",
-    desc: "E-mail corporativo seguro, colaboração com Teams, armazenamento em nuvem OneDrive e SharePoint para documentos médicos.",
-    specs: ["Exchange Online seguro", "Microsoft Teams para equipes", "OneDrive e SharePoint", "Compliance e auditoria"],
-  },
-  {
-    icon: Network,
-    title: "Rede Estruturada Hospitalar",
-    desc: "Cabeamento Cat6A, switches Dell gerenciáveis, Wi-Fi enterprise com cobertura total e VLANs para separação de tráfego.",
-    specs: ["Cabeamento Cat6A certificado", "Switches Dell gerenciáveis", "Wi-Fi enterprise UniFi", "VLANs para PACS e dados"],
-  },
-];
-
-const benefits = [
-  { icon: Heart, title: "Continuidade do atendimento", text: "Infraestrutura redundante garante que sistemas médicos nunca parem." },
-  { icon: Lock, title: "Proteção de prontuários", text: "Criptografia AES-256 em trânsito e repouso para dados de pacientes." },
-  { icon: Activity, title: "Redução de falhas", text: "Monitoramento proativo reduz em até 90% as paradas não planejadas." },
-  { icon: Shield, title: "Defesa contra ataques", text: "Firewall, IDS/IPS e anti-ransomware protegem contra ameaças digitais." },
-  { icon: Server, title: "Infraestrutura confiável", text: "Servidores Dell enterprise com garantia e suporte direto do fabricante." },
-  { icon: Database, title: "Conformidade LGPD", text: "Medidas técnicas e organizacionais para proteção de dados sensíveis de saúde." },
-];
-
-const faq = [
-  { question: "Clínicas precisam de servidor próprio?", answer: "Depende do porte. Para clínicas com mais de 5 estações e sistemas como prontuário eletrônico e PACS, um servidor dedicado Dell PowerEdge garante performance, segurança e backup centralizado. Para consultórios menores, soluções em nuvem podem ser suficientes." },
-  { question: "Como proteger prontuários eletrônicos?", answer: "Implementamos backup automatizado com criptografia AES-256, controle de acesso por perfil de usuário, firewall com IDS/IPS, antivírus gerenciado e logs de auditoria — tudo em conformidade com a LGPD para dados sensíveis de saúde." },
-  { question: "Clínicas são alvo de ransomware?", answer: "Sim. Instituições de saúde são alvos prioritários de ransomware porque possuem dados sensíveis e alta urgência para restabelecer sistemas. Implementamos defesa em camadas: firewall pfSense, segmentação de rede, backup isolado e plano de resposta a incidentes." },
-  { question: "Como garantir backup seguro de exames e dados médicos?", answer: "Utilizamos a estratégia 3-2-1: três cópias dos dados, em dois tipos de mídia diferentes, com uma cópia externa (nuvem Azure). O backup é automatizado, criptografado e testado mensalmente para garantir recuperação rápida." },
-  { question: "Por que redundância de internet é importante em clínicas?", answer: "Sistemas médicos modernos dependem de conexão constante para prontuário eletrônico, telemedicina e integração com laboratórios. Implementamos failover automático com duas ou mais conexões para garantir disponibilidade contínua." },
-];
+const painIcons = [Monitor, Database, AlertTriangle, Server, HardDrive, Lock];
+const solIcons = [Server, Shield, HardDrive, Activity, Cloud, Network];
+const benIcons = [Heart, Lock, Activity, Shield, Server, Database];
 
 const TiHospitaisClinicasPage = () => {
+  const { t } = useTranslation();
+  const k = "custom.hospitais";
+
+  const painPoints = t(`${k}.painPoints`, { returnObjects: true }) as string[];
+  const solutions = t(`${k}.solutions`, { returnObjects: true }) as { title: string; desc: string; specs: string[] }[];
+  const benefits = t(`${k}.benefits`, { returnObjects: true }) as { title: string; text: string }[];
+  const lgpdCards = t(`${k}.lgpdCards`, { returnObjects: true }) as { label: string; desc: string }[];
+  const faq = t(`${k}.faq`, { returnObjects: true }) as { question: string; answer: string }[];
+  const relatedLinks = t(`${k}.relatedLinks`, { returnObjects: true }) as { label: string; href: string }[];
+  const whatsappMsg = t(`${k}.whatsappMsg`);
+
   useEffect(() => {
-    document.title = "Infraestrutura de TI para Hospitais e Clínicas | WMTi";
+    document.title = t(`${k}.metaTitle`);
     const desc = document.querySelector('meta[name="description"]');
-    if (desc) desc.setAttribute("content", "Soluções de infraestrutura de TI para hospitais e clínicas médicas. Servidores, segurança, backup e monitoramento para garantir estabilidade e proteção de dados.");
+    if (desc) desc.setAttribute("content", t(`${k}.metaDesc`));
     window.scrollTo(0, 0);
-  }, []);
+  }, [t]);
 
   return (
     <div className="min-h-screen">
       <Navbar />
 
-      {/* Hero with image */}
+      {/* Hero */}
       <section className="relative pt-14 md:pt-16 overflow-hidden">
         <div className="absolute inset-0">
-          <img src={hospitalTech} alt="Tecnologia em hospitais" className="w-full h-full object-cover" />
+          <img src={hospitalTech} alt={t(`${k}.imgAlt`)} className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-secondary/90" />
         </div>
         <div className="relative container py-20 md:py-32">
           <motion.div {...fadeIn} className="max-w-4xl">
-            <Link
-              to="/"
-              className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors mb-8"
-            >
-              <ArrowLeft size={14} /> Voltar ao início
+            <Link to="/" className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors mb-8">
+              <ArrowLeft size={14} /> {t(`${k}.back`)}
             </Link>
-            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">// TI para Saúde</p>
+            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">{t(`${k}.heroTag`)}</p>
             <h1 className="text-3xl md:text-5xl lg:text-6xl mb-6">
-              Sua clínica depende de sistemas que <span className="text-primary">não podem falhar</span> — mas estão falhando
+              {t(`${k}.heroTitle1`)}<span className="text-primary">{t(`${k}.heroHighlight`)}</span>{t(`${k}.heroTitle2`)}
             </h1>
             <p className="font-body text-lg md:text-xl text-muted-foreground max-w-2xl leading-relaxed mb-8">
-              Prontuário travando. Sistema de imagens lento. Backup que ninguém sabe se funciona. Na saúde, uma falha de TI não é inconveniente — é risco para o atendimento. A WMTi estrutura a TI da sua clínica para que a tecnologia nunca seja o problema.
+              {t(`${k}.heroDescription`)}
             </p>
             <div className="flex flex-wrap gap-4">
-              <a
-                href={`https://wa.me/5511963166915?text=${encodeURIComponent(whatsappMsg)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
-              >
-                <MessageCircle size={16} /> Solicitar diagnóstico
+              <a href={`https://wa.me/5511963166915?text=${encodeURIComponent(whatsappMsg)}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all">
+                <MessageCircle size={16} /> {t(`${k}.ctaDiag`)}
               </a>
-              <a
-                href="#contato-saude"
-                className="inline-flex items-center gap-2 border border-muted-foreground/30 text-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:border-primary hover:text-primary transition-all"
-              >
-                Falar com especialista
+              <a href="#contato-saude" className="inline-flex items-center gap-2 border border-muted-foreground/30 text-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:border-primary hover:text-primary transition-all">
+                {t(`${k}.ctaSpecialist`)}
               </a>
             </div>
           </motion.div>
@@ -142,21 +80,15 @@ const TiHospitaisClinicasPage = () => {
       <section className="section-light py-16 md:py-24">
         <div className="container">
           <motion.div {...fadeIn} className="max-w-3xl">
-              <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">// Por que TI para saúde é crítica</p>
-              <h2 className="text-2xl md:text-3xl mb-6">
-                Hospitais e clínicas não podem <span className="text-primary">parar.</span>
-              </h2>
-              <div className="font-body text-muted-foreground leading-relaxed space-y-4">
-                <p>
-                  Instituições de saúde dependem fortemente da tecnologia para funcionar. Prontuários eletrônicos, sistemas de imagens médicas (PACS/DICOM), agendamento, faturamento e telemedicina exigem uma infraestrutura robusta, segura e sempre disponível.
-                </p>
-                <p>
-                  Uma falha no servidor pode impedir o acesso a prontuários durante uma emergência. Um ataque ransomware pode paralisar todo o hospital. Um backup mal configurado pode significar a perda irreversível de dados de pacientes.
-                </p>
-                <p>
-                  A WMTi é especialista em projetar e manter infraestrutura de TI para o setor de saúde, com foco em disponibilidade contínua, segurança de dados e conformidade com a LGPD.
-                </p>
-              </div>
+            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">{t(`${k}.introTag`)}</p>
+            <h2 className="text-2xl md:text-3xl mb-6">
+              {t(`${k}.introTitle1`)}<span className="text-primary">{t(`${k}.introHighlight`)}</span>
+            </h2>
+            <div className="font-body text-muted-foreground leading-relaxed space-y-4">
+              <p>{t(`${k}.introP1`)}</p>
+              <p>{t(`${k}.introP2`)}</p>
+              <p>{t(`${k}.introP3`)}</p>
+            </div>
           </motion.div>
         </div>
       </section>
@@ -165,25 +97,21 @@ const TiHospitaisClinicasPage = () => {
       <section className="section-dark py-16 md:py-24">
         <div className="container">
           <motion.div {...fadeIn} className="mb-12">
-            <p className="font-mono text-xs tracking-[0.3em] uppercase text-destructive mb-4">// Riscos comuns</p>
+            <p className="font-mono text-xs tracking-[0.3em] uppercase text-destructive mb-4">{t(`${k}.painTag`)}</p>
             <h2 className="text-2xl md:text-4xl">
-              Problemas de TI em <span className="text-primary">clínicas e hospitais</span>
+              {t(`${k}.painTitle1`)}<span className="text-primary">{t(`${k}.painHighlight`)}</span>
             </h2>
           </motion.div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-px bg-border">
-            {painPoints.map((p, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: i * 0.08 }}
-                className="bg-secondary p-8"
-              >
-                <p.icon size={20} className="text-destructive mb-4" strokeWidth={1.5} />
-                <p className="font-body text-sm text-muted-foreground leading-relaxed">{p.text}</p>
-              </motion.div>
-            ))}
+            {painPoints.map((text, i) => {
+              const Icon = painIcons[i];
+              return (
+                <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.4, delay: i * 0.08 }} className="bg-secondary p-8">
+                  <Icon size={20} className="text-destructive mb-4" strokeWidth={1.5} />
+                  <p className="font-body text-sm text-muted-foreground leading-relaxed">{text}</p>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -192,34 +120,30 @@ const TiHospitaisClinicasPage = () => {
       <section className="section-light py-16 md:py-24">
         <div className="container">
           <motion.div {...fadeIn} className="mb-12">
-            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">// Como a WMTi resolve</p>
+            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">{t(`${k}.solutionTag`)}</p>
             <h2 className="text-2xl md:text-4xl">
-              Soluções completas para <span className="text-primary">infraestrutura médica</span>
+              {t(`${k}.solutionTitle1`)}<span className="text-primary">{t(`${k}.solutionHighlight`)}</span>
             </h2>
           </motion.div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {solutions.map((s, i) => (
-              <motion.div
-                key={s.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: i * 0.08 }}
-                className="border border-border p-8 hover:border-primary/40 transition-colors"
-              >
-                <s.icon size={24} className="text-primary mb-4" strokeWidth={1.5} />
-                <h3 className="font-mono text-sm font-bold uppercase tracking-wider mb-3">{s.title}</h3>
-                <p className="font-body text-sm text-muted-foreground leading-relaxed mb-4">{s.desc}</p>
-                <ul className="space-y-2">
-                  {s.specs.map((spec) => (
-                    <li key={spec} className="flex items-center gap-2">
-                      <CheckCircle2 size={14} className="text-primary shrink-0" />
-                      <span className="font-mono text-xs text-muted-foreground">{spec}</span>
-                    </li>
-                  ))}
-                </ul>
-              </motion.div>
-            ))}
+            {solutions.map((s, i) => {
+              const Icon = solIcons[i];
+              return (
+                <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.4, delay: i * 0.08 }} className="border border-border p-8 hover:border-primary/40 transition-colors">
+                  <Icon size={24} className="text-primary mb-4" strokeWidth={1.5} />
+                  <h3 className="font-mono text-sm font-bold uppercase tracking-wider mb-3">{s.title}</h3>
+                  <p className="font-body text-sm text-muted-foreground leading-relaxed mb-4">{s.desc}</p>
+                  <ul className="space-y-2">
+                    {s.specs.map((spec) => (
+                      <li key={spec} className="flex items-center gap-2">
+                        <CheckCircle2 size={14} className="text-primary shrink-0" />
+                        <span className="font-mono text-xs text-muted-foreground">{spec}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -228,55 +152,41 @@ const TiHospitaisClinicasPage = () => {
       <section className="section-dark py-16 md:py-24">
         <div className="container">
           <motion.div {...fadeIn} className="mb-12">
-            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">// Benefícios</p>
+            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">{t(`${k}.benefitsTag`)}</p>
             <h2 className="text-2xl md:text-4xl">
-              Por que escolher a <span className="text-primary">WMTi</span> para sua clínica
+              {t(`${k}.benefitsTitle1`)}<span className="text-primary">{t(`${k}.benefitsHighlight`)}</span>{t(`${k}.benefitsTitle2`)}
             </h2>
           </motion.div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-px bg-border">
-            {benefits.map((b, i) => (
-              <motion.div
-                key={b.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: i * 0.08 }}
-                className="bg-secondary p-8"
-              >
-                <b.icon size={20} className="text-primary mb-4" strokeWidth={1.5} />
-                <h3 className="font-mono text-sm font-bold mb-2">{b.title}</h3>
-                <p className="font-body text-sm text-muted-foreground leading-relaxed">{b.text}</p>
-              </motion.div>
-            ))}
+            {benefits.map((b, i) => {
+              const Icon = benIcons[i];
+              return (
+                <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.4, delay: i * 0.08 }} className="bg-secondary p-8">
+                  <Icon size={20} className="text-primary mb-4" strokeWidth={1.5} />
+                  <h3 className="font-mono text-sm font-bold mb-2">{b.title}</h3>
+                  <p className="font-body text-sm text-muted-foreground leading-relaxed">{b.text}</p>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* LGPD Section */}
+      {/* LGPD */}
       <section className="section-light py-16 md:py-24">
         <div className="container max-w-4xl">
           <motion.div {...fadeIn}>
-            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">// LGPD e proteção de dados</p>
+            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">{t(`${k}.lgpdTag`)}</p>
             <h2 className="text-2xl md:text-3xl mb-6">
-              Proteção de dados de <span className="text-primary">pacientes</span>
+              {t(`${k}.lgpdTitle1`)}<span className="text-primary">{t(`${k}.lgpdHighlight`)}</span>
             </h2>
             <div className="font-body text-muted-foreground leading-relaxed space-y-4">
-              <p>
-                A Lei Geral de Proteção de Dados (LGPD) classifica dados de saúde como <strong className="text-foreground">dados pessoais sensíveis</strong>, exigindo medidas técnicas e organizacionais reforçadas para seu tratamento.
-              </p>
-              <p>
-                Clínicas e hospitais que não protegem adequadamente prontuários eletrônicos, resultados de exames e dados cadastrais de pacientes estão sujeitos a sanções que incluem multas de até 2% do faturamento.
-              </p>
-              <p>
-                A WMTi implementa as medidas técnicas exigidas pela LGPD: <strong className="text-foreground">criptografia de dados em trânsito e repouso</strong>, controle de acesso granular por perfil de usuário, backup criptografado com testes de restauração, firewall com logs de auditoria e plano documentado de resposta a incidentes de segurança.
-              </p>
+              <p dangerouslySetInnerHTML={{ __html: t(`${k}.lgpdP1`) }} />
+              <p>{t(`${k}.lgpdP2`)}</p>
+              <p dangerouslySetInnerHTML={{ __html: t(`${k}.lgpdP3`) }} />
             </div>
             <div className="grid sm:grid-cols-3 gap-6 mt-8">
-              {[
-                { label: "Criptografia AES-256", desc: "Dados protegidos em trânsito e repouso" },
-                { label: "Controle de acesso", desc: "Perfis granulares por função" },
-                { label: "Auditoria completa", desc: "Logs de acesso e alterações" },
-              ].map((item) => (
+              {lgpdCards.map((item) => (
                 <div key={item.label} className="border border-border p-4">
                   <p className="font-mono text-xs font-bold text-primary mb-1">{item.label}</p>
                   <p className="font-body text-xs text-muted-foreground">{item.desc}</p>
@@ -291,19 +201,12 @@ const TiHospitaisClinicasPage = () => {
       <section className="section-dark py-16 md:py-24">
         <div className="container max-w-3xl">
           <motion.div {...fadeIn} className="mb-12">
-            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">// Perguntas frequentes</p>
-            <h2 className="text-2xl md:text-4xl">FAQ — TI para Saúde</h2>
+            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">{t(`${k}.faqTag`)}</p>
+            <h2 className="text-2xl md:text-4xl">{t(`${k}.faqTitle`)}</h2>
           </motion.div>
           <div className="space-y-px">
             {faq.map((item, i) => (
-              <motion.details
-                key={i}
-                initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.3, delay: i * 0.05 }}
-                className="bg-secondary group"
-              >
+              <motion.details key={i} initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.3, delay: i * 0.05 }} className="bg-secondary group">
                 <summary className="p-6 cursor-pointer font-mono text-sm font-bold hover:text-primary transition-colors list-none flex justify-between items-center">
                   {item.question}
                   <ArrowRight size={16} className="text-primary group-open:rotate-90 transition-transform shrink-0 ml-4" />
@@ -322,50 +225,28 @@ const TiHospitaisClinicasPage = () => {
         <div className="container max-w-3xl text-center">
           <motion.div {...fadeIn}>
             <h2 className="text-2xl md:text-4xl mb-4">
-              Avalie a infraestrutura de TI da sua <span className="text-primary">clínica</span>
+              {t(`${k}.ctaTitle1`)}<span className="text-primary">{t(`${k}.ctaHighlight`)}</span>
             </h2>
-            <p className="font-body text-muted-foreground max-w-xl mx-auto mb-8 leading-relaxed">
-              Nossa equipe pode realizar uma análise técnica da infraestrutura da sua clínica ou hospital e indicar melhorias para garantir estabilidade, segurança e continuidade dos serviços.
-            </p>
+            <p className="font-body text-muted-foreground max-w-xl mx-auto mb-8 leading-relaxed">{t(`${k}.ctaDescription`)}</p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <a
-                href={`https://wa.me/5511963166915?text=${encodeURIComponent(whatsappMsg)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
-              >
-                <MessageCircle size={16} /> Solicitar diagnóstico de TI
+              <a href={`https://wa.me/5511963166915?text=${encodeURIComponent(whatsappMsg)}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all">
+                <MessageCircle size={16} /> {t(`${k}.ctaDiagBtn`)}
               </a>
-              <a
-                href="https://wa.me/5511963166915"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 border border-border text-foreground px-8 py-4 font-mono text-sm uppercase tracking-wider hover:border-primary hover:text-primary transition-all"
-              >
-                Falar no WhatsApp
+              <a href="https://wa.me/5511963166915" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 border border-border text-foreground px-8 py-4 font-mono text-sm uppercase tracking-wider hover:border-primary hover:text-primary transition-all">
+                {t(`${k}.ctaWhatsapp`)}
               </a>
             </div>
           </motion.div>
         </div>
       </section>
 
-      {/* Related services */}
+      {/* Related */}
       <section className="section-dark py-12 border-t border-border">
         <div className="container">
-          <p className="font-mono text-xs tracking-[0.3em] uppercase text-muted-foreground mb-6">// Serviços relacionados</p>
+          <p className="font-mono text-xs tracking-[0.3em] uppercase text-muted-foreground mb-6">{t(`${k}.relatedTag`)}</p>
           <div className="flex flex-wrap gap-3">
-            {[
-              { label: "Infraestrutura corporativa", href: "/infraestrutura-ti-corporativa-jacarei" },
-              { label: "Backup empresarial", href: "/backup-empresarial-jacarei" },
-              { label: "Firewall pfSense", href: "/firewall-pfsense-jacarei" },
-              { label: "Diagnóstico TI", href: "/diagnostico-ti-empresarial" },
-              { label: "Servidores Dell", href: "/servidor-dell-poweredge-jacarei" },
-            ].map((link) => (
-              <Link
-                key={link.href}
-                to={link.href}
-                className="inline-flex items-center gap-2 border border-border px-4 py-2 font-mono text-xs uppercase tracking-wider text-muted-foreground hover:border-primary hover:text-primary transition-colors"
-              >
+            {relatedLinks.map((link) => (
+              <Link key={link.href} to={link.href} className="inline-flex items-center gap-2 border border-border px-4 py-2 font-mono text-xs uppercase tracking-wider text-muted-foreground hover:border-primary hover:text-primary transition-colors">
                 {link.label} <ArrowRight size={12} />
               </Link>
             ))}

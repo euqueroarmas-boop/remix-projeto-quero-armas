@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { Target, Eye, Heart, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -13,22 +14,17 @@ const fadeIn = {
   transition: { duration: 0.5 },
 };
 
-const values = [
-  { title: "Excelência Técnica", desc: "Buscamos a perfeição em cada projeto. Certificações Dell e Microsoft não são apenas selos — são compromisso com a qualidade." },
-  { title: "Integridade", desc: "Transparência total com nossos clientes. Recomendamos apenas o que é necessário e entregamos o que prometemos." },
-  { title: "Responsabilidade", desc: "Tratamos a infraestrutura do cliente como se fosse nossa. Cada servidor, cada backup, cada firewall recebe atenção máxima." },
-  { title: "Inovação Contínua", desc: "Investimos em capacitação constante para oferecer as melhores soluções do mercado." },
-  { title: "Compromisso com o Cliente", desc: "Nosso sucesso é medido pelo sucesso dos nossos clientes. Suporte proativo, não reativo." },
-  { title: "Servir com Propósito", desc: "Acreditamos que nosso trabalho é uma forma de servir. Como nos ensina Colossenses 3:23 — 'Tudo o que fizerem, façam de todo o coração, como para o Senhor, e não para os homens.'" },
-];
-
 const SobrePage = () => {
+  const { t } = useTranslation();
+  const k = "custom.sobre";
+  const values = t(`${k}.values`, { returnObjects: true }) as { title: string; desc: string }[];
+
   useEffect(() => {
-    document.title = "Sobre a WMTi | Missão, Visão e Valores";
+    document.title = t(`${k}.metaTitle`);
     const desc = document.querySelector('meta[name="description"]');
-    if (desc) desc.setAttribute("content", "Conheça a WMTi: missão, visão e valores. Empresa de TI em Jacareí especializada em infraestrutura corporativa com certificações Dell e Microsoft.");
+    if (desc) desc.setAttribute("content", t(`${k}.metaDesc`));
     window.scrollTo(0, 0);
-  }, []);
+  }, [t]);
 
   return (
     <div className="min-h-screen">
@@ -38,18 +34,15 @@ const SobrePage = () => {
       <section className="section-dark pt-24 md:pt-28 pb-16 md:pb-24 border-b-4 border-primary">
         <div className="container">
           <motion.div {...fadeIn} className="max-w-4xl">
-            <Link
-              to="/"
-              className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors mb-8"
-            >
-              <ArrowLeft size={14} /> Voltar ao início
+            <Link to="/" className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors mb-8">
+              <ArrowLeft size={14} /> {t(`${k}.back`)}
             </Link>
-            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">// Sobre a WMTi</p>
+            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">{t(`${k}.heroTag`)}</p>
             <h1 className="text-3xl md:text-5xl lg:text-6xl mb-6">
-              Tecnologia com <span className="text-primary">propósito.</span>
+              {t(`${k}.heroTitle`)}<span className="text-primary">{t(`${k}.heroHighlight`)}</span>
             </h1>
             <p className="font-body text-lg md:text-xl text-muted-foreground max-w-2xl leading-relaxed">
-              Há mais de 10 anos, entregamos infraestrutura de TI corporativa que faz a diferença no dia a dia das empresas.
+              {t(`${k}.heroDescription`)}
             </p>
           </motion.div>
         </div>
@@ -63,11 +56,9 @@ const SobrePage = () => {
               <Target size={28} className="text-primary" />
             </div>
             <div>
-              <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-3">// Missão</p>
-              <h2 className="text-2xl md:text-3xl mb-4">Nossa Missão</h2>
-              <p className="font-body text-lg text-muted-foreground leading-relaxed">
-                Prover infraestrutura de TI corporativa confiável, segura e escalável, permitindo que nossos clientes foquem no que fazem de melhor enquanto cuidamos da tecnologia que sustenta seus negócios.
-              </p>
+              <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-3">{t(`${k}.missionTag`)}</p>
+              <h2 className="text-2xl md:text-3xl mb-4">{t(`${k}.missionTitle`)}</h2>
+              <p className="font-body text-lg text-muted-foreground leading-relaxed">{t(`${k}.missionText`)}</p>
             </div>
           </motion.div>
         </div>
@@ -81,11 +72,9 @@ const SobrePage = () => {
               <Eye size={28} className="text-primary" />
             </div>
             <div>
-              <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-3">// Visão</p>
-              <h2 className="text-2xl md:text-3xl mb-4">Nossa Visão</h2>
-              <p className="font-body text-lg text-muted-foreground leading-relaxed">
-                Ser reconhecida como a principal empresa de infraestrutura de TI do Brasil, referência em excelência técnica, inovação e compromisso com a segurança da informação em todos os segmentos que atendemos.
-              </p>
+              <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-3">{t(`${k}.visionTag`)}</p>
+              <h2 className="text-2xl md:text-3xl mb-4">{t(`${k}.visionTitle`)}</h2>
+              <p className="font-body text-lg text-muted-foreground leading-relaxed">{t(`${k}.visionText`)}</p>
             </div>
           </motion.div>
         </div>
@@ -99,14 +88,14 @@ const SobrePage = () => {
               <Heart size={28} className="text-primary" />
             </div>
             <div>
-              <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-3">// Valores</p>
-              <h2 className="text-2xl md:text-3xl">Nossos Valores</h2>
+              <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-3">{t(`${k}.valuesTag`)}</p>
+              <h2 className="text-2xl md:text-3xl">{t(`${k}.valuesTitle`)}</h2>
             </div>
           </motion.div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-px bg-border">
             {values.map((v, i) => (
               <motion.div
-                key={v.title}
+                key={i}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -121,14 +110,14 @@ const SobrePage = () => {
         </div>
       </section>
 
-      {/* Colossenses 3:23 */}
+      {/* Quote */}
       <section className="section-dark py-16 md:py-24">
         <div className="container max-w-3xl text-center">
           <motion.div {...fadeIn}>
             <blockquote className="text-xl md:text-2xl italic text-muted-foreground leading-relaxed mb-6">
-              "Tudo o que fizerem, façam de todo o coração, como para o Senhor, e não para os homens."
+              "{t(`${k}.quote`)}"
             </blockquote>
-            <p className="font-mono text-sm text-primary tracking-wider">— Colossenses 3:23</p>
+            <p className="font-mono text-sm text-primary tracking-wider">{t(`${k}.quoteRef`)}</p>
           </motion.div>
         </div>
       </section>
