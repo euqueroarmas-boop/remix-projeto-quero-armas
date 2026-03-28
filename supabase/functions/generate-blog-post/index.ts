@@ -194,7 +194,7 @@ serve(async (req) => {
     if (action === "list") {
       const { data, error } = await supabase
         .from("blog_posts_ai")
-        .select("id, slug, title, status, category, tag, created_at, published_at, image_url, image_source, image_prompt, image_alt_pt")
+        .select("id, slug, title, title_en, status, category, tag, created_at, published_at, image_url, image_source, image_prompt, image_alt_pt")
         .order("created_at", { ascending: false })
         .limit(100);
 
