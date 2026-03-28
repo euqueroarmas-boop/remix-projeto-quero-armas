@@ -144,7 +144,7 @@ const BlogPostPage = () => {
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
               <nav aria-label="Breadcrumb" className="mb-5 md:mb-6">
                 <ol className="flex items-center gap-1 font-mono text-xs text-gunmetal-foreground/50">
-                  <li><Link to="/" className="hover:text-primary transition-colors">Home</Link></li>
+                  <li><Link to="/" className="hover:text-primary transition-colors">{t("service.breadcrumbHome")}</Link></li>
                   <ChevronRight size={10} className="shrink-0" />
                   <li><Link to="/blog" className="hover:text-primary transition-colors">{t("blogPost.blog")}</Link></li>
                   <ChevronRight size={10} className="shrink-0" />
@@ -227,17 +227,17 @@ const BlogPostPage = () => {
     ? `${localizedPost?.excerpt} ${isEn ? `Learn how WMTi serves companies in ${city.name} and the ${city.region} region.` : `Saiba como a WMTi atende empresas em ${city.name} e região de ${city.region}.`}`
     : (localizedStructuredContent?.metaDescription || structuredContent?.metaDescription) || localizedPost?.excerpt || "";
 
-  if (aiLoading) return <div className="min-h-screen flex items-center justify-center"><p className="text-muted-foreground">Carregando...</p></div>;
+  if (aiLoading) return <div className="min-h-screen flex items-center justify-center"><p className="text-muted-foreground">{isEn ? "Loading..." : "Carregando..."}</p></div>;
   if (!post) return <Navigate to="/blog" replace />;
   if (!structuredContent && !legacy) return <Navigate to="/blog" replace />;
 
   const canonicalUrl = city ? `${baseUrl}/blog/${baseSlug}` : pageUrl;
 
   const breadcrumbItems = [
-    { name: "Home", url: `${baseUrl}/` },
+    { name: t("service.breadcrumbHome"), url: `${baseUrl}/` },
     { name: t("blogPost.blog"), url: `${baseUrl}/blog` },
     ...(city ? [{ name: city.name, url: pageUrl }] : []),
-    { name: post.title, url: pageUrl },
+    { name: localizedPost.title, url: pageUrl },
   ];
 
   return (
@@ -259,12 +259,12 @@ const BlogPostPage = () => {
           datePublished: post.date,
         })}
       />
-      {structuredContent && structuredContent.faq.length > 0 && (
+      {localizedStructuredContent && localizedStructuredContent.faq.length > 0 && (
         <JsonLd
           data={{
             "@context": "https://schema.org",
             "@type": "FAQPage",
-            mainEntity: structuredContent.faq.map((item) => ({
+            mainEntity: localizedStructuredContent.faq.map((item) => ({
               "@type": "Question",
               name: item.q,
               acceptedAnswer: { "@type": "Answer", text: item.a },
@@ -294,7 +294,7 @@ const BlogPostPage = () => {
             {/* Breadcrumbs */}
             <nav aria-label="Breadcrumb" className="mb-5 md:mb-6">
               <ol className="flex items-center gap-1 font-mono text-xs text-gunmetal-foreground/50">
-                <li><Link to="/" className="hover:text-primary transition-colors">Home</Link></li>
+                <li><Link to="/" className="hover:text-primary transition-colors">{t("service.breadcrumbHome")}</Link></li>
                 <ChevronRight size={10} className="shrink-0" />
                 <li><Link to="/blog" className="hover:text-primary transition-colors">{t("blogPost.blog")}</Link></li>
                 <ChevronRight size={10} className="shrink-0" />
