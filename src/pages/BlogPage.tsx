@@ -110,12 +110,14 @@ const BlogPage = () => {
     setActiveSlide((prev) => (prev - 1 + carouselPosts.length) % carouselPosts.length);
   }, [carouselPosts.length]);
 
+  const canAutoplay = typeof window !== "undefined" && window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+
   // Autoplay
   useEffect(() => {
-    if (isPaused || carouselPosts.length <= 1) return;
+    if (!canAutoplay || isPaused || carouselPosts.length <= 1) return;
     timerRef.current = setInterval(goNext, CAROUSEL_INTERVAL);
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [isPaused, goNext, carouselPosts.length]);
+  }, [canAutoplay, isPaused, goNext, carouselPosts.length]);
 
   const allCategories: (BlogCategory | "Todos")[] = ["Todos", ...blogCategories];
   const categoryLabelMap = useMemo(() => {

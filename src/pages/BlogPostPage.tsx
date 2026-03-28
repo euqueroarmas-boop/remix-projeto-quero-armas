@@ -9,7 +9,7 @@ import SeoHead from "@/components/SeoHead";
 import JsonLd, { buildArticleSchema, buildBreadcrumbSchema, buildFaqSchema } from "@/components/JsonLd";
 import { blogPosts, blogContent as blogContentData } from "@/data/blogPosts";
 import { cities } from "@/data/seo/cities";
-import { useLocalizedBlogPosts, useLocalizedBlogContent } from "@/hooks/useBlogLocalized";
+import { useLocalizedBlogPosts, useLocalizedBlogContent, translateBlogCategoryLabel, translateInternalLinkLabel } from "@/hooks/useBlogLocalized";
 import { openWhatsApp } from "@/lib/whatsapp";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -114,7 +114,12 @@ const BlogPostPage = () => {
     const aiMetaDesc = (isEn && aiPost.meta_description_en) ? aiPost.meta_description_en : aiPost.meta_description;
     const aiCta = (isEn && aiPost.cta_en) ? aiPost.cta_en : aiPost.cta;
     const aiFaq = ((isEn && aiPost.faq_en && (aiPost.faq_en as any[]).length > 0) ? aiPost.faq_en : aiPost.faq || []) as { q: string; a: string }[];
-    const aiLinks = (aiPost.internal_links || []) as { label: string; href: string }[];
+    const aiLinks = ((aiPost.internal_links || []) as { label: string; href: string }[]).map((link) => ({
+      ...link,
+      label: translateInternalLinkLabel(link.label, i18n.language),
+    }));
+    const aiTag = t(`blog.tags.${aiPost.tag}`, { defaultValue: aiPost.tag });
+    const aiCategory = translateBlogCategoryLabel(aiPost.category, i18n.language);
     const dateLocale = isEn ? "en-US" : "pt-BR";
     return (
       <div className="min-h-screen">
@@ -147,8 +152,8 @@ const BlogPostPage = () => {
                 </ol>
               </nav>
               <div className="flex items-center gap-3 mb-5 flex-wrap">
-                <span className="font-mono text-[10px] tracking-[0.15em] uppercase text-primary border border-primary/30 px-2 py-0.5">{aiPost.tag}</span>
-                <span className="font-mono text-[10px] tracking-[0.15em] uppercase text-muted-foreground border border-border px-2 py-0.5">{aiPost.category}</span>
+                <span className="font-mono text-[10px] tracking-[0.15em] uppercase text-primary border border-primary/30 px-2 py-0.5">{aiTag}</span>
+                <span className="font-mono text-[10px] tracking-[0.15em] uppercase text-muted-foreground border border-border px-2 py-0.5">{aiCategory}</span>
                 <span className="flex items-center gap-1 font-mono text-[10px] text-gunmetal-foreground/50">
                   <Calendar size={10} />
                   {new Date(aiPost.published_at || aiPost.created_at).toLocaleDateString(dateLocale)}
