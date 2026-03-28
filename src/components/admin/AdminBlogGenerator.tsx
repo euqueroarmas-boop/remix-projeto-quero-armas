@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Plus, Trash2, Eye, Send, RefreshCw, Sparkles, Upload, Image, X, Pencil, Check, RotateCcw } from "lucide-react";
+import { Loader2, Plus, Trash2, Eye, Send, RefreshCw, Sparkles, Upload, Image, X, Pencil, Check, RotateCcw, Languages } from "lucide-react";
 import { toast } from "sonner";
 
 const CATEGORIES = [
@@ -39,6 +39,7 @@ interface AiPost {
   id: string;
   slug: string;
   title: string;
+  title_en?: string | null;
   status: string;
   category: string;
   tag: string;
@@ -445,6 +446,7 @@ export default function AdminBlogGenerator() {
 
   // Edit cover modal
   const [editingPost, setEditingPost] = useState<AiPost | null>(null);
+  const [translating, setTranslating] = useState<string | null>(null);
 
   const getToken = () => sessionStorage.getItem("admin_token") || "";
 
@@ -521,6 +523,56 @@ export default function AdminBlogGenerator() {
     } catch {
       toast.error("Erro ao excluir");
     }
+  };
+
+  
+
+  const handleTranslate = async (postId: string) => {
+    setTranslating(postId);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-blog-post", {
+        body: { action: "translate", post_id: postId },
+        headers: { "x-admin-token": getToken() },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success(`Traduzido: ${data.translated_title}`);
+      fetchPosts();
+    } catch (e: any) {
+      toast.error(`Erro ao traduzir: ${e.message}`);
+    }
+    setTranslating(null);
+  };
+
+  const handleBatchTranslate = async () => {
+    const untranslated = posts.filter((p) => !p.title_en);
+    if (untranslated.length === 0) {
+      toast.info("Todos os posts já possuem tradução!");
+      return;
+    }
+    setBatchRunning(true);
+    setBatchProgress({ current: 0, total: untranslated.length });
+    for (let i = 0; i < untranslated.length; i++) {
+      setBatchProgress({ current: i + 1, total: untranslated.length });
+      try {
+        await supabase.functions.invoke("generate-blog-post", {
+          body: { action: "translate", post_id: untranslated[i].id },
+          headers: { "x-admin-token": getToken() },
+        });
+        if (i < untranslated.length - 1) {
+          await new Promise((r) => setTimeout(r, 3000));
+        }
+      } catch (e: any) {
+        toast.error(`Erro no post ${i + 1}: ${e.message}`);
+        if (e.message?.includes("Rate limit")) {
+          toast.info("Aguardando rate limit... Continuando em 30s");
+          await new Promise((r) => setTimeout(r, 30000));
+        }
+      }
+    }
+    setBatchRunning(false);
+    toast.success(`Tradução em lote concluída: ${untranslated.length} posts`);
+    fetchPosts();
   };
 
   const handleBatchGenerate = async () => {
@@ -672,9 +724,17 @@ export default function AdminBlogGenerator() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-sm">Artigos Gerados</CardTitle>
-          <Button variant="ghost" size="sm" onClick={fetchPosts} disabled={loading}>
-            <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-          </Button>
+          <div className="flex items-center gap-2">
+            {posts.some((p) => !p.title_en) && (
+              <Button variant="outline" size="sm" onClick={handleBatchTranslate} disabled={batchRunning || loading} title="Traduzir todos sem inglês">
+                <Languages size={14} className="mr-1" />
+                Traduzir Todos ({posts.filter((p) => !p.title_en).length})
+              </Button>
+            )}
+            <Button variant="ghost" size="sm" onClick={fetchPosts} disabled={loading}>
+              <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -703,6 +763,11 @@ export default function AdminBlogGenerator() {
                       <Badge variant={post.status === "published" ? "default" : "secondary"} className="text-[10px]">
                         {post.status === "published" ? "Publicado" : "Rascunho"}
                       </Badge>
+                      {post.title_en ? (
+                        <Badge variant="outline" className="text-[10px] border-primary/30 text-primary">🌐 EN</Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-[10px] border-destructive/30 text-destructive">⚠ Sem EN</Badge>
+                      )}
                       <span className="text-[10px] text-muted-foreground">{post.category}</span>
                       <span className="text-[10px] text-muted-foreground">
                         {new Date(post.created_at).toLocaleDateString("pt-BR")}
@@ -713,6 +778,11 @@ export default function AdminBlogGenerator() {
                     <Button variant="ghost" size="sm" onClick={() => setEditingPost(post)} title="Editar capa">
                       <Pencil size={14} className="text-primary" />
                     </Button>
+                    {!post.title_en && (
+                      <Button variant="ghost" size="sm" onClick={() => handleTranslate(post.id)} disabled={translating === post.id} title="Traduzir para inglês">
+                        {translating === post.id ? <Loader2 size={14} className="animate-spin" /> : <Languages size={14} className="text-primary" />}
+                      </Button>
+                    )}
                     {post.status === "draft" && (
                       <Button variant="ghost" size="sm" onClick={() => handlePublish(post.id)} title="Publicar">
                         <Send size={14} className="text-green-500" />
