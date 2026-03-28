@@ -74,6 +74,78 @@ export type Database = {
         }
         Relationships: []
       }
+      blog_posts_ai: {
+        Row: {
+          category: string
+          city_slug: string | null
+          content_md: string
+          created_at: string
+          cta: string | null
+          excerpt: string
+          faq: Json | null
+          id: string
+          image_url: string | null
+          internal_links: Json | null
+          keywords: string[] | null
+          meta_description: string
+          meta_title: string
+          published_at: string | null
+          read_time: string
+          service_slug: string | null
+          slug: string
+          status: string
+          tag: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          city_slug?: string | null
+          content_md?: string
+          created_at?: string
+          cta?: string | null
+          excerpt?: string
+          faq?: Json | null
+          id?: string
+          image_url?: string | null
+          internal_links?: Json | null
+          keywords?: string[] | null
+          meta_description?: string
+          meta_title?: string
+          published_at?: string | null
+          read_time?: string
+          service_slug?: string | null
+          slug: string
+          status?: string
+          tag?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          city_slug?: string | null
+          content_md?: string
+          created_at?: string
+          cta?: string | null
+          excerpt?: string
+          faq?: Json | null
+          id?: string
+          image_url?: string | null
+          internal_links?: Json | null
+          keywords?: string[] | null
+          meta_description?: string
+          meta_title?: string
+          published_at?: string | null
+          read_time?: string
+          service_slug?: string | null
+          slug?: string
+          status?: string
+          tag?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       budget_leads: {
         Row: {
           city: string | null

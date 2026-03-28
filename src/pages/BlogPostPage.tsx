@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useParams, Link, Navigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -6,11 +6,12 @@ import { ArrowLeft, Calendar, ArrowRight, ChevronRight, MapPin } from "lucide-re
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SeoHead from "@/components/SeoHead";
-import JsonLd, { buildArticleSchema, buildBreadcrumbSchema } from "@/components/JsonLd";
+import JsonLd, { buildArticleSchema, buildBreadcrumbSchema, buildFaqSchema } from "@/components/JsonLd";
 import { blogPosts, blogContent as blogContentData } from "@/data/blogPosts";
 import { cities } from "@/data/seo/cities";
 import { useLocalizedBlogPosts, useLocalizedBlogContent } from "@/hooks/useBlogLocalized";
 import { openWhatsApp } from "@/lib/whatsapp";
+import { supabase } from "@/integrations/supabase/client";
 
 /** Try to match a slug like "vantagens-microsoft-365-para-empresas-campinas" */
 function resolveBlogSlug(slug: string | undefined) {
@@ -71,12 +72,140 @@ const BlogPostPage = () => {
   const localizedPosts = useLocalizedBlogPosts(post ? [post] : []);
   const localizedPost = localizedPosts[0] || post;
   const localizedStructuredContent = useLocalizedBlogContent(structuredContent, baseSlug);
-  const localizedLegacy = legacy; // legacy content stays in PT (only 2 old posts)
+  const localizedLegacy = legacy;
+
+  // AI-generated post from DB
+  const [aiPost, setAiPost] = useState<any>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+
+  useEffect(() => {
+    if (!post && !structuredContent && !legacy && slug) {
+      setAiLoading(true);
+      supabase
+        .from("blog_posts_ai")
+        .select("*")
+        .eq("slug", slug)
+        .eq("status", "published")
+        .maybeSingle()
+        .then(({ data }) => {
+          setAiPost(data);
+          setAiLoading(false);
+        });
+    }
+  }, [slug, post, structuredContent, legacy]);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [slug]);
 
   const baseUrl = "https://wmti.com.br";
   const pageUrl = `${baseUrl}${location.pathname}`;
 
   const cityTitle = city ? ` em ${city.name}` : "";
+
+  // For AI posts
+  if (!post && aiPost) {
+    const aiFaq = (aiPost.faq || []) as { q: string; a: string }[];
+    const aiLinks = (aiPost.internal_links || []) as { label: string; href: string }[];
+    return (
+      <div className="min-h-screen">
+        <SeoHead
+          title={aiPost.meta_title || `${aiPost.title} | Blog WMTi`}
+          description={aiPost.meta_description || aiPost.excerpt}
+          canonical={`${baseUrl}/blog/${aiPost.slug}`}
+          ogType="article"
+          ogImage={aiPost.image_url}
+        />
+        <JsonLd data={buildArticleSchema({ title: aiPost.title, description: aiPost.excerpt, url: pageUrl, image: aiPost.image_url || "", datePublished: aiPost.published_at || aiPost.created_at })} />
+        {aiFaq.length > 0 && <JsonLd data={buildFaqSchema(aiFaq.map(f => ({ question: f.q, answer: f.a })))} />}
+        <Navbar />
+
+        <div className="relative w-full h-48 md:h-64 mt-14 md:mt-16 overflow-hidden">
+          <img src={aiPost.image_url} alt={aiPost.title} className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-secondary via-secondary/60 to-transparent" />
+        </div>
+
+        <section className="section-dark pb-16 md:pb-20 -mt-20 relative z-10">
+          <div className="container max-w-3xl px-5 md:px-6 pt-8 md:pt-12">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+              <nav aria-label="Breadcrumb" className="mb-5 md:mb-6">
+                <ol className="flex items-center gap-1 font-mono text-xs text-gunmetal-foreground/50">
+                  <li><Link to="/" className="hover:text-primary transition-colors">Home</Link></li>
+                  <ChevronRight size={10} className="shrink-0" />
+                  <li><Link to="/blog" className="hover:text-primary transition-colors">{t("blogPost.blog")}</Link></li>
+                  <ChevronRight size={10} className="shrink-0" />
+                  <li className="text-primary truncate max-w-[200px]" aria-current="page">{aiPost.title}</li>
+                </ol>
+              </nav>
+              <div className="flex items-center gap-3 mb-5 flex-wrap">
+                <span className="font-mono text-[10px] tracking-[0.15em] uppercase text-primary border border-primary/30 px-2 py-0.5">{aiPost.tag}</span>
+                <span className="font-mono text-[10px] tracking-[0.15em] uppercase text-muted-foreground border border-border px-2 py-0.5">{aiPost.category}</span>
+                <span className="flex items-center gap-1 font-mono text-[10px] text-gunmetal-foreground/50">
+                  <Calendar size={10} />
+                  {new Date(aiPost.published_at || aiPost.created_at).toLocaleDateString("pt-BR")}
+                </span>
+                <span className="font-mono text-[10px] text-gunmetal-foreground/50">{aiPost.read_time}</span>
+              </div>
+              <h1 className="text-2xl md:text-4xl mb-5 md:mb-6">{aiPost.title}</h1>
+              <p className="font-body text-lg text-gunmetal-foreground/70 leading-relaxed">{aiPost.excerpt}</p>
+            </motion.div>
+          </div>
+        </section>
+
+        <section className="section-light py-16 md:py-24">
+          <div className="container max-w-3xl px-5 md:px-6">
+            <div className="font-body text-foreground leading-relaxed prose prose-sm md:prose-base max-w-none [&_h2]:font-heading [&_h2]:text-xl [&_h2]:md:text-2xl [&_h2]:font-bold [&_h2]:mt-8 [&_h2]:mb-3 [&_h2]:text-foreground [&_p]:text-muted-foreground [&_p]:mb-4">
+              <div dangerouslySetInnerHTML={{ __html: aiPost.content_md.replace(/^## (.+)$/gm, '<h2>$1</h2>').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/^- (.+)$/gm, '<li>$1</li>').replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>').replace(/\n\n/g, '</p><p>').replace(/^(?!<[hul])/gm, '<p>').replace(/<p><\/p>/g, '') }} />
+            </div>
+
+            {aiFaq.length > 0 && (
+              <div className="mt-12">
+                <h2 className="font-heading text-xl md:text-2xl font-bold text-foreground mb-6">Perguntas Frequentes</h2>
+                <div className="space-y-6">
+                  {aiFaq.map((item, i) => (
+                    <div key={i}>
+                      <h3 className="font-heading text-lg font-semibold text-foreground mb-2">{item.q}</h3>
+                      <p className="font-body text-muted-foreground">{item.a}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {aiLinks.length > 0 && (
+              <div className="mt-8 p-6 bg-muted/50 border border-border">
+                <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground mb-3">Serviços relacionados</p>
+                <div className="flex flex-wrap gap-3">
+                  {aiLinks.map((link, i) => (
+                    <Link key={i} to={link.href} className="inline-flex items-center gap-1 text-sm text-primary hover:underline">
+                      {link.label} <ArrowRight size={12} />
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="mt-12 bg-secondary p-8 md:p-12 text-center border border-border">
+              <h3 className="text-xl md:text-2xl text-secondary-foreground mb-3">
+                {t("blog.ctaTitle")} <span className="text-primary">{t("blog.ctaTitleHighlight")}?</span>
+              </h3>
+              <p className="font-body text-sm text-secondary-foreground/70 max-w-md mx-auto mb-6">
+                {aiPost.cta || t("blog.ctaDesc")}
+              </p>
+              <button
+                onClick={() => openWhatsApp({ pageTitle: aiPost.title, intent: "blog" })}
+                className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
+              >
+                {t("blog.ctaBtn")}
+              </button>
+            </div>
+          </div>
+        </section>
+        <Footer />
+      </div>
+    );
+  }
+
   const seoTitle = city
     ? `${post?.title}${cityTitle} | Blog WMTi`
     : structuredContent?.metaTitle || (post ? `${post.title} | Blog WMTi` : "Blog | WMTi");
@@ -84,10 +213,7 @@ const BlogPostPage = () => {
     ? `${post?.excerpt} Saiba como a WMTi atende empresas em ${city.name} e região de ${city.region}.`
     : structuredContent?.metaDescription || post?.excerpt || "";
 
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [slug]);
-
+  if (aiLoading) return <div className="min-h-screen flex items-center justify-center"><p className="text-muted-foreground">Carregando...</p></div>;
   if (!post) return <Navigate to="/blog" replace />;
   if (!structuredContent && !legacy) return <Navigate to="/blog" replace />;
 

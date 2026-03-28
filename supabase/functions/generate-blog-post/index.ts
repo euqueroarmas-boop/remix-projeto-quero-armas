@@ -1,0 +1,212 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-admin-token",
+};
+
+const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+interface GenerateRequest {
+  topic: string;
+  service_slug?: string;
+  city_slug?: string;
+  category?: string;
+  action?: "generate" | "publish" | "delete" | "list";
+  post_id?: string;
+}
+
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+async function generatePost(topic: string, serviceName?: string, cityName?: string, category?: string) {
+  if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+
+  const cityContext = cityName ? ` na cidade de ${cityName}` : "";
+  const serviceContext = serviceName ? ` relacionado ao serviço de ${serviceName}` : "";
+
+  const systemPrompt = `Você é um redator técnico especializado em TI corporativa para a empresa WMTi Tecnologia da Informação, localizada em Jacareí-SP. 
+Escreva artigos técnicos, informativos e otimizados para SEO, voltados para decisores de empresas (gerentes, diretores, donos).
+Use linguagem profissional mas acessível. Inclua dados concretos quando possível.
+O artigo deve ter entre 1200-2000 palavras.
+IMPORTANTE: Responda APENAS com o JSON válido, sem markdown code blocks.`;
+
+  const userPrompt = `Gere um artigo completo sobre: "${topic}"${serviceContext}${cityContext}.
+
+Retorne um JSON com esta estrutura exata:
+{
+  "title": "título do artigo (60-70 chars, com keyword principal)",
+  "slug": "slug-do-artigo-em-portugues",
+  "excerpt": "resumo de 2 linhas do artigo (150-160 chars)",
+  "meta_title": "título SEO (até 60 chars)",
+  "meta_description": "descrição SEO (até 155 chars)",
+  "tag": "tag curta (ex: Infraestrutura, Segurança, Cloud)",
+  "category": "${category || 'Tecnologia Empresarial'}",
+  "read_time": "X min",
+  "keywords": ["keyword1", "keyword2", "keyword3", "keyword4", "keyword5"],
+  "content_md": "conteúdo completo em markdown com ## headings, parágrafos, listas e **destaques**",
+  "faq": [
+    {"q": "pergunta frequente 1?", "a": "resposta detalhada 1"},
+    {"q": "pergunta frequente 2?", "a": "resposta detalhada 2"},
+    {"q": "pergunta frequente 3?", "a": "resposta detalhada 3"},
+    {"q": "pergunta frequente 4?", "a": "resposta detalhada 4"},
+    {"q": "pergunta frequente 5?", "a": "resposta detalhada 5"}
+  ],
+  "internal_links": [
+    {"label": "texto do link", "href": "/rota-interna"},
+    {"label": "texto do link 2", "href": "/rota-interna-2"}
+  ],
+  "cta": "texto do call-to-action final"
+}`;
+
+  const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${LOVABLE_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "google/gemini-3-flash-preview",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+    }),
+  });
+
+  if (!response.ok) {
+    const status = response.status;
+    if (status === 429) throw new Error("Rate limit exceeded. Try again later.");
+    if (status === 402) throw new Error("Credits exhausted. Add funds in workspace settings.");
+    throw new Error(`AI gateway error: ${status}`);
+  }
+
+  const data = await response.json();
+  let content = data.choices?.[0]?.message?.content;
+  if (!content) throw new Error("Empty AI response");
+
+  // Strip markdown code fences if present
+  content = content.replace(/^```json?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
+
+  const article = JSON.parse(content);
+  return article;
+}
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    // Validate admin token
+    const adminToken = req.headers.get("x-admin-token");
+    if (!adminToken) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const body: GenerateRequest = await req.json();
+    const action = body.action || "generate";
+
+    if (action === "list") {
+      const { data, error } = await supabase
+        .from("blog_posts_ai")
+        .select("id, slug, title, status, category, tag, created_at, published_at")
+        .order("created_at", { ascending: false })
+        .limit(100);
+
+      if (error) throw error;
+      return new Response(JSON.stringify({ posts: data }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "publish" && body.post_id) {
+      const { error } = await supabase
+        .from("blog_posts_ai")
+        .update({ status: "published", published_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+        .eq("id", body.post_id);
+
+      if (error) throw error;
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "delete" && body.post_id) {
+      const { error } = await supabase
+        .from("blog_posts_ai")
+        .delete()
+        .eq("id", body.post_id);
+
+      if (error) throw error;
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Generate
+    if (!body.topic) {
+      return new Response(JSON.stringify({ error: "topic is required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const article = await generatePost(body.topic, body.service_slug, body.city_slug, body.category);
+
+    const slug = article.slug || slugify(article.title);
+
+    const { data: inserted, error: insertErr } = await supabase
+      .from("blog_posts_ai")
+      .insert({
+        slug,
+        title: article.title,
+        excerpt: article.excerpt,
+        meta_title: article.meta_title,
+        meta_description: article.meta_description,
+        content_md: article.content_md,
+        category: article.category,
+        tag: article.tag,
+        read_time: article.read_time || "5 min",
+        keywords: article.keywords || [],
+        service_slug: body.service_slug || null,
+        city_slug: body.city_slug || null,
+        faq: article.faq || [],
+        internal_links: article.internal_links || [],
+        cta: article.cta || "",
+        status: "draft",
+      })
+      .select("id, slug, title")
+      .single();
+
+    if (insertErr) throw insertErr;
+
+    return new Response(JSON.stringify({ success: true, post: inserted }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (e) {
+    console.error("generate-blog-post error:", e);
+    return new Response(
+      JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
+  }
+});

@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Calendar, Search, X, Filter, Layers, ChevronLeft, ChevronRight } from "lucide-react";
@@ -34,12 +35,40 @@ const BlogPage = () => {
   const [activeCategory, setActiveCategory] = useState<BlogCategory | "Todos">("Todos");
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+  const [aiPosts, setAiPosts] = useState<any[]>([]);
   const localizedPosts = useLocalizedBlogPosts(blogPosts);
   const localizedCategories = useLocalizedCategories(blogCategories);
 
+  // Fetch published AI posts
+  useEffect(() => {
+    supabase
+      .from("blog_posts_ai")
+      .select("slug, title, excerpt, category, tag, read_time, image_url, published_at, created_at")
+      .eq("status", "published")
+      .order("published_at", { ascending: false })
+      .limit(200)
+      .then(({ data }) => {
+        if (data) {
+          setAiPosts(data.map((p: any) => ({
+            slug: p.slug,
+            title: p.title,
+            excerpt: p.excerpt,
+            category: p.category as BlogCategory,
+            tag: p.tag,
+            readTime: p.read_time,
+            image: p.image_url || "/placeholder.svg",
+            date: p.published_at || p.created_at,
+          })));
+        }
+      });
+  }, []);
+
+  // Merge static + AI posts
+  const allPosts = useMemo(() => [...localizedPosts, ...aiPosts], [localizedPosts, aiPosts]);
+
   const sorted = useMemo(
-    () => [...localizedPosts].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
-    [localizedPosts]
+    () => [...allPosts].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+    [allPosts]
   );
 
   const filtered = useMemo(() => {
