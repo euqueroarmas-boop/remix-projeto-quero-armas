@@ -369,6 +369,14 @@ function fill(template: string, replacements: Record<string, string>): string {
 export function generateLocalPage(entity: SeoEntity, city: SeoCity): SeoPageData {
   const canonicalSlug = `${entity.urlPrefix}-em-${city.slug}`;
 
+  // Build city context string for content differentiation
+  const cityContext = city.context
+    ? ` ${city.name}, ${city.context},`
+    : ` ${city.name},`;
+  const populationNote = city.population
+    ? ` Com mais de ${Math.round(city.population / 1000)}mil habitantes, ${city.name} demanda infraestrutura de TI corporativa robusta e confiável.`
+    : "";
+
   if (entity.type === "service" && entity.service) {
     const svc = entity.service;
     const r = { city: city.name };
@@ -405,13 +413,13 @@ export function generateLocalPage(entity: SeoEntity, city: SeoCity): SeoPageData
       cityName: city.name,
       citySlug: city.slug,
       faq: [
-        { question: `A WMTi oferece ${svc.name.toLowerCase()} em ${city.name}?`, answer: `Sim. A WMTi atende empresas em ${city.name} e região com soluções profissionais de ${svc.name.toLowerCase()}, suporte técnico especializado e infraestrutura corporativa.` },
+        { question: `A WMTi oferece ${svc.name.toLowerCase()} em ${city.name}?`, answer: `Sim. A WMTi atende empresas em${cityContext} região de ${city.region}, com soluções profissionais de ${svc.name.toLowerCase()}, suporte técnico especializado e infraestrutura corporativa.${populationNote}` },
         { question: `Quanto custa ${svc.name.toLowerCase()} em ${city.name}?`, answer: `O investimento depende do porte da empresa e das necessidades específicas. Entre em contato para um diagnóstico gratuito e proposta personalizada para sua empresa em ${city.name}.` },
         { question: `A WMTi atende empresas de todos os portes em ${city.name}?`, answer: `Sim. Atendemos desde escritórios com 5 computadores até operações com centenas de estações em ${city.name}. Nossos planos são escaláveis.` },
         { question: "Como solicitar um orçamento de TI?", answer: "Entre em contato pelo WhatsApp ou formulário do site para agendar um diagnóstico gratuito. Nossa equipe apresenta uma proposta detalhada sem compromisso." },
       ],
       relatedLinks,
-      localContent: `A WMTi Tecnologia da Informação atende empresas em ${city.name} (${city.state}), região de ${city.region}, com soluções especializadas de ${svc.name.toLowerCase()}. Com sede em Jacareí/SP e mais de 15 anos de experiência no mercado corporativo, oferecemos atendimento presencial e remoto com SLA garantido.`,
+      localContent: `A WMTi Tecnologia da Informação atende empresas em${cityContext} região de ${city.region}, com soluções especializadas de ${svc.name.toLowerCase()}. Com sede em Jacareí/SP e mais de 15 anos de experiência no mercado corporativo, oferecemos atendimento presencial e remoto com SLA garantido.${populationNote}`,
       shouldIndex: true,
       priority: city.priority * 0.7,
       canonicalSlug,
