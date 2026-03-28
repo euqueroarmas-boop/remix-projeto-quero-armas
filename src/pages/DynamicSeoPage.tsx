@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { findPageBySlug } from "@/data/seoPages";
-import { resolveLocalPage } from "@/data/seo/engine";
+import { resolveLocalPage, parseLocalSlug } from "@/data/seo/engine";
 import ServicePageTemplate from "@/components/ServicePageTemplate";
 import NotFound from "@/pages/NotFound";
 
@@ -32,6 +32,11 @@ const DynamicSeoPage = () => {
   // 4. If nothing matches, show 404 — never redirect to home
   if (!page) return <NotFound />;
 
+  // Detect problem pages for emergency form
+  const parsed = enginePage ? parseLocalSlug(slug) : null;
+  const isProblemPage = parsed?.entity.type === "problem" || page.category === "problema" || page.category === "problem-page";
+  const problemName = parsed?.entity.type === "problem" ? parsed.entity.name : undefined;
+
   return (
     <ServicePageTemplate
       title={page.metaTitle}
@@ -51,6 +56,8 @@ const DynamicSeoPage = () => {
       shouldIndex={page.shouldIndex}
       cityName={page.cityName}
       citySlug={page.citySlug}
+      isProblemPage={isProblemPage}
+      problemName={problemName}
     />
   );
 };
