@@ -196,9 +196,9 @@ const ServicePageTemplate = ({
   cityName,
   citySlug,
   extraSections,
+  isProblemPage,
+  problemName,
 }: ServicePageProps) => {
-  const isProblemPage = arguments[0]?.isProblemPage;
-  const problemName = arguments[0]?.problemName;
   const { t } = useTranslation();
   const location = useLocation();
   const baseUrl = "https://wmti.com.br";
