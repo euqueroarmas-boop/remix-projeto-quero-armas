@@ -148,20 +148,10 @@ problemChunks.forEach((chunk, i) => {
   sitemapFiles.push(name);
 });
 
-// 6. Service × Segment × City — pattern: /{service}-{segment-slug}-{city}
-const svcSegCityUrls = serviceSlugs.flatMap((svc) =>
-  segmentEntries.flatMap((seg) =>
-    citySlugs.map((city) => urlEntry(`/${svc}-${seg.slug}-${city}`, "0.5", "monthly"))
-  )
-);
-const svcSegCityChunks = chunkArray(svcSegCityUrls, MAX_URLS_PER_SITEMAP);
-svcSegCityChunks.forEach((chunk, i) => {
-  const name = svcSegCityChunks.length === 1
-    ? "sitemap-service-segment-cities.xml"
-    : `sitemap-service-segment-cities-${i + 1}.xml`;
-  writeFile(name, wrapUrlset(chunk));
-  sitemapFiles.push(name);
-});
+// 6. Service × Segment × City — REMOVED
+// These URLs used a non-standard pattern (/{svc}-{seg}-{city}) that doesn't match
+// the engine's /{entity}-em-{city} pattern, resulting in soft 404s.
+// All valid combinations are already covered by programmatic + segment sitemaps.
 
 // ─── Build sitemap index ───
 const now = new Date().toISOString().split("T")[0];
