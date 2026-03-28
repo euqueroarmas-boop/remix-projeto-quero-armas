@@ -18,6 +18,35 @@ const categoryTranslations: Record<BlogCategory, string> = {
   "Casos de Sucesso": "Success Stories",
 };
 
+const internalLinkTranslations: Record<string, string> = {
+  "Backup empresarial": "Business backup",
+  "Firewall pfSense": "pfSense firewall",
+  "Firewall pfSense para empresas": "pfSense firewall for businesses",
+  "Infraestrutura corporativa": "Corporate infrastructure",
+  "Infraestrutura de TI": "IT infrastructure",
+  "Infraestrutura de TI corporativa": "Corporate IT infrastructure",
+  "Locação de computadores": "Computer leasing",
+  "Microsoft 365": "Microsoft 365",
+  "Microsoft 365 para empresas": "Microsoft 365 for businesses",
+  "Montagem de redes": "Network setup",
+  "Provimento 213": "Provision 213",
+  "Segurança de rede": "Network security",
+  "Segurança para empresas": "Security for businesses",
+  "Servidores Dell PowerEdge": "Dell PowerEdge servers",
+  "Serviços de TI": "IT services",
+  "Suporte de TI": "IT support",
+  "Suporte de TI em Jacareí": "IT support in Jacareí",
+  "TI para cartórios": "IT for notary offices",
+  "TI para escritórios de advocacia": "IT for law firms",
+  "TI para hospitais e clínicas": "IT for hospitals and clinics",
+};
+
+export const translateBlogCategoryLabel = (category: string, language: string) =>
+  language.startsWith("en") ? (categoryTranslations[category as BlogCategory] || category) : category;
+
+export const translateInternalLinkLabel = (label: string, language: string) =>
+  language.startsWith("en") ? (internalLinkTranslations[label] || label) : label;
+
 export function useLocalizedCategory(category: BlogCategory): string {
   const { i18n } = useTranslation();
   if (i18n.language.startsWith("pt")) return category;
@@ -73,7 +102,10 @@ export function useLocalizedBlogContent(
       sections: Array.isArray(sections) ? sections : content.sections,
       faq: Array.isArray(faq) ? faq : content.faq,
       cta: cta || content.cta,
-      internalLinks: content.internalLinks, // keep original hrefs
+      internalLinks: content.internalLinks.map((link) => ({
+        ...link,
+        label: translateInternalLinkLabel(link.label, i18n.language),
+      })),
     };
   }, [content, slug, i18n.language, t]);
 }
