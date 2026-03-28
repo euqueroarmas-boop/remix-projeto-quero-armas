@@ -13,13 +13,17 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+const DEFAULT_IMAGE = "https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&q=80";
+
 interface GenerateRequest {
   topic: string;
   service_slug?: string;
   city_slug?: string;
   category?: string;
-  action?: "generate" | "publish" | "delete" | "list";
+  action?: "generate" | "publish" | "delete" | "list" | "update_cover" | "generate_cover";
   post_id?: string;
+  image_url?: string;
+  image_source?: string;
 }
 
 function slugify(text: string): string {
@@ -97,11 +101,61 @@ Retorne um JSON com esta estrutura exata:
   let content = data.choices?.[0]?.message?.content;
   if (!content) throw new Error("Empty AI response");
 
-  // Strip markdown code fences if present
   content = content.replace(/^```json?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
 
   const article = JSON.parse(content);
   return article;
+}
+
+async function generateCoverImage(topic: string): Promise<string | null> {
+  if (!LOVABLE_API_KEY) return null;
+
+  try {
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash-image",
+        messages: [
+          {
+            role: "user",
+            content: `Generate a professional, modern blog cover image for a corporate IT company. Topic: ${topic}. Style: clean, tech-oriented, professional blue tones, suitable for a business blog header. No text in the image.`,
+          },
+        ],
+        modalities: ["image", "text"],
+      }),
+    });
+
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    const imageData = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    if (!imageData) return null;
+
+    // Decode base64 and upload to storage
+    const base64 = imageData.replace(/^data:image\/\w+;base64,/, "");
+    const binary = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+    const path = `covers/ai-${Date.now()}-${Math.random().toString(36).slice(2)}.png`;
+
+    const { error } = await supabase.storage.from("blog-images").upload(path, binary, {
+      contentType: "image/png",
+      upsert: false,
+    });
+
+    if (error) {
+      console.error("Storage upload error:", error);
+      return null;
+    }
+
+    const { data: urlData } = supabase.storage.from("blog-images").getPublicUrl(path);
+    return urlData.publicUrl;
+  } catch (e) {
+    console.error("Cover generation error:", e);
+    return null;
+  }
 }
 
 serve(async (req) => {
@@ -110,7 +164,6 @@ serve(async (req) => {
   }
 
   try {
-    // Validate admin token
     const adminToken = req.headers.get("x-admin-token");
     if (!adminToken) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -122,10 +175,11 @@ serve(async (req) => {
     const body: GenerateRequest = await req.json();
     const action = body.action || "generate";
 
+    // ── List ──
     if (action === "list") {
       const { data, error } = await supabase
         .from("blog_posts_ai")
-        .select("id, slug, title, status, category, tag, created_at, published_at")
+        .select("id, slug, title, status, category, tag, created_at, published_at, image_url, image_source")
         .order("created_at", { ascending: false })
         .limit(100);
 
@@ -135,6 +189,7 @@ serve(async (req) => {
       });
     }
 
+    // ── Publish ──
     if (action === "publish" && body.post_id) {
       const { error } = await supabase
         .from("blog_posts_ai")
@@ -147,6 +202,7 @@ serve(async (req) => {
       });
     }
 
+    // ── Delete ──
     if (action === "delete" && body.post_id) {
       const { error } = await supabase
         .from("blog_posts_ai")
@@ -159,7 +215,38 @@ serve(async (req) => {
       });
     }
 
-    // Generate
+    // ── Update Cover ──
+    if (action === "update_cover" && body.post_id) {
+      const { error } = await supabase
+        .from("blog_posts_ai")
+        .update({
+          image_url: body.image_url || DEFAULT_IMAGE,
+          image_source: body.image_source || "fallback",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", body.post_id);
+
+      if (error) throw error;
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ── Generate Cover Image via AI ──
+    if (action === "generate_cover") {
+      const imageUrl = await generateCoverImage(body.topic || "corporate IT technology");
+      if (!imageUrl) {
+        return new Response(JSON.stringify({ error: "Failed to generate cover image" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      return new Response(JSON.stringify({ success: true, image_url: imageUrl }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ── Generate Article ──
     if (!body.topic) {
       return new Response(JSON.stringify({ error: "topic is required" }), {
         status: 400,
@@ -168,8 +255,11 @@ serve(async (req) => {
     }
 
     const article = await generatePost(body.topic, body.service_slug, body.city_slug, body.category);
-
     const slug = article.slug || slugify(article.title);
+
+    // Use provided image_url if admin chose one, otherwise use fallback
+    const finalImageUrl = body.image_url || DEFAULT_IMAGE;
+    const finalImageSource = body.image_source || "fallback";
 
     const { data: inserted, error: insertErr } = await supabase
       .from("blog_posts_ai")
@@ -190,6 +280,8 @@ serve(async (req) => {
         internal_links: article.internal_links || [],
         cta: article.cta || "",
         status: "draft",
+        image_url: finalImageUrl,
+        image_source: finalImageSource,
       })
       .select("id, slug, title")
       .single();
