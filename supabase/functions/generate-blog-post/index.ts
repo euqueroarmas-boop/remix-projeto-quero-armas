@@ -48,34 +48,39 @@ async function generatePost(topic: string, serviceName?: string, cityName?: stri
 Escreva artigos técnicos, informativos e otimizados para SEO, voltados para decisores de empresas (gerentes, diretores, donos).
 Use linguagem profissional mas acessível. Inclua dados concretos quando possível.
 O artigo deve ter entre 1200-2000 palavras.
-IMPORTANTE: Responda APENAS com o JSON válido, sem markdown code blocks.`;
+IMPORTANTE: Responda APENAS com o JSON válido, sem markdown code blocks.
+IMPORTANTE: Inclua versões em inglês dos campos indicados para internacionalização.`;
 
   const userPrompt = `Gere um artigo completo sobre: "${topic}"${serviceContext}${cityContext}.
 
 Retorne um JSON com esta estrutura exata:
 {
-  "title": "título do artigo (60-70 chars, com keyword principal)",
+  "title": "título do artigo em português (60-70 chars)",
+  "title_en": "article title in English (60-70 chars)",
   "slug": "slug-do-artigo-em-portugues",
-  "excerpt": "resumo de 2 linhas do artigo (150-160 chars)",
-  "meta_title": "título SEO (até 60 chars)",
-  "meta_description": "descrição SEO (até 155 chars)",
+  "excerpt": "resumo de 2 linhas em português (150-160 chars)",
+  "excerpt_en": "2-line summary in English (150-160 chars)",
+  "meta_title": "título SEO em português (até 60 chars)",
+  "meta_title_en": "SEO title in English (up to 60 chars)",
+  "meta_description": "descrição SEO em português (até 155 chars)",
+  "meta_description_en": "SEO description in English (up to 155 chars)",
   "tag": "tag curta (ex: Infraestrutura, Segurança, Cloud)",
   "category": "${category || 'Tecnologia Empresarial'}",
   "read_time": "X min",
   "keywords": ["keyword1", "keyword2", "keyword3", "keyword4", "keyword5"],
-  "content_md": "conteúdo completo em markdown com ## headings, parágrafos, listas e **destaques**",
+  "content_md": "conteúdo completo em português em markdown com ## headings, parágrafos, listas e **destaques**",
+  "content_md_en": "full content in English in markdown with ## headings, paragraphs, lists and **highlights**",
   "faq": [
-    {"q": "pergunta frequente 1?", "a": "resposta detalhada 1"},
-    {"q": "pergunta frequente 2?", "a": "resposta detalhada 2"},
-    {"q": "pergunta frequente 3?", "a": "resposta detalhada 3"},
-    {"q": "pergunta frequente 4?", "a": "resposta detalhada 4"},
-    {"q": "pergunta frequente 5?", "a": "resposta detalhada 5"}
+    {"q": "pergunta frequente?", "a": "resposta detalhada"}
+  ],
+  "faq_en": [
+    {"q": "frequently asked question?", "a": "detailed answer"}
   ],
   "internal_links": [
-    {"label": "texto do link", "href": "/rota-interna"},
-    {"label": "texto do link 2", "href": "/rota-interna-2"}
+    {"label": "texto do link", "href": "/rota-interna"}
   ],
-  "cta": "texto do call-to-action final",
+  "cta": "texto do call-to-action final em português",
+  "cta_en": "final call-to-action text in English",
   "image_alt_pt": "texto alt descritivo da imagem de capa em português",
   "image_alt_en": "descriptive alt text for the cover image in English"
 }`;
@@ -282,10 +287,15 @@ serve(async (req) => {
       .insert({
         slug,
         title: article.title,
+        title_en: article.title_en || null,
         excerpt: article.excerpt,
+        excerpt_en: article.excerpt_en || null,
         meta_title: article.meta_title,
+        meta_title_en: article.meta_title_en || null,
         meta_description: article.meta_description,
+        meta_description_en: article.meta_description_en || null,
         content_md: article.content_md,
+        content_md_en: article.content_md_en || null,
         category: article.category,
         tag: article.tag,
         read_time: article.read_time || "5 min",
@@ -293,8 +303,10 @@ serve(async (req) => {
         service_slug: body.service_slug || null,
         city_slug: body.city_slug || null,
         faq: article.faq || [],
+        faq_en: article.faq_en || [],
         internal_links: article.internal_links || [],
         cta: article.cta || "",
+        cta_en: article.cta_en || "",
         status: "draft",
         image_url: finalImageUrl,
         image_source: finalImageSource,

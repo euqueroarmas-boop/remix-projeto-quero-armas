@@ -79,10 +79,14 @@ export type Database = {
           category: string
           city_slug: string | null
           content_md: string
+          content_md_en: string | null
           created_at: string
           cta: string | null
+          cta_en: string | null
           excerpt: string
+          excerpt_en: string | null
           faq: Json | null
+          faq_en: Json | null
           id: string
           image_alt_en: string | null
           image_alt_pt: string | null
@@ -92,7 +96,9 @@ export type Database = {
           internal_links: Json | null
           keywords: string[] | null
           meta_description: string
+          meta_description_en: string | null
           meta_title: string
+          meta_title_en: string | null
           published_at: string | null
           read_time: string
           service_slug: string | null
@@ -100,16 +106,21 @@ export type Database = {
           status: string
           tag: string
           title: string
+          title_en: string | null
           updated_at: string
         }
         Insert: {
           category?: string
           city_slug?: string | null
           content_md?: string
+          content_md_en?: string | null
           created_at?: string
           cta?: string | null
+          cta_en?: string | null
           excerpt?: string
+          excerpt_en?: string | null
           faq?: Json | null
+          faq_en?: Json | null
           id?: string
           image_alt_en?: string | null
           image_alt_pt?: string | null
@@ -119,7 +130,9 @@ export type Database = {
           internal_links?: Json | null
           keywords?: string[] | null
           meta_description?: string
+          meta_description_en?: string | null
           meta_title?: string
+          meta_title_en?: string | null
           published_at?: string | null
           read_time?: string
           service_slug?: string | null
@@ -127,16 +140,21 @@ export type Database = {
           status?: string
           tag?: string
           title: string
+          title_en?: string | null
           updated_at?: string
         }
         Update: {
           category?: string
           city_slug?: string | null
           content_md?: string
+          content_md_en?: string | null
           created_at?: string
           cta?: string | null
+          cta_en?: string | null
           excerpt?: string
+          excerpt_en?: string | null
           faq?: Json | null
+          faq_en?: Json | null
           id?: string
           image_alt_en?: string | null
           image_alt_pt?: string | null
@@ -146,7 +164,9 @@ export type Database = {
           internal_links?: Json | null
           keywords?: string[] | null
           meta_description?: string
+          meta_description_en?: string | null
           meta_title?: string
+          meta_title_en?: string | null
           published_at?: string | null
           read_time?: string
           service_slug?: string | null
@@ -154,6 +174,7 @@ export type Database = {
           status?: string
           tag?: string
           title?: string
+          title_en?: string | null
           updated_at?: string
         }
         Relationships: []
