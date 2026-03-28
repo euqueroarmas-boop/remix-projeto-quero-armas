@@ -216,11 +216,11 @@ const BlogPostPage = () => {
   }
 
   const seoTitle = city
-    ? `${post?.title}${cityTitle} | Blog WMTi`
-    : structuredContent?.metaTitle || (post ? `${post.title} | Blog WMTi` : "Blog | WMTi");
+    ? `${localizedPost?.title}${cityTitle} | Blog WMTi`
+    : (localizedStructuredContent?.metaTitle || structuredContent?.metaTitle) || (localizedPost ? `${localizedPost.title} | Blog WMTi` : "Blog | WMTi");
   const seoDesc = city
-    ? `${post?.excerpt} Saiba como a WMTi atende empresas em ${city.name} e região de ${city.region}.`
-    : structuredContent?.metaDescription || post?.excerpt || "";
+    ? `${localizedPost?.excerpt} ${isEn ? `Learn how WMTi serves companies in ${city.name} and the ${city.region} region.` : `Saiba como a WMTi atende empresas em ${city.name} e região de ${city.region}.`}`
+    : (localizedStructuredContent?.metaDescription || structuredContent?.metaDescription) || localizedPost?.excerpt || "";
 
   if (aiLoading) return <div className="min-h-screen flex items-center justify-center"><p className="text-muted-foreground">Carregando...</p></div>;
   if (!post) return <Navigate to="/blog" replace />;
