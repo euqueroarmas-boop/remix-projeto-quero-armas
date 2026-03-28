@@ -524,6 +524,56 @@ export default function AdminBlogGenerator() {
     }
   };
 
+  const [translating, setTranslating] = useState<string | null>(null);
+
+  const handleTranslate = async (postId: string) => {
+    setTranslating(postId);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-blog-post", {
+        body: { action: "translate", post_id: postId },
+        headers: { "x-admin-token": getToken() },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success(`Traduzido: ${data.translated_title}`);
+      fetchPosts();
+    } catch (e: any) {
+      toast.error(`Erro ao traduzir: ${e.message}`);
+    }
+    setTranslating(null);
+  };
+
+  const handleBatchTranslate = async () => {
+    const untranslated = posts.filter((p) => !p.title_en);
+    if (untranslated.length === 0) {
+      toast.info("Todos os posts já possuem tradução!");
+      return;
+    }
+    setBatchRunning(true);
+    setBatchProgress({ current: 0, total: untranslated.length });
+    for (let i = 0; i < untranslated.length; i++) {
+      setBatchProgress({ current: i + 1, total: untranslated.length });
+      try {
+        await supabase.functions.invoke("generate-blog-post", {
+          body: { action: "translate", post_id: untranslated[i].id },
+          headers: { "x-admin-token": getToken() },
+        });
+        if (i < untranslated.length - 1) {
+          await new Promise((r) => setTimeout(r, 3000));
+        }
+      } catch (e: any) {
+        toast.error(`Erro no post ${i + 1}: ${e.message}`);
+        if (e.message?.includes("Rate limit")) {
+          toast.info("Aguardando rate limit... Continuando em 30s");
+          await new Promise((r) => setTimeout(r, 30000));
+        }
+      }
+    }
+    setBatchRunning(false);
+    toast.success(`Tradução em lote concluída: ${untranslated.length} posts`);
+    fetchPosts();
+  };
+
   const handleBatchGenerate = async () => {
     const topics = customTopics.trim()
       ? customTopics.split("\n").map((t) => t.trim()).filter(Boolean)
