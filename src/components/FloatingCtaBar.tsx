@@ -48,6 +48,7 @@ const FloatingCtaBar = () => {
         : href.includes("proposta") || href.includes("proposal") ? "proposal"
         : "specialist";
       trackWhatsApp(location.pathname, label);
+      // Let openWhatsApp auto-detect the H1/og:title — no need to pass pageTitle
       openWhatsApp({ intent });
       return;
     }
