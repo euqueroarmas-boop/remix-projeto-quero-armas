@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, CheckCircle2, MessageCircle, ChevronRight, ShieldCheck, Building2, Award, Zap, AlertTriangle, Clock } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import HoursCalculator from "@/components/orcamento/HoursCalculator";
+import EmergencyLeadForm from "@/components/EmergencyLeadForm";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SeoHead from "@/components/SeoHead";
@@ -38,6 +39,8 @@ interface ServicePageProps {
   cityName?: string;
   citySlug?: string;
   extraSections?: React.ReactNode;
+  isProblemPage?: boolean;
+  problemName?: string;
 }
 
 const fadeIn = {
@@ -194,6 +197,8 @@ const ServicePageTemplate = ({
   citySlug,
   extraSections,
 }: ServicePageProps) => {
+  const isProblemPage = arguments[0]?.isProblemPage;
+  const problemName = arguments[0]?.problemName;
   const { t } = useTranslation();
   const location = useLocation();
   const baseUrl = "https://wmti.com.br";
@@ -340,6 +345,15 @@ const ServicePageTemplate = ({
 
       {/* ══ MICRO-CTA 1 ══ */}
       <MicroCta href="/orcamento-ti" whatsappMessage={whatsappMessage} cityName={cityName} pageTitle={title} />
+
+      {/* ══ EMERGENCY LEAD FORM (problem pages only) ══ */}
+      {isProblemPage && (
+        <EmergencyLeadForm
+          problemName={problemName || tag}
+          cityName={cityName}
+          sourcePage={currentPath}
+        />
+      )}
 
       {/* ══ Benefits ══ */}
       <section className="section-dark py-16 md:py-24">
