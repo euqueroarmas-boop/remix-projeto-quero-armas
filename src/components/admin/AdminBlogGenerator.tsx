@@ -723,9 +723,17 @@ export default function AdminBlogGenerator() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-sm">Artigos Gerados</CardTitle>
-          <Button variant="ghost" size="sm" onClick={fetchPosts} disabled={loading}>
-            <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-          </Button>
+          <div className="flex items-center gap-2">
+            {posts.some((p) => !p.title_en) && (
+              <Button variant="outline" size="sm" onClick={handleBatchTranslate} disabled={batchRunning || loading} title="Traduzir todos sem inglês">
+                <Languages size={14} className="mr-1" />
+                Traduzir Todos ({posts.filter((p) => !p.title_en).length})
+              </Button>
+            )}
+            <Button variant="ghost" size="sm" onClick={fetchPosts} disabled={loading}>
+              <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -754,6 +762,11 @@ export default function AdminBlogGenerator() {
                       <Badge variant={post.status === "published" ? "default" : "secondary"} className="text-[10px]">
                         {post.status === "published" ? "Publicado" : "Rascunho"}
                       </Badge>
+                      {post.title_en ? (
+                        <Badge variant="outline" className="text-[10px] border-primary/30 text-primary">🌐 EN</Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-[10px] border-destructive/30 text-destructive">⚠ Sem EN</Badge>
+                      )}
                       <span className="text-[10px] text-muted-foreground">{post.category}</span>
                       <span className="text-[10px] text-muted-foreground">
                         {new Date(post.created_at).toLocaleDateString("pt-BR")}
@@ -764,6 +777,11 @@ export default function AdminBlogGenerator() {
                     <Button variant="ghost" size="sm" onClick={() => setEditingPost(post)} title="Editar capa">
                       <Pencil size={14} className="text-primary" />
                     </Button>
+                    {!post.title_en && (
+                      <Button variant="ghost" size="sm" onClick={() => handleTranslate(post.id)} disabled={translating === post.id} title="Traduzir para inglês">
+                        {translating === post.id ? <Loader2 size={14} className="animate-spin" /> : <Languages size={14} className="text-primary" />}
+                      </Button>
+                    )}
                     {post.status === "draft" && (
                       <Button variant="ghost" size="sm" onClick={() => handlePublish(post.id)} title="Publicar">
                         <Send size={14} className="text-green-500" />
