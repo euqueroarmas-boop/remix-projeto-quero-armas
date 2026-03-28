@@ -24,6 +24,9 @@ interface GenerateRequest {
   post_id?: string;
   image_url?: string;
   image_source?: string;
+  image_prompt?: string;
+  image_alt_pt?: string;
+  image_alt_en?: string;
 }
 
 function slugify(text: string): string {
@@ -72,7 +75,9 @@ Retorne um JSON com esta estrutura exata:
     {"label": "texto do link", "href": "/rota-interna"},
     {"label": "texto do link 2", "href": "/rota-interna-2"}
   ],
-  "cta": "texto do call-to-action final"
+  "cta": "texto do call-to-action final",
+  "image_alt_pt": "texto alt descritivo da imagem de capa em português",
+  "image_alt_en": "descriptive alt text for the cover image in English"
 }`;
 
   const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -107,7 +112,7 @@ Retorne um JSON com esta estrutura exata:
   return article;
 }
 
-async function generateCoverImage(topic: string): Promise<string | null> {
+async function generateCoverImage(prompt: string): Promise<string | null> {
   if (!LOVABLE_API_KEY) return null;
 
   try {
@@ -122,14 +127,19 @@ async function generateCoverImage(topic: string): Promise<string | null> {
         messages: [
           {
             role: "user",
-            content: `Generate a professional, modern blog cover image for a corporate IT company. Topic: ${topic}. Style: clean, tech-oriented, professional blue tones, suitable for a business blog header. No text in the image.`,
+            content: prompt,
           },
         ],
         modalities: ["image", "text"],
       }),
     });
 
-    if (!response.ok) return null;
+    if (!response.ok) {
+      const status = response.status;
+      if (status === 429) throw new Error("Rate limit exceeded. Try again later.");
+      if (status === 402) throw new Error("Credits exhausted.");
+      throw new Error(`AI image error: ${status}`);
+    }
 
     const data = await response.json();
     const imageData = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
@@ -154,7 +164,7 @@ async function generateCoverImage(topic: string): Promise<string | null> {
     return urlData.publicUrl;
   } catch (e) {
     console.error("Cover generation error:", e);
-    return null;
+    throw e; // Re-throw so caller gets the error message
   }
 }
 
@@ -179,7 +189,7 @@ serve(async (req) => {
     if (action === "list") {
       const { data, error } = await supabase
         .from("blog_posts_ai")
-        .select("id, slug, title, status, category, tag, created_at, published_at, image_url, image_source")
+        .select("id, slug, title, status, category, tag, created_at, published_at, image_url, image_source, image_prompt, image_alt_pt")
         .order("created_at", { ascending: false })
         .limit(100);
 
@@ -217,13 +227,18 @@ serve(async (req) => {
 
     // ── Update Cover ──
     if (action === "update_cover" && body.post_id) {
+      const updatePayload: Record<string, unknown> = {
+        image_url: body.image_url || DEFAULT_IMAGE,
+        image_source: body.image_source || "fallback",
+        updated_at: new Date().toISOString(),
+      };
+      if (body.image_prompt !== undefined) updatePayload.image_prompt = body.image_prompt;
+      if (body.image_alt_pt !== undefined) updatePayload.image_alt_pt = body.image_alt_pt;
+      if (body.image_alt_en !== undefined) updatePayload.image_alt_en = body.image_alt_en;
+
       const { error } = await supabase
         .from("blog_posts_ai")
-        .update({
-          image_url: body.image_url || DEFAULT_IMAGE,
-          image_source: body.image_source || "fallback",
-          updated_at: new Date().toISOString(),
-        })
+        .update(updatePayload)
         .eq("id", body.post_id);
 
       if (error) throw error;
@@ -234,14 +249,16 @@ serve(async (req) => {
 
     // ── Generate Cover Image via AI ──
     if (action === "generate_cover") {
-      const imageUrl = await generateCoverImage(body.topic || "corporate IT technology");
+      const prompt = body.image_prompt || `Generate a professional, modern blog cover image for a corporate IT company. Topic: ${body.topic || "corporate IT technology"}. Style: clean, tech-oriented, professional blue tones, suitable for a business blog header. No text in the image.`;
+      
+      const imageUrl = await generateCoverImage(prompt);
       if (!imageUrl) {
         return new Response(JSON.stringify({ error: "Failed to generate cover image" }), {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      return new Response(JSON.stringify({ success: true, image_url: imageUrl }), {
+      return new Response(JSON.stringify({ success: true, image_url: imageUrl, prompt_used: prompt }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -257,7 +274,6 @@ serve(async (req) => {
     const article = await generatePost(body.topic, body.service_slug, body.city_slug, body.category);
     const slug = article.slug || slugify(article.title);
 
-    // Use provided image_url if admin chose one, otherwise use fallback
     const finalImageUrl = body.image_url || DEFAULT_IMAGE;
     const finalImageSource = body.image_source || "fallback";
 
@@ -282,6 +298,9 @@ serve(async (req) => {
         status: "draft",
         image_url: finalImageUrl,
         image_source: finalImageSource,
+        image_prompt: body.image_prompt || null,
+        image_alt_pt: body.image_alt_pt || article.image_alt_pt || null,
+        image_alt_en: body.image_alt_en || article.image_alt_en || null,
       })
       .select("id, slug, title")
       .single();

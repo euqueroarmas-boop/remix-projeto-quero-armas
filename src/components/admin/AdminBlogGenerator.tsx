@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Plus, Trash2, Eye, Send, RefreshCw, Sparkles, Upload, Image, X, Pencil } from "lucide-react";
+import { Loader2, Plus, Trash2, Eye, Send, RefreshCw, Sparkles, Upload, Image, X, Pencil, Check, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 
 const CATEGORIES = [
@@ -46,13 +46,25 @@ interface AiPost {
   published_at: string | null;
   image_url?: string | null;
   image_source?: string | null;
+  image_prompt?: string | null;
+  image_alt_pt?: string | null;
 }
 
-type ImageSource = "manual_upload" | "ai_generated" | "url_input" | "fallback";
+type ImageSource = "manual_upload" | "ai_generated" | "url_input" | "library_select" | "fallback";
 
 const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&q=80";
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+function buildDefaultPrompt(context?: { title?: string; excerpt?: string; category?: string; tag?: string }) {
+  const parts = ["Generate a professional, modern blog cover image for a corporate IT company."];
+  if (context?.title) parts.push(`Article title: "${context.title}".`);
+  if (context?.excerpt) parts.push(`Summary: ${context.excerpt}.`);
+  if (context?.category) parts.push(`Category: ${context.category}.`);
+  if (context?.tag) parts.push(`Tag: ${context.tag}.`);
+  parts.push("Style: clean, tech-oriented, professional blue tones, suitable for a business blog header. No text in the image. High quality, 16:9 aspect ratio.");
+  return parts.join(" ");
+}
 
 /* ── Cover Image Picker Component ── */
 function CoverImagePicker({
@@ -60,17 +72,22 @@ function CoverImagePicker({
   imageSource,
   onImageChange,
   disabled,
+  context,
 }: {
   imageUrl: string;
   imageSource: ImageSource;
-  onImageChange: (url: string, source: ImageSource) => void;
+  onImageChange: (url: string, source: ImageSource, meta?: { prompt?: string; alt_pt?: string }) => void;
   disabled?: boolean;
+  context?: { title?: string; excerpt?: string; category?: string; tag?: string };
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [generatingAi, setGeneratingAi] = useState(false);
   const [urlInput, setUrlInput] = useState("");
   const [showUrlInput, setShowUrlInput] = useState(false);
+  const [showAiPanel, setShowAiPanel] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiGallery, setAiGallery] = useState<{ url: string; prompt: string }[]>([]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -106,23 +123,40 @@ function CoverImagePicker({
   };
 
   const handleGenerateAi = async () => {
+    const prompt = aiPrompt.trim() || buildDefaultPrompt(context);
     setGeneratingAi(true);
     try {
       const { data, error } = await supabase.functions.invoke("generate-blog-post", {
-        body: { action: "generate_cover", topic: "imagem de capa para blog de TI corporativa, tecnologia, servidores, redes" },
+        body: { action: "generate_cover", topic: context?.title || "TI corporativa", image_prompt: prompt },
         headers: { "x-admin-token": sessionStorage.getItem("admin_token") || "" },
       });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       if (data?.image_url) {
-        onImageChange(data.image_url, "ai_generated");
-        toast.success("Capa gerada por IA!");
+        setAiGallery((prev) => [...prev, { url: data.image_url, prompt }]);
+        toast.success("Imagem gerada! Clique para selecionar.");
       } else {
         toast.error("Não foi possível gerar a imagem.");
       }
     } catch (err: any) {
-      toast.error(`Erro ao gerar capa: ${err.message}`);
+      if (err.message?.includes("Rate limit")) {
+        toast.error("Rate limit atingido. Aguarde alguns segundos e tente novamente.");
+      } else if (err.message?.includes("Credits")) {
+        toast.error("Créditos esgotados. Adicione fundos nas configurações.");
+      } else {
+        toast.error(`Erro ao gerar: ${err.message}`);
+      }
     }
     setGeneratingAi(false);
+  };
+
+  const selectFromGallery = (item: { url: string; prompt: string }) => {
+    onImageChange(item.url, "ai_generated", { prompt: item.prompt });
+    toast.success("Imagem selecionada como capa!");
+  };
+
+  const removeFromGallery = (index: number) => {
+    setAiGallery((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleUrlSubmit = () => {
@@ -146,6 +180,7 @@ function CoverImagePicker({
     manual_upload: "📤 Upload manual",
     ai_generated: "🤖 Gerada por IA",
     url_input: "🔗 URL externa",
+    library_select: "📁 Biblioteca",
     fallback: "📷 Automática (fallback)",
   };
 
@@ -178,33 +213,68 @@ function CoverImagePicker({
 
       {/* Action buttons */}
       <div className="flex flex-wrap gap-2">
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={disabled || uploading}
-        >
+        <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={disabled || uploading}>
           {uploading ? <Loader2 size={14} className="animate-spin mr-1" /> : <Upload size={14} className="mr-1" />}
           Upload
         </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={handleGenerateAi}
-          disabled={disabled || generatingAi}
-        >
-          {generatingAi ? <Loader2 size={14} className="animate-spin mr-1" /> : <Sparkles size={14} className="mr-1" />}
-          Gerar por IA
+        <Button size="sm" variant="outline" onClick={() => setShowAiPanel(!showAiPanel)} disabled={disabled}>
+          <Sparkles size={14} className="mr-1" /> Gerar por IA
         </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => setShowUrlInput(!showUrlInput)}
-          disabled={disabled}
-        >
+        <Button size="sm" variant="outline" onClick={() => setShowUrlInput(!showUrlInput)} disabled={disabled}>
           <Image size={14} className="mr-1" /> URL
         </Button>
       </div>
+
+      {/* AI Generation Panel */}
+      {showAiPanel && (
+        <div className="space-y-3 p-3 rounded-lg border border-primary/30 bg-primary/5">
+          <p className="text-xs font-medium text-foreground">Gerar capa por IA</p>
+          <textarea
+            className="w-full h-20 p-2 text-xs bg-card border border-border rounded-md text-foreground placeholder:text-muted-foreground resize-none"
+            placeholder="Descreva a imagem desejada ou deixe vazio para prompt automático..."
+            value={aiPrompt}
+            onChange={(e) => setAiPrompt(e.target.value)}
+          />
+          <div className="flex gap-2">
+            <Button size="sm" onClick={handleGenerateAi} disabled={generatingAi}>
+              {generatingAi ? <Loader2 size={14} className="animate-spin mr-1" /> : <Sparkles size={14} className="mr-1" />}
+              {aiGallery.length > 0 ? "Gerar Mais" : "Gerar Imagem"}
+            </Button>
+            {aiGallery.length > 0 && (
+              <Button size="sm" variant="ghost" onClick={() => setAiGallery([])}>
+                <Trash2 size={14} className="mr-1" /> Limpar galeria
+              </Button>
+            )}
+          </div>
+
+          {/* AI Gallery */}
+          {aiGallery.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground">{aiGallery.length} imagem(ns) gerada(s) — clique para selecionar:</p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {aiGallery.map((item, i) => (
+                  <div key={i} className="relative group/item rounded-md overflow-hidden border border-border aspect-[16/9] cursor-pointer hover:ring-2 hover:ring-primary transition-all"
+                    onClick={() => selectFromGallery(item)}
+                  >
+                    <img src={item.url} alt={`Opção ${i + 1}`} className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/item:opacity-100 transition-opacity flex items-center justify-center gap-1">
+                      <Button size="sm" variant="secondary" className="h-7 text-xs" onClick={(e) => { e.stopPropagation(); selectFromGallery(item); }}>
+                        <Check size={12} className="mr-1" /> Usar
+                      </Button>
+                      <Button size="sm" variant="destructive" className="h-7 text-xs" onClick={(e) => { e.stopPropagation(); removeFromGallery(i); }}>
+                        <X size={12} />
+                      </Button>
+                    </div>
+                    <span className="absolute bottom-1 left-1 text-[9px] font-mono bg-black/60 text-white px-1.5 py-0.5 rounded">
+                      #{i + 1}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* URL input */}
       {showUrlInput && (
@@ -243,13 +313,22 @@ function EditCoverModal({
 }) {
   const [imageUrl, setImageUrl] = useState(post.image_url || FALLBACK_IMAGE);
   const [imageSource, setImageSource] = useState<ImageSource>((post.image_source as ImageSource) || "fallback");
+  const [imagePrompt, setImagePrompt] = useState(post.image_prompt || "");
+  const [altPt, setAltPt] = useState(post.image_alt_pt || "");
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
     setSaving(true);
     try {
       const { error } = await supabase.functions.invoke("generate-blog-post", {
-        body: { action: "update_cover", post_id: post.id, image_url: imageUrl, image_source: imageSource },
+        body: {
+          action: "update_cover",
+          post_id: post.id,
+          image_url: imageUrl,
+          image_source: imageSource,
+          image_prompt: imagePrompt || undefined,
+          image_alt_pt: altPt || undefined,
+        },
         headers: { "x-admin-token": sessionStorage.getItem("admin_token") || "" },
       });
       if (error) throw error;
@@ -264,7 +343,7 @@ function EditCoverModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-card border border-border rounded-xl p-6 max-w-lg w-full space-y-4" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-card border border-border rounded-xl p-6 max-w-xl w-full space-y-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-bold text-foreground">Editar Capa — {post.title}</h3>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground"><X size={18} /></button>
@@ -272,8 +351,22 @@ function EditCoverModal({
         <CoverImagePicker
           imageUrl={imageUrl}
           imageSource={imageSource}
-          onImageChange={(url, src) => { setImageUrl(url); setImageSource(src); }}
+          onImageChange={(url, src, meta) => {
+            setImageUrl(url);
+            setImageSource(src);
+            if (meta?.prompt) setImagePrompt(meta.prompt);
+          }}
+          context={{ title: post.title, category: post.category, tag: post.tag }}
         />
+        <div className="space-y-2">
+          <label className="text-xs font-medium text-foreground">Texto alternativo (SEO)</label>
+          <Input
+            placeholder="Descrição da imagem para acessibilidade..."
+            value={altPt}
+            onChange={(e) => setAltPt(e.target.value)}
+            className="bg-card text-sm"
+          />
+        </div>
         <div className="flex justify-end gap-2">
           <Button variant="ghost" size="sm" onClick={onClose}>Cancelar</Button>
           <Button size="sm" onClick={handleSave} disabled={saving}>
@@ -300,6 +393,7 @@ export default function AdminBlogGenerator() {
   // Cover image state for single generation
   const [coverUrl, setCoverUrl] = useState(FALLBACK_IMAGE);
   const [coverSource, setCoverSource] = useState<ImageSource>("fallback");
+  const [coverPrompt, setCoverPrompt] = useState("");
 
   // Edit cover modal
   const [editingPost, setEditingPost] = useState<AiPost | null>(null);
@@ -334,6 +428,7 @@ export default function AdminBlogGenerator() {
           category,
           image_url: coverSource !== "fallback" ? coverUrl : undefined,
           image_source: coverSource,
+          image_prompt: coverPrompt || undefined,
         },
         headers: { "x-admin-token": getToken() },
       });
@@ -343,6 +438,7 @@ export default function AdminBlogGenerator() {
       setTopic("");
       setCoverUrl(FALLBACK_IMAGE);
       setCoverSource("fallback");
+      setCoverPrompt("");
       fetchPosts();
     } catch (e: any) {
       toast.error(e.message || "Erro ao gerar artigo");
@@ -352,7 +448,7 @@ export default function AdminBlogGenerator() {
 
   const handlePublish = async (postId: string) => {
     try {
-      const { data, error } = await supabase.functions.invoke("generate-blog-post", {
+      const { error } = await supabase.functions.invoke("generate-blog-post", {
         body: { action: "publish", post_id: postId },
         headers: { "x-admin-token": getToken() },
       });
@@ -367,7 +463,7 @@ export default function AdminBlogGenerator() {
   const handleDelete = async (postId: string) => {
     if (!confirm("Excluir este post?")) return;
     try {
-      const { data, error } = await supabase.functions.invoke("generate-blog-post", {
+      const { error } = await supabase.functions.invoke("generate-blog-post", {
         body: { action: "delete", post_id: postId },
         headers: { "x-admin-token": getToken() },
       });
@@ -470,8 +566,13 @@ export default function AdminBlogGenerator() {
           <CoverImagePicker
             imageUrl={coverUrl}
             imageSource={coverSource}
-            onImageChange={(url, src) => { setCoverUrl(url); setCoverSource(src); }}
+            onImageChange={(url, src, meta) => {
+              setCoverUrl(url);
+              setCoverSource(src);
+              if (meta?.prompt) setCoverPrompt(meta.prompt);
+            }}
             disabled={generating}
+            context={{ title: topic, category }}
           />
 
           <Button onClick={handleGenerate} disabled={generating || !topic.trim()} className="w-full sm:w-auto">
