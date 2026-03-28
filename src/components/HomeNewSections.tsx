@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   Wifi,
@@ -61,11 +62,17 @@ export const HomeAuthority = () => {
 };
 
 /* ─── PROBLEMAS ─── */
-const problemIcons: LucideIcon[] = [Wifi, Server, Monitor, ShieldAlert, Headphones, HardDrive];
+const problemCards: { icon: LucideIcon; labelKey: string; slug: string; desc: string }[] = [
+  { icon: Wifi, labelKey: "Rede Lenta?", slug: "rede-lenta", desc: "Internet travando, quedas e lentidão na rede corporativa" },
+  { icon: Server, labelKey: "Servidor Travando?", slug: "servidor-travando", desc: "Servidor caindo, reiniciando ou com erros críticos" },
+  { icon: Monitor, labelKey: "Computador Lento?", slug: "computador-lento", desc: "Máquinas demorando para ligar, travar ao abrir programas" },
+  { icon: ShieldAlert, labelKey: "Vírus na Rede?", slug: "virus-na-rede", desc: "Ransomware, malware ou ameaças comprometendo seus dados" },
+  { icon: HardDrive, labelKey: "Sem Backup?", slug: "sem-backup", desc: "Dados sem proteção, risco de perda total de informações" },
+  { icon: Headphones, labelKey: "Sem Suporte de TI?", slug: "sem-suporte-de-ti", desc: "Empresa sem equipe técnica para resolver problemas urgentes" },
+];
 
 export const HomeProblems = () => {
   const { t } = useTranslation();
-  const problems = t("home.problems", { returnObjects: true }) as string[];
 
   return (
     <section className="py-16 md:py-24 section-dark">
@@ -82,22 +89,34 @@ export const HomeProblems = () => {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-px bg-border">
-          {problems.map((title, i) => {
-            const Icon = problemIcons[i] || Wifi;
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+          {problemCards.map((item, i) => {
+            const Icon = item.icon;
             return (
               <motion.div
-                key={i}
+                key={item.slug}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: i * 0.06 }}
-                className="flex flex-col items-start gap-3 p-5 md:p-8 bg-background"
               >
-                <Icon size={24} className="text-primary" strokeWidth={1.5} />
-                <span className="font-mono text-xs md:text-sm uppercase tracking-wider text-foreground">
-                  {title}
-                </span>
+                <Link
+                  to={`/${item.slug}-em-jacarei`}
+                  className="flex flex-col items-start gap-3 p-5 md:p-8 bg-background border border-border hover:border-primary/50 transition-all group h-full"
+                >
+                  <div className="w-10 h-10 flex items-center justify-center border border-destructive/30 bg-destructive/5 group-hover:bg-destructive/10 transition-colors">
+                    <Icon size={20} className="text-destructive" strokeWidth={1.5} />
+                  </div>
+                  <span className="font-mono text-xs md:text-sm uppercase tracking-wider text-foreground group-hover:text-primary transition-colors font-bold">
+                    {item.labelKey}
+                  </span>
+                  <p className="font-body text-xs text-muted-foreground leading-relaxed">
+                    {item.desc}
+                  </p>
+                  <span className="font-mono text-[10px] uppercase tracking-wider text-primary opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 mt-auto">
+                    Resolver agora →
+                  </span>
+                </Link>
               </motion.div>
             );
           })}
