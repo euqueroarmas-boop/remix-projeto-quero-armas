@@ -5,6 +5,7 @@ const projectRoot = process.cwd();
 const publicDir = path.join(projectRoot, "public");
 const seoDataPath = path.join(projectRoot, "supabase/functions/_shared/seo-data.ts");
 const BASE_URL = "https://www.wmti.com.br";
+const MAX_URLS_PER_SITEMAP = 45000;
 
 const staticPages = [
   { loc: "/", priority: "1.0", changefreq: "weekly" },
@@ -71,30 +72,20 @@ function wrapUrlset(urls) {
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join("\n")}\n</urlset>`;
 }
 
-function buildSitemapIndex() {
-  const now = new Date().toISOString().split("T")[0];
-  const sitemaps = [
-    "sitemap-pages.xml",
-    "sitemap-blog.xml",
-    "sitemap-programmatic.xml",
-    "sitemap-services.xml",
-    "sitemap-segments.xml",
-    "sitemap-problems.xml",
-    "sitemap-blog-cities.xml",
-    "sitemap-service-segment-cities.xml",
-  ];
-
-  const entries = sitemaps
-    .map((name) => `  <sitemap><loc>${BASE_URL}/${name}</loc><lastmod>${now}</lastmod></sitemap>`)
-    .join("\n");
-
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries}\n</sitemapindex>`;
+/** Split an array of URL entries into chunks of MAX_URLS_PER_SITEMAP */
+function chunkArray(arr, size) {
+  const chunks = [];
+  for (let i = 0; i < arr.length; i += size) {
+    chunks.push(arr.slice(i, i + size));
+  }
+  return chunks;
 }
 
 function writeFile(name, content) {
   fs.writeFileSync(path.join(publicDir, name), content, "utf8");
 }
 
+// ─── Read SEO data ───
 const seoDataSource = fs.readFileSync(seoDataPath, "utf8");
 const serviceSlugs = extractArray(seoDataSource, "serviceSlugs");
 const segmentEntries = extractArray(seoDataSource, "segmentEntries");
@@ -102,38 +93,89 @@ const problemSlugs = extractArray(seoDataSource, "problemSlugs");
 const blogSlugs = extractArray(seoDataSource, "blogSlugs");
 const citySlugs = extractArray(seoDataSource, "citySlugs");
 
+// ─── Track all sitemap filenames for the index ───
+const sitemapFiles = [];
+
+// 1. Static pages
 const pagesXml = wrapUrlset(staticPages.map((page) => urlEntry(page.loc, page.priority, page.changefreq)));
+writeFile("sitemap-pages.xml", pagesXml);
+sitemapFiles.push("sitemap-pages.xml");
+
+// 2. Blog
 const blogXml = wrapUrlset([
   urlEntry("/blog", "0.8", "weekly"),
   ...blogSlugs.map((slug) => urlEntry(`/blog/${slug}`, "0.6", "monthly")),
 ]);
-const programmaticXml = wrapUrlset(
-  serviceSlugs.flatMap((svc) => citySlugs.map((city) => urlEntry(`/${svc}-em-${city}`, "0.7", "monthly"))),
-);
-const servicesXml = programmaticXml;
-const segmentsXml = wrapUrlset(
-  segmentEntries.flatMap((seg) => citySlugs.map((city) => urlEntry(`/${seg.prefix}-em-${city}`, "0.6", "monthly"))),
-);
-const problemsXml = wrapUrlset(
-  problemSlugs.flatMap((prob) => citySlugs.map((city) => urlEntry(`/${prob}-em-${city}`, "0.5", "monthly"))),
-);
-const blogCitiesXml = wrapUrlset(
-  blogSlugs.flatMap((slug) => citySlugs.map((city) => urlEntry(`/blog-${slug}-${city}`, "0.4", "monthly"))),
-);
-const serviceSegmentCitiesXml = wrapUrlset(
-  serviceSlugs.flatMap((svc) =>
-    segmentEntries.flatMap((seg) => citySlugs.map((city) => urlEntry(`/${svc}-${seg.slug}-${city}`, "0.5", "monthly"))),
-  ),
-);
-
-writeFile("sitemap.xml", buildSitemapIndex());
-writeFile("sitemap-pages.xml", pagesXml);
 writeFile("sitemap-blog.xml", blogXml);
-writeFile("sitemap-programmatic.xml", programmaticXml);
-writeFile("sitemap-services.xml", servicesXml);
-writeFile("sitemap-segments.xml", segmentsXml);
-writeFile("sitemap-problems.xml", problemsXml);
-writeFile("sitemap-blog-cities.xml", blogCitiesXml);
-writeFile("sitemap-service-segment-cities.xml", serviceSegmentCitiesXml);
+sitemapFiles.push("sitemap-blog.xml");
 
-console.log("Static sitemaps generated successfully.");
+// 3. Programmatic (service × city) — pattern: /{service}-em-{city}
+const programmaticUrls = serviceSlugs.flatMap((svc) =>
+  citySlugs.map((city) => urlEntry(`/${svc}-em-${city}`, "0.7", "monthly"))
+);
+const programmaticChunks = chunkArray(programmaticUrls, MAX_URLS_PER_SITEMAP);
+programmaticChunks.forEach((chunk, i) => {
+  const name = programmaticChunks.length === 1
+    ? "sitemap-programmatic.xml"
+    : `sitemap-programmatic-${i + 1}.xml`;
+  writeFile(name, wrapUrlset(chunk));
+  sitemapFiles.push(name);
+});
+
+// 4. Segments (segment × city) — pattern: /{segment-prefix}-em-{city}
+const segmentUrls = segmentEntries.flatMap((seg) =>
+  citySlugs.map((city) => urlEntry(`/${seg.prefix}-em-${city}`, "0.6", "monthly"))
+);
+const segmentChunks = chunkArray(segmentUrls, MAX_URLS_PER_SITEMAP);
+segmentChunks.forEach((chunk, i) => {
+  const name = segmentChunks.length === 1
+    ? "sitemap-segments.xml"
+    : `sitemap-segments-${i + 1}.xml`;
+  writeFile(name, wrapUrlset(chunk));
+  sitemapFiles.push(name);
+});
+
+// 5. Problems (problem × city) — pattern: /{problem}-em-{city}
+const problemUrls = problemSlugs.flatMap((prob) =>
+  citySlugs.map((city) => urlEntry(`/${prob}-em-${city}`, "0.5", "monthly"))
+);
+const problemChunks = chunkArray(problemUrls, MAX_URLS_PER_SITEMAP);
+problemChunks.forEach((chunk, i) => {
+  const name = problemChunks.length === 1
+    ? "sitemap-problems.xml"
+    : `sitemap-problems-${i + 1}.xml`;
+  writeFile(name, wrapUrlset(chunk));
+  sitemapFiles.push(name);
+});
+
+// 6. Service × Segment × City — pattern: /{service}-{segment-slug}-{city}
+const svcSegCityUrls = serviceSlugs.flatMap((svc) =>
+  segmentEntries.flatMap((seg) =>
+    citySlugs.map((city) => urlEntry(`/${svc}-${seg.slug}-${city}`, "0.5", "monthly"))
+  )
+);
+const svcSegCityChunks = chunkArray(svcSegCityUrls, MAX_URLS_PER_SITEMAP);
+svcSegCityChunks.forEach((chunk, i) => {
+  const name = svcSegCityChunks.length === 1
+    ? "sitemap-service-segment-cities.xml"
+    : `sitemap-service-segment-cities-${i + 1}.xml`;
+  writeFile(name, wrapUrlset(chunk));
+  sitemapFiles.push(name);
+});
+
+// ─── Build sitemap index ───
+const now = new Date().toISOString().split("T")[0];
+const indexEntries = sitemapFiles
+  .map((name) => `  <sitemap><loc>${BASE_URL}/${name}</loc><lastmod>${now}</lastmod></sitemap>`)
+  .join("\n");
+const sitemapIndex = `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${indexEntries}\n</sitemapindex>`;
+writeFile("sitemap.xml", sitemapIndex);
+
+// ─── Summary ───
+console.log(`Sitemaps generated: ${sitemapFiles.length + 1} files (including index)`);
+sitemapFiles.forEach((f) => {
+  const stat = fs.statSync(path.join(publicDir, f));
+  const content = fs.readFileSync(path.join(publicDir, f), "utf8");
+  const count = (content.match(/<url>/g) || []).length;
+  console.log(`  ${f}: ${count} URLs (${(stat.size / 1024).toFixed(0)} KB)`);
+});
