@@ -228,8 +228,9 @@ const BlogPostPage = () => {
     : (localizedStructuredContent?.metaDescription || structuredContent?.metaDescription) || localizedPost?.excerpt || "";
 
   if (aiLoading) return <div className="min-h-screen flex items-center justify-center"><p className="text-muted-foreground">{isEn ? "Loading..." : "Carregando..."}</p></div>;
-  if (!post) return <Navigate to="/blog" replace />;
-  if (!structuredContent && !legacy) return <Navigate to="/blog" replace />;
+  // AI posts are handled above (line 108) — only redirect if no manual post AND no AI post found
+  if (!post && !aiPost) return <Navigate to="/blog" replace />;
+  if (post && !structuredContent && !legacy) return <Navigate to="/blog" replace />;
 
   const canonicalUrl = city ? `${baseUrl}/blog/${baseSlug}` : pageUrl;
 
