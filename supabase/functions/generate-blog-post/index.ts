@@ -20,7 +20,7 @@ interface GenerateRequest {
   service_slug?: string;
   city_slug?: string;
   category?: string;
-  action?: "generate" | "publish" | "delete" | "list" | "update_cover" | "generate_cover";
+  action?: "generate" | "publish" | "delete" | "list" | "update_cover" | "generate_cover" | "translate";
   post_id?: string;
   image_url?: string;
   image_source?: string;
@@ -248,6 +248,91 @@ serve(async (req) => {
 
       if (error) throw error;
       return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ── Translate post to English via AI ──
+    if (action === "translate" && body.post_id) {
+      // Fetch the post
+      const { data: postData, error: fetchErr } = await supabase
+        .from("blog_posts_ai")
+        .select("*")
+        .eq("id", body.post_id)
+        .single();
+      if (fetchErr || !postData) throw fetchErr || new Error("Post not found");
+
+      if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+
+      const translatePrompt = `You are a professional translator specializing in corporate IT content.
+Translate the following blog post content from Brazilian Portuguese to American English.
+Keep the same markdown formatting, technical terms, and professional tone.
+IMPORTANT: Return ONLY valid JSON, no markdown code blocks.
+
+Return a JSON with these exact fields:
+{
+  "title_en": "translated title",
+  "excerpt_en": "translated excerpt",
+  "meta_title_en": "translated SEO title (up to 60 chars)",
+  "meta_description_en": "translated SEO description (up to 155 chars)",
+  "content_md_en": "full translated content in markdown",
+  "cta_en": "translated call-to-action text",
+  "faq_en": [{"q": "translated question?", "a": "translated answer"}],
+  "image_alt_en": "translated image alt text"
+}
+
+POST TO TRANSLATE:
+Title: ${postData.title}
+Excerpt: ${postData.excerpt}
+Meta Title: ${postData.meta_title}
+Meta Description: ${postData.meta_description}
+Content: ${postData.content_md}
+CTA: ${postData.cta || ""}
+FAQ: ${JSON.stringify(postData.faq || [])}
+Image Alt: ${postData.image_alt_pt || ""}`;
+
+      const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-3-flash-preview",
+          messages: [{ role: "user", content: translatePrompt }],
+        }),
+      });
+
+      if (!res.ok) {
+        const status = res.status;
+        if (status === 429) throw new Error("Rate limit exceeded. Try again later.");
+        if (status === 402) throw new Error("Credits exhausted.");
+        throw new Error(`AI translation error: ${status}`);
+      }
+
+      const aiData = await res.json();
+      let rawContent = aiData.choices?.[0]?.message?.content;
+      if (!rawContent) throw new Error("Empty AI translation response");
+      rawContent = rawContent.replace(/^```json?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
+      const translated = JSON.parse(rawContent);
+
+      const { error: updateErr } = await supabase
+        .from("blog_posts_ai")
+        .update({
+          title_en: translated.title_en || null,
+          excerpt_en: translated.excerpt_en || null,
+          meta_title_en: translated.meta_title_en || null,
+          meta_description_en: translated.meta_description_en || null,
+          content_md_en: translated.content_md_en || null,
+          cta_en: translated.cta_en || null,
+          faq_en: translated.faq_en || [],
+          image_alt_en: translated.image_alt_en || null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", body.post_id);
+
+      if (updateErr) throw updateErr;
+      return new Response(JSON.stringify({ success: true, translated_title: translated.title_en }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
