@@ -56,14 +56,52 @@ const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1518770660439-4636190a
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
+// Map categories/tags to realistic visual scenarios
+const CATEGORY_SCENES: Record<string, string> = {
+  "Segurança": "cybersecurity breach alert on monitor screens, red warning lights, tense IT security team analyzing threat dashboard",
+  "Infraestrutura": "server room with blinking status lights, IT technician inspecting rack-mounted servers and network cables",
+  "Cloud": "modern data center with cloud infrastructure diagrams on glass board, IT team planning migration",
+  "Redes": "corporate network operations center, ethernet cables, switches and routers, technician configuring equipment",
+  "Suporte": "IT help desk professional assisting frustrated office worker at their desk, computer showing error screen",
+  "Backup": "data recovery scenario, external drives and server backup systems, worried manager watching restore progress",
+  "Locação": "brand new Dell computers being unboxed and set up in a modern corporate office by IT team",
+  "Servidores": "enterprise server room with Dell PowerEdge servers, technician performing maintenance with monitoring screens",
+  "Automação": "smart office with automated systems, digital dashboards controlling building systems, modern workspace",
+  "Microsoft 365": "team collaborating on Microsoft 365 apps on multiple screens in a modern meeting room",
+  "Firewall": "network security operations center, firewall rules on screen, IT analyst monitoring traffic logs",
+  "Linux": "terminal screens with Linux commands, server administration, sysadmin working in data center",
+};
+
 function buildDefaultPrompt(context?: { title?: string; excerpt?: string; category?: string; tag?: string }) {
-  const parts = ["Generate a professional, modern blog cover image for a corporate IT company."];
-  if (context?.title) parts.push(`Article title: "${context.title}".`);
-  if (context?.excerpt) parts.push(`Summary: ${context.excerpt}.`);
-  if (context?.category) parts.push(`Category: ${context.category}.`);
-  if (context?.tag) parts.push(`Tag: ${context.tag}.`);
-  parts.push("Style: clean, tech-oriented, professional blue tones, suitable for a business blog header. No text in the image. High quality, 16:9 aspect ratio.");
-  return parts.join(" ");
+  const title = context?.title || "";
+  const excerpt = context?.excerpt || "";
+  const category = context?.category || "";
+  const tag = context?.tag || "";
+
+  // Find the best matching scene from category or tag
+  const sceneKey = Object.keys(CATEGORY_SCENES).find(
+    (k) => category.toLowerCase().includes(k.toLowerCase()) || tag.toLowerCase().includes(k.toLowerCase())
+  );
+  const sceneSuggestion = sceneKey ? CATEGORY_SCENES[sceneKey] : "corporate IT office environment with real employees and computer workstations";
+
+  // Build a context-rich prompt based on the actual article content
+  const prompt = [
+    `Create a photorealistic, high-quality blog cover image for this specific article:`,
+    `"${title}".`,
+    excerpt ? `The article discusses: ${excerpt.slice(0, 200)}.` : "",
+    `Visual scene: ${sceneSuggestion}.`,
+    `MANDATORY STYLE RULES:`,
+    `- Photorealistic, NOT abstract, NOT cartoon, NOT generic stock art`,
+    `- Real people in a real corporate/business environment`,
+    `- Natural lighting, professional photography look`,
+    `- Show the actual problem or solution described in the title`,
+    `- Emotional tone: urgency if about problems, confidence if about solutions`,
+    `- NO glowing lines, NO futuristic abstract backgrounds, NO generic tech icons`,
+    `- NO text or watermarks in the image`,
+    `- 16:9 aspect ratio, suitable as a blog header`,
+  ].filter(Boolean).join("\n");
+
+  return prompt;
 }
 
 /* ── Cover Image Picker Component ── */
@@ -228,10 +266,20 @@ function CoverImagePicker({
       {/* AI Generation Panel */}
       {showAiPanel && (
         <div className="space-y-3 p-3 rounded-lg border border-primary/30 bg-primary/5">
-          <p className="text-xs font-medium text-foreground">Gerar capa por IA</p>
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-medium text-foreground">🎯 Gerar capa contextualizada por IA</p>
+            {!aiPrompt && context?.title && (
+              <Button size="sm" variant="ghost" className="h-6 text-[10px]" onClick={() => setAiPrompt(buildDefaultPrompt(context))}>
+                Carregar prompt automático
+              </Button>
+            )}
+          </div>
+          <p className="text-[10px] text-muted-foreground">
+            O prompt é gerado automaticamente baseado no título e conteúdo do post. Você pode editá-lo livremente antes de gerar.
+          </p>
           <textarea
-            className="w-full h-20 p-2 text-xs bg-card border border-border rounded-md text-foreground placeholder:text-muted-foreground resize-none"
-            placeholder="Descreva a imagem desejada ou deixe vazio para prompt automático..."
+            className="w-full h-28 p-2 text-xs bg-card border border-border rounded-md text-foreground placeholder:text-muted-foreground resize-none font-mono"
+            placeholder={context?.title ? buildDefaultPrompt(context).slice(0, 300) + "..." : "Descreva a imagem desejada..."}
             value={aiPrompt}
             onChange={(e) => setAiPrompt(e.target.value)}
           />

@@ -254,7 +254,8 @@ serve(async (req) => {
 
     // ── Generate Cover Image via AI ──
     if (action === "generate_cover") {
-      const prompt = body.image_prompt || `Generate a professional, modern blog cover image for a corporate IT company. Topic: ${body.topic || "corporate IT technology"}. Style: clean, tech-oriented, professional blue tones, suitable for a business blog header. No text in the image.`;
+      const fallbackPrompt = `Create a photorealistic blog cover image for a corporate IT article titled: "${body.topic || "Corporate IT Solutions"}". Show a real corporate office environment with actual people, natural lighting, professional photography style. NO abstract art, NO glowing lines, NO cartoon, NO text in image. 16:9 ratio.`;
+      const prompt = body.image_prompt || fallbackPrompt;
       
       const imageUrl = await generateCoverImage(prompt);
       if (!imageUrl) {
