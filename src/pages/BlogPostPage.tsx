@@ -75,8 +75,9 @@ const BlogPostPage = () => {
   const localizedLegacy = legacy;
 
   // AI-generated post from DB
+  const needsAiFetch = !post && !structuredContent && !legacy && !!slug;
   const [aiPost, setAiPost] = useState<any>(null);
-  const [aiLoading, setAiLoading] = useState(false);
+  const [aiLoading, setAiLoading] = useState(needsAiFetch);
 
   useEffect(() => {
     if (!post && !structuredContent && !legacy && slug) {
