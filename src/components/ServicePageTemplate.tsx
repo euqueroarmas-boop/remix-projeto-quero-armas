@@ -201,7 +201,7 @@ const ServicePageTemplate = ({
 }: ServicePageProps) => {
   const { t } = useTranslation();
   const location = useLocation();
-  const baseUrl = "https://wmti.com.br";
+  const baseUrl = "https://www.wmti.com.br";
   const currentPath = location.pathname;
   const canonicalUrl = canonicalSlug
     ? `${baseUrl}/${canonicalSlug}`
