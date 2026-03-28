@@ -147,6 +147,7 @@ function buildSitemapIndex(): string {
   const sitemaps = [
     "sitemap-pages.xml",
     "sitemap-blog.xml",
+    "sitemap-programmatic.xml",
     "sitemap-services.xml",
     "sitemap-segments.xml",
     "sitemap-problems.xml",
