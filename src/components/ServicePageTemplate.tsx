@@ -485,31 +485,115 @@ const ServicePageTemplate = ({
         </div>
       </section>
 
-      {/* ══ Related services ══ */}
-      {relatedLinks.length > 0 && (
-        <section className="section-dark py-12 border-t border-gunmetal-foreground/10">
-          <div className="container">
-            <p className="font-mono text-xs tracking-[0.3em] uppercase text-muted-foreground mb-6">
-              // {cityName ? t("service.relatedTagCity", { city: cityName }) : t("service.relatedTag")}
-            </p>
-            <div className="flex flex-wrap gap-3">
-              {relatedLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  to={link.href}
-                  className="inline-flex items-center gap-2 border border-gunmetal-foreground/20 px-4 py-2 font-mono text-xs uppercase tracking-wider text-gunmetal-foreground/60 hover:border-primary hover:text-primary transition-colors"
-                >
-                  {link.label}
-                  <ArrowRight size={12} />
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
+      {/* ══ Internal Link Cluster ══ */}
+      <InternalLinkCluster
+        relatedLinks={relatedLinks}
+        cityName={cityName}
+        citySlug={citySlug}
+        currentPath={currentPath}
+      />
 
       <Footer />
     </div>
+  );
+};
+
+/** Dense internal link cluster for SEO — shows related + all services in the same city */
+const SERVICE_LINKS = [
+  { slug: "infraestrutura-ti", label: "Infraestrutura de TI" },
+  { slug: "suporte-ti", label: "Suporte Técnico" },
+  { slug: "seguranca-rede", label: "Segurança de Rede" },
+  { slug: "monitoramento-rede", label: "Monitoramento de Rede" },
+  { slug: "servidores-dell", label: "Servidores Dell" },
+  { slug: "microsoft-365", label: "Microsoft 365" },
+  { slug: "backup-corporativo", label: "Backup Corporativo" },
+  { slug: "firewall-corporativo", label: "Firewall pfSense" },
+  { slug: "locacao-computadores", label: "Locação de Computadores" },
+  { slug: "administracao-servidores", label: "Administração de Servidores" },
+  { slug: "suporte-emergencial", label: "Suporte Emergencial" },
+  { slug: "terceirizacao-ti", label: "Terceirização de TI" },
+];
+
+const SEGMENT_LINKS = [
+  { prefix: "ti-para-serventias-notariais", label: "TI para Cartórios" },
+  { prefix: "ti-para-hospitais", label: "TI para Hospitais" },
+  { prefix: "ti-para-escritorios-de-advocacia", label: "TI para Advocacia" },
+  { prefix: "ti-para-contabilidades", label: "TI para Contabilidades" },
+  { prefix: "ti-para-industrias-alimenticias", label: "TI para Indústrias" },
+];
+
+interface InternalLinkClusterProps {
+  relatedLinks: { label: string; href: string }[];
+  cityName?: string;
+  citySlug?: string;
+  currentPath: string;
+}
+
+const InternalLinkCluster = ({ relatedLinks, cityName, citySlug, currentPath }: InternalLinkClusterProps) => {
+  const { t } = useTranslation();
+
+  const clusterLinks = useMemo(() => {
+    if (!citySlug || !cityName) return [];
+
+    const seen = new Set<string>();
+    seen.add(currentPath);
+
+    const links: { label: string; href: string }[] = [];
+    for (const rl of relatedLinks) {
+      if (!seen.has(rl.href)) {
+        seen.add(rl.href);
+        links.push(rl);
+      }
+    }
+
+    for (const svc of SERVICE_LINKS) {
+      const href = `/${svc.slug}-em-${citySlug}`;
+      if (!seen.has(href)) {
+        seen.add(href);
+        links.push({ label: `${svc.label} em ${cityName}`, href });
+      }
+    }
+
+    for (const seg of SEGMENT_LINKS) {
+      const href = `/${seg.prefix}-em-${citySlug}`;
+      if (!seen.has(href)) {
+        seen.add(href);
+        links.push({ label: `${seg.label} em ${cityName}`, href });
+      }
+    }
+
+    return links;
+  }, [citySlug, cityName, currentPath, relatedLinks]);
+
+  const displayLinks = clusterLinks.length > 0 ? clusterLinks : relatedLinks;
+
+  if (displayLinks.length === 0) return null;
+
+  return (
+    <section className="section-dark py-12 border-t border-gunmetal-foreground/10">
+      <div className="container">
+        <p className="font-mono text-xs tracking-[0.3em] uppercase text-muted-foreground mb-2">
+          // {cityName ? t("service.relatedTagCity", { city: cityName }) : t("service.relatedTag")}
+        </p>
+        {cityName && (
+          <p className="font-body text-sm text-muted-foreground/70 mb-6">
+            Todos os nossos serviços de TI disponíveis para empresas em {cityName}:
+          </p>
+        )}
+        <div className="flex flex-wrap gap-2 md:gap-3">
+          {displayLinks.map((link) => (
+            <Link
+              key={link.href}
+              to={link.href}
+              className="inline-flex items-center gap-1.5 border border-gunmetal-foreground/20 px-3 py-1.5 md:px-4 md:py-2 font-mono text-[10px] md:text-xs uppercase tracking-wider text-gunmetal-foreground/60 hover:border-primary hover:text-primary transition-colors"
+            >
+              {link.label}
+              <ArrowRight size={10} />
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 };
 
