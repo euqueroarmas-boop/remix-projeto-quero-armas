@@ -105,7 +105,7 @@ const BlogPostPage = () => {
 
   // For AI posts
   if (!post && aiPost) {
-    const isEn = t("lang") === "en" || (typeof navigator !== "undefined" && /^en/i.test(navigator.language) && t("lang") !== "pt");
+    const isEn = t("blogPost.locale") === "en-US";
     const aiTitle = (isEn && aiPost.title_en) ? aiPost.title_en : aiPost.title;
     const aiExcerpt = (isEn && aiPost.excerpt_en) ? aiPost.excerpt_en : aiPost.excerpt;
     const aiContent = (isEn && aiPost.content_md_en) ? aiPost.content_md_en : aiPost.content_md;
