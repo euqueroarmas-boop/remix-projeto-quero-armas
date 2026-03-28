@@ -446,6 +446,7 @@ export default function AdminBlogGenerator() {
 
   // Edit cover modal
   const [editingPost, setEditingPost] = useState<AiPost | null>(null);
+  const [translating, setTranslating] = useState<string | null>(null);
 
   const getToken = () => sessionStorage.getItem("admin_token") || "";
 
