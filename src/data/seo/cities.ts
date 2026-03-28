@@ -4,6 +4,10 @@ export interface SeoCity {
   state: string;
   region: string;
   priority: number;
+  /** Approximate population for content differentiation */
+  population?: number;
+  /** Notable industries or characteristics */
+  context?: string;
 }
 
 export const cities: SeoCity[] = [
