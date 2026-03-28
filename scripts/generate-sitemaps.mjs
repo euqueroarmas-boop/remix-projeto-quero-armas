@@ -57,16 +57,9 @@ const staticPages = [
 ];
 
 function extractArray(source, exportName) {
-  const regex = new RegExp(`export const ${exportName}\\s*=\\s*(\\[[\\s\\S]*?\\]);`);
+  const regex = new RegExp(`export const ${exportName}(?::[^=]+)?\\s*=\\s*(\\[[\\s\\S]*?\\]);`);
   const match = source.match(regex);
   if (!match) throw new Error(`Array not found: ${exportName}`);
-  return Function(`return (${match[1]});`)();
-}
-
-function extractSegmentEntries(source) {
-  const regex = /export const segmentEntries:[^=]*=\s*(\[[\s\S]*?\]);/;
-  const match = source.match(regex);
-  if (!match) throw new Error("Array not found: segmentEntries");
   return Function(`return (${match[1]});`)();
 }
 
@@ -90,9 +83,11 @@ function buildSitemapIndex() {
     "sitemap-blog-cities.xml",
     "sitemap-service-segment-cities.xml",
   ];
+
   const entries = sitemaps
-    .map((s) => `  <sitemap><loc>${BASE_URL}/${s}</loc><lastmod>${now}</lastmod></sitemap>`)
+    .map((name) => `  <sitemap><loc>${BASE_URL}/${name}</loc><lastmod>${now}</lastmod></sitemap>`)
     .join("\n");
+
   return `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries}\n</sitemapindex>`;
 }
 
@@ -102,19 +97,20 @@ function writeFile(name, content) {
 
 const seoDataSource = fs.readFileSync(seoDataPath, "utf8");
 const serviceSlugs = extractArray(seoDataSource, "serviceSlugs");
+const segmentEntries = extractArray(seoDataSource, "segmentEntries");
 const problemSlugs = extractArray(seoDataSource, "problemSlugs");
 const blogSlugs = extractArray(seoDataSource, "blogSlugs");
 const citySlugs = extractArray(seoDataSource, "citySlugs");
-const segmentEntries = extractSegmentEntries(seoDataSource);
 
-const pagesXml = wrapUrlset(staticPages.map((p) => urlEntry(p.loc, p.priority, p.changefreq)));
+const pagesXml = wrapUrlset(staticPages.map((page) => urlEntry(page.loc, page.priority, page.changefreq)));
 const blogXml = wrapUrlset([
   urlEntry("/blog", "0.8", "weekly"),
   ...blogSlugs.map((slug) => urlEntry(`/blog/${slug}`, "0.6", "monthly")),
 ]);
-const servicesXml = wrapUrlset(
+const programmaticXml = wrapUrlset(
   serviceSlugs.flatMap((svc) => citySlugs.map((city) => urlEntry(`/${svc}-em-${city}`, "0.7", "monthly"))),
 );
+const servicesXml = programmaticXml;
 const segmentsXml = wrapUrlset(
   segmentEntries.flatMap((seg) => citySlugs.map((city) => urlEntry(`/${seg.prefix}-em-${city}`, "0.6", "monthly"))),
 );
@@ -133,11 +129,11 @@ const serviceSegmentCitiesXml = wrapUrlset(
 writeFile("sitemap.xml", buildSitemapIndex());
 writeFile("sitemap-pages.xml", pagesXml);
 writeFile("sitemap-blog.xml", blogXml);
-writeFile("sitemap-programmatic.xml", servicesXml);
+writeFile("sitemap-programmatic.xml", programmaticXml);
 writeFile("sitemap-services.xml", servicesXml);
 writeFile("sitemap-segments.xml", segmentsXml);
 writeFile("sitemap-problems.xml", problemsXml);
 writeFile("sitemap-blog-cities.xml", blogCitiesXml);
 writeFile("sitemap-service-segment-cities.xml", serviceSegmentCitiesXml);
 
-console.log("Static sitemaps generated in /public");
+console.log("Static sitemaps generated successfully.");
