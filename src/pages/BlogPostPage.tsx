@@ -94,6 +94,10 @@ const BlogPostPage = () => {
     }
   }, [slug, post, structuredContent, legacy]);
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [slug]);
+
   const baseUrl = "https://wmti.com.br";
   const pageUrl = `${baseUrl}${location.pathname}`;
 
@@ -208,10 +212,6 @@ const BlogPostPage = () => {
   const seoDesc = city
     ? `${post?.excerpt} Saiba como a WMTi atende empresas em ${city.name} e região de ${city.region}.`
     : structuredContent?.metaDescription || post?.excerpt || "";
-
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [slug]);
 
   if (aiLoading) return <div className="min-h-screen flex items-center justify-center"><p className="text-muted-foreground">Carregando...</p></div>;
   if (!post) return <Navigate to="/blog" replace />;
