@@ -69,28 +69,60 @@ function getSiteUrl(): string {
  * Extract a clean, human-readable page name from an H1, a passed title,
  * or the current pathname – never the raw document.title (which contains
  * SEO separators, slogans, etc.).
+ *
+ * Guards against returning raw slugs, comments ("// ..."), or empty strings.
  */
 function getCleanPageName(pageTitle?: string): string {
-  if (pageTitle) return pageTitle;
+  // 1. Explicit title always wins
+  if (pageTitle && isValidTitle(pageTitle)) return pageTitle;
 
+  // 2. Try H1 from the DOM
   if (typeof document !== "undefined") {
     const h1 = document.querySelector("h1");
     if (h1?.textContent) {
       const text = h1.textContent.trim();
-      if (text.length <= 120) return text;
+      if (text.length > 0 && text.length <= 120 && isValidTitle(text)) return text;
     }
   }
 
+  // 3. Try meta og:title (often has the clean page name)
+  if (typeof document !== "undefined") {
+    const ogTitle = document.querySelector('meta[property="og:title"]');
+    if (ogTitle) {
+      const content = ogTitle.getAttribute("content")?.trim();
+      if (content && isValidTitle(content)) {
+        // Strip common suffixes like " | WMTi" or " - WMTi"
+        const clean = content.replace(/\s*[|–—-]\s*WMTi.*$/i, "").trim();
+        if (clean.length > 0) return clean;
+      }
+    }
+  }
+
+  // 4. Humanize the pathname slug (last resort before fallback)
   if (typeof window !== "undefined") {
     const slug = window.location.pathname.replace(/^\//, "").split("?")[0];
-    if (slug) {
-      return slug
+    if (slug && slug !== "/" && !slug.startsWith("//")) {
+      const humanized = slug
+        .split("/").pop()!
         .replace(/-/g, " ")
         .replace(/\b\w/g, (l) => l.toUpperCase());
+      if (humanized.length > 0 && isValidTitle(humanized)) return humanized;
     }
   }
 
   return "WMTi";
+}
+
+/** Returns false for values that should never appear in a WhatsApp message */
+function isValidTitle(text: string): boolean {
+  if (!text || text.trim().length === 0) return false;
+  // Reject comment-like strings
+  if (/^\/\//.test(text.trim())) return false;
+  // Reject raw code patterns
+  if (/^\.\.\.$/.test(text.trim())) return false;
+  // Reject single special chars
+  if (/^[/\\#*]+$/.test(text.trim())) return false;
+  return true;
 }
 
 /* ------------------------------------------------------------------ */

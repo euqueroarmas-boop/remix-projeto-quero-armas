@@ -84,6 +84,7 @@ export type Database = {
           excerpt: string
           faq: Json | null
           id: string
+          image_source: string | null
           image_url: string | null
           internal_links: Json | null
           keywords: string[] | null
@@ -107,6 +108,7 @@ export type Database = {
           excerpt?: string
           faq?: Json | null
           id?: string
+          image_source?: string | null
           image_url?: string | null
           internal_links?: Json | null
           keywords?: string[] | null
@@ -130,6 +132,7 @@ export type Database = {
           excerpt?: string
           faq?: Json | null
           id?: string
+          image_source?: string | null
           image_url?: string | null
           internal_links?: Json | null
           keywords?: string[] | null
