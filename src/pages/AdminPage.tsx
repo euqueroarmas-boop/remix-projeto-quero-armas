@@ -22,6 +22,7 @@ import AdminLeadsProposals from "@/components/admin/AdminLeadsProposals";
 import AdminDiagnostics from "@/components/admin/AdminDiagnostics";
 
 const QAPanel = lazy(() => import("@/components/admin/qa/QAPanel"));
+const AdminBlogGenerator = lazy(() => import("@/components/admin/AdminBlogGenerator"));
 
 const ITEMS_PER_PAGE = 20;
 
@@ -782,6 +783,7 @@ export default function AdminPage() {
               <TabsTrigger value="risk" className="text-xs md:text-sm px-2.5 md:px-3">Risco</TabsTrigger>
               <TabsTrigger value="diagnostics" className="text-xs md:text-sm px-2.5 md:px-3 text-destructive">🔍 Diagnóstico</TabsTrigger>
               <TabsTrigger value="qa" className="text-xs md:text-sm px-2.5 md:px-3 text-primary">🧪 QA</TabsTrigger>
+              <TabsTrigger value="blog-ai" className="text-xs md:text-sm px-2.5 md:px-3 text-primary">✍️ Blog IA</TabsTrigger>
             </TabsList>
           </div>
 
@@ -797,6 +799,7 @@ export default function AdminPage() {
           <TabsContent value="risk"><AdminRiskMonitor /></TabsContent>
           <TabsContent value="diagnostics"><AdminDiagnostics /></TabsContent>
           <TabsContent value="qa"><Suspense fallback={<div className="text-center py-8 text-muted-foreground text-sm">Carregando QA...</div>}><QAPanel /></Suspense></TabsContent>
+          <TabsContent value="blog-ai"><Suspense fallback={<div className="text-center py-8 text-muted-foreground text-sm">Carregando Blog IA...</div>}><AdminBlogGenerator /></Suspense></TabsContent>
         </Tabs>
       </main>
     </div>
