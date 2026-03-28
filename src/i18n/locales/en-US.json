@@ -190,6 +190,21 @@
       "No support when you need it most",
       "Outdated equipment"
     ],
+    "problemCards": {
+      "slowNetwork": "Slow Network?",
+      "slowNetworkDesc": "Internet freezing, drops and latency in corporate network",
+      "serverCrash": "Server Crashing?",
+      "serverCrashDesc": "Server going down, restarting or with critical errors",
+      "slowComputer": "Slow Computer?",
+      "slowComputerDesc": "Machines taking forever to boot, freezing when opening programs",
+      "virus": "Virus on Network?",
+      "virusDesc": "Ransomware, malware or threats compromising your data",
+      "noBackup": "No Backup?",
+      "noBackupDesc": "Unprotected data, risk of total information loss",
+      "noSupport": "No IT Support?",
+      "noSupportDesc": "Company without technical staff to solve urgent issues",
+      "solveNow": "Solve now"
+    },
     "diffTag": "// Why WMTi",
     "diffTitle": "Results you can",
     "diffTitleHighlight": "see in your bottom line.",

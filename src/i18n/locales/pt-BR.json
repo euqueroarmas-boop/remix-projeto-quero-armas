@@ -190,6 +190,21 @@
       "Sem suporte quando mais precisa",
       "Equipamentos ultrapassados"
     ],
+    "problemCards": {
+      "slowNetwork": "Rede Lenta?",
+      "slowNetworkDesc": "Internet travando, quedas e lentidão na rede corporativa",
+      "serverCrash": "Servidor Travando?",
+      "serverCrashDesc": "Servidor caindo, reiniciando ou com erros críticos",
+      "slowComputer": "Computador Lento?",
+      "slowComputerDesc": "Máquinas demorando para ligar, travar ao abrir programas",
+      "virus": "Vírus na Rede?",
+      "virusDesc": "Ransomware, malware ou ameaças comprometendo seus dados",
+      "noBackup": "Sem Backup?",
+      "noBackupDesc": "Dados sem proteção, risco de perda total de informações",
+      "noSupport": "Sem Suporte de TI?",
+      "noSupportDesc": "Empresa sem equipe técnica para resolver problemas urgentes",
+      "solveNow": "Resolver agora"
+    },
     "diffTag": "// Por que a WMTi",
     "diffTitle": "Resultados que você",
     "diffTitleHighlight": "sente no caixa.",

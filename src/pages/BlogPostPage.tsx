@@ -63,7 +63,7 @@ const legacyContent = {
 };
 
 const BlogPostPage = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { slug } = useParams<{ slug: string }>();
   const location = useLocation();
   const { post, city, baseSlug } = useMemo(() => resolveBlogSlug(slug), [slug]);
@@ -101,11 +101,12 @@ const BlogPostPage = () => {
   const baseUrl = "https://wmti.com.br";
   const pageUrl = `${baseUrl}${location.pathname}`;
 
-  const cityTitle = city ? ` em ${city.name}` : "";
+  const isEn = i18n.language?.startsWith("en");
+  const cityTitle = city ? (isEn ? ` in ${city.name}` : ` em ${city.name}`) : "";
 
   // For AI posts
   if (!post && aiPost) {
-    const isEn = t("blogPost.locale") === "en-US";
+    
     const aiTitle = (isEn && aiPost.title_en) ? aiPost.title_en : aiPost.title;
     const aiExcerpt = (isEn && aiPost.excerpt_en) ? aiPost.excerpt_en : aiPost.excerpt;
     const aiContent = (isEn && aiPost.content_md_en) ? aiPost.content_md_en : aiPost.content_md;
@@ -215,11 +216,11 @@ const BlogPostPage = () => {
   }
 
   const seoTitle = city
-    ? `${post?.title}${cityTitle} | Blog WMTi`
-    : structuredContent?.metaTitle || (post ? `${post.title} | Blog WMTi` : "Blog | WMTi");
+    ? `${localizedPost?.title}${cityTitle} | Blog WMTi`
+    : (localizedStructuredContent?.metaTitle || structuredContent?.metaTitle) || (localizedPost ? `${localizedPost.title} | Blog WMTi` : "Blog | WMTi");
   const seoDesc = city
-    ? `${post?.excerpt} Saiba como a WMTi atende empresas em ${city.name} e região de ${city.region}.`
-    : structuredContent?.metaDescription || post?.excerpt || "";
+    ? `${localizedPost?.excerpt} ${isEn ? `Learn how WMTi serves companies in ${city.name} and the ${city.region} region.` : `Saiba como a WMTi atende empresas em ${city.name} e região de ${city.region}.`}`
+    : (localizedStructuredContent?.metaDescription || structuredContent?.metaDescription) || localizedPost?.excerpt || "";
 
   if (aiLoading) return <div className="min-h-screen flex items-center justify-center"><p className="text-muted-foreground">Carregando...</p></div>;
   if (!post) return <Navigate to="/blog" replace />;
@@ -292,7 +293,7 @@ const BlogPostPage = () => {
                 <ChevronRight size={10} className="shrink-0" />
                 <li><Link to="/blog" className="hover:text-primary transition-colors">{t("blogPost.blog")}</Link></li>
                 <ChevronRight size={10} className="shrink-0" />
-                <li className="text-primary truncate max-w-[200px]" aria-current="page">{post.title}</li>
+                <li className="text-primary truncate max-w-[200px]" aria-current="page">{localizedPost.title}</li>
               </ol>
             </nav>
 
