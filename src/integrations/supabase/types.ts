@@ -84,6 +84,9 @@ export type Database = {
           excerpt: string
           faq: Json | null
           id: string
+          image_alt_en: string | null
+          image_alt_pt: string | null
+          image_prompt: string | null
           image_source: string | null
           image_url: string | null
           internal_links: Json | null
@@ -108,6 +111,9 @@ export type Database = {
           excerpt?: string
           faq?: Json | null
           id?: string
+          image_alt_en?: string | null
+          image_alt_pt?: string | null
+          image_prompt?: string | null
           image_source?: string | null
           image_url?: string | null
           internal_links?: Json | null
@@ -132,6 +138,9 @@ export type Database = {
           excerpt?: string
           faq?: Json | null
           id?: string
+          image_alt_en?: string | null
+          image_alt_pt?: string | null
+          image_prompt?: string | null
           image_source?: string | null
           image_url?: string | null
           internal_links?: Json | null
