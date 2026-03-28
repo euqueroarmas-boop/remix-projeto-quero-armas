@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Plus, Trash2, Eye, Send, RefreshCw, Sparkles, Upload, Image, X, Pencil, Check, RotateCcw } from "lucide-react";
+import { Loader2, Plus, Trash2, Eye, Send, RefreshCw, Sparkles, Upload, Image, X, Pencil, Check, RotateCcw, Languages } from "lucide-react";
 import { toast } from "sonner";
 
 const CATEGORIES = [
@@ -39,6 +39,7 @@ interface AiPost {
   id: string;
   slug: string;
   title: string;
+  title_en?: string | null;
   status: string;
   category: string;
   tag: string;
