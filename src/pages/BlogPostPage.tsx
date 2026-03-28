@@ -101,7 +101,9 @@ const BlogPostPage = () => {
   const baseUrl = "https://wmti.com.br";
   const pageUrl = `${baseUrl}${location.pathname}`;
 
-  const cityTitle = city ? ` em ${city.name}` : "";
+  const { i18n } = useTranslation();
+  const isEn = i18n.language?.startsWith("en");
+  const cityTitle = city ? (isEn ? ` in ${city.name}` : ` em ${city.name}`) : "";
 
   // For AI posts
   if (!post && aiPost) {
@@ -292,7 +294,7 @@ const BlogPostPage = () => {
                 <ChevronRight size={10} className="shrink-0" />
                 <li><Link to="/blog" className="hover:text-primary transition-colors">{t("blogPost.blog")}</Link></li>
                 <ChevronRight size={10} className="shrink-0" />
-                <li className="text-primary truncate max-w-[200px]" aria-current="page">{post.title}</li>
+                <li className="text-primary truncate max-w-[200px]" aria-current="page">{localizedPost.title}</li>
               </ol>
             </nav>
 

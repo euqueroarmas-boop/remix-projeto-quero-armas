@@ -62,13 +62,13 @@ export const HomeAuthority = () => {
 };
 
 /* ─── PROBLEMAS ─── */
-const problemCards: { icon: LucideIcon; labelKey: string; slug: string; desc: string }[] = [
-  { icon: Wifi, labelKey: "Rede Lenta?", slug: "rede-lenta", desc: "Internet travando, quedas e lentidão na rede corporativa" },
-  { icon: Server, labelKey: "Servidor Travando?", slug: "servidor-travando", desc: "Servidor caindo, reiniciando ou com erros críticos" },
-  { icon: Monitor, labelKey: "Computador Lento?", slug: "computador-lento", desc: "Máquinas demorando para ligar, travar ao abrir programas" },
-  { icon: ShieldAlert, labelKey: "Vírus na Rede?", slug: "virus-na-rede", desc: "Ransomware, malware ou ameaças comprometendo seus dados" },
-  { icon: HardDrive, labelKey: "Sem Backup?", slug: "sem-backup", desc: "Dados sem proteção, risco de perda total de informações" },
-  { icon: Headphones, labelKey: "Sem Suporte de TI?", slug: "sem-suporte-de-ti", desc: "Empresa sem equipe técnica para resolver problemas urgentes" },
+const problemCards: { icon: LucideIcon; labelKey: string; descKey: string; slug: string }[] = [
+  { icon: Wifi, labelKey: "home.problemCards.slowNetwork", descKey: "home.problemCards.slowNetworkDesc", slug: "rede-lenta" },
+  { icon: Server, labelKey: "home.problemCards.serverCrash", descKey: "home.problemCards.serverCrashDesc", slug: "servidor-travando" },
+  { icon: Monitor, labelKey: "home.problemCards.slowComputer", descKey: "home.problemCards.slowComputerDesc", slug: "computador-lento" },
+  { icon: ShieldAlert, labelKey: "home.problemCards.virus", descKey: "home.problemCards.virusDesc", slug: "virus-na-rede" },
+  { icon: HardDrive, labelKey: "home.problemCards.noBackup", descKey: "home.problemCards.noBackupDesc", slug: "sem-backup" },
+  { icon: Headphones, labelKey: "home.problemCards.noSupport", descKey: "home.problemCards.noSupportDesc", slug: "sem-suporte-de-ti" },
 ];
 
 export const HomeProblems = () => {
@@ -108,13 +108,13 @@ export const HomeProblems = () => {
                     <Icon size={20} className="text-destructive" strokeWidth={1.5} />
                   </div>
                   <span className="font-mono text-xs md:text-sm uppercase tracking-wider text-foreground group-hover:text-primary transition-colors font-bold">
-                    {item.labelKey}
+                    {t(item.labelKey)}
                   </span>
                   <p className="font-body text-xs text-muted-foreground leading-relaxed">
-                    {item.desc}
+                    {t(item.descKey)}
                   </p>
                   <span className="font-mono text-[10px] uppercase tracking-wider text-primary opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 mt-auto">
-                    Resolver agora →
+                    {t("home.problemCards.solveNow")} →
                   </span>
                 </Link>
               </motion.div>

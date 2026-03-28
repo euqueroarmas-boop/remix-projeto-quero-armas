@@ -41,7 +41,9 @@ const BlogPage = () => {
 
   const isEn = i18n.language?.startsWith("en");
 
-  // Fetch published AI posts
+  const [rawAiPosts, setRawAiPosts] = useState<any[]>([]);
+
+  // Fetch published AI posts (once, language-independent)
   useEffect(() => {
     supabase
       .from("blog_posts_ai")
@@ -50,20 +52,21 @@ const BlogPage = () => {
       .order("published_at", { ascending: false })
       .limit(200)
       .then(({ data }) => {
-        if (data) {
-          setAiPosts(data.map((p: any) => ({
-            slug: p.slug,
-            title: (isEn && p.title_en) ? p.title_en : p.title,
-            excerpt: (isEn && p.excerpt_en) ? p.excerpt_en : p.excerpt,
-            category: p.category as BlogCategory,
-            tag: p.tag,
-            readTime: p.read_time,
-            image: p.image_url || "/placeholder.svg",
-            date: p.published_at || p.created_at,
-          })));
-        }
+        if (data) setRawAiPosts(data);
       });
-  }, [isEn]);
+  }, []);
+
+  // Derive localized AI posts at render time
+  const aiPosts = useMemo(() => rawAiPosts.map((p: any) => ({
+    slug: p.slug,
+    title: (isEn && p.title_en) ? p.title_en : p.title,
+    excerpt: (isEn && p.excerpt_en) ? p.excerpt_en : p.excerpt,
+    category: p.category as BlogCategory,
+    tag: p.tag,
+    readTime: p.read_time,
+    image: p.image_url || "/placeholder.svg",
+    date: p.published_at || p.created_at,
+  })), [rawAiPosts, isEn]);
 
   // Merge static + AI posts
   const allPosts = useMemo(() => [...localizedPosts, ...aiPosts], [localizedPosts, aiPosts]);
