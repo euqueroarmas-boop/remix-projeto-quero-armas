@@ -83,7 +83,7 @@ const BlogPostPage = () => {
       setAiLoading(true);
       supabase
         .from("blog_posts_ai")
-        .select("*")
+        .select("*, title_en, excerpt_en, content_md_en, meta_title_en, meta_description_en, cta_en, faq_en")
         .eq("slug", slug)
         .eq("status", "published")
         .maybeSingle()
