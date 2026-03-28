@@ -1,13 +1,1 @@
-# Sitemaps — proxy to edge function
-/sitemap.xml  https://itwsjxijqjximspqtvqk.supabase.co/functions/v1/sitemap?type=index  200
-/sitemap-pages.xml  https://itwsjxijqjximspqtvqk.supabase.co/functions/v1/sitemap?type=pages  200
-/sitemap-blog.xml  https://itwsjxijqjximspqtvqk.supabase.co/functions/v1/sitemap?type=blog  200
-/sitemap-programmatic.xml  https://itwsjxijqjximspqtvqk.supabase.co/functions/v1/sitemap?type=programmatic  200
-/sitemap-services.xml  https://itwsjxijqjximspqtvqk.supabase.co/functions/v1/sitemap?type=services  200
-/sitemap-segments.xml  https://itwsjxijqjximspqtvqk.supabase.co/functions/v1/sitemap?type=segments  200
-/sitemap-problems.xml  https://itwsjxijqjximspqtvqk.supabase.co/functions/v1/sitemap?type=problems  200
-/sitemap-blog-cities.xml  https://itwsjxijqjximspqtvqk.supabase.co/functions/v1/sitemap?type=blog-cities  200
-/sitemap-service-segment-cities.xml  https://itwsjxijqjximspqtvqk.supabase.co/functions/v1/sitemap?type=service-segment-cities  200
-
-# SPA fallback — must be last
 /*    /index.html   200
