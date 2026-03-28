@@ -106,7 +106,7 @@ const BlogPostPage = () => {
 
   // For AI posts
   if (!post && aiPost) {
-    const aiIsEn = isEn;
+    
     const aiTitle = (isEn && aiPost.title_en) ? aiPost.title_en : aiPost.title;
     const aiExcerpt = (isEn && aiPost.excerpt_en) ? aiPost.excerpt_en : aiPost.excerpt;
     const aiContent = (isEn && aiPost.content_md_en) ? aiPost.content_md_en : aiPost.content_md;
