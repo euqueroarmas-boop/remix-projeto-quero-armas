@@ -234,6 +234,7 @@ const ServicePageTemplate = ({
           name: tag,
           description: metaDescription,
           url: canonicalUrl,
+          areaServed: cityName,
         })}
       />
       <Navbar />
