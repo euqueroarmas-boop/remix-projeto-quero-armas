@@ -12,6 +12,7 @@
 import { services, type SeoService } from "./services";
 import { segments, type SeoSegment } from "./segments";
 import { cities, type SeoCity } from "./cities";
+import { problems, type SeoProblem } from "./problems";
 import type { SeoPageData } from "@/data/seoPages";
 import {
   Server, Shield, Cloud, Network, Monitor, Wrench, Headphones,
@@ -26,13 +27,14 @@ const cityBySlug = new Map<string, SeoCity>(cities.map((c) => [c.slug, c]));
 
 // ─── Entity types ───
 export interface SeoEntity {
-  type: "service" | "segment";
+  type: "service" | "segment" | "problem";
   slug: string;
   name: string;
   /** The URL prefix used before -em-{city} */
   urlPrefix: string;
   service?: SeoService;
   segment?: SeoSegment;
+  problem?: SeoProblem;
 }
 
 // ─── Entity registry: urlPrefix → entity ───
@@ -90,6 +92,19 @@ for (const seg of segments) {
   };
   entityByPrefix.set(prefix, entity);
   entityByOldSlug.set(prefix, entity);
+}
+
+// Register problems
+for (const prob of problems) {
+  const entity: SeoEntity = {
+    type: "problem",
+    slug: prob.slug,
+    name: prob.name,
+    urlPrefix: prob.slug,
+    problem: prob,
+  };
+  entityByPrefix.set(prob.slug, entity);
+  entityByOldSlug.set(prob.slug, entity);
 }
 
 // ─── Slug parser ───
@@ -454,6 +469,45 @@ export function generateLocalPage(entity: SeoEntity, city: SeoCity): SeoPageData
     };
   }
 
+  // Problem page
+  if (entity.type === "problem" && entity.problem) {
+    const prob = entity.problem;
+    const problemIcons = genericIcons;
+
+    const relatedLinks = [
+      { label: `Suporte Técnico em ${city.name}`, href: `/suporte-ti-em-${city.slug}` },
+      { label: `Infraestrutura de TI em ${city.name}`, href: `/infraestrutura-ti-em-${city.slug}` },
+      { label: `Segurança de Rede em ${city.name}`, href: `/seguranca-rede-em-${city.slug}` },
+    ];
+
+    return {
+      slug: canonicalSlug,
+      metaTitle: `${fill(prob.h1Template, { city: city.name })} | WMTi Tecnologia`,
+      metaDescription: `${prob.description.slice(0, 140)}. Atendemos empresas em ${city.name}.`,
+      tag: `${prob.name} em ${city.name}`,
+      headline: `${prob.name}: `,
+      headlineHighlight: city.name,
+      description: fill(prob.description, { city: city.name }),
+      whatsappMessage: `Olá! Estou com problema de ${prob.name.toLowerCase()} na minha empresa em ${city.name}.`,
+      category: "problem-page",
+      painPoints: prob.painPoints,
+      solutions: [prob.solutionIntro, ...defaultSolutions.slice(0, 4)],
+      benefits: problemIcons,
+      faq: [
+        { question: `A WMTi resolve ${prob.name.toLowerCase()} em ${city.name}?`, answer: `Sim. A WMTi atende empresas em ${city.name} com diagnóstico gratuito e resolução definitiva de ${prob.name.toLowerCase()}.` },
+        { question: `Quanto custa resolver ${prob.name.toLowerCase()}?`, answer: `O custo depende da complexidade. Oferecemos diagnóstico gratuito e proposta sem compromisso para sua empresa em ${city.name}.` },
+        { question: "O atendimento é urgente?", answer: "Sim. Oferecemos atendimento emergencial com prioridade para problemas que estão impactando a operação da empresa." },
+      ],
+      relatedLinks,
+      localContent: `A WMTi resolve ${prob.name.toLowerCase()} em empresas de ${city.name} (${city.state}), região de ${city.region}. Diagnóstico gratuito e atendimento com SLA garantido.`,
+      shouldIndex: true,
+      priority: city.priority * 0.5,
+      canonicalSlug,
+      cityName: city.name,
+      citySlug: city.slug,
+    };
+  }
+
   // Fallback (should not happen with valid entities)
   return {
     slug: canonicalSlug,
@@ -503,3 +557,4 @@ export function getAllCitySlugs(): string[] {
 }
 
 export { cities, services, segments };
+export { problems };
