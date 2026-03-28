@@ -266,10 +266,20 @@ function CoverImagePicker({
       {/* AI Generation Panel */}
       {showAiPanel && (
         <div className="space-y-3 p-3 rounded-lg border border-primary/30 bg-primary/5">
-          <p className="text-xs font-medium text-foreground">Gerar capa por IA</p>
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-medium text-foreground">🎯 Gerar capa contextualizada por IA</p>
+            {!aiPrompt && context?.title && (
+              <Button size="sm" variant="ghost" className="h-6 text-[10px]" onClick={() => setAiPrompt(buildDefaultPrompt(context))}>
+                Carregar prompt automático
+              </Button>
+            )}
+          </div>
+          <p className="text-[10px] text-muted-foreground">
+            O prompt é gerado automaticamente baseado no título e conteúdo do post. Você pode editá-lo livremente antes de gerar.
+          </p>
           <textarea
-            className="w-full h-20 p-2 text-xs bg-card border border-border rounded-md text-foreground placeholder:text-muted-foreground resize-none"
-            placeholder="Descreva a imagem desejada ou deixe vazio para prompt automático..."
+            className="w-full h-28 p-2 text-xs bg-card border border-border rounded-md text-foreground placeholder:text-muted-foreground resize-none font-mono"
+            placeholder={context?.title ? buildDefaultPrompt(context).slice(0, 300) + "..." : "Descreva a imagem desejada..."}
             value={aiPrompt}
             onChange={(e) => setAiPrompt(e.target.value)}
           />
