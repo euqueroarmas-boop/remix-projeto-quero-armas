@@ -63,7 +63,7 @@ const legacyContent = {
 };
 
 const BlogPostPage = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { slug } = useParams<{ slug: string }>();
   const location = useLocation();
   const { post, city, baseSlug } = useMemo(() => resolveBlogSlug(slug), [slug]);
