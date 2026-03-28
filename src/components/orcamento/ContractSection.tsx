@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { FileText, CheckSquare, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,11 +18,7 @@ interface Props {
 }
 
 const generateContractText = (
-  companyName: string,
-  planName: string,
-  computersQty: number,
-  monthlyValue: number,
-  pathLabel: string
+  companyName: string, planName: string, computersQty: number, monthlyValue: number, pathLabel: string
 ) => {
   const isRental = pathLabel === "Locação";
   return `
@@ -31,8 +28,7 @@ CONTRATANTE: ${companyName || "[Nome da empresa]"}
 CONTRATADA: WM Tecnologia da Informação LTDA
 
 CLÁUSULA 1 — OBJETO
-${
-  isRental
+${isRental
     ? `A CONTRATADA se compromete a fornecer ${computersQty} (${computersQty > 1 ? computersQty + " unidades" : "uma unidade"}) de computadores Dell OptiPlex — Plano ${planName}, incluindo monitor, teclado e mouse, bem como serviços de suporte técnico durante toda a vigência do contrato.`
     : `A CONTRATADA se compromete a prestar serviços de suporte técnico mensal para ${computersQty} computador${computersQty > 1 ? "es" : ""} e infraestrutura de rede da CONTRATANTE.`
 }
@@ -57,15 +53,9 @@ Qualquer das partes poderá rescindir o contrato mediante aviso prévio de 30 (t
 };
 
 const ContractSection = ({
-  visible,
-  selectedPlan,
-  computersQty,
-  monthlyValue,
-  companyName,
-  onSign,
-  signed,
-  pathLabel = "Locação",
+  visible, selectedPlan, computersQty, monthlyValue, companyName, onSign, signed, pathLabel = "Locação",
 }: Props) => {
+  const { t } = useTranslation();
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -74,14 +64,7 @@ const ContractSection = ({
   const plan = plans.find((p) => p.id === selectedPlan) || { name: "Suporte Mensal" };
   const contractText = generateContractText(companyName, plan.name, computersQty, monthlyValue, pathLabel);
 
-  const handleSign = async () => {
-    setLoading(true);
-    try {
-      await onSign();
-    } finally {
-      setLoading(false);
-    }
-  };
+  const handleSign = async () => { setLoading(true); try { await onSign(); } finally { setLoading(false); } };
 
   if (signed) {
     return (
@@ -89,10 +72,8 @@ const ContractSection = ({
         <div className="container mx-auto px-4 text-center">
           <div className="max-w-md mx-auto bg-background border border-primary/20 rounded-2xl p-8">
             <CheckSquare className="w-12 h-12 text-primary mx-auto mb-4" />
-            <h3 className="text-xl font-heading font-bold mb-2">Contrato assinado!</h3>
-            <p className="text-muted-foreground text-sm">
-              A confirmação será enviada ao seu e-mail.
-            </p>
+            <h3 className="text-xl font-heading font-bold mb-2">{t("contractSection.signedTitle")}</h3>
+            <p className="text-muted-foreground text-sm">{t("contractSection.signedDesc")}</p>
           </div>
         </div>
       </section>
@@ -102,17 +83,12 @@ const ContractSection = ({
   return (
     <section id="contract-section" className="py-20 bg-card">
       <div className="container mx-auto px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-10"
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-10">
           <span className="inline-block px-4 py-1.5 mb-4 text-xs font-semibold tracking-widest uppercase bg-primary/10 text-primary rounded-full border border-primary/20">
-            Contrato
+            {t("contractSection.tag")}
           </span>
           <h2 className="text-2xl md:text-4xl font-heading font-bold mb-3">
-            Preparação do <span className="text-primary">contrato</span>
+            {t("contractSection.title")} <span className="text-primary">{t("contractSection.titleHighlight")}</span>
           </h2>
         </motion.div>
 
@@ -120,35 +96,19 @@ const ContractSection = ({
           <div className="bg-background border border-border rounded-xl p-6 mb-6 max-h-80 overflow-y-auto">
             <div className="flex items-center gap-2 mb-4">
               <FileText className="w-5 h-5 text-primary" />
-              <span className="font-semibold text-sm">Prévia do contrato</span>
+              <span className="font-semibold text-sm">{t("contractSection.preview")}</span>
             </div>
-            <pre className="text-sm text-foreground/80 whitespace-pre-wrap font-body leading-relaxed">
-              {contractText}
-            </pre>
+            <pre className="text-sm text-foreground/80 whitespace-pre-wrap font-body leading-relaxed">{contractText}</pre>
           </div>
 
           <label className="flex items-start gap-3 mb-6 cursor-pointer">
-            <Checkbox
-              checked={agreed}
-              onCheckedChange={(v) => setAgreed(v === true)}
-              className="mt-0.5"
-            />
-            <span className="text-sm text-foreground/80">
-              Declaro que li e concordo com os termos do contrato.
-            </span>
+            <Checkbox checked={agreed} onCheckedChange={(v) => setAgreed(v === true)} className="mt-0.5" />
+            <span className="text-sm text-foreground/80">{t("contractSection.agreeTerms")}</span>
           </label>
 
-          <Button
-            onClick={handleSign}
-            disabled={!agreed || loading}
-            className="w-full h-14 text-base bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50"
-          >
-            {loading ? (
-              <Loader2 className="w-5 h-5 animate-spin mr-2" />
-            ) : (
-              <CheckSquare className="w-5 h-5 mr-2" />
-            )}
-            Assinar contrato digitalmente
+          <Button onClick={handleSign} disabled={!agreed || loading} className="w-full h-14 text-base bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50">
+            {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <CheckSquare className="w-5 h-5 mr-2" />}
+            {t("contractSection.sign")}
           </Button>
         </div>
       </div>
