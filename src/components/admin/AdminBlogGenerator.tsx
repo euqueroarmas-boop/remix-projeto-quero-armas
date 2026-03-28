@@ -524,7 +524,7 @@ export default function AdminBlogGenerator() {
     }
   };
 
-  const [translating, setTranslating] = useState<string | null>(null);
+  
 
   const handleTranslate = async (postId: string) => {
     setTranslating(postId);
