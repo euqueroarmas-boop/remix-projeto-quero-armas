@@ -39,11 +39,13 @@ const BlogPage = () => {
   const localizedPosts = useLocalizedBlogPosts(blogPosts);
   const localizedCategories = useLocalizedCategories(blogCategories);
 
+  const isEn = i18n.language?.startsWith("en");
+
   // Fetch published AI posts
   useEffect(() => {
     supabase
       .from("blog_posts_ai")
-      .select("slug, title, excerpt, category, tag, read_time, image_url, published_at, created_at")
+      .select("slug, title, title_en, excerpt, excerpt_en, category, tag, read_time, image_url, published_at, created_at")
       .eq("status", "published")
       .order("published_at", { ascending: false })
       .limit(200)
@@ -51,8 +53,8 @@ const BlogPage = () => {
         if (data) {
           setAiPosts(data.map((p: any) => ({
             slug: p.slug,
-            title: p.title,
-            excerpt: p.excerpt,
+            title: (isEn && p.title_en) ? p.title_en : p.title,
+            excerpt: (isEn && p.excerpt_en) ? p.excerpt_en : p.excerpt,
             category: p.category as BlogCategory,
             tag: p.tag,
             readTime: p.read_time,
@@ -61,7 +63,7 @@ const BlogPage = () => {
           })));
         }
       });
-  }, []);
+  }, [isEn]);
 
   // Merge static + AI posts
   const allPosts = useMemo(() => [...localizedPosts, ...aiPosts], [localizedPosts, aiPosts]);
