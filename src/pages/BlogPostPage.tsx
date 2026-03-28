@@ -101,7 +101,6 @@ const BlogPostPage = () => {
   const baseUrl = "https://wmti.com.br";
   const pageUrl = `${baseUrl}${location.pathname}`;
 
-  const { i18n } = useTranslation();
   const isEn = i18n.language?.startsWith("en");
   const cityTitle = city ? (isEn ? ` in ${city.name}` : ` em ${city.name}`) : "";
 
