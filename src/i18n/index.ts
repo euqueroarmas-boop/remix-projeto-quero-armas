@@ -53,6 +53,11 @@ i18n
       order: ["localStorage", "navigator"],
       lookupLocalStorage: "wmti-lang",
       caches: ["localStorage"],
+      convertDetectedLanguage: (lng: string) => {
+        // Only allow supported languages; default to pt-BR
+        if (lng === "en-US" || lng === "en" || lng.startsWith("en-")) return "en-US";
+        return "pt-BR";
+      },
     },
   });
 
