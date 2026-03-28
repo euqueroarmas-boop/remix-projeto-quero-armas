@@ -35,7 +35,6 @@ const BlogPage = () => {
   const [activeCategory, setActiveCategory] = useState<BlogCategory | "Todos">("Todos");
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
-  const [rawAiPosts, setRawAiPosts] = useState<any[]>([]);
   const localizedPosts = useLocalizedBlogPosts(blogPosts);
   const localizedCategories = useLocalizedCategories(blogCategories);
 
