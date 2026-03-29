@@ -131,15 +131,17 @@ const ContractingWizard = ({
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  type Step = "registration" | "contract" | "payment";
+  type Step = "registration" | "planConfig" | "contract" | "payment";
   const [currentStep, setCurrentStep] = useState<Step>("registration");
-  const stepOrder: Step[] = ["registration", "contract", "payment"];
+  const stepOrder: Step[] = ["registration", "planConfig", "contract", "payment"];
 
   const [activeQuoteId, setActiveQuoteId] = useState<string | null>(quoteId);
   const [registrationData, setRegistrationData] = useState<RegistrationData | null>(null);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [contractId, setContractId] = useState<string | null>(null);
   const [contractSigned, setContractSigned] = useState(false);
+  const [planConfig, setPlanConfig] = useState<PlanConfig | null>(null);
+  const [pricingBreakdown, setPricingBreakdown] = useState<PricingBreakdown | null>(null);
 
   const [selectedPayment, setSelectedPayment] = useState<BillingType | null>(null);
   const [paymentLoading, setPaymentLoading] = useState(false);
