@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -11,7 +13,8 @@ import {
   Play, RefreshCw, CheckCircle, XCircle, Clock, Loader2,
   ChevronLeft, ChevronRight, Eye, Zap, Globe, FileText,
   Shield, ShoppingCart, FormInput, Monitor, BookOpen,
-  Server, AlertTriangle, Rocket, ArrowLeft,
+  Server, AlertTriangle, Rocket, ArrowLeft, Bell, Send,
+  MessageSquare, Mail, Webhook, Settings,
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
