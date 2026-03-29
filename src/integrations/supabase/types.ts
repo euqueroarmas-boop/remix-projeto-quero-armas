@@ -395,6 +395,42 @@ export type Database = {
           },
         ]
       }
+      contract_templates: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          editavel: boolean
+          id: string
+          nome: string
+          template_text: string
+          tipo: string
+          updated_at: string
+          versao: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          editavel?: boolean
+          id: string
+          nome: string
+          template_text: string
+          tipo?: string
+          updated_at?: string
+          versao?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          editavel?: boolean
+          id?: string
+          nome?: string
+          template_text?: string
+          tipo?: string
+          updated_at?: string
+          versao?: string
+        }
+        Relationships: []
+      }
       contracts: {
         Row: {
           accepted_minimum_term: boolean | null
