@@ -326,18 +326,108 @@ function ErrorDetail({ result }: { result: DetailedTestResult }) {
   );
 }
 
+// ─── GitHub Diagnostic Panel ───
+function GitHubDiagnosticPanel() {
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<any>(null);
+
+  const runDiag = async () => {
+    setLoading(true);
+    try {
+      const data = await invokeRunTests("GET", { action: "github_status" });
+      setResult(data);
+    } catch (err) {
+      setResult({ error: String(err) });
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div className="space-y-3">
+      <Button variant="outline" size="sm" onClick={runDiag} disabled={loading} className="text-xs gap-1.5">
+        {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Bug className="h-3 w-3" />}
+        Diagnosticar GitHub Actions
+      </Button>
+      {result && (
+        <div className="space-y-2">
+          {result.error && (
+            <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-xs space-y-1">
+              <p className="font-bold text-destructive">❌ Problema detectado</p>
+              <p className="text-destructive/80">{result.error}</p>
+              {result.diagnostic?.fix && (
+                <p className="text-foreground font-medium mt-2">💡 Solução: {result.diagnostic.fix}</p>
+              )}
+            </div>
+          )}
+          {result.diagnostic && !result.error && (
+            <div className="p-3 rounded-lg bg-green-600/10 border border-green-600/30 text-xs space-y-2">
+              <p className="font-bold text-green-400">✅ GitHub API acessível</p>
+              <div className="text-muted-foreground space-y-0.5">
+                <p>Repo: <span className="text-foreground font-mono">{result.diagnostic.repo}</span></p>
+                <p>Workflow: <span className="text-foreground font-mono">{result.diagnostic.workflow}</span></p>
+                <p>Total de execuções: <span className="text-foreground">{result.diagnostic.total_count}</span></p>
+              </div>
+              {result.diagnostic.recent_runs?.length > 0 && (
+                <div className="space-y-1 mt-2">
+                  <p className="font-semibold text-foreground">Últimas execuções:</p>
+                  {result.diagnostic.recent_runs.map((r: any, i: number) => (
+                    <div key={i} className="flex items-center justify-between bg-muted/30 rounded px-2 py-1">
+                      <div className="flex items-center gap-2">
+                        <span className={r.conclusion === "success" ? "text-green-400" : r.conclusion === "failure" ? "text-red-400" : r.status === "in_progress" ? "text-blue-400" : "text-yellow-400"}>
+                          {r.conclusion === "success" ? "✓" : r.conclusion === "failure" ? "✗" : r.status === "in_progress" ? "⟳" : "⏳"}
+                        </span>
+                        <span className="text-foreground">#{r.run_number}</span>
+                        <span className="text-muted-foreground">{r.status}{r.conclusion ? ` (${r.conclusion})` : ""}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-muted-foreground">{new Date(r.created_at).toLocaleString("pt-BR")}</span>
+                        <a href={r.html_url} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="h-3 w-3 text-primary" />
+                        </a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {result.diagnostic.recent_runs?.length === 0 && (
+                <p className="text-amber-400 mt-1">⚠️ Nenhuma execução recente encontrada. O workflow pode nunca ter sido executado ou o PAT não tem permissão.</p>
+              )}
+            </div>
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-[10px] h-6 gap-1"
+            onClick={() => {
+              navigator.clipboard.writeText(JSON.stringify(result, null, 2));
+              toast.success("Diagnóstico copiado");
+            }}
+          >
+            <Copy className="h-3 w-3" /> Copiar diagnóstico
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Live Progress Panel (Enhanced with real-time details) ───
 function LiveProgressPanel({ run }: { run: TestRun }) {
   const STALE_TIMEOUT_MS = 10 * 60 * 1000; // 10 min for individual tests
   const isStale = run.started_at && (Date.now() - new Date(run.started_at).getTime()) > STALE_TIMEOUT_MS;
+  const isGitHub = run.execution_engine === "github_actions";
+
+  // Detect GitHub stuck at 0% for more than 3 minutes
+  const elapsedMs = run.started_at ? Date.now() - new Date(run.started_at).getTime() : 0;
+  const isGitHubStuck = isGitHub && (run.progress_percent ?? 0) === 0 && elapsedMs > 3 * 60 * 1000;
 
   const completed = (run.completed_tests ?? 0) || (run.passed_tests + run.failed_tests + run.skipped_tests);
   const total = run.total_tests || 1;
   const pct = run.progress_percent ?? (total > 0 ? Math.min(100, Math.round((completed / total) * 100)) : 0);
   const [elapsed, setElapsed] = useState(0);
-  const [showLogs, setShowLogs] = useState(true); // Default open to show what's being scanned
+  const [showLogs, setShowLogs] = useState(true);
+  const [showDiag, setShowDiag] = useState(false);
 
-  // Use direct columns first, fallback to logs JSON
   const logs = run.logs as any;
   const currentSpec = run.current_spec || logs?.current_spec || null;
   const currentTest = run.current_test || null;
@@ -359,12 +449,10 @@ function LiveProgressPanel({ run }: { run: TestRun }) {
     return `${Math.floor(s / 60)}m ${String(s % 60).padStart(2, "0")}s`;
   };
 
-  // Estimate remaining time
   const estimatedRemaining = pct > 5 && elapsed > 0
     ? Math.round((elapsed / pct) * (100 - pct))
     : null;
 
-  // Extract last scanned items from log entries for display
   const recentActivity = logEntries.slice(-5).reverse();
   const lastScannedUrl = logEntries.filter(e => e.detail?.includes("→")).slice(-1)[0]?.detail?.split("→")[1]?.trim();
 
@@ -389,6 +477,7 @@ function LiveProgressPanel({ run }: { run: TestRun }) {
               <ExternalLink className="h-3 w-3" /> Ver no GitHub Actions
             </a>
           )}
+          <GitHubDiagnosticPanel />
           <p className="text-[10px] text-muted-foreground">
             Início: {run.started_at ? new Date(run.started_at).toLocaleString("pt-BR") : "—"} · Tempo decorrido: {formatElapsed(elapsed)}
           </p>
@@ -409,7 +498,7 @@ function LiveProgressPanel({ run }: { run: TestRun }) {
             </span>
           </div>
           <Badge variant="outline" className="text-xs border-primary/30 text-primary">
-            {run.execution_engine === "github_actions" ? "GitHub Actions" : "Edge Function"}
+            {isGitHub ? "GitHub Actions" : "Edge Function"}
           </Badge>
         </div>
 
@@ -437,7 +526,31 @@ function LiveProgressPanel({ run }: { run: TestRun }) {
           </div>
         )}
 
-        {/* Current spec & URL — what's being scanned NOW */}
+        {/* GitHub stuck warning */}
+        {isGitHubStuck && (
+          <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 space-y-2">
+            <div className="flex items-center gap-2 text-xs">
+              <AlertTriangle className="h-3.5 w-3.5 text-amber-400 flex-shrink-0" />
+              <span className="text-amber-400 font-medium">
+                GitHub Actions não enviou progresso há {formatElapsed(elapsed)}
+              </span>
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              Possíveis causas: PAT sem permissão, workflow não encontrado no branch main, runner em fila, ou timeout da rede.
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-[10px] h-6 gap-1"
+              onClick={() => setShowDiag(!showDiag)}
+            >
+              <Bug className="h-3 w-3" /> {showDiag ? "Ocultar diagnóstico" : "Diagnosticar"}
+            </Button>
+            {showDiag && <GitHubDiagnosticPanel />}
+          </div>
+        )}
+
+        {/* Current spec & URL */}
         <div className="space-y-1.5 bg-muted/20 rounded-lg p-2.5 border border-border/50">
           {currentSpec && (
             <div className="flex items-center gap-1.5 text-xs">
@@ -464,8 +577,8 @@ function LiveProgressPanel({ run }: { run: TestRun }) {
             <div className="flex items-center gap-1.5 text-xs">
               <Loader2 className="h-3 w-3 text-primary animate-spin flex-shrink-0" />
               <span className="text-muted-foreground">
-                {run.execution_engine === "github_actions" 
-                  ? "Aguardando GitHub Actions iniciar o runner..." 
+                {isGitHub
+                  ? "Aguardando GitHub Actions iniciar o runner..."
                   : "Iniciando verificação..."}
               </span>
             </div>
@@ -492,7 +605,7 @@ function LiveProgressPanel({ run }: { run: TestRun }) {
           <p className="text-xs text-destructive bg-destructive/10 rounded-md p-2">{run.error_message}</p>
         )}
 
-        {/* Live log entries — shows exactly what's being scanned */}
+        {/* Live log entries */}
         {logEntries.length > 0 && (
           <Collapsible open={showLogs} onOpenChange={setShowLogs}>
             <CollapsibleTrigger className="w-full">

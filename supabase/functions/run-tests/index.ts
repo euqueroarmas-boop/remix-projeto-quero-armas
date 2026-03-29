@@ -406,6 +406,88 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify(data), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    // ─── GitHub Actions diagnostic ───
+    if (action === "github_status") {
+      try {
+        // Check if PAT is configured
+        if (!GITHUB_PAT) {
+          return new Response(JSON.stringify({ error: "GITHUB_PAT not configured", diagnostic: { pat_exists: false } }), {
+            status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        // List recent workflow runs
+        const ghRes = await fetch(
+          `https://api.github.com/repos/${GITHUB_REPO}/actions/workflows/cypress-tests.yml/runs?per_page=5`,
+          {
+            headers: {
+              Authorization: `Bearer ${GITHUB_PAT}`,
+              Accept: "application/vnd.github.v3+json",
+            },
+          }
+        );
+
+        if (ghRes.status === 401 || ghRes.status === 403) {
+          const body = await ghRes.text();
+          return new Response(JSON.stringify({
+            error: `GitHub API ${ghRes.status}: Token sem permissão`,
+            diagnostic: {
+              pat_exists: true,
+              pat_valid: false,
+              github_status: ghRes.status,
+              github_response: body.substring(0, 500),
+              fix: "O GITHUB_PAT precisa ter permissão 'actions:write' e 'repo' no repositório " + GITHUB_REPO,
+            },
+          }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+
+        if (ghRes.status === 404) {
+          const body = await ghRes.text();
+          return new Response(JSON.stringify({
+            error: "Workflow ou repositório não encontrado",
+            diagnostic: {
+              pat_exists: true,
+              pat_valid: true,
+              repo: GITHUB_REPO,
+              workflow: "cypress-tests.yml",
+              github_status: 404,
+              github_response: body.substring(0, 500),
+              fix: "Verifique se o arquivo .github/workflows/cypress-tests.yml existe no branch 'main' do repositório " + GITHUB_REPO,
+            },
+          }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+
+        const ghData = await ghRes.json();
+        const runs = (ghData.workflow_runs || []).map((r: any) => ({
+          id: r.id,
+          status: r.status,
+          conclusion: r.conclusion,
+          created_at: r.created_at,
+          updated_at: r.updated_at,
+          html_url: r.html_url,
+          event: r.event,
+          run_number: r.run_number,
+          head_branch: r.head_branch,
+        }));
+
+        return new Response(JSON.stringify({
+          diagnostic: {
+            pat_exists: true,
+            pat_valid: true,
+            repo: GITHUB_REPO,
+            workflow: "cypress-tests.yml",
+            total_count: ghData.total_count || 0,
+            recent_runs: runs,
+          },
+        }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      } catch (e) {
+        return new Response(JSON.stringify({
+          error: `Erro ao consultar GitHub: ${String(e)}`,
+          diagnostic: { pat_exists: !!GITHUB_PAT, network_error: true },
+        }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+    }
+
     // ─── Auto-finalize stale runs (>15 min stuck in running) ───
     const STALE_TIMEOUT_MS = 15 * 60 * 1000;
     const staleThreshold = new Date(Date.now() - STALE_TIMEOUT_MS).toISOString();
