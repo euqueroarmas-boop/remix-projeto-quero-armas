@@ -381,6 +381,13 @@ function LiveProgressPanel({ run }: { run: TestRun }) {
               <span className="text-muted-foreground">Spec atual:</span>
               <span className="font-medium text-foreground truncate">{currentSpec}</span>
             </div>
+            {currentTest && (
+              <div className="flex items-center gap-1.5 text-xs">
+                <Play className="h-3 w-3 text-primary flex-shrink-0" />
+                <span className="text-muted-foreground">Teste:</span>
+                <span className="font-medium text-foreground truncate">{currentTest}</span>
+              </div>
+            )}
             {currentUrl && (
               <div className="flex items-center gap-1.5 text-xs">
                 <Globe className="h-3 w-3 text-primary flex-shrink-0" />
