@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { formatDuration } from "@/lib/formatDuration";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,7 +24,7 @@ import {
   Eye, Zap, Globe, FileText, Shield, ShoppingCart, FormInput,
   Monitor, BookOpen, Server, AlertTriangle, Rocket, ArrowLeft,
   Bell, Send, MessageSquare, Mail, Webhook, ChevronDown, Image,
-  Video, Bug, Terminal, ExternalLink,
+  Video, Bug, Terminal, ExternalLink, Copy, Home,
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -292,6 +293,32 @@ function ErrorDetail({ result }: { result: DetailedTestResult }) {
               </pre>
             </div>
           )}
+
+          {/* Copy full error button */}
+          <div className="pl-5 pt-1">
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-[10px] h-6 px-2 gap-1"
+              onClick={(e) => {
+                e.stopPropagation();
+                const parts = [
+                  `Teste: ${result.name}`,
+                  result.spec ? `Spec: ${result.spec}` : "",
+                  `Status: ${result.status}`,
+                  `Duração: ${formatDuration(result.duration_ms)}`,
+                  result.error ? `\nErro:\n${result.error}` : "",
+                  result.stack_trace ? `\nStack Trace:\n${result.stack_trace}` : "",
+                  result.cypress_command ? `\nComando Cypress:\n${result.cypress_command}` : "",
+                  result.diff ? `\nExpected: ${JSON.stringify(result.diff.expected)}\nActual: ${JSON.stringify(result.diff.actual)}` : "",
+                ].filter(Boolean).join("\n");
+                navigator.clipboard.writeText(parts);
+                toast.success("Erro copiado com sucesso");
+              }}
+            >
+              <Copy className="h-3 w-3" /> Copiar erro
+            </Button>
+          </div>
         </CollapsibleContent>
       </div>
     </Collapsible>
@@ -550,8 +577,21 @@ function RunDetail({ run, onBack }: { run: TestRun; onBack: () => void }) {
 
           {run.error_message && (
             <div className="p-3 rounded-lg border border-destructive/30 bg-destructive/5 text-xs">
-              <p className="font-semibold text-destructive mb-1">Erro principal</p>
-              <p className="text-muted-foreground">{run.error_message}</p>
+              <div className="flex items-center justify-between mb-1">
+                <p className="font-semibold text-destructive">Erro principal</p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-2 text-[10px] gap-1"
+                  onClick={() => {
+                    navigator.clipboard.writeText(run.error_message || "");
+                    toast.success("Erro copiado");
+                  }}
+                >
+                  <Copy className="h-3 w-3" /> Copiar
+                </Button>
+              </div>
+              <p className="text-muted-foreground whitespace-pre-wrap">{run.error_message}</p>
             </div>
           )}
 
@@ -579,10 +619,31 @@ function RunDetail({ run, onBack }: { run: TestRun; onBack: () => void }) {
       {failed.length > 0 && (
         <Card className="border-destructive/30">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-destructive flex items-center gap-2">
-              <XCircle className="h-4 w-4" />
-              Testes que Falharam ({failed.length})
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm text-destructive flex items-center gap-2">
+                <XCircle className="h-4 w-4" />
+                Testes que Falharam ({failed.length})
+              </CardTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-[11px] h-7 gap-1"
+                onClick={() => {
+                  const allErrors = failed.map(t => [
+                    `❌ ${t.name}`,
+                    t.spec ? `   Spec: ${t.spec}` : "",
+                    t.error ? `   Erro: ${t.error}` : "",
+                    t.stack_trace ? `   Stack: ${t.stack_trace}` : "",
+                    t.cypress_command ? `   Comando: ${t.cypress_command}` : "",
+                    "",
+                  ].filter(Boolean).join("\n")).join("\n");
+                  navigator.clipboard.writeText(allErrors);
+                  toast.success("Todos os erros copiados");
+                }}
+              >
+                <Copy className="h-3 w-3" /> Copiar todos
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
@@ -896,7 +957,7 @@ function AlertConfigPanel() {
 }
 
 // ─── Main Component ───
-export default function AdminTestCenter() {
+export default function AdminTestCenter({ onBack }: { onBack?: () => void }) {
   const isMobile = useIsMobile();
   const [runs, setRuns] = useState<TestRun[]>([]);
   const [loading, setLoading] = useState(true);
@@ -997,13 +1058,20 @@ export default function AdminTestCenter() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-        <div>
-          <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
-            🧪 Centro de Testes
-          </h3>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Dispare, acompanhe e audite testes automatizados
+        <div className="flex items-center gap-2">
+          {onBack && (
+            <Button variant="ghost" size="sm" onClick={onBack} className="text-xs gap-1 px-2">
+              <ArrowLeft className="h-3.5 w-3.5" /> Voltar
+            </Button>
+          )}
+          <div>
+            <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
+              🧪 Centro de Testes
+            </h3>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Dispare, acompanhe e audite testes automatizados
           </p>
+          </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <Button variant={activeTab === "suites" ? "default" : "outline"} size="sm" onClick={() => setActiveTab("suites")} className="text-xs">

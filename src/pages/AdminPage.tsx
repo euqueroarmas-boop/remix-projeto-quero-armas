@@ -697,7 +697,7 @@ function AdminContent({ activeSection, onNavigate }: { activeSection: string; on
     case "risk": return <AdminRiskMonitor />;
     case "diagnostics": return <AdminDiagnostics />;
     case "qa": return <Suspense fallback={fallback}><QAPanel /></Suspense>;
-    case "test-center": return <Suspense fallback={fallback}><AdminTestCenter /></Suspense>;
+    case "test-center": return <Suspense fallback={fallback}><AdminTestCenter onBack={() => onNavigate("dashboard")} /></Suspense>;
     case "blog-ai": return <Suspense fallback={fallback}><AdminBlogGenerator /></Suspense>;
     default: return <AdminCommandCenter onNavigate={onNavigate} />;
   }
