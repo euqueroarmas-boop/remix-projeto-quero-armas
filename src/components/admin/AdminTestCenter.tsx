@@ -923,7 +923,7 @@ function AlertConfigPanel() {
 }
 
 // ─── Main Component ───
-export default function AdminTestCenter() {
+export default function AdminTestCenter({ onBack }: { onBack?: () => void }) {
   const isMobile = useIsMobile();
   const [runs, setRuns] = useState<TestRun[]>([]);
   const [loading, setLoading] = useState(true);
