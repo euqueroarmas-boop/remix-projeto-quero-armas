@@ -106,86 +106,87 @@ const PlanConfigStep = ({ valorBase, onConfirm, initialConfig }: Props) => {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-card border border-border rounded-xl p-5 space-y-3"
+          className="space-y-4"
         >
-          <h4 className="text-sm font-semibold text-foreground mb-2">Resumo financeiro</h4>
-
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Valor base do plano</span>
-            <span className="text-foreground">{formatCurrency(pricing.valorBase)}</span>
+          {/* BLOCO 1 — VALOR BASE */}
+          <div className="bg-card border border-border rounded-xl p-5 space-y-2">
+            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              Valor base do plano
+            </h4>
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Mensalidade base</span>
+              <span className="text-foreground font-medium">{formatCurrency(pricing.valorBase)}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Total base ({selectedTerm} meses)</span>
+              <span className="text-foreground">{formatCurrency(pricing.valorBase * selectedTerm)}</span>
+            </div>
           </div>
 
+          {/* BLOCO 2 — DESCONTO */}
           {pricing.descontoPercentual > 0 && (
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">
-                Desconto ({Math.round(pricing.descontoPercentual * 100)}% — {selectedTerm} meses)
-              </span>
-              <span className="text-primary font-medium">
-                -{formatCurrency(pricing.valorBase - pricing.valorComDesconto)}
-              </span>
-            </div>
-          )}
-
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Valor com desconto</span>
-            <span className="text-foreground">{formatCurrency(pricing.valorComDesconto)}</span>
-          </div>
-
-          {pricing.support24h && (
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Suporte 24h (+35%)</span>
-              <span className="text-foreground">+{formatCurrency(pricing.valorAdicional24h)}</span>
-            </div>
-          )}
-
-          <div className="border-t border-border pt-3 flex justify-between items-center">
-            <span className="text-sm font-semibold text-foreground">Mensalidade final</span>
-            <span className="text-xl font-heading font-bold text-primary">
-              {formatCurrency(pricing.valorFinalMensal)}
-            </span>
-          </div>
-
-          {/* Contract totals */}
-          {(() => {
-            const totalSemDesconto = pricing.valorBase * selectedTerm;
-            const economiaMensal = pricing.valorBase - pricing.valorComDesconto;
-            const economiaTotal = economiaMensal * selectedTerm;
-            const totalComDesconto = pricing.valorFinalMensal * selectedTerm;
-
-            return (
-              <div className="border-t border-border pt-3 space-y-2">
-                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                  Totais do contrato ({selectedTerm} meses)
-                </h4>
-
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Total sem desconto</span>
-                  <span className="text-foreground">{formatCurrency(totalSemDesconto)}</span>
-                </div>
-
-                <div className="flex justify-between text-sm">
-                  <span className={economiaTotal > 0 ? "text-primary font-semibold" : "text-muted-foreground"}>
-                    Economia total no período
-                  </span>
-                  <span className={economiaTotal > 0 ? "text-primary font-bold" : "text-foreground"}>
-                    {economiaTotal > 0 ? "-" : ""}{formatCurrency(economiaTotal)}
-                  </span>
-                </div>
-
-                <div className="flex justify-between items-center text-sm">
-                  <span className="font-semibold text-foreground">Total do contrato</span>
-                  <span className="text-lg font-heading font-bold text-primary">
-                    {formatCurrency(totalComDesconto)}
-                  </span>
-                </div>
+            <div className="bg-primary/5 border border-primary/20 rounded-xl p-5 space-y-2">
+              <h4 className="text-xs font-semibold text-primary uppercase tracking-wide">
+                Desconto por fidelidade ({Math.round(pricing.descontoPercentual * 100)}%)
+              </h4>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Economia mensal</span>
+                <span className="text-primary font-medium">
+                  -{formatCurrency(pricing.valorBase - pricing.valorComDesconto)}
+                </span>
               </div>
-            );
-          })()}
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Economia total ({selectedTerm} meses)</span>
+                <span className="text-primary font-bold">
+                  -{formatCurrency((pricing.valorBase - pricing.valorComDesconto) * selectedTerm)}
+                </span>
+              </div>
+              <div className="flex justify-between text-sm border-t border-primary/10 pt-2">
+                <span className="text-muted-foreground">Mensalidade com desconto</span>
+                <span className="text-foreground font-medium">{formatCurrency(pricing.valorComDesconto)}</span>
+              </div>
+            </div>
+          )}
 
-          <p className="text-[11px] text-muted-foreground text-center">
-            Contrato de {selectedTerm} meses com renovação automática
-            {pricing.support24h ? " • Suporte 24h incluso" : ""}
-          </p>
+          {/* BLOCO 3 — ADICIONAIS */}
+          {pricing.support24h && (
+            <div className="bg-card border border-border rounded-xl p-5 space-y-2">
+              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                Adicionais contratados
+              </h4>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Suporte 24h (+35% sobre mensalidade)</span>
+                <span className="text-foreground font-medium">+{formatCurrency(pricing.valorAdicional24h)}/mês</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Total adicional ({selectedTerm} meses)</span>
+                <span className="text-foreground">+{formatCurrency(pricing.valorAdicional24h * selectedTerm)}</span>
+              </div>
+            </div>
+          )}
+
+          {/* BLOCO 4 — TOTAL FINAL */}
+          <div className="bg-card border-2 border-primary rounded-xl p-5 space-y-3">
+            <h4 className="text-xs font-semibold text-primary uppercase tracking-wide">
+              Totais do contrato
+            </h4>
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-semibold text-foreground">Mensalidade final</span>
+              <span className="text-2xl font-heading font-bold text-primary">
+                {formatCurrency(pricing.valorFinalMensal)}
+              </span>
+            </div>
+            <div className="flex justify-between text-sm border-t border-border pt-2">
+              <span className="text-muted-foreground">Total do contrato ({selectedTerm} meses)</span>
+              <span className="text-lg font-heading font-bold text-foreground">
+                {formatCurrency(pricing.valorFinalMensal * selectedTerm)}
+              </span>
+            </div>
+            <p className="text-[11px] text-muted-foreground text-center pt-1">
+              Contrato de {selectedTerm} meses com renovação automática
+              {pricing.support24h ? " • Suporte 24h incluso" : ""}
+            </p>
+          </div>
         </motion.div>
       )}
 
