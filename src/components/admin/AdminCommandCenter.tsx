@@ -235,11 +235,27 @@ const SystemStatusGrid = memo(function SystemStatusGrid({ errors24h, webhookErro
   );
 });
 
-const TestsBlock = memo(function TestsBlock({ testRun, activeRun, lastCompletedRun, onNavigate }: { testRun: any; activeRun: any; lastCompletedRun: any; onNavigate: (s: string) => void }) {
+const TestsBlock = memo(function TestsBlock({ testRun, activeRun, lastCompletedRun, onNavigate, onRunTests }: { testRun: any; activeRun: any; lastCompletedRun: any; onNavigate: (s: string) => void; onRunTests?: () => void }) {
   // For counters, always use the latest COMPLETED run so we never show zeros from a running run
   const displayRun = lastCompletedRun || testRun;
   const isRunning = !!activeRun;
   const testPct = displayRun ? Math.round(((displayRun.passed_tests || 0) / Math.max(displayRun.total_tests || 1, 1)) * 100) : 0;
+
+  // Extract failed tests from results array
+  const failedTests = useMemo(() => {
+    if (!displayRun?.results || !Array.isArray(displayRun.results)) return [];
+    return (displayRun.results as any[]).filter((r: any) => r.status === "failed");
+  }, [displayRun?.results]);
+
+  const [runningFull, setRunningFull] = useState(false);
+  const handleRunTests = async () => {
+    if (onRunTests) {
+      setRunningFull(true);
+      onRunTests();
+      // Reset after 5s - the realtime subscription will update the state
+      setTimeout(() => setRunningFull(false), 5000);
+    }
+  };
 
   return (
     <Card className={`border transition-colors duration-500 ${displayRun?.status === "failed" ? "border-red-500/30" : displayRun?.status === "success" ? "border-emerald-500/30" : isRunning ? "border-blue-500/30" : "border-border"}`}>
@@ -249,9 +265,21 @@ const TestsBlock = memo(function TestsBlock({ testRun, activeRun, lastCompletedR
             <TestTube2 className="h-4 w-4 text-primary" />
             <h3 className="text-sm font-bold text-foreground">Testes</h3>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => onNavigate("test-center")} className="text-xs gap-1 h-7">
-            Detalhes <ArrowRight className="h-3 w-3" />
-          </Button>
+          <div className="flex items-center gap-1.5">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRunTests}
+              disabled={isRunning || runningFull}
+              className="text-xs gap-1 h-7"
+            >
+              {isRunning || runningFull ? <Loader2 className="h-3 w-3 animate-spin" /> : <Play className="h-3 w-3" />}
+              Rodar
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => onNavigate("test-center")} className="text-xs gap-1 h-7">
+              Detalhes <ArrowRight className="h-3 w-3" />
+            </Button>
+          </div>
         </div>
 
         {/* Show running indicator if there's an active run */}
@@ -268,9 +296,9 @@ const TestsBlock = memo(function TestsBlock({ testRun, activeRun, lastCompletedR
               {displayRun.status === "success" ? (
                 <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs">Aprovado</Badge>
               ) : displayRun.status === "failed" ? (
-                <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-xs">Falhou</Badge>
+                <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-xs cursor-pointer hover:bg-red-500/30" onClick={() => onNavigate("test-center")}>Falhou</Badge>
               ) : displayRun.status === "partial" ? (
-                <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-xs">Parcial</Badge>
+                <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-xs cursor-pointer hover:bg-amber-500/30" onClick={() => onNavigate("test-center")}>Parcial</Badge>
               ) : (
                 <Badge variant="outline" className="text-xs">{displayRun.status}</Badge>
               )}
@@ -289,7 +317,36 @@ const TestsBlock = memo(function TestsBlock({ testRun, activeRun, lastCompletedR
               <div><p className="text-lg font-bold text-red-400">{displayRun.failed_tests || 0}</p><p className="text-[10px] text-muted-foreground">Falhos</p></div>
               <div><p className="text-lg font-bold text-amber-400">{displayRun.skipped_tests || 0}</p><p className="text-[10px] text-muted-foreground">Ignorados</p></div>
             </div>
-            {displayRun.error_message && (
+
+            {/* Inline failed tests with copy */}
+            {failedTests.length > 0 && (
+              <div className="space-y-1.5 border-t border-red-500/20 pt-2">
+                <p className="text-[10px] font-semibold text-red-400 uppercase tracking-wider">Falhas detectadas:</p>
+                {failedTests.map((ft: any, i: number) => (
+                  <button
+                    key={i}
+                    onClick={() => {
+                      const text = `❌ ${ft.name}\nErro: ${ft.error || "sem detalhe"}\nSpec: ${ft.spec || "—"}`;
+                      navigator.clipboard.writeText(text);
+                      const el = document.getElementById(`dash-fail-${i}`);
+                      if (el) { el.textContent = "✓ Copiado"; setTimeout(() => { el.textContent = "Copiar"; }, 1500); }
+                    }}
+                    className="w-full flex items-center justify-between gap-2 p-2 rounded-md bg-red-500/10 hover:bg-red-500/15 transition-colors text-left group"
+                  >
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <XCircle className="h-3 w-3 text-red-400 shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-[11px] text-foreground font-medium truncate">{ft.name}</p>
+                        {ft.error && <p className="text-[10px] text-red-400/80 truncate">{ft.error}</p>}
+                      </div>
+                    </div>
+                    <span id={`dash-fail-${i}`} className="text-[10px] text-muted-foreground shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">Copiar</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {displayRun.error_message && failedTests.length === 0 && (
               <p className="text-[10px] text-red-400 bg-red-500/10 rounded px-2 py-1 truncate">{displayRun.error_message}</p>
             )}
             {displayRun.duration_ms && <p className="text-[10px] text-muted-foreground">Duração: {formatDuration(displayRun.duration_ms)}</p>}
@@ -297,7 +354,7 @@ const TestsBlock = memo(function TestsBlock({ testRun, activeRun, lastCompletedR
         ) : (
           <div className="text-center py-4">
             <p className="text-sm text-muted-foreground">Nenhum teste executado</p>
-            <Button size="sm" className="mt-2 text-xs" onClick={() => onNavigate("test-center")}><Play className="h-3 w-3 mr-1" /> Executar Primeiro Teste</Button>
+            <Button size="sm" className="mt-2 text-xs" onClick={handleRunTests}><Play className="h-3 w-3 mr-1" /> Executar Primeiro Teste</Button>
           </div>
         )}
       </CardContent>
@@ -444,6 +501,22 @@ export default function AdminCommandCenter({ onNavigate }: CommandCenterProps) {
     setRefreshing(false);
   }, [alerts, funnel, tests, activity]);
 
+  const handleRunTests = useCallback(async () => {
+    try {
+      const token = sessionStorage.getItem("admin_token");
+      if (!token) return;
+      await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/run-tests`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-admin-token": token },
+        body: JSON.stringify({ test_type: "full" }),
+      });
+      // Realtime will pick up the new run
+      setTimeout(() => tests.refetch(), 1000);
+    } catch (err) {
+      console.error("Run tests from dashboard:", err);
+    }
+  }, [tests]);
+
   // Update timestamp when any module reloads via realtime
   useEffect(() => {
     if (allLoaded) setLastUpdate(new Date());
@@ -480,7 +553,7 @@ export default function AdminCommandCenter({ onNavigate }: CommandCenterProps) {
       <SystemStatusGrid errors24h={alerts.errors24h} webhookErrors={alerts.webhookErrors} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <TestsBlock testRun={tests.testRun} activeRun={tests.activeRun} lastCompletedRun={tests.lastCompletedRun} onNavigate={onNavigate} />
+        <TestsBlock testRun={tests.testRun} activeRun={tests.activeRun} lastCompletedRun={tests.lastCompletedRun} onNavigate={onNavigate} onRunTests={handleRunTests} />
         <FunnelBlock data={{ leads: funnel.leads, quotes: funnel.quotes, contracts: funnel.contracts, paymentsOk: funnel.paymentsOk, paymentsFail: funnel.paymentsFail }} onNavigate={onNavigate} />
       </div>
 
