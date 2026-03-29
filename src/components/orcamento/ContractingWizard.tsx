@@ -127,6 +127,7 @@ const ContractingWizard = ({
   leadNumero,
   leadComplemento,
   leadBairro,
+  customRegistrationForm,
 }: Props) => {
   const { toast } = useToast();
   const navigate = useNavigate();
