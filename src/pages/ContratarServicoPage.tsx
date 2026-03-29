@@ -18,6 +18,7 @@ import QuickRegistrationForm, { type RegistrationData } from "@/components/orcam
 import { generateContractHtml } from "@/components/orcamento/ContractPreview";
 import ContractingWizard from "@/components/orcamento/ContractingWizard";
 import { plans } from "@/components/orcamento/PlanSelector";
+import ServerAdminRegistrationForm, { type ServerAdminRegistrationData } from "@/components/orcamento/ServerAdminRegistrationForm";
 
 import type { CustomerData } from "@/components/orcamento/CustomerDataForm";
 
