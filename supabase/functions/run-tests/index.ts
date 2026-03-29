@@ -307,7 +307,7 @@ async function runBlogTests(supabase: ReturnType<typeof getSupabase>, runId: str
       url,
       stack_trace: articleLinks < 1 ? `Links encontrados no HTML: ${articleLinks}\nExemplos de hrefs no HTML: ${(html.match(/href="[^"]*"/g) || []).slice(0, 10).join(", ")}` : undefined,
     } as any);
-    logEntries.push({ ts: new Date().toISOString(), event: linkStatus === "passed" ? "test_passed" : "test_failed", detail: `Blog: links — ${linkStatus === "passed" ? `${articleLinks} links encontrados` : `0 links (${(count || 0)} posts no DB)`}` });
+    logEntries.push({ ts: new Date().toISOString(), event: linkStatus === "passed" ? "test_passed" : "test_failed", detail: `Blog: links — ${linkStatus === "passed" ? `${articleLinks} links encontrados` : `0 links no HTML`}` });
   } catch (e) {
     results.push({ name: "Blog: página carrega", status: "failed", duration_ms: Date.now() - start, error: `Falha ao acessar ${url}: ${String(e)}`, url });
     logEntries.push({ ts: new Date().toISOString(), event: "test_failed", detail: `Blog — ${String(e)}` });
