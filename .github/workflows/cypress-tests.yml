@@ -33,6 +33,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
+    # Expose env vars at job level so setupNodeEvents (process.env) can read them
+    env:
+      SUPABASE_URL: ${{ github.event.inputs.supabase_url }}
+      SUPABASE_KEY: ${{ github.event.inputs.supabase_key }}
+      RUN_ID: ${{ github.event.inputs.run_id }}
+      INGEST_TOKEN: ${{ github.event.inputs.ingest_token }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -89,101 +96,24 @@ jobs:
           browser: chrome
           headed: false
           spec: ${{ steps.specs.outputs.spec }}
-          config: baseUrl=${{ github.event.inputs.base_url }},video=true,videoCompression=32,screenshotOnRunFailure=true,reporter=mochawesome,reporterOptions.reportDir=cypress/results,reporterOptions.overwrite=false,reporterOptions.html=false,reporterOptions.json=true
-        env:
-          CYPRESS_BASE_URL: ${{ github.event.inputs.base_url }}
-          SUPABASE_URL: ${{ github.event.inputs.supabase_url }}
-          SUPABASE_KEY: ${{ github.event.inputs.supabase_key }}
-          RUN_ID: ${{ github.event.inputs.run_id }}
-          INGEST_TOKEN: ${{ github.event.inputs.ingest_token }}
+          config: baseUrl=${{ github.event.inputs.base_url }}
 
       - name: Merge mochawesome reports
         if: always()
         run: |
           npx mochawesome-merge "cypress/results/*.json" > cypress/results/merged-report.json 2>/dev/null || echo '{"stats":{},"results":[]}' > cypress/results/merged-report.json
 
-      - name: Parse results and finalize
+      - name: Upload artifacts and finalize
         if: always()
         run: |
           SUPABASE_URL="${{ github.event.inputs.supabase_url }}"
           SUPABASE_KEY="${{ github.event.inputs.supabase_key }}"
           RUN_ID="${{ github.event.inputs.run_id }}"
           INGEST_TOKEN="${{ github.event.inputs.ingest_token }}"
-          CYPRESS_OUTCOME="${{ steps.cypress.outcome }}"
-
-          if [ "$CYPRESS_OUTCOME" = "success" ]; then
-            DB_STATUS="success"
-          else
-            DB_STATUS="failed"
-          fi
-
-          if [ -f "cypress/results/merged-report.json" ]; then
-            RESULTS_JSON=$(node -e "
-              const report = require('./cypress/results/merged-report.json');
-              const tests = [];
-              function extractTests(suites) {
-                if (!suites) return;
-                for (const suite of suites) {
-                  if (suite.tests) {
-                    for (const test of suite.tests) {
-                      const entry = {
-                        name: (suite.title ? suite.title + ' > ' : '') + test.title,
-                        fullTitle: test.fullTitle || test.title,
-                        status: test.pass ? 'passed' : test.fail ? 'failed' : 'skipped',
-                        duration_ms: test.duration || 0,
-                        spec: suite.file || '',
-                      };
-                      if (test.fail && test.err) {
-                        entry.error = test.err.message || '';
-                        entry.stack_trace = test.err.estack || test.err.stack || '';
-                        entry.diff = test.err.showDiff ? { expected: test.err.expected, actual: test.err.actual } : null;
-                        entry.cypress_command = test.err.sourceMappedStack || '';
-                      }
-                      tests.push(entry);
-                    }
-                  }
-                  if (suite.suites) extractTests(suite.suites);
-                }
-              }
-              if (report.results) {
-                for (const result of report.results) {
-                  extractTests(result.suites);
-                }
-              }
-              console.log(JSON.stringify(tests));
-            " 2>/dev/null || echo '[]')
-
-            TOTAL=$(echo "$RESULTS_JSON" | node -e "const d=require('fs').readFileSync(0,'utf8');const t=JSON.parse(d);console.log(t.length)")
-            PASSED=$(echo "$RESULTS_JSON" | node -e "const d=require('fs').readFileSync(0,'utf8');const t=JSON.parse(d);console.log(t.filter(x=>x.status==='passed').length)")
-            FAILED=$(echo "$RESULTS_JSON" | node -e "const d=require('fs').readFileSync(0,'utf8');const t=JSON.parse(d);console.log(t.filter(x=>x.status==='failed').length)")
-            SKIPPED=$(echo "$RESULTS_JSON" | node -e "const d=require('fs').readFileSync(0,'utf8');const t=JSON.parse(d);console.log(t.filter(x=>x.status==='skipped').length)")
-            DURATION=$(echo "$RESULTS_JSON" | node -e "const d=require('fs').readFileSync(0,'utf8');const t=JSON.parse(d);console.log(t.reduce((s,x)=>s+(x.duration_ms||0),0))")
-
-            ERROR_MSG=$(echo "$RESULTS_JSON" | node -e "
-              const d=require('fs').readFileSync(0,'utf8');
-              const t=JSON.parse(d).filter(x=>x.status==='failed');
-              if(t.length===0){console.log('');return;}
-              const msg=t.map(x=>x.name+': '+(x.error||'unknown error')).join(' | ').substring(0,1000);
-              console.log(msg);
-            ")
-          else
-            RESULTS_JSON="[]"
-            TOTAL=0
-            PASSED=0
-            FAILED=0
-            SKIPPED=0
-            DURATION=0
-            if [ "$DB_STATUS" = "failed" ]; then
-              ERROR_MSG="Cypress tests failed — no detailed report available"
-            else
-              ERROR_MSG=""
-            fi
-          fi
 
           # Upload screenshots to Supabase Storage
           SCREENSHOT_URLS="[]"
           if [ -d "cypress/screenshots" ]; then
-            URLS=""
             find cypress/screenshots -name "*.png" | while read -r file; do
               RELATIVE_PATH="${file#cypress/screenshots/}"
               STORAGE_PATH="runs/$RUN_ID/screenshots/$RELATIVE_PATH"
@@ -221,74 +151,20 @@ jobs:
             [ -z "$VIDEO_URLS" ] && VIDEO_URLS="[]"
           fi
 
-          # Finalize via ingest API if token available
-          if [ -n "$INGEST_TOKEN" ]; then
-            FINALIZE_BODY=$(node -e "
-              const results = $RESULTS_JSON;
-              console.log(JSON.stringify({
-                run_id: '$RUN_ID',
-                token: '$INGEST_TOKEN',
-                status: '$DB_STATUS',
-                duration_ms: $DURATION,
-                error_summary: '$ERROR_MSG' || null,
-                total_tests: $TOTAL,
-                passed_tests: $PASSED,
-                failed_tests: $FAILED,
-                skipped_tests: $SKIPPED,
-                results: results,
-                screenshot_urls: $SCREENSHOT_URLS,
-                video_urls: $VIDEO_URLS,
-              }));
-            " 2>/dev/null)
-
-            curl -s -X POST \
-              "$SUPABASE_URL/functions/v1/ingest-test-events?action=finalize" \
-              -H "Content-Type: application/json" \
-              -d "$FINALIZE_BODY" > /dev/null 2>&1
-          else
-            # Fallback: direct PATCH
-            FINAL_LOGS=$(node -e "
-              const results = $RESULTS_JSON;
-              const entries = results.map(r => ({
-                ts: new Date().toISOString(),
-                event: r.status === 'passed' ? 'test_passed' : r.status === 'failed' ? 'test_failed' : 'test_skipped',
-                detail: r.name + ' — ' + r.status + (r.error ? ' — ' + r.error.substring(0, 200) : '') + (r.spec ? ' [' + r.spec + ']' : ''),
-              }));
-              entries.push({ ts: new Date().toISOString(), event: 'execution_completed', detail: 'Cypress finalizado: $PASSED passaram, $FAILED falharam' });
-              console.log(JSON.stringify({ entries, current_spec: null, current_url: null, completed: true }));
-            " 2>/dev/null || echo '{"entries":[],"current_spec":null,"current_url":null,"completed":true}')
-
-            ERROR_JSON="null"
-            [ -n "$ERROR_MSG" ] && ERROR_JSON=$(echo "$ERROR_MSG" | node -e "const d=require('fs').readFileSync(0,'utf8').trim();console.log(JSON.stringify(d))")
-
-            curl -s -X PATCH \
-              "$SUPABASE_URL/rest/v1/test_runs?id=eq.$RUN_ID" \
-              -H "apikey: $SUPABASE_KEY" \
-              -H "Authorization: Bearer $SUPABASE_KEY" \
-              -H "Content-Type: application/json" \
-              -H "Prefer: return=minimal" \
-              -d "{
-                \"status\": \"$DB_STATUS\",
-                \"finished_at\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",
-                \"duration_ms\": $DURATION,
-                \"total_tests\": $TOTAL,
-                \"passed_tests\": $PASSED,
-                \"failed_tests\": $FAILED,
-                \"skipped_tests\": $SKIPPED,
-                \"progress_percent\": 100,
-                \"current_spec\": null,
-                \"current_test\": null,
-                \"current_url\": null,
-                \"results\": $RESULTS_JSON,
-                \"github_run_id\": \"${{ github.run_id }}\",
-                \"github_run_url\": \"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\",
-                \"browser\": \"chrome\",
-                \"screenshot_urls\": $SCREENSHOT_URLS,
-                \"video_urls\": $VIDEO_URLS,
-                \"error_message\": $ERROR_JSON,
-                \"logs\": $FINAL_LOGS
-              }"
-          fi
+          # Update run with artifact URLs (after:run already finalized status/counters)
+          curl -s -X PATCH \
+            "$SUPABASE_URL/rest/v1/test_runs?id=eq.$RUN_ID" \
+            -H "apikey: $SUPABASE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_KEY" \
+            -H "Content-Type: application/json" \
+            -H "Prefer: return=minimal" \
+            -d "{
+              \"screenshot_urls\": $SCREENSHOT_URLS,
+              \"video_urls\": $VIDEO_URLS,
+              \"github_run_id\": \"${{ github.run_id }}\",
+              \"github_run_url\": \"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\",
+              \"browser\": \"chrome\"
+            }"
 
       - name: Upload screenshots (GitHub artifact backup)
         if: failure()
