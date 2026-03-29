@@ -392,6 +392,7 @@ export default function AdminTestCenter() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [runningTests, setRunningTests] = useState<Set<string>>(new Set());
   const [selectedRun, setSelectedRun] = useState<TestRun | null>(null);
+  const [showAlertConfig, setShowAlertConfig] = useState(false);
 
   const fetchRuns = useCallback(async () => {
     setLoading(true);
