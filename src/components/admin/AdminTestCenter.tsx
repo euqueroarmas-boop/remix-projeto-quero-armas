@@ -292,12 +292,21 @@ function ErrorDetail({ result }: { result: DetailedTestResult }) {
   );
 }
 
-// ─── Live Progress Panel ───
+// ─── Live Progress Panel (Enhanced with real-time details) ───
 function LiveProgressPanel({ run }: { run: TestRun }) {
   const completed = run.passed_tests + run.failed_tests + run.skipped_tests;
   const total = run.total_tests || 1;
-  const pct = Math.round((completed / total) * 100);
+  const pct = total > 0 ? Math.min(100, Math.round((completed / total) * 100)) : 0;
   const [elapsed, setElapsed] = useState(0);
+  const [showLogs, setShowLogs] = useState(false);
+
+  // Extract structured log data
+  const logs = run.logs as any;
+  const currentSpec = logs?.current_spec || null;
+  const currentUrl = logs?.current_url || null;
+  const logEntries: Array<{ ts: string; event: string; detail?: string }> = logs?.entries || [];
+  const specsCompleted = logs?.specs_completed ?? null;
+  const totalSpecs = logs?.total_specs ?? null;
 
   useEffect(() => {
     if (!run.started_at) return;
@@ -307,9 +316,20 @@ function LiveProgressPanel({ run }: { run: TestRun }) {
     return () => clearInterval(interval);
   }, [run.started_at]);
 
+  const formatElapsed = (s: number) => {
+    if (s < 60) return `${s}s`;
+    return `${Math.floor(s / 60)}m ${s % 60}s`;
+  };
+
+  // Estimate remaining time
+  const estimatedRemaining = pct > 5 && elapsed > 0
+    ? Math.round((elapsed / pct) * (100 - pct))
+    : null;
+
   return (
     <Card className="border-primary/40 bg-primary/5">
       <CardContent className="p-4 space-y-3">
+        {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Loader2 className="h-4 w-4 text-primary animate-spin" />
@@ -322,18 +342,49 @@ function LiveProgressPanel({ run }: { run: TestRun }) {
           </Badge>
         </div>
 
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">Progresso</span>
-            <span className="font-bold text-foreground">{pct}%</span>
-          </div>
-          <Progress value={pct} className="h-3" />
-          <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-            <span>{completed} de {run.total_tests || "?"} specs</span>
-            <span>{elapsed}s decorridos</span>
+        {/* Big percentage */}
+        <div className="flex items-center gap-3">
+          <span className="text-3xl font-black text-primary tabular-nums">{pct}%</span>
+          <div className="flex-1 space-y-1">
+            <Progress value={pct} className="h-3" />
+            <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+              <span>{completed} de {run.total_tests || "?"} testes concluídos</span>
+              <span>{formatElapsed(elapsed)} decorridos</span>
+            </div>
+            {estimatedRemaining !== null && estimatedRemaining > 0 && (
+              <p className="text-[10px] text-muted-foreground/70">
+                ≈ {formatElapsed(estimatedRemaining)} restantes
+              </p>
+            )}
           </div>
         </div>
 
+        {/* Spec progress (for Cypress) */}
+        {specsCompleted !== null && totalSpecs !== null && (
+          <div className="text-xs text-muted-foreground bg-muted/30 rounded-md px-3 py-1.5">
+            📂 Spec {specsCompleted} de {totalSpecs} concluídos
+          </div>
+        )}
+
+        {/* Current spec & URL */}
+        {currentSpec && (
+          <div className="space-y-1.5 bg-muted/20 rounded-lg p-2.5 border border-border/50">
+            <div className="flex items-center gap-1.5 text-xs">
+              <FileText className="h-3 w-3 text-primary flex-shrink-0" />
+              <span className="text-muted-foreground">Spec atual:</span>
+              <span className="font-medium text-foreground truncate">{currentSpec}</span>
+            </div>
+            {currentUrl && (
+              <div className="flex items-center gap-1.5 text-xs">
+                <Globe className="h-3 w-3 text-primary flex-shrink-0" />
+                <span className="text-muted-foreground">URL:</span>
+                <span className="font-mono text-foreground truncate text-[11px]">{currentUrl}</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Counters */}
         <div className="grid grid-cols-3 gap-2 text-center text-xs">
           <div className="bg-green-600/10 rounded-md py-1.5 px-2">
             <div className="text-green-400 font-bold text-lg">{run.passed_tests}</div>
@@ -351,6 +402,46 @@ function LiveProgressPanel({ run }: { run: TestRun }) {
 
         {run.error_message && (
           <p className="text-xs text-destructive bg-destructive/10 rounded-md p-2">{run.error_message}</p>
+        )}
+
+        {/* Live log entries */}
+        {logEntries.length > 0 && (
+          <Collapsible open={showLogs} onOpenChange={setShowLogs}>
+            <CollapsibleTrigger className="w-full">
+              <div className="flex items-center justify-between text-xs text-muted-foreground hover:text-foreground cursor-pointer py-1">
+                <span className="flex items-center gap-1">
+                  <Terminal className="h-3 w-3" /> Logs em tempo real ({logEntries.length})
+                </span>
+                <ChevronDown className={`h-3 w-3 transition-transform ${showLogs ? "rotate-180" : ""}`} />
+              </div>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <ScrollArea className="max-h-48 mt-1">
+                <div className="space-y-0.5 font-mono text-[10px]">
+                  {logEntries.slice(-30).reverse().map((entry, i) => {
+                    const eventColor = entry.event?.includes("passed") || entry.event?.includes("completed")
+                      ? "text-green-400"
+                      : entry.event?.includes("failed")
+                        ? "text-red-400"
+                        : entry.event?.includes("started")
+                          ? "text-blue-400"
+                          : "text-muted-foreground";
+                    return (
+                      <div key={i} className="flex gap-2 py-0.5">
+                        <span className="text-muted-foreground/50 flex-shrink-0 w-16">
+                          {new Date(entry.ts).toLocaleTimeString("pt-BR")}
+                        </span>
+                        <span className={`${eventColor} flex-shrink-0 w-3`}>
+                          {entry.event?.includes("passed") ? "✓" : entry.event?.includes("failed") ? "✗" : "→"}
+                        </span>
+                        <span className="text-foreground/80 break-all">{entry.detail || entry.event}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </ScrollArea>
+            </CollapsibleContent>
+          </Collapsible>
         )}
       </CardContent>
     </Card>

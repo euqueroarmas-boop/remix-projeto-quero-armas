@@ -57,6 +57,24 @@ jobs:
           esac
           echo "spec=$SPEC" >> $GITHUB_OUTPUT
 
+      - name: Update status to running in Supabase
+        run: |
+          curl -s -X PATCH \
+            "${{ github.event.inputs.supabase_url }}/rest/v1/test_runs?id=eq.${{ github.event.inputs.run_id }}" \
+            -H "apikey: ${{ github.event.inputs.supabase_key }}" \
+            -H "Authorization: Bearer ${{ github.event.inputs.supabase_key }}" \
+            -H "Content-Type: application/json" \
+            -H "Prefer: return=minimal" \
+            -d '{
+              "github_run_id": "${{ github.run_id }}",
+              "github_run_url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+              "logs": {
+                "entries": [{"ts": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'", "event": "github_started", "detail": "GitHub Actions workflow iniciado"}],
+                "current_spec": "Instalando dependências...",
+                "current_url": null
+              }
+            }'
+
       - name: Run Cypress
         id: cypress
         uses: cypress-io/github-action@v6
@@ -68,6 +86,9 @@ jobs:
           config: baseUrl=${{ github.event.inputs.base_url }},video=true,videoCompression=32,screenshotOnRunFailure=true,reporter=mochawesome,reporterOptions.reportDir=cypress/results,reporterOptions.overwrite=false,reporterOptions.html=false,reporterOptions.json=true
         env:
           CYPRESS_BASE_URL: ${{ github.event.inputs.base_url }}
+          SUPABASE_URL: ${{ github.event.inputs.supabase_url }}
+          SUPABASE_KEY: ${{ github.event.inputs.supabase_key }}
+          RUN_ID: ${{ github.event.inputs.run_id }}
 
       - name: Merge mochawesome reports
         if: always()
@@ -88,7 +109,6 @@ jobs:
             DB_STATUS="failed"
           fi
 
-          # Parse merged report for detailed results
           if [ -f "cypress/results/merged-report.json" ]; then
             RESULTS_JSON=$(node -e "
               const report = require('./cypress/results/merged-report.json');
@@ -131,7 +151,6 @@ jobs:
             SKIPPED=$(echo "$RESULTS_JSON" | node -e "const d=require('fs').readFileSync(0,'utf8');const t=JSON.parse(d);console.log(t.filter(x=>x.status==='skipped').length)")
             DURATION=$(echo "$RESULTS_JSON" | node -e "const d=require('fs').readFileSync(0,'utf8');const t=JSON.parse(d);console.log(t.reduce((s,x)=>s+(x.duration_ms||0),0))")
 
-            # Build error message from failed tests
             ERROR_MSG=$(echo "$RESULTS_JSON" | node -e "
               const d=require('fs').readFileSync(0,'utf8');
               const t=JSON.parse(d).filter(x=>x.status==='failed');
@@ -153,10 +172,9 @@ jobs:
             fi
           fi
 
-          # Upload screenshots to Supabase Storage
+          # Upload screenshots
           SCREENSHOT_URLS="[]"
           if [ -d "cypress/screenshots" ]; then
-            URLS=""
             find cypress/screenshots -name "*.png" | while read -r file; do
               RELATIVE_PATH="${file#cypress/screenshots/}"
               STORAGE_PATH="runs/$RUN_ID/screenshots/$RELATIVE_PATH"
@@ -174,7 +192,7 @@ jobs:
             [ -z "$SCREENSHOT_URLS" ] && SCREENSHOT_URLS="[]"
           fi
 
-          # Upload videos to Supabase Storage
+          # Upload videos
           VIDEO_URLS="[]"
           if [ -d "cypress/videos" ]; then
             find cypress/videos -name "*.mp4" | while read -r file; do
@@ -194,7 +212,18 @@ jobs:
             [ -z "$VIDEO_URLS" ] && VIDEO_URLS="[]"
           fi
 
-          # Report everything to Supabase
+          # Build final log entries
+          FINAL_LOGS=$(node -e "
+            const results = $RESULTS_JSON;
+            const entries = results.map(r => ({
+              ts: new Date().toISOString(),
+              event: r.status === 'passed' ? 'test_passed' : r.status === 'failed' ? 'test_failed' : 'test_skipped',
+              detail: r.name + ' — ' + r.status + (r.error ? ' — ' + r.error.substring(0, 200) : '') + (r.spec ? ' [' + r.spec + ']' : ''),
+            }));
+            entries.push({ ts: new Date().toISOString(), event: 'execution_completed', detail: 'Cypress finalizado: $PASSED passaram, $FAILED falharam' });
+            console.log(JSON.stringify({ entries, current_spec: null, current_url: null, completed: true }));
+          " 2>/dev/null || echo '{"entries":[],"current_spec":null,"current_url":null,"completed":true}')
+
           curl -s -X PATCH \
             "$SUPABASE_URL/rest/v1/test_runs?id=eq.$RUN_ID" \
             -H "apikey: $SUPABASE_KEY" \
@@ -215,7 +244,8 @@ jobs:
               \"browser\": \"chrome\",
               \"screenshot_urls\": $SCREENSHOT_URLS,
               \"video_urls\": $VIDEO_URLS,
-              \"error_message\": $ERROR_MSG
+              \"error_message\": $ERROR_MSG,
+              \"logs\": $FINAL_LOGS
             }"
 
       - name: Upload screenshots (GitHub artifact backup)
