@@ -111,15 +111,38 @@ const BlogPostPage = () => {
     
     const aiTitle = (isEn && aiPost.title_en) ? aiPost.title_en : aiPost.title;
     const aiExcerpt = (isEn && aiPost.excerpt_en) ? aiPost.excerpt_en : aiPost.excerpt;
-    const aiContent = (isEn && aiPost.content_md_en) ? aiPost.content_md_en : aiPost.content_md;
+    const aiContentRaw = (isEn && aiPost.content_md_en) ? aiPost.content_md_en : aiPost.content_md;
     const aiMetaTitle = (isEn && aiPost.meta_title_en) ? aiPost.meta_title_en : aiPost.meta_title;
     const aiMetaDesc = (isEn && aiPost.meta_description_en) ? aiPost.meta_description_en : aiPost.meta_description;
     const aiCta = (isEn && aiPost.cta_en) ? aiPost.cta_en : aiPost.cta;
     const aiFaq = ((isEn && aiPost.faq_en && (aiPost.faq_en as any[]).length > 0) ? aiPost.faq_en : aiPost.faq || []) as { q: string; a: string }[];
-    const aiLinks = ((aiPost.internal_links || []) as { label: string; href: string }[]).map((link) => ({
+    const aiExistingLinks = ((aiPost.internal_links || []) as { label: string; href: string }[]).map((link) => ({
       ...link,
       label: translateInternalLinkLabel(link.label, i18n.language),
     }));
+
+    // Generate smart internal links
+    const generatedLinks = generateBlogInternalLinks(
+      aiPost.slug,
+      aiPost.title,
+      aiPost.excerpt,
+      aiPost.category || "Tecnologia Empresarial",
+      aiPost.tag || "",
+      aiPost.keywords || []
+    );
+
+    // Inject contextual links into markdown content (only for PT, avoid breaking translations)
+    const aiContent = !isEn ? injectLinksIntoMarkdown(aiContentRaw, generatedLinks) : aiContentRaw;
+
+    // Merge existing links with generated related services block
+    const relatedBlock = getRelatedServicesBlock(
+      aiPost.slug,
+      aiPost.title,
+      aiPost.excerpt,
+      aiPost.category || "Tecnologia Empresarial",
+      aiPost.tag || ""
+    );
+    const aiLinks = aiExistingLinks.length > 0 ? aiExistingLinks : relatedBlock;
     const aiTag = t(`blog.tags.${aiPost.tag}`, { defaultValue: aiPost.tag });
     const aiCategory = translateBlogCategoryLabel(aiPost.category, i18n.language);
     const dateLocale = isEn ? "en-US" : "pt-BR";
