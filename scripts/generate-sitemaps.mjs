@@ -68,8 +68,9 @@ function urlEntry(loc) {
   return `  <url>\n    <loc>${BASE_URL}${loc}</loc>\n  </url>`;
 }
 
+
 function wrapUrlset(urls) {
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join("\n")}\n</urlset>`;
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<?xml-stylesheet type="text/xsl" href="/sitemap-style.xsl"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join("\n")}\n</urlset>`;
 }
 
 /** Split an array of URL entries into chunks of MAX_URLS_PER_SITEMAP */
