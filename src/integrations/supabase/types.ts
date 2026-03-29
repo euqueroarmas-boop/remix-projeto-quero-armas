@@ -1069,6 +1069,59 @@ export type Database = {
         }
         Relationships: []
       }
+      test_run_events: {
+        Row: {
+          created_at: string
+          duration_ms: number | null
+          error_message: string | null
+          event_type: string
+          id: string
+          payload: Json | null
+          run_id: string
+          spec_name: string | null
+          stack_trace: string | null
+          status: string | null
+          test_name: string | null
+          url: string | null
+        }
+        Insert: {
+          created_at?: string
+          duration_ms?: number | null
+          error_message?: string | null
+          event_type: string
+          id?: string
+          payload?: Json | null
+          run_id: string
+          spec_name?: string | null
+          stack_trace?: string | null
+          status?: string | null
+          test_name?: string | null
+          url?: string | null
+        }
+        Update: {
+          created_at?: string
+          duration_ms?: number | null
+          error_message?: string | null
+          event_type?: string
+          id?: string
+          payload?: Json | null
+          run_id?: string
+          spec_name?: string | null
+          stack_trace?: string | null
+          status?: string | null
+          test_name?: string | null
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "test_run_events_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "test_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       test_runs: {
         Row: {
           base_url: string | null
@@ -1076,19 +1129,28 @@ export type Database = {
           build_ref: string | null
           client_id: string | null
           client_name: string | null
+          completed_specs: number | null
+          completed_tests: number | null
           created_at: string
+          current_spec: string | null
+          current_test: string | null
+          current_url: string | null
           duration_ms: number | null
           environment: string | null
           error_message: string | null
+          error_summary: string | null
           execution_engine: string | null
           failed_tests: number | null
           finished_at: string | null
           github_run_id: string | null
           github_run_url: string | null
           id: string
+          ingest_token: string | null
+          last_event_at: string | null
           logs: Json | null
           passed_tests: number | null
           plan_type: string | null
+          progress_percent: number | null
           report_url: string | null
           results: Json | null
           screenshot_urls: string[] | null
@@ -1097,6 +1159,7 @@ export type Database = {
           status: string
           suite: string
           test_type: string
+          total_specs: number | null
           total_tests: number | null
           triggered_by: string | null
           updated_at: string
@@ -1109,19 +1172,28 @@ export type Database = {
           build_ref?: string | null
           client_id?: string | null
           client_name?: string | null
+          completed_specs?: number | null
+          completed_tests?: number | null
           created_at?: string
+          current_spec?: string | null
+          current_test?: string | null
+          current_url?: string | null
           duration_ms?: number | null
           environment?: string | null
           error_message?: string | null
+          error_summary?: string | null
           execution_engine?: string | null
           failed_tests?: number | null
           finished_at?: string | null
           github_run_id?: string | null
           github_run_url?: string | null
           id?: string
+          ingest_token?: string | null
+          last_event_at?: string | null
           logs?: Json | null
           passed_tests?: number | null
           plan_type?: string | null
+          progress_percent?: number | null
           report_url?: string | null
           results?: Json | null
           screenshot_urls?: string[] | null
@@ -1130,6 +1202,7 @@ export type Database = {
           status?: string
           suite: string
           test_type?: string
+          total_specs?: number | null
           total_tests?: number | null
           triggered_by?: string | null
           updated_at?: string
@@ -1142,19 +1215,28 @@ export type Database = {
           build_ref?: string | null
           client_id?: string | null
           client_name?: string | null
+          completed_specs?: number | null
+          completed_tests?: number | null
           created_at?: string
+          current_spec?: string | null
+          current_test?: string | null
+          current_url?: string | null
           duration_ms?: number | null
           environment?: string | null
           error_message?: string | null
+          error_summary?: string | null
           execution_engine?: string | null
           failed_tests?: number | null
           finished_at?: string | null
           github_run_id?: string | null
           github_run_url?: string | null
           id?: string
+          ingest_token?: string | null
+          last_event_at?: string | null
           logs?: Json | null
           passed_tests?: number | null
           plan_type?: string | null
+          progress_percent?: number | null
           report_url?: string | null
           results?: Json | null
           screenshot_urls?: string[] | null
@@ -1163,6 +1245,7 @@ export type Database = {
           status?: string
           suite?: string
           test_type?: string
+          total_specs?: number | null
           total_tests?: number | null
           triggered_by?: string | null
           updated_at?: string
