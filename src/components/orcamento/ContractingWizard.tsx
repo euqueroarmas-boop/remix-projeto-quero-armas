@@ -586,9 +586,33 @@ const ContractingWizard = ({
               <QuickRegistrationForm onComplete={handleRegistrationComplete} loading={registrationLoading} initialData={initialRegistrationData} />
             </WizardStepWrapper>
 
-            {/* Step 2: Contract */}
+            {/* Step 2: Plan Configuration */}
             <WizardStepWrapper
               stepNumber={2}
+              title="Configuração do Plano"
+              subtitle={pricingBreakdown ? `${planConfig?.termMonths} meses${planConfig?.support24h ? " • 24h" : ""} ✓` : "Escolha o prazo e nível de atendimento"}
+              status={getStepStatus("planConfig")}
+            >
+              {pricingBreakdown && currentStep !== "planConfig" ? (
+                <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-3">
+                  <Settings2 className="w-10 h-10 text-primary mx-auto" />
+                  <h4 className="text-lg font-heading font-bold">Plano configurado!</h4>
+                  <p className="text-sm text-muted-foreground">
+                    {planConfig?.termMonths} meses{planConfig?.support24h ? " • Suporte 24h" : ""} — R$ {pricingBreakdown.valorFinalMensal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}/mês
+                  </p>
+                </div>
+              ) : (
+                <PlanConfigStep
+                  valorBase={monthlyValue}
+                  onConfirm={handlePlanConfigConfirm}
+                  initialConfig={planConfig}
+                />
+              )}
+            </WizardStepWrapper>
+
+            {/* Step 3: Contract */}
+            <WizardStepWrapper
+              stepNumber={3}
               title="Contrato e Assinatura"
               subtitle={contractSigned ? "Contrato assinado ✓" : "Leia e assine o contrato em página dedicada"}
               status={getStepStatus("contract")}
