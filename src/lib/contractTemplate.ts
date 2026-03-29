@@ -18,6 +18,9 @@ interface ContractVariables {
   testemunha2_nome: string;
   testemunha2_cpf: string;
   objeto_servico_especifico: string;
+  valor_mensal: string;
+  valor_mensal_extenso: string;
+  dia_vencimento: string;
 }
 
 /**
