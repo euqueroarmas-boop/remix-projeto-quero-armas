@@ -4,5 +4,6 @@
 /sitemap-programmatic.xml /sitemap-programmatic.xml 200
 /sitemap-segments.xml   /sitemap-segments.xml   200
 /sitemap-problems.xml   /sitemap-problems.xml   200
+/sitemap-style.xsl      /sitemap-style.xsl      200
 /robots.txt             /robots.txt             200
 /*    /index.html   200
