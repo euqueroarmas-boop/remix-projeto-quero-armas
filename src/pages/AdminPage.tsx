@@ -300,9 +300,14 @@ function LogsTab({ onlyErrors = false }: { onlyErrors?: boolean }) {
                 <p className="text-sm text-foreground line-clamp-2">{log.mensagem}</p>
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">{new Date(log.created_at).toLocaleString("pt-BR")}</span>
-                  <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => setExpandedId(expandedId === log.id ? null : log.id)}>
-                    <Eye className="h-3 w-3" />
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => setExpandedId(expandedId === log.id ? null : log.id)}>
+                      <Eye className="h-3 w-3" />
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setViewerLog(log)}>
+                      Inspeção
+                    </Button>
+                  </div>
                 </div>
                 {expandedId === log.id && (
                   <pre className="text-xs text-muted-foreground bg-muted/50 p-3 rounded overflow-auto max-h-40">{JSON.stringify(log.payload, null, 2)}</pre>
@@ -332,9 +337,14 @@ function LogsTab({ onlyErrors = false }: { onlyErrors?: boolean }) {
                     <TableCell><StatusBadge status={log.status} /></TableCell>
                     <TableCell className="text-sm text-foreground max-w-[300px] truncate">{log.mensagem}</TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="sm" onClick={() => setExpandedId(expandedId === log.id ? null : log.id)}>
-                        <Eye className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="sm" onClick={() => setExpandedId(expandedId === log.id ? null : log.id)}>
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" className="text-xs" onClick={() => setViewerLog(log)}>
+                          Inspeção
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                   {expandedId === log.id && (
