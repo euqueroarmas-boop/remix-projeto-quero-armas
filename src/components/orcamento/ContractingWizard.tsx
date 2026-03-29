@@ -759,7 +759,7 @@ const ContractingWizard = ({
         qualification={qualification}
         registration={registrationData}
         computersQty={computersQty}
-        monthlyValue={monthlyValue}
+        monthlyValue={pricingBreakdown?.valorFinalMensal ?? monthlyValue}
       />
 
       {/* Outsourcing offer — only after payment AND only if has internal tech */}
