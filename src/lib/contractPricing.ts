@@ -22,8 +22,8 @@ export interface PricingBreakdown {
 
 const TERM_DISCOUNTS: Record<ContractTerm, number> = {
   12: 0,
-  24: 0.03,
-  36: 0.05,
+  24: 0.07,
+  36: 0.12,
 };
 
 const SUPPORT_24H_SURCHARGE = 0.35;
