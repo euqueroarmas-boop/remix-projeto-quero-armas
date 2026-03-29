@@ -1165,6 +1165,32 @@ export default function AdminTestCenter({ onBack }: { onBack?: () => void }) {
     return () => { if (pollingRef.current) clearInterval(pollingRef.current); };
   }, [runningTests.size, runs, fetchRuns]);
 
+  // Watchdog: auto-fail Cypress runs stuck with 0% progress for 5+ minutes
+  useEffect(() => {
+    const WATCHDOG_MS = 5 * 60 * 1000; // 5 minutes
+    const stuckRuns = runs.filter(r =>
+      r.status === "running" &&
+      r.execution_engine !== "edge_function" &&
+      (r.progress_percent === null || r.progress_percent === 0) &&
+      r.started_at &&
+      Date.now() - new Date(r.started_at).getTime() > WATCHDOG_MS
+    );
+    stuckRuns.forEach(r => {
+      const elapsed = Math.round((Date.now() - new Date(r.started_at!).getTime()) / 60000);
+      supabase.from("test_runs").update({
+        status: "failed" as any,
+        finished_at: new Date().toISOString(),
+        error_message: `Timeout: GitHub Actions não respondeu após ${elapsed} minutos`,
+        error_summary: `Timeout de dispatch (${elapsed}min sem progresso)`,
+        current_spec: null,
+      } as any).eq("id", r.id).then(() => {
+        setRunningTests(prev => { const n = new Set(prev); n.delete(r.test_type); return n; });
+        fetchRuns();
+        toast.error(`Teste ${r.test_type} expirou: GitHub Actions não iniciou`);
+      });
+    });
+  }, [runs]);
+
   const handleRunTest = async (testType: string) => {
     setRunningTests(prev => new Set(prev).add(testType));
     try {
@@ -1403,6 +1429,24 @@ export default function AdminTestCenter({ onBack }: { onBack?: () => void }) {
                               </button>
                             )}
                           </div>
+                          {/* Show current phase for running Cypress tests */}
+                          {lastSuiteRun.status === "running" && lastSuiteRun.current_spec && (
+                            <p className="text-[10px] text-blue-400/90 bg-blue-500/10 rounded px-2 py-1 truncate">
+                              {lastSuiteRun.current_spec}
+                            </p>
+                          )}
+                          {/* Show github link if available */}
+                          {lastSuiteRun.status === "running" && lastSuiteRun.github_run_url && (
+                            <a
+                              href={lastSuiteRun.github_run_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[10px] text-primary hover:underline flex items-center gap-1"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <ExternalLink className="h-3 w-3" /> Ver no GitHub
+                            </a>
+                          )}
                           {hasFailed && lastSuiteRun.error_message && (
                             <p className="text-[10px] text-red-400/90 bg-red-500/10 rounded px-2 py-1 line-clamp-2">
                               {lastSuiteRun.error_message}

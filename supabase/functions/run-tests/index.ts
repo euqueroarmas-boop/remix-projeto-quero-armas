@@ -320,8 +320,16 @@ async function runBlogTests(supabase: ReturnType<typeof getSupabase>, runId: str
 }
 
 // ─── GitHub Actions dispatch ───
-async function triggerGitHubWorkflow(testType: string, runId: string, ingestToken?: string): Promise<{ success: boolean; error?: string }> {
+async function triggerGitHubWorkflow(
+  testType: string,
+  runId: string,
+  ingestToken?: string,
+  supabase?: ReturnType<typeof createClient>
+): Promise<{ success: boolean; error?: string; github_run_id?: string }> {
   try {
+    // Capture timestamp before dispatch to find the run later
+    const dispatchedAt = new Date().toISOString();
+
     const res = await fetch(
       `https://api.github.com/repos/${GITHUB_REPO}/actions/workflows/cypress-tests.yml/dispatches`,
       {
@@ -344,9 +352,78 @@ async function triggerGitHubWorkflow(testType: string, runId: string, ingestToke
         }),
       }
     );
-    if (res.status === 204) return { success: true };
-    const body = await res.text();
-    return { success: false, error: `GitHub API ${res.status}: ${body}` };
+
+    if (res.status !== 204) {
+      const body = await res.text();
+      return { success: false, error: `GitHub API ${res.status}: ${body}` };
+    }
+
+    // Poll GitHub API to capture the real github_run_id (max 30s, 6 attempts)
+    let githubRunId: string | undefined;
+    if (supabase) {
+      for (let attempt = 0; attempt < 6; attempt++) {
+        await new Promise(r => setTimeout(r, 5000));
+        try {
+          const pollRes = await fetch(
+            `https://api.github.com/repos/${GITHUB_REPO}/actions/workflows/cypress-tests.yml/runs?per_page=5&created=>${dispatchedAt.split("T")[0]}`,
+            {
+              headers: {
+                Authorization: `Bearer ${GITHUB_PAT}`,
+                Accept: "application/vnd.github.v3+json",
+              },
+            }
+          );
+          if (pollRes.ok) {
+            const pollData = await pollRes.json();
+            const matchingRun = (pollData.workflow_runs || []).find(
+              (r: any) => r.status !== "completed" && new Date(r.created_at) >= new Date(dispatchedAt)
+            );
+            if (matchingRun) {
+              githubRunId = String(matchingRun.id);
+              // Persist immediately
+              await supabase.from("test_runs").update({
+                github_run_id: githubRunId,
+                github_run_url: matchingRun.html_url,
+                current_spec: `GitHub Actions: ${matchingRun.status}`,
+                logs: {
+                  entries: [
+                    { ts: dispatchedAt, event: "execution_started", detail: `Cypress ${testType} disparado` },
+                    { ts: dispatchedAt, event: "cypress_dispatched", detail: "Workflow enviado ao GitHub" },
+                    { ts: new Date().toISOString(), event: "workflow_found", detail: `Workflow #${matchingRun.run_number} encontrado (${matchingRun.status})` },
+                  ],
+                  current_spec: `Workflow #${matchingRun.run_number}: ${matchingRun.status}`,
+                  current_url: matchingRun.html_url,
+                  github_run_id: githubRunId,
+                } as any,
+              } as any).eq("id", runId);
+              console.log(`[WMTi] Captured github_run_id=${githubRunId} for run=${runId}`);
+              break;
+            }
+          }
+        } catch (pollErr) {
+          console.error(`[WMTi] Poll attempt ${attempt + 1} failed:`, pollErr);
+        }
+      }
+
+      // If we couldn't find the workflow after 30s, log warning but don't fail
+      if (!githubRunId) {
+        console.warn(`[WMTi] Could not capture github_run_id for run=${runId} after 30s`);
+        await supabase.from("test_runs").update({
+          current_spec: "Workflow enviado, aguardando início...",
+          logs: {
+            entries: [
+              { ts: dispatchedAt, event: "execution_started", detail: `Cypress ${testType} disparado` },
+              { ts: dispatchedAt, event: "cypress_dispatched", detail: "Workflow enviado ao GitHub" },
+              { ts: new Date().toISOString(), event: "workflow_pending", detail: "Workflow ainda não apareceu na API do GitHub (pode levar até 2 min)" },
+            ],
+            current_spec: "Aguardando workflow iniciar...",
+            current_url: null,
+          } as any,
+        } as any).eq("id", runId);
+      }
+    }
+
+    return { success: true, github_run_id: githubRunId };
   } catch (e) {
     return { success: false, error: String(e) };
   }
@@ -588,7 +665,7 @@ Deno.serve(async (req) => {
 
       // Dispatch Cypress
       for (const ct of CYPRESS_TESTS) {
-        await triggerGitHubWorkflow(ct, runId, fullIngestToken);
+        await triggerGitHubWorkflow(ct, runId, fullIngestToken, supabase);
       }
 
       allLogs.push({ ts: new Date().toISOString(), event: "cypress_dispatched", detail: `Cypress disparado via GitHub Actions: ${CYPRESS_TESTS.join(", ")}` });
@@ -667,24 +744,27 @@ Deno.serve(async (req) => {
 
     await supabase.from("test_runs").update({
       total_tests: estimatedTotal,
+      current_spec: "Enviando para GitHub Actions...",
       logs: {
         entries: [
           { ts: new Date().toISOString(), event: "execution_started", detail: `Cypress ${testType} disparado` },
-          { ts: new Date().toISOString(), event: "cypress_dispatched", detail: "Aguardando GitHub Actions iniciar..." },
+          { ts: new Date().toISOString(), event: "dispatching", detail: "Enviando workflow para GitHub..." },
         ],
-        current_spec: "Aguardando GitHub Actions...",
+        current_spec: "Enviando para GitHub Actions...",
         current_url: null,
         estimated_total: estimatedTotal,
       } as any,
     } as any).eq("id", runId);
 
-    const dispatch = await triggerGitHubWorkflow(testType, runId, singleIngestToken);
+    // Dispatch WITH polling for github_run_id (blocks up to ~30s)
+    const dispatch = await triggerGitHubWorkflow(testType, runId, singleIngestToken, supabase);
     if (!dispatch.success) {
       await supabase.from("test_runs").update({
         status: "failed",
         finished_at: new Date().toISOString(),
         error_message: dispatch.error,
         error_summary: dispatch.error,
+        current_spec: null,
         logs: {
           entries: [
             { ts: new Date().toISOString(), event: "execution_started", detail: `Cypress ${testType} disparado` },
@@ -703,7 +783,12 @@ Deno.serve(async (req) => {
       });
     }
 
-    return new Response(JSON.stringify({ id: runId, status: "running", engine: "github_actions" }), {
+    return new Response(JSON.stringify({
+      id: runId,
+      status: "running",
+      engine: "github_actions",
+      github_run_id: dispatch.github_run_id || null,
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
