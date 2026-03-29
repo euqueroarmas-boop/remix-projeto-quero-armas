@@ -27,9 +27,25 @@ const LIGHT_TESTS: string[] = ["smoke", "seo", "api", "blog"];
 const CYPRESS_TESTS: string[] = ["frontend", "business", "forms", "contracts", "checkout", "portal", "regression"];
 
 // ─── Auth ───
-function verifyAdmin(req: Request): boolean {
+async function hmacVerify(secret: string, message: string, signature: string): Promise<boolean> {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey("raw", enc.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const sig = await crypto.subtle.sign("HMAC", key, enc.encode(message));
+  const expected = Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, "0")).join("");
+  return expected === signature;
+}
+
+async function verifyAdmin(req: Request): Promise<boolean> {
   const token = req.headers.get("x-admin-token") || "";
-  return token === ADMIN_PASSWORD;
+  if (!token || !token.includes(".")) return false;
+  try {
+    const [ts, sig] = token.split(".");
+    const timestamp = parseInt(ts, 10);
+    if (Date.now() - timestamp > 8 * 60 * 60 * 1000) return false;
+    return await hmacVerify(ADMIN_PASSWORD, `admin:${ts}`, sig);
+  } catch {
+    return false;
+  }
 }
 
 // ─── Supabase client ───
@@ -277,7 +293,7 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  if (!verifyAdmin(req)) {
+  if (!(await verifyAdmin(req))) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 
