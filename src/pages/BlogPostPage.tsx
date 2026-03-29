@@ -12,6 +12,7 @@ import { cities } from "@/data/seo/cities";
 import { useLocalizedBlogPosts, useLocalizedBlogContent, translateBlogCategoryLabel, translateInternalLinkLabel } from "@/hooks/useBlogLocalized";
 import { openWhatsApp } from "@/lib/whatsapp";
 import { supabase } from "@/integrations/supabase/client";
+import { generateBlogInternalLinks, injectLinksIntoMarkdown, getRelatedServicesBlock, type InternalLink } from "@/lib/blogInternalLinks";
 
 /** Try to match a slug like "vantagens-microsoft-365-para-empresas-campinas" */
 function resolveBlogSlug(slug: string | undefined) {
