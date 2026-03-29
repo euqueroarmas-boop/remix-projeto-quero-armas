@@ -404,18 +404,46 @@ const BlogPostPage = () => {
           <div className="font-body text-foreground leading-relaxed [&_h2]:font-heading [&_h2]:text-xl [&_h2]:md:text-2xl [&_h2]:font-bold [&_h2]:mt-8 [&_h2]:mb-3 [&_h2]:text-foreground [&_p]:text-muted-foreground [&_p]:mb-4">
             {(localizedLegacy || localizedStructuredContent) && (
               <div className="space-y-6">
-                {(localizedStructuredContent?.sections || localizedLegacy?.sections || []).map((section, i) => (
-                  <div key={i}>
-                    {section.heading && <h2>{section.heading}</h2>}
-                    <p>{section.body}</p>
-                  </div>
-                ))}
+                {(() => {
+                  const sections = localizedStructuredContent?.sections || localizedLegacy?.sections || [];
+                  const midIdx = Math.floor(sections.length * 0.4);
+                  return sections.map((section: { heading?: string; body: string }, i: number) => (
+                    <div key={i}>
+                      {section.heading && <h2>{section.heading}</h2>}
+                      <p>{section.body}</p>
+                      {/* Mid-article CTA */}
+                      {i === midIdx && sections.length > 4 && (
+                        <div className="my-8 p-6 bg-primary/5 border border-primary/20 rounded-lg">
+                          <p className="font-heading text-base font-semibold text-foreground mb-2">
+                            💡 {isEn ? "Facing this challenge?" : "Sua empresa enfrenta esse tipo de desafio?"}
+                          </p>
+                          <p className="font-body text-sm text-muted-foreground mb-3">
+                            {isEn
+                              ? "Talk to a WMTi specialist and get a free diagnosis of your IT infrastructure."
+                              : "Fale com um especialista da WMTi e receba um diagnóstico gratuito da sua infraestrutura de TI."}
+                          </p>
+                          <div className="flex flex-wrap gap-3">
+                            <Link to="/orcamento-ti" className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline">
+                              {isEn ? "Request a quote" : "Solicitar orçamento"} <ArrowRight size={14} />
+                            </Link>
+                            <button
+                              onClick={() => openWhatsApp({ pageTitle: localizedPost.title, intent: "blog" })}
+                              className="inline-flex items-center gap-1 text-sm font-semibold text-green-500 hover:underline"
+                            >
+                              WhatsApp <ArrowRight size={14} />
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ));
+                })()}
 
                 {localizedStructuredContent?.faq?.length > 0 && (
                   <div className="mt-12">
                     <h2>{t("blogPost.faq")}</h2>
                     <div className="space-y-6 mt-4">
-                      {localizedStructuredContent.faq.map((item, i) => (
+                      {localizedStructuredContent.faq.map((item: { q: string; a: string }, i: number) => (
                         <div key={i}>
                           <h3 className="font-heading text-lg font-semibold text-foreground mb-2">{item.q}</h3>
                           <p>{item.a}</p>
@@ -428,6 +456,13 @@ const BlogPostPage = () => {
                 {/* Enhanced internal links: merge existing with generated */}
                 {(() => {
                   const existingLinks = localizedStructuredContent?.internalLinks || [];
+                  const allGenerated = generateBlogInternalLinks(
+                    post.slug,
+                    post.title,
+                    post.excerpt,
+                    post.category,
+                    post.tag
+                  );
                   const generatedRelated = getRelatedServicesBlock(
                     post.slug,
                     post.title,
@@ -435,74 +470,69 @@ const BlogPostPage = () => {
                     post.category,
                     post.tag
                   );
-                  // Merge: existing first, then fill from generated (avoid duplicate hrefs)
-                  const existingHrefs = new Set(existingLinks.map(l => l.href));
+                  const existingHrefs = new Set(existingLinks.map((l: { href: string }) => l.href));
                   const mergedLinks = [
                     ...existingLinks,
                     ...generatedRelated.filter(l => !existingHrefs.has(l.href)),
                   ];
-                  return mergedLinks.length > 0 ? (
-                    <div className="mt-8 p-6 bg-muted/50 border border-border">
-                      <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground mb-3">{t("blogPost.relatedServices", "Serviços relacionados")}</p>
-                      <div className="flex flex-wrap gap-3">
-                        {mergedLinks.map((link, i) => (
-                          <Link
-                            key={i}
-                            to={link.href}
-                            className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
-                          >
-                            {(link as any).label || (link as any).anchor} <ArrowRight size={12} />
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null;
-                })()}
+                  
+                  const blogLinks = allGenerated.filter(l => l.type === "blog").slice(0, 5);
+                  const cityLinks = allGenerated.filter(l => l.type === "city").slice(0, 4);
 
-                {/* Related blog posts */}
-                {(() => {
-                  const blogLinks = generateBlogInternalLinks(post.slug, post.title, post.excerpt, post.category, post.tag)
-                    .filter(l => l.type === "blog")
-                    .slice(0, 5);
-                  return blogLinks.length > 0 ? (
-                    <div className="mt-6 p-6 bg-muted/30 border border-border">
-                      <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground mb-3">Leitura recomendada</p>
-                      <div className="space-y-2">
-                        {blogLinks.map((link, i) => (
-                          <Link
-                            key={i}
-                            to={link.href}
-                            className="block text-sm text-primary hover:underline"
-                          >
-                            → {link.anchor}
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null;
-                })()}
+                  return (
+                    <>
+                      {mergedLinks.length > 0 && (
+                        <div className="mt-8 p-6 bg-muted/50 border border-border">
+                          <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground mb-3">{t("blogPost.relatedServices", "Serviços relacionados")}</p>
+                          <div className="flex flex-wrap gap-3">
+                            {mergedLinks.map((link, i) => (
+                              <Link
+                                key={i}
+                                to={link.href}
+                                className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                              >
+                                {(link as any).label || (link as any).anchor} <ArrowRight size={12} />
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      )}
 
-                {/* City links */}
-                {(() => {
-                  const cityLinks = generateBlogInternalLinks(post.slug, post.title, post.excerpt, post.category, post.tag)
-                    .filter(l => l.type === "city")
-                    .slice(0, 3);
-                  return cityLinks.length > 0 ? (
-                    <div className="mt-6 p-6 bg-muted/20 border border-border">
-                      <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground mb-3">Atendemos sua região</p>
-                      <div className="flex flex-wrap gap-3">
-                        {cityLinks.map((link, i) => (
-                          <Link
-                            key={i}
-                            to={link.href}
-                            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors font-body"
-                          >
-                            <MapPin size={10} /> {link.anchor}
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null;
+                      {blogLinks.length > 0 && (
+                        <div className="mt-6 p-6 bg-muted/30 border border-border">
+                          <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground mb-3">
+                            {isEn ? "Recommended reading" : "Leitura recomendada"}
+                          </p>
+                          <div className="space-y-2">
+                            {blogLinks.map((link, i) => (
+                              <Link key={i} to={link.href} className="block text-sm text-primary hover:underline">
+                                → {link.anchor}
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {cityLinks.length > 0 && (
+                        <div className="mt-6 p-6 bg-muted/20 border border-border">
+                          <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground mb-3">
+                            {isEn ? "We serve your region" : "Atendemos sua região"}
+                          </p>
+                          <div className="flex flex-wrap gap-3">
+                            {cityLinks.map((link, i) => (
+                              <Link
+                                key={i}
+                                to={link.href}
+                                className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors font-body"
+                              >
+                                <MapPin size={10} /> {link.anchor}
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  );
                 })()}
               </div>
             )}
