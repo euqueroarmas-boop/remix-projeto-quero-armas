@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
   RefreshCw, AlertTriangle, CheckCircle2, XCircle, Clock, Loader2,
+  Pause, Play as PlayIcon,
   TestTube2, Megaphone, FileText, CreditCard, Webhook, Activity,
   ArrowRight, Zap, Database, Server, HardDrive, Link2, ShieldAlert,
   TrendingUp, Eye, Play,
@@ -413,13 +414,24 @@ export default function AdminCommandCenter({ onNavigate }: CommandCenterProps) {
         <div>
           <h2 className="text-lg font-bold text-foreground">Centro de Comando</h2>
           <p className="text-xs text-muted-foreground">
-            Última atualização: {lastUpdate.toLocaleTimeString("pt-BR")} · Ambiente: <Badge variant="outline" className="text-[10px] ml-1">Produção</Badge>
+            {allLoaded ? `Última atualização: ${lastUpdate.toLocaleTimeString("pt-BR")}` : "Carregando..."} · Ambiente: <Badge variant="outline" className="text-[10px] ml-1">Produção</Badge>
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={handleRefreshAll} disabled={refreshing} className="text-xs gap-1.5">
-          <RefreshCw className={`h-3 w-3 ${refreshing ? "animate-spin" : ""}`} />
-          Atualizar
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant={autoRefresh ? "default" : "outline"}
+            size="sm"
+            onClick={() => setAutoRefresh(!autoRefresh)}
+            className="text-xs gap-1"
+          >
+            {autoRefresh ? <Pause className="h-3 w-3" /> : <PlayIcon className="h-3 w-3" />}
+            {autoRefresh ? "Auto" : "Pausado"}
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleRefreshAll} disabled={refreshing} className="text-xs gap-1.5">
+            <RefreshCw className={`h-3 w-3 ${refreshing ? "animate-spin" : ""}`} />
+            Atualizar
+          </Button>
+        </div>
       </div>
 
       <AlertsBanner errors24h={alerts.errors24h} webhookErrors={alerts.webhookErrors} onNavigate={onNavigate} />
