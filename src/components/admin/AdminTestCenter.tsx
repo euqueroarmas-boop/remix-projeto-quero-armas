@@ -11,10 +11,18 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
+  Collapsible, CollapsibleContent, CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
   Play, RefreshCw, CheckCircle, XCircle, Clock, Loader2,
   Eye, Zap, Globe, FileText, Shield, ShoppingCart, FormInput,
   Monitor, BookOpen, Server, AlertTriangle, Rocket, ArrowLeft,
-  Bell, Send, MessageSquare, Mail, Webhook,
+  Bell, Send, MessageSquare, Mail, Webhook, ChevronDown, Image,
+  Video, Bug, Terminal, ExternalLink,
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -47,11 +55,16 @@ interface TestRun {
   created_at: string;
 }
 
-interface TestResult {
+interface DetailedTestResult {
   name: string;
+  fullTitle?: string;
   status: "passed" | "failed" | "skipped";
   duration_ms: number;
   error?: string;
+  stack_trace?: string;
+  diff?: { expected: any; actual: any } | null;
+  cypress_command?: string;
+  spec?: string;
 }
 
 // ─── Constants ───
@@ -116,7 +129,6 @@ function RunStatusBadge({ status }: { status: string }) {
   );
 }
 
-// ─── Duration formatter ───
 function formatDuration(ms: number | null): string {
   if (!ms) return "—";
   if (ms < 1000) return `${ms}ms`;
@@ -124,17 +136,179 @@ function formatDuration(ms: number | null): string {
   return `${Math.floor(ms / 60000)}m ${Math.round((ms % 60000) / 1000)}s`;
 }
 
+// ─── Screenshot Viewer Dialog ───
+function ScreenshotViewer({ urls }: { urls: string[] }) {
+  const [selected, setSelected] = useState(0);
+  if (!urls || urls.length === 0) return null;
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="text-xs gap-1.5">
+          <Image className="h-3.5 w-3.5" />
+          Screenshots ({urls.length})
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-4xl max-h-[90vh]">
+        <DialogHeader>
+          <DialogTitle className="text-sm">Screenshots da Execução</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <img
+            src={urls[selected]}
+            alt={`Screenshot ${selected + 1}`}
+            className="w-full rounded-lg border border-border"
+          />
+          {urls.length > 1 && (
+            <div className="flex gap-2 overflow-x-auto pb-2">
+              {urls.map((url, i) => (
+                <button
+                  key={i}
+                  onClick={() => setSelected(i)}
+                  className={`flex-shrink-0 w-20 h-14 rounded border overflow-hidden ${i === selected ? "border-primary ring-2 ring-primary/30" : "border-border opacity-60 hover:opacity-100"}`}
+                >
+                  <img src={url} alt={`Thumb ${i + 1}`} className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
+          <p className="text-[11px] text-muted-foreground">
+            {decodeURIComponent(urls[selected]?.split("/").pop() || "")}
+          </p>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── Video Viewer Dialog ───
+function VideoViewer({ urls }: { urls: string[] }) {
+  if (!urls || urls.length === 0) return null;
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="text-xs gap-1.5">
+          <Video className="h-3.5 w-3.5" />
+          Vídeos ({urls.length})
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-4xl max-h-[90vh]">
+        <DialogHeader>
+          <DialogTitle className="text-sm">Vídeos da Execução</DialogTitle>
+        </DialogHeader>
+        <ScrollArea className="max-h-[70vh]">
+          <div className="space-y-4">
+            {urls.map((url, i) => (
+              <div key={i} className="space-y-1">
+                <p className="text-xs text-muted-foreground font-medium">
+                  {decodeURIComponent(url.split("/").pop() || `Video ${i + 1}`)}
+                </p>
+                <video controls className="w-full rounded-lg border border-border" preload="metadata">
+                  <source src={url} type="video/mp4" />
+                  Seu navegador não suporta vídeo.
+                </video>
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── Expandable Error Block ───
+function ErrorDetail({ result }: { result: DetailedTestResult }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <div className="p-3 rounded-lg bg-destructive/5 border border-destructive/20 text-xs space-y-1.5">
+        <CollapsibleTrigger className="w-full">
+          <div className="flex justify-between items-center cursor-pointer">
+            <div className="flex items-center gap-2 text-left">
+              <XCircle className="h-3.5 w-3.5 text-destructive flex-shrink-0" />
+              <span className="font-medium text-foreground">{result.name}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground">{formatDuration(result.duration_ms)}</span>
+              <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
+            </div>
+          </div>
+        </CollapsibleTrigger>
+
+        {result.error && (
+          <p className="text-destructive/90 text-[11px] pl-5">{result.error}</p>
+        )}
+
+        <CollapsibleContent className="space-y-2 pt-2">
+          {result.spec && (
+            <div className="pl-5">
+              <span className="text-[10px] font-medium text-muted-foreground">Spec: </span>
+              <span className="text-[10px] text-foreground font-mono">{result.spec}</span>
+            </div>
+          )}
+
+          {result.diff && (
+            <div className="pl-5 p-2 rounded bg-muted/50 border border-border space-y-1">
+              <p className="text-[10px] font-semibold text-muted-foreground">Expected vs Actual</p>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <p className="text-[10px] text-green-400 font-medium">Expected:</p>
+                  <pre className="text-[10px] text-foreground font-mono break-all">{JSON.stringify(result.diff.expected, null, 2)}</pre>
+                </div>
+                <div>
+                  <p className="text-[10px] text-red-400 font-medium">Actual:</p>
+                  <pre className="text-[10px] text-foreground font-mono break-all">{JSON.stringify(result.diff.actual, null, 2)}</pre>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {result.stack_trace && (
+            <div className="pl-5">
+              <p className="text-[10px] font-semibold text-muted-foreground mb-1 flex items-center gap-1">
+                <Bug className="h-3 w-3" /> Stack Trace
+              </p>
+              <pre className="text-[10px] text-muted-foreground bg-muted/50 p-2 rounded overflow-x-auto max-h-48 font-mono whitespace-pre-wrap border border-border">
+                {result.stack_trace}
+              </pre>
+            </div>
+          )}
+
+          {result.cypress_command && (
+            <div className="pl-5">
+              <p className="text-[10px] font-semibold text-muted-foreground mb-1 flex items-center gap-1">
+                <Terminal className="h-3 w-3" /> Comando Cypress
+              </p>
+              <pre className="text-[10px] text-muted-foreground bg-muted/50 p-2 rounded overflow-x-auto max-h-32 font-mono whitespace-pre-wrap border border-border">
+                {result.cypress_command}
+              </pre>
+            </div>
+          )}
+        </CollapsibleContent>
+      </div>
+    </Collapsible>
+  );
+}
+
 // ─── Live Progress Panel ───
 function LiveProgressPanel({ run }: { run: TestRun }) {
   const completed = run.passed_tests + run.failed_tests + run.skipped_tests;
   const total = run.total_tests || 1;
   const pct = Math.round((completed / total) * 100);
-  const elapsed = run.started_at
-    ? Math.round((Date.now() - new Date(run.started_at).getTime()) / 1000)
-    : 0;
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    if (!run.started_at) return;
+    const interval = setInterval(() => {
+      setElapsed(Math.round((Date.now() - new Date(run.started_at!).getTime()) / 1000));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [run.started_at]);
 
   return (
-    <Card className="border-primary/40 bg-primary/5 animate-pulse-slow">
+    <Card className="border-primary/40 bg-primary/5">
       <CardContent className="p-4 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -155,7 +329,7 @@ function LiveProgressPanel({ run }: { run: TestRun }) {
           </div>
           <Progress value={pct} className="h-3" />
           <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-            <span>{completed} de {total} specs concluídas</span>
+            <span>{completed} de {run.total_tests || "?"} specs</span>
             <span>{elapsed}s decorridos</span>
           </div>
         </div>
@@ -183,12 +357,21 @@ function LiveProgressPanel({ run }: { run: TestRun }) {
   );
 }
 
-// ─── Detail View ───
+// ─── Detail View (ENHANCED with full observability) ───
 function RunDetail({ run, onBack }: { run: TestRun; onBack: () => void }) {
-  const results = (run.results || []) as TestResult[];
+  const results = (run.results || []) as DetailedTestResult[];
   const passed = results.filter(r => r.status === "passed");
   const failed = results.filter(r => r.status === "failed");
+  const skipped = results.filter(r => r.status === "skipped");
   const pct = run.total_tests > 0 ? Math.round((run.passed_tests / run.total_tests) * 100) : 0;
+
+  // Group by spec file
+  const specGroups = results.reduce<Record<string, DetailedTestResult[]>>((acc, r) => {
+    const spec = r.spec || "Sem spec";
+    if (!acc[spec]) acc[spec] = [];
+    acc[spec].push(r);
+    return acc;
+  }, {});
 
   return (
     <div className="space-y-4">
@@ -196,6 +379,7 @@ function RunDetail({ run, onBack }: { run: TestRun; onBack: () => void }) {
         <ArrowLeft className="h-3 w-3 mr-1" /> Voltar ao histórico
       </Button>
 
+      {/* Summary Card */}
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -239,39 +423,106 @@ function RunDetail({ run, onBack }: { run: TestRun; onBack: () => void }) {
             </div>
           )}
 
-          {run.github_run_url && (
-            <a href={run.github_run_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline">
-              Ver no GitHub Actions →
-            </a>
-          )}
+          {/* Action buttons: screenshots, videos, GitHub */}
+          <div className="flex flex-wrap gap-2">
+            {run.screenshot_urls && run.screenshot_urls.length > 0 && (
+              <ScreenshotViewer urls={run.screenshot_urls} />
+            )}
+            {run.video_urls && run.video_urls.length > 0 && (
+              <VideoViewer urls={run.video_urls} />
+            )}
+            {run.github_run_url && (
+              <a href={run.github_run_url} target="_blank" rel="noopener noreferrer">
+                <Button variant="outline" size="sm" className="text-xs gap-1.5">
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  GitHub Actions
+                </Button>
+              </a>
+            )}
+          </div>
         </CardContent>
       </Card>
 
+      {/* Failed Tests - Detailed with expandable errors */}
       {failed.length > 0 && (
         <Card className="border-destructive/30">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-destructive">❌ Testes que Falharam ({failed.length})</CardTitle>
+            <CardTitle className="text-sm text-destructive flex items-center gap-2">
+              <XCircle className="h-4 w-4" />
+              Testes que Falharam ({failed.length})
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
               {failed.map((t, i) => (
-                <div key={i} className="p-3 rounded-lg bg-destructive/5 border border-destructive/20 text-xs space-y-1">
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium text-foreground">{t.name}</span>
-                    <span className="text-muted-foreground">{formatDuration(t.duration_ms)}</span>
-                  </div>
-                  {t.error && <p className="text-destructive/80 font-mono text-[11px]">{t.error}</p>}
-                </div>
+                <ErrorDetail key={i} result={t} />
               ))}
             </div>
           </CardContent>
         </Card>
       )}
 
+      {/* Tests grouped by spec */}
+      {Object.keys(specGroups).length > 1 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <FileText className="h-4 w-4 text-primary" />
+              Por Arquivo de Spec
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {Object.entries(specGroups).map(([spec, tests]) => {
+                const specPassed = tests.filter(t => t.status === "passed").length;
+                const specFailed = tests.filter(t => t.status === "failed").length;
+                return (
+                  <Collapsible key={spec}>
+                    <CollapsibleTrigger className="w-full">
+                      <div className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/30 cursor-pointer">
+                        <span className="text-xs font-mono text-foreground truncate">{spec}</span>
+                        <div className="flex items-center gap-2 text-[11px]">
+                          <span className="text-green-400">{specPassed}✓</span>
+                          {specFailed > 0 && <span className="text-red-400">{specFailed}✗</span>}
+                          <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                        </div>
+                      </div>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <div className="pl-3 border-l-2 border-border ml-2 space-y-1 mt-1">
+                        {tests.map((t, i) => (
+                          <div key={i} className="flex items-center justify-between text-xs py-1 px-2">
+                            <div className="flex items-center gap-1.5">
+                              {t.status === "passed" ? (
+                                <CheckCircle className="h-3 w-3 text-green-400" />
+                              ) : t.status === "failed" ? (
+                                <XCircle className="h-3 w-3 text-red-400" />
+                              ) : (
+                                <Clock className="h-3 w-3 text-yellow-400" />
+                              )}
+                              <span className="text-foreground">{t.name}</span>
+                            </div>
+                            <span className="text-muted-foreground">{formatDuration(t.duration_ms)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Passed Tests */}
       {passed.length > 0 && (
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-green-400">✓ Testes que Passaram ({passed.length})</CardTitle>
+            <CardTitle className="text-sm text-green-400 flex items-center gap-2">
+              <CheckCircle className="h-4 w-4" />
+              Testes que Passaram ({passed.length})
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-1">
@@ -286,13 +537,39 @@ function RunDetail({ run, onBack }: { run: TestRun; onBack: () => void }) {
         </Card>
       )}
 
+      {/* Skipped Tests */}
+      {skipped.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-yellow-400 flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              Testes Pulados ({skipped.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-1">
+              {skipped.map((t, i) => (
+                <div key={i} className="flex justify-between items-center text-xs py-1.5 px-2 rounded hover:bg-muted/30">
+                  <span className="text-muted-foreground">{t.name}</span>
+                  <span className="text-muted-foreground">{formatDuration(t.duration_ms)}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Technical Logs */}
       {run.logs && (
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Logs técnicos</CardTitle>
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Terminal className="h-4 w-4 text-muted-foreground" />
+              Logs técnicos
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <pre className="text-[11px] text-muted-foreground bg-muted/50 p-3 rounded overflow-auto max-h-48">
+            <pre className="text-[11px] text-muted-foreground bg-muted/50 p-3 rounded overflow-auto max-h-48 font-mono">
               {JSON.stringify(run.logs, null, 2)}
             </pre>
           </CardContent>
@@ -302,7 +579,7 @@ function RunDetail({ run, onBack }: { run: TestRun; onBack: () => void }) {
   );
 }
 
-// ─── Alert Config Panel (FIXED: proper local state management) ───
+// ─── Alert Config Panel ───
 interface AlertConfigItem {
   id?: string;
   channel: string;
@@ -317,7 +594,6 @@ const ALERT_CHANNELS = [
 ];
 
 function AlertConfigPanel() {
-  // Local form state per channel - completely independent from DB state
   const [localForms, setLocalForms] = useState<Record<string, { enabled: boolean; config: Record<string, string>; id?: string }>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
@@ -333,7 +609,6 @@ function AlertConfigPanel() {
       const data = await res.json();
       const configs = Array.isArray(data) ? data : [];
 
-      // Initialize local forms for ALL channels
       const forms: typeof localForms = {};
       ALERT_CHANNELS.forEach(ch => {
         const existing = configs.find((c: AlertConfigItem) => c.channel === ch.id);
@@ -346,7 +621,6 @@ function AlertConfigPanel() {
       setLocalForms(forms);
     } catch (err) {
       console.error("Fetch alert configs:", err);
-      // Initialize empty forms even on error
       const forms: typeof localForms = {};
       ALERT_CHANNELS.forEach(ch => {
         forms[ch.id] = { enabled: false, config: {}, id: undefined };
@@ -387,7 +661,6 @@ function AlertConfigPanel() {
       });
       setSaveSuccess(channel);
       setTimeout(() => setSaveSuccess(null), 2000);
-      // Re-fetch to get the ID if it was new
       await fetchConfigs();
     } catch (err) {
       console.error("Save config:", err);
@@ -518,7 +791,7 @@ export default function AdminTestCenter() {
 
   useEffect(() => { fetchRuns(); }, [fetchRuns]);
 
-  // Realtime subscription for running tests
+  // Realtime subscription
   useEffect(() => {
     const channel = supabase
       .channel("test_runs_realtime")
@@ -539,7 +812,7 @@ export default function AdminTestCenter() {
     return () => { supabase.removeChannel(channel); };
   }, [selectedRun?.id]);
 
-  // Polling fallback for progress (every 3s while tests are running)
+  // Polling fallback
   useEffect(() => {
     if (runningTests.size > 0 && !pollingRef.current) {
       pollingRef.current = setInterval(fetchRuns, 3000);
@@ -548,9 +821,7 @@ export default function AdminTestCenter() {
       clearInterval(pollingRef.current);
       pollingRef.current = null;
     }
-    return () => {
-      if (pollingRef.current) clearInterval(pollingRef.current);
-    };
+    return () => { if (pollingRef.current) clearInterval(pollingRef.current); };
   }, [runningTests.size, fetchRuns]);
 
   const handleRunTest = async (testType: string) => {
@@ -577,7 +848,6 @@ export default function AdminTestCenter() {
     }
   };
 
-  // Get currently running test runs
   const runningRuns = runs.filter(r => r.status === "running");
   const lastRun = runs.length > 0 ? runs[0] : null;
 
@@ -598,32 +868,17 @@ export default function AdminTestCenter() {
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <Button
-            variant={activeTab === "suites" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setActiveTab("suites")}
-            className="text-xs"
-          >
+          <Button variant={activeTab === "suites" ? "default" : "outline"} size="sm" onClick={() => setActiveTab("suites")} className="text-xs">
             <Play className="h-3 w-3 mr-1" /> Suites
           </Button>
-          <Button
-            variant={activeTab === "alerts" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setActiveTab("alerts")}
-            className="text-xs"
-          >
+          <Button variant={activeTab === "alerts" ? "default" : "outline"} size="sm" onClick={() => setActiveTab("alerts")} className="text-xs">
             <Bell className="h-3 w-3 mr-1" /> Alertas
           </Button>
           <div className="w-px h-6 bg-border mx-1" />
           <Button variant="outline" size="sm" onClick={fetchRuns} className="text-xs">
             <RefreshCw className="h-3 w-3 mr-1" /> Atualizar
           </Button>
-          <Button
-            size="sm"
-            onClick={handleRunFull}
-            disabled={runningTests.has("full")}
-            className="text-xs"
-          >
+          <Button size="sm" onClick={handleRunFull} disabled={runningTests.has("full")} className="text-xs">
             {runningTests.has("full") ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Rocket className="h-3 w-3 mr-1" />}
             Teste Completo
           </Button>
@@ -633,47 +888,33 @@ export default function AdminTestCenter() {
       {/* Summary Stats */}
       {lastRun && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Card>
-            <CardContent className="p-4">
-              <p className="text-xs text-muted-foreground">Última execução</p>
-              <p className="text-sm font-bold text-foreground mt-1">
-                {lastRun.started_at ? new Date(lastRun.started_at).toLocaleString("pt-BR") : "—"}
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <p className="text-xs text-muted-foreground">Último status</p>
-              <div className="mt-1"><RunStatusBadge status={lastRun.status} /></div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <p className="text-xs text-muted-foreground">Duração</p>
-              <p className="text-sm font-bold text-foreground mt-1">{formatDuration(lastRun.duration_ms)}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <p className="text-xs text-muted-foreground">Taxa de sucesso</p>
-              <p className="text-sm font-bold text-green-400 mt-1">
-                {lastRun.total_tests > 0 ? `${Math.round((lastRun.passed_tests / lastRun.total_tests) * 100)}%` : "—"}
-              </p>
-            </CardContent>
-          </Card>
+          <Card><CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Última execução</p>
+            <p className="text-sm font-bold text-foreground mt-1">{lastRun.started_at ? new Date(lastRun.started_at).toLocaleString("pt-BR") : "—"}</p>
+          </CardContent></Card>
+          <Card><CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Último status</p>
+            <div className="mt-1"><RunStatusBadge status={lastRun.status} /></div>
+          </CardContent></Card>
+          <Card><CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Duração</p>
+            <p className="text-sm font-bold text-foreground mt-1">{formatDuration(lastRun.duration_ms)}</p>
+          </CardContent></Card>
+          <Card><CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Taxa de sucesso</p>
+            <p className="text-sm font-bold text-green-400 mt-1">{lastRun.total_tests > 0 ? `${Math.round((lastRun.passed_tests / lastRun.total_tests) * 100)}%` : "—"}</p>
+          </CardContent></Card>
         </div>
       )}
 
-      {/* Live Progress for Running Tests */}
+      {/* Live Progress */}
       {runningRuns.length > 0 && (
         <div className="space-y-3">
           <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
             <Loader2 className="h-4 w-4 animate-spin text-primary" />
             Execuções em andamento ({runningRuns.length})
           </h4>
-          {runningRuns.map(run => (
-            <LiveProgressPanel key={run.id} run={run} />
-          ))}
+          {runningRuns.map(run => <LiveProgressPanel key={run.id} run={run} />)}
         </div>
       )}
 
@@ -681,24 +922,16 @@ export default function AdminTestCenter() {
       {activeTab === "alerts" && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Bell className="h-4 w-4 text-primary" />
-              Configuração de Alertas
-            </CardTitle>
-            <CardDescription className="text-xs">
-              Receba notificações quando testes falharem
-            </CardDescription>
+            <CardTitle className="text-base flex items-center gap-2"><Bell className="h-4 w-4 text-primary" /> Configuração de Alertas</CardTitle>
+            <CardDescription className="text-xs">Receba notificações quando testes falharem</CardDescription>
           </CardHeader>
-          <CardContent>
-            <AlertConfigPanel />
-          </CardContent>
+          <CardContent><AlertConfigPanel /></CardContent>
         </Card>
       )}
 
       {/* Suites Tab */}
       {activeTab === "suites" && (
         <>
-          {/* Suite Cards */}
           <div>
             <h4 className="text-sm font-bold text-foreground mb-3">Disparar Testes</h4>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -718,16 +951,8 @@ export default function AdminTestCenter() {
                       </div>
                       <p className="text-[11px] text-muted-foreground line-clamp-2">{suite.description}</p>
                       <div className="flex items-center justify-between gap-1">
-                        <Badge variant="outline" className="text-[10px] font-normal">
-                          {isLight ? "⚡ Leve" : "🧪 Cypress"}
-                        </Badge>
-                        <Button
-                          size="sm"
-                          variant={isRunning ? "ghost" : "outline"}
-                          onClick={() => handleRunTest(suite.id)}
-                          disabled={isRunning}
-                          className="h-7 text-[11px] px-2.5"
-                        >
+                        <Badge variant="outline" className="text-[10px] font-normal">{isLight ? "⚡ Leve" : "🧪 Cypress"}</Badge>
+                        <Button size="sm" variant={isRunning ? "ghost" : "outline"} onClick={() => handleRunTest(suite.id)} disabled={isRunning} className="h-7 text-[11px] px-2.5">
                           {isRunning ? <Loader2 className="h-3 w-3 animate-spin" /> : <Play className="h-3 w-3 mr-0.5" />}
                           {isRunning ? "..." : "Rodar"}
                         </Button>
@@ -747,7 +972,7 @@ export default function AdminTestCenter() {
           {/* Filters */}
           <div className="flex flex-wrap gap-2 items-center pt-2">
             <h4 className="text-sm font-bold text-foreground mr-2">Histórico</h4>
-            <Select value={filterType} onValueChange={(v) => { setFilterType(v); }}>
+            <Select value={filterType} onValueChange={setFilterType}>
               <SelectTrigger className="w-36 text-xs h-8"><SelectValue placeholder="Tipo" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os tipos</SelectItem>
@@ -755,7 +980,7 @@ export default function AdminTestCenter() {
                 <SelectItem value="full">Teste Completo</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={filterStatus} onValueChange={(v) => { setFilterStatus(v); }}>
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
               <SelectTrigger className="w-32 text-xs h-8"><SelectValue placeholder="Status" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>
@@ -771,22 +996,17 @@ export default function AdminTestCenter() {
           {/* History */}
           {loading ? (
             <div className="text-center py-12 text-muted-foreground text-sm">
-              <Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" />
-              Carregando histórico...
+              <Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" /> Carregando histórico...
             </div>
           ) : runs.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground text-sm">
-              Nenhuma execução encontrada. Dispare um teste acima.
-            </div>
+            <div className="text-center py-12 text-muted-foreground text-sm">Nenhuma execução encontrada. Dispare um teste acima.</div>
           ) : isMobile ? (
             <div className="space-y-2">
               {runs.map((run) => (
                 <Card key={run.id} className={`cursor-pointer hover:border-muted-foreground/30 transition-all ${run.status === "failed" ? "border-destructive/30" : ""}`} onClick={() => setSelectedRun(run)}>
                   <CardContent className="p-3 space-y-2">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs font-bold text-foreground truncate">
-                        {SUITES.find(s => s.id === run.test_type)?.label || run.test_type}
-                      </span>
+                      <span className="text-xs font-bold text-foreground truncate">{SUITES.find(s => s.id === run.test_type)?.label || run.test_type}</span>
                       <RunStatusBadge status={run.status} />
                     </div>
                     <div className="flex items-center justify-between text-[11px] text-muted-foreground">
@@ -800,11 +1020,11 @@ export default function AdminTestCenter() {
                       </div>
                     )}
                     <div className="text-[11px]">
-                      <span className="text-green-400">{run.passed_tests}✓</span>
-                      {" / "}
-                      <span className="text-red-400">{run.failed_tests}✗</span>
-                      {" / "}
+                      <span className="text-green-400">{run.passed_tests}✓</span>{" / "}
+                      <span className="text-red-400">{run.failed_tests}✗</span>{" / "}
                       <span className="text-muted-foreground">{run.total_tests} total</span>
+                      {run.screenshot_urls && run.screenshot_urls.length > 0 && <span className="ml-2">📸 {run.screenshot_urls.length}</span>}
+                      {run.video_urls && run.video_urls.length > 0 && <span className="ml-1">🎥 {run.video_urls.length}</span>}
                     </div>
                   </CardContent>
                 </Card>
@@ -820,6 +1040,7 @@ export default function AdminTestCenter() {
                     <TableHead className="text-xs">Início</TableHead>
                     <TableHead className="text-xs">Duração</TableHead>
                     <TableHead className="text-xs">Resultado</TableHead>
+                    <TableHead className="text-xs">Artefatos</TableHead>
                     <TableHead className="text-xs">Motor</TableHead>
                     <TableHead className="text-xs w-[60px]"></TableHead>
                   </TableRow>
@@ -827,20 +1048,27 @@ export default function AdminTestCenter() {
                 <TableBody>
                   {runs.map((run) => (
                     <TableRow key={run.id} className={`cursor-pointer hover:bg-muted/50 ${run.status === "failed" ? "bg-red-950/10" : ""}`} onClick={() => setSelectedRun(run)}>
-                      <TableCell className="text-xs font-medium text-foreground">
-                        {SUITES.find(s => s.id === run.test_type)?.label || run.test_type}
-                      </TableCell>
+                      <TableCell className="text-xs font-medium text-foreground">{SUITES.find(s => s.id === run.test_type)?.label || run.test_type}</TableCell>
                       <TableCell><RunStatusBadge status={run.status} /></TableCell>
-                      <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                        {run.started_at ? new Date(run.started_at).toLocaleString("pt-BR") : "—"}
-                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{run.started_at ? new Date(run.started_at).toLocaleString("pt-BR") : "—"}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">{formatDuration(run.duration_ms)}</TableCell>
                       <TableCell className="text-xs">
-                        <span className="text-green-400">{run.passed_tests}✓</span>
-                        {" "}
-                        <span className="text-red-400">{run.failed_tests}✗</span>
-                        {" / "}
+                        <span className="text-green-400">{run.passed_tests}✓</span>{" "}
+                        <span className="text-red-400">{run.failed_tests}✗</span>{" / "}
                         <span className="text-muted-foreground">{run.total_tests}</span>
+                      </TableCell>
+                      <TableCell className="text-xs">
+                        <div className="flex items-center gap-1">
+                          {run.screenshot_urls && run.screenshot_urls.length > 0 && (
+                            <span title="Screenshots" className="text-muted-foreground">📸{run.screenshot_urls.length}</span>
+                          )}
+                          {run.video_urls && run.video_urls.length > 0 && (
+                            <span title="Vídeos" className="text-muted-foreground">🎥{run.video_urls.length}</span>
+                          )}
+                          {(!run.screenshot_urls || run.screenshot_urls.length === 0) && (!run.video_urls || run.video_urls.length === 0) && (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className="text-[10px]">

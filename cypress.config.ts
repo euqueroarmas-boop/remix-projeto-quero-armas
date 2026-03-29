@@ -7,8 +7,17 @@ export default defineConfig({
     specPattern: "cypress/e2e/**/*.cy.{ts,tsx}",
     viewportWidth: 1280,
     viewportHeight: 720,
-    video: false,
+    video: true,
+    videoCompression: 32,
     screenshotOnRunFailure: true,
     defaultCommandTimeout: 10000,
+    reporter: "mochawesome",
+    reporterOptions: {
+      reportDir: "cypress/results",
+      overwrite: false,
+      html: false,
+      json: true,
+      quiet: true,
+    },
   },
 });
