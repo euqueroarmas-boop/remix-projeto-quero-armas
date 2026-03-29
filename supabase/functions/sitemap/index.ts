@@ -66,7 +66,7 @@ const staticPages = [
 ];
 
 function urlEntry(loc: string, priority: string, changefreq: string): string {
-  return `  <url><loc>${BASE_URL}${loc}</loc><changefreq>${changefreq}</changefreq><priority>${priority}</priority></url>`;
+  return `  <url>\n    <loc>${BASE_URL}${loc}</loc>\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>`;
 }
 
 function wrapUrlset(urls: string[]): string {

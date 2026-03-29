@@ -65,7 +65,7 @@ function extractArray(source, exportName) {
 }
 
 function urlEntry(loc, priority, changefreq) {
-  return `  <url><loc>${BASE_URL}${loc}</loc><changefreq>${changefreq}</changefreq><priority>${priority}</priority></url>`;
+  return `  <url>\n    <loc>${BASE_URL}${loc}</loc>\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>`;
 }
 
 function wrapUrlset(urls) {
