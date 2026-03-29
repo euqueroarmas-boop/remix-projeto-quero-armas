@@ -224,6 +224,40 @@ const BlogPostPage = () => {
               </div>
             )}
 
+            {/* Related blog posts */}
+            {(() => {
+              const blogLinks = generatedLinks.filter(l => l.type === "blog").slice(0, 5);
+              return blogLinks.length > 0 ? (
+                <div className="mt-6 p-6 bg-muted/30 border border-border">
+                  <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground mb-3">Leitura recomendada</p>
+                  <div className="space-y-2">
+                    {blogLinks.map((link, i) => (
+                      <Link key={i} to={link.href} className="block text-sm text-primary hover:underline">
+                        → {link.anchor}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ) : null;
+            })()}
+
+            {/* City links */}
+            {(() => {
+              const cityLinks = generatedLinks.filter(l => l.type === "city").slice(0, 3);
+              return cityLinks.length > 0 ? (
+                <div className="mt-6 p-6 bg-muted/20 border border-border">
+                  <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground mb-3">Atendemos sua região</p>
+                  <div className="flex flex-wrap gap-3">
+                    {cityLinks.map((link, i) => (
+                      <Link key={i} to={link.href} className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors font-body">
+                        <MapPin size={10} /> {link.anchor}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ) : null;
+            })()}
+
             <div className="mt-12 bg-secondary p-8 md:p-12 text-center border border-border">
               <h3 className="text-xl md:text-2xl text-secondary-foreground mb-3">
                 {t("blog.ctaTitle")} <span className="text-primary">{t("blog.ctaTitleHighlight")}?</span>
