@@ -76,13 +76,13 @@ function wrapUrlset(urls: string[]): string {
 // ─── Sub-sitemap builders ───
 
 function buildPagesXml(): string {
-  return wrapUrlset(staticPages.map((p) => urlEntry(p.loc, p.priority, p.changefreq)));
+  return wrapUrlset(staticPages.map((p) => urlEntry(p.loc)));
 }
 
 function buildBlogXml(): string {
-  const urls = [urlEntry("/blog", "0.8", "weekly")];
+  const urls = [urlEntry("/blog")];
   for (const slug of blogSlugs) {
-    urls.push(urlEntry(`/blog/${slug}`, "0.6", "monthly"));
+    urls.push(urlEntry(`/blog/${slug}`));
   }
   return wrapUrlset(urls);
 }
@@ -92,7 +92,7 @@ function buildServiceCityXml(): string {
   const urls: string[] = [];
   for (const svc of serviceSlugs) {
     for (const city of citySlugs) {
-      urls.push(urlEntry(`/${svc}-em-${city}`, "0.7", "monthly"));
+      urls.push(urlEntry(`/${svc}-em-${city}`));
     }
   }
   return wrapUrlset(urls);
@@ -103,7 +103,7 @@ function buildSegmentCityXml(): string {
   const urls: string[] = [];
   for (const seg of segmentEntries) {
     for (const city of citySlugs) {
-      urls.push(urlEntry(`/${seg.prefix}-em-${city}`, "0.6", "monthly"));
+      urls.push(urlEntry(`/${seg.prefix}-em-${city}`));
     }
   }
   return wrapUrlset(urls);
@@ -114,7 +114,7 @@ function buildProblemCityXml(): string {
   const urls: string[] = [];
   for (const prob of problemSlugs) {
     for (const city of citySlugs) {
-      urls.push(urlEntry(`/${prob}-em-${city}`, "0.5", "monthly"));
+      urls.push(urlEntry(`/${prob}-em-${city}`));
     }
   }
   return wrapUrlset(urls);
@@ -124,7 +124,7 @@ function buildBlogCityXml(): string {
   const urls: string[] = [];
   for (const slug of blogSlugs) {
     for (const city of citySlugs) {
-      urls.push(urlEntry(`/blog-${slug}-${city}`, "0.4", "monthly"));
+      urls.push(urlEntry(`/blog-${slug}-${city}`));
     }
   }
   return wrapUrlset(urls);
@@ -135,7 +135,7 @@ function buildServiceSegmentCityXml(): string {
   for (const svc of serviceSlugs) {
     for (const seg of segmentEntries) {
       for (const city of citySlugs) {
-        urls.push(urlEntry(`/${svc}-${seg.slug}-${city}`, "0.5", "monthly"));
+        urls.push(urlEntry(`/${svc}-${seg.slug}-${city}`));
       }
     }
   }
