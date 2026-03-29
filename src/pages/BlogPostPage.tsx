@@ -167,26 +167,28 @@ const BlogPostPage = () => {
         <section className="section-dark pb-16 md:pb-20 -mt-20 relative z-10">
           <div className="container max-w-3xl px-5 md:px-6 pt-8 md:pt-12">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-              <nav aria-label="Breadcrumb" className="mb-5 md:mb-6">
-                <ol className="flex items-center gap-1 font-mono text-xs text-gunmetal-foreground/50">
-                  <li><Link to="/" className="hover:text-primary transition-colors">{t("service.breadcrumbHome")}</Link></li>
-                  <ChevronRight size={10} className="shrink-0" />
-                  <li><Link to="/blog" className="hover:text-primary transition-colors">{t("blogPost.blog")}</Link></li>
-                  <ChevronRight size={10} className="shrink-0" />
-                  <li className="text-primary truncate max-w-[200px]" aria-current="page">{aiTitle}</li>
-                </ol>
-              </nav>
-              <div className="flex items-center gap-3 mb-5 flex-wrap">
-                <span className="font-mono text-[10px] tracking-[0.15em] uppercase text-primary border border-primary/30 px-2 py-0.5">{aiTag}</span>
-                <span className="font-mono text-[10px] tracking-[0.15em] uppercase text-muted-foreground border border-border px-2 py-0.5">{aiCategory}</span>
-                <span className="flex items-center gap-1 font-mono text-[10px] text-gunmetal-foreground/50">
-                  <Calendar size={10} />
-                  {new Date(aiPost.published_at || aiPost.created_at).toLocaleDateString(dateLocale)}
-                </span>
-                <span className="font-mono text-[10px] text-gunmetal-foreground/50">{aiPost.read_time}</span>
+              <div className="bg-card/60 border border-border/50 rounded-xl p-5 md:p-8 backdrop-blur-sm">
+                <nav aria-label="Breadcrumb" className="mb-4 md:mb-5">
+                  <ol className="flex items-center gap-1 font-mono text-xs text-gunmetal-foreground/50">
+                    <li><Link to="/" className="hover:text-primary transition-colors">{t("service.breadcrumbHome")}</Link></li>
+                    <ChevronRight size={10} className="shrink-0" />
+                    <li><Link to="/blog" className="hover:text-primary transition-colors">{t("blogPost.blog")}</Link></li>
+                    <ChevronRight size={10} className="shrink-0" />
+                    <li className="text-primary truncate max-w-[200px]" aria-current="page">{aiTitle}</li>
+                  </ol>
+                </nav>
+                <div className="flex items-center gap-3 mb-4 flex-wrap">
+                  <span className="font-mono text-[10px] tracking-[0.15em] uppercase text-primary border border-primary/30 px-2 py-0.5">{aiTag}</span>
+                  <span className="font-mono text-[10px] tracking-[0.15em] uppercase text-muted-foreground border border-border px-2 py-0.5">{aiCategory}</span>
+                  <span className="flex items-center gap-1 font-mono text-[10px] text-gunmetal-foreground/50">
+                    <Calendar size={10} />
+                    {new Date(aiPost.published_at || aiPost.created_at).toLocaleDateString(dateLocale)}
+                  </span>
+                  <span className="font-mono text-[10px] text-gunmetal-foreground/50">{aiPost.read_time}</span>
+                </div>
+                <h1 className="text-2xl md:text-4xl mb-4 md:mb-5">{aiTitle}</h1>
+                <p className="font-body text-lg text-gunmetal-foreground/70 leading-relaxed">{aiExcerpt}</p>
               </div>
-              <h1 className="text-2xl md:text-4xl mb-5 md:mb-6">{aiTitle}</h1>
-              <p className="font-body text-lg text-gunmetal-foreground/70 leading-relaxed">{aiExcerpt}</p>
             </motion.div>
           </div>
         </section>
@@ -351,46 +353,48 @@ const BlogPostPage = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            {/* Breadcrumbs */}
-            <nav aria-label="Breadcrumb" className="mb-5 md:mb-6">
-              <ol className="flex items-center gap-1 font-mono text-xs text-gunmetal-foreground/50">
-                <li><Link to="/" className="hover:text-primary transition-colors">{t("service.breadcrumbHome")}</Link></li>
-                <ChevronRight size={10} className="shrink-0" />
-                <li><Link to="/blog" className="hover:text-primary transition-colors">{t("blogPost.blog")}</Link></li>
-                <ChevronRight size={10} className="shrink-0" />
-                <li className="text-primary truncate max-w-[200px]" aria-current="page">{localizedPost.title}</li>
-              </ol>
-            </nav>
+            <div className="bg-card/60 border border-border/50 rounded-xl p-5 md:p-8 backdrop-blur-sm">
+              {/* Breadcrumbs */}
+              <nav aria-label="Breadcrumb" className="mb-4 md:mb-5">
+                <ol className="flex items-center gap-1 font-mono text-xs text-gunmetal-foreground/50">
+                  <li><Link to="/" className="hover:text-primary transition-colors">{t("service.breadcrumbHome")}</Link></li>
+                  <ChevronRight size={10} className="shrink-0" />
+                  <li><Link to="/blog" className="hover:text-primary transition-colors">{t("blogPost.blog")}</Link></li>
+                  <ChevronRight size={10} className="shrink-0" />
+                  <li className="text-primary truncate max-w-[200px]" aria-current="page">{localizedPost.title}</li>
+                </ol>
+              </nav>
 
-            <div className="flex items-center gap-3 mb-5 flex-wrap">
-              <span className="font-mono text-[10px] tracking-[0.15em] uppercase text-primary border border-primary/30 px-2 py-0.5">
-                {localizedPost.tag}
-              </span>
-              <span className="font-mono text-[10px] tracking-[0.15em] uppercase text-muted-foreground border border-border px-2 py-0.5">
-                {localizedPost.category}
-              </span>
-              <span className="flex items-center gap-1 font-mono text-[10px] text-gunmetal-foreground/50">
-                <Calendar size={10} />
-                {new Date(post.date).toLocaleDateString(t("blogPost.locale"))}
-              </span>
-              <span className="font-mono text-[10px] text-gunmetal-foreground/50">
-                {post.readTime}
-              </span>
-            </div>
-
-            <h1 className="text-2xl md:text-4xl mb-5 md:mb-6">{localizedPost.title}{cityTitle}</h1>
-            {city && (
-              <div className="flex items-center gap-2 mt-1 mb-2">
-                <MapPin size={14} className="text-primary" />
-                <span className="font-mono text-xs text-primary uppercase tracking-wider">
-                  {t("blogPost.localContent", { city: city.name, region: city.region })}
+              <div className="flex items-center gap-3 mb-4 flex-wrap">
+                <span className="font-mono text-[10px] tracking-[0.15em] uppercase text-primary border border-primary/30 px-2 py-0.5">
+                  {localizedPost.tag}
+                </span>
+                <span className="font-mono text-[10px] tracking-[0.15em] uppercase text-muted-foreground border border-border px-2 py-0.5">
+                  {localizedPost.category}
+                </span>
+                <span className="flex items-center gap-1 font-mono text-[10px] text-gunmetal-foreground/50">
+                  <Calendar size={10} />
+                  {new Date(post.date).toLocaleDateString(t("blogPost.locale"))}
+                </span>
+                <span className="font-mono text-[10px] text-gunmetal-foreground/50">
+                  {post.readTime}
                 </span>
               </div>
-            )}
-            <p className="font-body text-lg text-gunmetal-foreground/70 leading-relaxed">
-              {localizedPost.excerpt}
-              {city && ` ${t("blogPost.cityExcerpt", { city: city.name })}`}
-            </p>
+
+              <h1 className="text-2xl md:text-4xl mb-4 md:mb-5">{localizedPost.title}{cityTitle}</h1>
+              {city && (
+                <div className="flex items-center gap-2 mt-1 mb-2">
+                  <MapPin size={14} className="text-primary" />
+                  <span className="font-mono text-xs text-primary uppercase tracking-wider">
+                    {t("blogPost.localContent", { city: city.name, region: city.region })}
+                  </span>
+                </div>
+              )}
+              <p className="font-body text-lg text-gunmetal-foreground/70 leading-relaxed">
+                {localizedPost.excerpt}
+                {city && ` ${t("blogPost.cityExcerpt", { city: city.name })}`}
+              </p>
+            </div>
           </motion.div>
         </div>
       </section>
