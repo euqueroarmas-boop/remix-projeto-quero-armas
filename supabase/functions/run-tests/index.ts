@@ -242,6 +242,35 @@ async function triggerGitHubWorkflow(testType: string, runId: string): Promise<{
   }
 }
 
+// ─── Alert dispatch on failure ───
+async function dispatchAlert(run: any) {
+  if (run.status !== "failed" && run.status !== "partial") return;
+  try {
+    await fetch(`${SUPABASE_URL}/functions/v1/test-alerts`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "send_alert",
+        payload: {
+          run_id: run.id,
+          test_type: run.test_type || run.suite,
+          suite: run.suite,
+          status: run.status,
+          error_message: run.error_message,
+          total_tests: run.total_tests || 0,
+          passed_tests: run.passed_tests || 0,
+          failed_tests: run.failed_tests || 0,
+          client_name: run.client_name,
+          client_id: run.client_id,
+          plan_type: run.plan_type,
+        },
+      }),
+    });
+  } catch (e) {
+    console.error("[WMTi] Alert dispatch failed:", e);
+  }
+}
+
 // ─── Main handler ───
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -384,6 +413,11 @@ Deno.serve(async (req) => {
         error_message: failed > 0 ? `${failed} teste(s) falharam` : null,
       } as any).eq("id", (run as any).id);
 
+      // Dispatch alert if failed
+      if (failed > 0) {
+        await dispatchAlert({ id: (run as any).id, test_type: testType, suite: "light", status: "failed", error_message: `${failed} teste(s) falharam`, total_tests: results.length, passed_tests: passed, failed_tests: failed });
+      }
+
       return new Response(JSON.stringify({ id: (run as any).id, status: failed > 0 ? "failed" : "success", results }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -397,6 +431,9 @@ Deno.serve(async (req) => {
         finished_at: new Date().toISOString(),
         error_message: dispatch.error,
       } as any).eq("id", (run as any).id);
+
+      // Dispatch alert for GitHub dispatch failure
+      await dispatchAlert({ id: (run as any).id, test_type: testType, suite: "cypress", status: "failed", error_message: dispatch.error, total_tests: 0, passed_tests: 0, failed_tests: 0 });
     }
 
     return new Response(JSON.stringify({ id: (run as any).id, status: dispatch.success ? "running" : "failed", engine: "github_actions", error: dispatch.error }), {
