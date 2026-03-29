@@ -1,3 +1,4 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 import {
   serviceSlugs,
   segmentEntries,
@@ -6,6 +7,8 @@ import {
   citySlugs,
 } from "../_shared/seo-data.ts";
 
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const BASE_URL = "https://www.wmti.com.br";
 
 const corsHeaders = {
@@ -79,11 +82,36 @@ function buildPagesXml(): string {
   return wrapUrlset(staticPages.map((p) => urlEntry(p.loc)));
 }
 
-function buildBlogXml(): string {
+async function buildBlogXml(): Promise<string> {
   const urls = [urlEntry("/blog")];
-  for (const slug of blogSlugs) {
-    urls.push(urlEntry(`/blog/${slug}`));
+  
+  // First: add slugs from DB (dynamic, always up-to-date)
+  try {
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+    const { data } = await supabase
+      .from("blog_posts_ai")
+      .select("slug")
+      .eq("status", "published")
+      .order("published_at", { ascending: false })
+      .limit(500);
+    if (data) {
+      for (const post of data) {
+        urls.push(urlEntry(`/blog/${post.slug}`));
+      }
+    }
+  } catch (e) {
+    console.error("[sitemap] DB blog query failed, falling back to static:", e);
   }
+  
+  // Fallback: add static slugs that aren't already in DB results
+  const existingSlugs = new Set(urls.map(u => u));
+  for (const slug of blogSlugs) {
+    const entry = urlEntry(`/blog/${slug}`);
+    if (!existingSlugs.has(entry)) {
+      urls.push(entry);
+    }
+  }
+  
   return wrapUrlset(urls);
 }
 
