@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, memo } from "react";
+import { useState, useEffect, useCallback, useMemo, memo, useRef } from "react";
 import { adminQuery } from "@/lib/adminApi";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -392,6 +392,7 @@ export default function AdminCommandCenter({ onNavigate }: CommandCenterProps) {
   const allLoaded = alerts.loaded && funnel.loaded && tests.loaded && activity.loaded;
   const [lastUpdate, setLastUpdate] = useState(new Date());
   const [refreshing, setRefreshing] = useState(false);
+  const [autoRefresh, setAutoRefresh] = useState(true);
 
   const handleRefreshAll = useCallback(async () => {
     setRefreshing(true);
@@ -404,15 +405,6 @@ export default function AdminCommandCenter({ onNavigate }: CommandCenterProps) {
   useEffect(() => {
     if (allLoaded) setLastUpdate(new Date());
   }, [alerts.errors24h, alerts.webhookErrors, funnel.leads, tests.testRun?.id, activity.logs.length]);
-
-  if (!allLoaded) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin text-primary mr-3" />
-        <span className="text-muted-foreground text-sm">Carregando centro de comando...</span>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
