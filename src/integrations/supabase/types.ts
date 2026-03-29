@@ -1042,6 +1042,96 @@ export type Database = {
           },
         ]
       }
+      test_runs: {
+        Row: {
+          base_url: string | null
+          browser: string | null
+          build_ref: string | null
+          created_at: string
+          duration_ms: number | null
+          environment: string | null
+          error_message: string | null
+          execution_engine: string | null
+          failed_tests: number | null
+          finished_at: string | null
+          github_run_id: string | null
+          github_run_url: string | null
+          id: string
+          logs: Json | null
+          passed_tests: number | null
+          report_url: string | null
+          results: Json | null
+          screenshot_urls: string[] | null
+          skipped_tests: number | null
+          started_at: string | null
+          status: string
+          suite: string
+          total_tests: number | null
+          triggered_by: string | null
+          updated_at: string
+          video_urls: string[] | null
+          viewport: string | null
+        }
+        Insert: {
+          base_url?: string | null
+          browser?: string | null
+          build_ref?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          environment?: string | null
+          error_message?: string | null
+          execution_engine?: string | null
+          failed_tests?: number | null
+          finished_at?: string | null
+          github_run_id?: string | null
+          github_run_url?: string | null
+          id?: string
+          logs?: Json | null
+          passed_tests?: number | null
+          report_url?: string | null
+          results?: Json | null
+          screenshot_urls?: string[] | null
+          skipped_tests?: number | null
+          started_at?: string | null
+          status?: string
+          suite: string
+          total_tests?: number | null
+          triggered_by?: string | null
+          updated_at?: string
+          video_urls?: string[] | null
+          viewport?: string | null
+        }
+        Update: {
+          base_url?: string | null
+          browser?: string | null
+          build_ref?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          environment?: string | null
+          error_message?: string | null
+          execution_engine?: string | null
+          failed_tests?: number | null
+          finished_at?: string | null
+          github_run_id?: string | null
+          github_run_url?: string | null
+          id?: string
+          logs?: Json | null
+          passed_tests?: number | null
+          report_url?: string | null
+          results?: Json | null
+          screenshot_urls?: string[] | null
+          skipped_tests?: number | null
+          started_at?: string | null
+          status?: string
+          suite?: string
+          total_tests?: number | null
+          triggered_by?: string | null
+          updated_at?: string
+          video_urls?: string[] | null
+          viewport?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
