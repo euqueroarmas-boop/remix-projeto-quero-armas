@@ -667,11 +667,11 @@ function ClientesTab() {
 }
 
 // ─── Content Renderer ───
-function AdminContent({ activeSection }: { activeSection: string }) {
+function AdminContent({ activeSection, onNavigate }: { activeSection: string; onNavigate: (s: string) => void }) {
   const fallback = <div className="flex items-center justify-center py-12 text-muted-foreground text-sm"><Loader2 className="h-5 w-5 animate-spin mr-2" />Carregando...</div>;
 
   switch (activeSection) {
-    case "dashboard": return <Dashboard />;
+    case "dashboard": return <AdminCommandCenter onNavigate={onNavigate} />;
     case "logs": return <LogsTab />;
     case "errors": return <LogsTab onlyErrors />;
     case "payments": return <PaymentsTab />;
@@ -685,7 +685,7 @@ function AdminContent({ activeSection }: { activeSection: string }) {
     case "qa": return <Suspense fallback={fallback}><QAPanel /></Suspense>;
     case "test-center": return <Suspense fallback={fallback}><AdminTestCenter /></Suspense>;
     case "blog-ai": return <Suspense fallback={fallback}><AdminBlogGenerator /></Suspense>;
-    default: return <Dashboard />;
+    default: return <AdminCommandCenter onNavigate={onNavigate} />;
   }
 }
 
