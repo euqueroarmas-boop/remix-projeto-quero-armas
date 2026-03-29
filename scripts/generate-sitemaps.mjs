@@ -64,8 +64,8 @@ function extractArray(source, exportName) {
   return Function(`return (${match[1]});`)();
 }
 
-function urlEntry(loc, priority, changefreq) {
-  return `  <url>\n    <loc>${BASE_URL}${loc}</loc>\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>`;
+function urlEntry(loc) {
+  return `  <url>\n    <loc>${BASE_URL}${loc}</loc>\n  </url>`;
 }
 
 function wrapUrlset(urls) {
@@ -97,21 +97,21 @@ const citySlugs = extractArray(seoDataSource, "citySlugs");
 const sitemapFiles = [];
 
 // 1. Static pages
-const pagesXml = wrapUrlset(staticPages.map((page) => urlEntry(page.loc, page.priority, page.changefreq)));
+const pagesXml = wrapUrlset(staticPages.map((page) => urlEntry(page.loc)));
 writeFile("sitemap-pages.xml", pagesXml);
 sitemapFiles.push("sitemap-pages.xml");
 
 // 2. Blog
 const blogXml = wrapUrlset([
-  urlEntry("/blog", "0.8", "weekly"),
-  ...blogSlugs.map((slug) => urlEntry(`/blog/${slug}`, "0.6", "monthly")),
+  urlEntry("/blog"),
+  ...blogSlugs.map((slug) => urlEntry(`/blog/${slug}`)),
 ]);
 writeFile("sitemap-blog.xml", blogXml);
 sitemapFiles.push("sitemap-blog.xml");
 
 // 3. Programmatic (service × city) — pattern: /{service}-em-{city}
 const programmaticUrls = serviceSlugs.flatMap((svc) =>
-  citySlugs.map((city) => urlEntry(`/${svc}-em-${city}`, "0.7", "monthly"))
+  citySlugs.map((city) => urlEntry(`/${svc}-em-${city}`))
 );
 const programmaticChunks = chunkArray(programmaticUrls, MAX_URLS_PER_SITEMAP);
 programmaticChunks.forEach((chunk, i) => {
@@ -124,7 +124,7 @@ programmaticChunks.forEach((chunk, i) => {
 
 // 4. Segments (segment × city) — pattern: /{segment-prefix}-em-{city}
 const segmentUrls = segmentEntries.flatMap((seg) =>
-  citySlugs.map((city) => urlEntry(`/${seg.prefix}-em-${city}`, "0.6", "monthly"))
+  citySlugs.map((city) => urlEntry(`/${seg.prefix}-em-${city}`))
 );
 const segmentChunks = chunkArray(segmentUrls, MAX_URLS_PER_SITEMAP);
 segmentChunks.forEach((chunk, i) => {
@@ -137,7 +137,7 @@ segmentChunks.forEach((chunk, i) => {
 
 // 5. Problems (problem × city) — pattern: /{problem}-em-{city}
 const problemUrls = problemSlugs.flatMap((prob) =>
-  citySlugs.map((city) => urlEntry(`/${prob}-em-${city}`, "0.5", "monthly"))
+  citySlugs.map((city) => urlEntry(`/${prob}-em-${city}`))
 );
 const problemChunks = chunkArray(problemUrls, MAX_URLS_PER_SITEMAP);
 problemChunks.forEach((chunk, i) => {
