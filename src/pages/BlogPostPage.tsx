@@ -387,23 +387,85 @@ const BlogPostPage = () => {
                   </div>
                 )}
 
-                {localizedStructuredContent?.internalLinks?.length > 0 && (
-                  <div className="mt-8 p-6 bg-muted/50 border border-border">
-                    <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground mb-3">{t("blogPost.relatedServices")}</p>
-                    <div className="flex flex-wrap gap-3">
-                      {localizedStructuredContent.internalLinks.map((link, i) => (
-                        <Link
-                          key={i}
-                          to={link.href}
-                          className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
-                        >
-                          {link.label}
-                          <ArrowRight size={12} />
-                        </Link>
-                      ))}
+                {/* Enhanced internal links: merge existing with generated */}
+                {(() => {
+                  const existingLinks = localizedStructuredContent?.internalLinks || [];
+                  const generatedRelated = getRelatedServicesBlock(
+                    post.slug,
+                    post.title,
+                    post.excerpt,
+                    post.category,
+                    post.tag
+                  );
+                  // Merge: existing first, then fill from generated (avoid duplicate hrefs)
+                  const existingHrefs = new Set(existingLinks.map(l => l.href));
+                  const mergedLinks = [
+                    ...existingLinks,
+                    ...generatedRelated.filter(l => !existingHrefs.has(l.href)),
+                  ];
+                  return mergedLinks.length > 0 ? (
+                    <div className="mt-8 p-6 bg-muted/50 border border-border">
+                      <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground mb-3">{t("blogPost.relatedServices", "Serviços relacionados")}</p>
+                      <div className="flex flex-wrap gap-3">
+                        {mergedLinks.map((link, i) => (
+                          <Link
+                            key={i}
+                            to={link.href}
+                            className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                          >
+                            {link.label || link.anchor} <ArrowRight size={12} />
+                          </Link>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  ) : null;
+                })()}
+
+                {/* Related blog posts */}
+                {(() => {
+                  const blogLinks = generateBlogInternalLinks(post.slug, post.title, post.excerpt, post.category, post.tag)
+                    .filter(l => l.type === "blog")
+                    .slice(0, 5);
+                  return blogLinks.length > 0 ? (
+                    <div className="mt-6 p-6 bg-muted/30 border border-border">
+                      <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground mb-3">Leitura recomendada</p>
+                      <div className="space-y-2">
+                        {blogLinks.map((link, i) => (
+                          <Link
+                            key={i}
+                            to={link.href}
+                            className="block text-sm text-primary hover:underline"
+                          >
+                            → {link.anchor}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null;
+                })()}
+
+                {/* City links */}
+                {(() => {
+                  const cityLinks = generateBlogInternalLinks(post.slug, post.title, post.excerpt, post.category, post.tag)
+                    .filter(l => l.type === "city")
+                    .slice(0, 3);
+                  return cityLinks.length > 0 ? (
+                    <div className="mt-6 p-6 bg-muted/20 border border-border">
+                      <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground mb-3">Atendemos sua região</p>
+                      <div className="flex flex-wrap gap-3">
+                        {cityLinks.map((link, i) => (
+                          <Link
+                            key={i}
+                            to={link.href}
+                            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors font-body"
+                          >
+                            <MapPin size={10} /> {link.anchor}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null;
+                })()}
               </div>
             )}
           </div>
