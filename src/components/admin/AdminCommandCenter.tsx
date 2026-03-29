@@ -200,8 +200,54 @@ const AlertsBanner = memo(function AlertsBanner({ errors24h, webhookErrors, onNa
   );
 });
 
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "";
+const PUBLISHED_URL = "https://dell-shine-solutions.lovable.app";
+
+const SYSTEM_CHECKS: Record<string, { name: string; url: string; method?: string }[]> = {
+  "Aplicação": [
+    { name: "Homepage (SSR)", url: `${PUBLISHED_URL}/` },
+    { name: "Blog", url: `${PUBLISHED_URL}/blog` },
+    { name: "Orçamento", url: `${PUBLISHED_URL}/orcamento-ti` },
+    { name: "Serviços", url: `${PUBLISHED_URL}/servicos` },
+    { name: "Sitemap XML", url: `${PUBLISHED_URL}/sitemap.xml` },
+    { name: "Robots.txt", url: `${PUBLISHED_URL}/robots.txt` },
+  ],
+  "Banco de Dados": [
+    { name: "REST API", url: `${SUPABASE_URL}/rest/v1/` },
+    { name: "Tabela leads", url: `${SUPABASE_URL}/rest/v1/leads?select=id&limit=1` },
+    { name: "Tabela contracts", url: `${SUPABASE_URL}/rest/v1/contracts?select=id&limit=1` },
+    { name: "Tabela payments", url: `${SUPABASE_URL}/rest/v1/payments?select=id&limit=1` },
+    { name: "Tabela logs_sistema", url: `${SUPABASE_URL}/rest/v1/logs_sistema?select=id&limit=1` },
+  ],
+  "Edge Functions": [
+    { name: "submit-lead", url: `${SUPABASE_URL}/functions/v1/submit-lead`, method: "OPTIONS" },
+    { name: "admin-data", url: `${SUPABASE_URL}/functions/v1/admin-data`, method: "OPTIONS" },
+    { name: "run-tests", url: `${SUPABASE_URL}/functions/v1/run-tests`, method: "OPTIONS" },
+    { name: "brasil-api-lookup", url: `${SUPABASE_URL}/functions/v1/brasil-api-lookup`, method: "OPTIONS" },
+    { name: "create-asaas-payment", url: `${SUPABASE_URL}/functions/v1/create-asaas-payment`, method: "OPTIONS" },
+    { name: "notify-lead", url: `${SUPABASE_URL}/functions/v1/notify-lead`, method: "OPTIONS" },
+    { name: "sitemap", url: `${SUPABASE_URL}/functions/v1/sitemap`, method: "OPTIONS" },
+  ],
+  "Storage": [
+    { name: "Storage API", url: `${SUPABASE_URL}/storage/v1/` },
+    { name: "Bucket: contracts", url: `${SUPABASE_URL}/storage/v1/bucket/contracts` },
+  ],
+  "Webhooks": [
+    { name: "asaas-webhook", url: `${SUPABASE_URL}/functions/v1/asaas-webhook`, method: "OPTIONS" },
+    { name: "ingest-test-events", url: `${SUPABASE_URL}/functions/v1/ingest-test-events`, method: "OPTIONS" },
+    { name: "test-alerts", url: `${SUPABASE_URL}/functions/v1/test-alerts`, method: "OPTIONS" },
+  ],
+  "Integrações": [
+    { name: "Asaas Payments", url: `${SUPABASE_URL}/functions/v1/create-asaas-payment`, method: "OPTIONS" },
+    { name: "Brasil API (CEP/CNPJ)", url: `${SUPABASE_URL}/functions/v1/brasil-api-lookup`, method: "OPTIONS" },
+    { name: "send-purchase-confirmation", url: `${SUPABASE_URL}/functions/v1/send-purchase-confirmation`, method: "OPTIONS" },
+    { name: "generate-blog-post (AI)", url: `${SUPABASE_URL}/functions/v1/generate-blog-post`, method: "OPTIONS" },
+  ],
+};
+
 const SystemStatusGrid = memo(function SystemStatusGrid({ errors24h, webhookErrors }: { errors24h: number; webhookErrors: number }) {
-  const now = new Date().toLocaleTimeString("pt-BR");
+  const [expanded, setExpanded] = useState<string | null>(null);
+
   const items = useMemo(() => [
     { label: "Aplicação", status: "online" as SystemStatus, detail: "Operacional", icon: Server },
     { label: "Banco de Dados", status: "online" as SystemStatus, detail: "Operacional", icon: Database },
@@ -211,14 +257,21 @@ const SystemStatusGrid = memo(function SystemStatusGrid({ errors24h, webhookErro
     { label: "Integrações", status: (webhookErrors > 5 ? "degraded" : "online") as SystemStatus, detail: webhookErrors > 5 ? "Instabilidade" : "Operacional", icon: Link2 },
   ], [errors24h, webhookErrors]);
 
+  const checks = SYSTEM_CHECKS[expanded || ""] || [];
+
   return (
     <div>
       <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Status do Sistema</h3>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
         {items.map((s) => {
           const Icon = s.icon;
+          const isOpen = expanded === s.label;
           return (
-            <Card key={s.label} className={`border ${s.status === "online" ? "border-border" : s.status === "degraded" ? "border-amber-500/30" : "border-red-500/30"} transition-colors duration-500`}>
+            <Card
+              key={s.label}
+              onClick={() => setExpanded(isOpen ? null : s.label)}
+              className={`border cursor-pointer transition-colors duration-300 ${isOpen ? "border-primary/50 ring-1 ring-primary/20" : s.status === "online" ? "border-border hover:border-primary/30" : s.status === "degraded" ? "border-amber-500/30 hover:border-amber-500/50" : "border-red-500/30 hover:border-red-500/50"}`}
+            >
               <CardContent className="p-3">
                 <div className="flex items-center gap-2 mb-2">
                   <div className={`w-2 h-2 rounded-full transition-colors duration-500 ${STATUS_DOT[s.status]}`} />
@@ -231,6 +284,51 @@ const SystemStatusGrid = memo(function SystemStatusGrid({ errors24h, webhookErro
           );
         })}
       </div>
+
+      {/* Expanded detail panel */}
+      {expanded && checks.length > 0 && (
+        <Card className="mt-3 border-primary/20 animate-in fade-in slide-in-from-top-2 duration-200">
+          <CardContent className="p-4 space-y-2">
+            <div className="flex items-center justify-between mb-1">
+              <h4 className="text-xs font-bold text-foreground">{expanded} — Conexões Validadas</h4>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const text = checks.map(c => `${c.name}\n  ${c.method || "GET"} ${c.url}`).join("\n\n");
+                  navigator.clipboard.writeText(text);
+                }}
+                className="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Copiar tudo
+              </button>
+            </div>
+            {checks.map((check, i) => (
+              <div key={i} className="flex items-start gap-2 p-2 rounded-md bg-muted/30 group">
+                <CheckCircle2 className="h-3 w-3 text-emerald-400 shrink-0 mt-0.5" />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-medium text-foreground">{check.name}</span>
+                    <Badge variant="outline" className="text-[9px] h-3.5 px-1">{check.method || "GET"}</Badge>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground font-mono break-all mt-0.5">{check.url}</p>
+                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigator.clipboard.writeText(`${check.name}\n${check.method || "GET"} ${check.url}`);
+                    const el = e.currentTarget;
+                    el.textContent = "✓";
+                    setTimeout(() => { el.textContent = "Copiar"; }, 1200);
+                  }}
+                  className="text-[10px] text-muted-foreground hover:text-foreground transition-colors opacity-0 group-hover:opacity-100 shrink-0"
+                >
+                  Copiar
+                </button>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 });
