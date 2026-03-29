@@ -12,6 +12,7 @@ import { cities } from "@/data/seo/cities";
 import { useLocalizedBlogPosts, useLocalizedBlogContent, translateBlogCategoryLabel, translateInternalLinkLabel } from "@/hooks/useBlogLocalized";
 import { openWhatsApp } from "@/lib/whatsapp";
 import { supabase } from "@/integrations/supabase/client";
+import { generateBlogInternalLinks, injectLinksIntoMarkdown, getRelatedServicesBlock, type InternalLink } from "@/lib/blogInternalLinks";
 
 /** Try to match a slug like "vantagens-microsoft-365-para-empresas-campinas" */
 function resolveBlogSlug(slug: string | undefined) {
@@ -110,15 +111,38 @@ const BlogPostPage = () => {
     
     const aiTitle = (isEn && aiPost.title_en) ? aiPost.title_en : aiPost.title;
     const aiExcerpt = (isEn && aiPost.excerpt_en) ? aiPost.excerpt_en : aiPost.excerpt;
-    const aiContent = (isEn && aiPost.content_md_en) ? aiPost.content_md_en : aiPost.content_md;
+    const aiContentRaw = (isEn && aiPost.content_md_en) ? aiPost.content_md_en : aiPost.content_md;
     const aiMetaTitle = (isEn && aiPost.meta_title_en) ? aiPost.meta_title_en : aiPost.meta_title;
     const aiMetaDesc = (isEn && aiPost.meta_description_en) ? aiPost.meta_description_en : aiPost.meta_description;
     const aiCta = (isEn && aiPost.cta_en) ? aiPost.cta_en : aiPost.cta;
     const aiFaq = ((isEn && aiPost.faq_en && (aiPost.faq_en as any[]).length > 0) ? aiPost.faq_en : aiPost.faq || []) as { q: string; a: string }[];
-    const aiLinks = ((aiPost.internal_links || []) as { label: string; href: string }[]).map((link) => ({
+    const aiExistingLinks = ((aiPost.internal_links || []) as { label: string; href: string }[]).map((link) => ({
       ...link,
       label: translateInternalLinkLabel(link.label, i18n.language),
     }));
+
+    // Generate smart internal links
+    const generatedLinks = generateBlogInternalLinks(
+      aiPost.slug,
+      aiPost.title,
+      aiPost.excerpt,
+      aiPost.category || "Tecnologia Empresarial",
+      aiPost.tag || "",
+      aiPost.keywords || []
+    );
+
+    // Inject contextual links into markdown content (only for PT, avoid breaking translations)
+    const aiContent = !isEn ? injectLinksIntoMarkdown(aiContentRaw, generatedLinks) : aiContentRaw;
+
+    // Merge existing links with generated related services block
+    const relatedBlock = getRelatedServicesBlock(
+      aiPost.slug,
+      aiPost.title,
+      aiPost.excerpt,
+      aiPost.category || "Tecnologia Empresarial",
+      aiPost.tag || ""
+    );
+    const aiLinks = aiExistingLinks.length > 0 ? aiExistingLinks : relatedBlock;
     const aiTag = t(`blog.tags.${aiPost.tag}`, { defaultValue: aiPost.tag });
     const aiCategory = translateBlogCategoryLabel(aiPost.category, i18n.language);
     const dateLocale = isEn ? "en-US" : "pt-BR";
@@ -170,7 +194,7 @@ const BlogPostPage = () => {
         <section className="section-light py-16 md:py-24">
           <div className="container max-w-3xl px-5 md:px-6">
             <div className="font-body text-foreground leading-relaxed prose prose-sm md:prose-base max-w-none [&_h2]:font-heading [&_h2]:text-xl [&_h2]:md:text-2xl [&_h2]:font-bold [&_h2]:mt-8 [&_h2]:mb-3 [&_h2]:text-foreground [&_p]:text-muted-foreground [&_p]:mb-4">
-              <div dangerouslySetInnerHTML={{ __html: aiContent.replace(/^## (.+)$/gm, '<h2>$1</h2>').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/^- (.+)$/gm, '<li>$1</li>').replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>').replace(/\n\n/g, '</p><p>').replace(/^(?!<[hul])/gm, '<p>').replace(/<p><\/p>/g, '') }} />
+              <div dangerouslySetInnerHTML={{ __html: aiContent.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-primary hover:underline">$1</a>').replace(/^## (.+)$/gm, '<h2>$1</h2>').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/^- (.+)$/gm, '<li>$1</li>').replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>').replace(/\n\n/g, '</p><p>').replace(/^(?!<[hula])/gm, '<p>').replace(/<p><\/p>/g, '') }} />
             </div>
 
             {aiFaq.length > 0 && (
@@ -199,6 +223,40 @@ const BlogPostPage = () => {
                 </div>
               </div>
             )}
+
+            {/* Related blog posts */}
+            {(() => {
+              const blogLinks = generatedLinks.filter(l => l.type === "blog").slice(0, 5);
+              return blogLinks.length > 0 ? (
+                <div className="mt-6 p-6 bg-muted/30 border border-border">
+                  <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground mb-3">Leitura recomendada</p>
+                  <div className="space-y-2">
+                    {blogLinks.map((link, i) => (
+                      <Link key={i} to={link.href} className="block text-sm text-primary hover:underline">
+                        → {link.anchor}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ) : null;
+            })()}
+
+            {/* City links */}
+            {(() => {
+              const cityLinks = generatedLinks.filter(l => l.type === "city").slice(0, 3);
+              return cityLinks.length > 0 ? (
+                <div className="mt-6 p-6 bg-muted/20 border border-border">
+                  <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground mb-3">Atendemos sua região</p>
+                  <div className="flex flex-wrap gap-3">
+                    {cityLinks.map((link, i) => (
+                      <Link key={i} to={link.href} className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors font-body">
+                        <MapPin size={10} /> {link.anchor}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ) : null;
+            })()}
 
             <div className="mt-12 bg-secondary p-8 md:p-12 text-center border border-border">
               <h3 className="text-xl md:text-2xl text-secondary-foreground mb-3">
@@ -363,23 +421,85 @@ const BlogPostPage = () => {
                   </div>
                 )}
 
-                {localizedStructuredContent?.internalLinks?.length > 0 && (
-                  <div className="mt-8 p-6 bg-muted/50 border border-border">
-                    <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground mb-3">{t("blogPost.relatedServices")}</p>
-                    <div className="flex flex-wrap gap-3">
-                      {localizedStructuredContent.internalLinks.map((link, i) => (
-                        <Link
-                          key={i}
-                          to={link.href}
-                          className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
-                        >
-                          {link.label}
-                          <ArrowRight size={12} />
-                        </Link>
-                      ))}
+                {/* Enhanced internal links: merge existing with generated */}
+                {(() => {
+                  const existingLinks = localizedStructuredContent?.internalLinks || [];
+                  const generatedRelated = getRelatedServicesBlock(
+                    post.slug,
+                    post.title,
+                    post.excerpt,
+                    post.category,
+                    post.tag
+                  );
+                  // Merge: existing first, then fill from generated (avoid duplicate hrefs)
+                  const existingHrefs = new Set(existingLinks.map(l => l.href));
+                  const mergedLinks = [
+                    ...existingLinks,
+                    ...generatedRelated.filter(l => !existingHrefs.has(l.href)),
+                  ];
+                  return mergedLinks.length > 0 ? (
+                    <div className="mt-8 p-6 bg-muted/50 border border-border">
+                      <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground mb-3">{t("blogPost.relatedServices", "Serviços relacionados")}</p>
+                      <div className="flex flex-wrap gap-3">
+                        {mergedLinks.map((link, i) => (
+                          <Link
+                            key={i}
+                            to={link.href}
+                            className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                          >
+                            {(link as any).label || (link as any).anchor} <ArrowRight size={12} />
+                          </Link>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  ) : null;
+                })()}
+
+                {/* Related blog posts */}
+                {(() => {
+                  const blogLinks = generateBlogInternalLinks(post.slug, post.title, post.excerpt, post.category, post.tag)
+                    .filter(l => l.type === "blog")
+                    .slice(0, 5);
+                  return blogLinks.length > 0 ? (
+                    <div className="mt-6 p-6 bg-muted/30 border border-border">
+                      <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground mb-3">Leitura recomendada</p>
+                      <div className="space-y-2">
+                        {blogLinks.map((link, i) => (
+                          <Link
+                            key={i}
+                            to={link.href}
+                            className="block text-sm text-primary hover:underline"
+                          >
+                            → {link.anchor}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null;
+                })()}
+
+                {/* City links */}
+                {(() => {
+                  const cityLinks = generateBlogInternalLinks(post.slug, post.title, post.excerpt, post.category, post.tag)
+                    .filter(l => l.type === "city")
+                    .slice(0, 3);
+                  return cityLinks.length > 0 ? (
+                    <div className="mt-6 p-6 bg-muted/20 border border-border">
+                      <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground mb-3">Atendemos sua região</p>
+                      <div className="flex flex-wrap gap-3">
+                        {cityLinks.map((link, i) => (
+                          <Link
+                            key={i}
+                            to={link.href}
+                            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors font-body"
+                          >
+                            <MapPin size={10} /> {link.anchor}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null;
+                })()}
               </div>
             )}
           </div>
