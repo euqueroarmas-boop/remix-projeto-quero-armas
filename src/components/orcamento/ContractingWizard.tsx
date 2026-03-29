@@ -406,7 +406,19 @@ const ContractingWizard = ({
       await supabase.from("integration_logs" as any).insert({
         integration_name: "contract",
         operation_name: "contract_created",
-        request_payload: { contract_id: (contractRow as any).id, customer_id: customer.id, customerId, quote_id: resolvedQuoteId },
+        request_payload: {
+          contract_id: (contractRow as any).id,
+          customer_id: customer.id,
+          quote_id: resolvedQuoteId,
+          contract_type: contractType,
+          template_id: contractType === "suporte" ? "wmti_recorrente_v1" : null,
+          template_version: contractType === "suporte" ? "1.0" : null,
+          monthly_value: monthlyValue,
+          computers_qty: computersQty,
+          aceite: true,
+          ip: null,
+          timestamp: new Date().toISOString(),
+        },
         status: "success",
       } as any);
 
