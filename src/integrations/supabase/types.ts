@@ -1066,6 +1066,7 @@ export type Database = {
           started_at: string | null
           status: string
           suite: string
+          test_type: string
           total_tests: number | null
           triggered_by: string | null
           updated_at: string
@@ -1095,6 +1096,7 @@ export type Database = {
           started_at?: string | null
           status?: string
           suite: string
+          test_type?: string
           total_tests?: number | null
           triggered_by?: string | null
           updated_at?: string
@@ -1124,6 +1126,7 @@ export type Database = {
           started_at?: string | null
           status?: string
           suite?: string
+          test_type?: string
           total_tests?: number | null
           triggered_by?: string | null
           updated_at?: string
