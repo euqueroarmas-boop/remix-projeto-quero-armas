@@ -321,13 +321,44 @@ const ContractingWizard = ({
         cep: data.cep,
       };
 
-      const html = generateContractHtml(
-        customerDataForContract,
-        contractType as "locacao" | "suporte",
-        effectivePath === "locacao" ? plan : null,
-        computersQty,
-        monthlyValue,
-      );
+      let html: string;
+
+      if (contractType === "suporte") {
+        // Use the official versioned template for recurring services
+        const templateHtml = await generateContractFromTemplate("wmti_recorrente_v1", {
+          cliente_razao_social: data.razaoSocial,
+          cliente_cnpj: data.cnpjOuCpf,
+          cliente_endereco_completo: fullAddress + ", " + data.cidade + "/" + data.uf + ", CEP " + data.cep,
+          representante_nome_completo: data.responsavel,
+          representante_cpf: data.cnpjOuCpf.replace(/\D/g, "").length <= 11 ? data.cnpjOuCpf : "",
+          representante_email: data.email,
+          representante_telefone: data.telefone || "",
+          prazo_meses: "36",
+          data_contratacao: new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" }),
+          ip_contratante: "",
+          geo_contratante: "",
+          aceite_checkbox: "Sim",
+          testemunha1_nome: "",
+          testemunha1_cpf: "",
+          testemunha2_nome: "",
+          testemunha2_cpf: "",
+        });
+        html = templateHtml || generateContractHtml(
+          customerDataForContract,
+          "suporte",
+          null,
+          computersQty,
+          monthlyValue,
+        );
+      } else {
+        html = generateContractHtml(
+          customerDataForContract,
+          "locacao",
+          plan,
+          computersQty,
+          monthlyValue,
+        );
+      }
 
       const encoder = new TextEncoder();
       const hashBuffer = await crypto.subtle.digest("SHA-256", encoder.encode(html));
