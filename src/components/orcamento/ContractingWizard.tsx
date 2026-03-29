@@ -63,6 +63,7 @@ interface Props {
   leadNumero?: string;
   leadComplemento?: string;
   leadBairro?: string;
+  customRegistrationForm?: (onComplete: (data: RegistrationData) => Promise<void>, loading: boolean) => React.ReactNode;
 }
 
 const normalizeQrImage = (value: unknown) => {
@@ -126,6 +127,7 @@ const ContractingWizard = ({
   leadNumero,
   leadComplemento,
   leadBairro,
+  customRegistrationForm,
 }: Props) => {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -356,7 +358,7 @@ const ContractingWizard = ({
           cliente_cnpj: registrationData.cnpjOuCpf,
           cliente_endereco_completo: fullAddress + ", " + registrationData.cidade + "/" + registrationData.uf + ", CEP " + registrationData.cep,
           representante_nome_completo: registrationData.responsavel,
-          representante_cpf: registrationData.cnpjOuCpf.replace(/\D/g, "").length <= 11 ? registrationData.cnpjOuCpf : "",
+          representante_cpf: registrationData.representanteCpf || (registrationData.cnpjOuCpf.replace(/\D/g, "").length <= 11 ? registrationData.cnpjOuCpf : ""),
           representante_email: registrationData.email,
           representante_telefone: registrationData.telefone || "",
           prazo_meses: String(config.termMonths),
@@ -583,7 +585,10 @@ const ContractingWizard = ({
               subtitle="Preenchimento automático por CNPJ e CEP"
               status={getStepStatus("registration")}
             >
-              <QuickRegistrationForm onComplete={handleRegistrationComplete} loading={registrationLoading} initialData={initialRegistrationData} />
+              {customRegistrationForm
+                ? customRegistrationForm(handleRegistrationComplete, registrationLoading)
+                : <QuickRegistrationForm onComplete={handleRegistrationComplete} loading={registrationLoading} initialData={initialRegistrationData} />
+              }
             </WizardStepWrapper>
 
             {/* Step 2: Plan Configuration */}

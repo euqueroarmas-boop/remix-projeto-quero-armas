@@ -23,6 +23,7 @@ export interface RegistrationData {
   cidade: string;
   uf: string;
   isPJ: boolean;
+  representanteCpf?: string;
 }
 
 const registrationSchema = z.object({
