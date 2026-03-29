@@ -293,6 +293,32 @@ function ErrorDetail({ result }: { result: DetailedTestResult }) {
               </pre>
             </div>
           )}
+
+          {/* Copy full error button */}
+          <div className="pl-5 pt-1">
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-[10px] h-6 px-2 gap-1"
+              onClick={(e) => {
+                e.stopPropagation();
+                const parts = [
+                  `Teste: ${result.name}`,
+                  result.spec ? `Spec: ${result.spec}` : "",
+                  `Status: ${result.status}`,
+                  `Duração: ${formatDuration(result.duration_ms)}`,
+                  result.error ? `\nErro:\n${result.error}` : "",
+                  result.stack_trace ? `\nStack Trace:\n${result.stack_trace}` : "",
+                  result.cypress_command ? `\nComando Cypress:\n${result.cypress_command}` : "",
+                  result.diff ? `\nExpected: ${JSON.stringify(result.diff.expected)}\nActual: ${JSON.stringify(result.diff.actual)}` : "",
+                ].filter(Boolean).join("\n");
+                navigator.clipboard.writeText(parts);
+                toast.success("Erro copiado com sucesso");
+              }}
+            >
+              <Copy className="h-3 w-3" /> Copiar erro
+            </Button>
+          </div>
         </CollapsibleContent>
       </div>
     </Collapsible>
