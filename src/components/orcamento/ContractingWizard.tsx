@@ -314,31 +314,52 @@ const ContractingWizard = ({
         setActiveQuoteId(resolvedQuoteId);
       }
 
+      setCurrentStep("planConfig");
+      scrollToWizardTop();
+    } catch (err) {
+      console.error("[WMTi] Erro no cadastro:", err);
+      toast({ title: "Erro ao salvar dados", description: "Tente novamente.", variant: "destructive" });
+    } finally {
+      setRegistrationLoading(false);
+    }
+  };
+
+  const handlePlanConfigConfirm = async (config: PlanConfig, pricing: PricingBreakdown) => {
+    setPlanConfig(config);
+    setPricingBreakdown(pricing);
+
+    if (!registrationData || !customerId || !activeQuoteId) return;
+
+    setRegistrationLoading(true);
+    try {
+      const fullAddress = [registrationData.endereco, registrationData.numero, registrationData.complemento, registrationData.bairro].filter(Boolean).join(", ");
+
       const customerDataForContract: CustomerData = {
-        razaoSocial: data.razaoSocial,
-        nomeFantasia: data.nomeFantasia,
-        cnpjOuCpf: data.cnpjOuCpf,
-        responsavel: data.responsavel,
-        email: data.email,
-        telefone: data.telefone,
+        razaoSocial: registrationData.razaoSocial,
+        nomeFantasia: registrationData.nomeFantasia,
+        cnpjOuCpf: registrationData.cnpjOuCpf,
+        responsavel: registrationData.responsavel,
+        email: registrationData.email,
+        telefone: registrationData.telefone,
         endereco: fullAddress,
-        cidade: `${data.cidade}/${data.uf}`,
-        cep: data.cep,
+        cidade: `${registrationData.cidade}/${registrationData.uf}`,
+        cep: registrationData.cep,
       };
+
+      const finalMonthlyValue = pricing.valorFinalMensal;
 
       let html: string;
 
       if (contractType === "suporte") {
-        // Use the official versioned template for recurring services
         const templateHtml = await generateContractFromTemplate("wmti_recorrente_v1", {
-          cliente_razao_social: data.razaoSocial,
-          cliente_cnpj: data.cnpjOuCpf,
-          cliente_endereco_completo: fullAddress + ", " + data.cidade + "/" + data.uf + ", CEP " + data.cep,
-          representante_nome_completo: data.responsavel,
-          representante_cpf: data.cnpjOuCpf.replace(/\D/g, "").length <= 11 ? data.cnpjOuCpf : "",
-          representante_email: data.email,
-          representante_telefone: data.telefone || "",
-          prazo_meses: "36",
+          cliente_razao_social: registrationData.razaoSocial,
+          cliente_cnpj: registrationData.cnpjOuCpf,
+          cliente_endereco_completo: fullAddress + ", " + registrationData.cidade + "/" + registrationData.uf + ", CEP " + registrationData.cep,
+          representante_nome_completo: registrationData.responsavel,
+          representante_cpf: registrationData.cnpjOuCpf.replace(/\D/g, "").length <= 11 ? registrationData.cnpjOuCpf : "",
+          representante_email: registrationData.email,
+          representante_telefone: registrationData.telefone || "",
+          prazo_meses: String(config.termMonths),
           data_contratacao: new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" }),
           ip_contratante: "",
           geo_contratante: "",
@@ -353,7 +374,7 @@ const ContractingWizard = ({
           "suporte",
           null,
           computersQty,
-          monthlyValue,
+          finalMonthlyValue,
         );
       } else {
         html = generateContractHtml(
@@ -361,7 +382,7 @@ const ContractingWizard = ({
           "locacao",
           plan,
           computersQty,
-          monthlyValue,
+          finalMonthlyValue,
         );
       }
 
@@ -373,11 +394,11 @@ const ContractingWizard = ({
       const { data: contractRow, error: contractErr } = await supabase
         .from("contracts" as any)
         .insert({
-          quote_id: resolvedQuoteId,
-          customer_id: customer.id,
+          quote_id: activeQuoteId,
+          customer_id: customerId,
           contract_type: contractType,
           contract_text: html,
-          monthly_value: monthlyValue,
+          monthly_value: finalMonthlyValue,
           contract_hash: contractHash,
           status: "draft",
           signed: false,
@@ -404,7 +425,7 @@ const ContractingWizard = ({
           mouse_model: "Mouse óptico USB",
           quantity: computersQty,
           unit_price: plan.price,
-          monthly_total: monthlyValue,
+          monthly_total: finalMonthlyValue,
         } as any);
       }
 
@@ -413,30 +434,39 @@ const ContractingWizard = ({
         operation_name: "contract_created",
         request_payload: {
           contract_id: (contractRow as any).id,
-          customer_id: customer.id,
-          quote_id: resolvedQuoteId,
+          customer_id: customerId,
+          quote_id: activeQuoteId,
           contract_type: contractType,
           template_id: contractType === "suporte" ? "wmti_recorrente_v1" : null,
           template_version: contractType === "suporte" ? "1.0" : null,
-          monthly_value: monthlyValue,
-          computers_qty: computersQty,
+          term_months: config.termMonths,
+          support_24h: config.support24h,
+          valor_base: pricing.valorBase,
+          desconto_percentual: pricing.descontoPercentual,
+          valor_com_desconto: pricing.valorComDesconto,
+          valor_adicional_24h: pricing.valorAdicional24h,
+          valor_final_mensal: pricing.valorFinalMensal,
           aceite: true,
-          ip: null,
           timestamp: new Date().toISOString(),
         },
         status: "success",
       } as any);
 
+      // Update quote with final value
+      await supabase.from("quotes" as any)
+        .update({ monthly_value: finalMonthlyValue } as any)
+        .eq("id", activeQuoteId);
+
       await supabase.from("payments" as any).insert({
-        quote_id: resolvedQuoteId,
+        quote_id: activeQuoteId,
         payment_status: "pending",
       } as any);
 
       setCurrentStep("contract");
       scrollToWizardTop();
     } catch (err) {
-      console.error("[WMTi] Erro no cadastro:", err);
-      toast({ title: "Erro ao salvar dados", description: "Tente novamente.", variant: "destructive" });
+      console.error("[WMTi] Erro ao gerar contrato:", err);
+      toast({ title: "Erro ao gerar contrato", description: "Tente novamente.", variant: "destructive" });
     } finally {
       setRegistrationLoading(false);
     }
