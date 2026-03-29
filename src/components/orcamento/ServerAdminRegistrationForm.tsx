@@ -202,6 +202,7 @@ const ServerAdminRegistrationForm = ({ onComplete, loading: externalLoading }: P
               autoComplete="off"
               inputMode="numeric"
               required
+              data-testid="campo-cnpj"
             />
             {cnpjLoading && <Loader2 className="w-4 h-4 animate-spin absolute right-3 top-4 text-primary" />}
           </div>
@@ -210,7 +211,7 @@ const ServerAdminRegistrationForm = ({ onComplete, loading: externalLoading }: P
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Label className="mb-1.5 block text-sm">Razão Social *</Label>
-            <Input value={form.razaoSocial} onChange={(e) => update("razaoSocial", e.target.value)} className={fieldClass} placeholder="Razão social da empresa" autoComplete="organization" required />
+            <Input value={form.razaoSocial} onChange={(e) => update("razaoSocial", e.target.value)} className={fieldClass} placeholder="Razão social da empresa" autoComplete="organization" required data-testid="campo-razao-social" />
           </div>
           <div>
             <Label className="mb-1.5 block text-sm">Nome Fantasia</Label>
@@ -238,19 +239,19 @@ const ServerAdminRegistrationForm = ({ onComplete, loading: externalLoading }: P
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Label className="mb-1.5 block text-sm">Nome completo *</Label>
-            <Input value={form.responsavelNome} onChange={(e) => update("responsavelNome", e.target.value)} className={fieldClass} placeholder="Nome completo do responsável" autoComplete="name" required />
+            <Input value={form.responsavelNome} onChange={(e) => update("responsavelNome", e.target.value)} className={fieldClass} placeholder="Nome completo do responsável" autoComplete="name" required data-testid="campo-representante-nome" />
           </div>
           <div>
             <Label className="mb-1.5 block text-sm">CPF *</Label>
-            <Input value={form.responsavelCpf} onChange={(e) => update("responsavelCpf", maskCpf(e.target.value))} className={fieldClass} placeholder="000.000.000-00" maxLength={14} autoComplete="off" inputMode="numeric" required />
+            <Input value={form.responsavelCpf} onChange={(e) => update("responsavelCpf", maskCpf(e.target.value))} className={fieldClass} placeholder="000.000.000-00" maxLength={14} autoComplete="off" inputMode="numeric" required data-testid="campo-representante-cpf" />
           </div>
           <div>
             <Label className="mb-1.5 block text-sm">E-mail *</Label>
-            <Input type="email" value={form.responsavelEmail} onChange={(e) => update("responsavelEmail", e.target.value)} className={fieldClass} placeholder="responsavel@email.com" autoComplete="email" required />
+            <Input type="email" value={form.responsavelEmail} onChange={(e) => update("responsavelEmail", e.target.value)} className={fieldClass} placeholder="responsavel@email.com" autoComplete="email" required data-testid="campo-representante-email" />
           </div>
           <div>
             <Label className="mb-1.5 block text-sm">Telefone *</Label>
-            <Input value={form.responsavelTelefone} onChange={(e) => update("responsavelTelefone", maskPhone(e.target.value))} className={fieldClass} placeholder="(00) 00000-0000" maxLength={15} autoComplete="tel" inputMode="tel" required />
+            <Input value={form.responsavelTelefone} onChange={(e) => update("responsavelTelefone", maskPhone(e.target.value))} className={fieldClass} placeholder="(00) 00000-0000" maxLength={15} autoComplete="tel" inputMode="tel" required data-testid="campo-representante-telefone" />
           </div>
         </div>
       </div>
@@ -266,7 +267,7 @@ const ServerAdminRegistrationForm = ({ onComplete, loading: externalLoading }: P
           <div>
             <Label className="mb-1.5 block text-sm">CEP *</Label>
             <div className="relative">
-              <Input value={form.cep} onChange={(e) => update("cep", maskCep(e.target.value))} className={`${fieldClass} pr-10`} placeholder="00000-000" maxLength={9} autoComplete="postal-code" inputMode="numeric" required />
+              <Input value={form.cep} onChange={(e) => update("cep", maskCep(e.target.value))} className={`${fieldClass} pr-10`} placeholder="00000-000" maxLength={9} autoComplete="postal-code" inputMode="numeric" required data-testid="campo-cep" />
               {cepLoading && <Loader2 className="w-4 h-4 animate-spin absolute right-3 top-4 text-primary" />}
             </div>
           </div>
@@ -276,7 +277,7 @@ const ServerAdminRegistrationForm = ({ onComplete, loading: externalLoading }: P
           </div>
           <div>
             <Label className="mb-1.5 block text-sm">Número *</Label>
-            <Input value={form.numero} onChange={(e) => update("numero", e.target.value)} className={fieldClass} placeholder="123" required />
+            <Input value={form.numero} onChange={(e) => update("numero", e.target.value)} className={fieldClass} placeholder="123" required data-testid="campo-numero" />
           </div>
           <div>
             <Label className="mb-1.5 block text-sm">Complemento</Label>
@@ -297,7 +298,7 @@ const ServerAdminRegistrationForm = ({ onComplete, loading: externalLoading }: P
         </div>
       </div>
 
-      <Button type="submit" disabled={isLoading} className="w-full h-14 text-base bg-primary hover:bg-primary/90 text-primary-foreground">
+      <Button type="submit" disabled={isLoading} className="w-full h-14 text-base bg-primary hover:bg-primary/90 text-primary-foreground" data-testid="botao-prosseguir-cadastro">
         {isLoading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <ArrowRight className="w-5 h-5 mr-2" />}
         Continuar para o contrato
       </Button>
