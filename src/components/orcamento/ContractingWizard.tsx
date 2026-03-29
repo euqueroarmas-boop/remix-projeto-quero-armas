@@ -115,6 +115,7 @@ const ContractingWizard = ({
   computersQty,
   monthlyValue,
   quoteId,
+  serviceSlug,
   leadCompanyName,
   leadContactName,
   leadEmail,
