@@ -10,6 +10,7 @@ import {
   ExternalLink,
   AlertTriangle,
   RotateCcw,
+  Settings2,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -18,8 +19,10 @@ import { useToast } from "@/hooks/use-toast";
 
 import WizardStepWrapper from "./WizardStepWrapper";
 import QuickRegistrationForm, { type RegistrationData } from "./QuickRegistrationForm";
+import PlanConfigStep from "./PlanConfigStep";
 import { generateContractHtml } from "./ContractPreview";
 import { generateContractFromTemplate } from "@/lib/contractTemplate";
+import { calculatePricing, type PlanConfig, type PricingBreakdown, type ContractTerm } from "@/lib/contractPricing";
 import PostPaymentReport from "./PostPaymentReport";
 import OutsourcingOffer from "./OutsourcingOffer";
 
@@ -128,15 +131,17 @@ const ContractingWizard = ({
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  type Step = "registration" | "contract" | "payment";
+  type Step = "registration" | "planConfig" | "contract" | "payment";
   const [currentStep, setCurrentStep] = useState<Step>("registration");
-  const stepOrder: Step[] = ["registration", "contract", "payment"];
+  const stepOrder: Step[] = ["registration", "planConfig", "contract", "payment"];
 
   const [activeQuoteId, setActiveQuoteId] = useState<string | null>(quoteId);
   const [registrationData, setRegistrationData] = useState<RegistrationData | null>(null);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [contractId, setContractId] = useState<string | null>(null);
   const [contractSigned, setContractSigned] = useState(false);
+  const [planConfig, setPlanConfig] = useState<PlanConfig | null>(null);
+  const [pricingBreakdown, setPricingBreakdown] = useState<PricingBreakdown | null>(null);
 
   const [selectedPayment, setSelectedPayment] = useState<BillingType | null>(null);
   const [paymentLoading, setPaymentLoading] = useState(false);
@@ -212,7 +217,7 @@ const ContractingWizard = ({
         const purchaseData = {
           serviceName: effectivePath === "locacao" ? "Locação de Equipamentos" : "Serviços de TI",
           computersQty,
-          monthlyValue,
+          monthlyValue: pricingBreakdown?.valorFinalMensal ?? monthlyValue,
           isRecurring: true,
           customerName: registrationData?.razaoSocial || "",
           customerCpfCnpj: registrationData?.cnpjOuCpf || "",
@@ -309,31 +314,52 @@ const ContractingWizard = ({
         setActiveQuoteId(resolvedQuoteId);
       }
 
+      setCurrentStep("planConfig");
+      scrollToWizardTop();
+    } catch (err) {
+      console.error("[WMTi] Erro no cadastro:", err);
+      toast({ title: "Erro ao salvar dados", description: "Tente novamente.", variant: "destructive" });
+    } finally {
+      setRegistrationLoading(false);
+    }
+  };
+
+  const handlePlanConfigConfirm = async (config: PlanConfig, pricing: PricingBreakdown) => {
+    setPlanConfig(config);
+    setPricingBreakdown(pricing);
+
+    if (!registrationData || !customerId || !activeQuoteId) return;
+
+    setRegistrationLoading(true);
+    try {
+      const fullAddress = [registrationData.endereco, registrationData.numero, registrationData.complemento, registrationData.bairro].filter(Boolean).join(", ");
+
       const customerDataForContract: CustomerData = {
-        razaoSocial: data.razaoSocial,
-        nomeFantasia: data.nomeFantasia,
-        cnpjOuCpf: data.cnpjOuCpf,
-        responsavel: data.responsavel,
-        email: data.email,
-        telefone: data.telefone,
+        razaoSocial: registrationData.razaoSocial,
+        nomeFantasia: registrationData.nomeFantasia,
+        cnpjOuCpf: registrationData.cnpjOuCpf,
+        responsavel: registrationData.responsavel,
+        email: registrationData.email,
+        telefone: registrationData.telefone,
         endereco: fullAddress,
-        cidade: `${data.cidade}/${data.uf}`,
-        cep: data.cep,
+        cidade: `${registrationData.cidade}/${registrationData.uf}`,
+        cep: registrationData.cep,
       };
+
+      const finalMonthlyValue = pricing.valorFinalMensal;
 
       let html: string;
 
       if (contractType === "suporte") {
-        // Use the official versioned template for recurring services
         const templateHtml = await generateContractFromTemplate("wmti_recorrente_v1", {
-          cliente_razao_social: data.razaoSocial,
-          cliente_cnpj: data.cnpjOuCpf,
-          cliente_endereco_completo: fullAddress + ", " + data.cidade + "/" + data.uf + ", CEP " + data.cep,
-          representante_nome_completo: data.responsavel,
-          representante_cpf: data.cnpjOuCpf.replace(/\D/g, "").length <= 11 ? data.cnpjOuCpf : "",
-          representante_email: data.email,
-          representante_telefone: data.telefone || "",
-          prazo_meses: "36",
+          cliente_razao_social: registrationData.razaoSocial,
+          cliente_cnpj: registrationData.cnpjOuCpf,
+          cliente_endereco_completo: fullAddress + ", " + registrationData.cidade + "/" + registrationData.uf + ", CEP " + registrationData.cep,
+          representante_nome_completo: registrationData.responsavel,
+          representante_cpf: registrationData.cnpjOuCpf.replace(/\D/g, "").length <= 11 ? registrationData.cnpjOuCpf : "",
+          representante_email: registrationData.email,
+          representante_telefone: registrationData.telefone || "",
+          prazo_meses: String(config.termMonths),
           data_contratacao: new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" }),
           ip_contratante: "",
           geo_contratante: "",
@@ -348,7 +374,7 @@ const ContractingWizard = ({
           "suporte",
           null,
           computersQty,
-          monthlyValue,
+          finalMonthlyValue,
         );
       } else {
         html = generateContractHtml(
@@ -356,7 +382,7 @@ const ContractingWizard = ({
           "locacao",
           plan,
           computersQty,
-          monthlyValue,
+          finalMonthlyValue,
         );
       }
 
@@ -368,11 +394,11 @@ const ContractingWizard = ({
       const { data: contractRow, error: contractErr } = await supabase
         .from("contracts" as any)
         .insert({
-          quote_id: resolvedQuoteId,
-          customer_id: customer.id,
+          quote_id: activeQuoteId,
+          customer_id: customerId,
           contract_type: contractType,
           contract_text: html,
-          monthly_value: monthlyValue,
+          monthly_value: finalMonthlyValue,
           contract_hash: contractHash,
           status: "draft",
           signed: false,
@@ -399,7 +425,7 @@ const ContractingWizard = ({
           mouse_model: "Mouse óptico USB",
           quantity: computersQty,
           unit_price: plan.price,
-          monthly_total: monthlyValue,
+          monthly_total: finalMonthlyValue,
         } as any);
       }
 
@@ -408,30 +434,39 @@ const ContractingWizard = ({
         operation_name: "contract_created",
         request_payload: {
           contract_id: (contractRow as any).id,
-          customer_id: customer.id,
-          quote_id: resolvedQuoteId,
+          customer_id: customerId,
+          quote_id: activeQuoteId,
           contract_type: contractType,
           template_id: contractType === "suporte" ? "wmti_recorrente_v1" : null,
           template_version: contractType === "suporte" ? "1.0" : null,
-          monthly_value: monthlyValue,
-          computers_qty: computersQty,
+          term_months: config.termMonths,
+          support_24h: config.support24h,
+          valor_base: pricing.valorBase,
+          desconto_percentual: pricing.descontoPercentual,
+          valor_com_desconto: pricing.valorComDesconto,
+          valor_adicional_24h: pricing.valorAdicional24h,
+          valor_final_mensal: pricing.valorFinalMensal,
           aceite: true,
-          ip: null,
           timestamp: new Date().toISOString(),
         },
         status: "success",
       } as any);
 
+      // Update quote with final value
+      await supabase.from("quotes" as any)
+        .update({ monthly_value: finalMonthlyValue } as any)
+        .eq("id", activeQuoteId);
+
       await supabase.from("payments" as any).insert({
-        quote_id: resolvedQuoteId,
+        quote_id: activeQuoteId,
         payment_status: "pending",
       } as any);
 
       setCurrentStep("contract");
       scrollToWizardTop();
     } catch (err) {
-      console.error("[WMTi] Erro no cadastro:", err);
-      toast({ title: "Erro ao salvar dados", description: "Tente novamente.", variant: "destructive" });
+      console.error("[WMTi] Erro ao gerar contrato:", err);
+      toast({ title: "Erro ao gerar contrato", description: "Tente novamente.", variant: "destructive" });
     } finally {
       setRegistrationLoading(false);
     }
@@ -457,7 +492,9 @@ const ContractingWizard = ({
     setPaymentData(null);
     setInvoiceUrl(null);
 
-    const description = `Contrato WMTi — ${pathLabel} — ${computersQty} computador(es)`;
+    const finalValue = pricingBreakdown?.valorFinalMensal ?? monthlyValue;
+    const termLabel = planConfig ? `${planConfig.termMonths} meses` : "36 meses";
+    const description = `Contrato WMTi — ${pathLabel} — ${computersQty} computador(es) — ${termLabel}${planConfig?.support24h ? " — 24h" : ""}`;
 
     try {
       const { data, error } = await supabase.functions.invoke("create-asaas-subscription", {
@@ -466,7 +503,7 @@ const ContractingWizard = ({
           customer_email: registrationData.email,
           customer_cpf_cnpj: registrationData.cnpjOuCpf,
           billing_type: selectedPayment,
-          value: monthlyValue,
+          value: finalValue,
           description,
           quote_id: activeQuoteId,
         },
@@ -549,9 +586,33 @@ const ContractingWizard = ({
               <QuickRegistrationForm onComplete={handleRegistrationComplete} loading={registrationLoading} initialData={initialRegistrationData} />
             </WizardStepWrapper>
 
-            {/* Step 2: Contract */}
+            {/* Step 2: Plan Configuration */}
             <WizardStepWrapper
               stepNumber={2}
+              title="Configuração do Plano"
+              subtitle={pricingBreakdown ? `${planConfig?.termMonths} meses${planConfig?.support24h ? " • 24h" : ""} ✓` : "Escolha o prazo e nível de atendimento"}
+              status={getStepStatus("planConfig")}
+            >
+              {pricingBreakdown && currentStep !== "planConfig" ? (
+                <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-3">
+                  <Settings2 className="w-10 h-10 text-primary mx-auto" />
+                  <h4 className="text-lg font-heading font-bold">Plano configurado!</h4>
+                  <p className="text-sm text-muted-foreground">
+                    {planConfig?.termMonths} meses{planConfig?.support24h ? " • Suporte 24h" : ""} — R$ {pricingBreakdown.valorFinalMensal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}/mês
+                  </p>
+                </div>
+              ) : (
+                <PlanConfigStep
+                  valorBase={monthlyValue}
+                  onConfirm={handlePlanConfigConfirm}
+                  initialConfig={planConfig}
+                />
+              )}
+            </WizardStepWrapper>
+
+            {/* Step 3: Contract */}
+            <WizardStepWrapper
+              stepNumber={3}
               title="Contrato e Assinatura"
               subtitle={contractSigned ? "Contrato assinado ✓" : "Leia e assine o contrato em página dedicada"}
               status={getStepStatus("contract")}
@@ -588,8 +649,8 @@ const ContractingWizard = ({
               )}
             </WizardStepWrapper>
 
-            {/* Step 3: Payment */}
-            <WizardStepWrapper stepNumber={3} title={paymentConfirmed ? "Compra Concluída" : "Pagamento"} subtitle={paymentConfirmed ? "Pagamento confirmado ✓" : "Ao prosseguir, você será direcionado para a página segura de checkout"} status={paymentConfirmed ? "completed" : getStepStatus("payment")} isLast>
+            {/* Step 4: Payment */}
+            <WizardStepWrapper stepNumber={4} title={paymentConfirmed ? "Compra Concluída" : "Pagamento"} subtitle={paymentConfirmed ? "Pagamento confirmado ✓" : "Ao prosseguir, você será direcionado para a página segura de checkout"} status={paymentConfirmed ? "completed" : getStepStatus("payment")} isLast>
               {paymentConfirmed ? (
                 <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-3">
                   <CheckCircle className="w-10 h-10 text-green-500 mx-auto" />
@@ -638,10 +699,11 @@ const ContractingWizard = ({
                     Ao prosseguir, você será direcionado para a página segura de checkout para preencher seus dados e concluir a contratação.
                   </p>
                   <p className="text-sm text-muted-foreground text-center">
-                    Valor mensal: <strong className="text-primary">R$ {monthlyValue.toLocaleString("pt-BR")},00</strong>
+                    Valor mensal: <strong className="text-primary">R$ {(pricingBreakdown?.valorFinalMensal ?? monthlyValue).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</strong>
                   </p>
                   <p className="text-xs text-muted-foreground text-center">
-                    Assinatura recorrente mensal — prazo de 36 meses com renovação automática
+                    Assinatura recorrente mensal — prazo de {planConfig?.termMonths ?? 36} meses com renovação automática
+                    {planConfig?.support24h ? " • Suporte 24h" : ""}
                   </p>
 
                   {paymentError && (
@@ -697,7 +759,7 @@ const ContractingWizard = ({
         qualification={qualification}
         registration={registrationData}
         computersQty={computersQty}
-        monthlyValue={monthlyValue}
+        monthlyValue={pricingBreakdown?.valorFinalMensal ?? monthlyValue}
       />
 
       {/* Outsourcing offer — only after payment AND only if has internal tech */}
