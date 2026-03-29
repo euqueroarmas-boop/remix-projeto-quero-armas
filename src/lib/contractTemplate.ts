@@ -151,8 +151,8 @@ export async function generateContractFromTemplate(
   templateId: string,
   variables: Partial<ContractVariables>
 ): Promise<string | null> {
-  const template = await fetchContractTemplate(templateId);
-  if (!template) return null;
-  const hydrated = hydrateTemplate(template, variables);
-  return templateToHtml(hydrated);
+  const record = await fetchContractTemplate(templateId);
+  if (!record) return null;
+  const hydrated = hydrateTemplate(record.template_text, variables);
+  return templateToHtml(hydrated, record.id, record.versao);
 }
