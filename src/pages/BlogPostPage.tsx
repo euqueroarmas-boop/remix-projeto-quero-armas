@@ -413,7 +413,7 @@ const BlogPostPage = () => {
                             to={link.href}
                             className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
                           >
-                            {link.label || link.anchor} <ArrowRight size={12} />
+                            {(link as any).label || (link as any).anchor} <ArrowRight size={12} />
                           </Link>
                         ))}
                       </div>
