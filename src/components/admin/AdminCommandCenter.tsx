@@ -29,12 +29,12 @@ const STATUS_DOT: Record<SystemStatus, string> = {
 
 // ─── Individual module hooks ───────────────────────────────────────
 
-function useAlerts() {
+function useAlerts(autoRefreshRef: React.MutableRefObject<boolean>) {
   const [errors24h, setErrors24h] = useState(0);
   const [webhookErrors, setWebhookErrors] = useState(0);
   const [loaded, setLoaded] = useState(false);
 
-  const fetch = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     const yesterday = new Date(Date.now() - 86400000).toISOString();
     try {
       const res = await adminQuery([
@@ -47,19 +47,18 @@ function useAlerts() {
     setLoaded(true);
   }, []);
 
-  useEffect(() => { fetch(); }, [fetch]);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
-  // Realtime: listen to new logs_sistema and integration_logs
   useEffect(() => {
     const ch = supabase
       .channel("cmd-alerts")
-      .on("postgres_changes", { event: "*", schema: "public", table: "logs_sistema" }, () => fetch())
-      .on("postgres_changes", { event: "*", schema: "public", table: "integration_logs" }, () => fetch())
+      .on("postgres_changes", { event: "*", schema: "public", table: "logs_sistema" }, () => { if (autoRefreshRef.current) fetchData(); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "integration_logs" }, () => { if (autoRefreshRef.current) fetchData(); })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [fetch]);
+  }, [fetchData, autoRefreshRef]);
 
-  return { errors24h, webhookErrors, loaded, refetch: fetch };
+  return { errors24h, webhookErrors, loaded, refetch: fetchData };
 }
 
 function useFunnel() {
