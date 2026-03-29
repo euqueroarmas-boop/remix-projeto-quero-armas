@@ -1,14 +1,5 @@
 /// <reference types="cypress" />
 
-/**
- * Testa o fluxo de checkout completo até a etapa de pagamento.
- * NÃO realiza pagamento real — apenas verifica que o wizard avança
- * corretamente e exibe as opções de pagamento.
- *
- * A geração de usuário/senha acontece pós-pagamento via webhook,
- * então aqui testamos que o sistema está preparado para isso.
- */
-
 describe("Checkout — Fluxo Completo", () => {
   beforeEach(() => {
     cy.visit("/contratar/administracao-de-servidores?hosts=1&vms=0");
@@ -16,21 +7,20 @@ describe("Checkout — Fluxo Completo", () => {
   });
 
   const completeRegistration = () => {
-    cy.get('input[placeholder*="CNPJ"]').first().clear().type("12345678000190", { delay: 10 });
+    cy.get('[data-testid="campo-cnpj"]').clear().type("12345678000190", { delay: 10 });
     cy.wait(1000);
 
     const fields = [
-      { sel: 'input[placeholder*="Razão Social"]', val: "Empresa Teste LTDA" },
-      { sel: 'input[placeholder*="Nome Fantasia"]', val: "Teste Corp" },
-      { sel: 'input[placeholder*="Nome completo"]', val: "João da Silva" },
-      { sel: 'input[placeholder*="CPF"]', val: "37799538899" },
-      { sel: 'input[placeholder*="E-mail do responsável"]', val: "joao@teste.com" },
-      { sel: 'input[placeholder*="Telefone do responsável"]', val: "12998765432" },
-      { sel: 'input[placeholder*="CEP"]', val: "12327000" },
+      { testid: "campo-razao-social", val: "Empresa Teste LTDA" },
+      { testid: "campo-representante-nome", val: "João da Silva" },
+      { testid: "campo-representante-cpf", val: "37799538899" },
+      { testid: "campo-representante-email", val: "joao@teste.com" },
+      { testid: "campo-representante-telefone", val: "12998765432" },
+      { testid: "campo-cep", val: "12327000" },
     ];
     fields.forEach((f) => {
-      cy.get(f.sel).then(($el) => {
-        if ($el.length > 0 && !$el.val()) cy.wrap($el).type(f.val, { delay: 10 });
+      cy.get(`[data-testid="${f.testid}"]`).then(($el) => {
+        if (!$el.val()) cy.wrap($el).type(f.val, { delay: 10 });
       });
     });
 
@@ -38,7 +28,7 @@ describe("Checkout — Fluxo Completo", () => {
     cy.get('input[placeholder*="Logradouro"], input[placeholder*="logradouro"]').then(($el) => {
       if ($el.length && !$el.val()) cy.wrap($el).type("Rua das Flores");
     });
-    cy.get('input[placeholder*="Número"], input[placeholder*="número"]').then(($el) => {
+    cy.get('[data-testid="campo-numero"]').then(($el) => {
       if ($el.length && !$el.val()) cy.wrap($el).type("100");
     });
     cy.get('input[placeholder*="Cidade"], input[placeholder*="cidade"]').then(($el) => {
@@ -48,21 +38,12 @@ describe("Checkout — Fluxo Completo", () => {
       if ($el.length && !$el.val()) cy.wrap($el).type("SP");
     });
 
-    cy.contains("button", /prosseguir|confirmar|enviar|cadastrar|avançar/i).click();
+    cy.get('[data-testid="botao-prosseguir-cadastro"]').click();
   };
 
   const selectPlan = () => {
-    cy.contains("Configuração do Plano", { timeout: 15000 }).should("be.visible");
-    cy.contains("button", "24").click();
-    cy.contains("button", /confirmar plano|confirmar configuração/i).click();
-  };
-
-  const signContract = () => {
-    cy.contains("Contrato e Assinatura", { timeout: 15000 }).should("be.visible");
-    // The contract is opened in a new tab and signed there.
-    // We simulate the contract being signed by checking the wizard state.
-    // In E2E we can verify the button exists.
-    cy.contains(/abrir contrato|ler contrato|visualizar contrato/i).should("be.visible");
+    cy.get('[data-testid="plano-24-meses"]', { timeout: 15000 }).should("be.visible").click();
+    cy.get('[data-testid="botao-confirmar-plano"]').click();
   };
 
   it("wizard exibe todas as 4 etapas", () => {
@@ -75,17 +56,12 @@ describe("Checkout — Fluxo Completo", () => {
   it("fluxo avança: cadastro → plano → contrato", () => {
     completeRegistration();
     selectPlan();
-    signContract();
+    cy.get('[data-testid="botao-abrir-contrato"]', { timeout: 15000 }).should("be.visible");
   });
 
-  it("etapa de pagamento aparece após contrato", () => {
-    // This test verifies the payment step exists in the wizard
-    cy.contains("Pagamento").should("be.visible");
-
-    // The payment step should be in "pending" state initially
-    cy.get("#contracting-wizard").within(() => {
-      cy.contains("Pagamento").should("exist");
-    });
+  it("botão de checkout existe na etapa de pagamento", () => {
+    cy.contains("Pagamento").should("exist");
+    cy.get('[data-testid="botao-ir-checkout"]').should("exist");
   });
 
   it("página de compra concluída existe", () => {
@@ -106,7 +82,6 @@ describe("Checkout — Fluxo Completo", () => {
   it("área do cliente existe e exige login", () => {
     cy.visit("/area-do-cliente");
     cy.get("body").should("be.visible");
-    // Should show login form since no user is authenticated
     cy.get('input[type="email"], input[type="password"]', { timeout: 10000 }).should("exist");
   });
 });
