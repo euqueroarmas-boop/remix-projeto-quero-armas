@@ -41,7 +41,8 @@ const ALLOWED_TABLES = [
   "asaas_webhooks", "customers", "payments", "contracts", "leads",
   "proposals", "budget_leads", "contract_signatures", "quotes",
   "fiscal_documents", "client_events", "service_requests", "contract_equipment",
-  "network_diagnostics",
+  "network_diagnostics", "test_runs", "test_run_events", "test_alert_config",
+  "blog_posts_ai",
 ];
 
 Deno.serve(async (req) => {
