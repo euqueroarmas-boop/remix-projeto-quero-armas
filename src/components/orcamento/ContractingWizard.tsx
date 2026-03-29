@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import WizardStepWrapper from "./WizardStepWrapper";
 import QuickRegistrationForm, { type RegistrationData } from "./QuickRegistrationForm";
 import { generateContractHtml } from "./ContractPreview";
+import { generateContractFromTemplate } from "@/lib/contractTemplate";
 import PostPaymentReport from "./PostPaymentReport";
 import OutsourcingOffer from "./OutsourcingOffer";
 
