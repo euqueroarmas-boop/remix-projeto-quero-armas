@@ -17,6 +17,7 @@ interface ContractVariables {
   testemunha1_cpf: string;
   testemunha2_nome: string;
   testemunha2_cpf: string;
+  objeto_servico_especifico: string;
 }
 
 /**
