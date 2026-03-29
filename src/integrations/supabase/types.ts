@@ -1042,11 +1042,40 @@ export type Database = {
           },
         ]
       }
+      test_alert_config: {
+        Row: {
+          channel: string
+          config: Json
+          created_at: string
+          enabled: boolean
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          channel: string
+          config?: Json
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          channel?: string
+          config?: Json
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       test_runs: {
         Row: {
           base_url: string | null
           browser: string | null
           build_ref: string | null
+          client_id: string | null
+          client_name: string | null
           created_at: string
           duration_ms: number | null
           environment: string | null
@@ -1059,6 +1088,7 @@ export type Database = {
           id: string
           logs: Json | null
           passed_tests: number | null
+          plan_type: string | null
           report_url: string | null
           results: Json | null
           screenshot_urls: string[] | null
@@ -1077,6 +1107,8 @@ export type Database = {
           base_url?: string | null
           browser?: string | null
           build_ref?: string | null
+          client_id?: string | null
+          client_name?: string | null
           created_at?: string
           duration_ms?: number | null
           environment?: string | null
@@ -1089,6 +1121,7 @@ export type Database = {
           id?: string
           logs?: Json | null
           passed_tests?: number | null
+          plan_type?: string | null
           report_url?: string | null
           results?: Json | null
           screenshot_urls?: string[] | null
@@ -1107,6 +1140,8 @@ export type Database = {
           base_url?: string | null
           browser?: string | null
           build_ref?: string | null
+          client_id?: string | null
+          client_name?: string | null
           created_at?: string
           duration_ms?: number | null
           environment?: string | null
@@ -1119,6 +1154,7 @@ export type Database = {
           id?: string
           logs?: Json | null
           passed_tests?: number | null
+          plan_type?: string | null
           report_url?: string | null
           results?: Json | null
           screenshot_urls?: string[] | null
@@ -1133,7 +1169,15 @@ export type Database = {
           video_urls?: string[] | null
           viewport?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "test_runs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
