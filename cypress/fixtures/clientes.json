@@ -1,35 +1,50 @@
 {
   "empresa_padrao": {
+    "cnpj": "12345678000190",
     "razaoSocial": "Empresa Teste LTDA",
     "nomeFantasia": "Teste Corp",
-    "cnpjOuCpf": "12.345.678/0001-90",
-    "responsavel": "João da Silva",
-    "email": "joao@empresateste.com.br",
-    "telefone": "(12) 99876-5432",
-    "endereco": "Rua das Flores, 100 - Centro",
+    "responsavelNome": "João da Silva",
+    "responsavelCpf": "37799538899",
+    "responsavelEmail": "joao@empresateste.com.br",
+    "responsavelTelefone": "12998765432",
+    "cep": "12327000",
+    "logradouro": "Rua das Flores",
+    "numero": "100",
+    "complemento": "",
+    "bairro": "Centro",
     "cidade": "Jacareí",
-    "cep": "12327-000"
+    "uf": "SP"
   },
   "pessoa_fisica": {
+    "cnpj": "12345678900",
     "razaoSocial": "Maria Oliveira",
     "nomeFantasia": "",
-    "cnpjOuCpf": "123.456.789-00",
-    "responsavel": "Maria Oliveira",
-    "email": "maria@email.com",
-    "telefone": "(11) 98765-4321",
-    "endereco": "Av. Brasil, 500 - Jardim América",
+    "responsavelNome": "Maria Oliveira",
+    "responsavelCpf": "98765432100",
+    "responsavelEmail": "maria@email.com",
+    "responsavelTelefone": "11987654321",
+    "cep": "12240000",
+    "logradouro": "Av. Brasil",
+    "numero": "500",
+    "complemento": "Sala 2",
+    "bairro": "Jardim América",
     "cidade": "São José dos Campos",
-    "cep": "12240-000"
+    "uf": "SP"
   },
   "empresa_grande": {
+    "cnpj": "98765432000110",
     "razaoSocial": "Indústria Nacional S/A",
     "nomeFantasia": "IndNacional",
-    "cnpjOuCpf": "98.765.432/0001-10",
-    "responsavel": "Carlos Mendes",
-    "email": "carlos@indnacional.com.br",
-    "telefone": "(12) 3622-1234",
-    "endereco": "Rod. Presidente Dutra, km 150 - Distrito Industrial",
+    "responsavelNome": "Carlos Mendes",
+    "responsavelCpf": "11122233344",
+    "responsavelEmail": "carlos@indnacional.com.br",
+    "responsavelTelefone": "1236221234",
+    "cep": "12060000",
+    "logradouro": "Rod. Presidente Dutra",
+    "numero": "150",
+    "complemento": "Galpão 3",
+    "bairro": "Distrito Industrial",
     "cidade": "Taubaté",
-    "cep": "12060-000"
+    "uf": "SP"
   }
 }
