@@ -80,7 +80,7 @@ export function QATestList({ tests, results, onRerun }: Props) {
                     Bloqueia
                   </Badge>
                 )}
-                {result && <span className="text-[10px] text-muted-foreground">{result.duration}ms</span>}
+                {result && <span className="text-[10px] text-muted-foreground">{formatDuration(result.duration)}</span>}
               </div>
 
               {expanded && (

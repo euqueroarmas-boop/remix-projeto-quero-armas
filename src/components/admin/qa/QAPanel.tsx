@@ -435,7 +435,7 @@ export default function QAPanel() {
                           {new Date(exec.executedAt).toLocaleString("pt-BR")}
                         </span>
                         <span className="text-[10px] text-muted-foreground">
-                          ({(exec.duration / 1000).toFixed(1)}s)
+                          ({formatDuration(exec.duration)})
                         </span>
                       </div>
                       <Badge variant="outline" className="text-[10px]">{exec.environment}</Badge>
