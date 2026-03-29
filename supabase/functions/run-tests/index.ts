@@ -665,7 +665,7 @@ Deno.serve(async (req) => {
 
       // Dispatch Cypress
       for (const ct of CYPRESS_TESTS) {
-        await triggerGitHubWorkflow(ct, runId, fullIngestToken);
+        await triggerGitHubWorkflow(ct, runId, fullIngestToken, supabase);
       }
 
       allLogs.push({ ts: new Date().toISOString(), event: "cypress_dispatched", detail: `Cypress disparado via GitHub Actions: ${CYPRESS_TESTS.join(", ")}` });
