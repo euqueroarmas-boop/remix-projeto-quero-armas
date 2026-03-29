@@ -61,11 +61,11 @@ function useAlerts(autoRefreshRef: React.MutableRefObject<boolean>) {
   return { errors24h, webhookErrors, loaded, refetch: fetchData };
 }
 
-function useFunnel() {
+function useFunnel(autoRefreshRef: React.MutableRefObject<boolean>) {
   const [data, setData] = useState({ leads: 0, quotes: 0, contracts: 0, paymentsOk: 0, paymentsFail: 0 });
   const [loaded, setLoaded] = useState(false);
 
-  const fetch = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     const todayStart = new Date(new Date().setHours(0, 0, 0, 0)).toISOString();
     try {
       const res = await adminQuery([
@@ -80,27 +80,28 @@ function useFunnel() {
     setLoaded(true);
   }, []);
 
-  useEffect(() => { fetch(); }, [fetch]);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   useEffect(() => {
+    const guard = () => { if (autoRefreshRef.current) fetchData(); };
     const ch = supabase
       .channel("cmd-funnel")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "leads" }, () => fetch())
-      .on("postgres_changes", { event: "*", schema: "public", table: "payments" }, () => fetch())
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "contracts" }, () => fetch())
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "quotes" }, () => fetch())
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "leads" }, guard)
+      .on("postgres_changes", { event: "*", schema: "public", table: "payments" }, guard)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "contracts" }, guard)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "quotes" }, guard)
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [fetch]);
+  }, [fetchData, autoRefreshRef]);
 
-  return { ...data, loaded, refetch: fetch };
+  return { ...data, loaded, refetch: fetchData };
 }
 
-function useTestRun() {
+function useTestRun(autoRefreshRef: React.MutableRefObject<boolean>) {
   const [testRun, setTestRun] = useState<any>(null);
   const [loaded, setLoaded] = useState(false);
 
-  const fetch = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     try {
       const res = await adminQuery([
         { table: "test_runs", select: "*", order: { column: "created_at", ascending: false }, limit: 1 },
@@ -110,25 +111,25 @@ function useTestRun() {
     setLoaded(true);
   }, []);
 
-  useEffect(() => { fetch(); }, [fetch]);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   useEffect(() => {
     const ch = supabase
       .channel("cmd-tests")
-      .on("postgres_changes", { event: "*", schema: "public", table: "test_runs" }, () => fetch())
+      .on("postgres_changes", { event: "*", schema: "public", table: "test_runs" }, () => { if (autoRefreshRef.current) fetchData(); })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [fetch]);
+  }, [fetchData, autoRefreshRef]);
 
-  return { testRun, loaded, refetch: fetch };
+  return { testRun, loaded, refetch: fetchData };
 }
 
-function useActivity() {
+function useActivity(autoRefreshRef: React.MutableRefObject<boolean>) {
   const [logs, setLogs] = useState<any[]>([]);
   const [audit, setAudit] = useState<any[]>([]);
   const [loaded, setLoaded] = useState(false);
 
-  const fetch = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     try {
       const res = await adminQuery([
         { table: "logs_sistema", select: "id,tipo,status,mensagem,created_at", order: { column: "created_at", ascending: false }, limit: 5 },
@@ -140,18 +141,19 @@ function useActivity() {
     setLoaded(true);
   }, []);
 
-  useEffect(() => { fetch(); }, [fetch]);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   useEffect(() => {
+    const guard = () => { if (autoRefreshRef.current) fetchData(); };
     const ch = supabase
       .channel("cmd-activity")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "logs_sistema" }, () => fetch())
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "admin_audit_logs" }, () => fetch())
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "logs_sistema" }, guard)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "admin_audit_logs" }, guard)
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [fetch]);
+  }, [fetchData, autoRefreshRef]);
 
-  return { logs, audit, loaded, refetch: fetch };
+  return { logs, audit, loaded, refetch: fetchData };
 }
 
 // ─── Memoized sub-components ───────────────────────────────────────
