@@ -145,6 +145,43 @@ const PlanConfigStep = ({ valorBase, onConfirm, initialConfig }: Props) => {
             </span>
           </div>
 
+          {/* Contract totals */}
+          {(() => {
+            const totalSemDesconto = pricing.valorBase * selectedTerm;
+            const economiaMensal = pricing.valorBase - pricing.valorComDesconto;
+            const economiaTotal = economiaMensal * selectedTerm;
+            const totalComDesconto = pricing.valorFinalMensal * selectedTerm;
+
+            return (
+              <div className="border-t border-border pt-3 space-y-2">
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  Totais do contrato ({selectedTerm} meses)
+                </h4>
+
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Total sem desconto</span>
+                  <span className="text-foreground">{formatCurrency(totalSemDesconto)}</span>
+                </div>
+
+                <div className="flex justify-between text-sm">
+                  <span className={economiaTotal > 0 ? "text-primary font-semibold" : "text-muted-foreground"}>
+                    Economia total no período
+                  </span>
+                  <span className={economiaTotal > 0 ? "text-primary font-bold" : "text-foreground"}>
+                    {economiaTotal > 0 ? "-" : ""}{formatCurrency(economiaTotal)}
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center text-sm">
+                  <span className="font-semibold text-foreground">Total do contrato</span>
+                  <span className="text-lg font-heading font-bold text-primary">
+                    {formatCurrency(totalComDesconto)}
+                  </span>
+                </div>
+              </div>
+            );
+          })()}
+
           <p className="text-[11px] text-muted-foreground text-center">
             Contrato de {selectedTerm} meses com renovação automática
             {pricing.support24h ? " • Suporte 24h incluso" : ""}
