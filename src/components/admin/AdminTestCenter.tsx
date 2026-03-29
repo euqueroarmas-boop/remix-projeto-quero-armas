@@ -254,6 +254,134 @@ function RunDetail({ run, onBack }: { run: TestRun; onBack: () => void }) {
   );
 }
 
+// ─── Alert Config Panel ───
+interface AlertConfigItem {
+  id?: string;
+  channel: string;
+  enabled: boolean;
+  config: Record<string, string>;
+}
+
+const ALERT_CHANNELS = [
+  { id: "whatsapp", label: "WhatsApp", icon: MessageSquare, configFields: [{ key: "phone", label: "Número (com DDD)", placeholder: "5512999887766" }] },
+  { id: "email", label: "E-mail", icon: Mail, configFields: [{ key: "to", label: "E-mail de destino", placeholder: "admin@wmti.com.br" }] },
+  { id: "webhook", label: "Webhook", icon: Webhook, configFields: [{ key: "url", label: "URL do webhook", placeholder: "https://..." }] },
+];
+
+function AlertConfigPanel() {
+  const [configs, setConfigs] = useState<AlertConfigItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState<string | null>(null);
+  const [testing, setTesting] = useState<string | null>(null);
+
+  const fetchConfigs = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/test-alerts`, {
+        headers: { "x-admin-token": getAdminToken(), "Content-Type": "application/json" },
+      });
+      const data = await res.json();
+      setConfigs(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Fetch alert configs:", err);
+    }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { fetchConfigs(); }, [fetchConfigs]);
+
+  const handleSave = async (channel: string, enabled: boolean, config: Record<string, string>, id?: string) => {
+    setSaving(channel);
+    try {
+      await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/test-alerts`, {
+        method: "POST",
+        headers: { "x-admin-token": getAdminToken(), "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "save_config", id, channel, enabled, config }),
+      });
+      await fetchConfigs();
+    } catch (err) {
+      console.error("Save config:", err);
+    }
+    setSaving(null);
+  };
+
+  const handleTest = async (channel: string, config: Record<string, string>) => {
+    setTesting(channel);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/test-alerts`, {
+        method: "POST",
+        headers: { "x-admin-token": getAdminToken(), "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "test_alert", channel, config }),
+      });
+      const result = await res.json();
+      alert(result.ok ? `✅ Alerta de teste enviado para ${channel}` : `❌ Falha: ${result.error}`);
+    } catch (err) {
+      alert(`❌ Erro: ${err}`);
+    }
+    setTesting(null);
+  };
+
+  if (loading) return <div className="text-center py-4 text-muted-foreground text-xs"><Loader2 className="h-4 w-4 animate-spin inline mr-1" />Carregando...</div>;
+
+  return (
+    <div className="space-y-3">
+      {ALERT_CHANNELS.map((ch) => {
+        const existing = configs.find(c => c.channel === ch.id);
+        const enabled = existing?.enabled ?? false;
+        const cfgValues = existing?.config || {};
+        const Icon = ch.icon;
+
+        return (
+          <Card key={ch.id} className={`transition-all ${enabled ? "border-primary/30" : ""}`}>
+            <CardContent className="p-4 space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Icon className={`h-4 w-4 ${enabled ? "text-primary" : "text-muted-foreground"}`} />
+                  <span className="text-sm font-semibold text-foreground">{ch.label}</span>
+                </div>
+                <Switch
+                  checked={enabled}
+                  onCheckedChange={(checked) => handleSave(ch.id, checked, cfgValues, existing?.id)}
+                />
+              </div>
+
+              {ch.configFields.map((field) => (
+                <div key={field.key}>
+                  <label className="text-xs text-muted-foreground block mb-1">{field.label}</label>
+                  <Input
+                    placeholder={field.placeholder}
+                    value={cfgValues[field.key] || ""}
+                    onChange={(e) => {
+                      const newConfig = { ...cfgValues, [field.key]: e.target.value };
+                      // Debounce: only update local state, save on blur
+                      setConfigs(prev => prev.map(c => c.channel === ch.id ? { ...c, config: newConfig } : c));
+                    }}
+                    onBlur={() => handleSave(ch.id, enabled, configs.find(c => c.channel === ch.id)?.config || cfgValues, existing?.id)}
+                    className="text-xs h-8"
+                  />
+                </div>
+              ))}
+
+              <div className="flex gap-2 justify-end">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleTest(ch.id, cfgValues)}
+                  disabled={testing === ch.id || !Object.values(cfgValues).some(v => v)}
+                  className="h-7 text-xs"
+                >
+                  {testing === ch.id ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Send className="h-3 w-3 mr-1" />}
+                  Testar
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })}
+    </div>
+  );
+}
+
 // ─── Main Component ───
 export default function AdminTestCenter() {
   const isMobile = useIsMobile();
