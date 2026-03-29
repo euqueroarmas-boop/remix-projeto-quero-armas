@@ -465,6 +465,9 @@ export default function AdminTestCenter() {
           <p className="text-xs text-muted-foreground">Dispare, acompanhe e audite testes de todas as camadas do site</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => setShowAlertConfig(!showAlertConfig)} className="text-xs">
+            <Bell className="h-3 w-3 mr-1" /> Alertas
+          </Button>
           <Button variant="outline" size="sm" onClick={fetchRuns} className="text-xs">
             <RefreshCw className="h-3 w-3 mr-1" /> Atualizar
           </Button>
