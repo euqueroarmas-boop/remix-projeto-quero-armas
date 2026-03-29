@@ -502,6 +502,7 @@ const ContratarServicoPage = () => {
                   cidade: data.cidade,
                   uf: data.uf,
                   isPJ: true,
+                  representanteCpf: data.responsavelCpf,
                 };
                 await onComplete(mapped);
               }}

@@ -358,7 +358,7 @@ const ContractingWizard = ({
           cliente_cnpj: registrationData.cnpjOuCpf,
           cliente_endereco_completo: fullAddress + ", " + registrationData.cidade + "/" + registrationData.uf + ", CEP " + registrationData.cep,
           representante_nome_completo: registrationData.responsavel,
-          representante_cpf: registrationData.cnpjOuCpf.replace(/\D/g, "").length <= 11 ? registrationData.cnpjOuCpf : "",
+          representante_cpf: registrationData.representanteCpf || (registrationData.cnpjOuCpf.replace(/\D/g, "").length <= 11 ? registrationData.cnpjOuCpf : ""),
           representante_email: registrationData.email,
           representante_telefone: registrationData.telefone || "",
           prazo_meses: String(config.termMonths),
