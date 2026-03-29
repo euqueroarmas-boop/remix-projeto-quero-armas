@@ -318,29 +318,59 @@ const TestsBlock = memo(function TestsBlock({ testRun, activeRun, lastCompletedR
               <div><p className="text-lg font-bold text-amber-400">{displayRun.skipped_tests || 0}</p><p className="text-[10px] text-muted-foreground">Ignorados</p></div>
             </div>
 
-            {/* Inline failed tests with copy */}
+            {/* Inline failed tests with full details */}
             {failedTests.length > 0 && (
               <div className="space-y-1.5 border-t border-red-500/20 pt-2">
-                <p className="text-[10px] font-semibold text-red-400 uppercase tracking-wider">Falhas detectadas:</p>
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] font-semibold text-red-400 uppercase tracking-wider">Falhas detectadas:</p>
+                  <button
+                    onClick={() => {
+                      const all = failedTests.map((ft: any) => [
+                        `❌ ${ft.name}`,
+                        ft.url ? `   URL: ${ft.url}` : "",
+                        ft.error ? `   Erro: ${ft.error}` : "",
+                        ft.spec ? `   Spec: ${ft.spec}` : "",
+                        ft.stack_trace ? `   Stack: ${ft.stack_trace}` : "",
+                        ft.cypress_command ? `   Comando: ${ft.cypress_command}` : "",
+                      ].filter(Boolean).join("\n")).join("\n\n");
+                      navigator.clipboard.writeText(all);
+                    }}
+                    className="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Copiar todos
+                  </button>
+                </div>
                 {failedTests.map((ft: any, i: number) => (
                   <button
                     key={i}
                     onClick={() => {
-                      const text = `❌ ${ft.name}\nErro: ${ft.error || "sem detalhe"}\nSpec: ${ft.spec || "—"}`;
-                      navigator.clipboard.writeText(text);
+                      const parts = [
+                        `❌ ${ft.name}`,
+                        ft.url ? `URL: ${ft.url}` : "",
+                        ft.error ? `Erro: ${ft.error}` : "",
+                        ft.spec ? `Spec: ${ft.spec}` : "",
+                        ft.stack_trace ? `Stack Trace:\n${ft.stack_trace}` : "",
+                        ft.cypress_command ? `Comando Cypress: ${ft.cypress_command}` : "",
+                        ft.diff ? `Expected: ${JSON.stringify(ft.diff.expected)}\nActual: ${JSON.stringify(ft.diff.actual)}` : "",
+                      ].filter(Boolean).join("\n");
+                      navigator.clipboard.writeText(parts);
                       const el = document.getElementById(`dash-fail-${i}`);
                       if (el) { el.textContent = "✓ Copiado"; setTimeout(() => { el.textContent = "Copiar"; }, 1500); }
                     }}
-                    className="w-full flex items-center justify-between gap-2 p-2 rounded-md bg-red-500/10 hover:bg-red-500/15 transition-colors text-left group"
+                    className="w-full flex items-start justify-between gap-2 p-2.5 rounded-md bg-red-500/10 hover:bg-red-500/15 transition-colors text-left group"
                   >
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <XCircle className="h-3 w-3 text-red-400 shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-[11px] text-foreground font-medium truncate">{ft.name}</p>
-                        {ft.error && <p className="text-[10px] text-red-400/80 truncate">{ft.error}</p>}
+                    <div className="flex items-start gap-1.5 min-w-0 flex-1">
+                      <XCircle className="h-3 w-3 text-red-400 shrink-0 mt-0.5" />
+                      <div className="min-w-0 space-y-0.5">
+                        <p className="text-[11px] text-foreground font-medium">{ft.name}</p>
+                        {ft.url && (
+                          <p className="text-[10px] text-muted-foreground font-mono break-all">{ft.url}</p>
+                        )}
+                        {ft.error && <p className="text-[10px] text-red-400/90">{ft.error}</p>}
+                        {ft.spec && <p className="text-[10px] text-muted-foreground/70">Spec: {ft.spec}</p>}
                       </div>
                     </div>
-                    <span id={`dash-fail-${i}`} className="text-[10px] text-muted-foreground shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">Copiar</span>
+                    <span id={`dash-fail-${i}`} className="text-[10px] text-muted-foreground shrink-0 opacity-60 group-hover:opacity-100 transition-opacity">Copiar</span>
                   </button>
                 ))}
               </div>
