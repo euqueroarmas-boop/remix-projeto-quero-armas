@@ -585,7 +585,10 @@ const ContractingWizard = ({
               subtitle="Preenchimento automático por CNPJ e CEP"
               status={getStepStatus("registration")}
             >
-              <QuickRegistrationForm onComplete={handleRegistrationComplete} loading={registrationLoading} initialData={initialRegistrationData} />
+              {customRegistrationForm
+                ? customRegistrationForm(handleRegistrationComplete, registrationLoading)
+                : <QuickRegistrationForm onComplete={handleRegistrationComplete} loading={registrationLoading} initialData={initialRegistrationData} />
+              }
             </WizardStepWrapper>
 
             {/* Step 2: Plan Configuration */}
