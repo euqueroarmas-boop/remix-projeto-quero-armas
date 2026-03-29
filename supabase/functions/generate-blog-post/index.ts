@@ -44,10 +44,24 @@ async function generatePost(topic: string, serviceName?: string, cityName?: stri
   const cityContext = cityName ? ` na cidade de ${cityName}` : "";
   const serviceContext = serviceName ? ` relacionado ao serviço de ${serviceName}` : "";
 
-  const systemPrompt = `Você é um redator técnico especializado em TI corporativa para a empresa WMTi Tecnologia da Informação, localizada em Jacareí-SP. 
-Escreva artigos técnicos, informativos e otimizados para SEO, voltados para decisores de empresas (gerentes, diretores, donos).
-Use linguagem profissional mas acessível. Inclua dados concretos quando possível.
-O artigo deve ter entre 1200-2000 palavras.
+  const systemPrompt = `Você é um redator técnico sênior especializado em TI corporativa para a empresa WMTi Tecnologia da Informação, localizada em Jacareí-SP.
+
+DIRETRIZES DE CONTEÚDO:
+- Escreva artigos PROFUNDOS, técnicos e estratégicos, voltados para decisores de empresas (gerentes, diretores, donos).
+- O artigo DEVE ter entre 2000-3000 palavras. Conteúdo raso será rejeitado.
+- Inclua cenários reais, riscos financeiros e operacionais, consequências de inação, e dados concretos.
+- Use linguagem orientada a DOR → IMPACTO → SOLUÇÃO.
+- Estruture com H2 e H3 para cobrir subtópicos em profundidade.
+- Inclua pelo menos 5 variações de palavras-chave naturalmente distribuídas.
+- NÃO use linguagem genérica. Cada parágrafo deve agregar valor técnico ou estratégico.
+
+DIRETRIZES DE SEO E LINKAGEM INTERNA:
+- Insira NO MÍNIMO 8 links internos contextuais ao longo do content_md usando markdown [texto âncora](/rota).
+- Links devem apontar para rotas reais como: /suporte-ti, /servidores-dell, /backup-corporativo, /seguranca-rede, /firewall-pfsense, /microsoft-365, /locacao-computadores, /administracao-servidores, /monitoramento-rede, /terceirizacao-ti, /ti-para-cartorios, /ti-para-hospitais-e-clinicas, /ti-para-escritorios-de-advocacia, /ti-para-contabilidades, /orcamento-ti, /blog.
+- Use âncoras semânticas e contextuais (NUNCA "clique aqui").
+- Distribua links naturalmente pelo texto, não concentre em um bloco.
+- Insira pelo menos 2 CTAs contextuais no meio do artigo (não só no final), mencionando diagnóstico gratuito, orçamento ou WhatsApp.
+
 IMPORTANTE: Responda APENAS com o JSON válido, sem markdown code blocks.
 IMPORTANTE: Inclua versões em inglês dos campos indicados para internacionalização.`;
 
@@ -68,8 +82,8 @@ Retorne um JSON com esta estrutura exata:
   "category": "${category || 'Tecnologia Empresarial'}",
   "read_time": "X min",
   "keywords": ["keyword1", "keyword2", "keyword3", "keyword4", "keyword5"],
-  "content_md": "conteúdo completo em português em markdown com ## headings, parágrafos, listas e **destaques**",
-  "content_md_en": "full content in English in markdown with ## headings, paragraphs, lists and **highlights**",
+  "content_md": "conteúdo PROFUNDO (2000-3000 palavras) em português em markdown com ## e ### headings, parágrafos detalhados, listas, **destaques**, cenários reais e NO MÍNIMO 8 links internos contextuais usando [âncora](/rota)",
+  "content_md_en": "DEEP content (2000-3000 words) in English in markdown with ## and ### headings, detailed paragraphs, lists, **highlights**, real scenarios and AT LEAST 8 contextual internal links using [anchor](/route)",
   "faq": [
     {"q": "pergunta frequente?", "a": "resposta detalhada"}
   ],
