@@ -1,10 +1,10 @@
 /**
  * Blog Internal Linking Engine
  * Generates 15+ relevant internal links per blog post, distributed across:
- * - Service pages (min 5)
- * - Segment pages (min 3)
+ * - Service pages (min 6)
+ * - Segment pages (min 4)
  * - Other blog posts (min 5)
- * - City pages (min 2)
+ * - City pages (min 3)
  */
 
 import { services } from "@/data/seo/services";
@@ -149,11 +149,29 @@ function scoreSegment(segmentSlug: string, title: string, excerpt: string, categ
   for (const kw of keywords) {
     if (text.includes(kw.toLowerCase())) score += 2;
   }
-  // Bonus from category mapping
   const mappedSegments = CATEGORY_TO_SEGMENT[category] || [];
   if (mappedSegments.includes(segmentSlug)) score += 3;
   return score;
 }
+
+// ── Natural insertion phrases (varied to avoid repetition) ──
+const INSERTION_PHRASES = [
+  (anchor: string, href: string) => `Para resolver esse cenário, contar com [${anchor}](${href}) é essencial.`,
+  (anchor: string, href: string) => `Nesse contexto, investir em [${anchor}](${href}) faz toda a diferença.`,
+  (anchor: string, href: string) => `A [${anchor}](${href}) é uma das formas mais eficazes de evitar esse tipo de problema.`,
+  (anchor: string, href: string) => `Empresas que implementam [${anchor}](${href}) reduzem drasticamente esse tipo de risco.`,
+  (anchor: string, href: string) => `Um dos pilares para prevenir essa situação é a [${anchor}](${href}).`,
+  (anchor: string, href: string) => `A adoção de [${anchor}](${href}) tem se mostrado decisiva para empresas que enfrentam esse desafio.`,
+  (anchor: string, href: string) => `Essa é uma das razões pelas quais a [${anchor}](${href}) se tornou prioridade em ambientes corporativos.`,
+  (anchor: string, href: string) => `A [${anchor}](${href}) oferece camadas de proteção que mitigam esses riscos de forma contínua.`,
+  (anchor: string, href: string) => `Quando falamos em resultados concretos, a [${anchor}](${href}) se destaca como solução comprovada.`,
+  (anchor: string, href: string) => `Organizações de todos os portes têm adotado [${anchor}](${href}) para fortalecer sua operação.`,
+  (anchor: string, href: string) => `Para garantir continuidade operacional, a [${anchor}](${href}) é indispensável.`,
+  (anchor: string, href: string) => `Profissionais de TI recomendam [${anchor}](${href}) como parte de qualquer estratégia robusta.`,
+  (anchor: string, href: string) => `Negligenciar [${anchor}](${href}) pode gerar custos imprevistos e riscos operacionais.`,
+  (anchor: string, href: string) => `O investimento em [${anchor}](${href}) se paga rapidamente em produtividade e segurança.`,
+  (anchor: string, href: string) => `Muitas empresas só descobrem a importância da [${anchor}](${href}) depois de enfrentar uma crise.`,
+];
 
 // ── Main link generation function ──
 export function generateBlogInternalLinks(
@@ -165,18 +183,16 @@ export function generateBlogInternalLinks(
   keywords?: string[]
 ): InternalLink[] {
   const seed = hashCode(postSlug);
-  const fullText = `${title} ${excerpt} ${(keywords || []).join(" ")} ${category} ${tag}`;
   const links: InternalLink[] = [];
 
-  // 1. SERVICE LINKS (min 5)
+  // 1. SERVICE LINKS (min 6)
   const serviceScores = services
     .map(s => ({ service: s, score: scoreService(s.slug, title, excerpt, category, tag) }))
     .sort((a, b) => b.score - a.score || hashCode(a.service.slug + postSlug) - hashCode(b.service.slug + postSlug));
 
-  // Pick top scored + fill with shuffled rest to reach 6
-  const topServices = serviceScores.slice(0, 3).filter(s => s.score > 0);
-  const restServices = seededShuffle(serviceScores.slice(3), seed);
-  const selectedServices = [...topServices, ...restServices].slice(0, 6);
+  const topServices = serviceScores.slice(0, 4).filter(s => s.score > 0);
+  const restServices = seededShuffle(serviceScores.slice(4), seed);
+  const selectedServices = [...topServices, ...restServices].slice(0, 7);
 
   for (const { service } of selectedServices) {
     const anchors = SERVICE_ANCHOR_TEMPLATES[service.slug] || [service.name];
@@ -188,7 +204,7 @@ export function generateBlogInternalLinks(
     });
   }
 
-  // 2. SEGMENT LINKS (min 3)
+  // 2. SEGMENT LINKS (min 4)
   const segmentScores = segments
     .map(s => ({ segment: s, score: scoreSegment(s.slug, title, excerpt, category, tag) }))
     .sort((a, b) => b.score - a.score || hashCode(a.segment.slug + postSlug) - hashCode(b.segment.slug + postSlug));
@@ -211,7 +227,6 @@ export function generateBlogInternalLinks(
     let score = 0;
     if (p.category === category) score += 3;
     if (p.tag === tag) score += 2;
-    // Title word overlap
     const postWords = title.toLowerCase().split(/\s+/).filter(w => w.length > 4);
     for (const w of postWords) {
       if (p.title.toLowerCase().includes(w)) score += 1;
@@ -229,12 +244,11 @@ export function generateBlogInternalLinks(
     });
   }
 
-  // 4. CITY LINKS (min 2)
+  // 4. CITY LINKS (min 3)
   const topCities = cities.filter(c => c.priority >= 0.7 && c.context);
   const shuffledCities = seededShuffle(topCities, seed);
-  const selectedCities = shuffledCities.slice(0, 3);
+  const selectedCities = shuffledCities.slice(0, 4);
 
-  // Pick a relevant service slug for the city link
   const primaryServiceSlug = selectedServices[0]?.service.slug || "suporte-ti";
 
   for (const city of selectedCities) {
@@ -251,7 +265,7 @@ export function generateBlogInternalLinks(
 
 /**
  * Injects contextual internal links into markdown content.
- * Distributes links naturally throughout the text body.
+ * Distributes links naturally throughout the text body with varied phrases.
  */
 export function injectLinksIntoMarkdown(markdown: string, links: InternalLink[]): string {
   if (!markdown || links.length === 0) return markdown;
@@ -259,58 +273,72 @@ export function injectLinksIntoMarkdown(markdown: string, links: InternalLink[])
   const paragraphs = markdown.split("\n\n");
   if (paragraphs.length < 3) return markdown;
 
-  // Separate links by type
   const serviceLinks = links.filter(l => l.type === "service");
   const segmentLinks = links.filter(l => l.type === "segment");
   const blogLinks = links.filter(l => l.type === "blog");
   const cityLinks = links.filter(l => l.type === "city");
 
-  // Pool all contextual links (service + segment + city) for inline insertion
+  // Pool contextual links for inline insertion
   const contextualLinks = [...serviceLinks, ...segmentLinks, ...cityLinks];
-  
-  // Distribute contextual links across paragraphs (skip first 2 and headings)
-  let linkIdx = 0;
-  const contentParagraphs = paragraphs.map((p, i) => {
-    // Skip headings, first 2 paragraphs, and list items
-    if (i < 2 || p.startsWith("##") || p.startsWith("- ") || p.startsWith("*") || linkIdx >= contextualLinks.length) {
-      return p;
-    }
+  const seed = hashCode(markdown.substring(0, 100));
+  const shuffledPhrases = seededShuffle(INSERTION_PHRASES, seed);
 
-    // Only add to text paragraphs (not headings or lists)
-    if (p.length > 80 && !p.startsWith("#")) {
-      const link = contextualLinks[linkIdx];
-      // Find a natural insertion point (after the first sentence or at end)
-      const sentenceEnd = p.indexOf(". ");
-      if (sentenceEnd > 30 && sentenceEnd < p.length - 20) {
-        const before = p.substring(0, sentenceEnd + 2);
-        const after = p.substring(sentenceEnd + 2);
-        p = `${before}Empresas que investem em [${link.anchor}](${link.href}) obtêm resultados superiores. ${after}`;
-      } else {
-        // Append at end
-        p = `${p} Conheça mais sobre [${link.anchor}](${link.href}).`;
-      }
-      linkIdx++;
-    }
-
-    return p;
+  // Identify eligible paragraphs (skip headings, lists, first 2)
+  const eligibleIndices: number[] = [];
+  paragraphs.forEach((p, i) => {
+    if (i < 2) return;
+    if (p.startsWith("##") || p.startsWith("- ") || p.startsWith("*") || p.startsWith("#")) return;
+    if (p.length < 60) return;
+    eligibleIndices.push(i);
   });
+
+  // Distribute links evenly across eligible paragraphs
+  let linkIdx = 0;
+  const spacing = Math.max(1, Math.floor(eligibleIndices.length / contextualLinks.length));
+
+  for (let ei = 0; ei < eligibleIndices.length && linkIdx < contextualLinks.length; ei++) {
+    // Only place a link every `spacing` eligible paragraphs
+    if (ei % spacing !== 0 && linkIdx > 0) continue;
+
+    const pIdx = eligibleIndices[ei];
+    const link = contextualLinks[linkIdx];
+    const phraseBuilder = shuffledPhrases[linkIdx % shuffledPhrases.length];
+    const phrase = phraseBuilder(link.anchor, link.href);
+
+    const p = paragraphs[pIdx];
+    // Insert after the first sentence if possible
+    const sentenceEnd = p.indexOf(". ");
+    if (sentenceEnd > 30 && sentenceEnd < p.length - 20) {
+      paragraphs[pIdx] = `${p.substring(0, sentenceEnd + 2)}${phrase} ${p.substring(sentenceEnd + 2)}`;
+    } else {
+      paragraphs[pIdx] = `${p} ${phrase}`;
+    }
+    linkIdx++;
+  }
+
+  // Add a mid-article CTA after ~40% of paragraphs
+  const midPoint = Math.floor(paragraphs.length * 0.4);
+  if (paragraphs.length > 8) {
+    paragraphs.splice(midPoint, 0, 
+      `> **💡 Sua empresa enfrenta esse tipo de desafio?** Fale agora com um especialista da WMTi e receba um diagnóstico gratuito. [Solicitar orçamento](/orcamento-ti) ou chame no [WhatsApp](https://wa.me/5511963166915).`
+    );
+  }
 
   // Add related blog posts section at the end
   if (blogLinks.length > 0) {
-    contentParagraphs.push("");
-    contentParagraphs.push("## Leitura recomendada");
-    contentParagraphs.push("");
+    paragraphs.push("");
+    paragraphs.push("## Leitura recomendada");
+    paragraphs.push("");
     for (const link of blogLinks.slice(0, 5)) {
-      contentParagraphs.push(`- [${link.anchor}](${link.href})`);
+      paragraphs.push(`- [${link.anchor}](${link.href})`);
     }
   }
 
-  return contentParagraphs.join("\n\n");
+  return paragraphs.join("\n\n");
 }
 
 /**
  * Generates the "Serviços relacionados" block data for the bottom of blog posts.
- * Returns 5 most relevant service + segment links.
  */
 export function getRelatedServicesBlock(
   postSlug: string,
@@ -321,9 +349,8 @@ export function getRelatedServicesBlock(
 ): { label: string; href: string }[] {
   const allLinks = generateBlogInternalLinks(postSlug, title, excerpt, category, tag);
   
-  // Mix of services and segments for the block
-  const serviceLinks = allLinks.filter(l => l.type === "service").slice(0, 3);
-  const segmentLinks = allLinks.filter(l => l.type === "segment").slice(0, 2);
+  const serviceLinks = allLinks.filter(l => l.type === "service").slice(0, 4);
+  const segmentLinks = allLinks.filter(l => l.type === "segment").slice(0, 3);
   
   return [...serviceLinks, ...segmentLinks].map(l => ({
     label: l.anchor,
