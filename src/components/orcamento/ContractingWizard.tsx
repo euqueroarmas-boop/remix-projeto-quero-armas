@@ -50,6 +50,7 @@ interface Props {
   computersQty: number;
   monthlyValue: number;
   quoteId: string | null;
+  serviceSlug?: string;
   leadCompanyName?: string;
   leadContactName?: string;
   leadEmail?: string;
