@@ -1343,12 +1343,38 @@ export default function AdminTestCenter({ onBack }: { onBack?: () => void }) {
                         <span className="text-xs font-bold text-foreground truncate">{suite.label}</span>
                       </div>
                       <p className="text-[11px] text-muted-foreground line-clamp-2">{suite.description}</p>
+                      {/* Last run date */}
+                      {lastSuiteRun && (
+                        <p className="text-[10px] text-muted-foreground">
+                          Último: {new Date(lastSuiteRun.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                        </p>
+                      )}
                       <div className="flex items-center justify-between gap-1">
                         <Badge variant="outline" className="text-[10px] font-normal">{isLight ? "⚡ Leve" : "🧪 Cypress"}</Badge>
-                        <Button size="sm" variant={isRunning ? "ghost" : "outline"} onClick={(e) => { e.stopPropagation(); handleRunTest(suite.id); }} disabled={isRunning} className="h-7 text-[11px] px-2.5">
-                          {isRunning ? <Loader2 className="h-3 w-3 animate-spin" /> : <Play className="h-3 w-3 mr-0.5" />}
-                          {isRunning ? "..." : "Rodar"}
-                        </Button>
+                        <div className="flex items-center gap-1">
+                          {isRunning && (
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              className="h-7 text-[10px] px-2"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setRunningTests(prev => { const n = new Set(prev); n.delete(suite.id); return n; });
+                                // Force-finish any stuck run in DB
+                                if (lastSuiteRun && lastSuiteRun.status === "running") {
+                                  supabase.from("test_runs").update({ status: "failed", error_message: "Parado manualmente pelo admin", finished_at: new Date().toISOString() }).eq("id", lastSuiteRun.id).then(() => fetchRuns());
+                                }
+                                toast.info("Teste parado");
+                              }}
+                            >
+                              <Square className="h-3 w-3" /> Parar
+                            </Button>
+                          )}
+                          <Button size="sm" variant={isRunning ? "ghost" : "outline"} onClick={(e) => { e.stopPropagation(); handleRunTest(suite.id); }} disabled={isRunning} className="h-7 text-[11px] px-2.5">
+                            {isRunning ? <Loader2 className="h-3 w-3 animate-spin" /> : <Play className="h-3 w-3 mr-0.5" />}
+                            {isRunning ? "..." : "Rodar"}
+                          </Button>
+                        </div>
                       </div>
                       {lastSuiteRun && (
                         <div className="border-t border-border pt-1.5 mt-1 space-y-1.5">
@@ -1376,7 +1402,6 @@ export default function AdminTestCenter({ onBack }: { onBack?: () => void }) {
                               </button>
                             )}
                           </div>
-                          {/* Show inline error preview */}
                           {hasFailed && lastSuiteRun.error_message && (
                             <p className="text-[10px] text-red-400/90 bg-red-500/10 rounded px-2 py-1 line-clamp-2">
                               {lastSuiteRun.error_message}
