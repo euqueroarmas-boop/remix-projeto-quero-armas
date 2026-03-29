@@ -77,6 +77,7 @@ interface DetailedTestResult {
   diff?: { expected: any; actual: any } | null;
   cypress_command?: string;
   spec?: string;
+  url?: string;
 }
 
 // ─── Constants ───
@@ -1146,8 +1147,19 @@ export default function AdminTestCenter({ onBack }: { onBack?: () => void }) {
                 const Icon = suite.icon;
                 const isLight = suite.engine === "light";
                 const lastSuiteRun = runs.find(r => r.test_type === suite.id);
+                const hasFailed = lastSuiteRun && ["failed", "partial"].includes(lastSuiteRun.status);
+                const failedResults = hasFailed && Array.isArray(lastSuiteRun.results)
+                  ? (lastSuiteRun.results as DetailedTestResult[]).filter(r => r.status === "failed")
+                  : [];
+
                 return (
-                  <Card key={suite.id} className={`transition-all ${isRunning ? "border-primary/50 bg-primary/5" : "hover:border-muted-foreground/30"}`}>
+                  <Card
+                    key={suite.id}
+                    className={`transition-all cursor-pointer ${isRunning ? "border-primary/50 bg-primary/5" : hasFailed ? "hover:border-red-500/40" : "hover:border-muted-foreground/30"}`}
+                    onClick={() => {
+                      if (lastSuiteRun) setSelectedRun(lastSuiteRun);
+                    }}
+                  >
                     <CardContent className="p-3.5 space-y-2.5">
                       <div className="flex items-center gap-2">
                         <div className={`p-1.5 rounded-md ${isRunning ? "bg-primary/20" : "bg-muted"}`}>
@@ -1158,14 +1170,43 @@ export default function AdminTestCenter({ onBack }: { onBack?: () => void }) {
                       <p className="text-[11px] text-muted-foreground line-clamp-2">{suite.description}</p>
                       <div className="flex items-center justify-between gap-1">
                         <Badge variant="outline" className="text-[10px] font-normal">{isLight ? "⚡ Leve" : "🧪 Cypress"}</Badge>
-                        <Button size="sm" variant={isRunning ? "ghost" : "outline"} onClick={() => handleRunTest(suite.id)} disabled={isRunning} className="h-7 text-[11px] px-2.5">
+                        <Button size="sm" variant={isRunning ? "ghost" : "outline"} onClick={(e) => { e.stopPropagation(); handleRunTest(suite.id); }} disabled={isRunning} className="h-7 text-[11px] px-2.5">
                           {isRunning ? <Loader2 className="h-3 w-3 animate-spin" /> : <Play className="h-3 w-3 mr-0.5" />}
                           {isRunning ? "..." : "Rodar"}
                         </Button>
                       </div>
                       {lastSuiteRun && (
-                        <div className="text-[10px] text-muted-foreground border-t border-border pt-1.5 mt-1">
-                          <RunStatusBadge status={lastSuiteRun.status} />
+                        <div className="border-t border-border pt-1.5 mt-1 space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <RunStatusBadge status={lastSuiteRun.status} />
+                            {hasFailed && (
+                              <button
+                                className="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const errorText = [
+                                    `Suite: ${suite.label} (${lastSuiteRun.test_type})`,
+                                    `Status: ${lastSuiteRun.status}`,
+                                    `Data: ${new Date(lastSuiteRun.created_at).toLocaleString("pt-BR")}`,
+                                    lastSuiteRun.error_message ? `\nErro: ${lastSuiteRun.error_message}` : "",
+                                    lastSuiteRun.error_summary ? `Resumo: ${lastSuiteRun.error_summary}` : "",
+                                    lastSuiteRun.github_run_url ? `GitHub: ${lastSuiteRun.github_run_url}` : "",
+                                    failedResults.length > 0 ? `\nTestes que falharam:\n${failedResults.map(r => `  ❌ ${r.name}${r.url ? ` (${r.url})` : ""}\n     ${r.error || ""}`).join("\n")}` : "",
+                                  ].filter(Boolean).join("\n");
+                                  navigator.clipboard.writeText(errorText);
+                                  toast.success("Erro copiado");
+                                }}
+                              >
+                                <Copy className="h-3 w-3 inline mr-0.5" />Copiar erro
+                              </button>
+                            )}
+                          </div>
+                          {/* Show inline error preview */}
+                          {hasFailed && lastSuiteRun.error_message && (
+                            <p className="text-[10px] text-red-400/90 bg-red-500/10 rounded px-2 py-1 line-clamp-2">
+                              {lastSuiteRun.error_message}
+                            </p>
+                          )}
                         </div>
                       )}
                     </CardContent>
