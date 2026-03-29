@@ -70,9 +70,12 @@ export default defineConfig({
 
       // Helper to update test_runs directly (fallback / legacy)
       async function patchRun(payload: Record<string, unknown>) {
-        if (!supabaseUrl || !supabaseKey || !runId) return;
+        if (!supabaseUrl || !supabaseKey || !runId) {
+          console.log(`[WMTi Bridge] patchRun SKIPPED — missing vars`);
+          return;
+        }
         try {
-          await fetch(`${supabaseUrl}/rest/v1/test_runs?id=eq.${runId}`, {
+          const res = await fetch(`${supabaseUrl}/rest/v1/test_runs?id=eq.${runId}`, {
             method: "PATCH",
             headers: {
               apikey: supabaseKey,
@@ -82,8 +85,9 @@ export default defineConfig({
             },
             body: JSON.stringify(payload),
           });
-        } catch {
-          // Silently fail
+          console.log(`[WMTi Bridge] patchRun → ${res.status}`);
+        } catch (err) {
+          console.error(`[WMTi Bridge] patchRun FAILED:`, err);
         }
       }
 
