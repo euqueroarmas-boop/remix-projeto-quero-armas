@@ -293,7 +293,7 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  if (!verifyAdmin(req)) {
+  if (!(await verifyAdmin(req))) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 
