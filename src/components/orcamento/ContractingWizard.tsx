@@ -357,8 +357,21 @@ const ContractingWizard = ({
 
       let html: string;
 
+      // Capture client proof data for legal validity (clause 17.3)
+      const proof = await captureClientProof();
+
+      // Determine due date (10 days from now)
+      const dueDate = new Date();
+      dueDate.setDate(dueDate.getDate() + 10);
+      const diaVencimento = String(dueDate.getDate());
+
+      // Resolve service-specific contract object
+      const objetoServico = serviceSlug
+        ? getServiceContractObject(serviceSlug)
+        : "Os serviços de T.I. objeto deste contrato serão aqueles especificamente definidos no momento da contratação, conforme escopo acordado entre as partes.";
+
       if (contractType === "suporte") {
-        const templateHtml = await generateContractFromTemplate("wmti_recorrente_v1", {
+        const templateHtml = await generateContractFromTemplate("wmti_servicos_base_v1", {
           cliente_razao_social: registrationData.razaoSocial,
           cliente_cnpj: registrationData.cnpjOuCpf,
           cliente_endereco_completo: fullAddress + ", " + registrationData.cidade + "/" + registrationData.uf + ", CEP " + registrationData.cep,
@@ -368,9 +381,16 @@ const ContractingWizard = ({
           representante_telefone: registrationData.telefone || "",
           prazo_meses: String(config.termMonths),
           data_contratacao: new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" }),
-          ip_contratante: "",
-          geo_contratante: "",
+          ip_contratante: proof.ip_contratante,
+          geo_contratante: proof.geo_contratante,
           aceite_checkbox: "Sim",
+          objeto_servico_especifico: objetoServico,
+          valor_mensal: finalMonthlyValue.toLocaleString("pt-BR", { minimumFractionDigits: 2 }),
+          valor_mensal_extenso: valueToWords(finalMonthlyValue),
+          dia_vencimento: diaVencimento,
+          data_hora_contratacao: proof.data_hora_contratacao,
+          user_agent: proof.user_agent,
+          session_id: proof.session_id,
         });
         html = templateHtml || generateContractHtml(
           customerDataForContract,
