@@ -483,6 +483,22 @@ export default function AdminTestCenter() {
         </div>
       </div>
 
+      {/* Alert Configuration Panel */}
+      {showAlertConfig && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Bell className="h-4 w-4 text-primary" />
+              Configuração de Alertas
+            </CardTitle>
+            <p className="text-xs text-muted-foreground">Receba alertas quando testes falharem</p>
+          </CardHeader>
+          <CardContent>
+            <AlertConfigPanel />
+          </CardContent>
+        </Card>
+      )}
+
       {/* Suite Cards — Dispatch Buttons */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
         {SUITES.map((suite) => {
