@@ -20,35 +20,47 @@ export default defineConfig({
       quiet: true,
     },
     setupNodeEvents(on, config) {
-      // Track spec-level progress and report to Supabase
+      // ─── Event Bridge: Cypress → Ingest API ───
       const supabaseUrl = process.env.SUPABASE_URL || config.env.SUPABASE_URL || "";
       const supabaseKey = process.env.SUPABASE_KEY || config.env.SUPABASE_KEY || "";
       const runId = process.env.RUN_ID || config.env.RUN_ID || "";
+      const ingestToken = process.env.INGEST_TOKEN || config.env.INGEST_TOKEN || "";
+      const ingestUrl = supabaseUrl ? `${supabaseUrl}/functions/v1/ingest-test-events` : "";
 
-      let specsCompleted = 0;
       let totalSpecs = 0;
-      let specResults: Array<{ spec: string; status: string; tests: number; passes: number; failures: number; duration: number }> = [];
+      let specsCompleted = 0;
+      let totalTests = 0;
+      let passedTests = 0;
+      let failedTests = 0;
+      let skippedTests = 0;
 
-      on("before:run", (details) => {
-        totalSpecs = details.specs?.length || 0;
-        specsCompleted = 0;
-        specResults = [];
-
-        if (supabaseUrl && supabaseKey && runId) {
-          const payload = JSON.stringify({
-            total_tests: totalSpecs,
-            logs: {
-              entries: [
-                { ts: new Date().toISOString(), event: "cypress_started", detail: `Cypress iniciado com ${totalSpecs} specs` },
-              ],
-              current_spec: "Iniciando...",
-              current_url: null,
-              total_specs: totalSpecs,
-              specs_completed: 0,
-            },
+      // Helper to send events to the ingest API
+      async function sendEvents(
+        events: Array<Record<string, unknown>>,
+        progress?: Record<string, unknown>
+      ) {
+        if (!ingestUrl || !runId || !ingestToken) return;
+        try {
+          await fetch(ingestUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              run_id: runId,
+              token: ingestToken,
+              events,
+              progress,
+            }),
           });
+        } catch {
+          // Silently fail — don't block test execution
+        }
+      }
 
-          fetch(`${supabaseUrl}/rest/v1/test_runs?id=eq.${runId}`, {
+      // Helper to update test_runs directly (fallback / legacy)
+      async function patchRun(payload: Record<string, unknown>) {
+        if (!supabaseUrl || !supabaseKey || !runId) return;
+        try {
+          await fetch(`${supabaseUrl}/rest/v1/test_runs?id=eq.${runId}`, {
             method: "PATCH",
             headers: {
               apikey: supabaseKey,
@@ -56,64 +68,138 @@ export default defineConfig({
               "Content-Type": "application/json",
               Prefer: "return=minimal",
             },
-            body: payload,
-          }).catch(() => {});
+            body: JSON.stringify(payload),
+          });
+        } catch {
+          // Silently fail
         }
+      }
+
+      on("before:run", async (details) => {
+        totalSpecs = details.specs?.length || 0;
+        specsCompleted = 0;
+        totalTests = 0;
+        passedTests = 0;
+        failedTests = 0;
+        skippedTests = 0;
+
+        await sendEvents(
+          [
+            {
+              event_type: "execution_started",
+              payload: {
+                total_specs: totalSpecs,
+                browser: details.browser?.name,
+                cypress_version: details.cypressVersion,
+              },
+            },
+          ],
+          { total_specs: totalSpecs }
+        );
+
+        // Also do legacy PATCH for compatibility
+        await patchRun({
+          total_specs: totalSpecs,
+          current_spec: "Iniciando...",
+          progress_percent: 0,
+          logs: {
+            entries: [
+              {
+                ts: new Date().toISOString(),
+                event: "cypress_started",
+                detail: `Cypress iniciado com ${totalSpecs} specs`,
+              },
+            ],
+            current_spec: "Iniciando...",
+            current_url: null,
+            total_specs: totalSpecs,
+            specs_completed: 0,
+          },
+        });
       });
 
-      on("after:spec", (spec, results) => {
+      on("after:spec", async (spec, results) => {
         specsCompleted++;
         const specName = spec.relative || spec.name || "unknown";
         const passes = results.stats?.passes || 0;
         const failures = results.stats?.failures || 0;
         const tests = results.stats?.tests || 0;
+        const pending = results.stats?.pending || 0;
         const duration = results.stats?.duration || 0;
 
-        specResults.push({
-          spec: specName,
+        passedTests += passes;
+        failedTests += failures;
+        skippedTests += pending;
+        totalTests += tests;
+
+        // Build events for each test in this spec
+        const testEvents: Array<Record<string, unknown>> = [];
+
+        // Add spec_completed event
+        testEvents.push({
+          event_type: "spec_completed",
+          spec_name: specName,
           status: failures > 0 ? "failed" : "passed",
-          tests,
-          passes,
-          failures,
-          duration,
+          duration_ms: duration,
+          payload: { passes, failures, tests, pending },
         });
 
-        if (supabaseUrl && supabaseKey && runId) {
-          const totalPassed = specResults.reduce((s, r) => s + r.passes, 0);
-          const totalFailed = specResults.reduce((s, r) => s + r.failures, 0);
-          const totalTests = specResults.reduce((s, r) => s + r.tests, 0);
+        // Extract individual test results from mochawesome if available
+        if (results.tests) {
+          for (const test of results.tests) {
+            const attempts = test.attempts || [];
+            const lastAttempt = attempts[attempts.length - 1];
+            const testStatus = lastAttempt?.state || "unknown";
+            const testError = lastAttempt?.error?.message;
+            const testStack = lastAttempt?.error?.stack;
 
-          const entries = specResults.map(r => ({
-            ts: new Date().toISOString(),
-            event: r.failures > 0 ? "spec_failed" : "spec_passed",
-            detail: `${r.spec} — ${r.passes}✓ ${r.failures}✗ (${r.duration}ms)`,
-          }));
-
-          const payload = JSON.stringify({
-            total_tests: totalTests > 0 ? totalTests : totalSpecs,
-            passed_tests: totalPassed,
-            failed_tests: totalFailed,
-            logs: {
-              entries,
-              current_spec: specsCompleted < totalSpecs ? `Spec ${specsCompleted + 1} de ${totalSpecs}` : "Finalizando...",
-              current_url: null,
-              total_specs: totalSpecs,
-              specs_completed: specsCompleted,
-              spec_results: specResults,
-            },
-          });
-
-          fetch(`${supabaseUrl}/rest/v1/test_runs?id=eq.${runId}`, {
-            method: "PATCH",
-            headers: {
-              apikey: supabaseKey,
-              Authorization: `Bearer ${supabaseKey}`,
-              "Content-Type": "application/json",
-              Prefer: "return=minimal",
-            },
-            body: payload,
-          }).catch(() => {});
+            testEvents.push({
+              event_type: testStatus === "passed" ? "test_passed" : testStatus === "failed" ? "test_failed" : "test_skipped",
+              spec_name: specName,
+              test_name: test.title?.join(" > ") || "unknown",
+              status: testStatus,
+              duration_ms: lastAttempt?.duration || 0,
+              error_message: testError || undefined,
+              stack_trace: testStack || undefined,
+            });
+          }
         }
+
+        await sendEvents(testEvents, {
+          total_tests: totalTests,
+          total_specs: totalSpecs,
+          completed_specs: specsCompleted,
+          completed_tests: passedTests + failedTests + skippedTests,
+          passed_tests: passedTests,
+          failed_tests: failedTests,
+          skipped_tests: skippedTests,
+        });
+
+        // Legacy PATCH
+        const nextSpec =
+          specsCompleted < totalSpecs
+            ? `Spec ${specsCompleted + 1} de ${totalSpecs}`
+            : "Finalizando...";
+
+        await patchRun({
+          total_tests: totalTests > 0 ? totalTests : totalSpecs,
+          passed_tests: passedTests,
+          failed_tests: failedTests,
+          skipped_tests: skippedTests,
+          completed_tests: passedTests + failedTests + skippedTests,
+          completed_specs: specsCompleted,
+          total_specs: totalSpecs,
+          current_spec: nextSpec,
+          progress_percent: Math.min(
+            100,
+            Math.round(
+              ((passedTests + failedTests + skippedTests) /
+                Math.max(totalTests, 1)) *
+                100
+            )
+          ),
+          last_event_at: new Date().toISOString(),
+        });
       });
 
       return config;
