@@ -63,6 +63,7 @@ interface Props {
   leadNumero?: string;
   leadComplemento?: string;
   leadBairro?: string;
+  customRegistrationForm?: (onComplete: (data: RegistrationData) => Promise<void>, loading: boolean) => React.ReactNode;
 }
 
 const normalizeQrImage = (value: unknown) => {
