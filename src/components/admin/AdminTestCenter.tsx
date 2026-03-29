@@ -1021,11 +1021,21 @@ export default function AdminTestCenter({ onBack }: { onBack?: () => void }) {
   const handleRunTest = async (testType: string) => {
     setRunningTests(prev => new Set(prev).add(testType));
     try {
-      const result = await invokeRunTests("POST", undefined, { test_type: testType });
-      await fetchRuns();
-      if (result.status === "success" || result.status === "failed") {
-        setRunningTests(prev => { const n = new Set(prev); n.delete(testType); return n; });
-      }
+      // Fire-and-forget: don't await the full response for light tests
+      // The edge function updates the DB incrementally via updateRunProgress
+      // and realtime subscription picks up changes in real-time
+      invokeRunTests("POST", undefined, { test_type: testType })
+        .then(() => {
+          // After completion, refresh list to get final state
+          fetchRuns();
+        })
+        .catch((err) => {
+          console.error("Run test error:", err);
+          setRunningTests(prev => { const n = new Set(prev); n.delete(testType); return n; });
+          toast.error(`Erro ao executar teste ${testType}`);
+        });
+      // Immediately fetch to pick up the new "running" row
+      setTimeout(() => fetchRuns(), 500);
     } catch (err) {
       console.error("Run test error:", err);
       setRunningTests(prev => { const n = new Set(prev); n.delete(testType); return n; });
@@ -1035,8 +1045,13 @@ export default function AdminTestCenter({ onBack }: { onBack?: () => void }) {
   const handleRunFull = async () => {
     setRunningTests(new Set(["full"]));
     try {
-      await invokeRunTests("POST", undefined, { test_type: "full" });
-      await fetchRuns();
+      invokeRunTests("POST", undefined, { test_type: "full" })
+        .then(() => fetchRuns())
+        .catch((err) => {
+          console.error("Full test error:", err);
+          toast.error("Erro ao executar teste completo");
+        });
+      setTimeout(() => fetchRuns(), 500);
     } catch (err) {
       console.error("Full test error:", err);
     }
