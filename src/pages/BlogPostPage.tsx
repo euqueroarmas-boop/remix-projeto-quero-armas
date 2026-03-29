@@ -428,7 +428,7 @@ const BlogPostPage = () => {
                             </Link>
                             <button
                               onClick={() => openWhatsApp({ pageTitle: localizedPost.title, intent: "blog" })}
-                              className="inline-flex items-center gap-1 text-sm font-semibold text-green-500 hover:underline"
+                              className="inline-flex items-center gap-1 text-sm font-semibold text-accent hover:underline"
                             >
                               WhatsApp <ArrowRight size={14} />
                             </button>
