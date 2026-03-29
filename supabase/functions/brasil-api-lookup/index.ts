@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
       const res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${digits}`);
       if (!res.ok) {
         await logLookup(supabase, "cnpj", digits, "api_error", `Status: ${res.status}`);
-        return json({ error: "CNPJ não encontrado na Receita Federal" }, 404);
+        return json({ error: "CNPJ não encontrado na Receita Federal", data: null }, 200);
       }
 
       const apiData = await res.json();
@@ -88,7 +88,7 @@ Deno.serve(async (req) => {
       const res = await fetch(`https://brasilapi.com.br/api/cep/v1/${digits}`);
       if (!res.ok) {
         await logLookup(supabase, "cep", digits, "api_error", `Status: ${res.status}`);
-        return json({ error: "CEP não encontrado" }, 404);
+        return json({ error: "CEP não encontrado", data: null }, 200);
       }
 
       const apiData = await res.json();
