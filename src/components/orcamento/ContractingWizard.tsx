@@ -423,6 +423,7 @@ const ContractingWizard = ({
           contract_text: html,
           monthly_value: finalMonthlyValue,
           contract_hash: contractHash,
+          client_ip: proof.ip_contratante,
           status: "draft",
           signed: false,
           accepted_minimum_term: false,
