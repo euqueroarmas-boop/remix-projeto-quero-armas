@@ -77,6 +77,7 @@ interface DetailedTestResult {
   diff?: { expected: any; actual: any } | null;
   cypress_command?: string;
   spec?: string;
+  url?: string;
 }
 
 // ─── Constants ───
