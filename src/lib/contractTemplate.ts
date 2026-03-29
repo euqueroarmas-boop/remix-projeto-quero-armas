@@ -17,6 +17,9 @@ interface ContractVariables {
   valor_mensal: string;
   valor_mensal_extenso: string;
   dia_vencimento: string;
+  data_hora_contratacao: string;
+  user_agent: string;
+  session_id: string;
 }
 
 /**
