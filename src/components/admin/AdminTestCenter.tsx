@@ -1429,6 +1429,24 @@ export default function AdminTestCenter({ onBack }: { onBack?: () => void }) {
                               </button>
                             )}
                           </div>
+                          {/* Show current phase for running Cypress tests */}
+                          {lastSuiteRun.status === "running" && lastSuiteRun.current_spec && (
+                            <p className="text-[10px] text-blue-400/90 bg-blue-500/10 rounded px-2 py-1 truncate">
+                              {lastSuiteRun.current_spec}
+                            </p>
+                          )}
+                          {/* Show github link if available */}
+                          {lastSuiteRun.status === "running" && lastSuiteRun.github_run_url && (
+                            <a
+                              href={lastSuiteRun.github_run_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[10px] text-primary hover:underline flex items-center gap-1"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <ExternalLink className="h-3 w-3" /> Ver no GitHub
+                            </a>
+                          )}
                           {hasFailed && lastSuiteRun.error_message && (
                             <p className="text-[10px] text-red-400/90 bg-red-500/10 rounded px-2 py-1 line-clamp-2">
                               {lastSuiteRun.error_message}
