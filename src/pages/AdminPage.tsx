@@ -20,6 +20,8 @@ import AdminAudit from "@/components/admin/AdminAudit";
 import AdminRiskMonitor from "@/components/admin/AdminRiskMonitor";
 import AdminLeadsProposals from "@/components/admin/AdminLeadsProposals";
 import AdminDiagnostics from "@/components/admin/AdminDiagnostics";
+import AdminCommandCenter from "@/components/admin/AdminCommandCenter";
+import AdminFullscreenMenu from "@/components/admin/AdminFullscreenMenu";
 
 const QAPanel = lazy(() => import("@/components/admin/qa/QAPanel"));
 const AdminBlogGenerator = lazy(() => import("@/components/admin/AdminBlogGenerator"));
@@ -665,11 +667,11 @@ function ClientesTab() {
 }
 
 // ─── Content Renderer ───
-function AdminContent({ activeSection }: { activeSection: string }) {
+function AdminContent({ activeSection, onNavigate }: { activeSection: string; onNavigate: (s: string) => void }) {
   const fallback = <div className="flex items-center justify-center py-12 text-muted-foreground text-sm"><Loader2 className="h-5 w-5 animate-spin mr-2" />Carregando...</div>;
 
   switch (activeSection) {
-    case "dashboard": return <Dashboard />;
+    case "dashboard": return <AdminCommandCenter onNavigate={onNavigate} />;
     case "logs": return <LogsTab />;
     case "errors": return <LogsTab onlyErrors />;
     case "payments": return <PaymentsTab />;
@@ -683,7 +685,7 @@ function AdminContent({ activeSection }: { activeSection: string }) {
     case "qa": return <Suspense fallback={fallback}><QAPanel /></Suspense>;
     case "test-center": return <Suspense fallback={fallback}><AdminTestCenter /></Suspense>;
     case "blog-ai": return <Suspense fallback={fallback}><AdminBlogGenerator /></Suspense>;
-    default: return <Dashboard />;
+    default: return <AdminCommandCenter onNavigate={onNavigate} />;
   }
 }
 
@@ -692,6 +694,7 @@ export default function AdminPage() {
   const [authed, setAuthed] = useState(!!sessionStorage.getItem("admin_token"));
   const [activeSection, setActiveSection] = useState("dashboard");
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const isMobile = useIsMobile();
 
   if (!authed) return <AdminLogin onLogin={() => setAuthed(true)} />;
@@ -704,12 +707,22 @@ export default function AdminPage() {
   const handleNavClick = (id: string) => {
     setActiveSection(id);
     setMobileNavOpen(false);
+    setMenuOpen(false);
   };
 
   const currentLabel = NAV_GROUPS.flatMap(g => g.items).find(i => i.id === activeSection)?.label || "Dashboard";
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col md:flex-row">
+      {/* Fullscreen Menu */}
+      <AdminFullscreenMenu
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        activeSection={activeSection}
+        onNavigate={handleNavClick}
+        onLogout={handleLogout}
+      />
+
       {/* Sidebar - Desktop */}
       {!isMobile && (
         <aside className="w-56 border-r border-border bg-card flex-shrink-0 flex flex-col h-screen sticky top-0">
@@ -758,63 +771,42 @@ export default function AdminPage() {
       <div className="flex-1 flex flex-col min-w-0">
         {/* Mobile Header */}
         {isMobile && (
-          <>
-            <header className="border-b border-border px-4 py-3 flex items-center justify-between gap-2 bg-card sticky top-0 z-30">
-              <button
-                onClick={() => setMobileNavOpen(!mobileNavOpen)}
-                className="text-xs font-bold text-foreground flex items-center gap-2"
-              >
-                🛡️ {currentLabel}
-                <ChevronLeft className={`h-3 w-3 transition-transform ${mobileNavOpen ? "rotate-90" : "-rotate-90"}`} />
-              </button>
-              <Button variant="ghost" size="sm" onClick={handleLogout} className="text-xs">
-                <LogOut className="h-3.5 w-3.5" />
-              </Button>
-            </header>
-
-            {/* Mobile Navigation Dropdown */}
-            {mobileNavOpen && (
-              <div className="bg-card border-b border-border px-2 py-2 space-y-1 sticky top-[49px] z-20 max-h-[60vh] overflow-y-auto">
-                {NAV_GROUPS.map((group) => (
-                  <div key={group.label}>
-                    <p className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                      {group.label}
-                    </p>
-                    {group.items.map((item) => {
-                      const Icon = item.icon;
-                      const isActive = activeSection === item.id;
-                      return (
-                        <button
-                          key={item.id}
-                          onClick={() => handleNavClick(item.id)}
-                          className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-xs transition-colors ${
-                            isActive
-                              ? "bg-primary/10 text-primary font-semibold"
-                              : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                          }`}
-                        >
-                          <Icon className="h-3.5 w-3.5" />
-                          {item.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                ))}
+          <header className="border-b border-border px-4 py-3 flex items-center justify-between gap-2 bg-card sticky top-0 z-30">
+            <button
+              onClick={() => setMenuOpen(true)}
+              className="text-xs font-bold text-foreground flex items-center gap-2"
+            >
+              <div className="flex flex-col gap-[3px]">
+                <span className="block w-4 h-[2px] bg-foreground rounded" />
+                <span className="block w-4 h-[2px] bg-foreground rounded" />
+                <span className="block w-4 h-[2px] bg-foreground rounded" />
               </div>
-            )}
-          </>
+              {currentLabel}
+            </button>
+            <Button variant="ghost" size="sm" onClick={handleLogout} className="text-xs">
+              <LogOut className="h-3.5 w-3.5" />
+            </Button>
+          </header>
         )}
 
         {/* Desktop Header */}
         {!isMobile && (
-          <header className="border-b border-border px-6 py-4">
+          <header className="border-b border-border px-6 py-4 flex items-center justify-between">
             <h2 className="text-lg font-bold text-foreground">{currentLabel}</h2>
+            <Button variant="ghost" size="sm" onClick={() => setMenuOpen(true)} className="text-xs gap-1.5">
+              <div className="flex flex-col gap-[3px]">
+                <span className="block w-3.5 h-[1.5px] bg-foreground rounded" />
+                <span className="block w-3.5 h-[1.5px] bg-foreground rounded" />
+                <span className="block w-3.5 h-[1.5px] bg-foreground rounded" />
+              </div>
+              Menu
+            </Button>
           </header>
         )}
 
         {/* Page Content */}
         <main className="flex-1 p-4 md:p-6 overflow-auto">
-          <AdminContent activeSection={activeSection} />
+          <AdminContent activeSection={activeSection} onNavigate={handleNavClick} />
         </main>
       </div>
     </div>
