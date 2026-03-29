@@ -289,7 +289,7 @@ async function runBlogTests(supabase: ReturnType<typeof getSupabase>, runId: str
 }
 
 // ─── GitHub Actions dispatch ───
-async function triggerGitHubWorkflow(testType: string, runId: string): Promise<{ success: boolean; error?: string }> {
+async function triggerGitHubWorkflow(testType: string, runId: string, ingestToken?: string): Promise<{ success: boolean; error?: string }> {
   try {
     const res = await fetch(
       `https://api.github.com/repos/${GITHUB_REPO}/actions/workflows/cypress-tests.yml/dispatches`,
@@ -308,6 +308,7 @@ async function triggerGitHubWorkflow(testType: string, runId: string): Promise<{
             base_url: SITE_URL,
             supabase_url: SUPABASE_URL,
             supabase_key: SUPABASE_SERVICE_KEY,
+            ingest_token: ingestToken || "",
           },
         }),
       }
