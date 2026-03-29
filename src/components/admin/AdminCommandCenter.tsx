@@ -501,6 +501,22 @@ export default function AdminCommandCenter({ onNavigate }: CommandCenterProps) {
     setRefreshing(false);
   }, [alerts, funnel, tests, activity]);
 
+  const handleRunTests = useCallback(async () => {
+    try {
+      const token = sessionStorage.getItem("admin_token");
+      if (!token) return;
+      await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/run-tests`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-admin-token": token },
+        body: JSON.stringify({ test_type: "full" }),
+      });
+      // Realtime will pick up the new run
+      setTimeout(() => tests.refetch(), 1000);
+    } catch (err) {
+      console.error("Run tests from dashboard:", err);
+    }
+  }, [tests]);
+
   // Update timestamp when any module reloads via realtime
   useEffect(() => {
     if (allLoaded) setLastUpdate(new Date());
@@ -537,7 +553,7 @@ export default function AdminCommandCenter({ onNavigate }: CommandCenterProps) {
       <SystemStatusGrid errors24h={alerts.errors24h} webhookErrors={alerts.webhookErrors} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <TestsBlock testRun={tests.testRun} activeRun={tests.activeRun} lastCompletedRun={tests.lastCompletedRun} onNavigate={onNavigate} />
+        <TestsBlock testRun={tests.testRun} activeRun={tests.activeRun} lastCompletedRun={tests.lastCompletedRun} onNavigate={onNavigate} onRunTests={handleRunTests} />
         <FunnelBlock data={{ leads: funnel.leads, quotes: funnel.quotes, contracts: funnel.contracts, paymentsOk: funnel.paymentsOk, paymentsFail: funnel.paymentsFail }} onNavigate={onNavigate} />
       </div>
 
