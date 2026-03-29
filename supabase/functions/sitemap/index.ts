@@ -202,7 +202,7 @@ Deno.serve(async (req) => {
       xml = buildPagesXml();
       break;
     case "blog":
-      xml = buildBlogXml();
+      xml = await buildBlogXml();
       break;
     case "services":
       xml = buildServiceCityXml();
