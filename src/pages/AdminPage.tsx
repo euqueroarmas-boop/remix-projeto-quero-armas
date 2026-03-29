@@ -22,6 +22,7 @@ import AdminLeadsProposals from "@/components/admin/AdminLeadsProposals";
 import AdminDiagnostics from "@/components/admin/AdminDiagnostics";
 import AdminCommandCenter from "@/components/admin/AdminCommandCenter";
 import AdminFullscreenMenu from "@/components/admin/AdminFullscreenMenu";
+import LogFullscreenViewer from "@/components/admin/LogFullscreenViewer";
 
 const QAPanel = lazy(() => import("@/components/admin/qa/QAPanel"));
 const AdminBlogGenerator = lazy(() => import("@/components/admin/AdminBlogGenerator"));
@@ -220,6 +221,7 @@ function LogsTab({ onlyErrors = false }: { onlyErrors?: boolean }) {
   const [filterTipo, setFilterTipo] = useState("all");
   const [filterStatus, setFilterStatus] = useState(onlyErrors ? "error" : "all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [viewerLog, setViewerLog] = useState<LogRow | null>(null);
 
   const fetchLogs = useCallback(async () => {
     setLoading(true);
