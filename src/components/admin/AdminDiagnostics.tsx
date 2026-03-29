@@ -5,10 +5,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { RefreshCw, Copy, Check, Eye, ChevronLeft, ChevronRight, Search, AlertTriangle } from "lucide-react";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { formatErrorForClipboard, type WmtiError } from "@/lib/errorLogger";
+import { RefreshCw, Copy, Check, Eye, ChevronLeft, ChevronRight, Search, AlertTriangle, Pause, Play } from "lucide-react";
+import LogFullscreenViewer from "@/components/admin/LogFullscreenViewer";
 
 const ITEMS_PER_PAGE = 20;
 
@@ -22,23 +20,13 @@ type LogRow = {
   created_at: string;
 };
 
-function formatLogForClipboard(log: LogRow): string {
-  const p = log.payload || {};
-  return `[ERRO WMTI]
-Horário: ${new Date(log.created_at).toLocaleString("pt-BR")}
-Rota: ${(p.route as string) || "—"}
-Ação: ${(p.action as string) || log.tipo}
-Mensagem: ${log.mensagem}
-Erro técnico: ${(p.technical_message as string) || "—"}
-Quote ID: ${(p.quote_id as string) || "—"}
-Contract ID: ${(p.contract_id as string) || "—"}
-Customer ID: ${(p.customer_id as string) || "—"}
-Payment ID: ${(p.payment_id as string) || "—"}
-Function: ${(p.function_name as string) || "—"}
-Status HTTP: ${(p.http_status as string) || "—"}
-Stack: ${(p.stack as string) || "—"}
-Contexto: ${(p.browser_info as string) || "—"}
-Payload: ${JSON.stringify(p, null, 2)}`;
+function StatusBadge({ status }: { status: string }) {
+  const color =
+    status === "success" ? "bg-green-600/20 text-green-400 border-green-600/30"
+    : status === "error" ? "bg-red-600/20 text-red-400 border-red-600/30"
+    : status === "warning" ? "bg-yellow-600/20 text-yellow-400 border-yellow-600/30"
+    : "bg-blue-600/20 text-blue-400 border-blue-600/30";
+  return <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${color}`}>{status}</span>;
 }
 
 function CopyBtn({ text, label = "Copiar" }: { text: string; label?: string }) {
@@ -56,25 +44,16 @@ function CopyBtn({ text, label = "Copiar" }: { text: string; label?: string }) {
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const color =
-    status === "success" ? "bg-green-600/20 text-green-400 border-green-600/30"
-    : status === "error" ? "bg-red-600/20 text-red-400 border-red-600/30"
-    : status === "warning" ? "bg-yellow-600/20 text-yellow-400 border-yellow-600/30"
-    : "bg-blue-600/20 text-blue-400 border-blue-600/30";
-  return <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${color}`}>{status}</span>;
-}
-
 export default function AdminDiagnostics() {
-  const isMobile = useIsMobile();
   const [logs, setLogs] = useState<LogRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [total, setTotal] = useState(0);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState("error");
   const [filterTipo, setFilterTipo] = useState("all");
   const [searchQuoteId, setSearchQuoteId] = useState("");
+  const [viewerLog, setViewerLog] = useState<LogRow | null>(null);
+  const [autoRefresh, setAutoRefresh] = useState(true);
 
   const fetchLogs = useCallback(async () => {
     setLoading(true);
@@ -104,6 +83,13 @@ export default function AdminDiagnostics() {
   }, [page, filterStatus, filterTipo, searchQuoteId]);
 
   useEffect(() => { fetchLogs(); }, [fetchLogs]);
+
+  // Auto-refresh every 30s, paused when viewer is open or toggle is off
+  useEffect(() => {
+    if (!autoRefresh || viewerLog) return;
+    const interval = setInterval(fetchLogs, 30000);
+    return () => clearInterval(interval);
+  }, [autoRefresh, viewerLog, fetchLogs]);
 
   const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
 
@@ -152,6 +138,15 @@ export default function AdminDiagnostics() {
         <Button variant="outline" size="sm" onClick={fetchLogs} className="text-xs">
           <RefreshCw className="h-3 w-3 mr-1" /> Atualizar
         </Button>
+        <Button
+          variant={autoRefresh ? "default" : "outline"}
+          size="sm"
+          onClick={() => setAutoRefresh(!autoRefresh)}
+          className="text-xs gap-1"
+        >
+          {autoRefresh ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
+          {autoRefresh ? "Auto" : "Pausado"}
+        </Button>
       </div>
 
       {/* Log list */}
@@ -192,18 +187,16 @@ export default function AdminDiagnostics() {
                 )}
 
                 <div className="flex items-center gap-1 flex-wrap">
-                  <CopyBtn text={formatLogForClipboard(log)} label="Copiar erro" />
                   <CopyBtn text={JSON.stringify(log.payload, null, 2)} label="Copiar payload" />
-                  <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setExpandedId(expandedId === log.id ? null : log.id)}>
-                    <Eye className="h-3 w-3 mr-1" /> Detalhes
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 text-xs"
+                    onClick={() => setViewerLog(log)}
+                  >
+                    <Eye className="h-3 w-3 mr-1" /> Inspeção completa
                   </Button>
                 </div>
-
-                {expandedId === log.id && (
-                  <pre className="text-xs text-muted-foreground bg-muted/50 p-3 rounded overflow-auto max-h-60 mt-2">
-                    {JSON.stringify(log.payload, null, 2)}
-                  </pre>
-                )}
               </CardContent>
             </Card>
           ))}
@@ -222,6 +215,9 @@ export default function AdminDiagnostics() {
           </Button>
         </div>
       )}
+
+      {/* Fullscreen Viewer */}
+      <LogFullscreenViewer log={viewerLog} onClose={() => setViewerLog(null)} />
     </div>
   );
 }
