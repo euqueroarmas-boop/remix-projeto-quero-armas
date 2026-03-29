@@ -1,10 +1,17 @@
 /**
- * Blog Internal Linking Engine
- * Generates 15+ relevant internal links per blog post, distributed across:
- * - Service pages (min 6)
+ * Blog Internal Linking Engine v3
+ * Generates 15-20+ relevant internal links per blog post, distributed across:
+ * - Service pages (min 7)
  * - Segment pages (min 4)
  * - Other blog posts (min 5)
  * - City pages (min 3)
+ * - Conversion pages (orçamento, WhatsApp)
+ *
+ * Also provides:
+ * - Keyword-based auto-linking within markdown content
+ * - Natural phrase-based contextual insertion
+ * - Mid-article and 2/3-article CTAs
+ * - Validation report per article
  */
 
 import { services } from "@/data/seo/services";
@@ -15,7 +22,14 @@ import { blogPosts, type BlogPost } from "@/data/blogPosts";
 export interface InternalLink {
   href: string;
   anchor: string;
-  type: "service" | "segment" | "blog" | "city";
+  type: "service" | "segment" | "blog" | "city" | "conversion";
+}
+
+export interface LinkingReport {
+  totalLinks: number;
+  byType: Record<string, number>;
+  destinations: string[];
+  distribution: { position: string; count: number }[];
 }
 
 // ── Keyword → service/segment relevance mapping ──
@@ -69,7 +83,7 @@ const CATEGORY_TO_SEGMENT: Record<string, string[]> = {
   "Casos de Sucesso": ["empresas-corporativas"],
 };
 
-// ── Anchor text templates for natural variation ──
+// ── Anchor text templates ──
 const SERVICE_ANCHOR_TEMPLATES: Record<string, string[]> = {
   "infraestrutura-ti": ["infraestrutura de TI corporativa", "soluções de infraestrutura de TI", "projetos de infraestrutura de tecnologia"],
   "suporte-ti": ["suporte técnico de TI", "suporte técnico especializado", "serviço de suporte de TI"],
@@ -105,7 +119,26 @@ const SEGMENT_ANCHOR_TEMPLATES: Record<string, string[]> = {
   "empresas-corporativas": ["TI para empresas corporativas", "soluções corporativas de TI", "infraestrutura para empresas de médio e grande porte"],
 };
 
-// ── Seeded pseudo-random for deterministic but varied results ──
+// ── Keyword auto-link map: keyword in text → link target ──
+const KEYWORD_AUTOLINK_MAP: { pattern: RegExp; href: string; anchor: string }[] = [
+  { pattern: /\bbackup\b(?! corporativo)/i, href: "/backup-corporativo", anchor: "backup corporativo" },
+  { pattern: /\bfirewall\b(?! pfSense| corporativo)/i, href: "/firewall-pfsense", anchor: "firewall corporativo pfSense" },
+  { pattern: /\bransomware\b/i, href: "/seguranca-rede", anchor: "proteção contra ransomware" },
+  { pattern: /\bactive directory\b/i, href: "/administracao-servidores", anchor: "administração de Active Directory" },
+  { pattern: /\bwindows server\b/i, href: "/suporte-windows-server", anchor: "suporte para Windows Server" },
+  { pattern: /\bpoweredge\b/i, href: "/servidores-dell", anchor: "servidores Dell PowerEdge" },
+  { pattern: /\bmicrosoft 365\b/i, href: "/microsoft-365", anchor: "Microsoft 365 para empresas" },
+  { pattern: /\bmonitoramento\b(?! de rede| de servidores| contínuo)/i, href: "/monitoramento-rede", anchor: "monitoramento de rede" },
+  { pattern: /\bvirtualização\b/i, href: "/administracao-servidores", anchor: "virtualização de servidores" },
+  { pattern: /\bvpn\b/i, href: "/firewall-pfsense", anchor: "conexão VPN segura" },
+  { pattern: /\blgpd\b/i, href: "/seguranca-rede", anchor: "conformidade com a LGPD" },
+  { pattern: /\bterceirização de ti\b/i, href: "/terceirizacao-ti", anchor: "terceirização de TI" },
+  { pattern: /\blocação de computadores\b/i, href: "/locacao-computadores", anchor: "locação de computadores para empresas" },
+  { pattern: /\bcabeamento estruturado\b/i, href: "/montagem-redes", anchor: "cabeamento estruturado profissional" },
+  { pattern: /\borçamento\b/i, href: "/orcamento-ti", anchor: "solicitar orçamento de TI" },
+];
+
+// ── Seeded pseudo-random ──
 function hashCode(str: string): number {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
@@ -131,7 +164,6 @@ function pickAnchors(templates: string[], seed: number, count: number): string[]
   return seededShuffle(templates, seed).slice(0, count);
 }
 
-// ── Score relevance of a service to a post ──
 function scoreService(serviceSlug: string, title: string, excerpt: string, category: string, tag: string): number {
   const text = `${title} ${excerpt} ${category} ${tag}`.toLowerCase();
   const keywords = SERVICE_KEYWORDS[serviceSlug] || [];
@@ -154,23 +186,28 @@ function scoreSegment(segmentSlug: string, title: string, excerpt: string, categ
   return score;
 }
 
-// ── Natural insertion phrases (varied to avoid repetition) ──
+// ── Natural insertion phrases (20 varied to avoid repetition) ──
 const INSERTION_PHRASES = [
-  (anchor: string, href: string) => `Para resolver esse cenário, contar com [${anchor}](${href}) é essencial.`,
-  (anchor: string, href: string) => `Nesse contexto, investir em [${anchor}](${href}) faz toda a diferença.`,
-  (anchor: string, href: string) => `A [${anchor}](${href}) é uma das formas mais eficazes de evitar esse tipo de problema.`,
-  (anchor: string, href: string) => `Empresas que implementam [${anchor}](${href}) reduzem drasticamente esse tipo de risco.`,
-  (anchor: string, href: string) => `Um dos pilares para prevenir essa situação é a [${anchor}](${href}).`,
-  (anchor: string, href: string) => `A adoção de [${anchor}](${href}) tem se mostrado decisiva para empresas que enfrentam esse desafio.`,
-  (anchor: string, href: string) => `Essa é uma das razões pelas quais a [${anchor}](${href}) se tornou prioridade em ambientes corporativos.`,
-  (anchor: string, href: string) => `A [${anchor}](${href}) oferece camadas de proteção que mitigam esses riscos de forma contínua.`,
-  (anchor: string, href: string) => `Quando falamos em resultados concretos, a [${anchor}](${href}) se destaca como solução comprovada.`,
-  (anchor: string, href: string) => `Organizações de todos os portes têm adotado [${anchor}](${href}) para fortalecer sua operação.`,
-  (anchor: string, href: string) => `Para garantir continuidade operacional, a [${anchor}](${href}) é indispensável.`,
-  (anchor: string, href: string) => `Profissionais de TI recomendam [${anchor}](${href}) como parte de qualquer estratégia robusta.`,
-  (anchor: string, href: string) => `Negligenciar [${anchor}](${href}) pode gerar custos imprevistos e riscos operacionais.`,
-  (anchor: string, href: string) => `O investimento em [${anchor}](${href}) se paga rapidamente em produtividade e segurança.`,
-  (anchor: string, href: string) => `Muitas empresas só descobrem a importância da [${anchor}](${href}) depois de enfrentar uma crise.`,
+  (a: string, h: string) => `Para resolver esse cenário, contar com [${a}](${h}) é essencial.`,
+  (a: string, h: string) => `Nesse contexto, investir em [${a}](${h}) faz toda a diferença.`,
+  (a: string, h: string) => `A [${a}](${h}) é uma das formas mais eficazes de evitar esse tipo de problema.`,
+  (a: string, h: string) => `Empresas que implementam [${a}](${h}) reduzem drasticamente esse tipo de risco.`,
+  (a: string, h: string) => `Um dos pilares para prevenir essa situação é a [${a}](${h}).`,
+  (a: string, h: string) => `A adoção de [${a}](${h}) tem se mostrado decisiva para empresas que enfrentam esse desafio.`,
+  (a: string, h: string) => `Essa é uma das razões pelas quais a [${a}](${h}) se tornou prioridade em ambientes corporativos.`,
+  (a: string, h: string) => `A [${a}](${h}) oferece camadas de proteção que mitigam esses riscos de forma contínua.`,
+  (a: string, h: string) => `Quando falamos em resultados concretos, a [${a}](${h}) se destaca como solução comprovada.`,
+  (a: string, h: string) => `Organizações de todos os portes têm adotado [${a}](${h}) para fortalecer sua operação.`,
+  (a: string, h: string) => `Para garantir continuidade operacional, a [${a}](${h}) é indispensável.`,
+  (a: string, h: string) => `Profissionais de TI recomendam [${a}](${h}) como parte de qualquer estratégia robusta.`,
+  (a: string, h: string) => `Negligenciar [${a}](${h}) pode gerar custos imprevistos e riscos operacionais graves.`,
+  (a: string, h: string) => `O investimento em [${a}](${h}) se paga rapidamente em produtividade e segurança.`,
+  (a: string, h: string) => `Muitas empresas só descobrem a importância da [${a}](${h}) depois de enfrentar uma crise.`,
+  (a: string, h: string) => `Segundo especialistas, a [${a}](${h}) é fundamental para operações de missão crítica.`,
+  (a: string, h: string) => `Em ambientes de alta exigência, a [${a}](${h}) garante estabilidade e previsibilidade.`,
+  (a: string, h: string) => `Empresas que ainda não adotaram [${a}](${h}) estão expostas a riscos significativos.`,
+  (a: string, h: string) => `A transformação digital começa com a [${a}](${h}) bem implementada.`,
+  (a: string, h: string) => `Para escalar com segurança, a [${a}](${h}) deve ser parte da estratégia desde o primeiro dia.`,
 ];
 
 // ── Main link generation function ──
@@ -185,7 +222,7 @@ export function generateBlogInternalLinks(
   const seed = hashCode(postSlug);
   const links: InternalLink[] = [];
 
-  // 1. SERVICE LINKS (min 6)
+  // 1. SERVICE LINKS (min 7)
   const serviceScores = services
     .map(s => ({ service: s, score: scoreService(s.slug, title, excerpt, category, tag) }))
     .sort((a, b) => b.score - a.score || hashCode(a.service.slug + postSlug) - hashCode(b.service.slug + postSlug));
@@ -260,12 +297,25 @@ export function generateBlogInternalLinks(
     });
   }
 
+  // 5. CONVERSION LINKS (always)
+  links.push({
+    href: "/orcamento-ti",
+    anchor: "solicitar um orçamento personalizado de TI",
+    type: "conversion",
+  });
+  links.push({
+    href: "https://wa.me/5511963166915",
+    anchor: "falar com um especialista pelo WhatsApp",
+    type: "conversion",
+  });
+
   return links;
 }
 
 /**
  * Injects contextual internal links into markdown content.
  * Distributes links naturally throughout the text body with varied phrases.
+ * Also performs keyword-based auto-linking for common terms.
  */
 export function injectLinksIntoMarkdown(markdown: string, links: InternalLink[]): string {
   if (!markdown || links.length === 0) return markdown;
@@ -277,9 +327,10 @@ export function injectLinksIntoMarkdown(markdown: string, links: InternalLink[])
   const segmentLinks = links.filter(l => l.type === "segment");
   const blogLinks = links.filter(l => l.type === "blog");
   const cityLinks = links.filter(l => l.type === "city");
+  const conversionLinks = links.filter(l => l.type === "conversion");
 
-  // Pool contextual links for inline insertion
-  const contextualLinks = [...serviceLinks, ...segmentLinks, ...cityLinks];
+  // Pool contextual links for inline insertion (services + segments + cities + conversion)
+  const contextualLinks = [...serviceLinks, ...segmentLinks, ...cityLinks, ...conversionLinks];
   const seed = hashCode(markdown.substring(0, 100));
   const shuffledPhrases = seededShuffle(INSERTION_PHRASES, seed);
 
@@ -287,17 +338,16 @@ export function injectLinksIntoMarkdown(markdown: string, links: InternalLink[])
   const eligibleIndices: number[] = [];
   paragraphs.forEach((p, i) => {
     if (i < 2) return;
-    if (p.startsWith("##") || p.startsWith("- ") || p.startsWith("*") || p.startsWith("#")) return;
+    if (p.startsWith("##") || p.startsWith("- ") || p.startsWith("*") || p.startsWith("#") || p.startsWith(">")) return;
     if (p.length < 60) return;
     eligibleIndices.push(i);
   });
 
-  // Distribute links evenly across eligible paragraphs
+  // Distribute contextual links evenly across eligible paragraphs
   let linkIdx = 0;
   const spacing = Math.max(1, Math.floor(eligibleIndices.length / contextualLinks.length));
 
   for (let ei = 0; ei < eligibleIndices.length && linkIdx < contextualLinks.length; ei++) {
-    // Only place a link every `spacing` eligible paragraphs
     if (ei % spacing !== 0 && linkIdx > 0) continue;
 
     const pIdx = eligibleIndices[ei];
@@ -306,7 +356,6 @@ export function injectLinksIntoMarkdown(markdown: string, links: InternalLink[])
     const phrase = phraseBuilder(link.anchor, link.href);
 
     const p = paragraphs[pIdx];
-    // Insert after the first sentence if possible
     const sentenceEnd = p.indexOf(". ");
     if (sentenceEnd > 30 && sentenceEnd < p.length - 20) {
       paragraphs[pIdx] = `${p.substring(0, sentenceEnd + 2)}${phrase} ${p.substring(sentenceEnd + 2)}`;
@@ -316,15 +365,49 @@ export function injectLinksIntoMarkdown(markdown: string, links: InternalLink[])
     linkIdx++;
   }
 
-  // Add a mid-article CTA after ~40% of paragraphs
+  // Keyword auto-linking: scan remaining eligible paragraphs for keyword matches
+  const usedHrefs = new Set(contextualLinks.map(l => l.href));
+  let autoLinkCount = 0;
+  const MAX_AUTOLINKS = 5;
+
+  for (const pIdx of eligibleIndices) {
+    if (autoLinkCount >= MAX_AUTOLINKS) break;
+    const p = paragraphs[pIdx];
+    // Skip if paragraph already has a markdown link
+    if (p.includes("](")) continue;
+
+    for (const rule of KEYWORD_AUTOLINK_MAP) {
+      if (autoLinkCount >= MAX_AUTOLINKS) break;
+      if (usedHrefs.has(rule.href)) continue;
+
+      const match = p.match(rule.pattern);
+      if (match) {
+        // Replace only the first occurrence with a link
+        paragraphs[pIdx] = p.replace(rule.pattern, `[${rule.anchor}](${rule.href})`);
+        usedHrefs.add(rule.href);
+        autoLinkCount++;
+        break; // One auto-link per paragraph
+      }
+    }
+  }
+
+  // Mid-article CTA (~40%)
   const midPoint = Math.floor(paragraphs.length * 0.4);
-  if (paragraphs.length > 8) {
-    paragraphs.splice(midPoint, 0, 
+  if (paragraphs.length > 6) {
+    paragraphs.splice(midPoint, 0,
       `> **💡 Sua empresa enfrenta esse tipo de desafio?** Fale agora com um especialista da WMTi e receba um diagnóstico gratuito. [Solicitar orçamento](/orcamento-ti) ou chame no [WhatsApp](https://wa.me/5511963166915).`
     );
   }
 
-  // Add related blog posts section at the end
+  // Second CTA (~75%)
+  const threeQuarterPoint = Math.floor(paragraphs.length * 0.75);
+  if (paragraphs.length > 10) {
+    paragraphs.splice(threeQuarterPoint, 0,
+      `> **🔒 Não espere o problema acontecer.** A WMTi atua com prevenção, monitoramento contínuo e resposta rápida. [Agende uma avaliação gratuita](/orcamento-ti) e descubra como proteger sua operação.`
+    );
+  }
+
+  // Related blog posts section at the end
   if (blogLinks.length > 0) {
     paragraphs.push("");
     paragraphs.push("## Leitura recomendada");
@@ -348,12 +431,59 @@ export function getRelatedServicesBlock(
   tag: string
 ): { label: string; href: string }[] {
   const allLinks = generateBlogInternalLinks(postSlug, title, excerpt, category, tag);
-  
+
   const serviceLinks = allLinks.filter(l => l.type === "service").slice(0, 4);
   const segmentLinks = allLinks.filter(l => l.type === "segment").slice(0, 3);
-  
+
   return [...serviceLinks, ...segmentLinks].map(l => ({
     label: l.anchor,
     href: l.href,
   }));
+}
+
+/**
+ * Generates a validation report for a given blog post's internal linking.
+ * Useful for debugging and QA in the admin panel.
+ */
+export function generateLinkingReport(
+  postSlug: string,
+  title: string,
+  excerpt: string,
+  category: string,
+  tag: string,
+  contentMd?: string
+): LinkingReport {
+  const links = generateBlogInternalLinks(postSlug, title, excerpt, category, tag);
+
+  const byType: Record<string, number> = {};
+  const destinations: string[] = [];
+
+  for (const link of links) {
+    byType[link.type] = (byType[link.type] || 0) + 1;
+    destinations.push(link.href);
+  }
+
+  // Count links already in content (pre-existing markdown links)
+  let existingLinksInContent = 0;
+  if (contentMd) {
+    const linkMatches = contentMd.match(/\[([^\]]+)\]\(([^)]+)\)/g);
+    existingLinksInContent = linkMatches ? linkMatches.length : 0;
+  }
+
+  const totalParagraphs = contentMd ? contentMd.split("\n\n").length : 0;
+  const third = Math.floor(totalParagraphs / 3);
+
+  return {
+    totalLinks: links.length + existingLinksInContent,
+    byType: {
+      ...byType,
+      "existing_in_content": existingLinksInContent,
+    },
+    destinations,
+    distribution: [
+      { position: "Primeiro terço", count: Math.min(byType["service"] || 0, third) },
+      { position: "Segundo terço", count: (byType["segment"] || 0) + (byType["conversion"] || 0) },
+      { position: "Terço final", count: (byType["blog"] || 0) + (byType["city"] || 0) },
+    ],
+  };
 }
