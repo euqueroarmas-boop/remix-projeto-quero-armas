@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
+import { formatDuration } from "@/lib/formatDuration";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -435,7 +436,7 @@ export default function QAPanel() {
                           {new Date(exec.executedAt).toLocaleString("pt-BR")}
                         </span>
                         <span className="text-[10px] text-muted-foreground">
-                          ({(exec.duration / 1000).toFixed(1)}s)
+                          ({formatDuration(exec.duration)})
                         </span>
                       </div>
                       <Badge variant="outline" className="text-[10px]">{exec.environment}</Badge>

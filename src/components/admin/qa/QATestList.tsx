@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatDuration } from "@/lib/formatDuration";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -80,7 +81,7 @@ export function QATestList({ tests, results, onRerun }: Props) {
                     Bloqueia
                   </Badge>
                 )}
-                {result && <span className="text-[10px] text-muted-foreground">{result.duration}ms</span>}
+                {result && <span className="text-[10px] text-muted-foreground">{formatDuration(result.duration)}</span>}
               </div>
 
               {expanded && (

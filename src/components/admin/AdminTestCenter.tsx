@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { formatDuration } from "@/lib/formatDuration";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -129,12 +130,7 @@ function RunStatusBadge({ status }: { status: string }) {
   );
 }
 
-function formatDuration(ms: number | null): string {
-  if (!ms) return "—";
-  if (ms < 1000) return `${ms}ms`;
-  if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
-  return `${Math.floor(ms / 60000)}m ${Math.round((ms % 60000) / 1000)}s`;
-}
+// formatDuration importado de @/lib/formatDuration
 
 // ─── Screenshot Viewer Dialog ───
 function ScreenshotViewer({ urls }: { urls: string[] }) {
