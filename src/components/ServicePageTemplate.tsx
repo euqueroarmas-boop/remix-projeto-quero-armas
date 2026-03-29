@@ -216,7 +216,9 @@ const ServicePageTemplate = ({
     { name: tag, url: `${baseUrl}${currentPath}` },
   ];
 
-  const contractHref = "/orcamento-ti";
+  // Derive the slug from currentPath (e.g. "/administracao-de-servidores" → "administracao-de-servidores")
+  const pageSlug = currentPath.replace(/^\//, "");
+  const contractHref = pageSlug ? `/contratar/${pageSlug}` : "/orcamento-ti";
 
   return (
     <div className="min-h-screen">
