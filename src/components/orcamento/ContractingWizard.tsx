@@ -492,7 +492,9 @@ const ContractingWizard = ({
     setPaymentData(null);
     setInvoiceUrl(null);
 
-    const description = `Contrato WMTi — ${pathLabel} — ${computersQty} computador(es)`;
+    const finalValue = pricingBreakdown?.valorFinalMensal ?? monthlyValue;
+    const termLabel = planConfig ? `${planConfig.termMonths} meses` : "36 meses";
+    const description = `Contrato WMTi — ${pathLabel} — ${computersQty} computador(es) — ${termLabel}${planConfig?.support24h ? " — 24h" : ""}`;
 
     try {
       const { data, error } = await supabase.functions.invoke("create-asaas-subscription", {
@@ -501,7 +503,7 @@ const ContractingWizard = ({
           customer_email: registrationData.email,
           customer_cpf_cnpj: registrationData.cnpjOuCpf,
           billing_type: selectedPayment,
-          value: monthlyValue,
+          value: finalValue,
           description,
           quote_id: activeQuoteId,
         },
