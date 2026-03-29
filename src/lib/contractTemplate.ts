@@ -22,10 +22,21 @@ interface ContractVariables {
 /**
  * Fetches the active contract template from the database by ID.
  */
-export async function fetchContractTemplate(templateId: string): Promise<string | null> {
+interface TemplateRecord {
+  template_text: string;
+  versao: string;
+  editavel: boolean;
+  id: string;
+}
+
+/**
+ * Fetches the active contract template from the database by ID.
+ * Returns null if template not found, inactive, or editable (immutable templates only).
+ */
+export async function fetchContractTemplate(templateId: string): Promise<TemplateRecord | null> {
   const { data, error } = await supabase
     .from("contract_templates" as any)
-    .select("template_text")
+    .select("id, template_text, versao, editavel")
     .eq("id", templateId)
     .eq("ativo", true)
     .single();
@@ -34,7 +45,16 @@ export async function fetchContractTemplate(templateId: string): Promise<string 
     console.error("[contractTemplate] Erro ao buscar template:", error);
     return null;
   }
-  return (data as any).template_text;
+
+  const record = data as any as TemplateRecord;
+
+  // Protection: immutable templates cannot be edited
+  if (record.editavel) {
+    console.warn("[contractTemplate] Template editável não pode ser usado como oficial:", templateId);
+    return null;
+  }
+
+  return record;
 }
 
 /**
@@ -52,7 +72,7 @@ export function hydrateTemplate(template: string, variables: Partial<ContractVar
 /**
  * Converts plain-text contract (with line breaks) to styled HTML for rendering/signing.
  */
-export function templateToHtml(text: string): string {
+export function templateToHtml(text: string, templateId?: string, versao?: string): string {
   const lines = text.split("\n");
   const htmlLines: string[] = [];
 
@@ -113,6 +133,12 @@ export function templateToHtml(text: string): string {
 
     // Default paragraph
     htmlLines.push(`<p style="margin: 8px 0;">${trimmed}</p>`);
+  }
+
+  // Version footer
+  if (templateId && versao) {
+    htmlLines.push(`<hr style="border: none; border-top: 1px solid #ccc; margin: 32px 0 8px 0;"/>`);
+    htmlLines.push(`<p style="font-size: 9pt; color: #888; text-align: center; margin: 0;">Contrato WMTi — Versão ${versao} — ID ${templateId}</p>`);
   }
 
   return `<div style="font-family: 'Times New Roman', Times, serif; max-width: 800px; margin: 0 auto; color: #000; line-height: 1.8; font-size: 12pt; text-align: justify;">${htmlLines.join("\n")}</div>`;
