@@ -328,14 +328,14 @@ function ErrorDetail({ result }: { result: DetailedTestResult }) {
 
 // ─── Live Progress Panel (Enhanced with real-time details) ───
 function LiveProgressPanel({ run }: { run: TestRun }) {
-  const STALE_TIMEOUT_MS = 15 * 60 * 1000;
+  const STALE_TIMEOUT_MS = 10 * 60 * 1000; // 10 min for individual tests
   const isStale = run.started_at && (Date.now() - new Date(run.started_at).getTime()) > STALE_TIMEOUT_MS;
 
   const completed = (run.completed_tests ?? 0) || (run.passed_tests + run.failed_tests + run.skipped_tests);
   const total = run.total_tests || 1;
   const pct = run.progress_percent ?? (total > 0 ? Math.min(100, Math.round((completed / total) * 100)) : 0);
   const [elapsed, setElapsed] = useState(0);
-  const [showLogs, setShowLogs] = useState(false);
+  const [showLogs, setShowLogs] = useState(true); // Default open to show what's being scanned
 
   // Use direct columns first, fallback to logs JSON
   const logs = run.logs as any;
@@ -356,13 +356,17 @@ function LiveProgressPanel({ run }: { run: TestRun }) {
 
   const formatElapsed = (s: number) => {
     if (s < 60) return `${s}s`;
-    return `${Math.floor(s / 60)}m ${s % 60}s`;
+    return `${Math.floor(s / 60)}m ${String(s % 60).padStart(2, "0")}s`;
   };
 
   // Estimate remaining time
   const estimatedRemaining = pct > 5 && elapsed > 0
     ? Math.round((elapsed / pct) * (100 - pct))
     : null;
+
+  // Extract last scanned items from log entries for display
+  const recentActivity = logEntries.slice(-5).reverse();
+  const lastScannedUrl = logEntries.filter(e => e.detail?.includes("→")).slice(-1)[0]?.detail?.split("→")[1]?.trim();
 
   if (isStale) {
     return (
@@ -378,8 +382,13 @@ function LiveProgressPanel({ run }: { run: TestRun }) {
             <Badge variant="outline" className="text-xs border-amber-500/30 text-amber-400">Expirado</Badge>
           </div>
           <p className="text-xs text-amber-400">
-            Execução iniciada há mais de 15 minutos sem finalização. Pode ter falhado silenciosamente no GitHub Actions.
+            Execução iniciada há mais de 10 minutos sem finalização. Pode ter falhado silenciosamente no GitHub Actions.
           </p>
+          {run.github_run_url && (
+            <a href={run.github_run_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline flex items-center gap-1">
+              <ExternalLink className="h-3 w-3" /> Ver no GitHub Actions
+            </a>
+          )}
           <p className="text-[10px] text-muted-foreground">
             Início: {run.started_at ? new Date(run.started_at).toLocaleString("pt-BR") : "—"} · Tempo decorrido: {formatElapsed(elapsed)}
           </p>
@@ -428,30 +437,40 @@ function LiveProgressPanel({ run }: { run: TestRun }) {
           </div>
         )}
 
-        {/* Current spec & URL */}
-        {currentSpec && (
-          <div className="space-y-1.5 bg-muted/20 rounded-lg p-2.5 border border-border/50">
+        {/* Current spec & URL — what's being scanned NOW */}
+        <div className="space-y-1.5 bg-muted/20 rounded-lg p-2.5 border border-border/50">
+          {currentSpec && (
             <div className="flex items-center gap-1.5 text-xs">
               <FileText className="h-3 w-3 text-primary flex-shrink-0" />
-              <span className="text-muted-foreground">Spec atual:</span>
+              <span className="text-muted-foreground">Escaneando:</span>
               <span className="font-medium text-foreground truncate">{currentSpec}</span>
             </div>
-            {currentTest && (
-              <div className="flex items-center gap-1.5 text-xs">
-                <Play className="h-3 w-3 text-primary flex-shrink-0" />
-                <span className="text-muted-foreground">Teste:</span>
-                <span className="font-medium text-foreground truncate">{currentTest}</span>
-              </div>
-            )}
-            {currentUrl && (
-              <div className="flex items-center gap-1.5 text-xs">
-                <Globe className="h-3 w-3 text-primary flex-shrink-0" />
-                <span className="text-muted-foreground">URL:</span>
-                <span className="font-mono text-foreground truncate text-[11px]">{currentUrl}</span>
-              </div>
-            )}
-          </div>
-        )}
+          )}
+          {currentTest && (
+            <div className="flex items-center gap-1.5 text-xs">
+              <Play className="h-3 w-3 text-primary flex-shrink-0" />
+              <span className="text-muted-foreground">Teste:</span>
+              <span className="font-medium text-foreground truncate">{currentTest}</span>
+            </div>
+          )}
+          {(currentUrl || lastScannedUrl) && (
+            <div className="flex items-center gap-1.5 text-xs">
+              <Globe className="h-3 w-3 text-primary flex-shrink-0" />
+              <span className="text-muted-foreground">URL:</span>
+              <span className="font-mono text-foreground truncate text-[11px]">{currentUrl || lastScannedUrl}</span>
+            </div>
+          )}
+          {!currentSpec && !currentUrl && !lastScannedUrl && (
+            <div className="flex items-center gap-1.5 text-xs">
+              <Loader2 className="h-3 w-3 text-primary animate-spin flex-shrink-0" />
+              <span className="text-muted-foreground">
+                {run.execution_engine === "github_actions" 
+                  ? "Aguardando GitHub Actions iniciar o runner..." 
+                  : "Iniciando verificação..."}
+              </span>
+            </div>
+          )}
+        </div>
 
         {/* Counters */}
         <div className="grid grid-cols-3 gap-2 text-center text-xs">
@@ -473,19 +492,19 @@ function LiveProgressPanel({ run }: { run: TestRun }) {
           <p className="text-xs text-destructive bg-destructive/10 rounded-md p-2">{run.error_message}</p>
         )}
 
-        {/* Live log entries */}
+        {/* Live log entries — shows exactly what's being scanned */}
         {logEntries.length > 0 && (
           <Collapsible open={showLogs} onOpenChange={setShowLogs}>
             <CollapsibleTrigger className="w-full">
               <div className="flex items-center justify-between text-xs text-muted-foreground hover:text-foreground cursor-pointer py-1">
                 <span className="flex items-center gap-1">
-                  <Terminal className="h-3 w-3" /> Logs em tempo real ({logEntries.length})
+                  <Terminal className="h-3 w-3" /> Atividade em tempo real ({logEntries.length})
                 </span>
                 <ChevronDown className={`h-3 w-3 transition-transform ${showLogs ? "rotate-180" : ""}`} />
               </div>
             </CollapsibleTrigger>
             <CollapsibleContent>
-              <ScrollArea className="max-h-48 mt-1">
+              <ScrollArea className="max-h-56 mt-1">
                 <div className="space-y-0.5 font-mono text-[10px]">
                   {logEntries.slice(-30).reverse().map((entry, i) => {
                     const eventColor = entry.event?.includes("passed") || entry.event?.includes("completed")
