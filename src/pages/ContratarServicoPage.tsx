@@ -477,7 +477,7 @@ const ContratarServicoPage = () => {
         <ContractingWizard
           visible={true}
           effectivePath="suporte"
-          plan={{ id: "server-admin", name: "Administração de Servidores", price: serverMonthlyValue, features: [`${serverHosts} Host(s)`, `${serverVms} VM(s)`, "Monitoramento contínuo", "Manutenção preventiva", "Permanência mínima 12 meses"], tag: "Recorrente" }}
+          plan={{ id: "server-admin", name: "Administração de Servidores", cpu: `${serverHosts} Host(s)`, ram: `${serverVms} VM(s)`, ssd: "Monitoramento contínuo", extras: ["Manutenção preventiva", "Permanência mínima 12 meses"], price: serverMonthlyValue, popular: false }}
           qualification={null}
           computersQty={serverHosts + serverVms}
           monthlyValue={serverMonthlyValue}
