@@ -54,6 +54,16 @@ interface TestRun {
   report_url: string | null;
   results: any[] | null;
   created_at: string;
+  // New direct columns
+  progress_percent: number | null;
+  current_spec: string | null;
+  current_test: string | null;
+  current_url: string | null;
+  total_specs: number | null;
+  completed_specs: number | null;
+  completed_tests: number | null;
+  last_event_at: string | null;
+  error_summary: string | null;
 }
 
 interface DetailedTestResult {
