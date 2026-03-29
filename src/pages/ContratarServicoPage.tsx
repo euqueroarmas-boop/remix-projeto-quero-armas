@@ -69,12 +69,20 @@ const ContratarServicoPage = () => {
   const serviceName = service?.name || searchParams.get("servico") || "Serviço de TI";
   const isEmergency = service?.isEmergency || false;
   const isRentalContract = slug === "locacao-de-computadores-para-empresas-jacarei";
+  const isServerAdmin = slug === "administracao-de-servidores";
   const selectedRentalPlanId = searchParams.get("plano") || "equilibrio";
   const selectedRentalQty = Math.max(1, Number(searchParams.get("qty") || 1));
   const selectedRentalPlan = plans.find((item) => item.id === selectedRentalPlanId) || plans[1];
   const rentalMonthlyValue = selectedRentalPlan.price * selectedRentalQty;
   const basePrice = isEmergency ? 300 : 200;
   const priceTable = isEmergency ? EMERGENCY_PRICES : STANDARD_PRICES;
+
+  // Server admin params
+  const serverHosts = Math.max(1, Number(searchParams.get("hosts") || 1));
+  const serverVms = Math.max(0, Number(searchParams.get("vms") || 0));
+  const SERVER_HOST_PRICE = 350;
+  const SERVER_VM_PRICE = 200;
+  const serverMonthlyValue = serverHosts * SERVER_HOST_PRICE + serverVms * SERVER_VM_PRICE;
 
   // Flow state
   const [currentStep, setCurrentStep] = useState<FlowStep>("calculator");
@@ -412,6 +420,68 @@ const ContratarServicoPage = () => {
           leadNumero={leadNumero}
           leadComplemento={leadComplemento}
           leadBairro={leadBairro}
+        />
+
+        <Footer />
+      </div>
+    );
+  }
+
+  /* ─── Server Admin: Recurring contract flow ─── */
+  if (isServerAdmin) {
+    return (
+      <div className="min-h-screen">
+        <SeoHead
+          title="Contratar Administração de Servidores | WMTi"
+          description="Contrate a administração contínua de servidores com a WMTi. Plano recorrente com permanência mínima de 12 meses."
+        />
+        <Navbar />
+
+        <section className="section-dark pt-24 md:pt-28 pb-8 border-b-4 border-primary">
+          <div className="container">
+            <nav aria-label="Breadcrumb" className="mb-6">
+              <ol className="flex items-center gap-1 font-mono text-xs text-muted-foreground/50">
+                <li><Link to="/" className="hover:text-primary transition-colors">Home</Link></li>
+                <ChevronRight size={10} className="shrink-0" />
+                <li><Link to="/administracao-de-servidores" className="hover:text-primary transition-colors">Administração de Servidores</Link></li>
+                <ChevronRight size={10} className="shrink-0" />
+                <li className="text-primary" aria-current="page">Contratar</li>
+              </ol>
+            </nav>
+            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">Contratação recorrente</p>
+            <h1 className="text-2xl md:text-4xl lg:text-5xl mb-4">
+              Contratar <span className="text-primary">Administração de Servidores</span>
+            </h1>
+            <p className="font-body text-lg text-muted-foreground/70 max-w-2xl leading-relaxed">
+              Serviço contínuo de administração, monitoramento e manutenção dos seus servidores físicos e virtuais.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <div className="rounded-lg border border-border bg-card px-4 py-3 text-sm text-foreground">
+                <span className="text-muted-foreground">Hosts: </span><strong className="text-primary">{serverHosts}</strong>
+              </div>
+              {serverVms > 0 && (
+                <div className="rounded-lg border border-border bg-card px-4 py-3 text-sm text-foreground">
+                  <span className="text-muted-foreground">VMs: </span><strong className="text-primary">{serverVms}</strong>
+                </div>
+              )}
+              <div className="rounded-lg border border-border bg-card px-4 py-3 text-sm text-foreground">
+                <span className="text-muted-foreground">Mensalidade: </span><strong className="text-primary">R$ {serverMonthlyValue.toLocaleString("pt-BR")}/mês</strong>
+              </div>
+              <div className="rounded-lg border border-border bg-card px-4 py-3 text-sm text-foreground">
+                <span className="text-muted-foreground">Permanência mínima: </span><strong>12 meses</strong>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <ContractingWizard
+          visible={true}
+          effectivePath="suporte"
+          plan={{ id: "server-admin", name: "Administração de Servidores", cpu: `${serverHosts} Host(s)`, ram: `${serverVms} VM(s)`, ssd: "Monitoramento contínuo", extras: ["Manutenção preventiva", "Permanência mínima 12 meses"], price: serverMonthlyValue, popular: false }}
+          qualification={null}
+          computersQty={serverHosts + serverVms}
+          monthlyValue={serverMonthlyValue}
+          quoteId={null}
         />
 
         <Footer />

@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Server, Shield, Activity, HardDrive, Wrench, Headphones } from "lucide-react";
 import ServicePageTemplate from "@/components/ServicePageTemplate";
+import ServerAdminCalculator from "@/components/orcamento/ServerAdminCalculator";
 
 const icons = [Server, Shield, Activity, HardDrive, Wrench, Headphones];
 
@@ -29,7 +30,8 @@ const AdministracaoServidoresPage = () => {
         { label: relatedLabels[2], href: "/infraestrutura-ti-corporativa-jacarei" },
       ]}
       localContent={t(`${k}.localContent`)}
-      showHoursCalculator
+      showHoursCalculator={false}
+      extraSections={<ServerAdminCalculator />}
     />
   );
 };
