@@ -10,6 +10,7 @@ import {
   ExternalLink,
   AlertTriangle,
   RotateCcw,
+  Settings2,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -18,8 +19,10 @@ import { useToast } from "@/hooks/use-toast";
 
 import WizardStepWrapper from "./WizardStepWrapper";
 import QuickRegistrationForm, { type RegistrationData } from "./QuickRegistrationForm";
+import PlanConfigStep from "./PlanConfigStep";
 import { generateContractHtml } from "./ContractPreview";
 import { generateContractFromTemplate } from "@/lib/contractTemplate";
+import { calculatePricing, type PlanConfig, type PricingBreakdown, type ContractTerm } from "@/lib/contractPricing";
 import PostPaymentReport from "./PostPaymentReport";
 import OutsourcingOffer from "./OutsourcingOffer";
 
