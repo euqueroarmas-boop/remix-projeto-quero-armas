@@ -69,12 +69,20 @@ const ContratarServicoPage = () => {
   const serviceName = service?.name || searchParams.get("servico") || "Serviço de TI";
   const isEmergency = service?.isEmergency || false;
   const isRentalContract = slug === "locacao-de-computadores-para-empresas-jacarei";
+  const isServerAdmin = slug === "administracao-de-servidores";
   const selectedRentalPlanId = searchParams.get("plano") || "equilibrio";
   const selectedRentalQty = Math.max(1, Number(searchParams.get("qty") || 1));
   const selectedRentalPlan = plans.find((item) => item.id === selectedRentalPlanId) || plans[1];
   const rentalMonthlyValue = selectedRentalPlan.price * selectedRentalQty;
   const basePrice = isEmergency ? 300 : 200;
   const priceTable = isEmergency ? EMERGENCY_PRICES : STANDARD_PRICES;
+
+  // Server admin params
+  const serverHosts = Math.max(1, Number(searchParams.get("hosts") || 1));
+  const serverVms = Math.max(0, Number(searchParams.get("vms") || 0));
+  const SERVER_HOST_PRICE = 350;
+  const SERVER_VM_PRICE = 200;
+  const serverMonthlyValue = serverHosts * SERVER_HOST_PRICE + serverVms * SERVER_VM_PRICE;
 
   // Flow state
   const [currentStep, setCurrentStep] = useState<FlowStep>("calculator");
