@@ -577,8 +577,21 @@ function RunDetail({ run, onBack }: { run: TestRun; onBack: () => void }) {
 
           {run.error_message && (
             <div className="p-3 rounded-lg border border-destructive/30 bg-destructive/5 text-xs">
-              <p className="font-semibold text-destructive mb-1">Erro principal</p>
-              <p className="text-muted-foreground">{run.error_message}</p>
+              <div className="flex items-center justify-between mb-1">
+                <p className="font-semibold text-destructive">Erro principal</p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-2 text-[10px] gap-1"
+                  onClick={() => {
+                    navigator.clipboard.writeText(run.error_message || "");
+                    toast.success("Erro copiado");
+                  }}
+                >
+                  <Copy className="h-3 w-3" /> Copiar
+                </Button>
+              </div>
+              <p className="text-muted-foreground whitespace-pre-wrap">{run.error_message}</p>
             </div>
           )}
 
