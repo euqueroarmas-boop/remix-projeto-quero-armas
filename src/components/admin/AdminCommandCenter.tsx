@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, memo } from "react";
+import { useState, useEffect, useCallback, useMemo, memo, useRef } from "react";
 import { adminQuery } from "@/lib/adminApi";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
   RefreshCw, AlertTriangle, CheckCircle2, XCircle, Clock, Loader2,
+  Pause, Play as PlayIcon,
   TestTube2, Megaphone, FileText, CreditCard, Webhook, Activity,
   ArrowRight, Zap, Database, Server, HardDrive, Link2, ShieldAlert,
   TrendingUp, Eye, Play,
@@ -28,12 +29,12 @@ const STATUS_DOT: Record<SystemStatus, string> = {
 
 // ─── Individual module hooks ───────────────────────────────────────
 
-function useAlerts() {
+function useAlerts(autoRefreshRef: React.MutableRefObject<boolean>) {
   const [errors24h, setErrors24h] = useState(0);
   const [webhookErrors, setWebhookErrors] = useState(0);
   const [loaded, setLoaded] = useState(false);
 
-  const fetch = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     const yesterday = new Date(Date.now() - 86400000).toISOString();
     try {
       const res = await adminQuery([
@@ -46,26 +47,25 @@ function useAlerts() {
     setLoaded(true);
   }, []);
 
-  useEffect(() => { fetch(); }, [fetch]);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
-  // Realtime: listen to new logs_sistema and integration_logs
   useEffect(() => {
     const ch = supabase
       .channel("cmd-alerts")
-      .on("postgres_changes", { event: "*", schema: "public", table: "logs_sistema" }, () => fetch())
-      .on("postgres_changes", { event: "*", schema: "public", table: "integration_logs" }, () => fetch())
+      .on("postgres_changes", { event: "*", schema: "public", table: "logs_sistema" }, () => { if (autoRefreshRef.current) fetchData(); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "integration_logs" }, () => { if (autoRefreshRef.current) fetchData(); })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [fetch]);
+  }, [fetchData, autoRefreshRef]);
 
-  return { errors24h, webhookErrors, loaded, refetch: fetch };
+  return { errors24h, webhookErrors, loaded, refetch: fetchData };
 }
 
-function useFunnel() {
+function useFunnel(autoRefreshRef: React.MutableRefObject<boolean>) {
   const [data, setData] = useState({ leads: 0, quotes: 0, contracts: 0, paymentsOk: 0, paymentsFail: 0 });
   const [loaded, setLoaded] = useState(false);
 
-  const fetch = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     const todayStart = new Date(new Date().setHours(0, 0, 0, 0)).toISOString();
     try {
       const res = await adminQuery([
@@ -80,27 +80,28 @@ function useFunnel() {
     setLoaded(true);
   }, []);
 
-  useEffect(() => { fetch(); }, [fetch]);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   useEffect(() => {
+    const guard = () => { if (autoRefreshRef.current) fetchData(); };
     const ch = supabase
       .channel("cmd-funnel")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "leads" }, () => fetch())
-      .on("postgres_changes", { event: "*", schema: "public", table: "payments" }, () => fetch())
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "contracts" }, () => fetch())
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "quotes" }, () => fetch())
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "leads" }, guard)
+      .on("postgres_changes", { event: "*", schema: "public", table: "payments" }, guard)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "contracts" }, guard)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "quotes" }, guard)
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [fetch]);
+  }, [fetchData, autoRefreshRef]);
 
-  return { ...data, loaded, refetch: fetch };
+  return { ...data, loaded, refetch: fetchData };
 }
 
-function useTestRun() {
+function useTestRun(autoRefreshRef: React.MutableRefObject<boolean>) {
   const [testRun, setTestRun] = useState<any>(null);
   const [loaded, setLoaded] = useState(false);
 
-  const fetch = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     try {
       const res = await adminQuery([
         { table: "test_runs", select: "*", order: { column: "created_at", ascending: false }, limit: 1 },
@@ -110,25 +111,25 @@ function useTestRun() {
     setLoaded(true);
   }, []);
 
-  useEffect(() => { fetch(); }, [fetch]);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   useEffect(() => {
     const ch = supabase
       .channel("cmd-tests")
-      .on("postgres_changes", { event: "*", schema: "public", table: "test_runs" }, () => fetch())
+      .on("postgres_changes", { event: "*", schema: "public", table: "test_runs" }, () => { if (autoRefreshRef.current) fetchData(); })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [fetch]);
+  }, [fetchData, autoRefreshRef]);
 
-  return { testRun, loaded, refetch: fetch };
+  return { testRun, loaded, refetch: fetchData };
 }
 
-function useActivity() {
+function useActivity(autoRefreshRef: React.MutableRefObject<boolean>) {
   const [logs, setLogs] = useState<any[]>([]);
   const [audit, setAudit] = useState<any[]>([]);
   const [loaded, setLoaded] = useState(false);
 
-  const fetch = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     try {
       const res = await adminQuery([
         { table: "logs_sistema", select: "id,tipo,status,mensagem,created_at", order: { column: "created_at", ascending: false }, limit: 5 },
@@ -140,18 +141,19 @@ function useActivity() {
     setLoaded(true);
   }, []);
 
-  useEffect(() => { fetch(); }, [fetch]);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   useEffect(() => {
+    const guard = () => { if (autoRefreshRef.current) fetchData(); };
     const ch = supabase
       .channel("cmd-activity")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "logs_sistema" }, () => fetch())
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "admin_audit_logs" }, () => fetch())
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "logs_sistema" }, guard)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "admin_audit_logs" }, guard)
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [fetch]);
+  }, [fetchData, autoRefreshRef]);
 
-  return { logs, audit, loaded, refetch: fetch };
+  return { logs, audit, loaded, refetch: fetchData };
 }
 
 // ─── Memoized sub-components ───────────────────────────────────────
@@ -384,10 +386,14 @@ const QuickActions = memo(function QuickActions({ onNavigate }: { onNavigate: (s
 // ─── Main Component ────────────────────────────────────────────────
 
 export default function AdminCommandCenter({ onNavigate }: CommandCenterProps) {
-  const alerts = useAlerts();
-  const funnel = useFunnel();
-  const tests = useTestRun();
-  const activity = useActivity();
+  const [autoRefresh, setAutoRefresh] = useState(true);
+  const autoRefreshRef = useRef(true);
+  useEffect(() => { autoRefreshRef.current = autoRefresh; }, [autoRefresh]);
+
+  const alerts = useAlerts(autoRefreshRef);
+  const funnel = useFunnel(autoRefreshRef);
+  const tests = useTestRun(autoRefreshRef);
+  const activity = useActivity(autoRefreshRef);
 
   const allLoaded = alerts.loaded && funnel.loaded && tests.loaded && activity.loaded;
   const [lastUpdate, setLastUpdate] = useState(new Date());
@@ -405,15 +411,6 @@ export default function AdminCommandCenter({ onNavigate }: CommandCenterProps) {
     if (allLoaded) setLastUpdate(new Date());
   }, [alerts.errors24h, alerts.webhookErrors, funnel.leads, tests.testRun?.id, activity.logs.length]);
 
-  if (!allLoaded) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin text-primary mr-3" />
-        <span className="text-muted-foreground text-sm">Carregando centro de comando...</span>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -421,13 +418,24 @@ export default function AdminCommandCenter({ onNavigate }: CommandCenterProps) {
         <div>
           <h2 className="text-lg font-bold text-foreground">Centro de Comando</h2>
           <p className="text-xs text-muted-foreground">
-            Última atualização: {lastUpdate.toLocaleTimeString("pt-BR")} · Ambiente: <Badge variant="outline" className="text-[10px] ml-1">Produção</Badge>
+            {allLoaded ? `Última atualização: ${lastUpdate.toLocaleTimeString("pt-BR")}` : "Carregando..."} · Ambiente: <Badge variant="outline" className="text-[10px] ml-1">Produção</Badge>
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={handleRefreshAll} disabled={refreshing} className="text-xs gap-1.5">
-          <RefreshCw className={`h-3 w-3 ${refreshing ? "animate-spin" : ""}`} />
-          Atualizar
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant={autoRefresh ? "default" : "outline"}
+            size="sm"
+            onClick={() => setAutoRefresh(!autoRefresh)}
+            className="text-xs gap-1"
+          >
+            {autoRefresh ? <Pause className="h-3 w-3" /> : <PlayIcon className="h-3 w-3" />}
+            {autoRefresh ? "Auto" : "Pausado"}
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleRefreshAll} disabled={refreshing} className="text-xs gap-1.5">
+            <RefreshCw className={`h-3 w-3 ${refreshing ? "animate-spin" : ""}`} />
+            Atualizar
+          </Button>
+        </div>
       </div>
 
       <AlertsBanner errors24h={alerts.errors24h} webhookErrors={alerts.webhookErrors} onNavigate={onNavigate} />
