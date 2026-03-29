@@ -194,7 +194,7 @@ const BlogPostPage = () => {
         <section className="section-light py-16 md:py-24">
           <div className="container max-w-3xl px-5 md:px-6">
             <div className="font-body text-foreground leading-relaxed prose prose-sm md:prose-base max-w-none [&_h2]:font-heading [&_h2]:text-xl [&_h2]:md:text-2xl [&_h2]:font-bold [&_h2]:mt-8 [&_h2]:mb-3 [&_h2]:text-foreground [&_p]:text-muted-foreground [&_p]:mb-4">
-              <div dangerouslySetInnerHTML={{ __html: aiContent.replace(/^## (.+)$/gm, '<h2>$1</h2>').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/^- (.+)$/gm, '<li>$1</li>').replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>').replace(/\n\n/g, '</p><p>').replace(/^(?!<[hul])/gm, '<p>').replace(/<p><\/p>/g, '') }} />
+              <div dangerouslySetInnerHTML={{ __html: aiContent.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-primary hover:underline">$1</a>').replace(/^## (.+)$/gm, '<h2>$1</h2>').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/^- (.+)$/gm, '<li>$1</li>').replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>').replace(/\n\n/g, '</p><p>').replace(/^(?!<[hula])/gm, '<p>').replace(/<p><\/p>/g, '') }} />
             </div>
 
             {aiFaq.length > 0 && (
