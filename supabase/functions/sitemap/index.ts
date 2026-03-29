@@ -65,8 +65,8 @@ const staticPages = [
   { loc: "/desenvolvimento-de-sites-e-sistemas-web", priority: "0.7", changefreq: "monthly" },
 ];
 
-function urlEntry(loc: string, priority: string, changefreq: string): string {
-  return `  <url>\n    <loc>${BASE_URL}${loc}</loc>\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>`;
+function urlEntry(loc: string): string {
+  return `  <url>\n    <loc>${BASE_URL}${loc}</loc>\n  </url>`;
 }
 
 function wrapUrlset(urls: string[]): string {
