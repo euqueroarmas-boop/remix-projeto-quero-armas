@@ -368,6 +368,8 @@ function LogsTab({ onlyErrors = false }: { onlyErrors?: boolean }) {
           <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)}><ChevronRight className="h-4 w-4" /></Button>
         </div>
       )}
+
+      <LogFullscreenViewer log={viewerLog} onClose={() => setViewerLog(null)} />
     </div>
   );
 }
