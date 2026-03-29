@@ -1024,12 +1024,18 @@ export default function AdminTestCenter({ onBack }: { onBack?: () => void }) {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-        <div>
-          <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
-            🧪 Centro de Testes
-          </h3>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Dispare, acompanhe e audite testes automatizados
+        <div className="flex items-center gap-2">
+          {onBack && (
+            <Button variant="ghost" size="sm" onClick={onBack} className="text-xs gap-1 px-2">
+              <ArrowLeft className="h-3.5 w-3.5" /> Voltar
+            </Button>
+          )}
+          <div>
+            <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
+              🧪 Centro de Testes
+            </h3>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Dispare, acompanhe e audite testes automatizados
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
