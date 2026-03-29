@@ -385,15 +385,18 @@ const QuickActions = memo(function QuickActions({ onNavigate }: { onNavigate: (s
 // ─── Main Component ────────────────────────────────────────────────
 
 export default function AdminCommandCenter({ onNavigate }: CommandCenterProps) {
-  const alerts = useAlerts();
-  const funnel = useFunnel();
-  const tests = useTestRun();
-  const activity = useActivity();
+  const [autoRefresh, setAutoRefresh] = useState(true);
+  const autoRefreshRef = useRef(true);
+  useEffect(() => { autoRefreshRef.current = autoRefresh; }, [autoRefresh]);
+
+  const alerts = useAlerts(autoRefreshRef);
+  const funnel = useFunnel(autoRefreshRef);
+  const tests = useTestRun(autoRefreshRef);
+  const activity = useActivity(autoRefreshRef);
 
   const allLoaded = alerts.loaded && funnel.loaded && tests.loaded && activity.loaded;
   const [lastUpdate, setLastUpdate] = useState(new Date());
   const [refreshing, setRefreshing] = useState(false);
-  const [autoRefresh, setAutoRefresh] = useState(true);
 
   const handleRefreshAll = useCallback(async () => {
     setRefreshing(true);
