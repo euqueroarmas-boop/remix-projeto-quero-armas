@@ -328,14 +328,14 @@ function ErrorDetail({ result }: { result: DetailedTestResult }) {
 
 // ─── Live Progress Panel (Enhanced with real-time details) ───
 function LiveProgressPanel({ run }: { run: TestRun }) {
-  const STALE_TIMEOUT_MS = 15 * 60 * 1000;
+  const STALE_TIMEOUT_MS = 10 * 60 * 1000; // 10 min for individual tests
   const isStale = run.started_at && (Date.now() - new Date(run.started_at).getTime()) > STALE_TIMEOUT_MS;
 
   const completed = (run.completed_tests ?? 0) || (run.passed_tests + run.failed_tests + run.skipped_tests);
   const total = run.total_tests || 1;
   const pct = run.progress_percent ?? (total > 0 ? Math.min(100, Math.round((completed / total) * 100)) : 0);
   const [elapsed, setElapsed] = useState(0);
-  const [showLogs, setShowLogs] = useState(false);
+  const [showLogs, setShowLogs] = useState(true); // Default open to show what's being scanned
 
   // Use direct columns first, fallback to logs JSON
   const logs = run.logs as any;
@@ -356,13 +356,17 @@ function LiveProgressPanel({ run }: { run: TestRun }) {
 
   const formatElapsed = (s: number) => {
     if (s < 60) return `${s}s`;
-    return `${Math.floor(s / 60)}m ${s % 60}s`;
+    return `${Math.floor(s / 60)}m ${String(s % 60).padStart(2, "0")}s`;
   };
 
   // Estimate remaining time
   const estimatedRemaining = pct > 5 && elapsed > 0
     ? Math.round((elapsed / pct) * (100 - pct))
     : null;
+
+  // Extract last scanned items from log entries for display
+  const recentActivity = logEntries.slice(-5).reverse();
+  const lastScannedUrl = logEntries.filter(e => e.detail?.includes("→")).slice(-1)[0]?.detail?.split("→")[1]?.trim();
 
   if (isStale) {
     return (
@@ -378,8 +382,13 @@ function LiveProgressPanel({ run }: { run: TestRun }) {
             <Badge variant="outline" className="text-xs border-amber-500/30 text-amber-400">Expirado</Badge>
           </div>
           <p className="text-xs text-amber-400">
-            Execução iniciada há mais de 15 minutos sem finalização. Pode ter falhado silenciosamente no GitHub Actions.
+            Execução iniciada há mais de 10 minutos sem finalização. Pode ter falhado silenciosamente no GitHub Actions.
           </p>
+          {run.github_run_url && (
+            <a href={run.github_run_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline flex items-center gap-1">
+              <ExternalLink className="h-3 w-3" /> Ver no GitHub Actions
+            </a>
+          )}
           <p className="text-[10px] text-muted-foreground">
             Início: {run.started_at ? new Date(run.started_at).toLocaleString("pt-BR") : "—"} · Tempo decorrido: {formatElapsed(elapsed)}
           </p>
@@ -428,30 +437,40 @@ function LiveProgressPanel({ run }: { run: TestRun }) {
           </div>
         )}
 
-        {/* Current spec & URL */}
-        {currentSpec && (
-          <div className="space-y-1.5 bg-muted/20 rounded-lg p-2.5 border border-border/50">
+        {/* Current spec & URL — what's being scanned NOW */}
+        <div className="space-y-1.5 bg-muted/20 rounded-lg p-2.5 border border-border/50">
+          {currentSpec && (
             <div className="flex items-center gap-1.5 text-xs">
               <FileText className="h-3 w-3 text-primary flex-shrink-0" />
-              <span className="text-muted-foreground">Spec atual:</span>
+              <span className="text-muted-foreground">Escaneando:</span>
               <span className="font-medium text-foreground truncate">{currentSpec}</span>
             </div>
-            {currentTest && (
-              <div className="flex items-center gap-1.5 text-xs">
-                <Play className="h-3 w-3 text-primary flex-shrink-0" />
-                <span className="text-muted-foreground">Teste:</span>
-                <span className="font-medium text-foreground truncate">{currentTest}</span>
-              </div>
-            )}
-            {currentUrl && (
-              <div className="flex items-center gap-1.5 text-xs">
-                <Globe className="h-3 w-3 text-primary flex-shrink-0" />
-                <span className="text-muted-foreground">URL:</span>
-                <span className="font-mono text-foreground truncate text-[11px]">{currentUrl}</span>
-              </div>
-            )}
-          </div>
-        )}
+          )}
+          {currentTest && (
+            <div className="flex items-center gap-1.5 text-xs">
+              <Play className="h-3 w-3 text-primary flex-shrink-0" />
+              <span className="text-muted-foreground">Teste:</span>
+              <span className="font-medium text-foreground truncate">{currentTest}</span>
+            </div>
+          )}
+          {(currentUrl || lastScannedUrl) && (
+            <div className="flex items-center gap-1.5 text-xs">
+              <Globe className="h-3 w-3 text-primary flex-shrink-0" />
+              <span className="text-muted-foreground">URL:</span>
+              <span className="font-mono text-foreground truncate text-[11px]">{currentUrl || lastScannedUrl}</span>
+            </div>
+          )}
+          {!currentSpec && !currentUrl && !lastScannedUrl && (
+            <div className="flex items-center gap-1.5 text-xs">
+              <Loader2 className="h-3 w-3 text-primary animate-spin flex-shrink-0" />
+              <span className="text-muted-foreground">
+                {run.execution_engine === "github_actions" 
+                  ? "Aguardando GitHub Actions iniciar o runner..." 
+                  : "Iniciando verificação..."}
+              </span>
+            </div>
+          )}
+        </div>
 
         {/* Counters */}
         <div className="grid grid-cols-3 gap-2 text-center text-xs">
@@ -473,19 +492,19 @@ function LiveProgressPanel({ run }: { run: TestRun }) {
           <p className="text-xs text-destructive bg-destructive/10 rounded-md p-2">{run.error_message}</p>
         )}
 
-        {/* Live log entries */}
+        {/* Live log entries — shows exactly what's being scanned */}
         {logEntries.length > 0 && (
           <Collapsible open={showLogs} onOpenChange={setShowLogs}>
             <CollapsibleTrigger className="w-full">
               <div className="flex items-center justify-between text-xs text-muted-foreground hover:text-foreground cursor-pointer py-1">
                 <span className="flex items-center gap-1">
-                  <Terminal className="h-3 w-3" /> Logs em tempo real ({logEntries.length})
+                  <Terminal className="h-3 w-3" /> Atividade em tempo real ({logEntries.length})
                 </span>
                 <ChevronDown className={`h-3 w-3 transition-transform ${showLogs ? "rotate-180" : ""}`} />
               </div>
             </CollapsibleTrigger>
             <CollapsibleContent>
-              <ScrollArea className="max-h-48 mt-1">
+              <ScrollArea className="max-h-56 mt-1">
                 <div className="space-y-0.5 font-mono text-[10px]">
                   {logEntries.slice(-30).reverse().map((entry, i) => {
                     const eventColor = entry.event?.includes("passed") || entry.event?.includes("completed")
@@ -1006,26 +1025,37 @@ export default function AdminTestCenter({ onBack }: { onBack?: () => void }) {
     return () => { supabase.removeChannel(channel); };
   }, [selectedRun?.id]);
 
-  // Polling fallback
+  // Polling fallback — faster when tests are running
   useEffect(() => {
-    if (runningTests.size > 0 && !pollingRef.current) {
-      pollingRef.current = setInterval(fetchRuns, 3000);
+    const hasRunning = runningTests.size > 0 || runs.some(r => r.status === "running");
+    if (hasRunning && !pollingRef.current) {
+      pollingRef.current = setInterval(fetchRuns, 1500);
     }
-    if (runningTests.size === 0 && pollingRef.current) {
+    if (!hasRunning && pollingRef.current) {
       clearInterval(pollingRef.current);
       pollingRef.current = null;
     }
     return () => { if (pollingRef.current) clearInterval(pollingRef.current); };
-  }, [runningTests.size, fetchRuns]);
+  }, [runningTests.size, runs, fetchRuns]);
 
   const handleRunTest = async (testType: string) => {
     setRunningTests(prev => new Set(prev).add(testType));
     try {
-      const result = await invokeRunTests("POST", undefined, { test_type: testType });
-      await fetchRuns();
-      if (result.status === "success" || result.status === "failed") {
-        setRunningTests(prev => { const n = new Set(prev); n.delete(testType); return n; });
-      }
+      // Fire-and-forget: don't await the full response for light tests
+      // The edge function updates the DB incrementally via updateRunProgress
+      // and realtime subscription picks up changes in real-time
+      invokeRunTests("POST", undefined, { test_type: testType })
+        .then(() => {
+          // After completion, refresh list to get final state
+          fetchRuns();
+        })
+        .catch((err) => {
+          console.error("Run test error:", err);
+          setRunningTests(prev => { const n = new Set(prev); n.delete(testType); return n; });
+          toast.error(`Erro ao executar teste ${testType}`);
+        });
+      // Immediately fetch to pick up the new "running" row
+      setTimeout(() => fetchRuns(), 500);
     } catch (err) {
       console.error("Run test error:", err);
       setRunningTests(prev => { const n = new Set(prev); n.delete(testType); return n; });
@@ -1035,21 +1065,39 @@ export default function AdminTestCenter({ onBack }: { onBack?: () => void }) {
   const handleRunFull = async () => {
     setRunningTests(new Set(["full"]));
     try {
-      await invokeRunTests("POST", undefined, { test_type: "full" });
-      await fetchRuns();
+      invokeRunTests("POST", undefined, { test_type: "full" })
+        .then(() => fetchRuns())
+        .catch((err) => {
+          console.error("Full test error:", err);
+          toast.error("Erro ao executar teste completo");
+        });
+      setTimeout(() => fetchRuns(), 500);
     } catch (err) {
       console.error("Full test error:", err);
     }
   };
 
-  const STALE_TIMEOUT = 15 * 60 * 1000;
+  const STALE_TIMEOUT = 10 * 60 * 1000; // 10 min
   const runningRuns = runs.filter(r => {
     if (r.status !== "running") return false;
-    // Exclude stale runs (>15 min without finalization)
     if (r.started_at && (Date.now() - new Date(r.started_at).getTime()) > STALE_TIMEOUT) return false;
     return true;
   });
   const lastRun = runs.length > 0 ? runs[0] : null;
+
+  // Auto-clear runningTests when realtime shows completion
+  useEffect(() => {
+    const completedStatuses = ["success", "failed", "partial", "cancelled"];
+    runs.forEach(r => {
+      if (completedStatuses.includes(r.status) && runningTests.has(r.test_type)) {
+        setRunningTests(prev => { const n = new Set(prev); n.delete(r.test_type); return n; });
+      }
+    });
+    // Also clear "full" if no running runs exist
+    if (runningTests.has("full") && !runs.some(r => r.status === "running")) {
+      setRunningTests(prev => { const n = new Set(prev); n.delete("full"); return n; });
+    }
+  }, [runs]);
 
   if (selectedRun) {
     return <RunDetail run={selectedRun} onBack={() => { setSelectedRun(null); fetchRuns(); }} />;
