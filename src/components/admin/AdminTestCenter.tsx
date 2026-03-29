@@ -1077,14 +1077,27 @@ export default function AdminTestCenter({ onBack }: { onBack?: () => void }) {
     }
   };
 
-  const STALE_TIMEOUT = 15 * 60 * 1000;
+  const STALE_TIMEOUT = 10 * 60 * 1000; // 10 min
   const runningRuns = runs.filter(r => {
     if (r.status !== "running") return false;
-    // Exclude stale runs (>15 min without finalization)
     if (r.started_at && (Date.now() - new Date(r.started_at).getTime()) > STALE_TIMEOUT) return false;
     return true;
   });
   const lastRun = runs.length > 0 ? runs[0] : null;
+
+  // Auto-clear runningTests when realtime shows completion
+  useEffect(() => {
+    const completedStatuses = ["success", "failed", "partial", "cancelled"];
+    runs.forEach(r => {
+      if (completedStatuses.includes(r.status) && runningTests.has(r.test_type)) {
+        setRunningTests(prev => { const n = new Set(prev); n.delete(r.test_type); return n; });
+      }
+    });
+    // Also clear "full" if no running runs exist
+    if (runningTests.has("full") && !runs.some(r => r.status === "running")) {
+      setRunningTests(prev => { const n = new Set(prev); n.delete("full"); return n; });
+    }
+  }, [runs]);
 
   if (selectedRun) {
     return <RunDetail run={selectedRun} onBack={() => { setSelectedRun(null); fetchRuns(); }} />;
