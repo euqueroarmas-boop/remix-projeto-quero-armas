@@ -49,6 +49,13 @@ function getSupabase() {
   return createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 }
 
+// Generate ephemeral ingest token for a run
+function generateIngestToken(): string {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
 // ─── Types ───
 interface TestResult {
   name: string;
