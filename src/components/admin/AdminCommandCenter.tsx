@@ -98,15 +98,35 @@ function useFunnel(autoRefreshRef: React.MutableRefObject<boolean>) {
 }
 
 function useTestRun(autoRefreshRef: React.MutableRefObject<boolean>) {
-  const [testRun, setTestRun] = useState<any>(null);
+  const [lastCompletedRun, setLastCompletedRun] = useState<any>(null);
+  const [activeRun, setActiveRun] = useState<any>(null);
   const [loaded, setLoaded] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
       const res = await adminQuery([
-        { table: "test_runs", select: "*", order: { column: "created_at", ascending: false }, limit: 1 },
+        // Latest completed run (the source of truth for counters)
+        { table: "test_runs", select: "*", order: { column: "created_at", ascending: false }, limit: 1, filters: [{ column: "status", op: "in", value: "(success,failed,partial)" }] },
+        // Any currently running run
+        { table: "test_runs", select: "*", order: { column: "created_at", ascending: false }, limit: 1, filters: [{ column: "status", op: "eq", value: "running" }] },
       ]);
-      setTestRun(((res[0].data as any[]) || [])[0] || null);
+      const completed = ((res[0].data as any[]) || [])[0] || null;
+      const running = ((res[1].data as any[]) || [])[0] || null;
+
+      // Auto-detect stale: running for >15 min with no recent events
+      if (running && running.started_at) {
+        const elapsed = Date.now() - new Date(running.started_at).getTime();
+        if (elapsed > 15 * 60 * 1000) {
+          // Treat as stale - show completed instead
+          setActiveRun(null);
+          setLastCompletedRun(completed);
+          setLoaded(true);
+          return;
+        }
+      }
+
+      setActiveRun(running);
+      setLastCompletedRun(completed);
     } catch { /* keep last state */ }
     setLoaded(true);
   }, []);
@@ -121,7 +141,9 @@ function useTestRun(autoRefreshRef: React.MutableRefObject<boolean>) {
     return () => { supabase.removeChannel(ch); };
   }, [fetchData, autoRefreshRef]);
 
-  return { testRun, loaded, refetch: fetchData };
+  // The "display" run: prefer active if exists, fallback to last completed
+  const testRun = activeRun || lastCompletedRun;
+  return { testRun, activeRun, lastCompletedRun, loaded, refetch: fetchData };
 }
 
 function useActivity(autoRefreshRef: React.MutableRefObject<boolean>) {
@@ -213,10 +235,14 @@ const SystemStatusGrid = memo(function SystemStatusGrid({ errors24h, webhookErro
   );
 });
 
-const TestsBlock = memo(function TestsBlock({ testRun, onNavigate }: { testRun: any; onNavigate: (s: string) => void }) {
-  const testPct = testRun ? Math.round(((testRun.passed_tests || 0) / Math.max(testRun.total_tests || 1, 1)) * 100) : 0;
+const TestsBlock = memo(function TestsBlock({ testRun, activeRun, lastCompletedRun, onNavigate }: { testRun: any; activeRun: any; lastCompletedRun: any; onNavigate: (s: string) => void }) {
+  // For counters, always use the latest COMPLETED run so we never show zeros from a running run
+  const displayRun = lastCompletedRun || testRun;
+  const isRunning = !!activeRun;
+  const testPct = displayRun ? Math.round(((displayRun.passed_tests || 0) / Math.max(displayRun.total_tests || 1, 1)) * 100) : 0;
+
   return (
-    <Card className={`border transition-colors duration-500 ${testRun?.status === "failed" ? "border-red-500/30" : testRun?.status === "passed" ? "border-emerald-500/30" : "border-border"}`}>
+    <Card className={`border transition-colors duration-500 ${displayRun?.status === "failed" ? "border-red-500/30" : displayRun?.status === "success" ? "border-emerald-500/30" : isRunning ? "border-blue-500/30" : "border-border"}`}>
       <CardContent className="p-4 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -227,34 +253,46 @@ const TestsBlock = memo(function TestsBlock({ testRun, onNavigate }: { testRun: 
             Detalhes <ArrowRight className="h-3 w-3" />
           </Button>
         </div>
-        {testRun ? (
+
+        {/* Show running indicator if there's an active run */}
+        {isRunning && (
+          <div className="flex items-center gap-2 p-2 rounded-md bg-blue-500/10 border border-blue-500/20">
+            <Loader2 className="h-3.5 w-3.5 text-blue-400 animate-spin" />
+            <span className="text-xs text-blue-400 font-medium">Execução em andamento ({activeRun.test_type})</span>
+          </div>
+        )}
+
+        {displayRun ? (
           <>
             <div className="flex items-center gap-2">
-              {testRun.status === "passed" ? (
+              {displayRun.status === "success" ? (
                 <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs">Aprovado</Badge>
-              ) : testRun.status === "failed" ? (
+              ) : displayRun.status === "failed" ? (
                 <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-xs">Falhou</Badge>
-              ) : testRun.status === "running" ? (
-                <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 text-xs">Executando</Badge>
+              ) : displayRun.status === "partial" ? (
+                <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-xs">Parcial</Badge>
               ) : (
-                <Badge variant="outline" className="text-xs">{testRun.status}</Badge>
+                <Badge variant="outline" className="text-xs">{displayRun.status}</Badge>
               )}
-              <span className="text-xs text-muted-foreground">{testRun.suite} · {new Date(testRun.created_at).toLocaleString("pt-BR")}</span>
+              <span className="text-xs text-muted-foreground">{displayRun.suite} · {new Date(displayRun.created_at).toLocaleString("pt-BR")}</span>
             </div>
             <div className="space-y-1">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">Progresso</span>
+                <span className="text-muted-foreground">Taxa de sucesso</span>
                 <span className="font-mono text-foreground">{testPct}%</span>
               </div>
               <Progress value={testPct} className="h-2 transition-all duration-700" />
             </div>
             <div className="grid grid-cols-4 gap-2 text-center">
-              <div><p className="text-lg font-bold text-foreground">{testRun.total_tests || 0}</p><p className="text-[10px] text-muted-foreground">Total</p></div>
-              <div><p className="text-lg font-bold text-emerald-400">{testRun.passed_tests || 0}</p><p className="text-[10px] text-muted-foreground">Aprovados</p></div>
-              <div><p className="text-lg font-bold text-red-400">{testRun.failed_tests || 0}</p><p className="text-[10px] text-muted-foreground">Falhos</p></div>
-              <div><p className="text-lg font-bold text-amber-400">{testRun.skipped_tests || 0}</p><p className="text-[10px] text-muted-foreground">Ignorados</p></div>
+              <div><p className="text-lg font-bold text-foreground">{displayRun.total_tests || 0}</p><p className="text-[10px] text-muted-foreground">Total</p></div>
+              <div><p className="text-lg font-bold text-emerald-400">{displayRun.passed_tests || 0}</p><p className="text-[10px] text-muted-foreground">Aprovados</p></div>
+              <div><p className="text-lg font-bold text-red-400">{displayRun.failed_tests || 0}</p><p className="text-[10px] text-muted-foreground">Falhos</p></div>
+              <div><p className="text-lg font-bold text-amber-400">{displayRun.skipped_tests || 0}</p><p className="text-[10px] text-muted-foreground">Ignorados</p></div>
             </div>
-            {testRun.duration_ms && <p className="text-[10px] text-muted-foreground">Duração: {formatDuration(testRun.duration_ms)}</p>}
+            {displayRun.error_message && (
+              <p className="text-[10px] text-red-400 bg-red-500/10 rounded px-2 py-1 truncate">{displayRun.error_message}</p>
+            )}
+            {displayRun.duration_ms && <p className="text-[10px] text-muted-foreground">Duração: {formatDuration(displayRun.duration_ms)}</p>}
           </>
         ) : (
           <div className="text-center py-4">
@@ -442,7 +480,7 @@ export default function AdminCommandCenter({ onNavigate }: CommandCenterProps) {
       <SystemStatusGrid errors24h={alerts.errors24h} webhookErrors={alerts.webhookErrors} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <TestsBlock testRun={tests.testRun} onNavigate={onNavigate} />
+        <TestsBlock testRun={tests.testRun} activeRun={tests.activeRun} lastCompletedRun={tests.lastCompletedRun} onNavigate={onNavigate} />
         <FunnelBlock data={{ leads: funnel.leads, quotes: funnel.quotes, contracts: funnel.contracts, paymentsOk: funnel.paymentsOk, paymentsFail: funnel.paymentsFail }} onNavigate={onNavigate} />
       </div>
 

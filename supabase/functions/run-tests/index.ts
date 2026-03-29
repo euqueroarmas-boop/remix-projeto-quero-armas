@@ -375,6 +375,34 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify(data), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    // ─── Auto-finalize stale runs (>15 min stuck in running) ───
+    const STALE_TIMEOUT_MS = 15 * 60 * 1000;
+    const staleThreshold = new Date(Date.now() - STALE_TIMEOUT_MS).toISOString();
+    const { data: staleRuns } = await supabase
+      .from("test_runs")
+      .select("id,started_at,test_type,suite,total_tests,passed_tests,failed_tests,skipped_tests")
+      .eq("status", "running")
+      .lt("started_at", staleThreshold);
+
+    if (staleRuns && staleRuns.length > 0) {
+      for (const stale of staleRuns) {
+        const elapsed = Date.now() - new Date(stale.started_at!).getTime();
+        await supabase.from("test_runs").update({
+          status: "failed",
+          finished_at: new Date().toISOString(),
+          duration_ms: elapsed,
+          error_message: `Execução expirou após ${Math.round(elapsed / 60000)} minutos sem finalização`,
+          error_summary: "Timeout: execução não foi finalizada pelo runner",
+          progress_percent: stale.total_tests && stale.total_tests > 0
+            ? Math.round(((stale.passed_tests || 0) + (stale.failed_tests || 0) + (stale.skipped_tests || 0)) / stale.total_tests * 100)
+            : 0,
+          current_spec: null,
+          current_test: null,
+        } as any).eq("id", stale.id);
+        console.log(`[WMTi] Auto-finalized stale run ${stale.id} (${stale.test_type})`);
+      }
+    }
+
     // Default: list
     const limit = parseInt(url.searchParams.get("limit") || "50");
     const suiteFilter = url.searchParams.get("suite");
