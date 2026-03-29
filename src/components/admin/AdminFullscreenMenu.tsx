@@ -77,7 +77,8 @@ export default function AdminFullscreenMenu({ open, onClose, activeSection, onNa
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-[100] bg-background/98 backdrop-blur-sm flex flex-col"
+          className="fixed inset-0 z-[9999] bg-[#0A0A0A] flex flex-col shadow-inner"
+          style={{ background: "linear-gradient(to bottom, #0A0A0A, #050505)" }}
         >
           {/* Header */}
           <div className="flex items-center justify-between px-5 py-4 border-b border-border">
