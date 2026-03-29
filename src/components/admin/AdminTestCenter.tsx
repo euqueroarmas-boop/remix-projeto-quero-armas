@@ -1006,17 +1006,18 @@ export default function AdminTestCenter({ onBack }: { onBack?: () => void }) {
     return () => { supabase.removeChannel(channel); };
   }, [selectedRun?.id]);
 
-  // Polling fallback
+  // Polling fallback — faster when tests are running
   useEffect(() => {
-    if (runningTests.size > 0 && !pollingRef.current) {
-      pollingRef.current = setInterval(fetchRuns, 3000);
+    const hasRunning = runningTests.size > 0 || runs.some(r => r.status === "running");
+    if (hasRunning && !pollingRef.current) {
+      pollingRef.current = setInterval(fetchRuns, 1500);
     }
-    if (runningTests.size === 0 && pollingRef.current) {
+    if (!hasRunning && pollingRef.current) {
       clearInterval(pollingRef.current);
       pollingRef.current = null;
     }
     return () => { if (pollingRef.current) clearInterval(pollingRef.current); };
-  }, [runningTests.size, fetchRuns]);
+  }, [runningTests.size, runs, fetchRuns]);
 
   const handleRunTest = async (testType: string) => {
     setRunningTests(prev => new Set(prev).add(testType));
