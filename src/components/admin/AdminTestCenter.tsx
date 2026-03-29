@@ -889,10 +889,24 @@ function RunDetail({ run, onBack }: { run: TestRun; onBack: () => void }) {
       {run.logs && (
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Terminal className="h-4 w-4 text-muted-foreground" />
-              Logs técnicos
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Terminal className="h-4 w-4 text-muted-foreground" />
+                Logs técnicos
+              </CardTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-[10px] gap-1"
+                onClick={() => {
+                  const text = typeof run.logs === 'string' ? run.logs : JSON.stringify(run.logs, null, 2);
+                  navigator.clipboard.writeText(text);
+                  toast.success("Logs copiados");
+                }}
+              >
+                <Copy className="h-3 w-3" /> Copiar logs
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             <pre className="text-[11px] text-muted-foreground bg-muted/50 p-3 rounded overflow-auto max-h-48 font-mono">
