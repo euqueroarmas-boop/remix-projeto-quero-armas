@@ -24,7 +24,7 @@ import {
   Eye, Zap, Globe, FileText, Shield, ShoppingCart, FormInput,
   Monitor, BookOpen, Server, AlertTriangle, Rocket, ArrowLeft,
   Bell, Send, MessageSquare, Mail, Webhook, ChevronDown, Image,
-  Video, Bug, Terminal, ExternalLink, Copy, Home,
+  Video, Bug, Terminal, ExternalLink, Copy, Home, Square,
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
