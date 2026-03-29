@@ -1037,6 +1037,7 @@ export default function AdminTestCenter({ onBack }: { onBack?: () => void }) {
             <p className="text-sm text-muted-foreground mt-0.5">
               Dispare, acompanhe e audite testes automatizados
           </p>
+          </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <Button variant={activeTab === "suites" ? "default" : "outline"} size="sm" onClick={() => setActiveTab("suites")} className="text-xs">
