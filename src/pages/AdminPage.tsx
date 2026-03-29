@@ -5,13 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
   BarChart3, AlertTriangle, CreditCard, FileText, LogOut, RefreshCw, ChevronLeft, ChevronRight, Eye, Users, Plus, Loader2, Check, Copy, Shield,
+  LayoutDashboard, ScrollText, CreditCard as CreditCardIcon, UserCog, Megaphone, ShieldAlert, Webhook, ClipboardCheck, Activity, Stethoscope, FlaskConical, PenTool, TestTube2,
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import AdminSecurityEvents from "@/components/admin/AdminSecurityEvents";
@@ -26,6 +26,44 @@ const AdminBlogGenerator = lazy(() => import("@/components/admin/AdminBlogGenera
 const AdminTestCenter = lazy(() => import("@/components/admin/AdminTestCenter"));
 
 const ITEMS_PER_PAGE = 20;
+
+// ─── Navigation Structure ───
+const NAV_GROUPS = [
+  {
+    label: "Visão Geral",
+    items: [
+      { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+    ],
+  },
+  {
+    label: "Operações",
+    items: [
+      { id: "logs", label: "Logs", icon: ScrollText },
+      { id: "errors", label: "Erros", icon: AlertTriangle },
+      { id: "payments", label: "Pagamentos", icon: CreditCardIcon },
+      { id: "clientes", label: "Clientes", icon: UserCog },
+      { id: "leads", label: "Leads & Propostas", icon: Megaphone },
+    ],
+  },
+  {
+    label: "Segurança",
+    items: [
+      { id: "security", label: "Eventos", icon: ShieldAlert },
+      { id: "webhooks", label: "Webhooks", icon: Webhook },
+      { id: "audit", label: "Auditoria", icon: ClipboardCheck },
+      { id: "risk", label: "Monitor de Risco", icon: Activity },
+    ],
+  },
+  {
+    label: "Qualidade & Conteúdo",
+    items: [
+      { id: "diagnostics", label: "Diagnóstico", icon: Stethoscope },
+      { id: "qa", label: "QA", icon: FlaskConical },
+      { id: "test-center", label: "Centro de Testes", icon: TestTube2 },
+      { id: "blog-ai", label: "Blog IA", icon: PenTool },
+    ],
+  },
+];
 
 function AdminLogin({ onLogin }: { onLogin: () => void }) {
   const [password, setPassword] = useState("");
@@ -56,7 +94,8 @@ function AdminLogin({ onLogin }: { onLogin: () => void }) {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle className="text-center text-foreground">Painel Administrativo</CardTitle>
+          <CardTitle className="text-center text-foreground">🛡️ Painel Administrativo</CardTitle>
+          <p className="text-center text-sm text-muted-foreground">WMTi Tecnologia</p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -148,18 +187,20 @@ function Dashboard() {
   ];
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
       {cards.map((c) => (
         <Card key={c.title}>
-          <CardContent className="pt-4 pb-4 px-4 md:pt-6">
+          <CardContent className="pt-5 pb-5 px-5">
             <div className="flex items-center justify-between gap-2">
               <div className="min-w-0">
-                <p className="text-xs md:text-sm text-muted-foreground truncate">{c.title}</p>
-                <p className={`text-2xl md:text-3xl font-bold ${c.color}`}>
+                <p className="text-xs text-muted-foreground truncate">{c.title}</p>
+                <p className={`text-3xl font-bold ${c.color} mt-1`}>
                   {loading ? "..." : c.value}
                 </p>
               </div>
-              <c.icon className={`h-6 w-6 md:h-8 md:w-8 ${c.color} opacity-50 shrink-0`} />
+              <div className="p-2.5 rounded-lg bg-muted">
+                <c.icon className={`h-5 w-5 ${c.color} opacity-60`} />
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -207,9 +248,9 @@ function LogsTab({ onlyErrors = false }: { onlyErrors?: boolean }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-2 md:gap-3 items-center">
+      <div className="flex flex-wrap gap-2 items-center">
         <Select value={filterTipo} onValueChange={(v) => { setFilterTipo(v); setPage(0); }}>
-          <SelectTrigger className="w-32 md:w-40 text-xs md:text-sm"><SelectValue placeholder="Tipo" /></SelectTrigger>
+          <SelectTrigger className="w-36 text-xs h-8"><SelectValue placeholder="Tipo" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos os tipos</SelectItem>
             <SelectItem value="checkout">Checkout</SelectItem>
@@ -223,7 +264,7 @@ function LogsTab({ onlyErrors = false }: { onlyErrors?: boolean }) {
         </Select>
         {!onlyErrors && (
           <Select value={filterStatus} onValueChange={(v) => { setFilterStatus(v); setPage(0); }}>
-            <SelectTrigger className="w-28 md:w-40 text-xs md:text-sm"><SelectValue placeholder="Status" /></SelectTrigger>
+            <SelectTrigger className="w-32 text-xs h-8"><SelectValue placeholder="Status" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos</SelectItem>
               <SelectItem value="success">Success</SelectItem>
@@ -233,45 +274,41 @@ function LogsTab({ onlyErrors = false }: { onlyErrors?: boolean }) {
             </SelectContent>
           </Select>
         )}
-        <Button variant="outline" size="sm" onClick={fetchLogs} className="text-xs">
-          <RefreshCw className="h-3 w-3 md:h-4 md:w-4 mr-1" /> Atualizar
+        <Button variant="outline" size="sm" onClick={fetchLogs} className="text-xs h-8">
+          <RefreshCw className="h-3 w-3 mr-1" /> Atualizar
         </Button>
         <span className="text-xs text-muted-foreground ml-auto">{total} registros</span>
       </div>
 
       {loading ? (
-        <div className="text-center py-12 text-muted-foreground">Carregando...</div>
+        <div className="text-center py-12 text-muted-foreground text-sm"><Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" />Carregando...</div>
       ) : logs.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">Nenhum log encontrado</div>
+        <div className="text-center py-12 text-muted-foreground text-sm">Nenhum log encontrado</div>
       ) : isMobile ? (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {logs.map((log) => (
             <Card key={log.id} className={log.status === "error" ? "border-destructive/30" : ""}>
-              <CardContent className="p-4 space-y-2">
+              <CardContent className="p-3 space-y-2">
                 <div className="flex items-center justify-between gap-2">
                   <Badge variant="outline" className="text-xs">{log.tipo}</Badge>
                   <StatusBadge status={log.status} />
                 </div>
                 <p className="text-sm text-foreground line-clamp-2">{log.mensagem}</p>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">
-                    {new Date(log.created_at).toLocaleString("pt-BR")}
-                  </span>
+                  <span className="text-xs text-muted-foreground">{new Date(log.created_at).toLocaleString("pt-BR")}</span>
                   <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => setExpandedId(expandedId === log.id ? null : log.id)}>
                     <Eye className="h-3 w-3" />
                   </Button>
                 </div>
                 {expandedId === log.id && (
-                  <pre className="text-xs text-muted-foreground bg-muted/50 p-3 rounded overflow-auto max-h-40 mt-2">
-                    {JSON.stringify(log.payload, null, 2)}
-                  </pre>
+                  <pre className="text-xs text-muted-foreground bg-muted/50 p-3 rounded overflow-auto max-h-40">{JSON.stringify(log.payload, null, 2)}</pre>
                 )}
               </CardContent>
             </Card>
           ))}
         </div>
       ) : (
-        <div className="rounded-md border border-border overflow-auto">
+        <div className="rounded-lg border border-border overflow-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -279,19 +316,15 @@ function LogsTab({ onlyErrors = false }: { onlyErrors?: boolean }) {
                 <TableHead className="w-[100px]">Tipo</TableHead>
                 <TableHead className="w-[80px]">Status</TableHead>
                 <TableHead>Mensagem</TableHead>
-                <TableHead className="w-[60px]">Detalhe</TableHead>
+                <TableHead className="w-[60px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {logs.map((log) => (
                 <>
                   <TableRow key={log.id} className={log.status === "error" ? "bg-red-950/20" : ""}>
-                    <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                      {new Date(log.created_at).toLocaleString("pt-BR")}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="text-xs">{log.tipo}</Badge>
-                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{new Date(log.created_at).toLocaleString("pt-BR")}</TableCell>
+                    <TableCell><Badge variant="outline" className="text-xs">{log.tipo}</Badge></TableCell>
                     <TableCell><StatusBadge status={log.status} /></TableCell>
                     <TableCell className="text-sm text-foreground max-w-[300px] truncate">{log.mensagem}</TableCell>
                     <TableCell>
@@ -303,9 +336,7 @@ function LogsTab({ onlyErrors = false }: { onlyErrors?: boolean }) {
                   {expandedId === log.id && (
                     <TableRow key={`${log.id}-detail`}>
                       <TableCell colSpan={5}>
-                        <pre className="text-xs text-muted-foreground bg-muted/50 p-3 rounded overflow-auto max-h-60">
-                          {JSON.stringify(log.payload, null, 2)}
-                        </pre>
+                        <pre className="text-xs text-muted-foreground bg-muted/50 p-3 rounded overflow-auto max-h-60">{JSON.stringify(log.payload, null, 2)}</pre>
                       </TableCell>
                     </TableRow>
                   )}
@@ -318,15 +349,9 @@ function LogsTab({ onlyErrors = false }: { onlyErrors?: boolean }) {
 
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-2">
-          <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(page - 1)}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <span className="text-sm text-muted-foreground">
-            {page + 1} / {totalPages}
-          </span>
-          <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+          <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(page - 1)}><ChevronLeft className="h-4 w-4" /></Button>
+          <span className="text-sm text-muted-foreground">{page + 1} / {totalPages}</span>
+          <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)}><ChevronRight className="h-4 w-4" /></Button>
         </div>
       )}
     </div>
@@ -339,27 +364,17 @@ function PaymentsTab() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [total, setTotal] = useState(0);
+  const [webhookIds, setWebhookIds] = useState<Set<string>>(new Set());
 
   const fetchPayments = useCallback(async () => {
     setLoading(true);
     try {
       const results = await adminQuery([
-        {
-          table: "payments",
-          select: "*",
-          count: true,
-          order: { column: "created_at", ascending: false },
-          range: { from: page * ITEMS_PER_PAGE, to: (page + 1) * ITEMS_PER_PAGE - 1 },
-        },
-        {
-          table: "asaas_webhooks",
-          select: "payload",
-        },
+        { table: "payments", select: "*", count: true, order: { column: "created_at", ascending: false }, range: { from: page * ITEMS_PER_PAGE, to: (page + 1) * ITEMS_PER_PAGE - 1 } },
+        { table: "asaas_webhooks", select: "payload" },
       ]);
-
       setPayments((results[0].data as PaymentRow[]) || []);
       setTotal(results[0].count || 0);
-
       const ids = new Set<string>();
       ((results[1].data as any[]) || []).forEach((w: any) => {
         const paymentId = w.payload?.payment?.id;
@@ -374,91 +389,57 @@ function PaymentsTab() {
 
   useEffect(() => { fetchPayments(); }, [fetchPayments]);
 
-  const [webhookIds, setWebhookIds] = useState<Set<string>>(new Set());
-
   const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2 md:gap-3">
-        <Button variant="outline" size="sm" onClick={fetchPayments} className="text-xs">
-          <RefreshCw className="h-3 w-3 md:h-4 md:w-4 mr-1" /> Atualizar
-        </Button>
+      <div className="flex items-center gap-2">
+        <Button variant="outline" size="sm" onClick={fetchPayments} className="text-xs h-8"><RefreshCw className="h-3 w-3 mr-1" /> Atualizar</Button>
         <span className="text-xs text-muted-foreground ml-auto">{total} pagamentos</span>
       </div>
 
       {loading ? (
-        <div className="text-center py-12 text-muted-foreground">Carregando...</div>
+        <div className="text-center py-12 text-muted-foreground text-sm"><Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" />Carregando...</div>
       ) : payments.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">Nenhum pagamento encontrado</div>
+        <div className="text-center py-12 text-muted-foreground text-sm">Nenhum pagamento encontrado</div>
       ) : isMobile ? (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {payments.map((p) => (
             <Card key={p.id}>
-              <CardContent className="p-4 space-y-2">
+              <CardContent className="p-3 space-y-2">
                 <div className="flex items-center justify-between gap-2">
                   <Badge variant="outline" className="text-xs">{p.billing_type || p.payment_method || "—"}</Badge>
                   <StatusBadge status={p.payment_status || "pending"} />
                 </div>
                 <div className="text-xs space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Data:</span>
-                    <span className="text-foreground">{new Date(p.created_at).toLocaleString("pt-BR")}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Asaas ID:</span>
-                    <span className="font-mono text-foreground text-[11px]">{p.asaas_payment_id?.slice(0, 16) || "—"}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Webhook:</span>
-                    <span>{p.asaas_payment_id && webhookIds.has(p.asaas_payment_id) ? "✓ Recebido" : "—"}</span>
-                  </div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Data:</span><span className="text-foreground">{new Date(p.created_at).toLocaleString("pt-BR")}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Asaas ID:</span><span className="font-mono text-foreground text-[11px]">{p.asaas_payment_id?.slice(0, 16) || "—"}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Webhook:</span><span>{p.asaas_payment_id && webhookIds.has(p.asaas_payment_id) ? "✓ Recebido" : "—"}</span></div>
                 </div>
                 {p.asaas_invoice_url && (
-                  <a href={p.asaas_invoice_url} target="_blank" rel="noopener noreferrer" className="text-primary text-xs underline block text-right">
-                    Abrir Invoice
-                  </a>
+                  <a href={p.asaas_invoice_url} target="_blank" rel="noopener noreferrer" className="text-primary text-xs underline block text-right">Abrir Invoice</a>
                 )}
               </CardContent>
             </Card>
           ))}
         </div>
       ) : (
-        <div className="rounded-md border border-border overflow-auto">
+        <div className="rounded-lg border border-border overflow-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Data</TableHead>
-                <TableHead>Asaas ID</TableHead>
-                <TableHead>Método</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Webhook</TableHead>
-                <TableHead>Invoice</TableHead>
+                <TableHead>Data</TableHead><TableHead>Asaas ID</TableHead><TableHead>Método</TableHead><TableHead>Status</TableHead><TableHead>Webhook</TableHead><TableHead>Invoice</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {payments.map((p) => (
                 <TableRow key={p.id}>
-                  <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                    {new Date(p.created_at).toLocaleString("pt-BR")}
-                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{new Date(p.created_at).toLocaleString("pt-BR")}</TableCell>
                   <TableCell className="text-xs font-mono text-foreground">{p.asaas_payment_id || "—"}</TableCell>
                   <TableCell><Badge variant="outline" className="text-xs">{p.billing_type || p.payment_method || "—"}</Badge></TableCell>
                   <TableCell><StatusBadge status={p.payment_status || "pending"} /></TableCell>
-                  <TableCell>
-                    {p.asaas_payment_id && webhookIds.has(p.asaas_payment_id) ? (
-                      <span className="text-green-400 text-xs">✓ Recebido</span>
-                    ) : (
-                      <span className="text-muted-foreground text-xs">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {p.asaas_invoice_url ? (
-                      <a href={p.asaas_invoice_url} target="_blank" rel="noopener noreferrer" className="text-primary text-xs underline">
-                        Abrir
-                      </a>
-                    ) : "—"}
-                  </TableCell>
+                  <TableCell>{p.asaas_payment_id && webhookIds.has(p.asaas_payment_id) ? <span className="text-green-400 text-xs">✓ Recebido</span> : <span className="text-muted-foreground text-xs">—</span>}</TableCell>
+                  <TableCell>{p.asaas_invoice_url ? <a href={p.asaas_invoice_url} target="_blank" rel="noopener noreferrer" className="text-primary text-xs underline">Abrir</a> : "—"}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -468,13 +449,9 @@ function PaymentsTab() {
 
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-2">
-          <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(page - 1)}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
+          <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(page - 1)}><ChevronLeft className="h-4 w-4" /></Button>
           <span className="text-sm text-muted-foreground">{page + 1} / {totalPages}</span>
-          <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+          <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)}><ChevronRight className="h-4 w-4" /></Button>
         </div>
       )}
     </div>
@@ -498,26 +475,13 @@ function ClientesTab() {
     setLoading(true);
     try {
       const results = await adminQuery([
-        {
-          table: "customers",
-          select: "id, razao_social, nome_fantasia, cnpj_ou_cpf, email, user_id, created_at",
-          order: { column: "created_at", ascending: false },
-        },
-        {
-          table: "admin_audit_logs",
-          select: "target_id, action, after_state, created_at",
-          filters: [{ column: "action", op: "in", value: ["auto_user_created", "auto_user_creation_failed"] }],
-          order: { column: "created_at", ascending: false },
-        },
+        { table: "customers", select: "id, razao_social, nome_fantasia, cnpj_ou_cpf, email, user_id, created_at", order: { column: "created_at", ascending: false } },
+        { table: "admin_audit_logs", select: "target_id, action, after_state, created_at", filters: [{ column: "action", op: "in", value: ["auto_user_created", "auto_user_creation_failed"] }], order: { column: "created_at", ascending: false } },
       ]);
-
       setCustomers((results[0].data as any[]) || []);
-
       const auditMap: Record<string, any> = {};
       ((results[1].data as any[]) || []).forEach((a: any) => {
-        if (a.target_id && !auditMap[a.target_id]) {
-          auditMap[a.target_id] = a;
-        }
+        if (a.target_id && !auditMap[a.target_id]) auditMap[a.target_id] = a;
       });
       setAuditLogs(auditMap);
     } catch (err) {
@@ -576,9 +540,7 @@ function ClientesTab() {
         return (
           <div className="space-y-1">
             <Badge variant="outline" className="text-xs border-green-600/30 text-green-400">✓ Ativo (auto)</Badge>
-            {!pwdChanged && (
-              <Badge variant="outline" className="text-xs border-amber-600/30 text-amber-400">Senha temp.</Badge>
-            )}
+            {!pwdChanged && <Badge variant="outline" className="text-xs border-amber-600/30 text-amber-400">Senha temp.</Badge>}
           </div>
         );
       }
@@ -589,19 +551,15 @@ function ClientesTab() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2 md:gap-3">
-        <Button variant="outline" size="sm" onClick={fetchCustomers} className="text-xs">
-          <RefreshCw className="h-3 w-3 md:h-4 md:w-4 mr-1" /> Atualizar
-        </Button>
-        <Button size="sm" onClick={() => { setShowForm(!showForm); setResult(null); setError(""); }} className="text-xs">
-          <Plus className="h-3 w-3 md:h-4 md:w-4 mr-1" /> Criar Acesso
-        </Button>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button variant="outline" size="sm" onClick={fetchCustomers} className="text-xs h-8"><RefreshCw className="h-3 w-3 mr-1" /> Atualizar</Button>
+        <Button size="sm" onClick={() => { setShowForm(!showForm); setResult(null); setError(""); }} className="text-xs h-8"><Plus className="h-3 w-3 mr-1" /> Criar Acesso</Button>
         <span className="text-xs text-muted-foreground ml-auto">{customers.length} clientes</span>
       </div>
 
       {showForm && (
         <Card className="border-primary/30">
-          <CardContent className="p-4 md:p-5">
+          <CardContent className="p-5">
             {result ? (
               <div className="space-y-4">
                 <div className="flex items-center gap-2 text-emerald-400 mb-2">
@@ -609,65 +567,36 @@ function ClientesTab() {
                 </div>
                 <div className="bg-muted/50 rounded-lg p-4 space-y-3">
                   <div className="flex items-center justify-between">
-                    <div className="min-w-0">
-                      <p className="text-[10px] text-muted-foreground uppercase">E-mail</p>
-                      <p className="text-sm font-mono text-foreground truncate">{result.email}</p>
-                    </div>
-                    <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => copyToClipboard(result.email, "email")}>
-                      {copied === "email" ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
-                    </Button>
+                    <div className="min-w-0"><p className="text-[10px] text-muted-foreground uppercase">E-mail</p><p className="text-sm font-mono text-foreground truncate">{result.email}</p></div>
+                    <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => copyToClipboard(result.email, "email")}>{copied === "email" ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}</Button>
                   </div>
                   <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-[10px] text-muted-foreground uppercase">Senha</p>
-                      <p className="text-sm font-mono text-foreground">{result.password}</p>
-                    </div>
-                    <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => copyToClipboard(result.password, "pwd")}>
-                      {copied === "pwd" ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
-                    </Button>
+                    <div><p className="text-[10px] text-muted-foreground uppercase">Senha</p><p className="text-sm font-mono text-foreground">{result.password}</p></div>
+                    <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => copyToClipboard(result.password, "pwd")}>{copied === "pwd" ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}</Button>
                   </div>
-                  <p className="text-xs text-muted-foreground">Envie essas credenciais ao cliente. Ele pode acessar em /area-do-cliente</p>
+                  <p className="text-xs text-muted-foreground">Envie essas credenciais ao cliente. Acesso em /area-do-cliente</p>
                 </div>
-                <Button size="sm" variant="outline" onClick={() => { setResult(null); setShowForm(false); setForm({ email: "", password: "", name: "" }); }}>
-                  Fechar
-                </Button>
+                <Button size="sm" variant="outline" onClick={() => { setResult(null); setShowForm(false); setForm({ email: "", password: "", name: "" }); }}>Fechar</Button>
               </div>
             ) : (
               <form onSubmit={handleCreate} className="space-y-4">
-                <h3 className="font-heading font-bold text-sm text-foreground">Criar Acesso para Cliente</h3>
-
+                <h3 className="font-bold text-sm text-foreground">Criar Acesso para Cliente</h3>
                 <div>
                   <label className="text-xs text-muted-foreground mb-1 block">Vincular a Cliente (opcional)</label>
                   <Select value={selectedCustomerId} onValueChange={setSelectedCustomerId}>
-                    <SelectTrigger className="bg-card text-xs md:text-sm"><SelectValue placeholder="Selecione um cliente" /></SelectTrigger>
+                    <SelectTrigger className="bg-card text-xs"><SelectValue placeholder="Selecione um cliente" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">Nenhum (criar sem vínculo)</SelectItem>
                       {customers.filter((c) => !c.user_id).map((c) => (
-                        <SelectItem key={c.id} value={c.id}>
-                          {c.razao_social} ({c.cnpj_ou_cpf})
-                        </SelectItem>
+                        <SelectItem key={c.id} value={c.id}>{c.razao_social} ({c.cnpj_ou_cpf})</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
-
-                <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">Nome</label>
-                  <Input placeholder="Nome do usuário" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="bg-card" />
-                </div>
-
-                <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">E-mail *</label>
-                  <Input type="email" placeholder="email@cliente.com" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="bg-card" />
-                </div>
-
-                <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">Senha *</label>
-                  <Input type="text" placeholder="Mínimo 6 caracteres" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="bg-card" />
-                </div>
-
+                <div><label className="text-xs text-muted-foreground mb-1 block">Nome</label><Input placeholder="Nome do usuário" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="bg-card" /></div>
+                <div><label className="text-xs text-muted-foreground mb-1 block">E-mail *</label><Input type="email" placeholder="email@cliente.com" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="bg-card" /></div>
+                <div><label className="text-xs text-muted-foreground mb-1 block">Senha *</label><Input type="text" placeholder="Mínimo 6 caracteres" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="bg-card" /></div>
                 {error && <p className="text-sm text-destructive">{error}</p>}
-
                 <div className="flex gap-2 justify-end">
                   <Button type="button" variant="ghost" size="sm" onClick={() => setShowForm(false)}>Cancelar</Button>
                   <Button type="submit" size="sm" disabled={creating}>
@@ -682,14 +611,14 @@ function ClientesTab() {
       )}
 
       {loading ? (
-        <div className="text-center py-12 text-muted-foreground">Carregando...</div>
+        <div className="text-center py-12 text-muted-foreground text-sm"><Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" />Carregando...</div>
       ) : customers.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">Nenhum cliente cadastrado</div>
+        <div className="text-center py-12 text-muted-foreground text-sm">Nenhum cliente cadastrado</div>
       ) : isMobile ? (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {customers.map((c) => (
             <Card key={c.id}>
-              <CardContent className="p-4 space-y-2">
+              <CardContent className="p-3 space-y-2">
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-sm font-medium text-foreground truncate">{c.nome_fantasia || c.razao_social}</p>
                   {getAccessBadge(c)}
@@ -699,9 +628,7 @@ function ClientesTab() {
                   <p><span className="text-foreground/70">E-mail:</span> {c.email}</p>
                   <p><span className="text-foreground/70">Cadastro:</span> {new Date(c.created_at).toLocaleDateString("pt-BR")}</p>
                   {auditLogs[c.id] && (
-                    <p className="text-primary text-[11px]">
-                      {auditLogs[c.id].action === "auto_user_created" ? "🤖 Conta criada automaticamente" : "⚠️ Falha na criação automática"}
-                    </p>
+                    <p className="text-primary text-[11px]">{auditLogs[c.id].action === "auto_user_created" ? "🤖 Conta criada automaticamente" : "⚠️ Falha na criação automática"}</p>
                   )}
                 </div>
               </CardContent>
@@ -709,16 +636,11 @@ function ClientesTab() {
           ))}
         </div>
       ) : (
-        <div className="rounded-md border border-border overflow-auto">
+        <div className="rounded-lg border border-border overflow-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Empresa</TableHead>
-                <TableHead>CNPJ/CPF</TableHead>
-                <TableHead>E-mail</TableHead>
-                <TableHead>Acesso Portal</TableHead>
-                <TableHead>Origem</TableHead>
-                <TableHead>Cadastro</TableHead>
+                <TableHead>Empresa</TableHead><TableHead>CNPJ/CPF</TableHead><TableHead>E-mail</TableHead><TableHead>Acesso Portal</TableHead><TableHead>Origem</TableHead><TableHead>Cadastro</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -729,15 +651,9 @@ function ClientesTab() {
                   <TableCell className="text-xs text-muted-foreground">{c.email}</TableCell>
                   <TableCell>{getAccessBadge(c)}</TableCell>
                   <TableCell className="text-xs text-muted-foreground">
-                    {auditLogs[c.id]?.action === "auto_user_created"
-                      ? <span className="text-primary">🤖 Auto</span>
-                      : auditLogs[c.id]?.action === "auto_user_creation_failed"
-                      ? <span className="text-destructive">⚠️ Falha</span>
-                      : c.user_id ? "Manual" : "—"}
+                    {auditLogs[c.id]?.action === "auto_user_created" ? <span className="text-primary">🤖 Auto</span> : auditLogs[c.id]?.action === "auto_user_creation_failed" ? <span className="text-destructive">⚠️ Falha</span> : c.user_id ? "Manual" : "—"}
                   </TableCell>
-                  <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                    {new Date(c.created_at).toLocaleDateString("pt-BR")}
-                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{new Date(c.created_at).toLocaleDateString("pt-BR")}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -748,8 +664,34 @@ function ClientesTab() {
   );
 }
 
+// ─── Content Renderer ───
+function AdminContent({ activeSection }: { activeSection: string }) {
+  const fallback = <div className="flex items-center justify-center py-12 text-muted-foreground text-sm"><Loader2 className="h-5 w-5 animate-spin mr-2" />Carregando...</div>;
+
+  switch (activeSection) {
+    case "dashboard": return <Dashboard />;
+    case "logs": return <LogsTab />;
+    case "errors": return <LogsTab onlyErrors />;
+    case "payments": return <PaymentsTab />;
+    case "clientes": return <ClientesTab />;
+    case "leads": return <AdminLeadsProposals />;
+    case "security": return <AdminSecurityEvents />;
+    case "webhooks": return <AdminWebhooks />;
+    case "audit": return <AdminAudit />;
+    case "risk": return <AdminRiskMonitor />;
+    case "diagnostics": return <AdminDiagnostics />;
+    case "qa": return <Suspense fallback={fallback}><QAPanel /></Suspense>;
+    case "test-center": return <Suspense fallback={fallback}><AdminTestCenter /></Suspense>;
+    case "blog-ai": return <Suspense fallback={fallback}><AdminBlogGenerator /></Suspense>;
+    default: return <Dashboard />;
+  }
+}
+
+// ─── Main Page ───
 export default function AdminPage() {
   const [authed, setAuthed] = useState(!!sessionStorage.getItem("admin_token"));
+  const [activeSection, setActiveSection] = useState("dashboard");
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const isMobile = useIsMobile();
 
   if (!authed) return <AdminLogin onLogin={() => setAuthed(true)} />;
@@ -759,52 +701,122 @@ export default function AdminPage() {
     setAuthed(false);
   };
 
-  return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border px-4 md:px-6 py-3 md:py-4 flex items-center justify-between gap-2">
-        <h1 className="text-sm md:text-lg font-bold text-foreground truncate">🛡️ Admin — WMTi</h1>
-        <Button variant="ghost" size="sm" onClick={handleLogout} className="shrink-0 text-xs md:text-sm">
-          <LogOut className="h-4 w-4 mr-1" /> Sair
-        </Button>
-      </header>
+  const handleNavClick = (id: string) => {
+    setActiveSection(id);
+    setMobileNavOpen(false);
+  };
 
-      <main className="max-w-7xl mx-auto p-3 md:p-6 space-y-4 md:space-y-6">
-        <Tabs defaultValue="dashboard">
-          <div className="overflow-x-auto -mx-3 px-3 md:mx-0 md:px-0 pb-1">
-            <TabsList className="mb-4 inline-flex w-max min-w-full md:min-w-0 gap-0.5">
-              <TabsTrigger value="dashboard" className="text-xs md:text-sm px-2.5 md:px-3">Dashboard</TabsTrigger>
-              <TabsTrigger value="logs" className="text-xs md:text-sm px-2.5 md:px-3">Logs</TabsTrigger>
-              <TabsTrigger value="errors" className="text-xs md:text-sm px-2.5 md:px-3">Erros</TabsTrigger>
-              <TabsTrigger value="payments" className="text-xs md:text-sm px-2.5 md:px-3">Pgtos</TabsTrigger>
-              <TabsTrigger value="clientes" className="text-xs md:text-sm px-2.5 md:px-3">Clientes</TabsTrigger>
-              <TabsTrigger value="leads" className="text-xs md:text-sm px-2.5 md:px-3">Leads</TabsTrigger>
-              <TabsTrigger value="security" className="text-xs md:text-sm px-2.5 md:px-3">Segurança</TabsTrigger>
-              <TabsTrigger value="webhooks" className="text-xs md:text-sm px-2.5 md:px-3">Webhooks</TabsTrigger>
-              <TabsTrigger value="audit" className="text-xs md:text-sm px-2.5 md:px-3">Auditoria</TabsTrigger>
-              <TabsTrigger value="risk" className="text-xs md:text-sm px-2.5 md:px-3">Risco</TabsTrigger>
-              <TabsTrigger value="diagnostics" className="text-xs md:text-sm px-2.5 md:px-3 text-destructive">🔍 Diagnóstico</TabsTrigger>
-              <TabsTrigger value="qa" className="text-xs md:text-sm px-2.5 md:px-3 text-primary">🧪 QA</TabsTrigger>
-              <TabsTrigger value="blog-ai" className="text-xs md:text-sm px-2.5 md:px-3 text-primary">✍️ Blog IA</TabsTrigger>
-              <TabsTrigger value="test-center" className="text-xs md:text-sm px-2.5 md:px-3 text-primary">🧪 Testes</TabsTrigger>
-            </TabsList>
+  const currentLabel = NAV_GROUPS.flatMap(g => g.items).find(i => i.id === activeSection)?.label || "Dashboard";
+
+  return (
+    <div className="min-h-screen bg-background text-foreground flex flex-col md:flex-row">
+      {/* Sidebar - Desktop */}
+      {!isMobile && (
+        <aside className="w-56 border-r border-border bg-card flex-shrink-0 flex flex-col h-screen sticky top-0">
+          <div className="p-4 border-b border-border">
+            <h1 className="text-sm font-bold text-foreground">🛡️ Admin WMTi</h1>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Painel de Controle</p>
           </div>
 
-          <TabsContent value="dashboard"><Dashboard /></TabsContent>
-          <TabsContent value="logs"><LogsTab /></TabsContent>
-          <TabsContent value="errors"><LogsTab onlyErrors /></TabsContent>
-          <TabsContent value="payments"><PaymentsTab /></TabsContent>
-          <TabsContent value="clientes"><ClientesTab /></TabsContent>
-          <TabsContent value="leads"><AdminLeadsProposals /></TabsContent>
-          <TabsContent value="security"><AdminSecurityEvents /></TabsContent>
-          <TabsContent value="webhooks"><AdminWebhooks /></TabsContent>
-          <TabsContent value="audit"><AdminAudit /></TabsContent>
-          <TabsContent value="risk"><AdminRiskMonitor /></TabsContent>
-          <TabsContent value="diagnostics"><AdminDiagnostics /></TabsContent>
-          <TabsContent value="qa"><Suspense fallback={<div className="text-center py-8 text-muted-foreground text-sm">Carregando QA...</div>}><QAPanel /></Suspense></TabsContent>
-          <TabsContent value="blog-ai"><Suspense fallback={<div className="text-center py-8 text-muted-foreground text-sm">Carregando Blog IA...</div>}><AdminBlogGenerator /></Suspense></TabsContent>
-          <TabsContent value="test-center"><Suspense fallback={<div className="text-center py-8 text-muted-foreground text-sm">Carregando Centro de Testes...</div>}><AdminTestCenter /></Suspense></TabsContent>
-        </Tabs>
-      </main>
+          <nav className="flex-1 overflow-y-auto py-2">
+            {NAV_GROUPS.map((group) => (
+              <div key={group.label} className="mb-1">
+                <p className="px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  {group.label}
+                </p>
+                {group.items.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activeSection === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => handleNavClick(item.id)}
+                      className={`w-full flex items-center gap-2.5 px-4 py-2 text-xs transition-colors ${
+                        isActive
+                          ? "bg-primary/10 text-primary font-semibold border-r-2 border-primary"
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      }`}
+                    >
+                      <Icon className="h-3.5 w-3.5" />
+                      {item.label}
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
+          </nav>
+
+          <div className="p-3 border-t border-border">
+            <Button variant="ghost" size="sm" onClick={handleLogout} className="w-full justify-start text-xs text-muted-foreground hover:text-foreground">
+              <LogOut className="h-3.5 w-3.5 mr-2" /> Sair
+            </Button>
+          </div>
+        </aside>
+      )}
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Mobile Header */}
+        {isMobile && (
+          <>
+            <header className="border-b border-border px-4 py-3 flex items-center justify-between gap-2 bg-card sticky top-0 z-30">
+              <button
+                onClick={() => setMobileNavOpen(!mobileNavOpen)}
+                className="text-xs font-bold text-foreground flex items-center gap-2"
+              >
+                🛡️ {currentLabel}
+                <ChevronLeft className={`h-3 w-3 transition-transform ${mobileNavOpen ? "rotate-90" : "-rotate-90"}`} />
+              </button>
+              <Button variant="ghost" size="sm" onClick={handleLogout} className="text-xs">
+                <LogOut className="h-3.5 w-3.5" />
+              </Button>
+            </header>
+
+            {/* Mobile Navigation Dropdown */}
+            {mobileNavOpen && (
+              <div className="bg-card border-b border-border px-2 py-2 space-y-1 sticky top-[49px] z-20 max-h-[60vh] overflow-y-auto">
+                {NAV_GROUPS.map((group) => (
+                  <div key={group.label}>
+                    <p className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                      {group.label}
+                    </p>
+                    {group.items.map((item) => {
+                      const Icon = item.icon;
+                      const isActive = activeSection === item.id;
+                      return (
+                        <button
+                          key={item.id}
+                          onClick={() => handleNavClick(item.id)}
+                          className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-xs transition-colors ${
+                            isActive
+                              ? "bg-primary/10 text-primary font-semibold"
+                              : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                          }`}
+                        >
+                          <Icon className="h-3.5 w-3.5" />
+                          {item.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Desktop Header */}
+        {!isMobile && (
+          <header className="border-b border-border px-6 py-4">
+            <h2 className="text-lg font-bold text-foreground">{currentLabel}</h2>
+          </header>
+        )}
+
+        {/* Page Content */}
+        <main className="flex-1 p-4 md:p-6 overflow-auto">
+          <AdminContent activeSection={activeSection} />
+        </main>
+      </div>
     </div>
   );
 }
