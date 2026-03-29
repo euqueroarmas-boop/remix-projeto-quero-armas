@@ -261,56 +261,111 @@ async function runApiTests(supabase: ReturnType<typeof getSupabase>, runId: stri
 async function runBlogTests(supabase: ReturnType<typeof getSupabase>, runId: string, existingResults: TestResult[] = [], existingLogs: LogEntry[] = []): Promise<{ results: TestResult[]; logs: LogEntry[] }> {
   const results: TestResult[] = [...existingResults];
   const logEntries: LogEntry[] = [...existingLogs];
-  const url = `${SITE_URL}/blog`;
 
+  // ─── Test 1: Blog page loads ───
+  const url = `${SITE_URL}/blog`;
   logEntries.push({ ts: new Date().toISOString(), event: "test_started", detail: `Blog: página carrega → ${url}` });
 
   const start = Date.now();
   try {
     const res = await fetch(url);
-    const html = await res.text();
+    await res.text();
     const pageStatus = res.status === 200 ? "passed" : "failed";
     results.push({ name: "Blog: página carrega", status: pageStatus, duration_ms: Date.now() - start, error: res.status !== 200 ? `HTTP ${res.status} ao acessar ${url}` : undefined, url });
     logEntries.push({ ts: new Date().toISOString(), event: pageStatus === "passed" ? "test_passed" : "test_failed", detail: `Blog: página — ${pageStatus === "passed" ? "OK" : `HTTP ${res.status}`}` });
+  } catch (e) {
+    results.push({ name: "Blog: página carrega", status: "failed", duration_ms: Date.now() - start, error: `Falha ao acessar ${url}: ${String(e)}`, url });
+    logEntries.push({ ts: new Date().toISOString(), event: "test_failed", detail: `Blog — ${String(e)}` });
+  }
 
-    // Check for blog article links in SSR HTML (href="/blog/slug")
-    const linkMatches = html.match(/href="\/blog\/[^"]+"/g) || [];
+  // ─── Test 2: Blog prerender has article links (crawlable) ───
+  const prerenderUrl = `${SUPABASE_URL}/functions/v1/blog-prerender`;
+  logEntries.push({ ts: new Date().toISOString(), event: "test_started", detail: `Blog: prerender contém links → ${prerenderUrl}` });
+
+  const prerenderStart = Date.now();
+  try {
+    const prerenderRes = await fetch(prerenderUrl);
+    const prerenderHtml = await prerenderRes.text();
+    const linkMatches = prerenderHtml.match(/href="\/blog\/[^"]+"/g) || [];
     const articleLinks = linkMatches.length;
     const linkStatus = articleLinks >= 1 ? "passed" : "failed";
 
-    // Build detailed error message
     let linkError: string | undefined;
     if (articleLinks < 1) {
-      // Check if blog_posts_ai has published posts
       const { count } = await supabase
         .from("blog_posts_ai")
         .select("id", { count: "exact", head: true })
         .eq("status", "published");
-      
-      const dbCount = count || 0;
       linkError = [
-        `Nenhum link de artigo encontrado na página ${url}`,
-        `Posts publicados no banco: ${dbCount}`,
-        dbCount > 0
-          ? "A página é SPA (React) — o HTML server-side não contém links renderizados pelo cliente. Este teste valida apenas o HTML estático inicial."
-          : "Nenhum post com status 'published' encontrado na tabela blog_posts_ai.",
-        `Regex usada: href="/blog/[slug]"`,
-        `HTML analisado: ${html.length} caracteres`,
+        `Nenhum link de artigo encontrado no prerender`,
+        `Posts publicados no banco: ${count || 0}`,
+        `URL testada: ${prerenderUrl}`,
+        `HTML: ${prerenderHtml.length} caracteres`,
       ].join("\n");
     }
 
     results.push({
-      name: "Blog: contém links para artigos",
+      name: "Blog: prerender contém links para artigos",
       status: linkStatus,
-      duration_ms: Date.now() - start,
+      duration_ms: Date.now() - prerenderStart,
       error: linkError,
-      url,
-      stack_trace: articleLinks < 1 ? `Links encontrados no HTML: ${articleLinks}\nExemplos de hrefs no HTML: ${(html.match(/href="[^"]*"/g) || []).slice(0, 10).join(", ")}` : undefined,
+      url: prerenderUrl,
     } as any);
-    logEntries.push({ ts: new Date().toISOString(), event: linkStatus === "passed" ? "test_passed" : "test_failed", detail: `Blog: links — ${linkStatus === "passed" ? `${articleLinks} links encontrados` : `0 links no HTML`}` });
+    logEntries.push({ ts: new Date().toISOString(), event: linkStatus === "passed" ? "test_passed" : "test_failed", detail: `Blog prerender: ${articleLinks} links encontrados` });
   } catch (e) {
-    results.push({ name: "Blog: página carrega", status: "failed", duration_ms: Date.now() - start, error: `Falha ao acessar ${url}: ${String(e)}`, url });
-    logEntries.push({ ts: new Date().toISOString(), event: "test_failed", detail: `Blog — ${String(e)}` });
+    results.push({ name: "Blog: prerender contém links", status: "failed", duration_ms: Date.now() - prerenderStart, error: `Falha no prerender: ${String(e)}`, url: prerenderUrl } as any);
+    logEntries.push({ ts: new Date().toISOString(), event: "test_failed", detail: `Blog prerender — ${String(e)}` });
+  }
+
+  // ─── Test 3: Dynamic blog sitemap has URLs ───
+  const sitemapUrl = `${SUPABASE_URL}/functions/v1/sitemap?type=blog`;
+  logEntries.push({ ts: new Date().toISOString(), event: "test_started", detail: `Blog: sitemap dinâmico → ${sitemapUrl}` });
+
+  const sitemapStart = Date.now();
+  try {
+    const sitemapRes = await fetch(sitemapUrl);
+    const sitemapXml = await sitemapRes.text();
+    const sitemapLinks = (sitemapXml.match(/<loc>[^<]*\/blog\/[^<]+<\/loc>/g) || []).length;
+    const sitemapStatus = sitemapLinks >= 1 ? "passed" : "failed";
+
+    results.push({
+      name: "Blog: sitemap dinâmico contém URLs de artigos",
+      status: sitemapStatus,
+      duration_ms: Date.now() - sitemapStart,
+      error: sitemapStatus === "failed" ? `Nenhuma URL /blog/[slug] no sitemap. XML: ${sitemapXml.substring(0, 500)}` : undefined,
+      url: sitemapUrl,
+    } as any);
+    logEntries.push({ ts: new Date().toISOString(), event: sitemapStatus === "passed" ? "test_passed" : "test_failed", detail: `Blog sitemap: ${sitemapLinks} URLs encontradas` });
+  } catch (e) {
+    results.push({ name: "Blog: sitemap dinâmico", status: "failed", duration_ms: Date.now() - sitemapStart, error: `Falha no sitemap: ${String(e)}`, url: sitemapUrl } as any);
+    logEntries.push({ ts: new Date().toISOString(), event: "test_failed", detail: `Blog sitemap — ${String(e)}` });
+  }
+
+  // ─── Test 4: DB has published posts ───
+  const dbStart = Date.now();
+  logEntries.push({ ts: new Date().toISOString(), event: "test_started", detail: "Blog: posts publicados no banco" });
+  try {
+    const { data: dbPosts, error: dbErr } = await supabase
+      .from("blog_posts_ai")
+      .select("slug, title")
+      .eq("status", "published")
+      .limit(50);
+    
+    const postCount = dbPosts?.length || 0;
+    const dbStatus = postCount >= 1 ? "passed" : "failed";
+    const postList = (dbPosts || []).map(p => `/blog/${p.slug}`).join(", ");
+    
+    results.push({
+      name: `Blog: ${postCount} posts publicados no banco`,
+      status: dbStatus,
+      duration_ms: Date.now() - dbStart,
+      error: dbStatus === "failed" ? "Nenhum post com status 'published' na tabela blog_posts_ai" : undefined,
+      url: postList,
+    } as any);
+    logEntries.push({ ts: new Date().toISOString(), event: dbStatus === "passed" ? "test_passed" : "test_failed", detail: `Blog DB: ${postCount} posts publicados` });
+  } catch (e) {
+    results.push({ name: "Blog: posts no banco", status: "failed", duration_ms: Date.now() - dbStart, error: String(e) } as any);
+    logEntries.push({ ts: new Date().toISOString(), event: "test_failed", detail: `Blog DB — ${String(e)}` });
   }
 
   const totalExpected = results.length;
