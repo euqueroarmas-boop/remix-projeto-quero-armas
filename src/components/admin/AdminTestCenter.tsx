@@ -606,10 +606,31 @@ function RunDetail({ run, onBack }: { run: TestRun; onBack: () => void }) {
       {failed.length > 0 && (
         <Card className="border-destructive/30">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-destructive flex items-center gap-2">
-              <XCircle className="h-4 w-4" />
-              Testes que Falharam ({failed.length})
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm text-destructive flex items-center gap-2">
+                <XCircle className="h-4 w-4" />
+                Testes que Falharam ({failed.length})
+              </CardTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-[11px] h-7 gap-1"
+                onClick={() => {
+                  const allErrors = failed.map(t => [
+                    `❌ ${t.name}`,
+                    t.spec ? `   Spec: ${t.spec}` : "",
+                    t.error ? `   Erro: ${t.error}` : "",
+                    t.stack_trace ? `   Stack: ${t.stack_trace}` : "",
+                    t.cypress_command ? `   Comando: ${t.cypress_command}` : "",
+                    "",
+                  ].filter(Boolean).join("\n")).join("\n");
+                  navigator.clipboard.writeText(allErrors);
+                  toast.success("Todos os erros copiados");
+                }}
+              >
+                <Copy className="h-3 w-3" /> Copiar todos
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
