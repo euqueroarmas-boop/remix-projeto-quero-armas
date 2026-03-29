@@ -1,0 +1,35 @@
+{
+  "empresa_padrao": {
+    "razaoSocial": "Empresa Teste LTDA",
+    "nomeFantasia": "Teste Corp",
+    "cnpjOuCpf": "12.345.678/0001-90",
+    "responsavel": "João da Silva",
+    "email": "joao@empresateste.com.br",
+    "telefone": "(12) 99876-5432",
+    "endereco": "Rua das Flores, 100 - Centro",
+    "cidade": "Jacareí",
+    "cep": "12327-000"
+  },
+  "pessoa_fisica": {
+    "razaoSocial": "Maria Oliveira",
+    "nomeFantasia": "",
+    "cnpjOuCpf": "123.456.789-00",
+    "responsavel": "Maria Oliveira",
+    "email": "maria@email.com",
+    "telefone": "(11) 98765-4321",
+    "endereco": "Av. Brasil, 500 - Jardim América",
+    "cidade": "São José dos Campos",
+    "cep": "12240-000"
+  },
+  "empresa_grande": {
+    "razaoSocial": "Indústria Nacional S/A",
+    "nomeFantasia": "IndNacional",
+    "cnpjOuCpf": "98.765.432/0001-10",
+    "responsavel": "Carlos Mendes",
+    "email": "carlos@indnacional.com.br",
+    "telefone": "(12) 3622-1234",
+    "endereco": "Rod. Presidente Dutra, km 150 - Distrito Industrial",
+    "cidade": "Taubaté",
+    "cep": "12060-000"
+  }
+}
