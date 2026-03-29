@@ -406,6 +406,7 @@ Deno.serve(async (req) => {
 
     // For "full", run all light tests inline + dispatch all cypress tests
     if (testType === "full") {
+      const fullIngestToken = generateIngestToken();
       const { data: run, error: insertErr } = await supabase.from("test_runs").insert({
         suite: "full",
         test_type: "full",
@@ -414,6 +415,8 @@ Deno.serve(async (req) => {
         triggered_by: "admin",
         execution_engine: "hybrid",
         base_url: SITE_URL,
+        ingest_token: fullIngestToken,
+        progress_percent: 0,
         logs: { entries: [{ ts: new Date().toISOString(), event: "execution_started", detail: "Teste completo iniciado" }], current_spec: null, current_url: null } as any,
       } as any).select().single();
 
@@ -444,7 +447,7 @@ Deno.serve(async (req) => {
 
       // Dispatch Cypress
       for (const ct of CYPRESS_TESTS) {
-        await triggerGitHubWorkflow(ct, runId);
+        await triggerGitHubWorkflow(ct, runId, fullIngestToken);
       }
 
       allLogs.push({ ts: new Date().toISOString(), event: "cypress_dispatched", detail: `Cypress disparado via GitHub Actions: ${CYPRESS_TESTS.join(", ")}` });
@@ -460,6 +463,7 @@ Deno.serve(async (req) => {
     // Single test type
     const isLight = LIGHT_TESTS.includes(testType);
     const engine = isLight ? "edge_function" : "github_actions";
+    const singleIngestToken = generateIngestToken();
 
     const { data: run, error: insertErr } = await supabase.from("test_runs").insert({
       suite: isLight ? "light" : "cypress",
@@ -469,6 +473,8 @@ Deno.serve(async (req) => {
       triggered_by: "admin",
       execution_engine: engine,
       base_url: SITE_URL,
+      ingest_token: singleIngestToken,
+      progress_percent: 0,
       logs: { entries: [{ ts: new Date().toISOString(), event: "execution_started", detail: `Teste ${testType} iniciado` }], current_spec: null, current_url: null } as any,
     } as any).select().single();
 
@@ -531,7 +537,7 @@ Deno.serve(async (req) => {
       } as any,
     } as any).eq("id", runId);
 
-    const dispatch = await triggerGitHubWorkflow(testType, runId);
+    const dispatch = await triggerGitHubWorkflow(testType, runId, singleIngestToken);
     if (!dispatch.success) {
       await supabase.from("test_runs").update({
         status: "failed",
