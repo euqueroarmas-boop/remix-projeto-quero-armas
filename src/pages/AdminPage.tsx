@@ -20,6 +20,8 @@ import AdminAudit from "@/components/admin/AdminAudit";
 import AdminRiskMonitor from "@/components/admin/AdminRiskMonitor";
 import AdminLeadsProposals from "@/components/admin/AdminLeadsProposals";
 import AdminDiagnostics from "@/components/admin/AdminDiagnostics";
+import AdminCommandCenter from "@/components/admin/AdminCommandCenter";
+import AdminFullscreenMenu from "@/components/admin/AdminFullscreenMenu";
 
 const QAPanel = lazy(() => import("@/components/admin/qa/QAPanel"));
 const AdminBlogGenerator = lazy(() => import("@/components/admin/AdminBlogGenerator"));
