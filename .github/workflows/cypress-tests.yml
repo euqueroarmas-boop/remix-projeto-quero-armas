@@ -1,0 +1,115 @@
+name: Cypress Tests (Triggered by Admin)
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Type of test to run'
+        required: true
+        type: string
+      run_id:
+        description: 'test_runs UUID from Supabase'
+        required: true
+        type: string
+      base_url:
+        description: 'Base URL to test'
+        required: true
+        type: string
+      supabase_url:
+        description: 'Supabase project URL'
+        required: true
+        type: string
+      supabase_key:
+        description: 'Supabase service role key'
+        required: true
+        type: string
+
+jobs:
+  cypress:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Map test_type to Cypress spec
+        id: specs
+        run: |
+          case "${{ github.event.inputs.test_type }}" in
+            frontend)     SPEC="cypress/e2e/smoke/**" ;;
+            business)     SPEC="cypress/e2e/calculo-planos.cy.ts" ;;
+            forms)        SPEC="cypress/e2e/formulario-contratacao.cy.ts" ;;
+            contracts)    SPEC="cypress/e2e/contratos/**" ;;
+            checkout)     SPEC="cypress/e2e/checkout/**" ;;
+            portal)       SPEC="cypress/e2e/smoke/home.cy.ts" ;;
+            regression)   SPEC="cypress/e2e/**" ;;
+            *)            SPEC="cypress/e2e/smoke/**" ;;
+          esac
+          echo "spec=$SPEC" >> $GITHUB_OUTPUT
+
+      - name: Run Cypress
+        uses: cypress-io/github-action@v6
+        with:
+          browser: chrome
+          headed: false
+          spec: ${{ steps.specs.outputs.spec }}
+          config: baseUrl=${{ github.event.inputs.base_url }}
+        env:
+          CYPRESS_BASE_URL: ${{ github.event.inputs.base_url }}
+
+      - name: Report results to Supabase
+        if: always()
+        run: |
+          STATUS="${{ job.status }}"
+          if [ "$STATUS" = "success" ]; then
+            DB_STATUS="success"
+          else
+            DB_STATUS="failed"
+          fi
+
+          # Parse Cypress results if available
+          RESULTS_JSON="[]"
+          if [ -f "cypress/results.json" ]; then
+            RESULTS_JSON=$(cat cypress/results.json)
+          fi
+
+          curl -s -X PATCH \
+            "${{ github.event.inputs.supabase_url }}/rest/v1/test_runs?id=eq.${{ github.event.inputs.run_id }}" \
+            -H "apikey: ${{ github.event.inputs.supabase_key }}" \
+            -H "Authorization: Bearer ${{ github.event.inputs.supabase_key }}" \
+            -H "Content-Type: application/json" \
+            -H "Prefer: return=minimal" \
+            -d "{
+              \"status\": \"$DB_STATUS\",
+              \"finished_at\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",
+              \"github_run_id\": \"${{ github.run_id }}\",
+              \"github_run_url\": \"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\",
+              \"browser\": \"chrome\",
+              \"error_message\": $([ \"$DB_STATUS\" = \"failed\" ] && echo '\"Cypress tests failed — see GitHub Actions logs\"' || echo 'null')
+            }"
+
+      - name: Upload screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-screenshots-${{ github.event.inputs.test_type }}
+          path: cypress/screenshots
+          retention-days: 14
+
+      - name: Upload videos
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-videos-${{ github.event.inputs.test_type }}
+          path: cypress/videos
+          retention-days: 14
