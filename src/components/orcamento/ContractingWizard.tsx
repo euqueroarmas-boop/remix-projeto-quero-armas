@@ -217,7 +217,7 @@ const ContractingWizard = ({
         const purchaseData = {
           serviceName: effectivePath === "locacao" ? "Locação de Equipamentos" : "Serviços de TI",
           computersQty,
-          monthlyValue,
+          monthlyValue: pricingBreakdown?.valorFinalMensal ?? monthlyValue,
           isRecurring: true,
           customerName: registrationData?.razaoSocial || "",
           customerCpfCnpj: registrationData?.cnpjOuCpf || "",
