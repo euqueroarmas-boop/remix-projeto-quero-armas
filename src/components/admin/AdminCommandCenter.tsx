@@ -106,7 +106,7 @@ function useTestRun(autoRefreshRef: React.MutableRefObject<boolean>) {
     try {
       const res = await adminQuery([
         // Latest completed run (the source of truth for counters)
-        { table: "test_runs", select: "*", order: { column: "created_at", ascending: false }, limit: 1, filters: [{ column: "status", op: "in", value: "(success,failed,partial)" }] },
+        { table: "test_runs", select: "*", order: { column: "created_at", ascending: false }, limit: 1, filters: [{ column: "status", op: "in", value: ["success", "failed", "partial"] }] },
         // Any currently running run
         { table: "test_runs", select: "*", order: { column: "created_at", ascending: false }, limit: 1, filters: [{ column: "status", op: "eq", value: "running" }] },
       ]);
