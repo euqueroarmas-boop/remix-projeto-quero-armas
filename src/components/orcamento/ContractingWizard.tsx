@@ -699,10 +699,11 @@ const ContractingWizard = ({
                     Ao prosseguir, você será direcionado para a página segura de checkout para preencher seus dados e concluir a contratação.
                   </p>
                   <p className="text-sm text-muted-foreground text-center">
-                    Valor mensal: <strong className="text-primary">R$ {monthlyValue.toLocaleString("pt-BR")},00</strong>
+                    Valor mensal: <strong className="text-primary">R$ {(pricingBreakdown?.valorFinalMensal ?? monthlyValue).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</strong>
                   </p>
                   <p className="text-xs text-muted-foreground text-center">
-                    Assinatura recorrente mensal — prazo de 36 meses com renovação automática
+                    Assinatura recorrente mensal — prazo de {planConfig?.termMonths ?? 36} meses com renovação automática
+                    {planConfig?.support24h ? " • Suporte 24h" : ""}
                   </p>
 
                   {paymentError && (
