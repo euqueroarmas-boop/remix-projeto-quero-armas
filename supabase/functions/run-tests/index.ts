@@ -684,12 +684,13 @@ Deno.serve(async (req) => {
         status: "failed",
         finished_at: new Date().toISOString(),
         error_message: dispatch.error,
+        error_summary: dispatch.error,
         logs: {
           entries: [
             { ts: new Date().toISOString(), event: "execution_started", detail: `Cypress ${testType} disparado` },
             { ts: new Date().toISOString(), event: "dispatch_failed", detail: dispatch.error || "Falha ao disparar GitHub Actions" },
           ],
-          current_spec: null,
+          current_spec: "Falha ao disparar GitHub Actions",
           current_url: null,
         } as any,
       } as any).eq("id", runId);

@@ -42,16 +42,22 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 20
           cache: npm
 
+      - name: Prepare Cypress artifact directories
+        run: |
+          mkdir -p cypress/results
+          mkdir -p cypress/screenshots
+          mkdir -p cypress/videos
+
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Map test_type to Cypress spec
         id: specs
@@ -90,18 +96,25 @@ jobs:
 
       - name: Run Cypress
         id: cypress
-        uses: cypress-io/github-action@v6
+        uses: cypress-io/github-action@v7
         continue-on-error: true
         with:
+          install: false
           browser: chrome
           headed: false
           spec: ${{ steps.specs.outputs.spec }}
           config: baseUrl=${{ github.event.inputs.base_url }}
+          publish-summary: false
 
       - name: Merge mochawesome reports
         if: always()
         run: |
-          npx mochawesome-merge "cypress/results/*.json" > cypress/results/merged-report.json 2>/dev/null || echo '{"stats":{},"results":[]}' > cypress/results/merged-report.json
+          mkdir -p cypress/results
+          if ls cypress/results/*.json >/dev/null 2>&1; then
+            npx mochawesome-merge "cypress/results/*.json" > cypress/results/merged-report.json
+          else
+            echo '{"stats":{},"results":[]}' > cypress/results/merged-report.json
+          fi
 
       - name: Upload artifacts and finalize
         if: always()
@@ -168,16 +181,18 @@ jobs:
 
       - name: Upload screenshots (GitHub artifact backup)
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: cypress-screenshots-${{ github.event.inputs.test_type }}
           path: cypress/screenshots
           retention-days: 14
+          if-no-files-found: ignore
 
       - name: Upload videos (GitHub artifact backup)
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: cypress-videos-${{ github.event.inputs.test_type }}
           path: cypress/videos
           retention-days: 14
+          if-no-files-found: ignore
