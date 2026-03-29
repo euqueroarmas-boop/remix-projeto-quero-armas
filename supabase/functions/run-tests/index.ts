@@ -261,28 +261,59 @@ async function runApiTests(supabase: ReturnType<typeof getSupabase>, runId: stri
 async function runBlogTests(supabase: ReturnType<typeof getSupabase>, runId: string, existingResults: TestResult[] = [], existingLogs: LogEntry[] = []): Promise<{ results: TestResult[]; logs: LogEntry[] }> {
   const results: TestResult[] = [...existingResults];
   const logEntries: LogEntry[] = [...existingLogs];
-  const totalExpected = existingResults.length + 2;
   const url = `${SITE_URL}/blog`;
 
   logEntries.push({ ts: new Date().toISOString(), event: "test_started", detail: `Blog: página carrega → ${url}` });
-  await updateRunProgress(supabase, runId, results, logEntries, "Blog: página carrega", url, totalExpected);
 
   const start = Date.now();
   try {
     const res = await fetch(url);
     const html = await res.text();
-    const status = res.status === 200 ? "passed" : "failed";
-    results.push({ name: "Blog: página carrega", status, duration_ms: Date.now() - start, error: res.status !== 200 ? `HTTP ${res.status}` : undefined, url });
-    logEntries.push({ ts: new Date().toISOString(), event: status === "passed" ? "test_passed" : "test_failed", detail: `Blog: página — ${status === "passed" ? "OK" : `HTTP ${res.status}`}` });
+    const pageStatus = res.status === 200 ? "passed" : "failed";
+    results.push({ name: "Blog: página carrega", status: pageStatus, duration_ms: Date.now() - start, error: res.status !== 200 ? `HTTP ${res.status} ao acessar ${url}` : undefined, url });
+    logEntries.push({ ts: new Date().toISOString(), event: pageStatus === "passed" ? "test_passed" : "test_failed", detail: `Blog: página — ${pageStatus === "passed" ? "OK" : `HTTP ${res.status}`}` });
 
-    const articleLinks = (html.match(/href="\/blog\//g) || []).length;
+    // Check for blog article links in SSR HTML (href="/blog/slug")
+    const linkMatches = html.match(/href="\/blog\/[^"]+"/g) || [];
+    const articleLinks = linkMatches.length;
     const linkStatus = articleLinks >= 1 ? "passed" : "failed";
-    results.push({ name: "Blog: contém links para artigos", status: linkStatus, duration_ms: 0, error: articleLinks < 1 ? `Encontrados ${articleLinks} links` : undefined, url });
-    logEntries.push({ ts: new Date().toISOString(), event: linkStatus === "passed" ? "test_passed" : "test_failed", detail: `Blog: links — ${linkStatus === "passed" ? `${articleLinks} links encontrados` : "Sem links"}` });
+
+    // Build detailed error message
+    let linkError: string | undefined;
+    if (articleLinks < 1) {
+      // Check if blog_posts_ai has published posts
+      const { count } = await supabase
+        .from("blog_posts_ai")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "published");
+      
+      const dbCount = count || 0;
+      linkError = [
+        `Nenhum link de artigo encontrado na página ${url}`,
+        `Posts publicados no banco: ${dbCount}`,
+        dbCount > 0
+          ? "A página é SPA (React) — o HTML server-side não contém links renderizados pelo cliente. Este teste valida apenas o HTML estático inicial."
+          : "Nenhum post com status 'published' encontrado na tabela blog_posts_ai.",
+        `Regex usada: href="/blog/[slug]"`,
+        `HTML analisado: ${html.length} caracteres`,
+      ].join("\n");
+    }
+
+    results.push({
+      name: "Blog: contém links para artigos",
+      status: linkStatus,
+      duration_ms: Date.now() - start,
+      error: linkError,
+      url,
+      stack_trace: articleLinks < 1 ? `Links encontrados no HTML: ${articleLinks}\nExemplos de hrefs no HTML: ${(html.match(/href="[^"]*"/g) || []).slice(0, 10).join(", ")}` : undefined,
+    } as any);
+    logEntries.push({ ts: new Date().toISOString(), event: linkStatus === "passed" ? "test_passed" : "test_failed", detail: `Blog: links — ${linkStatus === "passed" ? `${articleLinks} links encontrados` : `0 links (${(count || 0)} posts no DB)`}` });
   } catch (e) {
-    results.push({ name: "Blog: página carrega", status: "failed", duration_ms: Date.now() - start, error: String(e), url });
+    results.push({ name: "Blog: página carrega", status: "failed", duration_ms: Date.now() - start, error: `Falha ao acessar ${url}: ${String(e)}`, url });
     logEntries.push({ ts: new Date().toISOString(), event: "test_failed", detail: `Blog — ${String(e)}` });
   }
+
+  const totalExpected = results.length;
   await updateRunProgress(supabase, runId, results, logEntries, "Blog: concluído", url, totalExpected);
 
   return { results, logs: logEntries };
