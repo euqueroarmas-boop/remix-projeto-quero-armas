@@ -242,6 +242,35 @@ async function triggerGitHubWorkflow(testType: string, runId: string): Promise<{
   }
 }
 
+// ─── Alert dispatch on failure ───
+async function dispatchAlert(run: any) {
+  if (run.status !== "failed" && run.status !== "partial") return;
+  try {
+    await fetch(`${SUPABASE_URL}/functions/v1/test-alerts`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "send_alert",
+        payload: {
+          run_id: run.id,
+          test_type: run.test_type || run.suite,
+          suite: run.suite,
+          status: run.status,
+          error_message: run.error_message,
+          total_tests: run.total_tests || 0,
+          passed_tests: run.passed_tests || 0,
+          failed_tests: run.failed_tests || 0,
+          client_name: run.client_name,
+          client_id: run.client_id,
+          plan_type: run.plan_type,
+        },
+      }),
+    });
+  } catch (e) {
+    console.error("[WMTi] Alert dispatch failed:", e);
+  }
+}
+
 // ─── Main handler ───
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
