@@ -65,7 +65,8 @@ function extractArray(source, exportName) {
 }
 
 function urlEntry(loc) {
-  return `  <url>\n    <loc>${BASE_URL}${loc}</loc>\n  </url>\n`;}
+  return `  <url>\n    <loc>${BASE_URL}${loc}</loc>\n  </url>`;
+}
 
 
 function wrapUrlset(urls) {
