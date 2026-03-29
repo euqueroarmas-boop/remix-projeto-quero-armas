@@ -54,6 +54,16 @@ interface TestRun {
   report_url: string | null;
   results: any[] | null;
   created_at: string;
+  // New direct columns
+  progress_percent: number | null;
+  current_spec: string | null;
+  current_test: string | null;
+  current_url: string | null;
+  total_specs: number | null;
+  completed_specs: number | null;
+  completed_tests: number | null;
+  last_event_at: string | null;
+  error_summary: string | null;
 }
 
 interface DetailedTestResult {
@@ -290,19 +300,20 @@ function ErrorDetail({ result }: { result: DetailedTestResult }) {
 
 // ─── Live Progress Panel (Enhanced with real-time details) ───
 function LiveProgressPanel({ run }: { run: TestRun }) {
-  const completed = run.passed_tests + run.failed_tests + run.skipped_tests;
+  const completed = (run.completed_tests ?? 0) || (run.passed_tests + run.failed_tests + run.skipped_tests);
   const total = run.total_tests || 1;
-  const pct = total > 0 ? Math.min(100, Math.round((completed / total) * 100)) : 0;
+  const pct = run.progress_percent ?? (total > 0 ? Math.min(100, Math.round((completed / total) * 100)) : 0);
   const [elapsed, setElapsed] = useState(0);
   const [showLogs, setShowLogs] = useState(false);
 
-  // Extract structured log data
+  // Use direct columns first, fallback to logs JSON
   const logs = run.logs as any;
-  const currentSpec = logs?.current_spec || null;
-  const currentUrl = logs?.current_url || null;
+  const currentSpec = run.current_spec || logs?.current_spec || null;
+  const currentTest = run.current_test || null;
+  const currentUrl = run.current_url || logs?.current_url || null;
   const logEntries: Array<{ ts: string; event: string; detail?: string }> = logs?.entries || [];
-  const specsCompleted = logs?.specs_completed ?? null;
-  const totalSpecs = logs?.total_specs ?? null;
+  const specsCompleted = run.completed_specs ?? logs?.specs_completed ?? null;
+  const totalSpecs = run.total_specs ?? logs?.total_specs ?? null;
 
   useEffect(() => {
     if (!run.started_at) return;
@@ -370,6 +381,13 @@ function LiveProgressPanel({ run }: { run: TestRun }) {
               <span className="text-muted-foreground">Spec atual:</span>
               <span className="font-medium text-foreground truncate">{currentSpec}</span>
             </div>
+            {currentTest && (
+              <div className="flex items-center gap-1.5 text-xs">
+                <Play className="h-3 w-3 text-primary flex-shrink-0" />
+                <span className="text-muted-foreground">Teste:</span>
+                <span className="font-medium text-foreground truncate">{currentTest}</span>
+              </div>
+            )}
             {currentUrl && (
               <div className="flex items-center gap-1.5 text-xs">
                 <Globe className="h-3 w-3 text-primary flex-shrink-0" />

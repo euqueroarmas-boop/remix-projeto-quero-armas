@@ -49,6 +49,13 @@ function getSupabase() {
   return createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 }
 
+// Generate ephemeral ingest token for a run
+function generateIngestToken(): string {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
 // ─── Types ───
 interface TestResult {
   name: string;
@@ -282,7 +289,7 @@ async function runBlogTests(supabase: ReturnType<typeof getSupabase>, runId: str
 }
 
 // ─── GitHub Actions dispatch ───
-async function triggerGitHubWorkflow(testType: string, runId: string): Promise<{ success: boolean; error?: string }> {
+async function triggerGitHubWorkflow(testType: string, runId: string, ingestToken?: string): Promise<{ success: boolean; error?: string }> {
   try {
     const res = await fetch(
       `https://api.github.com/repos/${GITHUB_REPO}/actions/workflows/cypress-tests.yml/dispatches`,
@@ -301,6 +308,7 @@ async function triggerGitHubWorkflow(testType: string, runId: string): Promise<{
             base_url: SITE_URL,
             supabase_url: SUPABASE_URL,
             supabase_key: SUPABASE_SERVICE_KEY,
+            ingest_token: ingestToken || "",
           },
         }),
       }
@@ -398,6 +406,7 @@ Deno.serve(async (req) => {
 
     // For "full", run all light tests inline + dispatch all cypress tests
     if (testType === "full") {
+      const fullIngestToken = generateIngestToken();
       const { data: run, error: insertErr } = await supabase.from("test_runs").insert({
         suite: "full",
         test_type: "full",
@@ -406,6 +415,8 @@ Deno.serve(async (req) => {
         triggered_by: "admin",
         execution_engine: "hybrid",
         base_url: SITE_URL,
+        ingest_token: fullIngestToken,
+        progress_percent: 0,
         logs: { entries: [{ ts: new Date().toISOString(), event: "execution_started", detail: "Teste completo iniciado" }], current_spec: null, current_url: null } as any,
       } as any).select().single();
 
@@ -436,7 +447,7 @@ Deno.serve(async (req) => {
 
       // Dispatch Cypress
       for (const ct of CYPRESS_TESTS) {
-        await triggerGitHubWorkflow(ct, runId);
+        await triggerGitHubWorkflow(ct, runId, fullIngestToken);
       }
 
       allLogs.push({ ts: new Date().toISOString(), event: "cypress_dispatched", detail: `Cypress disparado via GitHub Actions: ${CYPRESS_TESTS.join(", ")}` });
@@ -452,6 +463,7 @@ Deno.serve(async (req) => {
     // Single test type
     const isLight = LIGHT_TESTS.includes(testType);
     const engine = isLight ? "edge_function" : "github_actions";
+    const singleIngestToken = generateIngestToken();
 
     const { data: run, error: insertErr } = await supabase.from("test_runs").insert({
       suite: isLight ? "light" : "cypress",
@@ -461,6 +473,8 @@ Deno.serve(async (req) => {
       triggered_by: "admin",
       execution_engine: engine,
       base_url: SITE_URL,
+      ingest_token: singleIngestToken,
+      progress_percent: 0,
       logs: { entries: [{ ts: new Date().toISOString(), event: "execution_started", detail: `Teste ${testType} iniciado` }], current_spec: null, current_url: null } as any,
     } as any).select().single();
 
@@ -523,7 +537,7 @@ Deno.serve(async (req) => {
       } as any,
     } as any).eq("id", runId);
 
-    const dispatch = await triggerGitHubWorkflow(testType, runId);
+    const dispatch = await triggerGitHubWorkflow(testType, runId, singleIngestToken);
     if (!dispatch.success) {
       await supabase.from("test_runs").update({
         status: "failed",
