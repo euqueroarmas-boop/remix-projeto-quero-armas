@@ -22,6 +22,9 @@ import QuickRegistrationForm, { type RegistrationData } from "./QuickRegistratio
 import PlanConfigStep from "./PlanConfigStep";
 import { generateContractHtml } from "./ContractPreview";
 import { generateContractFromTemplate } from "@/lib/contractTemplate";
+import { getServiceContractObject } from "@/lib/serviceContractMap";
+import { captureClientProof } from "@/lib/clientProof";
+import { valueToWords } from "./ContractPreview";
 import { calculatePricing, type PlanConfig, type PricingBreakdown, type ContractTerm } from "@/lib/contractPricing";
 import PostPaymentReport from "./PostPaymentReport";
 import OutsourcingOffer from "./OutsourcingOffer";
