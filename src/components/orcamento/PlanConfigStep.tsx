@@ -60,6 +60,7 @@ const PlanConfigStep = ({ valorBase, onConfirm, initialConfig }: Props) => {
                 key={term}
                 type="button"
                 onClick={() => setSelectedTerm(term)}
+                data-testid={`plano-${term}-meses`}
                 className={`relative p-4 rounded-xl border-2 transition-all text-center ${
                   isSelected
                     ? "border-primary bg-primary/5 shadow-md"
@@ -98,7 +99,7 @@ const PlanConfigStep = ({ valorBase, onConfirm, initialConfig }: Props) => {
               </p>
             </div>
           </div>
-          <Switch checked={support24h} onCheckedChange={setSupport24h} />
+          <Switch checked={support24h} onCheckedChange={setSupport24h} data-testid="toggle-suporte-24h" />
         </div>
       </div>
 
@@ -115,7 +116,7 @@ const PlanConfigStep = ({ valorBase, onConfirm, initialConfig }: Props) => {
             </h4>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Mensalidade base</span>
-              <span className="text-foreground font-medium">{formatCurrency(pricing.valorBase)}</span>
+              <span className="text-foreground font-medium" data-testid="resumo-valor-base">{formatCurrency(pricing.valorBase)}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Total base ({selectedTerm} meses)</span>
@@ -131,7 +132,7 @@ const PlanConfigStep = ({ valorBase, onConfirm, initialConfig }: Props) => {
               </h4>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Economia mensal</span>
-                <span className="text-primary font-medium">
+                <span className="text-primary font-medium" data-testid="resumo-desconto">
                   -{formatCurrency(pricing.valorBase - pricing.valorComDesconto)}
                 </span>
               </div>
@@ -143,7 +144,7 @@ const PlanConfigStep = ({ valorBase, onConfirm, initialConfig }: Props) => {
               </div>
               <div className="flex justify-between text-sm border-t border-primary/10 pt-2">
                 <span className="text-muted-foreground">Mensalidade com desconto</span>
-                <span className="text-foreground font-medium">{formatCurrency(pricing.valorComDesconto)}</span>
+                <span className="text-foreground font-medium" data-testid="resumo-subtotal">{formatCurrency(pricing.valorComDesconto)}</span>
               </div>
             </div>
           )}
@@ -156,7 +157,7 @@ const PlanConfigStep = ({ valorBase, onConfirm, initialConfig }: Props) => {
               </h4>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Suporte 24h (+35% sobre mensalidade)</span>
-                <span className="text-foreground font-medium">+{formatCurrency(pricing.valorAdicional24h)}/mês</span>
+                <span className="text-foreground font-medium" data-testid="resumo-adicional-24h">+{formatCurrency(pricing.valorAdicional24h)}/mês</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Total adicional ({selectedTerm} meses)</span>
@@ -172,13 +173,13 @@ const PlanConfigStep = ({ valorBase, onConfirm, initialConfig }: Props) => {
             </h4>
             <div className="flex justify-between items-center">
               <span className="text-sm font-semibold text-foreground">Mensalidade final</span>
-              <span className="text-2xl font-heading font-bold text-primary">
+              <span className="text-2xl font-heading font-bold text-primary" data-testid="resumo-total-mensal">
                 {formatCurrency(pricing.valorFinalMensal)}
               </span>
             </div>
             <div className="flex justify-between text-sm border-t border-border pt-2">
               <span className="text-muted-foreground">Total do contrato ({selectedTerm} meses)</span>
-              <span className="text-lg font-heading font-bold text-foreground">
+              <span className="text-lg font-heading font-bold text-foreground" data-testid="resumo-total-contrato">
                 {formatCurrency(pricing.valorFinalMensal * selectedTerm)}
               </span>
             </div>
@@ -194,6 +195,7 @@ const PlanConfigStep = ({ valorBase, onConfirm, initialConfig }: Props) => {
         onClick={handleConfirm}
         disabled={!selectedTerm}
         className="w-full h-14 text-base bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50"
+        data-testid="botao-confirmar-plano"
       >
         Confirmar configuração e prosseguir
       </Button>

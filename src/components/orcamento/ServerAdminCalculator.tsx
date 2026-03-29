@@ -77,14 +77,16 @@ const ServerAdminCalculator = () => {
                   disabled={hosts <= 1}
                   className="w-10 h-10 flex items-center justify-center border border-border text-muted-foreground hover:border-primary hover:text-primary transition-colors rounded disabled:opacity-30 disabled:cursor-not-allowed"
                   aria-label="Diminuir hosts"
+                  data-testid="decrementar-host"
                 >
                   <Minus size={16} />
                 </button>
-                <span className="text-2xl font-bold text-primary w-8 text-center">{hosts}</span>
+                <span className="text-2xl font-bold text-primary w-8 text-center" data-testid="quantidade-hosts">{hosts}</span>
                 <button
                   onClick={() => setHosts(hosts + 1)}
                   className="w-10 h-10 flex items-center justify-center border border-border text-muted-foreground hover:border-primary hover:text-primary transition-colors rounded"
                   aria-label="Aumentar hosts"
+                  data-testid="incrementar-host"
                 >
                   <Plus size={16} />
                 </button>
@@ -108,14 +110,16 @@ const ServerAdminCalculator = () => {
                   disabled={vms <= 0}
                   className="w-10 h-10 flex items-center justify-center border border-border text-muted-foreground hover:border-primary hover:text-primary transition-colors rounded disabled:opacity-30 disabled:cursor-not-allowed"
                   aria-label="Diminuir VMs"
+                  data-testid="decrementar-vm"
                 >
                   <Minus size={16} />
                 </button>
-                <span className="text-2xl font-bold text-primary w-8 text-center">{vms}</span>
+                <span className="text-2xl font-bold text-primary w-8 text-center" data-testid="quantidade-vms">{vms}</span>
                 <button
                   onClick={() => setVms(vms + 1)}
                   className="w-10 h-10 flex items-center justify-center border border-border text-muted-foreground hover:border-primary hover:text-primary transition-colors rounded"
                   aria-label="Aumentar VMs"
+                  data-testid="incrementar-vm"
                 >
                   <Plus size={16} />
                 </button>
@@ -156,6 +160,7 @@ const ServerAdminCalculator = () => {
             <button
               onClick={handleContract}
               className="w-full inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all rounded"
+              data-testid="botao-contratar"
             >
               <ArrowRight size={16} />
               Contratar Administração de Servidores

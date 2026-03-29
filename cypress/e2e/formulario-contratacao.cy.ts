@@ -8,13 +8,11 @@ describe("Formulário de Contratação — Cadastro", () => {
 
   it("exibe o formulário de cadastro como primeira etapa", () => {
     cy.contains("Dados do Contratante").should("be.visible");
-    cy.get('input[placeholder*="CNPJ"]').should("be.visible");
+    cy.get('[data-testid="campo-cnpj"]').should("be.visible");
   });
 
   it("valida campos obrigatórios ao submeter vazio", () => {
-    cy.contains("button", /prosseguir|confirmar|enviar|cadastrar|avançar/i).click();
-
-    // Should show validation errors (toast or inline)
+    cy.get('[data-testid="botao-prosseguir-cadastro"]').click();
     cy.get('[role="status"], [data-sonner-toast], .text-destructive', { timeout: 5000 })
       .should("exist");
   });
@@ -23,59 +21,46 @@ describe("Formulário de Contratação — Cadastro", () => {
     cy.fixture("clientes.json").then((data) => {
       const c = data.empresa_padrao;
 
-      cy.get('input[placeholder*="CNPJ"]').first().clear().type("12345678000190", { delay: 10 });
+      cy.get('[data-testid="campo-cnpj"]').clear().type("12345678000190", { delay: 10 });
       cy.wait(1000);
 
-      // Fill remaining fields
-      cy.get('input[placeholder*="Razão Social"]').then(($el) => {
+      cy.get('[data-testid="campo-razao-social"]').then(($el) => {
         if (!$el.val()) cy.wrap($el).type(c.razaoSocial);
       });
-      cy.get('input[placeholder*="Nome Fantasia"]').then(($el) => {
-        if (!$el.val()) cy.wrap($el).type(c.nomeFantasia);
-      });
-      cy.get('input[placeholder*="Nome completo"]').then(($el) => {
+      cy.get('[data-testid="campo-representante-nome"]').then(($el) => {
         if (!$el.val()) cy.wrap($el).type(c.responsavel);
       });
-      cy.get('input[placeholder*="CPF"]').then(($el) => {
+      cy.get('[data-testid="campo-representante-cpf"]').then(($el) => {
         if (!$el.val()) cy.wrap($el).type("37799538899");
       });
-      cy.get('input[placeholder*="E-mail do responsável"]').then(($el) => {
+      cy.get('[data-testid="campo-representante-email"]').then(($el) => {
         if (!$el.val()) cy.wrap($el).type(c.email);
       });
-      cy.get('input[placeholder*="Telefone do responsável"]').then(($el) => {
+      cy.get('[data-testid="campo-representante-telefone"]').then(($el) => {
         if (!$el.val()) cy.wrap($el).type(c.telefone);
       });
-      cy.get('input[placeholder*="CEP"]').then(($el) => {
+      cy.get('[data-testid="campo-cep"]').then(($el) => {
         if (!$el.val()) cy.wrap($el).type("12327000");
       });
 
       cy.wait(500);
 
-      cy.get('input[placeholder*="Logradouro"], input[placeholder*="logradouro"]').then(($el) => {
-        if ($el.length && !$el.val()) cy.wrap($el).type("Rua das Flores");
-      });
-      cy.get('input[placeholder*="Número"], input[placeholder*="número"]').then(($el) => {
+      cy.get('[data-testid="campo-numero"]').then(($el) => {
         if ($el.length && !$el.val()) cy.wrap($el).type("100");
       });
-      cy.get('input[placeholder*="Cidade"], input[placeholder*="cidade"]').then(($el) => {
-        if ($el.length && !$el.val()) cy.wrap($el).type("Jacareí");
-      });
-      cy.get('input[placeholder*="UF"], input[placeholder*="uf"], input[placeholder*="Estado"]').then(($el) => {
-        if ($el.length && !$el.val()) cy.wrap($el).type("SP");
-      });
 
-      // All fields should be filled
-      cy.get('input[placeholder*="CNPJ"]').should("not.have.value", "");
-      cy.get('input[placeholder*="Nome completo"]').should("not.have.value", "");
+      // Verify fields are filled
+      cy.get('[data-testid="campo-cnpj"]').should("not.have.value", "");
+      cy.get('[data-testid="campo-representante-nome"]').should("not.have.value", "");
+      cy.get('[data-testid="campo-representante-email"]').should("not.have.value", "");
     });
   });
 
   it("formulário aceita dados de pessoa jurídica grande", () => {
-    cy.fixture("clientes.json").then((data) => {
-      const c = data.empresa_grande;
-      cy.get('input[placeholder*="CNPJ"]').first().clear().type("98765432000110", { delay: 10 });
+    cy.fixture("clientes.json").then(() => {
+      cy.get('[data-testid="campo-cnpj"]').clear().type("98765432000110", { delay: 10 });
       cy.wait(500);
-      cy.get('input[placeholder*="CNPJ"]').should("not.have.value", "");
+      cy.get('[data-testid="campo-cnpj"]').should("not.have.value", "");
     });
   });
 });

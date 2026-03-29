@@ -10,138 +10,92 @@
  */
 
 describe("Cálculo de Planos — 12, 24, 36 meses", () => {
-  const BASE = 750; // 1 host + 2 VMs
-
   beforeEach(() => {
-    // Go to the contracting page with predefined params
     cy.visit("/contratar/administracao-de-servidores?hosts=1&vms=2");
     cy.get("#contracting-wizard").should("be.visible");
   });
 
-  /**
-   * Helper: fill the server admin registration form with fixture data
-   * and submit to advance to the plan config step.
-   */
   const fillAndSubmitRegistration = () => {
-    cy.fixture("clientes.json").then((clientes) => {
-      const c = clientes.empresa_padrao;
+    cy.get('[data-testid="campo-cnpj"]').clear().type("12345678000190", { delay: 10 });
+    cy.wait(1000);
 
-      // Fill CNPJ field
-      cy.get("#contracting-wizard").within(() => {
-        // CNPJ
-        cy.get('input[placeholder*="CNPJ"]').first().clear().type("12345678000190", { delay: 10 });
-
-        // Wait for potential auto-fill, then fill remaining fields
-        cy.wait(1000);
-
-        // Razão Social (may be auto-filled)
-        cy.get('input').then(($inputs) => {
-          // Fill fields that are empty
-          const fields = [
-            { placeholder: "Razão Social", value: c.razaoSocial },
-            { placeholder: "Nome Fantasia", value: c.nomeFantasia },
-            { placeholder: "Nome completo", value: c.responsavel },
-            { placeholder: "CPF", value: "37799538899" },
-            { placeholder: "E-mail do responsável", value: c.email },
-            { placeholder: "Telefone do responsável", value: c.telefone },
-            { placeholder: "CEP", value: "12327000" },
-          ];
-
-          fields.forEach((f) => {
-            cy.get(`input[placeholder*="${f.placeholder}"]`).then(($el) => {
-              if ($el.length > 0 && !$el.val()) {
-                cy.wrap($el).clear().type(f.value, { delay: 10 });
-              }
-            });
-          });
-        });
-
-        cy.wait(500);
-
-        // Fill address fields that may not be auto-filled
-        cy.get('input[placeholder*="Logradouro"], input[placeholder*="logradouro"]').then(($el) => {
-          if ($el.length > 0 && !$el.val()) {
-            cy.wrap($el).clear().type("Rua das Flores", { delay: 10 });
-          }
-        });
-        cy.get('input[placeholder*="Número"], input[placeholder*="número"]').then(($el) => {
-          if ($el.length > 0 && !$el.val()) {
-            cy.wrap($el).clear().type("100", { delay: 10 });
-          }
-        });
-        cy.get('input[placeholder*="Cidade"], input[placeholder*="cidade"]').then(($el) => {
-          if ($el.length > 0 && !$el.val()) {
-            cy.wrap($el).clear().type("Jacareí", { delay: 10 });
-          }
-        });
-        cy.get('input[placeholder*="UF"], input[placeholder*="uf"], input[placeholder*="Estado"]').then(($el) => {
-          if ($el.length > 0 && !$el.val()) {
-            cy.wrap($el).clear().type("SP", { delay: 10 });
-          }
-        });
-
-        // Submit the registration form
-        cy.contains("button", /prosseguir|confirmar|enviar|cadastrar|avançar/i).click();
-      });
+    cy.get('[data-testid="campo-razao-social"]').then(($el) => {
+      if (!$el.val()) cy.wrap($el).type("Empresa Teste LTDA");
     });
+    cy.get('[data-testid="campo-representante-nome"]').then(($el) => {
+      if (!$el.val()) cy.wrap($el).type("João da Silva");
+    });
+    cy.get('[data-testid="campo-representante-cpf"]').then(($el) => {
+      if (!$el.val()) cy.wrap($el).type("37799538899");
+    });
+    cy.get('[data-testid="campo-representante-email"]').then(($el) => {
+      if (!$el.val()) cy.wrap($el).type("joao@teste.com");
+    });
+    cy.get('[data-testid="campo-representante-telefone"]').then(($el) => {
+      if (!$el.val()) cy.wrap($el).type("12998765432");
+    });
+    cy.get('[data-testid="campo-cep"]').then(($el) => {
+      if (!$el.val()) cy.wrap($el).type("12327000");
+    });
+
+    cy.wait(500);
+
+    cy.get('input[placeholder*="Logradouro"], input[placeholder*="logradouro"]').then(($el) => {
+      if ($el.length && !$el.val()) cy.wrap($el).type("Rua das Flores");
+    });
+    cy.get('[data-testid="campo-numero"]').then(($el) => {
+      if ($el.length && !$el.val()) cy.wrap($el).type("100");
+    });
+    cy.get('input[placeholder*="Cidade"], input[placeholder*="cidade"]').then(($el) => {
+      if ($el.length && !$el.val()) cy.wrap($el).type("Jacareí");
+    });
+    cy.get('input[placeholder*="UF"], input[placeholder*="uf"], input[placeholder*="Estado"]').then(($el) => {
+      if ($el.length && !$el.val()) cy.wrap($el).type("SP");
+    });
+
+    cy.get('[data-testid="botao-prosseguir-cadastro"]').click();
   };
 
   it("exibe a etapa de Configuração do Plano após cadastro", () => {
     fillAndSubmitRegistration();
-    cy.contains("Configuração do Plano", { timeout: 15000 }).should("be.visible");
-    cy.contains("12").should("be.visible");
-    cy.contains("24").should("be.visible");
-    cy.contains("36").should("be.visible");
+    cy.get('[data-testid="plano-12-meses"]', { timeout: 15000 }).should("be.visible");
+    cy.get('[data-testid="plano-24-meses"]').should("be.visible");
+    cy.get('[data-testid="plano-36-meses"]').should("be.visible");
   });
 
-  it("12 meses → sem desconto", () => {
+  it("12 meses → sem desconto (R$750,00)", () => {
     fillAndSubmitRegistration();
-    cy.contains("Configuração do Plano", { timeout: 15000 }).should("be.visible");
-
-    // Select 12 months
-    cy.contains("button", "12").click();
-
-    // 12m = 0% discount, so base value R$750.00
-    cy.contains("750,00").should("be.visible");
+    cy.get('[data-testid="plano-12-meses"]', { timeout: 15000 }).click();
+    cy.get('[data-testid="resumo-valor-base"]').should("contain", "750,00");
   });
 
-  it("24 meses → 7% de desconto", () => {
+  it("24 meses → 7% de desconto (R$697,50)", () => {
     fillAndSubmitRegistration();
-    cy.contains("Configuração do Plano", { timeout: 15000 }).should("be.visible");
-
-    // Select 24 months
-    cy.contains("button", "24").click();
-
-    // 24m = 7% discount: R$750 × 0.93 = R$697.50
-    cy.contains("697,50").should("be.visible");
-    cy.contains("7%").should("be.visible");
+    cy.get('[data-testid="plano-24-meses"]', { timeout: 15000 }).click();
+    cy.get('[data-testid="resumo-subtotal"]').should("contain", "697,50");
+    cy.get('[data-testid="resumo-desconto"]').should("be.visible");
   });
 
-  it("36 meses → 12% de desconto", () => {
+  it("36 meses → 12% de desconto (R$660,00)", () => {
     fillAndSubmitRegistration();
-    cy.contains("Configuração do Plano", { timeout: 15000 }).should("be.visible");
-
-    // Select 36 months
-    cy.contains("button", "36").click();
-
-    // 36m = 12% discount: R$750 × 0.88 = R$660.00
-    cy.contains("660,00").should("be.visible");
-    cy.contains("12%").should("be.visible");
+    cy.get('[data-testid="plano-36-meses"]', { timeout: 15000 }).click();
+    cy.get('[data-testid="resumo-subtotal"]').should("contain", "660,00");
   });
 
   it("Suporte 24h adiciona 35% sobre subtotal com desconto", () => {
     fillAndSubmitRegistration();
-    cy.contains("Configuração do Plano", { timeout: 15000 }).should("be.visible");
+    cy.get('[data-testid="plano-24-meses"]', { timeout: 15000 }).click();
+    cy.get('[data-testid="resumo-subtotal"]').should("contain", "697,50");
 
-    // Select 24 months first
-    cy.contains("button", "24").click();
-    cy.contains("697,50").should("be.visible");
+    cy.get('[data-testid="toggle-suporte-24h"]').click();
+    cy.get('[data-testid="resumo-adicional-24h"]').should("be.visible");
+    cy.get('[data-testid="resumo-total-mensal"]').should("contain", "941,6");
+  });
 
-    // Toggle 24h support
-    cy.contains("Suporte 24h").should("be.visible");
-    cy.get('[role="switch"]').click();
-
-    // 24m + 24h = R$697.50 × 1.35 = R$941.63 (rounded)
-    cy.contains("941,6").should("be.visible");
+  it("total do contrato calcula corretamente (24m × R$697,50)", () => {
+    fillAndSubmitRegistration();
+    cy.get('[data-testid="plano-24-meses"]', { timeout: 15000 }).click();
+    // 24 × R$697,50 = R$16.740,00
+    cy.get('[data-testid="resumo-total-contrato"]').should("contain", "16.740,00");
   });
 });

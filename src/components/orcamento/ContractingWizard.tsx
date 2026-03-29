@@ -663,7 +663,7 @@ const ContractingWizard = ({
                     <p className="text-xs text-muted-foreground mb-3">Após ler e assinar o contrato, esta página será atualizada automaticamente.</p>
                   </div>
 
-                  <Button onClick={handleOpenContract} disabled={!contractId} className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground">
+                  <Button onClick={handleOpenContract} disabled={!contractId} className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground" data-testid="botao-abrir-contrato">
                     <ExternalLink className="w-4 h-4 mr-2" />
                     Abrir contrato para leitura e assinatura
                   </Button>
@@ -767,7 +767,7 @@ const ContractingWizard = ({
                     Você será direcionado para a página segura de pagamento.
                   </p>
 
-                  <Button onClick={handlePayment} disabled={!selectedPayment || paymentLoading} className="w-full h-14 text-base bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50">
+                  <Button onClick={handlePayment} disabled={!selectedPayment || paymentLoading} className="w-full h-14 text-base bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50" data-testid="botao-ir-checkout">
                     <ExternalLink className="w-5 h-5 mr-2" />
                     {paymentError ? "Tentar novamente" : "PROSSEGUIR PARA PAGAMENTO"}
                   </Button>
