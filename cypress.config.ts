@@ -21,11 +21,19 @@ export default defineConfig({
     },
     setupNodeEvents(on, config) {
       // ─── Event Bridge: Cypress → Ingest API ───
-      const supabaseUrl = process.env.SUPABASE_URL || config.env.SUPABASE_URL || "";
-      const supabaseKey = process.env.SUPABASE_KEY || config.env.SUPABASE_KEY || "";
-      const runId = process.env.RUN_ID || config.env.RUN_ID || "";
-      const ingestToken = process.env.INGEST_TOKEN || config.env.INGEST_TOKEN || "";
+      // Variables come from process.env (set by GitHub Actions env: block)
+      const supabaseUrl = process.env.SUPABASE_URL || "";
+      const supabaseKey = process.env.SUPABASE_KEY || "";
+      const runId = process.env.RUN_ID || "";
+      const ingestToken = process.env.INGEST_TOKEN || "";
       const ingestUrl = supabaseUrl ? `${supabaseUrl}/functions/v1/ingest-test-events` : "";
+
+      // Log bridge status for debugging
+      console.log(`[WMTi Bridge] SUPABASE_URL: ${supabaseUrl ? "SET" : "MISSING"}`);
+      console.log(`[WMTi Bridge] SUPABASE_KEY: ${supabaseKey ? "SET" : "MISSING"}`);
+      console.log(`[WMTi Bridge] RUN_ID: ${runId || "MISSING"}`);
+      console.log(`[WMTi Bridge] INGEST_TOKEN: ${ingestToken ? "SET" : "MISSING"}`);
+      console.log(`[WMTi Bridge] Ingest URL: ${ingestUrl || "DISABLED"}`);
 
       let totalSpecs = 0;
       let specsCompleted = 0;
@@ -39,9 +47,12 @@ export default defineConfig({
         events: Array<Record<string, unknown>>,
         progress?: Record<string, unknown>
       ) {
-        if (!ingestUrl || !runId || !ingestToken) return;
+        if (!ingestUrl || !runId || !ingestToken) {
+          console.log(`[WMTi Bridge] sendEvents SKIPPED — missing: ${!ingestUrl ? "ingestUrl " : ""}${!runId ? "runId " : ""}${!ingestToken ? "ingestToken" : ""}`);
+          return;
+        }
         try {
-          await fetch(ingestUrl, {
+          const res = await fetch(ingestUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -51,8 +62,9 @@ export default defineConfig({
               progress,
             }),
           });
-        } catch {
-          // Silently fail — don't block test execution
+          console.log(`[WMTi Bridge] sendEvents ${events.length} events → ${res.status}`);
+        } catch (err) {
+          console.error(`[WMTi Bridge] sendEvents FAILED:`, err);
         }
       }
 
