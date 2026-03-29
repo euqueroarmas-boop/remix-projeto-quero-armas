@@ -366,10 +366,6 @@ const ContractingWizard = ({
           ip_contratante: "",
           geo_contratante: "",
           aceite_checkbox: "Sim",
-          testemunha1_nome: "",
-          testemunha1_cpf: "",
-          testemunha2_nome: "",
-          testemunha2_cpf: "",
         });
         html = templateHtml || generateContractHtml(
           customerDataForContract,

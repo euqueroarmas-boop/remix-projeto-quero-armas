@@ -13,10 +13,6 @@ interface ContractVariables {
   ip_contratante: string;
   geo_contratante: string;
   aceite_checkbox: string;
-  testemunha1_nome: string;
-  testemunha1_cpf: string;
-  testemunha2_nome: string;
-  testemunha2_cpf: string;
   objeto_servico_especifico: string;
   valor_mensal: string;
   valor_mensal_extenso: string;
