@@ -17,6 +17,9 @@ interface ContractVariables {
   valor_mensal: string;
   valor_mensal_extenso: string;
   dia_vencimento: string;
+  data_hora_contratacao: string;
+  user_agent: string;
+  session_id: string;
 }
 
 /**
@@ -59,12 +62,26 @@ export async function fetchContractTemplate(templateId: string): Promise<Templat
 
 /**
  * Replaces all {{placeholder}} variables in the template text with actual values.
+ * Uses "Não capturado" as fallback for empty required fields.
  */
+const REQUIRED_FIELDS = [
+  "cliente_razao_social", "cliente_cnpj", "representante_nome_completo",
+  "representante_cpf", "prazo_meses", "data_contratacao", "objeto_servico_especifico",
+  "valor_mensal", "ip_contratante", "geo_contratante", "data_hora_contratacao",
+  "user_agent", "session_id",
+];
+
 export function hydrateTemplate(template: string, variables: Partial<ContractVariables>): string {
   let result = template;
   for (const [key, value] of Object.entries(variables)) {
     const regex = new RegExp(`\\{\\{${key}\\}\\}`, "g");
-    result = result.replace(regex, value || "");
+    const fallback = REQUIRED_FIELDS.includes(key) ? "Não capturado" : "";
+    result = result.replace(regex, value || fallback);
+  }
+  // Replace any remaining unreplaced required placeholders with fallback
+  for (const field of REQUIRED_FIELDS) {
+    const regex = new RegExp(`\\{\\{${field}\\}\\}`, "g");
+    result = result.replace(regex, "Não capturado");
   }
   return result;
 }
