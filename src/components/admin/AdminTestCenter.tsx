@@ -300,6 +300,9 @@ function ErrorDetail({ result }: { result: DetailedTestResult }) {
 
 // ─── Live Progress Panel (Enhanced with real-time details) ───
 function LiveProgressPanel({ run }: { run: TestRun }) {
+  const STALE_TIMEOUT_MS = 15 * 60 * 1000;
+  const isStale = run.started_at && (Date.now() - new Date(run.started_at).getTime()) > STALE_TIMEOUT_MS;
+
   const completed = (run.completed_tests ?? 0) || (run.passed_tests + run.failed_tests + run.skipped_tests);
   const total = run.total_tests || 1;
   const pct = run.progress_percent ?? (total > 0 ? Math.min(100, Math.round((completed / total) * 100)) : 0);
@@ -332,6 +335,30 @@ function LiveProgressPanel({ run }: { run: TestRun }) {
   const estimatedRemaining = pct > 5 && elapsed > 0
     ? Math.round((elapsed / pct) * (100 - pct))
     : null;
+
+  if (isStale) {
+    return (
+      <Card className="border-amber-500/40 bg-amber-500/5">
+        <CardContent className="p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-amber-400" />
+              <span className="text-sm font-bold text-foreground">
+                {SUITES.find(s => s.id === run.test_type)?.label || run.test_type}
+              </span>
+            </div>
+            <Badge variant="outline" className="text-xs border-amber-500/30 text-amber-400">Expirado</Badge>
+          </div>
+          <p className="text-xs text-amber-400">
+            Execução iniciada há mais de 15 minutos sem finalização. Pode ter falhado silenciosamente no GitHub Actions.
+          </p>
+          <p className="text-[10px] text-muted-foreground">
+            Início: {run.started_at ? new Date(run.started_at).toLocaleString("pt-BR") : "—"} · Tempo decorrido: {formatElapsed(elapsed)}
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="border-primary/40 bg-primary/5">
@@ -953,7 +980,13 @@ export default function AdminTestCenter() {
     }
   };
 
-  const runningRuns = runs.filter(r => r.status === "running");
+  const STALE_TIMEOUT = 15 * 60 * 1000;
+  const runningRuns = runs.filter(r => {
+    if (r.status !== "running") return false;
+    // Exclude stale runs (>15 min without finalization)
+    if (r.started_at && (Date.now() - new Date(r.started_at).getTime()) > STALE_TIMEOUT) return false;
+    return true;
+  });
   const lastRun = runs.length > 0 ? runs[0] : null;
 
   if (selectedRun) {
