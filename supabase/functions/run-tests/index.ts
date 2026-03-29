@@ -413,6 +413,11 @@ Deno.serve(async (req) => {
         error_message: failed > 0 ? `${failed} teste(s) falharam` : null,
       } as any).eq("id", (run as any).id);
 
+      // Dispatch alert if failed
+      if (failed > 0) {
+        await dispatchAlert({ id: (run as any).id, test_type: testType, suite: "light", status: "failed", error_message: `${failed} teste(s) falharam`, total_tests: results.length, passed_tests: passed, failed_tests: failed });
+      }
+
       return new Response(JSON.stringify({ id: (run as any).id, status: failed > 0 ? "failed" : "success", results }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -426,6 +431,9 @@ Deno.serve(async (req) => {
         finished_at: new Date().toISOString(),
         error_message: dispatch.error,
       } as any).eq("id", (run as any).id);
+
+      // Dispatch alert for GitHub dispatch failure
+      await dispatchAlert({ id: (run as any).id, test_type: testType, suite: "cypress", status: "failed", error_message: dispatch.error, total_tests: 0, passed_tests: 0, failed_tests: 0 });
     }
 
     return new Response(JSON.stringify({ id: (run as any).id, status: dispatch.success ? "running" : "failed", engine: "github_actions", error: dispatch.error }), {
