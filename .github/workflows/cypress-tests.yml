@@ -33,7 +33,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
-    # Expose env vars at job level so setupNodeEvents (process.env) can read them
     env:
       SUPABASE_URL: ${{ github.event.inputs.supabase_url }}
       SUPABASE_KEY: ${{ github.event.inputs.supabase_key }}
@@ -42,22 +41,20 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Setup Node
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
 
-      - name: Prepare Cypress artifact directories
+      - name: Prepare directories
         run: |
-          mkdir -p cypress/results
-          mkdir -p cypress/screenshots
-          mkdir -p cypress/videos
+          mkdir -p cypress/results cypress/screenshots cypress/videos
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Map test_type to Cypress spec
         id: specs
@@ -74,58 +71,44 @@ jobs:
           esac
           echo "spec=$SPEC" >> $GITHUB_OUTPUT
 
-      - name: Update status to running in Supabase
+      - name: Notify runner online
         run: |
           INGEST_URL="${{ github.event.inputs.supabase_url }}/functions/v1/ingest-test-events"
-          
-          # Send runner_online event via ingest API
+          TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
           if [ -n "${{ github.event.inputs.ingest_token }}" ]; then
-            curl -s -X POST "$INGEST_URL" \
+            curl -sf -X POST "$INGEST_URL" \
               -H "Content-Type: application/json" \
-              -d '{
-                "run_id": "${{ github.event.inputs.run_id }}",
-                "token": "${{ github.event.inputs.ingest_token }}",
-                "events": [
-                  {
-                    "event_type": "runner_online",
-                    "status": "running",
-                    "payload": {
-                      "github_run_id": "${{ github.run_id }}",
-                      "github_run_url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
-                      "runner": "ubuntu-latest"
-                    }
+              -d "{
+                \"run_id\": \"${{ github.event.inputs.run_id }}\",
+                \"token\": \"${{ github.event.inputs.ingest_token }}\",
+                \"events\": [{
+                  \"event_type\": \"runner_online\",
+                  \"status\": \"running\",
+                  \"payload\": {
+                    \"github_run_id\": \"${{ github.run_id }}\",
+                    \"runner\": \"ubuntu-latest\"
                   }
-                ],
-                "progress": { "total_tests": 0 }
-              }' > /dev/null 2>&1 || true
+                }]
+              }" && echo "Ingest: runner_online sent" || echo "Ingest: runner_online failed (non-fatal)"
           fi
 
-          # Also update via REST API as fallback
-          curl -s -X PATCH \
+          curl -sf -X PATCH \
             "${{ github.event.inputs.supabase_url }}/rest/v1/test_runs?id=eq.${{ github.event.inputs.run_id }}" \
             -H "apikey: ${{ github.event.inputs.supabase_key }}" \
             -H "Authorization: Bearer ${{ github.event.inputs.supabase_key }}" \
             -H "Content-Type: application/json" \
             -H "Prefer: return=minimal" \
-            -d '{
-              "github_run_id": "${{ github.run_id }}",
-              "github_run_url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
-              "current_spec": "Runner online, instalando dependências...",
-              "progress_percent": 5,
-              "logs": {
-                "entries": [
-                  {"ts": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'", "event": "runner_online", "detail": "GitHub Actions runner iniciado"},
-                  {"ts": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'", "event": "installing_deps", "detail": "Instalando dependências..."}
-                ],
-                "current_spec": "Instalando dependências...",
-                "current_url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
-                "github_run_id": "${{ github.run_id }}"
-              }
-            }'
+            -d "{
+              \"github_run_id\": \"${{ github.run_id }}\",
+              \"github_run_url\": \"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\",
+              \"current_spec\": \"Runner online, instalando dependências...\",
+              \"progress_percent\": 5
+            }" && echo "REST: runner status updated" || echo "REST: runner status update failed"
 
       - name: Run Cypress
         id: cypress
-        uses: cypress-io/github-action@v7
+        uses: cypress-io/github-action@v6
         continue-on-error: true
         with:
           install: false
@@ -135,91 +118,178 @@ jobs:
           config: baseUrl=${{ github.event.inputs.base_url }}
           publish-summary: false
 
-      - name: Merge mochawesome reports
+      - name: Finalize run from mochawesome report
         if: always()
         run: |
-          mkdir -p cypress/results
-          if ls cypress/results/*.json >/dev/null 2>&1; then
-            npx mochawesome-merge "cypress/results/*.json" > cypress/results/merged-report.json
-          else
-            echo '{"stats":{},"results":[]}' > cypress/results/merged-report.json
-          fi
-
-      - name: Upload artifacts and finalize
-        if: always()
-        run: |
+          set +e
           SUPABASE_URL="${{ github.event.inputs.supabase_url }}"
           SUPABASE_KEY="${{ github.event.inputs.supabase_key }}"
           RUN_ID="${{ github.event.inputs.run_id }}"
           INGEST_TOKEN="${{ github.event.inputs.ingest_token }}"
+          INGEST_URL="$SUPABASE_URL/functions/v1/ingest-test-events"
+          CYPRESS_EXIT="${{ steps.cypress.outcome }}"
 
-          # Upload screenshots to Supabase Storage
+          echo "=== FINALIZATION START ==="
+          echo "Cypress outcome: $CYPRESS_EXIT"
+
+          # Merge mochawesome reports
+          MERGED_REPORT="cypress/results/merged-report.json"
+          if ls cypress/results/*.json >/dev/null 2>&1; then
+            npx mochawesome-merge "cypress/results/*.json" > "$MERGED_REPORT" 2>/dev/null
+            echo "Mochawesome reports merged"
+          else
+            echo '{"stats":{"tests":0,"passes":0,"failures":0,"pending":0,"duration":0},"results":[]}' > "$MERGED_REPORT"
+            echo "No mochawesome reports found, using empty"
+          fi
+
+          # Parse stats from merged report
+          TOTAL=$(node -e "const r=require('./$MERGED_REPORT'); console.log(r.stats?.tests||0)" 2>/dev/null || echo "0")
+          PASSED=$(node -e "const r=require('./$MERGED_REPORT'); console.log(r.stats?.passes||0)" 2>/dev/null || echo "0")
+          FAILED=$(node -e "const r=require('./$MERGED_REPORT'); console.log(r.stats?.failures||0)" 2>/dev/null || echo "0")
+          SKIPPED=$(node -e "const r=require('./$MERGED_REPORT'); console.log(r.stats?.pending||0)" 2>/dev/null || echo "0")
+          DURATION=$(node -e "const r=require('./$MERGED_REPORT'); console.log(r.stats?.duration||0)" 2>/dev/null || echo "0")
+
+          echo "Stats: total=$TOTAL passed=$PASSED failed=$FAILED skipped=$SKIPPED duration=${DURATION}ms"
+
+          # Determine final status
+          if [ "$FAILED" -gt 0 ] 2>/dev/null; then
+            FINAL_STATUS="failed"
+          elif [ "$CYPRESS_EXIT" = "failure" ]; then
+            FINAL_STATUS="failed"
+            [ "$TOTAL" -eq 0 ] && FAILED=1 && TOTAL=1
+          else
+            FINAL_STATUS="success"
+          fi
+
+          # Extract error summary from failed tests
+          ERROR_SUMMARY=""
+          if [ "$FAILED" -gt 0 ] 2>/dev/null; then
+            ERROR_SUMMARY=$(node -e "
+              const r=require('./$MERGED_REPORT');
+              const errors=[];
+              (r.results||[]).forEach(s=>{
+                (s.suites||[]).forEach(su=>{
+                  (su.tests||[]).forEach(t=>{
+                    if(t.fail&&t.err&&t.err.message){
+                      errors.push(t.fullTitle+': '+t.err.message.substring(0,200));
+                    }
+                  });
+                });
+              });
+              console.log(errors.join(' | ').substring(0,1000)||'$FAILED test(s) failed');
+            " 2>/dev/null || echo "$FAILED test(s) failed")
+          fi
+
+          echo "Final status: $FINAL_STATUS"
+          echo "Error summary: $ERROR_SUMMARY"
+
+          # Upload screenshots
           SCREENSHOT_URLS="[]"
-          if [ -d "cypress/screenshots" ]; then
+          if [ -d "cypress/screenshots" ] && [ "$(find cypress/screenshots -name '*.png' 2>/dev/null | wc -l)" -gt 0 ]; then
+            URLS=""
             find cypress/screenshots -name "*.png" | while read -r file; do
-              RELATIVE_PATH="${file#cypress/screenshots/}"
-              STORAGE_PATH="runs/$RUN_ID/screenshots/$RELATIVE_PATH"
-              curl -s -X POST \
-                "$SUPABASE_URL/storage/v1/object/test-artifacts/$STORAGE_PATH" \
+              REL="${file#cypress/screenshots/}"
+              SPATH="runs/$RUN_ID/screenshots/$REL"
+              curl -sf -X POST \
+                "$SUPABASE_URL/storage/v1/object/test-artifacts/$SPATH" \
                 -H "apikey: $SUPABASE_KEY" \
                 -H "Authorization: Bearer $SUPABASE_KEY" \
                 -H "Content-Type: image/png" \
-                --data-binary "@$file" > /dev/null
+                --data-binary "@$file" > /dev/null && echo "Uploaded: $REL" || echo "Failed: $REL"
             done
             SCREENSHOT_URLS=$(find cypress/screenshots -name "*.png" | while read -r file; do
-              RELATIVE_PATH="${file#cypress/screenshots/}"
-              echo "\"$SUPABASE_URL/storage/v1/object/public/test-artifacts/runs/$RUN_ID/screenshots/$RELATIVE_PATH\""
+              REL="${file#cypress/screenshots/}"
+              echo "\"$SUPABASE_URL/storage/v1/object/public/test-artifacts/runs/$RUN_ID/screenshots/$REL\""
             done | paste -sd, | sed 's/^/[/' | sed 's/$/]/')
             [ -z "$SCREENSHOT_URLS" ] && SCREENSHOT_URLS="[]"
           fi
 
-          # Upload videos to Supabase Storage
+          # Upload videos
           VIDEO_URLS="[]"
-          if [ -d "cypress/videos" ]; then
+          if [ -d "cypress/videos" ] && [ "$(find cypress/videos -name '*.mp4' 2>/dev/null | wc -l)" -gt 0 ]; then
             find cypress/videos -name "*.mp4" | while read -r file; do
-              RELATIVE_PATH="${file#cypress/videos/}"
-              STORAGE_PATH="runs/$RUN_ID/videos/$RELATIVE_PATH"
-              curl -s -X POST \
-                "$SUPABASE_URL/storage/v1/object/test-artifacts/$STORAGE_PATH" \
+              REL="${file#cypress/videos/}"
+              SPATH="runs/$RUN_ID/videos/$REL"
+              curl -sf -X POST \
+                "$SUPABASE_URL/storage/v1/object/test-artifacts/$SPATH" \
                 -H "apikey: $SUPABASE_KEY" \
                 -H "Authorization: Bearer $SUPABASE_KEY" \
                 -H "Content-Type: video/mp4" \
-                --data-binary "@$file" > /dev/null
+                --data-binary "@$file" > /dev/null && echo "Uploaded video: $REL" || echo "Failed video: $REL"
             done
             VIDEO_URLS=$(find cypress/videos -name "*.mp4" | while read -r file; do
-              RELATIVE_PATH="${file#cypress/videos/}"
-              echo "\"$SUPABASE_URL/storage/v1/object/public/test-artifacts/runs/$RUN_ID/videos/$RELATIVE_PATH\""
+              REL="${file#cypress/videos/}"
+              echo "\"$SUPABASE_URL/storage/v1/object/public/test-artifacts/runs/$RUN_ID/videos/$REL\""
             done | paste -sd, | sed 's/^/[/' | sed 's/$/]/')
             [ -z "$VIDEO_URLS" ] && VIDEO_URLS="[]"
           fi
 
-          # Update run with artifact URLs (after:run already finalized status/counters)
-          curl -s -X PATCH \
+          # 1) Finalize via ingest API
+          if [ -n "$INGEST_TOKEN" ]; then
+            ESCAPED_ERROR=$(echo "$ERROR_SUMMARY" | sed 's/"/\\"/g' | head -c 900)
+            curl -sf -X POST "$INGEST_URL?action=finalize" \
+              -H "Content-Type: application/json" \
+              -d "{
+                \"run_id\": \"$RUN_ID\",
+                \"token\": \"$INGEST_TOKEN\",
+                \"status\": \"$FINAL_STATUS\",
+                \"duration_ms\": $DURATION,
+                \"total_tests\": $TOTAL,
+                \"passed_tests\": $PASSED,
+                \"failed_tests\": $FAILED,
+                \"skipped_tests\": $SKIPPED,
+                \"error_summary\": \"$ESCAPED_ERROR\"
+              }" && echo "Ingest finalize: OK" || echo "Ingest finalize: FAILED"
+          fi
+
+          # 2) Direct REST PATCH (definitive fallback)
+          ESCAPED_ERROR_REST=$(echo "$ERROR_SUMMARY" | sed 's/"/\\"/g' | head -c 900)
+          FINISHED_AT=$(date -u +%Y-%m-%dT%H:%M:%S.000Z)
+
+          curl -sf -X PATCH \
             "$SUPABASE_URL/rest/v1/test_runs?id=eq.$RUN_ID" \
             -H "apikey: $SUPABASE_KEY" \
             -H "Authorization: Bearer $SUPABASE_KEY" \
             -H "Content-Type: application/json" \
             -H "Prefer: return=minimal" \
             -d "{
+              \"status\": \"$FINAL_STATUS\",
+              \"finished_at\": \"$FINISHED_AT\",
+              \"duration_ms\": $DURATION,
+              \"total_tests\": $TOTAL,
+              \"passed_tests\": $PASSED,
+              \"failed_tests\": $FAILED,
+              \"skipped_tests\": $SKIPPED,
+              \"completed_tests\": $(($PASSED + $FAILED + $SKIPPED)),
+              \"progress_percent\": 100,
+              \"current_spec\": null,
+              \"current_test\": null,
+              \"current_url\": null,
+              \"error_message\": $([ -n "$ESCAPED_ERROR_REST" ] && echo "\"$ESCAPED_ERROR_REST\"" || echo "null"),
+              \"error_summary\": $([ -n "$ESCAPED_ERROR_REST" ] && echo "\"$ESCAPED_ERROR_REST\"" || echo "null"),
               \"screenshot_urls\": $SCREENSHOT_URLS,
               \"video_urls\": $VIDEO_URLS,
+              \"ingest_token\": null,
               \"github_run_id\": \"${{ github.run_id }}\",
               \"github_run_url\": \"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\",
-              \"browser\": \"chrome\"
-            }"
+              \"browser\": \"chrome\",
+              \"last_event_at\": \"$FINISHED_AT\"
+            }" && echo "REST finalize: OK" || echo "REST finalize: FAILED"
 
-      - name: Upload screenshots (GitHub artifact backup)
+          echo "=== FINALIZATION COMPLETE ==="
+
+      - name: Upload screenshots (GitHub backup)
         if: failure()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4
         with:
           name: cypress-screenshots-${{ github.event.inputs.test_type }}
           path: cypress/screenshots
           retention-days: 14
           if-no-files-found: ignore
 
-      - name: Upload videos (GitHub artifact backup)
+      - name: Upload videos (GitHub backup)
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4
         with:
           name: cypress-videos-${{ github.event.inputs.test_type }}
           path: cypress/videos

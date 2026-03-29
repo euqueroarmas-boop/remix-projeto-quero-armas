@@ -29,10 +29,11 @@ export default defineConfig({
         ? `${supabaseUrl}/functions/v1/ingest-test-events`
         : "";
 
-      console.log(`[WMTi Bridge] SUPABASE_URL: ${supabaseUrl ? "SET" : "MISSING"}`);
-      console.log(`[WMTi Bridge] SUPABASE_KEY: ${supabaseKey ? "SET" : "MISSING"}`);
+      console.log(`[WMTi Bridge] ── CONFIG ──`);
+      console.log(`[WMTi Bridge] SUPABASE_URL: ${supabaseUrl ? "SET (" + supabaseUrl.substring(0, 30) + "...)" : "MISSING"}`);
+      console.log(`[WMTi Bridge] SUPABASE_KEY: ${supabaseKey ? "SET (" + supabaseKey.length + " chars)" : "MISSING"}`);
       console.log(`[WMTi Bridge] RUN_ID: ${runId || "MISSING"}`);
-      console.log(`[WMTi Bridge] INGEST_TOKEN: ${ingestToken ? "SET" : "MISSING"}`);
+      console.log(`[WMTi Bridge] INGEST_TOKEN: ${ingestToken ? "SET (" + ingestToken.length + " chars)" : "MISSING"}`);
       console.log(`[WMTi Bridge] Ingest URL: ${ingestUrl || "DISABLED"}`);
 
       let totalSpecs = 0;
@@ -42,7 +43,7 @@ export default defineConfig({
       let failedTests = 0;
       let skippedTests = 0;
 
-      // Helper to send events to the ingest API
+      // Helper: send events to ingest API with full error logging
       async function sendEvents(
         events: Array<Record<string, unknown>>,
         progress?: Record<string, unknown>
@@ -54,53 +55,34 @@ export default defineConfig({
           return;
         }
         try {
+          const payload = JSON.stringify({
+            run_id: runId,
+            token: ingestToken,
+            events,
+            progress,
+          });
+          console.log(`[WMTi Bridge] sendEvents → ${events.length} events, payload ${payload.length} bytes`);
           const res = await fetch(ingestUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              run_id: runId,
-              token: ingestToken,
-              events,
-              progress,
-            }),
+            body: payload,
           });
-          console.log(
-            `[WMTi Bridge] sendEvents ${events.length} events → ${res.status}`
-          );
+          const resBody = await res.text();
+          console.log(`[WMTi Bridge] sendEvents response: ${res.status} ${resBody.substring(0, 200)}`);
         } catch (err) {
           console.error(`[WMTi Bridge] sendEvents FAILED:`, err);
         }
       }
 
-      // Helper to finalize via ingest API
-      async function sendFinalize(payload: Record<string, unknown>) {
-        if (!ingestUrl || !runId || !ingestToken) {
-          console.log(`[WMTi Bridge] sendFinalize SKIPPED — missing vars`);
-          return;
-        }
-        try {
-          const res = await fetch(`${ingestUrl}?action=finalize`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              run_id: runId,
-              token: ingestToken,
-              ...payload,
-            }),
-          });
-          console.log(`[WMTi Bridge] sendFinalize → ${res.status}`);
-        } catch (err) {
-          console.error(`[WMTi Bridge] sendFinalize FAILED:`, err);
-        }
-      }
-
-      // Helper to update test_runs directly (fallback / legacy)
+      // Helper: direct PATCH to test_runs (always works if key is valid)
       async function patchRun(payload: Record<string, unknown>) {
         if (!supabaseUrl || !supabaseKey || !runId) {
-          console.log(`[WMTi Bridge] patchRun SKIPPED — missing vars`);
+          console.log(`[WMTi Bridge] patchRun SKIPPED — missing: ${!supabaseUrl ? "url " : ""}${!supabaseKey ? "key " : ""}${!runId ? "runId" : ""}`);
           return;
         }
         try {
+          const body = JSON.stringify(payload);
+          console.log(`[WMTi Bridge] patchRun → ${body.length} bytes`);
           const res = await fetch(
             `${supabaseUrl}/rest/v1/test_runs?id=eq.${runId}`,
             {
@@ -111,10 +93,11 @@ export default defineConfig({
                 "Content-Type": "application/json",
                 Prefer: "return=minimal",
               },
-              body: JSON.stringify(payload),
+              body,
             }
           );
-          console.log(`[WMTi Bridge] patchRun → ${res.status}`);
+          console.log(`[WMTi Bridge] patchRun response: ${res.status}`);
+          await res.text(); // consume body
         } catch (err) {
           console.error(`[WMTi Bridge] patchRun FAILED:`, err);
         }
@@ -123,43 +106,17 @@ export default defineConfig({
       // ─── BEFORE:RUN ───
       on("before:run", async (details) => {
         totalSpecs = details.specs?.length || 0;
-        specsCompleted = 0;
-        totalTests = 0;
-        passedTests = 0;
-        failedTests = 0;
-        skippedTests = 0;
+        console.log(`[WMTi Bridge] ══ before:run ══ specs=${totalSpecs} browser=${details.browser?.name}`);
 
         await sendEvents(
-          [
-            {
-              event_type: "execution_started",
-              payload: {
-                total_specs: totalSpecs,
-                browser: details.browser?.name,
-                cypress_version: details.cypressVersion,
-              },
-            },
-          ],
+          [{ event_type: "execution_started", payload: { total_specs: totalSpecs, browser: details.browser?.name } }],
           { total_specs: totalSpecs }
         );
 
         await patchRun({
           total_specs: totalSpecs,
-          current_spec: "Iniciando...",
-          progress_percent: 0,
-          logs: {
-            entries: [
-              {
-                ts: new Date().toISOString(),
-                event: "cypress_started",
-                detail: `Cypress iniciado com ${totalSpecs} specs`,
-              },
-            ],
-            current_spec: "Iniciando...",
-            current_url: null,
-            total_specs: totalSpecs,
-            specs_completed: 0,
-          },
+          current_spec: "Iniciando specs...",
+          progress_percent: 2,
         });
       });
 
@@ -178,6 +135,8 @@ export default defineConfig({
         skippedTests += pending;
         totalTests += tests;
 
+        console.log(`[WMTi Bridge] ══ after:spec ══ ${specName} — tests=${tests} passed=${passes} failed=${failures} pending=${pending} duration=${duration}ms`);
+
         const testEvents: Array<Record<string, unknown>> = [];
 
         testEvents.push({
@@ -188,27 +147,19 @@ export default defineConfig({
           payload: { passes, failures, tests, pending },
         });
 
+        // Emit individual test results
         if (results.tests) {
           for (const test of results.tests) {
             const attempts = test.attempts || [];
             const lastAttempt = attempts[attempts.length - 1];
             const testStatus = lastAttempt?.state || "unknown";
-            const testError =
-              lastAttempt?.error?.message || lastAttempt?.error?.name;
-            const testStack =
-              lastAttempt?.error?.stack || lastAttempt?.error?.codeFrame?.frame;
+            const testError = lastAttempt?.error?.message || lastAttempt?.error?.name;
+            const testStack = lastAttempt?.error?.stack || lastAttempt?.error?.codeFrame?.frame;
 
             testEvents.push({
-              event_type:
-                testStatus === "passed"
-                  ? "test_passed"
-                  : testStatus === "failed"
-                    ? "test_failed"
-                    : "test_skipped",
+              event_type: testStatus === "passed" ? "test_passed" : testStatus === "failed" ? "test_failed" : "test_skipped",
               spec_name: specName,
-              test_name: Array.isArray(test.title)
-                ? test.title.join(" > ")
-                : test.title || "unknown",
+              test_name: Array.isArray(test.title) ? test.title.join(" > ") : test.title || "unknown",
               status: testStatus,
               duration_ms: lastAttempt?.duration || 0,
               error_message: testError || undefined,
@@ -216,6 +167,8 @@ export default defineConfig({
             });
           }
         }
+
+        console.log(`[WMTi Bridge] Sending ${testEvents.length} events for spec ${specName}`);
 
         await sendEvents(testEvents, {
           total_tests: totalTests,
@@ -227,10 +180,10 @@ export default defineConfig({
           skipped_tests: skippedTests,
         });
 
-        const nextSpec =
-          specsCompleted < totalSpecs
-            ? `Spec ${specsCompleted + 1} de ${totalSpecs}`
-            : "Finalizando...";
+        const progressPercent = Math.min(95, Math.round((specsCompleted / Math.max(totalSpecs, 1)) * 100));
+        const nextSpec = specsCompleted < totalSpecs
+          ? `Spec ${specsCompleted + 1} de ${totalSpecs}`
+          : "Finalizando...";
 
         await patchRun({
           total_tests: totalTests > 0 ? totalTests : totalSpecs,
@@ -241,73 +194,48 @@ export default defineConfig({
           completed_specs: specsCompleted,
           total_specs: totalSpecs,
           current_spec: nextSpec,
-          progress_percent: Math.min(
-            100,
-            Math.round(
-              ((passedTests + failedTests + skippedTests) /
-                Math.max(totalTests, 1)) *
-                100
-            )
-          ),
+          progress_percent: progressPercent,
           last_event_at: new Date().toISOString(),
         });
+
+        console.log(`[WMTi Bridge] after:spec done — progress=${progressPercent}%`);
       });
 
-      // ─── AFTER:RUN — CRITICAL: Finalize execution ───
+      // ─── AFTER:RUN ───
       on("after:run", async (results) => {
-        console.log(
-          `[WMTi Bridge] after:run fired — totalPassed: ${results?.totalPassed}, totalFailed: ${results?.totalFailed}, totalTests: ${results?.totalTests}`
-        );
-
-        const finalStatus =
-          (results?.totalFailed || 0) > 0 ? "failed" : "success";
         const finalTotalTests = results?.totalTests || totalTests;
         const finalPassed = results?.totalPassed || passedTests;
         const finalFailed = results?.totalFailed || failedTests;
         const finalSkipped = results?.totalSkipped || skippedTests;
         const finalDuration = results?.totalDuration || 0;
+        const finalStatus = (finalFailed || 0) > 0 ? "failed" : "success";
 
-        // Build error summary from failed tests
+        console.log(`[WMTi Bridge] ══ after:run ══ status=${finalStatus} total=${finalTotalTests} passed=${finalPassed} failed=${finalFailed} skipped=${finalSkipped} duration=${finalDuration}ms`);
+
+        // Build error summary
         let errorSummary: string | null = null;
         if (finalFailed > 0 && results?.runs) {
           const errors: string[] = [];
           for (const run of results.runs) {
             if (run.tests) {
               for (const test of run.tests) {
-                const lastAttempt =
-                  test.attempts?.[test.attempts.length - 1];
-                if (
-                  lastAttempt?.state === "failed" &&
-                  lastAttempt?.error?.message
-                ) {
-                  const testName = Array.isArray(test.title)
-                    ? test.title.join(" > ")
-                    : test.title;
-                  errors.push(
-                    `${testName}: ${lastAttempt.error.message.substring(0, 200)}`
-                  );
+                const lastAttempt = test.attempts?.[test.attempts.length - 1];
+                if (lastAttempt?.state === "failed" && lastAttempt?.error?.message) {
+                  const testName = Array.isArray(test.title) ? test.title.join(" > ") : test.title;
+                  errors.push(`${testName}: ${lastAttempt.error.message.substring(0, 200)}`);
                 }
               }
             }
           }
-          errorSummary =
-            errors.length > 0
-              ? errors.join(" | ").substring(0, 1000)
-              : `${finalFailed} test(s) failed`;
+          errorSummary = errors.length > 0 ? errors.join(" | ").substring(0, 1000) : `${finalFailed} test(s) failed`;
         }
 
-        // 1) Finalize via ingest API (preferred)
-        await sendFinalize({
-          status: finalStatus,
-          duration_ms: finalDuration,
-          error_summary: errorSummary,
-          total_tests: finalTotalTests,
-          passed_tests: finalPassed,
-          failed_tests: finalFailed,
-          skipped_tests: finalSkipped,
-        });
+        // Finalize via ingest API
+        await sendEvents(
+          [{ event_type: "execution_completed", status: finalStatus, payload: { total_tests: finalTotalTests, passed_tests: finalPassed, failed_tests: finalFailed, skipped_tests: finalSkipped } }]
+        );
 
-        // 2) Fallback: direct PATCH
+        // Direct PATCH (definitive)
         await patchRun({
           status: finalStatus,
           finished_at: new Date().toISOString(),
@@ -326,9 +254,7 @@ export default defineConfig({
           last_event_at: new Date().toISOString(),
         });
 
-        console.log(
-          `[WMTi Bridge] after:run complete — status: ${finalStatus}, tests: ${finalTotalTests}, passed: ${finalPassed}, failed: ${finalFailed}`
-        );
+        console.log(`[WMTi Bridge] after:run COMPLETE`);
       });
 
       return config;
