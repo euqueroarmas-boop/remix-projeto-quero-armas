@@ -65,8 +65,8 @@ function extractArray(source, exportName) {
 }
 
 function urlEntry(loc) {
-  return `  <url>\n    <loc>${BASE_URL}${loc}</loc>\n  </url>`;
-}
+  return `  <url>\n    <loc>${BASE_URL}${loc}</loc>\n  </url>\n`;}
+
 
 function wrapUrlset(urls) {
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join("\n")}\n</urlset>`;
