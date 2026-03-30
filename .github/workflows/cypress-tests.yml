@@ -27,6 +27,10 @@ on:
         description: 'Ephemeral token for event ingestion'
         required: false
         type: string
+      admin_password:
+        description: 'Admin password for authenticated tests'
+        required: false
+        type: string
 
 jobs:
   cypress:
@@ -117,6 +121,8 @@ jobs:
         id: cypress
         uses: cypress-io/github-action@v6
         continue-on-error: true
+        env:
+          CYPRESS_ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD || github.event.inputs.admin_password }}
         with:
           install: false
           browser: chrome

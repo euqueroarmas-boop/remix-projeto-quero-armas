@@ -408,6 +408,7 @@ async function triggerGitHubWorkflowFast(
             supabase_url: SUPABASE_URL,
             supabase_key: SUPABASE_SERVICE_KEY,
             ingest_token: ingestToken || "",
+            admin_password: ADMIN_PASSWORD,
           },
         }),
       }
@@ -451,6 +452,7 @@ async function triggerGitHubWorkflow(
             supabase_url: SUPABASE_URL,
             supabase_key: SUPABASE_SERVICE_KEY,
             ingest_token: ingestToken || "",
+            admin_password: ADMIN_PASSWORD,
           },
         }),
       }
