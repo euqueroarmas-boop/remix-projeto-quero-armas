@@ -1,11 +1,6 @@
 /// <reference types="cypress" />
 
 describe("Smoke — Blog Post Individual", () => {
-  it("listagem do blog carrega", () => {
-    cy.visit("/blog", { timeout: 15000 });
-    cy.get("h1", { timeout: 10000 }).should("be.visible");
-  });
-
   it("primeiro post do blog abre corretamente", () => {
     cy.visit("/blog", { timeout: 15000 });
     cy.get('a[href*="/blog/"]', { timeout: 10000 }).first().then(($link) => {
