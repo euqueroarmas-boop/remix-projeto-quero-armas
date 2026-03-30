@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/table";
 import {
   BarChart3, AlertTriangle, CreditCard, FileText, LogOut, RefreshCw, ChevronLeft, ChevronRight, Eye, Users, Plus, Loader2, Check, Copy, Shield,
-  LayoutDashboard, ScrollText, CreditCard as CreditCardIcon, UserCog, Megaphone, ShieldAlert, Webhook, ClipboardCheck, Activity, Stethoscope, FlaskConical, PenTool, TestTube2,
+  LayoutDashboard, ScrollText, CreditCard as CreditCardIcon, UserCog, Megaphone, ShieldAlert, Webhook, ClipboardCheck, Activity, Stethoscope, FlaskConical, PenTool, TestTube2, Brain,
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import AdminSecurityEvents from "@/components/admin/AdminSecurityEvents";
@@ -27,6 +27,7 @@ import LogFullscreenViewer from "@/components/admin/LogFullscreenViewer";
 const QAPanel = lazy(() => import("@/components/admin/qa/QAPanel"));
 const AdminBlogGenerator = lazy(() => import("@/components/admin/AdminBlogGenerator"));
 const AdminTestCenter = lazy(() => import("@/components/admin/AdminTestCenter"));
+const AdminPromptIntelligence = lazy(() => import("@/components/admin/AdminPromptIntelligence"));
 
 const ITEMS_PER_PAGE = 20;
 
@@ -64,6 +65,7 @@ const NAV_GROUPS = [
       { id: "qa", label: "QA", icon: FlaskConical },
       { id: "test-center", label: "Centro de Testes", icon: TestTube2 },
       { id: "blog-ai", label: "Blog IA", icon: PenTool },
+      { id: "prompt-intelligence", label: "Prompt Intelligence", icon: Brain },
     ],
   },
 ];
