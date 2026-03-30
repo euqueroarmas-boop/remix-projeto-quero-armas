@@ -17,6 +17,8 @@ describe("Certificado Digital — Upload", () => {
     });
     cy.contains(/Assinatura Digital/i, { timeout: 10000 }).click();
     cy.get("[data-testid='certificate-module-page']", { timeout: 15000 }).should("exist");
+    cy.log("CERT_PAGE_LOADED");
+    cy.log("CERT_NAVIGATION_OK");
   });
 
   it("exibe seção de upload com campos obrigatórios", () => {

@@ -31,5 +31,6 @@ describe("Certificado Digital — Navegação", () => {
 
     cy.contains(/Diagnóstico Cert|Diag\. Certificado/i, { timeout: 10000 }).click();
     cy.get("[data-testid='certificate-diagnostic-page']", { timeout: 15000 }).should("exist");
+    cy.log("CERT_DIAG_PAGE_LOADED");
   });
 });

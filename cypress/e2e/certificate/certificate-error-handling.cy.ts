@@ -17,6 +17,8 @@ describe("Certificado Digital — Tratamento de Erros", () => {
     });
     cy.contains(/Diagnóstico Cert|Diag\. Certificado/i, { timeout: 10000 }).click();
     cy.get("[data-testid='certificate-diagnostic-page']", { timeout: 15000 }).should("exist");
+    cy.log("CERT_PAGE_LOADED");
+    cy.log("CERT_NAVIGATION_OK");
   });
 
   it("senha com espaço é detectada no diagnóstico", () => {
