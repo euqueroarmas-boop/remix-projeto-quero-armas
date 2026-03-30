@@ -45,7 +45,9 @@ function latin1ToUint8(str: string): Uint8Array {
 
 /**
  * Adds a PDF signature field with a placeholder /Contents to a pdf-lib document.
- * **Must be called BEFORE `pdfDoc.save()`.**
+ * **Must be called BEFORE `pdfDoc.save({ useObjectStreams: false })`.**
+ * IMPORTANT: You MUST pass `{ useObjectStreams: false }` to `pdfDoc.save()`
+ * so the signature dictionary is written uncompressed and searchable.
  *
  * @param pdfDoc  - A pdf-lib PDFDocument instance
  * @param pdfLib  - The pdf-lib module (to access PDFName, PDFHexString, etc.)
