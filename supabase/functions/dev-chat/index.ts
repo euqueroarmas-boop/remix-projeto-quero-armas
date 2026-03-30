@@ -40,7 +40,7 @@ serve(async (req) => {
     );
     const expected = Array.from(
       new Uint8Array(
-        await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(ts))
+        await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(`admin:${ts}`))
       )
     )
       .map((b) => b.toString(16).padStart(2, "0"))
