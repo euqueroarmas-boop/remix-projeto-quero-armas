@@ -27,6 +27,10 @@ on:
         description: 'Ephemeral token for event ingestion'
         required: false
         type: string
+      admin_password:
+        description: 'Admin password for authenticated tests'
+        required: false
+        type: string
 
 jobs:
   cypress:
