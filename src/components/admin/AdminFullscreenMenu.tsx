@@ -5,7 +5,7 @@ import {
   X, LogOut,
   LayoutDashboard, ScrollText, AlertTriangle, CreditCard, UserCog, Megaphone,
   ShieldAlert, Webhook, ClipboardCheck, Activity, Stethoscope, FlaskConical,
-  TestTube2, PenTool, Settings, Users,
+  TestTube2, PenTool, Settings, Users, MessageSquareCode,
 } from "lucide-react";
 
 interface AdminFullscreenMenuProps {
@@ -47,6 +47,7 @@ const MENU_SECTIONS = [
     items: [
       { id: "prompt-intelligence", label: "Prompt Intelligence", icon: Activity },
       { id: "revenue-intelligence", label: "Receita", icon: CreditCard },
+      { id: "dev-chat", label: "DevChat", icon: MessageSquareCode },
     ],
   },
   {

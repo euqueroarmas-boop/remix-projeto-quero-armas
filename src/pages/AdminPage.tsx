@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/table";
 import {
   BarChart3, AlertTriangle, CreditCard, FileText, LogOut, RefreshCw, ChevronLeft, ChevronRight, Eye, Users, Plus, Loader2, Check, Copy, Shield,
-  LayoutDashboard, ScrollText, CreditCard as CreditCardIcon, UserCog, Megaphone, ShieldAlert, Webhook, ClipboardCheck, Activity, Stethoscope, FlaskConical, PenTool, TestTube2, Brain, DollarSign,
+  LayoutDashboard, ScrollText, CreditCard as CreditCardIcon, UserCog, Megaphone, ShieldAlert, Webhook, ClipboardCheck, Activity, Stethoscope, FlaskConical, PenTool, TestTube2, Brain, DollarSign, MessageSquareCode,
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import AdminSecurityEvents from "@/components/admin/AdminSecurityEvents";
@@ -29,6 +29,7 @@ const AdminBlogGenerator = lazy(() => import("@/components/admin/AdminBlogGenera
 const AdminTestCenter = lazy(() => import("@/components/admin/AdminTestCenter"));
 const AdminPromptIntelligence = lazy(() => import("@/components/admin/AdminPromptIntelligence"));
 const AdminRevenueIntelligence = lazy(() => import("@/components/admin/AdminRevenueIntelligence"));
+const DevChatPanel = lazy(() => import("@/components/admin/DevChatPanel"));
 
 const ITEMS_PER_PAGE = 20;
 
@@ -68,6 +69,7 @@ const NAV_GROUPS = [
       { id: "blog-ai", label: "Blog IA", icon: PenTool },
       { id: "prompt-intelligence", label: "Prompt Intelligence", icon: Brain },
       { id: "revenue-intelligence", label: "Receita", icon: DollarSign },
+      { id: "dev-chat", label: "DevChat", icon: MessageSquareCode },
     ],
   },
 ];
@@ -705,6 +707,7 @@ function AdminContent({ activeSection, onNavigate }: { activeSection: string; on
     case "blog-ai": return <Suspense fallback={fallback}><AdminBlogGenerator /></Suspense>;
     case "prompt-intelligence": return <Suspense fallback={fallback}><AdminPromptIntelligence /></Suspense>;
     case "revenue-intelligence": return <Suspense fallback={fallback}><AdminRevenueIntelligence /></Suspense>;
+    case "dev-chat": return <Suspense fallback={fallback}><DevChatPanel /></Suspense>;
     default: return <AdminCommandCenter onNavigate={onNavigate} />;
   }
 }
