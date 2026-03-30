@@ -22,9 +22,46 @@ export interface ClienteFixture {
   uf: string;
 }
 
+type AdminSection = "dashboard" | "digital-signature" | "cert-diagnostic";
+
+const ADMIN_TOKEN_STORAGE_KEY = "admin_token";
+const ADMIN_TOKEN_REGEX = /^\d+\.[a-f0-9]+$/;
+
+function assertAdminSession(win: Window) {
+  const token = win.sessionStorage.getItem(ADMIN_TOKEN_STORAGE_KEY);
+  expect(token, "admin token salvo na sessão").to.be.a("string");
+  expect(token, "admin token em formato válido").to.match(ADMIN_TOKEN_REGEX);
+}
+
+function openAdminSection(section: AdminSection) {
+  if (section === "dashboard") {
+    cy.get("[data-testid='admin-topbar']", { timeout: 20000 }).should("be.visible");
+    return;
+  }
+
+  const navTestId = section === "digital-signature"
+    ? "admin-nav-digital-signature"
+    : "admin-nav-cert-diagnostic";
+
+  const pageTestId = section === "digital-signature"
+    ? "certificate-module-page"
+    : "certificate-diagnostic-page";
+
+  cy.get(`[data-testid='${navTestId}']`, { timeout: 20000 })
+    .should("be.visible")
+    .click();
+
+  cy.location("pathname", { timeout: 20000 }).should("eq", "/admin");
+  cy.get(`[data-testid='${pageTestId}']`, { timeout: 20000 }).should("be.visible");
+  cy.log("CERT_MODULE_OPENED");
+}
+
 declare global {
   namespace Cypress {
     interface Chainable {
+      /** Faz login admin de forma confiável e confirma a sessão real */
+      loginAdmin(section?: AdminSection): Chainable<void>;
+
       /** Preenche o formulário de cadastro do contratante usando fixture */
       preencherContratante(fixtureName?: string): Chainable<void>;
 
@@ -66,6 +103,51 @@ function typeIfEmptyBySelector(selector: string, value: string) {
     }
   });
 }
+
+Cypress.Commands.add("loginAdmin", (section: AdminSection = "dashboard") => {
+  const password = Cypress.env("ADMIN_PASSWORD");
+
+  expect(password, "Cypress ADMIN_PASSWORD").to.be.a("string").and.not.be.empty;
+
+  cy.session(["wmti-admin", password], () => {
+    cy.log("ADMIN_LOGIN_STARTED");
+    cy.visit("/admin");
+
+    cy.get("[data-testid='admin-login-page']", { timeout: 20000 }).should("be.visible");
+    cy.get("[data-testid='admin-login-password']", { timeout: 20000 })
+      .should("be.visible")
+      .clear()
+      .type(String(password), { log: false });
+
+    cy.get("[data-testid='admin-login-submit']")
+      .should("be.visible")
+      .and("not.be.disabled")
+      .click();
+
+    cy.contains(/senha incorreta/i).should("not.exist");
+    cy.location("pathname", { timeout: 20000 }).should("eq", "/admin");
+    cy.get("[data-testid='admin-topbar']", { timeout: 20000 }).should("be.visible");
+    cy.window({ timeout: 20000 }).then(assertAdminSession);
+    cy.log("ADMIN_LOGIN_SUCCESS");
+    cy.log("ADMIN_SESSION_CONFIRMED");
+  }, {
+    cacheAcrossSpecs: true,
+    validate() {
+      cy.visit("/admin");
+      cy.location("pathname", { timeout: 20000 }).should("eq", "/admin");
+      cy.get("[data-testid='admin-topbar']", { timeout: 20000 }).should("be.visible");
+      cy.window({ timeout: 20000 }).then(assertAdminSession);
+    },
+  });
+
+  cy.visit("/admin");
+  cy.location("pathname", { timeout: 20000 }).should("eq", "/admin");
+  cy.get("[data-testid='admin-topbar']", { timeout: 20000 }).should("be.visible");
+  cy.window({ timeout: 20000 }).then(assertAdminSession);
+  cy.log("ADMIN_SESSION_CONFIRMED");
+
+  openAdminSection(section);
+});
 
 // ═══════════════════════════════════════════════
 //  1. Preencher dados do contratante

@@ -134,11 +134,12 @@ function AdminLogin({ onLogin }: { onLogin: () => void }) {
           <h1 className="text-lg font-bold text-foreground">WMTi Operations</h1>
           <p className="text-xs text-muted-foreground mt-1">Centro de Controle · Produção</p>
         </div>
-        <div className="rounded-xl border border-border bg-card p-6">
+        <div className="rounded-xl border border-border bg-card p-6" data-testid="admin-login-page">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">Senha de Acesso</label>
               <Input
+                data-testid="admin-login-password"
                 type="password"
                 placeholder="••••••••"
                 value={password}
@@ -146,8 +147,8 @@ function AdminLogin({ onLogin }: { onLogin: () => void }) {
                 className="bg-muted/30 border-border/60 text-foreground h-10"
               />
             </div>
-            {error && <p className="text-destructive text-xs bg-destructive/10 rounded-md px-3 py-2">{error}</p>}
-            <Button type="submit" className="w-full h-10" disabled={loading}>
+            {error && <p data-testid="admin-login-error" className="text-destructive text-xs bg-destructive/10 rounded-md px-3 py-2">{error}</p>}
+            <Button data-testid="admin-login-submit" type="submit" className="w-full h-10" disabled={loading}>
               {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               {loading ? "Verificando..." : "Entrar"}
             </Button>
@@ -768,7 +769,7 @@ function AdminSidebar({ activeSection, onNavigate, collapsed, onToggle }: {
   onToggle: () => void;
 }) {
   return (
-    <aside className={cn(
+    <aside data-testid="admin-sidebar" className={cn(
       "h-screen sticky top-0 flex flex-col bg-[hsl(0,0%,5%)] border-r border-border/40 transition-all duration-300 shrink-0",
       collapsed ? "w-14" : "w-56"
     )}>
@@ -800,6 +801,7 @@ function AdminSidebar({ activeSection, onNavigate, collapsed, onToggle }: {
               return (
                 <button
                   key={item.id}
+                  data-testid={`admin-nav-${item.id}`}
                   onClick={() => onNavigate(item.id)}
                   title={collapsed ? item.label : undefined}
                   className={cn(
@@ -830,14 +832,14 @@ function AdminSidebar({ activeSection, onNavigate, collapsed, onToggle }: {
 // ─── Topbar ───
 function AdminTopbar({ title, onMenuOpen, onLogout }: { title: string; onMenuOpen: () => void; onLogout: () => void }) {
   return (
-    <header className="h-14 border-b border-border/30 bg-[hsl(0,0%,5%)] flex items-center justify-between px-4 md:px-6 shrink-0 sticky top-0 z-30">
+    <header data-testid="admin-topbar" className="h-14 border-b border-border/30 bg-[hsl(0,0%,5%)] flex items-center justify-between px-4 md:px-6 shrink-0 sticky top-0 z-30">
       <div className="flex items-center gap-3 min-w-0">
         {/* Mobile menu */}
-        <button onClick={onMenuOpen} className="md:hidden p-1.5 rounded-md hover:bg-muted/30 text-muted-foreground">
+        <button data-testid="admin-menu-toggle" onClick={onMenuOpen} className="md:hidden p-1.5 rounded-md hover:bg-muted/30 text-muted-foreground">
           <Menu className="h-4.5 w-4.5" />
         </button>
         <div className="min-w-0">
-          <h2 className="text-sm font-bold text-foreground truncate">{title}</h2>
+          <h2 data-testid="admin-topbar-title" className="text-sm font-bold text-foreground truncate">{title}</h2>
         </div>
       </div>
       <div className="flex items-center gap-2">
