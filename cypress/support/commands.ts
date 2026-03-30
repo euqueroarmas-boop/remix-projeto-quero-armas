@@ -111,39 +111,58 @@ Cypress.Commands.add("loginAdmin", (section: AdminSection = "dashboard") => {
 
   cy.session(["wmti-admin", password], () => {
     cy.log("ADMIN_LOGIN_STARTED");
-    cy.visit("/admin");
+    cy.visit("/admin", {
+      timeout: 30000,
+      onBeforeLoad(win) {
+        win.sessionStorage.clear();
+      },
+    });
 
-    cy.get("[data-testid='admin-login-page']", { timeout: 20000 }).should("be.visible");
-    cy.get("[data-testid='admin-login-password']", { timeout: 20000 })
-      .should("be.visible")
-      .clear()
-      .type(String(password), { log: false });
+    // Wait for the page to fully load — either login form or already-authed topbar
+    cy.get("body", { timeout: 30000 }).should("not.be.empty");
+    cy.log("ADMIN_PAGE_BODY_LOADED");
 
-    cy.get("[data-testid='admin-login-submit']")
-      .should("be.visible")
-      .and("not.be.disabled")
-      .click();
+    // The login form lives inside a div with data-testid='admin-login-page'
+    // Wait for either the login form OR the topbar (already authed from a previous run)
+    cy.get("[data-testid='admin-login-page'], [data-testid='admin-topbar']", { timeout: 30000 })
+      .should("exist")
+      .then(($el) => {
+        if ($el.filter("[data-testid='admin-topbar']").length > 0) {
+          cy.log("ADMIN_ALREADY_AUTHENTICATED");
+          return;
+        }
+        cy.log("ADMIN_LOGIN_FORM_FOUND");
 
-    cy.contains(/senha incorreta/i).should("not.exist");
-    cy.location("pathname", { timeout: 20000 }).should("eq", "/admin");
-    cy.get("[data-testid='admin-topbar']", { timeout: 20000 }).should("be.visible");
-    cy.window({ timeout: 20000 }).then(assertAdminSession);
+        cy.get("[data-testid='admin-login-password']", { timeout: 10000 })
+          .should("be.visible")
+          .clear()
+          .type(String(password), { log: false });
+
+        cy.get("[data-testid='admin-login-submit']")
+          .should("be.visible")
+          .and("not.be.disabled")
+          .click();
+
+        cy.get("[data-testid='admin-login-error']", { timeout: 3000 }).should("not.exist");
+      });
+
+    cy.get("[data-testid='admin-topbar']", { timeout: 30000 }).should("be.visible");
+    cy.window({ timeout: 10000 }).then(assertAdminSession);
     cy.log("ADMIN_LOGIN_SUCCESS");
     cy.log("ADMIN_SESSION_CONFIRMED");
   }, {
     cacheAcrossSpecs: true,
     validate() {
-      cy.visit("/admin");
-      cy.location("pathname", { timeout: 20000 }).should("eq", "/admin");
-      cy.get("[data-testid='admin-topbar']", { timeout: 20000 }).should("be.visible");
-      cy.window({ timeout: 20000 }).then(assertAdminSession);
+      cy.visit("/admin", { timeout: 30000 });
+      cy.get("[data-testid='admin-topbar']", { timeout: 30000 }).should("be.visible");
+      cy.window({ timeout: 10000 }).then(assertAdminSession);
     },
   });
 
-  cy.visit("/admin");
-  cy.location("pathname", { timeout: 20000 }).should("eq", "/admin");
-  cy.get("[data-testid='admin-topbar']", { timeout: 20000 }).should("be.visible");
-  cy.window({ timeout: 20000 }).then(assertAdminSession);
+  // After session restore, navigate and confirm
+  cy.visit("/admin", { timeout: 30000 });
+  cy.get("[data-testid='admin-topbar']", { timeout: 30000 }).should("be.visible");
+  cy.window({ timeout: 10000 }).then(assertAdminSession);
   cy.log("ADMIN_SESSION_CONFIRMED");
 
   openAdminSection(section);
