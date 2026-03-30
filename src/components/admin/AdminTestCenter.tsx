@@ -803,12 +803,9 @@ function RunDetail({ run, onBack }: { run: TestRun; onBack: () => void }) {
                   variant="ghost"
                   size="sm"
                   className="h-6 px-2 text-[10px] gap-1"
-                  onClick={() => {
-                    navigator.clipboard.writeText(run.error_message || "");
-                    toast.success("Erro copiado");
-                  }}
+                  onClick={() => copyDiagnostic(run, "error")}
                 >
-                  <Copy className="h-3 w-3" /> Copiar
+                  <Copy className="h-3 w-3" /> Copiar erro
                 </Button>
               </div>
               <p className="text-muted-foreground whitespace-pre-wrap">{run.error_message}</p>
@@ -985,13 +982,9 @@ function RunDetail({ run, onBack }: { run: TestRun; onBack: () => void }) {
                 variant="ghost"
                 size="sm"
                 className="h-7 px-2 text-[10px] gap-1"
-                onClick={() => {
-                  const text = typeof run.logs === 'string' ? run.logs : JSON.stringify(run.logs, null, 2);
-                  navigator.clipboard.writeText(text);
-                  toast.success("Logs copiados");
-                }}
+                onClick={() => copyDiagnostic(run, "full")}
               >
-                <Copy className="h-3 w-3" /> Copiar logs
+                <Copy className="h-3 w-3" /> Copiar dump completo
               </Button>
             </div>
           </CardHeader>
