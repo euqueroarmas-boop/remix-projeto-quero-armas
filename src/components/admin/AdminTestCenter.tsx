@@ -1757,6 +1757,8 @@ export default function AdminTestCenter({ onBack }: { onBack?: () => void }) {
     try { return localStorage.getItem("wmti_auto_execution") === "true"; } catch { return false; }
   });
   const [autoFixing, setAutoFixing] = useState<string | null>(null);
+  const [autoFixBranch, setAutoFixBranch] = useState<{ branch: string; prUrl: string | null; prNumber: number | null; filePath: string; commitSha: string } | null>(null);
+  const [merging, setMerging] = useState(false);
   const autoFixAttemptsRef = useRef<Record<string, number>>({});
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
