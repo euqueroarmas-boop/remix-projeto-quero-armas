@@ -887,7 +887,7 @@ export default function AdminPage() {
   const currentLabel = NAV_GROUPS.flatMap(g => g.items).find(i => i.id === activeSection)?.label || "Dashboard";
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex">
+    <div className="min-h-screen bg-background text-foreground flex" data-testid="admin-authenticated">
       {/* Fullscreen Menu (mobile) */}
       <AdminFullscreenMenu
         open={menuOpen}
