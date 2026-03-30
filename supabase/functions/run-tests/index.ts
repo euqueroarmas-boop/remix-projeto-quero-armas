@@ -59,9 +59,12 @@ function generateIngestToken(): string {
 // ─── Types ───
 interface TestResult {
   name: string;
+  fullTitle?: string;
+  spec?: string;
   status: "passed" | "failed" | "skipped";
   duration_ms: number;
   error?: string;
+  stack_trace?: string;
   url?: string;
 }
 

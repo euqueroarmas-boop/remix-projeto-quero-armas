@@ -161,24 +161,69 @@ jobs:
             FINAL_STATUS="success"
           fi
 
-          # Extract error summary from failed tests
+          # Extract error summary AND per-test results from mochawesome
           ERROR_SUMMARY=""
-          if [ "$FAILED" -gt 0 ] 2>/dev/null; then
-            ERROR_SUMMARY=$(node -e "
-              const r=require('./$MERGED_REPORT');
-              const errors=[];
-              (r.results||[]).forEach(s=>{
-                (s.suites||[]).forEach(su=>{
-                  (su.tests||[]).forEach(t=>{
-                    if(t.fail&&t.err&&t.err.message){
-                      errors.push(t.fullTitle+': '+t.err.message.substring(0,200));
+          TEST_RESULTS_JSON="[]"
+          
+          node -e "
+            const fs = require('fs');
+            const r = require('./$MERGED_REPORT');
+            const errors = [];
+            const results = [];
+            
+            (r.results || []).forEach(specFile => {
+              const specName = specFile.file || specFile.fullFile || 'unknown';
+              
+              function walkSuites(suites, parentTitle) {
+                (suites || []).forEach(suite => {
+                  const suiteTitle = parentTitle ? parentTitle + ' > ' + suite.title : suite.title;
+                  
+                  (suite.tests || []).forEach(test => {
+                    const entry = {
+                      name: test.title || 'unnamed',
+                      fullTitle: test.fullTitle || suiteTitle + ' > ' + test.title,
+                      spec: specName,
+                      status: test.pass ? 'passed' : test.fail ? 'failed' : 'skipped',
+                      duration_ms: test.duration || 0,
+                      url: test.context ? (typeof test.context === 'string' ? test.context : null) : null,
+                    };
+                    
+                    if (test.fail && test.err) {
+                      entry.error = (test.err.message || '').substring(0, 2000);
+                      entry.stack_trace = (test.err.estack || test.err.stack || '').substring(0, 3000);
+                      if (test.err.expected !== undefined || test.err.actual !== undefined) {
+                        entry.diff = {
+                          expected: test.err.expected,
+                          actual: test.err.actual
+                        };
+                      }
+                      errors.push(test.fullTitle + ': ' + (test.err.message || '').substring(0, 200));
                     }
+                    
+                    results.push(entry);
                   });
+                  
+                  // Recurse nested suites
+                  walkSuites(suite.suites, suiteTitle);
                 });
-              });
-              console.log(errors.join(' | ').substring(0,1000)||'$FAILED test(s) failed');
-            " 2>/dev/null || echo "$FAILED test(s) failed")
+              }
+              
+              walkSuites(specFile.suites, '');
+            });
+            
+            const errorSummary = errors.join(' | ').substring(0, 1000) || (r.stats?.failures > 0 ? r.stats.failures + ' test(s) failed' : '');
+            
+            fs.writeFileSync('/tmp/test_results.json', JSON.stringify(results));
+            fs.writeFileSync('/tmp/error_summary.txt', errorSummary);
+          " 2>/dev/null
+          
+          if [ -f /tmp/error_summary.txt ]; then
+            ERROR_SUMMARY=$(cat /tmp/error_summary.txt)
           fi
+          if [ -f /tmp/test_results.json ]; then
+            TEST_RESULTS_JSON=$(cat /tmp/test_results.json)
+          fi
+          [ -z "$ERROR_SUMMARY" ] && [ "$FAILED" -gt 0 ] && ERROR_SUMMARY="$FAILED test(s) failed"
 
           echo "Final status: $FINAL_STATUS"
           echo "Error summary: $ERROR_SUMMARY"
@@ -242,39 +287,58 @@ jobs:
               }" && echo "Ingest finalize: OK" || echo "Ingest finalize: FAILED"
           fi
 
-          # 2) Direct REST PATCH (definitive fallback)
-          ESCAPED_ERROR_REST=$(echo "$ERROR_SUMMARY" | sed 's/"/\\"/g' | head -c 900)
+          # 2) Build REST payload via Node (avoids shell escaping issues with JSON)
           FINISHED_AT=$(date -u +%Y-%m-%dT%H:%M:%S.000Z)
 
+          FINAL_STATUS="$FINAL_STATUS" FINISHED_AT="$FINISHED_AT" DURATION="$DURATION" \
+          TOTAL="$TOTAL" PASSED="$PASSED" FAILED="$FAILED" SKIPPED="$SKIPPED" \
+          SCREENSHOT_URLS="$SCREENSHOT_URLS" VIDEO_URLS="$VIDEO_URLS" \
+          GITHUB_RUN_ID="${{ github.run_id }}" \
+          GITHUB_RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+          node -e "
+            const fs = require('fs');
+            let results = [];
+            let errorSummary = null;
+            try { results = JSON.parse(fs.readFileSync('/tmp/test_results.json', 'utf8')); } catch(e) {}
+            try { errorSummary = fs.readFileSync('/tmp/error_summary.txt', 'utf8') || null; } catch(e) {}
+            
+            let screenshots = null;
+            let videos = null;
+            try { const s = JSON.parse(process.env.SCREENSHOT_URLS || '[]'); if (s.length) screenshots = s; } catch(e) {}
+            try { const v = JSON.parse(process.env.VIDEO_URLS || '[]'); if (v.length) videos = v; } catch(e) {}
+            
+            const payload = {
+              status: process.env.FINAL_STATUS,
+              finished_at: process.env.FINISHED_AT,
+              duration_ms: parseInt(process.env.DURATION) || 0,
+              total_tests: parseInt(process.env.TOTAL) || 0,
+              passed_tests: parseInt(process.env.PASSED) || 0,
+              failed_tests: parseInt(process.env.FAILED) || 0,
+              skipped_tests: parseInt(process.env.SKIPPED) || 0,
+              completed_tests: (parseInt(process.env.PASSED)||0) + (parseInt(process.env.FAILED)||0) + (parseInt(process.env.SKIPPED)||0),
+              progress_percent: 100,
+              current_spec: null, current_test: null, current_url: null,
+              error_message: errorSummary, error_summary: errorSummary,
+              results: results,
+              screenshot_urls: screenshots, video_urls: videos,
+              ingest_token: null,
+              github_run_id: process.env.GITHUB_RUN_ID,
+              github_run_url: process.env.GITHUB_RUN_URL,
+              browser: 'chrome',
+              last_event_at: process.env.FINISHED_AT,
+            };
+            fs.writeFileSync('/tmp/patch_payload.json', JSON.stringify(payload));
+            console.log('Payload built: ' + results.length + ' test results, ' + (results.filter(r=>r.status==='failed').length) + ' failures');
+          "
+
+          # 3) PATCH via REST with full payload from file
           curl -sf -X PATCH \
             "$SUPABASE_URL/rest/v1/test_runs?id=eq.$RUN_ID" \
             -H "apikey: $SUPABASE_KEY" \
             -H "Authorization: Bearer $SUPABASE_KEY" \
             -H "Content-Type: application/json" \
             -H "Prefer: return=minimal" \
-            -d "{
-              \"status\": \"$FINAL_STATUS\",
-              \"finished_at\": \"$FINISHED_AT\",
-              \"duration_ms\": $DURATION,
-              \"total_tests\": $TOTAL,
-              \"passed_tests\": $PASSED,
-              \"failed_tests\": $FAILED,
-              \"skipped_tests\": $SKIPPED,
-              \"completed_tests\": $(($PASSED + $FAILED + $SKIPPED)),
-              \"progress_percent\": 100,
-              \"current_spec\": null,
-              \"current_test\": null,
-              \"current_url\": null,
-              \"error_message\": $([ -n "$ESCAPED_ERROR_REST" ] && echo "\"$ESCAPED_ERROR_REST\"" || echo "null"),
-              \"error_summary\": $([ -n "$ESCAPED_ERROR_REST" ] && echo "\"$ESCAPED_ERROR_REST\"" || echo "null"),
-              \"screenshot_urls\": $SCREENSHOT_URLS,
-              \"video_urls\": $VIDEO_URLS,
-              \"ingest_token\": null,
-              \"github_run_id\": \"${{ github.run_id }}\",
-              \"github_run_url\": \"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\",
-              \"browser\": \"chrome\",
-              \"last_event_at\": \"$FINISHED_AT\"
-            }" && echo "REST finalize: OK" || echo "REST finalize: FAILED"
+            -d @/tmp/patch_payload.json && echo "REST finalize: OK" || echo "REST finalize: FAILED"
 
           echo "=== FINALIZATION COMPLETE ==="
 
