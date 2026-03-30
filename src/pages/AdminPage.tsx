@@ -701,6 +701,7 @@ function AdminContent({ activeSection, onNavigate }: { activeSection: string; on
     case "qa": return <Suspense fallback={fallback}><QAPanel /></Suspense>;
     case "test-center": return <Suspense fallback={fallback}><AdminTestCenter onBack={() => onNavigate("dashboard")} /></Suspense>;
     case "blog-ai": return <Suspense fallback={fallback}><AdminBlogGenerator /></Suspense>;
+    case "prompt-intelligence": return <Suspense fallback={fallback}><AdminPromptIntelligence /></Suspense>;
     default: return <AdminCommandCenter onNavigate={onNavigate} />;
   }
 }
