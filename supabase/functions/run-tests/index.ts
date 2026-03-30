@@ -851,7 +851,7 @@ Deno.serve(async (req) => {
 
     // Cypress — dispatch to GitHub with estimated spec count
     const specCounts: Record<string, number> = {
-      frontend: 4, business: 1, forms: 1, contracts: 1, checkout: 1, portal: 1, regression: 10, certificate: 10,
+      frontend: 4, business: 1, forms: 1, contracts: 1, checkout: 1, portal: 1, regression: 10, certificate: 6,
     };
     const estimatedTotal = specCounts[testType] || 5;
 

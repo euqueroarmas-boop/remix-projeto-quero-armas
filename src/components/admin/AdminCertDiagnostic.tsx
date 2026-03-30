@@ -142,7 +142,7 @@ export default function AdminCertDiagnostic() {
   const allPassed = result ? result.steps.every(s => s.status === "pass") : false;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="certificate-diagnostic-page">
       <SectionHeader title="Diagnóstico de Certificado Digital" icon={Stethoscope} />
       <p className="text-[11px] text-muted-foreground -mt-4">
         Executa validação completa em 10 etapas sem assinar contrato real. Upload de arquivo .pfx/.p12 para teste isolado.
@@ -157,6 +157,7 @@ export default function AdminCertDiagnostic() {
             </label>
             <Input
               ref={fileRef}
+              data-testid="certificate-diag-file-input"
               type="file"
               accept=".pfx,.p12"
               onChange={(e) => {
@@ -178,6 +179,7 @@ export default function AdminCertDiagnostic() {
             </label>
             <div className="relative">
               <Input
+                data-testid="certificate-diag-password-input"
                 type={showPassword ? "text" : "password"}
                 placeholder="Senha do arquivo .pfx"
                 value={password}
@@ -197,7 +199,7 @@ export default function AdminCertDiagnostic() {
             </p>
           </div>
 
-          <Button onClick={runDiagnostic} disabled={running || !file || !password} className="w-full sm:w-auto">
+          <Button data-testid="certificate-run-diagnostic-button" onClick={runDiagnostic} disabled={running || !file || !password} className="w-full sm:w-auto">
             {running ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Stethoscope className="mr-2 h-4 w-4" />}
             {running ? "Executando diagnóstico..." : "Executar Diagnóstico"}
           </Button>
@@ -209,8 +211,8 @@ export default function AdminCertDiagnostic() {
         <>
           {/* Summary bar */}
           <div className={`rounded-xl border p-4 flex items-center justify-between flex-wrap gap-3 ${
-            allPassed ? "border-emerald-500/30 bg-emerald-500/5" : "border-destructive/30 bg-destructive/5"
-          }`}>
+           allPassed ? "border-emerald-500/30 bg-emerald-500/5" : "border-destructive/30 bg-destructive/5"
+          }`} data-testid="certificate-result-panel">
             <div className="flex items-center gap-3">
               {allPassed
                 ? <Shield className="h-5 w-5 text-emerald-400" />

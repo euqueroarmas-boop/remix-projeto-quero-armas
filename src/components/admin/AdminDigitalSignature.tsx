@@ -188,7 +188,7 @@ export default function AdminDigitalSignature() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="certificate-module-page">
       {/* Certificate Status */}
       <div className="grid gap-4 md:grid-cols-3">
         <DataPanel>
@@ -316,6 +316,7 @@ export default function AdminDigitalSignature() {
               Arquivo do certificado (.pfx ou .p12)
             </label>
             <Input
+              data-testid="certificate-upload-input"
               type="file"
               accept=".pfx,.p12"
               onChange={(e) => {
@@ -332,6 +333,7 @@ export default function AdminDigitalSignature() {
             </label>
             <div className="relative">
               <Input
+                data-testid="certificate-password-input"
                 type={showPassword ? "text" : "password"}
                 placeholder="Senha do arquivo .pfx"
                 value={certPassword}
@@ -360,7 +362,7 @@ export default function AdminDigitalSignature() {
             </p>
           )}
 
-          <Button onClick={handleUpload} disabled={uploading || !uploadFile || !certPassword}>
+          <Button data-testid="certificate-upload-button" onClick={handleUpload} disabled={uploading || !uploadFile || !certPassword}>
             {uploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
             {uploading ? "Enviando..." : "Enviar certificado"}
           </Button>
@@ -375,7 +377,7 @@ export default function AdminDigitalSignature() {
             Verifica se o certificado está acessível, descriptografável e válido para assinatura.
           </p>
           <div className="flex items-center gap-3">
-            <Button variant="outline" onClick={handleTest} disabled={testing}>
+            <Button data-testid="certificate-test-sign-button" variant="outline" onClick={handleTest} disabled={testing}>
               {testing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Key className="mr-2 h-4 w-4" />}
               {testing ? "Testando..." : "Testar certificado"}
             </Button>
