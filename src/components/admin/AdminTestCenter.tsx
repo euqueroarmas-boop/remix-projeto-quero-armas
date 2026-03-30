@@ -1297,7 +1297,7 @@ function RunDetail({ run, onBack }: { run: TestRun; onBack: () => void }) {
           </CardHeader>
           <CardContent>
             {failed.length > 0 ? (
-              <div className="space-y-2">{failed.map((t, i) => <ErrorDetail key={i} result={t} />)}</div>
+              <div className="space-y-2">{failed.map((t, i) => <ErrorDetail key={i} result={t} screenshotUrls={run.screenshot_urls || undefined} videoUrls={run.video_urls || undefined} />)}</div>
             ) : (
               <p className="text-xs text-muted-foreground py-3">
                 {run.failed_tests} teste(s) falharam, mas os detalhes individuais não foram capturados.
