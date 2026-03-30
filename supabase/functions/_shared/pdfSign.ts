@@ -8,6 +8,9 @@
  *  - validar.iti.gov.br
  *  - Adobe Acrobat Reader signature panel
  *  - Foxit, Okular, and other PDF readers
+ *
+ * IMPORTANT: The PDF MUST be saved with { useObjectStreams: false }
+ * so the signature dictionary is written uncompressed and searchable.
  */
 
 const SIGNATURE_MAX_LENGTH = 16384; // 16 KB for CMS DER
@@ -18,6 +21,15 @@ export interface SignPdfOptions {
   contactInfo?: string;
   signerName?: string;
   signingTime?: Date;
+}
+
+export interface SignDiagnostics {
+  byteRange: number[];
+  pdfSize: number;
+  placeholderSize: number;
+  cmsSize: number;
+  dataToSignHash: string;
+  resignedAuthAttrs: boolean;
 }
 
 /* ── helpers ─────────────────────────────────────────── */
@@ -41,17 +53,16 @@ function latin1ToUint8(str: string): Uint8Array {
   return a;
 }
 
+async function sha256Hex(data: Uint8Array): Promise<string> {
+  const hash = await crypto.subtle.digest("SHA-256", data);
+  return [...new Uint8Array(hash)].map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
 /* ── 1. Add signature placeholder ───────────────────── */
 
 /**
  * Adds a PDF signature field with a placeholder /Contents to a pdf-lib document.
  * **Must be called BEFORE `pdfDoc.save({ useObjectStreams: false })`.**
- * IMPORTANT: You MUST pass `{ useObjectStreams: false }` to `pdfDoc.save()`
- * so the signature dictionary is written uncompressed and searchable.
- *
- * @param pdfDoc  - A pdf-lib PDFDocument instance
- * @param pdfLib  - The pdf-lib module (to access PDFName, PDFHexString, etc.)
- * @param lastPage - The pdf-lib PDFPage where the widget annotation is anchored
  */
 export function addSignaturePlaceholder(
   pdfDoc: any,
@@ -120,13 +131,97 @@ export function addSignaturePlaceholder(
   pdfDoc.catalog.set(PDFName.of("AcroForm"), acroForm);
 }
 
-/* ── 2. Embed the CMS signature ─────────────────────── */
+/* ── 2. Re-sign authenticated attributes ────────────── */
+
+/**
+ * After forge's p7.sign(), the ASN.1 output may re-serialize the
+ * authenticated attributes with a different DER encoding than what
+ * was originally signed. This function re-signs using the EXACT
+ * encoding that appears in the output, ensuring validators see a
+ * matching RSA signature.
+ */
+function resignCmsAuthAttrs(asn1Root: any, forge: any, privateKey: any): boolean {
+  try {
+    // Navigate: ContentInfo → [0] → SignedData → signerInfos → signerInfo
+    const signedDataWrapper = asn1Root.value[1]; // CONTEXT [0] EXPLICIT
+    const signedData = signedDataWrapper.value[0]; // SEQUENCE (SignedData)
+
+    // signerInfos is the last SET child of SignedData
+    let signerInfosSet: any = null;
+    for (let i = signedData.value.length - 1; i >= 0; i--) {
+      const child = signedData.value[i];
+      if (child.tagClass === forge.asn1.Class.UNIVERSAL &&
+          child.type === forge.asn1.Type.SET &&
+          child.constructed) {
+        signerInfosSet = child;
+        break;
+      }
+    }
+    if (!signerInfosSet) throw new Error("signerInfos SET not found");
+
+    const signerInfo = signerInfosSet.value[0]; // first SEQUENCE
+
+    // Find authenticatedAttributes [0] IMPLICIT and encryptedDigest OCTET STRING
+    let authAttrsNode: any = null;
+    let encDigestNode: any = null;
+
+    for (const child of signerInfo.value) {
+      // authenticatedAttributes: CONTEXT_SPECIFIC, constructed, type 0
+      if (child.tagClass === forge.asn1.Class.CONTEXT_SPECIFIC &&
+          child.constructed && child.type === 0) {
+        authAttrsNode = child;
+      }
+      // encryptedDigest: UNIVERSAL OCTET_STRING, not constructed
+      if (child.tagClass === forge.asn1.Class.UNIVERSAL &&
+          child.type === forge.asn1.Type.OCTETSTRING &&
+          !child.constructed) {
+        encDigestNode = child;
+      }
+    }
+
+    if (!authAttrsNode || !encDigestNode) {
+      throw new Error("authenticatedAttributes or encryptedDigest not found in SignerInfo");
+    }
+
+    // Create a copy with SET tag (0x31) for signing — per CMS spec,
+    // the signature is computed over the DER encoding with UNIVERSAL SET tag,
+    // not the IMPLICIT [0] tag used in the SignerInfo structure.
+    const setForSigning = forge.asn1.create(
+      forge.asn1.Class.UNIVERSAL,
+      forge.asn1.Type.SET,
+      true,
+      authAttrsNode.value, // same children
+    );
+
+    const attrsDer = forge.asn1.toDer(setForSigning).getBytes();
+
+    // Hash with SHA-256
+    const md = forge.md.sha256.create();
+    md.update(attrsDer);
+
+    // RSA sign (PKCS#1 v1.5 with SHA-256 DigestInfo)
+    const sig = privateKey.sign(md);
+
+    // Replace the encryptedDigest value
+    encDigestNode.value = sig;
+
+    console.log("[pdfSign] Re-signed authenticatedAttributes:",
+      `attrs DER=${attrsDer.length} bytes, sig=${sig.length} bytes`);
+    return true;
+  } catch (e) {
+    console.error("[pdfSign] resignCmsAuthAttrs failed:", e);
+    return false;
+  }
+}
+
+/* ── 3. Embed the CMS signature ─────────────────────── */
 
 /**
  * Finds the placeholder in the saved PDF bytes, calculates ByteRange,
- * creates a CMS/PKCS#7 detached signature, and embeds it.
+ * creates a CMS/PKCS#7 detached signature, re-signs the authenticated
+ * attributes for exact DER match, and embeds the result.
  *
- * @returns The signed PDF bytes and the hex-encoded signature
+ * @returns The signed PDF bytes, hex signature, and diagnostics
  */
 export async function signPdfBytes(
   pdfBytes: Uint8Array,
@@ -134,7 +229,7 @@ export async function signPdfBytes(
   privateKey: any,
   certificate: any,
   additionalCerts: any[] = [],
-): Promise<{ signedPdf: Uint8Array; signatureHex: string }> {
+): Promise<{ signedPdf: Uint8Array; signatureHex: string; diagnostics: SignDiagnostics }> {
   const pdfStr = uint8ToLatin1(pdfBytes);
 
   /* 1 — locate Contents placeholder */
@@ -142,7 +237,15 @@ export async function signPdfBytes(
   const contentsTag = `<${zeroHex}>`;
   const contentsIdx = pdfStr.indexOf(contentsTag);
   if (contentsIdx === -1) {
-    throw new Error("Signature Contents placeholder not found in PDF");
+    // Debug: show surrounding bytes where we'd expect it
+    const sigIdx = pdfStr.indexOf("/Contents");
+    const context = sigIdx >= 0
+      ? pdfStr.substring(sigIdx, Math.min(sigIdx + 100, pdfStr.length))
+      : "NOT_FOUND";
+    throw new Error(
+      `Signature Contents placeholder not found in PDF (size=${pdfBytes.length}). ` +
+      `Near /Contents: ${context}`
+    );
   }
   const contentsEnd = contentsIdx + contentsTag.length;
 
@@ -153,6 +256,9 @@ export async function signPdfBytes(
     contentsEnd,
     pdfBytes.length - contentsEnd,
   ];
+
+  console.log("[pdfSign] ByteRange:", JSON.stringify(byteRange),
+    `| PDF size: ${pdfBytes.length} | Placeholder: ${contentsTag.length} bytes`);
 
   /* 3 — replace ByteRange placeholder (same byte length) */
   const brRegex =
@@ -186,6 +292,9 @@ export async function signPdfBytes(
     byteRange[1],
   );
 
+  const dataHash = await sha256Hex(dataToSign);
+  console.log("[pdfSign] Data to sign:", dataToSign.length, "bytes | SHA-256:", dataHash);
+
   /* 5 — create CMS/PKCS#7 detached signature */
   const p7 = forge.pkcs7.createSignedData();
   p7.content = forge.util.createBuffer(uint8ToLatin1(dataToSign));
@@ -207,28 +316,65 @@ export async function signPdfBytes(
 
   p7.sign({ detached: true });
 
-  const derStr = forge.asn1.toDer(p7.toAsn1()).getBytes();
+  /* 6 — get ASN.1, re-sign authenticated attributes with exact output encoding */
+  const asn1 = p7.toAsn1();
+  const resigned = resignCmsAuthAttrs(asn1, forge, privateKey);
+
+  /* 7 — serialize the (re-signed) CMS to DER */
+  const derBytes = forge.asn1.toDer(asn1).getBytes();
+
   let sigHex = "";
-  for (let i = 0; i < derStr.length; i++) {
-    sigHex += derStr.charCodeAt(i).toString(16).padStart(2, "0");
+  for (let i = 0; i < derBytes.length; i++) {
+    sigHex += (derBytes.charCodeAt(i) & 0xff).toString(16).padStart(2, "0").toUpperCase();
   }
 
-  if (sigHex.length > SIGNATURE_MAX_LENGTH * 2) {
+  const cmsSize = derBytes.length;
+  console.log("[pdfSign] CMS DER:", cmsSize, "bytes |",
+    `Placeholder capacity: ${SIGNATURE_MAX_LENGTH} bytes |`,
+    `Re-signed: ${resigned}`);
+
+  if (cmsSize > SIGNATURE_MAX_LENGTH) {
     throw new Error(
-      `CMS signature too large: ${sigHex.length / 2} bytes (max ${SIGNATURE_MAX_LENGTH})`,
+      `CMS signature too large: ${cmsSize} bytes (max ${SIGNATURE_MAX_LENGTH})`,
     );
   }
 
   // Pad to fill the entire placeholder
   sigHex = sigHex.padEnd(SIGNATURE_MAX_LENGTH * 2, "0");
 
-  /* 6 — insert signature hex into Contents placeholder */
+  /* 8 — insert signature hex into Contents placeholder */
+  // Freeze a snapshot of bytes outside Contents for integrity check
+  const beforeContents = updatedBytes.slice(0, contentsIdx);
+  const afterContents = updatedBytes.slice(contentsEnd);
+
   for (let i = 0; i < sigHex.length; i++) {
     updatedBytes[contentsIdx + 1 + i] = sigHex.charCodeAt(i);
   }
 
+  // Integrity check: no bytes outside Contents should have changed
+  for (let i = 0; i < beforeContents.length; i++) {
+    if (updatedBytes[i] !== beforeContents[i]) {
+      throw new Error(`Integrity violation: byte ${i} changed (before Contents)`);
+    }
+  }
+  for (let i = 0; i < afterContents.length; i++) {
+    if (updatedBytes[contentsEnd + i] !== afterContents[i]) {
+      throw new Error(`Integrity violation: byte ${contentsEnd + i} changed (after Contents)`);
+    }
+  }
+
+  console.log("[pdfSign] Signature embedded. Final PDF:", updatedBytes.length, "bytes");
+
   return {
     signedPdf: updatedBytes,
     signatureHex: sigHex.replace(/0+$/, ""),
+    diagnostics: {
+      byteRange,
+      pdfSize: updatedBytes.length,
+      placeholderSize: SIGNATURE_MAX_LENGTH,
+      cmsSize,
+      dataToSignHash: dataHash,
+      resignedAuthAttrs: resigned,
+    },
   };
 }
