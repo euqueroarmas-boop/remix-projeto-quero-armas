@@ -820,6 +820,54 @@ export type Database = {
           },
         ]
       }
+      prompt_intelligence: {
+        Row: {
+          analysis_data: Json | null
+          analysis_type: string
+          created_at: string
+          finished_at: string | null
+          high_priority: number | null
+          id: string
+          low_priority: number | null
+          medium_priority: number | null
+          prompts: Json | null
+          status: string
+          summary: string | null
+          total_prompts: number | null
+          triggered_by: string | null
+        }
+        Insert: {
+          analysis_data?: Json | null
+          analysis_type?: string
+          created_at?: string
+          finished_at?: string | null
+          high_priority?: number | null
+          id?: string
+          low_priority?: number | null
+          medium_priority?: number | null
+          prompts?: Json | null
+          status?: string
+          summary?: string | null
+          total_prompts?: number | null
+          triggered_by?: string | null
+        }
+        Update: {
+          analysis_data?: Json | null
+          analysis_type?: string
+          created_at?: string
+          finished_at?: string | null
+          high_priority?: number | null
+          id?: string
+          low_priority?: number | null
+          medium_priority?: number | null
+          prompts?: Json | null
+          status?: string
+          summary?: string | null
+          total_prompts?: number | null
+          triggered_by?: string | null
+        }
+        Relationships: []
+      }
       proposals: {
         Row: {
           computers_qty: number
