@@ -115,7 +115,7 @@ function AdminLogin({ onLogin }: { onLogin: () => void }) {
       if (fnErr || !data?.success) {
         setError(data?.error || "Senha incorreta");
       } else {
-        sessionStorage.setItem("admin_token", data.token);
+        saveAdminToken(data.token);
         onLogin();
       }
     } catch {
