@@ -179,6 +179,7 @@ export default function AdminCertDiagnostic() {
             </label>
             <div className="relative">
               <Input
+                data-testid="certificate-diag-password-input"
                 type={showPassword ? "text" : "password"}
                 placeholder="Senha do arquivo .pfx"
                 value={password}
