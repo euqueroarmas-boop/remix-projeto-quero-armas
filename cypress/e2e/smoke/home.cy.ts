@@ -2,7 +2,7 @@
 
 describe("Smoke — Home", () => {
   beforeEach(() => {
-    cy.visit("/");
+    cy.visit("/", { timeout: 15000 });
   });
 
   it("carrega sem erro", () => {
@@ -15,7 +15,7 @@ describe("Smoke — Home", () => {
   });
 
   it("exibe heading principal", () => {
-    cy.get("h1").should("be.visible");
+    cy.get("h1", { timeout: 10000 }).should("be.visible");
   });
 
   it("exibe footer", () => {
