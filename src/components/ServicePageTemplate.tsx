@@ -415,7 +415,7 @@ const ServicePageTemplate = ({
       <UrgencyBlock whatsappMessage={whatsappMessage} currentPath={currentPath} cityName={cityName} pageTitle={title} />
 
       {/* ══ FAQ ══ */}
-      <section className="section-dark py-16 md:py-24">
+      <section className="section-dark py-16 md:py-24" data-testid="faq-section">
         <div className="container max-w-3xl">
           <motion.div {...fadeIn} className="mb-12">
             <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
@@ -429,8 +429,7 @@ const ServicePageTemplate = ({
               <motion.details
                 key={i}
                 initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: i * 0.05 }}
                 className="bg-secondary group"
               >
