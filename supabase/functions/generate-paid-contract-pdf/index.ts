@@ -139,9 +139,13 @@ async function buildPdfBytes(context: Awaited<ReturnType<typeof getPostPurchaseC
 
   drawSectionTitle("Dados do contratante");
   drawTextBlock(`Razão social: ${context.customer.razao_social}`, { bold: true });
-  drawTextBlock(`CPF/CNPJ: ${context.customer.cnpj_ou_cpf}`);
+  drawTextBlock(`CNPJ/CPF: ${context.customer.cnpj_ou_cpf}`);
   drawTextBlock(`Responsável: ${context.customer.responsavel}`);
-  drawTextBlock(`E-mail cadastrado: ${context.customer.email}`);
+  drawTextBlock(`E-mail: ${context.customer.email}`);
+
+  drawSectionTitle("Dados da contratada");
+  drawTextBlock("WMTI TECNOLOGIA DA INFORMAÇÃO LTDA", { bold: true });
+  drawTextBlock("CNPJ: 13.366.668/0001-07");
 
   drawSectionTitle("Dados da contratação");
   drawTextBlock(`Serviço/plano: ${buildServiceName(context)}`, { bold: true });
