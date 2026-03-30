@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { ScreenshotViewer, VideoViewer } from "@/components/admin/MediaViewer";
 import { formatDuration } from "@/lib/formatDuration";
+import { adminFunctionFetch, requireAdminToken } from "@/lib/adminSession";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -462,18 +463,17 @@ function copyDiagnostic(run: TestRun, mode: "full" | "error" = "full") {
 }
 
 function getAdminToken() {
-  return sessionStorage.getItem("admin_token") || "";
+  return requireAdminToken();
 }
 
 async function invokeRunTests(method: "GET" | "POST", params?: Record<string, string>, body?: any) {
   const url = new URL(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/run-tests`);
   if (params) Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
 
-  const res = await fetch(url.toString(), {
+  const res = await adminFunctionFetch(url.toString(), {
     method,
     headers: {
       "Content-Type": "application/json",
-      "x-admin-token": getAdminToken(),
     },
     ...(body ? { body: JSON.stringify(body) } : {}),
   });

@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { requireAdminToken } from "@/lib/adminSession";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -34,7 +35,7 @@ type DiagResult = {
 };
 
 function getAdminToken(): string {
-  return sessionStorage.getItem("admin_token") || "";
+  return requireAdminToken();
 }
 
 function StepRow({ step }: { step: DiagStep }) {

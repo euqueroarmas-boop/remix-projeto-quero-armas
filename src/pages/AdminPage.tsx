@@ -1,6 +1,13 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { adminQuerySingle, adminQuery } from "@/lib/adminApi";
+import {
+  ADMIN_SESSION_EXPIRED_EVENT,
+  ADMIN_SESSION_EXPIRED_MESSAGE,
+  clearAdminSession,
+  getValidAdminToken,
+  saveAdminToken,
+} from "@/lib/adminSession";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -108,7 +115,7 @@ function AdminLogin({ onLogin }: { onLogin: () => void }) {
       if (fnErr || !data?.success) {
         setError(data?.error || "Senha incorreta");
       } else {
-        sessionStorage.setItem("admin_token", data.token);
+        saveAdminToken(data.token);
         onLogin();
       }
     } catch {
@@ -557,8 +564,8 @@ function ClientesTab() {
     setError("");
 
     try {
-      const adminToken = sessionStorage.getItem("admin_token");
-      if (!adminToken) { setError("Sessão admin expirada. Faça login novamente."); setCreating(false); return; }
+      const adminToken = getValidAdminToken();
+      if (!adminToken) { setError(ADMIN_SESSION_EXPIRED_MESSAGE); setCreating(false); return; }
       
       const { data, error: fnErr } = await supabase.functions.invoke("create-client-user", {
         body: {
@@ -847,16 +854,28 @@ function AdminTopbar({ title, onMenuOpen, onLogout }: { title: string; onMenuOpe
 
 // ─── Main Page ───
 export default function AdminPage() {
-  const [authed, setAuthed] = useState(!!sessionStorage.getItem("admin_token"));
+  const [authed, setAuthed] = useState(!!getValidAdminToken());
   const [activeSection, setActiveSection] = useState("dashboard");
   const [menuOpen, setMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const isMobile = useIsMobile();
 
+  useEffect(() => {
+    const syncSession = () => setAuthed(!!getValidAdminToken());
+    const intervalId = window.setInterval(syncSession, 60_000);
+    window.addEventListener(ADMIN_SESSION_EXPIRED_EVENT, syncSession);
+    window.addEventListener("focus", syncSession);
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener(ADMIN_SESSION_EXPIRED_EVENT, syncSession);
+      window.removeEventListener("focus", syncSession);
+    };
+  }, []);
+
   if (!authed) return <AdminLogin onLogin={() => setAuthed(true)} />;
 
   const handleLogout = () => {
-    sessionStorage.removeItem("admin_token");
+    clearAdminSession("manual");
     setAuthed(false);
   };
 
