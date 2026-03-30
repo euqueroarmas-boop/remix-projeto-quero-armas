@@ -1836,6 +1836,83 @@ export default function AdminTestCenter({ onBack }: { onBack?: () => void }) {
     });
   }, [runs]);
 
+  const toggleAutoExecution = useCallback((val: boolean) => {
+    setAutoExecution(val);
+    localStorage.setItem("wmti_auto_execution", String(val));
+    toast.info(val ? "Auto-Execution ATIVADO" : "Auto-Execution DESATIVADO");
+  }, []);
+
+  const triggerAutoFix = useCallback(async (failedRun: TestRun) => {
+    const MAX_ATTEMPTS = 3;
+    const key = failedRun.test_type;
+    const current = autoFixAttemptsRef.current[key] || 0;
+    if (current >= MAX_ATTEMPTS) {
+      toast.error(`Auto-fix: ${key} falhou após ${MAX_ATTEMPTS} tentativas`);
+      autoFixAttemptsRef.current[key] = 0;
+      setAutoFixing(null);
+      return;
+    }
+    const attempt = current + 1;
+    autoFixAttemptsRef.current[key] = attempt;
+    setAutoFixing(key);
+    toast.info(`🤖 Auto-fix ${key}: tentativa ${attempt}/${MAX_ATTEMPTS}...`);
+
+    try {
+      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auto-fix-cycle`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-token": getAdminToken(),
+        },
+        body: JSON.stringify({ run_id: failedRun.id, attempt, max_attempts: MAX_ATTEMPTS }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || `HTTP ${resp.status}`);
+
+      if (data.success) {
+        toast.success(`✅ Auto-fix: patch aplicado em ${data.file_path} (${data.commit_sha?.slice(0, 7)})`);
+        // The re-run was triggered by the edge function, wait for result via realtime
+      } else {
+        toast.warning(`Auto-fix: ${data.error || "sem código gerado"}`);
+        setAutoFixing(null);
+      }
+    } catch (e) {
+      console.error("Auto-fix error:", e);
+      toast.error(`Auto-fix falhou: ${e instanceof Error ? e.message : "erro"}`);
+      setAutoFixing(null);
+    }
+  }, []);
+
+  // Auto-fix trigger: when a run transitions to "failed" and autoExecution is on
+  useEffect(() => {
+    if (!autoExecution) return;
+    const failedRun = runs.find(r =>
+      r.status === "failed" &&
+      r.failed_tests > 0 &&
+      r.execution_engine === "github_actions" &&
+      r.finished_at &&
+      (Date.now() - new Date(r.finished_at).getTime()) < 60_000 // only recent failures
+    );
+    if (failedRun && autoFixing !== failedRun.test_type) {
+      // Check if this is a re-run after a fix (the test might have passed now as "success")
+      const alreadyAttempted = (autoFixAttemptsRef.current[failedRun.test_type] || 0);
+      // If a new failed run appears for the same type, it means our fix didn't work — retry
+      if (alreadyAttempted > 0 && alreadyAttempted < 3) {
+        triggerAutoFix(failedRun);
+      } else if (alreadyAttempted === 0) {
+        triggerAutoFix(failedRun);
+      }
+    }
+    // Reset attempts when a test passes
+    runs.forEach(r => {
+      if (r.status === "success" && autoFixAttemptsRef.current[r.test_type]) {
+        toast.success(`🎉 Auto-fix validado: ${r.test_type} passou!`);
+        autoFixAttemptsRef.current[r.test_type] = 0;
+        if (autoFixing === r.test_type) setAutoFixing(null);
+      }
+    });
+  }, [runs, autoExecution, autoFixing, triggerAutoFix]);
+
   const handleRunTest = async (testType: string) => {
     setRunningTests(prev => new Set(prev).add(testType));
     try {
