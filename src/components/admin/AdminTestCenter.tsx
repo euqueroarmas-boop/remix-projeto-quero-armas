@@ -666,11 +666,18 @@ function ErrorDetail({ result }: { result: DetailedTestResult }) {
                   result.cypress_command ? `\nComando Cypress:\n${result.cypress_command}` : "",
                   result.diff ? `\nExpected: ${JSON.stringify(result.diff.expected)}\nActual: ${JSON.stringify(result.diff.actual)}` : "",
                 ].filter(Boolean).join("\n");
-                navigator.clipboard.writeText(parts);
-                toast.success("Erro copiado com sucesso");
+                const diagnosis = inferErrorCategory(result.error || "");
+                const fullParts = [
+                  parts,
+                  `\n── CATEGORIA: ${diagnosis.category} ──`,
+                  `\n── COMO RESOLVER ──`,
+                  ...diagnosis.suggestions.map((s, j) => `${j + 1}. ${s}`),
+                ].join("\n");
+                navigator.clipboard.writeText(fullParts);
+                toast.success("Diagnóstico copiado ✓");
               }}
             >
-              <Copy className="h-3 w-3" /> Copiar erro
+              <Copy className="h-3 w-3" /> Copiar diagnóstico
             </Button>
           </div>
         </CollapsibleContent>
@@ -1123,7 +1130,7 @@ function RunDetail({ run, onBack }: { run: TestRun; onBack: () => void }) {
             <span className="text-red-400 font-medium">{run.error_message}</span>
           </div>
           <Button variant="ghost" size="sm" className="h-7 px-2 text-[10px] gap-1 flex-shrink-0" onClick={() => copyDiagnostic(run, "error")}>
-            <Copy className="h-3 w-3" /> Copiar
+            <Copy className="h-3 w-3" /> Copiar diagnóstico
           </Button>
         </div>
       )}
@@ -1133,7 +1140,7 @@ function RunDetail({ run, onBack }: { run: TestRun; onBack: () => void }) {
           {run.screenshot_urls && run.screenshot_urls.length > 0 && <ScreenshotViewer urls={run.screenshot_urls} />}
           {run.video_urls && run.video_urls.length > 0 && <VideoViewer urls={run.video_urls} />}
           <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={() => copyDiagnostic(run, "full")}>
-            <Copy className="h-3.5 w-3.5" /> Dump completo
+            <Copy className="h-3.5 w-3.5" /> Copiar diagnóstico completo
           </Button>
         </div>
       )}
@@ -1149,23 +1156,9 @@ function RunDetail({ run, onBack }: { run: TestRun; onBack: () => void }) {
               </CardTitle>
               {failed.length > 0 && (
                 <Button variant="outline" size="sm" className="text-[11px] h-7 gap-1" onClick={() => {
-                  const dump = failed.map((t, i) => [
-                    `── Falha ${i + 1}/${failed.length} ──`,
-                    `Teste: ${t.name}`,
-                    t.fullTitle ? `Título completo: ${t.fullTitle}` : "",
-                    t.spec ? `Spec: ${t.spec}` : "",
-                    t.url ? `URL: ${t.url}` : "",
-                    `Duração: ${formatDuration(t.duration_ms)}`,
-                    t.error ? `\nErro:\n${t.error}` : "",
-                    t.stack_trace ? `\nStack Trace:\n${t.stack_trace}` : "",
-                    t.cypress_command ? `\nComando Cypress:\n${t.cypress_command}` : "",
-                    t.diff ? `\nExpected: ${JSON.stringify(t.diff.expected)}\nActual: ${JSON.stringify(t.diff.actual)}` : "",
-                    "",
-                  ].filter(Boolean).join("\n")).join("\n");
-                  navigator.clipboard.writeText(dump);
-                  toast.success("Todas as falhas copiadas");
+                  copyDiagnostic(run, "error");
                 }}>
-                  <Copy className="h-3 w-3" /> Copiar todas
+                  <Copy className="h-3 w-3" /> Copiar diagnóstico completo
                 </Button>
               )}
             </div>
@@ -1296,7 +1289,7 @@ function RunDetail({ run, onBack }: { run: TestRun; onBack: () => void }) {
                   </CardTitle>
                   <div className="flex items-center gap-2">
                     <Button variant="ghost" size="sm" className="h-7 px-2 text-[10px] gap-1" onClick={(e) => { e.stopPropagation(); copyDiagnostic(run, "full"); }}>
-                      <Copy className="h-3 w-3" /> Copiar dump
+                      <Copy className="h-3 w-3" /> Copiar diagnóstico
                     </Button>
                     <ChevronDown className="h-4 w-4 text-muted-foreground" />
                   </div>
