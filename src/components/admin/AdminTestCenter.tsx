@@ -736,15 +736,18 @@ function LiveProgressPanel({ run }: { run: TestRun }) {
   );
 }
 
-// ─── Detail View (ENHANCED with full observability) ───
+// ─── Detail View (Restructured with executive hierarchy) ───
 function RunDetail({ run, onBack }: { run: TestRun; onBack: () => void }) {
   const results = (run.results || []) as DetailedTestResult[];
   const passed = results.filter(r => r.status === "passed");
   const failed = results.filter(r => r.status === "failed");
   const skipped = results.filter(r => r.status === "skipped");
   const pct = run.total_tests > 0 ? Math.round((run.passed_tests / run.total_tests) * 100) : 0;
+  const [showPassed, setShowPassed] = useState(false);
 
-  // Group by spec file
+  const actualFailedCount = failed.length || run.failed_tests;
+  const hasFailed = actualFailedCount > 0;
+
   const specGroups = results.reduce<Record<string, DetailedTestResult[]>>((acc, r) => {
     const spec = r.spec || "Sem spec";
     if (!acc[spec]) acc[spec] = [];
@@ -752,167 +755,208 @@ function RunDetail({ run, onBack }: { run: TestRun; onBack: () => void }) {
     return acc;
   }, {});
 
+  const suiteLabel = SUITES.find(s => s.id === run.test_type)?.label || run.test_type;
+
   return (
-    <div className="space-y-4">
-      <Button variant="ghost" size="sm" onClick={onBack} className="text-xs">
-        <ArrowLeft className="h-3 w-3 mr-1" /> Voltar ao histórico
+    <div className="space-y-5">
+      <Button variant="ghost" size="sm" onClick={onBack} className="text-xs gap-1">
+        <ArrowLeft className="h-3.5 w-3.5" /> Voltar
       </Button>
 
-      {/* Summary Card */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between gap-2 flex-wrap">
-            <CardTitle className="text-base">
-              {SUITES.find(s => s.id === run.test_type)?.label || run.test_type}
-            </CardTitle>
+      {/* ═══ 1) EXECUTIVE SUMMARY ═══ */}
+      <Card className={hasFailed ? "border-red-600/30" : run.status === "success" ? "border-green-600/30" : "border-border"}>
+        <CardContent className="p-4 md:p-5 space-y-4">
+          <div className="flex items-start justify-between gap-3 flex-wrap">
+            <div>
+              <h2 className="text-lg font-bold text-foreground">{suiteLabel}</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Suite: {run.suite} · Tipo: {run.test_type}
+              </p>
+            </div>
             <RunStatusBadge status={run.status} />
           </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
-            <div><span className="text-muted-foreground block mb-0.5">Início</span><span className="text-foreground font-medium">{run.started_at ? new Date(run.started_at).toLocaleString("pt-BR") : "—"}</span></div>
-            <div><span className="text-muted-foreground block mb-0.5">Duração</span><span className="text-foreground font-medium">{formatDuration(run.duration_ms)}</span></div>
-            <div><span className="text-muted-foreground block mb-0.5">Motor</span><span className="text-foreground font-medium">{run.execution_engine}</span></div>
-            <div><span className="text-muted-foreground block mb-0.5">Disparado por</span><span className="text-foreground font-medium">{run.triggered_by}</span></div>
-          </div>
 
-          {/* Progress bar */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">Taxa de sucesso</span>
-              <span className="font-bold text-foreground">{pct}%</span>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-2 text-xs">
+            <div>
+              <span className="text-muted-foreground block text-[10px] uppercase tracking-wider">Ambiente</span>
+              <span className="text-foreground font-medium">{run.environment}</span>
             </div>
-            <div className="h-2.5 rounded-full bg-muted overflow-hidden flex">
-              <div className="bg-green-500 h-full transition-all" style={{ width: `${(run.passed_tests / (run.total_tests || 1)) * 100}%` }} />
-              <div className="bg-red-500 h-full transition-all" style={{ width: `${(run.failed_tests / (run.total_tests || 1)) * 100}%` }} />
-              <div className="bg-yellow-500 h-full transition-all" style={{ width: `${(run.skipped_tests / (run.total_tests || 1)) * 100}%` }} />
+            <div>
+              <span className="text-muted-foreground block text-[10px] uppercase tracking-wider">Motor</span>
+              <span className="text-foreground font-medium">{run.execution_engine === "github_actions" ? "GitHub Actions" : run.execution_engine === "edge_function" ? "Edge Function" : run.execution_engine}</span>
             </div>
-            <div className="flex items-center gap-4 text-xs">
-              <span className="text-green-400">✓ {run.passed_tests} passaram</span>
-              <span className="text-red-400">✗ {run.failed_tests} falharam</span>
-              {run.skipped_tests > 0 && <span className="text-yellow-400">⊘ {run.skipped_tests} pulados</span>}
-              <span className="text-muted-foreground ml-auto">Total: {run.total_tests}</span>
+            <div>
+              <span className="text-muted-foreground block text-[10px] uppercase tracking-wider">Início</span>
+              <span className="text-foreground font-medium">{run.started_at ? new Date(run.started_at).toLocaleString("pt-BR") : "—"}</span>
+            </div>
+            <div>
+              <span className="text-muted-foreground block text-[10px] uppercase tracking-wider">Duração</span>
+              <span className="text-foreground font-medium">{formatDuration(run.duration_ms)}</span>
             </div>
           </div>
 
-          {run.error_message && (
-            <div className="p-3 rounded-lg border border-destructive/30 bg-destructive/5 text-xs">
-              <div className="flex items-center justify-between mb-1">
-                <p className="font-semibold text-destructive">Erro principal</p>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 px-2 text-[10px] gap-1"
-                  onClick={() => copyDiagnostic(run, "error")}
-                >
-                  <Copy className="h-3 w-3" /> Copiar erro
-                </Button>
-              </div>
-              <p className="text-muted-foreground whitespace-pre-wrap">{run.error_message}</p>
-            </div>
-          )}
-
-          {/* Action buttons: screenshots, videos, GitHub */}
-          <div className="flex flex-wrap gap-2">
-            {run.screenshot_urls && run.screenshot_urls.length > 0 && (
-              <ScreenshotViewer urls={run.screenshot_urls} />
-            )}
-            {run.video_urls && run.video_urls.length > 0 && (
-              <VideoViewer urls={run.video_urls} />
-            )}
+          <div className="flex flex-wrap items-center gap-3 text-[11px]">
+            <span className="text-muted-foreground">
+              Run ID: <span className="font-mono text-foreground">{run.id.substring(0, 8)}…</span>
+              <button className="ml-1 text-muted-foreground hover:text-foreground" onClick={() => { navigator.clipboard.writeText(run.id); toast.success("Run ID copiado"); }}>
+                <Copy className="h-3 w-3 inline" />
+              </button>
+            </span>
             {run.github_run_url && (
-              <a href={run.github_run_url} target="_blank" rel="noopener noreferrer">
-                <Button variant="outline" size="sm" className="text-xs gap-1.5">
-                  <ExternalLink className="h-3.5 w-3.5" />
-                  GitHub Actions
-                </Button>
+              <a href={run.github_run_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">
+                <ExternalLink className="h-3 w-3" /> GitHub Actions #{run.github_run_id}
               </a>
+            )}
+            {run.base_url && (
+              <span className="text-muted-foreground">URL: <span className="font-mono text-foreground">{run.base_url}</span></span>
             )}
           </div>
         </CardContent>
       </Card>
 
-      {/* Failed Tests - Detailed with expandable errors */}
-      {failed.length > 0 && (
-        <Card className="border-destructive/30">
+      {/* ═══ 2) NUMERIC SUMMARY ═══ */}
+      <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+        <Card><CardContent className="p-3 text-center">
+          <p className="text-2xl font-black text-foreground tabular-nums">{run.total_tests}</p>
+          <p className="text-[10px] text-muted-foreground">Total</p>
+        </CardContent></Card>
+        <Card className="border-green-600/20"><CardContent className="p-3 text-center">
+          <p className="text-2xl font-black text-green-400 tabular-nums">{run.passed_tests}</p>
+          <p className="text-[10px] text-green-400/70">Passaram</p>
+        </CardContent></Card>
+        <Card className={hasFailed ? "border-red-600/30 bg-red-600/5" : ""}><CardContent className="p-3 text-center">
+          <p className={`text-2xl font-black tabular-nums ${hasFailed ? "text-red-400" : "text-foreground"}`}>{run.failed_tests}</p>
+          <p className={`text-[10px] ${hasFailed ? "text-red-400/70" : "text-muted-foreground"}`}>Falharam</p>
+        </CardContent></Card>
+        <Card><CardContent className="p-3 text-center">
+          <p className="text-2xl font-black text-foreground tabular-nums">{run.skipped_tests}</p>
+          <p className="text-[10px] text-muted-foreground">Pulados</p>
+        </CardContent></Card>
+        <Card><CardContent className="p-3 text-center">
+          <p className="text-2xl font-black text-foreground tabular-nums">{run.completed_specs ?? "—"}/{run.total_specs ?? "—"}</p>
+          <p className="text-[10px] text-muted-foreground">Specs</p>
+        </CardContent></Card>
+        <Card><CardContent className="p-3 text-center">
+          <p className={`text-2xl font-black tabular-nums ${pct === 100 && !hasFailed ? "text-green-400" : pct >= 80 ? "text-foreground" : "text-red-400"}`}>{pct}%</p>
+          <p className="text-[10px] text-muted-foreground">Sucesso</p>
+        </CardContent></Card>
+      </div>
+
+      {run.total_tests > 0 && (
+        <div className="h-2.5 rounded-full bg-muted overflow-hidden flex">
+          <div className="bg-green-500 h-full transition-all" style={{ width: `${(run.passed_tests / run.total_tests) * 100}%` }} />
+          <div className="bg-red-500 h-full transition-all" style={{ width: `${(run.failed_tests / run.total_tests) * 100}%` }} />
+          {run.skipped_tests > 0 && <div className="bg-yellow-500 h-full transition-all" style={{ width: `${(run.skipped_tests / run.total_tests) * 100}%` }} />}
+        </div>
+      )}
+
+      {run.error_message && (
+        <div className="p-3 rounded-lg border border-red-600/30 bg-red-600/5 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-xs">
+            <AlertTriangle className="h-4 w-4 text-red-400 flex-shrink-0" />
+            <span className="text-red-400 font-medium">{run.error_message}</span>
+          </div>
+          <Button variant="ghost" size="sm" className="h-7 px-2 text-[10px] gap-1 flex-shrink-0" onClick={() => copyDiagnostic(run, "error")}>
+            <Copy className="h-3 w-3" /> Copiar
+          </Button>
+        </div>
+      )}
+
+      {(run.screenshot_urls?.length || run.video_urls?.length) && (
+        <div className="flex flex-wrap gap-2">
+          {run.screenshot_urls && run.screenshot_urls.length > 0 && <ScreenshotViewer urls={run.screenshot_urls} />}
+          {run.video_urls && run.video_urls.length > 0 && <VideoViewer urls={run.video_urls} />}
+          <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={() => copyDiagnostic(run, "full")}>
+            <Copy className="h-3.5 w-3.5" /> Dump completo
+          </Button>
+        </div>
+      )}
+
+      {/* ═══ 3) FAILURES BLOCK ═══ */}
+      {hasFailed && (
+        <Card className="border-red-600/30">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm text-destructive flex items-center gap-2">
+              <CardTitle className="text-sm text-red-400 flex items-center gap-2">
                 <XCircle className="h-4 w-4" />
-                Testes que Falharam ({failed.length})
+                Falhas ({actualFailedCount})
               </CardTitle>
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-[11px] h-7 gap-1"
-                onClick={() => {
-                  const allErrors = failed.map(t => [
-                    `❌ ${t.name}`,
-                    t.spec ? `   Spec: ${t.spec}` : "",
-                    t.error ? `   Erro: ${t.error}` : "",
-                    t.stack_trace ? `   Stack: ${t.stack_trace}` : "",
-                    t.cypress_command ? `   Comando: ${t.cypress_command}` : "",
+              {failed.length > 0 && (
+                <Button variant="outline" size="sm" className="text-[11px] h-7 gap-1" onClick={() => {
+                  const dump = failed.map((t, i) => [
+                    `── Falha ${i + 1}/${failed.length} ──`,
+                    `Teste: ${t.name}`,
+                    t.fullTitle ? `Título completo: ${t.fullTitle}` : "",
+                    t.spec ? `Spec: ${t.spec}` : "",
+                    t.url ? `URL: ${t.url}` : "",
+                    `Duração: ${formatDuration(t.duration_ms)}`,
+                    t.error ? `\nErro:\n${t.error}` : "",
+                    t.stack_trace ? `\nStack Trace:\n${t.stack_trace}` : "",
+                    t.cypress_command ? `\nComando Cypress:\n${t.cypress_command}` : "",
+                    t.diff ? `\nExpected: ${JSON.stringify(t.diff.expected)}\nActual: ${JSON.stringify(t.diff.actual)}` : "",
                     "",
                   ].filter(Boolean).join("\n")).join("\n");
-                  navigator.clipboard.writeText(allErrors);
-                  toast.success("Todos os erros copiados");
-                }}
-              >
-                <Copy className="h-3 w-3" /> Copiar todos
-              </Button>
+                  navigator.clipboard.writeText(dump);
+                  toast.success("Todas as falhas copiadas");
+                }}>
+                  <Copy className="h-3 w-3" /> Copiar todas
+                </Button>
+              )}
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              {failed.map((t, i) => (
-                <ErrorDetail key={i} result={t} />
-              ))}
-            </div>
+            {failed.length > 0 ? (
+              <div className="space-y-2">{failed.map((t, i) => <ErrorDetail key={i} result={t} />)}</div>
+            ) : (
+              <p className="text-xs text-muted-foreground py-3">
+                {run.failed_tests} teste(s) falharam, mas os detalhes individuais não foram capturados.
+                Verifique os logs técnicos ou o GitHub Actions.
+              </p>
+            )}
           </CardContent>
         </Card>
       )}
 
-      {/* Tests grouped by spec */}
-      {Object.keys(specGroups).length > 1 && (
+      {/* ═══ 4) SPEC BREAKDOWN ═══ */}
+      {Object.keys(specGroups).length > 0 && (
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
               <FileText className="h-4 w-4 text-primary" />
-              Por Arquivo de Spec
+              Resultados por Spec ({Object.keys(specGroups).length})
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
+            <div className="space-y-2">
               {Object.entries(specGroups).map(([spec, tests]) => {
                 const specPassed = tests.filter(t => t.status === "passed").length;
                 const specFailed = tests.filter(t => t.status === "failed").length;
+                const allPassed = specFailed === 0;
                 return (
                   <Collapsible key={spec}>
                     <CollapsibleTrigger className="w-full">
-                      <div className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/30 cursor-pointer">
-                        <span className="text-xs font-mono text-foreground truncate">{spec}</span>
-                        <div className="flex items-center gap-2 text-[11px]">
+                      <div className={`flex items-center justify-between p-2.5 rounded-lg cursor-pointer transition-colors ${allPassed ? "hover:bg-green-600/5" : "hover:bg-red-600/5 bg-red-600/5"}`}>
+                        <div className="flex items-center gap-2 min-w-0">
+                          {allPassed ? <CheckCircle className="h-3.5 w-3.5 text-green-400 flex-shrink-0" /> : <XCircle className="h-3.5 w-3.5 text-red-400 flex-shrink-0" />}
+                          <span className="text-xs font-mono text-foreground truncate">{spec}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-[11px] flex-shrink-0">
                           <span className="text-green-400">{specPassed}✓</span>
                           {specFailed > 0 && <span className="text-red-400">{specFailed}✗</span>}
+                          <span className="text-muted-foreground">/{tests.length}</span>
                           <ChevronDown className="h-3 w-3 text-muted-foreground" />
                         </div>
                       </div>
                     </CollapsibleTrigger>
                     <CollapsibleContent>
-                      <div className="pl-3 border-l-2 border-border ml-2 space-y-1 mt-1">
+                      <div className="pl-3 border-l-2 border-border ml-4 space-y-0.5 mt-1 mb-2">
                         {tests.map((t, i) => (
                           <div key={i} className="flex items-center justify-between text-xs py-1 px-2">
-                            <div className="flex items-center gap-1.5">
-                              {t.status === "passed" ? (
-                                <CheckCircle className="h-3 w-3 text-green-400" />
-                              ) : t.status === "failed" ? (
-                                <XCircle className="h-3 w-3 text-red-400" />
-                              ) : (
-                                <Clock className="h-3 w-3 text-yellow-400" />
-                              )}
-                              <span className="text-foreground">{t.name}</span>
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              {t.status === "passed" ? <CheckCircle className="h-3 w-3 text-green-400 flex-shrink-0" /> : t.status === "failed" ? <XCircle className="h-3 w-3 text-red-400 flex-shrink-0" /> : <Clock className="h-3 w-3 text-yellow-400 flex-shrink-0" />}
+                              <span className="text-foreground truncate">{t.name}</span>
                             </div>
-                            <span className="text-muted-foreground">{formatDuration(t.duration_ms)}</span>
+                            <span className="text-muted-foreground flex-shrink-0 ml-2">{formatDuration(t.duration_ms)}</span>
                           </div>
                         ))}
                       </div>
@@ -925,75 +969,83 @@ function RunDetail({ run, onBack }: { run: TestRun; onBack: () => void }) {
         </Card>
       )}
 
-      {/* Passed Tests */}
+      {/* ═══ 5) PASSED (collapsed) ═══ */}
       {passed.length > 0 && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-green-400 flex items-center gap-2">
-              <CheckCircle className="h-4 w-4" />
-              Testes que Passaram ({passed.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-1">
-              {passed.map((t, i) => (
-                <div key={i} className="flex justify-between items-center text-xs py-1.5 px-2 rounded hover:bg-muted/30">
-                  <span className="text-foreground">{t.name}</span>
-                  <span className="text-muted-foreground">{formatDuration(t.duration_ms)}</span>
+        <Collapsible open={showPassed} onOpenChange={setShowPassed}>
+          <Card>
+            <CollapsibleTrigger className="w-full">
+              <CardHeader className="pb-2 cursor-pointer">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm text-green-400 flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4" />
+                    Testes Aprovados ({passed.length})
+                  </CardTitle>
+                  <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${showPassed ? "rotate-180" : ""}`} />
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent className="pt-0">
+                <div className="space-y-0.5">
+                  {passed.map((t, i) => (
+                    <div key={i} className="flex justify-between items-center text-xs py-1.5 px-2 rounded hover:bg-muted/30">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <CheckCircle className="h-3 w-3 text-green-400 flex-shrink-0" />
+                        <span className="text-foreground truncate">{t.name}</span>
+                      </div>
+                      <span className="text-muted-foreground flex-shrink-0 ml-2">{formatDuration(t.duration_ms)}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
       )}
 
-      {/* Skipped Tests */}
       {skipped.length > 0 && (
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-yellow-400 flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              Testes Pulados ({skipped.length})
-            </CardTitle>
+            <CardTitle className="text-sm text-yellow-400 flex items-center gap-2"><Clock className="h-4 w-4" /> Testes Pulados ({skipped.length})</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               {skipped.map((t, i) => (
-                <div key={i} className="flex justify-between items-center text-xs py-1.5 px-2 rounded hover:bg-muted/30">
-                  <span className="text-muted-foreground">{t.name}</span>
-                  <span className="text-muted-foreground">{formatDuration(t.duration_ms)}</span>
-                </div>
+                <div key={i} className="flex justify-between items-center text-xs py-1.5 px-2"><span className="text-muted-foreground">{t.name}</span><span className="text-muted-foreground">{formatDuration(t.duration_ms)}</span></div>
               ))}
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Technical Logs */}
+      {/* ═══ 6) TECHNICAL LOGS (collapsed, support role) ═══ */}
       {run.logs && (
-        <Card>
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <Terminal className="h-4 w-4 text-muted-foreground" />
-                Logs técnicos
-              </CardTitle>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 px-2 text-[10px] gap-1"
-                onClick={() => copyDiagnostic(run, "full")}
-              >
-                <Copy className="h-3 w-3" /> Copiar dump completo
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <pre className="text-[11px] text-muted-foreground bg-muted/50 p-3 rounded overflow-auto max-h-48 font-mono">
-              {JSON.stringify(run.logs, null, 2)}
-            </pre>
-          </CardContent>
-        </Card>
+        <Collapsible>
+          <Card>
+            <CollapsibleTrigger className="w-full">
+              <CardHeader className="pb-2 cursor-pointer">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Terminal className="h-4 w-4 text-muted-foreground" /> Logs Técnicos
+                  </CardTitle>
+                  <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="sm" className="h-7 px-2 text-[10px] gap-1" onClick={(e) => { e.stopPropagation(); copyDiagnostic(run, "full"); }}>
+                      <Copy className="h-3 w-3" /> Copiar dump
+                    </Button>
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                </div>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent className="pt-0">
+                <pre className="text-[11px] text-muted-foreground bg-muted/50 p-3 rounded overflow-auto max-h-64 font-mono whitespace-pre-wrap">
+                  {JSON.stringify(run.logs, null, 2)}
+                </pre>
+              </CardContent>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
       )}
     </div>
   );
