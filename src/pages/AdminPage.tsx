@@ -12,8 +12,10 @@ import {
 import {
   BarChart3, AlertTriangle, CreditCard, FileText, LogOut, RefreshCw, ChevronLeft, ChevronRight, Eye, Users, Plus, Loader2, Check, Copy, Shield,
   LayoutDashboard, ScrollText, CreditCard as CreditCardIcon, UserCog, Megaphone, ShieldAlert, Webhook, ClipboardCheck, Activity, Stethoscope, FlaskConical, PenTool, TestTube2, Brain, DollarSign, MessageSquareCode,
+  Search, Bell, ChevronDown, PanelLeftClose, PanelLeft, Menu,
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { StatusPill, SectionHeader, DataPanel } from "@/components/admin/ui/AdminPrimitives";
 import AdminSecurityEvents from "@/components/admin/AdminSecurityEvents";
 import AdminWebhooks from "@/components/admin/AdminWebhooks";
 import AdminAudit from "@/components/admin/AdminAudit";
@@ -23,6 +25,7 @@ import AdminDiagnostics from "@/components/admin/AdminDiagnostics";
 import AdminCommandCenter from "@/components/admin/AdminCommandCenter";
 import AdminFullscreenMenu from "@/components/admin/AdminFullscreenMenu";
 import LogFullscreenViewer from "@/components/admin/LogFullscreenViewer";
+import { cn } from "@/lib/utils";
 
 const QAPanel = lazy(() => import("@/components/admin/qa/QAPanel"));
 const AdminBlogGenerator = lazy(() => import("@/components/admin/AdminBlogGenerator"));
@@ -67,6 +70,11 @@ const NAV_GROUPS = [
       { id: "qa", label: "QA", icon: FlaskConical },
       { id: "test-center", label: "Centro de Testes", icon: TestTube2 },
       { id: "blog-ai", label: "Blog IA", icon: PenTool },
+    ],
+  },
+  {
+    label: "Inteligência",
+    items: [
       { id: "prompt-intelligence", label: "Prompt Intelligence", icon: Brain },
       { id: "revenue-intelligence", label: "Receita", icon: DollarSign },
       { id: "dev-chat", label: "DevChat", icon: MessageSquareCode },
@@ -74,6 +82,7 @@ const NAV_GROUPS = [
   },
 ];
 
+// ─── Login ───
 function AdminLogin({ onLogin }: { onLogin: () => void }) {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -101,31 +110,39 @@ function AdminLogin({ onLogin }: { onLogin: () => void }) {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle className="text-center text-foreground">🛡️ Painel Administrativo</CardTitle>
-          <p className="text-center text-sm text-muted-foreground">WMTi Tecnologia</p>
-        </CardHeader>
-        <CardContent>
+      <div className="w-full max-w-sm">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 mb-4">
+            <Shield className="h-6 w-6 text-primary" />
+          </div>
+          <h1 className="text-lg font-bold text-foreground">WMTi Operations</h1>
+          <p className="text-xs text-muted-foreground mt-1">Centro de Controle · Produção</p>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
-            <Input
-              type="password"
-              placeholder="Senha de acesso"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="text-foreground"
-            />
-            {error && <p className="text-destructive text-sm">{error}</p>}
-            <Button type="submit" className="w-full" disabled={loading}>
+            <div>
+              <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">Senha de Acesso</label>
+              <Input
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="bg-muted/30 border-border/60 text-foreground h-10"
+              />
+            </div>
+            {error && <p className="text-destructive text-xs bg-destructive/10 rounded-md px-3 py-2">{error}</p>}
+            <Button type="submit" className="w-full h-10" disabled={loading}>
+              {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               {loading ? "Verificando..." : "Entrar"}
             </Button>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
 
+// ─── Types ───
 type LogRow = {
   id: string;
   tipo: string;
@@ -150,14 +167,17 @@ type PaymentRow = {
 
 function StatusBadge({ status }: { status: string }) {
   const color =
-    status === "success"
-      ? "bg-green-600/20 text-green-400 border-green-600/30"
-      : status === "error"
-      ? "bg-red-600/20 text-red-400 border-red-600/30"
-      : "bg-yellow-600/20 text-yellow-400 border-yellow-600/30";
-  return <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${color}`}>{status}</span>;
+    status === "success" || status === "RECEIVED"
+      ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/25"
+      : status === "error" || status === "OVERDUE"
+      ? "bg-red-500/15 text-red-400 border-red-500/25"
+      : status === "warning"
+      ? "bg-amber-500/15 text-amber-400 border-amber-500/25"
+      : "bg-muted/50 text-muted-foreground border-border/60";
+  return <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium border ${color}`}>{status}</span>;
 }
 
+// ─── Dashboard Stats ───
 function Dashboard() {
   const [stats, setStats] = useState({ totalLogs: 0, errors24h: 0, webhooks: 0, payments: 0 });
   const [loading, setLoading] = useState(true);
@@ -192,32 +212,31 @@ function Dashboard() {
     { title: "Total de Logs", value: stats.totalLogs, icon: FileText, color: "text-blue-400" },
     { title: "Erros (24h)", value: stats.errors24h, icon: AlertTriangle, color: "text-red-400" },
     { title: "Webhooks", value: stats.webhooks, icon: BarChart3, color: "text-purple-400" },
-    { title: "Pagamentos", value: stats.payments, icon: CreditCard, color: "text-green-400" },
+    { title: "Pagamentos", value: stats.payments, icon: CreditCard, color: "text-emerald-400" },
   ];
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
       {cards.map((c) => (
-        <Card key={c.title}>
-          <CardContent className="pt-5 pb-5 px-5">
-            <div className="flex items-center justify-between gap-2">
-              <div className="min-w-0">
-                <p className="text-xs text-muted-foreground truncate">{c.title}</p>
-                <p className={`text-3xl font-bold ${c.color} mt-1`}>
-                  {loading ? "..." : c.value}
-                </p>
-              </div>
-              <div className="p-2.5 rounded-lg bg-muted">
-                <c.icon className={`h-5 w-5 ${c.color} opacity-60`} />
-              </div>
+        <div key={c.title} className="rounded-lg border border-border/60 bg-card p-4">
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground truncate">{c.title}</p>
+              <p className={`text-2xl font-bold font-mono tabular-nums ${c.color} mt-1`}>
+                {loading ? "—" : c.value}
+              </p>
             </div>
-          </CardContent>
-        </Card>
+            <div className={`p-2 rounded-md bg-muted/40`}>
+              <c.icon className={`h-4 w-4 ${c.color} opacity-60`} />
+            </div>
+          </div>
+        </div>
       ))}
     </div>
   );
 }
 
+// ─── Logs Tab ───
 function LogsTab({ onlyErrors = false }: { onlyErrors?: boolean }) {
   const isMobile = useIsMobile();
   const [logs, setLogs] = useState<LogRow[]>([]);
@@ -258,9 +277,10 @@ function LogsTab({ onlyErrors = false }: { onlyErrors?: boolean }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-2 items-center">
+      {/* Filters bar */}
+      <div className="flex flex-wrap gap-2 items-center rounded-lg border border-border/40 bg-card/50 p-3">
         <Select value={filterTipo} onValueChange={(v) => { setFilterTipo(v); setPage(0); }}>
-          <SelectTrigger className="w-36 text-xs h-8"><SelectValue placeholder="Tipo" /></SelectTrigger>
+          <SelectTrigger className="w-36 text-[11px] h-8 bg-muted/30 border-border/50"><SelectValue placeholder="Tipo" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos os tipos</SelectItem>
             <SelectItem value="checkout">Checkout</SelectItem>
@@ -274,7 +294,7 @@ function LogsTab({ onlyErrors = false }: { onlyErrors?: boolean }) {
         </Select>
         {!onlyErrors && (
           <Select value={filterStatus} onValueChange={(v) => { setFilterStatus(v); setPage(0); }}>
-            <SelectTrigger className="w-32 text-xs h-8"><SelectValue placeholder="Status" /></SelectTrigger>
+            <SelectTrigger className="w-32 text-[11px] h-8 bg-muted/30 border-border/50"><SelectValue placeholder="Status" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos</SelectItem>
               <SelectItem value="success">Success</SelectItem>
@@ -284,79 +304,79 @@ function LogsTab({ onlyErrors = false }: { onlyErrors?: boolean }) {
             </SelectContent>
           </Select>
         )}
-        <Button variant="outline" size="sm" onClick={fetchLogs} className="text-xs h-8">
-          <RefreshCw className="h-3 w-3 mr-1" /> Atualizar
+        <Button variant="ghost" size="sm" onClick={fetchLogs} className="text-[11px] h-8 gap-1">
+          <RefreshCw className="h-3 w-3" /> Atualizar
         </Button>
-        <span className="text-xs text-muted-foreground ml-auto">{total} registros</span>
+        <span className="text-[10px] text-muted-foreground ml-auto font-mono">{total} registros</span>
       </div>
 
       {loading ? (
-        <div className="text-center py-12 text-muted-foreground text-sm"><Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" />Carregando...</div>
+        <div className="text-center py-16 text-muted-foreground text-sm"><Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" />Carregando...</div>
       ) : logs.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground text-sm">Nenhum log encontrado</div>
+        <div className="text-center py-16 text-muted-foreground text-sm">Nenhum log encontrado</div>
       ) : isMobile ? (
         <div className="space-y-2">
           {logs.map((log) => (
-            <Card key={log.id} className={log.status === "error" ? "border-destructive/30" : ""}>
-              <CardContent className="p-3 space-y-2">
-                <div className="flex items-center justify-between gap-2">
-                  <Badge variant="outline" className="text-xs">{log.tipo}</Badge>
-                  <StatusBadge status={log.status} />
+            <div key={log.id} className={cn("rounded-lg border bg-card p-3 space-y-2", log.status === "error" && "border-red-500/20")}>
+              <div className="flex items-center justify-between gap-2">
+                <span className="inline-flex items-center px-1.5 py-0 rounded text-[9px] font-medium border border-border/60 bg-muted/30 text-muted-foreground">{log.tipo}</span>
+                <StatusBadge status={log.status} />
+              </div>
+              <p className="text-xs text-foreground line-clamp-2">{log.mensagem}</p>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] text-muted-foreground font-mono">{new Date(log.created_at).toLocaleString("pt-BR")}</span>
+                <div className="flex items-center gap-1">
+                  <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => setExpandedId(expandedId === log.id ? null : log.id)}>
+                    <Eye className="h-3 w-3" />
+                  </Button>
+                  <Button variant="ghost" size="sm" className="h-7 px-2 text-[10px]" onClick={() => setViewerLog(log)}>
+                    Inspeção
+                  </Button>
                 </div>
-                <p className="text-sm text-foreground line-clamp-2">{log.mensagem}</p>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">{new Date(log.created_at).toLocaleString("pt-BR")}</span>
-                  <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => setExpandedId(expandedId === log.id ? null : log.id)}>
-                      <Eye className="h-3 w-3" />
-                    </Button>
-                    <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setViewerLog(log)}>
-                      Inspeção
-                    </Button>
-                  </div>
-                </div>
-                {expandedId === log.id && (
-                  <pre className="text-xs text-muted-foreground bg-muted/50 p-3 rounded overflow-auto max-h-40">{JSON.stringify(log.payload, null, 2)}</pre>
-                )}
-              </CardContent>
-            </Card>
+              </div>
+              {expandedId === log.id && (
+                <pre className="text-[10px] text-muted-foreground bg-muted/30 p-3 rounded-md overflow-auto max-h-40 font-mono border border-border/30">{JSON.stringify(log.payload, null, 2)}</pre>
+              )}
+            </div>
           ))}
         </div>
       ) : (
-        <div className="rounded-lg border border-border overflow-auto">
+        <DataPanel>
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead className="w-[140px]">Data</TableHead>
-                <TableHead className="w-[100px]">Tipo</TableHead>
-                <TableHead className="w-[80px]">Status</TableHead>
-                <TableHead>Mensagem</TableHead>
-                <TableHead className="w-[60px]"></TableHead>
+              <TableRow className="border-border/40 hover:bg-transparent">
+                <TableHead className="text-[10px] uppercase tracking-wider font-semibold w-[140px]">Data</TableHead>
+                <TableHead className="text-[10px] uppercase tracking-wider font-semibold w-[100px]">Tipo</TableHead>
+                <TableHead className="text-[10px] uppercase tracking-wider font-semibold w-[80px]">Status</TableHead>
+                <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Mensagem</TableHead>
+                <TableHead className="text-[10px] uppercase tracking-wider font-semibold w-[80px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {logs.map((log) => (
                 <>
-                  <TableRow key={log.id} className={log.status === "error" ? "bg-red-950/20" : ""}>
-                    <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{new Date(log.created_at).toLocaleString("pt-BR")}</TableCell>
-                    <TableCell><Badge variant="outline" className="text-xs">{log.tipo}</Badge></TableCell>
+                  <TableRow key={log.id} className={cn("border-border/30 hover:bg-muted/20", log.status === "error" && "bg-red-500/5")}>
+                    <TableCell className="text-[11px] text-muted-foreground whitespace-nowrap font-mono">{new Date(log.created_at).toLocaleString("pt-BR")}</TableCell>
+                    <TableCell>
+                      <span className="inline-flex items-center px-1.5 py-0 rounded text-[9px] font-medium border border-border/60 bg-muted/30 text-muted-foreground">{log.tipo}</span>
+                    </TableCell>
                     <TableCell><StatusBadge status={log.status} /></TableCell>
-                    <TableCell className="text-sm text-foreground max-w-[300px] truncate">{log.mensagem}</TableCell>
+                    <TableCell className="text-xs text-foreground max-w-[300px] truncate">{log.mensagem}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => setExpandedId(expandedId === log.id ? null : log.id)}>
-                          <Eye className="h-4 w-4" />
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setExpandedId(expandedId === log.id ? null : log.id)}>
+                          <Eye className="h-3.5 w-3.5" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="text-xs" onClick={() => setViewerLog(log)}>
+                        <Button variant="ghost" size="sm" className="text-[10px] h-7" onClick={() => setViewerLog(log)}>
                           Inspeção
                         </Button>
                       </div>
                     </TableCell>
                   </TableRow>
                   {expandedId === log.id && (
-                    <TableRow key={`${log.id}-detail`}>
-                      <TableCell colSpan={5}>
-                        <pre className="text-xs text-muted-foreground bg-muted/50 p-3 rounded overflow-auto max-h-60">{JSON.stringify(log.payload, null, 2)}</pre>
+                    <TableRow key={`${log.id}-detail`} className="border-border/20">
+                      <TableCell colSpan={5} className="p-0">
+                        <pre className="text-[10px] text-muted-foreground bg-muted/20 p-4 overflow-auto max-h-60 font-mono">{JSON.stringify(log.payload, null, 2)}</pre>
                       </TableCell>
                     </TableRow>
                   )}
@@ -364,14 +384,14 @@ function LogsTab({ onlyErrors = false }: { onlyErrors?: boolean }) {
               ))}
             </TableBody>
           </Table>
-        </div>
+        </DataPanel>
       )}
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2">
-          <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(page - 1)}><ChevronLeft className="h-4 w-4" /></Button>
-          <span className="text-sm text-muted-foreground">{page + 1} / {totalPages}</span>
-          <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)}><ChevronRight className="h-4 w-4" /></Button>
+        <div className="flex items-center justify-center gap-2 pt-2">
+          <Button variant="outline" size="sm" className="h-8 w-8 p-0" disabled={page === 0} onClick={() => setPage(page - 1)}><ChevronLeft className="h-4 w-4" /></Button>
+          <span className="text-xs text-muted-foreground font-mono">{page + 1} / {totalPages}</span>
+          <Button variant="outline" size="sm" className="h-8 w-8 p-0" disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)}><ChevronRight className="h-4 w-4" /></Button>
         </div>
       )}
 
@@ -380,6 +400,7 @@ function LogsTab({ onlyErrors = false }: { onlyErrors?: boolean }) {
   );
 }
 
+// ─── Payments Tab ───
 function PaymentsTab() {
   const isMobile = useIsMobile();
   const [payments, setPayments] = useState<PaymentRow[]>([]);
@@ -415,71 +436,75 @@ function PaymentsTab() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <Button variant="outline" size="sm" onClick={fetchPayments} className="text-xs h-8"><RefreshCw className="h-3 w-3 mr-1" /> Atualizar</Button>
-        <span className="text-xs text-muted-foreground ml-auto">{total} pagamentos</span>
+      <div className="flex items-center gap-2 rounded-lg border border-border/40 bg-card/50 p-3">
+        <Button variant="ghost" size="sm" onClick={fetchPayments} className="text-[11px] h-8 gap-1"><RefreshCw className="h-3 w-3" /> Atualizar</Button>
+        <span className="text-[10px] text-muted-foreground ml-auto font-mono">{total} pagamentos</span>
       </div>
 
       {loading ? (
-        <div className="text-center py-12 text-muted-foreground text-sm"><Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" />Carregando...</div>
+        <div className="text-center py-16 text-muted-foreground text-sm"><Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" />Carregando...</div>
       ) : payments.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground text-sm">Nenhum pagamento encontrado</div>
+        <div className="text-center py-16 text-muted-foreground text-sm">Nenhum pagamento encontrado</div>
       ) : isMobile ? (
         <div className="space-y-2">
           {payments.map((p) => (
-            <Card key={p.id}>
-              <CardContent className="p-3 space-y-2">
-                <div className="flex items-center justify-between gap-2">
-                  <Badge variant="outline" className="text-xs">{p.billing_type || p.payment_method || "—"}</Badge>
-                  <StatusBadge status={p.payment_status || "pending"} />
-                </div>
-                <div className="text-xs space-y-1">
-                  <div className="flex justify-between"><span className="text-muted-foreground">Data:</span><span className="text-foreground">{new Date(p.created_at).toLocaleString("pt-BR")}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Asaas ID:</span><span className="font-mono text-foreground text-[11px]">{p.asaas_payment_id?.slice(0, 16) || "—"}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Webhook:</span><span>{p.asaas_payment_id && webhookIds.has(p.asaas_payment_id) ? "✓ Recebido" : "—"}</span></div>
-                </div>
-                {p.asaas_invoice_url && (
-                  <a href={p.asaas_invoice_url} target="_blank" rel="noopener noreferrer" className="text-primary text-xs underline block text-right">Abrir Invoice</a>
-                )}
-              </CardContent>
-            </Card>
+            <div key={p.id} className="rounded-lg border border-border/60 bg-card p-3 space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <span className="inline-flex items-center px-1.5 py-0 rounded text-[9px] font-medium border border-border/60 bg-muted/30 text-muted-foreground">{p.billing_type || p.payment_method || "—"}</span>
+                <StatusBadge status={p.payment_status || "pending"} />
+              </div>
+              <div className="text-[11px] space-y-1">
+                <div className="flex justify-between"><span className="text-muted-foreground">Data:</span><span className="text-foreground font-mono">{new Date(p.created_at).toLocaleString("pt-BR")}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Asaas ID:</span><span className="font-mono text-foreground text-[10px]">{p.asaas_payment_id?.slice(0, 16) || "—"}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Webhook:</span><span>{p.asaas_payment_id && webhookIds.has(p.asaas_payment_id) ? "✓ Recebido" : "—"}</span></div>
+              </div>
+              {p.asaas_invoice_url && (
+                <a href={p.asaas_invoice_url} target="_blank" rel="noopener noreferrer" className="text-primary text-[11px] underline block text-right">Abrir Invoice</a>
+              )}
+            </div>
           ))}
         </div>
       ) : (
-        <div className="rounded-lg border border-border overflow-auto">
+        <DataPanel>
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>Data</TableHead><TableHead>Asaas ID</TableHead><TableHead>Método</TableHead><TableHead>Status</TableHead><TableHead>Webhook</TableHead><TableHead>Invoice</TableHead>
+              <TableRow className="border-border/40 hover:bg-transparent">
+                <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Data</TableHead>
+                <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Asaas ID</TableHead>
+                <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Método</TableHead>
+                <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Status</TableHead>
+                <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Webhook</TableHead>
+                <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Invoice</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {payments.map((p) => (
-                <TableRow key={p.id}>
-                  <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{new Date(p.created_at).toLocaleString("pt-BR")}</TableCell>
-                  <TableCell className="text-xs font-mono text-foreground">{p.asaas_payment_id || "—"}</TableCell>
-                  <TableCell><Badge variant="outline" className="text-xs">{p.billing_type || p.payment_method || "—"}</Badge></TableCell>
+                <TableRow key={p.id} className="border-border/30 hover:bg-muted/20">
+                  <TableCell className="text-[11px] text-muted-foreground whitespace-nowrap font-mono">{new Date(p.created_at).toLocaleString("pt-BR")}</TableCell>
+                  <TableCell className="text-[11px] font-mono text-foreground">{p.asaas_payment_id || "—"}</TableCell>
+                  <TableCell><span className="inline-flex items-center px-1.5 py-0 rounded text-[9px] font-medium border border-border/60 bg-muted/30 text-muted-foreground">{p.billing_type || p.payment_method || "—"}</span></TableCell>
                   <TableCell><StatusBadge status={p.payment_status || "pending"} /></TableCell>
-                  <TableCell>{p.asaas_payment_id && webhookIds.has(p.asaas_payment_id) ? <span className="text-green-400 text-xs">✓ Recebido</span> : <span className="text-muted-foreground text-xs">—</span>}</TableCell>
-                  <TableCell>{p.asaas_invoice_url ? <a href={p.asaas_invoice_url} target="_blank" rel="noopener noreferrer" className="text-primary text-xs underline">Abrir</a> : "—"}</TableCell>
+                  <TableCell>{p.asaas_payment_id && webhookIds.has(p.asaas_payment_id) ? <span className="text-emerald-400 text-[10px]">✓ Recebido</span> : <span className="text-muted-foreground text-[10px]">—</span>}</TableCell>
+                  <TableCell>{p.asaas_invoice_url ? <a href={p.asaas_invoice_url} target="_blank" rel="noopener noreferrer" className="text-primary text-[10px] underline">Abrir</a> : "—"}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-        </div>
+        </DataPanel>
       )}
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2">
-          <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(page - 1)}><ChevronLeft className="h-4 w-4" /></Button>
-          <span className="text-sm text-muted-foreground">{page + 1} / {totalPages}</span>
-          <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)}><ChevronRight className="h-4 w-4" /></Button>
+        <div className="flex items-center justify-center gap-2 pt-2">
+          <Button variant="outline" size="sm" className="h-8 w-8 p-0" disabled={page === 0} onClick={() => setPage(page - 1)}><ChevronLeft className="h-4 w-4" /></Button>
+          <span className="text-xs text-muted-foreground font-mono">{page + 1} / {totalPages}</span>
+          <Button variant="outline" size="sm" className="h-8 w-8 p-0" disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)}><ChevronRight className="h-4 w-4" /></Button>
         </div>
       )}
     </div>
   );
 }
 
+// ─── Clientes Tab ───
 function ClientesTab() {
   const isMobile = useIsMobile();
   const [customers, setCustomers] = useState<any[]>([]);
@@ -561,126 +586,127 @@ function ClientesTab() {
         const pwdChanged = audit.after_state?.password_change_required === false;
         return (
           <div className="space-y-1">
-            <Badge variant="outline" className="text-xs border-green-600/30 text-green-400">✓ Ativo (auto)</Badge>
-            {!pwdChanged && <Badge variant="outline" className="text-xs border-amber-600/30 text-amber-400">Senha temp.</Badge>}
+            <span className="inline-flex items-center px-1.5 py-0 rounded text-[9px] font-medium border border-emerald-500/25 bg-emerald-500/10 text-emerald-400">✓ Ativo (auto)</span>
+            {!pwdChanged && <span className="inline-flex items-center px-1.5 py-0 rounded text-[9px] font-medium border border-amber-500/25 bg-amber-500/10 text-amber-400 ml-1">Senha temp.</span>}
           </div>
         );
       }
-      return <Badge variant="outline" className="text-xs border-green-600/30 text-green-400">✓ Ativo</Badge>;
+      return <span className="inline-flex items-center px-1.5 py-0 rounded text-[9px] font-medium border border-emerald-500/25 bg-emerald-500/10 text-emerald-400">✓ Ativo</span>;
     }
-    return <Badge variant="outline" className="text-xs">Sem acesso</Badge>;
+    return <span className="inline-flex items-center px-1.5 py-0 rounded text-[9px] font-medium border border-border/60 bg-muted/30 text-muted-foreground">Sem acesso</span>;
   };
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <Button variant="outline" size="sm" onClick={fetchCustomers} className="text-xs h-8"><RefreshCw className="h-3 w-3 mr-1" /> Atualizar</Button>
-        <Button size="sm" onClick={() => { setShowForm(!showForm); setResult(null); setError(""); }} className="text-xs h-8"><Plus className="h-3 w-3 mr-1" /> Criar Acesso</Button>
-        <span className="text-xs text-muted-foreground ml-auto">{customers.length} clientes</span>
+      <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border/40 bg-card/50 p-3">
+        <Button variant="ghost" size="sm" onClick={fetchCustomers} className="text-[11px] h-8 gap-1"><RefreshCw className="h-3 w-3" /> Atualizar</Button>
+        <Button size="sm" onClick={() => { setShowForm(!showForm); setResult(null); setError(""); }} className="text-[11px] h-8 gap-1"><Plus className="h-3 w-3" /> Criar Acesso</Button>
+        <span className="text-[10px] text-muted-foreground ml-auto font-mono">{customers.length} clientes</span>
       </div>
 
       {showForm && (
-        <Card className="border-primary/30">
-          <CardContent className="p-5">
-            {result ? (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 text-emerald-400 mb-2">
-                  <Check size={18} /> <span className="font-bold text-sm">Usuário criado com sucesso!</span>
-                </div>
-                <div className="bg-muted/50 rounded-lg p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="min-w-0"><p className="text-[10px] text-muted-foreground uppercase">E-mail</p><p className="text-sm font-mono text-foreground truncate">{result.email}</p></div>
-                    <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => copyToClipboard(result.email, "email")}>{copied === "email" ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}</Button>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div><p className="text-[10px] text-muted-foreground uppercase">Senha</p><p className="text-sm font-mono text-foreground">{result.password}</p></div>
-                    <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => copyToClipboard(result.password, "pwd")}>{copied === "pwd" ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}</Button>
-                  </div>
-                  <p className="text-xs text-muted-foreground">Envie essas credenciais ao cliente. Acesso em /area-do-cliente</p>
-                </div>
-                <Button size="sm" variant="outline" onClick={() => { setResult(null); setShowForm(false); setForm({ email: "", password: "", name: "" }); }}>Fechar</Button>
+        <div className="rounded-xl border border-primary/20 bg-card p-5">
+          {result ? (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-emerald-400 mb-2">
+                <Check size={18} /> <span className="font-bold text-sm">Usuário criado com sucesso!</span>
               </div>
-            ) : (
-              <form onSubmit={handleCreate} className="space-y-4">
-                <h3 className="font-bold text-sm text-foreground">Criar Acesso para Cliente</h3>
-                <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">Vincular a Cliente (opcional)</label>
-                  <Select value={selectedCustomerId} onValueChange={setSelectedCustomerId}>
-                    <SelectTrigger className="bg-card text-xs"><SelectValue placeholder="Selecione um cliente" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Nenhum (criar sem vínculo)</SelectItem>
-                      {customers.filter((c) => !c.user_id).map((c) => (
-                        <SelectItem key={c.id} value={c.id}>{c.razao_social} ({c.cnpj_ou_cpf})</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              <div className="bg-muted/30 rounded-lg p-4 space-y-3 border border-border/30">
+                <div className="flex items-center justify-between">
+                  <div className="min-w-0"><p className="text-[9px] text-muted-foreground uppercase tracking-wider">E-mail</p><p className="text-sm font-mono text-foreground truncate">{result.email}</p></div>
+                  <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => copyToClipboard(result.email, "email")}>{copied === "email" ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}</Button>
                 </div>
-                <div><label className="text-xs text-muted-foreground mb-1 block">Nome</label><Input placeholder="Nome do usuário" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="bg-card" /></div>
-                <div><label className="text-xs text-muted-foreground mb-1 block">E-mail *</label><Input type="email" placeholder="email@cliente.com" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="bg-card" /></div>
-                <div><label className="text-xs text-muted-foreground mb-1 block">Senha *</label><Input type="text" placeholder="Mínimo 6 caracteres" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="bg-card" /></div>
-                {error && <p className="text-sm text-destructive">{error}</p>}
-                <div className="flex gap-2 justify-end">
-                  <Button type="button" variant="ghost" size="sm" onClick={() => setShowForm(false)}>Cancelar</Button>
-                  <Button type="submit" size="sm" disabled={creating}>
-                    {creating ? <Loader2 size={14} className="animate-spin mr-1" /> : <Plus size={14} className="mr-1" />}
-                    Criar Usuário
-                  </Button>
+                <div className="flex items-center justify-between">
+                  <div><p className="text-[9px] text-muted-foreground uppercase tracking-wider">Senha</p><p className="text-sm font-mono text-foreground">{result.password}</p></div>
+                  <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => copyToClipboard(result.password, "pwd")}>{copied === "pwd" ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}</Button>
                 </div>
-              </form>
-            )}
-          </CardContent>
-        </Card>
+                <p className="text-[10px] text-muted-foreground">Envie essas credenciais ao cliente. Acesso em /area-do-cliente</p>
+              </div>
+              <Button size="sm" variant="outline" onClick={() => { setResult(null); setShowForm(false); setForm({ email: "", password: "", name: "" }); }}>Fechar</Button>
+            </div>
+          ) : (
+            <form onSubmit={handleCreate} className="space-y-4">
+              <h3 className="font-bold text-sm text-foreground">Criar Acesso para Cliente</h3>
+              <div>
+                <label className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 block">Vincular a Cliente (opcional)</label>
+                <Select value={selectedCustomerId} onValueChange={setSelectedCustomerId}>
+                  <SelectTrigger className="bg-muted/30 text-xs border-border/50"><SelectValue placeholder="Selecione um cliente" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhum (criar sem vínculo)</SelectItem>
+                    {customers.filter((c) => !c.user_id).map((c) => (
+                      <SelectItem key={c.id} value={c.id}>{c.razao_social} ({c.cnpj_ou_cpf})</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div><label className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 block">Nome</label><Input placeholder="Nome do usuário" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="bg-muted/30 border-border/50" /></div>
+              <div><label className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 block">E-mail *</label><Input type="email" placeholder="email@cliente.com" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="bg-muted/30 border-border/50" /></div>
+              <div><label className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 block">Senha *</label><Input type="text" placeholder="Mínimo 6 caracteres" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="bg-muted/30 border-border/50" /></div>
+              {error && <p className="text-xs text-destructive bg-destructive/10 rounded-md px-3 py-2">{error}</p>}
+              <div className="flex gap-2 justify-end">
+                <Button type="button" variant="ghost" size="sm" onClick={() => setShowForm(false)}>Cancelar</Button>
+                <Button type="submit" size="sm" disabled={creating}>
+                  {creating ? <Loader2 size={14} className="animate-spin mr-1" /> : <Plus size={14} className="mr-1" />}
+                  Criar Usuário
+                </Button>
+              </div>
+            </form>
+          )}
+        </div>
       )}
 
       {loading ? (
-        <div className="text-center py-12 text-muted-foreground text-sm"><Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" />Carregando...</div>
+        <div className="text-center py-16 text-muted-foreground text-sm"><Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" />Carregando...</div>
       ) : customers.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground text-sm">Nenhum cliente cadastrado</div>
+        <div className="text-center py-16 text-muted-foreground text-sm">Nenhum cliente cadastrado</div>
       ) : isMobile ? (
         <div className="space-y-2">
           {customers.map((c) => (
-            <Card key={c.id}>
-              <CardContent className="p-3 space-y-2">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-sm font-medium text-foreground truncate">{c.nome_fantasia || c.razao_social}</p>
-                  {getAccessBadge(c)}
-                </div>
-                <div className="text-xs space-y-1 text-muted-foreground">
-                  <p><span className="text-foreground/70">CNPJ/CPF:</span> {c.cnpj_ou_cpf}</p>
-                  <p><span className="text-foreground/70">E-mail:</span> {c.email}</p>
-                  <p><span className="text-foreground/70">Cadastro:</span> {new Date(c.created_at).toLocaleDateString("pt-BR")}</p>
-                  {auditLogs[c.id] && (
-                    <p className="text-primary text-[11px]">{auditLogs[c.id].action === "auto_user_created" ? "🤖 Conta criada automaticamente" : "⚠️ Falha na criação automática"}</p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            <div key={c.id} className="rounded-lg border border-border/60 bg-card p-3 space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs font-medium text-foreground truncate">{c.nome_fantasia || c.razao_social}</p>
+                {getAccessBadge(c)}
+              </div>
+              <div className="text-[11px] space-y-1 text-muted-foreground">
+                <p><span className="text-foreground/70">CNPJ/CPF:</span> {c.cnpj_ou_cpf}</p>
+                <p><span className="text-foreground/70">E-mail:</span> {c.email}</p>
+                <p><span className="text-foreground/70">Cadastro:</span> {new Date(c.created_at).toLocaleDateString("pt-BR")}</p>
+                {auditLogs[c.id] && (
+                  <p className="text-primary text-[10px]">{auditLogs[c.id].action === "auto_user_created" ? "🤖 Conta criada automaticamente" : "⚠️ Falha na criação automática"}</p>
+                )}
+              </div>
+            </div>
           ))}
         </div>
       ) : (
-        <div className="rounded-lg border border-border overflow-auto">
+        <DataPanel>
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>Empresa</TableHead><TableHead>CNPJ/CPF</TableHead><TableHead>E-mail</TableHead><TableHead>Acesso Portal</TableHead><TableHead>Origem</TableHead><TableHead>Cadastro</TableHead>
+              <TableRow className="border-border/40 hover:bg-transparent">
+                <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Empresa</TableHead>
+                <TableHead className="text-[10px] uppercase tracking-wider font-semibold">CNPJ/CPF</TableHead>
+                <TableHead className="text-[10px] uppercase tracking-wider font-semibold">E-mail</TableHead>
+                <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Acesso Portal</TableHead>
+                <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Origem</TableHead>
+                <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Cadastro</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {customers.map((c) => (
-                <TableRow key={c.id}>
-                  <TableCell className="text-sm text-foreground font-medium">{c.nome_fantasia || c.razao_social}</TableCell>
-                  <TableCell className="text-xs font-mono text-muted-foreground">{c.cnpj_ou_cpf}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground">{c.email}</TableCell>
+                <TableRow key={c.id} className="border-border/30 hover:bg-muted/20">
+                  <TableCell className="text-xs text-foreground font-medium">{c.nome_fantasia || c.razao_social}</TableCell>
+                  <TableCell className="text-[11px] font-mono text-muted-foreground">{c.cnpj_ou_cpf}</TableCell>
+                  <TableCell className="text-[11px] text-muted-foreground">{c.email}</TableCell>
                   <TableCell>{getAccessBadge(c)}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
+                  <TableCell className="text-[11px] text-muted-foreground">
                     {auditLogs[c.id]?.action === "auto_user_created" ? <span className="text-primary">🤖 Auto</span> : auditLogs[c.id]?.action === "auto_user_creation_failed" ? <span className="text-destructive">⚠️ Falha</span> : c.user_id ? "Manual" : "—"}
                   </TableCell>
-                  <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{new Date(c.created_at).toLocaleDateString("pt-BR")}</TableCell>
+                  <TableCell className="text-[11px] text-muted-foreground whitespace-nowrap font-mono">{new Date(c.created_at).toLocaleDateString("pt-BR")}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-        </div>
+        </DataPanel>
       )}
     </div>
   );
@@ -688,7 +714,11 @@ function ClientesTab() {
 
 // ─── Content Renderer ───
 function AdminContent({ activeSection, onNavigate }: { activeSection: string; onNavigate: (s: string) => void }) {
-  const fallback = <div className="flex items-center justify-center py-12 text-muted-foreground text-sm"><Loader2 className="h-5 w-5 animate-spin mr-2" />Carregando...</div>;
+  const fallback = (
+    <div className="flex items-center justify-center py-16 text-muted-foreground text-sm">
+      <Loader2 className="h-5 w-5 animate-spin mr-2" />Carregando módulo...
+    </div>
+  );
 
   switch (activeSection) {
     case "dashboard": return <AdminCommandCenter onNavigate={onNavigate} />;
@@ -712,12 +742,104 @@ function AdminContent({ activeSection, onNavigate }: { activeSection: string; on
   }
 }
 
+// ─── Sidebar ───
+function AdminSidebar({ activeSection, onNavigate, collapsed, onToggle }: {
+  activeSection: string;
+  onNavigate: (s: string) => void;
+  collapsed: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <aside className={cn(
+      "h-screen sticky top-0 flex flex-col bg-[hsl(0,0%,5%)] border-r border-border/40 transition-all duration-300 shrink-0",
+      collapsed ? "w-14" : "w-56"
+    )}>
+      {/* Brand */}
+      <div className={cn("flex items-center border-b border-border/30 h-14 shrink-0", collapsed ? "justify-center px-2" : "px-4 gap-3")}>
+        {!collapsed && (
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-bold text-foreground truncate">WMTi Ops</p>
+            <p className="text-[9px] text-muted-foreground truncate">Centro de Controle</p>
+          </div>
+        )}
+        <button onClick={onToggle} className="p-1.5 rounded-md hover:bg-muted/30 transition-colors text-muted-foreground hover:text-foreground shrink-0">
+          {collapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+        </button>
+      </div>
+
+      {/* Nav */}
+      <nav className="flex-1 overflow-y-auto py-3">
+        {NAV_GROUPS.map((group) => (
+          <div key={group.label} className="mb-2">
+            {!collapsed && (
+              <p className="px-4 py-1.5 text-[9px] font-bold uppercase tracking-[0.12em] text-muted-foreground/60">
+                {group.label}
+              </p>
+            )}
+            {group.items.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeSection === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => onNavigate(item.id)}
+                  title={collapsed ? item.label : undefined}
+                  className={cn(
+                    "w-full flex items-center gap-2.5 transition-all duration-150",
+                    collapsed ? "justify-center px-2 py-2.5" : "px-4 py-2",
+                    isActive
+                      ? "text-primary bg-primary/8 border-r-2 border-primary"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/20"
+                  )}
+                >
+                  <Icon className={cn("h-3.5 w-3.5 shrink-0", isActive && "text-primary")} />
+                  {!collapsed && <span className={cn("text-[11px] truncate", isActive && "font-semibold")}>{item.label}</span>}
+                </button>
+              );
+            })}
+          </div>
+        ))}
+      </nav>
+
+      {/* Footer */}
+      <div className={cn("border-t border-border/30 shrink-0", collapsed ? "p-2" : "p-3")}>
+        <StatusPill status="online" label={collapsed ? undefined : "Produção"} />
+      </div>
+    </aside>
+  );
+}
+
+// ─── Topbar ───
+function AdminTopbar({ title, onMenuOpen, onLogout }: { title: string; onMenuOpen: () => void; onLogout: () => void }) {
+  return (
+    <header className="h-14 border-b border-border/30 bg-[hsl(0,0%,5%)] flex items-center justify-between px-4 md:px-6 shrink-0 sticky top-0 z-30">
+      <div className="flex items-center gap-3 min-w-0">
+        {/* Mobile menu */}
+        <button onClick={onMenuOpen} className="md:hidden p-1.5 rounded-md hover:bg-muted/30 text-muted-foreground">
+          <Menu className="h-4.5 w-4.5" />
+        </button>
+        <div className="min-w-0">
+          <h2 className="text-sm font-bold text-foreground truncate">{title}</h2>
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <StatusPill status="online" label="Live" pulse />
+        <div className="w-px h-5 bg-border/30 mx-1 hidden sm:block" />
+        <Button variant="ghost" size="sm" onClick={onLogout} className="text-[11px] text-muted-foreground hover:text-foreground gap-1.5 h-8">
+          <LogOut className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">Sair</span>
+        </Button>
+      </div>
+    </header>
+  );
+}
+
 // ─── Main Page ───
 export default function AdminPage() {
   const [authed, setAuthed] = useState(!!sessionStorage.getItem("admin_token"));
   const [activeSection, setActiveSection] = useState("dashboard");
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const isMobile = useIsMobile();
 
   if (!authed) return <AdminLogin onLogin={() => setAuthed(true)} />;
@@ -729,15 +851,14 @@ export default function AdminPage() {
 
   const handleNavClick = (id: string) => {
     setActiveSection(id);
-    setMobileNavOpen(false);
     setMenuOpen(false);
   };
 
   const currentLabel = NAV_GROUPS.flatMap(g => g.items).find(i => i.id === activeSection)?.label || "Dashboard";
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col md:flex-row">
-      {/* Fullscreen Menu */}
+    <div className="min-h-screen bg-background text-foreground flex">
+      {/* Fullscreen Menu (mobile) */}
       <AdminFullscreenMenu
         open={menuOpen}
         onClose={() => setMenuOpen(false)}
@@ -748,84 +869,21 @@ export default function AdminPage() {
 
       {/* Sidebar - Desktop */}
       {!isMobile && (
-        <aside className="w-56 border-r border-border bg-card flex-shrink-0 flex flex-col h-screen sticky top-0">
-          <div className="p-4 border-b border-border">
-            <h1 className="text-sm font-bold text-foreground">🛡️ Admin WMTi</h1>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Painel de Controle</p>
-          </div>
-
-          <nav className="flex-1 overflow-y-auto py-2">
-            {NAV_GROUPS.map((group) => (
-              <div key={group.label} className="mb-1">
-                <p className="px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                  {group.label}
-                </p>
-                {group.items.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = activeSection === item.id;
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => handleNavClick(item.id)}
-                      className={`w-full flex items-center gap-2.5 px-4 py-2 text-xs transition-colors ${
-                        isActive
-                          ? "bg-primary/10 text-primary font-semibold border-r-2 border-primary"
-                          : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                      }`}
-                    >
-                      <Icon className="h-3.5 w-3.5" />
-                      {item.label}
-                    </button>
-                  );
-                })}
-              </div>
-            ))}
-          </nav>
-
-          <div className="p-3 border-t border-border">
-            <Button variant="ghost" size="sm" onClick={handleLogout} className="w-full justify-start text-xs text-muted-foreground hover:text-foreground">
-              <LogOut className="h-3.5 w-3.5 mr-2" /> Sair
-            </Button>
-          </div>
-        </aside>
+        <AdminSidebar
+          activeSection={activeSection}
+          onNavigate={handleNavClick}
+          collapsed={sidebarCollapsed}
+          onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+        />
       )}
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Mobile Header */}
-        {isMobile && (
-          <header className="border-b border-border px-4 py-3 flex items-center justify-between gap-2 bg-card sticky top-0 z-30">
-            <button
-              onClick={() => setMenuOpen(true)}
-              className="text-xs font-bold text-foreground flex items-center gap-2"
-            >
-              <div className="flex flex-col gap-[3px]">
-                <span className="block w-4 h-[2px] bg-foreground rounded" />
-                <span className="block w-4 h-[2px] bg-foreground rounded" />
-                <span className="block w-4 h-[2px] bg-foreground rounded" />
-              </div>
-              {currentLabel}
-            </button>
-            <Button variant="ghost" size="sm" onClick={handleLogout} className="text-xs">
-              <LogOut className="h-3.5 w-3.5" />
-            </Button>
-          </header>
-        )}
-
-        {/* Desktop Header */}
-        {!isMobile && (
-          <header className="border-b border-border px-6 py-4 flex items-center justify-between">
-            <h2 className="text-lg font-bold text-foreground">{currentLabel}</h2>
-            <Button variant="ghost" size="sm" onClick={() => setMenuOpen(true)} className="text-xs gap-1.5">
-              <div className="flex flex-col gap-[3px]">
-                <span className="block w-3.5 h-[1.5px] bg-foreground rounded" />
-                <span className="block w-3.5 h-[1.5px] bg-foreground rounded" />
-                <span className="block w-3.5 h-[1.5px] bg-foreground rounded" />
-              </div>
-              Menu
-            </Button>
-          </header>
-        )}
+        <AdminTopbar
+          title={currentLabel}
+          onMenuOpen={() => setMenuOpen(true)}
+          onLogout={handleLogout}
+        />
 
         {/* Page Content */}
         <main className="flex-1 p-4 md:p-6 overflow-auto">
