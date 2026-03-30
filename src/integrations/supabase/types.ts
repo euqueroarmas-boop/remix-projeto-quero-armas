@@ -824,13 +824,21 @@ export type Database = {
         Row: {
           analysis_data: Json | null
           analysis_type: string
+          applied: boolean | null
+          applied_at: string | null
+          auto_applicable: boolean | null
+          confidence: number | null
           created_at: string
           finished_at: string | null
           high_priority: number | null
           id: string
+          impact_score: number | null
           low_priority: number | null
           medium_priority: number | null
+          prompt_type: string | null
           prompts: Json | null
+          rejected_at: string | null
+          source: string | null
           status: string
           summary: string | null
           total_prompts: number | null
@@ -839,13 +847,21 @@ export type Database = {
         Insert: {
           analysis_data?: Json | null
           analysis_type?: string
+          applied?: boolean | null
+          applied_at?: string | null
+          auto_applicable?: boolean | null
+          confidence?: number | null
           created_at?: string
           finished_at?: string | null
           high_priority?: number | null
           id?: string
+          impact_score?: number | null
           low_priority?: number | null
           medium_priority?: number | null
+          prompt_type?: string | null
           prompts?: Json | null
+          rejected_at?: string | null
+          source?: string | null
           status?: string
           summary?: string | null
           total_prompts?: number | null
@@ -854,13 +870,21 @@ export type Database = {
         Update: {
           analysis_data?: Json | null
           analysis_type?: string
+          applied?: boolean | null
+          applied_at?: string | null
+          auto_applicable?: boolean | null
+          confidence?: number | null
           created_at?: string
           finished_at?: string | null
           high_priority?: number | null
           id?: string
+          impact_score?: number | null
           low_priority?: number | null
           medium_priority?: number | null
+          prompt_type?: string | null
           prompts?: Json | null
+          rejected_at?: string | null
+          source?: string | null
           status?: string
           summary?: string | null
           total_prompts?: number | null
