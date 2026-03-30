@@ -109,7 +109,8 @@ export async function addPlaceholderAndSign(
 
   // 4. Sign the PDF
   console.log("[pdfSign] Signing PDF with @signpdf...");
-  const signedPdfBuffer = await signpdf.sign(pdfWithPlaceholder, signer);
+  const signPdf = new SignPdf();
+  const signedPdfBuffer = await signPdf.sign(pdfWithPlaceholder, signer);
 
   // Convert to Uint8Array if needed
   const signedPdf = signedPdfBuffer instanceof Uint8Array
