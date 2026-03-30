@@ -88,6 +88,11 @@ const normalizePaymentPayload = (raw: any, fallbackBillingType: BillingType): No
   };
 };
 
+const isPaidStatus = (status?: string | null) => {
+  const normalized = String(status || "").toUpperCase();
+  return normalized === "CONFIRMED" || normalized === "RECEIVED" || normalized === "PAYMENT_CONFIRMED" || normalized === "PAYMENT_RECEIVED";
+};
+
 /* ─── Session recovery helpers ─── */
 const SESSION_KEY = "orcamentoWMti_session";
 
@@ -218,7 +223,7 @@ const ContractingWizard = ({
         .order("created_at", { ascending: false })
         .limit(1)
         .single();
-      if (data && ((data as any).payment_status === "CONFIRMED" || (data as any).payment_status === "RECEIVED")) {
+      if (data && isPaidStatus((data as any).payment_status)) {
         setPaymentConfirmed(true);
         // Email is now sent from webhook after user creation (includes credentials)
         const purchaseData = {
@@ -360,9 +365,9 @@ const ContractingWizard = ({
       // Capture client proof data for legal validity (clause 17.3)
       const proof = await captureClientProof();
 
-      // Determine due date (10 days from now)
+      // Determine due date (30 days from signature)
       const dueDate = new Date();
-      dueDate.setDate(dueDate.getDate() + 10);
+      dueDate.setDate(dueDate.getDate() + 30);
       const diaVencimento = String(dueDate.getDate());
 
       // Resolve service-specific contract object
