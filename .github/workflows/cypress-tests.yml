@@ -161,24 +161,69 @@ jobs:
             FINAL_STATUS="success"
           fi
 
-          # Extract error summary from failed tests
+          # Extract error summary AND per-test results from mochawesome
           ERROR_SUMMARY=""
-          if [ "$FAILED" -gt 0 ] 2>/dev/null; then
-            ERROR_SUMMARY=$(node -e "
-              const r=require('./$MERGED_REPORT');
-              const errors=[];
-              (r.results||[]).forEach(s=>{
-                (s.suites||[]).forEach(su=>{
-                  (su.tests||[]).forEach(t=>{
-                    if(t.fail&&t.err&&t.err.message){
-                      errors.push(t.fullTitle+': '+t.err.message.substring(0,200));
+          TEST_RESULTS_JSON="[]"
+          
+          node -e "
+            const fs = require('fs');
+            const r = require('./$MERGED_REPORT');
+            const errors = [];
+            const results = [];
+            
+            (r.results || []).forEach(specFile => {
+              const specName = specFile.file || specFile.fullFile || 'unknown';
+              
+              function walkSuites(suites, parentTitle) {
+                (suites || []).forEach(suite => {
+                  const suiteTitle = parentTitle ? parentTitle + ' > ' + suite.title : suite.title;
+                  
+                  (suite.tests || []).forEach(test => {
+                    const entry = {
+                      name: test.title || 'unnamed',
+                      fullTitle: test.fullTitle || suiteTitle + ' > ' + test.title,
+                      spec: specName,
+                      status: test.pass ? 'passed' : test.fail ? 'failed' : 'skipped',
+                      duration_ms: test.duration || 0,
+                      url: test.context ? (typeof test.context === 'string' ? test.context : null) : null,
+                    };
+                    
+                    if (test.fail && test.err) {
+                      entry.error = (test.err.message || '').substring(0, 2000);
+                      entry.stack_trace = (test.err.estack || test.err.stack || '').substring(0, 3000);
+                      if (test.err.expected !== undefined || test.err.actual !== undefined) {
+                        entry.diff = {
+                          expected: test.err.expected,
+                          actual: test.err.actual
+                        };
+                      }
+                      errors.push(test.fullTitle + ': ' + (test.err.message || '').substring(0, 200));
                     }
+                    
+                    results.push(entry);
                   });
+                  
+                  // Recurse nested suites
+                  walkSuites(suite.suites, suiteTitle);
                 });
-              });
-              console.log(errors.join(' | ').substring(0,1000)||'$FAILED test(s) failed');
-            " 2>/dev/null || echo "$FAILED test(s) failed")
+              }
+              
+              walkSuites(specFile.suites, '');
+            });
+            
+            const errorSummary = errors.join(' | ').substring(0, 1000) || (r.stats?.failures > 0 ? r.stats.failures + ' test(s) failed' : '');
+            
+            fs.writeFileSync('/tmp/test_results.json', JSON.stringify(results));
+            fs.writeFileSync('/tmp/error_summary.txt', errorSummary);
+          " 2>/dev/null
+          
+          if [ -f /tmp/error_summary.txt ]; then
+            ERROR_SUMMARY=$(cat /tmp/error_summary.txt)
           fi
+          if [ -f /tmp/test_results.json ]; then
+            TEST_RESULTS_JSON=$(cat /tmp/test_results.json)
+          fi
+          [ -z "$ERROR_SUMMARY" ] && [ "$FAILED" -gt 0 ] && ERROR_SUMMARY="$FAILED test(s) failed"
 
           echo "Final status: $FINAL_STATUS"
           echo "Error summary: $ERROR_SUMMARY"
