@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Send, Bot, User, Loader2, Save, Trash2, Terminal, Sparkles,
-  AlertTriangle, CheckCircle2, RefreshCw, Copy,
+  AlertTriangle, CheckCircle2, RefreshCw, Copy, GitCommit,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -20,6 +20,7 @@ type Message = {
 };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/dev-chat`;
+const PATCH_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/execute-code-patch`;
 const MAX_RETRIES = 3;
 const TIMEOUT_MS = 20_000;
 
@@ -49,22 +50,75 @@ const StatusIndicator = ({ status }: { status?: MessageStatus }) => {
 };
 
 const CodeBlock = ({ code, lang }: { code: string; lang: string }) => {
+  const [applying, setApplying] = useState(false);
+  const [applied, setApplied] = useState<string | null>(null);
+
   const handleCopy = () => {
     navigator.clipboard.writeText(code);
     toast.success("Código copiado!");
   };
-  // Extract file path from first comment line
+
   const lines = code.split("\n");
   const fileMatch = lines[0]?.match(/^\/\/\s*(.+\.\w+)/);
+  const filePath = fileMatch?.[1]?.trim();
+
+  const handleApply = async () => {
+    if (!filePath) { toast.error("Caminho do arquivo não detectado no código"); return; }
+    setApplying(true);
+    try {
+      const token = sessionStorage.getItem("admin_token") || "";
+      const resp = await fetch(PATCH_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          "x-admin-token": token,
+        },
+        body: JSON.stringify({
+          file_path: filePath,
+          content: code,
+          commit_message: `fix(auto): patch via DevChat — ${filePath}`,
+        }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || `HTTP ${resp.status}`);
+      setApplied(data.commit_sha?.slice(0, 7) || "ok");
+      toast.success(`Commit aplicado: ${data.commit_sha?.slice(0, 7)}`);
+    } catch (e) {
+      toast.error(`Falha ao aplicar: ${e instanceof Error ? e.message : "erro"}`);
+    } finally {
+      setApplying(false);
+    }
+  };
+
   return (
     <div className="my-2 rounded-md border border-border overflow-hidden">
-      <div className="flex items-center justify-between bg-muted/80 px-2.5 py-1">
-        <span className="text-[10px] text-muted-foreground font-mono">
-          {fileMatch ? fileMatch[1] : lang || "code"}
+      <div className="flex items-center justify-between bg-muted/80 px-2.5 py-1 gap-1">
+        <span className="text-[10px] text-muted-foreground font-mono truncate">
+          {filePath || lang || "code"}
         </span>
-        <Button variant="ghost" size="sm" onClick={handleCopy} className="h-5 px-1.5 text-[9px] gap-1 text-muted-foreground hover:text-primary">
-          <Copy className="h-2.5 w-2.5" /> Copiar código
-        </Button>
+        <div className="flex items-center gap-1 shrink-0">
+          <Button variant="ghost" size="sm" onClick={handleCopy} className="h-5 px-1.5 text-[9px] gap-1 text-muted-foreground hover:text-primary">
+            <Copy className="h-2.5 w-2.5" /> Copiar
+          </Button>
+          {filePath && !applied && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleApply}
+              disabled={applying}
+              className="h-5 px-1.5 text-[9px] gap-1 text-muted-foreground hover:text-primary"
+            >
+              {applying ? <Loader2 className="h-2.5 w-2.5 animate-spin" /> : <GitCommit className="h-2.5 w-2.5" />}
+              {applying ? "Aplicando..." : "Aplicar"}
+            </Button>
+          )}
+          {applied && (
+            <span className="flex items-center gap-1 text-[9px] text-primary px-1.5">
+              <CheckCircle2 className="h-2.5 w-2.5" /> {applied}
+            </span>
+          )}
+        </div>
       </div>
       <pre className="p-2.5 overflow-x-auto text-[11px] leading-relaxed bg-background">
         <code className="text-foreground/90 font-mono">{code}</code>
