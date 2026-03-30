@@ -87,13 +87,19 @@ async function updateRunProgress(
   const passed = results.filter(r => r.status === "passed").length;
   const failed = results.filter(r => r.status === "failed").length;
   const skipped = results.filter(r => r.status === "skipped").length;
-  const total = totalExpected || results.length;
+  const completed = passed + failed + skipped;
+  const total = totalExpected || results.length || 1;
+  const pct = Math.min(100, Math.round((completed / total) * 100));
 
   await supabase.from("test_runs").update({
     total_tests: total,
     passed_tests: passed,
     failed_tests: failed,
     skipped_tests: skipped,
+    completed_tests: completed,
+    progress_percent: pct,
+    current_spec: currentSpec || null,
+    current_url: currentUrl || null,
     results: results as any,
     logs: {
       entries: logEntries,
