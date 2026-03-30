@@ -106,87 +106,353 @@ const STATUS_CONFIG: Record<string, { color: string; icon: typeof CheckCircle; l
 
 const ITEMS_PER_PAGE = 20;
 
-// ─── Diagnostic dump builder ───
+// ─── Failure diagnosis engine ───
+
+const ROUTE_TO_COMPONENT: Record<string, string[]> = {
+  "/": ["Index.tsx", "HeroSection.tsx", "HomeSections.tsx"],
+  "/orcamento": ["OrcamentoTiPage.tsx", "PlanSelector.tsx", "InvestmentCalculator.tsx"],
+  "/contrato": ["ContratoPage.tsx", "ContractPreview.tsx", "ContractSection.tsx"],
+  "/contratar": ["ContratarServicoPage.tsx", "ContractingWizard.tsx", "CustomerDataForm.tsx"],
+  "/blog": ["BlogPage.tsx", "BlogPostPage.tsx"],
+  "/admin": ["AdminPage.tsx", "AdminCommandCenter.tsx"],
+  "/area-cliente": ["AreaDoClientePage.tsx", "ClientPortal.tsx", "ClientLogin.tsx"],
+  "/checkout": ["CompraConcluida.tsx", "PaymentSelector.tsx", "PurchaseSuccessScreen.tsx"],
+  "/servicos": ["ServicosPage.tsx", "ServicesSection.tsx"],
+  "/locacao": ["LocacaoPage.tsx", "LocacaoComputadoresPage.tsx"],
+};
+
+const TEST_TYPE_TO_AREA: Record<string, string> = {
+  frontend: "Front-End / UI",
+  checkout: "Checkout / Pagamento",
+  contracts: "Contratos / Jurídico",
+  forms: "Formulários / Entrada de Dados",
+  portal: "Portal / Área do Cliente",
+  business: "Fluxos de Negócio",
+  smoke: "Smoke Test / Disponibilidade",
+  seo: "SEO Técnico",
+  api: "APIs & Webhooks",
+  blog: "Blog & Linkagem",
+  regression: "Regressão Crítica",
+};
+
+function inferErrorCategory(error: string): { category: string; suggestions: string[] } {
+  const e = (error || "").toLowerCase();
+
+  if (e.includes("timed out") || e.includes("timeout") || e.includes("exceeded")) {
+    return {
+      category: "TIMEOUT / CARREGAMENTO LENTO",
+      suggestions: [
+        "Verificar se o elemento está sendo renderizado condicionalmente (loading state, Suspense, lazy)",
+        "Aumentar timeout do cy.get() ou cy.visit() se a página demora a carregar",
+        "Verificar se há redirect inesperado antes do elemento aparecer",
+        "Checar console do navegador por erros JS que impedem renderização",
+        "Verificar se há chamada API bloqueante sem tratamento de erro",
+      ],
+    };
+  }
+  if (e.includes("not found") || e.includes("could not find") || e.includes("expected to find") || e.includes("never found") || e.includes("unable to find")) {
+    return {
+      category: "ELEMENTO NÃO ENCONTRADO",
+      suggestions: [
+        "Verificar se o seletor (data-testid, classe, texto) ainda existe no componente",
+        "Checar se o elemento está dentro de um condicional (if/ternário) que não está sendo satisfeito",
+        "Verificar se o elemento está em um componente lazy-loaded que ainda não montou",
+        "Testar manualmente se o elemento aparece na página com DevTools",
+        "Verificar se houve mudança de texto (i18n) que quebrou o seletor por conteúdo",
+      ],
+    };
+  }
+  if (e.includes("assert") || e.includes("expected") || e.includes("should")) {
+    return {
+      category: "ASSERÇÃO FALHOU",
+      suggestions: [
+        "Verificar se o valor esperado mudou (preço, texto, label, contagem)",
+        "Checar se há race condition — dado chega depois da asserção",
+        "Verificar se o componente renderiza valor default antes do dado real",
+        "Comparar o valor esperado no teste com o valor real renderizado",
+        "Checar se houve mudança na lógica de cálculo/formatação",
+      ],
+    };
+  }
+  if (e.includes("navigate") || e.includes("route") || e.includes("redirect") || e.includes("404") || e.includes("not found page")) {
+    return {
+      category: "ERRO DE ROTA / NAVEGAÇÃO",
+      suggestions: [
+        "Verificar se a rota existe no App.tsx / router",
+        "Checar se há redirect condicional (auth guard, role check)",
+        "Verificar se o link/botão aponta para a rota correta",
+        "Checar se a rota usa parâmetros dinâmicos que estão faltando",
+        "Verificar NotFound.tsx e fallback routes",
+      ],
+    };
+  }
+  if (e.includes("fetch") || e.includes("api") || e.includes("network") || e.includes("500") || e.includes("401") || e.includes("403") || e.includes("cors")) {
+    return {
+      category: "ERRO DE API / REDE",
+      suggestions: [
+        "Verificar se o endpoint está ativo e respondendo",
+        "Checar se o token/API key está configurado corretamente",
+        "Verificar se há erro CORS no Edge Function",
+        "Checar payload enviado — campos obrigatórios faltando",
+        "Verificar se o RLS da tabela permite a operação",
+      ],
+    };
+  }
+  if (e.includes("form") || e.includes("valid") || e.includes("required") || e.includes("mask") || e.includes("cnpj") || e.includes("cep")) {
+    return {
+      category: "ERRO DE FORMULÁRIO / VALIDAÇÃO",
+      suggestions: [
+        "Verificar se o campo tem máscara aplicada corretamente",
+        "Checar se a validação Zod/React Hook Form aceita o valor do teste",
+        "Verificar se o campo está com estado controlado (value + onChange)",
+        "Checar se o submit está sendo bloqueado por validação invisível",
+        "Verificar se há auto-complete ou preenchimento automático conflitando",
+      ],
+    };
+  }
+
+  return {
+    category: "ERRO GENÉRICO",
+    suggestions: [
+      "Analisar stack trace completo para identificar o ponto exato da falha",
+      "Verificar console do navegador por erros JS",
+      "Reproduzir manualmente o fluxo descrito no teste",
+      "Checar se houve deploy recente que alterou a área afetada",
+      "Verificar se o ambiente de teste está acessível",
+    ],
+  };
+}
+
+function inferComponents(url: string | undefined, spec: string | undefined, testType: string): string[] {
+  const components: string[] = [];
+
+  if (url) {
+    const path = url.replace(/https?:\/\/[^/]+/, "").split("?")[0];
+    for (const [route, comps] of Object.entries(ROUTE_TO_COMPONENT)) {
+      if (path === route || path.startsWith(route + "/")) {
+        components.push(...comps);
+        break;
+      }
+    }
+    if (components.length === 0 && path.length > 1) {
+      const pageName = path.split("/").filter(Boolean)[0];
+      if (pageName) components.push(`${pageName}Page.tsx (inferido)`);
+    }
+  }
+
+  if (spec) {
+    const specClean = spec.replace(/\.cy\.(ts|js)$/, "").replace(/-/g, " ");
+    components.push(`Spec: ${spec}`);
+  }
+
+  if (components.length === 0) {
+    const area = TEST_TYPE_TO_AREA[testType] || testType;
+    components.push(`Área: ${area}`);
+  }
+
+  return [...new Set(components)];
+}
+
+function buildFailureDiagnosis(run: TestRun): string {
+  const lines: string[] = [];
+  const sep = "═".repeat(60);
+  const now = new Date().toISOString();
+
+  lines.push(sep);
+  lines.push("WMTi — DIAGNÓSTICO DE CORREÇÃO DE TESTES");
+  lines.push(sep);
+  lines.push(`Gerado em: ${now}`);
+  lines.push("");
+
+  // ── Header
+  lines.push("── EXECUÇÃO ──");
+  lines.push(`Run ID:      ${run.id}`);
+  lines.push(`Suite:       ${run.suite} (${run.test_type})`);
+  lines.push(`Área:        ${TEST_TYPE_TO_AREA[run.test_type] || run.test_type}`);
+  lines.push(`Status:      ${run.status.toUpperCase()}`);
+  lines.push(`Motor:       ${run.execution_engine}`);
+  lines.push(`Ambiente:    ${run.environment}`);
+  lines.push(`Disparado:   ${run.triggered_by}`);
+  if (run.started_at) lines.push(`Início:      ${run.started_at}`);
+  if (run.finished_at) lines.push(`Término:     ${run.finished_at}`);
+  if (run.duration_ms) lines.push(`Duração:     ${run.duration_ms}ms (${(run.duration_ms / 1000).toFixed(1)}s)`);
+  if (run.base_url) lines.push(`URL Base:    ${run.base_url}`);
+  if (run.browser) lines.push(`Browser:     ${run.browser}`);
+  if (run.github_run_url) lines.push(`GitHub:      ${run.github_run_url}`);
+  else if (run.github_run_id) lines.push(`GitHub Run:  ${run.github_run_id}`);
+  lines.push("");
+
+  // ── Numeric summary
+  lines.push("── RESUMO NUMÉRICO ──");
+  lines.push(`Total:     ${run.total_tests}`);
+  lines.push(`Passaram:  ${run.passed_tests}`);
+  lines.push(`Falharam:  ${run.failed_tests}`);
+  lines.push(`Pulados:   ${run.skipped_tests}`);
+  if (run.total_specs) lines.push(`Specs:     ${run.completed_specs || 0}/${run.total_specs}`);
+  const pct = run.total_tests > 0 ? Math.round((run.passed_tests / run.total_tests) * 100) : 0;
+  lines.push(`Sucesso:   ${pct}%`);
+  lines.push("");
+
+  // ── Failures detail
+  const failures = (run.results || []).filter((r: any) => r.status === "failed");
+  const failedCount = Math.max(run.failed_tests, failures.length);
+
+  if (failures.length > 0) {
+    lines.push("═".repeat(60));
+    lines.push(`FALHAS DETALHADAS (${failures.length})`);
+    lines.push("═".repeat(60));
+
+    failures.forEach((f: any, i: number) => {
+      const diagnosis = inferErrorCategory(f.error || f.stack_trace || "");
+      const components = inferComponents(f.url, f.spec, run.test_type);
+
+      lines.push("");
+      lines.push(`┌─ FALHA ${i + 1}/${failures.length} ${"─".repeat(40)}`);
+      lines.push(`│`);
+      lines.push(`│  Teste:     ${f.fullTitle || f.name || "SEM NOME"}`);
+      if (f.spec) lines.push(`│  Spec:      ${f.spec}`);
+      lines.push(`│  Status:    FAILED`);
+      if (f.duration_ms !== undefined) lines.push(`│  Duração:   ${f.duration_ms}ms`);
+      if (f.url) lines.push(`│  URL:       ${f.url}`);
+      else lines.push(`│  URL:       SEM URL CAPTURADA`);
+      if (f.cypress_command) lines.push(`│  Comando:   ${f.cypress_command}`);
+      lines.push(`│`);
+
+      // Error
+      lines.push(`│  ── ERRO ──`);
+      if (f.error) {
+        f.error.split("\n").forEach((line: string) => lines.push(`│  ${line}`));
+      } else {
+        lines.push(`│  SEM MENSAGEM DE ERRO DISPONÍVEL`);
+      }
+      lines.push(`│`);
+
+      // Stack trace
+      lines.push(`│  ── STACK TRACE ──`);
+      if (f.stack_trace) {
+        f.stack_trace.split("\n").slice(0, 15).forEach((line: string) => lines.push(`│  ${line}`));
+        if (f.stack_trace.split("\n").length > 15) lines.push(`│  ... (${f.stack_trace.split("\n").length - 15} linhas omitidas)`);
+      } else {
+        lines.push(`│  SEM STACK TRACE`);
+      }
+      lines.push(`│`);
+
+      // Diff
+      if (f.diff) {
+        lines.push(`│  ── DIFF ──`);
+        lines.push(`│  Expected: ${JSON.stringify(f.diff.expected)}`);
+        lines.push(`│  Actual:   ${JSON.stringify(f.diff.actual)}`);
+        lines.push(`│`);
+      }
+
+      // Category & probable cause
+      lines.push(`│  ── CATEGORIA DO ERRO ──`);
+      lines.push(`│  ${diagnosis.category}`);
+      lines.push(`│`);
+
+      // Probable components
+      lines.push(`│  ── COMPONENTES / ARQUIVOS PROVÁVEIS ──`);
+      components.forEach((c) => lines.push(`│  • src/pages/${c.includes("/") ? c : c.includes("Section") || c.includes("Form") || c.includes("Wizard") || c.includes("Calculator") || c.includes("Preview") ? "components/" + c : "pages/" + c}`));
+      lines.push(`│`);
+
+      // How to fix
+      lines.push(`│  ── COMO RESOLVER ──`);
+      diagnosis.suggestions.forEach((s, j) => lines.push(`│  ${j + 1}. ${s}`));
+      lines.push(`│`);
+      lines.push(`└${"─".repeat(50)}`);
+    });
+  } else if (failedCount > 0) {
+    lines.push("");
+    lines.push("── FALHAS (sem detalhes individuais) ──");
+    lines.push(`${failedCount} teste(s) falharam mas os detalhes individuais não foram capturados.`);
+    lines.push(`Error message: ${run.error_message || run.error_summary || "SEM MENSAGEM"}`);
+    lines.push("");
+    lines.push("Possíveis causas:");
+    lines.push("1. O workflow do GitHub não extraiu os resultados do mochawesome corretamente");
+    lines.push("2. O reporter não gerou o arquivo JSON de resultados");
+    lines.push("3. O PATCH para o banco não incluiu o array de results");
+    lines.push("");
+    lines.push("Como resolver:");
+    lines.push("1. Verificar o GitHub Actions run para obter os logs completos");
+    if (run.github_run_url) lines.push(`   → ${run.github_run_url}`);
+    lines.push("2. Verificar se o step 'Upload results' executou corretamente");
+    lines.push("3. Re-executar o teste para capturar os detalhes");
+  }
+
+  // ── Artifacts
+  const hasScreenshots = (run.screenshot_urls?.length || 0) > 0;
+  const hasVideos = (run.video_urls?.length || 0) > 0;
+  if (hasScreenshots || hasVideos || run.report_url) {
+    lines.push("");
+    lines.push("── ARTEFATOS ──");
+    if (hasScreenshots) {
+      lines.push("Screenshots:");
+      run.screenshot_urls!.forEach((u) => lines.push(`  ${u}`));
+    } else {
+      lines.push("Screenshots: SEM SCREENSHOTS");
+    }
+    if (hasVideos) {
+      lines.push("Vídeos:");
+      run.video_urls!.forEach((u) => lines.push(`  ${u}`));
+    } else {
+      lines.push("Vídeos: SEM VÍDEOS");
+    }
+    if (run.report_url) lines.push(`Report: ${run.report_url}`);
+  }
+
+  // ── Logs summary
+  if (run.logs?.entries?.length) {
+    lines.push("");
+    lines.push("── TIMELINE DE EVENTOS ──");
+    (run.logs.entries as any[]).slice(-20).forEach((entry: any) => {
+      lines.push(`  [${entry.ts || "?"}] ${entry.event}: ${entry.detail || ""}`);
+    });
+  }
+
+  lines.push("");
+  lines.push(sep);
+  lines.push("Fim do diagnóstico — WMTi Centro de Testes");
+  lines.push(sep);
+
+  return lines.join("\n");
+}
+
 function buildRunDump(run: TestRun, mode: "full" | "error" = "full"): string {
-  const header = [
-    `═══ WMTi Test Run Diagnostic ═══`,
+  if (mode === "error" || run.status === "failed") {
+    return buildFailureDiagnosis(run);
+  }
+
+  // Full dump for successful runs
+  const lines: string[] = [
+    `═══ WMTi Test Run Report ═══`,
     `Run ID: ${run.id}`,
     `Suite: ${run.suite} | Type: ${run.test_type}`,
     `Status: ${run.status}`,
-    `Engine: ${run.execution_engine}`,
-    `Environment: ${run.environment}`,
-    `Triggered by: ${run.triggered_by}`,
-    `Created: ${run.created_at}`,
+    `Engine: ${run.execution_engine} | Env: ${run.environment}`,
     run.started_at ? `Started: ${run.started_at}` : null,
     run.finished_at ? `Finished: ${run.finished_at}` : null,
-    run.duration_ms ? `Duration: ${run.duration_ms}ms (${(run.duration_ms / 1000).toFixed(1)}s)` : null,
+    run.duration_ms ? `Duration: ${run.duration_ms}ms` : null,
     run.base_url ? `Base URL: ${run.base_url}` : null,
-    run.browser ? `Browser: ${run.browser}` : null,
-    run.github_run_id ? `GitHub Run: ${run.github_run_id}` : null,
-    run.github_run_url ? `GitHub URL: ${run.github_run_url}` : null,
+    run.github_run_url ? `GitHub: ${run.github_run_url}` : null,
     ``,
-    `── Summary ──`,
     `Total: ${run.total_tests} | Passed: ${run.passed_tests} | Failed: ${run.failed_tests} | Skipped: ${run.skipped_tests}`,
-    run.total_specs ? `Specs: ${run.completed_specs || 0}/${run.total_specs}` : null,
-    run.progress_percent !== null ? `Progress: ${run.progress_percent}%` : null,
-    run.current_spec ? `Current spec: ${run.current_spec}` : null,
-    run.current_url ? `Current URL: ${run.current_url}` : null,
-  ].filter(Boolean).join("\n");
+  ].filter(Boolean) as string[];
 
-  const errorSection = (run.error_message || run.error_summary) ? [
-    ``,
-    `── Error ──`,
-    run.error_message ? `Message: ${run.error_message}` : null,
-    run.error_summary && run.error_summary !== run.error_message ? `Summary: ${run.error_summary}` : null,
-  ].filter(Boolean).join("\n") : "";
-
-  if (mode === "error") {
-    // Failed test details from results
-    const failedDetails = (run.results || [])
-      .filter((r: any) => r.status === "failed")
-      .map((r: any, i: number) => [
-        `  [${i + 1}] ${r.name}`,
-        r.url ? `      URL: ${r.url}` : null,
-        r.error ? `      Error: ${r.error}` : null,
-        r.duration_ms ? `      Duration: ${r.duration_ms}ms` : null,
-      ].filter(Boolean).join("\n"))
-      .join("\n");
-
-    return [header, errorSection, failedDetails ? `\n── Failed Tests ──\n${failedDetails}` : ""].join("\n");
+  if (run.results?.length) {
+    lines.push("", "── Results ──");
+    run.results.forEach((r: any, i: number) => {
+      lines.push(`  [${i + 1}] ${r.status === "passed" ? "✓" : "✗"} ${r.name}${r.duration_ms ? ` (${r.duration_ms}ms)` : ""}`);
+    });
   }
 
-  // Full dump
-  const resultsSection = run.results && run.results.length > 0 ? [
-    ``,
-    `── Test Results (${run.results.length}) ──`,
-    ...run.results.map((r: any, i: number) => [
-      `  [${i + 1}] ${r.status === "passed" ? "✓" : r.status === "failed" ? "✗" : "⊘"} ${r.name}`,
-      r.url ? `      URL: ${r.url}` : null,
-      r.error ? `      Error: ${r.error}` : null,
-      r.duration_ms !== undefined ? `      Duration: ${r.duration_ms}ms` : null,
-    ].filter(Boolean).join("\n")),
-  ].join("\n") : "";
-
-  const logsSection = run.logs ? [
-    ``,
-    `── Logs ──`,
-    typeof run.logs === "string" ? run.logs : JSON.stringify(run.logs, null, 2),
-  ].join("\n") : "";
-
-  const artifactsSection = [
-    (run.screenshot_urls?.length || 0) > 0 ? `\n── Screenshots ──\n${run.screenshot_urls!.join("\n")}` : "",
-    (run.video_urls?.length || 0) > 0 ? `\n── Videos ──\n${run.video_urls!.join("\n")}` : "",
-    run.report_url ? `\n── Report ──\n${run.report_url}` : "",
-  ].filter(Boolean).join("\n");
-
-  return [header, errorSection, resultsSection, logsSection, artifactsSection].filter(Boolean).join("\n");
+  return lines.join("\n");
 }
 
 function copyDiagnostic(run: TestRun, mode: "full" | "error" = "full") {
   try {
     const text = buildRunDump(run, mode);
     navigator.clipboard.writeText(text);
-    toast.success(mode === "full" ? "Dump completo copiado" : "Erro copiado com diagnóstico");
+    toast.success(run.status === "failed" || mode === "error" ? "Diagnóstico de correção copiado ✓" : "Relatório copiado ✓");
   } catch (err) {
     console.error("[WMTi] Clipboard write failed:", err);
     toast.error("Falha ao copiar para clipboard");
@@ -400,11 +666,18 @@ function ErrorDetail({ result }: { result: DetailedTestResult }) {
                   result.cypress_command ? `\nComando Cypress:\n${result.cypress_command}` : "",
                   result.diff ? `\nExpected: ${JSON.stringify(result.diff.expected)}\nActual: ${JSON.stringify(result.diff.actual)}` : "",
                 ].filter(Boolean).join("\n");
-                navigator.clipboard.writeText(parts);
-                toast.success("Erro copiado com sucesso");
+                const diagnosis = inferErrorCategory(result.error || "");
+                const fullParts = [
+                  parts,
+                  `\n── CATEGORIA: ${diagnosis.category} ──`,
+                  `\n── COMO RESOLVER ──`,
+                  ...diagnosis.suggestions.map((s, j) => `${j + 1}. ${s}`),
+                ].join("\n");
+                navigator.clipboard.writeText(fullParts);
+                toast.success("Diagnóstico copiado ✓");
               }}
             >
-              <Copy className="h-3 w-3" /> Copiar erro
+              <Copy className="h-3 w-3" /> Copiar diagnóstico
             </Button>
           </div>
         </CollapsibleContent>
@@ -857,7 +1130,7 @@ function RunDetail({ run, onBack }: { run: TestRun; onBack: () => void }) {
             <span className="text-red-400 font-medium">{run.error_message}</span>
           </div>
           <Button variant="ghost" size="sm" className="h-7 px-2 text-[10px] gap-1 flex-shrink-0" onClick={() => copyDiagnostic(run, "error")}>
-            <Copy className="h-3 w-3" /> Copiar
+            <Copy className="h-3 w-3" /> Copiar diagnóstico
           </Button>
         </div>
       )}
@@ -867,7 +1140,7 @@ function RunDetail({ run, onBack }: { run: TestRun; onBack: () => void }) {
           {run.screenshot_urls && run.screenshot_urls.length > 0 && <ScreenshotViewer urls={run.screenshot_urls} />}
           {run.video_urls && run.video_urls.length > 0 && <VideoViewer urls={run.video_urls} />}
           <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={() => copyDiagnostic(run, "full")}>
-            <Copy className="h-3.5 w-3.5" /> Dump completo
+            <Copy className="h-3.5 w-3.5" /> Copiar diagnóstico completo
           </Button>
         </div>
       )}
@@ -883,23 +1156,9 @@ function RunDetail({ run, onBack }: { run: TestRun; onBack: () => void }) {
               </CardTitle>
               {failed.length > 0 && (
                 <Button variant="outline" size="sm" className="text-[11px] h-7 gap-1" onClick={() => {
-                  const dump = failed.map((t, i) => [
-                    `── Falha ${i + 1}/${failed.length} ──`,
-                    `Teste: ${t.name}`,
-                    t.fullTitle ? `Título completo: ${t.fullTitle}` : "",
-                    t.spec ? `Spec: ${t.spec}` : "",
-                    t.url ? `URL: ${t.url}` : "",
-                    `Duração: ${formatDuration(t.duration_ms)}`,
-                    t.error ? `\nErro:\n${t.error}` : "",
-                    t.stack_trace ? `\nStack Trace:\n${t.stack_trace}` : "",
-                    t.cypress_command ? `\nComando Cypress:\n${t.cypress_command}` : "",
-                    t.diff ? `\nExpected: ${JSON.stringify(t.diff.expected)}\nActual: ${JSON.stringify(t.diff.actual)}` : "",
-                    "",
-                  ].filter(Boolean).join("\n")).join("\n");
-                  navigator.clipboard.writeText(dump);
-                  toast.success("Todas as falhas copiadas");
+                  copyDiagnostic(run, "error");
                 }}>
-                  <Copy className="h-3 w-3" /> Copiar todas
+                  <Copy className="h-3 w-3" /> Copiar diagnóstico completo
                 </Button>
               )}
             </div>
@@ -1030,7 +1289,7 @@ function RunDetail({ run, onBack }: { run: TestRun; onBack: () => void }) {
                   </CardTitle>
                   <div className="flex items-center gap-2">
                     <Button variant="ghost" size="sm" className="h-7 px-2 text-[10px] gap-1" onClick={(e) => { e.stopPropagation(); copyDiagnostic(run, "full"); }}>
-                      <Copy className="h-3 w-3" /> Copiar dump
+                      <Copy className="h-3 w-3" /> Copiar diagnóstico
                     </Button>
                     <ChevronDown className="h-4 w-4 text-muted-foreground" />
                   </div>
