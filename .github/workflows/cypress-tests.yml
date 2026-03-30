@@ -117,6 +117,8 @@ jobs:
         id: cypress
         uses: cypress-io/github-action@v6
         continue-on-error: true
+        env:
+          CYPRESS_ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
         with:
           install: false
           browser: chrome
