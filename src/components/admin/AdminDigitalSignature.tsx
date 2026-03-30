@@ -91,6 +91,21 @@ export default function AdminDigitalSignature() {
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
 
+  // Full signing test state
+  interface SigningStep { step: number; name: string; status: "pass" | "fail"; message: string; duration_ms: number; }
+  interface SigningTestResult {
+    success: boolean;
+    total_duration_ms: number;
+    steps: SigningStep[];
+    certificate?: { subject_cn: string; issuer_cn: string; valid_from: string; valid_to: string; };
+    signature?: { hash: string; algorithm: string; };
+    signed_pdf_base64?: string;
+    signed_pdf_size?: number;
+    error?: string;
+  }
+  const [signingTest, setSigningTest] = useState<SigningTestResult | null>(null);
+  const [signingTesting, setSigningTesting] = useState(false);
+
   // Toggle state
   const [toggling, setToggling] = useState(false);
 
