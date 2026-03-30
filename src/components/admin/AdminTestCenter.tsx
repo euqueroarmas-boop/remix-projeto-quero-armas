@@ -1183,6 +1183,272 @@ function AlertConfigPanel() {
   );
 }
 
+// ─── Global Summary Card ───
+function GlobalSummary({ suiteStatuses }: { suiteStatuses: { suite: typeof SUITES[number]; run: TestRun | null }[] }) {
+  const withRuns = suiteStatuses.filter(s => s.run !== null);
+  const totalSuites = withRuns.length;
+  const failedSuites = withRuns.filter(s => ["failed", "partial"].includes(s.run!.status)).length;
+  const successSuites = withRuns.filter(s => s.run!.status === "success").length;
+  const runningSuites = withRuns.filter(s => s.run!.status === "running").length;
+
+  const totalTests = withRuns.reduce((a, s) => a + (s.run!.total_tests || 0), 0);
+  const passedTests = withRuns.reduce((a, s) => a + (s.run!.passed_tests || 0), 0);
+  const failedTests = withRuns.reduce((a, s) => a + (s.run!.failed_tests || 0), 0);
+  const successRate = totalTests > 0 ? Math.round((passedTests / totalTests) * 100) : 0;
+
+  // Find latest finished run
+  const finishedRuns = withRuns
+    .filter(s => s.run!.finished_at)
+    .sort((a, b) => new Date(b.run!.finished_at!).getTime() - new Date(a.run!.finished_at!).getTime());
+  const lastFinished = finishedRuns[0]?.run || null;
+
+  // Global status
+  let globalStatus: string;
+  let globalStatusLabel: string;
+  if (runningSuites > 0) {
+    globalStatus = "running";
+    globalStatusLabel = `${runningSuites} suite${runningSuites > 1 ? "s" : ""} em execução`;
+  } else if (totalSuites === 0) {
+    globalStatus = "neutral";
+    globalStatusLabel = "Nenhum teste executado";
+  } else if (failedSuites > 0) {
+    globalStatus = "failed";
+    globalStatusLabel = `${failedSuites} suite${failedSuites > 1 ? "s" : ""} com falha`;
+  } else {
+    globalStatus = "success";
+    globalStatusLabel = "Todas as suites saudáveis";
+  }
+
+  const borderColor = globalStatus === "success" ? "border-green-600/30" : globalStatus === "failed" ? "border-red-600/30" : globalStatus === "running" ? "border-blue-600/30" : "border-border";
+  const bgColor = globalStatus === "success" ? "bg-green-600/5" : globalStatus === "failed" ? "bg-red-600/5" : globalStatus === "running" ? "bg-blue-600/5" : "";
+
+  return (
+    <Card className={`${borderColor} ${bgColor}`}>
+      <CardContent className="p-4 md:p-5">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          {/* Left: status + label */}
+          <div className="flex items-center gap-3">
+            <div className={`p-2.5 rounded-xl ${globalStatus === "success" ? "bg-green-600/15" : globalStatus === "failed" ? "bg-red-600/15" : globalStatus === "running" ? "bg-blue-600/15" : "bg-muted"}`}>
+              {globalStatus === "success" && <CheckCircle className="h-6 w-6 text-green-400" />}
+              {globalStatus === "failed" && <XCircle className="h-6 w-6 text-red-400" />}
+              {globalStatus === "running" && <Loader2 className="h-6 w-6 text-blue-400 animate-spin" />}
+              {globalStatus === "neutral" && <Clock className="h-6 w-6 text-muted-foreground" />}
+            </div>
+            <div>
+              <p className="text-base font-bold text-foreground">{globalStatusLabel}</p>
+              {lastFinished && (
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Último ciclo: {new Date(lastFinished.finished_at!).toLocaleString("pt-BR")}
+                  {lastFinished.duration_ms ? ` · ${formatDuration(lastFinished.duration_ms)}` : ""}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Right: counters */}
+          <div className="grid grid-cols-4 gap-3 text-center">
+            <div>
+              <p className="text-lg font-black text-foreground tabular-nums">{totalSuites}</p>
+              <p className="text-[10px] text-muted-foreground">Suites</p>
+            </div>
+            <div>
+              <p className="text-lg font-black text-green-400 tabular-nums">{successSuites}</p>
+              <p className="text-[10px] text-green-400/70">OK</p>
+            </div>
+            <div>
+              <p className="text-lg font-black text-red-400 tabular-nums">{failedSuites}</p>
+              <p className="text-[10px] text-red-400/70">Falhas</p>
+            </div>
+            <div>
+              <p className="text-lg font-black text-foreground tabular-nums">{successRate}%</p>
+              <p className="text-[10px] text-muted-foreground">Sucesso</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Test-level breakdown bar */}
+        {totalTests > 0 && (
+          <div className="mt-4 space-y-1">
+            <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+              <span>{passedTests} passaram · {failedTests} falharam · {totalTests} total</span>
+            </div>
+            <div className="h-2 rounded-full bg-muted overflow-hidden flex">
+              <div className="bg-green-500 h-full transition-all" style={{ width: `${(passedTests / totalTests) * 100}%` }} />
+              <div className="bg-red-500 h-full transition-all" style={{ width: `${(failedTests / totalTests) * 100}%` }} />
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── Suite Card (standardized) ───
+function SuiteCard({
+  suite, lastRun, isRunning, onRun, onStop, onViewDetails, onCopyError,
+}: {
+  suite: typeof SUITES[number];
+  lastRun: TestRun | null;
+  isRunning: boolean;
+  onRun: () => void;
+  onStop: () => void;
+  onViewDetails: () => void;
+  onCopyError: () => void;
+}) {
+  const Icon = suite.icon;
+  const isLight = suite.engine === "light";
+  const hasRunningInDb = lastRun && lastRun.status === "running";
+  const showStop = isRunning || !!hasRunningInDb;
+  const hasFailed = lastRun && ["failed", "partial"].includes(lastRun.status);
+  const hasSuccess = lastRun && lastRun.status === "success";
+  const neverRun = !lastRun;
+
+  return (
+    <Card className={`transition-all h-full flex flex-col ${showStop ? "border-blue-500/40 bg-blue-500/5" : hasFailed ? "border-red-600/20" : hasSuccess ? "border-green-600/20" : "border-border"}`}>
+      <CardContent className="p-4 flex flex-col flex-1 gap-3">
+        {/* Header */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className={`p-2 rounded-lg flex-shrink-0 ${showStop ? "bg-blue-500/15" : hasFailed ? "bg-red-600/10" : hasSuccess ? "bg-green-600/10" : "bg-muted"}`}>
+              <Icon className={`h-4 w-4 ${showStop ? "text-blue-400 animate-pulse" : hasFailed ? "text-red-400" : hasSuccess ? "text-green-400" : "text-muted-foreground"}`} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-bold text-foreground truncate">{suite.label}</p>
+              <p className="text-[11px] text-muted-foreground line-clamp-1">{suite.description}</p>
+            </div>
+          </div>
+          <Badge variant="outline" className="text-[10px] font-normal flex-shrink-0">
+            {isLight ? "⚡ Leve" : "🧪 Cypress"}
+          </Badge>
+        </div>
+
+        {/* Status + Results */}
+        {neverRun ? (
+          <div className="flex-1 flex items-center justify-center py-3">
+            <p className="text-xs text-muted-foreground italic">Nunca executado</p>
+          </div>
+        ) : (
+          <div className="flex-1 space-y-2">
+            {/* Status badge + date */}
+            <div className="flex items-center justify-between gap-2">
+              <RunStatusBadge status={lastRun.status} />
+              <span className="text-[10px] text-muted-foreground">
+                {lastRun.finished_at
+                  ? new Date(lastRun.finished_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })
+                  : lastRun.started_at
+                    ? new Date(lastRun.started_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })
+                    : ""}
+              </span>
+            </div>
+
+            {/* Numeric summary */}
+            {lastRun.total_tests > 0 && (
+              <div className="grid grid-cols-3 gap-1.5 text-center">
+                <div className="bg-green-600/10 rounded py-1">
+                  <span className="text-sm font-bold text-green-400">{lastRun.passed_tests}</span>
+                  <p className="text-[9px] text-green-400/70">OK</p>
+                </div>
+                <div className="bg-red-600/10 rounded py-1">
+                  <span className="text-sm font-bold text-red-400">{lastRun.failed_tests}</span>
+                  <p className="text-[9px] text-red-400/70">Falha</p>
+                </div>
+                <div className="bg-muted/50 rounded py-1">
+                  <span className="text-sm font-bold text-foreground">{lastRun.total_tests}</span>
+                  <p className="text-[9px] text-muted-foreground">Total</p>
+                </div>
+              </div>
+            )}
+
+            {/* Duration */}
+            {lastRun.duration_ms && (
+              <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                <Clock className="h-3 w-3" /> {formatDuration(lastRun.duration_ms)}
+              </p>
+            )}
+
+            {/* Running state */}
+            {lastRun.status === "running" && lastRun.current_spec && (
+              <p className="text-[10px] text-blue-400/90 bg-blue-500/10 rounded px-2 py-1 truncate">
+                📂 {lastRun.current_spec}
+              </p>
+            )}
+            {lastRun.status === "running" && lastRun.github_run_url && (
+              <a href={lastRun.github_run_url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary hover:underline flex items-center gap-1" onClick={e => e.stopPropagation()}>
+                <ExternalLink className="h-3 w-3" /> Ver no GitHub
+              </a>
+            )}
+
+            {/* Error preview */}
+            {hasFailed && lastRun.error_message && (
+              <p className="text-[10px] text-red-400/90 bg-red-500/10 rounded px-2 py-1 line-clamp-2">
+                {lastRun.error_message}
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Actions (fixed at bottom) */}
+        <div className="flex items-center gap-1.5 pt-1 border-t border-border mt-auto">
+          {showStop ? (
+            <>
+              <Button size="sm" variant="destructive" className="h-7 text-[10px] px-2 flex-1" onClick={e => { e.stopPropagation(); onStop(); }}>
+                <Square className="h-3 w-3 mr-0.5" /> Parar
+              </Button>
+              <Button size="sm" variant="ghost" className="h-7 text-[10px] px-2" disabled>
+                <Loader2 className="h-3 w-3 animate-spin" />
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button size="sm" variant="outline" className="h-7 text-[10px] px-2.5 flex-1" onClick={e => { e.stopPropagation(); onRun(); }}>
+                <Play className="h-3 w-3 mr-0.5" /> Rodar
+              </Button>
+              {lastRun && (
+                <Button size="sm" variant="ghost" className="h-7 text-[10px] px-2" onClick={e => { e.stopPropagation(); onViewDetails(); }}>
+                  <Eye className="h-3 w-3" />
+                </Button>
+              )}
+              {hasFailed && (
+                <Button size="sm" variant="ghost" className="h-7 text-[10px] px-2 text-red-400" onClick={e => { e.stopPropagation(); onCopyError(); }}>
+                  <Copy className="h-3 w-3" />
+                </Button>
+              )}
+            </>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── History Row (mobile) ───
+function HistoryCardMobile({ run, onSelect }: { run: TestRun; onSelect: () => void }) {
+  return (
+    <div
+      className={`p-3 rounded-lg border cursor-pointer transition-all hover:border-muted-foreground/30 ${run.status === "failed" ? "border-red-600/20 bg-red-600/5" : "border-border"}`}
+      onClick={onSelect}
+    >
+      <div className="flex items-center justify-between gap-2 mb-1.5">
+        <span className="text-xs font-bold text-foreground truncate">
+          {SUITES.find(s => s.id === run.test_type)?.label || run.test_type}
+        </span>
+        <RunStatusBadge status={run.status} />
+      </div>
+      <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+        <span>{run.started_at ? new Date(run.started_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—"}</span>
+        <span>{formatDuration(run.duration_ms)}</span>
+      </div>
+      {run.total_tests > 0 && (
+        <div className="flex items-center gap-2 mt-1.5 text-[11px]">
+          <span className="text-green-400">{run.passed_tests}✓</span>
+          <span className="text-red-400">{run.failed_tests}✗</span>
+          <span className="text-muted-foreground">/ {run.total_tests}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main Component ───
 export default function AdminTestCenter({ onBack }: { onBack?: () => void }) {
   const isMobile = useIsMobile();
@@ -1192,7 +1458,7 @@ export default function AdminTestCenter({ onBack }: { onBack?: () => void }) {
   const [filterStatus, setFilterStatus] = useState("all");
   const [runningTests, setRunningTests] = useState<Set<string>>(new Set());
   const [selectedRun, setSelectedRun] = useState<TestRun | null>(null);
-  const [activeTab, setActiveTab] = useState<"suites" | "alerts">("suites");
+  const [activeTab, setActiveTab] = useState<"suites" | "history" | "alerts">("suites");
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchRuns = useCallback(async () => {
@@ -1232,7 +1498,7 @@ export default function AdminTestCenter({ onBack }: { onBack?: () => void }) {
     return () => { supabase.removeChannel(channel); };
   }, [selectedRun?.id]);
 
-  // Polling fallback — faster when tests are running
+  // Polling fallback
   useEffect(() => {
     const hasRunning = runningTests.size > 0 || runs.some(r => r.status === "running");
     if (hasRunning && !pollingRef.current) {
@@ -1245,9 +1511,9 @@ export default function AdminTestCenter({ onBack }: { onBack?: () => void }) {
     return () => { if (pollingRef.current) clearInterval(pollingRef.current); };
   }, [runningTests.size, runs, fetchRuns]);
 
-  // Watchdog: auto-fail Cypress runs stuck with 0% progress for 5+ minutes
+  // Watchdog
   useEffect(() => {
-    const WATCHDOG_MS = 5 * 60 * 1000; // 5 minutes
+    const WATCHDOG_MS = 5 * 60 * 1000;
     const stuckRuns = runs.filter(r =>
       r.status === "running" &&
       r.execution_engine !== "edge_function" &&
@@ -1274,20 +1540,13 @@ export default function AdminTestCenter({ onBack }: { onBack?: () => void }) {
   const handleRunTest = async (testType: string) => {
     setRunningTests(prev => new Set(prev).add(testType));
     try {
-      // Fire-and-forget: don't await the full response for light tests
-      // The edge function updates the DB incrementally via updateRunProgress
-      // and realtime subscription picks up changes in real-time
       invokeRunTests("POST", undefined, { test_type: testType })
-        .then(() => {
-          // After completion, refresh list to get final state
-          fetchRuns();
-        })
+        .then(() => fetchRuns())
         .catch((err) => {
           console.error("Run test error:", err);
           setRunningTests(prev => { const n = new Set(prev); n.delete(testType); return n; });
           toast.error(`Erro ao executar teste ${testType}`);
         });
-      // Immediately fetch to pick up the new "running" row
       setTimeout(() => fetchRuns(), 500);
     } catch (err) {
       console.error("Run test error:", err);
@@ -1310,15 +1569,22 @@ export default function AdminTestCenter({ onBack }: { onBack?: () => void }) {
     }
   };
 
-  const STALE_TIMEOUT = 10 * 60 * 1000; // 10 min
-  const runningRuns = runs.filter(r => {
-    if (r.status !== "running") return false;
-    if (r.started_at && (Date.now() - new Date(r.started_at).getTime()) > STALE_TIMEOUT) return false;
-    return true;
-  });
-  const lastRun = runs.length > 0 ? runs[0] : null;
+  const handleStopTest = (suiteId: string) => {
+    setRunningTests(prev => { const n = new Set(prev); n.delete(suiteId); return n; });
+    const lastRun = runs.find(r => r.test_type === suiteId && (r.status === "running" || r.status === "pending"));
+    if (lastRun) {
+      supabase.from("test_runs").update({
+        status: "failed" as any,
+        error_message: "Parado manualmente pelo admin",
+        error_summary: "Parado manualmente",
+        finished_at: new Date().toISOString(),
+        progress_percent: lastRun.progress_percent || 0,
+      } as any).eq("id", lastRun.id).then(() => fetchRuns());
+    }
+    toast.info("Teste parado");
+  };
 
-  // Auto-clear runningTests when realtime shows completion
+  // Auto-clear runningTests
   useEffect(() => {
     const completedStatuses = ["success", "failed", "partial", "cancelled"];
     runs.forEach(r => {
@@ -1326,76 +1592,86 @@ export default function AdminTestCenter({ onBack }: { onBack?: () => void }) {
         setRunningTests(prev => { const n = new Set(prev); n.delete(r.test_type); return n; });
       }
     });
-    // Also clear "full" if no running runs exist
     if (runningTests.has("full") && !runs.some(r => r.status === "running")) {
       setRunningTests(prev => { const n = new Set(prev); n.delete("full"); return n; });
     }
   }, [runs]);
 
+  // Build suite statuses (latest run per suite)
+  const suiteStatuses = SUITES.map(suite => ({
+    suite,
+    run: runs.find(r => r.test_type === suite.id) || null,
+  }));
+
+  const STALE_TIMEOUT = 10 * 60 * 1000;
+  const runningRuns = runs.filter(r => {
+    if (r.status !== "running") return false;
+    if (r.started_at && (Date.now() - new Date(r.started_at).getTime()) > STALE_TIMEOUT) return false;
+    return true;
+  });
+
+  // Detail view
   if (selectedRun) {
     return <RunDetail run={selectedRun} onBack={() => { setSelectedRun(null); fetchRuns(); }} />;
   }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          {onBack && (
-            <Button variant="ghost" size="sm" onClick={onBack} className="text-xs gap-1 px-2">
-              <ArrowLeft className="h-3.5 w-3.5" /> Voltar
-            </Button>
-          )}
-          <div>
-            <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
-              🧪 Centro de Testes
-            </h3>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              Dispare, acompanhe e audite testes automatizados
-          </p>
+      {/* ═══ A) EXECUTIVE HEADER ═══ */}
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            {onBack && (
+              <Button variant="ghost" size="icon" onClick={onBack} className="h-8 w-8">
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            )}
+            <div>
+              <h3 className="text-xl font-bold text-foreground">Centro de Testes</h3>
+              <p className="text-xs text-muted-foreground">Observabilidade e qualidade automatizada</p>
+            </div>
           </div>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <Button variant={activeTab === "suites" ? "default" : "outline"} size="sm" onClick={() => setActiveTab("suites")} className="text-xs">
-            <Play className="h-3 w-3 mr-1" /> Suites
-          </Button>
-          <Button variant={activeTab === "alerts" ? "default" : "outline"} size="sm" onClick={() => setActiveTab("alerts")} className="text-xs">
-            <Bell className="h-3 w-3 mr-1" /> Alertas
-          </Button>
-          <div className="w-px h-6 bg-border mx-1" />
-          <Button variant="outline" size="sm" onClick={fetchRuns} className="text-xs">
-            <RefreshCw className="h-3 w-3 mr-1" /> Atualizar
-          </Button>
-          <Button size="sm" onClick={handleRunFull} disabled={runningTests.has("full")} className="text-xs">
-            {runningTests.has("full") ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Rocket className="h-3 w-3 mr-1" />}
-            Teste Completo
-          </Button>
+          <div className="flex items-center gap-1.5">
+            <Button variant="outline" size="sm" onClick={fetchRuns} className="text-xs h-8 px-2.5">
+              <RefreshCw className="h-3.5 w-3.5" />
+            </Button>
+          </div>
         </div>
       </div>
 
-      {/* Summary Stats */}
-      {lastRun && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Card><CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Última execução</p>
-            <p className="text-sm font-bold text-foreground mt-1">{lastRun.started_at ? new Date(lastRun.started_at).toLocaleString("pt-BR") : "—"}</p>
-          </CardContent></Card>
-          <Card><CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Último status</p>
-            <div className="mt-1"><RunStatusBadge status={lastRun.status} /></div>
-          </CardContent></Card>
-          <Card><CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Duração</p>
-            <p className="text-sm font-bold text-foreground mt-1">{formatDuration(lastRun.duration_ms)}</p>
-          </CardContent></Card>
-          <Card><CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Taxa de sucesso</p>
-            <p className="text-sm font-bold text-green-400 mt-1">{lastRun.total_tests > 0 ? `${Math.round((lastRun.passed_tests / lastRun.total_tests) * 100)}%` : "—"}</p>
-          </CardContent></Card>
-        </div>
-      )}
+      {/* ═══ B) GLOBAL SUMMARY ═══ */}
+      <GlobalSummary suiteStatuses={suiteStatuses} />
 
-      {/* Live Progress */}
+      {/* ═══ C) MAIN ACTIONS ═══ */}
+      <div className="flex flex-wrap items-center gap-2">
+        <Button size="sm" onClick={handleRunFull} disabled={runningTests.has("full")} className="text-xs h-8">
+          {runningTests.has("full") ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Rocket className="h-3.5 w-3.5 mr-1" />}
+          Teste Completo
+        </Button>
+        <div className="flex-1" />
+        <div className="flex items-center bg-muted rounded-lg p-0.5">
+          <button
+            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${activeTab === "suites" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+            onClick={() => setActiveTab("suites")}
+          >
+            Suites
+          </button>
+          <button
+            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${activeTab === "history" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+            onClick={() => setActiveTab("history")}
+          >
+            Histórico
+          </button>
+          <button
+            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${activeTab === "alerts" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+            onClick={() => setActiveTab("alerts")}
+          >
+            <Bell className="h-3 w-3 inline mr-1" />Alertas
+          </button>
+        </div>
+      </div>
+
+      {/* ═══ LIVE PROGRESS (always visible when running) ═══ */}
       {runningRuns.length > 0 && (
         <div className="space-y-3">
           <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
@@ -1406,190 +1682,70 @@ export default function AdminTestCenter({ onBack }: { onBack?: () => void }) {
         </div>
       )}
 
-      {/* Alerts Tab */}
-      {activeTab === "alerts" && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2"><Bell className="h-4 w-4 text-primary" /> Configuração de Alertas</CardTitle>
-            <CardDescription className="text-xs">Receba notificações quando testes falharem</CardDescription>
-          </CardHeader>
-          <CardContent><AlertConfigPanel /></CardContent>
-        </Card>
+      {/* ═══ D) SUITES TAB ═══ */}
+      {activeTab === "suites" && (
+        <div className="space-y-3">
+          <h4 className="text-sm font-bold text-foreground">Módulos de Teste</h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {SUITES.map(suite => {
+              const lastSuiteRun = runs.find(r => r.test_type === suite.id) || null;
+              return (
+                <SuiteCard
+                  key={suite.id}
+                  suite={suite}
+                  lastRun={lastSuiteRun}
+                  isRunning={runningTests.has(suite.id)}
+                  onRun={() => handleRunTest(suite.id)}
+                  onStop={() => handleStopTest(suite.id)}
+                  onViewDetails={() => lastSuiteRun && setSelectedRun(lastSuiteRun)}
+                  onCopyError={() => lastSuiteRun && copyDiagnostic(lastSuiteRun, "error")}
+                />
+              );
+            })}
+          </div>
+        </div>
       )}
 
-      {/* Suites Tab */}
-      {activeTab === "suites" && (
-        <>
-          <div>
-            <h4 className="text-sm font-bold text-foreground mb-3">Disparar Testes</h4>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-              {SUITES.map((suite) => {
-                const isRunning = runningTests.has(suite.id);
-                const Icon = suite.icon;
-                const isLight = suite.engine === "light";
-                const lastSuiteRun = runs.find(r => r.test_type === suite.id);
-                const hasFailed = lastSuiteRun && ["failed", "partial"].includes(lastSuiteRun.status);
-                const hasRunningInDb = lastSuiteRun && lastSuiteRun.status === "running";
-                const showStop = isRunning || hasRunningInDb;
-                const failedResults = hasFailed && Array.isArray(lastSuiteRun.results)
-                  ? (lastSuiteRun.results as DetailedTestResult[]).filter(r => r.status === "failed")
-                  : [];
-
-                return (
-                  <Card
-                    key={suite.id}
-                    className={`transition-all cursor-pointer ${isRunning ? "border-primary/50 bg-primary/5" : hasFailed ? "hover:border-red-500/40" : "hover:border-muted-foreground/30"}`}
-                    onClick={() => {
-                      if (lastSuiteRun) setSelectedRun(lastSuiteRun);
-                    }}
-                  >
-                    <CardContent className="p-3.5 space-y-2.5">
-                      <div className="flex items-center gap-2">
-                        <div className={`p-1.5 rounded-md ${isRunning ? "bg-primary/20" : "bg-muted"}`}>
-                          <Icon className={`h-3.5 w-3.5 ${isRunning ? "text-primary animate-pulse" : "text-muted-foreground"}`} />
-                        </div>
-                        <span className="text-xs font-bold text-foreground truncate">{suite.label}</span>
-                      </div>
-                      <p className="text-[11px] text-muted-foreground line-clamp-2">{suite.description}</p>
-                      {/* Last run date */}
-                      {lastSuiteRun && (
-                        <p className="text-[10px] text-muted-foreground">
-                          Último: {new Date(lastSuiteRun.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}
-                        </p>
-                      )}
-                      <div className="flex items-center justify-between gap-1">
-                        <Badge variant="outline" className="text-[10px] font-normal">{isLight ? "⚡ Leve" : "🧪 Cypress"}</Badge>
-                        <div className="flex items-center gap-1">
-                          {showStop && (
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              className="h-7 text-[10px] px-2"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setRunningTests(prev => { const n = new Set(prev); n.delete(suite.id); return n; });
-                                if (lastSuiteRun && (lastSuiteRun.status === "running" || lastSuiteRun.status === "pending")) {
-                                  supabase.from("test_runs").update({ status: "failed", error_message: "Parado manualmente pelo admin", error_summary: "Parado manualmente", finished_at: new Date().toISOString(), progress_percent: lastSuiteRun.progress_percent || 0 }).eq("id", lastSuiteRun.id).then(() => fetchRuns());
-                                }
-                                toast.info("Teste parado");
-                              }}
-                            >
-                              <Square className="h-3 w-3" /> Parar
-                            </Button>
-                          )}
-                          <Button size="sm" variant={showStop ? "ghost" : "outline"} onClick={(e) => { e.stopPropagation(); handleRunTest(suite.id); }} disabled={showStop} className="h-7 text-[11px] px-2.5">
-                            {showStop ? <Loader2 className="h-3 w-3 animate-spin" /> : <Play className="h-3 w-3 mr-0.5" />}
-                            {showStop ? "..." : "Rodar"}
-                          </Button>
-                        </div>
-                      </div>
-                      {lastSuiteRun && (
-                        <div className="border-t border-border pt-1.5 mt-1 space-y-1.5">
-                          <div className="flex items-center justify-between">
-                            <RunStatusBadge status={lastSuiteRun.status} />
-                            {hasFailed && (
-                              <button
-                                className="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  copyDiagnostic(lastSuiteRun as TestRun, "error");
-                                }}
-                              >
-                                <Copy className="h-3 w-3 inline mr-0.5" />Copiar erro
-                              </button>
-                            )}
-                          </div>
-                          {/* Show current phase for running Cypress tests */}
-                          {lastSuiteRun.status === "running" && lastSuiteRun.current_spec && (
-                            <p className="text-[10px] text-blue-400/90 bg-blue-500/10 rounded px-2 py-1 truncate">
-                              {lastSuiteRun.current_spec}
-                            </p>
-                          )}
-                          {/* Show github link if available */}
-                          {lastSuiteRun.status === "running" && lastSuiteRun.github_run_url && (
-                            <a
-                              href={lastSuiteRun.github_run_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-[10px] text-primary hover:underline flex items-center gap-1"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <ExternalLink className="h-3 w-3" /> Ver no GitHub
-                            </a>
-                          )}
-                          {hasFailed && lastSuiteRun.error_message && (
-                            <p className="text-[10px] text-red-400/90 bg-red-500/10 rounded px-2 py-1 line-clamp-2">
-                              {lastSuiteRun.error_message}
-                            </p>
-                          )}
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                );
-              })}
+      {/* ═══ E) HISTORY TAB ═══ */}
+      {activeTab === "history" && (
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+            <h4 className="text-sm font-bold text-foreground">Histórico de Execuções</h4>
+            <div className="flex items-center gap-2 sm:ml-auto">
+              <Select value={filterType} onValueChange={setFilterType}>
+                <SelectTrigger className="w-36 text-xs h-8"><SelectValue placeholder="Tipo" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os tipos</SelectItem>
+                  {SUITES.map(s => <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>)}
+                  <SelectItem value="full">Teste Completo</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger className="w-32 text-xs h-8"><SelectValue placeholder="Status" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="success">Sucesso</SelectItem>
+                  <SelectItem value="failed">Falhou</SelectItem>
+                  <SelectItem value="running">Rodando</SelectItem>
+                  <SelectItem value="partial">Parcial</SelectItem>
+                </SelectContent>
+              </Select>
+              <span className="text-[11px] text-muted-foreground whitespace-nowrap">{runs.length} registros</span>
             </div>
           </div>
 
-          {/* Filters */}
-          <div className="flex flex-wrap gap-2 items-center pt-2">
-            <h4 className="text-sm font-bold text-foreground mr-2">Histórico</h4>
-            <Select value={filterType} onValueChange={setFilterType}>
-              <SelectTrigger className="w-36 text-xs h-8"><SelectValue placeholder="Tipo" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os tipos</SelectItem>
-                {SUITES.map(s => <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>)}
-                <SelectItem value="full">Teste Completo</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-32 text-xs h-8"><SelectValue placeholder="Status" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="success">Sucesso</SelectItem>
-                <SelectItem value="failed">Falhou</SelectItem>
-                <SelectItem value="running">Rodando</SelectItem>
-                <SelectItem value="partial">Parcial</SelectItem>
-              </SelectContent>
-            </Select>
-            <span className="text-xs text-muted-foreground ml-auto">{runs.length} execuções</span>
-          </div>
-
-          {/* History */}
           {loading ? (
             <div className="text-center py-12 text-muted-foreground text-sm">
-              <Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" /> Carregando histórico...
+              <Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" /> Carregando...
             </div>
           ) : runs.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground text-sm">Nenhuma execução encontrada. Dispare um teste acima.</div>
+            <div className="text-center py-12 text-muted-foreground text-sm">
+              Nenhuma execução encontrada.
+            </div>
           ) : isMobile ? (
             <div className="space-y-2">
-              {runs.map((run) => (
-                <Card key={run.id} className={`cursor-pointer hover:border-muted-foreground/30 transition-all ${run.status === "failed" ? "border-destructive/30" : ""}`} onClick={() => setSelectedRun(run)}>
-                  <CardContent className="p-3 space-y-2">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs font-bold text-foreground truncate">{SUITES.find(s => s.id === run.test_type)?.label || run.test_type}</span>
-                      <RunStatusBadge status={run.status} />
-                    </div>
-                    <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                      <span>{run.started_at ? new Date(run.started_at).toLocaleString("pt-BR") : "—"}</span>
-                      <span>{formatDuration(run.duration_ms)}</span>
-                    </div>
-                    {run.total_tests > 0 && (
-                      <div className="h-1.5 rounded-full bg-muted overflow-hidden flex">
-                        <div className="bg-green-500 h-full" style={{ width: `${(run.passed_tests / run.total_tests) * 100}%` }} />
-                        <div className="bg-red-500 h-full" style={{ width: `${(run.failed_tests / run.total_tests) * 100}%` }} />
-                      </div>
-                    )}
-                    <div className="text-[11px]">
-                      <span className="text-green-400">{run.passed_tests}✓</span>{" / "}
-                      <span className="text-red-400">{run.failed_tests}✗</span>{" / "}
-                      <span className="text-muted-foreground">{run.total_tests} total</span>
-                      {run.screenshot_urls && run.screenshot_urls.length > 0 && <span className="ml-2">📸 {run.screenshot_urls.length}</span>}
-                      {run.video_urls && run.video_urls.length > 0 && <span className="ml-1">🎥 {run.video_urls.length}</span>}
-                    </div>
-                  </CardContent>
-                </Card>
+              {runs.map(run => (
+                <HistoryCardMobile key={run.id} run={run} onSelect={() => setSelectedRun(run)} />
               ))}
             </div>
           ) : (
@@ -1597,48 +1753,42 @@ export default function AdminTestCenter({ onBack }: { onBack?: () => void }) {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="text-xs">Tipo</TableHead>
+                    <TableHead className="text-xs">Suite</TableHead>
                     <TableHead className="text-xs">Status</TableHead>
-                    <TableHead className="text-xs">Início</TableHead>
+                    <TableHead className="text-xs">Data</TableHead>
                     <TableHead className="text-xs">Duração</TableHead>
                     <TableHead className="text-xs">Resultado</TableHead>
-                    <TableHead className="text-xs">Artefatos</TableHead>
                     <TableHead className="text-xs">Motor</TableHead>
-                    <TableHead className="text-xs w-[60px]"></TableHead>
+                    <TableHead className="text-xs w-[50px]"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {runs.map((run) => (
-                    <TableRow key={run.id} className={`cursor-pointer hover:bg-muted/50 ${run.status === "failed" ? "bg-red-950/10" : ""}`} onClick={() => setSelectedRun(run)}>
-                      <TableCell className="text-xs font-medium text-foreground">{SUITES.find(s => s.id === run.test_type)?.label || run.test_type}</TableCell>
+                  {runs.map(run => (
+                    <TableRow
+                      key={run.id}
+                      className={`cursor-pointer hover:bg-muted/50 ${run.status === "failed" ? "bg-red-950/10" : ""}`}
+                      onClick={() => setSelectedRun(run)}
+                    >
+                      <TableCell className="text-xs font-medium text-foreground">
+                        {SUITES.find(s => s.id === run.test_type)?.label || run.test_type}
+                      </TableCell>
                       <TableCell><RunStatusBadge status={run.status} /></TableCell>
-                      <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{run.started_at ? new Date(run.started_at).toLocaleString("pt-BR") : "—"}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                        {run.started_at ? new Date(run.started_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—"}
+                      </TableCell>
                       <TableCell className="text-xs text-muted-foreground">{formatDuration(run.duration_ms)}</TableCell>
                       <TableCell className="text-xs">
                         <span className="text-green-400">{run.passed_tests}✓</span>{" "}
                         <span className="text-red-400">{run.failed_tests}✗</span>{" / "}
                         <span className="text-muted-foreground">{run.total_tests}</span>
                       </TableCell>
-                      <TableCell className="text-xs">
-                        <div className="flex items-center gap-1">
-                          {run.screenshot_urls && run.screenshot_urls.length > 0 && (
-                            <span title="Screenshots" className="text-muted-foreground">📸{run.screenshot_urls.length}</span>
-                          )}
-                          {run.video_urls && run.video_urls.length > 0 && (
-                            <span title="Vídeos" className="text-muted-foreground">🎥{run.video_urls.length}</span>
-                          )}
-                          {(!run.screenshot_urls || run.screenshot_urls.length === 0) && (!run.video_urls || run.video_urls.length === 0) && (
-                            <span className="text-muted-foreground">—</span>
-                          )}
-                        </div>
-                      </TableCell>
                       <TableCell>
                         <Badge variant="outline" className="text-[10px]">
-                          {run.execution_engine === "edge_function" ? "⚡" : run.execution_engine === "github_actions" ? "🧪" : "🔀"}
+                          {run.execution_engine === "edge_function" ? "⚡" : "🧪"}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setSelectedRun(run); }}>
+                        <Button variant="ghost" size="sm" onClick={e => { e.stopPropagation(); setSelectedRun(run); }}>
                           <Eye className="h-4 w-4" />
                         </Button>
                       </TableCell>
@@ -1648,7 +1798,20 @@ export default function AdminTestCenter({ onBack }: { onBack?: () => void }) {
               </Table>
             </div>
           )}
-        </>
+        </div>
+      )}
+
+      {/* ═══ ALERTS TAB ═══ */}
+      {activeTab === "alerts" && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Bell className="h-4 w-4 text-primary" /> Configuração de Alertas
+            </CardTitle>
+            <CardDescription className="text-xs">Receba notificações quando testes falharem</CardDescription>
+          </CardHeader>
+          <CardContent><AlertConfigPanel /></CardContent>
+        </Card>
       )}
     </div>
   );
