@@ -1872,8 +1872,14 @@ export default function AdminTestCenter({ onBack }: { onBack?: () => void }) {
       if (!resp.ok) throw new Error(data.error || `HTTP ${resp.status}`);
 
       if (data.success) {
-        toast.success(`✅ Auto-fix: patch aplicado em ${data.file_path} (${data.commit_sha?.slice(0, 7)})`);
-        // The re-run was triggered by the edge function, wait for result via realtime
+        toast.success(`✅ Auto-fix: patch na branch ${data.branch} — PR #${data.pr_number}`);
+        setAutoFixBranch({
+          branch: data.branch,
+          prUrl: data.pr_url,
+          prNumber: data.pr_number,
+          filePath: data.file_path,
+          commitSha: data.commit_sha?.slice(0, 7) || "",
+        });
       } else {
         toast.warning(`Auto-fix: ${data.error || "sem código gerado"}`);
         setAutoFixing(null);
