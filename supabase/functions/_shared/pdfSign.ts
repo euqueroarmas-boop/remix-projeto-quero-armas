@@ -28,6 +28,12 @@ export interface SignPdfOptions {
   usePades?: boolean;
 }
 
+export interface LateralMarkOptions {
+  signerName: string;
+  documentHash: string;
+  signingDate?: string;
+}
+
 export interface SignResult {
   signedPdf: Uint8Array;
   signedPdfSize: number;
@@ -46,14 +52,11 @@ export function addVisualStamp(
   serialNumber: string,
 ): void {
   const { rgb } = pdfLib;
-  // We need fonts — caller should pass them or we embed here
-  // For simplicity, we draw with whatever fonts are available
   const { width: pageWidth } = lastPage.getSize();
   const stampX = 42;
   const stampY = 40;
   const stampWidth = pageWidth - 84;
   const stampHeight = 70;
-  const sigDate = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
 
   lastPage.drawRectangle({
     x: stampX,
@@ -64,11 +67,66 @@ export function addVisualStamp(
     borderColor: rgb(0.7, 0.7, 0.75),
     borderWidth: 0.5,
   });
+}
 
-  // Note: caller should embed fonts and pass them if needed for text
-  // The visual stamp text is drawn by the caller (sign-contract-pdf / test-certificate-sign)
-  // This function only draws the background rectangle.
-  // Text drawing is left to the caller for font flexibility.
+/**
+ * Adds a lateral (rotated 90°) digital signature mark on ALL pages.
+ * Similar to court-signed documents in Brazil.
+ * Call BEFORE addPlaceholderAndSign().
+ */
+export async function addLateralMark(
+  pdfDoc: any,
+  opts: LateralMarkOptions,
+): Promise<void> {
+  const pdfLib = await import("npm:pdf-lib@1.17.1");
+  const { StandardFonts, rgb, degrees } = pdfLib;
+
+  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const pages = pdfDoc.getPages();
+
+  const sigDate = opts.signingDate ||
+    new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+
+  // Truncate hash for display: first 12 + last 6 chars
+  const h = opts.documentHash || "";
+  const shortHash = h.length > 20
+    ? `${h.substring(0, 12)}...${h.substring(h.length - 6)}`
+    : h;
+
+  const line1 = `ASSINADO DIGITALMENTE \u2022 ${opts.signerName.toUpperCase()}`;
+  const line2 = `${sigDate} \u2022 SHA-256 ${shortHash}`;
+
+  const fontSize = 5.5;
+  const lineSpacing = 7;
+  const color = rgb(0.55, 0.55, 0.55);
+  const xPos = 8; // distance from left edge
+
+  for (const page of pages) {
+    const { height } = page.getSize();
+    const yStart = height / 2 + 80; // vertically centered-ish
+
+    // Line 1
+    page.drawText(line1, {
+      x: xPos,
+      y: yStart,
+      size: fontSize,
+      font,
+      color,
+      rotate: degrees(90),
+    });
+
+    // Line 2
+    page.drawText(line2, {
+      x: xPos + lineSpacing,
+      y: yStart,
+      size: fontSize,
+      font,
+      color,
+      rotate: degrees(90),
+    });
+  }
+
+  console.log(`[pdfSign] ✓ Lateral mark added to ${pages.length} page(s)`);
 }
 
 /**
