@@ -106,6 +106,93 @@ const STATUS_CONFIG: Record<string, { color: string; icon: typeof CheckCircle; l
 
 const ITEMS_PER_PAGE = 20;
 
+// ─── Diagnostic dump builder ───
+function buildRunDump(run: TestRun, mode: "full" | "error" = "full"): string {
+  const header = [
+    `═══ WMTi Test Run Diagnostic ═══`,
+    `Run ID: ${run.id}`,
+    `Suite: ${run.suite} | Type: ${run.test_type}`,
+    `Status: ${run.status}`,
+    `Engine: ${run.execution_engine}`,
+    `Environment: ${run.environment}`,
+    `Triggered by: ${run.triggered_by}`,
+    `Created: ${run.created_at}`,
+    run.started_at ? `Started: ${run.started_at}` : null,
+    run.finished_at ? `Finished: ${run.finished_at}` : null,
+    run.duration_ms ? `Duration: ${run.duration_ms}ms (${(run.duration_ms / 1000).toFixed(1)}s)` : null,
+    run.base_url ? `Base URL: ${run.base_url}` : null,
+    run.browser ? `Browser: ${run.browser}` : null,
+    run.github_run_id ? `GitHub Run: ${run.github_run_id}` : null,
+    run.github_run_url ? `GitHub URL: ${run.github_run_url}` : null,
+    ``,
+    `── Summary ──`,
+    `Total: ${run.total_tests} | Passed: ${run.passed_tests} | Failed: ${run.failed_tests} | Skipped: ${run.skipped_tests}`,
+    run.total_specs ? `Specs: ${run.completed_specs || 0}/${run.total_specs}` : null,
+    run.progress_percent !== null ? `Progress: ${run.progress_percent}%` : null,
+    run.current_spec ? `Current spec: ${run.current_spec}` : null,
+    run.current_url ? `Current URL: ${run.current_url}` : null,
+  ].filter(Boolean).join("\n");
+
+  const errorSection = (run.error_message || run.error_summary) ? [
+    ``,
+    `── Error ──`,
+    run.error_message ? `Message: ${run.error_message}` : null,
+    run.error_summary && run.error_summary !== run.error_message ? `Summary: ${run.error_summary}` : null,
+  ].filter(Boolean).join("\n") : "";
+
+  if (mode === "error") {
+    // Failed test details from results
+    const failedDetails = (run.results || [])
+      .filter((r: any) => r.status === "failed")
+      .map((r: any, i: number) => [
+        `  [${i + 1}] ${r.name}`,
+        r.url ? `      URL: ${r.url}` : null,
+        r.error ? `      Error: ${r.error}` : null,
+        r.duration_ms ? `      Duration: ${r.duration_ms}ms` : null,
+      ].filter(Boolean).join("\n"))
+      .join("\n");
+
+    return [header, errorSection, failedDetails ? `\n── Failed Tests ──\n${failedDetails}` : ""].join("\n");
+  }
+
+  // Full dump
+  const resultsSection = run.results && run.results.length > 0 ? [
+    ``,
+    `── Test Results (${run.results.length}) ──`,
+    ...run.results.map((r: any, i: number) => [
+      `  [${i + 1}] ${r.status === "passed" ? "✓" : r.status === "failed" ? "✗" : "⊘"} ${r.name}`,
+      r.url ? `      URL: ${r.url}` : null,
+      r.error ? `      Error: ${r.error}` : null,
+      r.duration_ms !== undefined ? `      Duration: ${r.duration_ms}ms` : null,
+    ].filter(Boolean).join("\n")),
+  ].join("\n") : "";
+
+  const logsSection = run.logs ? [
+    ``,
+    `── Logs ──`,
+    typeof run.logs === "string" ? run.logs : JSON.stringify(run.logs, null, 2),
+  ].join("\n") : "";
+
+  const artifactsSection = [
+    (run.screenshot_urls?.length || 0) > 0 ? `\n── Screenshots ──\n${run.screenshot_urls!.join("\n")}` : "",
+    (run.video_urls?.length || 0) > 0 ? `\n── Videos ──\n${run.video_urls!.join("\n")}` : "",
+    run.report_url ? `\n── Report ──\n${run.report_url}` : "",
+  ].filter(Boolean).join("\n");
+
+  return [header, errorSection, resultsSection, logsSection, artifactsSection].filter(Boolean).join("\n");
+}
+
+function copyDiagnostic(run: TestRun, mode: "full" | "error" = "full") {
+  try {
+    const text = buildRunDump(run, mode);
+    navigator.clipboard.writeText(text);
+    toast.success(mode === "full" ? "Dump completo copiado" : "Erro copiado com diagnóstico");
+  } catch (err) {
+    console.error("[WMTi] Clipboard write failed:", err);
+    toast.error("Falha ao copiar para clipboard");
+  }
+}
+
 function getAdminToken() {
   return sessionStorage.getItem("admin_token") || "";
 }
@@ -716,12 +803,9 @@ function RunDetail({ run, onBack }: { run: TestRun; onBack: () => void }) {
                   variant="ghost"
                   size="sm"
                   className="h-6 px-2 text-[10px] gap-1"
-                  onClick={() => {
-                    navigator.clipboard.writeText(run.error_message || "");
-                    toast.success("Erro copiado");
-                  }}
+                  onClick={() => copyDiagnostic(run, "error")}
                 >
-                  <Copy className="h-3 w-3" /> Copiar
+                  <Copy className="h-3 w-3" /> Copiar erro
                 </Button>
               </div>
               <p className="text-muted-foreground whitespace-pre-wrap">{run.error_message}</p>
@@ -898,13 +982,9 @@ function RunDetail({ run, onBack }: { run: TestRun; onBack: () => void }) {
                 variant="ghost"
                 size="sm"
                 className="h-7 px-2 text-[10px] gap-1"
-                onClick={() => {
-                  const text = typeof run.logs === 'string' ? run.logs : JSON.stringify(run.logs, null, 2);
-                  navigator.clipboard.writeText(text);
-                  toast.success("Logs copiados");
-                }}
+                onClick={() => copyDiagnostic(run, "full")}
               >
-                <Copy className="h-3 w-3" /> Copiar logs
+                <Copy className="h-3 w-3" /> Copiar dump completo
               </Button>
             </div>
           </CardHeader>
@@ -1412,17 +1492,7 @@ export default function AdminTestCenter({ onBack }: { onBack?: () => void }) {
                                 className="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  const errorText = [
-                                    `Suite: ${suite.label} (${lastSuiteRun.test_type})`,
-                                    `Status: ${lastSuiteRun.status}`,
-                                    `Data: ${new Date(lastSuiteRun.created_at).toLocaleString("pt-BR")}`,
-                                    lastSuiteRun.error_message ? `\nErro: ${lastSuiteRun.error_message}` : "",
-                                    lastSuiteRun.error_summary ? `Resumo: ${lastSuiteRun.error_summary}` : "",
-                                    lastSuiteRun.github_run_url ? `GitHub: ${lastSuiteRun.github_run_url}` : "",
-                                    failedResults.length > 0 ? `\nTestes que falharam:\n${failedResults.map(r => `  ❌ ${r.name}${r.url ? ` (${r.url})` : ""}\n     ${r.error || ""}`).join("\n")}` : "",
-                                  ].filter(Boolean).join("\n");
-                                  navigator.clipboard.writeText(errorText);
-                                  toast.success("Erro copiado");
+                                  copyDiagnostic(lastSuiteRun as TestRun, "error");
                                 }}
                               >
                                 <Copy className="h-3 w-3 inline mr-0.5" />Copiar erro
