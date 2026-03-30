@@ -43,6 +43,13 @@ const MENU_SECTIONS = [
     ],
   },
   {
+    label: "Inteligência",
+    items: [
+      { id: "prompt-intelligence", label: "Prompt Intelligence", icon: Activity },
+      { id: "revenue", label: "Receita", icon: CreditCard },
+    ],
+  },
+  {
     label: "Qualidade & Conteúdo",
     items: [
       { id: "logs", label: "Logs Técnicos", icon: ScrollText },
