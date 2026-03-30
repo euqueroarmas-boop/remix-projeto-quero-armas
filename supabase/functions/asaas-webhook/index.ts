@@ -74,25 +74,34 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Find payment record — try by payment ID first, then by subscription ID
+    // Find payment record — try by payment ID first, then by subscription ID.
+    // Important: this table may contain historical duplicates for the same quote,
+    // so we always pick the most recent record.
     let paymentRecord: { id: string; quote_id: string | null } | null = null;
 
-    const { data: byPaymentId } = await supabase
+    const { data: byPaymentIdRows } = await supabase
       .from("payments")
-      .select("id, quote_id")
+      .select("id, quote_id, created_at")
       .eq("asaas_payment_id", payment.id)
-      .maybeSingle();
+      .order("created_at", { ascending: false })
+      .limit(1);
 
-    paymentRecord = byPaymentId;
+    paymentRecord = byPaymentIdRows?.[0]
+      ? { id: byPaymentIdRows[0].id, quote_id: byPaymentIdRows[0].quote_id }
+      : null;
 
     // Fallback: subscription payments may be stored under subscription ID
     if (!paymentRecord && payment.subscription) {
-      const { data: bySubId } = await supabase
+      const { data: bySubIdRows } = await supabase
         .from("payments")
-        .select("id, quote_id")
+        .select("id, quote_id, created_at")
         .eq("asaas_payment_id", payment.subscription)
-        .maybeSingle();
-      paymentRecord = bySubId;
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      paymentRecord = bySubIdRows?.[0]
+        ? { id: bySubIdRows[0].id, quote_id: bySubIdRows[0].quote_id }
+        : null;
 
       // Update the record with the actual payment ID for future lookups
       if (paymentRecord) {
