@@ -5,7 +5,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Send, Bot, User, Loader2, Save, Trash2, Terminal, Sparkles,
   AlertTriangle, CheckCircle2, RefreshCw, Copy, GitCommit,
+  ShieldAlert, ShieldCheck, Shield, Eye, X, Check,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
 type MessageStatus = "sending" | "streaming" | "done" | "error" | "retrying";
@@ -49,9 +51,54 @@ const StatusIndicator = ({ status }: { status?: MessageStatus }) => {
   );
 };
 
+type RiskLevel = "low" | "medium" | "high";
+
+function classifyRisk(filePath: string, code: string): RiskLevel {
+  const highPatterns = [/auth/i, /login/i, /pagamento/i, /payment/i, /checkout/i, /contrato/i, /contract/i, /asaas/i, /stripe/i, /password/i, /senha/i, /token/i, /secret/i];
+  const mediumPatterns = [/api/i, /fetch\(/, /supabase/, /\.rpc\(/, /\.from\(/, /if\s*\(/, /switch\s*\(/, /router/i, /navigate/i];
+
+  const combined = (filePath || "") + code;
+  if (highPatterns.some((p) => p.test(combined))) return "high";
+  if (mediumPatterns.some((p) => p.test(combined))) return "medium";
+  return "low";
+}
+
+const RISK_CONFIG: Record<RiskLevel, { label: string; icon: React.ReactNode; color: string; variant: "default" | "secondary" | "destructive" }> = {
+  low: { label: "Baixo Risco", icon: <ShieldCheck className="h-3 w-3" />, color: "text-green-600", variant: "secondary" },
+  medium: { label: "Médio Risco", icon: <Shield className="h-3 w-3" />, color: "text-yellow-600", variant: "default" },
+  high: { label: "Alto Risco", icon: <ShieldAlert className="h-3 w-3" />, color: "text-destructive", variant: "destructive" },
+};
+
+const DiffView = ({ before, after }: { before: string; after: string }) => {
+  const beforeLines = before.split("\n");
+  const afterLines = after.split("\n");
+  const maxLen = Math.max(beforeLines.length, afterLines.length);
+
+  return (
+    <div className="text-[10px] font-mono max-h-[300px] overflow-auto rounded border border-border">
+      <div className="bg-destructive/5 px-2 py-1 border-b border-border text-destructive font-semibold text-[9px]">
+        --- ANTES ({beforeLines.length} linhas)
+      </div>
+      <pre className="px-2 py-1 text-muted-foreground whitespace-pre-wrap max-h-[120px] overflow-auto">
+        {beforeLines.slice(0, 50).join("\n")}{beforeLines.length > 50 ? `\n... +${beforeLines.length - 50} linhas` : ""}
+      </pre>
+      <div className="bg-green-500/5 px-2 py-1 border-y border-border text-green-700 font-semibold text-[9px]">
+        +++ DEPOIS ({afterLines.length} linhas)
+      </div>
+      <pre className="px-2 py-1 text-foreground/80 whitespace-pre-wrap max-h-[120px] overflow-auto">
+        {afterLines.slice(0, 50).join("\n")}{afterLines.length > 50 ? `\n... +${afterLines.length - 50} linhas` : ""}
+      </pre>
+    </div>
+  );
+};
+
 const CodeBlock = ({ code, lang }: { code: string; lang: string }) => {
   const [applying, setApplying] = useState(false);
   const [applied, setApplied] = useState<string | null>(null);
+  const [showDiff, setShowDiff] = useState(false);
+  const [currentContent, setCurrentContent] = useState<string | null>(null);
+  const [loadingDiff, setLoadingDiff] = useState(false);
+  const [confirmStep, setConfirmStep] = useState(0); // 0=none, 1=first confirm, 2=double confirm (high risk)
 
   const handleCopy = () => {
     navigator.clipboard.writeText(code);
@@ -61,9 +108,54 @@ const CodeBlock = ({ code, lang }: { code: string; lang: string }) => {
   const lines = code.split("\n");
   const fileMatch = lines[0]?.match(/^\/\/\s*(.+\.\w+)/);
   const filePath = fileMatch?.[1]?.trim();
+  const risk = filePath ? classifyRisk(filePath, code) : "low";
+  const riskCfg = RISK_CONFIG[risk];
 
-  const handleApply = async () => {
-    if (!filePath) { toast.error("Caminho do arquivo não detectado no código"); return; }
+  const fetchCurrentFile = async () => {
+    if (!filePath) return;
+    setLoadingDiff(true);
+    try {
+      const token = sessionStorage.getItem("admin_token") || "";
+      // Use GitHub API via a simple fetch to get current content
+      const resp = await fetch(`https://api.github.com/repos/euqueroarmas-boop/dell-shine-solutions/contents/${encodeURI(filePath)}`, {
+        headers: { Accept: "application/vnd.github.v3+json" },
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        setCurrentContent(atob(data.content.replace(/\n/g, "")));
+      } else if (resp.status === 404) {
+        setCurrentContent("(arquivo novo — não existe ainda)");
+      } else {
+        setCurrentContent("(não foi possível carregar o arquivo atual)");
+      }
+    } catch {
+      setCurrentContent("(erro ao buscar arquivo atual)");
+    }
+    setLoadingDiff(false);
+    setShowDiff(true);
+    setConfirmStep(0);
+  };
+
+  const handleReviewAndApply = () => {
+    fetchCurrentFile();
+  };
+
+  const handleConfirmApply = () => {
+    if (risk === "high" && confirmStep === 0) {
+      setConfirmStep(1);
+      return;
+    }
+    executeApply();
+  };
+
+  const handleReject = () => {
+    setShowDiff(false);
+    setConfirmStep(0);
+    toast.info("Patch rejeitado");
+  };
+
+  const executeApply = async () => {
+    if (!filePath) return;
     setApplying(true);
     try {
       const token = sessionStorage.getItem("admin_token") || "";
@@ -83,6 +175,8 @@ const CodeBlock = ({ code, lang }: { code: string; lang: string }) => {
       const data = await resp.json();
       if (!resp.ok) throw new Error(data.error || `HTTP ${resp.status}`);
       setApplied(data.commit_sha?.slice(0, 7) || "ok");
+      setShowDiff(false);
+      setConfirmStep(0);
       toast.success(`Commit aplicado: ${data.commit_sha?.slice(0, 7)}`);
     } catch (e) {
       toast.error(`Falha ao aplicar: ${e instanceof Error ? e.message : "erro"}`);
@@ -94,23 +188,30 @@ const CodeBlock = ({ code, lang }: { code: string; lang: string }) => {
   return (
     <div className="my-2 rounded-md border border-border overflow-hidden">
       <div className="flex items-center justify-between bg-muted/80 px-2.5 py-1 gap-1">
-        <span className="text-[10px] text-muted-foreground font-mono truncate">
-          {filePath || lang || "code"}
-        </span>
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span className="text-[10px] text-muted-foreground font-mono truncate">
+            {filePath || lang || "code"}
+          </span>
+          {filePath && (
+            <Badge variant={riskCfg.variant} className="text-[8px] px-1 py-0 h-4 gap-0.5 shrink-0">
+              {riskCfg.icon} {riskCfg.label}
+            </Badge>
+          )}
+        </div>
         <div className="flex items-center gap-1 shrink-0">
           <Button variant="ghost" size="sm" onClick={handleCopy} className="h-5 px-1.5 text-[9px] gap-1 text-muted-foreground hover:text-primary">
             <Copy className="h-2.5 w-2.5" /> Copiar
           </Button>
-          {filePath && !applied && (
+          {filePath && !applied && !showDiff && (
             <Button
               variant="ghost"
               size="sm"
-              onClick={handleApply}
-              disabled={applying}
+              onClick={handleReviewAndApply}
+              disabled={loadingDiff}
               className="h-5 px-1.5 text-[9px] gap-1 text-muted-foreground hover:text-primary"
             >
-              {applying ? <Loader2 className="h-2.5 w-2.5 animate-spin" /> : <GitCommit className="h-2.5 w-2.5" />}
-              {applying ? "Aplicando..." : "Aplicar"}
+              {loadingDiff ? <Loader2 className="h-2.5 w-2.5 animate-spin" /> : <Eye className="h-2.5 w-2.5" />}
+              {loadingDiff ? "Carregando..." : "Revisar Diff"}
             </Button>
           )}
           {applied && (
@@ -120,6 +221,41 @@ const CodeBlock = ({ code, lang }: { code: string; lang: string }) => {
           )}
         </div>
       </div>
+
+      {/* Diff panel */}
+      {showDiff && currentContent !== null && (
+        <div className="border-t border-border bg-muted/30 p-2 space-y-2">
+          <DiffView before={currentContent} after={code} />
+
+          {/* Confirm actions */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {risk === "high" && confirmStep === 0 && (
+              <p className="text-[9px] text-destructive flex items-center gap-1 w-full">
+                <ShieldAlert className="h-3 w-3" /> Arquivo de alto risco — confirmação dupla necessária
+              </p>
+            )}
+            {risk === "high" && confirmStep === 1 && (
+              <p className="text-[9px] text-destructive flex items-center gap-1 w-full font-semibold animate-pulse">
+                <ShieldAlert className="h-3 w-3" /> Tem certeza? Clique novamente para confirmar
+              </p>
+            )}
+            <Button
+              size="sm"
+              onClick={handleConfirmApply}
+              disabled={applying}
+              className="h-6 text-[10px] gap-1 px-3"
+              variant={risk === "high" && confirmStep === 1 ? "destructive" : "default"}
+            >
+              {applying ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+              {applying ? "Aplicando..." : risk === "high" && confirmStep === 1 ? "Confirmar Execução" : "Aprovar e Executar"}
+            </Button>
+            <Button size="sm" variant="ghost" onClick={handleReject} className="h-6 text-[10px] gap-1 px-3 text-muted-foreground">
+              <X className="h-3 w-3" /> Rejeitar
+            </Button>
+          </div>
+        </div>
+      )}
+
       <pre className="p-2.5 overflow-x-auto text-[11px] leading-relaxed bg-background">
         <code className="text-foreground/90 font-mono">{code}</code>
       </pre>
