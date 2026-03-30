@@ -1,13 +1,12 @@
 /**
  * sign-contract-pdf: Signs a PDF contract with A1 ICP-Brasil certificate.
- * Embeds PKCS#7/CMS signature into the PDF structure (ByteRange + /Contents).
- * Compatible with validar.iti.gov.br and Adobe Reader.
+ * Uses @signpdf for PAdES-compliant signatures recognized by validar.iti.gov.br.
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { decode as base64Decode } from "https://deno.land/std@0.208.0/encoding/base64.ts";
 import { crypto } from "https://deno.land/std@0.208.0/crypto/mod.ts";
 import { logSistemaBackend } from "../_shared/logSistema.ts";
-import { addSignaturePlaceholder, signPdfBytes } from "../_shared/pdfSign.ts";
+import { addPlaceholderAndSign } from "../_shared/pdfSign.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -31,16 +30,6 @@ async function hashBytes(bytes: Uint8Array): Promise<string> {
   return Array.from(new Uint8Array(hash))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
-}
-
-function uint8ToBinaryString(bytes: Uint8Array): string {
-  let str = "";
-  for (let i = 0; i < bytes.length; i += 8192) {
-    str += String.fromCharCode(
-      ...bytes.subarray(i, Math.min(i + 8192, bytes.length)),
-    );
-  }
-  return str;
 }
 
 async function decryptData(encryptedBytes: Uint8Array): Promise<Uint8Array> {
@@ -93,30 +82,16 @@ Deno.serve(async (req) => {
 
     if (!contract_id || !pdf_path) {
       return new Response(
-        JSON.stringify({
-          success: false,
-          error: "contract_id e pdf_path obrigatórios",
-        }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
+        JSON.stringify({ success: false, error: "contract_id e pdf_path obrigatórios" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
     const certConfig = await getActiveCertificate(supabase);
     if (!certConfig) {
       return new Response(
-        JSON.stringify({
-          success: false,
-          error:
-            "Nenhum certificado ativo com assinatura automática habilitada",
-          skipped: true,
-        }),
-        {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
+        JSON.stringify({ success: false, error: "Nenhum certificado ativo com assinatura automática habilitada", skipped: true }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
@@ -135,9 +110,7 @@ Deno.serve(async (req) => {
       .single();
 
     if (logInsertError) {
-      throw new Error(
-        `Falha ao criar log de assinatura: ${logInsertError.message}`,
-      );
+      throw new Error(`Falha ao criar log de assinatura: ${logInsertError.message}`);
     }
 
     try {
@@ -146,9 +119,7 @@ Deno.serve(async (req) => {
         await supabase.storage.from(CONTRACTS_BUCKET).download(pdf_path);
 
       if (pdfDownloadError || !pdfData) {
-        throw new Error(
-          `PDF não encontrado: ${pdfDownloadError?.message || "sem dados"}`,
-        );
+        throw new Error(`PDF não encontrado: ${pdfDownloadError?.message || "sem dados"}`);
       }
 
       const pdfBytes = new Uint8Array(await pdfData.arrayBuffer());
@@ -156,9 +127,7 @@ Deno.serve(async (req) => {
 
       // Download and decrypt certificate
       const { data: certData, error: certDownloadError } =
-        await supabase.storage
-          .from(CERT_BUCKET)
-          .download(certConfig.certificate_storage_path);
+        await supabase.storage.from(CERT_BUCKET).download(certConfig.certificate_storage_path);
 
       if (certDownloadError || !certData) {
         throw new Error("Certificado não encontrado no storage");
@@ -181,137 +150,56 @@ Deno.serve(async (req) => {
       const decryptedPassBytes = await decryptData(encPassBytes);
       const certPassword = new TextDecoder().decode(decryptedPassBytes);
 
-      // Parse certificate with node-forge
+      // Extract signer name from certificate for visual stamp
       const forgeMod = await import("npm:node-forge@1.3.1");
       const forge = forgeMod.default || forgeMod;
 
-      const binaryDer = uint8ToBinaryString(decryptedCert);
-      const pfxAsn1 = forge.asn1.fromDer(binaryDer);
+      function uint8ToBinaryString(bytes: Uint8Array): string {
+        let str = "";
+        for (let i = 0; i < bytes.length; i += 8192) {
+          str += String.fromCharCode(...bytes.subarray(i, Math.min(i + 8192, bytes.length)));
+        }
+        return str;
+      }
+
+      const pfxAsn1 = forge.asn1.fromDer(uint8ToBinaryString(decryptedCert));
       const pfx = forge.pkcs12.pkcs12FromAsn1(pfxAsn1, certPassword);
-
-      // Extract private key
-      const keyBags = pfx.getBags({
-        bagType: forge.pki.oids.pkcs8ShroudedKeyBag,
-      });
-      const keyBag = keyBags[forge.pki.oids.pkcs8ShroudedKeyBag];
-      if (!keyBag || keyBag.length === 0)
-        throw new Error("Chave privada não encontrada no certificado");
-      const privateKey = keyBag[0].key;
-      if (!privateKey) throw new Error("Chave privada inválida");
-
-      // Extract certificate(s)
       const certBags = pfx.getBags({ bagType: forge.pki.oids.certBag });
       const certBag = certBags[forge.pki.oids.certBag];
-      if (!certBag || certBag.length === 0)
-        throw new Error("Certificado não encontrado no PFX");
-      const cert = certBag[0].cert;
-      if (!cert) throw new Error("Certificado inválido");
+      const cert = certBag?.[0]?.cert;
 
-      // Additional chain certificates
-      const chainCerts = certBag
-        .slice(1)
-        .map((b: any) => b.cert)
-        .filter(Boolean);
+      const signerName = cert?.subject?.attributes?.find((a: any) => a.shortName === "CN")?.value || "WMTI TECNOLOGIA DA INFORMAÇÃO LTDA";
+      const issuerCN = cert?.issuer?.attributes?.find((a: any) => a.shortName === "CN")?.value || "ICP-Brasil";
+      const sigDate = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
 
-      // Load pdf-lib and add visual stamp + signature placeholder
+      // Load original PDF with pdf-lib to add visual stamp + sign
       const pdfLib = await import("npm:pdf-lib@1.17.1");
       const { PDFDocument, StandardFonts, rgb } = pdfLib;
       const pdfDoc = await PDFDocument.load(pdfBytes);
       const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
-      const helveticaBold = await pdfDoc.embedFont(
-        StandardFonts.HelveticaBold,
-      );
+      const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
       const pages = pdfDoc.getPages();
       const lastPage = pages[pages.length - 1];
       const { width: pageWidth } = lastPage.getSize();
 
       // Visual signature stamp
-      const stampY = 40;
-      const stampX = 42;
-      const stampWidth = pageWidth - 84;
-      const stampHeight = 70;
+      const stampY = 40, stampX = 42, stampWidth = pageWidth - 84, stampHeight = 70;
+      lastPage.drawRectangle({ x: stampX, y: stampY, width: stampWidth, height: stampHeight, color: rgb(0.97, 0.97, 0.98), borderColor: rgb(0.7, 0.7, 0.75), borderWidth: 0.5 });
+      lastPage.drawText("ASSINADO DIGITALMENTE", { x: stampX + 10, y: stampY + stampHeight - 15, size: 7, font: helveticaBold, color: rgb(0.2, 0.4, 0.2) });
+      lastPage.drawText(`Assinante: ${signerName}`, { x: stampX + 10, y: stampY + stampHeight - 28, size: 6.5, font: helveticaFont, color: rgb(0.3, 0.3, 0.3) });
+      lastPage.drawText(`Emissor: ${issuerCN}`, { x: stampX + 10, y: stampY + stampHeight - 39, size: 6.5, font: helveticaFont, color: rgb(0.3, 0.3, 0.3) });
+      lastPage.drawText(`Data: ${sigDate} | Serial: ${cert?.serialNumber?.substring(0, 20) || "N/A"}…`, { x: stampX + 10, y: stampY + stampHeight - 50, size: 6, font: helveticaFont, color: rgb(0.4, 0.4, 0.4) });
+      lastPage.drawText("Certificado A1 ICP-Brasil • PAdES • MP 2.200-2/2001", { x: stampX + 10, y: stampY + stampHeight - 61, size: 5.5, font: helveticaFont, color: rgb(0.5, 0.5, 0.5) });
 
-      lastPage.drawRectangle({
-        x: stampX,
-        y: stampY,
-        width: stampWidth,
-        height: stampHeight,
-        color: rgb(0.97, 0.97, 0.98),
-        borderColor: rgb(0.7, 0.7, 0.75),
-        borderWidth: 0.5,
-      });
-
-      const signerName =
-        cert.subject.attributes.find((a: any) => a.shortName === "CN")
-          ?.value || "WMTI TECNOLOGIA DA INFORMAÇÃO LTDA";
-      const sigDate = new Date().toLocaleString("pt-BR", {
-        timeZone: "America/Sao_Paulo",
-      });
-      const issuerCN =
-        cert.issuer.attributes.find((a: any) => a.shortName === "CN")?.value ||
-        "ICP-Brasil";
-
-      lastPage.drawText("ASSINADO DIGITALMENTE", {
-        x: stampX + 10,
-        y: stampY + stampHeight - 15,
-        size: 7,
-        font: helveticaBold,
-        color: rgb(0.2, 0.4, 0.2),
-      });
-      lastPage.drawText(`Assinante: ${signerName}`, {
-        x: stampX + 10,
-        y: stampY + stampHeight - 28,
-        size: 6.5,
-        font: helveticaFont,
-        color: rgb(0.3, 0.3, 0.3),
-      });
-      lastPage.drawText(`Emissor: ${issuerCN}`, {
-        x: stampX + 10,
-        y: stampY + stampHeight - 39,
-        size: 6.5,
-        font: helveticaFont,
-        color: rgb(0.3, 0.3, 0.3),
-      });
-      lastPage.drawText(
-        `Data: ${sigDate} | Serial: ${cert.serialNumber.substring(0, 20)}…`,
-        {
-          x: stampX + 10,
-          y: stampY + stampHeight - 50,
-          size: 6,
-          font: helveticaFont,
-          color: rgb(0.4, 0.4, 0.4),
-        },
-      );
-      lastPage.drawText(
-        "Certificado A1 ICP-Brasil • Válido conforme MP 2.200-2/2001",
-        {
-          x: stampX + 10,
-          y: stampY + stampHeight - 61,
-          size: 5.5,
-          font: helveticaFont,
-          color: rgb(0.5, 0.5, 0.5),
-        },
-      );
-
-      // Add signature field placeholder BEFORE saving
-      addSignaturePlaceholder(pdfDoc, pdfLib, lastPage, signerName, {
+      // Sign PDF using @signpdf (PAdES)
+      const { signedPdf } = await addPlaceholderAndSign(pdfDoc, decryptedCert, certPassword, {
         reason: "Assinatura digital do contrato",
         location: "Brasil",
         contactInfo: "contato@wmti.com.br",
+        signerName,
+        usePades: true,
       });
-
-      // Save PDF with placeholder
-      const pdfWithPlaceholder = await pdfDoc.save({ useObjectStreams: false });
-
-      // Embed the actual CMS/PKCS#7 signature
-      const { signedPdf, signatureHex } = await signPdfBytes(
-        pdfWithPlaceholder,
-        forge,
-        privateKey,
-        cert,
-        chainCerts,
-      );
 
       const signedPdfPath = pdf_path.replace(".pdf", "-assinado.pdf");
 
@@ -323,9 +211,7 @@ Deno.serve(async (req) => {
         });
 
       if (uploadError) {
-        throw new Error(
-          `Falha ao salvar PDF assinado: ${uploadError.message}`,
-        );
+        throw new Error(`Falha ao salvar PDF assinado: ${uploadError.message}`);
       }
 
       // Update signature log
@@ -335,7 +221,7 @@ Deno.serve(async (req) => {
           signed_pdf_path: signedPdfPath,
           document_hash: originalHash,
           status: "signed",
-          validation_result: `CMS embedded, ByteRange OK, SHA-256. Sig hex: ${signatureHex.substring(0, 16)}`,
+          validation_result: "PAdES (ETSI.CAdES.detached) via @signpdf",
         })
         .eq("id", signLog.id);
 
@@ -361,13 +247,8 @@ Deno.serve(async (req) => {
       await logSistemaBackend({
         tipo: "contrato",
         status: "success",
-        mensagem:
-          "Contrato assinado digitalmente com certificado A1 (CMS embarcado)",
-        payload: {
-          contract_id,
-          signed_pdf_path: signedPdfPath,
-          certificate_id: certConfig.id,
-        },
+        mensagem: "Contrato assinado digitalmente com PAdES (@signpdf)",
+        payload: { contract_id, signed_pdf_path: signedPdfPath, certificate_id: certConfig.id },
       });
 
       return new Response(
@@ -375,16 +256,13 @@ Deno.serve(async (req) => {
           success: true,
           signed_pdf_path: signedPdfPath,
           document_hash: originalHash,
-          signature_hex_prefix: signatureHex.substring(0, 32),
           certificate_subject: signerName,
+          signature_format: "PAdES (ETSI.CAdES.detached)",
         }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     } catch (signError) {
-      const errorMsg =
-        signError instanceof Error ? signError.message : "Falha na assinatura";
+      const errorMsg = signError instanceof Error ? signError.message : "Falha na assinatura";
 
       await supabase
         .from("signature_logs")
@@ -395,11 +273,7 @@ Deno.serve(async (req) => {
         tipo: "erro",
         status: "error",
         mensagem: "Falha ao assinar contrato digitalmente",
-        payload: {
-          contract_id,
-          error: errorMsg,
-          certificate_id: certConfig.id,
-        },
+        payload: { contract_id, error: errorMsg, certificate_id: certConfig.id },
       });
 
       return new Response(
@@ -407,13 +281,9 @@ Deno.serve(async (req) => {
           success: false,
           error: errorMsg,
           blocked: true,
-          message:
-            "Contrato bloqueado: assinatura digital falhou. O documento não será enviado ao cliente.",
+          message: "Contrato bloqueado: assinatura digital falhou. O documento não será enviado ao cliente.",
         }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
   } catch (error) {
