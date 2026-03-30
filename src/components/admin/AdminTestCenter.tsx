@@ -25,7 +25,7 @@ import {
   Eye, Zap, Globe, FileText, Shield, ShoppingCart, FormInput,
   Monitor, BookOpen, Server, AlertTriangle, Rocket, ArrowLeft,
   Bell, Send, MessageSquare, Mail, Webhook, ChevronDown, Image,
-  Video, Bug, Terminal, ExternalLink, Copy, Home, Square,
+  Video, Bug, Terminal, ExternalLink, Copy, Home, Square, GitBranch,
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -1757,6 +1757,8 @@ export default function AdminTestCenter({ onBack }: { onBack?: () => void }) {
     try { return localStorage.getItem("wmti_auto_execution") === "true"; } catch { return false; }
   });
   const [autoFixing, setAutoFixing] = useState<string | null>(null);
+  const [autoFixBranch, setAutoFixBranch] = useState<{ branch: string; prUrl: string | null; prNumber: number | null; filePath: string; commitSha: string } | null>(null);
+  const [merging, setMerging] = useState(false);
   const autoFixAttemptsRef = useRef<Record<string, number>>({});
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -1870,8 +1872,14 @@ export default function AdminTestCenter({ onBack }: { onBack?: () => void }) {
       if (!resp.ok) throw new Error(data.error || `HTTP ${resp.status}`);
 
       if (data.success) {
-        toast.success(`✅ Auto-fix: patch aplicado em ${data.file_path} (${data.commit_sha?.slice(0, 7)})`);
-        // The re-run was triggered by the edge function, wait for result via realtime
+        toast.success(`✅ Auto-fix: patch na branch ${data.branch} — PR #${data.pr_number}`);
+        setAutoFixBranch({
+          branch: data.branch,
+          prUrl: data.pr_url,
+          prNumber: data.pr_number,
+          filePath: data.file_path,
+          commitSha: data.commit_sha?.slice(0, 7) || "",
+        });
       } else {
         toast.warning(`Auto-fix: ${data.error || "sem código gerado"}`);
         setAutoFixing(null);
@@ -1912,6 +1920,49 @@ export default function AdminTestCenter({ onBack }: { onBack?: () => void }) {
       }
     });
   }, [runs, autoExecution, autoFixing, triggerAutoFix]);
+
+  const handleMergeBranch = useCallback(async () => {
+    if (!autoFixBranch?.prNumber) return;
+    setMerging(true);
+    try {
+      const GITHUB_API = `https://api.github.com/repos/euqueroarmas-boop/dell-shine-solutions/pulls/${autoFixBranch.prNumber}/merge`;
+      const resp = await fetch(GITHUB_API, {
+        method: "PUT",
+        headers: {
+          Accept: "application/vnd.github.v3+json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          commit_title: `🤖 merge: auto-fix PR #${autoFixBranch.prNumber}`,
+          merge_method: "squash",
+        }),
+      });
+      if (!resp.ok) {
+        // Fallback: use edge function to merge (has PAT)
+        const efResp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/execute-code-patch`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-admin-token": getAdminToken(),
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({
+            action: "merge_pr",
+            pr_number: autoFixBranch.prNumber,
+          }),
+        });
+        if (!efResp.ok) throw new Error("Merge falhou");
+      }
+      toast.success(`✅ PR #${autoFixBranch.prNumber} merged para produção!`);
+      setAutoFixBranch(null);
+      setAutoFixing(null);
+      autoFixAttemptsRef.current = {};
+    } catch (e) {
+      toast.error(`Merge falhou: ${e instanceof Error ? e.message : "erro"}`);
+    } finally {
+      setMerging(false);
+    }
+  }, [autoFixBranch]);
 
   const handleRunTest = async (testType: string) => {
     setRunningTests(prev => new Set(prev).add(testType));
@@ -2028,21 +2079,61 @@ export default function AdminTestCenter({ onBack }: { onBack?: () => void }) {
       <GlobalSummary suiteStatuses={suiteStatuses} />
 
       {/* ═══ AUTO-FIX STATUS ═══ */}
-      {autoFixing && (
-        <Card className="border-primary/30 bg-primary/5">
-          <CardContent className="py-3 px-4 flex items-center gap-3">
-            <Loader2 className="h-4 w-4 animate-spin text-primary" />
-            <div className="flex-1">
-              <p className="text-sm font-medium text-foreground">
-                🤖 Auto-Fix em execução: <span className="text-primary">{autoFixing}</span>
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Tentativa {autoFixAttemptsRef.current[autoFixing] || 1}/3 — IA analisando → patch → re-teste
-              </p>
+      {(autoFixing || autoFixBranch) && (
+        <Card className={`${autoFixBranch && !autoFixing ? "border-green-500/30 bg-green-500/5" : "border-primary/30 bg-primary/5"}`}>
+          <CardContent className="py-3 px-4 space-y-2">
+            <div className="flex items-center gap-3">
+              {autoFixing && !autoFixBranch && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
+              {autoFixBranch && <CheckCircle className="h-4 w-4 text-green-600" />}
+              <div className="flex-1">
+                <p className="text-sm font-medium text-foreground">
+                  {autoFixBranch
+                    ? `🔀 Branch: ${autoFixBranch.branch}`
+                    : `🤖 Auto-Fix em execução: ${autoFixing}`
+                  }
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {autoFixBranch
+                    ? `Arquivo: ${autoFixBranch.filePath} • Commit: ${autoFixBranch.commitSha}`
+                    : `Tentativa ${autoFixAttemptsRef.current[autoFixing!] || 1}/3 — IA → patch → branch → PR`
+                  }
+                </p>
+              </div>
+              {autoFixing && !autoFixBranch && (
+                <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => { setAutoFixing(null); autoFixAttemptsRef.current = {}; toast.info("Auto-fix interrompido"); }}>
+                  <Square className="h-3 w-3 mr-1" /> Parar
+                </Button>
+              )}
             </div>
-            <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => { setAutoFixing(null); autoFixAttemptsRef.current = {}; toast.info("Auto-fix interrompido"); }}>
-              <Square className="h-3 w-3 mr-1" /> Parar
-            </Button>
+
+            {autoFixBranch && (
+              <div className="flex items-center gap-2 flex-wrap pt-1 border-t border-border">
+                {autoFixBranch.prUrl && (
+                  <a href={autoFixBranch.prUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline flex items-center gap-1">
+                    <ExternalLink className="h-3 w-3" /> PR #{autoFixBranch.prNumber}
+                  </a>
+                )}
+                <div className="flex-1" />
+                <Badge variant="outline" className="text-[9px]">Aguardando testes da PR</Badge>
+                <Button
+                  size="sm"
+                  className="text-xs h-7 gap-1"
+                  onClick={handleMergeBranch}
+                  disabled={merging}
+                >
+                  {merging ? <Loader2 className="h-3 w-3 animate-spin" /> : <Rocket className="h-3 w-3" />}
+                  {merging ? "Merging..." : "Promover para Produção"}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs h-7 text-muted-foreground"
+                  onClick={() => { setAutoFixBranch(null); setAutoFixing(null); autoFixAttemptsRef.current = {}; }}
+                >
+                  Descartar
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
