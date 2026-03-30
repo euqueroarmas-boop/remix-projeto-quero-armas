@@ -721,12 +721,18 @@ Deno.serve(async (req) => {
         logs: { entries: allLogs, current_spec: "Aguardando Cypress...", current_url: null, light_completed: true, cypress_dispatched: false } as any,
       } as any).eq("id", runId);
 
-      // Dispatch Cypress
-      for (const ct of CYPRESS_TESTS) {
-        await triggerGitHubWorkflow(ct, runId, fullIngestToken, supabase);
-      }
+      // Dispatch all Cypress workflows in parallel (fire-and-forget, no polling)
+      const dispatchPromises = CYPRESS_TESTS.map(ct =>
+        triggerGitHubWorkflowFast(ct, runId, fullIngestToken)
+      );
+      const dispatchResults = await Promise.allSettled(dispatchPromises);
+      const dispatched = dispatchResults.filter(r => r.status === "fulfilled" && (r.value as any).success).length;
+      const dispatchFailed = CYPRESS_TESTS.length - dispatched;
 
-      allLogs.push({ ts: new Date().toISOString(), event: "cypress_dispatched", detail: `Cypress disparado via GitHub Actions: ${CYPRESS_TESTS.join(", ")}` });
+      allLogs.push({ ts: new Date().toISOString(), event: "cypress_dispatched", detail: `Cypress disparado via GitHub Actions: ${dispatched}/${CYPRESS_TESTS.length} enviados (${CYPRESS_TESTS.join(", ")})` });
+      if (dispatchFailed > 0) {
+        allLogs.push({ ts: new Date().toISOString(), event: "dispatch_warning", detail: `${dispatchFailed} workflow(s) falharam ao disparar` });
+      }
       await supabase.from("test_runs").update({
         logs: { entries: allLogs, current_spec: "Cypress executando no GitHub Actions...", current_url: null, light_completed: true, cypress_dispatched: true, cypress_types: CYPRESS_TESTS } as any,
       } as any).eq("id", runId);
