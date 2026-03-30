@@ -48,6 +48,66 @@ const StatusIndicator = ({ status }: { status?: MessageStatus }) => {
   );
 };
 
+const CodeBlock = ({ code, lang }: { code: string; lang: string }) => {
+  const handleCopy = () => {
+    navigator.clipboard.writeText(code);
+    toast.success("Código copiado!");
+  };
+  // Extract file path from first comment line
+  const lines = code.split("\n");
+  const fileMatch = lines[0]?.match(/^\/\/\s*(.+\.\w+)/);
+  return (
+    <div className="my-2 rounded-md border border-border overflow-hidden">
+      <div className="flex items-center justify-between bg-muted/80 px-2.5 py-1">
+        <span className="text-[10px] text-muted-foreground font-mono">
+          {fileMatch ? fileMatch[1] : lang || "code"}
+        </span>
+        <Button variant="ghost" size="sm" onClick={handleCopy} className="h-5 px-1.5 text-[9px] gap-1 text-muted-foreground hover:text-primary">
+          <Copy className="h-2.5 w-2.5" /> Copiar código
+        </Button>
+      </div>
+      <pre className="p-2.5 overflow-x-auto text-[11px] leading-relaxed bg-background">
+        <code className="text-foreground/90 font-mono">{code}</code>
+      </pre>
+    </div>
+  );
+};
+
+const MessageContent = ({ content }: { content: string }) => {
+  // Split content into text and code blocks
+  const parts: { type: "text" | "code"; content: string; lang?: string }[] = [];
+  const codeBlockRegex = /```(\w*)\n([\s\S]*?)```/g;
+  let lastIndex = 0;
+  let match;
+
+  while ((match = codeBlockRegex.exec(content)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push({ type: "text", content: content.slice(lastIndex, match.index) });
+    }
+    parts.push({ type: "code", content: match[2].trim(), lang: match[1] || "ts" });
+    lastIndex = match.index + match[0].length;
+  }
+  if (lastIndex < content.length) {
+    parts.push({ type: "text", content: content.slice(lastIndex) });
+  }
+
+  if (parts.length === 0) {
+    return <div className="whitespace-pre-wrap break-words leading-relaxed">{content}</div>;
+  }
+
+  return (
+    <div className="break-words leading-relaxed">
+      {parts.map((part, i) =>
+        part.type === "code" ? (
+          <CodeBlock key={i} code={part.content} lang={part.lang || "ts"} />
+        ) : (
+          <span key={i} className="whitespace-pre-wrap">{part.content}</span>
+        )
+      )}
+    </div>
+  );
+};
+
 const DevChatPanel = forwardRef<HTMLDivElement>((_props, ref) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
