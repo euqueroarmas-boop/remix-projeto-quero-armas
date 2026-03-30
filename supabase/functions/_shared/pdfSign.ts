@@ -140,7 +140,8 @@ export async function signExistingPdf(
   password: string,
 ): Promise<SignResult> {
   const signer = new P12Signer(pfxBytes, { passphrase: password });
-  const signedPdfBuffer = await signpdf.sign(pdfBytes, signer);
+  const signPdf = new SignPdf();
+  const signedPdfBuffer = await signPdf.sign(pdfBytes, signer);
   const signedPdf = signedPdfBuffer instanceof Uint8Array
     ? signedPdfBuffer
     : new Uint8Array(signedPdfBuffer);
