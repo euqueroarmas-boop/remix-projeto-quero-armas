@@ -94,6 +94,7 @@ const SUITES = [
   { id: "checkout", label: "Checkout", icon: ShoppingCart, description: "Fluxo financeiro completo", engine: "cypress" },
   { id: "portal", label: "Portal / Área Restrita", icon: Shield, description: "Login, autenticação, acesso", engine: "cypress" },
   { id: "regression", label: "Regressão Crítica", icon: AlertTriangle, description: "Todos os fluxos críticos", engine: "cypress" },
+  { id: "certificate", label: "Certificado Digital", icon: Shield, description: "Upload, diagnóstico, assinatura A1", engine: "cypress" },
 ] as const;
 
 const STATUS_CONFIG: Record<string, { color: string; icon: typeof CheckCircle; label: string }> = {
