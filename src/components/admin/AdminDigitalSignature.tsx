@@ -426,12 +426,12 @@ export default function AdminDigitalSignature() {
         </div>
       </DataPanel>
 
-      {/* Test Signature */}
+      {/* Test Signature — Quick check */}
       {cert && !cert.is_expired && (
         <DataPanel>
-          <SectionHeader title="Testar Assinatura" icon={CheckCircle} />
+          <SectionHeader title="Verificação Rápida" icon={CheckCircle} />
           <p className="text-[11px] text-muted-foreground mt-2 mb-4">
-            Verifica se o certificado está acessível, descriptografável e válido para assinatura.
+            Verifica se o certificado está acessível e descriptografável.
           </p>
           <div className="flex items-center gap-3">
             <Button data-testid="certificate-test-sign-button" variant="outline" onClick={handleTest} disabled={testing}>
@@ -446,6 +446,101 @@ export default function AdminDigitalSignature() {
           </div>
         </DataPanel>
       )}
+
+      {/* Full Signing Test — 9 steps */}
+      <DataPanel>
+        <SectionHeader title="Teste Completo de Assinatura" icon={FileSignature} />
+        <p className="text-[11px] text-muted-foreground mt-2 mb-4">
+          Executa as 9 etapas do fluxo de assinatura com o certificado armazenado, gera um PDF de teste e o assina digitalmente.
+        </p>
+
+        <Button
+          data-testid="certificate-full-test-button"
+          onClick={handleFullSigningTest}
+          disabled={signingTesting}
+          className="mb-4"
+        >
+          {signingTesting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
+          {signingTesting ? "Executando teste..." : "Executar teste de assinatura"}
+        </Button>
+
+        {signingTest && (
+          <div className="space-y-4">
+            {/* Steps table */}
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-[10px] w-10">#</TableHead>
+                    <TableHead className="text-[10px]">Etapa</TableHead>
+                    <TableHead className="text-[10px] w-16">Status</TableHead>
+                    <TableHead className="text-[10px]">Detalhe</TableHead>
+                    <TableHead className="text-[10px] w-16">Tempo</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {signingTest.steps.map((s) => (
+                    <TableRow key={s.step}>
+                      <TableCell className="text-[11px] font-mono">{s.step}</TableCell>
+                      <TableCell className="text-[11px] font-medium">{s.name}</TableCell>
+                      <TableCell>
+                        {s.status === "pass" ? (
+                          <Badge variant="outline" className="border-emerald-500/30 text-emerald-400 bg-emerald-500/10 text-[10px]">
+                            ✓ OK
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="border-destructive/30 text-destructive bg-destructive/10 text-[10px]">
+                            ✗ Falha
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-[10px] text-muted-foreground max-w-[300px]">
+                        <span className="block truncate" title={s.message}>{s.message}</span>
+                      </TableCell>
+                      <TableCell className="text-[10px] font-mono text-muted-foreground">{s.duration_ms}ms</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Result summary */}
+            {signingTest.success ? (
+              <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5 text-emerald-400" />
+                  <p className="text-sm font-semibold text-emerald-400">Assinatura concluída com sucesso</p>
+                </div>
+                <div className="grid gap-1 text-[11px] text-muted-foreground">
+                  <p><strong>Certificado:</strong> {signingTest.certificate?.subject_cn}</p>
+                  <p><strong>Emissor:</strong> {signingTest.certificate?.issuer_cn}</p>
+                  <p><strong>Algoritmo:</strong> {signingTest.signature?.algorithm}</p>
+                  <p><strong>Hash:</strong> <span className="font-mono">{signingTest.signature?.hash}…</span></p>
+                  <p><strong>PDF:</strong> {signingTest.signed_pdf_size ? `${(signingTest.signed_pdf_size / 1024).toFixed(1)} KB` : "—"}</p>
+                  <p><strong>Duração total:</strong> {signingTest.total_duration_ms}ms</p>
+                </div>
+                <div className="flex gap-2 pt-1">
+                  <Button size="sm" variant="outline" onClick={downloadSignedPdf} className="text-[11px] h-7">
+                    <Download className="h-3 w-3 mr-1" /> Baixar PDF assinado
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={previewSignedPdf} className="text-[11px] h-7">
+                    <FileText className="h-3 w-3 mr-1" /> Visualizar PDF
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4">
+                <div className="flex items-center gap-2">
+                  <XCircle className="h-5 w-5 text-destructive" />
+                  <p className="text-sm font-semibold text-destructive">Teste falhou</p>
+                </div>
+                <p className="text-[11px] text-muted-foreground mt-2">{signingTest.error}</p>
+                <p className="text-[10px] text-muted-foreground mt-1">Duração: {signingTest.total_duration_ms}ms</p>
+              </div>
+            )}
+          </div>
+        )}
+      </DataPanel>
 
       {/* Recent Signature Logs */}
       <DataPanel>
