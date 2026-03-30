@@ -662,8 +662,26 @@ function VideoViewer({ urls }: { urls: string[] }) {
 }
 
 // ─── Expandable Error Block ───
-function ErrorDetail({ result }: { result: DetailedTestResult }) {
+function ErrorDetail({ result, screenshotUrls, videoUrls }: { result: DetailedTestResult; screenshotUrls?: string[]; videoUrls?: string[] }) {
   const [open, setOpen] = useState(false);
+
+  // Find screenshots matching this test's spec
+  const matchingScreenshots = (screenshotUrls || []).filter(u => {
+    if (!result.spec) return false;
+    const specSlug = result.spec.replace(/\.cy\.ts$|\.cy\.js$/g, "").replace(/[^a-zA-Z0-9]/g, "_").toLowerCase();
+    const urlLower = u.toLowerCase().replace(/[^a-zA-Z0-9]/g, "_");
+    return urlLower.includes(specSlug);
+  });
+
+  // Find video matching this spec
+  const matchingVideos = (videoUrls || []).filter(u => {
+    if (!result.spec) return false;
+    const specSlug = result.spec.replace(/\.cy\.ts$|\.cy\.js$/g, "").replace(/[^a-zA-Z0-9]/g, "_").toLowerCase();
+    const urlLower = u.toLowerCase().replace(/[^a-zA-Z0-9]/g, "_");
+    return urlLower.includes(specSlug);
+  });
+
+  const hasArtifacts = matchingScreenshots.length > 0 || matchingVideos.length > 0;
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
@@ -673,6 +691,12 @@ function ErrorDetail({ result }: { result: DetailedTestResult }) {
             <div className="flex items-center gap-2 text-left">
               <XCircle className="h-3.5 w-3.5 text-destructive flex-shrink-0" />
               <span className="font-medium text-foreground">{result.name}</span>
+              {hasArtifacts && (
+                <span className="flex items-center gap-0.5 text-muted-foreground">
+                  {matchingScreenshots.length > 0 && <Image className="h-3 w-3" />}
+                  {matchingVideos.length > 0 && <Video className="h-3 w-3" />}
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground">{formatDuration(result.duration_ms)}</span>
@@ -690,6 +714,28 @@ function ErrorDetail({ result }: { result: DetailedTestResult }) {
             <div className="pl-5">
               <span className="text-[10px] font-medium text-muted-foreground">Spec: </span>
               <span className="text-[10px] text-foreground font-mono">{result.spec}</span>
+            </div>
+          )}
+
+          {result.url && (
+            <div className="pl-5">
+              <span className="text-[10px] font-medium text-muted-foreground">URL: </span>
+              <span className="text-[10px] text-foreground font-mono">{result.url}</span>
+            </div>
+          )}
+
+          {/* Per-failure artifacts */}
+          {hasArtifacts && (
+            <div className="pl-5 flex flex-wrap gap-1.5">
+              {matchingScreenshots.length > 0 && <ScreenshotViewer urls={matchingScreenshots} />}
+              {matchingVideos.length > 0 && <VideoViewer urls={matchingVideos} />}
+            </div>
+          )}
+          {!hasArtifacts && result.status === "failed" && (
+            <div className="pl-5">
+              <p className="text-[10px] text-yellow-500 flex items-center gap-1">
+                <AlertTriangle className="h-3 w-3" /> SEM SCREENSHOT / VÍDEO vinculado a esta falha
+              </p>
             </div>
           )}
 
@@ -742,12 +788,15 @@ function ErrorDetail({ result }: { result: DetailedTestResult }) {
                 const parts = [
                   `Teste: ${result.name}`,
                   result.spec ? `Spec: ${result.spec}` : "",
+                  result.url ? `URL: ${result.url}` : "",
                   `Status: ${result.status}`,
                   `Duração: ${formatDuration(result.duration_ms)}`,
                   result.error ? `\nErro:\n${result.error}` : "",
                   result.stack_trace ? `\nStack Trace:\n${result.stack_trace}` : "",
                   result.cypress_command ? `\nComando Cypress:\n${result.cypress_command}` : "",
                   result.diff ? `\nExpected: ${JSON.stringify(result.diff.expected)}\nActual: ${JSON.stringify(result.diff.actual)}` : "",
+                  matchingScreenshots.length > 0 ? `\n── SCREENSHOTS ──\n${matchingScreenshots.join("\n")}` : "\n── SCREENSHOTS: SEM SCREENSHOT ──",
+                  matchingVideos.length > 0 ? `\n── VÍDEOS ──\n${matchingVideos.join("\n")}` : "\n── VÍDEOS: SEM VÍDEO ──",
                 ].filter(Boolean).join("\n");
                 const diagnosis = inferErrorCategory(result.error || "");
                 const fullParts = [
