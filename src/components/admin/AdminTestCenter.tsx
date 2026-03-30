@@ -750,9 +750,25 @@ function LiveProgressPanel({ run, onStop }: { run: TestRun; onStop?: () => void 
   const elapsedMs = run.started_at ? Date.now() - new Date(run.started_at).getTime() : 0;
   const isGitHubStuck = isGitHub && (run.progress_percent ?? 0) === 0 && elapsedMs > 3 * 60 * 1000;
 
-  const completed = (run.completed_tests ?? 0) || (run.passed_tests + run.failed_tests + run.skipped_tests);
+  // Compute progress from multiple sources - use the HIGHEST value to never decrease
+  const completedFromFields = (run.completed_tests ?? 0) || (run.passed_tests + run.failed_tests + run.skipped_tests);
   const total = run.total_tests || 1;
-  const pct = run.progress_percent ?? (total > 0 ? Math.min(100, Math.round((completed / total) * 100)) : 0);
+  const resultsArray = (run.results as any[]) || [];
+  const completedFromResults = resultsArray.filter((r: any) => r.status === "passed" || r.status === "failed" || r.status === "skipped").length;
+  const completed = Math.max(completedFromFields, completedFromResults);
+
+  // Calculate percentage from multiple sources and use the highest (monotonic)
+  const pctFromDb = run.progress_percent ?? 0;
+  const pctFromCompleted = total > 0 ? Math.min(100, Math.round((completed / total) * 100)) : 0;
+  const [maxPct, setMaxPct] = useState(0);
+
+  const currentPct = Math.max(pctFromDb, pctFromCompleted);
+  useEffect(() => {
+    setMaxPct(prev => Math.max(prev, currentPct));
+  }, [currentPct]);
+
+  const pct = maxPct;
+
   const [elapsed, setElapsed] = useState(0);
   const [showLogs, setShowLogs] = useState(true);
   const [showDiag, setShowDiag] = useState(false);
@@ -764,6 +780,12 @@ function LiveProgressPanel({ run, onStop }: { run: TestRun; onStop?: () => void 
   const logEntries: Array<{ ts: string; event: string; detail?: string }> = logs?.entries || [];
   const specsCompleted = run.completed_specs ?? logs?.specs_completed ?? null;
   const totalSpecs = run.total_specs ?? logs?.total_specs ?? null;
+
+  // Extract the most recent test detail with URL for display
+  const lastStartedEntry = logEntries.filter(e => e.event === "test_started").slice(-1)[0];
+  const lastTestDetail = lastStartedEntry?.detail || null;
+  const lastTestUrl = lastTestDetail?.includes("→") ? lastTestDetail.split("→")[1]?.trim() : null;
+  const lastTestModule = lastTestDetail?.includes("→") ? lastTestDetail.split("→")[0]?.trim().replace(/^(Smoke|SEO|API|Blog):\s*/, "") : null;
 
   useEffect(() => {
     if (!run.started_at) return;
@@ -783,7 +805,6 @@ function LiveProgressPanel({ run, onStop }: { run: TestRun; onStop?: () => void 
     : null;
 
   const recentActivity = logEntries.slice(-5).reverse();
-  const lastScannedUrl = logEntries.filter(e => e.detail?.includes("→")).slice(-1)[0]?.detail?.split("→")[1]?.trim();
 
   if (isStale) {
     return (
@@ -895,11 +916,11 @@ function LiveProgressPanel({ run, onStop }: { run: TestRun; onStop?: () => void 
 
         {/* Current spec & URL */}
         <div className="space-y-1.5 bg-muted/20 rounded-lg p-2.5 border border-border/50">
-          {currentSpec && (
+          {(currentSpec || lastTestModule) && (
             <div className="flex items-center gap-1.5 text-xs">
               <FileText className="h-3 w-3 text-primary flex-shrink-0" />
-              <span className="text-muted-foreground">Escaneando:</span>
-              <span className="font-medium text-foreground truncate">{currentSpec}</span>
+              <span className="text-muted-foreground">Módulo:</span>
+              <span className="font-medium text-foreground truncate">{currentSpec || lastTestModule}</span>
             </div>
           )}
           {currentTest && (
@@ -909,14 +930,21 @@ function LiveProgressPanel({ run, onStop }: { run: TestRun; onStop?: () => void 
               <span className="font-medium text-foreground truncate">{currentTest}</span>
             </div>
           )}
-          {(currentUrl || lastScannedUrl) && (
+          {(currentUrl || lastTestUrl) && (
             <div className="flex items-center gap-1.5 text-xs">
               <Globe className="h-3 w-3 text-primary flex-shrink-0" />
               <span className="text-muted-foreground">URL:</span>
-              <span className="font-mono text-foreground truncate text-[11px]">{currentUrl || lastScannedUrl}</span>
+              <a
+                href={currentUrl || lastTestUrl || "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-mono text-primary truncate text-[11px] underline hover:text-primary/80"
+              >
+                {currentUrl || lastTestUrl}
+              </a>
             </div>
           )}
-          {!currentSpec && !currentUrl && !lastScannedUrl && (
+          {!currentSpec && !lastTestModule && !currentUrl && !lastTestUrl && (
             <div className="flex items-center gap-1.5 text-xs">
               <Loader2 className="h-3 w-3 text-primary animate-spin flex-shrink-0" />
               <span className="text-muted-foreground">
