@@ -156,9 +156,16 @@ Deno.serve(async (req) => {
       const certPassword = new TextDecoder().decode(decryptedPassBytes);
 
       // Parse certificate with node-forge
-      const forge = await import("npm:node-forge@1.3.1");
+      const forgeMod = await import("npm:node-forge@1.3.1");
+      const forge = forgeMod.default || forgeMod;
 
-      const pfxAsn1 = forge.asn1.fromDer(forge.util.decode64(base64Encode(decryptedCert)));
+      // Convert Uint8Array to binary string for forge
+      let binaryDer = "";
+      for (let i = 0; i < decryptedCert.length; i += 8192) {
+        const chunk = decryptedCert.subarray(i, Math.min(i + 8192, decryptedCert.length));
+        binaryDer += String.fromCharCode(...chunk);
+      }
+      const pfxAsn1 = forge.asn1.fromDer(binaryDer);
       const pfx = forge.pkcs12.pkcs12FromAsn1(pfxAsn1, certPassword);
 
       // Get private key and certificate

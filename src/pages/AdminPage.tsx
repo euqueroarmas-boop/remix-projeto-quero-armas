@@ -34,6 +34,7 @@ const AdminPromptIntelligence = lazy(() => import("@/components/admin/AdminPromp
 const AdminRevenueIntelligence = lazy(() => import("@/components/admin/AdminRevenueIntelligence"));
 const DevChatPanel = lazy(() => import("@/components/admin/DevChatPanel"));
 const AdminDigitalSignature = lazy(() => import("@/components/admin/AdminDigitalSignature"));
+const AdminCertDiagnostic = lazy(() => import("@/components/admin/AdminCertDiagnostic"));
 
 const ITEMS_PER_PAGE = 20;
 
@@ -85,6 +86,7 @@ const NAV_GROUPS = [
     label: "Configurações",
     items: [
       { id: "digital-signature", label: "Assinatura Digital", icon: FileSignature },
+      { id: "cert-diagnostic", label: "Diag. Certificado", icon: Stethoscope },
     ],
   },
 ];
@@ -746,6 +748,7 @@ function AdminContent({ activeSection, onNavigate }: { activeSection: string; on
     case "revenue-intelligence": return <Suspense fallback={fallback}><AdminRevenueIntelligence /></Suspense>;
     case "dev-chat": return <Suspense fallback={fallback}><DevChatPanel /></Suspense>;
     case "digital-signature": return <Suspense fallback={fallback}><AdminDigitalSignature /></Suspense>;
+    case "cert-diagnostic": return <Suspense fallback={fallback}><AdminCertDiagnostic /></Suspense>;
     default: return <AdminCommandCenter onNavigate={onNavigate} />;
   }
 }
