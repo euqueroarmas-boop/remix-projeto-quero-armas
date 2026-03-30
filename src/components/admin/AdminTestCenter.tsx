@@ -1921,6 +1921,49 @@ export default function AdminTestCenter({ onBack }: { onBack?: () => void }) {
     });
   }, [runs, autoExecution, autoFixing, triggerAutoFix]);
 
+  const handleMergeBranch = useCallback(async () => {
+    if (!autoFixBranch?.prNumber) return;
+    setMerging(true);
+    try {
+      const GITHUB_API = `https://api.github.com/repos/euqueroarmas-boop/dell-shine-solutions/pulls/${autoFixBranch.prNumber}/merge`;
+      const resp = await fetch(GITHUB_API, {
+        method: "PUT",
+        headers: {
+          Accept: "application/vnd.github.v3+json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          commit_title: `🤖 merge: auto-fix PR #${autoFixBranch.prNumber}`,
+          merge_method: "squash",
+        }),
+      });
+      if (!resp.ok) {
+        // Fallback: use edge function to merge (has PAT)
+        const efResp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/execute-code-patch`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-admin-token": getAdminToken(),
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({
+            action: "merge_pr",
+            pr_number: autoFixBranch.prNumber,
+          }),
+        });
+        if (!efResp.ok) throw new Error("Merge falhou");
+      }
+      toast.success(`✅ PR #${autoFixBranch.prNumber} merged para produção!`);
+      setAutoFixBranch(null);
+      setAutoFixing(null);
+      autoFixAttemptsRef.current = {};
+    } catch (e) {
+      toast.error(`Merge falhou: ${e instanceof Error ? e.message : "erro"}`);
+    } finally {
+      setMerging(false);
+    }
+  }, [autoFixBranch]);
+
   const handleRunTest = async (testType: string) => {
     setRunningTests(prev => new Set(prev).add(testType));
     try {
