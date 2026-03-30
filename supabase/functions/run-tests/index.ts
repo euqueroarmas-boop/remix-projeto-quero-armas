@@ -801,7 +801,7 @@ Deno.serve(async (req) => {
       test_type: testType,
       status: "running",
       started_at: new Date().toISOString(),
-      triggered_by: "admin",
+      triggered_by: isCronCall ? "cron" : "admin",
       execution_engine: engine,
       base_url: SITE_URL,
       ingest_token: singleIngestToken,
