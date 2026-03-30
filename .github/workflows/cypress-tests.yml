@@ -128,7 +128,7 @@ jobs:
           browser: chrome
           headed: false
           spec: ${{ steps.specs.outputs.spec }}
-          config: baseUrl=${{ github.event.inputs.base_url }}
+          config: baseUrl=${{ github.event.inputs.base_url }},reporter=mochawesome,reporterOptions.reportDir=cypress/results,reporterOptions.overwrite=false,reporterOptions.html=false,reporterOptions.json=true
           publish-summary: false
 
       - name: Finalize run from mochawesome report
@@ -205,232 +205,163 @@ jobs:
             FINAL_STATUS="success"
           fi
 
-          # Extract error summary AND per-test results from mochawesome
-          ERROR_SUMMARY=""
-          TEST_RESULTS_JSON="[]"
-          
-          node -e "
-            const fs = require('fs');
-            const r = require('./$MERGED_REPORT');
-            const errors = [];
-            const results = [];
-            
-            (r.results || []).forEach(specFile => {
-              const specName = specFile.file || specFile.fullFile || 'unknown';
-              
-              function walkSuites(suites, parentTitle) {
-                (suites || []).forEach(suite => {
-                  const suiteTitle = parentTitle ? parentTitle + ' > ' + suite.title : suite.title;
-                  
-                  (suite.tests || []).forEach(test => {
-                    const entry = {
-                      name: test.title || 'unnamed',
-                      fullTitle: test.fullTitle || suiteTitle + ' > ' + test.title,
-                      spec: specName,
-                      status: test.pass ? 'passed' : test.fail ? 'failed' : 'skipped',
-                      duration_ms: test.duration || 0,
-                      url: test.context ? (typeof test.context === 'string' ? test.context : null) : null,
-                    };
-                    
-                    if (test.fail && test.err) {
-                      entry.error = (test.err.message || '').substring(0, 2000);
-                      entry.stack_trace = (test.err.estack || test.err.stack || '').substring(0, 3000);
-                      if (test.err.expected !== undefined || test.err.actual !== undefined) {
-                        entry.diff = {
-                          expected: test.err.expected,
-                          actual: test.err.actual
-                        };
-                      }
-                      errors.push(test.fullTitle + ': ' + (test.err.message || '').substring(0, 200));
-                    }
-                    
-                    results.push(entry);
-                  });
-                  
-                  // Recurse nested suites
-                  walkSuites(suite.suites, suiteTitle);
-                });
-              }
-              
-              walkSuites(specFile.suites, '');
-            });
-            
-            const errorSummary = errors.join(' | ').substring(0, 1000) || (r.stats?.failures > 0 ? r.stats.failures + ' test(s) failed' : '');
-            
-            fs.writeFileSync('/tmp/test_results.json', JSON.stringify(results));
-            fs.writeFileSync('/tmp/error_summary.txt', errorSummary);
-          " 2>/dev/null
-          
-          if [ -f /tmp/error_summary.txt ]; then
-            ERROR_SUMMARY=$(cat /tmp/error_summary.txt)
-          fi
-          if [ -f /tmp/test_results.json ]; then
-            TEST_RESULTS_JSON=$(cat /tmp/test_results.json)
-          fi
-          [ -z "$ERROR_SUMMARY" ] && [ "$FAILED" -gt 0 ] && ERROR_SUMMARY="$FAILED test(s) failed"
-
           echo "Final status: $FINAL_STATUS"
-          echo "Error summary: $ERROR_SUMMARY"
 
-          # Upload screenshots with sanitized filenames
+          # ── Upload screenshots FIRST (creates /tmp/screenshot_map.json) ──
           SCREENSHOT_URLS="[]"
-          SCREENSHOT_MAP_JSON="[]"
           if [ -d "cypress/screenshots" ] && [ "$(find cypress/screenshots -name '*.png' 2>/dev/null | wc -l)" -gt 0 ]; then
-            UPLOAD_OK=0
-            UPLOAD_FAIL=0
-            
             node -e "
               const fs = require('fs');
               const path = require('path');
               const { execSync } = require('child_process');
-              
               const SUPABASE_URL = process.env.SUPABASE_URL;
               const SUPABASE_KEY = process.env.SUPABASE_KEY;
               const RUN_ID = process.env.RUN_ID;
-              
-              function sanitize(name) {
-                return name
-                  .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-                  .replace(/[^a-zA-Z0-9._-]/g, '_')
-                  .replace(/_+/g, '_')
-                  .replace(/^_|_$/g, '')
-                  .substring(0, 200);
-              }
-              
-              function findFiles(dir, ext) {
-                const results = [];
-                if (!fs.existsSync(dir)) return results;
-                for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-                  const full = path.join(dir, entry.name);
-                  if (entry.isDirectory()) results.push(...findFiles(full, ext));
-                  else if (entry.name.endsWith(ext)) results.push(full);
-                }
-                return results;
-              }
-              
-              const screenshots = findFiles('cypress/screenshots', '.png');
-              const urls = [];
-              const mapEntries = [];
-              
-              for (const file of screenshots) {
-                const rel = path.relative('cypress/screenshots', file);
-                const parts = rel.split(path.sep);
-                const specSlug = sanitize(parts.length > 1 ? parts[0].replace('.cy.ts','').replace('.cy.js','') : 'unknown');
-                const fileSlug = sanitize(path.basename(file, '.png'));
-                const storagePath = 'runs/' + RUN_ID + '/screenshots/' + specSlug + '/' + fileSlug + '.png';
-                
-                try {
-                  execSync(
-                    'curl -sf -X POST \"' + SUPABASE_URL + '/storage/v1/object/test-artifacts/' + storagePath + '\" ' +
-                    '-H \"apikey: ' + SUPABASE_KEY + '\" ' +
-                    '-H \"Authorization: Bearer ' + SUPABASE_KEY + '\" ' +
-                    '-H \"Content-Type: image/png\" ' +
-                    '--data-binary @\"' + file + '\"',
-                    { stdio: 'pipe' }
-                  );
-                  const publicUrl = SUPABASE_URL + '/storage/v1/object/public/test-artifacts/' + storagePath;
+              function sanitize(n) { return n.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9._-]/g,'_').replace(/_+/g,'_').replace(/^_|_$/g,'').substring(0,200); }
+              function findFiles(dir, ext) { const r=[]; if(!fs.existsSync(dir)) return r; for(const e of fs.readdirSync(dir,{withFileTypes:true})){const f=path.join(dir,e.name); if(e.isDirectory()) r.push(...findFiles(f,ext)); else if(e.name.endsWith(ext)) r.push(f);} return r; }
+              const screenshots = findFiles('cypress/screenshots','.png');
+              const urls=[], mapEntries=[];
+              for(const file of screenshots){
+                const rel=path.relative('cypress/screenshots',file);
+                const parts=rel.split(path.sep);
+                const specSlug=sanitize(parts.length>1?parts[0].replace('.cy.ts','').replace('.cy.js',''):'unknown');
+                const fileSlug=sanitize(path.basename(file,'.png'));
+                const storagePath='runs/'+RUN_ID+'/screenshots/'+specSlug+'/'+fileSlug+'.png';
+                try{
+                  execSync('curl -sf -X POST \"'+SUPABASE_URL+'/storage/v1/object/test-artifacts/'+storagePath+'\" -H \"apikey: '+SUPABASE_KEY+'\" -H \"Authorization: Bearer '+SUPABASE_KEY+'\" -H \"Content-Type: image/png\" --data-binary @\"'+file+'\"',{stdio:'pipe'});
+                  const publicUrl=SUPABASE_URL+'/storage/v1/object/public/test-artifacts/'+storagePath;
                   urls.push(publicUrl);
-                  
-                  // Extract spec and test name from original path for mapping
-                  const origSpec = parts.length > 1 ? parts[0] : 'unknown';
-                  const origFile = path.basename(file, '.png');
-                  mapEntries.push({ url: publicUrl, spec: origSpec, file: origFile, original_path: rel });
-                  
-                  console.log('OK: ' + rel + ' -> ' + storagePath);
-                } catch(e) {
-                  console.error('FAIL: ' + rel + ' - ' + e.message);
-                }
+                  mapEntries.push({url:publicUrl,spec:parts.length>1?parts[0]:'unknown',file:path.basename(file,'.png'),original_path:rel});
+                  console.log('OK: '+rel);
+                }catch(e){console.error('FAIL: '+rel+' - '+e.message);}
               }
-              
-              fs.writeFileSync('/tmp/screenshot_urls.json', JSON.stringify(urls));
-              fs.writeFileSync('/tmp/screenshot_map.json', JSON.stringify(mapEntries));
-              console.log('Screenshots: ' + urls.length + '/' + screenshots.length + ' uploaded');
+              fs.writeFileSync('/tmp/screenshot_urls.json',JSON.stringify(urls));
+              fs.writeFileSync('/tmp/screenshot_map.json',JSON.stringify(mapEntries));
+              console.log('Screenshots: '+urls.length+'/'+screenshots.length+' uploaded');
             "
-            
-            if [ -f /tmp/screenshot_urls.json ]; then
-              SCREENSHOT_URLS=$(cat /tmp/screenshot_urls.json)
-            fi
-            if [ -f /tmp/screenshot_map.json ]; then
-              SCREENSHOT_MAP_JSON=$(cat /tmp/screenshot_map.json)
-            fi
+            if [ -f /tmp/screenshot_urls.json ]; then SCREENSHOT_URLS=$(cat /tmp/screenshot_urls.json); fi
           fi
-          echo "Screenshot URLs: $SCREENSHOT_URLS"
 
-          # Upload videos with sanitized filenames
+          # ── Upload videos SECOND (creates /tmp/video_map.json) ──
           VIDEO_URLS="[]"
-          VIDEO_MAP_JSON="[]"
           if [ -d "cypress/videos" ] && [ "$(find cypress/videos -name '*.mp4' 2>/dev/null | wc -l)" -gt 0 ]; then
             node -e "
               const fs = require('fs');
               const path = require('path');
               const { execSync } = require('child_process');
-              
               const SUPABASE_URL = process.env.SUPABASE_URL;
               const SUPABASE_KEY = process.env.SUPABASE_KEY;
               const RUN_ID = process.env.RUN_ID;
-              
-              function sanitize(name) {
-                return name
-                  .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-                  .replace(/[^a-zA-Z0-9._-]/g, '_')
-                  .replace(/_+/g, '_')
-                  .replace(/^_|_$/g, '')
-                  .substring(0, 200);
-              }
-              
-              function findFiles(dir, ext) {
-                const results = [];
-                if (!fs.existsSync(dir)) return results;
-                for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-                  const full = path.join(dir, entry.name);
-                  if (entry.isDirectory()) results.push(...findFiles(full, ext));
-                  else if (entry.name.endsWith(ext)) results.push(full);
-                }
-                return results;
-              }
-              
-              const videos = findFiles('cypress/videos', '.mp4');
-              const urls = [];
-              const mapEntries = [];
-              
-              for (const file of videos) {
-                const rel = path.relative('cypress/videos', file);
-                const specSlug = sanitize(path.basename(file, '.mp4'));
-                const storagePath = 'runs/' + RUN_ID + '/videos/' + specSlug + '.mp4';
-                
-                try {
-                  execSync(
-                    'curl -sf -X POST \"' + SUPABASE_URL + '/storage/v1/object/test-artifacts/' + storagePath + '\" ' +
-                    '-H \"apikey: ' + SUPABASE_KEY + '\" ' +
-                    '-H \"Authorization: Bearer ' + SUPABASE_KEY + '\" ' +
-                    '-H \"Content-Type: video/mp4\" ' +
-                    '--data-binary @\"' + file + '\"',
-                    { stdio: 'pipe' }
-                  );
-                  const publicUrl = SUPABASE_URL + '/storage/v1/object/public/test-artifacts/' + storagePath;
+              function sanitize(n) { return n.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9._-]/g,'_').replace(/_+/g,'_').replace(/^_|_$/g,'').substring(0,200); }
+              function findFiles(dir, ext) { const r=[]; if(!fs.existsSync(dir)) return r; for(const e of fs.readdirSync(dir,{withFileTypes:true})){const f=path.join(dir,e.name); if(e.isDirectory()) r.push(...findFiles(f,ext)); else if(e.name.endsWith(ext)) r.push(f);} return r; }
+              const videos=findFiles('cypress/videos','.mp4');
+              const urls=[], mapEntries=[];
+              for(const file of videos){
+                const rel=path.relative('cypress/videos',file);
+                const specSlug=sanitize(path.basename(file,'.mp4'));
+                const storagePath='runs/'+RUN_ID+'/videos/'+specSlug+'.mp4';
+                try{
+                  execSync('curl -sf -X POST \"'+SUPABASE_URL+'/storage/v1/object/test-artifacts/'+storagePath+'\" -H \"apikey: '+SUPABASE_KEY+'\" -H \"Authorization: Bearer '+SUPABASE_KEY+'\" -H \"Content-Type: video/mp4\" --data-binary @\"'+file+'\"',{stdio:'pipe'});
+                  const publicUrl=SUPABASE_URL+'/storage/v1/object/public/test-artifacts/'+storagePath;
                   urls.push(publicUrl);
-                  mapEntries.push({ url: publicUrl, spec: rel, specSlug });
-                  console.log('OK: ' + rel + ' -> ' + storagePath);
-                } catch(e) {
-                  console.error('FAIL: ' + rel + ' - ' + e.message);
-                }
+                  mapEntries.push({url:publicUrl,spec:rel,specSlug});
+                  console.log('OK: '+rel);
+                }catch(e){console.error('FAIL: '+rel+' - '+e.message);}
               }
-              
-              fs.writeFileSync('/tmp/video_urls.json', JSON.stringify(urls));
-              fs.writeFileSync('/tmp/video_map.json', JSON.stringify(mapEntries));
-              console.log('Videos: ' + urls.length + '/' + videos.length + ' uploaded');
+              fs.writeFileSync('/tmp/video_urls.json',JSON.stringify(urls));
+              fs.writeFileSync('/tmp/video_map.json',JSON.stringify(mapEntries));
+              console.log('Videos: '+urls.length+'/'+videos.length+' uploaded');
             "
-            
-            if [ -f /tmp/video_urls.json ]; then
-              VIDEO_URLS=$(cat /tmp/video_urls.json)
-            fi
-            if [ -f /tmp/video_map.json ]; then
-              VIDEO_MAP_JSON=$(cat /tmp/video_map.json)
-            fi
+            if [ -f /tmp/video_urls.json ]; then VIDEO_URLS=$(cat /tmp/video_urls.json); fi
           fi
-          echo "Video URLs: $VIDEO_URLS"
 
-          # 1) Finalize via ingest API
+          echo "Screenshots: $SCREENSHOT_URLS"
+          echo "Videos: $VIDEO_URLS"
+
+          # ── Extract per-test results WITH screenshot/video mapping ──
+          node -e "
+            const fs = require('fs');
+            const path = require('path');
+            const r = require('./$MERGED_REPORT');
+            const errors = [];
+            const results = [];
+
+            let screenshotMap = [];
+            try { screenshotMap = JSON.parse(fs.readFileSync('/tmp/screenshot_map.json','utf8')); } catch(e) {}
+            let videoMap = [];
+            try { videoMap = JSON.parse(fs.readFileSync('/tmp/video_map.json','utf8')); } catch(e) {}
+
+            function findScreenshot(specFile, testTitle) {
+              const specSlug = path.basename(specFile||'','.cy.ts').replace('.cy.js','');
+              return (screenshotMap.find(s => {
+                const sSpec = (s.spec||'').replace('.cy.ts','').replace('.cy.js','');
+                if (sSpec !== specSlug && !(s.spec||'').includes(specSlug)) return false;
+                const words = (testTitle||'').toLowerCase().split(/\s+/).filter(w=>w.length>3);
+                const f = (s.file||'').toLowerCase();
+                return words.some(w=>f.includes(w));
+              }) || {}).url || null;
+            }
+
+            function findVideo(specFile) {
+              const specSlug = path.basename(specFile||'','.cy.ts').replace('.cy.js','');
+              return (videoMap.find(v => {
+                const vs = (v.specSlug||'').replace('.cy.ts','').replace('.cy.js','');
+                return vs === specSlug || (v.spec||'').includes(specSlug);
+              }) || {}).url || null;
+            }
+
+            (r.results || []).forEach(specFile => {
+              const specName = specFile.file || specFile.fullFile || 'unknown';
+              function walkSuites(suites, parentTitle) {
+                (suites || []).forEach(suite => {
+                  const suiteTitle = parentTitle ? parentTitle+' > '+suite.title : suite.title;
+                  (suite.tests || []).forEach(test => {
+                    const entry = {
+                      name: test.title||'unnamed',
+                      fullTitle: test.fullTitle||suiteTitle+' > '+test.title,
+                      spec: specName,
+                      status: test.pass?'passed':test.fail?'failed':test.pending?'skipped':'unknown',
+                      duration_ms: test.duration||0,
+                      screenshot_url: null,
+                      video_url: findVideo(specName),
+                    };
+                    if (test.fail && test.err) {
+                      entry.error = (test.err.message||'').substring(0,2000);
+                      entry.stack_trace = (test.err.estack||test.err.stack||'').substring(0,3000);
+                      entry.error_code = test.err.name||'AssertionError';
+                      entry.screenshot_url = findScreenshot(specName, test.fullTitle||test.title);
+                      errors.push((test.fullTitle||test.title)+': '+(test.err.message||'').substring(0,200));
+                    }
+                    results.push(entry);
+                  });
+                  walkSuites(suite.suites, suiteTitle);
+                });
+              }
+              walkSuites(specFile.suites, '');
+            });
+
+            const errorSummary = errors.join(' | ').substring(0,1000) || (r.stats?.failures>0?r.stats.failures+' test(s) failed':'');
+            fs.writeFileSync('/tmp/test_results.json', JSON.stringify(results));
+            fs.writeFileSync('/tmp/error_summary.txt', errorSummary);
+
+            const failedR = results.filter(x=>x.status==='failed');
+            console.log('RESULTS_EXTRACTION_OK: total='+results.length+' failed='+failedR.length+' with_error='+failedR.filter(x=>x.error).length+' with_screenshot='+results.filter(x=>x.screenshot_url).length+' with_video='+results.filter(x=>x.video_url).length);
+            if (results.length===0 && r.stats?.tests>0) console.error('REPORTER_OUTPUT_MISSING');
+          " 2>&1
+
+          ERROR_SUMMARY=""
+          if [ -f /tmp/error_summary.txt ]; then ERROR_SUMMARY=$(cat /tmp/error_summary.txt); fi
+          if [ -f /tmp/test_results.json ]; then
+            RESULTS_COUNT=$(node -e "console.log(JSON.parse(require('fs').readFileSync('/tmp/test_results.json','utf8')).length)" 2>/dev/null || echo "0")
+            echo "Test results: $RESULTS_COUNT entries"
+            [ "$RESULTS_COUNT" = "0" ] && [ "$TOTAL" -gt 0 ] && echo "RESULTS_JSON_EMPTY"
+          else
+            echo "RESULTS_UPLOAD_FAILED: /tmp/test_results.json missing"
+          fi
+          [ -z "$ERROR_SUMMARY" ] && [ "$FAILED" -gt 0 ] && ERROR_SUMMARY="$FAILED test(s) failed"
+          echo "Error summary: $ERROR_SUMMARY"
+
+          # ── Finalize via ingest API ──
           if [ -n "$INGEST_TOKEN" ]; then
             ESCAPED_ERROR=$(echo "$ERROR_SUMMARY" | sed 's/"/\\"/g' | head -c 900)
             curl -sf -X POST "$INGEST_URL?action=finalize" \
@@ -448,7 +379,7 @@ jobs:
               }" && echo "Ingest finalize: OK" || echo "Ingest finalize: FAILED"
           fi
 
-          # 2) Build REST payload via Node (avoids shell escaping issues with JSON)
+          # ── Build REST PATCH payload via Node ──
           FINISHED_AT=$(date -u +%Y-%m-%dT%H:%M:%S.000Z)
 
           FINAL_STATUS="$FINAL_STATUS" FINISHED_AT="$FINISHED_AT" DURATION="$DURATION" \
@@ -460,23 +391,20 @@ jobs:
             const fs = require('fs');
             let results = [];
             let errorSummary = null;
-            try { results = JSON.parse(fs.readFileSync('/tmp/test_results.json', 'utf8')); } catch(e) {}
-            try { errorSummary = fs.readFileSync('/tmp/error_summary.txt', 'utf8') || null; } catch(e) {}
-            
-            let screenshots = null;
-            let videos = null;
-            try { const s = JSON.parse(process.env.SCREENSHOT_URLS || '[]'); if (s.length) screenshots = s; } catch(e) {}
-            try { const v = JSON.parse(process.env.VIDEO_URLS || '[]'); if (v.length) videos = v; } catch(e) {}
-            
+            try { results = JSON.parse(fs.readFileSync('/tmp/test_results.json','utf8')); } catch(e) {}
+            try { errorSummary = fs.readFileSync('/tmp/error_summary.txt','utf8') || null; } catch(e) {}
+            let screenshots = null, videos = null;
+            try { const s=JSON.parse(process.env.SCREENSHOT_URLS||'[]'); if(s.length) screenshots=s; } catch(e) {}
+            try { const v=JSON.parse(process.env.VIDEO_URLS||'[]'); if(v.length) videos=v; } catch(e) {}
             const payload = {
               status: process.env.FINAL_STATUS,
               finished_at: process.env.FINISHED_AT,
-              duration_ms: parseInt(process.env.DURATION) || 0,
-              total_tests: parseInt(process.env.TOTAL) || 0,
-              passed_tests: parseInt(process.env.PASSED) || 0,
-              failed_tests: parseInt(process.env.FAILED) || 0,
-              skipped_tests: parseInt(process.env.SKIPPED) || 0,
-              completed_tests: (parseInt(process.env.PASSED)||0) + (parseInt(process.env.FAILED)||0) + (parseInt(process.env.SKIPPED)||0),
+              duration_ms: parseInt(process.env.DURATION)||0,
+              total_tests: parseInt(process.env.TOTAL)||0,
+              passed_tests: parseInt(process.env.PASSED)||0,
+              failed_tests: parseInt(process.env.FAILED)||0,
+              skipped_tests: parseInt(process.env.SKIPPED)||0,
+              completed_tests: (parseInt(process.env.PASSED)||0)+(parseInt(process.env.FAILED)||0)+(parseInt(process.env.SKIPPED)||0),
               progress_percent: 100,
               current_spec: null, current_test: null, current_url: null,
               error_message: errorSummary, error_summary: errorSummary,
@@ -489,10 +417,13 @@ jobs:
               last_event_at: process.env.FINISHED_AT,
             };
             fs.writeFileSync('/tmp/patch_payload.json', JSON.stringify(payload));
-            console.log('Payload built: ' + results.length + ' test results, ' + (results.filter(r=>r.status==='failed').length) + ' failures');
+            const failedCount = results.filter(r=>r.status==='failed').length;
+            const withError = results.filter(r=>r.error).length;
+            console.log('PATCH payload: '+results.length+' results, '+failedCount+' failed, '+withError+' with error details');
+            if (results.length===0 && parseInt(process.env.TOTAL)>0) console.error('RESULTS_PATCH_INCOMPLETE');
           "
 
-          # 3) PATCH via REST with full payload from file
+          # ── PATCH to database ──
           curl -sf -X PATCH \
             "$SUPABASE_URL/rest/v1/test_runs?id=eq.$RUN_ID" \
             -H "apikey: $SUPABASE_KEY" \
