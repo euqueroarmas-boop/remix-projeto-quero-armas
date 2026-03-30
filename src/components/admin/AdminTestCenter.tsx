@@ -916,11 +916,11 @@ function LiveProgressPanel({ run, onStop }: { run: TestRun; onStop?: () => void 
 
         {/* Current spec & URL */}
         <div className="space-y-1.5 bg-muted/20 rounded-lg p-2.5 border border-border/50">
-          {currentSpec && (
+          {(currentSpec || lastTestModule) && (
             <div className="flex items-center gap-1.5 text-xs">
               <FileText className="h-3 w-3 text-primary flex-shrink-0" />
-              <span className="text-muted-foreground">Escaneando:</span>
-              <span className="font-medium text-foreground truncate">{currentSpec}</span>
+              <span className="text-muted-foreground">Módulo:</span>
+              <span className="font-medium text-foreground truncate">{currentSpec || lastTestModule}</span>
             </div>
           )}
           {currentTest && (
@@ -930,14 +930,21 @@ function LiveProgressPanel({ run, onStop }: { run: TestRun; onStop?: () => void 
               <span className="font-medium text-foreground truncate">{currentTest}</span>
             </div>
           )}
-          {(currentUrl || lastScannedUrl) && (
+          {(currentUrl || lastTestUrl) && (
             <div className="flex items-center gap-1.5 text-xs">
               <Globe className="h-3 w-3 text-primary flex-shrink-0" />
               <span className="text-muted-foreground">URL:</span>
-              <span className="font-mono text-foreground truncate text-[11px]">{currentUrl || lastScannedUrl}</span>
+              <a
+                href={currentUrl || lastTestUrl || "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-mono text-primary truncate text-[11px] underline hover:text-primary/80"
+              >
+                {currentUrl || lastTestUrl}
+              </a>
             </div>
           )}
-          {!currentSpec && !currentUrl && !lastScannedUrl && (
+          {!currentSpec && !lastTestModule && !currentUrl && !lastTestUrl && (
             <div className="flex items-center gap-1.5 text-xs">
               <Loader2 className="h-3 w-3 text-primary animate-spin flex-shrink-0" />
               <span className="text-muted-foreground">
