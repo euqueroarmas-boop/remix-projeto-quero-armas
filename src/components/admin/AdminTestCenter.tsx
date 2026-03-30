@@ -826,9 +826,16 @@ function LiveProgressPanel({ run, onStop }: { run: TestRun; onStop?: () => void 
               {SUITES.find(s => s.id === run.test_type)?.label || run.test_type}
             </span>
           </div>
-          <Badge variant="outline" className="text-xs border-primary/30 text-primary">
-            {isGitHub ? "GitHub Actions" : "Edge Function"}
-          </Badge>
+          <div className="flex items-center gap-2">
+            {onStop && (
+              <Button variant="destructive" size="sm" className="h-7 text-[10px] px-2.5 gap-1" onClick={onStop}>
+                <Square className="h-3 w-3" /> Parar
+              </Button>
+            )}
+            <Badge variant="outline" className="text-xs border-primary/30 text-primary">
+              {isGitHub ? "GitHub Actions" : "Edge Function"}
+            </Badge>
+          </div>
         </div>
 
         {/* Big percentage */}
