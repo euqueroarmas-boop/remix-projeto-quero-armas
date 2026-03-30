@@ -215,6 +215,15 @@ Deno.serve(async (req) => {
       page.drawText("Certificado A1 ICP-Brasil • PAdES • MP 2.200-2/2001", { x: stampX + 10, y: stampY + stampH - 61, size: 5.5, font, color: rgb(0.5, 0.5, 0.5) });
 
       addStep(4, "Gerar PDF de teste", "pass", "PDF A4 com selo visual criado", s4);
+
+      // ── Step 4b: Add lateral mark to all pages ──
+      const testHash = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", await pdfDoc.save())))
+        .map((b: number) => b.toString(16).padStart(2, "0")).join("");
+      await addLateralMark(pdfDoc, {
+        signerName: certSubjectCN,
+        documentHash: testHash,
+      });
+
     } catch (e) {
       addStep(4, "Gerar PDF de teste", "fail", `${e instanceof Error ? e.message : e}`, s4);
       return respond(500, { success: false, steps });
