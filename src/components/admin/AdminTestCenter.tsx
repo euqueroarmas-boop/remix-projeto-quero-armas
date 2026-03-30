@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { ScreenshotViewer, VideoViewer } from "@/components/admin/MediaViewer";
 import { formatDuration } from "@/lib/formatDuration";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
