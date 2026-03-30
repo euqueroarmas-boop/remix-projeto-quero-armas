@@ -451,7 +451,7 @@ export default function AdminDigitalSignature() {
       <DataPanel>
         <SectionHeader title="Teste Completo de Assinatura" icon={FileSignature} />
         <p className="text-[11px] text-muted-foreground mt-2 mb-4">
-          Executa as 9 etapas do fluxo de assinatura com o certificado armazenado, gera um PDF de teste e o assina digitalmente.
+          Executa as 6 etapas do fluxo de assinatura com o certificado armazenado, gera um PDF de teste e o assina digitalmente.
         </p>
 
         <Button
