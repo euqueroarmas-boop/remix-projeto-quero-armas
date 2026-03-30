@@ -7,9 +7,9 @@ describe("Certificado Digital — Autenticação Admin", () => {
     cy.get("input[type='password']").type(Cypress.env("ADMIN_PASSWORD") || "admin");
     cy.contains("button", /entrar|login|acessar/i).click();
 
-    // Valida que o admin está autenticado — não depende de texto "Dashboard"
-    cy.get("[data-testid='admin-sidebar'], [data-testid='admin-content']", { timeout: 15000 })
-      .should("exist");
+    // Valida que o admin está autenticado
+    cy.get("[data-testid='admin-authenticated']", { timeout: 15000 }).should("exist");
+    cy.log("CERT_LOGIN_OK");
   });
 
   it("sessão expirada redireciona para login", () => {
