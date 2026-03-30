@@ -567,7 +567,11 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  if (!(await verifyAdmin(req))) {
+  // Allow cron invocations authenticated via service_role key in Authorization header
+  const isCronCall = req.headers.get("x-cron-secret") === SUPABASE_SERVICE_KEY;
+  const isAdmin = await verifyAdmin(req);
+
+  if (!isAdmin && !isCronCall) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 
