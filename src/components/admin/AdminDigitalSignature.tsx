@@ -333,6 +333,7 @@ export default function AdminDigitalSignature() {
             </label>
             <div className="relative">
               <Input
+                data-testid="certificate-password-input"
                 type={showPassword ? "text" : "password"}
                 placeholder="Senha do arquivo .pfx"
                 value={certPassword}
