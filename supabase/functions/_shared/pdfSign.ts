@@ -28,6 +28,12 @@ export interface SignPdfOptions {
   usePades?: boolean;
 }
 
+export interface LateralMarkOptions {
+  signerName: string;
+  documentHash: string;
+  signingDate?: string;
+}
+
 export interface SignResult {
   signedPdf: Uint8Array;
   signedPdfSize: number;
