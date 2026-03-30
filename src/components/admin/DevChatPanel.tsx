@@ -127,6 +127,32 @@ const CodeBlock = ({ code, lang }: { code: string; lang: string }) => {
   );
 };
 
+export type ExtractedCode = { code: string; filePath?: string; lang: string };
+
+/**
+ * Extracts all executable code blocks from an AI response.
+ * Handles ```ts/tsx/js blocks and detects file paths from leading comments.
+ */
+export function extractExecutableCode(response: string): ExtractedCode[] {
+  const results: ExtractedCode[] = [];
+  const codeBlockRegex = /```(\w*)\n([\s\S]*?)```/g;
+  let match;
+
+  while ((match = codeBlockRegex.exec(response)) !== null) {
+    const lang = match[1] || "ts";
+    const code = match[2].trim();
+    if (!code) continue;
+
+    // Detect file path from first comment line
+    const firstLine = code.split("\n")[0];
+    const fileMatch = firstLine?.match(/^\/\/\s*(.+\.\w+)/);
+
+    results.push({ code, filePath: fileMatch?.[1]?.trim(), lang });
+  }
+
+  return results;
+}
+
 const MessageContent = ({ content }: { content: string }) => {
   // Split content into text and code blocks
   const parts: { type: "text" | "code"; content: string; lang?: string }[] = [];
