@@ -37,12 +37,11 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    // 1. Get failed test run details
+    // 1. Get failed test run
     const { data: run, error: runErr } = await supabase.from("test_runs").select("*").eq("id", run_id).single();
     if (runErr || !run) return json({ error: "Test run não encontrado" }, 404);
     if (run.status !== "failed") return json({ error: "Test run não está em status failed", status: run.status }, 400);
 
-    // Build error context from run data
     const errorContext = [
       `Suite: ${run.suite} | Tipo: ${run.test_type}`,
       `Erro: ${run.error_message || run.error_summary || "Sem mensagem de erro"}`,
@@ -99,7 +98,6 @@ FORMATO:
     // 3. Extract code and file path
     const codeMatch = aiContent.match(/```(?:ts|tsx|js)?\n([\s\S]*?)```/);
     if (!codeMatch) {
-      // Log failed extraction
       await supabase.from("prompt_intelligence").insert({
         analysis_type: "auto_fix",
         status: "failed",
@@ -120,44 +118,35 @@ FORMATO:
       return json({ success: false, error: "Caminho do arquivo não detectado no código gerado", attempt });
     }
 
-    // 4. Apply patch via GitHub
-    const GITHUB_PAT = Deno.env.get("GITHUB_PAT");
-    if (!GITHUB_PAT) return json({ error: "GITHUB_PAT não configurado" }, 500);
+    // 4. Apply patch via execute-code-patch (with branch mode)
+    const patchUrl = `${supabaseUrl}/functions/v1/execute-code-patch`;
+    const patchResp = await fetch(patchUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-token": adminToken,
+        Authorization: `Bearer ${Deno.env.get("SUPABASE_ANON_KEY") || ""}`,
+      },
+      body: JSON.stringify({
+        file_path: filePath,
+        content: code,
+        commit_message: `fix(auto): auto-fix tentativa ${attempt} — ${filePath}`,
+        use_branch: true, // Always use branch for auto-fix
+      }),
+    });
 
-    const OWNER = "euqueroarmas-boop";
-    const REPO = "dell-shine-solutions";
-    const ghHeaders = { Authorization: `Bearer ${GITHUB_PAT}`, Accept: "application/vnd.github.v3+json", "Content-Type": "application/json" };
-    const apiUrl = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${encodeURI(filePath)}`;
-
-    // Get current SHA
-    let sha: string | undefined;
-    const getResp = await fetch(apiUrl, { headers: ghHeaders });
-    if (getResp.ok) {
-      sha = (await getResp.json()).sha;
-    } else if (getResp.status !== 404) {
-      return json({ error: `GitHub GET falhou: ${getResp.status}` }, 502);
+    if (!patchResp.ok) {
+      const errText = await patchResp.text();
+      return json({ error: `Patch falhou: ${patchResp.status}`, details: errText }, 502);
     }
 
-    // Commit
-    const putBody: Record<string, unknown> = {
-      message: `fix(auto): auto-fix tentativa ${attempt} — ${filePath}`,
-      content: btoa(unescape(encodeURIComponent(code))),
-    };
-    if (sha) putBody.sha = sha;
-
-    const putResp = await fetch(apiUrl, { method: "PUT", headers: ghHeaders, body: JSON.stringify(putBody) });
-    if (!putResp.ok) {
-      const errText = await putResp.text();
-      return json({ error: `GitHub commit falhou: ${putResp.status}`, details: errText }, 502);
-    }
-
-    const commitResult = await putResp.json();
+    const patchResult = await patchResp.json();
 
     // 5. Log to prompt_intelligence
     await supabase.from("prompt_intelligence").insert({
       analysis_type: "auto_fix",
       status: "applied",
-      summary: `Auto-fix tentativa ${attempt}: patch aplicado em ${filePath}`,
+      summary: `Auto-fix tentativa ${attempt}: patch em branch ${patchResult.branch} — ${filePath}`,
       source: "auto_execution",
       confidence: 0.7,
       impact_score: 0.8,
@@ -168,44 +157,39 @@ FORMATO:
       prompts: [{
         attempt,
         file_path: filePath,
-        commit_sha: commitResult.commit?.sha,
+        commit_sha: patchResult.commit_sha,
+        branch: patchResult.branch,
+        pr_url: patchResult.pr_url,
+        pr_number: patchResult.pr_number,
         error_context: errorContext.slice(0, 500),
       }],
     });
 
     // 6. Audit log
     await supabase.from("admin_audit_logs").insert({
-      action: "auto_fix_applied",
+      action: "auto_fix_branch",
       target_type: "test_run",
       target_id: run_id,
-      after_state: { attempt, file_path: filePath, commit_sha: commitResult.commit?.sha },
-    });
-
-    // 7. Re-trigger the same test type
-    const runTestUrl = `${supabaseUrl}/functions/v1/run-tests`;
-    const rerunResp = await fetch(runTestUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-admin-token": adminToken,
+      after_state: {
+        attempt,
+        file_path: filePath,
+        commit_sha: patchResult.commit_sha,
+        branch: patchResult.branch,
+        pr_url: patchResult.pr_url,
+        pr_number: patchResult.pr_number,
       },
-      body: JSON.stringify({ test_type: run.test_type }),
     });
-
-    let rerunData = null;
-    if (rerunResp.ok) {
-      rerunData = await rerunResp.json();
-    }
 
     return json({
       success: true,
       attempt,
       max_attempts,
       file_path: filePath,
-      commit_sha: commitResult.commit?.sha,
-      commit_url: commitResult.commit?.html_url,
-      rerun_id: rerunData?.id || null,
-      message: `Patch aplicado e teste ${run.test_type} re-disparado (tentativa ${attempt}/${max_attempts})`,
+      commit_sha: patchResult.commit_sha,
+      branch: patchResult.branch,
+      pr_url: patchResult.pr_url,
+      pr_number: patchResult.pr_number,
+      message: `Patch aplicado na branch ${patchResult.branch} com PR #${patchResult.pr_number}`,
     });
   } catch (e) {
     console.error("auto-fix-cycle error:", e);
