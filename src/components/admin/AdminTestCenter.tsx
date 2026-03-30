@@ -2027,6 +2027,26 @@ export default function AdminTestCenter({ onBack }: { onBack?: () => void }) {
       {/* ═══ B) GLOBAL SUMMARY ═══ */}
       <GlobalSummary suiteStatuses={suiteStatuses} />
 
+      {/* ═══ AUTO-FIX STATUS ═══ */}
+      {autoFixing && (
+        <Card className="border-primary/30 bg-primary/5">
+          <CardContent className="py-3 px-4 flex items-center gap-3">
+            <Loader2 className="h-4 w-4 animate-spin text-primary" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-foreground">
+                🤖 Auto-Fix em execução: <span className="text-primary">{autoFixing}</span>
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Tentativa {autoFixAttemptsRef.current[autoFixing] || 1}/3 — IA analisando → patch → re-teste
+              </p>
+            </div>
+            <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => { setAutoFixing(null); autoFixAttemptsRef.current = {}; toast.info("Auto-fix interrompido"); }}>
+              <Square className="h-3 w-3 mr-1" /> Parar
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {/* ═══ C) MAIN ACTIONS ═══ */}
       <div className="flex flex-wrap items-center gap-2">
         <Button size="sm" onClick={handleRunFull} disabled={runningTests.has("full")} className="text-xs h-8">
