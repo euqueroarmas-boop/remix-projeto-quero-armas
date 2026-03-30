@@ -53,7 +53,53 @@ Deno.serve(async (req) => {
     }
 
     // ── Input validation ──
-    const { file_path, content, commit_message, use_branch } = await req.json();
+    const body = await req.json();
+    const { action } = body;
+
+    const GITHUB_PAT = Deno.env.get("GITHUB_PAT");
+    if (!GITHUB_PAT) return json({ error: "GITHUB_PAT não configurado" }, 500);
+
+    const ghHeaders = {
+      Authorization: `Bearer ${GITHUB_PAT}`,
+      Accept: "application/vnd.github.v3+json",
+      "Content-Type": "application/json",
+    };
+
+    // ── Merge PR action ──
+    if (action === "merge_pr") {
+      const { pr_number } = body;
+      if (!pr_number) return json({ error: "pr_number obrigatório" }, 400);
+
+      const mergeResp = await ghFetch(`pulls/${pr_number}/merge`, ghHeaders, {
+        method: "PUT",
+        body: JSON.stringify({
+          commit_title: `🤖 merge: auto-fix PR #${pr_number}`,
+          merge_method: "squash",
+        }),
+      });
+      if (!mergeResp.ok) {
+        const err = await mergeResp.text();
+        return json({ error: `Merge falhou: ${mergeResp.status}`, details: err }, 502);
+      }
+      const mergeData = await mergeResp.json();
+
+      try {
+        const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+        await supabase.from("admin_audit_logs").insert({
+          action: "pr_merged",
+          target_type: "pull_request",
+          target_id: String(pr_number),
+          after_state: { sha: mergeData.sha, merged: mergeData.merged },
+        });
+      } catch (e) {
+        console.error("Audit log failed:", e);
+      }
+
+      return json({ success: true, merged: true, sha: mergeData.sha, pr_number });
+    }
+
+    // ── Standard patch action ──
+    const { file_path, content, commit_message, use_branch } = body;
     if (!file_path || typeof file_path !== "string" || file_path.includes("..")) {
       return json({ error: "file_path inválido" }, 400);
     }
