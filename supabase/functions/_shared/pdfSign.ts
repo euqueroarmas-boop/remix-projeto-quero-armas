@@ -10,7 +10,7 @@
  *  - Foxit, Okular, and other PDF readers
  */
 
-import signpdf from "npm:@signpdf/signpdf@3.3.0";
+import { SignPdf } from "npm:@signpdf/signpdf@3.3.0";
 import { P12Signer } from "npm:@signpdf/signer-p12@3.3.0";
 import { pdflibAddPlaceholder } from "npm:@signpdf/placeholder-pdf-lib@3.3.0";
 import {
@@ -109,7 +109,8 @@ export async function addPlaceholderAndSign(
 
   // 4. Sign the PDF
   console.log("[pdfSign] Signing PDF with @signpdf...");
-  const signedPdfBuffer = await signpdf.sign(pdfWithPlaceholder, signer);
+  const signPdf = new SignPdf();
+  const signedPdfBuffer = await signPdf.sign(pdfWithPlaceholder, signer);
 
   // Convert to Uint8Array if needed
   const signedPdf = signedPdfBuffer instanceof Uint8Array
@@ -139,7 +140,8 @@ export async function signExistingPdf(
   password: string,
 ): Promise<SignResult> {
   const signer = new P12Signer(pfxBytes, { passphrase: password });
-  const signedPdfBuffer = await signpdf.sign(pdfBytes, signer);
+  const signPdf = new SignPdf();
+  const signedPdfBuffer = await signPdf.sign(pdfBytes, signer);
   const signedPdf = signedPdfBuffer instanceof Uint8Array
     ? signedPdfBuffer
     : new Uint8Array(signedPdfBuffer);
