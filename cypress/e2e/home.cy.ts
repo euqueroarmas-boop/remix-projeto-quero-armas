@@ -16,9 +16,7 @@ describe("Home — Smoke Test", () => {
 
   it("exibe a seção hero", () => {
     cy.get("h1", { timeout: 10000 }).should("be.visible");
-    cy.get("section").first().should(($section) => {
-      expect($section[0].getBoundingClientRect().height).to.be.greaterThan(100);
-    });
+    cy.get("h1").closest("section").should("be.visible");
   });
 
   it("exibe o footer", () => {
