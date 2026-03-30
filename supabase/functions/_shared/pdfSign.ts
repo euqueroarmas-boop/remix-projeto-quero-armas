@@ -10,7 +10,7 @@
  *  - Foxit, Okular, and other PDF readers
  */
 
-import signpdf from "npm:@signpdf/signpdf@3.3.0";
+import { SignPdf } from "npm:@signpdf/signpdf@3.3.0";
 import { P12Signer } from "npm:@signpdf/signer-p12@3.3.0";
 import { pdflibAddPlaceholder } from "npm:@signpdf/placeholder-pdf-lib@3.3.0";
 import {
