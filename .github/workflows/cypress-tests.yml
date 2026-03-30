@@ -491,7 +491,7 @@ jobs:
           echo "=== FINALIZATION COMPLETE ==="
 
       - name: Upload screenshots (GitHub backup)
-        if: failure()
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: cypress-screenshots-${{ github.event.inputs.test_type }}
