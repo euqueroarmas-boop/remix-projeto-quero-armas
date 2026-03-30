@@ -84,6 +84,134 @@ async function gatherFunnelData(supabase: ReturnType<typeof getSupabase>) {
   };
 }
 
+// ─── Deduplication ───
+
+async function findExistingPrompt(supabase: ReturnType<typeof getSupabase>, title: string): Promise<any | null> {
+  const { data } = await supabase
+    .from("prompt_intelligence")
+    .select("id, prompts, applied, confidence")
+    .eq("status", "completed")
+    .order("created_at", { ascending: false })
+    .limit(10);
+
+  if (!data) return null;
+
+  for (const record of data) {
+    const prompts = record.prompts as any[];
+    if (!prompts) continue;
+    const match = prompts.find((p: any) =>
+      p.title?.toLowerCase().trim() === title.toLowerCase().trim()
+    );
+    if (match) return { ...match, recordId: record.id, applied: record.applied };
+  }
+  return null;
+}
+
+// ─── Impact Score Calculator ───
+
+function calculateImpactScore(prompt: any, funnel: any): number {
+  let score = 0;
+
+  // Priority weight
+  if (prompt.priority === "high") score += 40;
+  else if (prompt.priority === "medium") score += 20;
+  else score += 5;
+
+  // Type weight (revenue-focused)
+  if (prompt.type === "conversion") score += 30;
+  else if (prompt.type === "fix") score += 25;
+  else if (prompt.type === "optimize") score += 15;
+  else if (prompt.type === "create") score += 10;
+  else score += 5;
+
+  // Impact area weight
+  if (prompt.impact === "revenue") score += 25;
+  else if (prompt.impact === "stability") score += 20;
+  else if (prompt.impact === "ux") score += 15;
+  else if (prompt.impact === "seo") score += 10;
+  else if (prompt.impact === "performance") score += 10;
+
+  // Funnel drop-off bonus
+  if (funnel) {
+    const conversionRate = funnel.payments > 0 && funnel.leads > 0
+      ? funnel.payments / funnel.leads
+      : 0;
+    if (conversionRate < 0.05) score += 15; // Very low conversion
+    else if (conversionRate < 0.1) score += 8;
+  }
+
+  return Math.min(score / 100, 1.0);
+}
+
+// ─── Confidence Scorer ───
+
+function calculateConfidence(prompt: any, existingMatch: any | null): number {
+  let conf = 0.5;
+
+  // If we've seen this before and it was applied successfully
+  if (existingMatch?.applied) conf += 0.3;
+
+  // High priority = higher confidence in relevance
+  if (prompt.priority === "high") conf += 0.1;
+
+  // Fix type = usually clear action
+  if (prompt.type === "fix") conf += 0.1;
+
+  // Small effort = safer to auto-apply
+  if (prompt.estimated_effort === "small") conf += 0.1;
+
+  return Math.min(conf, 1.0);
+}
+
+// ─── Auto-applicability Rules ───
+
+function isAutoApplicable(prompt: any, confidence: number): boolean {
+  if (confidence < 0.8) return false;
+
+  // Safe auto-apply types
+  const safeTypes = ["optimize", "standardize"];
+  const safeImpacts = ["seo", "performance"];
+
+  if (safeTypes.includes(prompt.type) && safeImpacts.includes(prompt.impact)) return true;
+
+  // Small effort fixes with high confidence
+  if (prompt.estimated_effort === "small" && confidence >= 0.9) return true;
+
+  return false;
+}
+
+// ─── Source Detection ───
+
+function detectSource(prompt: any, tests: any, logs: any): string {
+  const titleLower = (prompt.title || "").toLowerCase();
+  const descLower = (prompt.description || "").toLowerCase();
+  const combined = titleLower + " " + descLower;
+
+  if (combined.includes("teste") || combined.includes("cypress") || combined.includes("spec")) return "test";
+  if (combined.includes("erro") || combined.includes("log") || combined.includes("falha")) return "log";
+  if (combined.includes("funil") || combined.includes("conversão") || combined.includes("lead")) return "funnel";
+  if (combined.includes("contrato") || combined.includes("assinatura")) return "contract";
+
+  // Check if related to recent test failures
+  if (tests.failedRuns.length > 0) return "test";
+  if (logs.recentErrors.length > 0) return "log";
+
+  return "log";
+}
+
+// ─── Prompt Type Mapper ───
+
+function mapPromptType(type: string): string {
+  const map: Record<string, string> = {
+    fix: "correction",
+    create: "growth",
+    optimize: "ux",
+    standardize: "ux",
+    conversion: "conversion",
+  };
+  return map[type] || "correction";
+}
+
 // ─── AI Prompt Generation ───
 
 async function generatePromptsWithAI(analysisData: any): Promise<any> {
@@ -108,6 +236,7 @@ REGRAS:
 - NÃO sugira mudanças destrutivas
 - NÃO sugira SEO se dados indicarem homologação
 - Priorize por impacto no faturamento e estabilidade
+- Para cada prompt, estime: impact (stability|revenue|ux|performance|seo), estimated_effort (small|medium|large)
 
 FORMATO DE RESPOSTA (JSON):
 {
@@ -167,13 +296,48 @@ Gere entre 5 e 15 prompts priorizados. Retorne APENAS o JSON, sem markdown.`;
   const result = await response.json();
   const content = result.choices?.[0]?.message?.content || "{}";
 
-  // Parse JSON from response (strip markdown fences if present)
   let cleaned = content.trim();
   if (cleaned.startsWith("```")) {
     cleaned = cleaned.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "");
   }
 
   return JSON.parse(cleaned);
+}
+
+// ─── Enrich Prompts with Brain Fields ───
+
+async function enrichPrompts(
+  supabase: ReturnType<typeof getSupabase>,
+  prompts: any[],
+  analysisData: any
+): Promise<any[]> {
+  const enriched = [];
+
+  for (const p of prompts) {
+    const existingMatch = await findExistingPrompt(supabase, p.title);
+
+    const confidence = calculateConfidence(p, existingMatch);
+    const impactScore = calculateImpactScore(p, analysisData.funnel);
+    const source = detectSource(p, analysisData.tests, analysisData.logs);
+    const promptType = mapPromptType(p.type);
+    const autoApplicable = isAutoApplicable(p, confidence);
+
+    enriched.push({
+      ...p,
+      confidence: Math.round(confidence * 100) / 100,
+      impact_score: Math.round(impactScore * 100) / 100,
+      source,
+      prompt_type: promptType,
+      auto_applicable: autoApplicable,
+      applied: false,
+      deduplicated: !!existingMatch,
+    });
+  }
+
+  // Sort by impact_score descending
+  enriched.sort((a, b) => b.impact_score - a.impact_score);
+
+  return enriched;
 }
 
 // ─── Main Handler ───
@@ -210,9 +374,64 @@ Deno.serve(async (req) => {
       });
     }
 
+    // ─── MARK APPLIED ───
+    if (action === "apply") {
+      const { id, promptIndex } = body;
+      if (!id) throw new Error("id required");
+
+      const { data: record } = await supabase
+        .from("prompt_intelligence")
+        .select("prompts")
+        .eq("id", id)
+        .single();
+
+      if (record?.prompts && Array.isArray(record.prompts)) {
+        const updatedPrompts = [...record.prompts];
+        if (promptIndex !== undefined && updatedPrompts[promptIndex]) {
+          (updatedPrompts[promptIndex] as any).applied = true;
+        }
+        await supabase.from("prompt_intelligence").update({
+          prompts: updatedPrompts,
+          applied: true,
+          applied_at: new Date().toISOString(),
+        }).eq("id", id);
+      }
+
+      return new Response(JSON.stringify({ ok: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ─── REJECT ───
+    if (action === "reject") {
+      const { id, promptIndex } = body;
+      if (!id) throw new Error("id required");
+
+      const { data: record } = await supabase
+        .from("prompt_intelligence")
+        .select("prompts")
+        .eq("id", id)
+        .single();
+
+      if (record?.prompts && Array.isArray(record.prompts)) {
+        const updatedPrompts = [...record.prompts];
+        if (promptIndex !== undefined && updatedPrompts[promptIndex]) {
+          (updatedPrompts[promptIndex] as any).applied = false;
+          (updatedPrompts[promptIndex] as any).rejected = true;
+        }
+        await supabase.from("prompt_intelligence").update({
+          prompts: updatedPrompts,
+          rejected_at: new Date().toISOString(),
+        }).eq("id", id);
+      }
+
+      return new Response(JSON.stringify({ ok: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // ─── ANALYZE ───
     if (action === "analyze") {
-      // Create record
       const { data: record, error: insertErr } = await supabase
         .from("prompt_intelligence")
         .insert({ status: "running", analysis_type: body.type || "full" })
@@ -222,7 +441,6 @@ Deno.serve(async (req) => {
       if (insertErr) throw insertErr;
       const recordId = record.id;
 
-      // Gather data
       const [tests, logs, contracts, funnel] = await Promise.all([
         gatherTestData(supabase),
         gatherLogData(supabase),
@@ -243,7 +461,6 @@ Deno.serve(async (req) => {
 
       const analysisData = { tests, logs, contracts, funnel, structure };
 
-      // Call AI
       let aiResult: any;
       try {
         aiResult = await generatePromptsWithAI(analysisData);
@@ -260,28 +477,44 @@ Deno.serve(async (req) => {
         });
       }
 
-      const prompts = aiResult.prompts || [];
-      const high = prompts.filter((p: any) => p.priority === "high").length;
-      const medium = prompts.filter((p: any) => p.priority === "medium").length;
-      const low = prompts.filter((p: any) => p.priority === "low").length;
+      // Enrich with brain fields
+      const rawPrompts = aiResult.prompts || [];
+      const enrichedPrompts = await enrichPrompts(supabase, rawPrompts, analysisData);
+
+      const high = enrichedPrompts.filter((p: any) => p.priority === "high").length;
+      const medium = enrichedPrompts.filter((p: any) => p.priority === "medium").length;
+      const low = enrichedPrompts.filter((p: any) => p.priority === "low").length;
+
+      // Calculate aggregate scores
+      const avgConfidence = enrichedPrompts.length > 0
+        ? enrichedPrompts.reduce((s: number, p: any) => s + p.confidence, 0) / enrichedPrompts.length
+        : 0;
+      const avgImpact = enrichedPrompts.length > 0
+        ? enrichedPrompts.reduce((s: number, p: any) => s + p.impact_score, 0) / enrichedPrompts.length
+        : 0;
+      const autoCount = enrichedPrompts.filter((p: any) => p.auto_applicable).length;
 
       await supabase.from("prompt_intelligence").update({
         status: "completed",
         analysis_data: analysisData,
-        prompts: prompts,
+        prompts: enrichedPrompts,
         summary: aiResult.summary || "",
-        total_prompts: prompts.length,
+        total_prompts: enrichedPrompts.length,
         high_priority: high,
         medium_priority: medium,
         low_priority: low,
+        confidence: Math.round(avgConfidence * 100) / 100,
+        impact_score: Math.round(avgImpact * 100) / 100,
+        auto_applicable: autoCount > 0,
         finished_at: new Date().toISOString(),
       }).eq("id", recordId);
 
       return new Response(JSON.stringify({
         id: recordId,
         summary: aiResult.summary,
-        prompts,
-        counts: { total: prompts.length, high, medium, low },
+        prompts: enrichedPrompts,
+        counts: { total: enrichedPrompts.length, high, medium, low, auto: autoCount },
+        scores: { avgConfidence: Math.round(avgConfidence * 100) / 100, avgImpact: Math.round(avgImpact * 100) / 100 },
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
