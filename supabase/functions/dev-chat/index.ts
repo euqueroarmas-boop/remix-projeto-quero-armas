@@ -4,49 +4,49 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-admin-token",
+    "authorization, x-client-info, apikey, content-type, x-admin-token, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+async function verifyAdminToken(token: string, password: string): Promise<boolean> {
+  const [ts, sig] = token.split(".");
+  if (!ts || !sig) return false;
+  const age = Date.now() - Number(ts);
+  if (age > 8 * 3600 * 1000) return false;
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(password),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const expected = Array.from(
+    new Uint8Array(
+      await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(`admin:${ts}`))
+    )
+  )
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+  return expected === sig;
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS")
     return new Response(null, { headers: corsHeaders });
 
   try {
-    // ── Auth via admin HMAC token ──
+    // ── Auth ──
     const adminToken = req.headers.get("x-admin-token") || "";
     const ADMIN_PASSWORD = Deno.env.get("ADMIN_PASSWORD");
-    if (!ADMIN_PASSWORD) throw new Error("ADMIN_PASSWORD not configured");
+    if (!ADMIN_PASSWORD) {
+      return new Response(JSON.stringify({ error: "ADMIN_PASSWORD não configurado" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
-    const [ts, sig] = adminToken.split(".");
-    if (!ts || !sig) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    const age = Date.now() - Number(ts);
-    if (age > 8 * 3600 * 1000) {
-      return new Response(JSON.stringify({ error: "Token expired" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    const key = await crypto.subtle.importKey(
-      "raw",
-      new TextEncoder().encode(ADMIN_PASSWORD),
-      { name: "HMAC", hash: "SHA-256" },
-      false,
-      ["sign"]
-    );
-    const expected = Array.from(
-      new Uint8Array(
-        await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(`admin:${ts}`))
-      )
-    )
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
-    if (expected !== sig) {
-      return new Response(JSON.stringify({ error: "Invalid token" }), {
+    const valid = await verifyAdminToken(adminToken, ADMIN_PASSWORD);
+    if (!valid) {
+      return new Response(JSON.stringify({ error: "Token admin inválido ou expirado. Faça login novamente." }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -56,7 +56,13 @@ serve(async (req) => {
     const { action, messages, command } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+    if (!LOVABLE_API_KEY) {
+      console.error("LOVABLE_API_KEY not found in env");
+      return new Response(
+        JSON.stringify({ error: "Token de IA não configurado. Verifique LOVABLE_API_KEY nas configurações." }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -105,7 +111,7 @@ REGRAS:
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            model: "google/gemini-3-flash-preview",
+            model: "google/gemini-2.5-flash",
             messages: [
               { role: "system", content: systemPrompt },
               ...messages,
@@ -117,23 +123,18 @@ REGRAS:
 
       if (!response.ok) {
         const status = response.status;
-        if (status === 429) {
-          return new Response(
-            JSON.stringify({ error: "Rate limit excedido. Tente novamente em alguns segundos." }),
-            { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-        if (status === 402) {
-          return new Response(
-            JSON.stringify({ error: "Créditos insuficientes. Adicione fundos no workspace." }),
-            { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
         const t = await response.text();
         console.error("AI gateway error:", status, t);
+
+        const errorMap: Record<number, string> = {
+          429: "Rate limit excedido. Tente novamente em alguns segundos.",
+          402: "Créditos insuficientes.",
+          401: "Token de IA inválido. Verifique LOVABLE_API_KEY.",
+        };
+
         return new Response(
-          JSON.stringify({ error: "Erro no gateway de IA" }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({ error: errorMap[status] || `Erro no gateway de IA (${status})` }),
+          { status: status >= 500 ? 502 : status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
@@ -142,7 +143,7 @@ REGRAS:
       });
     }
 
-    // ── Action: save (save command to prompt_intelligence) ──
+    // ── Action: save ──
     if (action === "save") {
       const { data, error } = await supabase
         .from("prompt_intelligence")
@@ -175,14 +176,14 @@ REGRAS:
       });
     }
 
-    return new Response(JSON.stringify({ error: "Unknown action" }), {
+    return new Response(JSON.stringify({ error: "Ação desconhecida" }), {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
     console.error("dev-chat error:", e);
     return new Response(
-      JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
+      JSON.stringify({ error: e instanceof Error ? e.message : "Erro interno" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
