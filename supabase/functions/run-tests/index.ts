@@ -15,13 +15,13 @@ const SITE_URL = "https://dell-shine-solutions.lovable.app";
 
 const VALID_TEST_TYPES = [
   "smoke", "frontend", "business", "forms", "contracts",
-  "checkout", "seo", "blog", "portal", "api", "regression",
+  "checkout", "seo", "blog", "portal", "api", "regression", "certificate",
 ] as const;
 
 const VALID_SUITES = ["smoke", "light", "cypress", "full"] as const;
 
 const LIGHT_TESTS: string[] = ["smoke", "seo", "api", "blog"];
-const CYPRESS_TESTS: string[] = ["frontend", "business", "forms", "contracts", "checkout", "portal", "regression"];
+const CYPRESS_TESTS: string[] = ["frontend", "business", "forms", "contracts", "checkout", "portal", "regression", "certificate"];
 
 // ─── Auth ───
 async function hmacVerify(secret: string, message: string, signature: string): Promise<boolean> {
