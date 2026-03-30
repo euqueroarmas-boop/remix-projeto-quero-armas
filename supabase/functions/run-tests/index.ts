@@ -737,7 +737,7 @@ Deno.serve(async (req) => {
         test_type: "full",
         status: "running",
         started_at: new Date().toISOString(),
-        triggered_by: "admin",
+        triggered_by: isCronCall ? "cron" : "admin",
         execution_engine: "hybrid",
         base_url: SITE_URL,
         ingest_token: fullIngestToken,
