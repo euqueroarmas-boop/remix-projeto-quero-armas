@@ -90,9 +90,11 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Auth check
+  // Auth check — admin token OR service-role key (for backend testing)
   const isAdmin = await validateAdminToken(req);
-  if (!isAdmin) {
+  const authHeader = req.headers.get("authorization") || "";
+  const isServiceRole = authHeader === `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`;
+  if (!isAdmin && !isServiceRole) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
