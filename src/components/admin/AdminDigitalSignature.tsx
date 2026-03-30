@@ -377,7 +377,7 @@ export default function AdminDigitalSignature() {
             Verifica se o certificado está acessível, descriptografável e válido para assinatura.
           </p>
           <div className="flex items-center gap-3">
-            <Button variant="outline" onClick={handleTest} disabled={testing}>
+            <Button data-testid="certificate-test-sign-button" variant="outline" onClick={handleTest} disabled={testing}>
               {testing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Key className="mr-2 h-4 w-4" />}
               {testing ? "Testando..." : "Testar certificado"}
             </Button>

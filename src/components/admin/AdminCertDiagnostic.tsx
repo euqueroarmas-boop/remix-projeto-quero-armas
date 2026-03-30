@@ -211,8 +211,8 @@ export default function AdminCertDiagnostic() {
         <>
           {/* Summary bar */}
           <div className={`rounded-xl border p-4 flex items-center justify-between flex-wrap gap-3 ${
-            allPassed ? "border-emerald-500/30 bg-emerald-500/5" : "border-destructive/30 bg-destructive/5"
-          }`}>
+           allPassed ? "border-emerald-500/30 bg-emerald-500/5" : "border-destructive/30 bg-destructive/5"
+          }`} data-testid="certificate-result-panel">
             <div className="flex items-center gap-3">
               {allPassed
                 ? <Shield className="h-5 w-5 text-emerald-400" />
