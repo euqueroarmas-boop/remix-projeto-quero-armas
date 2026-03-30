@@ -157,6 +157,7 @@ export default function AdminCertDiagnostic() {
             </label>
             <Input
               ref={fileRef}
+              data-testid="certificate-diag-file-input"
               type="file"
               accept=".pfx,.p12"
               onChange={(e) => {
