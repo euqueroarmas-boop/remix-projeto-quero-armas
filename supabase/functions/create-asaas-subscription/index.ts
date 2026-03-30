@@ -164,17 +164,28 @@ Deno.serve(async (req) => {
 
     // ── Update database ──
     if (quote_id) {
-      await supabase
+      const { data: latestPayment } = await supabase
         .from("payments")
-        .update({
-          asaas_payment_id: firstPaymentId || subData.id,
-          payment_method: billing_type,
-          payment_status: "PENDING",
-          billing_type,
-          due_date: nextDueDate,
-          asaas_invoice_url: invoiceUrl,
-        })
-        .eq("quote_id", quote_id);
+        .select("id")
+        .eq("quote_id", quote_id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const payload = {
+        asaas_payment_id: firstPaymentId || subData.id,
+        payment_method: billing_type,
+        payment_status: "PENDING",
+        billing_type,
+        due_date: nextDueDate,
+        asaas_invoice_url: invoiceUrl,
+      };
+
+      if (latestPayment?.id) {
+        await supabase.from("payments").update(payload).eq("id", latestPayment.id);
+      } else {
+        await supabase.from("payments").insert({ quote_id, ...payload });
+      }
     }
 
     const normalizedResponse = {

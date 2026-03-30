@@ -126,10 +126,12 @@ export async function getPostPurchaseContext(
       .from("contracts")
       .select("id, customer_id, contract_type, monthly_value, created_at, contract_text, contract_pdf_path, status, quote_id")
       .eq("quote_id", args.quoteId)
-      .single();
+      .order("signed", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(1);
 
-    if (error || !data) throw new Error("Contrato não encontrado");
-    contract = data;
+    if (error || !data?.length) throw new Error("Contrato não encontrado");
+    contract = data[0];
   } else {
     throw new Error("quote_id ou contract_id é obrigatório");
   }

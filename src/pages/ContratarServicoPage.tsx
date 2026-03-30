@@ -57,6 +57,11 @@ const EMERGENCY_PRICES: Record<number, number> = { 1: 300, 2: 285, 3: 270, 4: 25
 type BillingType = "BOLETO" | "CREDIT_CARD";
 type FlowStep = "calculator" | "registration" | "contract" | "payment" | "success";
 
+const isPaidStatus = (status?: string | null) => {
+  const normalized = String(status || "").toUpperCase();
+  return normalized === "CONFIRMED" || normalized === "RECEIVED" || normalized === "PAYMENT_CONFIRMED" || normalized === "PAYMENT_RECEIVED";
+};
+
 const ContratarServicoPage = () => {
   const { t } = useTranslation();
   const { slug } = useParams<{ slug: string }>();
@@ -141,7 +146,7 @@ const ContratarServicoPage = () => {
         .order("created_at", { ascending: false })
         .limit(1)
         .single();
-      if (data && ((data as any).payment_status === "CONFIRMED" || (data as any).payment_status === "RECEIVED")) {
+      if (data && isPaidStatus((data as any).payment_status)) {
         setPaymentConfirmed(true);
         // Email is now sent from webhook after user creation (includes credentials)
         // Save data to session and redirect to standalone page
