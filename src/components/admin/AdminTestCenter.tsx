@@ -500,7 +500,16 @@ function RunStatusBadge({ status }: { status: string }) {
 // ─── Screenshot Viewer Dialog ───
 function ScreenshotViewer({ urls }: { urls: string[] }) {
   const [selected, setSelected] = useState(0);
+  const [loadErrors, setLoadErrors] = useState<Record<number, boolean>>({});
+  const [loading, setLoading] = useState<Record<number, boolean>>({});
   if (!urls || urls.length === 0) return null;
+
+  const handleError = (i: number) => setLoadErrors(prev => ({ ...prev, [i]: true }));
+  const handleLoad = (i: number) => setLoading(prev => ({ ...prev, [i]: false }));
+
+  const fileName = (url: string) => {
+    try { return decodeURIComponent(url.split("/").pop() || "screenshot.png"); } catch { return url.split("/").pop() || "screenshot.png"; }
+  };
 
   return (
     <Dialog>
@@ -515,27 +524,72 @@ function ScreenshotViewer({ urls }: { urls: string[] }) {
           <DialogTitle className="text-sm">Screenshots da Execução</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
-          <img
-            src={urls[selected]}
-            alt={`Screenshot ${selected + 1}`}
-            className="w-full rounded-lg border border-border"
-          />
+          <div className="relative min-h-[200px] bg-muted/30 rounded-lg border border-border overflow-hidden">
+            {loading[selected] && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            )}
+            {loadErrors[selected] ? (
+              <div className="p-6 text-center space-y-3">
+                <AlertTriangle className="h-8 w-8 text-yellow-500 mx-auto" />
+                <p className="text-sm font-medium text-foreground">Falha ao carregar screenshot</p>
+                <p className="text-[11px] text-muted-foreground break-all font-mono">{urls[selected]}</p>
+                <div className="flex gap-2 justify-center">
+                  <Button variant="outline" size="sm" className="text-xs gap-1" onClick={() => window.open(urls[selected], "_blank")}>
+                    <ExternalLink className="h-3 w-3" /> Abrir em nova aba
+                  </Button>
+                  <Button variant="outline" size="sm" className="text-xs gap-1" onClick={() => {
+                    navigator.clipboard.writeText(urls[selected]);
+                    toast.success("URL copiada");
+                  }}>
+                    <Copy className="h-3 w-3" /> Copiar URL
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <img
+                src={urls[selected]}
+                alt={`Screenshot ${selected + 1}`}
+                className="w-full rounded-lg"
+                onError={() => handleError(selected)}
+                onLoad={() => handleLoad(selected)}
+              />
+            )}
+          </div>
           {urls.length > 1 && (
             <div className="flex gap-2 overflow-x-auto pb-2">
               {urls.map((url, i) => (
                 <button
                   key={i}
                   onClick={() => setSelected(i)}
-                  className={`flex-shrink-0 w-20 h-14 rounded border overflow-hidden ${i === selected ? "border-primary ring-2 ring-primary/30" : "border-border opacity-60 hover:opacity-100"}`}
+                  className={`flex-shrink-0 w-20 h-14 rounded border overflow-hidden relative ${i === selected ? "border-primary ring-2 ring-primary/30" : "border-border opacity-60 hover:opacity-100"}`}
                 >
-                  <img src={url} alt={`Thumb ${i + 1}`} className="w-full h-full object-cover" />
+                  {loadErrors[i] ? (
+                    <div className="w-full h-full flex items-center justify-center bg-muted">
+                      <AlertTriangle className="h-3 w-3 text-yellow-500" />
+                    </div>
+                  ) : (
+                    <img src={url} alt={`Thumb ${i + 1}`} className="w-full h-full object-cover" onError={() => handleError(i)} />
+                  )}
                 </button>
               ))}
             </div>
           )}
-          <p className="text-[11px] text-muted-foreground">
-            {decodeURIComponent(urls[selected]?.split("/").pop() || "")}
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] text-muted-foreground font-mono truncate flex-1">{fileName(urls[selected])}</p>
+            <div className="flex gap-1.5 flex-shrink-0">
+              <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px] gap-1" onClick={() => window.open(urls[selected], "_blank")}>
+                <ExternalLink className="h-3 w-3" /> Abrir
+              </Button>
+              <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px] gap-1" onClick={() => {
+                navigator.clipboard.writeText(urls[selected]);
+                toast.success("URL copiada");
+              }}>
+                <Copy className="h-3 w-3" /> URL
+              </Button>
+            </div>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
@@ -544,7 +598,12 @@ function ScreenshotViewer({ urls }: { urls: string[] }) {
 
 // ─── Video Viewer Dialog ───
 function VideoViewer({ urls }: { urls: string[] }) {
+  const [videoErrors, setVideoErrors] = useState<Record<number, boolean>>({});
   if (!urls || urls.length === 0) return null;
+
+  const fileName = (url: string) => {
+    try { return decodeURIComponent(url.split("/").pop() || "video.mp4"); } catch { return url.split("/").pop() || "video.mp4"; }
+  };
 
   return (
     <Dialog>
@@ -562,13 +621,37 @@ function VideoViewer({ urls }: { urls: string[] }) {
           <div className="space-y-4">
             {urls.map((url, i) => (
               <div key={i} className="space-y-1">
-                <p className="text-xs text-muted-foreground font-medium">
-                  {decodeURIComponent(url.split("/").pop() || `Video ${i + 1}`)}
-                </p>
-                <video controls className="w-full rounded-lg border border-border" preload="metadata">
-                  <source src={url} type="video/mp4" />
-                  Seu navegador não suporta vídeo.
-                </video>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-muted-foreground font-mono truncate">{fileName(url)}</p>
+                  <div className="flex gap-1.5">
+                    <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px] gap-1" onClick={() => window.open(url, "_blank")}>
+                      <ExternalLink className="h-3 w-3" /> Abrir
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px] gap-1" onClick={() => {
+                      navigator.clipboard.writeText(url);
+                      toast.success("URL copiada");
+                    }}>
+                      <Copy className="h-3 w-3" /> URL
+                    </Button>
+                  </div>
+                </div>
+                {videoErrors[i] ? (
+                  <div className="p-4 rounded-lg border border-border bg-muted/30 text-center space-y-2">
+                    <AlertTriangle className="h-6 w-6 text-yellow-500 mx-auto" />
+                    <p className="text-xs text-foreground">Falha ao carregar vídeo</p>
+                    <p className="text-[10px] text-muted-foreground font-mono break-all">{url}</p>
+                  </div>
+                ) : (
+                  <video
+                    controls
+                    className="w-full rounded-lg border border-border"
+                    preload="metadata"
+                    onError={() => setVideoErrors(prev => ({ ...prev, [i]: true }))}
+                  >
+                    <source src={url} type="video/mp4" />
+                    Seu navegador não suporta vídeo.
+                  </video>
+                )}
               </div>
             ))}
           </div>
@@ -579,8 +662,26 @@ function VideoViewer({ urls }: { urls: string[] }) {
 }
 
 // ─── Expandable Error Block ───
-function ErrorDetail({ result }: { result: DetailedTestResult }) {
+function ErrorDetail({ result, screenshotUrls, videoUrls }: { result: DetailedTestResult; screenshotUrls?: string[]; videoUrls?: string[] }) {
   const [open, setOpen] = useState(false);
+
+  // Find screenshots matching this test's spec
+  const matchingScreenshots = (screenshotUrls || []).filter(u => {
+    if (!result.spec) return false;
+    const specSlug = result.spec.replace(/\.cy\.ts$|\.cy\.js$/g, "").replace(/[^a-zA-Z0-9]/g, "_").toLowerCase();
+    const urlLower = u.toLowerCase().replace(/[^a-zA-Z0-9]/g, "_");
+    return urlLower.includes(specSlug);
+  });
+
+  // Find video matching this spec
+  const matchingVideos = (videoUrls || []).filter(u => {
+    if (!result.spec) return false;
+    const specSlug = result.spec.replace(/\.cy\.ts$|\.cy\.js$/g, "").replace(/[^a-zA-Z0-9]/g, "_").toLowerCase();
+    const urlLower = u.toLowerCase().replace(/[^a-zA-Z0-9]/g, "_");
+    return urlLower.includes(specSlug);
+  });
+
+  const hasArtifacts = matchingScreenshots.length > 0 || matchingVideos.length > 0;
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
@@ -590,6 +691,12 @@ function ErrorDetail({ result }: { result: DetailedTestResult }) {
             <div className="flex items-center gap-2 text-left">
               <XCircle className="h-3.5 w-3.5 text-destructive flex-shrink-0" />
               <span className="font-medium text-foreground">{result.name}</span>
+              {hasArtifacts && (
+                <span className="flex items-center gap-0.5 text-muted-foreground">
+                  {matchingScreenshots.length > 0 && <Image className="h-3 w-3" />}
+                  {matchingVideos.length > 0 && <Video className="h-3 w-3" />}
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground">{formatDuration(result.duration_ms)}</span>
@@ -607,6 +714,28 @@ function ErrorDetail({ result }: { result: DetailedTestResult }) {
             <div className="pl-5">
               <span className="text-[10px] font-medium text-muted-foreground">Spec: </span>
               <span className="text-[10px] text-foreground font-mono">{result.spec}</span>
+            </div>
+          )}
+
+          {result.url && (
+            <div className="pl-5">
+              <span className="text-[10px] font-medium text-muted-foreground">URL: </span>
+              <span className="text-[10px] text-foreground font-mono">{result.url}</span>
+            </div>
+          )}
+
+          {/* Per-failure artifacts */}
+          {hasArtifacts && (
+            <div className="pl-5 flex flex-wrap gap-1.5">
+              {matchingScreenshots.length > 0 && <ScreenshotViewer urls={matchingScreenshots} />}
+              {matchingVideos.length > 0 && <VideoViewer urls={matchingVideos} />}
+            </div>
+          )}
+          {!hasArtifacts && result.status === "failed" && (
+            <div className="pl-5">
+              <p className="text-[10px] text-yellow-500 flex items-center gap-1">
+                <AlertTriangle className="h-3 w-3" /> SEM SCREENSHOT / VÍDEO vinculado a esta falha
+              </p>
             </div>
           )}
 
@@ -659,12 +788,15 @@ function ErrorDetail({ result }: { result: DetailedTestResult }) {
                 const parts = [
                   `Teste: ${result.name}`,
                   result.spec ? `Spec: ${result.spec}` : "",
+                  result.url ? `URL: ${result.url}` : "",
                   `Status: ${result.status}`,
                   `Duração: ${formatDuration(result.duration_ms)}`,
                   result.error ? `\nErro:\n${result.error}` : "",
                   result.stack_trace ? `\nStack Trace:\n${result.stack_trace}` : "",
                   result.cypress_command ? `\nComando Cypress:\n${result.cypress_command}` : "",
                   result.diff ? `\nExpected: ${JSON.stringify(result.diff.expected)}\nActual: ${JSON.stringify(result.diff.actual)}` : "",
+                  matchingScreenshots.length > 0 ? `\n── SCREENSHOTS ──\n${matchingScreenshots.join("\n")}` : "\n── SCREENSHOTS: SEM SCREENSHOT ──",
+                  matchingVideos.length > 0 ? `\n── VÍDEOS ──\n${matchingVideos.join("\n")}` : "\n── VÍDEOS: SEM VÍDEO ──",
                 ].filter(Boolean).join("\n");
                 const diagnosis = inferErrorCategory(result.error || "");
                 const fullParts = [
@@ -1165,7 +1297,7 @@ function RunDetail({ run, onBack }: { run: TestRun; onBack: () => void }) {
           </CardHeader>
           <CardContent>
             {failed.length > 0 ? (
-              <div className="space-y-2">{failed.map((t, i) => <ErrorDetail key={i} result={t} />)}</div>
+              <div className="space-y-2">{failed.map((t, i) => <ErrorDetail key={i} result={t} screenshotUrls={run.screenshot_urls || undefined} videoUrls={run.video_urls || undefined} />)}</div>
             ) : (
               <p className="text-xs text-muted-foreground py-3">
                 {run.failed_tests} teste(s) falharam, mas os detalhes individuais não foram capturados.
