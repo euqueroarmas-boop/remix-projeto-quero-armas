@@ -16,7 +16,7 @@ describe("Cálculo de Planos — 12, 24, 36 meses", () => {
   });
 
   const fillAndSubmitRegistration = () => {
-    cy.get('[data-testid="campo-cnpj"]').clear().type("12345678000190", { delay: 10 });
+    cy.get('[data-testid="campo-cnpj"]').clear().type("33814058000128", { delay: 10 });
     cy.wait(1000);
 
     cy.get('[data-testid="campo-razao-social"]').then(($el) => {
