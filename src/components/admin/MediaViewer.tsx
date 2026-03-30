@@ -85,6 +85,26 @@ export default function MediaViewer({
   const [zoomed, setZoomed] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
 
+  const prev = useCallback(() => setIdx((p) => (p > 0 ? p - 1 : (items?.length || 1) - 1)), [items?.length]);
+  const next = useCallback(() => setIdx((p) => (p < (items?.length || 1) - 1 ? p + 1 : 0)), [items?.length]);
+
+  const handleError = useCallback((i: number) => {
+    setLoadErrors((p) => ({ ...p, [i]: true }));
+    setLoading((p) => ({ ...p, [i]: false }));
+  }, []);
+
+  const handleLoaded = useCallback((i: number) => {
+    setLoading((p) => ({ ...p, [i]: false }));
+  }, []);
+
+  const handleOpen = useCallback(() => {
+    setOpen(true);
+    setIdx(0);
+    setLoadErrors({});
+    setLoading({});
+    setZoomed(false);
+  }, []);
+
   if (!items || items.length === 0) return null;
 
   const current = items[idx];
