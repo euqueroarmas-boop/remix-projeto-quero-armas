@@ -230,7 +230,7 @@ function generateRestructuringContractHtml(
   </div>
 
   <div data-traceability="true" style="margin-top: 48px; padding-top: 16px; border-top: 1px solid #999;">
-    <h2 style="font-size: 10pt; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; color: #333;">Dados de Rastreabilidade da Assinatura Eletrônica</h2>
+    <h2 style="font-size: 10pt; font-weight: bold; margin-bottom: 8px; color: #333;">Dados de Rastreabilidade da Assinatura Eletrônica</h2>
     <p style="font-size: 9pt; color: #444; margin: 4px 0;">IP de origem: <strong data-proof="ip">{{SIGN_IP}}</strong></p>
     <p style="font-size: 9pt; color: #444; margin: 4px 0;">Data da confirmação: <strong data-proof="date">{{SIGN_DATE}}</strong></p>
     <p style="font-size: 9pt; color: #444; margin: 4px 0;">Hora da confirmação: <strong data-proof="time">{{SIGN_TIME}}</strong></p>
