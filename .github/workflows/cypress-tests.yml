@@ -259,46 +259,163 @@ jobs:
           echo "Final status: $FINAL_STATUS"
           echo "Error summary: $ERROR_SUMMARY"
 
-          # Upload screenshots
+          # Upload screenshots with sanitized filenames
           SCREENSHOT_URLS="[]"
+          SCREENSHOT_MAP_JSON="[]"
           if [ -d "cypress/screenshots" ] && [ "$(find cypress/screenshots -name '*.png' 2>/dev/null | wc -l)" -gt 0 ]; then
-            URLS=""
-            find cypress/screenshots -name "*.png" | while read -r file; do
-              REL="${file#cypress/screenshots/}"
-              SPATH="runs/$RUN_ID/screenshots/$REL"
-              curl -sf -X POST \
-                "$SUPABASE_URL/storage/v1/object/test-artifacts/$SPATH" \
-                -H "apikey: $SUPABASE_KEY" \
-                -H "Authorization: Bearer $SUPABASE_KEY" \
-                -H "Content-Type: image/png" \
-                --data-binary "@$file" > /dev/null && echo "Uploaded: $REL" || echo "Failed: $REL"
-            done
-            SCREENSHOT_URLS=$(find cypress/screenshots -name "*.png" | while read -r file; do
-              REL="${file#cypress/screenshots/}"
-              echo "\"$SUPABASE_URL/storage/v1/object/public/test-artifacts/runs/$RUN_ID/screenshots/$REL\""
-            done | paste -sd, | sed 's/^/[/' | sed 's/$/]/')
-            [ -z "$SCREENSHOT_URLS" ] && SCREENSHOT_URLS="[]"
+            UPLOAD_OK=0
+            UPLOAD_FAIL=0
+            
+            node -e "
+              const fs = require('fs');
+              const path = require('path');
+              const { execSync } = require('child_process');
+              
+              const SUPABASE_URL = process.env.SUPABASE_URL;
+              const SUPABASE_KEY = process.env.SUPABASE_KEY;
+              const RUN_ID = process.env.RUN_ID;
+              
+              function sanitize(name) {
+                return name
+                  .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                  .replace(/[^a-zA-Z0-9._-]/g, '_')
+                  .replace(/_+/g, '_')
+                  .replace(/^_|_$/g, '')
+                  .substring(0, 200);
+              }
+              
+              function findFiles(dir, ext) {
+                const results = [];
+                if (!fs.existsSync(dir)) return results;
+                for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+                  const full = path.join(dir, entry.name);
+                  if (entry.isDirectory()) results.push(...findFiles(full, ext));
+                  else if (entry.name.endsWith(ext)) results.push(full);
+                }
+                return results;
+              }
+              
+              const screenshots = findFiles('cypress/screenshots', '.png');
+              const urls = [];
+              const mapEntries = [];
+              
+              for (const file of screenshots) {
+                const rel = path.relative('cypress/screenshots', file);
+                const parts = rel.split(path.sep);
+                const specSlug = sanitize(parts.length > 1 ? parts[0].replace('.cy.ts','').replace('.cy.js','') : 'unknown');
+                const fileSlug = sanitize(path.basename(file, '.png'));
+                const storagePath = 'runs/' + RUN_ID + '/screenshots/' + specSlug + '/' + fileSlug + '.png';
+                
+                try {
+                  execSync(
+                    'curl -sf -X POST \"' + SUPABASE_URL + '/storage/v1/object/test-artifacts/' + storagePath + '\" ' +
+                    '-H \"apikey: ' + SUPABASE_KEY + '\" ' +
+                    '-H \"Authorization: Bearer ' + SUPABASE_KEY + '\" ' +
+                    '-H \"Content-Type: image/png\" ' +
+                    '--data-binary @\"' + file + '\"',
+                    { stdio: 'pipe' }
+                  );
+                  const publicUrl = SUPABASE_URL + '/storage/v1/object/public/test-artifacts/' + storagePath;
+                  urls.push(publicUrl);
+                  
+                  // Extract spec and test name from original path for mapping
+                  const origSpec = parts.length > 1 ? parts[0] : 'unknown';
+                  const origFile = path.basename(file, '.png');
+                  mapEntries.push({ url: publicUrl, spec: origSpec, file: origFile, original_path: rel });
+                  
+                  console.log('OK: ' + rel + ' -> ' + storagePath);
+                } catch(e) {
+                  console.error('FAIL: ' + rel + ' - ' + e.message);
+                }
+              }
+              
+              fs.writeFileSync('/tmp/screenshot_urls.json', JSON.stringify(urls));
+              fs.writeFileSync('/tmp/screenshot_map.json', JSON.stringify(mapEntries));
+              console.log('Screenshots: ' + urls.length + '/' + screenshots.length + ' uploaded');
+            "
+            
+            if [ -f /tmp/screenshot_urls.json ]; then
+              SCREENSHOT_URLS=$(cat /tmp/screenshot_urls.json)
+            fi
+            if [ -f /tmp/screenshot_map.json ]; then
+              SCREENSHOT_MAP_JSON=$(cat /tmp/screenshot_map.json)
+            fi
           fi
+          echo "Screenshot URLs: $SCREENSHOT_URLS"
 
-          # Upload videos
+          # Upload videos with sanitized filenames
           VIDEO_URLS="[]"
+          VIDEO_MAP_JSON="[]"
           if [ -d "cypress/videos" ] && [ "$(find cypress/videos -name '*.mp4' 2>/dev/null | wc -l)" -gt 0 ]; then
-            find cypress/videos -name "*.mp4" | while read -r file; do
-              REL="${file#cypress/videos/}"
-              SPATH="runs/$RUN_ID/videos/$REL"
-              curl -sf -X POST \
-                "$SUPABASE_URL/storage/v1/object/test-artifacts/$SPATH" \
-                -H "apikey: $SUPABASE_KEY" \
-                -H "Authorization: Bearer $SUPABASE_KEY" \
-                -H "Content-Type: video/mp4" \
-                --data-binary "@$file" > /dev/null && echo "Uploaded video: $REL" || echo "Failed video: $REL"
-            done
-            VIDEO_URLS=$(find cypress/videos -name "*.mp4" | while read -r file; do
-              REL="${file#cypress/videos/}"
-              echo "\"$SUPABASE_URL/storage/v1/object/public/test-artifacts/runs/$RUN_ID/videos/$REL\""
-            done | paste -sd, | sed 's/^/[/' | sed 's/$/]/')
-            [ -z "$VIDEO_URLS" ] && VIDEO_URLS="[]"
+            node -e "
+              const fs = require('fs');
+              const path = require('path');
+              const { execSync } = require('child_process');
+              
+              const SUPABASE_URL = process.env.SUPABASE_URL;
+              const SUPABASE_KEY = process.env.SUPABASE_KEY;
+              const RUN_ID = process.env.RUN_ID;
+              
+              function sanitize(name) {
+                return name
+                  .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                  .replace(/[^a-zA-Z0-9._-]/g, '_')
+                  .replace(/_+/g, '_')
+                  .replace(/^_|_$/g, '')
+                  .substring(0, 200);
+              }
+              
+              function findFiles(dir, ext) {
+                const results = [];
+                if (!fs.existsSync(dir)) return results;
+                for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+                  const full = path.join(dir, entry.name);
+                  if (entry.isDirectory()) results.push(...findFiles(full, ext));
+                  else if (entry.name.endsWith(ext)) results.push(full);
+                }
+                return results;
+              }
+              
+              const videos = findFiles('cypress/videos', '.mp4');
+              const urls = [];
+              const mapEntries = [];
+              
+              for (const file of videos) {
+                const rel = path.relative('cypress/videos', file);
+                const specSlug = sanitize(path.basename(file, '.mp4'));
+                const storagePath = 'runs/' + RUN_ID + '/videos/' + specSlug + '.mp4';
+                
+                try {
+                  execSync(
+                    'curl -sf -X POST \"' + SUPABASE_URL + '/storage/v1/object/test-artifacts/' + storagePath + '\" ' +
+                    '-H \"apikey: ' + SUPABASE_KEY + '\" ' +
+                    '-H \"Authorization: Bearer ' + SUPABASE_KEY + '\" ' +
+                    '-H \"Content-Type: video/mp4\" ' +
+                    '--data-binary @\"' + file + '\"',
+                    { stdio: 'pipe' }
+                  );
+                  const publicUrl = SUPABASE_URL + '/storage/v1/object/public/test-artifacts/' + storagePath;
+                  urls.push(publicUrl);
+                  mapEntries.push({ url: publicUrl, spec: rel, specSlug });
+                  console.log('OK: ' + rel + ' -> ' + storagePath);
+                } catch(e) {
+                  console.error('FAIL: ' + rel + ' - ' + e.message);
+                }
+              }
+              
+              fs.writeFileSync('/tmp/video_urls.json', JSON.stringify(urls));
+              fs.writeFileSync('/tmp/video_map.json', JSON.stringify(mapEntries));
+              console.log('Videos: ' + urls.length + '/' + videos.length + ' uploaded');
+            "
+            
+            if [ -f /tmp/video_urls.json ]; then
+              VIDEO_URLS=$(cat /tmp/video_urls.json)
+            fi
+            if [ -f /tmp/video_map.json ]; then
+              VIDEO_MAP_JSON=$(cat /tmp/video_map.json)
+            fi
           fi
+          echo "Video URLs: $VIDEO_URLS"
 
           # 1) Finalize via ingest API
           if [ -n "$INGEST_TOKEN" ]; then
