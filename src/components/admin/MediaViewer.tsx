@@ -118,25 +118,6 @@ export default function MediaViewer({
       .filter(Boolean)
       .join(" · ");
 
-  const prev = () => setIdx((p) => (p > 0 ? p - 1 : items.length - 1));
-  const next = () => setIdx((p) => (p < items.length - 1 ? p + 1 : 0));
-
-  const handleError = useCallback((i: number) => {
-    setLoadErrors((p) => ({ ...p, [i]: true }));
-    setLoading((p) => ({ ...p, [i]: false }));
-  }, []);
-
-  const handleLoaded = useCallback((i: number) => {
-    setLoading((p) => ({ ...p, [i]: false }));
-  }, []);
-
-  const handleOpen = () => {
-    setOpen(true);
-    setIdx(0);
-    setLoadErrors({});
-    setLoading({});
-    setZoomed(false);
-  };
 
   return (
     <>
