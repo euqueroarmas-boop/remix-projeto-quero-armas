@@ -243,7 +243,7 @@ const ContractingWizard = ({
       }
     }, 5000);
     return () => clearInterval(interval);
-  }, [paymentComplete, paymentConfirmed, activeQuoteId, registrationData, selectedPayment, contractId, effectivePath, computersQty, monthlyValue]);
+  }, [paymentComplete, paymentConfirmed, activeQuoteId, registrationData, selectedPayment, contractId, effectivePath, computersQty, monthlyValue, pricingBreakdown]);
 
   // Open checkout in new tab — detects popup blocker
   const handleRedirectToCheckout = useCallback((url: string) => {
