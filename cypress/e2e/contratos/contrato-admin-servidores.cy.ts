@@ -190,27 +190,23 @@ describe("Contrato — Dados de Prova (Cláusula 17.3)", () => {
       cy.visit(url);
       cy.get("body", { timeout: 15000 }).should("be.visible");
 
+      // The contract should contain the traceability section with placeholders (filled at signing)
+      cy.contains("Dados de Rastreabilidade da Assinatura Eletrônica", { timeout: 10000 }).should("exist");
+
       cy.get("body").invoke("text").then((text) => {
-        // Verifica presença de IP (padrão IPv4)
-        const hasIp = /\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/.test(text) || text.includes("Não capturado");
-        // Verifica presença de data/hora
-        const hasDateTime = /\d{2}\/\d{2}\/\d{4}/.test(text) || text.includes("202");
-        // Verifica user agent
-        const hasUserAgent = text.includes("Mozilla") || text.includes("Chrome") || text.includes("Não capturado");
+        // Before signing, placeholders {{SIGN_IP}} etc. will be present, or the section header
+        const hasTraceabilitySection = text.includes("Rastreabilidade") || text.includes("SIGN_IP") || text.includes("Não capturado");
+        expect(hasTraceabilitySection, "Seção de rastreabilidade deve estar presente no contrato").to.be.true;
 
-        if (!hasIp) {
-          cy.log("⚠️ CAMPO AUSENTE: IP do contratante não encontrado no contrato.");
-          cy.log("Verificar se captureClientProof() está sendo chamado e se o template renderiza {{ip_contratante}}.");
-        }
-        if (!hasDateTime) {
-          cy.log("⚠️ CAMPO AUSENTE: Data/hora da contratação não encontrada.");
-        }
-        if (!hasUserAgent) {
-          cy.log("⚠️ CAMPO AUSENTE: User Agent não encontrado no contrato.");
-        }
+        const hasIpField = text.includes("IP de origem");
+        const hasDateField = text.includes("Data da confirmação");
+        const hasTimeField = text.includes("Hora da confirmação");
+        const hasUaField = text.includes("User Agent");
 
-        // Pelo menos IP e data devem estar presentes para validade jurídica
-        expect(hasIp || hasDateTime, "Pelo menos IP ou data/hora deve estar presente no contrato").to.be.true;
+        expect(hasIpField, "Campo de IP deve existir no contrato").to.be.true;
+        expect(hasDateField, "Campo de data deve existir no contrato").to.be.true;
+        expect(hasTimeField, "Campo de hora deve existir no contrato").to.be.true;
+        expect(hasUaField, "Campo de User Agent deve existir no contrato").to.be.true;
       });
     });
   });

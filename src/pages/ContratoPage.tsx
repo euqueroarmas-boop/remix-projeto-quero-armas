@@ -127,27 +127,40 @@ const ContratoPage = () => {
     try {
       const signatureData = canvasRef.current.toDataURL("image/png");
 
-      let clientIp = "unknown";
+      let clientIp = "Não capturado";
       try {
-        const res = await fetch("https://api.ipify.org?format=json");
+        const res = await fetch("https://api.ipify.org?format=json", { signal: AbortSignal.timeout(5000) });
         const d = await res.json();
-        clientIp = d.ip;
+        clientIp = d.ip || "Não capturado";
       } catch {}
+
+      const userAgent = navigator.userAgent || "Não capturado";
+      const signedAt = new Date();
+      const signDate = signedAt.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+      const signTime = signedAt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 
       const { data: contractRow } = await supabase
         .from("contracts" as any)
-        .select("contract_hash")
+        .select("contract_hash, contract_text")
         .eq("id", contractId)
         .single();
 
       const contractHash = (contractRow as any)?.contract_hash || "";
+      let currentHtml = (contractRow as any)?.contract_text || "";
+
+      // Inject real traceability data into contract HTML placeholders
+      currentHtml = currentHtml
+        .replace(/\{\{SIGN_IP\}\}/g, clientIp)
+        .replace(/\{\{SIGN_DATE\}\}/g, signDate)
+        .replace(/\{\{SIGN_TIME\}\}/g, signTime)
+        .replace(/\{\{SIGN_USER_AGENT\}\}/g, userAgent);
 
       await supabase.from("contract_signatures" as any).insert({
         contract_id: contractId,
         signer_name: signerName.trim(),
         signature_data: signatureData,
         ip_address: clientIp,
-        user_agent: navigator.userAgent,
+        user_agent: userAgent,
         contract_hash: contractHash,
       } as any);
 
@@ -155,10 +168,11 @@ const ContratoPage = () => {
         .from("contracts" as any)
         .update({
           signed: true,
-          signed_at: new Date().toISOString(),
+          signed_at: signedAt.toISOString(),
           client_ip: clientIp,
           status: "AGUARDANDO PAGAMENTO",
           accepted_minimum_term: true,
+          contract_text: currentHtml,
         } as any)
         .eq("id", contractId);
 
@@ -166,7 +180,14 @@ const ContratoPage = () => {
       await supabase.from("integration_logs" as any).insert({
         integration_name: "contract",
         operation_name: "contract_signed",
-        request_payload: { contract_id: contractId, signer_name: signerName },
+        request_payload: {
+          contract_id: contractId,
+          signer_name: signerName,
+          ip: clientIp,
+          date: signDate,
+          time: signTime,
+          user_agent: userAgent,
+        },
         status: "success",
       } as any);
 
