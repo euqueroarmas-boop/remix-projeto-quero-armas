@@ -192,6 +192,13 @@ Deno.serve(async (req) => {
       lastPage.drawText(`Data: ${sigDate} | Serial: ${cert?.serialNumber?.substring(0, 20) || "N/A"}…`, { x: stampX + 10, y: stampY + stampHeight - 50, size: 6, font: helveticaFont, color: rgb(0.4, 0.4, 0.4) });
       lastPage.drawText("Certificado A1 ICP-Brasil • PAdES • MP 2.200-2/2001", { x: stampX + 10, y: stampY + stampHeight - 61, size: 5.5, font: helveticaFont, color: rgb(0.5, 0.5, 0.5) });
 
+      // Lateral mark on ALL pages (court-style)
+      await addLateralMark(pdfDoc, {
+        signerName: signerName,
+        documentHash: originalHash,
+        signingDate: sigDate,
+      });
+
       // Sign PDF using @signpdf (PAdES)
       const { signedPdf } = await addPlaceholderAndSign(pdfDoc, decryptedCert, certPassword, {
         reason: "Assinatura digital do contrato",
