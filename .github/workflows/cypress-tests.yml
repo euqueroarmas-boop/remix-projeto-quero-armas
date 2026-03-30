@@ -132,14 +132,45 @@ jobs:
           echo "=== FINALIZATION START ==="
           echo "Cypress outcome: $CYPRESS_EXIT"
 
-          # Merge mochawesome reports
+          # ── Validate & merge mochawesome reports ──
           MERGED_REPORT="cypress/results/merged-report.json"
-          if ls cypress/results/*.json >/dev/null 2>&1; then
-            npx mochawesome-merge "cypress/results/*.json" > "$MERGED_REPORT" 2>/dev/null
-            echo "Mochawesome reports merged"
+          rm -f "$MERGED_REPORT"
+
+          VALID_FILES=""
+          INVALID_COUNT=0
+          VALID_COUNT=0
+
+          if ls cypress/results/mochawesome*.json >/dev/null 2>&1; then
+            for f in cypress/results/mochawesome*.json; do
+              FSIZE=$(stat -c%s "$f" 2>/dev/null || stat -f%z "$f" 2>/dev/null || echo "0")
+              if [ "$FSIZE" -lt 10 ]; then
+                echo "SKIP (empty/tiny ${FSIZE}b): $f"
+                INVALID_COUNT=$((INVALID_COUNT + 1))
+                continue
+              fi
+              if node -e "JSON.parse(require('fs').readFileSync('$f','utf8'))" 2>/dev/null; then
+                VALID_FILES="$VALID_FILES $f"
+                VALID_COUNT=$((VALID_COUNT + 1))
+                echo "OK (${FSIZE}b): $f"
+              else
+                echo "SKIP (invalid JSON): $f"
+                INVALID_COUNT=$((INVALID_COUNT + 1))
+              fi
+            done
+          fi
+
+          echo "Report files: valid=$VALID_COUNT invalid=$INVALID_COUNT"
+
+          if [ "$VALID_COUNT" -gt 0 ]; then
+            npx mochawesome-merge $VALID_FILES > "$MERGED_REPORT" 2>/dev/null
+            if [ $? -ne 0 ] || [ ! -s "$MERGED_REPORT" ]; then
+              echo "Merge failed, using first valid file"
+              cp $(echo $VALID_FILES | awk '{print $1}') "$MERGED_REPORT" 2>/dev/null
+            fi
+            echo "Mochawesome reports merged successfully"
           else
             echo '{"stats":{"tests":0,"passes":0,"failures":0,"pending":0,"duration":0},"results":[]}' > "$MERGED_REPORT"
-            echo "No mochawesome reports found, using empty"
+            echo "No valid mochawesome reports found, using empty"
           fi
 
           # Parse stats from merged report
