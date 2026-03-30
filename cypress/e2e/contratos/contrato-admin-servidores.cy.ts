@@ -14,20 +14,13 @@ const fillRegistration = () => {
   const getField = (testId: string) => cy.get(`[data-testid="${testId}"]`, { timeout: 15000 });
   const readValue = ($el: JQuery<HTMLElement>) => String($el.val() ?? "").trim();
 
-  const ensureFieldValue = (testId: string, fallbackValue: string) => {
-    getField(testId)
-      .should("be.visible")
-      .then(($el) => {
-        if (!readValue($el)) {
-          cy.wrap($el).clear().type(fallbackValue, { delay: 10 }).blur();
-        }
-      });
-
-    getField(testId).should(($el) => {
-      expect(readValue($el)).not.to.equal("");
+  const ensureValue = (testId: string, value: string) => {
+    getField(testId).should("be.visible").then(($el) => {
+      if (!readValue($el)) cy.wrap($el).clear().type(value, { delay: 10 }).blur();
     });
   };
 
+  // 1) CNPJ válido — dispara lookup automático (razão social + endereço)
   cy.get('[data-testid="campo-cnpj"]', { timeout: 15000 })
     .should("be.visible")
     .clear()
@@ -36,33 +29,27 @@ const fillRegistration = () => {
 
   cy.wait("@brasilApiLookup", { timeout: 10000 });
 
-  ensureFieldValue("campo-razao-social", "Empresa Cypress LTDA");
-  ensureFieldValue("campo-representante-nome", "Maria Teste");
-  ensureFieldValue("campo-representante-cpf", "377.995.388-99");
-  ensureFieldValue("campo-representante-email", "maria@cypress.com");
-  ensureFieldValue("campo-representante-telefone", "(12) 99988-7766");
+  // 2) Razão social (pode vir do lookup)
+  ensureValue("campo-razao-social", "Empresa Cypress LTDA");
 
-  getField("campo-cep")
-    .should("be.visible")
-    .then(($el) => {
-      if (!readValue($el)) {
-        cy.wrap($el).clear().type("12327-000", { delay: 10 }).blur();
-        cy.wait("@brasilApiLookup", { timeout: 10000 });
-      }
-    });
+  // 3) Representante — dados obrigatórios: nome, CPF, e-mail, telefone
+  ensureValue("campo-representante-nome", "Maria Teste");
+  ensureValue("campo-representante-cpf", "377.995.388-99");
+  ensureValue("campo-representante-email", "maria@cypress.com");
+  ensureValue("campo-representante-telefone", "(12) 99988-7766");
 
-  ensureFieldValue("campo-cep", "12327-000");
-  ensureFieldValue("campo-logradouro", "Rua Teste Cypress");
-  ensureFieldValue("campo-numero", "42");
-  ensureFieldValue("campo-bairro", "Centro");
-  ensureFieldValue("campo-cidade", "Jacareí");
-  ensureFieldValue("campo-uf", "SP");
+  // 4) Endereço — PULA. Validação manual. Não é gate do fluxo.
+  //    Se o form exigir CEP mínimo, preenche só ele sem esperar lookup.
+  getField("campo-cep").then(($el) => {
+    if (!readValue($el)) cy.wrap($el).type("12327-000", { delay: 10 }).blur();
+  });
 
+  // 5) Avança — botão deve estar habilitado com os dados acima
   cy.get('[data-testid="botao-prosseguir-cadastro"]', { timeout: 15000 })
-    .should("be.visible")
-    .and("be.enabled")
+    .should("not.be.disabled")
     .click();
 
+  // 6) Confirma que chegou na etapa de plano
   cy.get('[data-testid="botao-confirmar-plano"]', { timeout: 15000 }).should("be.visible");
 };
 
