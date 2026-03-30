@@ -18,7 +18,7 @@ const formatDate = (date: Date) =>
 
 const getDueDate = () => {
   const d = new Date();
-  d.setDate(d.getDate() + 10);
+  d.setDate(d.getDate() + 30);
   return formatDate(d);
 };
 
