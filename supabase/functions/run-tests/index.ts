@@ -377,6 +377,45 @@ async function runBlogTests(supabase: ReturnType<typeof getSupabase>, runId: str
   return { results, logs: logEntries };
 }
 
+// ─── Fast GitHub dispatch (no polling, for parallel use in "full" mode) ───
+async function triggerGitHubWorkflowFast(
+  testType: string,
+  runId: string,
+  ingestToken?: string,
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/${GITHUB_REPO}/actions/workflows/cypress-tests.yml/dispatches`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${GITHUB_PAT}`,
+          Accept: "application/vnd.github.v3+json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ref: "main",
+          inputs: {
+            test_type: testType,
+            run_id: runId,
+            base_url: SITE_URL,
+            supabase_url: SUPABASE_URL,
+            supabase_key: SUPABASE_SERVICE_KEY,
+            ingest_token: ingestToken || "",
+          },
+        }),
+      }
+    );
+    if (res.status !== 204) {
+      const body = await res.text();
+      return { success: false, error: `GitHub API ${res.status}: ${body}` };
+    }
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: String(e) };
+  }
+}
+
 // ─── GitHub Actions dispatch ───
 async function triggerGitHubWorkflow(
   testType: string,
