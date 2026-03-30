@@ -188,7 +188,7 @@ export default function AdminDigitalSignature() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="certificate-module-page">
       {/* Certificate Status */}
       <div className="grid gap-4 md:grid-cols-3">
         <DataPanel>
