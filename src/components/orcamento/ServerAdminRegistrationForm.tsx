@@ -273,7 +273,7 @@ const ServerAdminRegistrationForm = ({ onComplete, loading: externalLoading }: P
           </div>
           <div className="md:col-span-2">
             <Label className="mb-1.5 block text-sm">Logradouro *</Label>
-            <Input value={form.logradouro} onChange={(e) => update("logradouro", e.target.value)} className={fieldClass} placeholder="Rua, Avenida..." autoComplete="street-address" required />
+            <Input value={form.logradouro} onChange={(e) => update("logradouro", e.target.value)} className={fieldClass} placeholder="Rua, Avenida..." autoComplete="street-address" required data-testid="campo-logradouro" />
           </div>
           <div>
             <Label className="mb-1.5 block text-sm">Número *</Label>
@@ -281,19 +281,19 @@ const ServerAdminRegistrationForm = ({ onComplete, loading: externalLoading }: P
           </div>
           <div>
             <Label className="mb-1.5 block text-sm">Complemento</Label>
-            <Input value={form.complemento} onChange={(e) => update("complemento", e.target.value)} className={fieldClass} placeholder="Sala, andar..." />
+            <Input value={form.complemento} onChange={(e) => update("complemento", e.target.value)} className={fieldClass} placeholder="Sala, andar..." data-testid="campo-complemento" />
           </div>
           <div>
             <Label className="mb-1.5 block text-sm">Bairro *</Label>
-            <Input value={form.bairro} onChange={(e) => update("bairro", e.target.value)} className={fieldClass} placeholder="Bairro" required />
+            <Input value={form.bairro} onChange={(e) => update("bairro", e.target.value)} className={fieldClass} placeholder="Bairro" required data-testid="campo-bairro" />
           </div>
           <div>
             <Label className="mb-1.5 block text-sm">Cidade *</Label>
-            <Input value={form.cidade} onChange={(e) => update("cidade", e.target.value)} className={fieldClass} placeholder="Sua cidade" autoComplete="address-level2" required />
+            <Input value={form.cidade} onChange={(e) => update("cidade", e.target.value)} className={fieldClass} placeholder="Sua cidade" autoComplete="address-level2" required data-testid="campo-cidade" />
           </div>
           <div>
             <Label className="mb-1.5 block text-sm">UF *</Label>
-            <Input value={form.uf} onChange={(e) => update("uf", e.target.value.toUpperCase().slice(0, 2))} className={fieldClass} placeholder="SP" maxLength={2} autoComplete="address-level1" required />
+            <Input value={form.uf} onChange={(e) => update("uf", e.target.value.toUpperCase().slice(0, 2))} className={fieldClass} placeholder="SP" maxLength={2} autoComplete="address-level1" required data-testid="campo-uf" />
           </div>
         </div>
       </div>
