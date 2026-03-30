@@ -741,7 +741,7 @@ function GitHubDiagnosticPanel() {
 }
 
 // ─── Live Progress Panel (Enhanced with real-time details) ───
-function LiveProgressPanel({ run }: { run: TestRun }) {
+function LiveProgressPanel({ run, onStop }: { run: TestRun; onStop?: () => void }) {
   const STALE_TIMEOUT_MS = 10 * 60 * 1000; // 10 min for individual tests
   const isStale = run.started_at && (Date.now() - new Date(run.started_at).getTime()) > STALE_TIMEOUT_MS;
   const isGitHub = run.execution_engine === "github_actions";
@@ -826,9 +826,16 @@ function LiveProgressPanel({ run }: { run: TestRun }) {
               {SUITES.find(s => s.id === run.test_type)?.label || run.test_type}
             </span>
           </div>
-          <Badge variant="outline" className="text-xs border-primary/30 text-primary">
-            {isGitHub ? "GitHub Actions" : "Edge Function"}
-          </Badge>
+          <div className="flex items-center gap-2">
+            {onStop && (
+              <Button variant="destructive" size="sm" className="h-7 text-[10px] px-2.5 gap-1" onClick={onStop}>
+                <Square className="h-3 w-3" /> Parar
+              </Button>
+            )}
+            <Badge variant="outline" className="text-xs border-primary/30 text-primary">
+              {isGitHub ? "GitHub Actions" : "Edge Function"}
+            </Badge>
+          </div>
         </div>
 
         {/* Big percentage */}
@@ -1958,7 +1965,7 @@ export default function AdminTestCenter({ onBack }: { onBack?: () => void }) {
             <Loader2 className="h-4 w-4 animate-spin text-primary" />
             Execuções em andamento ({runningRuns.length})
           </h4>
-          {runningRuns.map(run => <LiveProgressPanel key={run.id} run={run} />)}
+          {runningRuns.map(run => <LiveProgressPanel key={run.id} run={run} onStop={() => handleStopTest(run.test_type)} />)}
         </div>
       )}
 
