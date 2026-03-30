@@ -2007,7 +2007,16 @@ export default function AdminTestCenter({ onBack }: { onBack?: () => void }) {
               <p className="text-xs text-muted-foreground">Observabilidade e qualidade automatizada</p>
             </div>
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 bg-muted/50 rounded-lg px-2 py-1">
+              <Zap className={`h-3 w-3 ${autoExecution ? "text-primary" : "text-muted-foreground"}`} />
+              <span className="text-[10px] font-medium text-foreground/80">Auto-Fix</span>
+              <Switch
+                checked={autoExecution}
+                onCheckedChange={toggleAutoExecution}
+                className="scale-75"
+              />
+            </div>
             <Button variant="outline" size="sm" onClick={fetchRuns} className="text-xs h-8 px-2.5">
               <RefreshCw className="h-3.5 w-3.5" />
             </Button>
