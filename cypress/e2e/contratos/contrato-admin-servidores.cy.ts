@@ -9,9 +9,11 @@
  */
 
 const fillRegistration = () => {
-  cy.intercept("POST", "**/brasil-api-lookup").as("cepLookup");
+  cy.intercept("POST", "**/brasil-api-lookup").as("cnpjLookup");
   cy.get('[data-testid="campo-cnpj"]').clear().type("33814058000128", { delay: 10 });
-  cy.wait(1500);
+
+  // Wait for CNPJ lookup which may auto-fill address fields
+  cy.wait("@cnpjLookup", { timeout: 10000 });
 
   const fields = [
     { id: "campo-razao-social", val: "Empresa Cypress LTDA" },
@@ -27,12 +29,20 @@ const fillRegistration = () => {
     });
   });
 
+  // CEP may already be filled by CNPJ lookup — only type if empty
   cy.get('[data-testid="campo-cep"]').then(($el) => {
-    if (!$el.val()) cy.wrap($el).type("12327000", { delay: 10 });
+    if ($el.val()) {
+      // Address already auto-filled via CNPJ, just wait for fields to be visible
+      cy.get('[data-testid="campo-logradouro"]', { timeout: 10000 }).should("be.visible");
+    } else {
+      cy.intercept("POST", "**/brasil-api-lookup").as("cepLookup");
+      cy.wrap($el).type("12327000", { delay: 10 });
+      cy.wait("@cepLookup", { timeout: 10000 });
+      cy.get('[data-testid="campo-logradouro"]', { timeout: 10000 }).should("be.visible");
+    }
   });
-  cy.wait("@cepLookup", { timeout: 10000 });
-  cy.wait(500);
 
+  // Fill address fields only if not auto-populated
   cy.get('[data-testid="campo-logradouro"]').then(($el) => {
     if (!$el.val()) cy.wrap($el).type("Rua Teste Cypress");
   });
