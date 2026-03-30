@@ -5,7 +5,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Send, Bot, User, Loader2, Save, Trash2, Terminal, Sparkles,
   AlertTriangle, CheckCircle2, RefreshCw, Copy, GitCommit,
+  ShieldAlert, ShieldCheck, Shield, Eye, X, Check,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
 type MessageStatus = "sending" | "streaming" | "done" | "error" | "retrying";
