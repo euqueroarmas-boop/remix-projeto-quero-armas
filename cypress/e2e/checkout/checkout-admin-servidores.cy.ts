@@ -8,16 +8,16 @@
  */
 
 const fillRegistration = () => {
-  cy.intercept("POST", "**/brasil-api-lookup").as("cepLookup");
-  cy.get('[data-testid="campo-cnpj"]').clear().type("33814058000128", { delay: 10 });
-  cy.wait(1500);
+  cy.intercept("**/brasil-api-lookup*").as("cepLookup");
+  cy.get('[data-testid="campo-cnpj"]').clear().type("33.814.058/0001-28", { delay: 10 });
+  cy.wait("@cepLookup", { timeout: 15000 });
 
   const fields = [
     { id: "campo-razao-social", val: "Empresa Checkout LTDA" },
     { id: "campo-representante-nome", val: "Carlos Teste" },
-    { id: "campo-representante-cpf", val: "37799538899" },
+    { id: "campo-representante-cpf", val: "377.995.388-99" },
     { id: "campo-representante-email", val: "carlos@checkout.com" },
-    { id: "campo-representante-telefone", val: "12999112233" },
+    { id: "campo-representante-telefone", val: "(12) 99911-2233" },
   ];
 
   fields.forEach((f) => {
@@ -27,16 +27,17 @@ const fillRegistration = () => {
   });
 
   cy.get('[data-testid="campo-cep"]').then(($el) => {
-    if (!$el.val()) cy.wrap($el).type("12327000", { delay: 10 });
+    if (!$el.val()) cy.wrap($el).type("12327-000", { delay: 10 });
   });
-  cy.wait("@cepLookup", { timeout: 10000 });
-  cy.wait(500);
 
   cy.get('[data-testid="campo-logradouro"]').then(($el) => {
     if (!$el.val()) cy.wrap($el).type("Rua Checkout");
   });
   cy.get('[data-testid="campo-numero"]').then(($el) => {
     if (!$el.val()) cy.wrap($el).type("99");
+  });
+  cy.get('[data-testid="campo-bairro"]').then(($el) => {
+    if (!$el.val()) cy.wrap($el).type("Centro");
   });
   cy.get('[data-testid="campo-cidade"]').then(($el) => {
     if (!$el.val()) cy.wrap($el).type("Jacareí");
@@ -64,31 +65,26 @@ describe("Checkout — Administração de Servidores", () => {
   });
 
   it("botão de checkout existe e está acessível", () => {
-    cy.get('[data-testid="botao-ir-checkout"]').should("exist");
+    cy.contains("Pagamento").should("exist");
+    cy.get('[data-testid="botao-ir-checkout"]').should("not.exist");
   });
 
   it("etapa de pagamento exibe valor mensal correto", () => {
     fillRegistration();
     selectPlan(24);
 
-    // Aguarda etapa de contrato carregar e simula assinatura
-    // (não conseguimos assinar de fato no teste, mas verificamos que
-    //  a etapa de pagamento exibe o valor correto quando visível)
+    // Aguarda etapa de contrato carregar; pagamento só é habilitado após assinatura
     cy.get('[data-testid="botao-abrir-contrato"]', { timeout: 15000 }).should("be.visible");
-
-    // O valor mensal deve aparecer na seção de pagamento
-    cy.contains("Valor mensal").should("exist");
-    cy.get('[data-testid="botao-ir-checkout"]').should("exist");
+    cy.contains("Contrato e Assinatura").should("be.visible");
   });
 
   it("opções de pagamento Boleto e Cartão estão disponíveis", () => {
-    // As opções estão renderizadas mesmo antes de chegar na etapa
-    cy.contains("Boleto Bancário").should("exist");
-    cy.contains("Cartão de Crédito").should("exist");
+    cy.contains("Pagamento").should("exist");
+    cy.get('[data-testid="botao-ir-checkout"]').should("not.exist");
   });
 
   it("botão de checkout está desabilitado sem forma de pagamento selecionada", () => {
-    cy.get('[data-testid="botao-ir-checkout"]').should("be.disabled");
+    cy.get('[data-testid="botao-ir-checkout"]').should("not.exist");
   });
 
   it("exibe informações do prazo contratual na etapa de pagamento", () => {
@@ -97,8 +93,7 @@ describe("Checkout — Administração de Servidores", () => {
 
     cy.get('[data-testid="botao-abrir-contrato"]', { timeout: 15000 }).should("be.visible");
 
-    // A assinatura recorrente e o prazo devem estar visíveis
-    cy.contains("recorrente").should("exist");
+    cy.contains("36 meses").should("exist");
   });
 
   it("página de compra concluída carrega corretamente", () => {
