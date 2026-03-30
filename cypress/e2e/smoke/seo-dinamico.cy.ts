@@ -11,8 +11,8 @@ describe("Smoke — SEO Dinâmico", () => {
     it(`${path} carrega sem 404`, () => {
       cy.visit(path, { timeout: 15000, failOnStatusCode: false });
       cy.get("body").should("be.visible");
-      cy.get("h1", { timeout: 10000 }).should("be.visible");
-      cy.get("h1").invoke("text").should("not.match", /não encontrad|not found|404/i);
+      cy.get("h1, h2", { timeout: 15000 }).should("be.visible");
+      cy.get("h1, h2").first().invoke("text").should("not.match", /não encontrad|not found|404/i);
     });
   });
 

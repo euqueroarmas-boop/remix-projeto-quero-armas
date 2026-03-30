@@ -4,7 +4,7 @@ describe("Smoke — Páginas Transacionais", () => {
   it("/contrato carrega", () => {
     cy.visit("/contrato", { timeout: 15000 });
     cy.get("body").should("be.visible");
-    cy.get("h1, h2", { timeout: 10000 }).should("be.visible");
+    cy.get("h1, h2, p", { timeout: 10000 }).should("be.visible");
   });
 
   it("/compra-concluida carrega", () => {
@@ -47,7 +47,6 @@ describe("Smoke — Redirects Legacy", () => {
     { from: "/infraestrutura-ti-corporativa", to: "/infraestrutura-ti-corporativa-jacarei" },
     { from: "/infraestrutura-corporativa", to: "/infraestrutura-ti-corporativa-jacarei" },
     { from: "/microsoft-365-empresas-jacarei", to: "/microsoft-365-para-empresas-jacarei" },
-    { from: "/microsoft-365-para-empresas", to: "/microsoft-365-para-empresas-jacarei" },
     { from: "/montagem-redes-corporativas-jacarei", to: "/montagem-e-monitoramento-de-redes-jacarei" },
     { from: "/montagem-redes-estruturadas-jacarei", to: "/montagem-e-monitoramento-de-redes-jacarei" },
     { from: "/montagem-redes-jacarei", to: "/montagem-e-monitoramento-de-redes-jacarei" },

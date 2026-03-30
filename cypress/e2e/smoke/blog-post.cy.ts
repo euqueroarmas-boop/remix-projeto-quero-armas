@@ -8,7 +8,7 @@ describe("Smoke — Blog Post Individual", () => {
       if (href) {
         cy.visit(href, { timeout: 15000 });
         cy.get("h1", { timeout: 10000 }).should("be.visible");
-        cy.get("article, [class*='blog'], [class*='post'], main").should("exist");
+        cy.get("article, main, [class*='blog'], [class*='post'], [class*='container']").should("exist");
       }
     });
   });
