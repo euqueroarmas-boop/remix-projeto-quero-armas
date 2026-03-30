@@ -377,6 +377,45 @@ async function runBlogTests(supabase: ReturnType<typeof getSupabase>, runId: str
   return { results, logs: logEntries };
 }
 
+// ─── Fast GitHub dispatch (no polling, for parallel use in "full" mode) ───
+async function triggerGitHubWorkflowFast(
+  testType: string,
+  runId: string,
+  ingestToken?: string,
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/${GITHUB_REPO}/actions/workflows/cypress-tests.yml/dispatches`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${GITHUB_PAT}`,
+          Accept: "application/vnd.github.v3+json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ref: "main",
+          inputs: {
+            test_type: testType,
+            run_id: runId,
+            base_url: SITE_URL,
+            supabase_url: SUPABASE_URL,
+            supabase_key: SUPABASE_SERVICE_KEY,
+            ingest_token: ingestToken || "",
+          },
+        }),
+      }
+    );
+    if (res.status !== 204) {
+      const body = await res.text();
+      return { success: false, error: `GitHub API ${res.status}: ${body}` };
+    }
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: String(e) };
+  }
+}
+
 // ─── GitHub Actions dispatch ───
 async function triggerGitHubWorkflow(
   testType: string,
@@ -721,12 +760,18 @@ Deno.serve(async (req) => {
         logs: { entries: allLogs, current_spec: "Aguardando Cypress...", current_url: null, light_completed: true, cypress_dispatched: false } as any,
       } as any).eq("id", runId);
 
-      // Dispatch Cypress
-      for (const ct of CYPRESS_TESTS) {
-        await triggerGitHubWorkflow(ct, runId, fullIngestToken, supabase);
-      }
+      // Dispatch all Cypress workflows in parallel (fire-and-forget, no polling)
+      const dispatchPromises = CYPRESS_TESTS.map(ct =>
+        triggerGitHubWorkflowFast(ct, runId, fullIngestToken)
+      );
+      const dispatchResults = await Promise.allSettled(dispatchPromises);
+      const dispatched = dispatchResults.filter(r => r.status === "fulfilled" && (r.value as any).success).length;
+      const dispatchFailed = CYPRESS_TESTS.length - dispatched;
 
-      allLogs.push({ ts: new Date().toISOString(), event: "cypress_dispatched", detail: `Cypress disparado via GitHub Actions: ${CYPRESS_TESTS.join(", ")}` });
+      allLogs.push({ ts: new Date().toISOString(), event: "cypress_dispatched", detail: `Cypress disparado via GitHub Actions: ${dispatched}/${CYPRESS_TESTS.length} enviados (${CYPRESS_TESTS.join(", ")})` });
+      if (dispatchFailed > 0) {
+        allLogs.push({ ts: new Date().toISOString(), event: "dispatch_warning", detail: `${dispatchFailed} workflow(s) falharam ao disparar` });
+      }
       await supabase.from("test_runs").update({
         logs: { entries: allLogs, current_spec: "Cypress executando no GitHub Actions...", current_url: null, light_completed: true, cypress_dispatched: true, cypress_types: CYPRESS_TESTS } as any,
       } as any).eq("id", runId);
