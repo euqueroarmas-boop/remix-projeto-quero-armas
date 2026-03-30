@@ -1753,6 +1753,11 @@ export default function AdminTestCenter({ onBack }: { onBack?: () => void }) {
   const [runningTests, setRunningTests] = useState<Set<string>>(new Set());
   const [selectedRun, setSelectedRun] = useState<TestRun | null>(null);
   const [activeTab, setActiveTab] = useState<"suites" | "history" | "alerts">("suites");
+  const [autoExecution, setAutoExecution] = useState(() => {
+    try { return localStorage.getItem("wmti_auto_execution") === "true"; } catch { return false; }
+  });
+  const [autoFixing, setAutoFixing] = useState<string | null>(null);
+  const autoFixAttemptsRef = useRef<Record<string, number>>({});
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchRuns = useCallback(async () => {
