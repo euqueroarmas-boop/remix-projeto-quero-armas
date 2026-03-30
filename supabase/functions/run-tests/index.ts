@@ -567,7 +567,11 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  if (!(await verifyAdmin(req))) {
+  // Allow cron invocations authenticated via service_role key in Authorization header
+  const isCronCall = req.headers.get("x-cron-secret") === SUPABASE_SERVICE_KEY;
+  const isAdmin = await verifyAdmin(req);
+
+  if (!isAdmin && !isCronCall) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 
@@ -733,7 +737,7 @@ Deno.serve(async (req) => {
         test_type: "full",
         status: "running",
         started_at: new Date().toISOString(),
-        triggered_by: "admin",
+        triggered_by: isCronCall ? "cron" : "admin",
         execution_engine: "hybrid",
         base_url: SITE_URL,
         ingest_token: fullIngestToken,
@@ -797,7 +801,7 @@ Deno.serve(async (req) => {
       test_type: testType,
       status: "running",
       started_at: new Date().toISOString(),
-      triggered_by: "admin",
+      triggered_by: isCronCall ? "cron" : "admin",
       execution_engine: engine,
       base_url: SITE_URL,
       ingest_token: singleIngestToken,
