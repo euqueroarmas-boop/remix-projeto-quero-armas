@@ -189,6 +189,7 @@ const OrcamentoLeadHero = () => {
                 <button
                   type="submit"
                   disabled={loading}
+                  data-testid="botao-solicitar-orcamento"
                   className="w-full inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all rounded disabled:opacity-50"
                 >
                   {loading ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}

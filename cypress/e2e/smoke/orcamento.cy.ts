@@ -10,7 +10,7 @@ describe("Smoke — Orçamento / Contato", () => {
   it("formulário de contato existe", () => {
     cy.visit("/orcamento-ti");
     cy.get('input[type="email"]').should("exist");
-    cy.get("button[type='submit'], button").contains(/enviar|solicitar|contato/i).should("exist");
+    cy.get('[data-testid="botao-solicitar-orcamento"], button[type="submit"]').should("exist");
   });
 
   it("campo de interesse existe", () => {
