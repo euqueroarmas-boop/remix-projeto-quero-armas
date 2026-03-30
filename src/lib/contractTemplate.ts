@@ -86,6 +86,29 @@ export function hydrateTemplate(template: string, variables: Partial<ContractVar
   return result;
 }
 
+function applyLegacyTemplateFixes(templateId: string, hydratedText: string): string {
+  if (templateId !== "wmti_servicos_base_v1") return hydratedText;
+
+  let fixed = hydratedText;
+
+  fixed = fixed.replace(
+    /CONTRATADA:\s*WMTI TECNOLOGIA DA INFORMAÇÃO LTDA,[\s\S]*?377\.995\.388-99\./i,
+    "CONTRATADA: WMTI TECNOLOGIA DA INFORMAÇÃO LTDA, pessoa jurídica de direito privado, inscrita no CNPJ sob nº 13.366.668/0001-07, com sede na Rua José Benedito Duarte, 140, Parque Itamarati, Jacareí/SP.",
+  );
+
+  fixed = fixed.replace(
+    /4\.2\.[\s\S]*?QRCODE disponibilizado no boleto\./i,
+    "4.2. A primeira mensalidade vencerá em até 30 (trinta) dias corridos da assinatura deste contrato. As mensalidades subsequentes vencerão todo dia {{dia_vencimento}} de cada mês, por boleto bancário ou PIX (QR Code da própria cobrança).",
+  );
+
+  fixed = fixed.replace(
+    /Parágrafo Único:\s*O único meio cabível de recebimento da CONTRATADA é o boleto bancário sendo disponibilizado o PIX somente através deste documento\./i,
+    "Parágrafo Único: A CONTRATANTE reconhece que os meios oficiais de cobrança serão os disponibilizados no boleto/checkout da CONTRATADA.",
+  );
+
+  return fixed;
+}
+
 /**
  * Converts plain-text contract (with line breaks) to styled HTML for rendering/signing.
  */
@@ -181,5 +204,6 @@ export async function generateContractFromTemplate(
   const record = await fetchContractTemplate(templateId);
   if (!record) return null;
   const hydrated = hydrateTemplate(record.template_text, variables);
-  return templateToHtml(hydrated, record.id, record.versao);
+  const normalized = applyLegacyTemplateFixes(templateId, hydrated);
+  return templateToHtml(normalized, record.id, record.versao);
 }
