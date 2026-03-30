@@ -7,16 +7,16 @@ describe("Geração de Contrato", () => {
   });
 
   const completeRegistration = () => {
-    cy.intercept("POST", "**/brasil-api-lookup").as("cepLookup");
-    cy.get('[data-testid="campo-cnpj"]').clear().type("33814058000128", { delay: 10 });
-    cy.wait(1000);
+    cy.intercept("**/brasil-api-lookup*").as("cepLookup");
+    cy.get('[data-testid="campo-cnpj"]').clear().type("33.814.058/0001-28", { delay: 10 });
+    cy.wait("@cepLookup", { timeout: 15000 });
 
     const fields = [
       { testid: "campo-razao-social", val: "Empresa Teste LTDA" },
       { testid: "campo-representante-nome", val: "João da Silva" },
-      { testid: "campo-representante-cpf", val: "37799538899" },
+      { testid: "campo-representante-cpf", val: "377.995.388-99" },
       { testid: "campo-representante-email", val: "joao@teste.com" },
-      { testid: "campo-representante-telefone", val: "12998765432" },
+      { testid: "campo-representante-telefone", val: "(12) 99876-5432" },
     ];
     fields.forEach((f) => {
       cy.get(`[data-testid="${f.testid}"]`).then(($el) => {
@@ -25,16 +25,17 @@ describe("Geração de Contrato", () => {
     });
 
     cy.get('[data-testid="campo-cep"]').then(($el) => {
-      if (!$el.val()) cy.wrap($el).type("12327000", { delay: 10 });
+      if (!$el.val()) cy.wrap($el).type("12327-000", { delay: 10 });
     });
-    cy.wait("@cepLookup", { timeout: 10000 });
-    cy.wait(500);
 
     cy.get('[data-testid="campo-logradouro"]').then(($el) => {
       if (!$el.val()) cy.wrap($el).type("Rua das Flores");
     });
     cy.get('[data-testid="campo-numero"]').then(($el) => {
       if (!$el.val()) cy.wrap($el).type("100");
+    });
+    cy.get('[data-testid="campo-bairro"]').then(($el) => {
+      if (!$el.val()) cy.wrap($el).type("Centro");
     });
     cy.get('[data-testid="campo-cidade"]').then(($el) => {
       if (!$el.val()) cy.wrap($el).type("Jacareí");
