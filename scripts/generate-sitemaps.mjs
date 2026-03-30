@@ -159,7 +159,7 @@ const now = new Date().toISOString().split("T")[0];
 const indexEntries = sitemapFiles
   .map((name) => `  <sitemap><loc>${BASE_URL}/${name}</loc><lastmod>${now}</lastmod></sitemap>`)
   .join("\n");
-const sitemapIndex = `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${indexEntries}\n</sitemapindex>`;
+const sitemapIndex = `<?xml version="1.0" encoding="UTF-8"?>\n<?xml-stylesheet type="text/xsl" href="/sitemap-style.xsl"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${indexEntries}\n</sitemapindex>`;
 writeFile("sitemap.xml", sitemapIndex);
 
 // ─── Summary ───
