@@ -100,15 +100,15 @@ jobs:
         id: specs
         run: |
           mkdir -p cypress/results cypress/screenshots cypress/videos
-          case "${{ github.event.inputs.test_type }}" in
-            frontend)     SPEC="cypress/e2e/smoke/**" ;;
-            business)     SPEC="cypress/e2e/calculo-planos.cy.ts" ;;
-            forms)        SPEC="cypress/e2e/formulario-contratacao.cy.ts" ;;
-            contracts)    SPEC="cypress/e2e/contratos/**" ;;
-            checkout)     SPEC="cypress/e2e/checkout/**" ;;
-            portal)       SPEC="cypress/e2e/smoke/home.cy.ts" ;;
-            regression)   SPEC="cypress/e2e/**" ;;
-            *)            SPEC="cypress/e2e/smoke/**" ;;
+            case "${{ github.event.inputs.test_type }}" in
+              frontend)     SPEC="cypress/e2e/smoke/**" ;;
+              business)     SPEC="cypress/e2e/calculo-planos.cy.ts,cypress/e2e/formulario-contratacao.cy.ts,cypress/e2e/geracao-contrato.cy.ts,cypress/e2e/checkout-completo.cy.ts,cypress/e2e/administracao-servidores.cy.ts" ;;
+              forms)        SPEC="cypress/e2e/formulario-contratacao.cy.ts" ;;
+              contracts)    SPEC="cypress/e2e/contratos/**" ;;
+              checkout)     SPEC="cypress/e2e/checkout/**" ;;
+              portal)       SPEC="cypress/e2e/smoke/area-cliente.cy.ts,cypress/e2e/smoke/home.cy.ts" ;;
+              regression)   SPEC="cypress/e2e/**" ;;
+              *)            SPEC="cypress/e2e/smoke/**" ;;
           esac
           echo "spec=$SPEC" >> $GITHUB_OUTPUT
 
