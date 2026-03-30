@@ -18,6 +18,13 @@ function createServiceClient() {
   );
 }
 
+async function hmacSign(secret: string, message: string): Promise<string> {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey("raw", enc.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const sig = await crypto.subtle.sign("HMAC", key, enc.encode(message));
+  return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
 async function validateAdminToken(req: Request): Promise<boolean> {
   const token = req.headers.get("x-admin-token");
   if (!token) return false;
@@ -26,25 +33,14 @@ async function validateAdminToken(req: Request): Promise<boolean> {
   if (!adminPassword) return false;
 
   try {
-    const [timestampStr, signature] = token.split(".");
-    if (!timestampStr || !signature) return false;
+    const [ts, signature] = token.split(".");
+    if (!ts || !signature) return false;
 
-    const timestamp = parseInt(timestampStr, 10);
-    const now = Date.now();
-    const maxAge = 8 * 60 * 60 * 1000; // 8h
-    if (isNaN(timestamp) || Math.abs(now - timestamp) > maxAge) return false;
+    const timestamp = parseInt(ts, 10);
+    if (isNaN(timestamp) || Date.now() - timestamp > 8 * 60 * 60 * 1000) return false;
 
-    const key = await crypto.subtle.importKey(
-      "raw",
-      new TextEncoder().encode(adminPassword),
-      { name: "HMAC", hash: "SHA-256" },
-      false,
-      ["sign"],
-    );
-    const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(timestampStr));
-    const expectedSig = base64Encode(new Uint8Array(sig));
-
-    return signature === expectedSig;
+    const expected = await hmacSign(adminPassword, `admin:${ts}`);
+    return expected === signature;
   } catch {
     return false;
   }
