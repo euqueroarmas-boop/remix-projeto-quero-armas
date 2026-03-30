@@ -2,23 +2,9 @@
 
 describe("Certificado Digital — Diagnóstico", () => {
   beforeEach(() => {
-    cy.visit("/admin");
-    cy.get("input[type='password']", { timeout: 15000 }).should("be.visible");
-    cy.get("input[type='password']").type(Cypress.env("ADMIN_PASSWORD") || "admin");
-    cy.contains("button", /entrar|login|acessar/i).click();
-    cy.get("[data-testid='admin-authenticated']", { timeout: 15000 }).should("exist");
-    cy.log("CERT_LOGIN_OK");
-
-    // Navigate to cert diagnostic module
-    cy.get("body").then(($body) => {
-      if ($body.find("[data-testid='admin-menu-toggle']").length) {
-        cy.get("[data-testid='admin-menu-toggle']").click();
-      }
-    });
-    cy.contains(/Diagnóstico Cert|Diag\. Certificado/i, { timeout: 10000 }).click();
-    cy.get("[data-testid='certificate-diagnostic-page']", { timeout: 15000 }).should("exist");
-    cy.log("CERT_PAGE_LOADED");
+    cy.loginAdmin("cert-diagnostic");
     cy.log("CERT_NAVIGATION_OK");
+    cy.log("CERT_PAGE_LOADED");
   });
 
   it("exibe formulário de diagnóstico com campos obrigatórios", () => {
