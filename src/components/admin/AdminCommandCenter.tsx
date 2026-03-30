@@ -362,7 +362,20 @@ const TestsBlock = memo(function TestsBlock({ testRun, activeRun, lastCompletedR
           <div className="flex items-center gap-2">
             <TestTube2 className="h-4 w-4 text-primary" />
             <h3 className="text-sm font-bold text-foreground truncate max-w-[180px]">
-              {displayRun?.suite ? displayRun.suite : "Testes"}
+              {(() => {
+                if (!displayRun) return "Testes";
+                const typeLabels: Record<string, string> = {
+                  contracts: "Contratos",
+                  smoke: "Smoke",
+                  seo: "SEO",
+                  api: "API",
+                  blog: "Blog",
+                  full: "Completo",
+                  frontend: "Frontend",
+                  checkout: "Checkout",
+                };
+                return typeLabels[displayRun.test_type] || displayRun.test_type || "Testes";
+              })()}
             </h3>
           </div>
           <div className="flex items-center gap-1.5">
