@@ -19,6 +19,7 @@ describe("Certificado Digital — Navegação", () => {
 
     cy.contains(/Assinatura Digital/i, { timeout: 10000 }).click();
     cy.get("[data-testid='certificate-module-page']", { timeout: 15000 }).should("exist");
+    cy.log("CERT_PAGE_LOADED");
   });
 
   it("navega até Diagnóstico de Certificado pelo menu", () => {
