@@ -316,6 +316,7 @@ export default function AdminDigitalSignature() {
               Arquivo do certificado (.pfx ou .p12)
             </label>
             <Input
+              data-testid="certificate-upload-input"
               type="file"
               accept=".pfx,.p12"
               onChange={(e) => {
