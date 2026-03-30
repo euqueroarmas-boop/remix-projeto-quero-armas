@@ -287,9 +287,79 @@ jobs:
               }" && echo "Ingest finalize: OK" || echo "Ingest finalize: FAILED"
           fi
 
-          # 2) Direct REST PATCH (definitive fallback)
-          ESCAPED_ERROR_REST=$(echo "$ERROR_SUMMARY" | sed 's/"/\\"/g' | head -c 900)
+          # 2) Direct REST PATCH with full results (definitive fallback)
           FINISHED_AT=$(date -u +%Y-%m-%dT%H:%M:%S.000Z)
+
+          # Build payload via Node to avoid shell escaping issues
+          node -e "
+            const fs = require('fs');
+            const results = JSON.parse(fs.readFileSync('/tmp/test_results.json', 'utf8') || '[]');
+            const errorSummary = fs.readFileSync('/tmp/error_summary.txt', 'utf8') || null;
+            const screenshotUrls = JSON.parse(process.env.SCREENSHOT_URLS || '[]');
+            const videoUrls = JSON.parse(process.env.VIDEO_URLS || '[]');
+            
+            const payload = {
+              status: process.env.FINAL_STATUS,
+              finished_at: process.env.FINISHED_AT,
+              duration_ms: parseInt(process.env.DURATION) || 0,
+              total_tests: parseInt(process.env.TOTAL) || 0,
+              passed_tests: parseInt(process.env.PASSED) || 0,
+              failed_tests: parseInt(process.env.FAILED) || 0,
+              skipped_tests: parseInt(process.env.SKIPPED) || 0,
+              completed_tests: (parseInt(process.env.PASSED) || 0) + (parseInt(process.env.FAILED) || 0) + (parseInt(process.env.SKIPPED) || 0),
+              progress_percent: 100,
+              current_spec: null,
+              current_test: null,
+              current_url: null,
+              error_message: errorSummary || null,
+              error_summary: errorSummary || null,
+              results: results,
+              screenshot_urls: screenshotUrls.length > 0 ? screenshotUrls : null,
+              video_urls: videoUrls.length > 0 ? videoUrls : null,
+              ingest_token: null,
+              github_run_id: process.env.GITHUB_RUN_ID,
+              github_run_url: process.env.GITHUB_RUN_URL,
+              browser: 'chrome',
+              last_event_at: process.env.FINISHED_AT,
+            };
+            
+            fs.writeFileSync('/tmp/patch_payload.json', JSON.stringify(payload));
+          " 2>/dev/null
+          
+          FINAL_STATUS="$FINAL_STATUS" FINISHED_AT="$FINISHED_AT" DURATION="$DURATION" \
+          TOTAL="$TOTAL" PASSED="$PASSED" FAILED="$FAILED" SKIPPED="$SKIPPED" \
+          SCREENSHOT_URLS="$SCREENSHOT_URLS" VIDEO_URLS="$VIDEO_URLS" \
+          GITHUB_RUN_ID="${{ github.run_id }}" \
+          GITHUB_RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+          node -e "
+            const fs = require('fs');
+            const results = JSON.parse(fs.readFileSync('/tmp/test_results.json', 'utf8') || '[]');
+            const errorSummary = fs.readFileSync('/tmp/error_summary.txt', 'utf8') || null;
+            
+            const payload = {
+              status: process.env.FINAL_STATUS,
+              finished_at: process.env.FINISHED_AT,
+              duration_ms: parseInt(process.env.DURATION) || 0,
+              total_tests: parseInt(process.env.TOTAL) || 0,
+              passed_tests: parseInt(process.env.PASSED) || 0,
+              failed_tests: parseInt(process.env.FAILED) || 0,
+              skipped_tests: parseInt(process.env.SKIPPED) || 0,
+              completed_tests: (parseInt(process.env.PASSED)||0) + (parseInt(process.env.FAILED)||0) + (parseInt(process.env.SKIPPED)||0),
+              progress_percent: 100,
+              current_spec: null, current_test: null, current_url: null,
+              error_message: errorSummary || null,
+              error_summary: errorSummary || null,
+              results: results,
+              screenshot_urls: process.env.SCREENSHOT_URLS !== '[]' ? JSON.parse(process.env.SCREENSHOT_URLS) : null,
+              video_urls: process.env.VIDEO_URLS !== '[]' ? JSON.parse(process.env.VIDEO_URLS) : null,
+              ingest_token: null,
+              github_run_id: process.env.GITHUB_RUN_ID,
+              github_run_url: process.env.GITHUB_RUN_URL,
+              browser: 'chrome',
+              last_event_at: process.env.FINISHED_AT,
+            };
+            fs.writeFileSync('/tmp/patch_payload.json', JSON.stringify(payload));
+          "
 
           curl -sf -X PATCH \
             "$SUPABASE_URL/rest/v1/test_runs?id=eq.$RUN_ID" \
@@ -297,29 +367,7 @@ jobs:
             -H "Authorization: Bearer $SUPABASE_KEY" \
             -H "Content-Type: application/json" \
             -H "Prefer: return=minimal" \
-            -d "{
-              \"status\": \"$FINAL_STATUS\",
-              \"finished_at\": \"$FINISHED_AT\",
-              \"duration_ms\": $DURATION,
-              \"total_tests\": $TOTAL,
-              \"passed_tests\": $PASSED,
-              \"failed_tests\": $FAILED,
-              \"skipped_tests\": $SKIPPED,
-              \"completed_tests\": $(($PASSED + $FAILED + $SKIPPED)),
-              \"progress_percent\": 100,
-              \"current_spec\": null,
-              \"current_test\": null,
-              \"current_url\": null,
-              \"error_message\": $([ -n "$ESCAPED_ERROR_REST" ] && echo "\"$ESCAPED_ERROR_REST\"" || echo "null"),
-              \"error_summary\": $([ -n "$ESCAPED_ERROR_REST" ] && echo "\"$ESCAPED_ERROR_REST\"" || echo "null"),
-              \"screenshot_urls\": $SCREENSHOT_URLS,
-              \"video_urls\": $VIDEO_URLS,
-              \"ingest_token\": null,
-              \"github_run_id\": \"${{ github.run_id }}\",
-              \"github_run_url\": \"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\",
-              \"browser\": \"chrome\",
-              \"last_event_at\": \"$FINISHED_AT\"
-            }" && echo "REST finalize: OK" || echo "REST finalize: FAILED"
+            -d @/tmp/patch_payload.json && echo "REST finalize: OK" || echo "REST finalize: FAILED"
 
           echo "=== FINALIZATION COMPLETE ==="
 
