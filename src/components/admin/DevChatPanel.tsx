@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Send, Bot, User, Loader2, Save, Trash2, Terminal, Sparkles,
-  AlertTriangle, CheckCircle2, RefreshCw, Copy,
+  AlertTriangle, CheckCircle2, RefreshCw, Copy, GitCommit,
 } from "lucide-react";
 import { toast } from "sonner";
 
