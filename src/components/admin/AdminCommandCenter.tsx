@@ -594,11 +594,9 @@ export default function AdminCommandCenter({ onNavigate }: CommandCenterProps) {
 
   const handleRunTests = useCallback(async () => {
     try {
-      const token = sessionStorage.getItem("admin_token");
-      if (!token) return;
-      await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/run-tests`, {
+      await adminFunctionFetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/run-tests`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-admin-token": token },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ test_type: "full" }),
       });
       setTimeout(() => tests.refetch(), 1000);

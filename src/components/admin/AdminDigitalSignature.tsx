@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { adminFunctionFetch } from "@/lib/adminSession";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -46,14 +47,9 @@ interface SignatureLog {
   created_at: string;
 }
 
-function getAdminToken(): string {
-  return sessionStorage.getItem("admin_token") || "";
-}
-
 async function certApi(action: string, options?: { method?: string; body?: any; formData?: FormData }) {
   const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/certificate-manager?action=${action}`;
   const headers: Record<string, string> = {
-    "x-admin-token": getAdminToken(),
     "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
   };
 
@@ -71,7 +67,7 @@ async function certApi(action: string, options?: { method?: string; body?: any; 
     fetchOptions.headers = headers;
   }
 
-  const resp = await fetch(url, fetchOptions);
+  const resp = await adminFunctionFetch(url, fetchOptions);
   return resp.json();
 }
 
