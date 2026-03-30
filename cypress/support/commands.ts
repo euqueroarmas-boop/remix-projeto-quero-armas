@@ -75,9 +75,16 @@ Cypress.Commands.add("preencherContratante", (fixtureName = "empresa_padrao") =>
     const c = data[fixtureName];
     if (!c) throw new Error(`Fixture "${fixtureName}" não encontrada em clientes.json`);
 
+    // Intercept CNPJ and CEP API calls
+    cy.intercept("POST", "**/brasil-api-lookup").as("brasilApiLookup");
+
     // CNPJ (always clear + type to trigger auto-fill)
     cy.get('[data-testid="campo-cnpj"]').clear().type(c.cnpj, { delay: 10 });
-    cy.wait(1000); // wait for CNPJ API auto-fill
+
+    // Wait for CNPJ lookup to complete (or timeout gracefully)
+    cy.wait("@brasilApiLookup", { timeout: 10000 }).then(() => {
+      cy.wait(300); // allow React state to settle
+    });
 
     // Fields that may be auto-filled by CNPJ lookup
     typeIfEmpty("campo-razao-social", c.razaoSocial);
@@ -85,19 +92,27 @@ Cypress.Commands.add("preencherContratante", (fixtureName = "empresa_padrao") =>
     typeIfEmpty("campo-representante-cpf", c.responsavelCpf);
     typeIfEmpty("campo-representante-email", c.responsavelEmail);
     typeIfEmpty("campo-representante-telefone", c.responsavelTelefone);
-    typeIfEmpty("campo-cep", c.cep);
 
-    cy.wait(500); // wait for CEP API auto-fill
+    // CEP — type and wait for lookup
+    cy.get('[data-testid="campo-cep"]').then(($el) => {
+      if (!$el.val()) {
+        cy.wrap($el).type(c.cep, { delay: 10 });
+        // Wait for CEP lookup response
+        cy.wait("@brasilApiLookup", { timeout: 10000 }).then(() => {
+          cy.wait(300); // allow React state to settle after CEP fill
+        });
+      }
+    });
 
-    // Address fields (may be auto-filled by CEP lookup)
-    typeIfEmptyBySelector('input[placeholder*="Logradouro"], input[placeholder*="logradouro"]', c.logradouro);
+    // Address fields — use stable data-testid selectors, fill only if empty
+    typeIfEmpty("campo-logradouro", c.logradouro);
     typeIfEmpty("campo-numero", c.numero);
     if (c.complemento) {
-      typeIfEmptyBySelector('input[placeholder*="Complemento"], input[placeholder*="complemento"]', c.complemento);
+      typeIfEmpty("campo-complemento", c.complemento);
     }
-    typeIfEmptyBySelector('input[placeholder*="Bairro"], input[placeholder*="bairro"]', c.bairro);
-    typeIfEmptyBySelector('input[placeholder*="Cidade"], input[placeholder*="cidade"]', c.cidade);
-    typeIfEmptyBySelector('input[placeholder*="UF"], input[placeholder*="uf"], input[placeholder*="Estado"]', c.uf);
+    typeIfEmpty("campo-bairro", c.bairro);
+    typeIfEmpty("campo-cidade", c.cidade);
+    typeIfEmpty("campo-uf", c.uf);
   });
 });
 
