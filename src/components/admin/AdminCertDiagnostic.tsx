@@ -142,7 +142,7 @@ export default function AdminCertDiagnostic() {
   const allPassed = result ? result.steps.every(s => s.status === "pass") : false;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="certificate-diagnostic-page">
       <SectionHeader title="Diagnóstico de Certificado Digital" icon={Stethoscope} />
       <p className="text-[11px] text-muted-foreground -mt-4">
         Executa validação completa em 10 etapas sem assinar contrato real. Upload de arquivo .pfx/.p12 para teste isolado.
