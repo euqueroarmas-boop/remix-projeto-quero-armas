@@ -1015,6 +1015,90 @@ export type Database = {
           },
         ]
       }
+      revenue_intelligence: {
+        Row: {
+          actual_value: number | null
+          analysis_summary: string | null
+          company_size: string | null
+          conversion_probability: number | null
+          converted: boolean | null
+          created_at: string
+          decision_stage: string | null
+          discount_suggested: number | null
+          id: string
+          lead_id: string | null
+          lead_value_estimate: number | null
+          machines_qty: number | null
+          pain_point: string | null
+          price_suggested: number | null
+          quote_id: string | null
+          sector: string | null
+          service_type: string | null
+          strategy: string | null
+          updated_at: string
+          urgency_level: string | null
+        }
+        Insert: {
+          actual_value?: number | null
+          analysis_summary?: string | null
+          company_size?: string | null
+          conversion_probability?: number | null
+          converted?: boolean | null
+          created_at?: string
+          decision_stage?: string | null
+          discount_suggested?: number | null
+          id?: string
+          lead_id?: string | null
+          lead_value_estimate?: number | null
+          machines_qty?: number | null
+          pain_point?: string | null
+          price_suggested?: number | null
+          quote_id?: string | null
+          sector?: string | null
+          service_type?: string | null
+          strategy?: string | null
+          updated_at?: string
+          urgency_level?: string | null
+        }
+        Update: {
+          actual_value?: number | null
+          analysis_summary?: string | null
+          company_size?: string | null
+          conversion_probability?: number | null
+          converted?: boolean | null
+          created_at?: string
+          decision_stage?: string | null
+          discount_suggested?: number | null
+          id?: string
+          lead_id?: string | null
+          lead_value_estimate?: number | null
+          machines_qty?: number | null
+          pain_point?: string | null
+          price_suggested?: number | null
+          quote_id?: string | null
+          sector?: string | null
+          service_type?: string | null
+          strategy?: string | null
+          updated_at?: string
+          urgency_level?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revenue_intelligence_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revenue_intelligence_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       security_events: {
         Row: {
           created_at: string
