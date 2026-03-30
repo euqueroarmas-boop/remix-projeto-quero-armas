@@ -16,8 +16,12 @@ describe("Cálculo de Planos — 12, 24, 36 meses", () => {
   });
 
   const fillAndSubmitRegistration = () => {
+    cy.intercept("**/brasil-api-lookup*").as("brasilApiLookup");
+
     cy.get('[data-testid="campo-cnpj"]').clear().type("33814058000128", { delay: 10 });
-    cy.wait(1000);
+    cy.wait("@brasilApiLookup", { timeout: 15000 }).then(() => {
+      cy.wait(500);
+    });
 
     cy.get('[data-testid="campo-razao-social"]').then(($el) => {
       if (!$el.val()) cy.wrap($el).type("Empresa Teste LTDA");
@@ -38,22 +42,22 @@ describe("Cálculo de Planos — 12, 24, 36 meses", () => {
       if (!$el.val()) cy.wrap($el).type("12327000");
     });
 
-    cy.wait(500);
+    cy.wait(1000);
 
-    cy.get('input[placeholder*="Logradouro"], input[placeholder*="logradouro"]').then(($el) => {
+    cy.get('[data-testid="campo-logradouro"]', { timeout: 15000 }).then(($el) => {
       if ($el.length && !$el.val()) cy.wrap($el).type("Rua das Flores");
     });
     cy.get('[data-testid="campo-numero"]').then(($el) => {
       if ($el.length && !$el.val()) cy.wrap($el).type("100");
     });
-    cy.get('input[placeholder*="Cidade"], input[placeholder*="cidade"]').then(($el) => {
+    cy.get('[data-testid="campo-cidade"]', { timeout: 10000 }).then(($el) => {
       if ($el.length && !$el.val()) cy.wrap($el).type("Jacareí");
     });
-    cy.get('input[placeholder*="UF"], input[placeholder*="uf"], input[placeholder*="Estado"]').then(($el) => {
+    cy.get('[data-testid="campo-uf"]', { timeout: 10000 }).then(($el) => {
       if ($el.length && !$el.val()) cy.wrap($el).type("SP");
     });
 
-    cy.get('[data-testid="botao-prosseguir-cadastro"]').click();
+    cy.get('[data-testid="botao-prosseguir-cadastro"]').should("not.be.disabled").click();
   };
 
   it("exibe a etapa de Configuração do Plano após cadastro", () => {
