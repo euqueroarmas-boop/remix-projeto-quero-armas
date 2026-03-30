@@ -19,6 +19,7 @@ type Message = {
   retryCount?: number;
 };
 
+const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/dev-chat`;
 const PATCH_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/execute-code-patch`;
 const MAX_RETRIES = 3;
 const TIMEOUT_MS = 20_000;
