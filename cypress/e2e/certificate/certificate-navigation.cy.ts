@@ -6,8 +6,8 @@ describe("Certificado Digital — Navegação", () => {
     cy.get("input[type='password']", { timeout: 15000 }).should("be.visible");
     cy.get("input[type='password']").type(Cypress.env("ADMIN_PASSWORD") || "admin");
     cy.contains("button", /entrar|login|acessar/i).click();
-    cy.get("[data-testid='admin-sidebar'], [data-testid='admin-content']", { timeout: 15000 })
-      .should("exist");
+    cy.get("[data-testid='admin-authenticated']", { timeout: 15000 }).should("exist");
+    cy.log("CERT_LOGIN_OK");
   });
 
   it("navega até Assinatura Digital pelo menu", () => {
