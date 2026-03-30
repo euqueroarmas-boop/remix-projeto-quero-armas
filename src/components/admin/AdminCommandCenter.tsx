@@ -361,7 +361,9 @@ const TestsBlock = memo(function TestsBlock({ testRun, activeRun, lastCompletedR
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <TestTube2 className="h-4 w-4 text-primary" />
-            <h3 className="text-sm font-bold text-foreground">Testes</h3>
+            <h3 className="text-sm font-bold text-foreground truncate max-w-[180px]">
+              {displayRun?.suite ? displayRun.suite : "Testes"}
+            </h3>
           </div>
           <div className="flex items-center gap-1.5">
             <Button
