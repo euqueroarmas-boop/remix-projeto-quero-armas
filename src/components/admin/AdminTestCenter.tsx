@@ -741,7 +741,7 @@ function GitHubDiagnosticPanel() {
 }
 
 // ─── Live Progress Panel (Enhanced with real-time details) ───
-function LiveProgressPanel({ run }: { run: TestRun }) {
+function LiveProgressPanel({ run, onStop }: { run: TestRun; onStop?: () => void }) {
   const STALE_TIMEOUT_MS = 10 * 60 * 1000; // 10 min for individual tests
   const isStale = run.started_at && (Date.now() - new Date(run.started_at).getTime()) > STALE_TIMEOUT_MS;
   const isGitHub = run.execution_engine === "github_actions";
