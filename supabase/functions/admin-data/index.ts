@@ -42,7 +42,7 @@ const ALLOWED_TABLES = [
   "proposals", "budget_leads", "contract_signatures", "quotes",
   "fiscal_documents", "client_events", "service_requests", "contract_equipment",
   "network_diagnostics", "test_runs", "test_run_events", "test_alert_config",
-  "blog_posts_ai",
+  "blog_posts_ai", "prompt_intelligence",
 ];
 
 Deno.serve(async (req) => {
