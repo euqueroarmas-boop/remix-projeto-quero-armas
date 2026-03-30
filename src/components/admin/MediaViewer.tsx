@@ -1,9 +1,9 @@
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import {
   X, Download, ExternalLink, Copy, ChevronLeft, ChevronRight,
-  Image, Video, AlertTriangle, Loader2, Maximize2, ZoomIn, ZoomOut,
+  Image, Video, AlertTriangle, Loader2, ZoomIn, ZoomOut, Info,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -11,7 +11,7 @@ import { toast } from "sonner";
 export interface MediaItem {
   url: string;
   type: "screenshot" | "video";
-  label?: string;       // e.g. test name
+  label?: string;
   spec?: string;
   testTitle?: string;
   status?: string;
@@ -27,7 +27,23 @@ interface MediaViewerProps {
 }
 
 // ─── Helpers ───
-function fileName(url: string) {
+function friendlyName(item: MediaItem): string {
+  if (item.testTitle) return item.testTitle;
+  if (item.label) return item.label;
+  try {
+    const raw = decodeURIComponent(item.url.split("/").pop() || "arquivo");
+    // Strip long hash prefixes and extensions
+    return raw
+      .replace(/^[a-f0-9]{8,}-/, "")
+      .replace(/\.(png|jpg|jpeg|mp4|webm)$/i, "")
+      .replace(/[-_]+/g, " ")
+      .trim() || "Artifact";
+  } catch {
+    return "Artifact";
+  }
+}
+
+function rawFileName(url: string) {
   try {
     return decodeURIComponent(url.split("/").pop() || "arquivo");
   } catch {
@@ -52,7 +68,7 @@ async function forceDownload(url: string, name: string) {
   } catch (e) {
     console.error("Download failed, opening in new tab", e);
     window.open(url, "_blank");
-    toast.info("Abrindo em nova aba (download direto falhou)");
+    toast.info("Abrindo em nova aba");
   }
 }
 
@@ -83,7 +99,8 @@ export default function MediaViewer({
   const [loadErrors, setLoadErrors] = useState<Record<number, boolean>>({});
   const [loading, setLoading] = useState<Record<number, boolean>>({});
   const [zoomed, setZoomed] = useState(false);
-  const imgRef = useRef<HTMLImageElement>(null);
+  const [showDetails, setShowDetails] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const prev = useCallback(() => setIdx((p) => (p > 0 ? p - 1 : (items?.length || 1) - 1)), [items?.length]);
   const next = useCallback(() => setIdx((p) => (p < (items?.length || 1) - 1 ? p + 1 : 0)), [items?.length]);
@@ -103,7 +120,27 @@ export default function MediaViewer({
     setLoadErrors({});
     setLoading({});
     setZoomed(false);
+    setShowDetails(false);
   }, []);
+
+  // Keyboard nav
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft") prev();
+      else if (e.key === "ArrowRight") next();
+      else if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [open, prev, next]);
+
+  // Scroll active thumbnail into view
+  useEffect(() => {
+    if (!scrollRef.current) return;
+    const active = scrollRef.current.children[idx] as HTMLElement;
+    active?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+  }, [idx]);
 
   if (!items || items.length === 0) return null;
 
@@ -111,13 +148,14 @@ export default function MediaViewer({
   const isImage = current.type === "screenshot";
   const totalScreenshots = items.filter((i) => i.type === "screenshot").length;
   const totalVideos = items.filter((i) => i.type === "video").length;
+  const name = friendlyName(current);
+  const statusColor = current.status === "failed" ? "text-destructive" : current.status === "passed" ? "text-green-500" : "text-muted-foreground";
 
   const label =
     triggerLabel ||
-    [totalScreenshots > 0 ? `${totalScreenshots} screenshot${totalScreenshots > 1 ? "s" : ""}` : "", totalVideos > 0 ? `${totalVideos} vídeo${totalVideos > 1 ? "s" : ""}` : ""]
+    [totalScreenshots > 0 ? `${totalScreenshots} img` : "", totalVideos > 0 ? `${totalVideos} vid` : ""]
       .filter(Boolean)
       .join(" · ");
-
 
   return (
     <>
@@ -127,101 +165,121 @@ export default function MediaViewer({
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        {/* Full-screen on mobile, large on desktop */}
-        <DialogContent className="p-0 gap-0 border-0 bg-background max-w-[100vw] max-h-[100dvh] w-screen h-[100dvh] sm:max-w-[92vw] sm:max-h-[92vh] sm:h-auto sm:w-auto sm:rounded-xl overflow-hidden">
+        <DialogContent className="p-0 gap-0 border-0 bg-[hsl(var(--background))] max-w-[100vw] max-h-[100dvh] w-screen h-[100dvh] sm:max-w-[94vw] sm:max-h-[94vh] sm:h-[94vh] sm:w-[94vw] sm:rounded-xl overflow-hidden flex flex-col">
           <DialogTitle className="sr-only">Visualizador de Mídia</DialogTitle>
 
-          {/* ── Header ── */}
-          <div className="flex items-center justify-between px-3 py-2 sm:px-4 sm:py-2.5 border-b border-border bg-card shrink-0">
-            <div className="flex items-center gap-2 min-w-0">
-              {isImage ? <Image className="h-4 w-4 text-primary shrink-0" /> : <Video className="h-4 w-4 text-primary shrink-0" />}
-              <div className="min-w-0">
-                <p className="text-xs font-medium text-foreground truncate">
-                  {current.testTitle || current.label || fileName(current.url)}
-                </p>
-                {current.spec && (
-                  <p className="text-[10px] text-muted-foreground font-mono truncate">{current.spec}</p>
-                )}
+          {/* ── Compact Header ── */}
+          <div className="flex items-center justify-between px-3 py-1.5 border-b border-border bg-card/80 backdrop-blur-sm shrink-0 min-h-[40px]">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <div className={`shrink-0 w-5 h-5 rounded flex items-center justify-center ${isImage ? "bg-primary/10" : "bg-accent/20"}`}>
+                {isImage ? <Image className="h-3 w-3 text-primary" /> : <Video className="h-3 w-3 text-primary" />}
               </div>
-            </div>
-            <div className="flex items-center gap-1 shrink-0">
+              <p className="text-xs font-medium text-foreground truncate max-w-[50vw] sm:max-w-none" title={rawFileName(current.url)}>
+                {name}
+              </p>
+              {current.status && (
+                <span className={`text-[10px] font-semibold uppercase ${statusColor} shrink-0`}>
+                  {current.status}
+                </span>
+              )}
               {items.length > 1 && (
-                <span className="text-[10px] text-muted-foreground mr-1">
+                <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">
                   {idx + 1}/{items.length}
                 </span>
               )}
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => forceDownload(current.url, fileName(current.url))}>
+            </div>
+            <div className="flex items-center gap-0.5 shrink-0">
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setShowDetails(d => !d)} title="Detalhes">
+                <Info className="h-3.5 w-3.5" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => forceDownload(current.url, rawFileName(current.url))} title="Download">
                 <Download className="h-3.5 w-3.5" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => window.open(current.url, "_blank")}>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => window.open(current.url, "_blank")} title="Abrir">
                 <ExternalLink className="h-3.5 w-3.5" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => copyUrl(current.url)}>
-                <Copy className="h-3.5 w-3.5" />
-              </Button>
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setOpen(false)}>
-                <X className="h-4 w-4" />
+                <X className="h-3.5 w-3.5" />
               </Button>
             </div>
           </div>
 
-          {/* ── Main content ── */}
-          <div className="flex-1 relative flex items-center justify-center bg-black/90 min-h-0 overflow-hidden"
-            style={{ height: "calc(100dvh - 100px)", maxHeight: "calc(92vh - 100px)" }}>
+          {/* ── Collapsible Details ── */}
+          {showDetails && (
+            <div className="px-3 py-2 bg-muted/30 border-b border-border text-[11px] space-y-1 shrink-0 animate-in slide-in-from-top-2 duration-150">
+              <div className="flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground">
+                {current.spec && <span className="font-mono">Spec: {current.spec}</span>}
+                {current.testTitle && <span>Teste: {current.testTitle}</span>}
+                {current.timestamp && <span>{new Date(current.timestamp).toLocaleString("pt-BR")}</span>}
+              </div>
+              <div className="flex items-center gap-2">
+                <button onClick={() => copyUrl(current.url)} className="text-primary hover:underline text-[10px] flex items-center gap-1">
+                  <Copy className="h-2.5 w-2.5" /> Copiar URL
+                </button>
+                <span className="text-muted-foreground/50 font-mono text-[9px] truncate">{rawFileName(current.url)}</span>
+              </div>
+            </div>
+          )}
+
+          {/* ── Main Media Area ── */}
+          <div className="flex-1 relative flex items-center justify-center bg-black min-h-0 overflow-hidden">
             {/* Nav arrows */}
             {items.length > 1 && (
               <>
                 <button
-                  onClick={prev}
-                  className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-black/60 hover:bg-black/80 text-white rounded-full p-2 transition-colors"
+                  onClick={(e) => { e.stopPropagation(); prev(); setZoomed(false); }}
+                  className="absolute left-1.5 sm:left-3 top-1/2 -translate-y-1/2 z-20 bg-black/50 hover:bg-black/70 active:bg-black/90 text-white/80 rounded-full p-1.5 sm:p-2 transition-all"
                   aria-label="Anterior"
                 >
-                  <ChevronLeft className="h-5 w-5" />
+                  <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
                 </button>
                 <button
-                  onClick={next}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-black/60 hover:bg-black/80 text-white rounded-full p-2 transition-colors"
+                  onClick={(e) => { e.stopPropagation(); next(); setZoomed(false); }}
+                  className="absolute right-1.5 sm:right-3 top-1/2 -translate-y-1/2 z-20 bg-black/50 hover:bg-black/70 active:bg-black/90 text-white/80 rounded-full p-1.5 sm:p-2 transition-all"
                   aria-label="Próximo"
                 >
-                  <ChevronRight className="h-5 w-5" />
+                  <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
                 </button>
               </>
             )}
 
             {/* Error state */}
             {loadErrors[idx] ? (
-              <div className="p-8 text-center space-y-4 max-w-md">
-                <AlertTriangle className="h-10 w-10 text-yellow-500 mx-auto" />
-                <p className="text-sm font-medium text-white">
-                  {isImage ? "Falha ao carregar screenshot" : "Falha ao carregar vídeo"}
-                </p>
-                <p className="text-[11px] text-white/60 break-all font-mono">{current.url}</p>
+              <div className="p-6 text-center space-y-3 max-w-sm">
+                <AlertTriangle className="h-8 w-8 text-yellow-500 mx-auto" />
+                <p className="text-sm font-medium text-white">Falha ao carregar {isImage ? "screenshot" : "vídeo"}</p>
+                <p className="text-[10px] text-white/40 break-all font-mono leading-relaxed">{current.url}</p>
                 <div className="flex flex-wrap gap-2 justify-center">
-                  <Button variant="secondary" size="sm" className="text-xs gap-1.5" onClick={() => window.open(current.url, "_blank")}>
-                    <ExternalLink className="h-3 w-3" /> Abrir em nova aba
+                  <Button variant="secondary" size="sm" className="text-xs gap-1" onClick={() => window.open(current.url, "_blank")}>
+                    <ExternalLink className="h-3 w-3" /> Nova aba
                   </Button>
-                  <Button variant="secondary" size="sm" className="text-xs gap-1.5" onClick={() => copyUrl(current.url)}>
+                  <Button variant="secondary" size="sm" className="text-xs gap-1" onClick={() => copyUrl(current.url)}>
                     <Copy className="h-3 w-3" /> Copiar URL
                   </Button>
-                  <Button variant="secondary" size="sm" className="text-xs gap-1.5" onClick={() => forceDownload(current.url, fileName(current.url))}>
-                    <Download className="h-3 w-3" /> Tentar download
+                  <Button variant="secondary" size="sm" className="text-xs gap-1" onClick={() => forceDownload(current.url, rawFileName(current.url))}>
+                    <Download className="h-3 w-3" /> Download
                   </Button>
                 </div>
               </div>
             ) : isImage ? (
               /* ── Image viewer ── */
-              <div className={`w-full h-full flex items-center justify-center ${zoomed ? "overflow-auto cursor-zoom-out" : "overflow-hidden cursor-zoom-in"}`}
-                onClick={() => setZoomed((z) => !z)}>
+              <div
+                className={`w-full h-full flex items-center justify-center ${zoomed ? "overflow-auto cursor-grab active:cursor-grabbing" : "overflow-hidden cursor-zoom-in"}`}
+                onClick={() => setZoomed((z) => !z)}
+              >
                 {loading[idx] !== false && !loadErrors[idx] && (
                   <div className="absolute inset-0 flex items-center justify-center z-10">
-                    <Loader2 className="h-8 w-8 animate-spin text-white/50" />
+                    <Loader2 className="h-6 w-6 animate-spin text-white/30" />
                   </div>
                 )}
                 <img
-                  ref={imgRef}
                   src={current.url}
-                  alt={current.testTitle || `Screenshot ${idx + 1}`}
-                  className={`transition-transform duration-200 ${zoomed ? "max-w-none w-auto h-auto" : "max-w-full max-h-full object-contain"}`}
+                  alt={name}
+                  className={`transition-transform duration-200 select-none ${
+                    zoomed
+                      ? "max-w-none w-auto h-auto scale-150 sm:scale-[2]"
+                      : "max-w-full max-h-full object-contain p-1"
+                  }`}
                   onError={() => handleError(idx)}
                   onLoad={() => handleLoaded(idx)}
                   draggable={false}
@@ -232,9 +290,10 @@ export default function MediaViewer({
               <video
                 key={current.url}
                 controls
+                autoPlay
                 playsInline
                 preload="metadata"
-                className="w-full h-full max-h-full object-contain"
+                className="w-full h-full object-contain"
                 onError={() => handleError(idx)}
                 onLoadedData={() => handleLoaded(idx)}
               >
@@ -243,67 +302,63 @@ export default function MediaViewer({
               </video>
             )}
 
-            {/* Zoom indicator for images */}
+            {/* Zoom button for images */}
             {isImage && !loadErrors[idx] && (
               <button
-                onClick={() => setZoomed((z) => !z)}
-                className="absolute bottom-3 right-3 z-10 bg-black/60 hover:bg-black/80 text-white rounded-full p-2 transition-colors"
+                onClick={(e) => { e.stopPropagation(); setZoomed((z) => !z); }}
+                className="absolute bottom-2 right-2 z-20 bg-black/50 hover:bg-black/70 text-white/80 rounded-full p-1.5 transition-all"
                 aria-label={zoomed ? "Reduzir" : "Ampliar"}
               >
-                {zoomed ? <ZoomOut className="h-4 w-4" /> : <ZoomIn className="h-4 w-4" />}
+                {zoomed ? <ZoomOut className="h-3.5 w-3.5" /> : <ZoomIn className="h-3.5 w-3.5" />}
               </button>
             )}
           </div>
 
-          {/* ── Thumbnails bar ── */}
+          {/* ── Thumbnail Strip ── */}
           {items.length > 1 && (
-            <div className="flex gap-1.5 px-3 py-2 bg-card border-t border-border overflow-x-auto shrink-0">
-              {items.map((item, i) => (
-                <button
-                  key={i}
-                  onClick={() => { setIdx(i); setZoomed(false); }}
-                  className={`flex-shrink-0 w-16 h-11 sm:w-20 sm:h-14 rounded border overflow-hidden relative transition-all ${
-                    i === idx
-                      ? "border-primary ring-2 ring-primary/30"
-                      : "border-border opacity-50 hover:opacity-100"
-                  }`}
-                >
-                  {item.type === "video" ? (
-                    <div className="w-full h-full bg-muted flex items-center justify-center">
-                      <Video className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                  ) : loadErrors[i] ? (
-                    <div className="w-full h-full bg-muted flex items-center justify-center">
-                      <AlertTriangle className="h-3 w-3 text-yellow-500" />
-                    </div>
-                  ) : (
-                    <img
-                      src={item.url}
-                      alt={`Miniatura ${i + 1}`}
-                      className="w-full h-full object-cover"
-                      onError={() => handleError(i)}
-                      loading="lazy"
-                    />
-                  )}
-                  {/* Type badge */}
-                  <span className="absolute bottom-0.5 right-0.5 bg-black/70 text-white text-[8px] px-1 rounded">
-                    {item.type === "video" ? "VID" : "IMG"}
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* ── Context footer ── */}
-          {(current.spec || current.status || current.timestamp) && (
-            <div className="px-3 py-1.5 bg-card border-t border-border flex items-center gap-3 text-[10px] text-muted-foreground shrink-0 overflow-x-auto">
-              {current.status && (
-                <span className={`font-medium ${current.status === "failed" ? "text-destructive" : "text-green-500"}`}>
-                  {current.status}
-                </span>
-              )}
-              {current.spec && <span className="font-mono truncate">{current.spec}</span>}
-              {current.timestamp && <span>{new Date(current.timestamp).toLocaleString("pt-BR")}</span>}
+            <div
+              ref={scrollRef}
+              className="flex gap-1 px-2 py-1.5 bg-card/80 backdrop-blur-sm border-t border-border overflow-x-auto shrink-0 scrollbar-none snap-x snap-mandatory"
+              style={{ WebkitOverflowScrolling: "touch" }}
+            >
+              {items.map((item, i) => {
+                const isActive = i === idx;
+                return (
+                  <button
+                    key={i}
+                    onClick={() => { setIdx(i); setZoomed(false); }}
+                    className={`flex-shrink-0 snap-center rounded-md overflow-hidden relative transition-all duration-150 ${
+                      isActive
+                        ? "ring-2 ring-primary ring-offset-1 ring-offset-background w-14 h-10 sm:w-[72px] sm:h-12"
+                        : "opacity-40 hover:opacity-80 w-12 h-9 sm:w-16 sm:h-11"
+                    }`}
+                  >
+                    {item.type === "video" ? (
+                      <div className="w-full h-full bg-muted flex items-center justify-center">
+                        <Video className="h-3.5 w-3.5 text-muted-foreground" />
+                      </div>
+                    ) : loadErrors[i] ? (
+                      <div className="w-full h-full bg-muted flex items-center justify-center">
+                        <AlertTriangle className="h-3 w-3 text-yellow-500" />
+                      </div>
+                    ) : (
+                      <img
+                        src={item.url}
+                        alt={`#${i + 1}`}
+                        className="w-full h-full object-cover"
+                        onError={() => handleError(i)}
+                        loading="lazy"
+                      />
+                    )}
+                    {/* Tiny type indicator */}
+                    <span className={`absolute bottom-0 right-0 text-[7px] px-0.5 leading-tight rounded-tl ${
+                      isActive ? "bg-primary text-primary-foreground" : "bg-black/60 text-white/70"
+                    }`}>
+                      {item.type === "video" ? "▶" : "◻"}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           )}
         </DialogContent>
@@ -312,23 +367,17 @@ export default function MediaViewer({
   );
 }
 
-// ─── Convenience wrappers for backward compat ───
+// ─── Convenience wrappers ───
 export function ScreenshotViewer({ urls, spec, testTitle }: { urls: string[]; spec?: string; testTitle?: string }) {
   const items: MediaItem[] = urls.map((url) => ({
-    url,
-    type: "screenshot" as const,
-    spec,
-    testTitle,
-    status: "failed",
+    url, type: "screenshot" as const, spec, testTitle, status: "failed",
   }));
   return <MediaViewer items={items} triggerIcon="screenshot" triggerLabel={`Screenshots (${urls.length})`} />;
 }
 
 export function VideoViewer({ urls, spec }: { urls: string[]; spec?: string }) {
   const items: MediaItem[] = urls.map((url) => ({
-    url,
-    type: "video" as const,
-    spec,
+    url, type: "video" as const, spec,
   }));
   return <MediaViewer items={items} triggerIcon="video" triggerLabel={`Vídeos (${urls.length})`} />;
 }
