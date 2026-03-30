@@ -13,7 +13,7 @@ import { SectionHeader, DataPanel, StatusPill } from "@/components/admin/ui/Admi
 import {
   Shield, Upload, CheckCircle, XCircle, AlertTriangle, Clock, Key,
   FileSignature, RefreshCw, Loader2, ShieldCheck, Calendar, Activity,
-  Lock, Eye, EyeOff,
+  Lock, Eye, EyeOff, Play, Download, FileText,
 } from "lucide-react";
 
 interface CertificateInfo {
