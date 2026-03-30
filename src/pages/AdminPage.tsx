@@ -12,7 +12,7 @@ import {
 import {
   BarChart3, AlertTriangle, CreditCard, FileText, LogOut, RefreshCw, ChevronLeft, ChevronRight, Eye, Users, Plus, Loader2, Check, Copy, Shield,
   LayoutDashboard, ScrollText, CreditCard as CreditCardIcon, UserCog, Megaphone, ShieldAlert, Webhook, ClipboardCheck, Activity, Stethoscope, FlaskConical, PenTool, TestTube2, Brain, DollarSign, MessageSquareCode,
-  Search, Bell, ChevronDown, PanelLeftClose, PanelLeft, Menu,
+  Search, Bell, ChevronDown, PanelLeftClose, PanelLeft, Menu, Settings, FileSignature,
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { StatusPill, SectionHeader, DataPanel } from "@/components/admin/ui/AdminPrimitives";
@@ -33,6 +33,7 @@ const AdminTestCenter = lazy(() => import("@/components/admin/AdminTestCenter"))
 const AdminPromptIntelligence = lazy(() => import("@/components/admin/AdminPromptIntelligence"));
 const AdminRevenueIntelligence = lazy(() => import("@/components/admin/AdminRevenueIntelligence"));
 const DevChatPanel = lazy(() => import("@/components/admin/DevChatPanel"));
+const AdminDigitalSignature = lazy(() => import("@/components/admin/AdminDigitalSignature"));
 
 const ITEMS_PER_PAGE = 20;
 
@@ -78,6 +79,12 @@ const NAV_GROUPS = [
       { id: "prompt-intelligence", label: "Prompt Intelligence", icon: Brain },
       { id: "revenue-intelligence", label: "Receita", icon: DollarSign },
       { id: "dev-chat", label: "DevChat", icon: MessageSquareCode },
+    ],
+  },
+  {
+    label: "Configurações",
+    items: [
+      { id: "digital-signature", label: "Assinatura Digital", icon: FileSignature },
     ],
   },
 ];
@@ -738,6 +745,7 @@ function AdminContent({ activeSection, onNavigate }: { activeSection: string; on
     case "prompt-intelligence": return <Suspense fallback={fallback}><AdminPromptIntelligence /></Suspense>;
     case "revenue-intelligence": return <Suspense fallback={fallback}><AdminRevenueIntelligence /></Suspense>;
     case "dev-chat": return <Suspense fallback={fallback}><DevChatPanel /></Suspense>;
+    case "digital-signature": return <Suspense fallback={fallback}><AdminDigitalSignature /></Suspense>;
     default: return <AdminCommandCenter onNavigate={onNavigate} />;
   }
 }
