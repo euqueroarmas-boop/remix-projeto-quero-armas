@@ -171,6 +171,48 @@ export default function AdminDigitalSignature() {
     setTesting(false);
   };
 
+  const handleFullSigningTest = async () => {
+    setSigningTesting(true);
+    setSigningTest(null);
+    try {
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/test-certificate-sign`;
+      const resp = await adminFunctionFetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
+        body: JSON.stringify({ use_stored: true }),
+      });
+      const data = await resp.json();
+      setSigningTest(data);
+      if (data.success) await fetchStatus();
+    } catch (e) {
+      setSigningTest({ success: false, total_duration_ms: 0, steps: [], error: e instanceof Error ? e.message : "Erro de conexão" });
+    }
+    setSigningTesting(false);
+  };
+
+  const downloadSignedPdf = () => {
+    if (!signingTest?.signed_pdf_base64) return;
+    const byteChars = atob(signingTest.signed_pdf_base64);
+    const byteArray = new Uint8Array(byteChars.length);
+    for (let i = 0; i < byteChars.length; i++) byteArray[i] = byteChars.charCodeAt(i);
+    const blob = new Blob([byteArray], { type: "application/pdf" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `teste-assinatura-${new Date().toISOString().slice(0, 10)}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const previewSignedPdf = () => {
+    if (!signingTest?.signed_pdf_base64) return;
+    const byteChars = atob(signingTest.signed_pdf_base64);
+    const byteArray = new Uint8Array(byteChars.length);
+    for (let i = 0; i < byteChars.length; i++) byteArray[i] = byteChars.charCodeAt(i);
+    const blob = new Blob([byteArray], { type: "application/pdf" });
+    window.open(URL.createObjectURL(blob), "_blank");
+  };
+
   const handleToggle = async (enabled: boolean) => {
     setToggling(true);
     try {
