@@ -35,7 +35,7 @@ type DiagResult = {
 };
 
 function getAdminToken(): string {
-  return sessionStorage.getItem("admin_token") || "";
+  return requireAdminToken();
 }
 
 function StepRow({ step }: { step: DiagStep }) {

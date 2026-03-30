@@ -462,6 +462,10 @@ function copyDiagnostic(run: TestRun, mode: "full" | "error" = "full") {
   }
 }
 
+function getAdminToken() {
+  return requireAdminToken();
+}
+
 async function invokeRunTests(method: "GET" | "POST", params?: Record<string, string>, body?: any) {
   const url = new URL(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/run-tests`);
   if (params) Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));

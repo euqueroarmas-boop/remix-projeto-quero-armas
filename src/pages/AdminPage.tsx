@@ -854,16 +854,28 @@ function AdminTopbar({ title, onMenuOpen, onLogout }: { title: string; onMenuOpe
 
 // ─── Main Page ───
 export default function AdminPage() {
-  const [authed, setAuthed] = useState(!!sessionStorage.getItem("admin_token"));
+  const [authed, setAuthed] = useState(!!getValidAdminToken());
   const [activeSection, setActiveSection] = useState("dashboard");
   const [menuOpen, setMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const isMobile = useIsMobile();
 
+  useEffect(() => {
+    const syncSession = () => setAuthed(!!getValidAdminToken());
+    const intervalId = window.setInterval(syncSession, 60_000);
+    window.addEventListener(ADMIN_SESSION_EXPIRED_EVENT, syncSession);
+    window.addEventListener("focus", syncSession);
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener(ADMIN_SESSION_EXPIRED_EVENT, syncSession);
+      window.removeEventListener("focus", syncSession);
+    };
+  }, []);
+
   if (!authed) return <AdminLogin onLogin={() => setAuthed(true)} />;
 
   const handleLogout = () => {
-    sessionStorage.removeItem("admin_token");
+    clearAdminSession("manual");
     setAuthed(false);
   };
 
