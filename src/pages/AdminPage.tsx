@@ -86,6 +86,7 @@ const NAV_GROUPS = [
     label: "Configurações",
     items: [
       { id: "digital-signature", label: "Assinatura Digital", icon: FileSignature },
+      { id: "cert-diagnostic", label: "Diag. Certificado", icon: Stethoscope },
     ],
   },
 ];
