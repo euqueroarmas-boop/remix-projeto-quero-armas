@@ -98,7 +98,7 @@ function applyLegacyTemplateFixes(templateId: string, hydratedText: string): str
 
   fixed = fixed.replace(
     /4\.2\.[\s\S]*?QRCODE disponibilizado no boleto\./i,
-    "4.2. A primeira mensalidade vencerá em até 30 (trinta) dias corridos da assinatura deste contrato. As mensalidades subsequentes vencerão todo dia {{dia_vencimento}} de cada mês, por boleto bancário ou PIX (QR Code da própria cobrança).",
+    "4.2. A primeira mensalidade vencerá em até 30 (trinta) dias corridos da assinatura deste contrato. As mensalidades subsequentes observarão o mesmo dia de vencimento, por boleto bancário ou PIX (QR Code da própria cobrança).",
   );
 
   fixed = fixed.replace(
