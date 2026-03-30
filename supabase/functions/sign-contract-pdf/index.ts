@@ -302,7 +302,7 @@ Deno.serve(async (req) => {
       });
 
       // Save PDF with placeholder
-      const pdfWithPlaceholder = await pdfDoc.save();
+      const pdfWithPlaceholder = await pdfDoc.save({ useObjectStreams: false });
 
       // Embed the actual CMS/PKCS#7 signature
       const { signedPdf, signatureHex } = await signPdfBytes(

@@ -269,7 +269,7 @@ Deno.serve(async (req) => {
     let signedPdfBytes: Uint8Array;
     let signatureHex: string;
     try {
-      const pdfWithPlaceholder = await pdfDoc.save();
+      const pdfWithPlaceholder = await pdfDoc.save({ useObjectStreams: false });
       const result = await signPdfBytes(pdfWithPlaceholder, forge, privateKey, cert, chainCerts);
       signedPdfBytes = result.signedPdf;
       signatureHex = result.signatureHex;
