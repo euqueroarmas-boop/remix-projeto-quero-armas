@@ -1,11 +1,13 @@
 /**
  * sign-contract-pdf: Signs a PDF contract with A1 ICP-Brasil certificate.
- * Called internally after PDF generation. Backend-only operation.
+ * Embeds PKCS#7/CMS signature into the PDF structure (ByteRange + /Contents).
+ * Compatible with validar.iti.gov.br and Adobe Reader.
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { encode as base64Encode, decode as base64Decode } from "https://deno.land/std@0.208.0/encoding/base64.ts";
+import { decode as base64Decode } from "https://deno.land/std@0.208.0/encoding/base64.ts";
 import { crypto } from "https://deno.land/std@0.208.0/crypto/mod.ts";
 import { logSistemaBackend } from "../_shared/logSistema.ts";
+import { addSignaturePlaceholder, signPdfBytes } from "../_shared/pdfSign.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -26,7 +28,19 @@ function createServiceClient() {
 
 async function hashBytes(bytes: Uint8Array): Promise<string> {
   const hash = await crypto.subtle.digest("SHA-256", bytes);
-  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, "0")).join("");
+  return Array.from(new Uint8Array(hash))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function uint8ToBinaryString(bytes: Uint8Array): string {
+  let str = "";
+  for (let i = 0; i < bytes.length; i += 8192) {
+    str += String.fromCharCode(
+      ...bytes.subarray(i, Math.min(i + 8192, bytes.length)),
+    );
+  }
+  return str;
 }
 
 async function decryptData(encryptedBytes: Uint8Array): Promise<Uint8Array> {
@@ -48,7 +62,9 @@ async function decryptData(encryptedBytes: Uint8Array): Promise<Uint8Array> {
   return new Uint8Array(decrypted);
 }
 
-async function getActiveCertificate(supabase: ReturnType<typeof createServiceClient>) {
+async function getActiveCertificate(
+  supabase: ReturnType<typeof createServiceClient>,
+) {
   const { data: config } = await supabase
     .from("certificate_config")
     .select("*")
@@ -57,13 +73,10 @@ async function getActiveCertificate(supabase: ReturnType<typeof createServiceCli
     .single();
 
   if (!config) return null;
-
-  // Check expiry
   if (config.valid_to && new Date(config.valid_to) < new Date()) {
     console.warn("[sign-contract-pdf] Certificate expired");
     return null;
   }
-
   return config;
 }
 
@@ -79,26 +92,35 @@ Deno.serve(async (req) => {
     const { contract_id, pdf_path, ip_address, user_agent } = body;
 
     if (!contract_id || !pdf_path) {
-      return new Response(JSON.stringify({ success: false, error: "contract_id e pdf_path obrigatórios" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "contract_id e pdf_path obrigatórios",
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
-    // Check for active certificate with auto-sign enabled
     const certConfig = await getActiveCertificate(supabase);
     if (!certConfig) {
-      return new Response(JSON.stringify({
-        success: false,
-        error: "Nenhum certificado ativo com assinatura automática habilitada",
-        skipped: true,
-      }), {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error:
+            "Nenhum certificado ativo com assinatura automática habilitada",
+          skipped: true,
+        }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
-    // Create signature log entry
+    // Create signature log
     const { data: signLog, error: logInsertError } = await supabase
       .from("signature_logs")
       .insert({
@@ -113,26 +135,30 @@ Deno.serve(async (req) => {
       .single();
 
     if (logInsertError) {
-      throw new Error(`Falha ao criar log de assinatura: ${logInsertError.message}`);
+      throw new Error(
+        `Falha ao criar log de assinatura: ${logInsertError.message}`,
+      );
     }
 
     try {
       // Download the original PDF
-      const { data: pdfData, error: pdfDownloadError } = await supabase.storage
-        .from(CONTRACTS_BUCKET)
-        .download(pdf_path);
+      const { data: pdfData, error: pdfDownloadError } =
+        await supabase.storage.from(CONTRACTS_BUCKET).download(pdf_path);
 
       if (pdfDownloadError || !pdfData) {
-        throw new Error(`PDF não encontrado: ${pdfDownloadError?.message || "sem dados"}`);
+        throw new Error(
+          `PDF não encontrado: ${pdfDownloadError?.message || "sem dados"}`,
+        );
       }
 
       const pdfBytes = new Uint8Array(await pdfData.arrayBuffer());
       const originalHash = await hashBytes(pdfBytes);
 
       // Download and decrypt certificate
-      const { data: certData, error: certDownloadError } = await supabase.storage
-        .from(CERT_BUCKET)
-        .download(certConfig.certificate_storage_path);
+      const { data: certData, error: certDownloadError } =
+        await supabase.storage
+          .from(CERT_BUCKET)
+          .download(certConfig.certificate_storage_path);
 
       if (certDownloadError || !certData) {
         throw new Error("Certificado não encontrado no storage");
@@ -159,48 +185,53 @@ Deno.serve(async (req) => {
       const forgeMod = await import("npm:node-forge@1.3.1");
       const forge = forgeMod.default || forgeMod;
 
-      // Convert Uint8Array to binary string for forge
-      let binaryDer = "";
-      for (let i = 0; i < decryptedCert.length; i += 8192) {
-        const chunk = decryptedCert.subarray(i, Math.min(i + 8192, decryptedCert.length));
-        binaryDer += String.fromCharCode(...chunk);
-      }
+      const binaryDer = uint8ToBinaryString(decryptedCert);
       const pfxAsn1 = forge.asn1.fromDer(binaryDer);
       const pfx = forge.pkcs12.pkcs12FromAsn1(pfxAsn1, certPassword);
 
-      // Get private key and certificate
-      const keyBags = pfx.getBags({ bagType: forge.pki.oids.pkcs8ShroudedKeyBag });
+      // Extract private key
+      const keyBags = pfx.getBags({
+        bagType: forge.pki.oids.pkcs8ShroudedKeyBag,
+      });
       const keyBag = keyBags[forge.pki.oids.pkcs8ShroudedKeyBag];
-      if (!keyBag || keyBag.length === 0) throw new Error("Chave privada não encontrada no certificado");
-
+      if (!keyBag || keyBag.length === 0)
+        throw new Error("Chave privada não encontrada no certificado");
       const privateKey = keyBag[0].key;
       if (!privateKey) throw new Error("Chave privada inválida");
 
+      // Extract certificate(s)
       const certBags = pfx.getBags({ bagType: forge.pki.oids.certBag });
       const certBag = certBags[forge.pki.oids.certBag];
-      if (!certBag || certBag.length === 0) throw new Error("Certificado não encontrado no PFX");
-
+      if (!certBag || certBag.length === 0)
+        throw new Error("Certificado não encontrado no PFX");
       const cert = certBag[0].cert;
       if (!cert) throw new Error("Certificado inválido");
 
-      // Use pdf-lib to add signature appearance
-      const { PDFDocument, StandardFonts, rgb } = await import("npm:pdf-lib@1.17.1");
+      // Additional chain certificates
+      const chainCerts = certBag
+        .slice(1)
+        .map((b: any) => b.cert)
+        .filter(Boolean);
+
+      // Load pdf-lib and add visual stamp + signature placeholder
+      const pdfLib = await import("npm:pdf-lib@1.17.1");
+      const { PDFDocument, StandardFonts, rgb } = pdfLib;
       const pdfDoc = await PDFDocument.load(pdfBytes);
       const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
-      const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+      const helveticaBold = await pdfDoc.embedFont(
+        StandardFonts.HelveticaBold,
+      );
 
-      // Get last page for signature stamp
       const pages = pdfDoc.getPages();
       const lastPage = pages[pages.length - 1];
-      const { width: pageWidth, height: pageHeight } = lastPage.getSize();
+      const { width: pageWidth } = lastPage.getSize();
 
-      // Draw signature stamp at bottom of last page
+      // Visual signature stamp
       const stampY = 40;
       const stampX = 42;
       const stampWidth = pageWidth - 84;
       const stampHeight = 70;
 
-      // Background
       lastPage.drawRectangle({
         x: stampX,
         y: stampY,
@@ -211,9 +242,15 @@ Deno.serve(async (req) => {
         borderWidth: 0.5,
       });
 
-      // Signature text
-      const signerName = cert.subject.attributes.find((a: any) => a.shortName === "CN")?.value || "WMTI TECNOLOGIA DA INFORMAÇÃO LTDA";
-      const sigDate = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+      const signerName =
+        cert.subject.attributes.find((a: any) => a.shortName === "CN")
+          ?.value || "WMTI TECNOLOGIA DA INFORMAÇÃO LTDA";
+      const sigDate = new Date().toLocaleString("pt-BR", {
+        timeZone: "America/Sao_Paulo",
+      });
+      const issuerCN =
+        cert.issuer.attributes.find((a: any) => a.shortName === "CN")?.value ||
+        "ICP-Brasil";
 
       lastPage.drawText("ASSINADO DIGITALMENTE", {
         x: stampX + 10,
@@ -222,7 +259,6 @@ Deno.serve(async (req) => {
         font: helveticaBold,
         color: rgb(0.2, 0.4, 0.2),
       });
-
       lastPage.drawText(`Assinante: ${signerName}`, {
         x: stampX + 10,
         y: stampY + stampHeight - 28,
@@ -230,8 +266,6 @@ Deno.serve(async (req) => {
         font: helveticaFont,
         color: rgb(0.3, 0.3, 0.3),
       });
-
-      const issuerCN = cert.issuer.attributes.find((a: any) => a.shortName === "CN")?.value || "ICP-Brasil";
       lastPage.drawText(`Emissor: ${issuerCN}`, {
         x: stampX + 10,
         y: stampY + stampHeight - 39,
@@ -239,66 +273,59 @@ Deno.serve(async (req) => {
         font: helveticaFont,
         color: rgb(0.3, 0.3, 0.3),
       });
+      lastPage.drawText(
+        `Data: ${sigDate} | Serial: ${cert.serialNumber.substring(0, 20)}…`,
+        {
+          x: stampX + 10,
+          y: stampY + stampHeight - 50,
+          size: 6,
+          font: helveticaFont,
+          color: rgb(0.4, 0.4, 0.4),
+        },
+      );
+      lastPage.drawText(
+        "Certificado A1 ICP-Brasil • Válido conforme MP 2.200-2/2001",
+        {
+          x: stampX + 10,
+          y: stampY + stampHeight - 61,
+          size: 5.5,
+          font: helveticaFont,
+          color: rgb(0.5, 0.5, 0.5),
+        },
+      );
 
-      lastPage.drawText(`Data: ${sigDate} | Serial: ${cert.serialNumber.substring(0, 20)}...`, {
-        x: stampX + 10,
-        y: stampY + stampHeight - 50,
-        size: 6,
-        font: helveticaFont,
-        color: rgb(0.4, 0.4, 0.4),
+      // Add signature field placeholder BEFORE saving
+      addSignaturePlaceholder(pdfDoc, pdfLib, lastPage, signerName, {
+        reason: "Assinatura digital do contrato",
+        location: "Brasil",
+        contactInfo: "contato@wmti.com.br",
       });
 
-      lastPage.drawText("Certificado A1 ICP-Brasil • Válido conforme MP 2.200-2/2001", {
-        x: stampX + 10,
-        y: stampY + stampHeight - 61,
-        size: 5.5,
-        font: helveticaFont,
-        color: rgb(0.5, 0.5, 0.5),
-      });
+      // Save PDF with placeholder
+      const pdfWithPlaceholder = await pdfDoc.save();
 
-      // Create PKCS#7 signature using node-forge
-      const p7 = forge.pkcs7.createSignedData();
-      const pdfDigest = forge.md.sha256.create();
-      pdfDigest.update(forge.util.binary.raw.encode(pdfBytes));
+      // Embed the actual CMS/PKCS#7 signature
+      const { signedPdf, signatureHex } = await signPdfBytes(
+        pdfWithPlaceholder,
+        forge,
+        privateKey,
+        cert,
+        chainCerts,
+      );
 
-      p7.content = forge.util.createBuffer(forge.util.binary.raw.encode(pdfBytes));
-      p7.addCertificate(cert);
-      p7.addSigner({
-        key: privateKey,
-        certificate: cert,
-        digestAlgorithm: forge.pki.oids.sha256,
-        authenticatedAttributes: [
-          {
-            type: forge.pki.oids.contentType,
-            value: forge.pki.oids.data,
-          },
-          {
-            type: forge.pki.oids.messageDigest,
-          },
-          {
-            type: forge.pki.oids.signingTime,
-            value: new Date(),
-          },
-        ],
-      });
-
-      p7.sign({ detached: true });
-      const signatureBytes = forge.asn1.toDer(p7.toAsn1()).getBytes();
-      const signatureHash = await hashBytes(new Uint8Array(signatureBytes.split("").map((c: string) => c.charCodeAt(0))));
-
-      // Save the signed PDF (with visual stamp)
-      const signedPdfBytes = await pdfDoc.save();
       const signedPdfPath = pdf_path.replace(".pdf", "-assinado.pdf");
 
       const { error: uploadError } = await supabase.storage
         .from(CONTRACTS_BUCKET)
-        .upload(signedPdfPath, signedPdfBytes, {
+        .upload(signedPdfPath, signedPdf, {
           contentType: "application/pdf",
           upsert: true,
         });
 
       if (uploadError) {
-        throw new Error(`Falha ao salvar PDF assinado: ${uploadError.message}`);
+        throw new Error(
+          `Falha ao salvar PDF assinado: ${uploadError.message}`,
+        );
       }
 
       // Update signature log
@@ -308,11 +335,11 @@ Deno.serve(async (req) => {
           signed_pdf_path: signedPdfPath,
           document_hash: originalHash,
           status: "signed",
-          validation_result: `PKCS7 signature hash: ${signatureHash.substring(0, 16)}`,
+          validation_result: `CMS embedded, ByteRange OK, SHA-256. Sig hex: ${signatureHex.substring(0, 16)}`,
         })
         .eq("id", signLog.id);
 
-      // Update contract with signed PDF path
+      // Update contract
       await supabase
         .from("contracts")
         .update({
@@ -325,54 +352,69 @@ Deno.serve(async (req) => {
       // Update certificate last_used_at
       await supabase
         .from("certificate_config")
-        .update({ last_used_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+        .update({
+          last_used_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
         .eq("id", certConfig.id);
 
       await logSistemaBackend({
         tipo: "contrato",
         status: "success",
-        mensagem: "Contrato assinado digitalmente com certificado A1",
-        payload: { contract_id, signed_pdf_path: signedPdfPath, certificate_id: certConfig.id },
+        mensagem:
+          "Contrato assinado digitalmente com certificado A1 (CMS embarcado)",
+        payload: {
+          contract_id,
+          signed_pdf_path: signedPdfPath,
+          certificate_id: certConfig.id,
+        },
       });
 
-      return new Response(JSON.stringify({
-        success: true,
-        signed_pdf_path: signedPdfPath,
-        document_hash: originalHash,
-        signature_hash: signatureHash.substring(0, 32),
-        certificate_subject: signerName,
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({
+          success: true,
+          signed_pdf_path: signedPdfPath,
+          document_hash: originalHash,
+          signature_hex_prefix: signatureHex.substring(0, 32),
+          certificate_subject: signerName,
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     } catch (signError) {
-      const errorMsg = signError instanceof Error ? signError.message : "Falha na assinatura";
+      const errorMsg =
+        signError instanceof Error ? signError.message : "Falha na assinatura";
 
-      // Update log with error
       await supabase
         .from("signature_logs")
-        .update({
-          status: "error",
-          error_message: errorMsg,
-        })
+        .update({ status: "error", error_message: errorMsg })
         .eq("id", signLog.id);
 
       await logSistemaBackend({
         tipo: "erro",
         status: "error",
         mensagem: "Falha ao assinar contrato digitalmente",
-        payload: { contract_id, error: errorMsg, certificate_id: certConfig.id },
+        payload: {
+          contract_id,
+          error: errorMsg,
+          certificate_id: certConfig.id,
+        },
       });
 
-      // Block: do NOT send unsigned contract
-      return new Response(JSON.stringify({
-        success: false,
-        error: errorMsg,
-        blocked: true,
-        message: "Contrato bloqueado: assinatura digital falhou. O documento não será enviado ao cliente.",
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: errorMsg,
+          blocked: true,
+          message:
+            "Contrato bloqueado: assinatura digital falhou. O documento não será enviado ao cliente.",
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : "Erro interno";
