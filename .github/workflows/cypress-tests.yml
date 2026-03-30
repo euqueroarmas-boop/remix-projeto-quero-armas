@@ -43,39 +43,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-
-      - name: Prepare directories
-        run: |
-          mkdir -p cypress/results cypress/screenshots cypress/videos
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Map test_type to Cypress spec
-        id: specs
-        run: |
-          case "${{ github.event.inputs.test_type }}" in
-            frontend)     SPEC="cypress/e2e/smoke/**" ;;
-            business)     SPEC="cypress/e2e/calculo-planos.cy.ts" ;;
-            forms)        SPEC="cypress/e2e/formulario-contratacao.cy.ts" ;;
-            contracts)    SPEC="cypress/e2e/contratos/**" ;;
-            checkout)     SPEC="cypress/e2e/checkout/**" ;;
-            portal)       SPEC="cypress/e2e/smoke/home.cy.ts" ;;
-            regression)   SPEC="cypress/e2e/**" ;;
-            *)            SPEC="cypress/e2e/smoke/**" ;;
-          esac
-          echo "spec=$SPEC" >> $GITHUB_OUTPUT
-
-      - name: Notify runner online
+      - name: Notify runner online (early)
         run: |
           INGEST_URL="${{ github.event.inputs.supabase_url }}/functions/v1/ingest-test-events"
-          TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-
           if [ -n "${{ github.event.inputs.ingest_token }}" ]; then
             curl -sf -X POST "$INGEST_URL" \
               -H "Content-Type: application/json" \
@@ -92,7 +62,6 @@ jobs:
                 }]
               }" && echo "Ingest: runner_online sent" || echo "Ingest: runner_online failed (non-fatal)"
           fi
-
           curl -sf -X PATCH \
             "${{ github.event.inputs.supabase_url }}/rest/v1/test_runs?id=eq.${{ github.event.inputs.run_id }}" \
             -H "apikey: ${{ github.event.inputs.supabase_key }}" \
@@ -102,9 +71,46 @@ jobs:
             -d "{
               \"github_run_id\": \"${{ github.run_id }}\",
               \"github_run_url\": \"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\",
-              \"current_spec\": \"Runner online, instalando dependências...\",
+              \"current_spec\": \"Runner online, preparando ambiente...\",
               \"progress_percent\": 5
             }" && echo "REST: runner status updated" || echo "REST: runner status update failed"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Cache Cypress binary
+        id: cypress-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/Cypress
+          key: cypress-bin-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            cypress-bin-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify Cypress binary
+        run: npx cypress verify
+
+      - name: Prepare directories & map specs
+        id: specs
+        run: |
+          mkdir -p cypress/results cypress/screenshots cypress/videos
+          case "${{ github.event.inputs.test_type }}" in
+            frontend)     SPEC="cypress/e2e/smoke/**" ;;
+            business)     SPEC="cypress/e2e/calculo-planos.cy.ts" ;;
+            forms)        SPEC="cypress/e2e/formulario-contratacao.cy.ts" ;;
+            contracts)    SPEC="cypress/e2e/contratos/**" ;;
+            checkout)     SPEC="cypress/e2e/checkout/**" ;;
+            portal)       SPEC="cypress/e2e/smoke/home.cy.ts" ;;
+            regression)   SPEC="cypress/e2e/**" ;;
+            *)            SPEC="cypress/e2e/smoke/**" ;;
+          esac
+          echo "spec=$SPEC" >> $GITHUB_OUTPUT
 
       - name: Run Cypress
         id: cypress
