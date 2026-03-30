@@ -7,7 +7,8 @@ describe("Geração de Contrato", () => {
   });
 
   const completeRegistration = () => {
-    cy.get('[data-testid="campo-cnpj"]').clear().type("12345678000190", { delay: 10 });
+    cy.intercept("POST", "**/brasil-api-lookup").as("cepLookup");
+    cy.get('[data-testid="campo-cnpj"]').clear().type("33814058000128", { delay: 10 });
     cy.wait(1000);
 
     const fields = [
@@ -16,7 +17,6 @@ describe("Geração de Contrato", () => {
       { testid: "campo-representante-cpf", val: "37799538899" },
       { testid: "campo-representante-email", val: "joao@teste.com" },
       { testid: "campo-representante-telefone", val: "12998765432" },
-      { testid: "campo-cep", val: "12327000" },
     ];
     fields.forEach((f) => {
       cy.get(`[data-testid="${f.testid}"]`).then(($el) => {
@@ -24,18 +24,23 @@ describe("Geração de Contrato", () => {
       });
     });
 
+    cy.get('[data-testid="campo-cep"]').then(($el) => {
+      if (!$el.val()) cy.wrap($el).type("12327000", { delay: 10 });
+    });
+    cy.wait("@cepLookup", { timeout: 10000 });
     cy.wait(500);
-    cy.get('input[placeholder*="Logradouro"], input[placeholder*="logradouro"]').then(($el) => {
-      if ($el.length && !$el.val()) cy.wrap($el).type("Rua das Flores");
+
+    cy.get('[data-testid="campo-logradouro"]').then(($el) => {
+      if (!$el.val()) cy.wrap($el).type("Rua das Flores");
     });
     cy.get('[data-testid="campo-numero"]').then(($el) => {
-      if ($el.length && !$el.val()) cy.wrap($el).type("100");
+      if (!$el.val()) cy.wrap($el).type("100");
     });
-    cy.get('input[placeholder*="Cidade"], input[placeholder*="cidade"]').then(($el) => {
-      if ($el.length && !$el.val()) cy.wrap($el).type("Jacareí");
+    cy.get('[data-testid="campo-cidade"]').then(($el) => {
+      if (!$el.val()) cy.wrap($el).type("Jacareí");
     });
-    cy.get('input[placeholder*="UF"], input[placeholder*="uf"], input[placeholder*="Estado"]').then(($el) => {
-      if ($el.length && !$el.val()) cy.wrap($el).type("SP");
+    cy.get('[data-testid="campo-uf"]').then(($el) => {
+      if (!$el.val()) cy.wrap($el).type("SP");
     });
 
     cy.get('[data-testid="botao-prosseguir-cadastro"]').click();

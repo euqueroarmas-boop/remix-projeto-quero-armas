@@ -8,7 +8,8 @@
  */
 
 const fillRegistration = () => {
-  cy.get('[data-testid="campo-cnpj"]').clear().type("12345678000190", { delay: 10 });
+  cy.intercept("POST", "**/brasil-api-lookup").as("cepLookup");
+  cy.get('[data-testid="campo-cnpj"]').clear().type("33814058000128", { delay: 10 });
   cy.wait(1500);
 
   const fields = [
@@ -17,7 +18,6 @@ const fillRegistration = () => {
     { id: "campo-representante-cpf", val: "37799538899" },
     { id: "campo-representante-email", val: "carlos@checkout.com" },
     { id: "campo-representante-telefone", val: "12999112233" },
-    { id: "campo-cep", val: "12327000" },
   ];
 
   fields.forEach((f) => {
@@ -26,18 +26,23 @@ const fillRegistration = () => {
     });
   });
 
+  cy.get('[data-testid="campo-cep"]').then(($el) => {
+    if (!$el.val()) cy.wrap($el).type("12327000", { delay: 10 });
+  });
+  cy.wait("@cepLookup", { timeout: 10000 });
   cy.wait(500);
-  cy.get('input[placeholder*="Logradouro"], input[placeholder*="logradouro"]').then(($el) => {
-    if ($el.length && !$el.val()) cy.wrap($el).type("Rua Checkout");
+
+  cy.get('[data-testid="campo-logradouro"]').then(($el) => {
+    if (!$el.val()) cy.wrap($el).type("Rua Checkout");
   });
   cy.get('[data-testid="campo-numero"]').then(($el) => {
-    if ($el.length && !$el.val()) cy.wrap($el).type("99");
+    if (!$el.val()) cy.wrap($el).type("99");
   });
-  cy.get('input[placeholder*="Cidade"], input[placeholder*="cidade"]').then(($el) => {
-    if ($el.length && !$el.val()) cy.wrap($el).type("Jacareí");
+  cy.get('[data-testid="campo-cidade"]').then(($el) => {
+    if (!$el.val()) cy.wrap($el).type("Jacareí");
   });
-  cy.get('input[placeholder*="UF"], input[placeholder*="uf"], input[placeholder*="Estado"]').then(($el) => {
-    if ($el.length && !$el.val()) cy.wrap($el).type("SP");
+  cy.get('[data-testid="campo-uf"]').then(($el) => {
+    if (!$el.val()) cy.wrap($el).type("SP");
   });
 
   cy.get('[data-testid="botao-prosseguir-cadastro"]').click();

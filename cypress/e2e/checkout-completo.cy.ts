@@ -7,7 +7,7 @@ describe("Checkout — Fluxo Completo", () => {
   });
 
   const completeRegistration = () => {
-    cy.get('[data-testid="campo-cnpj"]').clear().type("12345678000190", { delay: 10 });
+    cy.get('[data-testid="campo-cnpj"]').clear().type("33814058000128", { delay: 10 });
     cy.wait(1000);
 
     const fields = [
