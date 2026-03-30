@@ -96,6 +96,7 @@ export async function addPlaceholderAndSign(
     contactInfo: opts.contactInfo || "contato@wmti.com.br",
     name: opts.signerName || "WMTI Tecnologia",
     location: opts.location || "Brasil",
+    signatureLength: 24000,
     ...(usePades ? { subFilter: SUBFILTER_ETSI_CADES_DETACHED } : {}),
   });
 
