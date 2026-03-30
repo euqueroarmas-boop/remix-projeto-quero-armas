@@ -136,6 +136,7 @@ const TEST_TYPE_TO_AREA: Record<string, string> = {
   api: "APIs & Webhooks",
   blog: "Blog & Linkagem",
   regression: "Regressão Crítica",
+  certificate: "Certificado Digital / Assinatura A1",
 };
 
 function inferErrorCategory(error: string): { category: string; suggestions: string[] } {
