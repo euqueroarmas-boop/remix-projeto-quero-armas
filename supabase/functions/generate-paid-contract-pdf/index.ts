@@ -139,9 +139,13 @@ async function buildPdfBytes(context: Awaited<ReturnType<typeof getPostPurchaseC
 
   drawSectionTitle("Dados do contratante");
   drawTextBlock(`Razão social: ${context.customer.razao_social}`, { bold: true });
-  drawTextBlock(`CPF/CNPJ: ${context.customer.cnpj_ou_cpf}`);
+  drawTextBlock(`CNPJ/CPF: ${context.customer.cnpj_ou_cpf}`);
   drawTextBlock(`Responsável: ${context.customer.responsavel}`);
-  drawTextBlock(`E-mail cadastrado: ${context.customer.email}`);
+  drawTextBlock(`E-mail: ${context.customer.email}`);
+
+  drawSectionTitle("Dados da contratada");
+  drawTextBlock("WMTI TECNOLOGIA DA INFORMAÇÃO LTDA", { bold: true });
+  drawTextBlock("CNPJ: 13.366.668/0001-07");
 
   drawSectionTitle("Dados da contratação");
   drawTextBlock(`Serviço/plano: ${buildServiceName(context)}`, { bold: true });
@@ -254,6 +258,44 @@ Deno.serve(async (req) => {
       await supabase.from("contracts").update({ contract_pdf_path: pdfPath }).eq("id", context.contract.id);
       generated = true;
       reusedExisting = false;
+
+      // Auto-sign with A1 certificate if enabled
+      try {
+        const signUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/sign-contract-pdf`;
+        const signResp = await fetch(signUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: Deno.env.get("SUPABASE_ANON_KEY")!,
+            Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!}`,
+          },
+          body: JSON.stringify({
+            contract_id: context.contract.id,
+            pdf_path: pdfPath,
+            ip_address: req.headers.get("x-forwarded-for") || req.headers.get("cf-connecting-ip") || null,
+            user_agent: req.headers.get("user-agent") || null,
+          }),
+        });
+        const signResult = await signResp.json();
+        if (signResult.success && signResult.signed_pdf_path) {
+          pdfPath = signResult.signed_pdf_path;
+          console.log("[generate-paid-contract-pdf] Contract signed successfully:", signResult.signed_pdf_path);
+        } else if (signResult.blocked) {
+          // Signature failed and blocked - do not proceed
+          return new Response(JSON.stringify({
+            success: false,
+            error: "Assinatura digital falhou. Contrato bloqueado para proteção.",
+            details: signResult.error,
+          }), {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        } else if (signResult.skipped) {
+          console.log("[generate-paid-contract-pdf] Auto-signing skipped (not enabled)");
+        }
+      } catch (signErr) {
+        console.warn("[generate-paid-contract-pdf] Auto-sign call failed (non-blocking):", signErr);
+      }
     }
 
     const pdfUrl = await resolveSignedUrl(supabase, pdfPath);

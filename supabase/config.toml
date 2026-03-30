@@ -32,3 +32,9 @@ verify_jwt = false
 
 [functions.register-log]
 verify_jwt = false
+
+[functions.certificate-manager]
+verify_jwt = false
+
+[functions.sign-contract-pdf]
+verify_jwt = false

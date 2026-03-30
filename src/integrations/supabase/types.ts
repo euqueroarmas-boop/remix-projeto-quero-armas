@@ -230,6 +230,54 @@ export type Database = {
         }
         Relationships: []
       }
+      certificate_config: {
+        Row: {
+          auto_sign_enabled: boolean
+          certificate_hash: string
+          certificate_storage_path: string
+          created_at: string
+          id: string
+          issuer: string | null
+          last_used_at: string | null
+          serial_number: string | null
+          status: string
+          subject: string | null
+          updated_at: string
+          valid_from: string | null
+          valid_to: string | null
+        }
+        Insert: {
+          auto_sign_enabled?: boolean
+          certificate_hash: string
+          certificate_storage_path: string
+          created_at?: string
+          id?: string
+          issuer?: string | null
+          last_used_at?: string | null
+          serial_number?: string | null
+          status?: string
+          subject?: string | null
+          updated_at?: string
+          valid_from?: string | null
+          valid_to?: string | null
+        }
+        Update: {
+          auto_sign_enabled?: boolean
+          certificate_hash?: string
+          certificate_storage_path?: string
+          created_at?: string
+          id?: string
+          issuer?: string | null
+          last_used_at?: string | null
+          serial_number?: string | null
+          status?: string
+          subject?: string | null
+          updated_at?: string
+          valid_from?: string | null
+          valid_to?: string | null
+        }
+        Relationships: []
+      }
       client_events: {
         Row: {
           created_at: string
@@ -1194,6 +1242,69 @@ export type Database = {
             columns: ["quote_id"]
             isOneToOne: false
             referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      signature_logs: {
+        Row: {
+          certificate_id: string | null
+          contract_id: string | null
+          created_at: string
+          document_hash: string | null
+          error_message: string | null
+          id: string
+          ip_address: string | null
+          original_pdf_path: string | null
+          signed_at: string
+          signed_pdf_path: string | null
+          status: string
+          user_agent: string | null
+          validation_result: string | null
+        }
+        Insert: {
+          certificate_id?: string | null
+          contract_id?: string | null
+          created_at?: string
+          document_hash?: string | null
+          error_message?: string | null
+          id?: string
+          ip_address?: string | null
+          original_pdf_path?: string | null
+          signed_at?: string
+          signed_pdf_path?: string | null
+          status?: string
+          user_agent?: string | null
+          validation_result?: string | null
+        }
+        Update: {
+          certificate_id?: string | null
+          contract_id?: string | null
+          created_at?: string
+          document_hash?: string | null
+          error_message?: string | null
+          id?: string
+          ip_address?: string | null
+          original_pdf_path?: string | null
+          signed_at?: string
+          signed_pdf_path?: string | null
+          status?: string
+          user_agent?: string | null
+          validation_result?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "signature_logs_certificate_id_fkey"
+            columns: ["certificate_id"]
+            isOneToOne: false
+            referencedRelation: "certificate_config"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "signature_logs_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
             referencedColumns: ["id"]
           },
         ]
