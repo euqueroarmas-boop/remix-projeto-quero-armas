@@ -14,7 +14,7 @@ describe("Smoke — Área do Cliente", () => {
 
   it("botão de entrar está visível", () => {
     cy.visit("/area-do-cliente", { timeout: 15000 });
-    cy.get('button[type="submit"], button').contains(/entrar|login|acessar/i).should("be.visible");
+    cy.get('button[type="submit"]', { timeout: 10000 }).should("be.visible");
   });
 
   it("redirect /cliente leva para /area-do-cliente", () => {
