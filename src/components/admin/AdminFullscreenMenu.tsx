@@ -47,6 +47,7 @@ const MENU_SECTIONS = [
     items: [
       { id: "prompt-intelligence", label: "Prompt Intelligence", icon: Activity },
       { id: "revenue-intelligence", label: "Receita", icon: CreditCard },
+      { id: "dev-chat", label: "DevChat", icon: MessageSquareCode },
     ],
   },
   {
