@@ -9,54 +9,48 @@
  */
 
 const fillRegistration = () => {
-  cy.intercept("POST", "**/brasil-api-lookup").as("cnpjLookup");
-  cy.get('[data-testid="campo-cnpj"]').clear().type("33814058000128", { delay: 10 });
+  cy.intercept("POST", "**/brasil-api-lookup").as("brasilApiLookup");
 
-  // Wait for CNPJ lookup which may auto-fill address fields
-  cy.wait("@cnpjLookup", { timeout: 10000 });
-
-  const fields = [
-    { id: "campo-razao-social", val: "Empresa Cypress LTDA" },
-    { id: "campo-representante-nome", val: "Maria Teste" },
-    { id: "campo-representante-cpf", val: "37799538899" },
-    { id: "campo-representante-email", val: "maria@cypress.com" },
-    { id: "campo-representante-telefone", val: "12999887766" },
-  ];
-
-  fields.forEach((f) => {
-    cy.get(`[data-testid="${f.id}"]`).then(($el) => {
-      if (!$el.val()) cy.wrap($el).type(f.val, { delay: 10 });
+  const ensureValue = (testId: string, value: string) => {
+    cy.get(`[data-testid="${testId}"]`).should("exist").then(($el) => {
+      const currentValue = String($el.val() ?? "").trim();
+      if (!currentValue) {
+        cy.wrap($el).clear().type(value, { delay: 10 });
+      }
     });
-  });
+  };
 
-  // CEP may already be filled by CNPJ lookup — only type if empty
-  cy.get('[data-testid="campo-cep"]').then(($el) => {
-    if ($el.val()) {
-      // Address already auto-filled via CNPJ, just wait for fields to be visible
-      cy.get('[data-testid="campo-logradouro"]', { timeout: 10000 }).should("be.visible");
-    } else {
-      cy.intercept("POST", "**/brasil-api-lookup").as("cepLookup");
-      cy.wrap($el).type("12327000", { delay: 10 });
-      cy.wait("@cepLookup", { timeout: 10000 });
-      cy.get('[data-testid="campo-logradouro"]', { timeout: 10000 }).should("be.visible");
+  cy.get('[data-testid="campo-cnpj"]').should("be.visible").clear().type("33.814.058/0001-28", { delay: 10 });
+  cy.wait("@brasilApiLookup", { timeout: 10000 });
+
+  ensureValue("campo-razao-social", "Empresa Cypress LTDA");
+  ensureValue("campo-representante-nome", "Maria Teste");
+  ensureValue("campo-representante-cpf", "377.995.388-99");
+  ensureValue("campo-representante-email", "maria@cypress.com");
+  ensureValue("campo-representante-telefone", "(12) 99988-7766");
+
+  cy.get('[data-testid="campo-cep"]').should("exist").then(($el) => {
+    const cepAtual = String($el.val() ?? "").trim();
+
+    if (!cepAtual) {
+      cy.wrap($el).clear().type("12327-000", { delay: 10 });
+      cy.wait("@brasilApiLookup", { timeout: 10000 });
     }
   });
 
-  // Fill address fields only if not auto-populated
-  cy.get('[data-testid="campo-logradouro"]').then(($el) => {
-    if (!$el.val()) cy.wrap($el).type("Rua Teste Cypress");
-  });
-  cy.get('[data-testid="campo-numero"]').then(($el) => {
-    if (!$el.val()) cy.wrap($el).type("42");
-  });
-  cy.get('[data-testid="campo-cidade"]').then(($el) => {
-    if (!$el.val()) cy.wrap($el).type("Jacareí");
-  });
-  cy.get('[data-testid="campo-uf"]').then(($el) => {
-    if (!$el.val()) cy.wrap($el).type("SP");
-  });
+  ensureValue("campo-logradouro", "Rua Teste Cypress");
+  ensureValue("campo-numero", "42");
+  ensureValue("campo-bairro", "Centro");
+  ensureValue("campo-cidade", "Jacareí");
+  ensureValue("campo-uf", "SP");
 
-  cy.get('[data-testid="botao-prosseguir-cadastro"]').click();
+  cy.get('[data-testid="campo-cnpj"]').should(($el) => expect(String($el.val() ?? "").trim()).not.to.equal(""));
+  cy.get('[data-testid="campo-razao-social"]').should(($el) => expect(String($el.val() ?? "").trim()).not.to.equal(""));
+  cy.get('[data-testid="campo-representante-nome"]').should(($el) => expect(String($el.val() ?? "").trim()).not.to.equal(""));
+  cy.get('[data-testid="campo-representante-cpf"]').should(($el) => expect(String($el.val() ?? "").trim()).not.to.equal(""));
+  cy.get('[data-testid="botao-prosseguir-cadastro"]').should("be.visible").and("not.be.disabled").click();
+
+  cy.get('[data-testid="botao-confirmar-plano"]', { timeout: 15000 }).should("be.visible");
 };
 
 const selectPlan = (months: 12 | 24 | 36 = 12) => {
