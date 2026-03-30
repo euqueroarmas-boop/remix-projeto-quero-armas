@@ -337,7 +337,7 @@ ${lastError.includes("Token") || lastError.includes("inválido") || lastError.in
                 ? "bg-destructive/5 text-foreground border border-destructive/20"
                 : "bg-muted/50 text-foreground"
             }`}>
-              <div className="whitespace-pre-wrap break-words leading-relaxed">{msg.content}</div>
+              <MessageContent content={msg.content} />
               <div className="flex items-center justify-between mt-1.5 gap-2 flex-wrap">
                 <div className="flex items-center gap-2">
                   <span className="text-[9px] opacity-50">
