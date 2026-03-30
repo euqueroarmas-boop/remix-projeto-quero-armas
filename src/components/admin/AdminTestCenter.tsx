@@ -855,10 +855,17 @@ function LiveProgressPanel({ run, onStop }: { run: TestRun; onStop?: () => void 
           </div>
         </div>
 
-        {/* Spec progress (for Cypress) */}
-        {specsCompleted !== null && totalSpecs !== null && (
-          <div className="text-xs text-muted-foreground bg-muted/30 rounded-md px-3 py-1.5">
-            📂 Spec {specsCompleted} de {totalSpecs} concluídos
+        {/* Spec / modules found */}
+        {totalSpecs !== null && totalSpecs > 0 && (
+          <div className="text-xs text-muted-foreground bg-muted/30 rounded-md px-3 py-1.5 flex items-center gap-1.5">
+            📂 {specsCompleted !== null && specsCompleted > 0
+              ? `Spec ${specsCompleted} de ${totalSpecs} concluídos`
+              : `${totalSpecs} módulo${totalSpecs > 1 ? "s" : ""} encontrado${totalSpecs > 1 ? "s" : ""}`}
+          </div>
+        )}
+        {(totalSpecs === null || totalSpecs === 0) && total > 0 && (
+          <div className="text-xs text-muted-foreground bg-muted/30 rounded-md px-3 py-1.5 flex items-center gap-1.5">
+            🔍 {total} teste{total > 1 ? "s" : ""} registrado{total > 1 ? "s" : ""} neste ciclo
           </div>
         )}
 
