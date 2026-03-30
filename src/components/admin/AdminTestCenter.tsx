@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { ScreenshotViewer, VideoViewer } from "@/components/admin/MediaViewer";
 import { formatDuration } from "@/lib/formatDuration";
-import { adminFunctionFetch } from "@/lib/adminSession";
+import { adminFunctionFetch, requireAdminToken } from "@/lib/adminSession";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";

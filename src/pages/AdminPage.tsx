@@ -1,6 +1,13 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { adminQuerySingle, adminQuery } from "@/lib/adminApi";
+import {
+  ADMIN_SESSION_EXPIRED_EVENT,
+  ADMIN_SESSION_EXPIRED_MESSAGE,
+  clearAdminSession,
+  getValidAdminToken,
+  saveAdminToken,
+} from "@/lib/adminSession";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
