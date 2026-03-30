@@ -293,7 +293,7 @@ const ServerAdminRegistrationForm = ({ onComplete, loading: externalLoading }: P
           </div>
           <div>
             <Label className="mb-1.5 block text-sm">UF *</Label>
-            <Input value={form.uf} onChange={(e) => update("uf", e.target.value.toUpperCase().slice(0, 2))} className={fieldClass} placeholder="SP" maxLength={2} autoComplete="address-level1" required />
+            <Input value={form.uf} onChange={(e) => update("uf", e.target.value.toUpperCase().slice(0, 2))} className={fieldClass} placeholder="SP" maxLength={2} autoComplete="address-level1" required data-testid="campo-uf" />
           </div>
         </div>
       </div>
