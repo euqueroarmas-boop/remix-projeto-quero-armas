@@ -5,7 +5,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { encode as base64Encode, decode as base64Decode } from "https://deno.land/std@0.208.0/encoding/base64.ts";
 import { crypto } from "https://deno.land/std@0.208.0/crypto/mod.ts";
-import { addPlaceholderAndSign } from "../_shared/pdfSign.ts";
+import { addPlaceholderAndSign, addLateralMark } from "../_shared/pdfSign.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
