@@ -148,7 +148,7 @@ const App = () => (
             <Route path="/suporte-ti-empresarial-jacarei" element={<Navigate to="/suporte-ti-jacarei" replace />} />
             <Route path="/infraestrutura-ti-corporativa" element={<Navigate to="/infraestrutura-ti-corporativa-jacarei" replace />} />
             <Route path="/infraestrutura-corporativa" element={<Navigate to="/infraestrutura-ti-corporativa-jacarei" replace />} />
-            <Route path="/seguranca-da-informacao-empresarial-jacarei" element={<Navigate to="/seguranca-informacao-empresarial" replace />} />
+            <Route path="/seguranca-da-informacao-empresarial-jacarei" element={<Navigate to="/seguranca-de-rede" replace />} />
             <Route path="/microsoft-365-empresas-jacarei" element={<Navigate to="/microsoft-365-para-empresas-jacarei" replace />} />
             <Route path="/microsoft-365-para-empresas" element={<Navigate to="/microsoft-365-para-empresas-jacarei" replace />} />
             <Route path="/montagem-redes-corporativas-jacarei" element={<Navigate to="/montagem-e-monitoramento-de-redes-jacarei" replace />} />
