@@ -2079,21 +2079,61 @@ export default function AdminTestCenter({ onBack }: { onBack?: () => void }) {
       <GlobalSummary suiteStatuses={suiteStatuses} />
 
       {/* ═══ AUTO-FIX STATUS ═══ */}
-      {autoFixing && (
-        <Card className="border-primary/30 bg-primary/5">
-          <CardContent className="py-3 px-4 flex items-center gap-3">
-            <Loader2 className="h-4 w-4 animate-spin text-primary" />
-            <div className="flex-1">
-              <p className="text-sm font-medium text-foreground">
-                🤖 Auto-Fix em execução: <span className="text-primary">{autoFixing}</span>
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Tentativa {autoFixAttemptsRef.current[autoFixing] || 1}/3 — IA analisando → patch → re-teste
-              </p>
+      {(autoFixing || autoFixBranch) && (
+        <Card className={`${autoFixBranch && !autoFixing ? "border-green-500/30 bg-green-500/5" : "border-primary/30 bg-primary/5"}`}>
+          <CardContent className="py-3 px-4 space-y-2">
+            <div className="flex items-center gap-3">
+              {autoFixing && !autoFixBranch && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
+              {autoFixBranch && <CheckCircle className="h-4 w-4 text-green-600" />}
+              <div className="flex-1">
+                <p className="text-sm font-medium text-foreground">
+                  {autoFixBranch
+                    ? `🔀 Branch: ${autoFixBranch.branch}`
+                    : `🤖 Auto-Fix em execução: ${autoFixing}`
+                  }
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {autoFixBranch
+                    ? `Arquivo: ${autoFixBranch.filePath} • Commit: ${autoFixBranch.commitSha}`
+                    : `Tentativa ${autoFixAttemptsRef.current[autoFixing!] || 1}/3 — IA → patch → branch → PR`
+                  }
+                </p>
+              </div>
+              {autoFixing && !autoFixBranch && (
+                <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => { setAutoFixing(null); autoFixAttemptsRef.current = {}; toast.info("Auto-fix interrompido"); }}>
+                  <Square className="h-3 w-3 mr-1" /> Parar
+                </Button>
+              )}
             </div>
-            <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => { setAutoFixing(null); autoFixAttemptsRef.current = {}; toast.info("Auto-fix interrompido"); }}>
-              <Square className="h-3 w-3 mr-1" /> Parar
-            </Button>
+
+            {autoFixBranch && (
+              <div className="flex items-center gap-2 flex-wrap pt-1 border-t border-border">
+                {autoFixBranch.prUrl && (
+                  <a href={autoFixBranch.prUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline flex items-center gap-1">
+                    <ExternalLink className="h-3 w-3" /> PR #{autoFixBranch.prNumber}
+                  </a>
+                )}
+                <div className="flex-1" />
+                <Badge variant="outline" className="text-[9px]">Aguardando testes da PR</Badge>
+                <Button
+                  size="sm"
+                  className="text-xs h-7 gap-1"
+                  onClick={handleMergeBranch}
+                  disabled={merging}
+                >
+                  {merging ? <Loader2 className="h-3 w-3 animate-spin" /> : <Rocket className="h-3 w-3" />}
+                  {merging ? "Merging..." : "Promover para Produção"}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs h-7 text-muted-foreground"
+                  onClick={() => { setAutoFixBranch(null); setAutoFixing(null); autoFixAttemptsRef.current = {}; }}
+                >
+                  Descartar
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
