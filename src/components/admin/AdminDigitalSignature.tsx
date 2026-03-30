@@ -362,7 +362,7 @@ export default function AdminDigitalSignature() {
             </p>
           )}
 
-          <Button onClick={handleUpload} disabled={uploading || !uploadFile || !certPassword}>
+          <Button data-testid="certificate-upload-button" onClick={handleUpload} disabled={uploading || !uploadFile || !certPassword}>
             {uploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
             {uploading ? "Enviando..." : "Enviar certificado"}
           </Button>
