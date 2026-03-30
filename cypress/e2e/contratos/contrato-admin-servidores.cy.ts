@@ -11,44 +11,57 @@
 const fillRegistration = () => {
   cy.intercept("POST", "**/brasil-api-lookup").as("brasilApiLookup");
 
-  const ensureValue = (testId: string, value: string) => {
-    cy.get(`[data-testid="${testId}"]`).should("exist").then(($el) => {
-      const currentValue = String($el.val() ?? "").trim();
-      if (!currentValue) {
-        cy.wrap($el).clear().type(value, { delay: 10 });
-      }
+  const getField = (testId: string) => cy.get(`[data-testid="${testId}"]`, { timeout: 15000 });
+  const readValue = ($el: JQuery<HTMLElement>) => String($el.val() ?? "").trim();
+
+  const ensureFieldValue = (testId: string, fallbackValue: string) => {
+    getField(testId)
+      .should("be.visible")
+      .then(($el) => {
+        if (!readValue($el)) {
+          cy.wrap($el).clear().type(fallbackValue, { delay: 10 }).blur();
+        }
+      });
+
+    getField(testId).should(($el) => {
+      expect(readValue($el)).not.to.equal("");
     });
   };
 
-  cy.get('[data-testid="campo-cnpj"]').should("be.visible").clear().type("33.814.058/0001-28", { delay: 10 });
+  cy.get('[data-testid="campo-cnpj"]', { timeout: 15000 })
+    .should("be.visible")
+    .clear()
+    .type("33.814.058/0001-28", { delay: 10 })
+    .blur();
+
   cy.wait("@brasilApiLookup", { timeout: 10000 });
 
-  ensureValue("campo-razao-social", "Empresa Cypress LTDA");
-  ensureValue("campo-representante-nome", "Maria Teste");
-  ensureValue("campo-representante-cpf", "377.995.388-99");
-  ensureValue("campo-representante-email", "maria@cypress.com");
-  ensureValue("campo-representante-telefone", "(12) 99988-7766");
+  ensureFieldValue("campo-razao-social", "Empresa Cypress LTDA");
+  ensureFieldValue("campo-representante-nome", "Maria Teste");
+  ensureFieldValue("campo-representante-cpf", "377.995.388-99");
+  ensureFieldValue("campo-representante-email", "maria@cypress.com");
+  ensureFieldValue("campo-representante-telefone", "(12) 99988-7766");
 
-  cy.get('[data-testid="campo-cep"]').should("exist").then(($el) => {
-    const cepAtual = String($el.val() ?? "").trim();
+  getField("campo-cep")
+    .should("be.visible")
+    .then(($el) => {
+      if (!readValue($el)) {
+        cy.wrap($el).clear().type("12327-000", { delay: 10 }).blur();
+        cy.wait("@brasilApiLookup", { timeout: 10000 });
+      }
+    });
 
-    if (!cepAtual) {
-      cy.wrap($el).clear().type("12327-000", { delay: 10 });
-      cy.wait("@brasilApiLookup", { timeout: 10000 });
-    }
-  });
+  ensureFieldValue("campo-cep", "12327-000");
+  ensureFieldValue("campo-logradouro", "Rua Teste Cypress");
+  ensureFieldValue("campo-numero", "42");
+  ensureFieldValue("campo-bairro", "Centro");
+  ensureFieldValue("campo-cidade", "Jacareí");
+  ensureFieldValue("campo-uf", "SP");
 
-  ensureValue("campo-logradouro", "Rua Teste Cypress");
-  ensureValue("campo-numero", "42");
-  ensureValue("campo-bairro", "Centro");
-  ensureValue("campo-cidade", "Jacareí");
-  ensureValue("campo-uf", "SP");
-
-  cy.get('[data-testid="campo-cnpj"]').should(($el) => expect(String($el.val() ?? "").trim()).not.to.equal(""));
-  cy.get('[data-testid="campo-razao-social"]').should(($el) => expect(String($el.val() ?? "").trim()).not.to.equal(""));
-  cy.get('[data-testid="campo-representante-nome"]').should(($el) => expect(String($el.val() ?? "").trim()).not.to.equal(""));
-  cy.get('[data-testid="campo-representante-cpf"]').should(($el) => expect(String($el.val() ?? "").trim()).not.to.equal(""));
-  cy.get('[data-testid="botao-prosseguir-cadastro"]').should("be.visible").and("not.be.disabled").click();
+  cy.get('[data-testid="botao-prosseguir-cadastro"]', { timeout: 15000 })
+    .should("be.visible")
+    .and("be.enabled")
+    .click();
 
   cy.get('[data-testid="botao-confirmar-plano"]', { timeout: 15000 }).should("be.visible");
 };
