@@ -365,10 +365,9 @@ const ContractingWizard = ({
       // Capture client proof data for legal validity (clause 17.3)
       const proof = await captureClientProof();
 
-      // Determine due date (30 days from signature)
-      const dueDate = new Date();
-      dueDate.setDate(dueDate.getDate() + 30);
-      const diaVencimento = String(dueDate.getDate());
+      // Due date = same day of month, next month
+      const today = new Date();
+      const diaVencimento = String(today.getDate());
 
       // Resolve service-specific contract object
       const objetoServico = serviceSlug

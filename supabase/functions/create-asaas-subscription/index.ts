@@ -96,8 +96,8 @@ Deno.serve(async (req) => {
     }
 
     // ── Calculate dates ──
-    const nextDue = new Date();
-    nextDue.setDate(nextDue.getDate() + 3);
+    const now = new Date();
+    const nextDue = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
     const nextDueDate = nextDue.toISOString().split("T")[0];
 
     const endDate = new Date();
