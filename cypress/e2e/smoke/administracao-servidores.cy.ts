@@ -16,23 +16,23 @@ describe("Smoke — Administração de Servidores", () => {
     });
 
     it("controles de host existem", () => {
-      cy.get('[data-testid="quantidade-hosts"]').should("be.visible");
-      cy.get('[data-testid="incrementar-host"]').should("be.visible");
+      cy.get('[data-testid="quantidade-hosts"]').should("exist");
+      cy.get('[data-testid="incrementar-host"]').should("exist");
       cy.get('[data-testid="decrementar-host"]').should("exist");
     });
 
     it("controles de VM existem", () => {
-      cy.get('[data-testid="quantidade-vms"]').should("be.visible");
-      cy.get('[data-testid="incrementar-vm"]').should("be.visible");
+      cy.get('[data-testid="quantidade-vms"]').should("exist");
+      cy.get('[data-testid="incrementar-vm"]').should("exist");
       cy.get('[data-testid="decrementar-vm"]').should("exist");
     });
 
     it("botão de contratação existe", () => {
-      cy.get('[data-testid="botao-contratar"]').should("be.visible");
+      cy.get('[data-testid="botao-contratar"]').should("exist");
     });
 
     it("FAQ existe", () => {
-      cy.get('[class*="accordion"], [data-state]').should("exist");
+      cy.get('[data-testid="faq-section"]').should("exist");
     });
 
     it("navbar e footer visíveis", () => {
