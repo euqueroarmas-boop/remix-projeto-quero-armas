@@ -199,7 +199,7 @@ export default function AdminCertDiagnostic() {
             </p>
           </div>
 
-          <Button onClick={runDiagnostic} disabled={running || !file || !password} className="w-full sm:w-auto">
+          <Button data-testid="certificate-run-diagnostic-button" onClick={runDiagnostic} disabled={running || !file || !password} className="w-full sm:w-auto">
             {running ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Stethoscope className="mr-2 h-4 w-4" />}
             {running ? "Executando diagnóstico..." : "Executar Diagnóstico"}
           </Button>
