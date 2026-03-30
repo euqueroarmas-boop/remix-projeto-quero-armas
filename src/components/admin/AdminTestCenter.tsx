@@ -1965,7 +1965,7 @@ export default function AdminTestCenter({ onBack }: { onBack?: () => void }) {
             <Loader2 className="h-4 w-4 animate-spin text-primary" />
             Execuções em andamento ({runningRuns.length})
           </h4>
-          {runningRuns.map(run => <LiveProgressPanel key={run.id} run={run} />)}
+          {runningRuns.map(run => <LiveProgressPanel key={run.id} run={run} onStop={() => handleStopTest(run.test_type)} />)}
         </div>
       )}
 
