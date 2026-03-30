@@ -128,7 +128,7 @@ jobs:
           browser: chrome
           headed: false
           spec: ${{ steps.specs.outputs.spec }}
-          config: baseUrl=${{ github.event.inputs.base_url }}
+          config: baseUrl=${{ github.event.inputs.base_url }},reporter=mochawesome,reporterOptions.reportDir=cypress/results,reporterOptions.overwrite=false,reporterOptions.html=false,reporterOptions.json=true
           publish-summary: false
 
       - name: Finalize run from mochawesome report
