@@ -45,8 +45,8 @@ const MENU_SECTIONS = [
   {
     label: "Inteligência",
     items: [
-      { id: "prompt-intelligence", label: "Prompt Intelligence", icon: Activity },
-      { id: "revenue-intelligence", label: "Receita", icon: CreditCard },
+      { id: "prompt-intelligence", label: "Prompt Intelligence", icon: Brain },
+      { id: "revenue-intelligence", label: "Receita", icon: DollarSign },
       { id: "dev-chat", label: "DevChat", icon: MessageSquareCode },
     ],
   },
@@ -57,6 +57,12 @@ const MENU_SECTIONS = [
       { id: "diagnostics", label: "Diagnóstico", icon: Stethoscope },
       { id: "qa", label: "Homologação / QA", icon: FlaskConical },
       { id: "blog-ai", label: "Blog IA", icon: PenTool },
+    ],
+  },
+  {
+    label: "Configurações",
+    items: [
+      { id: "digital-signature", label: "Assinatura Digital", icon: FileSignature },
     ],
   },
 ];
