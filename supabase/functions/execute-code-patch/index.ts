@@ -116,14 +116,7 @@ Deno.serve(async (req) => {
       return json({ error: `Arquivo protegido: ${file_path}` }, 403);
     }
 
-    const GITHUB_PAT = Deno.env.get("GITHUB_PAT");
-    if (!GITHUB_PAT) return json({ error: "GITHUB_PAT não configurado" }, 500);
 
-    const ghHeaders = {
-      Authorization: `Bearer ${GITHUB_PAT}`,
-      Accept: "application/vnd.github.v3+json",
-      "Content-Type": "application/json",
-    };
 
     let targetBranch = "main";
     let branchName: string | null = null;
