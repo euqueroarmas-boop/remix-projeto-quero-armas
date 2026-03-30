@@ -564,8 +564,8 @@ function ClientesTab() {
     setError("");
 
     try {
-      const adminToken = sessionStorage.getItem("admin_token");
-      if (!adminToken) { setError("Sessão admin expirada. Faça login novamente."); setCreating(false); return; }
+      const adminToken = getValidAdminToken();
+      if (!adminToken) { setError(ADMIN_SESSION_EXPIRED_MESSAGE); setCreating(false); return; }
       
       const { data, error: fnErr } = await supabase.functions.invoke("create-client-user", {
         body: {
