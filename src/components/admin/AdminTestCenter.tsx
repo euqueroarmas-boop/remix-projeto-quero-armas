@@ -1492,17 +1492,7 @@ export default function AdminTestCenter({ onBack }: { onBack?: () => void }) {
                                 className="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  const errorText = [
-                                    `Suite: ${suite.label} (${lastSuiteRun.test_type})`,
-                                    `Status: ${lastSuiteRun.status}`,
-                                    `Data: ${new Date(lastSuiteRun.created_at).toLocaleString("pt-BR")}`,
-                                    lastSuiteRun.error_message ? `\nErro: ${lastSuiteRun.error_message}` : "",
-                                    lastSuiteRun.error_summary ? `Resumo: ${lastSuiteRun.error_summary}` : "",
-                                    lastSuiteRun.github_run_url ? `GitHub: ${lastSuiteRun.github_run_url}` : "",
-                                    failedResults.length > 0 ? `\nTestes que falharam:\n${failedResults.map(r => `  ❌ ${r.name}${r.url ? ` (${r.url})` : ""}\n     ${r.error || ""}`).join("\n")}` : "",
-                                  ].filter(Boolean).join("\n");
-                                  navigator.clipboard.writeText(errorText);
-                                  toast.success("Erro copiado");
+                                  copyDiagnostic(lastSuiteRun as TestRun, "error");
                                 }}
                               >
                                 <Copy className="h-3 w-3 inline mr-0.5" />Copiar erro
