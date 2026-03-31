@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
@@ -6,6 +6,8 @@ import { ArrowLeft, ArrowRight, CheckCircle2, MessageCircle, ChevronRight, Shiel
 import type { LucideIcon } from "lucide-react";
 import HoursCalculator from "@/components/orcamento/HoursCalculator";
 import EmergencyLeadForm from "@/components/EmergencyLeadForm";
+import ContractModeSelector, { type ContractMode, type AllowedModes } from "@/components/ContractModeSelector";
+import RecurringPlanPreview from "@/components/RecurringPlanPreview";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SeoHead from "@/components/SeoHead";
