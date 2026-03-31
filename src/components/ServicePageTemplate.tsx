@@ -425,7 +425,7 @@ const ServicePageTemplate = ({
       <MicroCta href={contractHref} whatsappMessage={whatsappMessage} cityName={cityName} pageTitle={title} contractMode={contractMode} />
 
       {/* ══ URGENCY BLOCK ══ */}
-      <UrgencyBlock whatsappMessage={whatsappMessage} currentPath={currentPath} cityName={cityName} pageTitle={title} />
+      <UrgencyBlock whatsappMessage={whatsappMessage} currentPath={currentPath} cityName={cityName} pageTitle={title} contractMode={contractMode} />
 
       {/* ══ FAQ ══ */}
       <section className="section-dark py-16 md:py-24" data-testid="faq-section">
