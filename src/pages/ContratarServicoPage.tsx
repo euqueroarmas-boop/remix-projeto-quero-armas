@@ -109,6 +109,9 @@ const ContratarServicoPage = () => {
   const [invoiceUrl, setInvoiceUrl] = useState<string | null>(null);
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
   const [popupBlocked, setPopupBlocked] = useState(false);
+  const [contractMode, setContractMode] = useState<ContractMode | null>(
+    (searchParams.get("modo") as ContractMode) || null
+  );
 
   // Calculations
   const unitPrice = priceTable[Math.min(hours, 8)] ?? (isEmergency ? 217.5 : 145);
