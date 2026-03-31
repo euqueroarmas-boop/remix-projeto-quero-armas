@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, AlertTriangle, RotateCcw, Clock, Trophy, BarChart3, Edit3, Trash2, Play, Timer, X, History } from "lucide-react";
+import { Heart, AlertTriangle, RotateCcw, Clock, Trophy, BarChart3, Edit3, Trash2, Play, Timer, X, History, Download, Share2 } from "lucide-react";
 import SeoHead from "@/components/SeoHead";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -69,6 +69,11 @@ const CipaPage = () => {
   const [editStartValue, setEditStartValue] = useState("");
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallBanner, setShowInstallBanner] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
+  const [isIos, setIsIos] = useState(false);
+  const [showIosGuide, setShowIosGuide] = useState(false);
   const tickRef = useRef<ReturnType<typeof setInterval>>();
 
   useEffect(() => {
@@ -92,8 +97,24 @@ const CipaPage = () => {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  // PWA manifest
+  // PWA: manifest, meta tags, service worker, install prompt
   useEffect(() => {
+    // Detect standalone mode
+    const standalone = window.matchMedia("(display-mode: standalone)").matches || (navigator as any).standalone === true;
+    setIsStandalone(standalone);
+
+    // Detect iOS
+    const ua = navigator.userAgent;
+    const ios = /iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream;
+    setIsIos(ios);
+
+    // Show install banner if not already installed
+    if (!standalone) {
+      const dismissed = sessionStorage.getItem("cipa-install-dismissed");
+      if (!dismissed) setShowInstallBanner(true);
+    }
+
+    // Manifest link
     let link = document.querySelector('link[rel="manifest"][data-cipa]') as HTMLLinkElement | null;
     if (!link) {
       link = document.createElement("link");
@@ -102,6 +123,8 @@ const CipaPage = () => {
       link.href = "/cipa-manifest.json";
       document.head.appendChild(link);
     }
+
+    // Theme color
     let meta = document.querySelector('meta[name="theme-color"][data-cipa]') as HTMLMetaElement | null;
     if (!meta) {
       meta = document.createElement("meta");
@@ -110,14 +133,56 @@ const CipaPage = () => {
       meta.content = "#0A0A0A";
       document.head.appendChild(meta);
     }
-    let metaCapable = document.querySelector('meta[name="apple-mobile-web-app-capable"]') as HTMLMetaElement | null;
-    if (!metaCapable) {
-      metaCapable = document.createElement("meta");
-      metaCapable.name = "apple-mobile-web-app-capable";
-      metaCapable.content = "yes";
-      document.head.appendChild(metaCapable);
+
+    // Apple meta tags
+    const appleMetas: { name: string; content: string }[] = [
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-title", content: "CIPA" },
+    ];
+    const createdMetas: HTMLMetaElement[] = [];
+    appleMetas.forEach(({ name, content }) => {
+      if (!document.querySelector(`meta[name="${name}"]`)) {
+        const m = document.createElement("meta");
+        m.name = name;
+        m.content = content;
+        document.head.appendChild(m);
+        createdMetas.push(m);
+      }
+    });
+
+    // Apple touch icon
+    let appleIcon = document.querySelector('link[rel="apple-touch-icon"][data-cipa]') as HTMLLinkElement | null;
+    if (!appleIcon) {
+      appleIcon = document.createElement("link");
+      appleIcon.rel = "apple-touch-icon";
+      appleIcon.setAttribute("data-cipa", "true");
+      appleIcon.href = "/cipa-icon-512.png";
+      document.head.appendChild(appleIcon);
     }
-    return () => { link?.remove(); meta?.remove(); metaCapable?.remove(); };
+
+    // Service worker — only register in production, not in iframe/preview
+    const isInIframe = (() => { try { return window.self !== window.top; } catch { return true; } })();
+    const isPreview = window.location.hostname.includes("id-preview--") || window.location.hostname.includes("lovableproject.com");
+    if (!isInIframe && !isPreview && "serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/cipa-sw.js", { scope: "/cipa" }).catch(() => {});
+    }
+
+    // Listen for beforeinstallprompt (Android/Chrome)
+    const handleBeforeInstall = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallBanner(true);
+    };
+    window.addEventListener("beforeinstallprompt", handleBeforeInstall);
+
+    return () => {
+      link?.remove();
+      meta?.remove();
+      createdMetas.forEach(m => m.remove());
+      appleIcon?.remove();
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstall);
+    };
   }, []);
 
   const elapsed = currentCycle ? now - new Date(currentCycle.started_at).getTime() : 0;
@@ -292,7 +357,112 @@ const CipaPage = () => {
             </span>
           )}
         </div>
+
+        {/* ═══ Install Banner ═══ */}
+        {showInstallBanner && !isStandalone && (
+          <div className="shrink-0 mt-1">
+            {isIos ? (
+              <button
+                onClick={() => setShowIosGuide(true)}
+                className="w-full flex items-center justify-center gap-2 bg-card border border-border text-foreground font-mono text-[11px] py-2.5 rounded-xl hover:border-primary/30 transition-all"
+              >
+                <Download className="w-3.5 h-3.5 text-primary" />
+                Instalar app
+              </button>
+            ) : deferredPrompt ? (
+              <button
+                onClick={async () => {
+                  deferredPrompt.prompt();
+                  const { outcome } = await deferredPrompt.userChoice;
+                  if (outcome === "accepted") setShowInstallBanner(false);
+                  setDeferredPrompt(null);
+                }}
+                className="w-full flex items-center justify-center gap-2 bg-card border border-border text-foreground font-mono text-[11px] py-2.5 rounded-xl hover:border-primary/30 transition-all"
+              >
+                <Download className="w-3.5 h-3.5 text-primary" />
+                Instalar app
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  sessionStorage.setItem("cipa-install-dismissed", "1");
+                  setShowInstallBanner(false);
+                }}
+                className="w-full flex items-center justify-center gap-2 text-muted-foreground/50 font-mono text-[10px] py-2 transition-all"
+              >
+                <Download className="w-3 h-3" />
+                Para instalar, use o menu do navegador
+              </button>
+            )}
+          </div>
+        )}
       </div>
+
+      {/* ═══ iOS Install Guide — Bottom Sheet ═══ */}
+      <AnimatePresence>
+        {showIosGuide && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end justify-center"
+            onClick={() => setShowIosGuide(false)}
+          >
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 28, stiffness: 300 }}
+              className="w-full max-w-lg bg-card border-t border-border rounded-t-2xl p-6"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-mono font-bold text-foreground">Instalar no iPhone</h3>
+                <button onClick={() => setShowIosGuide(false)} className="text-muted-foreground hover:text-foreground">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <span className="text-xs font-mono font-bold text-primary">1</span>
+                  </div>
+                  <div>
+                    <p className="text-sm text-foreground font-medium">Toque no botão Compartilhar</p>
+                    <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                      <Share2 className="w-3 h-3" /> O ícone de compartilhar na barra do Safari
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <span className="text-xs font-mono font-bold text-primary">2</span>
+                  </div>
+                  <div>
+                    <p className="text-sm text-foreground font-medium">Selecione "Adicionar à Tela de Início"</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Role para baixo no menu se necessário</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <span className="text-xs font-mono font-bold text-primary">3</span>
+                  </div>
+                  <div>
+                    <p className="text-sm text-foreground font-medium">Toque em "Adicionar"</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">O app CIPA será instalado na sua tela inicial</p>
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => { setShowIosGuide(false); sessionStorage.setItem("cipa-install-dismissed", "1"); setShowInstallBanner(false); }}
+                className="w-full mt-5 py-3 bg-primary text-primary-foreground font-mono text-xs font-bold uppercase tracking-wider rounded-xl"
+              >
+                Entendi
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ═══ Interrupt Confirm — Bottom Sheet ═══ */}
       <AnimatePresence>
