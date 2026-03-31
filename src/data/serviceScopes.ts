@@ -277,7 +277,7 @@ export const serviceScopes: ServiceScope[] = [
 
   createServiceScope({
     id: "srv-firewall",
-    slug: "firewall-pfsense",
+    slug: "firewall-pfsense-jacarei",
     service_name: "Firewall pfSense",
     description: "Implantação, configuração e gestão contínua de firewall pfSense para proteção do perímetro de rede.",
     included: [
