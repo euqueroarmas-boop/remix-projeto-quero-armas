@@ -509,7 +509,7 @@ export const serviceScopes: ServiceScope[] = [
 
   createServiceScope({
     id: "srv-dev-web",
-    slug: "desenvolvimento-web",
+    slug: "desenvolvimento-de-sites-e-sistemas-web",
     service_name: "Desenvolvimento Web",
     description: "Criação e manutenção de sites, sistemas web e landing pages corporativas sob medida.",
     included: [
