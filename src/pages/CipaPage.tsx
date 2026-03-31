@@ -225,7 +225,7 @@ const CipaPage = () => {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.1 }}
-          className="relative overflow-hidden rounded-3xl bg-white shadow-xl shadow-rose-100/50 border border-rose-100 p-8 mb-4 text-center"
+          className="relative overflow-hidden rounded-3xl bg-white shadow-xl shadow-rose-100/50 border border-rose-100 p-6 mb-3 text-center"
         >
           <div className="absolute inset-0 bg-gradient-to-br from-rose-500/5 to-amber-500/5" />
           <div className="relative">
