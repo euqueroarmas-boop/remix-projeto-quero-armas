@@ -60,6 +60,7 @@ const AutomacaoIaPage = lazyRetry(() => import("./pages/AutomacaoIaPage.tsx"), "
 const AutomacaoAlexaPage = lazyRetry(() => import("./pages/AutomacaoAlexaPage.tsx"), "AutomacaoAlexaPage");
 const AdminPage = lazyRetry(() => import("./pages/AdminPage.tsx"), "AdminPage");
 const RedefinirSenhaPage = lazyRetry(() => import("./pages/RedefinirSenhaPage.tsx"), "RedefinirSenhaPage");
+const CipaPage = lazyRetry(() => import("./pages/CipaPage.tsx"), "CipaPage");
 
 const queryClient = new QueryClient();
 
