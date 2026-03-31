@@ -393,7 +393,7 @@ export const serviceScopes: ServiceScope[] = [
 
   createServiceScope({
     id: "srv-montagem-redes",
-    slug: "montagem-de-redes",
+    slug: "montagem-e-monitoramento-de-redes-jacarei",
     service_name: "Montagem de Redes",
     description: "Projeto e execução de cabeamento estruturado e montagem de infraestrutura de rede corporativa.",
     included: [
