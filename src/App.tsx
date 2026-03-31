@@ -127,6 +127,7 @@ const App = () => (
             <Route path="/automacao-de-ti-com-inteligencia-artificial" element={<AutomacaoIaPage />} />
             <Route path="/automacao-alexa-casa-empresa-inteligente" element={<AutomacaoAlexaPage />} />
             <Route path="/admin" element={<AdminPage />} />
+            <Route path="/cipa" element={<CipaPage />} />
             {/* Segment dedicated pages */}
             <Route path="/ti-para-cartorios" element={<TiCartoriosPage />} />
             <Route path="/ti-para-serventias-cartoriais" element={<TiServentiasCartoriaisPage />} />
