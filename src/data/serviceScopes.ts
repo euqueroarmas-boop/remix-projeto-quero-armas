@@ -306,7 +306,7 @@ export const serviceScopes: ServiceScope[] = [
 
   createServiceScope({
     id: "srv-microsoft365",
-    slug: "microsoft-365",
+    slug: "microsoft-365-para-empresas-jacarei",
     service_name: "Microsoft 365",
     description: "Implantação, gestão e suporte contínuo do ambiente Microsoft 365 (Exchange, Teams, SharePoint, OneDrive).",
     included: [
