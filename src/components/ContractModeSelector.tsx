@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { motion, AnimatePresence } from "framer-motion";
-import { Clock, CalendarCheck, CheckCircle2, ArrowRight, Shield, Zap } from "lucide-react";
+import { motion } from "framer-motion";
+import { Clock, CalendarCheck, CheckCircle2, ArrowRight, Zap } from "lucide-react";
 
 export type ContractMode = "sob_demanda" | "recorrente";
 export type AllowedModes = "both" | "sob_demanda_only" | "recorrente_only";
