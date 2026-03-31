@@ -240,6 +240,7 @@ const ServicePageTemplate = ({
   // Derive the slug from currentPath (e.g. "/administracao-de-servidores" → "administracao-de-servidores")
   const pageSlug = currentPath.replace(/^\//, "");
   const contractHref = pageSlug ? `/contratar/${pageSlug}` : "/orcamento-ti";
+  const serviceScope = useMemo(() => getServiceScopeBySlug(pageSlug), [pageSlug]);
 
   return (
     <div className="min-h-screen">
