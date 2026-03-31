@@ -22,7 +22,7 @@ interface HoursCalculatorProps {
   contractHref?: string;
 }
 
-const HoursCalculator = ({ serviceName }: HoursCalculatorProps) => {
+const HoursCalculator = ({ serviceName, contractHref }: HoursCalculatorProps) => {
   const { t } = useTranslation();
   const [hours, setHours] = useState(1);
 
