@@ -15,13 +15,13 @@ interface Props {
 const ContractModeSelector = ({ mode, onSelect, allowedModes = "both" }: Props) => {
   const { t } = useTranslation();
 
-  // If only one mode allowed, auto-select and don't render selector
-  if (allowedModes === "sob_demanda_only") {
-    if (!mode) onSelect("sob_demanda");
-    return null;
-  }
-  if (allowedModes === "recorrente_only") {
-    if (!mode) onSelect("recorrente");
+  // If only one mode allowed, auto-select via effect and don't render selector
+  useEffect(() => {
+    if (allowedModes === "sob_demanda_only" && !mode) onSelect("sob_demanda");
+    if (allowedModes === "recorrente_only" && !mode) onSelect("recorrente");
+  }, [allowedModes, mode, onSelect]);
+
+  if (allowedModes === "sob_demanda_only" || allowedModes === "recorrente_only") {
     return null;
   }
 
