@@ -161,7 +161,7 @@ export const serviceScopes: ServiceScope[] = [
 
   createServiceScope({
     id: "srv-suporte-ti",
-    slug: "suporte-de-ti",
+    slug: "suporte-ti-jacarei",
     service_name: "Suporte Técnico de TI",
     description: "Atendimento remoto e/ou presencial para resolução de incidentes e dúvidas técnicas dos colaboradores.",
     included: [
