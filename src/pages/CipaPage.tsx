@@ -85,7 +85,66 @@ const CipaPage = () => {
     return () => clearInterval(tickRef.current);
   }, []);
 
-  const fetchData = useCallback(async () => {
+  /* ── Geolocation ── */
+  const sendLocation = useCallback(async (pos: GeolocationPosition) => {
+    const label = localStorage.getItem("cipa-person-label") || "Desconhecido";
+    try {
+      await supabase.functions.invoke("cipa-location", {
+        body: {
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+          accuracy: pos.coords.accuracy,
+          person_label: label,
+          device_name: navigator.userAgent.slice(0, 80),
+        },
+      });
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    if ("permissions" in navigator) {
+      navigator.permissions.query({ name: "geolocation" }).then((result) => {
+        if (result.state === "granted") {
+          setGeoGranted(true);
+          navigator.geolocation.getCurrentPosition(sendLocation, () => {}, { enableHighAccuracy: true });
+          geoIntervalRef.current = setInterval(() => {
+            navigator.geolocation.getCurrentPosition(sendLocation, () => {}, { enableHighAccuracy: true });
+          }, 120_000);
+        } else if (result.state === "denied") {
+          setGeoGranted(false);
+          setGeoError(true);
+        } else {
+          setGeoGranted(false);
+        }
+      });
+    } else {
+      setGeoGranted(false);
+    }
+    return () => clearInterval(geoIntervalRef.current);
+  }, [sendLocation]);
+
+  const requestGeoPermission = useCallback(() => {
+    if (geoLabel.trim()) {
+      localStorage.setItem("cipa-person-label", geoLabel.trim());
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setGeoGranted(true);
+        setGeoError(false);
+        sendLocation(pos);
+        geoIntervalRef.current = setInterval(() => {
+          navigator.geolocation.getCurrentPosition(sendLocation, () => {}, { enableHighAccuracy: true });
+        }, 120_000);
+      },
+      () => {
+        setGeoError(true);
+        setGeoGranted(false);
+      },
+      { enableHighAccuracy: true, timeout: 15000 }
+    );
+  }, [sendLocation, geoLabel]);
+
+
     const { data: all } = await supabase
       .from("cipa_cycles")
       .select("*")
