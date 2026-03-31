@@ -6,6 +6,8 @@ import { ArrowLeft, ArrowRight, CheckCircle2, MessageCircle, ChevronRight, Shiel
 import type { LucideIcon } from "lucide-react";
 import EmergencyLeadForm from "@/components/EmergencyLeadForm";
 import ContractModeSelector, { type ContractMode, type AllowedModes } from "@/components/ContractModeSelector";
+import ServiceScopeDisplay from "@/components/ServiceScopeDisplay";
+import { getServiceScopeBySlug } from "@/data/serviceScopes";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SeoHead from "@/components/SeoHead";
@@ -233,6 +235,7 @@ const ServicePageTemplate = ({
   // Derive the slug from currentPath (e.g. "/administracao-de-servidores" → "administracao-de-servidores")
   const pageSlug = currentPath.replace(/^\//, "");
   const contractHref = pageSlug ? `/contratar/${pageSlug}` : "/orcamento-ti";
+  const serviceScope = useMemo(() => getServiceScopeBySlug(pageSlug), [pageSlug]);
 
   return (
     <div className="min-h-screen">
@@ -419,6 +422,23 @@ const ServicePageTemplate = ({
           </div>
         </div>
       </section>
+
+      {/* ══ SERVICE SCOPE ══ */}
+      {serviceScope && (
+        <section className="section-light py-16 md:py-24">
+          <div className="container max-w-4xl">
+            <motion.div {...fadeIn}>
+              <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
+                {t("service.scopeTag", "Escopo do serviço")}
+              </p>
+              <h2 className="text-2xl md:text-3xl mb-8">
+                {t("service.scopeTitle", "O que está")} <span className="text-primary">{t("service.scopeTitleHighlight", "incluso")}</span>
+              </h2>
+              <ServiceScopeDisplay scope={serviceScope} />
+            </motion.div>
+          </div>
+        </section>
+      )}
 
       {/* ══ WHAT YOUR COMPANY AVOIDS ══ */}
       <AvoidanceBlock cityName={cityName} />
