@@ -112,6 +112,7 @@ jobs:
               checkout)     SPEC="cypress/e2e/checkout/**" ;;
               portal)       SPEC="cypress/e2e/smoke/area-cliente.cy.ts,cypress/e2e/smoke/home.cy.ts" ;;
               certificate)  SPEC="cypress/e2e/certificate/**" ;;
+              scope-engine) SPEC="cypress/e2e/scope-engine/**" ;;
               regression)   SPEC="cypress/e2e/**" ;;
               *)            SPEC="cypress/e2e/smoke/**" ;;
           esac
