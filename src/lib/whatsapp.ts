@@ -149,7 +149,7 @@ export interface WhatsAppMessageOptions {
  * Produces a SHORT, clean message — includes page name + current URL.
  */
 export function buildContextualWhatsAppMessage(options: WhatsAppMessageOptions = {}): string {
-  const { pageTitle, intent = "general", city, detail } = options;
+  const { pageTitle, intent = "general", city, detail, contractMode } = options;
   const name = getCleanPageName(pageTitle);
   const url = getSiteUrl();
 
@@ -185,7 +185,14 @@ export function buildContextualWhatsAppMessage(options: WhatsAppMessageOptions =
     intro = intro.replace("no site da WMTi", `em ${city} no site da WMTi`);
   }
 
-  const parts = [intro, detail?.trim(), url ? `Link da página: ${url}` : undefined].filter(Boolean) as string[];
+  // Append contract mode context
+  const modeLabel = contractMode === "sob_demanda"
+    ? "Modelo escolhido: Sob demanda / por hora"
+    : contractMode === "recorrente"
+    ? "Modelo escolhido: Plano recorrente / mensal"
+    : undefined;
+
+  const parts = [intro, modeLabel, detail?.trim(), url ? `Link da página: ${url}` : undefined].filter(Boolean) as string[];
 
   return dedupeRepeatedText(parts.join("\n\n"));
 }
