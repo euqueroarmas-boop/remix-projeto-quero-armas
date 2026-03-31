@@ -596,7 +596,7 @@ export const serviceScopes: ServiceScope[] = [
 
   createServiceScope({
     id: "srv-suporte-emergencial",
-    slug: "suporte-emergencial",
+    slug: "suporte-tecnico-emergencial",
     service_name: "Suporte Emergencial",
     description: "Atendimento técnico de urgência para incidentes críticos que paralisam a operação da empresa.",
     included: [
