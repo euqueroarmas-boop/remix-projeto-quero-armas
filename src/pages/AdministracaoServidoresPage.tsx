@@ -31,7 +31,7 @@ const AdministracaoServidoresPage = () => {
       ]}
       localContent={t(`${k}.localContent`)}
       showHoursCalculator={false}
-      extraSections={<ServerAdminCalculator />}
+      extraSections={<><GuaranteeBlock /><ServerAdminCalculator /></>}
     />
   );
 };
