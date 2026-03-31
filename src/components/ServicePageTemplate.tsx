@@ -360,7 +360,7 @@ const ServicePageTemplate = ({
       </section>
 
       {/* ══ MICRO-CTA 1 ══ */}
-      <MicroCta href="/orcamento-ti" whatsappMessage={whatsappMessage} cityName={cityName} pageTitle={title} />
+      <MicroCta href="/orcamento-ti" whatsappMessage={whatsappMessage} cityName={cityName} pageTitle={title} contractMode={contractMode} />
 
       {/* ══ EMERGENCY LEAD FORM (problem pages only) ══ */}
       {isProblemPage && (
