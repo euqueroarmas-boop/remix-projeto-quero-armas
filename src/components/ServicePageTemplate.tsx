@@ -141,7 +141,7 @@ const AvoidanceBlock = ({ cityName }: { cityName?: string }) => {
 };
 
 /* ── Urgency block ── */
-const UrgencyBlock = ({ cityName, pageTitle }: { whatsappMessage: string; currentPath: string; cityName?: string; pageTitle?: string }) => {
+const UrgencyBlock = ({ cityName, pageTitle, contractMode }: { whatsappMessage: string; currentPath: string; cityName?: string; pageTitle?: string; contractMode?: ContractMode | null }) => {
   const { t } = useTranslation();
   return (
     <section className="py-12 md:py-16 bg-destructive/5 border-y border-destructive/10">
@@ -159,7 +159,7 @@ const UrgencyBlock = ({ cityName, pageTitle }: { whatsappMessage: string; curren
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <button
-              onClick={() => openWhatsApp({ pageTitle, intent: "specialist" })}
+              onClick={() => openWhatsApp({ pageTitle, intent: "specialist", contractMode: contractMode || undefined })}
               className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all btn-glow rounded"
             >
               <MessageCircle size={16} />
