@@ -132,7 +132,7 @@ export const serviceScopes: ServiceScope[] = [
 
   createServiceScope({
     id: "srv-infra-ti",
-    slug: "infraestrutura-de-ti",
+    slug: "infraestrutura-ti-corporativa-jacarei",
     service_name: "Infraestrutura de TI",
     description: "Gestão completa da infraestrutura de tecnologia da informação, incluindo manutenção preventiva e corretiva de ativos.",
     included: [
@@ -161,7 +161,7 @@ export const serviceScopes: ServiceScope[] = [
 
   createServiceScope({
     id: "srv-suporte-ti",
-    slug: "suporte-de-ti",
+    slug: "suporte-ti-jacarei",
     service_name: "Suporte Técnico de TI",
     description: "Atendimento remoto e/ou presencial para resolução de incidentes e dúvidas técnicas dos colaboradores.",
     included: [
@@ -219,7 +219,7 @@ export const serviceScopes: ServiceScope[] = [
 
   createServiceScope({
     id: "srv-terceirizacao",
-    slug: "terceirizacao-de-ti",
+    slug: "terceirizacao-de-mao-de-obra-ti",
     service_name: "Terceirização de TI",
     description: "Gestão completa do ambiente tecnológico, assumindo todas as funções de TI da CONTRATANTE conforme pacote contratado.",
     included: [
@@ -248,7 +248,7 @@ export const serviceScopes: ServiceScope[] = [
 
   createServiceScope({
     id: "srv-locacao",
-    slug: "locacao-de-computadores",
+    slug: "locacao-de-computadores-para-empresas-jacarei",
     service_name: "Locação de Computadores",
     description: "Fornecimento de estações de trabalho corporativas em regime de locação, com manutenção e suporte inclusos.",
     included: [
@@ -277,7 +277,7 @@ export const serviceScopes: ServiceScope[] = [
 
   createServiceScope({
     id: "srv-firewall",
-    slug: "firewall-pfsense",
+    slug: "firewall-pfsense-jacarei",
     service_name: "Firewall pfSense",
     description: "Implantação, configuração e gestão contínua de firewall pfSense para proteção do perímetro de rede.",
     included: [
@@ -306,7 +306,7 @@ export const serviceScopes: ServiceScope[] = [
 
   createServiceScope({
     id: "srv-microsoft365",
-    slug: "microsoft-365",
+    slug: "microsoft-365-para-empresas-jacarei",
     service_name: "Microsoft 365",
     description: "Implantação, gestão e suporte contínuo do ambiente Microsoft 365 (Exchange, Teams, SharePoint, OneDrive).",
     included: [
@@ -393,7 +393,7 @@ export const serviceScopes: ServiceScope[] = [
 
   createServiceScope({
     id: "srv-montagem-redes",
-    slug: "montagem-de-redes",
+    slug: "montagem-e-monitoramento-de-redes-jacarei",
     service_name: "Montagem de Redes",
     description: "Projeto e execução de cabeamento estruturado e montagem de infraestrutura de rede corporativa.",
     included: [
@@ -422,7 +422,7 @@ export const serviceScopes: ServiceScope[] = [
 
   createServiceScope({
     id: "srv-reestruturacao-rede",
-    slug: "reestruturacao-de-rede",
+    slug: "reestruturacao-completa-de-rede-corporativa",
     service_name: "Reestruturação de Rede",
     description: "Análise, diagnóstico e reestruturação da infraestrutura de rede existente para melhorar performance e segurança.",
     included: [
@@ -480,7 +480,7 @@ export const serviceScopes: ServiceScope[] = [
 
   createServiceScope({
     id: "srv-suporte-redes-corp",
-    slug: "suporte-redes-corporativas",
+    slug: "suporte-tecnico-para-redes-corporativas",
     service_name: "Suporte a Redes Corporativas",
     description: "Suporte técnico especializado para redes corporativas, incluindo diagnóstico, manutenção e otimização de infraestrutura de rede.",
     included: [
@@ -509,7 +509,7 @@ export const serviceScopes: ServiceScope[] = [
 
   createServiceScope({
     id: "srv-dev-web",
-    slug: "desenvolvimento-web",
+    slug: "desenvolvimento-de-sites-e-sistemas-web",
     service_name: "Desenvolvimento Web",
     description: "Criação e manutenção de sites, sistemas web e landing pages corporativas sob medida.",
     included: [
@@ -538,7 +538,7 @@ export const serviceScopes: ServiceScope[] = [
 
   createServiceScope({
     id: "srv-automacao-ia",
-    slug: "automacao-ia",
+    slug: "automacao-de-ti-com-inteligencia-artificial",
     service_name: "Automação com IA",
     description: "Consultoria e implementação de soluções de automação utilizando inteligência artificial para processos corporativos.",
     included: [
@@ -567,7 +567,7 @@ export const serviceScopes: ServiceScope[] = [
 
   createServiceScope({
     id: "srv-automacao-alexa",
-    slug: "automacao-alexa",
+    slug: "automacao-alexa-casa-empresa-inteligente",
     service_name: "Automação com Alexa",
     description: "Implantação de automação residencial e corporativa utilizando dispositivos Amazon Alexa e ecossistema smart home.",
     included: [
@@ -596,7 +596,7 @@ export const serviceScopes: ServiceScope[] = [
 
   createServiceScope({
     id: "srv-suporte-emergencial",
-    slug: "suporte-emergencial",
+    slug: "suporte-tecnico-emergencial",
     service_name: "Suporte Emergencial",
     description: "Atendimento técnico de urgência para incidentes críticos que paralisam a operação da empresa.",
     included: [
@@ -625,7 +625,7 @@ export const serviceScopes: ServiceScope[] = [
 
   createServiceScope({
     id: "srv-servidores-dell",
-    slug: "servidores-dell",
+    slug: "servidor-dell-poweredge-jacarei",
     service_name: "Servidores Dell",
     description: "Consultoria, implantação e suporte para servidores Dell PowerEdge em ambiente corporativo.",
     included: [
@@ -654,7 +654,7 @@ export const serviceScopes: ServiceScope[] = [
 
   createServiceScope({
     id: "srv-manutencao-infra",
-    slug: "manutencao-infraestrutura",
+    slug: "manutencao-de-infraestrutura-de-ti",
     service_name: "Manutenção de Infraestrutura",
     description: "Serviço contínuo de manutenção preventiva e corretiva da infraestrutura de TI da CONTRATANTE.",
     included: [
