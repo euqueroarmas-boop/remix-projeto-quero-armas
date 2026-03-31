@@ -422,7 +422,7 @@ export const serviceScopes: ServiceScope[] = [
 
   createServiceScope({
     id: "srv-reestruturacao-rede",
-    slug: "reestruturacao-de-rede",
+    slug: "reestruturacao-completa-de-rede-corporativa",
     service_name: "Reestruturação de Rede",
     description: "Análise, diagnóstico e reestruturação da infraestrutura de rede existente para melhorar performance e segurança.",
     included: [
