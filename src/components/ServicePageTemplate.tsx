@@ -13,11 +13,6 @@ import Footer from "@/components/Footer";
 import SeoHead from "@/components/SeoHead";
 import JsonLd, { buildFaqSchema, buildBreadcrumbSchema, buildServiceSchema } from "@/components/JsonLd";
 import { openWhatsApp } from "@/lib/whatsapp";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
-import SeoHead from "@/components/SeoHead";
-import JsonLd, { buildFaqSchema, buildBreadcrumbSchema, buildServiceSchema } from "@/components/JsonLd";
-import { openWhatsApp } from "@/lib/whatsapp";
 
 interface FAQ {
   question: string;
