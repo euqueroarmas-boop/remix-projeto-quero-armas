@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
@@ -6,6 +6,8 @@ import { ArrowLeft, ArrowRight, CheckCircle2, MessageCircle, ChevronRight, Shiel
 import type { LucideIcon } from "lucide-react";
 import HoursCalculator from "@/components/orcamento/HoursCalculator";
 import EmergencyLeadForm from "@/components/EmergencyLeadForm";
+import ContractModeSelector, { type ContractMode, type AllowedModes } from "@/components/ContractModeSelector";
+import RecurringPlanPreview from "@/components/RecurringPlanPreview";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SeoHead from "@/components/SeoHead";
@@ -41,6 +43,8 @@ interface ServicePageProps {
   extraSections?: React.ReactNode;
   isProblemPage?: boolean;
   problemName?: string;
+  /** Controls which contract modes are available. Default: "both" */
+  allowedModes?: AllowedModes;
 }
 
 const fadeIn = {
@@ -51,7 +55,7 @@ const fadeIn = {
 };
 
 /* ── Micro-CTA reusable block ── */
-const MicroCta = ({ href, cityName, pageTitle }: { href: string; whatsappMessage: string; cityName?: string; pageTitle?: string }) => {
+const MicroCta = ({ href, cityName, pageTitle, contractMode }: { href: string; whatsappMessage: string; cityName?: string; pageTitle?: string; contractMode?: ContractMode | null }) => {
   const { t } = useTranslation();
   return (
     <motion.div {...fadeIn} className="py-8 md:py-10">
@@ -71,7 +75,7 @@ const MicroCta = ({ href, cityName, pageTitle }: { href: string; whatsappMessage
               {t("service.microCtaBtn")}
             </Link>
             <button
-              onClick={() => openWhatsApp({ pageTitle, intent: "specialist" })}
+              onClick={() => openWhatsApp({ pageTitle, intent: "specialist", contractMode: contractMode || undefined })}
               className="inline-flex items-center gap-2 border border-border text-foreground px-5 py-3 font-mono text-xs uppercase tracking-wider hover:border-primary hover:text-primary transition-all rounded"
             >
               <MessageCircle size={14} />
@@ -137,7 +141,7 @@ const AvoidanceBlock = ({ cityName }: { cityName?: string }) => {
 };
 
 /* ── Urgency block ── */
-const UrgencyBlock = ({ cityName, pageTitle }: { whatsappMessage: string; currentPath: string; cityName?: string; pageTitle?: string }) => {
+const UrgencyBlock = ({ cityName, pageTitle, contractMode }: { whatsappMessage: string; currentPath: string; cityName?: string; pageTitle?: string; contractMode?: ContractMode | null }) => {
   const { t } = useTranslation();
   return (
     <section className="py-12 md:py-16 bg-destructive/5 border-y border-destructive/10">
@@ -155,7 +159,7 @@ const UrgencyBlock = ({ cityName, pageTitle }: { whatsappMessage: string; curren
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <button
-              onClick={() => openWhatsApp({ pageTitle, intent: "specialist" })}
+              onClick={() => openWhatsApp({ pageTitle, intent: "specialist", contractMode: contractMode || undefined })}
               className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all btn-glow rounded"
             >
               <MessageCircle size={16} />
@@ -198,7 +202,9 @@ const ServicePageTemplate = ({
   extraSections,
   isProblemPage,
   problemName,
+  allowedModes = "both",
 }: ServicePageProps) => {
+  const [contractMode, setContractMode] = useState<ContractMode | null>(null);
   const { t } = useTranslation();
   const location = useLocation();
   const baseUrl = "https://www.wmti.com.br";
@@ -273,7 +279,7 @@ const ServicePageTemplate = ({
                   {t("service.ctaContract")}
                 </Link>
                 <button
-                  onClick={() => openWhatsApp({ pageTitle: title, intent: "specialist" })}
+                  onClick={() => openWhatsApp({ pageTitle: title, intent: "specialist", contractMode: contractMode || undefined })}
                   className="inline-flex items-center gap-2 border border-gunmetal-foreground/30 text-gunmetal-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:border-primary hover:text-primary transition-all"
                 >
                   <MessageCircle size={16} />
@@ -304,6 +310,13 @@ const ServicePageTemplate = ({
 
       {/* ══ AUTHORITY BAR ══ */}
       <AuthorityBar />
+
+      {/* ══ CONTRACT MODE SELECTOR ══ */}
+      <ContractModeSelector
+        mode={contractMode}
+        onSelect={setContractMode}
+        allowedModes={allowedModes}
+      />
 
       {/* ══ Pain Points & Solutions ══ */}
       <section className="section-light py-16 md:py-24">
@@ -347,7 +360,7 @@ const ServicePageTemplate = ({
       </section>
 
       {/* ══ MICRO-CTA 1 ══ */}
-      <MicroCta href="/orcamento-ti" whatsappMessage={whatsappMessage} cityName={cityName} pageTitle={title} />
+      <MicroCta href="/orcamento-ti" whatsappMessage={whatsappMessage} cityName={cityName} pageTitle={title} contractMode={contractMode} />
 
       {/* ══ EMERGENCY LEAD FORM (problem pages only) ══ */}
       {isProblemPage && (
@@ -409,10 +422,10 @@ const ServicePageTemplate = ({
       )}
 
       {/* ══ MICRO-CTA 2 ══ */}
-      <MicroCta href={contractHref} whatsappMessage={whatsappMessage} cityName={cityName} pageTitle={title} />
+      <MicroCta href={contractHref} whatsappMessage={whatsappMessage} cityName={cityName} pageTitle={title} contractMode={contractMode} />
 
       {/* ══ URGENCY BLOCK ══ */}
-      <UrgencyBlock whatsappMessage={whatsappMessage} currentPath={currentPath} cityName={cityName} pageTitle={title} />
+      <UrgencyBlock whatsappMessage={whatsappMessage} currentPath={currentPath} cityName={cityName} pageTitle={title} contractMode={contractMode} />
 
       {/* ══ FAQ ══ */}
       <section className="section-dark py-16 md:py-24" data-testid="faq-section">
@@ -446,8 +459,15 @@ const ServicePageTemplate = ({
         </div>
       </section>
 
-      {/* ══ Hours Calculator ══ */}
-      {showHoursCalculator && <HoursCalculator serviceName={tag} />}
+      {/* ══ Hours Calculator (sob demanda mode) ══ */}
+      {(contractMode === "sob_demanda" || (!contractMode && showHoursCalculator)) && (
+        <HoursCalculator serviceName={tag} />
+      )}
+
+      {/* ══ Recurring Plan Preview (recorrente mode) ══ */}
+      {contractMode === "recorrente" && (
+        <RecurringPlanPreview contractHref={contractHref} pageTitle={title} />
+      )}
 
       {/* ══ Extra Sections (e.g. downtime calculator) ══ */}
       {extraSections}
@@ -470,7 +490,7 @@ const ServicePageTemplate = ({
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <button
-                onClick={() => openWhatsApp({ pageTitle: title, intent: "proposal" })}
+                onClick={() => openWhatsApp({ pageTitle: title, intent: "proposal", contractMode: contractMode || undefined })}
                 className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all btn-glow rounded"
               >
                 <MessageCircle size={16} />
