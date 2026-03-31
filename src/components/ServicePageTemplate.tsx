@@ -288,11 +288,21 @@ const ServicePageTemplate = ({
 
               <div className="flex flex-wrap gap-4">
                 <Link
-                  to={contractHref}
+                  to={contractMode === "recorrente"
+                    ? `${contractHref}?modo=recorrente`
+                    : contractMode === "sob_demanda"
+                      ? `${contractHref}?modo=sob_demanda`
+                      : contractHref
+                  }
+                  onClick={() => console.log("[WMTi] CHECKOUT_FLOW_STARTED", { contractMode, contractHref })}
                   className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all btn-glow"
                 >
                   <ArrowRight size={16} />
-                  {t("service.ctaContract")}
+                  {contractMode === "sob_demanda"
+                    ? t("service.ctaContractOnDemand", "Contratar sob demanda")
+                    : contractMode === "recorrente"
+                      ? t("service.ctaContractRecurring", "Contratar plano recorrente")
+                      : t("service.ctaContract")}
                 </Link>
                 <button
                   onClick={() => openWhatsApp({ pageTitle: title, intent: "specialist", contractMode: contractMode || undefined })}
