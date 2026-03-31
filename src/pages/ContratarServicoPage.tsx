@@ -768,6 +768,8 @@ const ContratarServicoPage = () => {
     );
   }
 
+  /* ─── Server Admin: Recurring contract flow ─── */
+  if (isServerAdmin) {
     return (
       <div className="min-h-screen">
         <SeoHead
