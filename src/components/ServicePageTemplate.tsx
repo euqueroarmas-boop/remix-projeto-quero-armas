@@ -481,7 +481,7 @@ const ServicePageTemplate = ({
       {(contractMode === "sob_demanda" || (!contractMode && showHoursCalculator)) && (
         <div id="section-sob-demanda">
           {contractMode === "sob_demanda" && console.log("[WMTi] CONTRACT_MODE_RENDER_OK sob_demanda") as unknown as null}
-          <HoursCalculator serviceName={tag} />
+          <HoursCalculator serviceName={tag} contractHref={contractHref} />
         </div>
       )}
 

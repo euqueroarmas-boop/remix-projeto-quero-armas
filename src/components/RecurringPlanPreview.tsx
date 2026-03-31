@@ -76,11 +76,12 @@ const RecurringPlanPreview = ({ contractHref, pageTitle }: Props) => {
         {/* CTA */}
         <div className="text-center">
           <Link
-            to="/orcamento-ti"
+            to={`${contractHref}?modo=recorrente`}
+            onClick={() => console.log("[WMTi] CHECKOUT_REDIRECT_RECORRENTE", { contractHref, pageTitle })}
             className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all rounded"
           >
             <ArrowRight size={16} />
-            {t("recurringPreview.cta", "Contratar plano mensal")}
+            {t("recurringPreview.cta", "Contratar plano recorrente")}
           </Link>
         </div>
       </div>
