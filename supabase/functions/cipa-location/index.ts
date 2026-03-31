@@ -26,12 +26,14 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    const ua = req.headers.get("user-agent") || "Dispositivo";
+
     const { data, error } = await supabase.from("cipa_locations").insert({
       latitude,
       longitude,
       accuracy: accuracy ?? null,
       person_label: person_label || "Desconhecido",
-      device_name: device_name || navigator?.userAgent?.slice(0, 80) || "Dispositivo",
+      device_name: device_name || ua.slice(0, 80),
       captured_at: new Date().toISOString(),
     }).select().single();
 
