@@ -1,0 +1,22 @@
+{
+  "name": "CIPA — Contador de Dias",
+  "short_name": "CIPA",
+  "description": "Contador de dias sem briga",
+  "start_url": "/cipa",
+  "scope": "/cipa",
+  "display": "standalone",
+  "background_color": "#FFF7ED",
+  "theme_color": "#F43F5E",
+  "icons": [
+    {
+      "src": "/cipa-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/cipa-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

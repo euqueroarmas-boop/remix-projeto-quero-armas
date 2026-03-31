@@ -60,6 +60,7 @@ const AutomacaoIaPage = lazyRetry(() => import("./pages/AutomacaoIaPage.tsx"), "
 const AutomacaoAlexaPage = lazyRetry(() => import("./pages/AutomacaoAlexaPage.tsx"), "AutomacaoAlexaPage");
 const AdminPage = lazyRetry(() => import("./pages/AdminPage.tsx"), "AdminPage");
 const RedefinirSenhaPage = lazyRetry(() => import("./pages/RedefinirSenhaPage.tsx"), "RedefinirSenhaPage");
+const CipaPage = lazyRetry(() => import("./pages/CipaPage.tsx"), "CipaPage");
 
 const queryClient = new QueryClient();
 
@@ -126,6 +127,7 @@ const App = () => (
             <Route path="/automacao-de-ti-com-inteligencia-artificial" element={<AutomacaoIaPage />} />
             <Route path="/automacao-alexa-casa-empresa-inteligente" element={<AutomacaoAlexaPage />} />
             <Route path="/admin" element={<AdminPage />} />
+            <Route path="/cipa" element={<CipaPage />} />
             {/* Segment dedicated pages */}
             <Route path="/ti-para-cartorios" element={<TiCartoriosPage />} />
             <Route path="/ti-para-serventias-cartoriais" element={<TiServentiasCartoriaisPage />} />
