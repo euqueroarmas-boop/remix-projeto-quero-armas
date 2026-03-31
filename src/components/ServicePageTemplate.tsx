@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, CheckCircle2, MessageCircle, ChevronRight, ShieldCheck, Building2, Award, Zap, AlertTriangle, Clock } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import HoursCalculator from "@/components/orcamento/HoursCalculator";
+import UnifiedInfraCalculator from "@/components/orcamento/UnifiedInfraCalculator";
 import EmergencyLeadForm from "@/components/EmergencyLeadForm";
 import ContractModeSelector, { type ContractMode, type AllowedModes } from "@/components/ContractModeSelector";
 import RecurringPlanPreview from "@/components/RecurringPlanPreview";
