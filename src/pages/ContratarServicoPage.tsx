@@ -19,6 +19,8 @@ import { generateContractHtml } from "@/components/orcamento/ContractPreview";
 import ContractingWizard from "@/components/orcamento/ContractingWizard";
 import { plans } from "@/components/orcamento/PlanSelector";
 import ServerAdminRegistrationForm, { type ServerAdminRegistrationData } from "@/components/orcamento/ServerAdminRegistrationForm";
+import ContractModeSelector, { type ContractMode } from "@/components/ContractModeSelector";
+import UnifiedInfraCalculator from "@/components/orcamento/UnifiedInfraCalculator";
 
 import type { CustomerData } from "@/components/orcamento/CustomerDataForm";
 
