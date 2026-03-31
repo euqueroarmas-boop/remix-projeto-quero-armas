@@ -332,7 +332,7 @@ const ServicePageTemplate = ({
       {/* ══ CONTRACT MODE SELECTOR ══ */}
       <ContractModeSelector
         mode={contractMode}
-        onSelect={setContractMode}
+        onSelect={handleModeSelect}
         allowedModes={allowedModes}
       />
 
