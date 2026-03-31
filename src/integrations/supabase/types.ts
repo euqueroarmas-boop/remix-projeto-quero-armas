@@ -317,6 +317,45 @@ export type Database = {
         }
         Relationships: []
       }
+      cipa_locations: {
+        Row: {
+          accuracy: number | null
+          captured_at: string
+          created_at: string
+          device_name: string
+          id: string
+          is_priority: boolean
+          latitude: number
+          longitude: number
+          person_label: string
+          priority_order: number | null
+        }
+        Insert: {
+          accuracy?: number | null
+          captured_at?: string
+          created_at?: string
+          device_name?: string
+          id?: string
+          is_priority?: boolean
+          latitude: number
+          longitude: number
+          person_label?: string
+          priority_order?: number | null
+        }
+        Update: {
+          accuracy?: number | null
+          captured_at?: string
+          created_at?: string
+          device_name?: string
+          id?: string
+          is_priority?: boolean
+          latitude?: number
+          longitude?: number
+          person_label?: string
+          priority_order?: number | null
+        }
+        Relationships: []
+      }
       client_events: {
         Row: {
           created_at: string
