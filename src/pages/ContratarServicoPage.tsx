@@ -768,13 +768,22 @@ const ContratarServicoPage = () => {
     );
   }
 
-  /* ─── Server Admin: Recurring contract flow ─── */
+  /* ─── Server Admin: Dual-mode (on-demand + recurring) ─── */
   if (isServerAdmin) {
+    const handleServerModeSelect = (mode: ContractMode) => {
+      setContractMode(mode);
+      if (mode === "sob_demanda") {
+        console.log("[WMTi] CONTRACT_MODE_SELECTED_ON_DEMAND", { slug, serviceName: "Administração de Servidores" });
+      } else {
+        console.log("[WMTi] CONTRACT_MODE_SELECTED_RECURRING", { slug, serviceName: "Administração de Servidores" });
+      }
+    };
+
     return (
       <div className="min-h-screen">
         <SeoHead
           title="Contratar Administração de Servidores | WMTi"
-          description="Contrate a administração contínua de servidores com a WMTi. Plano recorrente com permanência mínima de 12 meses."
+          description="Contrate administração de servidores com a WMTi. Atendimento sob demanda ou plano recorrente mensal."
         />
         <Navbar />
 
@@ -789,68 +798,318 @@ const ContratarServicoPage = () => {
                 <li className="text-primary" aria-current="page">Contratar</li>
               </ol>
             </nav>
-            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">Contratação recorrente</p>
+            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">Contratação de serviço</p>
             <h1 className="text-2xl md:text-4xl lg:text-5xl mb-4">
               Contratar <span className="text-primary">Administração de Servidores</span>
             </h1>
             <p className="font-body text-lg text-muted-foreground/70 max-w-2xl leading-relaxed">
-              Serviço contínuo de administração, monitoramento e manutenção dos seus servidores físicos e virtuais.
+              Escolha o modelo ideal: atendimento urgente sob demanda ou proteção contínua com plano recorrente.
             </p>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <div className="rounded-lg border border-border bg-card px-4 py-3 text-sm text-foreground">
-                <span className="text-muted-foreground">Hosts: </span><strong className="text-primary">{serverHosts}</strong>
-              </div>
-              {serverVms > 0 && (
-                <div className="rounded-lg border border-border bg-card px-4 py-3 text-sm text-foreground">
-                  <span className="text-muted-foreground">VMs: </span><strong className="text-primary">{serverVms}</strong>
-                </div>
-              )}
-              <div className="rounded-lg border border-border bg-card px-4 py-3 text-sm text-foreground">
-                <span className="text-muted-foreground">Mensalidade: </span><strong className="text-primary">R$ {serverMonthlyValue.toLocaleString("pt-BR")}/mês</strong>
-              </div>
-              <div className="rounded-lg border border-border bg-card px-4 py-3 text-sm text-foreground">
-                <span className="text-muted-foreground">Permanência mínima: </span><strong>12 meses</strong>
-              </div>
-            </div>
           </div>
         </section>
 
-        <ContractingWizard
-          visible={true}
-          effectivePath="suporte"
-          serviceSlug="administracao-de-servidores"
-          plan={{ id: "server-admin", name: "Administração de Servidores", cpu: `${serverHosts} Host(s)`, ram: `${serverVms} VM(s)`, ssd: "Monitoramento contínuo", extras: ["Manutenção preventiva", "Permanência mínima 12 meses"], price: serverMonthlyValue, popular: false }}
-          qualification={null}
-          computersQty={serverHosts + serverVms}
-          monthlyValue={serverMonthlyValue}
-          quoteId={null}
-          customRegistrationForm={(onComplete, loading) => (
-            <ServerAdminRegistrationForm
-              onComplete={async (data: ServerAdminRegistrationData) => {
-                const fullAddress = [data.logradouro, data.numero, data.complemento, data.bairro].filter(Boolean).join(", ");
-                const mapped: RegistrationData = {
-                  razaoSocial: data.razaoSocial,
-                  nomeFantasia: data.nomeFantasia,
-                  cnpjOuCpf: data.cnpj,
-                  responsavel: data.responsavelNome,
-                  email: data.responsavelEmail,
-                  telefone: data.responsavelTelefone,
-                  cep: data.cep,
-                  endereco: data.logradouro,
-                  numero: data.numero,
-                  complemento: data.complemento,
-                  bairro: data.bairro,
-                  cidade: data.cidade,
-                  uf: data.uf,
-                  isPJ: true,
-                  representanteCpf: data.responsavelCpf,
-                };
-                await onComplete(mapped);
-              }}
-              loading={loading}
+        {/* ── Mode selector ── */}
+        <ContractModeSelector mode={contractMode} onSelect={handleServerModeSelect} />
+
+        {/* ══════════════════════════════════════════════════════════ */}
+        {/* ── FLUXO SOB DEMANDA: Calculadora de horas (urgência) ── */}
+        {/* ══════════════════════════════════════════════════════════ */}
+        {contractMode === "sob_demanda" && (
+          <div ref={wizardRef} className="section-dark py-12 md:py-16">
+            <div className="container max-w-3xl">
+              {(() => { console.log("[WMTi] HOURS_CALCULATOR_RENDERED — administracao-de-servidores"); return null; })()}
+
+              {/* Urgency messaging */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-8 bg-amber-500/10 border border-amber-500/30 rounded-xl p-5"
+              >
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="font-bold text-foreground text-sm mb-1">Servidor parado? Sistema travado?</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Cada hora com seu servidor parado pode custar mais do que este atendimento. Resolva agora antes que o prejuízo aumente.
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Step 1: Hours Calculator */}
+              <WizardStepWrapper stepNumber={1} title="Calculadora de Horas" subtitle="Escolha a quantidade de horas técnicas" status={getStepStatus("calculator")}>
+                <div className="space-y-6">
+                  <div className="bg-secondary p-4 flex items-center justify-between">
+                    <div>
+                      <p className="font-mono text-xs text-muted-foreground">Serviço selecionado</p>
+                      <p className="font-bold text-foreground">Administração de Servidores</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-mono text-xs text-muted-foreground">Sob demanda</p>
+                      <p className="font-bold text-primary">R$ {basePrice.toFixed(2).replace(".", ",")}/h</p>
+                    </div>
+                  </div>
+
+                  <div className="bg-secondary p-8">
+                    <div className="flex items-center justify-center gap-6 mb-6">
+                      <button onClick={() => setHours(Math.max(1, hours - 1))} className="w-12 h-12 flex items-center justify-center border border-muted-foreground/30 text-muted-foreground hover:border-primary hover:text-primary transition-colors" aria-label="Diminuir horas">
+                        <Minus size={20} />
+                      </button>
+                      <div className="text-center">
+                        <span className="text-5xl font-bold text-primary">{hours}</span>
+                        <p className="font-mono text-xs text-muted-foreground mt-1">{hours} hora{hours > 1 ? "s" : ""} técnica{hours > 1 ? "s" : ""}</p>
+                      </div>
+                      <button onClick={() => setHours(Math.min(8, hours + 1))} className="w-12 h-12 flex items-center justify-center border border-muted-foreground/30 text-muted-foreground hover:border-primary hover:text-primary transition-colors" aria-label="Aumentar horas">
+                        <Plus size={20} />
+                      </button>
+                    </div>
+
+                    <div className="space-y-3 mb-6">
+                      <div className="flex items-center justify-between font-mono text-sm">
+                        <span className="flex items-center gap-2 text-muted-foreground"><Clock size={14} /> Valor por hora</span>
+                        <span className="text-foreground">
+                          R$ {unitPrice.toFixed(2).replace(".", ",")}
+                          {discountPct > 0 && <span className="ml-2 text-xs text-primary">-{discountPct}%</span>}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between font-mono text-sm">
+                        <span className="text-muted-foreground">Preço cheio</span>
+                        <span className="text-muted-foreground/50 line-through">R$ {fullPrice.toFixed(2).replace(".", ",")}</span>
+                      </div>
+                      <div className="h-px bg-muted-foreground/10" />
+                      <div className="flex items-center justify-between font-mono text-base font-bold">
+                        <span className="text-foreground">Valor promocional</span>
+                        <span className="text-primary text-xl">R$ {promoPrice.toFixed(2).replace(".", ",")}</span>
+                      </div>
+                    </div>
+
+                    {savings > 0 && (
+                      <div className="bg-primary/10 border border-primary/30 p-4 flex items-center gap-3">
+                        <TrendingDown size={20} className="text-primary shrink-0" />
+                        <p className="font-mono text-sm font-bold text-primary">
+                          Economizando R$ {savings.toFixed(2).replace(".", ",")}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Summary */}
+                  <div className="bg-card border border-border rounded-xl p-5">
+                    <p className="font-mono text-[10px] tracking-[0.3em] uppercase text-primary mb-3 font-bold">Resumo da contratação</p>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between"><span className="text-muted-foreground">Serviço</span><span className="text-foreground font-semibold">Administração de Servidores</span></div>
+                      <div className="flex justify-between"><span className="text-muted-foreground">Modelo</span><span className="text-foreground font-semibold">Sob demanda / Urgência</span></div>
+                      <div className="flex justify-between"><span className="text-muted-foreground">Horas</span><span className="text-foreground font-semibold">{hours}</span></div>
+                      <div className="flex justify-between"><span className="text-muted-foreground">Valor total</span><span className="text-primary font-bold">R$ {promoPrice.toFixed(2).replace(".", ",")}</span></div>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      console.log("[WMTi] CHECKOUT_STARTED_AVULSO", { hours, promoPrice, serviceName: "Administração de Servidores" });
+                      handleContinueToRegistration();
+                    }}
+                    className="w-full inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
+                  >
+                    <ArrowRight size={16} />
+                    Resolver meu problema agora
+                  </button>
+                </div>
+              </WizardStepWrapper>
+
+              {/* Step 2: Registration */}
+              <WizardStepWrapper stepNumber={2} title="Dados da empresa" subtitle="Preencha os dados para gerar o contrato" status={getStepStatus("registration")}>
+                <QuickRegistrationForm onComplete={handleRegistrationComplete} loading={registrationLoading} initialData={{}} />
+              </WizardStepWrapper>
+
+              {/* Step 3: Contract */}
+              <WizardStepWrapper stepNumber={3} title="Contrato e Assinatura" subtitle={contractSigned ? "Contrato assinado ✓" : "Leia e assine o contrato"} status={getStepStatus("contract")}>
+                {contractSigned ? (
+                  <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-3">
+                    <CheckCircle className="w-10 h-10 text-primary mx-auto" />
+                    <h4 className="text-lg font-heading font-bold">Contrato assinado!</h4>
+                    <p className="text-sm text-muted-foreground">Prossiga para o pagamento abaixo.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="bg-card border border-border rounded-xl p-5">
+                      <div className="flex items-center gap-3 mb-3">
+                        <FileText className="w-6 h-6 text-primary" />
+                        <div>
+                          <p className="font-semibold text-sm">Contrato de Horas Técnicas — Administração de Servidores</p>
+                          <p className="text-xs text-muted-foreground">O contrato será aberto em uma página separada.</p>
+                        </div>
+                      </div>
+                    </div>
+                    <Button onClick={handleOpenContract} disabled={!contractId} className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground">
+                      <ExternalLink className="w-4 h-4 mr-2" />
+                      Abrir contrato para leitura e assinatura
+                    </Button>
+                    <p className="text-xs text-muted-foreground text-center">
+                      <Loader2 className="w-3 h-3 animate-spin inline mr-1" />
+                      Aguardando assinatura do contrato...
+                    </p>
+                  </div>
+                )}
+              </WizardStepWrapper>
+
+              {/* Step 4: Payment */}
+              <WizardStepWrapper stepNumber={4} title={paymentConfirmed ? "Compra Concluída" : "Pagamento"} subtitle={paymentConfirmed ? "Pagamento confirmado ✓" : "Pagamento único via checkout seguro"} status={paymentConfirmed ? "completed" : getStepStatus("payment")} isLast>
+                {paymentConfirmed ? (
+                  <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-3">
+                    <CheckCircle className="w-10 h-10 text-green-500 mx-auto" />
+                    <h4 className="text-lg font-heading font-bold">Pagamento confirmado!</h4>
+                    <p className="text-sm text-muted-foreground">Redirecionando...</p>
+                    <Loader2 className="w-5 h-5 animate-spin text-primary mx-auto" />
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <p className="text-sm text-muted-foreground text-center">
+                      Valor total: <strong className="text-primary">R$ {promoPrice.toFixed(2).replace(".", ",")}</strong> — Pagamento único
+                    </p>
+                    {paymentError && (
+                      <div className="p-3 rounded-lg border border-destructive/30 bg-destructive/5 flex items-start gap-2">
+                        <AlertTriangle className="w-4 h-4 text-destructive mt-0.5 shrink-0" />
+                        <div>
+                          <p className="text-sm font-semibold text-destructive">Erro ao gerar cobrança</p>
+                          <p className="text-xs text-muted-foreground mt-1">{paymentError}</p>
+                        </div>
+                      </div>
+                    )}
+                    <div className="grid grid-cols-2 gap-3">
+                      {([
+                        { id: "BOLETO" as BillingType, icon: FileBarChart, label: "Boleto Bancário", desc: "Pagamento único" },
+                        { id: "CREDIT_CARD" as BillingType, icon: CreditCard, label: "Cartão de Crédito", desc: "Pagamento único" },
+                      ]).map((method) => (
+                        <button
+                          key={method.id}
+                          type="button"
+                          onClick={() => setSelectedPayment(method.id)}
+                          className={`p-4 rounded-xl border-2 transition-all text-center ${
+                            selectedPayment === method.id ? "border-primary bg-primary/5" : "border-border bg-card hover:border-primary/30"
+                          }`}
+                        >
+                          <method.icon className={`w-6 h-6 mx-auto mb-2 ${selectedPayment === method.id ? "text-primary" : "text-muted-foreground"}`} />
+                          <p className="text-sm font-semibold text-foreground">{method.label}</p>
+                          <p className="text-xs text-muted-foreground">{method.desc}</p>
+                        </button>
+                      ))}
+                    </div>
+                    <Button onClick={handlePayment} disabled={!selectedPayment || paymentLoading} className="w-full h-14 text-base bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50">
+                      <ExternalLink className="w-5 h-5 mr-2" />
+                      PROSSEGUIR PARA PAGAMENTO
+                    </Button>
+                  </div>
+                )}
+              </WizardStepWrapper>
+            </div>
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════════════════════════════ */}
+        {/* ── FLUXO RECORRENTE: Calculadora de infra → ContractingWizard */}
+        {/* ══════════════════════════════════════════════════════════════ */}
+        {contractMode === "recorrente" && !(Number(searchParams.get("total_mensal") || 0) > 0) && (
+          <div>
+            {(() => { console.log("[WMTi] RECURRING_INFRA_CALCULATOR_RENDERED — administracao-de-servidores"); return null; })()}
+
+            {/* Prevention messaging */}
+            <div className="section-dark pt-6 pb-0">
+              <div className="container max-w-3xl">
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-primary/5 border border-primary/20 rounded-xl p-5"
+                >
+                  <p className="text-sm text-foreground leading-relaxed">
+                    <strong>Empresas que não monitoram seus servidores</strong> descobrem o problema quando já perderam dados ou ficaram horas paradas. Com o plano recorrente, você tem monitoramento 24h, atualizações, backup e SLA garantido.
+                  </p>
+                </motion.div>
+              </div>
+            </div>
+
+            <UnifiedInfraCalculator
+              contractHref={`/contratar/${slug}`}
+              pageTitle="Administração de Servidores"
             />
-          )}
-        />
+          </div>
+        )}
+
+        {contractMode === "recorrente" && Number(searchParams.get("total_mensal") || 0) > 0 && (
+          <div>
+            {(() => {
+              console.log("[WMTi] CHECKOUT_STARTED_RECORRENTE — administracao-de-servidores", { serverHosts, serverVms, serverMonthlyValue });
+              return null;
+            })()}
+
+            {/* Recurring summary badges */}
+            <div className="section-dark pt-6 pb-2">
+              <div className="container max-w-3xl">
+                <div className="flex flex-wrap gap-3">
+                  <div className="rounded-lg border border-border bg-card px-4 py-3 text-sm text-foreground">
+                    <span className="text-muted-foreground">Hosts: </span><strong className="text-primary">{serverHosts}</strong>
+                  </div>
+                  {serverVms > 0 && (
+                    <div className="rounded-lg border border-border bg-card px-4 py-3 text-sm text-foreground">
+                      <span className="text-muted-foreground">VMs: </span><strong className="text-primary">{serverVms}</strong>
+                    </div>
+                  )}
+                  <div className="rounded-lg border border-border bg-card px-4 py-3 text-sm text-foreground">
+                    <span className="text-muted-foreground">Mensalidade: </span><strong className="text-primary">R$ {serverMonthlyValue.toLocaleString("pt-BR")}/mês</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <ContractingWizard
+              visible={true}
+              effectivePath="suporte"
+              serviceSlug="administracao-de-servidores"
+              plan={{ id: "server-admin", name: "Administração de Servidores", cpu: `${serverHosts} Host(s)`, ram: `${serverVms} VM(s)`, ssd: "Monitoramento contínuo", extras: ["Manutenção preventiva", "Permanência mínima 12 meses"], price: serverMonthlyValue, popular: false }}
+              qualification={null}
+              computersQty={serverHosts + serverVms}
+              monthlyValue={serverMonthlyValue}
+              quoteId={null}
+              customRegistrationForm={(onComplete, loading) => (
+                <ServerAdminRegistrationForm
+                  onComplete={async (data: ServerAdminRegistrationData) => {
+                    const fullAddress = [data.logradouro, data.numero, data.complemento, data.bairro].filter(Boolean).join(", ");
+                    const mapped: RegistrationData = {
+                      razaoSocial: data.razaoSocial,
+                      nomeFantasia: data.nomeFantasia,
+                      cnpjOuCpf: data.cnpj,
+                      responsavel: data.responsavelNome,
+                      email: data.responsavelEmail,
+                      telefone: data.responsavelTelefone,
+                      cep: data.cep,
+                      endereco: data.logradouro,
+                      numero: data.numero,
+                      complemento: data.complemento,
+                      bairro: data.bairro,
+                      cidade: data.cidade,
+                      uf: data.uf,
+                      isPJ: true,
+                      representanteCpf: data.responsavelCpf,
+                    };
+                    await onComplete(mapped);
+                  }}
+                  loading={loading}
+                />
+              )}
+            />
+          </div>
+        )}
+
+        {/* Show prompt if no mode selected yet */}
+        {!contractMode && (
+          <div className="section-dark py-12">
+            <div className="container max-w-3xl text-center">
+              <p className="text-muted-foreground font-body">
+                Selecione o modelo de contratação acima para prosseguir.
+              </p>
+            </div>
+          </div>
+        )}
 
         <Footer />
       </div>
