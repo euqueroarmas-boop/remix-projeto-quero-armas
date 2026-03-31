@@ -94,6 +94,7 @@ const NAV_GROUPS = [
     items: [
       { id: "digital-signature", label: "Assinatura Digital", icon: FileSignature },
       { id: "cert-diagnostic", label: "Diag. Certificado", icon: Stethoscope },
+      { id: "cipa-locations", label: "CIPA Geo", icon: MapPin },
     ],
   },
 ];
