@@ -422,7 +422,7 @@ const ServicePageTemplate = ({
       )}
 
       {/* ══ MICRO-CTA 2 ══ */}
-      <MicroCta href={contractHref} whatsappMessage={whatsappMessage} cityName={cityName} pageTitle={title} />
+      <MicroCta href={contractHref} whatsappMessage={whatsappMessage} cityName={cityName} pageTitle={title} contractMode={contractMode} />
 
       {/* ══ URGENCY BLOCK ══ */}
       <UrgencyBlock whatsappMessage={whatsappMessage} currentPath={currentPath} cityName={cityName} pageTitle={title} />
