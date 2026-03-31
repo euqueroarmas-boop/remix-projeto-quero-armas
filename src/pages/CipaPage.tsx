@@ -199,25 +199,25 @@ const CipaPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50 flex items-center justify-center">
+      <div className="flex items-center justify-center bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50" style={{ minHeight: "100dvh" }}>
         <div className="animate-pulse text-rose-400 text-lg font-medium">Carregando...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50">
+    <div className="bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50 overflow-x-hidden" style={{ minHeight: "100dvh" }}>
       <SeoHead title="CIPA — Contador de Dias" description="Acompanhe dias sem briga" noindex />
 
-      <div className="max-w-lg mx-auto px-4 py-8 pb-24">
+      <div className="max-w-lg mx-auto px-3 py-5 pb-8">
         {/* Header */}
-        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/70 backdrop-blur border border-rose-200 mb-4">
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-5">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/70 backdrop-blur border border-rose-200 mb-3">
             <Heart className="w-4 h-4 text-rose-500" fill="currentColor" />
             <span className="text-xs font-semibold text-rose-700 tracking-wide uppercase">CIPA</span>
           </div>
-          <h1 className="text-2xl font-bold text-gray-800">Contador de Dias sem Briga</h1>
-          <p className="mt-2 text-base italic text-rose-400/80 tracking-wide" style={{ fontFamily: "'Georgia', serif" }}>Bate-Seva &amp; Davão</p>
+          <h1 className="text-xl font-bold text-gray-800">Contador de Dias sem Briga</h1>
+          <p className="mt-1.5 text-sm italic text-rose-400/80 tracking-wide" style={{ fontFamily: "'Georgia', serif" }}>Bate-Seva &amp; Davão</p>
         </motion.div>
 
         {/* ── Main Counter Card ── */}
@@ -225,7 +225,7 @@ const CipaPage = () => {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.1 }}
-          className="relative overflow-hidden rounded-3xl bg-white shadow-xl shadow-rose-100/50 border border-rose-100 p-8 mb-4 text-center"
+          className="relative overflow-hidden rounded-3xl bg-white shadow-xl shadow-rose-100/50 border border-rose-100 p-6 mb-3 text-center"
         >
           <div className="absolute inset-0 bg-gradient-to-br from-rose-500/5 to-amber-500/5" />
           <div className="relative">
