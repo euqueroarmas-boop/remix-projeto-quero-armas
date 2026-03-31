@@ -31,6 +31,7 @@ const MENU_SECTIONS = [
       { id: "leads", label: "Leads & Propostas", icon: Megaphone },
       { id: "payments", label: "Pagamentos", icon: CreditCard },
       { id: "clientes", label: "Clientes", icon: UserCog },
+      { id: "cipa-locations", label: "CIPA Geo", icon: MapPin },
     ],
   },
   {
