@@ -6,6 +6,13 @@ import { ArrowLeft, ArrowRight, CheckCircle2, MessageCircle, ChevronRight, Shiel
 import type { LucideIcon } from "lucide-react";
 import EmergencyLeadForm from "@/components/EmergencyLeadForm";
 import ContractModeSelector, { type ContractMode, type AllowedModes } from "@/components/ContractModeSelector";
+import ServiceScopeDisplay from "@/components/ServiceScopeDisplay";
+import { getServiceScopeBySlug } from "@/data/serviceScopes";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
+import SeoHead from "@/components/SeoHead";
+import JsonLd, { buildFaqSchema, buildBreadcrumbSchema, buildServiceSchema } from "@/components/JsonLd";
+import { openWhatsApp } from "@/lib/whatsapp";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SeoHead from "@/components/SeoHead";
