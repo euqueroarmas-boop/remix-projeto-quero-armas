@@ -55,6 +55,7 @@ const SERVICE_CATALOG: ServiceInfo[] = [
 /* ─── Price tables ─── */
 const STANDARD_PRICES: Record<number, number> = { 1: 200, 2: 190, 3: 180, 4: 170, 5: 160, 6: 155, 7: 150, 8: 145 };
 const EMERGENCY_PRICES: Record<number, number> = { 1: 300, 2: 285, 3: 270, 4: 255, 5: 240, 6: 232.5, 7: 225, 8: 217.5 };
+const SERVER_ADMIN_PRICES: Record<number, number> = { 1: 500, 2: 475, 3: 450, 4: 425, 5: 400, 6: 387.5, 7: 375, 8: 362.5 };
 
 type BillingType = "BOLETO" | "CREDIT_CARD";
 type FlowStep = "calculator" | "registration" | "contract" | "payment" | "success";
