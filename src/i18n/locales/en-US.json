@@ -435,6 +435,36 @@
     "ajudaDesc": "Answer a few quick questions about your company and we'll recommend the best option for your case.",
     "ajudaHighlight": "Free assessment in 2 minutes"
   },
+  "contractMode": {
+    "tag": "Contract model",
+    "title": "How do you prefer to hire?",
+    "subtitle": "Choose the ideal model for your needs. You can change anytime.",
+    "select": "Select",
+    "sobDemandaTitle": "On demand / per hour",
+    "sobDemandaDesc": "One-time service with hours calculator. Ideal for specific demands and emergencies.",
+    "sobDemandaH1": "Immediate execution",
+    "sobDemandaH2": "No monthly commitment",
+    "sobDemandaH3": "15-day warranty included",
+    "recorrenteTitle": "Recurring / monthly plan",
+    "recorrenteDesc": "Monthly contract with SLA, progressive discounts and continuous support for your company.",
+    "recorrenteH1": "Up to 12% discount",
+    "recorrenteH2": "Guaranteed SLA",
+    "recorrenteH3": "24h support available"
+  },
+  "recurringPreview": {
+    "tag": "Recurring plan",
+    "title": "Continuous protection for your company",
+    "subtitle": "Choose the ideal term and get progressive discounts on your monthly contract.",
+    "months": "months",
+    "off": "discount",
+    "term12": "12 months",
+    "term24": "24 months – 7% discount",
+    "term36": "36 months – 12% discount",
+    "benefit1": "Guaranteed SLA",
+    "benefit2": "Priority and continuous support",
+    "benefit3": "24h support option (+35%)",
+    "cta": "Subscribe to monthly plan"
+  },
   "contratar": {
     "breadcrumbHome": "Home",
     "breadcrumbContratar": "Hire",

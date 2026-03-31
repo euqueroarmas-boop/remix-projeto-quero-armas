@@ -435,6 +435,36 @@
     "ajudaDesc": "Responda algumas perguntas rápidas sobre sua empresa e nós vamos recomendar a melhor opção para o seu caso.",
     "ajudaHighlight": "Diagnóstico gratuito em 2 minutos"
   },
+  "contractMode": {
+    "tag": "Modelo de contratação",
+    "title": "Como você prefere contratar?",
+    "subtitle": "Escolha o modelo ideal para sua necessidade. Você pode mudar a qualquer momento.",
+    "select": "Selecionar",
+    "sobDemandaTitle": "Sob demanda / por hora",
+    "sobDemandaDesc": "Serviço pontual com calculadora de horas. Ideal para demandas específicas e urgências.",
+    "sobDemandaH1": "Execução imediata",
+    "sobDemandaH2": "Sem vínculo mensal",
+    "sobDemandaH3": "Garantia de 15 dias incluída",
+    "recorrenteTitle": "Plano recorrente / mensal",
+    "recorrenteDesc": "Contrato mensal com SLA, descontos progressivos e suporte contínuo para sua empresa.",
+    "recorrenteH1": "Descontos de até 12%",
+    "recorrenteH2": "SLA garantido",
+    "recorrenteH3": "Suporte 24h disponível"
+  },
+  "recurringPreview": {
+    "tag": "Plano recorrente",
+    "title": "Proteção contínua para sua empresa",
+    "subtitle": "Escolha o prazo ideal e garanta descontos progressivos no seu contrato mensal.",
+    "months": "meses",
+    "off": "de desconto",
+    "term12": "12 meses",
+    "term24": "24 meses – 7% de desconto",
+    "term36": "36 meses – 12% de desconto",
+    "benefit1": "SLA de atendimento garantido",
+    "benefit2": "Suporte prioritário e contínuo",
+    "benefit3": "Opção de suporte 24h (+35%)",
+    "cta": "Contratar plano mensal"
+  },
   "contratar": {
     "breadcrumbHome": "Home",
     "breadcrumbContratar": "Contratar",
