@@ -12,9 +12,9 @@ interface ServiceScopeDisplayProps {
  */
 export default function ServiceScopeDisplay({ scope, compact = false }: ServiceScopeDisplayProps) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="scope-section">
       {/* Description */}
-      <p className="text-sm text-muted-foreground leading-relaxed">{scope.description}</p>
+      <p className="text-sm text-muted-foreground leading-relaxed" data-testid="scope-description">{scope.description}</p>
 
       <div className={`grid gap-6 ${compact ? "grid-cols-1" : "md:grid-cols-2"}`}>
         {/* Included */}
@@ -23,7 +23,7 @@ export default function ServiceScopeDisplay({ scope, compact = false }: ServiceS
             <CheckCircle2 className="w-4 h-4 text-emerald-500" />
             Incluso no escopo
           </h4>
-          <ul className="space-y-2">
+          <ul className="space-y-2" data-testid="scope-included-list">
             {scope.included.map((item, i) => (
               <li key={i} className="flex items-start gap-2 text-sm text-foreground/80">
                 <span className="text-emerald-500 mt-0.5 shrink-0">✓</span>
@@ -39,7 +39,7 @@ export default function ServiceScopeDisplay({ scope, compact = false }: ServiceS
             <XCircle className="w-4 h-4 text-destructive/70" />
             Não incluso
           </h4>
-          <ul className="space-y-2">
+          <ul className="space-y-2" data-testid="scope-not-included-list">
             {scope.not_included.map((item, i) => (
               <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
                 <span className="text-destructive/50 mt-0.5 shrink-0">✕</span>
@@ -57,7 +57,7 @@ export default function ServiceScopeDisplay({ scope, compact = false }: ServiceS
             <Clock className="w-4 h-4 text-primary" />
             <span className="text-xs font-mono font-bold text-foreground uppercase tracking-wider">SLA</span>
           </div>
-          <p className="text-xs text-muted-foreground leading-relaxed">{scope.sla}</p>
+          <p className="text-xs text-muted-foreground leading-relaxed" data-testid="scope-sla">{scope.sla}</p>
         </div>
 
         <div className="bg-card border border-border rounded-lg p-4">
@@ -65,7 +65,7 @@ export default function ServiceScopeDisplay({ scope, compact = false }: ServiceS
             <Shield className="w-4 h-4 text-primary" />
             <span className="text-xs font-mono font-bold text-foreground uppercase tracking-wider">Frequência</span>
           </div>
-          <p className="text-xs text-muted-foreground leading-relaxed">{scope.frequency}</p>
+          <p className="text-xs text-muted-foreground leading-relaxed" data-testid="scope-frequency">{scope.frequency}</p>
         </div>
 
         <div className="bg-card border border-border rounded-lg p-4">
@@ -73,7 +73,7 @@ export default function ServiceScopeDisplay({ scope, compact = false }: ServiceS
             <Users className="w-4 h-4 text-primary" />
             <span className="text-xs font-mono font-bold text-foreground uppercase tracking-wider">Responsabilidades</span>
           </div>
-          <ul className="space-y-1">
+          <ul className="space-y-1" data-testid="scope-dependencies">
             {scope.client_dependencies.map((dep, i) => (
               <li key={i} className="text-xs text-muted-foreground leading-relaxed">• {dep}</li>
             ))}
