@@ -144,7 +144,7 @@ const CipaPage = () => {
     );
   }, [sendLocation, geoLabel]);
 
-
+  const fetchData = useCallback(async () => {
     const { data: all } = await supabase
       .from("cipa_cycles")
       .select("*")
