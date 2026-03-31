@@ -97,8 +97,24 @@ const CipaPage = () => {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  // PWA manifest
+  // PWA: manifest, meta tags, service worker, install prompt
   useEffect(() => {
+    // Detect standalone mode
+    const standalone = window.matchMedia("(display-mode: standalone)").matches || (navigator as any).standalone === true;
+    setIsStandalone(standalone);
+
+    // Detect iOS
+    const ua = navigator.userAgent;
+    const ios = /iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream;
+    setIsIos(ios);
+
+    // Show install banner if not already installed
+    if (!standalone) {
+      const dismissed = sessionStorage.getItem("cipa-install-dismissed");
+      if (!dismissed) setShowInstallBanner(true);
+    }
+
+    // Manifest link
     let link = document.querySelector('link[rel="manifest"][data-cipa]') as HTMLLinkElement | null;
     if (!link) {
       link = document.createElement("link");
@@ -107,6 +123,8 @@ const CipaPage = () => {
       link.href = "/cipa-manifest.json";
       document.head.appendChild(link);
     }
+
+    // Theme color
     let meta = document.querySelector('meta[name="theme-color"][data-cipa]') as HTMLMetaElement | null;
     if (!meta) {
       meta = document.createElement("meta");
@@ -115,14 +133,56 @@ const CipaPage = () => {
       meta.content = "#0A0A0A";
       document.head.appendChild(meta);
     }
-    let metaCapable = document.querySelector('meta[name="apple-mobile-web-app-capable"]') as HTMLMetaElement | null;
-    if (!metaCapable) {
-      metaCapable = document.createElement("meta");
-      metaCapable.name = "apple-mobile-web-app-capable";
-      metaCapable.content = "yes";
-      document.head.appendChild(metaCapable);
+
+    // Apple meta tags
+    const appleMetas: { name: string; content: string }[] = [
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-title", content: "CIPA" },
+    ];
+    const createdMetas: HTMLMetaElement[] = [];
+    appleMetas.forEach(({ name, content }) => {
+      if (!document.querySelector(`meta[name="${name}"]`)) {
+        const m = document.createElement("meta");
+        m.name = name;
+        m.content = content;
+        document.head.appendChild(m);
+        createdMetas.push(m);
+      }
+    });
+
+    // Apple touch icon
+    let appleIcon = document.querySelector('link[rel="apple-touch-icon"][data-cipa]') as HTMLLinkElement | null;
+    if (!appleIcon) {
+      appleIcon = document.createElement("link");
+      appleIcon.rel = "apple-touch-icon";
+      appleIcon.setAttribute("data-cipa", "true");
+      appleIcon.href = "/cipa-icon-512.png";
+      document.head.appendChild(appleIcon);
     }
-    return () => { link?.remove(); meta?.remove(); metaCapable?.remove(); };
+
+    // Service worker — only register in production, not in iframe/preview
+    const isInIframe = (() => { try { return window.self !== window.top; } catch { return true; } })();
+    const isPreview = window.location.hostname.includes("id-preview--") || window.location.hostname.includes("lovableproject.com");
+    if (!isInIframe && !isPreview && "serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/cipa-sw.js", { scope: "/cipa" }).catch(() => {});
+    }
+
+    // Listen for beforeinstallprompt (Android/Chrome)
+    const handleBeforeInstall = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallBanner(true);
+    };
+    window.addEventListener("beforeinstallprompt", handleBeforeInstall);
+
+    return () => {
+      link?.remove();
+      meta?.remove();
+      createdMetas.forEach(m => m.remove());
+      appleIcon?.remove();
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstall);
+    };
   }, []);
 
   const elapsed = currentCycle ? now - new Date(currentCycle.started_at).getTime() : 0;
