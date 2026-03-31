@@ -202,20 +202,19 @@ const ServicePageTemplate = ({
   problemName,
   allowedModes = "both",
 }: ServicePageProps) => {
+  const { t } = useTranslation();
+  const location = useLocation();
   const navigate = useNavigate();
   const [contractMode, setContractMode] = useState<ContractMode | null>(null);
 
   const handleModeSelect = useCallback((mode: ContractMode) => {
     setContractMode(mode);
     console.log(`[WMTi] CONTRACT_MODE_SELECTED`, { mode });
-    // Navigate directly to checkout with selected mode
     const slug = location.pathname.replace(/^\//, "");
     const href = slug ? `/contratar/${slug}?modo=${mode}` : `/orcamento-ti`;
     console.log("[WMTi] CHECKOUT_REDIRECT", { mode, href });
     navigate(href);
   }, [navigate, location.pathname]);
-  const { t } = useTranslation();
-  const location = useLocation();
   const baseUrl = "https://www.wmti.com.br";
   const currentPath = location.pathname;
   const canonicalUrl = canonicalSlug
