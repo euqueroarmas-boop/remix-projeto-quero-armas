@@ -1,14 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, CheckCircle2, MessageCircle, ChevronRight, ShieldCheck, Building2, Award, Zap, AlertTriangle, Clock } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import HoursCalculator from "@/components/orcamento/HoursCalculator";
-import UnifiedInfraCalculator from "@/components/orcamento/UnifiedInfraCalculator";
 import EmergencyLeadForm from "@/components/EmergencyLeadForm";
 import ContractModeSelector, { type ContractMode, type AllowedModes } from "@/components/ContractModeSelector";
-import RecurringPlanPreview from "@/components/RecurringPlanPreview";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SeoHead from "@/components/SeoHead";
@@ -205,25 +202,19 @@ const ServicePageTemplate = ({
   problemName,
   allowedModes = "both",
 }: ServicePageProps) => {
+  const { t } = useTranslation();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [contractMode, setContractMode] = useState<ContractMode | null>(null);
 
   const handleModeSelect = useCallback((mode: ContractMode) => {
     setContractMode(mode);
-    const targetId = mode === "sob_demanda" ? "section-sob-demanda" : "section-recorrente";
     console.log(`[WMTi] CONTRACT_MODE_SELECTED`, { mode });
-    console.log(`[WMTi] CONTRACT_MODE_SELECTED_${mode === "sob_demanda" ? "ON_DEMAND" : "RECURRING"}`);
-    requestAnimationFrame(() => {
-      setTimeout(() => {
-        const el = document.getElementById(targetId);
-        if (el) {
-          el.scrollIntoView({ behavior: "smooth", block: "start" });
-          console.log("[WMTi] CONTRACT_MODE_SCROLL_OK", targetId);
-        }
-      }, 150);
-    });
-  }, []);
-  const { t } = useTranslation();
-  const location = useLocation();
+    const slug = location.pathname.replace(/^\//, "");
+    const href = slug ? `/contratar/${slug}?modo=${mode}` : `/orcamento-ti`;
+    console.log("[WMTi] CHECKOUT_REDIRECT", { mode, href });
+    navigate(href);
+  }, [navigate, location.pathname]);
   const baseUrl = "https://www.wmti.com.br";
   const currentPath = location.pathname;
   const canonicalUrl = canonicalSlug
@@ -486,21 +477,6 @@ const ServicePageTemplate = ({
         </div>
       </section>
 
-      {/* ══ Hours Calculator (sob demanda mode) ══ */}
-      {(contractMode === "sob_demanda" || (!contractMode && showHoursCalculator)) && (
-        <div id="section-sob-demanda">
-          {contractMode === "sob_demanda" && console.log("[WMTi] CONTRACT_MODE_RENDER_OK sob_demanda") as unknown as null}
-          <HoursCalculator serviceName={tag} contractHref={contractHref} />
-        </div>
-      )}
-
-      {/* ══ Recurring Infrastructure Calculator (recorrente mode) ══ */}
-      {contractMode === "recorrente" && (
-        <div id="section-recorrente">
-          {console.log("[WMTi] CONTRACT_MODE_RENDER_OK recorrente") as unknown as null}
-          <UnifiedInfraCalculator contractHref={contractHref} pageTitle={title} />
-        </div>
-      )}
 
       {/* ══ Extra Sections (e.g. downtime calculator) ══ */}
       {extraSections}
