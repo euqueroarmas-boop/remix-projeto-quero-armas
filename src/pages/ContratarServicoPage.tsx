@@ -820,19 +820,32 @@ const ContratarServicoPage = () => {
             <div className="container max-w-3xl">
               {(() => { console.log("[WMTi] HOURS_CALCULATOR_RENDERED — administracao-de-servidores"); return null; })()}
 
-              {/* Urgency messaging */}
+              {/* Premium positioning + urgency messaging */}
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mb-8 bg-amber-500/10 border border-amber-500/30 rounded-xl p-5"
+                className="mb-8 space-y-4"
               >
-                <div className="flex items-start gap-3">
-                  <AlertTriangle className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
-                  <div>
-                    <p className="font-bold text-foreground text-sm mb-1">Servidor parado? Sistema travado?</p>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      Cada hora com seu servidor parado pode custar mais do que este atendimento. Resolva agora antes que o prejuízo aumente.
-                    </p>
+                {/* Risk awareness */}
+                <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-5">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
+                    <div>
+                      <p className="font-bold text-foreground text-sm mb-1">Servidor parado? Sistema travado?</p>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        Cada hora com seu servidor parado pode custar mais do que este atendimento. Resolva agora antes que o prejuízo aumente.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Premium positioning */}
+                <div className="bg-card border border-border rounded-xl p-5 space-y-3">
+                  <p className="font-mono text-[10px] tracking-[0.3em] uppercase text-primary font-bold">Por que R$ 500/h?</p>
+                  <div className="space-y-2 text-sm text-muted-foreground leading-relaxed">
+                    <p>Você não está pagando por uma hora. Está pagando para alguém <strong className="text-foreground">experiente</strong> entrar no seu servidor e resolver o problema <strong className="text-foreground">sem piorar a situação</strong>.</p>
+                    <p>Um erro em servidor pode custar <strong className="text-foreground">dias de operação</strong>. Aqui, você resolve em horas.</p>
+                    <p className="text-xs text-primary font-semibold">Empresas que tentam economizar nesse momento normalmente pagam muito mais depois.</p>
                   </div>
                 </div>
               </motion.div>
