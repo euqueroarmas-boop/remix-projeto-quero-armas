@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, AlertTriangle, RotateCcw, Clock, Trophy, BarChart3, Edit3, Trash2, Sparkles, Play, Timer, X, History } from "lucide-react";
+import { Heart, AlertTriangle, RotateCcw, Clock, Trophy, BarChart3, Edit3, Trash2, Play, Timer, X, History } from "lucide-react";
 import SeoHead from "@/components/SeoHead";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -107,7 +107,7 @@ const CipaPage = () => {
       meta = document.createElement("meta");
       meta.name = "theme-color";
       meta.setAttribute("data-cipa", "true");
-      meta.content = "#F43F5E";
+      meta.content = "#0A0A0A";
       document.head.appendChild(meta);
     }
     let metaCapable = document.querySelector('meta[name="apple-mobile-web-app-capable"]') as HTMLMetaElement | null;
@@ -178,45 +178,52 @@ const CipaPage = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50" style={{ height: "100dvh" }}>
-        <div className="animate-pulse text-rose-400 text-base font-medium">Carregando...</div>
+      <div className="flex items-center justify-center bg-background" style={{ height: "100dvh" }}>
+        <div className="animate-pulse text-primary text-base font-mono font-medium tracking-wider">CARREGANDO</div>
       </div>
     );
   }
 
   return (
     <div
-      className="flex flex-col bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50 overflow-hidden"
+      className="flex flex-col bg-background overflow-hidden"
       style={{ height: "100dvh", maxHeight: "100dvh" }}
     >
       <SeoHead title="CIPA — Contador de Dias" description="Acompanhe dias sem briga" noindex />
 
-      <div className="flex-1 flex flex-col max-w-lg mx-auto w-full px-3 pt-3 pb-2 overflow-hidden">
-        {/* Header — compact */}
-        <div className="text-center mb-2 shrink-0">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/70 backdrop-blur border border-rose-200 mb-1.5">
-            <Heart className="w-3 h-3 text-rose-500" fill="currentColor" />
-            <span className="text-[10px] font-semibold text-rose-700 tracking-wide uppercase">CIPA</span>
+      <div className="flex-1 flex flex-col max-w-lg mx-auto w-full px-4 pt-4 pb-3 overflow-hidden">
+
+        {/* ═══ Header ═══ */}
+        <div className="text-center mb-3 shrink-0">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border bg-card/50 backdrop-blur mb-2">
+            <Heart className="w-3 h-3 text-primary" fill="currentColor" />
+            <span className="text-[10px] font-mono font-bold text-primary tracking-[0.2em] uppercase">CIPA</span>
           </div>
-          <h1 className="text-base font-bold text-gray-800 leading-tight">Contador de Dias sem Briga</h1>
-          <p className="mt-0.5 text-xs italic text-rose-400/80 tracking-wide" style={{ fontFamily: "'Georgia', serif" }}>Bate-Seva &amp; Davão</p>
+          <h1 className="text-sm font-mono font-bold text-foreground tracking-wide uppercase">Contador de Dias sem Briga</h1>
+          <p className="mt-1 text-xs text-muted-foreground italic tracking-wide" style={{ fontFamily: "'Georgia', serif" }}>
+            Bate-Seva &amp; Davão
+          </p>
         </div>
 
-        {/* Main counter — compact */}
-        <div className="relative overflow-hidden rounded-2xl bg-white shadow-lg shadow-rose-100/50 border border-rose-100 px-4 py-3 mb-2 text-center shrink-0">
-          <div className="absolute inset-0 bg-gradient-to-br from-rose-500/5 to-amber-500/5" />
+        {/* ═══ Main Counter Card ═══ */}
+        <div className="relative overflow-hidden rounded-2xl bg-card border border-border p-5 mb-2.5 text-center shrink-0">
+          {/* Subtle orange glow */}
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/3 pointer-events-none" />
           <div className="relative">
-            <Sparkles className="w-4 h-4 text-amber-400 mx-auto mb-1" />
-            <div className="text-5xl font-extrabold text-gray-800 tabular-nums leading-none">{days}</div>
-            <p className="text-sm text-gray-500 font-medium mt-0.5">{days === 1 ? "dia" : "dias"} sem briga</p>
+            <div className="text-6xl font-mono font-extrabold text-foreground tabular-nums leading-none tracking-tight">
+              {days}
+            </div>
+            <p className="text-sm text-muted-foreground font-medium mt-1.5 tracking-wide">
+              {days === 1 ? "dia" : "dias"} sem briga
+            </p>
             {currentCycle && (
-              <div className="mt-2 pt-2 border-t border-gray-100">
-                <div className="flex items-center justify-center gap-1 text-[10px] text-gray-400">
-                  <Clock className="w-3 h-3" />
+              <div className="mt-3 pt-3 border-t border-border">
+                <div className="flex items-center justify-center gap-1.5 text-[10px] text-muted-foreground font-mono">
+                  <Clock className="w-3 h-3 text-primary/60" />
                   <span>Desde {formatDate(currentCycle.started_at)}</span>
                   <button
                     onClick={() => { setEditingStart(true); setEditStartValue(currentCycle.started_at.slice(0, 16)); }}
-                    className="ml-0.5 text-rose-400 hover:text-rose-600 transition-colors"
+                    className="ml-0.5 text-primary/40 hover:text-primary transition-colors"
                   >
                     <Edit3 className="w-3 h-3" />
                   </button>
@@ -226,140 +233,180 @@ const CipaPage = () => {
           </div>
         </div>
 
-        {/* Chronometer — compact */}
-        <div className="relative overflow-hidden rounded-xl bg-white shadow-md shadow-emerald-100/30 border border-emerald-100 px-4 py-2.5 mb-2 text-center shrink-0">
-          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-teal-500/5" />
-          <div className="relative flex items-center justify-center gap-3">
-            <div className="relative flex items-center justify-center">
-              <span className="absolute w-2.5 h-2.5 bg-emerald-400 rounded-full animate-ping opacity-40" />
-              <Play className="w-3 h-3 text-emerald-500 relative" fill="currentColor" />
+        {/* ═══ Chronometer ═══ */}
+        <div className="relative overflow-hidden rounded-xl bg-card border border-border px-4 py-2.5 mb-2.5 shrink-0">
+          <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-transparent to-emerald-500/3 pointer-events-none" />
+          <div className="relative flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="relative flex items-center justify-center w-6 h-6">
+                <span className="absolute w-2.5 h-2.5 bg-emerald-500 rounded-full animate-ping opacity-30" />
+                <Play className="w-3 h-3 text-emerald-500 relative" fill="currentColor" />
+              </div>
+              <span className="text-[10px] font-mono text-emerald-500/80 uppercase tracking-wider">Ativo</span>
             </div>
-            <span className="text-2xl font-mono font-bold text-gray-800 tabular-nums tracking-tight">
-              {totalHoursRaw}:{pad2(minutes)}:{pad2(seconds)}
-            </span>
-            <span className="text-[10px] text-gray-400">{days}d {hours}h {minutes}m</span>
+            <div className="flex items-center gap-2">
+              <span className="text-2xl font-mono font-bold text-foreground tabular-nums tracking-tight">
+                {totalHoursRaw}:{pad2(minutes)}:{pad2(seconds)}
+              </span>
+            </div>
+            <span className="text-[10px] font-mono text-muted-foreground tabular-nums">{days}d {hours}h</span>
           </div>
         </div>
 
-        {/* Edit start date overlay */}
-        <AnimatePresence>
-          {editingStart && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-              <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }} className="bg-white rounded-2xl p-5 w-full max-w-sm shadow-xl">
-                <p className="text-sm font-semibold text-gray-700 mb-3">Editar início do ciclo</p>
-                <input type="datetime-local" value={editStartValue} onChange={e => setEditStartValue(e.target.value)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 mb-3 focus:outline-none focus:ring-2 focus:ring-rose-300" />
-                <div className="flex gap-2">
-                  <button onClick={handleEditStart} className="flex-1 bg-rose-500 text-white text-sm font-semibold py-2 rounded-xl">Salvar</button>
-                  <button onClick={() => setEditingStart(false)} className="flex-1 bg-gray-100 text-gray-600 text-sm font-semibold py-2 rounded-xl">Cancelar</button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* ═══ Interrupt Button ═══ */}
+        <button
+          onClick={() => setShowConfirmInterrupt(true)}
+          className="w-full flex items-center justify-center gap-2 bg-primary/10 border border-primary/30 text-primary font-mono font-bold text-xs uppercase tracking-wider py-3.5 rounded-xl hover:bg-primary/20 hover:border-primary/50 transition-all mb-2.5 shrink-0"
+        >
+          <AlertTriangle className="w-3.5 h-3.5" />
+          Registrar interrupção
+        </button>
 
-        {/* Interrupt button — compact */}
-        <AnimatePresence mode="wait">
-          {!showConfirmInterrupt ? (
-            <motion.button
-              key="trigger"
-              initial={{ opacity: 1 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowConfirmInterrupt(true)}
-              className="w-full flex items-center justify-center gap-2 bg-white border-2 border-dashed border-rose-300 text-rose-500 font-semibold py-3 rounded-xl hover:border-rose-400 hover:bg-rose-50/50 transition-all mb-2 text-sm shrink-0"
-            >
-              <AlertTriangle className="w-3.5 h-3.5" />
-              Registrar interrupção
-            </motion.button>
-          ) : (
-            <motion.div key="confirm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 bg-black/40 flex items-end justify-center p-3">
-              <motion.div initial={{ y: 100 }} animate={{ y: 0 }} exit={{ y: 100 }} className="bg-white rounded-2xl border border-rose-200 shadow-xl p-5 w-full max-w-lg">
-                <p className="text-sm font-semibold text-gray-700 mb-1">Registrar interrupção?</p>
-                <p className="text-xs text-gray-400 mb-3">
-                  Ciclo atual ({durationText(elapsed)}) será salvo e um novo começará.
-                </p>
-                <textarea
-                  value={interruptNote}
-                  onChange={e => setInterruptNote(e.target.value)}
-                  placeholder="O que aconteceu? (opcional)"
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 mb-3 resize-none h-14 focus:outline-none focus:ring-2 focus:ring-rose-300"
-                />
-                <div className="flex gap-2">
-                  <button onClick={handleInterrupt} disabled={saving} className="flex-1 bg-rose-500 text-white text-sm font-semibold py-2.5 rounded-xl disabled:opacity-50">
-                    {saving ? "Salvando..." : "Confirmar"}
-                  </button>
-                  <button onClick={() => { setShowConfirmInterrupt(false); setInterruptNote(""); }} className="flex-1 bg-gray-100 text-gray-600 text-sm font-semibold py-2.5 rounded-xl">Cancelar</button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Stats — compact 2x2 */}
-        <div className="grid grid-cols-4 gap-1.5 mb-2 shrink-0">
-          <MiniStat icon={Trophy} value={bestStreak ? durationText(bestStreak) : "—"} label="Recorde" color="text-amber-500" />
-          <MiniStat icon={BarChart3} value={avgStreak ? durationText(avgStreak) : "—"} label="Média" color="text-blue-500" />
-          <MiniStat icon={AlertTriangle} value={String(totalInterruptions)} label="Paradas" color="text-rose-500" />
-          <MiniStat icon={Heart} value={durationText(elapsed)} label="Atual" color="text-emerald-500" />
+        {/* ═══ Stats Grid ═══ */}
+        <div className="grid grid-cols-4 gap-2 mb-2 shrink-0">
+          <StatMini icon={Trophy} value={bestStreak ? durationText(bestStreak) : "—"} label="Recorde" accent="text-amber-500" />
+          <StatMini icon={BarChart3} value={avgStreak ? durationText(avgStreak) : "—"} label="Média" accent="text-blue-400" />
+          <StatMini icon={AlertTriangle} value={String(totalInterruptions)} label="Paradas" accent="text-destructive" />
+          <StatMini icon={Heart} value={durationText(elapsed)} label="Atual" accent="text-emerald-500" />
         </div>
 
-        {/* Footer actions — compact */}
-        <div className="flex items-center justify-center gap-4 shrink-0 pt-1">
+        {/* ═══ Footer Actions ═══ */}
+        <div className="flex items-center justify-center gap-5 shrink-0 pt-1">
           {history.length > 0 && (
-            <button onClick={() => setShowHistoryModal(true)} className="text-[11px] text-gray-400 hover:text-rose-500 transition-colors inline-flex items-center gap-1">
+            <button onClick={() => setShowHistoryModal(true)} className="text-[11px] font-mono text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1.5">
               <History className="w-3 h-3" />
               Histórico ({history.length})
             </button>
           )}
           {!showConfirmReset ? (
-            <button onClick={() => setShowConfirmReset(true)} className="text-[11px] text-gray-300 hover:text-rose-400 transition-colors inline-flex items-center gap-1">
+            <button onClick={() => setShowConfirmReset(true)} className="text-[11px] font-mono text-muted-foreground/50 hover:text-destructive transition-colors inline-flex items-center gap-1.5">
               <RotateCcw className="w-3 h-3" />
               Reiniciar
             </button>
           ) : (
-            <span className="flex items-center gap-2">
-              <button onClick={handleResetAll} disabled={saving} className="text-[11px] text-rose-500 font-semibold disabled:opacity-50">
+            <span className="flex items-center gap-3">
+              <button onClick={handleResetAll} disabled={saving} className="text-[11px] font-mono text-destructive font-bold disabled:opacity-50">
                 {saving ? "..." : "Confirmar reset"}
               </button>
-              <button onClick={() => setShowConfirmReset(false)} className="text-[11px] text-gray-400">Cancelar</button>
+              <button onClick={() => setShowConfirmReset(false)} className="text-[11px] font-mono text-muted-foreground">Cancelar</button>
             </span>
           )}
         </div>
       </div>
 
-      {/* History Modal (bottom sheet) */}
+      {/* ═══ Interrupt Confirm — Bottom Sheet ═══ */}
       <AnimatePresence>
-        {showHistoryModal && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 bg-black/40 flex items-end justify-center" onClick={() => setShowHistoryModal(false)}>
+        {showConfirmInterrupt && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end justify-center"
+            onClick={() => { setShowConfirmInterrupt(false); setInterruptNote(""); }}
+          >
             <motion.div
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="bg-white rounded-t-2xl w-full max-w-lg shadow-xl"
-              style={{ maxHeight: "70dvh" }}
+              className="bg-card border-t border-border rounded-t-2xl w-full max-w-lg p-5 shadow-2xl"
               onClick={e => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
-                <span className="text-sm font-semibold text-gray-700">Histórico ({history.length} ciclo{history.length !== 1 ? "s" : ""})</span>
-                <button onClick={() => setShowHistoryModal(false)} className="text-gray-400 hover:text-gray-600 p-1"><X className="w-4 h-4" /></button>
+              <div className="w-10 h-1 bg-border rounded-full mx-auto mb-4" />
+              <p className="text-sm font-mono font-bold text-foreground mb-1">Registrar interrupção</p>
+              <p className="text-xs text-muted-foreground mb-4">
+                Ciclo atual ({durationText(elapsed)}) será salvo no histórico.
+              </p>
+              <textarea
+                value={interruptNote}
+                onChange={e => setInterruptNote(e.target.value)}
+                placeholder="O que aconteceu? (opcional)"
+                className="w-full bg-muted border border-border rounded-lg px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground mb-4 resize-none h-16 focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={handleInterrupt}
+                  disabled={saving}
+                  className="flex-1 bg-primary text-primary-foreground text-sm font-mono font-bold py-3 rounded-lg hover:brightness-110 transition-all disabled:opacity-50"
+                >
+                  {saving ? "Salvando..." : "Confirmar"}
+                </button>
+                <button
+                  onClick={() => { setShowConfirmInterrupt(false); setInterruptNote(""); }}
+                  className="flex-1 bg-muted text-muted-foreground text-sm font-mono font-bold py-3 rounded-lg hover:bg-border transition-colors"
+                >
+                  Cancelar
+                </button>
               </div>
-              <div className="overflow-y-auto" style={{ maxHeight: "calc(70dvh - 48px)" }}>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ═══ Edit Start — Modal ═══ */}
+      <AnimatePresence>
+        {editingStart && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }} className="bg-card border border-border rounded-2xl p-5 w-full max-w-sm shadow-2xl">
+              <p className="text-sm font-mono font-bold text-foreground mb-3">Editar início do ciclo</p>
+              <input
+                type="datetime-local"
+                value={editStartValue}
+                onChange={e => setEditStartValue(e.target.value)}
+                className="w-full bg-muted border border-border rounded-lg px-3 py-2.5 text-sm text-foreground mb-4 focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+              <div className="flex gap-2">
+                <button onClick={handleEditStart} className="flex-1 bg-primary text-primary-foreground text-sm font-mono font-bold py-2.5 rounded-lg">Salvar</button>
+                <button onClick={() => setEditingStart(false)} className="flex-1 bg-muted text-muted-foreground text-sm font-mono font-bold py-2.5 rounded-lg">Cancelar</button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ═══ History — Bottom Sheet ═══ */}
+      <AnimatePresence>
+        {showHistoryModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end justify-center"
+            onClick={() => setShowHistoryModal(false)}
+          >
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="bg-card border-t border-border rounded-t-2xl w-full max-w-lg shadow-2xl"
+              style={{ maxHeight: "75dvh" }}
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between px-5 py-3 border-b border-border">
+                <span className="text-sm font-mono font-bold text-foreground">
+                  Histórico ({history.length} ciclo{history.length !== 1 ? "s" : ""})
+                </span>
+                <button onClick={() => setShowHistoryModal(false)} className="text-muted-foreground hover:text-foreground p-1 transition-colors">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="overflow-y-auto" style={{ maxHeight: "calc(75dvh - 48px)" }}>
                 {[...history].reverse().map((cycle, i) => {
                   const dur = (cycle.duration_seconds || 0) * 1000;
                   const cycleNum = history.length - i;
                   return (
-                    <div key={cycle.id} className="px-5 py-3 border-b border-gray-50 last:border-0">
+                    <div key={cycle.id} className="px-5 py-3.5 border-b border-border/50 last:border-0">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-bold text-gray-600">Ciclo {cycleNum}</p>
-                          <p className="text-[11px] text-gray-400">
+                          <p className="text-xs font-mono font-bold text-foreground">Ciclo {cycleNum}</p>
+                          <p className="text-[11px] text-muted-foreground font-mono mt-0.5">
                             {formatDate(cycle.started_at)} → {cycle.ended_at ? formatDate(cycle.ended_at) : "—"}
                           </p>
-                          <p className="text-sm font-semibold text-rose-500 mt-0.5">{cycle.duration_label || durationText(dur)}</p>
-                          {cycle.note && <p className="text-[11px] text-gray-400 mt-0.5 italic">"{cycle.note}"</p>}
+                          <p className="text-sm font-bold text-primary mt-1">{cycle.duration_label || durationText(dur)}</p>
+                          {cycle.note && <p className="text-[11px] text-muted-foreground mt-1 italic">"{cycle.note}"</p>}
                         </div>
-                        <button onClick={() => handleDeleteCycle(cycle.id)} className="text-gray-300 hover:text-rose-400 transition-colors p-1 shrink-0">
+                        <button onClick={() => handleDeleteCycle(cycle.id)} className="text-muted-foreground/30 hover:text-destructive transition-colors p-1 shrink-0">
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
@@ -375,12 +422,12 @@ const CipaPage = () => {
   );
 };
 
-/* ── Mini Stat ── */
-const MiniStat = ({ icon: Icon, value, label, color }: { icon: typeof Trophy; value: string; label: string; color: string }) => (
-  <div className="bg-white/80 rounded-xl px-2 py-2 text-center border border-white">
-    <Icon className={`w-3 h-3 ${color} mx-auto mb-0.5`} />
-    <p className="text-xs font-bold text-gray-700 leading-tight truncate">{value}</p>
-    <p className="text-[9px] text-gray-400">{label}</p>
+/* ═══ Stat Mini Card ═══ */
+const StatMini = ({ icon: Icon, value, label, accent }: { icon: typeof Trophy; value: string; label: string; accent: string }) => (
+  <div className="bg-card border border-border rounded-xl px-2 py-2.5 text-center">
+    <Icon className={`w-3 h-3 ${accent} mx-auto mb-1`} />
+    <p className="text-xs font-mono font-bold text-foreground leading-tight truncate">{value}</p>
+    <p className="text-[9px] font-mono text-muted-foreground uppercase tracking-wider mt-0.5">{label}</p>
   </div>
 );
 
