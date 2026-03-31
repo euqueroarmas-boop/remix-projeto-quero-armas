@@ -279,7 +279,7 @@ const ServicePageTemplate = ({
                   {t("service.ctaContract")}
                 </Link>
                 <button
-                  onClick={() => openWhatsApp({ pageTitle: title, intent: "specialist" })}
+                  onClick={() => openWhatsApp({ pageTitle: title, intent: "specialist", contractMode: contractMode || undefined })}
                   className="inline-flex items-center gap-2 border border-gunmetal-foreground/30 text-gunmetal-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:border-primary hover:text-primary transition-all"
                 >
                   <MessageCircle size={16} />
