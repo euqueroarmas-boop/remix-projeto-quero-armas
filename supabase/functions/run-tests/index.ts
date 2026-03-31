@@ -21,7 +21,7 @@ const VALID_TEST_TYPES = [
 const VALID_SUITES = ["smoke", "light", "cypress", "full"] as const;
 
 const LIGHT_TESTS: string[] = ["smoke", "seo", "api", "blog"];
-const CYPRESS_TESTS: string[] = ["frontend", "business", "forms", "contracts", "checkout", "portal", "regression", "certificate"];
+const CYPRESS_TESTS: string[] = ["frontend", "business", "forms", "contracts", "checkout", "portal", "regression", "certificate", "scope-engine"];
 
 // ─── Auth ───
 async function hmacVerify(secret: string, message: string, signature: string): Promise<boolean> {
