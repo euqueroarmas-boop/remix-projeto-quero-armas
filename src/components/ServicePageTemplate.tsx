@@ -479,12 +479,18 @@ const ServicePageTemplate = ({
 
       {/* ══ Hours Calculator (sob demanda mode) ══ */}
       {(contractMode === "sob_demanda" || (!contractMode && showHoursCalculator)) && (
-        <HoursCalculator serviceName={tag} />
+        <div id="section-sob-demanda">
+          {contractMode === "sob_demanda" && console.log("[WMTi] CONTRACT_MODE_RENDER_OK sob_demanda") as unknown as null}
+          <HoursCalculator serviceName={tag} />
+        </div>
       )}
 
       {/* ══ Recurring Plan Preview (recorrente mode) ══ */}
       {contractMode === "recorrente" && (
-        <RecurringPlanPreview contractHref={contractHref} pageTitle={title} />
+        <div id="section-recorrente">
+          {console.log("[WMTi] CONTRACT_MODE_RENDER_OK recorrente") as unknown as null}
+          <RecurringPlanPreview contractHref={contractHref} pageTitle={title} />
+        </div>
       )}
 
       {/* ══ Extra Sections (e.g. downtime calculator) ══ */}
