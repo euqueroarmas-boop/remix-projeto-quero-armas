@@ -15,7 +15,7 @@ const SITE_URL = "https://dell-shine-solutions.lovable.app";
 
 const VALID_TEST_TYPES = [
   "smoke", "frontend", "business", "forms", "contracts",
-  "checkout", "seo", "blog", "portal", "api", "regression", "certificate",
+  "checkout", "seo", "blog", "portal", "api", "regression", "certificate", "scope-engine",
 ] as const;
 
 const VALID_SUITES = ["smoke", "light", "cypress", "full"] as const;
