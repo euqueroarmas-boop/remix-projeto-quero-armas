@@ -311,6 +311,13 @@ const ServicePageTemplate = ({
       {/* ══ AUTHORITY BAR ══ */}
       <AuthorityBar />
 
+      {/* ══ CONTRACT MODE SELECTOR ══ */}
+      <ContractModeSelector
+        mode={contractMode}
+        onSelect={setContractMode}
+        allowedModes={allowedModes}
+      />
+
       {/* ══ Pain Points & Solutions ══ */}
       <section className="section-light py-16 md:py-24">
         <div className="container">
