@@ -423,6 +423,23 @@ const ServicePageTemplate = ({
         </div>
       </section>
 
+      {/* ══ SERVICE SCOPE ══ */}
+      {serviceScope && (
+        <section className="section-light py-16 md:py-24">
+          <div className="container max-w-4xl">
+            <motion.div {...fadeIn}>
+              <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
+                {t("service.scopeTag", "Escopo do serviço")}
+              </p>
+              <h2 className="text-2xl md:text-3xl mb-8">
+                {t("service.scopeTitle", "O que está")} <span className="text-primary">{t("service.scopeTitleHighlight", "incluso")}</span>
+              </h2>
+              <ServiceScopeDisplay scope={serviceScope} />
+            </motion.div>
+          </div>
+        </section>
+      )}
+
       {/* ══ WHAT YOUR COMPANY AVOIDS ══ */}
       <AvoidanceBlock cityName={cityName} />
 
