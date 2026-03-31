@@ -62,6 +62,7 @@ const NAV_GROUPS = [
       { id: "payments", label: "Pagamentos", icon: CreditCardIcon },
       { id: "clientes", label: "Clientes", icon: UserCog },
       { id: "leads", label: "Leads & Propostas", icon: Megaphone },
+      { id: "cipa-locations", label: "CIPA Geo", icon: MapPin },
     ],
   },
   {
