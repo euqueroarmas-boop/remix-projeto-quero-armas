@@ -625,7 +625,7 @@ export const serviceScopes: ServiceScope[] = [
 
   createServiceScope({
     id: "srv-servidores-dell",
-    slug: "servidores-dell",
+    slug: "servidor-dell-poweredge-jacarei",
     service_name: "Servidores Dell",
     description: "Consultoria, implantação e suporte para servidores Dell PowerEdge em ambiente corporativo.",
     included: [
