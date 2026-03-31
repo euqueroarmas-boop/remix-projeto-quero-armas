@@ -312,21 +312,18 @@ const CipaPage = () => {
     );
   }
 
-  /* ── Geolocation consent gate ── */
+  /* ── Name consent gate ── */
   if (geoGranted === false) {
     return (
       <div className="flex flex-col items-center justify-center bg-background px-6 text-center gap-6" style={{ height: "100dvh" }}>
-        <SeoHead title="CIPA — Permissão necessária" description="Localização obrigatória" noindex />
+        <SeoHead title="CIPA — Bem-vindo" description="Contador de dias sem briga" noindex />
         <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-          <MapPin className="w-8 h-8 text-primary" />
+          <Heart className="w-8 h-8 text-primary" />
         </div>
         <div className="space-y-2 max-w-sm">
-          <h1 className="text-xl font-bold text-foreground">Permissão de localização</h1>
+          <h1 className="text-xl font-bold text-foreground">Bem-vindo ao CIPA</h1>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            O CIPA precisa da sua localização para funcionar. A localização será armazenada no servidor de forma consciente e segura.
-          </p>
-          <p className="text-xs text-muted-foreground/70">
-            Ao continuar, você autoriza o armazenamento da sua localização durante o uso do app.
+            Informe seu nome para começar a usar o contador de dias sem briga.
           </p>
         </div>
         <div className="w-full max-w-xs space-y-3">
@@ -341,17 +338,10 @@ const CipaPage = () => {
             onClick={requestGeoPermission}
             className="w-full bg-primary text-primary-foreground font-mono font-bold text-sm uppercase tracking-wider py-3.5 rounded-xl hover:bg-primary/90 transition-all flex items-center justify-center gap-2"
           >
-            <Shield className="w-4 h-4" />
-            Permitir localização
+            <Heart className="w-4 h-4" />
+            Começar
           </button>
         </div>
-        {geoError && (
-          <div className="bg-destructive/10 border border-destructive/30 rounded-xl px-4 py-3 max-w-xs">
-            <p className="text-xs text-destructive font-mono text-center">
-              Permissão negada. Ative a localização nas configurações do dispositivo e recarregue a página.
-            </p>
-          </div>
-        )}
       </div>
     );
   }
