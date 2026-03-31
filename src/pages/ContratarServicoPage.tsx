@@ -55,6 +55,7 @@ const SERVICE_CATALOG: ServiceInfo[] = [
 /* ─── Price tables ─── */
 const STANDARD_PRICES: Record<number, number> = { 1: 200, 2: 190, 3: 180, 4: 170, 5: 160, 6: 155, 7: 150, 8: 145 };
 const EMERGENCY_PRICES: Record<number, number> = { 1: 300, 2: 285, 3: 270, 4: 255, 5: 240, 6: 232.5, 7: 225, 8: 217.5 };
+const SERVER_ADMIN_PRICES: Record<number, number> = { 1: 500, 2: 475, 3: 450, 4: 425, 5: 400, 6: 387.5, 7: 375, 8: 362.5 };
 
 type BillingType = "BOLETO" | "CREDIT_CARD";
 type FlowStep = "calculator" | "registration" | "contract" | "payment" | "success";
@@ -83,8 +84,8 @@ const ContratarServicoPage = () => {
   const selectedRentalQty = Math.max(1, Number(searchParams.get("qty") || 1));
   const selectedRentalPlan = plans.find((item) => item.id === selectedRentalPlanId) || plans[1];
   const rentalMonthlyValue = selectedRentalPlan.price * selectedRentalQty;
-  const basePrice = isEmergency ? 300 : 200;
-  const priceTable = isEmergency ? EMERGENCY_PRICES : STANDARD_PRICES;
+  const basePrice = isServerAdmin ? 500 : isEmergency ? 300 : 200;
+  const priceTable = isServerAdmin ? SERVER_ADMIN_PRICES : isEmergency ? EMERGENCY_PRICES : STANDARD_PRICES;
 
   // Server admin params
   const serverHosts = Math.max(1, Number(searchParams.get("hosts") || 1));
@@ -819,19 +820,32 @@ const ContratarServicoPage = () => {
             <div className="container max-w-3xl">
               {(() => { console.log("[WMTi] HOURS_CALCULATOR_RENDERED — administracao-de-servidores"); return null; })()}
 
-              {/* Urgency messaging */}
+              {/* Premium positioning + urgency messaging */}
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mb-8 bg-amber-500/10 border border-amber-500/30 rounded-xl p-5"
+                className="mb-8 space-y-4"
               >
-                <div className="flex items-start gap-3">
-                  <AlertTriangle className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
-                  <div>
-                    <p className="font-bold text-foreground text-sm mb-1">Servidor parado? Sistema travado?</p>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      Cada hora com seu servidor parado pode custar mais do que este atendimento. Resolva agora antes que o prejuízo aumente.
-                    </p>
+                {/* Risk awareness */}
+                <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-5">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
+                    <div>
+                      <p className="font-bold text-foreground text-sm mb-1">Servidor parado? Sistema travado?</p>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        Cada hora com seu servidor parado pode custar mais do que este atendimento. Resolva agora antes que o prejuízo aumente.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Premium positioning */}
+                <div className="bg-card border border-border rounded-xl p-5 space-y-3">
+                  <p className="font-mono text-[10px] tracking-[0.3em] uppercase text-primary font-bold">Por que R$ 500/h?</p>
+                  <div className="space-y-2 text-sm text-muted-foreground leading-relaxed">
+                    <p>Você não está pagando por uma hora. Está pagando para alguém <strong className="text-foreground">experiente</strong> entrar no seu servidor e resolver o problema <strong className="text-foreground">sem piorar a situação</strong>.</p>
+                    <p>Um erro em servidor pode custar <strong className="text-foreground">dias de operação</strong>. Aqui, você resolve em horas.</p>
+                    <p className="text-xs text-primary font-semibold">Empresas que tentam economizar nesse momento normalmente pagam muito mais depois.</p>
                   </div>
                 </div>
               </motion.div>
@@ -904,6 +918,13 @@ const ContratarServicoPage = () => {
                     </div>
                   </div>
 
+                  {/* Impact reminder before CTA */}
+                  <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 text-center">
+                    <p className="font-mono text-xs text-primary font-bold">
+                      Investimento para resolver agora — antes que o prejuízo aumente
+                    </p>
+                  </div>
+
                   <button
                     onClick={() => {
                       console.log("[WMTi] CHECKOUT_STARTED_AVULSO", { hours, promoPrice, serviceName: "Administração de Servidores" });
@@ -912,7 +933,7 @@ const ContratarServicoPage = () => {
                     className="w-full inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
                   >
                     <ArrowRight size={16} />
-                    Resolver meu problema agora
+                    Resolver agora com especialista
                   </button>
                 </div>
               </WizardStepWrapper>
