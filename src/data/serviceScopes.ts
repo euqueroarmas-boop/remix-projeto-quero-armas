@@ -219,7 +219,7 @@ export const serviceScopes: ServiceScope[] = [
 
   createServiceScope({
     id: "srv-terceirizacao",
-    slug: "terceirizacao-de-ti",
+    slug: "terceirizacao-de-mao-de-obra-ti",
     service_name: "Terceirização de TI",
     description: "Gestão completa do ambiente tecnológico, assumindo todas as funções de TI da CONTRATANTE conforme pacote contratado.",
     included: [
