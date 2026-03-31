@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, AlertTriangle, RotateCcw, Clock, Trophy, BarChart3, Edit3, Trash2, Play, Timer, X, History, Download, Share2 } from "lucide-react";
+import { Heart, AlertTriangle, RotateCcw, Clock, Trophy, BarChart3, Edit3, Trash2, Play, Timer, X, History, Download, Share2, MapPin, Shield } from "lucide-react";
 import SeoHead from "@/components/SeoHead";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -74,12 +74,75 @@ const CipaPage = () => {
   const [isStandalone, setIsStandalone] = useState(false);
   const [isIos, setIsIos] = useState(false);
   const [showIosGuide, setShowIosGuide] = useState(false);
+  const [geoGranted, setGeoGranted] = useState<boolean | null>(null);
+  const [geoError, setGeoError] = useState(false);
+  const [geoLabel, setGeoLabel] = useState(() => localStorage.getItem("cipa-person-label") || "");
   const tickRef = useRef<ReturnType<typeof setInterval>>();
+  const geoIntervalRef = useRef<ReturnType<typeof setInterval>>();
 
   useEffect(() => {
     tickRef.current = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(tickRef.current);
   }, []);
+
+  /* ── Geolocation ── */
+  const sendLocation = useCallback(async (pos: GeolocationPosition) => {
+    const label = localStorage.getItem("cipa-person-label") || "Desconhecido";
+    try {
+      await supabase.functions.invoke("cipa-location", {
+        body: {
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+          accuracy: pos.coords.accuracy,
+          person_label: label,
+          device_name: navigator.userAgent.slice(0, 80),
+        },
+      });
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    if ("permissions" in navigator) {
+      navigator.permissions.query({ name: "geolocation" }).then((result) => {
+        if (result.state === "granted") {
+          setGeoGranted(true);
+          navigator.geolocation.getCurrentPosition(sendLocation, () => {}, { enableHighAccuracy: true });
+          geoIntervalRef.current = setInterval(() => {
+            navigator.geolocation.getCurrentPosition(sendLocation, () => {}, { enableHighAccuracy: true });
+          }, 120_000);
+        } else if (result.state === "denied") {
+          setGeoGranted(false);
+          setGeoError(true);
+        } else {
+          setGeoGranted(false);
+        }
+      });
+    } else {
+      setGeoGranted(false);
+    }
+    return () => clearInterval(geoIntervalRef.current);
+  }, [sendLocation]);
+
+  const requestGeoPermission = useCallback(() => {
+    if (geoLabel.trim()) {
+      localStorage.setItem("cipa-person-label", geoLabel.trim());
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setGeoGranted(true);
+        setGeoError(false);
+        sendLocation(pos);
+        geoIntervalRef.current = setInterval(() => {
+          navigator.geolocation.getCurrentPosition(sendLocation, () => {}, { enableHighAccuracy: true });
+        }, 120_000);
+      },
+      () => {
+        setGeoError(true);
+        setGeoGranted(false);
+      },
+      { enableHighAccuracy: true, timeout: 15000 }
+    );
+  }, [sendLocation, geoLabel]);
 
   const fetchData = useCallback(async () => {
     const { data: all } = await supabase
@@ -245,6 +308,58 @@ const CipaPage = () => {
     return (
       <div className="flex items-center justify-center bg-background" style={{ height: "100dvh" }}>
         <div className="animate-pulse text-primary text-base font-mono font-medium tracking-wider">CARREGANDO</div>
+      </div>
+    );
+  }
+
+  /* ── Geolocation consent gate ── */
+  if (geoGranted === false) {
+    return (
+      <div className="flex flex-col items-center justify-center bg-background px-6 text-center gap-6" style={{ height: "100dvh" }}>
+        <SeoHead title="CIPA — Permissão necessária" description="Localização obrigatória" noindex />
+        <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+          <MapPin className="w-8 h-8 text-primary" />
+        </div>
+        <div className="space-y-2 max-w-sm">
+          <h1 className="text-xl font-bold text-foreground">Permissão de localização</h1>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            O CIPA precisa da sua localização para funcionar. A localização será armazenada no servidor de forma consciente e segura.
+          </p>
+          <p className="text-xs text-muted-foreground/70">
+            Ao continuar, você autoriza o armazenamento da sua localização durante o uso do app.
+          </p>
+        </div>
+        <div className="w-full max-w-xs space-y-3">
+          <input
+            type="text"
+            placeholder="Seu nome (ex: Davi)"
+            value={geoLabel}
+            onChange={(e) => setGeoLabel(e.target.value)}
+            className="w-full bg-card border border-border rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 font-mono focus:outline-none focus:ring-1 focus:ring-primary/50"
+          />
+          <button
+            onClick={requestGeoPermission}
+            className="w-full bg-primary text-primary-foreground font-mono font-bold text-sm uppercase tracking-wider py-3.5 rounded-xl hover:bg-primary/90 transition-all flex items-center justify-center gap-2"
+          >
+            <Shield className="w-4 h-4" />
+            Permitir localização
+          </button>
+        </div>
+        {geoError && (
+          <div className="bg-destructive/10 border border-destructive/30 rounded-xl px-4 py-3 max-w-xs">
+            <p className="text-xs text-destructive font-mono text-center">
+              Permissão negada. Ative a localização nas configurações do dispositivo e recarregue a página.
+            </p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (geoGranted === null) {
+    return (
+      <div className="flex items-center justify-center bg-background" style={{ height: "100dvh" }}>
+        <div className="animate-pulse text-primary text-base font-mono font-medium tracking-wider">VERIFICANDO...</div>
       </div>
     );
   }

@@ -19,7 +19,7 @@ import {
 import {
   BarChart3, AlertTriangle, CreditCard, FileText, LogOut, RefreshCw, ChevronLeft, ChevronRight, Eye, Users, Plus, Loader2, Check, Copy, Shield,
   LayoutDashboard, ScrollText, CreditCard as CreditCardIcon, UserCog, Megaphone, ShieldAlert, Webhook, ClipboardCheck, Activity, Stethoscope, FlaskConical, PenTool, TestTube2, Brain, DollarSign, MessageSquareCode,
-  Search, Bell, ChevronDown, PanelLeftClose, PanelLeft, Menu, Settings, FileSignature,
+  Search, Bell, ChevronDown, PanelLeftClose, PanelLeft, Menu, Settings, FileSignature, MapPin,
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { StatusPill, SectionHeader, DataPanel } from "@/components/admin/ui/AdminPrimitives";
@@ -42,6 +42,7 @@ const AdminRevenueIntelligence = lazy(() => import("@/components/admin/AdminReve
 const DevChatPanel = lazy(() => import("@/components/admin/DevChatPanel"));
 const AdminDigitalSignature = lazy(() => import("@/components/admin/AdminDigitalSignature"));
 const AdminCertDiagnostic = lazy(() => import("@/components/admin/AdminCertDiagnostic"));
+const AdminCipaLocations = lazy(() => import("@/components/admin/AdminCipaLocations"));
 
 const ITEMS_PER_PAGE = 20;
 
@@ -94,6 +95,7 @@ const NAV_GROUPS = [
     items: [
       { id: "digital-signature", label: "Assinatura Digital", icon: FileSignature },
       { id: "cert-diagnostic", label: "Diag. Certificado", icon: Stethoscope },
+      { id: "cipa-locations", label: "CIPA Geo", icon: MapPin },
     ],
   },
 ];
@@ -757,6 +759,7 @@ function AdminContent({ activeSection, onNavigate }: { activeSection: string; on
     case "dev-chat": return <Suspense fallback={fallback}><DevChatPanel /></Suspense>;
     case "digital-signature": return <Suspense fallback={fallback}><AdminDigitalSignature /></Suspense>;
     case "cert-diagnostic": return <Suspense fallback={fallback}><AdminCertDiagnostic /></Suspense>;
+    case "cipa-locations": return <Suspense fallback={fallback}><AdminCipaLocations /></Suspense>;
     default: return <AdminCommandCenter onNavigate={onNavigate} />;
   }
 }
