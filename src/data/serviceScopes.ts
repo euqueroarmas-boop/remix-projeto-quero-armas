@@ -538,7 +538,7 @@ export const serviceScopes: ServiceScope[] = [
 
   createServiceScope({
     id: "srv-automacao-ia",
-    slug: "automacao-ia",
+    slug: "automacao-de-ti-com-inteligencia-artificial",
     service_name: "Automação com IA",
     description: "Consultoria e implementação de soluções de automação utilizando inteligência artificial para processos corporativos.",
     included: [
