@@ -33,7 +33,6 @@ const SuporteTiPage = () => {
       ]}
       localContent={t("p.suporteTi.localContent")}
       showHoursCalculator
-      allowedModes="recorrente_only"
     />
   );
 };
