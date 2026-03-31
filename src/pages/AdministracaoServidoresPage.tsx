@@ -31,7 +31,7 @@ const AdministracaoServidoresPage = () => {
       ]}
       localContent={t(`${k}.localContent`)}
       showHoursCalculator={false}
-      extraSections={<><GuaranteeBlock /><ServerAdminCalculator /></>}
+      extraSections={<><GuaranteeBlock /><UnifiedInfraCalculator contractHref="/contratar/administracao-de-servidores" pageTitle={t(`${k}.title`)} /></>}
     />
   );
 };

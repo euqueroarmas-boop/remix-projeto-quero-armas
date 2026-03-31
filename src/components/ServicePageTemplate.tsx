@@ -494,11 +494,11 @@ const ServicePageTemplate = ({
         </div>
       )}
 
-      {/* ══ Recurring Plan Preview (recorrente mode) ══ */}
+      {/* ══ Recurring Infrastructure Calculator (recorrente mode) ══ */}
       {contractMode === "recorrente" && (
         <div id="section-recorrente">
           {console.log("[WMTi] CONTRACT_MODE_RENDER_OK recorrente") as unknown as null}
-          <RecurringPlanPreview contractHref={contractHref} pageTitle={title} />
+          <UnifiedInfraCalculator contractHref={contractHref} pageTitle={title} />
         </div>
       )}
 
