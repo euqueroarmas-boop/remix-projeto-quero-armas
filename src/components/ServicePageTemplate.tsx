@@ -209,16 +209,14 @@ const ServicePageTemplate = ({
   const handleModeSelect = useCallback((mode: ContractMode) => {
     setContractMode(mode);
     const targetId = mode === "sob_demanda" ? "section-sob-demanda" : "section-recorrente";
+    console.log(`[WMTi] CONTRACT_MODE_SELECTED`, { mode });
     console.log(`[WMTi] CONTRACT_MODE_SELECTED_${mode === "sob_demanda" ? "ON_DEMAND" : "RECURRING"}`);
-    // Scroll after React re-render
     requestAnimationFrame(() => {
       setTimeout(() => {
         const el = document.getElementById(targetId);
         if (el) {
           el.scrollIntoView({ behavior: "smooth", block: "start" });
           console.log("[WMTi] CONTRACT_MODE_SCROLL_OK", targetId);
-        } else {
-          console.warn("[WMTi] CONTRACT_MODE_SCROLL_TARGET_NOT_FOUND", targetId);
         }
       }, 150);
     });
