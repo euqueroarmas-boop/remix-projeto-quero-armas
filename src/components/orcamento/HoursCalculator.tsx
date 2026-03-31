@@ -19,6 +19,7 @@ const fadeIn = {
 
 interface HoursCalculatorProps {
   serviceName?: string;
+  contractHref?: string;
 }
 
 const HoursCalculator = ({ serviceName }: HoursCalculatorProps) => {
