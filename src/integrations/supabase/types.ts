@@ -278,6 +278,45 @@ export type Database = {
         }
         Relationships: []
       }
+      cipa_cycles: {
+        Row: {
+          created_at: string
+          duration_days: number | null
+          duration_label: string | null
+          duration_seconds: number | null
+          ended_at: string | null
+          id: string
+          is_current: boolean
+          note: string | null
+          started_at: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          duration_days?: number | null
+          duration_label?: string | null
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          is_current?: boolean
+          note?: string | null
+          started_at?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          duration_days?: number | null
+          duration_label?: string | null
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          is_current?: boolean
+          note?: string | null
+          started_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       client_events: {
         Row: {
           created_at: string
