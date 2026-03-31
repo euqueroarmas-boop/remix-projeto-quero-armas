@@ -217,6 +217,7 @@ const CipaPage = () => {
             <span className="text-xs font-semibold text-rose-700 tracking-wide uppercase">CIPA</span>
           </div>
           <h1 className="text-2xl font-bold text-gray-800">Contador de Dias sem Briga</h1>
+          <p className="mt-2 text-base italic text-rose-400/80 tracking-wide" style={{ fontFamily: "'Georgia', serif" }}>Bate-Seva &amp; Davão</p>
         </motion.div>
 
         {/* ── Main Counter Card ── */}
