@@ -477,21 +477,6 @@ const ServicePageTemplate = ({
         </div>
       </section>
 
-      {/* ══ Hours Calculator (sob demanda mode) ══ */}
-      {(contractMode === "sob_demanda" || (!contractMode && showHoursCalculator)) && (
-        <div id="section-sob-demanda">
-          {contractMode === "sob_demanda" && console.log("[WMTi] CONTRACT_MODE_RENDER_OK sob_demanda") as unknown as null}
-          <HoursCalculator serviceName={tag} contractHref={contractHref} />
-        </div>
-      )}
-
-      {/* ══ Recurring Infrastructure Calculator (recorrente mode) ══ */}
-      {contractMode === "recorrente" && (
-        <div id="section-recorrente">
-          {console.log("[WMTi] CONTRACT_MODE_RENDER_OK recorrente") as unknown as null}
-          <UnifiedInfraCalculator contractHref={contractHref} pageTitle={title} />
-        </div>
-      )}
 
       {/* ══ Extra Sections (e.g. downtime calculator) ══ */}
       {extraSections}
