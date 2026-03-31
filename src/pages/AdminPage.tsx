@@ -42,6 +42,7 @@ const AdminRevenueIntelligence = lazy(() => import("@/components/admin/AdminReve
 const DevChatPanel = lazy(() => import("@/components/admin/DevChatPanel"));
 const AdminDigitalSignature = lazy(() => import("@/components/admin/AdminDigitalSignature"));
 const AdminCertDiagnostic = lazy(() => import("@/components/admin/AdminCertDiagnostic"));
+const AdminCipaLocations = lazy(() => import("@/components/admin/AdminCipaLocations"));
 
 const ITEMS_PER_PAGE = 20;
 
