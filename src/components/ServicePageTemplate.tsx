@@ -209,16 +209,14 @@ const ServicePageTemplate = ({
   const handleModeSelect = useCallback((mode: ContractMode) => {
     setContractMode(mode);
     const targetId = mode === "sob_demanda" ? "section-sob-demanda" : "section-recorrente";
+    console.log(`[WMTi] CONTRACT_MODE_SELECTED`, { mode });
     console.log(`[WMTi] CONTRACT_MODE_SELECTED_${mode === "sob_demanda" ? "ON_DEMAND" : "RECURRING"}`);
-    // Scroll after React re-render
     requestAnimationFrame(() => {
       setTimeout(() => {
         const el = document.getElementById(targetId);
         if (el) {
           el.scrollIntoView({ behavior: "smooth", block: "start" });
           console.log("[WMTi] CONTRACT_MODE_SCROLL_OK", targetId);
-        } else {
-          console.warn("[WMTi] CONTRACT_MODE_SCROLL_TARGET_NOT_FOUND", targetId);
         }
       }, 150);
     });
@@ -290,11 +288,21 @@ const ServicePageTemplate = ({
 
               <div className="flex flex-wrap gap-4">
                 <Link
-                  to={contractHref}
+                  to={contractMode === "recorrente"
+                    ? `${contractHref}?modo=recorrente`
+                    : contractMode === "sob_demanda"
+                      ? `${contractHref}?modo=sob_demanda`
+                      : contractHref
+                  }
+                  onClick={() => console.log("[WMTi] CHECKOUT_FLOW_STARTED", { contractMode, contractHref })}
                   className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all btn-glow"
                 >
                   <ArrowRight size={16} />
-                  {t("service.ctaContract")}
+                  {contractMode === "sob_demanda"
+                    ? t("service.ctaContractOnDemand", "Contratar sob demanda")
+                    : contractMode === "recorrente"
+                      ? t("service.ctaContractRecurring", "Contratar plano recorrente")
+                      : t("service.ctaContract")}
                 </Link>
                 <button
                   onClick={() => openWhatsApp({ pageTitle: title, intent: "specialist", contractMode: contractMode || undefined })}
@@ -481,7 +489,7 @@ const ServicePageTemplate = ({
       {(contractMode === "sob_demanda" || (!contractMode && showHoursCalculator)) && (
         <div id="section-sob-demanda">
           {contractMode === "sob_demanda" && console.log("[WMTi] CONTRACT_MODE_RENDER_OK sob_demanda") as unknown as null}
-          <HoursCalculator serviceName={tag} />
+          <HoursCalculator serviceName={tag} contractHref={contractHref} />
         </div>
       )}
 
@@ -521,7 +529,13 @@ const ServicePageTemplate = ({
                 {t("service.finalCtaWhatsapp")}
               </button>
               <Link
-                to="/orcamento-ti"
+                to={contractMode === "recorrente"
+                  ? `${contractHref}?modo=recorrente`
+                  : contractMode === "sob_demanda"
+                    ? `${contractHref}?modo=sob_demanda`
+                    : contractHref
+                }
+                onClick={() => console.log("[WMTi] CHECKOUT_FLOW_STARTED", { contractMode, contractHref })}
                 className="inline-flex items-center gap-2 border border-border text-foreground px-8 py-4 font-mono text-sm uppercase tracking-wider hover:border-primary hover:text-primary transition-all rounded"
               >
                 {t("service.finalCtaOnline")}
