@@ -84,8 +84,8 @@ const ContratarServicoPage = () => {
   const selectedRentalQty = Math.max(1, Number(searchParams.get("qty") || 1));
   const selectedRentalPlan = plans.find((item) => item.id === selectedRentalPlanId) || plans[1];
   const rentalMonthlyValue = selectedRentalPlan.price * selectedRentalQty;
-  const basePrice = isEmergency ? 300 : 200;
-  const priceTable = isEmergency ? EMERGENCY_PRICES : STANDARD_PRICES;
+  const basePrice = isServerAdmin ? 500 : isEmergency ? 300 : 200;
+  const priceTable = isServerAdmin ? SERVER_ADMIN_PRICES : isEmergency ? EMERGENCY_PRICES : STANDARD_PRICES;
 
   // Server admin params
   const serverHosts = Math.max(1, Number(searchParams.get("hosts") || 1));
