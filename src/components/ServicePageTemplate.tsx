@@ -43,6 +43,8 @@ interface ServicePageProps {
   extraSections?: React.ReactNode;
   isProblemPage?: boolean;
   problemName?: string;
+  /** Controls which contract modes are available. Default: "both" */
+  allowedModes?: AllowedModes;
 }
 
 const fadeIn = {
