@@ -55,7 +55,7 @@ const fadeIn = {
 };
 
 /* ── Micro-CTA reusable block ── */
-const MicroCta = ({ href, cityName, pageTitle }: { href: string; whatsappMessage: string; cityName?: string; pageTitle?: string }) => {
+const MicroCta = ({ href, cityName, pageTitle, contractMode }: { href: string; whatsappMessage: string; cityName?: string; pageTitle?: string; contractMode?: ContractMode | null }) => {
   const { t } = useTranslation();
   return (
     <motion.div {...fadeIn} className="py-8 md:py-10">
@@ -75,7 +75,7 @@ const MicroCta = ({ href, cityName, pageTitle }: { href: string; whatsappMessage
               {t("service.microCtaBtn")}
             </Link>
             <button
-              onClick={() => openWhatsApp({ pageTitle, intent: "specialist" })}
+              onClick={() => openWhatsApp({ pageTitle, intent: "specialist", contractMode: contractMode || undefined })}
               className="inline-flex items-center gap-2 border border-border text-foreground px-5 py-3 font-mono text-xs uppercase tracking-wider hover:border-primary hover:text-primary transition-all rounded"
             >
               <MessageCircle size={14} />
