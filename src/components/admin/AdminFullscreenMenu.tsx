@@ -5,7 +5,7 @@ import {
   X, LogOut,
   LayoutDashboard, ScrollText, AlertTriangle, CreditCard, UserCog, Megaphone,
   ShieldAlert, Webhook, ClipboardCheck, Activity, Stethoscope, FlaskConical,
-  TestTube2, PenTool, Settings, Users, MessageSquareCode, FileSignature, Brain, DollarSign,
+  TestTube2, PenTool, Settings, Users, MessageSquareCode, FileSignature, Brain, DollarSign, MapPin,
 } from "lucide-react";
 
 interface AdminFullscreenMenuProps {
