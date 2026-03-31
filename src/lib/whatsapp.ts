@@ -140,6 +140,8 @@ export interface WhatsAppMessageOptions {
   city?: string;
   /** Extra detail to append (e.g. calculator result, plan name) */
   detail?: string;
+  /** Contract mode chosen by the user */
+  contractMode?: "sob_demanda" | "recorrente";
 }
 
 /**
