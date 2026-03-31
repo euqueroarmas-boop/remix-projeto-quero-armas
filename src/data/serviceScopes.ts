@@ -654,7 +654,7 @@ export const serviceScopes: ServiceScope[] = [
 
   createServiceScope({
     id: "srv-manutencao-infra",
-    slug: "manutencao-infraestrutura",
+    slug: "manutencao-de-infraestrutura-de-ti",
     service_name: "Manutenção de Infraestrutura",
     description: "Serviço contínuo de manutenção preventiva e corretiva da infraestrutura de TI da CONTRATANTE.",
     included: [
