@@ -15,6 +15,7 @@ const HIDDEN_ROUTES = [
   "/area-do-cliente",
   "/redefinir-senha",
   "/admin",
+  "/cipa",
 ];
 
 const FloatingCtaBar = () => {
