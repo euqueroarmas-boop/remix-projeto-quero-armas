@@ -248,7 +248,7 @@ export const serviceScopes: ServiceScope[] = [
 
   createServiceScope({
     id: "srv-locacao",
-    slug: "locacao-de-computadores",
+    slug: "locacao-de-computadores-para-empresas-jacarei",
     service_name: "Locação de Computadores",
     description: "Fornecimento de estações de trabalho corporativas em regime de locação, com manutenção e suporte inclusos.",
     included: [
