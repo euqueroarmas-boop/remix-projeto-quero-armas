@@ -357,7 +357,112 @@ const CipaPage = () => {
             </span>
           )}
         </div>
+
+        {/* ═══ Install Banner ═══ */}
+        {showInstallBanner && !isStandalone && (
+          <div className="shrink-0 mt-1">
+            {isIos ? (
+              <button
+                onClick={() => setShowIosGuide(true)}
+                className="w-full flex items-center justify-center gap-2 bg-card border border-border text-foreground font-mono text-[11px] py-2.5 rounded-xl hover:border-primary/30 transition-all"
+              >
+                <Download className="w-3.5 h-3.5 text-primary" />
+                Instalar app
+              </button>
+            ) : deferredPrompt ? (
+              <button
+                onClick={async () => {
+                  deferredPrompt.prompt();
+                  const { outcome } = await deferredPrompt.userChoice;
+                  if (outcome === "accepted") setShowInstallBanner(false);
+                  setDeferredPrompt(null);
+                }}
+                className="w-full flex items-center justify-center gap-2 bg-card border border-border text-foreground font-mono text-[11px] py-2.5 rounded-xl hover:border-primary/30 transition-all"
+              >
+                <Download className="w-3.5 h-3.5 text-primary" />
+                Instalar app
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  sessionStorage.setItem("cipa-install-dismissed", "1");
+                  setShowInstallBanner(false);
+                }}
+                className="w-full flex items-center justify-center gap-2 text-muted-foreground/50 font-mono text-[10px] py-2 transition-all"
+              >
+                <Download className="w-3 h-3" />
+                Para instalar, use o menu do navegador
+              </button>
+            )}
+          </div>
+        )}
       </div>
+
+      {/* ═══ iOS Install Guide — Bottom Sheet ═══ */}
+      <AnimatePresence>
+        {showIosGuide && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end justify-center"
+            onClick={() => setShowIosGuide(false)}
+          >
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 28, stiffness: 300 }}
+              className="w-full max-w-lg bg-card border-t border-border rounded-t-2xl p-6"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-mono font-bold text-foreground">Instalar no iPhone</h3>
+                <button onClick={() => setShowIosGuide(false)} className="text-muted-foreground hover:text-foreground">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <span className="text-xs font-mono font-bold text-primary">1</span>
+                  </div>
+                  <div>
+                    <p className="text-sm text-foreground font-medium">Toque no botão Compartilhar</p>
+                    <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                      <Share2 className="w-3 h-3" /> O ícone de compartilhar na barra do Safari
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <span className="text-xs font-mono font-bold text-primary">2</span>
+                  </div>
+                  <div>
+                    <p className="text-sm text-foreground font-medium">Selecione "Adicionar à Tela de Início"</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Role para baixo no menu se necessário</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <span className="text-xs font-mono font-bold text-primary">3</span>
+                  </div>
+                  <div>
+                    <p className="text-sm text-foreground font-medium">Toque em "Adicionar"</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">O app CIPA será instalado na sua tela inicial</p>
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => { setShowIosGuide(false); sessionStorage.setItem("cipa-install-dismissed", "1"); setShowInstallBanner(false); }}
+                className="w-full mt-5 py-3 bg-primary text-primary-foreground font-mono text-xs font-bold uppercase tracking-wider rounded-xl"
+              >
+                Entendi
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ═══ Interrupt Confirm — Bottom Sheet ═══ */}
       <AnimatePresence>
