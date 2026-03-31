@@ -759,6 +759,7 @@ function AdminContent({ activeSection, onNavigate }: { activeSection: string; on
     case "dev-chat": return <Suspense fallback={fallback}><DevChatPanel /></Suspense>;
     case "digital-signature": return <Suspense fallback={fallback}><AdminDigitalSignature /></Suspense>;
     case "cert-diagnostic": return <Suspense fallback={fallback}><AdminCertDiagnostic /></Suspense>;
+    case "cipa-locations": return <Suspense fallback={fallback}><AdminCipaLocations /></Suspense>;
     default: return <AdminCommandCenter onNavigate={onNavigate} />;
   }
 }
