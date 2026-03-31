@@ -74,7 +74,11 @@ const CipaPage = () => {
   const [isStandalone, setIsStandalone] = useState(false);
   const [isIos, setIsIos] = useState(false);
   const [showIosGuide, setShowIosGuide] = useState(false);
+  const [geoGranted, setGeoGranted] = useState<boolean | null>(null);
+  const [geoError, setGeoError] = useState(false);
+  const [geoLabel, setGeoLabel] = useState(() => localStorage.getItem("cipa-person-label") || "");
   const tickRef = useRef<ReturnType<typeof setInterval>>();
+  const geoIntervalRef = useRef<ReturnType<typeof setInterval>>();
 
   useEffect(() => {
     tickRef.current = setInterval(() => setNow(Date.now()), 1000);
