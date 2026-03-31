@@ -1,4 +1,8 @@
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /area-do-cliente
+Disallow: /contrato
+Disallow: /api
 
 Sitemap: https://www.wmti.com.br/sitemap.xml
