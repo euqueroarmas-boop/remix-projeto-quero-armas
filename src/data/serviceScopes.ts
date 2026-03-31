@@ -480,7 +480,7 @@ export const serviceScopes: ServiceScope[] = [
 
   createServiceScope({
     id: "srv-suporte-redes-corp",
-    slug: "suporte-redes-corporativas",
+    slug: "suporte-tecnico-para-redes-corporativas",
     service_name: "Suporte a Redes Corporativas",
     description: "Suporte técnico especializado para redes corporativas, incluindo diagnóstico, manutenção e otimização de infraestrutura de rede.",
     included: [
