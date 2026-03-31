@@ -202,7 +202,9 @@ const ServicePageTemplate = ({
   extraSections,
   isProblemPage,
   problemName,
+  allowedModes = "both",
 }: ServicePageProps) => {
+  const [contractMode, setContractMode] = useState<ContractMode | null>(null);
   const { t } = useTranslation();
   const location = useLocation();
   const baseUrl = "https://www.wmti.com.br";
