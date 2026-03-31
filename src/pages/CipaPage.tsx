@@ -211,13 +211,13 @@ const CipaPage = () => {
 
       <div className="max-w-lg mx-auto px-3 py-5 pb-8">
         {/* Header */}
-        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/70 backdrop-blur border border-rose-200 mb-4">
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-5">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/70 backdrop-blur border border-rose-200 mb-3">
             <Heart className="w-4 h-4 text-rose-500" fill="currentColor" />
             <span className="text-xs font-semibold text-rose-700 tracking-wide uppercase">CIPA</span>
           </div>
-          <h1 className="text-2xl font-bold text-gray-800">Contador de Dias sem Briga</h1>
-          <p className="mt-2 text-base italic text-rose-400/80 tracking-wide" style={{ fontFamily: "'Georgia', serif" }}>Bate-Seva &amp; Davão</p>
+          <h1 className="text-xl font-bold text-gray-800">Contador de Dias sem Briga</h1>
+          <p className="mt-1.5 text-sm italic text-rose-400/80 tracking-wide" style={{ fontFamily: "'Georgia', serif" }}>Bate-Seva &amp; Davão</p>
         </motion.div>
 
         {/* ── Main Counter Card ── */}
