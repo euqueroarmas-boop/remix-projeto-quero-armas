@@ -567,7 +567,7 @@ export const serviceScopes: ServiceScope[] = [
 
   createServiceScope({
     id: "srv-automacao-alexa",
-    slug: "automacao-alexa",
+    slug: "automacao-alexa-casa-empresa-inteligente",
     service_name: "Automação com Alexa",
     description: "Implantação de automação residencial e corporativa utilizando dispositivos Amazon Alexa e ecossistema smart home.",
     included: [
