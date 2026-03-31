@@ -132,7 +132,7 @@ export const serviceScopes: ServiceScope[] = [
 
   createServiceScope({
     id: "srv-infra-ti",
-    slug: "infraestrutura-de-ti",
+    slug: "infraestrutura-ti-corporativa-jacarei",
     service_name: "Infraestrutura de TI",
     description: "Gestão completa da infraestrutura de tecnologia da informação, incluindo manutenção preventiva e corretiva de ativos.",
     included: [
