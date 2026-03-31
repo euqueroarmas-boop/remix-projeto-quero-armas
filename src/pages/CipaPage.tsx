@@ -69,6 +69,11 @@ const CipaPage = () => {
   const [editStartValue, setEditStartValue] = useState("");
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallBanner, setShowInstallBanner] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
+  const [isIos, setIsIos] = useState(false);
+  const [showIosGuide, setShowIosGuide] = useState(false);
   const tickRef = useRef<ReturnType<typeof setInterval>>();
 
   useEffect(() => {
