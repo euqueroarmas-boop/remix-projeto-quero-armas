@@ -89,7 +89,7 @@ export default function AdminCipaLocations() {
         title="Geolocalização CIPA"
         subtitle={`${locations.length} registros capturados`}
         icon={MapPin}
-        action={
+        actions={
           <Button size="sm" variant="outline" onClick={fetchLocations} disabled={loading}>
             <RefreshCw className={`w-4 h-4 mr-1 ${loading ? "animate-spin" : ""}`} /> Atualizar
           </Button>
