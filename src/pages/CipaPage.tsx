@@ -73,7 +73,38 @@ const CipaPage = () => {
     return () => clearInterval(id);
   }, []);
 
-  // Persist
+  // Inject PWA manifest for /cipa scope
+  useEffect(() => {
+    let link = document.querySelector('link[rel="manifest"][data-cipa]') as HTMLLinkElement | null;
+    if (!link) {
+      link = document.createElement("link");
+      link.rel = "manifest";
+      link.setAttribute("data-cipa", "true");
+      link.href = "/cipa-manifest.json";
+      document.head.appendChild(link);
+    }
+    // Theme color
+    let meta = document.querySelector('meta[name="theme-color"][data-cipa]') as HTMLMetaElement | null;
+    if (!meta) {
+      meta = document.createElement("meta");
+      meta.name = "theme-color";
+      meta.setAttribute("data-cipa", "true");
+      meta.content = "#F43F5E";
+      document.head.appendChild(meta);
+    }
+    let metaCapable = document.querySelector('meta[name="apple-mobile-web-app-capable"]') as HTMLMetaElement | null;
+    if (!metaCapable) {
+      metaCapable = document.createElement("meta");
+      metaCapable.name = "apple-mobile-web-app-capable";
+      metaCapable.content = "yes";
+      document.head.appendChild(metaCapable);
+    }
+    return () => {
+      link?.remove();
+      meta?.remove();
+      metaCapable?.remove();
+    };
+  }, []);
   useEffect(() => { saveState(state); }, [state]);
 
   const elapsed = now - new Date(state.currentCycleStart).getTime();
