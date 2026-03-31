@@ -529,7 +529,13 @@ const ServicePageTemplate = ({
                 {t("service.finalCtaWhatsapp")}
               </button>
               <Link
-                to="/orcamento-ti"
+                to={contractMode === "recorrente"
+                  ? `${contractHref}?modo=recorrente`
+                  : contractMode === "sob_demanda"
+                    ? `${contractHref}?modo=sob_demanda`
+                    : contractHref
+                }
+                onClick={() => console.log("[WMTi] CHECKOUT_FLOW_STARTED", { contractMode, contractHref })}
                 className="inline-flex items-center gap-2 border border-border text-foreground px-8 py-4 font-mono text-sm uppercase tracking-wider hover:border-primary hover:text-primary transition-all rounded"
               >
                 {t("service.finalCtaOnline")}
