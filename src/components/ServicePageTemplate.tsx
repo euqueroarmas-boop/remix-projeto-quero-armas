@@ -459,8 +459,15 @@ const ServicePageTemplate = ({
         </div>
       </section>
 
-      {/* ══ Hours Calculator ══ */}
-      {showHoursCalculator && <HoursCalculator serviceName={tag} />}
+      {/* ══ Hours Calculator (sob demanda mode) ══ */}
+      {(contractMode === "sob_demanda" || (!contractMode && showHoursCalculator)) && (
+        <HoursCalculator serviceName={tag} />
+      )}
+
+      {/* ══ Recurring Plan Preview (recorrente mode) ══ */}
+      {contractMode === "recorrente" && (
+        <RecurringPlanPreview contractHref={contractHref} pageTitle={title} />
+      )}
 
       {/* ══ Extra Sections (e.g. downtime calculator) ══ */}
       {extraSections}
