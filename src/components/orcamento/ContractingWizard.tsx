@@ -687,7 +687,7 @@ const ContractingWizard = ({
             </WizardStepWrapper>
 
             {/* Step 4: Payment */}
-            <WizardStepWrapper stepNumber={4} title={paymentConfirmed ? "Compra Concluída" : "Pagamento"} subtitle={paymentConfirmed ? "Pagamento confirmado ✓" : "Ao prosseguir, você será direcionado para a página segura de checkout"} status={paymentConfirmed ? "completed" : getStepStatus("payment")} isLast>
+            <WizardStepWrapper stepNumber={4} title={paymentConfirmed ? "Pagamento Confirmado ✓" : "Pagamento"} subtitle={paymentConfirmed ? "Pagamento confirmado com sucesso" : "Ao prosseguir, você será direcionado para a página segura de checkout"} status={paymentConfirmed ? "completed" : getStepStatus("payment")}>
               {paymentConfirmed ? (
                 <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-3">
                   <CheckCircle className="w-10 h-10 text-green-500 mx-auto" />
@@ -781,6 +781,22 @@ const ContractingWizard = ({
                     <ExternalLink className="w-5 h-5 mr-2" />
                     {paymentError ? "Tentar novamente" : "PROSSEGUIR PARA PAGAMENTO"}
                   </Button>
+                </div>
+              )}
+            </WizardStepWrapper>
+
+            {/* Step 5: Conclusão */}
+            <WizardStepWrapper stepNumber={5} title="Compra Concluída" subtitle="Fechamento e ativação do serviço" status={paymentConfirmed ? "active" : "pending"} isLast>
+              {paymentConfirmed ? (
+                <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-3">
+                  <CheckCircle className="w-12 h-12 text-green-500 mx-auto" />
+                  <h4 className="text-lg font-heading font-bold text-foreground">Pedido concluído com sucesso!</h4>
+                  <p className="text-sm text-muted-foreground">Redirecionando para a página de confirmação...</p>
+                  <Loader2 className="w-5 h-5 animate-spin text-primary mx-auto" />
+                </div>
+              ) : (
+                <div className="p-6 text-center">
+                  <p className="text-sm text-muted-foreground">Aguardando confirmação do pagamento para finalizar.</p>
                 </div>
               )}
             </WizardStepWrapper>
