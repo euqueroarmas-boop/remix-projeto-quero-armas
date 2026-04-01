@@ -243,18 +243,22 @@ export function generateOnDemandContractHtml(vars: OnDemandContractVars): string
   <!-- ═══════════════════════════════════════════════════════ -->
   <h2 style="font-size: 12pt; font-weight: bold; margin-top: 24px;">ARTIGO XI — DO CANCELAMENTO E REEMBOLSO</h2>
 
-  <p><strong>Cláusula 18ª</strong> — O CONTRATANTE poderá solicitar o cancelamento do presente contrato antes do início da execução dos serviços, mediante comunicação formal à CONTRATADA, ficando sujeito às seguintes condições:</p>
-  <p>a) Cancelamento solicitado antes do início do atendimento: reembolso integral do valor pago, deduzidas eventuais taxas de processamento financeiro;</p>
-  <p>b) Cancelamento solicitado após o início do atendimento: sem direito a reembolso pelas horas já utilizadas. Horas remanescentes poderão ser utilizadas dentro do prazo de validade previsto na Cláusula 6ª.</p>
+  <p><strong>Cláusula 18ª</strong> — A CONTRATANTE poderá solicitar o cancelamento da contratação e eventual reembolso no prazo máximo de até 7 (sete) dias corridos, contados a partir da data da contratação, desde que não tenha ocorrido a execução do serviço ou o início de sua utilização.</p>
 
-  <p><strong>Cláusula 19ª</strong> — A CONTRATADA poderá rescindir o presente contrato em caso de: (i) descumprimento pelo CONTRATANTE de qualquer obrigação prevista neste instrumento; (ii) impossibilidade técnica de execução dos serviços por motivo atribuível ao CONTRATANTE; (iii) conduta do CONTRATANTE incompatível com a boa-fé contratual.</p>
+  <p><strong>Cláusula 19ª</strong> — Após o prazo de 7 (sete) dias, não haverá possibilidade de reembolso, permanecendo os valores pagos integralmente vinculados à contratação realizada.</p>
+
+  <p><strong>Cláusula 20ª</strong> — Para serviços contratados na modalidade sob demanda, a CONTRATANTE deverá utilizar os serviços no prazo máximo de até 90 (noventa) dias, contados a partir da confirmação do pagamento. A não utilização do serviço dentro do prazo estabelecido não gera direito a reembolso, crédito ou compensação de qualquer natureza.</p>
+
+  <p><strong>Cláusula 21ª</strong> — Para serviços recorrentes, o cancelamento poderá ser solicitado a qualquer tempo para interromper cobranças futuras, respeitado o prazo mínimo contratual de 6 (seis) meses, não implicando, em nenhuma hipótese, na devolução de valores já pagos referentes a períodos anteriores ou em curso.</p>
+
+  <p><em>Parágrafo Único:</em> A contratação dos serviços garante à CONTRATANTE a disponibilidade técnica, operacional e organizacional da CONTRATADA durante o período contratado, não estando o direito de reembolso condicionado à efetiva utilização do serviço após o prazo legal de arrependimento.</p>
 
   <!-- ═══════════════════════════════════════════════════════ -->
   <!-- ARTIGO XII — DA CONTRATAÇÃO ADICIONAL                   -->
   <!-- ═══════════════════════════════════════════════════════ -->
   <h2 style="font-size: 12pt; font-weight: bold; margin-top: 24px;">ARTIGO XII — DA CONTRATAÇÃO ADICIONAL</h2>
 
-  <p><strong>Cláusula 20ª</strong> — Caso o CONTRATANTE necessite de horas técnicas adicionais além das contratadas neste instrumento, poderá realizar nova contratação, que será formalizada por instrumento próprio, podendo adotar as mesmas condições ou condições diversas, conforme disponibilidade e tabela vigente da CONTRATADA.</p>
+  <p><strong>Cláusula 22ª</strong> — Caso o CONTRATANTE necessite de horas técnicas adicionais além das contratadas neste instrumento, poderá realizar nova contratação, que será formalizada por instrumento próprio, podendo adotar as mesmas condições ou condições diversas, conforme disponibilidade e tabela vigente da CONTRATADA.</p>
 
   <p><em>Parágrafo Único:</em> As horas adicionais eventualmente contratadas não se confundem com as horas de garantia previstas no Artigo VI e não alteram os prazos de validade do presente contrato.</p>
 
@@ -263,42 +267,42 @@ export function generateOnDemandContractHtml(vars: OnDemandContractVars): string
   <!-- ═══════════════════════════════════════════════════════ -->
   <h2 style="font-size: 12pt; font-weight: bold; margin-top: 24px;">ARTIGO XIII — DAS CONDIÇÕES GERAIS</h2>
 
-  <p><strong>Cláusula 21ª</strong> — As relações existentes entre as partes são unicamente comerciais, de natureza civil, não havendo nenhum vínculo trabalhista, societário ou associativo entre CONTRATANTE e CONTRATADA, seus sócios, prepostos ou empregados.</p>
+  <p><strong>Cláusula 23ª</strong> — As relações existentes entre as partes são unicamente comerciais, de natureza civil, não havendo nenhum vínculo trabalhista, societário ou associativo entre CONTRATANTE e CONTRATADA, seus sócios, prepostos ou empregados.</p>
 
-  <p><strong>Cláusula 22ª</strong> — As partes não poderão ceder ou transferir a terceiros os direitos e obrigações emergentes deste contrato, sem a prévia aprovação por escrito da outra parte.</p>
+  <p><strong>Cláusula 24ª</strong> — As partes não poderão ceder ou transferir a terceiros os direitos e obrigações emergentes deste contrato, sem a prévia aprovação por escrito da outra parte.</p>
 
-  <p><strong>Cláusula 23ª</strong> — O CONTRATANTE compromete-se a não contratar qualquer tipo de serviço diretamente com funcionário da CONTRATADA enquanto estiver no quadro de empregados e pelo prazo de 24 (vinte e quatro) meses após desligamento.</p>
+  <p><strong>Cláusula 25ª</strong> — O CONTRATANTE compromete-se a não contratar qualquer tipo de serviço diretamente com funcionário da CONTRATADA enquanto estiver no quadro de empregados e pelo prazo de 24 (vinte e quatro) meses após desligamento.</p>
 
-  <p><strong>Cláusula 24ª</strong> — De acordo com o artigo 476 do Código Civil, fica assegurado ao CONTRATANTE o direito de suspender qualquer pagamento em caso de descumprimento das obrigações por parte da CONTRATADA, mediante notificação formal.</p>
+  <p><strong>Cláusula 26ª</strong> — De acordo com o artigo 476 do Código Civil, fica assegurado ao CONTRATANTE o direito de suspender qualquer pagamento em caso de descumprimento das obrigações por parte da CONTRATADA, mediante notificação formal.</p>
 
-  <p><strong>Cláusula 25ª</strong> — Não constituirá novação a abstenção ou tolerância por qualquer das partes no exercício de qualquer direito previsto neste contrato.</p>
+  <p><strong>Cláusula 27ª</strong> — Não constituirá novação a abstenção ou tolerância por qualquer das partes no exercício de qualquer direito previsto neste contrato.</p>
 
-  <p><strong>Cláusula 26ª</strong> — Na hipótese de divergência entre proposta comercial e o presente contrato, prevalecem os termos deste instrumento.</p>
+  <p><strong>Cláusula 28ª</strong> — Na hipótese de divergência entre proposta comercial e o presente contrato, prevalecem os termos deste instrumento.</p>
 
   <!-- ═══════════════════════════════════════════════════════ -->
   <!-- ARTIGO XIV — DA PROTEÇÃO DE DADOS (LGPD)               -->
   <!-- ═══════════════════════════════════════════════════════ -->
   <h2 style="font-size: 12pt; font-weight: bold; margin-top: 24px;">ARTIGO XIV — DA PROTEÇÃO DE DADOS (LGPD)</h2>
 
-  <p><strong>Cláusula 27ª</strong> — As partes comprometem-se a tratar os dados pessoais a que tiverem acesso em decorrência deste contrato em conformidade com a Lei Geral de Proteção de Dados Pessoais (Lei nº 13.709/2018 — LGPD), adotando medidas técnicas e administrativas aptas a proteger os dados pessoais de acessos não autorizados e de situações acidentais ou ilícitas de destruição, perda, alteração, comunicação ou difusão.</p>
+  <p><strong>Cláusula 29ª</strong> — As partes comprometem-se a tratar os dados pessoais a que tiverem acesso em decorrência deste contrato em conformidade com a Lei Geral de Proteção de Dados Pessoais (Lei nº 13.709/2018 — LGPD), adotando medidas técnicas e administrativas aptas a proteger os dados pessoais de acessos não autorizados e de situações acidentais ou ilícitas de destruição, perda, alteração, comunicação ou difusão.</p>
 
   <!-- ═══════════════════════════════════════════════════════ -->
   <!-- ARTIGO XV — DO ACEITE ELETRÔNICO                        -->
   <!-- ═══════════════════════════════════════════════════════ -->
   <h2 style="font-size: 12pt; font-weight: bold; margin-top: 24px;">ARTIGO XV — DO ACEITE ELETRÔNICO E TÍTULO EXECUTIVO</h2>
 
-  <p><strong>Cláusula 28ª</strong> — O presente contrato é celebrado de forma eletrônica, sendo a assinatura digital do CONTRATANTE considerada válida e vinculante para todos os efeitos legais, nos termos do artigo 10 da Medida Provisória nº 2.200-2/2001.</p>
+  <p><strong>Cláusula 30ª</strong> — O presente contrato é celebrado de forma eletrônica, sendo a assinatura digital do CONTRATANTE considerada válida e vinculante para todos os efeitos legais, nos termos do artigo 10 da Medida Provisória nº 2.200-2/2001.</p>
 
-  <p><strong>Cláusula 29ª</strong> — O presente instrumento tem força de título executivo extrajudicial nos termos do artigo 784, inciso III, do Código de Processo Civil, e é celebrado em caráter irrevogável e irretratável, obrigando as partes, seus herdeiros e sucessores.</p>
+  <p><strong>Cláusula 31ª</strong> — O presente instrumento tem força de título executivo extrajudicial nos termos do artigo 784, inciso III, do Código de Processo Civil, e é celebrado em caráter irrevogável e irretratável, obrigando as partes, seus herdeiros e sucessores.</p>
 
-  <p><strong>Cláusula 30ª</strong> — O presente Contrato será regido pelas leis da República Federativa do Brasil.</p>
+  <p><strong>Cláusula 32ª</strong> — O presente Contrato será regido pelas leis da República Federativa do Brasil.</p>
 
   <!-- ═══════════════════════════════════════════════════════ -->
   <!-- ARTIGO XVI — DO FORO                                    -->
   <!-- ═══════════════════════════════════════════════════════ -->
   <h2 style="font-size: 12pt; font-weight: bold; margin-top: 24px;">ARTIGO XVI — DO FORO</h2>
 
-  <p><strong>Cláusula 31ª</strong> — Fica eleito o Foro da Comarca de Jacareí/SP, com exclusão de qualquer outro, por mais privilegiado que seja, para dirimir quaisquer questões oriundas do presente contrato.</p>
+  <p><strong>Cláusula 33ª</strong> — Fica eleito o Foro da Comarca de Jacareí/SP, com exclusão de qualquer outro, por mais privilegiado que seja, para dirimir quaisquer questões oriundas do presente contrato.</p>
 
   <p style="margin-top: 32px;">E, por estarem assim justas e contratadas, as partes assinam o presente Contrato eletronicamente, na presença das informações de rastreabilidade abaixo.</p>
 
