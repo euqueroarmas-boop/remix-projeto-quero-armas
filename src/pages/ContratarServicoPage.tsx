@@ -3,9 +3,9 @@ import { useTranslation } from "react-i18next";
 import { useParams, useNavigate, useSearchParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
-  Minus, Plus, Clock, TrendingDown, ArrowRight, CheckCircle,
+  Minus, Plus, Clock, TrendingDown, ArrowRight, CheckCircle, CheckCircle2,
   FileText, CreditCard, FileBarChart, Loader2, ExternalLink,
-  AlertTriangle, RotateCcw, ChevronRight,
+  AlertTriangle, RotateCcw, ChevronRight, ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
