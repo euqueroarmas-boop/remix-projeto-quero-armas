@@ -338,7 +338,8 @@ const ReestruturacaoRedePage = () => {
         };
         try { sessionStorage.setItem("wmti_purchase_data", JSON.stringify(purchaseData)); } catch {}
         navigate(`/compra-concluida?quote=${quoteId}`);
-      }
+        }
+      } catch (e) { console.error("[poll] check-payment-status error:", e); }
     }, 5000);
     return () => clearInterval(interval);
   }, [paymentComplete, paymentConfirmed, quoteId, registrationData, selectedPayment, contractId, pcs, pricing.total]);
