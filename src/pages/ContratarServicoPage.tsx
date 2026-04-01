@@ -1095,7 +1095,7 @@ const ContratarServicoPage = () => {
               </WizardStepWrapper>
             </div>
           </div>
-        )
+        )}
 
         {/* ══════════════════════════════════════════════════════════════ */}
         {/* ── FLUXO RECORRENTE: Calculadora de infra → ContractingWizard */}
