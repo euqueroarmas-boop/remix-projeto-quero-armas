@@ -1034,13 +1034,12 @@ const ContratarServicoPage = () => {
               </WizardStepWrapper>
 
               {/* Step 4: Payment */}
-              <WizardStepWrapper stepNumber={4} title={paymentConfirmed ? "Compra Concluída" : "Pagamento"} subtitle={paymentConfirmed ? "Pagamento confirmado ✓" : "Pagamento único via checkout seguro"} status={paymentConfirmed ? "completed" : getStepStatus("payment")} isLast>
+              <WizardStepWrapper stepNumber={4} title={paymentConfirmed ? "Pagamento Confirmado ✓" : "Pagamento"} subtitle={paymentConfirmed ? "Pagamento confirmado com sucesso" : "Pagamento único via checkout seguro"} status={paymentConfirmed ? "completed" : getStepStatus("payment")}>
                 {paymentConfirmed ? (
                   <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-3">
                     <CheckCircle className="w-10 h-10 text-green-500 mx-auto" />
                     <h4 className="text-lg font-heading font-bold">Pagamento confirmado!</h4>
-                    <p className="text-sm text-muted-foreground">Redirecionando...</p>
-                    <Loader2 className="w-5 h-5 animate-spin text-primary mx-auto" />
+                    <p className="text-sm text-muted-foreground">Avançando para a conclusão...</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -1082,9 +1081,21 @@ const ContratarServicoPage = () => {
                   </div>
                 )}
               </WizardStepWrapper>
+
+              {/* Step 5: Conclusão */}
+              <WizardStepWrapper stepNumber={5} title="Compra Concluída" subtitle="Fechamento e ativação do serviço" status={paymentConfirmed ? "active" : "pending"} isLast>
+                {paymentConfirmed ? (
+                  <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-3">
+                    <CheckCircle className="w-12 h-12 text-green-500 mx-auto" />
+                    <h4 className="text-lg font-heading font-bold text-foreground">Pedido concluído com sucesso!</h4>
+                    <p className="text-sm text-muted-foreground">Redirecionando para a página de confirmação...</p>
+                    <Loader2 className="w-5 h-5 animate-spin text-primary mx-auto" />
+                  </div>
+                ) : null}
+              </WizardStepWrapper>
             </div>
           </div>
-        )}
+        )
 
         {/* ══════════════════════════════════════════════════════════════ */}
         {/* ── FLUXO RECORRENTE: Calculadora de infra → ContractingWizard */}
