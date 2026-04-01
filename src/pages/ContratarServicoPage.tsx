@@ -172,7 +172,7 @@ const ContratarServicoPage = () => {
         try { sessionStorage.setItem("wmti_purchase_data", JSON.stringify(purchaseData)); } catch {}
         navigate(`/compra-concluida?quote=${quoteId}`);
       }
-    }, 5000);
+    }, 3000);
     return () => clearInterval(interval);
   }, [paymentComplete, paymentConfirmed, quoteId, registrationData, selectedPayment, contractId, serviceName, hours, promoPrice]);
 
