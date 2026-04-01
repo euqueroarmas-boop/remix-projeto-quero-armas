@@ -123,6 +123,39 @@ const ContratarServicoPage = () => {
 
   useEffect(() => { window.scrollTo(0, 0); }, [slug]);
 
+  // On mount: check if URL has a quote with confirmed payment (resilient return)
+  useEffect(() => {
+    const urlQuote = searchParams.get("quote");
+    if (!urlQuote || paymentConfirmed) return;
+    (async () => {
+      const { data } = await supabase
+        .from("payments")
+        .select("payment_status, billing_type, asaas_invoice_url")
+        .eq("quote_id", urlQuote)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+      if (data && isPaidStatus((data as any).payment_status)) {
+        setQuoteId(urlQuote);
+        setPaymentConfirmed(true);
+        const purchaseData = {
+          serviceName, hours, monthlyValue: promoPrice, isRecurring: false,
+          customerName: "", customerCpfCnpj: "", customerEmail: "",
+          paymentMethod: (data as any).billing_type || "CREDIT_CARD",
+          contractId, purchaseDate: new Date().toLocaleDateString("pt-BR"),
+        };
+        try { sessionStorage.setItem("wmti_purchase_data", JSON.stringify(purchaseData)); } catch {}
+        navigate(`/compra-concluida?quote=${urlQuote}`);
+      } else if (data && (data as any).asaas_invoice_url) {
+        // Payment exists but pending — resume polling state
+        setQuoteId(urlQuote);
+        setInvoiceUrl((data as any).asaas_invoice_url);
+        setPaymentComplete(true);
+        setCurrentStep("payment");
+      }
+    })();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Poll contract signed
   useEffect(() => {
     if (currentStep !== "contract" || !contractId || contractSigned) return;
@@ -142,9 +175,11 @@ const ContratarServicoPage = () => {
     return () => clearInterval(interval);
   }, [currentStep, contractId, contractSigned, toast]);
 
-  // Poll for payment confirmation + send email
+  // Poll for payment confirmation — runs whenever we have a quoteId and are on/past payment step
   useEffect(() => {
-    if (!paymentComplete || paymentConfirmed || !quoteId) return;
+    if (paymentConfirmed || !quoteId) return;
+    // Only poll if payment was initiated or we're on the payment step
+    if (!paymentComplete && currentStep !== "payment") return;
     const interval = setInterval(async () => {
       const { data } = await supabase
         .from("payments")
@@ -155,8 +190,6 @@ const ContratarServicoPage = () => {
         .single();
       if (data && isPaidStatus((data as any).payment_status)) {
         setPaymentConfirmed(true);
-        // Email is now sent from webhook after user creation (includes credentials)
-        // Save data to session and redirect to standalone page
         const purchaseData = {
           serviceName,
           hours,
@@ -174,7 +207,7 @@ const ContratarServicoPage = () => {
       }
     }, 3000);
     return () => clearInterval(interval);
-  }, [paymentComplete, paymentConfirmed, quoteId, registrationData, selectedPayment, contractId, serviceName, hours, promoPrice]);
+  }, [paymentComplete, paymentConfirmed, quoteId, currentStep, registrationData, selectedPayment, contractId, serviceName, hours, promoPrice]);
 
   const scrollToTop = () => {
     setTimeout(() => {
