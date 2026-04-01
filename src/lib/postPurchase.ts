@@ -40,11 +40,13 @@ export async function fetchPurchaseInfo(quoteId: string): Promise<PurchaseInfo> 
     .single();
   if (qErr || !quote) throw new Error("Quote not found");
 
-  const { data: contract } = await supabase
+  const { data: contractRows } = await supabase
     .from("contracts")
     .select("id, contract_type, customer_id")
     .eq("quote_id", quoteId)
-    .single();
+    .order("created_at", { ascending: false })
+    .limit(1);
+  const contract = contractRows?.[0] ?? null;
 
   let customer: { razao_social?: string; cnpj_ou_cpf?: string; email?: string } | null = null;
   if (contract?.customer_id) {
