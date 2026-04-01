@@ -128,14 +128,10 @@ const ContratarServicoPage = () => {
     const urlQuote = searchParams.get("quote");
     if (!urlQuote || paymentConfirmed) return;
     (async () => {
-      const { data } = await supabase
-        .from("payments")
-        .select("payment_status, billing_type, asaas_invoice_url")
-        .eq("quote_id", urlQuote)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single();
-      if (data && isPaidStatus((data as any).payment_status)) {
+      const { data } = await supabase.functions.invoke("check-payment-status", {
+        body: { quote_id: urlQuote },
+      });
+      if (data && isPaidStatus(data?.payment_status)) {
         setQuoteId(urlQuote);
         setPaymentConfirmed(true);
         const purchaseData = {
