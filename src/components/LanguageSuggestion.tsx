@@ -17,8 +17,8 @@ const LanguageSuggestion = () => {
     const hasManual = localStorage.getItem("wmti-lang-manual") === "true";
     if (hasManual) return;
 
-    // Don't show if already dismissed this session
-    const dismissed = sessionStorage.getItem("wmti-lang-suggestion-dismissed");
+    // Don't show if already dismissed (persisted across sessions)
+    const dismissed = localStorage.getItem("wmti-lang-suggestion-dismissed");
     if (dismissed) return;
 
     // Only show if browser is English and app is in Portuguese
