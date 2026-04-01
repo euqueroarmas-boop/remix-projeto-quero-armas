@@ -507,7 +507,8 @@ const ContractingWizard = ({
     setPaymentError(null);
   };
 
-  const paymentLockRef = useRef(false);
+
+
 
   const handlePayment = async () => {
     if (!selectedPayment || !registrationData || !activeQuoteId) return;
