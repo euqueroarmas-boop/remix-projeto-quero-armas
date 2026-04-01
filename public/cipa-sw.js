@@ -19,11 +19,12 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+  // Only handle requests under /cipa scope
+  if (!url.pathname.startsWith('/cipa')) return;
   // Network-first for API/supabase calls
-  if (event.request.url.includes('supabase') || event.request.url.includes('/functions/')) {
-    return;
-  }
-  // For navigation and assets, try network first, fallback to cache
+  if (url.hostname !== self.location.hostname) return;
+  // For CIPA navigation and assets, try network first, fallback to cache
   event.respondWith(
     fetch(event.request)
       .then((response) => {

@@ -6,4 +6,5 @@
 /sitemap-problems.xml   /sitemap-problems.xml   200
 /sitemap-style.xsl      /sitemap-style.xsl      200
 /robots.txt             /robots.txt             200
+/assets/*  /assets/:splat  404
 /*    /index.html   200
