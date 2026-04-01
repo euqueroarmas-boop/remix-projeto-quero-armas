@@ -247,15 +247,9 @@ const ContratarServicoPage = () => {
 
       // Generate contract
       const customerDataForContract: CustomerData = {
-        razaoSocial: data.razaoSocial,
-        nomeFantasia: data.nomeFantasia,
-        cnpjOuCpf: data.cnpjOuCpf,
-        responsavel: data.responsavel,
-        email: data.email,
-        telefone: data.telefone,
+        ...data,
         endereco: fullAddress,
         cidade: `${data.cidade}/${data.uf}`,
-        cep: data.cep,
       };
 
       const html = generateHoursContractHtml(customerDataForContract, serviceName, isEmergency, hours, unitPrice, promoPrice, savings);
