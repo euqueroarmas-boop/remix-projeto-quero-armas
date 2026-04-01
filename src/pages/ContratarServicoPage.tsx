@@ -128,14 +128,10 @@ const ContratarServicoPage = () => {
     const urlQuote = searchParams.get("quote");
     if (!urlQuote || paymentConfirmed) return;
     (async () => {
-      const { data } = await supabase
-        .from("payments")
-        .select("payment_status, billing_type, asaas_invoice_url")
-        .eq("quote_id", urlQuote)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single();
-      if (data && isPaidStatus((data as any).payment_status)) {
+      const { data } = await supabase.functions.invoke("check-payment-status", {
+        body: { quote_id: urlQuote },
+      });
+      if (data && isPaidStatus(data?.payment_status)) {
         setQuoteId(urlQuote);
         setPaymentConfirmed(true);
         const purchaseData = {
@@ -181,30 +177,28 @@ const ContratarServicoPage = () => {
     // Only poll if payment was initiated or we're on the payment step
     if (!paymentComplete && currentStep !== "payment") return;
     const interval = setInterval(async () => {
-      const { data } = await supabase
-        .from("payments")
-        .select("payment_status")
-        .eq("quote_id", quoteId)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single();
-      if (data && isPaidStatus((data as any).payment_status)) {
-        setPaymentConfirmed(true);
-        const purchaseData = {
-          serviceName,
-          hours,
-          monthlyValue: promoPrice,
-          isRecurring: false,
-          customerName: registrationData?.razaoSocial || "",
-          customerCpfCnpj: registrationData?.cnpjOuCpf || "",
-          customerEmail: registrationData?.email || "",
-          paymentMethod: selectedPayment || "CREDIT_CARD",
-          contractId,
-          purchaseDate: new Date().toLocaleDateString("pt-BR"),
-        };
-        try { sessionStorage.setItem("wmti_purchase_data", JSON.stringify(purchaseData)); } catch {}
-        navigate(`/compra-concluida?quote=${quoteId}`);
-      }
+      try {
+        const { data } = await supabase.functions.invoke("check-payment-status", {
+          body: { quote_id: quoteId },
+        });
+        if (data && isPaidStatus(data?.payment_status)) {
+          setPaymentConfirmed(true);
+          const purchaseData = {
+            serviceName,
+            hours,
+            monthlyValue: promoPrice,
+            isRecurring: false,
+            customerName: registrationData?.razaoSocial || "",
+            customerCpfCnpj: registrationData?.cnpjOuCpf || "",
+            customerEmail: registrationData?.email || "",
+            paymentMethod: selectedPayment || "CREDIT_CARD",
+            contractId,
+            purchaseDate: new Date().toLocaleDateString("pt-BR"),
+          };
+          try { sessionStorage.setItem("wmti_purchase_data", JSON.stringify(purchaseData)); } catch {}
+          navigate(`/compra-concluida?quote=${quoteId}`);
+        }
+      } catch (e) { console.error("[poll] check-payment-status error:", e); }
     }, 3000);
     return () => clearInterval(interval);
   }, [paymentComplete, paymentConfirmed, quoteId, currentStep, registrationData, selectedPayment, contractId, serviceName, hours, promoPrice]);

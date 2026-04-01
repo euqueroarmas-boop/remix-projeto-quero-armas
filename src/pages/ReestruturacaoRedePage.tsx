@@ -302,14 +302,11 @@ const ReestruturacaoRedePage = () => {
   useEffect(() => {
     if (!paymentComplete || paymentConfirmed || !quoteId) return;
     const interval = setInterval(async () => {
-      const { data } = await supabase
-        .from("payments")
-        .select("payment_status")
-        .eq("quote_id", quoteId)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single();
-      if (data && ((data as any).payment_status === "CONFIRMED" || (data as any).payment_status === "RECEIVED")) {
+      try {
+        const { data } = await supabase.functions.invoke("check-payment-status", {
+          body: { quote_id: quoteId },
+        });
+        if (data && (data?.payment_status === "CONFIRMED" || data?.payment_status === "RECEIVED")) {
         setPaymentConfirmed(true);
         if (registrationData && !emailSentRef.current) {
           emailSentRef.current = true;
@@ -341,7 +338,8 @@ const ReestruturacaoRedePage = () => {
         };
         try { sessionStorage.setItem("wmti_purchase_data", JSON.stringify(purchaseData)); } catch {}
         navigate(`/compra-concluida?quote=${quoteId}`);
-      }
+        }
+      } catch (e) { console.error("[poll] check-payment-status error:", e); }
     }, 5000);
     return () => clearInterval(interval);
   }, [paymentComplete, paymentConfirmed, quoteId, registrationData, selectedPayment, contractId, pcs, pricing.total]);
