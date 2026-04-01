@@ -299,7 +299,15 @@ const ContratarServicoPage = () => {
   };
 
   const handlePayment = async () => {
-    if (!selectedPayment || !registrationData || !quoteId) return;
+    if (!selectedPayment) {
+      toast({ title: "Selecione a forma de pagamento", variant: "destructive" });
+      return;
+    }
+    if (!registrationData || !quoteId) {
+      console.error("[WMTi][payment] Estado incompleto:", { hasRegistration: !!registrationData, quoteId });
+      toast({ title: "Dados incompletos", description: "Preencha os dados da empresa novamente.", variant: "destructive" });
+      return;
+    }
     setPaymentLoading(true);
     setPaymentError(null);
 
