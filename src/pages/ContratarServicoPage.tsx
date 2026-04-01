@@ -924,23 +924,23 @@ const ContratarServicoPage = () => {
                     <div className="flex items-center gap-2.5 mb-3">
                       <ShieldCheck className="h-6 w-6 text-primary shrink-0" />
                       <h3 className="text-sm font-bold text-foreground tracking-tight">
-                        Garantia real de execução — você não fica no prejuízo
+                        Garantia após a conclusão — segurança real no que foi feito
                       </h3>
                     </div>
                     <p className="text-xs text-muted-foreground leading-relaxed mb-1.5">
-                      Se o seu problema não for resolvido dentro das horas contratadas, você não perde o investimento.
+                      Após a finalização do atendimento, você continua protegido.
                     </p>
                     <p className="text-xs text-muted-foreground leading-relaxed mb-3">
-                      Você recebe a mesma quantidade de horas como garantia para continuidade do atendimento.
+                      Se o mesmo problema voltar a ocorrer dentro de até 15 dias, você conta com a mesma quantidade de horas contratadas como garantia para continuidade do suporte.
                     </p>
                     <div className="bg-primary/10 border border-primary/30 rounded-lg p-3 mb-3 flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 mt-0.5 text-primary shrink-0" />
                       <p className="text-xs text-foreground/90 leading-relaxed">
-                        <span className="font-bold">Contratou {hours} {hours > 1 ? "horas" : "hora"}</span> → você tem <span className="font-bold text-primary">{hours} {hours > 1 ? "horas" : "hora"} de garantia</span>, válida por até 15 dias após o atendimento.
+                        <span className="font-bold">Contratou {hours} {hours > 1 ? "horas" : "hora"}</span> → você tem <span className="font-bold text-primary">{hours} {hours > 1 ? "horas" : "hora"} de garantia</span> para o mesmo problema, válida por até 15 dias após a conclusão.
                       </p>
                     </div>
                     <p className="text-xs font-semibold text-primary italic">
-                      Você não está pagando por tentativa. Está pagando por solução.
+                      Aqui o serviço é resolvido — e permanece resolvido.
                     </p>
                   </div>
 
