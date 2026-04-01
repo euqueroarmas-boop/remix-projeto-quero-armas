@@ -286,7 +286,7 @@ const ContratarServicoPage = () => {
           nomeFantasia: data.nomeFantasia,
           cnpjOuCpf: data.cnpjOuCpf,
           responsavel: data.responsavel,
-          cpfResponsavel: data.cpfResponsavel,
+          cpfResponsavel: data.responsavelCpf,
           email: data.email,
           whatsapp: data.whatsapp,
           telefone: data.telefone,
