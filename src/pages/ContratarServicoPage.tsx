@@ -298,6 +298,8 @@ const ContratarServicoPage = () => {
     window.open(`/contrato?id=${contractId}`, "_blank");
   };
 
+  const paymentLockRef = useRef(false);
+
   const handlePayment = async () => {
     if (!selectedPayment) {
       toast({ title: "Selecione a forma de pagamento", variant: "destructive" });
@@ -308,6 +310,12 @@ const ContratarServicoPage = () => {
       toast({ title: "Dados incompletos", description: "Preencha os dados da empresa novamente.", variant: "destructive" });
       return;
     }
+    // Prevent double-click / concurrent calls
+    if (paymentLockRef.current) {
+      console.warn("[WMTi][payment] Chamada duplicada bloqueada");
+      return;
+    }
+    paymentLockRef.current = true;
     setPaymentLoading(true);
     setPaymentError(null);
 
@@ -328,6 +336,13 @@ const ContratarServicoPage = () => {
 
       if (error) throw new Error(error.message || "Erro ao criar cobrança");
 
+      // If already paid, redirect immediately
+      if (data?.already_paid) {
+        setPaymentConfirmed(true);
+        navigate(`/compra-concluida?quote=${quoteId}`);
+        return;
+      }
+
       const url = data?.invoiceUrl || data?.invoice_url || data?.bankSlipUrl || data?.payment?.invoiceUrl;
       if (!url) throw new Error("O sistema de pagamento não retornou um link de cobrança.");
 
@@ -345,6 +360,7 @@ const ContratarServicoPage = () => {
       setPaymentError(message);
     } finally {
       setPaymentLoading(false);
+      paymentLockRef.current = false;
     }
   };
 
