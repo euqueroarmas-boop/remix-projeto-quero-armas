@@ -267,42 +267,42 @@ export function generateOnDemandContractHtml(vars: OnDemandContractVars): string
   <!-- ═══════════════════════════════════════════════════════ -->
   <h2 style="font-size: 12pt; font-weight: bold; margin-top: 24px;">ARTIGO XIII — DAS CONDIÇÕES GERAIS</h2>
 
-  <p><strong>Cláusula 21ª</strong> — As relações existentes entre as partes são unicamente comerciais, de natureza civil, não havendo nenhum vínculo trabalhista, societário ou associativo entre CONTRATANTE e CONTRATADA, seus sócios, prepostos ou empregados.</p>
+  <p><strong>Cláusula 23ª</strong> — As relações existentes entre as partes são unicamente comerciais, de natureza civil, não havendo nenhum vínculo trabalhista, societário ou associativo entre CONTRATANTE e CONTRATADA, seus sócios, prepostos ou empregados.</p>
 
-  <p><strong>Cláusula 22ª</strong> — As partes não poderão ceder ou transferir a terceiros os direitos e obrigações emergentes deste contrato, sem a prévia aprovação por escrito da outra parte.</p>
+  <p><strong>Cláusula 24ª</strong> — As partes não poderão ceder ou transferir a terceiros os direitos e obrigações emergentes deste contrato, sem a prévia aprovação por escrito da outra parte.</p>
 
-  <p><strong>Cláusula 23ª</strong> — O CONTRATANTE compromete-se a não contratar qualquer tipo de serviço diretamente com funcionário da CONTRATADA enquanto estiver no quadro de empregados e pelo prazo de 24 (vinte e quatro) meses após desligamento.</p>
+  <p><strong>Cláusula 25ª</strong> — O CONTRATANTE compromete-se a não contratar qualquer tipo de serviço diretamente com funcionário da CONTRATADA enquanto estiver no quadro de empregados e pelo prazo de 24 (vinte e quatro) meses após desligamento.</p>
 
-  <p><strong>Cláusula 24ª</strong> — De acordo com o artigo 476 do Código Civil, fica assegurado ao CONTRATANTE o direito de suspender qualquer pagamento em caso de descumprimento das obrigações por parte da CONTRATADA, mediante notificação formal.</p>
+  <p><strong>Cláusula 26ª</strong> — De acordo com o artigo 476 do Código Civil, fica assegurado ao CONTRATANTE o direito de suspender qualquer pagamento em caso de descumprimento das obrigações por parte da CONTRATADA, mediante notificação formal.</p>
 
-  <p><strong>Cláusula 25ª</strong> — Não constituirá novação a abstenção ou tolerância por qualquer das partes no exercício de qualquer direito previsto neste contrato.</p>
+  <p><strong>Cláusula 27ª</strong> — Não constituirá novação a abstenção ou tolerância por qualquer das partes no exercício de qualquer direito previsto neste contrato.</p>
 
-  <p><strong>Cláusula 26ª</strong> — Na hipótese de divergência entre proposta comercial e o presente contrato, prevalecem os termos deste instrumento.</p>
+  <p><strong>Cláusula 28ª</strong> — Na hipótese de divergência entre proposta comercial e o presente contrato, prevalecem os termos deste instrumento.</p>
 
   <!-- ═══════════════════════════════════════════════════════ -->
   <!-- ARTIGO XIV — DA PROTEÇÃO DE DADOS (LGPD)               -->
   <!-- ═══════════════════════════════════════════════════════ -->
   <h2 style="font-size: 12pt; font-weight: bold; margin-top: 24px;">ARTIGO XIV — DA PROTEÇÃO DE DADOS (LGPD)</h2>
 
-  <p><strong>Cláusula 27ª</strong> — As partes comprometem-se a tratar os dados pessoais a que tiverem acesso em decorrência deste contrato em conformidade com a Lei Geral de Proteção de Dados Pessoais (Lei nº 13.709/2018 — LGPD), adotando medidas técnicas e administrativas aptas a proteger os dados pessoais de acessos não autorizados e de situações acidentais ou ilícitas de destruição, perda, alteração, comunicação ou difusão.</p>
+  <p><strong>Cláusula 29ª</strong> — As partes comprometem-se a tratar os dados pessoais a que tiverem acesso em decorrência deste contrato em conformidade com a Lei Geral de Proteção de Dados Pessoais (Lei nº 13.709/2018 — LGPD), adotando medidas técnicas e administrativas aptas a proteger os dados pessoais de acessos não autorizados e de situações acidentais ou ilícitas de destruição, perda, alteração, comunicação ou difusão.</p>
 
   <!-- ═══════════════════════════════════════════════════════ -->
   <!-- ARTIGO XV — DO ACEITE ELETRÔNICO                        -->
   <!-- ═══════════════════════════════════════════════════════ -->
   <h2 style="font-size: 12pt; font-weight: bold; margin-top: 24px;">ARTIGO XV — DO ACEITE ELETRÔNICO E TÍTULO EXECUTIVO</h2>
 
-  <p><strong>Cláusula 28ª</strong> — O presente contrato é celebrado de forma eletrônica, sendo a assinatura digital do CONTRATANTE considerada válida e vinculante para todos os efeitos legais, nos termos do artigo 10 da Medida Provisória nº 2.200-2/2001.</p>
+  <p><strong>Cláusula 30ª</strong> — O presente contrato é celebrado de forma eletrônica, sendo a assinatura digital do CONTRATANTE considerada válida e vinculante para todos os efeitos legais, nos termos do artigo 10 da Medida Provisória nº 2.200-2/2001.</p>
 
-  <p><strong>Cláusula 29ª</strong> — O presente instrumento tem força de título executivo extrajudicial nos termos do artigo 784, inciso III, do Código de Processo Civil, e é celebrado em caráter irrevogável e irretratável, obrigando as partes, seus herdeiros e sucessores.</p>
+  <p><strong>Cláusula 31ª</strong> — O presente instrumento tem força de título executivo extrajudicial nos termos do artigo 784, inciso III, do Código de Processo Civil, e é celebrado em caráter irrevogável e irretratável, obrigando as partes, seus herdeiros e sucessores.</p>
 
-  <p><strong>Cláusula 30ª</strong> — O presente Contrato será regido pelas leis da República Federativa do Brasil.</p>
+  <p><strong>Cláusula 32ª</strong> — O presente Contrato será regido pelas leis da República Federativa do Brasil.</p>
 
   <!-- ═══════════════════════════════════════════════════════ -->
   <!-- ARTIGO XVI — DO FORO                                    -->
   <!-- ═══════════════════════════════════════════════════════ -->
   <h2 style="font-size: 12pt; font-weight: bold; margin-top: 24px;">ARTIGO XVI — DO FORO</h2>
 
-  <p><strong>Cláusula 31ª</strong> — Fica eleito o Foro da Comarca de Jacareí/SP, com exclusão de qualquer outro, por mais privilegiado que seja, para dirimir quaisquer questões oriundas do presente contrato.</p>
+  <p><strong>Cláusula 33ª</strong> — Fica eleito o Foro da Comarca de Jacareí/SP, com exclusão de qualquer outro, por mais privilegiado que seja, para dirimir quaisquer questões oriundas do presente contrato.</p>
 
   <p style="margin-top: 32px;">E, por estarem assim justas e contratadas, as partes assinam o presente Contrato eletronicamente, na presença das informações de rastreabilidade abaixo.</p>
 
