@@ -279,7 +279,29 @@ const ContratarServicoPage = () => {
         cidade: `${data.cidade}/${data.uf}`,
       };
 
-      const html = generateHoursContractHtml(customerDataForContract, serviceName, isEmergency, hours, unitPrice, promoPrice, savings);
+      const onDemandVars = buildOnDemandVarsFromCheckout({
+        customer: {
+          razaoSocial: data.razaoSocial,
+          nomeFantasia: data.nomeFantasia,
+          cnpjOuCpf: data.cnpjOuCpf,
+          responsavel: data.responsavel,
+          cpfResponsavel: data.cpfResponsavel,
+          email: data.email,
+          whatsapp: data.whatsapp,
+          telefone: data.telefone,
+          endereco: fullAddress,
+          cidade: `${data.cidade}/${data.uf}`,
+          cep: data.cep,
+        },
+        serviceName,
+        serviceSlug: slug || "",
+        isEmergency,
+        hours,
+        unitPrice,
+        totalValue: promoPrice,
+        savings,
+      });
+      const html = generateOnDemandContractHtml(onDemandVars);
 
       const encoder = new TextEncoder();
       const hashBuffer = await crypto.subtle.digest("SHA-256", encoder.encode(html));
