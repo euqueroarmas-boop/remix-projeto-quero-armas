@@ -36,7 +36,7 @@ const LanguageSuggestion = () => {
   const handleSwitch = () => {
     i18n.changeLanguage("en-US");
     localStorage.setItem("wmti-lang-manual", "true");
-    track("language_suggestion_accepted", "en-US");
+    track("language_switch", "suggestion_accepted_en-US");
     setVisible(false);
   };
 
