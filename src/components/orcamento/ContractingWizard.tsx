@@ -223,22 +223,23 @@ const ContractingWizard = ({
           body: { quote_id: activeQuoteId },
         });
         if (data && isPaidStatus(data?.payment_status)) {
-        setPaymentConfirmed(true);
-        const purchaseData = {
-          serviceName: effectivePath === "locacao" ? "Locação de Equipamentos" : "Serviços de TI",
-          computersQty,
-          monthlyValue: pricingBreakdown?.valorFinalMensal ?? monthlyValue,
-          isRecurring: true,
-          customerName: registrationData?.razaoSocial || "",
-          customerCpfCnpj: registrationData?.cnpjOuCpf || "",
-          customerEmail: registrationData?.email || "",
-          paymentMethod: selectedPayment || "CREDIT_CARD",
-          contractId,
-          purchaseDate: new Date().toLocaleDateString("pt-BR"),
-        };
-        try { sessionStorage.setItem("wmti_purchase_data", JSON.stringify(purchaseData)); } catch {}
-        navigate(`/compra-concluida?quote=${activeQuoteId}`);
-      }
+          setPaymentConfirmed(true);
+          const purchaseData = {
+            serviceName: effectivePath === "locacao" ? "Locação de Equipamentos" : "Serviços de TI",
+            computersQty,
+            monthlyValue: pricingBreakdown?.valorFinalMensal ?? monthlyValue,
+            isRecurring: true,
+            customerName: registrationData?.razaoSocial || "",
+            customerCpfCnpj: registrationData?.cnpjOuCpf || "",
+            customerEmail: registrationData?.email || "",
+            paymentMethod: selectedPayment || "CREDIT_CARD",
+            contractId,
+            purchaseDate: new Date().toLocaleDateString("pt-BR"),
+          };
+          try { sessionStorage.setItem("wmti_purchase_data", JSON.stringify(purchaseData)); } catch {}
+          navigate(`/compra-concluida?quote=${activeQuoteId}`);
+        }
+      } catch (e) { console.error("[poll] check-payment-status error:", e); }
     }, 3000);
     return () => clearInterval(interval);
   }, [paymentComplete, paymentConfirmed, activeQuoteId, currentStep, registrationData, selectedPayment, contractId, effectivePath, computersQty, monthlyValue, pricingBreakdown]);

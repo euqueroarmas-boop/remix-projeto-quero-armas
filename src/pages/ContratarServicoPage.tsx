@@ -186,22 +186,23 @@ const ContratarServicoPage = () => {
           body: { quote_id: quoteId },
         });
         if (data && isPaidStatus(data?.payment_status)) {
-        setPaymentConfirmed(true);
-        const purchaseData = {
-          serviceName,
-          hours,
-          monthlyValue: promoPrice,
-          isRecurring: false,
-          customerName: registrationData?.razaoSocial || "",
-          customerCpfCnpj: registrationData?.cnpjOuCpf || "",
-          customerEmail: registrationData?.email || "",
-          paymentMethod: selectedPayment || "CREDIT_CARD",
-          contractId,
-          purchaseDate: new Date().toLocaleDateString("pt-BR"),
-        };
-        try { sessionStorage.setItem("wmti_purchase_data", JSON.stringify(purchaseData)); } catch {}
-        navigate(`/compra-concluida?quote=${quoteId}`);
-      }
+          setPaymentConfirmed(true);
+          const purchaseData = {
+            serviceName,
+            hours,
+            monthlyValue: promoPrice,
+            isRecurring: false,
+            customerName: registrationData?.razaoSocial || "",
+            customerCpfCnpj: registrationData?.cnpjOuCpf || "",
+            customerEmail: registrationData?.email || "",
+            paymentMethod: selectedPayment || "CREDIT_CARD",
+            contractId,
+            purchaseDate: new Date().toLocaleDateString("pt-BR"),
+          };
+          try { sessionStorage.setItem("wmti_purchase_data", JSON.stringify(purchaseData)); } catch {}
+          navigate(`/compra-concluida?quote=${quoteId}`);
+        }
+      } catch (e) { console.error("[poll] check-payment-status error:", e); }
     }, 3000);
     return () => clearInterval(interval);
   }, [paymentComplete, paymentConfirmed, quoteId, currentStep, registrationData, selectedPayment, contractId, serviceName, hours, promoPrice]);
