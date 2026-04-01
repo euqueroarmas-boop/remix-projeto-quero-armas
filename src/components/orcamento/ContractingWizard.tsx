@@ -347,15 +347,9 @@ const ContractingWizard = ({
       const fullAddress = [registrationData.endereco, registrationData.numero, registrationData.complemento, registrationData.bairro].filter(Boolean).join(", ");
 
       const customerDataForContract: CustomerData = {
-        razaoSocial: registrationData.razaoSocial,
-        nomeFantasia: registrationData.nomeFantasia,
-        cnpjOuCpf: registrationData.cnpjOuCpf,
-        responsavel: registrationData.responsavel,
-        email: registrationData.email,
-        telefone: registrationData.telefone,
+        ...registrationData,
         endereco: fullAddress,
         cidade: `${registrationData.cidade}/${registrationData.uf}`,
-        cep: registrationData.cep,
       };
 
       const finalMonthlyValue = pricing.valorFinalMensal;
@@ -380,9 +374,9 @@ const ContractingWizard = ({
           cliente_cnpj: registrationData.cnpjOuCpf,
           cliente_endereco_completo: fullAddress + ", " + registrationData.cidade + "/" + registrationData.uf + ", CEP " + registrationData.cep,
           representante_nome_completo: registrationData.responsavel,
-          representante_cpf: registrationData.representanteCpf || (registrationData.cnpjOuCpf.replace(/\D/g, "").length <= 11 ? registrationData.cnpjOuCpf : ""),
+          representante_cpf: registrationData.responsavelCpf || (registrationData.cnpjOuCpf.replace(/\D/g, "").length <= 11 ? registrationData.cnpjOuCpf : ""),
           representante_email: registrationData.email,
-          representante_telefone: registrationData.telefone || "",
+          representante_telefone: registrationData.whatsapp || registrationData.telefone || "",
           prazo_meses: String(config.termMonths),
           data_contratacao: new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" }),
           ip_contratante: proof.ip_contratante,
