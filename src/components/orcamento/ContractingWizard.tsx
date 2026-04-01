@@ -168,6 +168,7 @@ const ContractingWizard = ({
   const [popupBlocked, setPopupBlocked] = useState(false);
 
   const wizardRef = useRef<HTMLDivElement>(null);
+  const paymentLockRef = useRef(false);
 
   useEffect(() => {
     setActiveQuoteId(quoteId);
