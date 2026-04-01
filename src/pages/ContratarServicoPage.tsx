@@ -3,9 +3,9 @@ import { useTranslation } from "react-i18next";
 import { useParams, useNavigate, useSearchParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
-  Minus, Plus, Clock, TrendingDown, ArrowRight, CheckCircle,
+  Minus, Plus, Clock, TrendingDown, ArrowRight, CheckCircle, CheckCircle2,
   FileText, CreditCard, FileBarChart, Loader2, ExternalLink,
-  AlertTriangle, RotateCcw, ChevronRight,
+  AlertTriangle, RotateCcw, ChevronRight, ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -918,10 +918,29 @@ const ContratarServicoPage = () => {
                     </div>
                   </div>
 
-                  {/* Impact reminder before CTA */}
-                  <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 text-center">
-                    <p className="font-mono text-xs text-primary font-bold">
-                      Investimento para resolver agora — antes que o prejuízo aumente
+                  {/* Guarantee block */}
+                  <div className="relative rounded-xl border border-primary/20 bg-card/60 backdrop-blur-sm p-5 shadow-lg shadow-primary/5">
+                    <div className="absolute inset-x-0 top-0 h-1 rounded-t-xl bg-gradient-to-r from-primary/80 via-primary to-primary/80" />
+                    <div className="flex items-center gap-2.5 mb-3">
+                      <ShieldCheck className="h-6 w-6 text-primary shrink-0" />
+                      <h3 className="text-sm font-bold text-foreground tracking-tight">
+                        Garantia real de execução — você não fica no prejuízo
+                      </h3>
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed mb-1.5">
+                      Se o seu problema não for resolvido dentro das horas contratadas, você não perde o investimento.
+                    </p>
+                    <p className="text-xs text-muted-foreground leading-relaxed mb-3">
+                      Você recebe a mesma quantidade de horas como garantia para continuidade do atendimento.
+                    </p>
+                    <div className="bg-primary/10 border border-primary/30 rounded-lg p-3 mb-3 flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 mt-0.5 text-primary shrink-0" />
+                      <p className="text-xs text-foreground/90 leading-relaxed">
+                        <span className="font-bold">Contratou {hours} {hours > 1 ? "horas" : "hora"}</span> → você tem <span className="font-bold text-primary">{hours} {hours > 1 ? "horas" : "hora"} de garantia</span>, válida por até 15 dias após o atendimento.
+                      </p>
+                    </div>
+                    <p className="text-xs font-semibold text-primary italic">
+                      Você não está pagando por tentativa. Está pagando por solução.
                     </p>
                   </div>
 
