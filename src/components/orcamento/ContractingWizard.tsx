@@ -218,14 +218,11 @@ const ContractingWizard = ({
     if (paymentConfirmed || !activeQuoteId) return;
     if (!paymentComplete && currentStep !== "payment") return;
     const interval = setInterval(async () => {
-      const { data } = await supabase
-        .from("payments")
-        .select("payment_status")
-        .eq("quote_id", activeQuoteId)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single();
-      if (data && isPaidStatus((data as any).payment_status)) {
+      try {
+        const { data } = await supabase.functions.invoke("check-payment-status", {
+          body: { quote_id: activeQuoteId },
+        });
+        if (data && isPaidStatus(data?.payment_status)) {
         setPaymentConfirmed(true);
         const purchaseData = {
           serviceName: effectivePath === "locacao" ? "Locação de Equipamentos" : "Serviços de TI",

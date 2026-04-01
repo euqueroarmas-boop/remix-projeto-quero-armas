@@ -181,14 +181,11 @@ const ContratarServicoPage = () => {
     // Only poll if payment was initiated or we're on the payment step
     if (!paymentComplete && currentStep !== "payment") return;
     const interval = setInterval(async () => {
-      const { data } = await supabase
-        .from("payments")
-        .select("payment_status")
-        .eq("quote_id", quoteId)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single();
-      if (data && isPaidStatus((data as any).payment_status)) {
+      try {
+        const { data } = await supabase.functions.invoke("check-payment-status", {
+          body: { quote_id: quoteId },
+        });
+        if (data && isPaidStatus(data?.payment_status)) {
         setPaymentConfirmed(true);
         const purchaseData = {
           serviceName,
