@@ -184,11 +184,13 @@ Deno.serve(async (req) => {
           .eq("id", paymentRecord.quote_id);
 
         // Fetch customer data
-        const { data: contractData } = await supabase
+        const { data: contractRows } = await supabase
           .from("contracts")
           .select("customer_id, contract_type, monthly_value, id")
           .eq("quote_id", paymentRecord.quote_id)
-          .single();
+          .order("created_at", { ascending: false })
+          .limit(1);
+        const contractData = contractRows?.[0] ?? null;
 
         let customerInfo: Record<string, unknown> = {};
         if (contractData?.customer_id) {
