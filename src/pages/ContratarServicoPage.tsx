@@ -1605,9 +1605,9 @@ function generateHoursContractHtml(
     </div>
     <div style="text-align: center; width: 45%;">
       <div style="border-top: 1px solid #000; padding-top: 8px;">
-        <p style="margin: 0;"><strong>Willian Rodrigues da Silva</strong></p>
-        <p style="margin: 0; font-size: 10pt;">CPF: 377.995.388-99</p>
-        <p style="margin: 0; font-size: 10pt;">CONTRATADA — WMTi</p>
+        <p style="margin: 0;"><strong>WMTI TECNOLOGIA DA INFORMAÇÃO LTDA</strong></p>
+        <p style="margin: 0; font-size: 10pt;">CNPJ: 13.366.668/0001-07</p>
+        <p style="margin: 0; font-size: 10pt;">CONTRATADA</p>
       </div>
     </div>
   </div>
