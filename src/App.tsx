@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import FloatingCtaBar from "@/components/FloatingCtaBar";
 import RouteTracker from "@/components/RouteTracker";
+import LanguageSuggestion from "@/components/LanguageSuggestion";
 import { lazyRetry } from "@/lib/lazyRetry";
 import Index from "./pages/Index.tsx";
 
@@ -79,6 +80,7 @@ const App = () => (
       <BrowserRouter>
         <RouteTracker />
         <FloatingCtaBar />
+        <LanguageSuggestion />
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/" element={<Index />} />

@@ -35,6 +35,13 @@ function syncHtmlLang(lng: string) {
   document.documentElement.dir = "ltr";
 }
 
+/** Check if user has explicitly chosen a language */
+const hasManualChoice = () => {
+  try {
+    return localStorage.getItem("wmti-lang-manual") === "true";
+  } catch { return false; }
+};
+
 i18n
   .use(LanguageDetector)
   .use(initReactI18next)
@@ -54,8 +61,12 @@ i18n
       lookupLocalStorage: "wmti-lang",
       caches: ["localStorage"],
       convertDetectedLanguage: (lng: string) => {
-        // Only allow supported languages; default to pt-BR
-        if (lng === "en-US" || lng === "en" || lng.startsWith("en-")) return "en-US";
+        // If user manually chose, respect localStorage (handled by order)
+        if (hasManualChoice()) {
+          if (lng === "en-US" || lng === "en" || lng.startsWith("en-")) return "en-US";
+          return "pt-BR";
+        }
+        // No manual choice → ALWAYS default to pt-BR regardless of browser
         return "pt-BR";
       },
     },
