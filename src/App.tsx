@@ -80,6 +80,7 @@ const App = () => (
       <BrowserRouter>
         <RouteTracker />
         <FloatingCtaBar />
+        <LanguageSuggestion />
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/" element={<Index />} />

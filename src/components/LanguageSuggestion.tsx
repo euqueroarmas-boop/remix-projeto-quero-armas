@@ -42,7 +42,7 @@ const LanguageSuggestion = () => {
 
   const handleDismiss = () => {
     sessionStorage.setItem("wmti-lang-suggestion-dismissed", "true");
-    track("language_suggestion_dismissed", "pt-BR");
+    track("language_switch", "suggestion_dismissed_pt-BR");
     setVisible(false);
   };
 

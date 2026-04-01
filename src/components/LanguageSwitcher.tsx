@@ -12,7 +12,7 @@ const LanguageSwitcher = ({ compact = false }: LanguageSwitcherProps) => {
 
   return (
     <button
-      onClick={() => { i18n.changeLanguage(next); track("language_switch", next); }}
+      onClick={() => { i18n.changeLanguage(next); localStorage.setItem("wmti-lang-manual", "true"); track("language_switch", next); }}
       className={compact
         ? "inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-background/80 px-2.5 py-1.5 text-[11px] uppercase tracking-wider text-foreground shadow-sm backdrop-blur-sm transition-colors hover:border-primary/60 hover:text-primary min-h-[36px]"
         : "inline-flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors h-16 justify-center"
