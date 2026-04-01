@@ -172,7 +172,7 @@ const ContratarServicoPage = () => {
         try { sessionStorage.setItem("wmti_purchase_data", JSON.stringify(purchaseData)); } catch {}
         navigate(`/compra-concluida?quote=${quoteId}`);
       }
-    }, 5000);
+    }, 3000);
     return () => clearInterval(interval);
   }, [paymentComplete, paymentConfirmed, quoteId, registrationData, selectedPayment, contractId, serviceName, hours, promoPrice]);
 
@@ -349,7 +349,7 @@ const ContratarServicoPage = () => {
   };
 
   const getStepStatus = (step: FlowStep) => {
-    const order: FlowStep[] = ["calculator", "registration", "contract", "payment"];
+    const order: FlowStep[] = ["calculator", "registration", "contract", "payment", "success"];
     const currentIdx = order.indexOf(currentStep);
     const stepIdx = order.indexOf(step);
     if (currentStep === "success") return "completed" as const;
@@ -616,13 +616,37 @@ const ContratarServicoPage = () => {
               </WizardStepWrapper>
 
               {/* Step 4: Payment */}
-              <WizardStepWrapper stepNumber={4} title={paymentConfirmed ? "Compra Concluída" : "Pagamento"} subtitle={paymentConfirmed ? "Pagamento confirmado ✓" : "Pagamento único via checkout seguro"} status={paymentConfirmed ? "completed" : getStepStatus("payment")} isLast>
+              <WizardStepWrapper stepNumber={4} title={paymentConfirmed ? "Pagamento Confirmado ✓" : paymentComplete ? "Aguardando Confirmação" : "Pagamento"} subtitle={paymentConfirmed ? "Pagamento confirmado com sucesso" : paymentComplete ? "Processando seu pagamento..." : "Pagamento único via checkout seguro"} status={paymentConfirmed ? "completed" : getStepStatus("payment")}>
                 {paymentConfirmed ? (
                   <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-3">
                     <CheckCircle className="w-10 h-10 text-green-500 mx-auto" />
                     <h4 className="text-lg font-heading font-bold">Pagamento confirmado!</h4>
-                    <p className="text-sm text-muted-foreground">Redirecionando...</p>
+                    <p className="text-sm text-muted-foreground">Preparando a conclusão da sua compra...</p>
                     <Loader2 className="w-5 h-5 animate-spin text-primary mx-auto" />
+                  </div>
+                ) : paymentComplete ? (
+                  <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-4">
+                    <Loader2 className="w-10 h-10 animate-spin text-primary mx-auto" />
+                    <h4 className="text-lg font-heading font-bold text-foreground">Aguardando confirmação do pagamento</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Complete o pagamento na janela do checkout. Assim que for confirmado, seu pedido será finalizado automaticamente.
+                    </p>
+                    {invoiceUrl && (
+                      <div className="space-y-2">
+                        {popupBlocked && (
+                          <p className="text-xs text-amber-500 font-mono">⚠ A janela de pagamento pode ter sido bloqueada pelo navegador.</p>
+                        )}
+                        <Button
+                          onClick={() => window.open(invoiceUrl, "_blank", "noopener,noreferrer")}
+                          variant="outline"
+                          className="w-full h-12 border-primary text-primary hover:bg-primary/10"
+                        >
+                          <ExternalLink className="w-4 h-4 mr-2" />
+                          {popupBlocked ? "Abrir checkout de pagamento" : "Reabrir checkout de pagamento"}
+                        </Button>
+                      </div>
+                    )}
+                    <p className="text-xs text-muted-foreground/60 font-mono">Verificando a cada 5 segundos...</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -661,6 +685,22 @@ const ContratarServicoPage = () => {
                       <ExternalLink className="w-5 h-5 mr-2" />
                       PROSSEGUIR PARA PAGAMENTO
                     </Button>
+                  </div>
+                )}
+              </WizardStepWrapper>
+
+              {/* Step 5: Conclusão */}
+              <WizardStepWrapper stepNumber={5} title="Conclusão" subtitle="Fechamento e ativação do serviço" status={paymentConfirmed ? "active" : "pending"} isLast>
+                {paymentConfirmed ? (
+                  <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-3">
+                    <CheckCircle className="w-10 h-10 text-green-500 mx-auto" />
+                    <h4 className="text-lg font-heading font-bold">Finalizando seu pedido...</h4>
+                    <p className="text-sm text-muted-foreground">Gerando credenciais e ativando seu serviço.</p>
+                    <Loader2 className="w-5 h-5 animate-spin text-primary mx-auto" />
+                  </div>
+                ) : (
+                  <div className="p-6 text-center">
+                    <p className="text-sm text-muted-foreground">Aguardando confirmação do pagamento para finalizar.</p>
                   </div>
                 )}
               </WizardStepWrapper>
