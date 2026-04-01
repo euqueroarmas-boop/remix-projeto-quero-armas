@@ -258,7 +258,7 @@ export function generateOnDemandContractHtml(vars: OnDemandContractVars): string
   <!-- ═══════════════════════════════════════════════════════ -->
   <h2 style="font-size: 12pt; font-weight: bold; margin-top: 24px;">ARTIGO XII — DA CONTRATAÇÃO ADICIONAL</h2>
 
-  <p><strong>Cláusula 20ª</strong> — Caso o CONTRATANTE necessite de horas técnicas adicionais além das contratadas neste instrumento, poderá realizar nova contratação, que será formalizada por instrumento próprio, podendo adotar as mesmas condições ou condições diversas, conforme disponibilidade e tabela vigente da CONTRATADA.</p>
+  <p><strong>Cláusula 22ª</strong> — Caso o CONTRATANTE necessite de horas técnicas adicionais além das contratadas neste instrumento, poderá realizar nova contratação, que será formalizada por instrumento próprio, podendo adotar as mesmas condições ou condições diversas, conforme disponibilidade e tabela vigente da CONTRATADA.</p>
 
   <p><em>Parágrafo Único:</em> As horas adicionais eventualmente contratadas não se confundem com as horas de garantia previstas no Artigo VI e não alteram os prazos de validade do presente contrato.</p>
 
