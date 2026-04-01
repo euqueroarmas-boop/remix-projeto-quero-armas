@@ -720,25 +720,7 @@ const ContratarServicoPage = () => {
               customRegistrationForm={(onComplete, loading) => (
                 <ServerAdminRegistrationForm
                   onComplete={async (data: ServerAdminRegistrationData) => {
-                    const fullAddress = [data.logradouro, data.numero, data.complemento, data.bairro].filter(Boolean).join(", ");
-                    const mapped: RegistrationData = {
-                      razaoSocial: data.razaoSocial,
-                      nomeFantasia: data.nomeFantasia,
-                      cnpjOuCpf: data.cnpj,
-                      responsavel: data.responsavelNome,
-                      email: data.responsavelEmail,
-                      telefone: data.responsavelTelefone,
-                      cep: data.cep,
-                      endereco: data.logradouro,
-                      numero: data.numero,
-                      complemento: data.complemento,
-                      bairro: data.bairro,
-                      cidade: data.cidade,
-                      uf: data.uf,
-                      isPJ: true,
-                      representanteCpf: data.responsavelCpf,
-                    };
-                    await onComplete(mapped);
+                    await onComplete(data);
                   }}
                   loading={loading}
                 />
