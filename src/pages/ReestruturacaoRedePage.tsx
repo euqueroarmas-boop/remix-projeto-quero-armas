@@ -464,8 +464,12 @@ const ReestruturacaoRedePage = () => {
     window.open(`/contrato?id=${contractId}`, "_blank");
   };
 
+  const paymentLockRef = useRef(false);
+
   const handlePayment = async () => {
     if (!selectedPayment || !registrationData || !quoteId) return;
+    if (paymentLockRef.current) return;
+    paymentLockRef.current = true;
     setPaymentLoading(true);
     setPaymentError(null);
 
@@ -486,6 +490,11 @@ const ReestruturacaoRedePage = () => {
 
       if (error) throw new Error(error.message || "Erro ao criar cobrança");
 
+      if (data?.already_paid) {
+        navigate(`/compra-concluida?quote=${quoteId}`);
+        return;
+      }
+
       const url = data?.invoiceUrl || data?.invoice_url || data?.bankSlipUrl || data?.payment?.invoiceUrl;
       if (!url) throw new Error("O sistema de pagamento não retornou um link de cobrança.");
 
@@ -498,6 +507,7 @@ const ReestruturacaoRedePage = () => {
       setPaymentError(message);
     } finally {
       setPaymentLoading(false);
+      paymentLockRef.current = false;
     }
   };
 

@@ -50,6 +50,72 @@ Deno.serve(async (req) => {
     console.log("[create-asaas-payment] Iniciando...", { billing_type, value, quote_id });
     await logSistemaBackend({ tipo: "checkout", status: "info", mensagem: "Início criação de pagamento", payload: { billing_type, value, quote_id } });
 
+    // ══════════════════════════════════════════════════════════
+    // IDEMPOTENCY: Check for existing active payment for this quote
+    // ══════════════════════════════════════════════════════════
+    if (quote_id) {
+      const { data: existingPayments } = await supabase
+        .from("payments")
+        .select("id, asaas_payment_id, payment_status, billing_type, asaas_invoice_url")
+        .eq("quote_id", quote_id)
+        .not("asaas_payment_id", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(5);
+
+      if (existingPayments && existingPayments.length > 0) {
+        // Check if already paid — block completely
+        const paidStatuses = ["CONFIRMED", "RECEIVED", "PAYMENT_CONFIRMED", "PAYMENT_RECEIVED"];
+        const paidPayment = existingPayments.find((p: any) =>
+          paidStatuses.includes(String(p.payment_status).toUpperCase())
+        );
+        if (paidPayment) {
+          console.log("[create-asaas-payment] BLOQUEADO: pedido já pago", paidPayment.id);
+          await logSistemaBackend({ tipo: "checkout", status: "warning", mensagem: "Tentativa de cobrança duplicada bloqueada — pedido já pago", payload: { quote_id, existing_payment_id: paidPayment.id } });
+          return jsonResponse({
+            success: true,
+            billingType: paidPayment.billing_type,
+            invoiceUrl: paidPayment.asaas_invoice_url,
+            asaasPaymentId: paidPayment.asaas_payment_id,
+            status: "confirmed",
+            invoice_url: paidPayment.asaas_invoice_url,
+            payment_id: paidPayment.asaas_payment_id,
+            reused: true,
+            already_paid: true,
+          }, 200);
+        }
+
+        // Check if same billing_type has a pending charge — reuse it
+        const sameMethodPending = existingPayments.find((p: any) =>
+          p.billing_type === billing_type &&
+          !paidStatuses.includes(String(p.payment_status).toUpperCase()) &&
+          p.asaas_invoice_url
+        );
+        if (sameMethodPending) {
+          console.log("[create-asaas-payment] Reutilizando cobrança existente:", sameMethodPending.asaas_payment_id);
+          await logSistemaBackend({ tipo: "checkout", status: "info", mensagem: "Cobrança existente reutilizada", payload: { quote_id, reused_payment_id: sameMethodPending.id } });
+          return jsonResponse({
+            success: true,
+            billingType: sameMethodPending.billing_type,
+            invoiceUrl: sameMethodPending.asaas_invoice_url,
+            asaasPaymentId: sameMethodPending.asaas_payment_id,
+            status: String(sameMethodPending.payment_status || "pending").toLowerCase(),
+            invoice_url: sameMethodPending.asaas_invoice_url,
+            payment_id: sameMethodPending.asaas_payment_id,
+            reused: true,
+          }, 200);
+        }
+
+        // Different billing_type — log the method change
+        console.log("[create-asaas-payment] Troca de método de pagamento detectada para quote_id:", quote_id);
+        await supabase.from("integration_logs").insert({
+          integration_name: "asaas",
+          operation_name: "payment_method_change",
+          request_payload: { quote_id, old_method: existingPayments[0].billing_type, new_method: billing_type },
+          status: "info",
+        });
+      }
+    }
+
     await supabase.from("integration_logs").insert({
       integration_name: "asaas",
       operation_name: "create_payment_start",

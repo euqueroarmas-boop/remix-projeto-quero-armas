@@ -52,6 +52,53 @@ Deno.serve(async (req) => {
 
     console.log("[create-asaas-subscription] Iniciando...", { billing_type, value, quote_id });
 
+    // ══════════════════════════════════════════════════════════
+    // IDEMPOTENCY: Check for existing active payment/subscription
+    // ══════════════════════════════════════════════════════════
+    if (quote_id) {
+      const { data: existingPayments } = await supabase
+        .from("payments")
+        .select("id, asaas_payment_id, payment_status, billing_type, asaas_invoice_url")
+        .eq("quote_id", quote_id)
+        .not("asaas_payment_id", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(5);
+
+      if (existingPayments && existingPayments.length > 0) {
+        const paidStatuses = ["CONFIRMED", "RECEIVED", "PAYMENT_CONFIRMED", "PAYMENT_RECEIVED"];
+        const paidPayment = existingPayments.find((p: any) =>
+          paidStatuses.includes(String(p.payment_status).toUpperCase())
+        );
+        if (paidPayment) {
+          console.log("[create-asaas-subscription] BLOQUEADO: pedido já pago", paidPayment.id);
+          return jsonResponse({
+            success: true,
+            invoiceUrl: paidPayment.asaas_invoice_url,
+            invoice_url: paidPayment.asaas_invoice_url,
+            asaasPaymentId: paidPayment.asaas_payment_id,
+            status: "confirmed",
+            reused: true,
+            already_paid: true,
+          }, 200);
+        }
+
+        const sameMethodPending = existingPayments.find((p: any) =>
+          p.billing_type === billing_type && p.asaas_invoice_url
+        );
+        if (sameMethodPending) {
+          console.log("[create-asaas-subscription] Reutilizando cobrança existente:", sameMethodPending.asaas_payment_id);
+          return jsonResponse({
+            success: true,
+            invoiceUrl: sameMethodPending.asaas_invoice_url,
+            invoice_url: sameMethodPending.asaas_invoice_url,
+            asaasPaymentId: sameMethodPending.asaas_payment_id,
+            status: String(sameMethodPending.payment_status || "pending").toLowerCase(),
+            reused: true,
+          }, 200);
+        }
+      }
+    }
+
     await supabase.from("integration_logs").insert({
       integration_name: "asaas",
       operation_name: "create_subscription_start",

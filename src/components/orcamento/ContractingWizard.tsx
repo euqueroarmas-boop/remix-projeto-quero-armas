@@ -168,6 +168,7 @@ const ContractingWizard = ({
   const [popupBlocked, setPopupBlocked] = useState(false);
 
   const wizardRef = useRef<HTMLDivElement>(null);
+  const paymentLockRef = useRef(false);
 
   useEffect(() => {
     setActiveQuoteId(quoteId);
@@ -506,8 +507,16 @@ const ContractingWizard = ({
     setPaymentError(null);
   };
 
+
+
+
   const handlePayment = async () => {
     if (!selectedPayment || !registrationData || !activeQuoteId) return;
+    if (paymentLockRef.current) {
+      console.warn("[WMTi][payment] Chamada duplicada bloqueada (ContractingWizard)");
+      return;
+    }
+    paymentLockRef.current = true;
     setPaymentLoading(true);
     setPaymentError(null);
     setPaymentComplete(false);
@@ -533,6 +542,12 @@ const ContractingWizard = ({
 
       if (error) throw new Error(error.message || "Erro ao criar assinatura");
 
+      // If already paid, redirect immediately
+      if (data?.already_paid) {
+        navigate(`/compra-concluida?quote=${activeQuoteId}`);
+        return;
+      }
+
       const normalized = normalizePaymentPayload(data, selectedPayment);
 
       if (!normalized.success) {
@@ -543,12 +558,10 @@ const ContractingWizard = ({
         throw new Error("O sistema de pagamento não retornou um link de cobrança. Tente novamente.");
       }
 
-      // Only set state and redirect AFTER confirmed URL
       setPaymentData(normalized);
       setInvoiceUrl(normalized.invoiceUrl);
       setPaymentComplete(true);
 
-      // Redirect directly now that we have the URL
       handleRedirectToCheckout(normalized.invoiceUrl);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Erro desconhecido";
@@ -559,6 +572,7 @@ const ContractingWizard = ({
       setPaymentData(null);
     } finally {
       setPaymentLoading(false);
+      paymentLockRef.current = false;
     }
   };
 
