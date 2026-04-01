@@ -349,7 +349,7 @@ const ContratarServicoPage = () => {
   };
 
   const getStepStatus = (step: FlowStep) => {
-    const order: FlowStep[] = ["calculator", "registration", "contract", "payment"];
+    const order: FlowStep[] = ["calculator", "registration", "contract", "payment", "success"];
     const currentIdx = order.indexOf(currentStep);
     const stepIdx = order.indexOf(step);
     if (currentStep === "success") return "completed" as const;
