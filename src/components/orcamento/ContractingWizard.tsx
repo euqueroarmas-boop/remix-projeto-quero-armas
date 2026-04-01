@@ -784,6 +784,22 @@ const ContractingWizard = ({
                 </div>
               )}
             </WizardStepWrapper>
+
+            {/* Step 5: Conclusão */}
+            <WizardStepWrapper stepNumber={5} title="Compra Concluída" subtitle="Fechamento e ativação do serviço" status={paymentConfirmed ? "active" : "pending"} isLast>
+              {paymentConfirmed ? (
+                <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-3">
+                  <CheckCircle className="w-12 h-12 text-green-500 mx-auto" />
+                  <h4 className="text-lg font-heading font-bold text-foreground">Pedido concluído com sucesso!</h4>
+                  <p className="text-sm text-muted-foreground">Redirecionando para a página de confirmação...</p>
+                  <Loader2 className="w-5 h-5 animate-spin text-primary mx-auto" />
+                </div>
+              ) : (
+                <div className="p-6 text-center">
+                  <p className="text-sm text-muted-foreground">Aguardando confirmação do pagamento para finalizar.</p>
+                </div>
+              )}
+            </WizardStepWrapper>
           </div>
         </div>
       </section>
