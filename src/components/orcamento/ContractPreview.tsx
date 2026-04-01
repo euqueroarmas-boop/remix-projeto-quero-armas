@@ -142,6 +142,12 @@ export const generateContractHtml = (
   ${isRental ? `<p><strong>Cláusula Trigésima Primeira</strong> – Ocorrendo a impontualidade em 3 aluguéis por parte do LOCATÁRIO, fica autorizado o LOCADOR retirar todos os equipamentos, mediante aviso com prazo de 5 dias de antecedência.</p>` : ""}
   <p><strong>Cláusula Trigésima Segunda</strong> – O descumprimento das presentes cláusulas ensejará a rescisão deste instrumento.</p>
   <p><strong>Cláusula Trigésima Terceira</strong> – O ${isRental ? "LOCATÁRIO" : "CONTRATANTE"} se obriga a informar, com antecedência de até 30 dias, possíveis alterações do local de prestação de serviço.</p>
+
+  <h2 style="font-size: 12pt; font-weight: bold; margin-top: 24px;">DO CANCELAMENTO E REEMBOLSO</h2>
+  <p><strong>Cláusula Trigésima Quarta-A</strong> – O ${isRental ? "LOCATÁRIO" : "CONTRATANTE"} poderá solicitar o cancelamento da contratação e eventual reembolso no prazo máximo de até 7 (sete) dias corridos, contados a partir da data da contratação, desde que não tenha ocorrido a execução do serviço ou o início de sua utilização.</p>
+  <p><strong>Cláusula Trigésima Quarta-B</strong> – Após o prazo de 7 (sete) dias, não haverá possibilidade de reembolso, permanecendo os valores pagos integralmente vinculados à contratação realizada.</p>
+  <p><strong>Cláusula Trigésima Quarta-C</strong> – Para serviços recorrentes, o cancelamento poderá ser solicitado a qualquer tempo para interromper cobranças futuras, respeitado o prazo mínimo contratual de 6 (seis) meses, não implicando, em nenhuma hipótese, na devolução de valores já pagos referentes a períodos anteriores ou em curso.</p>
+  <p><em>Parágrafo Único:</em> A contratação dos serviços garante ao ${isRental ? "LOCATÁRIO" : "CONTRATANTE"} a disponibilidade técnica, operacional e organizacional do ${isRental ? "LOCADOR" : "CONTRATADA"} durante o período contratado, não estando o direito de reembolso condicionado à efetiva utilização do serviço após o prazo legal de arrependimento.</p>
   <h2 style="font-size: 12pt; font-weight: bold; margin-top: 24px;">DAS CONDIÇÕES GERAIS</h2>
   <p><strong>Cláusula Trigésima Quinta</strong> – As relações existentes entre as partes são unicamente comerciais, não havendo nenhum vínculo trabalhista.</p>
   <p><strong>Cláusula Trigésima Sexta</strong> – As partes não poderão ceder ou transferir a terceiros os direitos e obrigações emergentes deste contrato, sem a prévia aprovação por escrito da outra parte.</p>

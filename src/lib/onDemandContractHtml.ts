@@ -243,11 +243,15 @@ export function generateOnDemandContractHtml(vars: OnDemandContractVars): string
   <!-- ═══════════════════════════════════════════════════════ -->
   <h2 style="font-size: 12pt; font-weight: bold; margin-top: 24px;">ARTIGO XI — DO CANCELAMENTO E REEMBOLSO</h2>
 
-  <p><strong>Cláusula 18ª</strong> — O CONTRATANTE poderá solicitar o cancelamento do presente contrato antes do início da execução dos serviços, mediante comunicação formal à CONTRATADA, ficando sujeito às seguintes condições:</p>
-  <p>a) Cancelamento solicitado antes do início do atendimento: reembolso integral do valor pago, deduzidas eventuais taxas de processamento financeiro;</p>
-  <p>b) Cancelamento solicitado após o início do atendimento: sem direito a reembolso pelas horas já utilizadas. Horas remanescentes poderão ser utilizadas dentro do prazo de validade previsto na Cláusula 6ª.</p>
+  <p><strong>Cláusula 18ª</strong> — A CONTRATANTE poderá solicitar o cancelamento da contratação e eventual reembolso no prazo máximo de até 7 (sete) dias corridos, contados a partir da data da contratação, desde que não tenha ocorrido a execução do serviço ou o início de sua utilização.</p>
 
-  <p><strong>Cláusula 19ª</strong> — A CONTRATADA poderá rescindir o presente contrato em caso de: (i) descumprimento pelo CONTRATANTE de qualquer obrigação prevista neste instrumento; (ii) impossibilidade técnica de execução dos serviços por motivo atribuível ao CONTRATANTE; (iii) conduta do CONTRATANTE incompatível com a boa-fé contratual.</p>
+  <p><strong>Cláusula 19ª</strong> — Após o prazo de 7 (sete) dias, não haverá possibilidade de reembolso, permanecendo os valores pagos integralmente vinculados à contratação realizada.</p>
+
+  <p><strong>Cláusula 20ª</strong> — Para serviços contratados na modalidade sob demanda, a CONTRATANTE deverá utilizar os serviços no prazo máximo de até 90 (noventa) dias, contados a partir da confirmação do pagamento. A não utilização do serviço dentro do prazo estabelecido não gera direito a reembolso, crédito ou compensação de qualquer natureza.</p>
+
+  <p><strong>Cláusula 21ª</strong> — Para serviços recorrentes, o cancelamento poderá ser solicitado a qualquer tempo para interromper cobranças futuras, respeitado o prazo mínimo contratual de 6 (seis) meses, não implicando, em nenhuma hipótese, na devolução de valores já pagos referentes a períodos anteriores ou em curso.</p>
+
+  <p><em>Parágrafo Único:</em> A contratação dos serviços garante à CONTRATANTE a disponibilidade técnica, operacional e organizacional da CONTRATADA durante o período contratado, não estando o direito de reembolso condicionado à efetiva utilização do serviço após o prazo legal de arrependimento.</p>
 
   <!-- ═══════════════════════════════════════════════════════ -->
   <!-- ARTIGO XII — DA CONTRATAÇÃO ADICIONAL                   -->
