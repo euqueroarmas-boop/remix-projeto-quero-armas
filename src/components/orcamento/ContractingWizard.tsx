@@ -347,15 +347,9 @@ const ContractingWizard = ({
       const fullAddress = [registrationData.endereco, registrationData.numero, registrationData.complemento, registrationData.bairro].filter(Boolean).join(", ");
 
       const customerDataForContract: CustomerData = {
-        razaoSocial: registrationData.razaoSocial,
-        nomeFantasia: registrationData.nomeFantasia,
-        cnpjOuCpf: registrationData.cnpjOuCpf,
-        responsavel: registrationData.responsavel,
-        email: registrationData.email,
-        telefone: registrationData.telefone,
+        ...registrationData,
         endereco: fullAddress,
         cidade: `${registrationData.cidade}/${registrationData.uf}`,
-        cep: registrationData.cep,
       };
 
       const finalMonthlyValue = pricing.valorFinalMensal;
