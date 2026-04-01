@@ -213,9 +213,10 @@ const ContractingWizard = ({
     return () => clearInterval(interval);
   }, [currentStep, contractId, contractSigned, toast]);
 
-  // Poll for payment confirmation + send email
+  // Poll for payment confirmation — runs when payment started or on payment step
   useEffect(() => {
-    if (!paymentComplete || paymentConfirmed || !activeQuoteId) return;
+    if (paymentConfirmed || !activeQuoteId) return;
+    if (!paymentComplete && currentStep !== "payment") return;
     const interval = setInterval(async () => {
       const { data } = await supabase
         .from("payments")
@@ -226,7 +227,6 @@ const ContractingWizard = ({
         .single();
       if (data && isPaidStatus((data as any).payment_status)) {
         setPaymentConfirmed(true);
-        // Email is now sent from webhook after user creation (includes credentials)
         const purchaseData = {
           serviceName: effectivePath === "locacao" ? "Locação de Equipamentos" : "Serviços de TI",
           computersQty,
@@ -242,9 +242,9 @@ const ContractingWizard = ({
         try { sessionStorage.setItem("wmti_purchase_data", JSON.stringify(purchaseData)); } catch {}
         navigate(`/compra-concluida?quote=${activeQuoteId}`);
       }
-    }, 5000);
+    }, 3000);
     return () => clearInterval(interval);
-  }, [paymentComplete, paymentConfirmed, activeQuoteId, registrationData, selectedPayment, contractId, effectivePath, computersQty, monthlyValue, pricingBreakdown]);
+  }, [paymentComplete, paymentConfirmed, activeQuoteId, currentStep, registrationData, selectedPayment, contractId, effectivePath, computersQty, monthlyValue, pricingBreakdown]);
 
   // Open checkout in new tab — detects popup blocker
   const handleRedirectToCheckout = useCallback((url: string) => {
