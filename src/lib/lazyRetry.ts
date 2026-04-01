@@ -8,6 +8,7 @@ function isChunkError(error: unknown): boolean {
   const msg = error.message.toLowerCase();
   return (
     msg.includes("failed to fetch dynamically imported module") ||
+    msg.includes("importing a module script failed") ||
     msg.includes("loading chunk") ||
     msg.includes("loading css chunk") ||
     msg.includes("dynamically imported module")
