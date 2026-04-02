@@ -191,6 +191,21 @@ async function buildPdfBytes(context: Awaited<ReturnType<typeof getPostPurchaseC
     });
   }
 
+  // Draw dynamic page numbers on all pages
+  const totalPages = pages.length;
+  for (let i = 0; i < totalPages; i++) {
+    const pg = pages[i];
+    const pageNumText = `${i + 1}`;
+    const numWidth = font.widthOfTextAtSize(pageNumText, 9);
+    pg.drawText(pageNumText, {
+      x: pageWidth - marginRight - numWidth,
+      y: pageHeight - 32,
+      size: 9,
+      font,
+      color: rgb(0.5, 0.5, 0.5),
+    });
+  }
+
   return await pdfDoc.save();
 }
 

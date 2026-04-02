@@ -84,9 +84,9 @@ export default function PortalDocumentos({ customer }: { customer: CustomerData 
                 <div className="flex items-center gap-2 shrink-0">
                   <StatusBadge status={d.status} />
                   {d.url && (
-                    <a href={d.url} target="_blank" rel="noopener noreferrer">
+                    <a href={d.url} rel="noopener noreferrer">
                       <Button size="icon" variant="ghost" className="h-7 w-7">
-                        <Download size={14} />
+                        {d.type === "contrato" ? <ExternalLink size={14} /> : <Download size={14} />}
                       </Button>
                     </a>
                   )}
