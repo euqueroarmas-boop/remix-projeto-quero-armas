@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, ChevronDown, Server, Cloud, Shield, Network, Monitor, Wrench, Headphones, Activity, Eye, Cpu, HardDrive, Lock, Zap, Terminal, RefreshCw, Building2, Scale, Heart, Landmark, Briefcase, Calculator, Factory, Fuel, FileText, Mail, Globe, Brain, Bot, Home } from "lucide-react";
+import { Menu, X, ChevronDown, ChevronRight, Server, Cloud, Shield, Network, Monitor, Wrench, Headphones, Activity, Eye, Cpu, HardDrive, Lock, Zap, Terminal, RefreshCw, Building2, Scale, Heart, Landmark, Briefcase, Calculator, Factory, Fuel, FileText, Mail, Globe, Brain, Bot, Home } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import logoFull from "@/assets/logo-wmti-full.webp";
@@ -13,6 +13,7 @@ interface MegaMenuItem {
   label: string;
   href: string;
   icon: LucideIcon;
+  children?: MegaMenuItem[];
 }
 
 const segmentosBase = [
@@ -22,7 +23,9 @@ const segmentosBase = [
   { labelKey: "segments.hospitais", href: "/ti-para-hospitais-e-clinicas", icon: Heart },
   { labelKey: "segments.alimenticias", href: "/ti-para-industrias-alimenticias", icon: Factory },
   { labelKey: "segments.petroliferas", href: "/ti-para-industrias-petroliferas", icon: Fuel },
-  { labelKey: "segments.notariais", href: "/ti-para-serventias-cartoriais", icon: FileText },
+  { labelKey: "segments.notariais", href: "/ti-para-serventias-cartoriais", icon: FileText, children: [
+    { labelKey: "segments.tabelionatos", href: "/ti-para-tabelionatos-de-notas", icon: Landmark },
+  ] },
 ] as const;
 
 const servicosBase = [
