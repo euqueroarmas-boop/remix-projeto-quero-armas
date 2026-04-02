@@ -275,7 +275,8 @@
     "hospitais": "Hospitais e Clínicas",
     "alimenticias": "Indústrias Alimentícias",
     "petroliferas": "Indústrias Petrolíferas",
-    "notariais": "Serventias Notariais",
+    "notariais": "Serventias Cartoriais",
+    "tabelionatos": "Tabelionatos de Notas",
     "cartorios": "Cartórios"
   },
   "services": {

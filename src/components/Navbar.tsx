@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, ChevronDown, Server, Cloud, Shield, Network, Monitor, Wrench, Headphones, Activity, Eye, Cpu, HardDrive, Lock, Zap, Terminal, RefreshCw, Building2, Scale, Heart, Landmark, Briefcase, Calculator, Factory, Fuel, FileText, Mail, Globe, Brain, Bot, Home } from "lucide-react";
+import { Menu, X, ChevronDown, ChevronRight, Server, Cloud, Shield, Network, Monitor, Wrench, Headphones, Activity, Eye, Cpu, HardDrive, Lock, Zap, Terminal, RefreshCw, Building2, Scale, Heart, Landmark, Briefcase, Calculator, Factory, Fuel, FileText, Mail, Globe, Brain, Bot, Home } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import logoFull from "@/assets/logo-wmti-full.webp";
@@ -13,6 +13,7 @@ interface MegaMenuItem {
   label: string;
   href: string;
   icon: LucideIcon;
+  children?: MegaMenuItem[];
 }
 
 const segmentosBase = [
@@ -22,7 +23,9 @@ const segmentosBase = [
   { labelKey: "segments.hospitais", href: "/ti-para-hospitais-e-clinicas", icon: Heart },
   { labelKey: "segments.alimenticias", href: "/ti-para-industrias-alimenticias", icon: Factory },
   { labelKey: "segments.petroliferas", href: "/ti-para-industrias-petroliferas", icon: Fuel },
-  { labelKey: "segments.notariais", href: "/ti-para-serventias-cartoriais", icon: FileText },
+  { labelKey: "segments.notariais", href: "/ti-para-serventias-cartoriais", icon: FileText, children: [
+    { labelKey: "segments.tabelionatos", href: "/ti-para-tabelionatos-de-notas", icon: Landmark },
+  ] },
 ] as const;
 
 const servicosBase = [
@@ -74,7 +77,13 @@ const WEBMAIL_URL = "https://sigma.servidor.net.br:2096/cpsess3314771808/webmail
 const Navbar = () => {
   const { t } = useTranslation();
   const segmentos: MegaMenuItem[] = [...segmentosBase]
-    .map((item) => ({ ...item, label: t(item.labelKey) }))
+    .map((item) => ({
+      ...item,
+      label: t(item.labelKey),
+      children: 'children' in item && item.children
+        ? item.children.map((c) => ({ ...c, label: t(c.labelKey) }))
+        : undefined,
+    }))
     .sort((a, b) => a.label.localeCompare(b.label));
   const servicos: MegaMenuItem[] = [...servicosBase]
     .map((item) => ({ ...item, label: t(item.labelKey) }))
@@ -272,32 +281,60 @@ const Navbar = () => {
               {items.map((item) => {
                 const Icon = item.icon;
                 return (
-                  <Link
-                    key={item.href + item.label}
-                    to={item.href}
-                    onClick={() => setIsOpen(false)}
-                    className="group flex items-center gap-4 px-5 py-4 rounded-xl transition-all duration-250 ease-out"
-                    style={{
-                      background: "rgba(255, 255, 255, 0.04)",
-                      border: "1px solid rgba(255, 255, 255, 0.08)",
-                      backdropFilter: "blur(8px)",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = "rgba(255, 90, 31, 0.10)";
-                      e.currentTarget.style.borderColor = "rgba(255, 90, 31, 0.45)";
-                      e.currentTarget.style.transform = "translateY(-1px)";
-                      e.currentTarget.style.boxShadow = "0 10px 25px rgba(0,0,0,0.28)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = "rgba(255, 255, 255, 0.04)";
-                      e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)";
-                      e.currentTarget.style.transform = "translateY(0)";
-                      e.currentTarget.style.boxShadow = "none";
-                    }}
-                  >
-                    <Icon size={22} className="text-primary shrink-0" strokeWidth={1.5} />
-                    <span className="text-[15px] font-medium tracking-wide text-foreground group-hover:text-white">{item.label}</span>
-                  </Link>
+                  <div key={item.href + item.label} className="flex flex-col gap-2">
+                    <Link
+                      to={item.href}
+                      onClick={() => setIsOpen(false)}
+                      className="group flex items-center gap-4 px-5 py-4 rounded-xl transition-all duration-250 ease-out"
+                      style={{
+                        background: "rgba(255, 255, 255, 0.04)",
+                        border: "1px solid rgba(255, 255, 255, 0.08)",
+                        backdropFilter: "blur(8px)",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = "rgba(255, 90, 31, 0.10)";
+                        e.currentTarget.style.borderColor = "rgba(255, 90, 31, 0.45)";
+                        e.currentTarget.style.transform = "translateY(-1px)";
+                        e.currentTarget.style.boxShadow = "0 10px 25px rgba(0,0,0,0.28)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "rgba(255, 255, 255, 0.04)";
+                        e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)";
+                        e.currentTarget.style.transform = "translateY(0)";
+                        e.currentTarget.style.boxShadow = "none";
+                      }}
+                    >
+                      <Icon size={22} className="text-primary shrink-0" strokeWidth={1.5} />
+                      <span className="text-[15px] font-medium tracking-wide text-foreground group-hover:text-white">{item.label}</span>
+                    </Link>
+                    {item.children && item.children.map((child) => {
+                      const ChildIcon = child.icon;
+                      return (
+                        <Link
+                          key={child.href + child.label}
+                          to={child.href}
+                          onClick={() => setIsOpen(false)}
+                          className="group flex items-center gap-3 px-5 py-3 ml-6 rounded-lg transition-all duration-250 ease-out"
+                          style={{
+                            background: "rgba(255, 255, 255, 0.02)",
+                            border: "1px solid rgba(255, 255, 255, 0.05)",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = "rgba(255, 90, 31, 0.08)";
+                            e.currentTarget.style.borderColor = "rgba(255, 90, 31, 0.35)";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = "rgba(255, 255, 255, 0.02)";
+                            e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.05)";
+                          }}
+                        >
+                          <ChevronRight size={14} className="text-muted-foreground shrink-0" />
+                          <ChildIcon size={18} className="text-primary shrink-0" strokeWidth={1.5} />
+                          <span className="text-[13px] font-medium tracking-wide text-muted-foreground group-hover:text-white">{child.label}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
                 );
               })}
             </div>
@@ -340,18 +377,37 @@ const Navbar = () => {
                 {items.map((item) => {
                   const Icon = item.icon;
                   return (
-                    <Link
-                      key={item.href + item.label}
-                      to={item.href}
-                      onClick={() => { closeMobileMenu(); setIsOpen(false); }}
-                      className={`flex items-center gap-4 py-3 px-4 transition-colors hover:bg-white/[0.04] ${
-                        location.pathname === item.href ? "text-primary" : "text-muted-foreground hover:text-primary"
-                      }`}
-                      style={{ borderRadius: "10px" }}
-                    >
-                      <Icon size={24} className="text-primary shrink-0" strokeWidth={1.5} />
-                      <span className="font-mono text-sm uppercase tracking-wider">{item.label}</span>
-                    </Link>
+                    <div key={item.href + item.label}>
+                      <Link
+                        to={item.href}
+                        onClick={() => { closeMobileMenu(); setIsOpen(false); }}
+                        className={`flex items-center gap-4 py-3 px-4 transition-colors hover:bg-white/[0.04] ${
+                          location.pathname === item.href ? "text-primary" : "text-muted-foreground hover:text-primary"
+                        }`}
+                        style={{ borderRadius: "10px" }}
+                      >
+                        <Icon size={24} className="text-primary shrink-0" strokeWidth={1.5} />
+                        <span className="font-mono text-sm uppercase tracking-wider">{item.label}</span>
+                      </Link>
+                      {item.children && item.children.map((child) => {
+                        const ChildIcon = child.icon;
+                        return (
+                          <Link
+                            key={child.href + child.label}
+                            to={child.href}
+                            onClick={() => { closeMobileMenu(); setIsOpen(false); }}
+                            className={`flex items-center gap-3 py-2.5 px-4 ml-8 transition-colors hover:bg-white/[0.04] ${
+                              location.pathname === child.href ? "text-primary" : "text-muted-foreground hover:text-primary"
+                            }`}
+                            style={{ borderRadius: "8px" }}
+                          >
+                            <ChevronRight size={14} className="text-muted-foreground shrink-0" />
+                            <ChildIcon size={20} className="text-primary shrink-0" strokeWidth={1.5} />
+                            <span className="font-mono text-xs uppercase tracking-wider">{child.label}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
                   );
                 })}
               </div>

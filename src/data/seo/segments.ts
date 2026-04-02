@@ -12,8 +12,8 @@ export interface SeoSegment {
 
 export const segments: SeoSegment[] = [
   {
-    slug: "serventias-notariais",
-    name: "Serventias Notariais",
+    slug: "serventias-cartoriais",
+    name: "Serventias Cartoriais",
     titleSuffix: "para Serventias Notariais",
     descriptionExtra:
       "Atendemos serventias notariais com foco em conformidade com o Provimento 213 do CNJ, garantindo segurança de dados, backup automatizado e infraestrutura homologada.",
