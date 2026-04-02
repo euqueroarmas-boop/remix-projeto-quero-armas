@@ -42,6 +42,21 @@ function stripHtml(html?: string | null) {
     .trim();
 }
 
+async function loadLetterhead(pdfDoc: InstanceType<typeof PDFDocument>) {
+  const LETTERHEAD_URL = `${Deno.env.get("SUPABASE_URL")}/storage/v1/object/public/contract-assets/timbrado-wmti.pdf`;
+  try {
+    const resp = await fetch(LETTERHEAD_URL);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const bytes = new Uint8Array(await resp.arrayBuffer());
+    const letterheadDoc = await PDFDocument.load(bytes);
+    const [embeddedPage] = await pdfDoc.embedPdf(letterheadDoc, [0]);
+    return embeddedPage;
+  } catch (err) {
+    console.warn("[generate-paid-contract-pdf] Letterhead not available, using plain layout:", err);
+    return null;
+  }
+}
+
 async function buildPdfBytes(context: Awaited<ReturnType<typeof getPostPurchaseContext>>, access: Awaited<ReturnType<typeof ensureClientAccess>>) {
   const pdfDoc = await PDFDocument.create();
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
@@ -49,23 +64,35 @@ async function buildPdfBytes(context: Awaited<ReturnType<typeof getPostPurchaseC
 
   const pageWidth = 595.28;
   const pageHeight = 841.89;
-  const margin = 42;
-  const lineHeight = 15;
+  const marginLeft = 50;
+  const marginRight = 50;
+  const topMargin = 120; // space for letterhead header
+  const bottomMargin = 60; // space for letterhead footer
 
-  let page = pdfDoc.addPage([pageWidth, pageHeight]);
-  let y = pageHeight - margin;
+  const letterhead = await loadLetterhead(pdfDoc);
+
+  const addNewPage = () => {
+    const p = pdfDoc.addPage([pageWidth, pageHeight]);
+    if (letterhead) {
+      p.drawPage(letterhead, { x: 0, y: 0, width: pageWidth, height: pageHeight });
+    }
+    return p;
+  };
+
+  let page = addNewPage();
+  let y = pageHeight - topMargin;
 
   const ensureSpace = (height: number) => {
-    if (y - height < margin) {
-      page = pdfDoc.addPage([pageWidth, pageHeight]);
-      y = pageHeight - margin;
+    if (y - height < bottomMargin) {
+      page = addNewPage();
+      y = pageHeight - topMargin;
     }
   };
 
   const drawTextBlock = (text: string, options: { size?: number; bold?: boolean; color?: ReturnType<typeof rgb>; indent?: number } = {}) => {
     const size = options.size || 10;
     const fontRef = options.bold ? bold : font;
-    const maxWidth = pageWidth - margin * 2 - (options.indent || 0);
+    const maxWidth = pageWidth - marginLeft - marginRight - (options.indent || 0);
     const words = text.split(/\s+/);
     let line = "";
     const lines: string[] = [];
@@ -85,7 +112,7 @@ async function buildPdfBytes(context: Awaited<ReturnType<typeof getPostPurchaseC
     ensureSpace(lines.length * (size + 3) + 6);
     lines.forEach((current) => {
       page.drawText(current, {
-        x: margin + (options.indent || 0),
+        x: marginLeft + (options.indent || 0),
         y,
         size,
         font: fontRef,
@@ -99,14 +126,14 @@ async function buildPdfBytes(context: Awaited<ReturnType<typeof getPostPurchaseC
   const drawSectionTitle = (title: string) => {
     ensureSpace(28);
     page.drawRectangle({
-      x: margin,
+      x: marginLeft,
       y: y - 8,
-      width: pageWidth - margin * 2,
+      width: pageWidth - marginLeft - marginRight,
       height: 22,
       color: rgb(1, 0.95, 0.91),
     });
     page.drawText(title, {
-      x: margin + 10,
+      x: marginLeft + 10,
       y,
       size: 11,
       font: bold,
@@ -115,22 +142,13 @@ async function buildPdfBytes(context: Awaited<ReturnType<typeof getPostPurchaseC
     y -= 28;
   };
 
-  page.drawRectangle({ x: 0, y: pageHeight - 90, width: pageWidth, height: 90, color: rgb(0.08, 0.09, 0.12) });
-  page.drawText("WMTi Tecnologia da Informação", {
-    x: margin,
-    y: pageHeight - 44,
-    size: 20,
-    font: bold,
-    color: rgb(1, 0.35, 0.12),
+  // Title line (no more manual dark header — letterhead handles branding)
+  drawTextBlock("Contrato final liberado após pagamento confirmado", {
+    size: 12,
+    bold: true,
+    color: rgb(0.3, 0.3, 0.3),
   });
-  page.drawText("Contrato final liberado após pagamento confirmado", {
-    x: margin,
-    y: pageHeight - 64,
-    size: 10,
-    font,
-    color: rgb(0.86, 0.86, 0.88),
-  });
-  y = pageHeight - 118;
+  y -= 6;
 
   drawTextBlock(`Pedido ${context.quote.id.slice(0, 8).toUpperCase()} • Contrato ${context.contract.id.slice(0, 8).toUpperCase()} • ${new Date(context.payment.created_at).toLocaleDateString("pt-BR")}`, {
     size: 10,
