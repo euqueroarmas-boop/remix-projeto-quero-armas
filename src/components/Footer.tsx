@@ -5,6 +5,8 @@ import logoFull from "@/assets/logo-wmti-full.webp";
 const footerLinks = [
   { label: "Serventias Cartoriais", href: "/ti-para-serventias-cartoriais" },
   { label: "Tabelionatos de Notas", href: "/ti-para-tabelionatos-de-notas" },
+  { label: "Ofícios de Registro", href: "/ti-para-oficios-de-registro" },
+  { label: "Tabelionatos de Protesto", href: "/ti-para-tabelionatos-de-protesto" },
   { label: "Provimento 213", href: "/cartorios/provimento-213" },
   { label: "Cartórios", href: "/ti-para-cartorios" },
 ];

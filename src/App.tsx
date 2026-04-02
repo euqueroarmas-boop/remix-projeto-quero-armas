@@ -137,6 +137,8 @@ const App = () => (
             <Route path="/ti-para-cartorios" element={<TiCartoriosPage />} />
             <Route path="/ti-para-serventias-cartoriais" element={<TiServentiasCartoriaisPage />} />
             <Route path="/ti-para-tabelionatos-de-notas" element={<TiTabelionatosNotasPage />} />
+            <Route path="/ti-para-oficios-de-registro" element={<TiTabelionatosRegistrosPage />} />
+            <Route path="/ti-para-tabelionatos-de-protesto" element={<TiTabelionatosProtestoPage />} />
             <Route path="/ti-para-industrias-alimenticias" element={<TiIndustriasAlimenticiaPage />} />
             <Route path="/ti-para-industrias-petroliferas" element={<TiIndustriasPetroliferasPage />} />
             <Route path="/ti-para-escritorios-de-advocacia" element={<TiEscritoriosAdvocaciaPage />} />

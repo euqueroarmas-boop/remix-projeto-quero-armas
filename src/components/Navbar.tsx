@@ -25,6 +25,8 @@ const segmentosBase = [
   { labelKey: "segments.petroliferas", href: "/ti-para-industrias-petroliferas", icon: Fuel },
   { labelKey: "segments.notariais", href: "/ti-para-serventias-cartoriais", icon: FileText, children: [
     { labelKey: "segments.tabelionatos", href: "/ti-para-tabelionatos-de-notas", icon: Landmark },
+    { labelKey: "segments.registros", href: "/ti-para-oficios-de-registro", icon: FileText },
+    { labelKey: "segments.protesto", href: "/ti-para-tabelionatos-de-protesto", icon: AlertTriangle },
   ] },
 ] as const;
 
