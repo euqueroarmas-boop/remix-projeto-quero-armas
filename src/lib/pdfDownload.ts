@@ -1,100 +1,55 @@
+import { supabase } from "@/integrations/supabase/client";
 import { logAndPersistError, type WmtiError } from "@/lib/errorLogger";
 
 export interface PdfDownloadResult {
   success: boolean;
-  method?: "direct" | "blob";
+  method?: "proxy";
   error?: WmtiError;
 }
 
 /**
- * Validates a PDF URL before opening it. Returns null if valid, error string otherwise.
+ * Fetches PDF bytes from the serve-contract-pdf proxy (never exposes storage URLs).
  */
-async function validatePdfUrl(url: string): Promise<string | null> {
-  if (!url || typeof url !== "string") return "URL do PDF está vazia ou inválida";
-  try {
-    new URL(url);
-  } catch {
-    return "URL do PDF não é uma URL válida";
+async function fetchPdfFromProxy(quoteId?: string, contractId?: string): Promise<Blob> {
+  const { data, error } = await supabase.functions.invoke("serve-contract-pdf", {
+    body: { quote_id: quoteId, contract_id: contractId },
+  });
+
+  if (error) throw new Error(error.message || "Falha ao buscar PDF");
+
+  // supabase.functions.invoke returns data as parsed JSON when content-type is JSON,
+  // but returns raw data for binary — we need to handle both cases
+  if (data instanceof Blob) return data;
+
+  // If we got JSON back, it's an error response
+  if (data && typeof data === "object" && "error" in data) {
+    throw new Error(data.error as string);
   }
 
-  try {
-    const resp = await fetch(url, { method: "HEAD" });
-    if (!resp.ok) return `Arquivo retornou HTTP ${resp.status}`;
-    const ct = resp.headers.get("content-type") || "";
-    if (!ct.includes("pdf") && !ct.includes("octet-stream")) {
-      return `Tipo de arquivo inesperado: ${ct}`;
-    }
-    const cl = resp.headers.get("content-length");
-    if (cl && parseInt(cl) < 100) return "Arquivo PDF parece estar vazio";
-  } catch (e) {
-    // HEAD may fail due to CORS – try GET fallback
-    return null; // allow blob fallback
-  }
-  return null;
+  throw new Error("Resposta inesperada do servidor");
 }
 
 /**
- * Robust PDF download: validates URL, tries direct open, falls back to blob download.
+ * Downloads a contract PDF via the WMTi proxy. Never exposes Supabase URLs.
  */
 export async function downloadPdf(
-  pdfUrl: string,
   fileName: string,
-  context?: { quoteId?: string; contractId?: string },
+  context: { quoteId?: string; contractId?: string },
 ): Promise<PdfDownloadResult> {
-  // Validate
-  const validationError = await validatePdfUrl(pdfUrl);
-
-  if (!validationError) {
-    // Try direct open first
-    const win = window.open(pdfUrl, "_blank", "noopener,noreferrer");
-    if (win) return { success: true, method: "direct" };
-  }
-
-  // Fallback: fetch as blob and force download
   try {
-    const resp = await fetch(pdfUrl);
-    if (!resp.ok) {
-      const errBody = await resp.text().catch(() => "");
-      const err = await logAndPersistError({
-        action: "download_pdf_blob",
-        message: `Falha ao baixar PDF: HTTP ${resp.status}`,
-        technicalMessage: errBody,
-        httpStatus: resp.status,
-        responseBody: errBody,
-        quoteId: context?.quoteId,
-        contractId: context?.contractId,
-        functionName: "downloadPdf",
-      });
-      return { success: false, error: err };
-    }
+    const blob = await fetchPdfFromProxy(context.quoteId, context.contractId);
 
-    const ct = resp.headers.get("content-type") || "";
-    if (!ct.includes("pdf") && !ct.includes("octet-stream")) {
-      const body = await resp.text().catch(() => "");
-      const err = await logAndPersistError({
-        action: "download_pdf_content_type",
-        message: `Arquivo não é um PDF válido (${ct})`,
-        technicalMessage: body.substring(0, 500),
-        quoteId: context?.quoteId,
-        contractId: context?.contractId,
-        functionName: "downloadPdf",
-      });
-      return { success: false, error: err };
-    }
-
-    const blob = await resp.blob();
     if (blob.size < 100) {
       const err = await logAndPersistError({
         action: "download_pdf_empty",
         message: "Arquivo PDF está vazio ou corrompido",
-        quoteId: context?.quoteId,
-        contractId: context?.contractId,
-        functionName: "downloadPdf",
+        quoteId: context.quoteId,
+        contractId: context.contractId,
+        functionName: "serve-contract-pdf",
       });
       return { success: false, error: err };
     }
 
-    // Force programmatic download
     const blobUrl = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = blobUrl;
@@ -104,15 +59,52 @@ export async function downloadPdf(
     document.body.removeChild(a);
     URL.revokeObjectURL(blobUrl);
 
-    return { success: true, method: "blob" };
+    return { success: true, method: "proxy" };
   } catch (e) {
     const err = await logAndPersistError({
       action: "download_pdf_exception",
       message: "Erro ao processar o download do contrato",
       error: e,
-      quoteId: context?.quoteId,
-      contractId: context?.contractId,
-      functionName: "downloadPdf",
+      quoteId: context.quoteId,
+      contractId: context.contractId,
+      functionName: "serve-contract-pdf",
+    });
+    return { success: false, error: err };
+  }
+}
+
+/**
+ * Opens a contract PDF in a new tab via blob URL (never exposes storage domain).
+ */
+export async function viewPdf(
+  context: { quoteId?: string; contractId?: string },
+): Promise<PdfDownloadResult> {
+  try {
+    const blob = await fetchPdfFromProxy(context.quoteId, context.contractId);
+
+    if (blob.size < 100) {
+      const err = await logAndPersistError({
+        action: "view_pdf_empty",
+        message: "Arquivo PDF está vazio ou corrompido",
+        quoteId: context.quoteId,
+        contractId: context.contractId,
+        functionName: "serve-contract-pdf",
+      });
+      return { success: false, error: err };
+    }
+
+    const blobUrl = URL.createObjectURL(new Blob([blob], { type: "application/pdf" }));
+    window.open(blobUrl, "_blank", "noopener,noreferrer");
+
+    return { success: true, method: "proxy" };
+  } catch (e) {
+    const err = await logAndPersistError({
+      action: "view_pdf_exception",
+      message: "Erro ao visualizar o contrato",
+      error: e,
+      quoteId: context.quoteId,
+      contractId: context.contractId,
+      functionName: "serve-contract-pdf",
     });
     return { success: false, error: err };
   }
