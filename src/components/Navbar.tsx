@@ -281,32 +281,60 @@ const Navbar = () => {
               {items.map((item) => {
                 const Icon = item.icon;
                 return (
-                  <Link
-                    key={item.href + item.label}
-                    to={item.href}
-                    onClick={() => setIsOpen(false)}
-                    className="group flex items-center gap-4 px-5 py-4 rounded-xl transition-all duration-250 ease-out"
-                    style={{
-                      background: "rgba(255, 255, 255, 0.04)",
-                      border: "1px solid rgba(255, 255, 255, 0.08)",
-                      backdropFilter: "blur(8px)",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = "rgba(255, 90, 31, 0.10)";
-                      e.currentTarget.style.borderColor = "rgba(255, 90, 31, 0.45)";
-                      e.currentTarget.style.transform = "translateY(-1px)";
-                      e.currentTarget.style.boxShadow = "0 10px 25px rgba(0,0,0,0.28)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = "rgba(255, 255, 255, 0.04)";
-                      e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)";
-                      e.currentTarget.style.transform = "translateY(0)";
-                      e.currentTarget.style.boxShadow = "none";
-                    }}
-                  >
-                    <Icon size={22} className="text-primary shrink-0" strokeWidth={1.5} />
-                    <span className="text-[15px] font-medium tracking-wide text-foreground group-hover:text-white">{item.label}</span>
-                  </Link>
+                  <div key={item.href + item.label} className="flex flex-col gap-2">
+                    <Link
+                      to={item.href}
+                      onClick={() => setIsOpen(false)}
+                      className="group flex items-center gap-4 px-5 py-4 rounded-xl transition-all duration-250 ease-out"
+                      style={{
+                        background: "rgba(255, 255, 255, 0.04)",
+                        border: "1px solid rgba(255, 255, 255, 0.08)",
+                        backdropFilter: "blur(8px)",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = "rgba(255, 90, 31, 0.10)";
+                        e.currentTarget.style.borderColor = "rgba(255, 90, 31, 0.45)";
+                        e.currentTarget.style.transform = "translateY(-1px)";
+                        e.currentTarget.style.boxShadow = "0 10px 25px rgba(0,0,0,0.28)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "rgba(255, 255, 255, 0.04)";
+                        e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)";
+                        e.currentTarget.style.transform = "translateY(0)";
+                        e.currentTarget.style.boxShadow = "none";
+                      }}
+                    >
+                      <Icon size={22} className="text-primary shrink-0" strokeWidth={1.5} />
+                      <span className="text-[15px] font-medium tracking-wide text-foreground group-hover:text-white">{item.label}</span>
+                    </Link>
+                    {item.children && item.children.map((child) => {
+                      const ChildIcon = child.icon;
+                      return (
+                        <Link
+                          key={child.href + child.label}
+                          to={child.href}
+                          onClick={() => setIsOpen(false)}
+                          className="group flex items-center gap-3 px-5 py-3 ml-6 rounded-lg transition-all duration-250 ease-out"
+                          style={{
+                            background: "rgba(255, 255, 255, 0.02)",
+                            border: "1px solid rgba(255, 255, 255, 0.05)",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = "rgba(255, 90, 31, 0.08)";
+                            e.currentTarget.style.borderColor = "rgba(255, 90, 31, 0.35)";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = "rgba(255, 255, 255, 0.02)";
+                            e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.05)";
+                          }}
+                        >
+                          <ChevronRight size={14} className="text-muted-foreground shrink-0" />
+                          <ChildIcon size={18} className="text-primary shrink-0" strokeWidth={1.5} />
+                          <span className="text-[13px] font-medium tracking-wide text-muted-foreground group-hover:text-white">{child.label}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
                 );
               })}
             </div>
