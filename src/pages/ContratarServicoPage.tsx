@@ -1490,7 +1490,7 @@ const ContratarServicoPage = () => {
 
                 <Button onClick={handlePayment} disabled={!selectedPayment || paymentLoading} className="w-full h-14 text-base bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50">
                   <ExternalLink className="w-5 h-5 mr-2" />
-                  {paymentError ? "Tentar novamente" : "PROSSEGUIR PARA PAGAMENTO"}
+                  {paymentError ? "Tentar novamente" : "COMPRAR AGORA"}
                 </Button>
               </div>
             )}
