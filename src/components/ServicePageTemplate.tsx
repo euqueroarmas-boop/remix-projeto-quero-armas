@@ -55,7 +55,7 @@ const fadeIn = {
 };
 
 /* ── Micro-CTA reusable block ── */
-const MicroCta = ({ href, cityName, pageTitle, contractMode }: { href: string; whatsappMessage: string; cityName?: string; pageTitle?: string; contractMode?: ContractMode | null }) => {
+const MicroCta = ({ href, cityName, pageTitle, contractMode, onPrimaryClick }: { href: string; whatsappMessage: string; cityName?: string; pageTitle?: string; contractMode?: ContractMode | null; onPrimaryClick?: (event: React.MouseEvent<HTMLAnchorElement>) => void }) => {
   const { t } = useTranslation();
   return (
     <motion.div {...fadeIn} className="py-8 md:py-10">
@@ -70,6 +70,7 @@ const MicroCta = ({ href, cityName, pageTitle, contractMode }: { href: string; w
           <div className="flex gap-3 shrink-0">
             <Link
               to={href}
+              onClick={onPrimaryClick}
               className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-5 py-3 font-mono text-xs font-bold uppercase tracking-wider hover:brightness-110 transition-all btn-glow rounded"
             >
               {t("service.microCtaBtn")}
@@ -141,7 +142,7 @@ const AvoidanceBlock = ({ cityName }: { cityName?: string }) => {
 };
 
 /* ── Urgency block ── */
-const UrgencyBlock = ({ cityName, pageTitle, contractMode }: { whatsappMessage: string; currentPath: string; cityName?: string; pageTitle?: string; contractMode?: ContractMode | null }) => {
+const UrgencyBlock = ({ cityName, pageTitle, contractMode, onlineCtaHref, onOnlineCtaClick }: { whatsappMessage: string; currentPath: string; cityName?: string; pageTitle?: string; contractMode?: ContractMode | null; onlineCtaHref: string; onOnlineCtaClick?: (event: React.MouseEvent<HTMLAnchorElement>) => void }) => {
   const { t } = useTranslation();
   return (
     <section className="py-12 md:py-16 bg-destructive/5 border-y border-destructive/10">
@@ -166,7 +167,8 @@ const UrgencyBlock = ({ cityName, pageTitle, contractMode }: { whatsappMessage: 
               {t("service.urgencyCta")}
             </button>
             <Link
-              to="/orcamento-ti"
+              to={onlineCtaHref}
+              onClick={onOnlineCtaClick}
               className="inline-flex items-center gap-2 border border-border text-foreground px-8 py-4 font-mono text-sm uppercase tracking-wider hover:border-primary hover:text-primary transition-all rounded"
             >
               {t("service.urgencyCtaContract")}
@@ -207,7 +209,12 @@ const ServicePageTemplate = ({
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
-  const [contractMode, setContractMode] = useState<ContractMode | null>(null);
+  const forcedContractMode = allowedModes === "recorrente_only"
+    ? "recorrente"
+    : allowedModes === "sob_demanda_only"
+      ? "sob_demanda"
+      : null;
+  const [contractMode, setContractMode] = useState<ContractMode | null>(forcedContractMode);
 
   const handleModeSelect = useCallback((mode: ContractMode) => {
     setContractMode(mode);
@@ -240,6 +247,33 @@ const ServicePageTemplate = ({
   const pageSlug = currentPath.replace(/^\//, "");
   const contractHref = pageSlug ? `/contratar/${pageSlug}` : "/orcamento-ti";
   const serviceScope = useMemo(() => getServiceScopeBySlug(pageSlug), [pageSlug]);
+  const checkoutHref = contractMode === "recorrente"
+    ? `${contractHref}?modo=recorrente`
+    : contractMode === "sob_demanda"
+      ? `${contractHref}?modo=sob_demanda`
+      : contractHref;
+  const shouldFocusRecurringCalculator = allowedModes === "recorrente_only";
+  const recurringCalculatorHref = `${currentPath}#calculadora-recorrente`;
+  const onlineCtaHref = shouldFocusRecurringCalculator ? recurringCalculatorHref : checkoutHref;
+
+  const handleOnlineCtaClick = useCallback((event: React.MouseEvent<HTMLAnchorElement>) => {
+    if (shouldFocusRecurringCalculator) {
+      const recurringCalculator = document.getElementById("calculadora-recorrente");
+      if (recurringCalculator) {
+        event.preventDefault();
+        recurringCalculator.scrollIntoView({ behavior: "smooth", block: "start" });
+
+        if (`${window.location.pathname}${window.location.hash}` !== recurringCalculatorHref) {
+          window.history.replaceState(null, "", recurringCalculatorHref);
+        }
+
+        console.log("[WMTi] RECURRING_CALCULATOR_FOCUSED", { currentPath, contractMode: forcedContractMode });
+        return;
+      }
+    }
+
+    console.log("[WMTi] CHECKOUT_FLOW_STARTED", { contractMode, contractHref });
+  }, [shouldFocusRecurringCalculator, recurringCalculatorHref, currentPath, contractMode, contractHref, forcedContractMode]);
 
   return (
     <div className="min-h-screen">
@@ -287,13 +321,8 @@ const ServicePageTemplate = ({
 
               <div className="flex flex-wrap gap-4">
                 <Link
-                  to={contractMode === "recorrente"
-                    ? `${contractHref}?modo=recorrente`
-                    : contractMode === "sob_demanda"
-                      ? `${contractHref}?modo=sob_demanda`
-                      : contractHref
-                  }
-                  onClick={() => console.log("[WMTi] CHECKOUT_FLOW_STARTED", { contractMode, contractHref })}
+                  to={onlineCtaHref}
+                  onClick={handleOnlineCtaClick}
                   className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all btn-glow"
                 >
                   <ArrowRight size={16} />
@@ -385,7 +414,7 @@ const ServicePageTemplate = ({
       </section>
 
       {/* ══ MICRO-CTA 1 ══ */}
-      <MicroCta href="/orcamento-ti" whatsappMessage={whatsappMessage} cityName={cityName} pageTitle={title} contractMode={contractMode} />
+      <MicroCta href={shouldFocusRecurringCalculator ? onlineCtaHref : "/orcamento-ti"} whatsappMessage={whatsappMessage} cityName={cityName} pageTitle={title} contractMode={contractMode} onPrimaryClick={shouldFocusRecurringCalculator ? handleOnlineCtaClick : undefined} />
 
       {/* ══ EMERGENCY LEAD FORM (problem pages only) ══ */}
       {isProblemPage && (
@@ -464,10 +493,10 @@ const ServicePageTemplate = ({
       )}
 
       {/* ══ MICRO-CTA 2 ══ */}
-      <MicroCta href={contractHref} whatsappMessage={whatsappMessage} cityName={cityName} pageTitle={title} contractMode={contractMode} />
+      <MicroCta href={onlineCtaHref} whatsappMessage={whatsappMessage} cityName={cityName} pageTitle={title} contractMode={contractMode} onPrimaryClick={handleOnlineCtaClick} />
 
       {/* ══ URGENCY BLOCK ══ */}
-      <UrgencyBlock whatsappMessage={whatsappMessage} currentPath={currentPath} cityName={cityName} pageTitle={title} contractMode={contractMode} />
+      <UrgencyBlock whatsappMessage={whatsappMessage} currentPath={currentPath} cityName={cityName} pageTitle={title} contractMode={contractMode} onlineCtaHref={onlineCtaHref} onOnlineCtaClick={handleOnlineCtaClick} />
 
       {/* ══ FAQ ══ */}
       <section className="section-dark py-16 md:py-24" data-testid="faq-section">
@@ -530,13 +559,8 @@ const ServicePageTemplate = ({
                 {t("service.finalCtaWhatsapp")}
               </button>
               <Link
-                to={contractMode === "recorrente"
-                  ? `${contractHref}?modo=recorrente`
-                  : contractMode === "sob_demanda"
-                    ? `${contractHref}?modo=sob_demanda`
-                    : contractHref
-                }
-                onClick={() => console.log("[WMTi] CHECKOUT_FLOW_STARTED", { contractMode, contractHref })}
+                to={onlineCtaHref}
+                onClick={handleOnlineCtaClick}
                 className="inline-flex items-center gap-2 border border-border text-foreground px-8 py-4 font-mono text-sm uppercase tracking-wider hover:border-primary hover:text-primary transition-all rounded"
               >
                 {t("service.finalCtaOnline")}
