@@ -71,11 +71,14 @@ async function buildPdfBytes(context: Awaited<ReturnType<typeof getPostPurchaseC
 
   const letterhead = await loadLetterhead(pdfDoc);
 
+  const pages: ReturnType<typeof pdfDoc.addPage>[] = [];
+
   const addNewPage = () => {
     const p = pdfDoc.addPage([pageWidth, pageHeight]);
     if (letterhead) {
       p.drawPage(letterhead, { x: 0, y: 0, width: pageWidth, height: pageHeight });
     }
+    pages.push(p);
     return p;
   };
 
@@ -185,6 +188,21 @@ async function buildPdfBytes(context: Awaited<ReturnType<typeof getPostPurchaseC
     drawSectionTitle("Texto contratual");
     contractBody.split(/\n+/).forEach((paragraph) => {
       if (paragraph.trim()) drawTextBlock(paragraph.trim(), { size: 9 });
+    });
+  }
+
+  // Draw dynamic page numbers on all pages
+  const totalPages = pages.length;
+  for (let i = 0; i < totalPages; i++) {
+    const pg = pages[i];
+    const pageNumText = `${i + 1}`;
+    const numWidth = font.widthOfTextAtSize(pageNumText, 9);
+    pg.drawText(pageNumText, {
+      x: pageWidth - marginRight - numWidth,
+      y: pageHeight - 32,
+      size: 9,
+      font,
+      color: rgb(0.5, 0.5, 0.5),
     });
   }
 

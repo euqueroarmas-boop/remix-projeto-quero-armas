@@ -33,7 +33,8 @@ export default function PortalDocumentos({ customer }: { customer: CustomerData 
            t("clientPortal.documents.contract"),
     status: c.signed ? "Assinado" : c.status || "draft",
     date: c.signed_at || c.created_at,
-    url: c.contract_pdf_path,
+    quoteId: c.quote_id,
+    url: c.quote_id ? `/contrato-final/${c.quote_id}` : null,
   }));
 
   const fiscalItems = fiscalDocs.map((d) => ({
@@ -83,9 +84,9 @@ export default function PortalDocumentos({ customer }: { customer: CustomerData 
                 <div className="flex items-center gap-2 shrink-0">
                   <StatusBadge status={d.status} />
                   {d.url && (
-                    <a href={d.url} target="_blank" rel="noopener noreferrer">
+                    <a href={d.url} rel="noopener noreferrer">
                       <Button size="icon" variant="ghost" className="h-7 w-7">
-                        <Download size={14} />
+                        {d.type === "contrato" ? <ExternalLink size={14} /> : <Download size={14} />}
                       </Button>
                     </a>
                   )}
