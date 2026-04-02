@@ -112,7 +112,7 @@ async function buildPdfBytes(context: Awaited<ReturnType<typeof getPostPurchaseC
     ensureSpace(lines.length * (size + 3) + 6);
     lines.forEach((current) => {
       page.drawText(current, {
-        x: margin + (options.indent || 0),
+        x: marginLeft + (options.indent || 0),
         y,
         size,
         font: fontRef,
