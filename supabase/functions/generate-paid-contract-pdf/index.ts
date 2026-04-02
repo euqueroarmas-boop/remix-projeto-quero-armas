@@ -92,18 +92,13 @@ async function buildPdfBytes(context: Awaited<ReturnType<typeof getPostPurchaseC
     }
   };
 
-  const drawTextBlock = (text: string, options: { size?: number; bold?: boolean; color?: ReturnType<typeof rgb>; indent?: number } = {}) => {
-    const size = options.size || 10;
-    const fontRef = options.bold ? bold : font;
-    const maxWidth = pageWidth - marginLeft - marginRight - (options.indent || 0);
-    const words = text.split(/\s+/);
+  const wrapText = (text: string, fontRef: typeof font, size: number, maxWidth: number) => {
+    const words = text.split(/\s+/).filter(Boolean);
     let line = "";
     const lines: string[] = [];
-
     for (const word of words) {
       const candidate = line ? `${line} ${word}` : word;
-      const width = fontRef.widthOfTextAtSize(candidate, size);
-      if (width <= maxWidth) {
+      if (fontRef.widthOfTextAtSize(candidate, size) <= maxWidth) {
         line = candidate;
       } else {
         if (line) lines.push(line);
@@ -111,17 +106,42 @@ async function buildPdfBytes(context: Awaited<ReturnType<typeof getPostPurchaseC
       }
     }
     if (line) lines.push(line);
+    return lines;
+  };
 
-    ensureSpace(lines.length * (size + 3) + 6);
-    lines.forEach((current) => {
-      page.drawText(current, {
-        x: marginLeft + (options.indent || 0),
-        y,
-        size,
-        font: fontRef,
-        color: options.color || rgb(0.2, 0.2, 0.2),
-      });
-      y -= size + 3;
+  const drawTextBlock = (text: string, options: { size?: number; bold?: boolean; color?: ReturnType<typeof rgb>; indent?: number; justify?: boolean } = {}) => {
+    const size = options.size || 10;
+    const fontRef = options.bold ? bold : font;
+    const xStart = marginLeft + (options.indent || 0);
+    const maxWidth = pageWidth - marginLeft - marginRight - (options.indent || 0);
+    const lines = wrapText(text, fontRef, size, maxWidth);
+    const lineHeight = size + 3;
+    const shouldJustify = options.justify === true;
+
+    ensureSpace(lines.length * lineHeight + 6);
+    lines.forEach((current, idx) => {
+      const isLastLine = idx === lines.length - 1;
+      const lineWidth = fontRef.widthOfTextAtSize(current, size);
+      const isShortLine = lineWidth < maxWidth * 0.75;
+
+      if (shouldJustify && !isLastLine && !isShortLine && lines.length > 1) {
+        // Justified: distribute extra space between words
+        const words = current.split(/\s+/);
+        if (words.length > 1) {
+          const totalWordWidth = words.reduce((sum, w) => sum + fontRef.widthOfTextAtSize(w, size), 0);
+          const extraSpace = (maxWidth - totalWordWidth) / (words.length - 1);
+          let cx = xStart;
+          words.forEach((word, wi) => {
+            page.drawText(word, { x: cx, y, size, font: fontRef, color: options.color || rgb(0.2, 0.2, 0.2) });
+            cx += fontRef.widthOfTextAtSize(word, size) + extraSpace;
+          });
+        } else {
+          page.drawText(current, { x: xStart, y, size, font: fontRef, color: options.color || rgb(0.2, 0.2, 0.2) });
+        }
+      } else {
+        page.drawText(current, { x: xStart, y, size, font: fontRef, color: options.color || rgb(0.2, 0.2, 0.2) });
+      }
+      y -= lineHeight;
     });
     y -= 4;
   };
