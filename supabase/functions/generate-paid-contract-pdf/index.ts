@@ -271,7 +271,7 @@ async function buildPdfBytes(context: Awaited<ReturnType<typeof getPostPurchaseC
   y -= 30;
 
   // Date line (bold)
-  const contractDate = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+  const contractDate = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric", timeZone: "America/Sao_Paulo" });
   drawTextBlock(`Jacareí/SP, ${contractDate}`, { size: 10, bold: true });
 
   // 3 blank lines
