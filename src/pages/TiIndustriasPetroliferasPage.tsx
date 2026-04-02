@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Server, Shield, HardDrive, Activity, Headphones, Lock } from "lucide-react";
 import ServicePageTemplate from "@/components/ServicePageTemplate";
+import UnifiedInfraCalculator from "@/components/orcamento/UnifiedInfraCalculator";
 import heroImg from "@/assets/segments/industrias-petroliferas.webp";
 
 const icons = [Server, Shield, HardDrive, Activity, Lock, Headphones];
@@ -28,6 +29,8 @@ const TiIndustriasPetroliferasPage = () => {
         { label: relatedLabels[3], href: "/suporte-ti-jacarei" },
       ]}
       localContent={t(`${k}.localContent`)}
+      allowedModes="recorrente_only"
+      extraSections={<UnifiedInfraCalculator contractHref="/contratar/administracao-de-servidores" pageTitle={t(`${k}.title`)} />}
     />
   );
 };
