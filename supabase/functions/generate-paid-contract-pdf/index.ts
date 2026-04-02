@@ -126,14 +126,14 @@ async function buildPdfBytes(context: Awaited<ReturnType<typeof getPostPurchaseC
   const drawSectionTitle = (title: string) => {
     ensureSpace(28);
     page.drawRectangle({
-      x: margin,
+      x: marginLeft,
       y: y - 8,
-      width: pageWidth - margin * 2,
+      width: pageWidth - marginLeft - marginRight,
       height: 22,
       color: rgb(1, 0.95, 0.91),
     });
     page.drawText(title, {
-      x: margin + 10,
+      x: marginLeft + 10,
       y,
       size: 11,
       font: bold,
@@ -142,22 +142,13 @@ async function buildPdfBytes(context: Awaited<ReturnType<typeof getPostPurchaseC
     y -= 28;
   };
 
-  page.drawRectangle({ x: 0, y: pageHeight - 90, width: pageWidth, height: 90, color: rgb(0.08, 0.09, 0.12) });
-  page.drawText("WMTi Tecnologia da Informação", {
-    x: margin,
-    y: pageHeight - 44,
-    size: 20,
-    font: bold,
-    color: rgb(1, 0.35, 0.12),
+  // Title line (no more manual dark header — letterhead handles branding)
+  drawTextBlock("Contrato final liberado após pagamento confirmado", {
+    size: 12,
+    bold: true,
+    color: rgb(0.3, 0.3, 0.3),
   });
-  page.drawText("Contrato final liberado após pagamento confirmado", {
-    x: margin,
-    y: pageHeight - 64,
-    size: 10,
-    font,
-    color: rgb(0.86, 0.86, 0.88),
-  });
-  y = pageHeight - 118;
+  y -= 6;
 
   drawTextBlock(`Pedido ${context.quote.id.slice(0, 8).toUpperCase()} • Contrato ${context.contract.id.slice(0, 8).toUpperCase()} • ${new Date(context.payment.created_at).toLocaleDateString("pt-BR")}`, {
     size: 10,
