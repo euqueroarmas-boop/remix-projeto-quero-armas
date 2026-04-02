@@ -277,6 +277,8 @@
     "petroliferas": "Oil & Gas Industry",
     "notariais": "Notary Services",
     "tabelionatos": "Notary Public Offices",
+    "registros": "Registry Offices",
+    "protesto": "Protest Registries",
     "cartorios": "Notary Offices"
   },
   "services": {

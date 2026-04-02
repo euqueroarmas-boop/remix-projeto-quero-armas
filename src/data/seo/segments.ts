@@ -48,6 +48,42 @@ export const segments: SeoSegment[] = [
     dedicatedPage: "/ti-para-tabelionatos-de-notas",
   },
   {
+    slug: "oficios-registro",
+    name: "Ofícios de Registro",
+    titleSuffix: "para Ofícios de Registro",
+    descriptionExtra:
+      "Infraestrutura de TI especializada para ofícios de registro civil, registro de imóveis e registro de títulos e documentos, com conformidade ao Provimento 213 do CNJ, proteção do acervo registral e integração com centrais eletrônicas.",
+    painPoints: [
+      "Acervo registral sem replicação geográfica — risco de perda total",
+      "Integração instável com centrais eletrônicas (CRC, RCPN)",
+      "Servidor único sem redundância comprometendo a disponibilidade",
+    ],
+    faqExtra: {
+      question: "A WMTi atende ofícios de registro?",
+      answer:
+        "Sim. Somos especialistas em infraestrutura de TI para ofícios de registro civil, registro de imóveis e registro de títulos e documentos, com soluções em conformidade com o Provimento 213 do CNJ.",
+    },
+    dedicatedPage: "/ti-para-oficios-de-registro",
+  },
+  {
+    slug: "tabelionatos-protesto",
+    name: "Tabelionatos de Protesto",
+    titleSuffix: "para Tabelionatos de Protesto",
+    descriptionExtra:
+      "Infraestrutura de TI de alta disponibilidade para tabelionatos de protesto, com integração estável com CRA e IEPTB, conformidade ao Provimento 213 do CNJ e continuidade operacional para cumprimento de prazos legais.",
+    painPoints: [
+      "Sistema travando durante processamento de remessas da CRA",
+      "Falha no servidor causando atraso em prazos legais de intimação",
+      "Integração instável com IEPTB gerando rejeição de arquivos",
+    ],
+    faqExtra: {
+      question: "A WMTi atende tabelionatos de protesto?",
+      answer:
+        "Sim. Oferecemos infraestrutura de TI de alta disponibilidade para tabelionatos de protesto, com integração estável com CRA e IEPTB e conformidade com o Provimento 213 do CNJ.",
+    },
+    dedicatedPage: "/ti-para-tabelionatos-de-protesto",
+  },
+  {
     slug: "hospitais",
     name: "Hospitais e Clínicas",
     titleSuffix: "para Hospitais e Clínicas",
