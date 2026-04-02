@@ -53,6 +53,14 @@ const SERVICE_CATALOG: ServiceInfo[] = [
   { name: "Terceirização De TI", slug: "terceirizacao-de-mao-de-obra-ti", isEmergency: false },
 ];
 
+const CARTORIO_SEGMENT_CHECKOUT_ALIASES = new Set([
+  "ti-para-cartorios",
+  "ti-para-serventias-cartoriais",
+  "ti-para-tabelionatos-de-notas",
+  "ti-para-oficios-de-registro",
+  "ti-para-tabelionatos-de-protesto",
+]);
+
 /* ─── Price tables ─── */
 const STANDARD_PRICES: Record<number, number> = { 1: 200, 2: 190, 3: 180, 4: 170, 5: 160, 6: 155, 7: 150, 8: 145 };
 const EMERGENCY_PRICES: Record<number, number> = { 1: 300, 2: 285, 3: 270, 4: 255, 5: 240, 6: 232.5, 7: 225, 8: 217.5 };
@@ -73,6 +81,11 @@ const ContratarServicoPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const wizardRef = useRef<HTMLDivElement>(null);
+  const isLegacyCartorioRecurringCheckout = Boolean(
+    slug &&
+    CARTORIO_SEGMENT_CHECKOUT_ALIASES.has(slug) &&
+    searchParams.get("modo") === "recorrente"
+  );
 
   // Find service
   const service = SERVICE_CATALOG.find(s => s.slug === slug);
@@ -123,6 +136,14 @@ const ContratarServicoPage = () => {
   const discountPct = hours > 1 ? Math.round(((basePrice - unitPrice) / basePrice) * 100) : 0;
 
   useEffect(() => { window.scrollTo(0, 0); }, [slug]);
+
+  useEffect(() => {
+    if (!isLegacyCartorioRecurringCheckout) return;
+
+    const redirectParams = new URLSearchParams(searchParams);
+    redirectParams.set("modo", "recorrente");
+    navigate(`/contratar/administracao-de-servidores?${redirectParams.toString()}`, { replace: true });
+  }, [isLegacyCartorioRecurringCheckout, navigate, searchParams]);
 
   // On mount: check if URL has a quote with confirmed payment (resilient return)
   useEffect(() => {
@@ -349,6 +370,10 @@ const ContratarServicoPage = () => {
   };
 
   const paymentLockRef = useRef(false);
+
+  if (isLegacyCartorioRecurringCheckout) {
+    return null;
+  }
 
   const handlePayment = async () => {
     if (!selectedPayment) {
