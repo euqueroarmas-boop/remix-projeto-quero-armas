@@ -232,31 +232,90 @@ async function buildPdfBytes(context: Awaited<ReturnType<typeof getPostPurchaseC
     }
   }
 
-  // Draw dynamic page numbers (orange circle) on all pages
-  const totalPages = pages.length;
-  const circleRadius = 12;
-  for (let i = 0; i < totalPages; i++) {
-    const pg = pages[i];
-    const pageNumText = `${i + 1}`;
-    const numWidth = bold.widthOfTextAtSize(pageNumText, 9);
-    const cx = pageWidth - marginRight - circleRadius;
-    const cy = pageHeight - 28;
-    // Orange circle background
-    pg.drawCircle({
-      x: cx,
-      y: cy,
-      size: circleRadius,
-      color: rgb(0.976, 0.451, 0.086),
-    });
-    // White number on top
-    pg.drawText(pageNumText, {
-      x: cx - numWidth / 2,
-      y: cy - 4,
-      size: 9,
-      font: bold,
-      color: rgb(1, 1, 1),
-    });
+  // === FOOTER: Date, Signatures, Traceability ===
+  y -= 30;
+
+  // Date line (bold)
+  const contractDate = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+  drawTextBlock(`Jacareí/SP, ${contractDate}`, { size: 10, bold: true });
+
+  // 3 blank lines
+  y -= 36;
+
+  // Signature lines
+  const lineWidth = 200;
+  const lineY = y;
+  const leftLineX = marginLeft;
+  const rightLineX = pageWidth - marginRight - lineWidth;
+
+  ensureSpace(100);
+  // Draw two signature lines
+  page.drawLine({ start: { x: leftLineX, y: lineY }, end: { x: leftLineX + lineWidth, y: lineY }, thickness: 0.8, color: rgb(0.3, 0.3, 0.3) });
+  page.drawLine({ start: { x: rightLineX, y: lineY }, end: { x: rightLineX + lineWidth, y: lineY }, thickness: 0.8, color: rgb(0.3, 0.3, 0.3) });
+
+  y = lineY - 14;
+
+  // CONTRATANTE block (left)
+  const contratanteNome = (context.customer.razao_social || "").toUpperCase();
+  const contratanteCnpj = context.customer.cnpj_ou_cpf || "00.000.000/0000-00";
+  page.drawText(contratanteNome, { x: leftLineX, y, size: 8, font: bold, color: rgb(0.15, 0.15, 0.15) });
+  y -= 12;
+  // "CNPJ:" bold, number normal
+  const cnpjLabel = "CNPJ: ";
+  page.drawText(cnpjLabel, { x: leftLineX, y, size: 8, font: bold, color: rgb(0.2, 0.2, 0.2) });
+  page.drawText(contratanteCnpj, { x: leftLineX + bold.widthOfTextAtSize(cnpjLabel, 8), y, size: 8, font, color: rgb(0.2, 0.2, 0.2) });
+  y -= 12;
+  page.drawText("CONTRATANTE", { x: leftLineX, y, size: 7, font: bold, color: rgb(0.4, 0.4, 0.4) });
+
+  // CONTRATADA block (right) - same vertical position as contratante
+  let rightY = lineY - 14;
+  page.drawText("WMTI TECNOLOGIA DA INFORMAÇÃO LTDA", { x: rightLineX, y: rightY, size: 8, font: bold, color: rgb(0.15, 0.15, 0.15) });
+  rightY -= 12;
+  const wmtiCnpjLabel = "CNPJ: ";
+  page.drawText(wmtiCnpjLabel, { x: rightLineX, y: rightY, size: 8, font: bold, color: rgb(0.2, 0.2, 0.2) });
+  page.drawText("13.366.668/0001-07", { x: rightLineX + bold.widthOfTextAtSize(wmtiCnpjLabel, 8), y: rightY, size: 8, font, color: rgb(0.2, 0.2, 0.2) });
+  rightY -= 12;
+  page.drawText("CONTRATADA", { x: rightLineX, y: rightY, size: 7, font: bold, color: rgb(0.4, 0.4, 0.4) });
+
+  // Move y below both blocks
+  y = Math.min(y, rightY) - 30;
+
+  // Traceability block
+  ensureSpace(90);
+  drawTextBlock("DADOS DE RASTREABILIDADE DA ASSINATURA ELETRÔNICA", { size: 9, bold: true, color: rgb(0.15, 0.15, 0.15) });
+  y -= 4;
+
+  const signIp = context.contract.client_ip || "Não disponível";
+  const signDate = context.contract.signed_at
+    ? new Date(context.contract.signed_at).toLocaleDateString("pt-BR")
+    : new Date().toLocaleDateString("pt-BR");
+  const signTime = context.contract.signed_at
+    ? new Date(context.contract.signed_at).toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo" })
+    : new Date().toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo" });
+  const signAgent = "Navegador Web";
+
+  // Each traceability line: label bold, value normal
+  const traceItems = [
+    { label: "IP de origem: ", value: signIp },
+    { label: "Data da confirmação: ", value: signDate },
+    { label: "Hora da confirmação: ", value: signTime },
+    { label: "Dispositivo/Navegador: ", value: signAgent },
+  ];
+  for (const item of traceItems) {
+    ensureSpace(14);
+    page.drawText(item.label, { x: marginLeft, y, size: 8, font: bold, color: rgb(0.2, 0.2, 0.2) });
+    page.drawText(item.value, { x: marginLeft + bold.widthOfTextAtSize(item.label, 8), y, size: 8, font, color: rgb(0.35, 0.35, 0.35) });
+    y -= 12;
   }
+
+  // 3 blank lines then closing text
+  y -= 36;
+  ensureSpace(30);
+  drawTextBlock("Este documento foi assinado eletronicamente conforme a Medida Provisória 2.200-2/2001 e tem validade jurídica entre as partes.", {
+    size: 7.5,
+    color: rgb(0.45, 0.45, 0.45),
+    justify: true,
+  });
 
   return await pdfDoc.save();
 }
