@@ -92,7 +92,7 @@ async function buildPdfBytes(context: Awaited<ReturnType<typeof getPostPurchaseC
   const drawTextBlock = (text: string, options: { size?: number; bold?: boolean; color?: ReturnType<typeof rgb>; indent?: number } = {}) => {
     const size = options.size || 10;
     const fontRef = options.bold ? bold : font;
-    const maxWidth = pageWidth - margin * 2 - (options.indent || 0);
+    const maxWidth = pageWidth - marginLeft - marginRight - (options.indent || 0);
     const words = text.split(/\s+/);
     let line = "";
     const lines: string[] = [];
