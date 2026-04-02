@@ -71,11 +71,14 @@ async function buildPdfBytes(context: Awaited<ReturnType<typeof getPostPurchaseC
 
   const letterhead = await loadLetterhead(pdfDoc);
 
+  const pages: ReturnType<typeof pdfDoc.addPage>[] = [];
+
   const addNewPage = () => {
     const p = pdfDoc.addPage([pageWidth, pageHeight]);
     if (letterhead) {
       p.drawPage(letterhead, { x: 0, y: 0, width: pageWidth, height: pageHeight });
     }
+    pages.push(p);
     return p;
   };
 
