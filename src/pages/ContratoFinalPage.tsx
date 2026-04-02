@@ -83,9 +83,9 @@ const ContratoFinalPage = () => {
 
   const handleView = async () => {
     if (!result?.pdf_url) return;
-    // Validate before opening
+    // Fetch the PDF as blob and open in a new tab to avoid exposing external URLs
     try {
-      const resp = await fetch(result.pdf_url, { method: "HEAD" });
+      const resp = await fetch(result.pdf_url);
       if (!resp.ok) {
         const wmtiErr = await logAndPersistError({
           action: "view_contract_pdf",
@@ -98,10 +98,13 @@ const ContratoFinalPage = () => {
         setState("error");
         return;
       }
+      const blob = await resp.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      window.open(blobUrl, "_blank", "noopener,noreferrer");
     } catch {
-      // HEAD may fail due to CORS, try opening directly
+      // Fallback: try opening directly
+      window.open(result.pdf_url, "_blank", "noopener,noreferrer");
     }
-    window.open(result.pdf_url, "_blank", "noopener,noreferrer");
   };
 
   const handleEmail = async () => {
