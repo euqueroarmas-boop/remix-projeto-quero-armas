@@ -336,14 +336,29 @@ async function buildPdfBytes(context: Awaited<ReturnType<typeof getPostPurchaseC
   drawTextBlock("DADOS DE RASTREABILIDADE DA ASSINATURA ELETRÔNICA", { size: 9, bold: true, color: rgb(0.15, 0.15, 0.15) });
   y -= 4;
 
-  const signIp = context.contract.client_ip || "Não disponível";
-  const signDate = context.contract.signed_at
-    ? new Date(context.contract.signed_at).toLocaleDateString("pt-BR")
-    : new Date().toLocaleDateString("pt-BR");
-  const signTime = context.contract.signed_at
-    ? new Date(context.contract.signed_at).toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo" })
-    : new Date().toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo" });
-  const signAgent = "Navegador Web";
+  // Fetch real signature data from contract_signatures table
+  let signIp = context.contract.client_ip || "Não disponível";
+  let signAgent = "Não disponível";
+  let signDateRaw = context.contract.signed_at ? new Date(context.contract.signed_at) : new Date();
+
+  try {
+    const supabaseForSig = createServiceClient();
+    const { data: sigData } = await supabaseForSig
+      .from("contract_signatures")
+      .select("ip_address, user_agent, signed_at")
+      .eq("contract_id", context.contract.id)
+      .order("signed_at", { ascending: false })
+      .limit(1)
+      .single();
+    if (sigData) {
+      signIp = sigData.ip_address || signIp;
+      signAgent = sigData.user_agent || signAgent;
+      if (sigData.signed_at) signDateRaw = new Date(sigData.signed_at);
+    }
+  } catch {}
+
+  const signDate = signDateRaw.toLocaleDateString("pt-BR");
+  const signTime = signDateRaw.toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo" });
 
   // Each traceability line: label bold, value normal
   const traceItems = [

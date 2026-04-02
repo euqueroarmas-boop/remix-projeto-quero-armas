@@ -182,13 +182,26 @@ export const generateContractHtml = (
 
   <br/><br/><br/>
 
-  <p style="text-align: center; margin: 0;">Jacareí/SP, ${today}</p>
+  <p style="text-align: center; margin: 0; font-weight: bold;">Jacareí/SP, ${today}</p>
 
   <br/><br/><br/>
 
-  <div style="display: flex; justify-content: space-between;">
-    <div style="text-align: center; width: 45%;"><div style="border-top: 1px solid #000; padding-top: 8px;"><p style="margin: 0;"><strong>${customer.responsavel}</strong></p><p style="margin: 0; font-size: 10pt;">${customer.cnpjOuCpf.replace(/\D/g, "").length > 11 ? "CNPJ" : "CPF"}: ${customer.cnpjOuCpf}</p><p style="margin: 0; font-size: 10pt;">${isRental ? "LOCATÁRIO" : "CONTRATANTE"}</p></div></div>
-    <div style="text-align: center; width: 45%;"><div style="border-top: 1px solid #000; padding-top: 8px;"><p style="margin: 0;"><strong>WMTI TECNOLOGIA DA INFORMAÇÃO LTDA</strong></p><p style="margin: 0; font-size: 10pt;">CNPJ: 13.366.668/0001-07</p><p style="margin: 0; font-size: 10pt;">${isRental ? "LOCADOR" : "CONTRATADA"}</p></div></div>
+  <div style="text-align: center; width: 60%; margin: 0 auto;">
+    <div style="border-top: 1px solid #000; padding-top: 8px;">
+      <p style="margin: 0; font-weight: bold; text-transform: uppercase;">${customer.razaoSocial}</p>
+      <p style="margin: 0; font-size: 10pt;"><strong>${customer.cnpjOuCpf.replace(/\D/g, "").length > 11 ? "CNPJ" : "CPF"}:</strong> ${customer.cnpjOuCpf}</p>
+      <p style="margin: 0; font-size: 10pt;">${isRental ? "LOCATÁRIO" : "CONTRATANTE"}</p>
+    </div>
+  </div>
+
+  <br/><br/>
+
+  <div style="text-align: center; width: 60%; margin: 0 auto;">
+    <div style="border-top: 1px solid #000; padding-top: 8px;">
+      <p style="margin: 0; font-weight: bold;">WMTI TECNOLOGIA DA INFORMAÇÃO LTDA</p>
+      <p style="margin: 0; font-size: 10pt;"><strong>CNPJ:</strong> 13.366.668/0001-07</p>
+      <p style="margin: 0; font-size: 10pt;">${isRental ? "LOCADOR" : "CONTRATADA"}</p>
+    </div>
   </div>
 
   <br/><br/><br/>
