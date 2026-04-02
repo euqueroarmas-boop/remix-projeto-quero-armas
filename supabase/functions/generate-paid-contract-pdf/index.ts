@@ -357,7 +357,7 @@ async function buildPdfBytes(context: Awaited<ReturnType<typeof getPostPurchaseC
     }
   } catch {}
 
-  const signDate = signDateRaw.toLocaleDateString("pt-BR");
+  const signDate = signDateRaw.toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
   const signTime = signDateRaw.toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo" });
 
   // Each traceability line: label bold, value normal
