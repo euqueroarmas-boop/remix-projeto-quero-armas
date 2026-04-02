@@ -33,6 +33,8 @@ const SuporteTiPage = lazyRetry(() => import("./pages/SuporteTiPage.tsx"), "Supo
 const TiCartoriosPage = lazyRetry(() => import("./pages/TiCartoriosPage.tsx"), "TiCartoriosPage");
 const TiServentiasCartoriaisPage = lazyRetry(() => import("./pages/TiServentiasCartoriaisPage.tsx"), "TiServentiasCartoriaisPage");
 const TiTabelionatosNotasPage = lazyRetry(() => import("./pages/TiTabelionatosNotasPage.tsx"), "TiTabelionatosNotasPage");
+const TiTabelionatosRegistrosPage = lazyRetry(() => import("./pages/TiTabelionatosRegistrosPage.tsx"), "TiTabelionatosRegistrosPage");
+const TiTabelionatosProtestoPage = lazyRetry(() => import("./pages/TiTabelionatosProtestoPage.tsx"), "TiTabelionatosProtestoPage");
 const TiIndustriasAlimenticiaPage = lazyRetry(() => import("./pages/TiIndustriasAlimenticiaPage.tsx"), "TiIndustriasAlimenticiaPage");
 const TiIndustriasPetroliferasPage = lazyRetry(() => import("./pages/TiIndustriasPetroliferasPage.tsx"), "TiIndustriasPetroliferasPage");
 const TiEscritoriosAdvocaciaPage = lazyRetry(() => import("./pages/TiEscritoriosAdvocaciaPage.tsx"), "TiEscritoriosAdvocaciaPage");
@@ -135,6 +137,8 @@ const App = () => (
             <Route path="/ti-para-cartorios" element={<TiCartoriosPage />} />
             <Route path="/ti-para-serventias-cartoriais" element={<TiServentiasCartoriaisPage />} />
             <Route path="/ti-para-tabelionatos-de-notas" element={<TiTabelionatosNotasPage />} />
+            <Route path="/ti-para-oficios-de-registro" element={<TiTabelionatosRegistrosPage />} />
+            <Route path="/ti-para-tabelionatos-de-protesto" element={<TiTabelionatosProtestoPage />} />
             <Route path="/ti-para-industrias-alimenticias" element={<TiIndustriasAlimenticiaPage />} />
             <Route path="/ti-para-industrias-petroliferas" element={<TiIndustriasPetroliferasPage />} />
             <Route path="/ti-para-escritorios-de-advocacia" element={<TiEscritoriosAdvocaciaPage />} />
