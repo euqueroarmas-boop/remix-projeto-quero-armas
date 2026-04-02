@@ -68,34 +68,35 @@ export function generateOnDemandContractHtml(vars: OnDemandContractVars): string
   const totalWords = valueToWords(v.WMTI_VALOR_TOTAL);
   const docType = v.WMTI_CLIENTE_CNPJ.replace(/\D/g, "").length > 11 ? "CNPJ" : "CPF";
 
-  return `
-<div style="font-family: 'Times New Roman', Times, serif; max-width: 800px; margin: 0 auto; color: #000; line-height: 1.8; font-size: 12pt; text-align: justify;">
+  // Common styles
+  const fontStack = `-apple-system, 'San Francisco', 'Helvetica Neue', Helvetica, Arial, sans-serif`;
+  const clauseStyle = `font-size: 12pt; font-weight: bold; text-transform: uppercase; margin-top: 32px; margin-bottom: 12px; letter-spacing: 0.3px;`;
+  const pStyle = `margin: 8px 0; text-align: justify;`;
+  const listStyle = `padding-left: 24px; margin: 4px 0; text-align: justify;`;
 
-  <div style="text-align: center; margin-bottom: 32px; padding-bottom: 16px; border-bottom: 1px solid #000;">
-    <p style="font-size: 14pt; font-weight: bold; margin: 0;">WMTi Tecnologia da Informação</p>
-    <h1 style="font-size: 14pt; font-weight: bold; margin: 16px 0 0 0; text-transform: uppercase;">
+  return `
+<div style="font-family: ${fontStack}; max-width: 800px; margin: 0 auto; color: #000; line-height: 1.8; font-size: 12pt; text-align: justify;">
+
+  <div style="text-align: center; margin-bottom: 40px;">
+    <h1 style="font-size: 15pt; font-weight: bold; margin: 0; text-transform: uppercase; letter-spacing: 0.5px;">
       CONTRATO DE PRESTAÇÃO DE SERVIÇOS TÉCNICOS SOB DEMANDA
     </h1>
     ${v.WMTI_CONTRATO_ID ? `<p style="font-size: 9pt; color: #666; margin-top: 8px;">Contrato nº ${v.WMTI_CONTRATO_ID} — Pedido nº ${v.WMTI_PEDIDO_ID}</p>` : ""}
   </div>
 
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <!-- CLÁUSULA 1 — IDENTIFICAÇÃO DAS PARTES CONTRATANTES    -->
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <h2 style="font-size: 12pt; font-weight: bold; margin-top: 24px;">CLÁUSULA 1 — IDENTIFICAÇÃO DAS PARTES CONTRATANTES</h2>
+  <!-- CLÁUSULA PRIMEIRA -->
+  <h2 style="${clauseStyle}">CLÁUSULA PRIMEIRA — IDENTIFICAÇÃO DAS PARTES CONTRATANTES</h2>
 
-  <p><strong>CONTRATANTE:</strong> ${v.WMTI_CLIENTE_RAZAO_SOCIAL}${v.WMTI_CLIENTE_NOME_FANTASIA ? `, nome fantasia ${v.WMTI_CLIENTE_NOME_FANTASIA}` : ""}, com sede em ${v.WMTI_CLIENTE_ENDERECO}, CIDADE DE ${v.WMTI_CLIENTE_CIDADE}, CEP ${v.WMTI_CLIENTE_CEP}, inscrita no ${docType} sob o nº ${v.WMTI_CLIENTE_CNPJ}, neste ato representada por ${v.WMTI_CLIENTE_RESPONSAVEL}${v.WMTI_CLIENTE_CPF_RESPONSAVEL ? `, CPF nº ${v.WMTI_CLIENTE_CPF_RESPONSAVEL}` : ""}, adiante denominada simplesmente CONTRATANTE.${v.WMTI_CLIENTE_EMAIL ? ` E-mail: ${v.WMTI_CLIENTE_EMAIL}.` : ""}${v.WMTI_CLIENTE_WHATSAPP ? ` WhatsApp: ${v.WMTI_CLIENTE_WHATSAPP}.` : ""}${v.WMTI_CLIENTE_TELEFONE_COMERCIAL ? ` Tel. comercial: ${v.WMTI_CLIENTE_TELEFONE_COMERCIAL}.` : ""}</p>
+  <p style="${pStyle}"><strong>CONTRATANTE:</strong> ${v.WMTI_CLIENTE_RAZAO_SOCIAL}${v.WMTI_CLIENTE_NOME_FANTASIA ? `, nome fantasia ${v.WMTI_CLIENTE_NOME_FANTASIA}` : ""}, com sede em ${v.WMTI_CLIENTE_ENDERECO}, CIDADE DE ${v.WMTI_CLIENTE_CIDADE}, CEP ${v.WMTI_CLIENTE_CEP}, inscrita no ${docType} sob o nº ${v.WMTI_CLIENTE_CNPJ}, neste ato representada por ${v.WMTI_CLIENTE_RESPONSAVEL}${v.WMTI_CLIENTE_CPF_RESPONSAVEL ? `, CPF nº ${v.WMTI_CLIENTE_CPF_RESPONSAVEL}` : ""}, adiante denominada simplesmente CONTRATANTE.${v.WMTI_CLIENTE_EMAIL ? ` E-mail: ${v.WMTI_CLIENTE_EMAIL}.` : ""}${v.WMTI_CLIENTE_WHATSAPP ? ` WhatsApp: ${v.WMTI_CLIENTE_WHATSAPP}.` : ""}${v.WMTI_CLIENTE_TELEFONE_COMERCIAL ? ` Tel. comercial: ${v.WMTI_CLIENTE_TELEFONE_COMERCIAL}.` : ""}</p>
 
-  <p><strong>CONTRATADA:</strong> WMTI TECNOLOGIA DA INFORMAÇÃO LTDA, pessoa jurídica de direito privado, inscrita no CNPJ sob nº 13.366.668/0001-07, com sede na Rua José Benedito Duarte, 140, Parque Itamarati, CEP 12.307-200, na Cidade de Jacareí, Estado de São Paulo, adiante denominada simplesmente CONTRATADA.</p>
+  <p style="${pStyle}"><strong>CONTRATADA:</strong> WMTI TECNOLOGIA DA INFORMAÇÃO LTDA, pessoa jurídica de direito privado, inscrita no CNPJ sob nº 13.366.668/0001-07, com sede na Rua José Benedito Duarte, 140, Parque Itamarati, CEP 12.307-200, na Cidade de Jacareí, Estado de São Paulo, adiante denominada simplesmente CONTRATADA.</p>
 
-  <p>As partes acima identificadas têm, entre si, justo e acertado o presente Contrato de Prestação de Serviços Técnicos Sob Demanda, que se regerá pelas cláusulas seguintes e pelas condições descritas no presente instrumento.</p>
+  <p style="${pStyle}">As partes acima identificadas têm, entre si, justo e acertado o presente Contrato de Prestação de Serviços Técnicos Sob Demanda, que se regerá pelas cláusulas seguintes e pelas condições descritas no presente instrumento.</p>
 
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <!-- CLÁUSULA 2 — DO OBJETO DO CONTRATO                    -->
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <h2 style="font-size: 12pt; font-weight: bold; margin-top: 24px;">CLÁUSULA 2 — DO OBJETO DO CONTRATO</h2>
+  <!-- CLÁUSULA SEGUNDA -->
+  <h2 style="${clauseStyle}">CLÁUSULA SEGUNDA — DO OBJETO DO CONTRATO</h2>
 
-  <p>O presente contrato tem como OBJETO a contratação pontual de ${horasLabel} para a prestação do serviço de <strong>${v.WMTI_SERVICO_NOME}</strong>, modalidade <strong>${v.WMTI_MODALIDADE}</strong>, conforme especificações abaixo:</p>
+  <p style="${pStyle}">O presente contrato tem como OBJETO a contratação pontual de ${horasLabel} para a prestação do serviço de <strong>${v.WMTI_SERVICO_NOME}</strong>, modalidade <strong>${v.WMTI_MODALIDADE}</strong>, conforme especificações abaixo:</p>
 
   <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
     <tr style="background: #f5f5f5;">
@@ -128,194 +129,167 @@ export function generateOnDemandContractHtml(vars: OnDemandContractVars): string
     </tr>` : ""}
   </table>
 
-  <p><em>Parágrafo Primeiro:</em> ${v.WMTI_SERVICO_OBJETO_TECNICO}</p>
+  <p style="${pStyle}"><em>Parágrafo Primeiro:</em> ${v.WMTI_SERVICO_OBJETO_TECNICO}</p>
 
-  <p><em>Parágrafo Segundo:</em> O objeto contratual não se limita exclusivamente à descrição simplificada ou comercial exibida no site da CONTRATADA, podendo abranger atividades correlatas, acessórias, complementares e tecnicamente necessárias à plena execução do serviço contratado, desde que: (I) tenham relação direta e proporcional com o objeto principal descrito neste instrumento; (II) sejam inerentes à natureza técnica do serviço contratado; (III) não descaracterizem o objeto original; e (IV) não importem em expansão ilimitada de escopo sem contratação adicional. Eventuais demandas extraordinárias, projetos, implantações, migrações, aquisições de infraestrutura ou quaisquer serviços não expressamente previstos ou não diretamente correlatos ao objeto principal demandarão contratação complementar específica.</p>
+  <p style="${pStyle}"><em>Parágrafo Segundo:</em> O objeto contratual não se limita exclusivamente à descrição simplificada ou comercial exibida no site da CONTRATADA, podendo abranger atividades correlatas, acessórias, complementares e tecnicamente necessárias à plena execução do serviço contratado, desde que: (I) tenham relação direta e proporcional com o objeto principal descrito neste instrumento; (II) sejam inerentes à natureza técnica do serviço contratado; (III) não descaracterizem o objeto original; e (IV) não importem em expansão ilimitada de escopo sem contratação adicional. Eventuais demandas extraordinárias, projetos, implantações, migrações, aquisições de infraestrutura ou quaisquer serviços não expressamente previstos ou não diretamente correlatos ao objeto principal demandarão contratação complementar específica.</p>
 
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <!-- CLÁUSULA 3 — DA EXECUÇÃO DOS SERVIÇOS                 -->
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <h2 style="font-size: 12pt; font-weight: bold; margin-top: 24px;">CLÁUSULA 3 — DA EXECUÇÃO DOS SERVIÇOS</h2>
+  <!-- CLÁUSULA TERCEIRA -->
+  <h2 style="${clauseStyle}">CLÁUSULA TERCEIRA — DA EXECUÇÃO DOS SERVIÇOS</h2>
 
-  <p>As horas técnicas contratadas poderão ser utilizadas pelo CONTRATANTE para o serviço descrito na Cláusula 2, mediante agendamento prévio com a CONTRATADA.</p>
+  <p style="${pStyle}">As horas técnicas contratadas poderão ser utilizadas pelo CONTRATANTE para o serviço descrito na Cláusula Segunda, mediante agendamento prévio com a CONTRATADA.</p>
 
-  <p><em>Parágrafo Primeiro:</em> O atendimento será prestado de forma remota ou presencial, conforme a necessidade técnica e a critério da CONTRATADA, no endereço: ${v.WMTI_CLIENTE_ENDERECO}, ${v.WMTI_CLIENTE_CIDADE}, CEP ${v.WMTI_CLIENTE_CEP}. No caso de atendimentos presenciais, serão realizados prioritariamente nas dependências do CONTRATANTE.</p>
+  <p style="${pStyle}"><em>Parágrafo Primeiro:</em> O atendimento será prestado de forma remota ou presencial, conforme a necessidade técnica e a critério da CONTRATADA, no endereço: ${v.WMTI_CLIENTE_ENDERECO}, ${v.WMTI_CLIENTE_CIDADE}, CEP ${v.WMTI_CLIENTE_CEP}. No caso de atendimentos presenciais, serão realizados prioritariamente nas dependências do CONTRATANTE.</p>
 
-  <p><em>Parágrafo Segundo:</em> As horas contratadas são válidas por 90 (noventa) dias corridos a partir da data de confirmação do pagamento. Horas não utilizadas dentro deste prazo serão consideradas integralmente consumidas, sem direito a reembolso ou crédito.</p>
+  <p style="${pStyle}"><em>Parágrafo Segundo:</em> As horas contratadas são válidas por 90 (noventa) dias corridos a partir da data de confirmação do pagamento. Horas não utilizadas dentro deste prazo serão consideradas integralmente consumidas, sem direito a reembolso ou crédito.</p>
 
   ${v.WMTI_IS_EMERGENCY
-    ? `<p><em>Parágrafo Terceiro:</em> Por se tratar de atendimento emergencial, a CONTRATADA envidará esforços razoáveis para iniciar o atendimento em até 4 (quatro) horas úteis após a solicitação formal do CONTRATANTE, sujeito à disponibilidade da equipe técnica. O prazo de resposta não constitui obrigação de resultado, mas de esforço compatível com a urgência declarada.</p>`
-    : `<p><em>Parágrafo Terceiro:</em> O agendamento do atendimento será realizado com antecedência mínima de 24 (vinte e quatro) horas úteis, sujeito à disponibilidade da equipe técnica da CONTRATADA. Em caso de urgência, a CONTRATADA envidará esforços para antecipar o atendimento, sem que isso constitua obrigação contratual.</p>`
+    ? `<p style="${pStyle}"><em>Parágrafo Terceiro:</em> Por se tratar de atendimento emergencial, a CONTRATADA envidará esforços razoáveis para iniciar o atendimento em até 4 (quatro) horas úteis após a solicitação formal do CONTRATANTE, sujeito à disponibilidade da equipe técnica. O prazo de resposta não constitui obrigação de resultado, mas de esforço compatível com a urgência declarada.</p>`
+    : `<p style="${pStyle}"><em>Parágrafo Terceiro:</em> O agendamento do atendimento será realizado com antecedência mínima de 24 (vinte e quatro) horas úteis, sujeito à disponibilidade da equipe técnica da CONTRATADA. Em caso de urgência, a CONTRATADA envidará esforços para antecipar o atendimento, sem que isso constitua obrigação contratual.</p>`
   }
 
-  <p><em>Parágrafo Quarto:</em> A contagem das horas técnicas será iniciada a partir do momento em que o técnico da CONTRATADA iniciar efetivamente a análise ou intervenção no ambiente do CONTRATANTE, seja de forma remota ou presencial, e cessará quando concluída a atividade objeto do chamado ou quando esgotado o saldo de horas contratadas.</p>
+  <p style="${pStyle}"><em>Parágrafo Quarto:</em> A contagem das horas técnicas será iniciada a partir do momento em que o técnico da CONTRATADA iniciar efetivamente a análise ou intervenção no ambiente do CONTRATANTE, seja de forma remota ou presencial, e cessará quando concluída a atividade objeto do chamado ou quando esgotado o saldo de horas contratadas.</p>
 
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <!-- CLÁUSULA 4 — DA NATUREZA PONTUAL DA CONTRATAÇÃO       -->
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <h2 style="font-size: 12pt; font-weight: bold; margin-top: 24px;">CLÁUSULA 4 — DA NATUREZA PONTUAL DA CONTRATAÇÃO</h2>
+  <!-- CLÁUSULA QUARTA -->
+  <h2 style="${clauseStyle}">CLÁUSULA QUARTA — DA NATUREZA PONTUAL DA CONTRATAÇÃO</h2>
 
-  <p>O presente contrato possui natureza pontual e não recorrente, não gerando obrigação automática de continuidade, renovação ou prestação periódica de serviços. Eventual continuidade da prestação de serviços dependerá de nova e independente contratação entre as partes, que poderá ocorrer sob as mesmas condições ou condições diversas, a critério de ambas as partes.</p>
+  <p style="${pStyle}">O presente contrato possui natureza pontual e não recorrente, não gerando obrigação automática de continuidade, renovação ou prestação periódica de serviços. Eventual continuidade da prestação de serviços dependerá de nova e independente contratação entre as partes, que poderá ocorrer sob as mesmas condições ou condições diversas, a critério de ambas as partes.</p>
 
-  <p><em>Parágrafo Único:</em> A celebração de contratos futuros entre as partes não caracteriza vínculo contratual continuado, relação de exclusividade ou dependência econômica entre CONTRATANTE e CONTRATADA.</p>
+  <p style="${pStyle}"><em>Parágrafo Único:</em> A celebração de contratos futuros entre as partes não caracteriza vínculo contratual continuado, relação de exclusividade ou dependência econômica entre CONTRATANTE e CONTRATADA.</p>
 
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <!-- CLÁUSULA 5 — DA CONTRAPRESTAÇÃO E PAGAMENTO           -->
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <h2 style="font-size: 12pt; font-weight: bold; margin-top: 24px;">CLÁUSULA 5 — DA CONTRAPRESTAÇÃO E PAGAMENTO</h2>
+  <!-- CLÁUSULA QUINTA -->
+  <h2 style="${clauseStyle}">CLÁUSULA QUINTA — DA CONTRAPRESTAÇÃO E PAGAMENTO</h2>
 
-  <p>Em contraprestação aos serviços objeto deste contrato, o CONTRATANTE deverá efetuar o pagamento integral e antecipado do valor de <strong>${formatCurrency(v.WMTI_VALOR_TOTAL)}</strong> (${totalWords}), correspondente a ${horasLabel} ao valor unitário de ${formatCurrency(v.WMTI_VALOR_HORA)} por hora técnica, por meio de boleto bancário, PIX (QR Code da cobrança) ou cartão de crédito.</p>
+  <p style="${pStyle}">Em contraprestação aos serviços objeto deste contrato, o CONTRATANTE deverá efetuar o pagamento integral e antecipado do valor de <strong>${formatCurrency(v.WMTI_VALOR_TOTAL)}</strong> (${totalWords}), correspondente a ${horasLabel} ao valor unitário de ${formatCurrency(v.WMTI_VALOR_HORA)} por hora técnica, por meio de boleto bancário, PIX (QR Code da cobrança) ou cartão de crédito.</p>
 
-  <p><em>Parágrafo Primeiro:</em> O início da prestação dos serviços está condicionado à confirmação do pagamento integral pela CONTRATADA. Não haverá prestação de serviços a crédito ou mediante promessa de pagamento futuro.</p>
+  <p style="${pStyle}"><em>Parágrafo Primeiro:</em> O início da prestação dos serviços está condicionado à confirmação do pagamento integral pela CONTRATADA. Não haverá prestação de serviços a crédito ou mediante promessa de pagamento futuro.</p>
 
-  <p><em>Parágrafo Segundo:</em> Todos os tributos e contribuições devidos em decorrência direta ou indireta do presente contrato serão de exclusiva responsabilidade do contribuinte legalmente obrigado, nos termos da legislação tributária vigente.</p>
+  <p style="${pStyle}"><em>Parágrafo Segundo:</em> Todos os tributos e contribuições devidos em decorrência direta ou indireta do presente contrato serão de exclusiva responsabilidade do contribuinte legalmente obrigado, nos termos da legislação tributária vigente.</p>
 
-  <p><em>Parágrafo Terceiro:</em> A CONTRATADA emitirá nota fiscal de serviços correspondente ao valor contratado, nos termos da legislação aplicável.</p>
+  <p style="${pStyle}"><em>Parágrafo Terceiro:</em> A CONTRATADA emitirá nota fiscal de serviços correspondente ao valor contratado, nos termos da legislação aplicável.</p>
 
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <!-- CLÁUSULA 6 — DA GARANTIA TÉCNICA PÓS-SERVIÇO         -->
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <h2 style="font-size: 12pt; font-weight: bold; margin-top: 24px;">CLÁUSULA 6 — DA GARANTIA TÉCNICA PÓS-SERVIÇO</h2>
+  <!-- CLÁUSULA SEXTA -->
+  <h2 style="${clauseStyle}">CLÁUSULA SEXTA — DA GARANTIA TÉCNICA PÓS-SERVIÇO</h2>
 
-  <p>Após a conclusão do atendimento, a CONTRATADA oferece garantia técnica pós-serviço de <strong>${v.WMTI_GARANTIA_HORAS} (${numberToPortuguese(v.WMTI_GARANTIA_HORAS)}) hora${v.WMTI_GARANTIA_HORAS > 1 ? "s" : ""}</strong>, válida por até <strong>${v.WMTI_GARANTIA_PRAZO_DIAS} (${numberToPortuguese(v.WMTI_GARANTIA_PRAZO_DIAS)}) dias corridos</strong> contados da data de conclusão do serviço.</p>
+  <p style="${pStyle}">Após a conclusão do atendimento, a CONTRATADA oferece garantia técnica pós-serviço de <strong>${v.WMTI_GARANTIA_HORAS} (${numberToPortuguese(v.WMTI_GARANTIA_HORAS)}) hora${v.WMTI_GARANTIA_HORAS > 1 ? "s" : ""}</strong>, válida por até <strong>${v.WMTI_GARANTIA_PRAZO_DIAS} (${numberToPortuguese(v.WMTI_GARANTIA_PRAZO_DIAS)}) dias corridos</strong> contados da data de conclusão do serviço.</p>
 
-  <p><em>Parágrafo Primeiro:</em> A garantia aplica-se exclusivamente ao mesmo problema e ao mesmo objeto técnico atendido durante a execução do contrato, devendo o CONTRATANTE reportar a recorrência do problema dentro do prazo de garantia.</p>
+  <p style="${pStyle}"><em>Parágrafo Primeiro:</em> A garantia aplica-se exclusivamente ao mesmo problema e ao mesmo objeto técnico atendido durante a execução do contrato, devendo o CONTRATANTE reportar a recorrência do problema dentro do prazo de garantia.</p>
 
-  <p><em>Parágrafo Segundo:</em> A garantia não cobre:</p>
-  <p style="padding-left: 24px;">I — demandas novas ou distintas do objeto originalmente atendido;</p>
-  <p style="padding-left: 24px;">II — alterações realizadas por terceiros ou pelo próprio CONTRATANTE no ambiente técnico após a conclusão do serviço;</p>
-  <p style="padding-left: 24px;">III — problemas decorrentes de fatores externos como falha de energia, desastres naturais, atos de terceiros ou uso indevido dos equipamentos;</p>
-  <p style="padding-left: 24px;">IV — ampliação ou modificação de escopo não prevista no atendimento original.</p>
+  <p style="${pStyle}"><em>Parágrafo Segundo:</em> A garantia não cobre:</p>
+  <p style="${listStyle}">I — demandas novas ou distintas do objeto originalmente atendido;</p>
+  <p style="${listStyle}">II — alterações realizadas por terceiros ou pelo próprio CONTRATANTE no ambiente técnico após a conclusão do serviço;</p>
+  <p style="${listStyle}">III — problemas decorrentes de fatores externos como falha de energia, desastres naturais, atos de terceiros ou uso indevido dos equipamentos;</p>
+  <p style="${listStyle}">IV — ampliação ou modificação de escopo não prevista no atendimento original.</p>
 
-  <p><em>Parágrafo Terceiro:</em> As horas de garantia serão utilizadas exclusivamente para correção da mesma ocorrência e não poderão ser convertidas em crédito, transferidas para outros serviços ou acumuladas com outros contratos.</p>
+  <p style="${pStyle}"><em>Parágrafo Terceiro:</em> As horas de garantia serão utilizadas exclusivamente para correção da mesma ocorrência e não poderão ser convertidas em crédito, transferidas para outros serviços ou acumuladas com outros contratos.</p>
 
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <!-- CLÁUSULA 7 — DAS OBRIGAÇÕES DA CONTRATADA             -->
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <h2 style="font-size: 12pt; font-weight: bold; margin-top: 24px;">CLÁUSULA 7 — DAS OBRIGAÇÕES DA CONTRATADA</h2>
+  <!-- CLÁUSULA SÉTIMA -->
+  <h2 style="${clauseStyle}">CLÁUSULA SÉTIMA — DAS OBRIGAÇÕES DA CONTRATADA</h2>
 
-  <p>Sem prejuízo às demais condições estabelecidas no presente contrato, a CONTRATADA obriga-se a:</p>
-  <p style="padding-left: 24px;">a) Executar de forma diligente e oportuna os serviços, observando normas e padrões técnicos aplicáveis, garantindo a sua boa qualidade;</p>
-  <p style="padding-left: 24px;">b) Cumprir rigorosamente os cronogramas de trabalho acordados;</p>
-  <p style="padding-left: 24px;">c) Respeitar os horários de funcionamento do CONTRATANTE;</p>
-  <p style="padding-left: 24px;">d) Emitir nota fiscal de serviços correspondente ao valor contratado;</p>
-  <p style="padding-left: 24px;">e) Responsabilizar-se pelo depósito de qualquer documento ou informação entregue pelo CONTRATANTE;</p>
-  <p style="padding-left: 24px;">f) Prestar todas as informações sobre os serviços em execução, incluindo saldo de horas restantes quando solicitado;</p>
-  <p style="padding-left: 24px;">g) Orientar o CONTRATANTE quanto a novas tecnologias e melhores práticas aplicáveis;</p>
-  <p style="padding-left: 24px;">h) Manter sua equipe tecnicamente atualizada e capacitada;</p>
-  <p style="padding-left: 24px;">i) Manter as informações da empresa CONTRATANTE em sigilo e confidencialidade.</p>
+  <p style="${pStyle}">Sem prejuízo às demais condições estabelecidas no presente contrato, a CONTRATADA obriga-se a:</p>
+  <p style="${listStyle}">a) Executar de forma diligente e oportuna os serviços, observando normas e padrões técnicos aplicáveis, garantindo a sua boa qualidade;</p>
+  <p style="${listStyle}">b) Cumprir rigorosamente os cronogramas de trabalho acordados;</p>
+  <p style="${listStyle}">c) Respeitar os horários de funcionamento do CONTRATANTE;</p>
+  <p style="${listStyle}">d) Emitir nota fiscal de serviços correspondente ao valor contratado;</p>
+  <p style="${listStyle}">e) Responsabilizar-se pelo depósito de qualquer documento ou informação entregue pelo CONTRATANTE;</p>
+  <p style="${listStyle}">f) Prestar todas as informações sobre os serviços em execução, incluindo saldo de horas restantes quando solicitado;</p>
+  <p style="${listStyle}">g) Orientar o CONTRATANTE quanto a novas tecnologias e melhores práticas aplicáveis;</p>
+  <p style="${listStyle}">h) Manter sua equipe tecnicamente atualizada e capacitada;</p>
+  <p style="${listStyle}">i) Manter as informações da empresa CONTRATANTE em sigilo e confidencialidade.</p>
 
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <!-- CLÁUSULA 8 — DAS OBRIGAÇÕES DO CONTRATANTE            -->
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <h2 style="font-size: 12pt; font-weight: bold; margin-top: 24px;">CLÁUSULA 8 — DAS OBRIGAÇÕES DO CONTRATANTE</h2>
+  <!-- CLÁUSULA OITAVA -->
+  <h2 style="${clauseStyle}">CLÁUSULA OITAVA — DAS OBRIGAÇÕES DO CONTRATANTE</h2>
 
-  <p>Sem prejuízo às demais condições, o CONTRATANTE obriga-se a:</p>
-  <p style="padding-left: 24px;">a) Designar profissionais que realizarão a interface técnica e administrativa com a CONTRATADA;</p>
-  <p style="padding-left: 24px;">b) Cooperar com a CONTRATADA, tomando decisões que orientem a execução dos serviços;</p>
-  <p style="padding-left: 24px;">c) Oferecer infraestrutura adequada — incluindo acesso remoto, rede, energia e espaço físico — aos profissionais da CONTRATADA quando da execução dos serviços presenciais;</p>
-  <p style="padding-left: 24px;">d) Colocar à disposição todas as informações, credenciais e acessos necessários ao desenvolvimento dos serviços;</p>
-  <p style="padding-left: 24px;">e) Manter nos equipamentos atendidos licenças válidas de softwares;</p>
-  <p style="padding-left: 24px;">f) Efetuar o pagamento conforme estabelecido na Cláusula 5 deste contrato;</p>
-  <p style="padding-left: 24px;">g) Comunicar à CONTRATADA, com a maior brevidade possível, qualquer ocorrência relevante que possa impactar a execução dos serviços.</p>
+  <p style="${pStyle}">Sem prejuízo às demais condições, o CONTRATANTE obriga-se a:</p>
+  <p style="${listStyle}">a) Designar profissionais que realizarão a interface técnica e administrativa com a CONTRATADA;</p>
+  <p style="${listStyle}">b) Cooperar com a CONTRATADA, tomando decisões que orientem a execução dos serviços;</p>
+  <p style="${listStyle}">c) Oferecer infraestrutura adequada — incluindo acesso remoto, rede, energia e espaço físico — aos profissionais da CONTRATADA quando da execução dos serviços presenciais;</p>
+  <p style="${listStyle}">d) Colocar à disposição todas as informações, credenciais e acessos necessários ao desenvolvimento dos serviços;</p>
+  <p style="${listStyle}">e) Manter nos equipamentos atendidos licenças válidas de softwares;</p>
+  <p style="${listStyle}">f) Efetuar o pagamento conforme estabelecido na Cláusula Quinta deste contrato;</p>
+  <p style="${listStyle}">g) Comunicar à CONTRATADA, com a maior brevidade possível, qualquer ocorrência relevante que possa impactar a execução dos serviços.</p>
 
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <!-- CLÁUSULA 9 — DA LIMITAÇÃO DE RESPONSABILIDADE         -->
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <h2 style="font-size: 12pt; font-weight: bold; margin-top: 24px;">CLÁUSULA 9 — DA LIMITAÇÃO DE RESPONSABILIDADE</h2>
+  <!-- CLÁUSULA NONA -->
+  <h2 style="${clauseStyle}">CLÁUSULA NONA — DA LIMITAÇÃO DE RESPONSABILIDADE</h2>
 
-  <p>A CONTRATADA não se responsabiliza por:</p>
-  <p style="padding-left: 24px;">a) Danos causados por problemas pré-existentes no ambiente do CONTRATANTE que não tenham sido previamente informados;</p>
-  <p style="padding-left: 24px;">b) Perda de dados decorrente de ausência de backup adequado por parte do CONTRATANTE;</p>
-  <p style="padding-left: 24px;">c) Interrupções causadas por falhas de energia elétrica, desastres naturais, atos de terceiros ou eventos de força maior;</p>
-  <p style="padding-left: 24px;">d) Incompatibilidade ou defeitos em softwares e hardwares de terceiros não objeto deste contrato;</p>
-  <p style="padding-left: 24px;">e) Resultados que dependam de fatores fora do controle técnico da CONTRATADA.</p>
+  <p style="${pStyle}">A CONTRATADA não se responsabiliza por:</p>
+  <p style="${listStyle}">a) Danos causados por problemas pré-existentes no ambiente do CONTRATANTE que não tenham sido previamente informados;</p>
+  <p style="${listStyle}">b) Perda de dados decorrente de ausência de backup adequado por parte do CONTRATANTE;</p>
+  <p style="${listStyle}">c) Interrupções causadas por falhas de energia elétrica, desastres naturais, atos de terceiros ou eventos de força maior;</p>
+  <p style="${listStyle}">d) Incompatibilidade ou defeitos em softwares e hardwares de terceiros não objeto deste contrato;</p>
+  <p style="${listStyle}">e) Resultados que dependam de fatores fora do controle técnico da CONTRATADA.</p>
 
-  <p><em>Parágrafo Único:</em> Em qualquer hipótese, a responsabilidade total da CONTRATADA ficará limitada ao valor efetivamente pago pelo CONTRATANTE neste contrato.</p>
+  <p style="${pStyle}"><em>Parágrafo Único:</em> Em qualquer hipótese, a responsabilidade total da CONTRATADA ficará limitada ao valor efetivamente pago pelo CONTRATANTE neste contrato.</p>
 
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <!-- CLÁUSULA 10 — DA CONFIDENCIALIDADE                    -->
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <h2 style="font-size: 12pt; font-weight: bold; margin-top: 24px;">CLÁUSULA 10 — DA CONFIDENCIALIDADE</h2>
+  <!-- CLÁUSULA DÉCIMA -->
+  <h2 style="${clauseStyle}">CLÁUSULA DÉCIMA — DA CONFIDENCIALIDADE</h2>
 
-  <p>A CONTRATADA obriga-se a manter sigilo e confidencialidade sobre todas as informações, dados, documentos e materiais obtidos em razão da execução do presente instrumento, não podendo divulgá-los, reproduzi-los ou utilizá-los para finalidade diversa da contratada, sob pena de responsabilização civil e criminal.</p>
+  <p style="${pStyle}">A CONTRATADA obriga-se a manter sigilo e confidencialidade sobre todas as informações, dados, documentos e materiais obtidos em razão da execução do presente instrumento, não podendo divulgá-los, reproduzi-los ou utilizá-los para finalidade diversa da contratada, sob pena de responsabilização civil e criminal.</p>
 
-  <p><em>Parágrafo Único:</em> A obrigação de confidencialidade permanecerá vigente mesmo após a conclusão, rescisão ou término do presente contrato, pelo prazo de 5 (cinco) anos.</p>
+  <p style="${pStyle}"><em>Parágrafo Único:</em> A obrigação de confidencialidade permanecerá vigente mesmo após a conclusão, rescisão ou término do presente contrato, pelo prazo de 5 (cinco) anos.</p>
 
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <!-- CLÁUSULA 11 — DO CANCELAMENTO E REEMBOLSO             -->
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <h2 style="font-size: 12pt; font-weight: bold; margin-top: 24px;">CLÁUSULA 11 — DO CANCELAMENTO E REEMBOLSO</h2>
+  <!-- CLÁUSULA DÉCIMA PRIMEIRA -->
+  <h2 style="${clauseStyle}">CLÁUSULA DÉCIMA PRIMEIRA — DO CANCELAMENTO E REEMBOLSO</h2>
 
-  <p>A CONTRATANTE poderá solicitar o cancelamento da contratação e eventual reembolso no prazo máximo de até 7 (sete) dias corridos, contados a partir da data da contratação, desde que não tenha ocorrido a execução do serviço ou o início de sua utilização.</p>
+  <p style="${pStyle}">A CONTRATANTE poderá solicitar o cancelamento da contratação e eventual reembolso no prazo máximo de até 7 (sete) dias corridos, contados a partir da data da contratação, desde que não tenha ocorrido a execução do serviço ou o início de sua utilização.</p>
 
-  <p><em>Parágrafo Primeiro:</em> Após o prazo de 7 (sete) dias, não haverá possibilidade de reembolso, permanecendo os valores pagos integralmente vinculados à contratação realizada.</p>
+  <p style="${pStyle}"><em>Parágrafo Primeiro:</em> Após o prazo de 7 (sete) dias, não haverá possibilidade de reembolso, permanecendo os valores pagos integralmente vinculados à contratação realizada.</p>
 
-  <p><em>Parágrafo Segundo:</em> Para serviços contratados na modalidade sob demanda, a CONTRATANTE deverá utilizar os serviços no prazo máximo de até 90 (noventa) dias, contados a partir da confirmação do pagamento. A não utilização do serviço dentro do prazo estabelecido não gera direito a reembolso, crédito ou compensação de qualquer natureza.</p>
+  <p style="${pStyle}"><em>Parágrafo Segundo:</em> Para serviços contratados na modalidade sob demanda, a CONTRATANTE deverá utilizar os serviços no prazo máximo de até 90 (noventa) dias, contados a partir da confirmação do pagamento. A não utilização do serviço dentro do prazo estabelecido não gera direito a reembolso, crédito ou compensação de qualquer natureza.</p>
 
-  <p><em>Parágrafo Terceiro:</em> Para serviços recorrentes, o cancelamento poderá ser solicitado a qualquer tempo para interromper cobranças futuras, respeitado o prazo mínimo contratual de 6 (seis) meses, não implicando, em nenhuma hipótese, na devolução de valores já pagos referentes a períodos anteriores ou em curso.</p>
+  <p style="${pStyle}"><em>Parágrafo Terceiro:</em> Para serviços recorrentes, o cancelamento poderá ser solicitado a qualquer tempo para interromper cobranças futuras, respeitado o prazo mínimo contratual de 6 (seis) meses, não implicando, em nenhuma hipótese, na devolução de valores já pagos referentes a períodos anteriores ou em curso.</p>
 
-  <p><em>Parágrafo Quarto:</em> A contratação dos serviços garante à CONTRATANTE a disponibilidade técnica, operacional e organizacional da CONTRATADA durante o período contratado, não estando o direito de reembolso condicionado à efetiva utilização do serviço após o prazo legal de arrependimento.</p>
+  <p style="${pStyle}"><em>Parágrafo Quarto:</em> A contratação dos serviços garante à CONTRATANTE a disponibilidade técnica, operacional e organizacional da CONTRATADA durante o período contratado, não estando o direito de reembolso condicionado à efetiva utilização do serviço após o prazo legal de arrependimento.</p>
 
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <!-- CLÁUSULA 12 — DA CONTRATAÇÃO ADICIONAL                -->
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <h2 style="font-size: 12pt; font-weight: bold; margin-top: 24px;">CLÁUSULA 12 — DA CONTRATAÇÃO ADICIONAL</h2>
+  <!-- CLÁUSULA DÉCIMA SEGUNDA -->
+  <h2 style="${clauseStyle}">CLÁUSULA DÉCIMA SEGUNDA — DA CONTRATAÇÃO ADICIONAL</h2>
 
-  <p>Caso o CONTRATANTE necessite de horas técnicas adicionais além das contratadas neste instrumento, poderá realizar nova contratação, que será formalizada por instrumento próprio, podendo adotar as mesmas condições ou condições diversas, conforme disponibilidade e tabela vigente da CONTRATADA.</p>
+  <p style="${pStyle}">Caso o CONTRATANTE necessite de horas técnicas adicionais além das contratadas neste instrumento, poderá realizar nova contratação, que será formalizada por instrumento próprio, podendo adotar as mesmas condições ou condições diversas, conforme disponibilidade e tabela vigente da CONTRATADA.</p>
 
-  <p><em>Parágrafo Único:</em> As horas adicionais eventualmente contratadas não se confundem com as horas de garantia previstas na Cláusula 6 e não alteram os prazos de validade do presente contrato.</p>
+  <p style="${pStyle}"><em>Parágrafo Único:</em> As horas adicionais eventualmente contratadas não se confundem com as horas de garantia previstas na Cláusula Sexta e não alteram os prazos de validade do presente contrato.</p>
 
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <!-- CLÁUSULA 13 — DAS CONDIÇÕES GERAIS                    -->
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <h2 style="font-size: 12pt; font-weight: bold; margin-top: 24px;">CLÁUSULA 13 — DAS CONDIÇÕES GERAIS</h2>
+  <!-- CLÁUSULA DÉCIMA TERCEIRA -->
+  <h2 style="${clauseStyle}">CLÁUSULA DÉCIMA TERCEIRA — DAS CONDIÇÕES GERAIS</h2>
 
-  <p>As relações existentes entre as partes são unicamente comerciais, de natureza civil, não havendo nenhum vínculo trabalhista, societário ou associativo entre CONTRATANTE e CONTRATADA, seus sócios, prepostos ou empregados.</p>
+  <p style="${pStyle}">As relações existentes entre as partes são unicamente comerciais, de natureza civil, não havendo nenhum vínculo trabalhista, societário ou associativo entre CONTRATANTE e CONTRATADA, seus sócios, prepostos ou empregados.</p>
 
-  <p><em>Parágrafo Primeiro:</em> As partes não poderão ceder ou transferir a terceiros os direitos e obrigações emergentes deste contrato, sem a prévia aprovação por escrito da outra parte.</p>
+  <p style="${pStyle}"><em>Parágrafo Primeiro:</em> As partes não poderão ceder ou transferir a terceiros os direitos e obrigações emergentes deste contrato, sem a prévia aprovação por escrito da outra parte.</p>
 
-  <p><em>Parágrafo Segundo:</em> O CONTRATANTE compromete-se a não contratar qualquer tipo de serviço diretamente com funcionário da CONTRATADA enquanto estiver no quadro de empregados e pelo prazo de 24 (vinte e quatro) meses após desligamento.</p>
+  <p style="${pStyle}"><em>Parágrafo Segundo:</em> O CONTRATANTE compromete-se a não contratar qualquer tipo de serviço diretamente com funcionário da CONTRATADA enquanto estiver no quadro de empregados e pelo prazo de 24 (vinte e quatro) meses após desligamento.</p>
 
-  <p><em>Parágrafo Terceiro:</em> De acordo com o artigo 476 do Código Civil, fica assegurado ao CONTRATANTE o direito de suspender qualquer pagamento em caso de descumprimento das obrigações por parte da CONTRATADA, mediante notificação formal.</p>
+  <p style="${pStyle}"><em>Parágrafo Terceiro:</em> De acordo com o artigo 476 do Código Civil, fica assegurado ao CONTRATANTE o direito de suspender qualquer pagamento em caso de descumprimento das obrigações por parte da CONTRATADA, mediante notificação formal.</p>
 
-  <p><em>Parágrafo Quarto:</em> Não constituirá novação a abstenção ou tolerância por qualquer das partes no exercício de qualquer direito previsto neste contrato.</p>
+  <p style="${pStyle}"><em>Parágrafo Quarto:</em> Não constituirá novação a abstenção ou tolerância por qualquer das partes no exercício de qualquer direito previsto neste contrato.</p>
 
-  <p><em>Parágrafo Quinto:</em> Na hipótese de divergência entre proposta comercial e o presente contrato, prevalecem os termos deste instrumento.</p>
+  <p style="${pStyle}"><em>Parágrafo Quinto:</em> Na hipótese de divergência entre proposta comercial e o presente contrato, prevalecem os termos deste instrumento.</p>
 
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <!-- CLÁUSULA 14 — DA PROTEÇÃO DE DADOS (LGPD)             -->
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <h2 style="font-size: 12pt; font-weight: bold; margin-top: 24px;">CLÁUSULA 14 — DA PROTEÇÃO DE DADOS (LGPD)</h2>
+  <!-- CLÁUSULA DÉCIMA QUARTA -->
+  <h2 style="${clauseStyle}">CLÁUSULA DÉCIMA QUARTA — DA PROTEÇÃO DE DADOS (LGPD)</h2>
 
-  <p>As partes comprometem-se a tratar os dados pessoais a que tiverem acesso em decorrência deste contrato em conformidade com a Lei Geral de Proteção de Dados Pessoais (Lei nº 13.709/2018 — LGPD), adotando medidas técnicas e administrativas aptas a proteger os dados pessoais de acessos não autorizados e de situações acidentais ou ilícitas de destruição, perda, alteração, comunicação ou difusão.</p>
+  <p style="${pStyle}">As partes comprometem-se a tratar os dados pessoais a que tiverem acesso em decorrência deste contrato em conformidade com a Lei Geral de Proteção de Dados Pessoais (Lei nº 13.709/2018 — LGPD), adotando medidas técnicas e administrativas aptas a proteger os dados pessoais de acessos não autorizados e de situações acidentais ou ilícitas de destruição, perda, alteração, comunicação ou difusão.</p>
 
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <!-- CLÁUSULA 15 — DO ACEITE ELETRÔNICO E TÍTULO EXECUTIVO -->
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <h2 style="font-size: 12pt; font-weight: bold; margin-top: 24px;">CLÁUSULA 15 — DO ACEITE ELETRÔNICO E TÍTULO EXECUTIVO</h2>
+  <!-- CLÁUSULA DÉCIMA QUINTA -->
+  <h2 style="${clauseStyle}">CLÁUSULA DÉCIMA QUINTA — DO ACEITE ELETRÔNICO E TÍTULO EXECUTIVO</h2>
 
-  <p>O presente contrato é celebrado de forma eletrônica, sendo a assinatura digital do CONTRATANTE considerada válida e vinculante para todos os efeitos legais, nos termos do artigo 10 da Medida Provisória nº 2.200-2/2001.</p>
+  <p style="${pStyle}">O presente contrato é celebrado de forma eletrônica, sendo a assinatura digital do CONTRATANTE considerada válida e vinculante para todos os efeitos legais, nos termos do artigo 10 da Medida Provisória nº 2.200-2/2001.</p>
 
-  <p><em>Parágrafo Primeiro:</em> O presente instrumento tem força de título executivo extrajudicial nos termos do artigo 784, inciso III, do Código de Processo Civil, e é celebrado em caráter irrevogável e irretratável, obrigando as partes, seus herdeiros e sucessores.</p>
+  <p style="${pStyle}"><em>Parágrafo Primeiro:</em> O presente instrumento tem força de título executivo extrajudicial nos termos do artigo 784, inciso III, do Código de Processo Civil, e é celebrado em caráter irrevogável e irretratável, obrigando as partes, seus herdeiros e sucessores.</p>
 
-  <p><em>Parágrafo Segundo:</em> O presente Contrato será regido pelas leis da República Federativa do Brasil.</p>
+  <p style="${pStyle}"><em>Parágrafo Segundo:</em> O presente Contrato será regido pelas leis da República Federativa do Brasil.</p>
 
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <!-- CLÁUSULA 16 — DO FORO                                 -->
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <h2 style="font-size: 12pt; font-weight: bold; margin-top: 24px;">CLÁUSULA 16 — DO FORO</h2>
+  <!-- CLÁUSULA DÉCIMA SEXTA -->
+  <h2 style="${clauseStyle}">CLÁUSULA DÉCIMA SEXTA — DO FORO</h2>
 
-  <p>Fica eleito o Foro da Comarca de Jacareí/SP, com exclusão de qualquer outro, por mais privilegiado que seja, para dirimir quaisquer questões oriundas do presente contrato.</p>
+  <p style="${pStyle}">Fica eleito o Foro da Comarca de Jacareí/SP, com exclusão de qualquer outro, por mais privilegiado que seja, para dirimir quaisquer questões oriundas do presente contrato.</p>
 
-  <p style="margin-top: 32px;">E, por estarem assim justas e contratadas, as partes assinam o presente Contrato eletronicamente, na presença das informações de rastreabilidade abaixo.</p>
+  <p style="${pStyle}; margin-top: 32px;">E, por estarem assim justas e contratadas, as partes assinam o presente Contrato eletronicamente, na presença das informações de rastreabilidade abaixo.</p>
 
-  <p style="margin-top: 24px; text-align: center;">Jacareí (SP), ${v.WMTI_DATA_CONTRATACAO}</p>
+  <br/><br/><br/>
 
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <!-- ASSINATURAS                                            -->
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <div style="margin-top: 48px; display: flex; justify-content: space-between;">
+  <p style="text-align: center; margin: 0;">Jacareí/SP, ${v.WMTI_DATA_CONTRATACAO}</p>
+
+  <br/><br/><br/>
+
+  <div style="display: flex; justify-content: space-between;">
     <div style="text-align: center; width: 45%;">
       <div style="border-top: 1px solid #000; padding-top: 8px;">
         <p style="margin: 0;"><strong>${v.WMTI_CLIENTE_RESPONSAVEL}</strong></p>
@@ -332,15 +306,14 @@ export function generateOnDemandContractHtml(vars: OnDemandContractVars): string
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <!-- RASTREABILIDADE DA ASSINATURA ELETRÔNICA               -->
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <div data-traceability="true" style="margin-top: 48px; padding-top: 16px; border-top: 1px solid #999;">
-    <h2 style="font-size: 10pt; font-weight: bold; margin-bottom: 8px; color: #333;">Dados de Rastreabilidade da Assinatura Eletrônica</h2>
+  <br/><br/><br/>
+
+  <div data-traceability="true" style="padding-top: 16px; border-top: 1px solid #999;">
+    <h2 style="font-size: 10pt; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; color: #333;">DADOS DE RASTREABILIDADE DA ASSINATURA ELETRÔNICA</h2>
     <p style="font-size: 9pt; color: #444; margin: 4px 0;">IP de origem: <strong data-proof="ip">{{SIGN_IP}}</strong></p>
     <p style="font-size: 9pt; color: #444; margin: 4px 0;">Data da confirmação: <strong data-proof="date">{{SIGN_DATE}}</strong></p>
     <p style="font-size: 9pt; color: #444; margin: 4px 0;">Hora da confirmação: <strong data-proof="time">{{SIGN_TIME}}</strong></p>
-    <p style="font-size: 9pt; color: #444; margin: 4px 0;">Identificação do navegador/dispositivo (User Agent): <strong data-proof="ua">{{SIGN_USER_AGENT}}</strong></p>
+    <p style="font-size: 9pt; color: #444; margin: 4px 0;">Dispositivo/Navegador: <strong data-proof="ua">{{SIGN_USER_AGENT}}</strong></p>
     <p style="font-size: 8pt; color: #888; margin-top: 12px; font-style: italic;">Este documento foi assinado eletronicamente nos termos do art. 10 da Medida Provisória nº 2.200-2/2001. Os dados acima constituem prova eletrônica da manifestação de vontade do signatário.</p>
   </div>
 
