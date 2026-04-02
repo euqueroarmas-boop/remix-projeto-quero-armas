@@ -188,13 +188,48 @@ async function buildPdfBytes(context: Awaited<ReturnType<typeof getPostPurchaseC
   drawTextBlock("WMTI TECNOLOGIA DA INFORMAÇÃO LTDA", { bold: true });
   drawTextBlock("CNPJ: 13.366.668/0001-07");
 
-  drawSectionTitle("Dados da contratação");
-  drawTextBlock(`Serviço/plano: ${buildServiceName(context)}`, { bold: true });
-  drawTextBlock(`Tipo de contrato: ${context.contract.contract_type || "Não informado"}`);
-  drawTextBlock(`Quantidade: ${context.quote.computers_qty || 0} equipamento(s)`);
-  drawTextBlock(`Valor contratado: ${formatCurrency(context.contract.monthly_value ?? context.quote.monthly_value ?? context.payment.amount)}`);
-  drawTextBlock(`Forma de pagamento: ${paymentLabel(context.payment.billing_type || context.payment.payment_method)}`);
-  drawTextBlock(`Status do pagamento: Confirmado`, { bold: true, color: rgb(0.13, 0.47, 0.24) });
+  // === Premium contract data table ===
+  y -= 8;
+  ensureSpace(140);
+  const tableX = marginLeft;
+  const tableWidth = pageWidth - marginLeft - marginRight;
+  const labelColWidth = 160;
+  const valueColWidth = tableWidth - labelColWidth;
+  const rowHeight = 22;
+  const tableFontSize = 9;
+  const tableData = [
+    { label: "Serviço / Plano", value: buildServiceName(context), highlight: true },
+    { label: "Tipo de contrato", value: context.contract.contract_type || "Não informado" },
+    { label: "Quantidade", value: `${context.quote.computers_qty || 0} equipamento(s)` },
+    { label: "Valor contratado", value: formatCurrency(context.contract.monthly_value ?? context.quote.monthly_value ?? context.payment.amount), highlight: true },
+    { label: "Forma de pagamento", value: paymentLabel(context.payment.billing_type || context.payment.payment_method) },
+    { label: "Status do pagamento", value: "Confirmado", highlight: true },
+  ];
+
+  for (let i = 0; i < tableData.length; i++) {
+    const row = tableData[i];
+    const rowY = y - rowHeight;
+    ensureSpace(rowHeight + 2);
+
+    // Row background (alternating)
+    const bgColor = i % 2 === 0 ? rgb(0.98, 0.98, 0.99) : rgb(1, 1, 1);
+    page.drawRectangle({ x: tableX, y: rowY, width: tableWidth, height: rowHeight, color: bgColor });
+    // Borders
+    page.drawLine({ start: { x: tableX, y: rowY }, end: { x: tableX + tableWidth, y: rowY }, thickness: 0.3, color: rgb(0.85, 0.85, 0.85) });
+    page.drawLine({ start: { x: tableX, y: rowY + rowHeight }, end: { x: tableX + tableWidth, y: rowY + rowHeight }, thickness: 0.3, color: rgb(0.85, 0.85, 0.85) });
+    // Label cell
+    page.drawRectangle({ x: tableX, y: rowY, width: labelColWidth, height: rowHeight, color: rgb(0.95, 0.95, 0.96) });
+    page.drawText(row.label, { x: tableX + 8, y: rowY + 7, size: tableFontSize, font: bold, color: rgb(0.2, 0.2, 0.2) });
+    // Value cell
+    const valueFont = row.highlight ? bold : font;
+    const valueColor = row.label === "Status do pagamento" ? rgb(0.13, 0.47, 0.24) : rgb(0.15, 0.15, 0.15);
+    page.drawText(row.value, { x: tableX + labelColWidth + 8, y: rowY + 7, size: tableFontSize, font: valueFont, color: valueColor });
+
+    y = rowY;
+  }
+  // Bottom border
+  page.drawLine({ start: { x: tableX, y }, end: { x: tableX + tableWidth, y }, thickness: 0.5, color: rgb(0.7, 0.7, 0.7) });
+  y -= 12;
 
   drawSectionTitle("Acesso ao portal do cliente");
   drawTextBlock(`Login: ${access.email}`, { bold: true });
@@ -242,57 +277,88 @@ async function buildPdfBytes(context: Awaited<ReturnType<typeof getPostPurchaseC
   // 3 blank lines
   y -= 36;
 
-  // Signature lines
-  const lineWidth = 200;
-  const lineY = y;
-  const leftLineX = marginLeft;
-  const rightLineX = pageWidth - marginRight - lineWidth;
+  // CONTRATANTE signature block (centered)
+  const lineWidth = 250;
+  const centerX = (pageWidth - lineWidth) / 2;
 
-  ensureSpace(100);
-  // Draw two signature lines
-  page.drawLine({ start: { x: leftLineX, y: lineY }, end: { x: leftLineX + lineWidth, y: lineY }, thickness: 0.8, color: rgb(0.3, 0.3, 0.3) });
-  page.drawLine({ start: { x: rightLineX, y: lineY }, end: { x: rightLineX + lineWidth, y: lineY }, thickness: 0.8, color: rgb(0.3, 0.3, 0.3) });
+  ensureSpace(130);
 
-  y = lineY - 14;
+  // CONTRATANTE line
+  page.drawLine({ start: { x: centerX, y }, end: { x: centerX + lineWidth, y }, thickness: 0.8, color: rgb(0.3, 0.3, 0.3) });
+  y -= 14;
 
-  // CONTRATANTE block (left)
   const contratanteNome = (context.customer.razao_social || "").toUpperCase();
   const contratanteCnpj = context.customer.cnpj_ou_cpf || "00.000.000/0000-00";
-  page.drawText(contratanteNome, { x: leftLineX, y, size: 8, font: bold, color: rgb(0.15, 0.15, 0.15) });
-  y -= 12;
-  // "CNPJ:" bold, number normal
-  const cnpjLabel = "CNPJ: ";
-  page.drawText(cnpjLabel, { x: leftLineX, y, size: 8, font: bold, color: rgb(0.2, 0.2, 0.2) });
-  page.drawText(contratanteCnpj, { x: leftLineX + bold.widthOfTextAtSize(cnpjLabel, 8), y, size: 8, font, color: rgb(0.2, 0.2, 0.2) });
-  y -= 12;
-  page.drawText("CONTRATANTE", { x: leftLineX, y, size: 7, font: bold, color: rgb(0.4, 0.4, 0.4) });
+  const cnpjType = contratanteCnpj.replace(/\D/g, "").length > 11 ? "CNPJ" : "CPF";
 
-  // CONTRATADA block (right) - same vertical position as contratante
-  let rightY = lineY - 14;
-  page.drawText("WMTI TECNOLOGIA DA INFORMAÇÃO LTDA", { x: rightLineX, y: rightY, size: 8, font: bold, color: rgb(0.15, 0.15, 0.15) });
-  rightY -= 12;
+  // Contratante name centered
+  const contratanteNameWidth = bold.widthOfTextAtSize(contratanteNome, 8);
+  page.drawText(contratanteNome, { x: centerX + (lineWidth - contratanteNameWidth) / 2, y, size: 8, font: bold, color: rgb(0.15, 0.15, 0.15) });
+  y -= 12;
+  // CNPJ line
+  const cnpjLabel = `${cnpjType}: `;
+  const cnpjFullWidth = bold.widthOfTextAtSize(cnpjLabel, 8) + font.widthOfTextAtSize(contratanteCnpj, 8);
+  const cnpjStartX = centerX + (lineWidth - cnpjFullWidth) / 2;
+  page.drawText(cnpjLabel, { x: cnpjStartX, y, size: 8, font: bold, color: rgb(0.2, 0.2, 0.2) });
+  page.drawText(contratanteCnpj, { x: cnpjStartX + bold.widthOfTextAtSize(cnpjLabel, 8), y, size: 8, font, color: rgb(0.2, 0.2, 0.2) });
+  y -= 12;
+  const contratanteLabel = "CONTRATANTE";
+  const contratanteLabelWidth = bold.widthOfTextAtSize(contratanteLabel, 7);
+  page.drawText(contratanteLabel, { x: centerX + (lineWidth - contratanteLabelWidth) / 2, y, size: 7, font: bold, color: rgb(0.4, 0.4, 0.4) });
+
+  // Visual break between blocks
+  y -= 30;
+
+  // CONTRATADA signature block (centered)
+  ensureSpace(60);
+  page.drawLine({ start: { x: centerX, y }, end: { x: centerX + lineWidth, y }, thickness: 0.8, color: rgb(0.3, 0.3, 0.3) });
+  y -= 14;
+
+  const wmtiName = "WMTI TECNOLOGIA DA INFORMAÇÃO LTDA";
+  const wmtiNameWidth = bold.widthOfTextAtSize(wmtiName, 8);
+  page.drawText(wmtiName, { x: centerX + (lineWidth - wmtiNameWidth) / 2, y, size: 8, font: bold, color: rgb(0.15, 0.15, 0.15) });
+  y -= 12;
   const wmtiCnpjLabel = "CNPJ: ";
-  page.drawText(wmtiCnpjLabel, { x: rightLineX, y: rightY, size: 8, font: bold, color: rgb(0.2, 0.2, 0.2) });
-  page.drawText("13.366.668/0001-07", { x: rightLineX + bold.widthOfTextAtSize(wmtiCnpjLabel, 8), y: rightY, size: 8, font, color: rgb(0.2, 0.2, 0.2) });
-  rightY -= 12;
-  page.drawText("CONTRATADA", { x: rightLineX, y: rightY, size: 7, font: bold, color: rgb(0.4, 0.4, 0.4) });
+  const wmtiCnpjValue = "13.366.668/0001-07";
+  const wmtiCnpjFullWidth = bold.widthOfTextAtSize(wmtiCnpjLabel, 8) + font.widthOfTextAtSize(wmtiCnpjValue, 8);
+  const wmtiCnpjStartX = centerX + (lineWidth - wmtiCnpjFullWidth) / 2;
+  page.drawText(wmtiCnpjLabel, { x: wmtiCnpjStartX, y, size: 8, font: bold, color: rgb(0.2, 0.2, 0.2) });
+  page.drawText(wmtiCnpjValue, { x: wmtiCnpjStartX + bold.widthOfTextAtSize(wmtiCnpjLabel, 8), y, size: 8, font, color: rgb(0.2, 0.2, 0.2) });
+  y -= 12;
+  const contratadaLabel = "CONTRATADA";
+  const contratadaLabelWidth = bold.widthOfTextAtSize(contratadaLabel, 7);
+  page.drawText(contratadaLabel, { x: centerX + (lineWidth - contratadaLabelWidth) / 2, y, size: 7, font: bold, color: rgb(0.4, 0.4, 0.4) });
 
-  // Move y below both blocks
-  y = Math.min(y, rightY) - 30;
+  y -= 30;
 
   // Traceability block
   ensureSpace(90);
   drawTextBlock("DADOS DE RASTREABILIDADE DA ASSINATURA ELETRÔNICA", { size: 9, bold: true, color: rgb(0.15, 0.15, 0.15) });
   y -= 4;
 
-  const signIp = context.contract.client_ip || "Não disponível";
-  const signDate = context.contract.signed_at
-    ? new Date(context.contract.signed_at).toLocaleDateString("pt-BR")
-    : new Date().toLocaleDateString("pt-BR");
-  const signTime = context.contract.signed_at
-    ? new Date(context.contract.signed_at).toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo" })
-    : new Date().toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo" });
-  const signAgent = "Navegador Web";
+  // Fetch real signature data from contract_signatures table
+  let signIp = context.contract.client_ip || "Não disponível";
+  let signAgent = "Não disponível";
+  let signDateRaw = context.contract.signed_at ? new Date(context.contract.signed_at) : new Date();
+
+  try {
+    const supabaseForSig = createServiceClient();
+    const { data: sigData } = await supabaseForSig
+      .from("contract_signatures")
+      .select("ip_address, user_agent, signed_at")
+      .eq("contract_id", context.contract.id)
+      .order("signed_at", { ascending: false })
+      .limit(1)
+      .single();
+    if (sigData) {
+      signIp = sigData.ip_address || signIp;
+      signAgent = sigData.user_agent || signAgent;
+      if (sigData.signed_at) signDateRaw = new Date(sigData.signed_at);
+    }
+  } catch {}
+
+  const signDate = signDateRaw.toLocaleDateString("pt-BR");
+  const signTime = signDateRaw.toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo" });
 
   // Each traceability line: label bold, value normal
   const traceItems = [
