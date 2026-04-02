@@ -277,43 +277,59 @@ async function buildPdfBytes(context: Awaited<ReturnType<typeof getPostPurchaseC
   // 3 blank lines
   y -= 36;
 
-  // Signature lines
-  const lineWidth = 200;
-  const lineY = y;
-  const leftLineX = marginLeft;
-  const rightLineX = pageWidth - marginRight - lineWidth;
+  // CONTRATANTE signature block (centered)
+  const lineWidth = 250;
+  const centerX = (pageWidth - lineWidth) / 2;
 
-  ensureSpace(100);
-  // Draw two signature lines
-  page.drawLine({ start: { x: leftLineX, y: lineY }, end: { x: leftLineX + lineWidth, y: lineY }, thickness: 0.8, color: rgb(0.3, 0.3, 0.3) });
-  page.drawLine({ start: { x: rightLineX, y: lineY }, end: { x: rightLineX + lineWidth, y: lineY }, thickness: 0.8, color: rgb(0.3, 0.3, 0.3) });
+  ensureSpace(130);
 
-  y = lineY - 14;
+  // CONTRATANTE line
+  page.drawLine({ start: { x: centerX, y }, end: { x: centerX + lineWidth, y }, thickness: 0.8, color: rgb(0.3, 0.3, 0.3) });
+  y -= 14;
 
-  // CONTRATANTE block (left)
   const contratanteNome = (context.customer.razao_social || "").toUpperCase();
   const contratanteCnpj = context.customer.cnpj_ou_cpf || "00.000.000/0000-00";
-  page.drawText(contratanteNome, { x: leftLineX, y, size: 8, font: bold, color: rgb(0.15, 0.15, 0.15) });
-  y -= 12;
-  // "CNPJ:" bold, number normal
-  const cnpjLabel = "CNPJ: ";
-  page.drawText(cnpjLabel, { x: leftLineX, y, size: 8, font: bold, color: rgb(0.2, 0.2, 0.2) });
-  page.drawText(contratanteCnpj, { x: leftLineX + bold.widthOfTextAtSize(cnpjLabel, 8), y, size: 8, font, color: rgb(0.2, 0.2, 0.2) });
-  y -= 12;
-  page.drawText("CONTRATANTE", { x: leftLineX, y, size: 7, font: bold, color: rgb(0.4, 0.4, 0.4) });
+  const cnpjType = contratanteCnpj.replace(/\D/g, "").length > 11 ? "CNPJ" : "CPF";
 
-  // CONTRATADA block (right) - same vertical position as contratante
-  let rightY = lineY - 14;
-  page.drawText("WMTI TECNOLOGIA DA INFORMAÇÃO LTDA", { x: rightLineX, y: rightY, size: 8, font: bold, color: rgb(0.15, 0.15, 0.15) });
-  rightY -= 12;
+  // Contratante name centered
+  const contratanteNameWidth = bold.widthOfTextAtSize(contratanteNome, 8);
+  page.drawText(contratanteNome, { x: centerX + (lineWidth - contratanteNameWidth) / 2, y, size: 8, font: bold, color: rgb(0.15, 0.15, 0.15) });
+  y -= 12;
+  // CNPJ line
+  const cnpjLabel = `${cnpjType}: `;
+  const cnpjFullWidth = bold.widthOfTextAtSize(cnpjLabel, 8) + font.widthOfTextAtSize(contratanteCnpj, 8);
+  const cnpjStartX = centerX + (lineWidth - cnpjFullWidth) / 2;
+  page.drawText(cnpjLabel, { x: cnpjStartX, y, size: 8, font: bold, color: rgb(0.2, 0.2, 0.2) });
+  page.drawText(contratanteCnpj, { x: cnpjStartX + bold.widthOfTextAtSize(cnpjLabel, 8), y, size: 8, font, color: rgb(0.2, 0.2, 0.2) });
+  y -= 12;
+  const contratanteLabel = "CONTRATANTE";
+  const contratanteLabelWidth = bold.widthOfTextAtSize(contratanteLabel, 7);
+  page.drawText(contratanteLabel, { x: centerX + (lineWidth - contratanteLabelWidth) / 2, y, size: 7, font: bold, color: rgb(0.4, 0.4, 0.4) });
+
+  // Visual break between blocks
+  y -= 30;
+
+  // CONTRATADA signature block (centered)
+  ensureSpace(60);
+  page.drawLine({ start: { x: centerX, y }, end: { x: centerX + lineWidth, y }, thickness: 0.8, color: rgb(0.3, 0.3, 0.3) });
+  y -= 14;
+
+  const wmtiName = "WMTI TECNOLOGIA DA INFORMAÇÃO LTDA";
+  const wmtiNameWidth = bold.widthOfTextAtSize(wmtiName, 8);
+  page.drawText(wmtiName, { x: centerX + (lineWidth - wmtiNameWidth) / 2, y, size: 8, font: bold, color: rgb(0.15, 0.15, 0.15) });
+  y -= 12;
   const wmtiCnpjLabel = "CNPJ: ";
-  page.drawText(wmtiCnpjLabel, { x: rightLineX, y: rightY, size: 8, font: bold, color: rgb(0.2, 0.2, 0.2) });
-  page.drawText("13.366.668/0001-07", { x: rightLineX + bold.widthOfTextAtSize(wmtiCnpjLabel, 8), y: rightY, size: 8, font, color: rgb(0.2, 0.2, 0.2) });
-  rightY -= 12;
-  page.drawText("CONTRATADA", { x: rightLineX, y: rightY, size: 7, font: bold, color: rgb(0.4, 0.4, 0.4) });
+  const wmtiCnpjValue = "13.366.668/0001-07";
+  const wmtiCnpjFullWidth = bold.widthOfTextAtSize(wmtiCnpjLabel, 8) + font.widthOfTextAtSize(wmtiCnpjValue, 8);
+  const wmtiCnpjStartX = centerX + (lineWidth - wmtiCnpjFullWidth) / 2;
+  page.drawText(wmtiCnpjLabel, { x: wmtiCnpjStartX, y, size: 8, font: bold, color: rgb(0.2, 0.2, 0.2) });
+  page.drawText(wmtiCnpjValue, { x: wmtiCnpjStartX + bold.widthOfTextAtSize(wmtiCnpjLabel, 8), y, size: 8, font, color: rgb(0.2, 0.2, 0.2) });
+  y -= 12;
+  const contratadaLabel = "CONTRATADA";
+  const contratadaLabelWidth = bold.widthOfTextAtSize(contratadaLabel, 7);
+  page.drawText(contratadaLabel, { x: centerX + (lineWidth - contratadaLabelWidth) / 2, y, size: 7, font: bold, color: rgb(0.4, 0.4, 0.4) });
 
-  // Move y below both blocks
-  y = Math.min(y, rightY) - 30;
+  y -= 30;
 
   // Traceability block
   ensureSpace(90);
