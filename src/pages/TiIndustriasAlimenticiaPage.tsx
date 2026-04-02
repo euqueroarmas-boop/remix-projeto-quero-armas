@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Server, Network, Shield, HardDrive, Activity, Headphones } from "lucide-react";
 import ServicePageTemplate from "@/components/ServicePageTemplate";
+import UnifiedInfraCalculator from "@/components/orcamento/UnifiedInfraCalculator";
 import heroImg from "@/assets/segments/industrias-alimenticias.webp";
 
 const icons = [Server, Network, Shield, HardDrive, Activity, Headphones];
@@ -28,6 +29,8 @@ const TiIndustriasAlimenticiaPage = () => {
         { label: relatedLabels[3], href: "/firewall-pfsense-jacarei" },
       ]}
       localContent={t(`${k}.localContent`)}
+      allowedModes="recorrente_only"
+      extraSections={<UnifiedInfraCalculator contractHref="/contratar/administracao-de-servidores" pageTitle={t(`${k}.title`)} />}
     />
   );
 };

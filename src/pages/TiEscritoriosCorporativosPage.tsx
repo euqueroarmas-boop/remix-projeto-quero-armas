@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Server, HardDrive, Shield, Activity, Headphones, Network } from "lucide-react";
 import ServicePageTemplate from "@/components/ServicePageTemplate";
+import UnifiedInfraCalculator from "@/components/orcamento/UnifiedInfraCalculator";
 import heroImg from "@/assets/segments/empresas-corporativas.webp";
 
 const icons = [Server, Network, HardDrive, Shield, Activity, Headphones];
@@ -28,6 +29,8 @@ const TiEscritoriosCorporativosPage = () => {
         { label: relatedLabels[3], href: "/montagem-e-monitoramento-de-redes-jacarei" },
       ]}
       localContent={t(`${k}.localContent`)}
+      allowedModes="recorrente_only"
+      extraSections={<UnifiedInfraCalculator contractHref="/contratar/administracao-de-servidores" pageTitle={t(`${k}.title`)} />}
     />
   );
 };

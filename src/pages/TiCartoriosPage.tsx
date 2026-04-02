@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { FileCheck, Shield, Server, HardDrive, Lock, Activity } from "lucide-react";
 import ServicePageTemplate from "@/components/ServicePageTemplate";
 import CartorioDowntimeCalculator from "@/components/CartorioDowntimeCalculator";
+import UnifiedInfraCalculator from "@/components/orcamento/UnifiedInfraCalculator";
 import heroImg from "@/assets/segments/cartorio-moderno.jpg";
 
 const icons = [FileCheck, Server, HardDrive, Shield, Lock, Activity];
@@ -30,7 +31,8 @@ const TiCartoriosPage = () => {
           { label: relatedLabels[3], href: "/infraestrutura-ti-corporativa" },
         ]}
         localContent={t(`${k}.localContent`)}
-        extraSections={<CartorioDowntimeCalculator />}
+        allowedModes="recorrente_only"
+        extraSections={<><CartorioDowntimeCalculator /><UnifiedInfraCalculator contractHref="/contratar/administracao-de-servidores" pageTitle={t(`${k}.title`)} /></>}
       />
     </>
   );

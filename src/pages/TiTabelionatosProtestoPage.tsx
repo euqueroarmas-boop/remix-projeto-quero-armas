@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Shield, Server, HardDrive, Activity, Lock, Headphones, FileCheck, AlertTriangle } from "lucide-react";
 import ServicePageTemplate from "@/components/ServicePageTemplate";
 import CartorioDowntimeCalculator from "@/components/CartorioDowntimeCalculator";
+import UnifiedInfraCalculator from "@/components/orcamento/UnifiedInfraCalculator";
 import heroImg from "@/assets/segments/tabelionato-protesto.jpg";
 
 const icons = [Shield, Server, HardDrive, FileCheck, Lock, Activity, AlertTriangle, Headphones];
@@ -37,7 +38,8 @@ const TiTabelionatosProtestoPage = () => {
           { label: relatedLabels[5], href: "/backup-corporativo" },
         ]}
         localContent={t(`${k}.localContent`)}
-        extraSections={<CartorioDowntimeCalculator />}
+        allowedModes="recorrente_only"
+        extraSections={<><CartorioDowntimeCalculator /><UnifiedInfraCalculator contractHref="/contratar/administracao-de-servidores" pageTitle={t(`${k}.title`)} /></>}
       />
     </>
   );

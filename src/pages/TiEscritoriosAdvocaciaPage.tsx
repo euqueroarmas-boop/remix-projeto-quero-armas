@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Server, HardDrive, Shield, Activity, Headphones, Lock } from "lucide-react";
 import ServicePageTemplate from "@/components/ServicePageTemplate";
+import UnifiedInfraCalculator from "@/components/orcamento/UnifiedInfraCalculator";
 import heroImg from "@/assets/segments/escritorios-advocacia.webp";
 
 const icons = [Lock, Shield, HardDrive, Server, Activity, Headphones];
@@ -28,6 +29,8 @@ const TiEscritoriosAdvocaciaPage = () => {
         { label: relatedLabels[3], href: "/suporte-ti-jacarei" },
       ]}
       localContent={t(`${k}.localContent`)}
+      allowedModes="recorrente_only"
+      extraSections={<UnifiedInfraCalculator contractHref="/contratar/administracao-de-servidores" pageTitle={t(`${k}.title`)} />}
     />
   );
 };
