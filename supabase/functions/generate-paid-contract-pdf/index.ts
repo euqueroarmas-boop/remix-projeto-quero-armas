@@ -271,7 +271,7 @@ async function buildPdfBytes(context: Awaited<ReturnType<typeof getPostPurchaseC
   y -= 30;
 
   // Date line (bold)
-  const contractDate = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+  const contractDate = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric", timeZone: "America/Sao_Paulo" });
   drawTextBlock(`Jacareí/SP, ${contractDate}`, { size: 10, bold: true });
 
   // 3 blank lines
@@ -357,7 +357,7 @@ async function buildPdfBytes(context: Awaited<ReturnType<typeof getPostPurchaseC
     }
   } catch {}
 
-  const signDate = signDateRaw.toLocaleDateString("pt-BR");
+  const signDate = signDateRaw.toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
   const signTime = signDateRaw.toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo" });
 
   // Each traceability line: label bold, value normal
