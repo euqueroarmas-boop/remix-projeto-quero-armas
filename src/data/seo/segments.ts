@@ -30,6 +30,24 @@ export const segments: SeoSegment[] = [
     dedicatedPage: "/ti-para-serventias-cartoriais",
   },
   {
+    slug: "tabelionatos-notas",
+    name: "Tabelionatos de Notas",
+    titleSuffix: "para Tabelionatos de Notas",
+    descriptionExtra:
+      "Infraestrutura de TI especializada para tabelionatos de notas com conformidade ao Provimento 213 do CNJ, backup automatizado, firewall, monitoramento e continuidade operacional.",
+    painPoints: [
+      "Parada operacional por falha tecnológica sem plano de continuidade",
+      "Backup que nunca foi testado — risco real de perda de acervo",
+      "Ausência de conformidade com o Provimento 213 do CNJ",
+    ],
+    faqExtra: {
+      question: "A WMTi atende tabelionatos de notas?",
+      answer:
+        "Sim. Somos especialistas em infraestrutura de TI para tabelionatos de notas, com soluções em conformidade com o Provimento 213 do CNJ e foco em continuidade operacional e segurança do acervo digital.",
+    },
+    dedicatedPage: "/ti-para-tabelionatos-de-notas",
+  },
+  {
     slug: "hospitais",
     name: "Hospitais e Clínicas",
     titleSuffix: "para Hospitais e Clínicas",

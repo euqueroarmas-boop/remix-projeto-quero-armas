@@ -3,6 +3,7 @@
 const segmentoPages = [
   { path: "/ti-para-cartorios", name: "TI para Cartórios" },
   { path: "/ti-para-serventias-cartoriais", name: "TI para Serventias Cartoriais" },
+  { path: "/ti-para-tabelionatos-de-notas", name: "TI para Tabelionatos de Notas" },
   { path: "/ti-para-industrias-alimenticias", name: "TI para Indústrias Alimentícias" },
   { path: "/ti-para-industrias-petroliferas", name: "TI para Indústrias Petrolíferas" },
   { path: "/ti-para-escritorios-de-advocacia", name: "TI para Escritórios de Advocacia" },

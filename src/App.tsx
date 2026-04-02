@@ -134,6 +134,7 @@ const App = () => (
             {/* Segment dedicated pages */}
             <Route path="/ti-para-cartorios" element={<TiCartoriosPage />} />
             <Route path="/ti-para-serventias-cartoriais" element={<TiServentiasCartoriaisPage />} />
+            <Route path="/ti-para-tabelionatos-de-notas" element={<TiTabelionatosNotasPage />} />
             <Route path="/ti-para-industrias-alimenticias" element={<TiIndustriasAlimenticiaPage />} />
             <Route path="/ti-para-industrias-petroliferas" element={<TiIndustriasPetroliferasPage />} />
             <Route path="/ti-para-escritorios-de-advocacia" element={<TiEscritoriosAdvocaciaPage />} />
