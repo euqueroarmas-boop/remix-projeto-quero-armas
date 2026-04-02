@@ -188,13 +188,48 @@ async function buildPdfBytes(context: Awaited<ReturnType<typeof getPostPurchaseC
   drawTextBlock("WMTI TECNOLOGIA DA INFORMAÇÃO LTDA", { bold: true });
   drawTextBlock("CNPJ: 13.366.668/0001-07");
 
-  drawSectionTitle("Dados da contratação");
-  drawTextBlock(`Serviço/plano: ${buildServiceName(context)}`, { bold: true });
-  drawTextBlock(`Tipo de contrato: ${context.contract.contract_type || "Não informado"}`);
-  drawTextBlock(`Quantidade: ${context.quote.computers_qty || 0} equipamento(s)`);
-  drawTextBlock(`Valor contratado: ${formatCurrency(context.contract.monthly_value ?? context.quote.monthly_value ?? context.payment.amount)}`);
-  drawTextBlock(`Forma de pagamento: ${paymentLabel(context.payment.billing_type || context.payment.payment_method)}`);
-  drawTextBlock(`Status do pagamento: Confirmado`, { bold: true, color: rgb(0.13, 0.47, 0.24) });
+  // === Premium contract data table ===
+  y -= 8;
+  ensureSpace(140);
+  const tableX = marginLeft;
+  const tableWidth = pageWidth - marginLeft - marginRight;
+  const labelColWidth = 160;
+  const valueColWidth = tableWidth - labelColWidth;
+  const rowHeight = 22;
+  const tableFontSize = 9;
+  const tableData = [
+    { label: "Serviço / Plano", value: buildServiceName(context), highlight: true },
+    { label: "Tipo de contrato", value: context.contract.contract_type || "Não informado" },
+    { label: "Quantidade", value: `${context.quote.computers_qty || 0} equipamento(s)` },
+    { label: "Valor contratado", value: formatCurrency(context.contract.monthly_value ?? context.quote.monthly_value ?? context.payment.amount), highlight: true },
+    { label: "Forma de pagamento", value: paymentLabel(context.payment.billing_type || context.payment.payment_method) },
+    { label: "Status do pagamento", value: "Confirmado", highlight: true },
+  ];
+
+  for (let i = 0; i < tableData.length; i++) {
+    const row = tableData[i];
+    const rowY = y - rowHeight;
+    ensureSpace(rowHeight + 2);
+
+    // Row background (alternating)
+    const bgColor = i % 2 === 0 ? rgb(0.98, 0.98, 0.99) : rgb(1, 1, 1);
+    page.drawRectangle({ x: tableX, y: rowY, width: tableWidth, height: rowHeight, color: bgColor });
+    // Borders
+    page.drawLine({ start: { x: tableX, y: rowY }, end: { x: tableX + tableWidth, y: rowY }, thickness: 0.3, color: rgb(0.85, 0.85, 0.85) });
+    page.drawLine({ start: { x: tableX, y: rowY + rowHeight }, end: { x: tableX + tableWidth, y: rowY + rowHeight }, thickness: 0.3, color: rgb(0.85, 0.85, 0.85) });
+    // Label cell
+    page.drawRectangle({ x: tableX, y: rowY, width: labelColWidth, height: rowHeight, color: rgb(0.95, 0.95, 0.96) });
+    page.drawText(row.label, { x: tableX + 8, y: rowY + 7, size: tableFontSize, font: bold, color: rgb(0.2, 0.2, 0.2) });
+    // Value cell
+    const valueFont = row.highlight ? bold : font;
+    const valueColor = row.label === "Status do pagamento" ? rgb(0.13, 0.47, 0.24) : rgb(0.15, 0.15, 0.15);
+    page.drawText(row.value, { x: tableX + labelColWidth + 8, y: rowY + 7, size: tableFontSize, font: valueFont, color: valueColor });
+
+    y = rowY;
+  }
+  // Bottom border
+  page.drawLine({ start: { x: tableX, y }, end: { x: tableX + tableWidth, y }, thickness: 0.5, color: rgb(0.7, 0.7, 0.7) });
+  y -= 12;
 
   drawSectionTitle("Acesso ao portal do cliente");
   drawTextBlock(`Login: ${access.email}`, { bold: true });
