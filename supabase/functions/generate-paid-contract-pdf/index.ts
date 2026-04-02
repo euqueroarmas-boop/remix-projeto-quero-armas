@@ -42,6 +42,21 @@ function stripHtml(html?: string | null) {
     .trim();
 }
 
+async function loadLetterhead(pdfDoc: InstanceType<typeof PDFDocument>) {
+  const LETTERHEAD_URL = `${Deno.env.get("SUPABASE_URL")}/storage/v1/object/public/contract-assets/timbrado-wmti.pdf`;
+  try {
+    const resp = await fetch(LETTERHEAD_URL);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const bytes = new Uint8Array(await resp.arrayBuffer());
+    const letterheadDoc = await PDFDocument.load(bytes);
+    const [embeddedPage] = await pdfDoc.embedPdf(letterheadDoc, [0]);
+    return embeddedPage;
+  } catch (err) {
+    console.warn("[generate-paid-contract-pdf] Letterhead not available, using plain layout:", err);
+    return null;
+  }
+}
+
 async function buildPdfBytes(context: Awaited<ReturnType<typeof getPostPurchaseContext>>, access: Awaited<ReturnType<typeof ensureClientAccess>>) {
   const pdfDoc = await PDFDocument.create();
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
@@ -49,16 +64,28 @@ async function buildPdfBytes(context: Awaited<ReturnType<typeof getPostPurchaseC
 
   const pageWidth = 595.28;
   const pageHeight = 841.89;
-  const margin = 42;
-  const lineHeight = 15;
+  const marginLeft = 50;
+  const marginRight = 50;
+  const topMargin = 120; // space for letterhead header
+  const bottomMargin = 60; // space for letterhead footer
 
-  let page = pdfDoc.addPage([pageWidth, pageHeight]);
-  let y = pageHeight - margin;
+  const letterhead = await loadLetterhead(pdfDoc);
+
+  const addNewPage = () => {
+    const p = pdfDoc.addPage([pageWidth, pageHeight]);
+    if (letterhead) {
+      p.drawPage(letterhead, { x: 0, y: 0, width: pageWidth, height: pageHeight });
+    }
+    return p;
+  };
+
+  let page = addNewPage();
+  let y = pageHeight - topMargin;
 
   const ensureSpace = (height: number) => {
-    if (y - height < margin) {
-      page = pdfDoc.addPage([pageWidth, pageHeight]);
-      y = pageHeight - margin;
+    if (y - height < bottomMargin) {
+      page = addNewPage();
+      y = pageHeight - topMargin;
     }
   };
 
