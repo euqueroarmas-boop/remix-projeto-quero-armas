@@ -24,7 +24,8 @@ export interface ClientCredentials {
 
 export interface PdfGenerationResult {
   success: boolean;
-  pdf_url?: string | null;
+  /** Whether a PDF exists for this contract (use serve-contract-pdf to fetch it) */
+  has_pdf?: boolean;
   file_name?: string;
   generated?: boolean;
   reused_existing?: boolean;
@@ -113,7 +114,21 @@ export async function resolvePaidContractPdf(
   });
 
   if (error) throw error;
-  return data as PdfGenerationResult;
+
+  const raw = data as any;
+
+  // Map response: never expose pdf_url to frontend
+  const result: PdfGenerationResult = {
+    success: raw.success,
+    has_pdf: Boolean(raw.pdf_url || raw.has_pdf),
+    file_name: raw.file_name,
+    generated: raw.generated,
+    reused_existing: raw.reused_existing,
+    error: raw.error,
+    status: raw.status,
+  };
+
+  return result;
 }
 
 export function readPurchaseInfoFromSession() {

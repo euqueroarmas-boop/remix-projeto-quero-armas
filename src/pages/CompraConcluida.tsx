@@ -14,11 +14,10 @@ const CompraConcluida = () => {
   const [data, setData] = useState<PurchaseInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [pdfReady, setPdfReady] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
-  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [pdfError, setPdfError] = useState<string | null>(null);
 
-  // Fetch purchase data
   useEffect(() => {
     const sessionData = readPurchaseInfoFromSession();
     if (sessionData) {
@@ -48,13 +47,13 @@ const CompraConcluida = () => {
     fetchData();
   }, [quoteId]);
 
+  // Check if PDF already exists (without generating)
   useEffect(() => {
     if (!quoteId) return;
-
     resolvePaidContractPdf(quoteId, { generateIfMissing: false })
       .then((result) => {
-        if (result.success && result.pdf_url) {
-          setPdfUrl(result.pdf_url);
+        if (result.success && result.has_pdf) {
+          setPdfReady(true);
         }
       })
       .catch((err) => {
@@ -69,11 +68,12 @@ const CompraConcluida = () => {
 
     try {
       const result = await resolvePaidContractPdf(quoteId, { generateIfMissing: true });
-      if (!result.success || !result.pdf_url) {
+      if (!result.success) {
         throw new Error(result.error || "Não foi possível gerar o contrato PDF.");
       }
-      setPdfUrl(result.pdf_url);
-      window.open(result.pdf_url, "_blank", "noopener,noreferrer");
+      setPdfReady(true);
+      // Navigate to the dedicated contract page (WMTi domain route)
+      navigate(`/contrato-final/${quoteId}`);
     } catch (err) {
       console.error("[WMTi] Erro ao gerar PDF:", err);
       setPdfError(err instanceof Error ? err.message : "Falha ao gerar o PDF final.");
@@ -110,9 +110,8 @@ const CompraConcluida = () => {
               visible
               data={data}
               quoteId={quoteId || ""}
-              pdfUrl={pdfUrl}
               pdfLoading={pdfLoading}
-              pdfReady={Boolean(pdfUrl)}
+              pdfReady={pdfReady}
               pdfError={pdfError}
               onGeneratePdf={handleGeneratePdf}
             />

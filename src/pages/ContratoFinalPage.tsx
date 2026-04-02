@@ -7,7 +7,7 @@ import SeoHead from "@/components/SeoHead";
 import { Button } from "@/components/ui/button";
 import { ErrorBlock } from "@/components/ui/ErrorBlock";
 import { resolvePaidContractPdf, type PdfGenerationResult } from "@/lib/postPurchase";
-import { downloadPdf } from "@/lib/pdfDownload";
+import { downloadPdf, viewPdf } from "@/lib/pdfDownload";
 import { logAndPersistError, type WmtiError } from "@/lib/errorLogger";
 
 type ContractState = "checking" | "not_generated" | "available" | "error" | "generating" | "downloading";
@@ -27,7 +27,7 @@ const ContratoFinalPage = () => {
     try {
       const response = await resolvePaidContractPdf(quoteId, { generateIfMissing: false });
       setResult(response);
-      setState(response.success && response.pdf_url ? "available" : "not_generated");
+      setState(response.success && response.has_pdf ? "available" : "not_generated");
     } catch (err) {
       const wmtiErr = await logAndPersistError({
         action: "check_contract_status",
@@ -49,7 +49,7 @@ const ContratoFinalPage = () => {
     setLastError(null);
     try {
       const response = await resolvePaidContractPdf(quoteId, { generateIfMissing: true });
-      if (!response.success || !response.pdf_url) {
+      if (!response.success) {
         throw new Error(response.error || "PDF não foi gerado");
       }
       setResult(response);
@@ -68,11 +68,11 @@ const ContratoFinalPage = () => {
   };
 
   const handleDownload = async () => {
-    if (!result?.pdf_url || !quoteId) return;
+    if (!quoteId) return;
     setState("downloading");
     setLastError(null);
-    const fileName = result.file_name || `contrato-wmti-${quoteId.slice(0, 8).toUpperCase()}.pdf`;
-    const downloadResult = await downloadPdf(result.pdf_url, fileName, { quoteId });
+    const fileName = result?.file_name || `contrato-wmti-${quoteId.slice(0, 8).toUpperCase()}.pdf`;
+    const downloadResult = await downloadPdf(fileName, { quoteId });
     if (!downloadResult.success) {
       setLastError(downloadResult.error || null);
       setState("error");
@@ -82,28 +82,11 @@ const ContratoFinalPage = () => {
   };
 
   const handleView = async () => {
-    if (!result?.pdf_url) return;
-    // Fetch the PDF as blob and open in a new tab to avoid exposing external URLs
-    try {
-      const resp = await fetch(result.pdf_url);
-      if (!resp.ok) {
-        const wmtiErr = await logAndPersistError({
-          action: "view_contract_pdf",
-          message: `Arquivo não acessível (HTTP ${resp.status})`,
-          httpStatus: resp.status,
-          quoteId,
-          functionName: "view_contract",
-        });
-        setLastError(wmtiErr);
-        setState("error");
-        return;
-      }
-      const blob = await resp.blob();
-      const blobUrl = URL.createObjectURL(blob);
-      window.open(blobUrl, "_blank", "noopener,noreferrer");
-    } catch {
-      // Fallback: try opening directly
-      window.open(result.pdf_url, "_blank", "noopener,noreferrer");
+    if (!quoteId) return;
+    const viewResult = await viewPdf({ quoteId });
+    if (!viewResult.success && viewResult.error) {
+      setLastError(viewResult.error);
+      setState("error");
     }
   };
 
@@ -115,7 +98,7 @@ const ContratoFinalPage = () => {
       const response = await resolvePaidContractPdf(quoteId, { generateIfMissing: true, sendEmail: true });
       if (!response.success) throw new Error(response.error || "Falha ao enviar");
       setResult(response);
-      if (response.pdf_url) setState("available");
+      if (response.has_pdf) setState("available");
     } catch (err) {
       const wmtiErr = await logAndPersistError({
         action: "email_contract_pdf",
@@ -157,7 +140,6 @@ const ContratoFinalPage = () => {
           </div>
 
           <section className="rounded-2xl border border-border bg-card p-5 md:p-6 shadow-lg space-y-5">
-            {/* Status indicator */}
             <div className={`rounded-xl border p-4 text-sm flex items-center gap-3 ${
               state === "error" ? "border-destructive/30 bg-destructive/10" :
               state === "available" ? "border-green-500/30 bg-green-500/10" :
@@ -176,20 +158,18 @@ const ContratoFinalPage = () => {
               </div>
             </div>
 
-            {/* Error block with copy */}
             {state === "error" && lastError && (
               <ErrorBlock
                 message={lastError.message}
                 error={lastError}
-                onRetry={result?.pdf_url ? handleDownload : generatePdf}
-                retryLabel={result?.pdf_url ? "Tentar download novamente" : "Regenerar contrato"}
+                onRetry={state === "available" ? handleDownload : generatePdf}
+                retryLabel={state === "available" ? "Tentar download novamente" : "Regenerar contrato"}
               />
             )}
 
-            {/* Action buttons */}
             {!isLoading && (
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                {state === "available" && result?.pdf_url ? (
+                {state === "available" ? (
                   <>
                     <Button onClick={handleView}>
                       <Eye className="mr-2 h-4 w-4" />
