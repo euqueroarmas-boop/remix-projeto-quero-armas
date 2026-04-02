@@ -1042,7 +1042,7 @@ const ContratarServicoPage = () => {
                     className="w-full inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
                   >
                     <ArrowRight size={16} />
-                    Resolver agora com especialista
+                    COMPRAR AGORA
                   </button>
                 </div>
               </WizardStepWrapper>
@@ -1126,7 +1126,7 @@ const ContratarServicoPage = () => {
                     </div>
                     <Button onClick={handlePayment} disabled={!selectedPayment || paymentLoading} className="w-full h-14 text-base bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50">
                       <ExternalLink className="w-5 h-5 mr-2" />
-                      PROSSEGUIR PARA PAGAMENTO
+                      {paymentError ? "Tentar novamente" : "COMPRAR AGORA"}
                     </Button>
                   </div>
                 )}
@@ -1490,7 +1490,7 @@ const ContratarServicoPage = () => {
 
                 <Button onClick={handlePayment} disabled={!selectedPayment || paymentLoading} className="w-full h-14 text-base bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50">
                   <ExternalLink className="w-5 h-5 mr-2" />
-                  {paymentError ? "Tentar novamente" : "PROSSEGUIR PARA PAGAMENTO"}
+                  {paymentError ? "Tentar novamente" : "COMPRAR AGORA"}
                 </Button>
               </div>
             )}
