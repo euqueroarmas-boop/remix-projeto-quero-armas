@@ -1824,82 +1824,103 @@
       "localContent": "Request a technology infrastructure analysis for your company. We serve Jacareí, Paraíba Valley and across Brazil."
     },
     "tiServentias": {
-      "title": "IT Infrastructure for Notarial Registries",
-      "metaTitle": "IT for Notarial Registries | Your registry could shut down — and it's on you | WMTi",
-      "metaDescription": "IT infrastructure for notarial registries in compliance with CNJ Provision 213. Prevent shutdowns, sanctions and revenue loss.",
-      "tag": "IT for Notarial Registries",
+      "title": "IT Infrastructure for Notarial & Registry Services",
+      "metaTitle": "IT for Notary Offices | Notary, Civil Registry, Protest & Real Estate — Provision 213 | WMTi",
+      "metaDescription": "IT infrastructure for all extrajudicial registries: notary offices, civil registries, protest offices, real estate registries and more. Full compliance with CNJ Provision 213.",
+      "tag": "IT for Notarial & Registry Services",
       "headline1": "Your registry could shut down. ",
       "headlineHighlight": "And the holder is personally liable.",
       "headline2": "",
-      "description": "There's no such thing as a 'technical issue' in a registry. There's only holder liability. CNJ Provision 213 demands continuity, security, integrity and traceability. When systems fail: service stops, revenue is lost, legal acts may be compromised. And this can trigger action from the regulatory authority.",
-      "whatsappMessage": "Hi! I need to adapt my notarial registry's IT infrastructure to Provision 213. I'd like to speak with a specialist.",
+      "description": "Whether it's a notary office, civil registry, real estate registry, protest office or any other extrajudicial service — CNJ Provision 213 requires the same from all: operational continuity, security, integrity, traceability and documented compliance. When systems fail, service stops, revenue is lost, legal acts may be compromised and liability falls directly on the holder. WMTi specializes in IT infrastructure for all extrajudicial registries, delivering solutions tailored to each unit's class, size and criticality.",
+      "whatsappMessage": "Hi! I need to adapt my registry's IT infrastructure to CNJ Provision 213. I'd like to speak with a specialist.",
       "painPoints": [
-        "Unstable registry systems that freeze during customer service",
-        "Manual backup or never tested — risk of total data loss",
-        "No firewall — confidential client data exposed",
+        "Unstable registry systems that freeze during service",
+        "Manual or untested backup — real risk of total data loss",
+        "No dedicated firewall — confidential client data exposed",
         "Only 1 internet link with no redundancy",
         "Shared logins — impossible to trace who did what",
+        "No business continuity plan (BCP) or disaster recovery plan (DRP)",
+        "Missing or incomplete audit trails",
         "Failures can trigger sanctions — liability falls on the holder"
       ],
       "solutions": [
-        "Complete Provision 213 compliance assessment",
+        "Complete Provision 213 compliance assessment — all stages and classes",
         "Windows Server with redundant RAID for continuous operation",
-        "Automated corporate backup with local and cloud replication",
-        "pfSense firewall with network segmentation and IDS/IPS",
-        "24/7 monitoring with automatic alerts",
+        "Automated corporate backup with local and cloud replication, periodically tested",
+        "pfSense firewall with network segmentation, IDS/IPS and perimeter protection",
+        "Individual and multi-factor authentication for critical access",
+        "Immutable audit trails with time synchronization from trusted source",
+        "24/7 monitoring with automatic alerts and proactive vulnerability management",
         "Specialized support with scheduled preventive maintenance"
       ],
       "benefits": [
         {
-          "title": "High-availability servers",
-          "text": "Windows Server with RAID and redundancy. Your registry system never freezes during service again."
+          "title": "Provision 213 compliance",
+          "text": "We implement all 5 stages of Annex IV — governance, infrastructure, archive protection, auditing and interoperability — for any type of registry."
         },
         {
-          "title": "Backup with guaranteed restoration",
-          "text": "Local and cloud replication with periodic testing. When crisis hits, it actually works."
+          "title": "High-availability servers",
+          "text": "Windows Server with RAID and redundancy. Your registry system runs without freezing, regardless of transaction volume."
+        },
+        {
+          "title": "Tested and restorable backup",
+          "text": "Local and cloud replication with source encryption and documented periodic restoration tests."
         },
         {
           "title": "Armored network",
-          "text": "pfSense firewall, network segmentation and security policies that protect confidential data."
+          "text": "pfSense firewall, network segmentation, AES-256 encryption and formalized security policy per Annex III."
+        },
+        {
+          "title": "Traceability and auditing",
+          "text": "Immutable audit trails with minimum 5-year retention, NTP synchronization and unambiguous identification of each operation."
         },
         {
           "title": "Monitoring before failure",
-          "text": "Servers and network monitored 24/7. We act before the problem becomes downtime."
+          "text": "Servers, network and backup monitored 24/7. We act before the problem becomes downtime."
         },
         {
-          "title": "Documented compliance",
-          "text": "All Provision 213 requirements met, documented and auditable."
+          "title": "Vulnerability management",
+          "text": "Critical vulnerabilities addressed within 30 days, with immediate measures when there is active risk."
         },
         {
-          "title": "Support that knows registries",
-          "text": "Team specialized in notarial operations. We don't show up only after everything has stopped."
+          "title": "Registry-specialized support",
+          "text": "Team experienced with extrajudicial registries — notary offices, civil registries, protest offices and more. We're not generic IT support."
         }
       ],
       "faq": [
         {
-          "question": "Does WMTi guarantee full Provision 213 compliance?",
-          "answer": "Yes. We assess, implement all infrastructure and deliver compliance documentation for all classes."
+          "question": "Does Provision 213 apply to all types of registries?",
+          "answer": "Yes. CNJ Provision 213 applies to all notarial and registry services in Brazil: notary offices, civil registries, real estate registries, protest offices and all extrajudicial services."
         },
         {
-          "question": "What happens if my registry doesn't comply?",
-          "answer": "Provision 213 is mandatory. Non-compliance can trigger warnings, fines and sanctions. Liability is personal to the holder."
+          "question": "Which types of registries does WMTi serve?",
+          "answer": "We serve all types: notary offices, civil registries, real estate registries, protest offices and mixed registries. Solutions are tailored to each unit's class, size and criticality."
         },
         {
-          "question": "My backup is set up. Should I worry?",
-          "answer": "If it's never been tested, it's the same as having none. Over 60% of backups fail during restoration. We test periodically."
+          "question": "What happens if my registry doesn't comply with Provision 213?",
+          "answer": "Unjustified non-compliance may trigger administrative disciplinary proceedings, in addition to civil and criminal liabilities. Liability is personal and non-delegable."
+        },
+        {
+          "question": "My backup is configured. Should I worry?",
+          "answer": "If it's never been formally tested, yes. The Provision requires documented restoration tests — semi-annually or annually depending on class. Untested backup is a serious risk."
         },
         {
           "question": "Do you serve registries outside the Paraíba Valley?",
-          "answer": "Yes. We serve notarial registries across Brazil."
+          "answer": "Yes. We serve notarial and registry offices across Brazil, with remote and on-site support as needed."
+        },
+        {
+          "question": "Does WMTi produce the technical dossier required by the regulatory authority?",
+          "answer": "Yes. We deliver a technical dossier with documentary evidence, integrity hashes, test records and compliance reports for each implemented stage."
         }
       ],
       "relatedLabels": [
         "IT for Notary Offices",
         "Provision 213",
-        "Dell servers",
-        "pfSense Firewall"
+        "Dell Servers",
+        "pfSense Firewall",
+        "Notary Public Offices"
       ],
-      "localContent": "We serve notarial registries in Jacareí, São José dos Campos, Taubaté, Sorocaba, Campinas and across Brazil."
+      "localContent": "We serve all extrajudicial registries — notary offices, civil registries, real estate registries, protest offices and more — in Jacareí, São José dos Campos, Taubaté, Campinas, Sorocaba and across Brazil."
     },
     "tiTabelionatos": {
       "title": "IT Infrastructure for Notary Offices (Tabelionatos de Notas)",

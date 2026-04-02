@@ -1,15 +1,15 @@
 import { useTranslation } from "react-i18next";
-import { Server, HardDrive, Shield, Activity, Headphones, Lock } from "lucide-react";
+import { Shield, Server, HardDrive, Activity, Lock, Headphones, FileCheck, AlertTriangle } from "lucide-react";
 import ServicePageTemplate from "@/components/ServicePageTemplate";
 import CartorioDowntimeCalculator from "@/components/CartorioDowntimeCalculator";
 import heroImg from "@/assets/segments/cartorio-moderno.jpg";
 
-const icons = [Server, HardDrive, Shield, Activity, Lock, Headphones];
+const icons = [Shield, Server, HardDrive, FileCheck, Lock, Activity, AlertTriangle, Headphones];
 
 const TiServentiasCartoriaisPage = () => {
   const { t } = useTranslation();
   const k = "p.tiServentias";
-  const benefits = (t(`${k}.benefits`, { returnObjects: true }) as { title: string; text: string }[]).map((b, i) => ({ ...b, icon: icons[i] }));
+  const benefits = (t(`${k}.benefits`, { returnObjects: true }) as { title: string; text: string }[]).map((b, i) => ({ ...b, icon: icons[i % icons.length] }));
   const relatedLabels = t(`${k}.relatedLabels`, { returnObjects: true }) as string[];
 
   return (
@@ -18,7 +18,7 @@ const TiServentiasCartoriaisPage = () => {
         title={t(`${k}.title`)} metaTitle={t(`${k}.metaTitle`)} metaDescription={t(`${k}.metaDescription`)} tag={t(`${k}.tag`)}
         headline={<>{t(`${k}.headline1`)}<span className="text-primary">{t(`${k}.headlineHighlight`)}</span>{t(`${k}.headline2`)}</>}
         description={t(`${k}.description`)} whatsappMessage={t(`${k}.whatsappMessage`)}
-        heroImage={heroImg} heroImageAlt="Modern notary office with technology"
+        heroImage={heroImg} heroImageAlt="Serventia cartorial com infraestrutura de TI moderna e segura"
         painPoints={t(`${k}.painPoints`, { returnObjects: true }) as string[]}
         solutions={t(`${k}.solutions`, { returnObjects: true }) as string[]}
         benefits={benefits}
@@ -28,7 +28,7 @@ const TiServentiasCartoriaisPage = () => {
           { label: relatedLabels[1], href: "/cartorios/provimento-213" },
           { label: relatedLabels[2], href: "/servidor-dell-poweredge-jacarei" },
           { label: relatedLabels[3], href: "/firewall-pfsense-jacarei" },
-          { label: "Tabelionatos de Notas", href: "/ti-para-tabelionatos-de-notas" },
+          { label: relatedLabels[4], href: "/ti-para-tabelionatos-de-notas" },
         ]}
         localContent={t(`${k}.localContent`)}
         extraSections={<CartorioDowntimeCalculator />}

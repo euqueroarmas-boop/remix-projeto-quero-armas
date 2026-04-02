@@ -1824,82 +1824,103 @@
       "localContent": "Solicite uma análise da infraestrutura tecnológica da sua empresa. Atendemos em Jacareí, Vale do Paraíba e em todo o Brasil."
     },
     "tiServentias": {
-      "title": "Infraestrutura de TI para Serventias Notariais",
-      "metaTitle": "TI para Serventias Notariais | Seu cartório pode parar — e a responsabilidade é sua | WMTi",
-      "metaDescription": "Infraestrutura de TI para serventias notariais em conformidade com o Provimento 213 do CNJ. Evite paradas, sanções e perda de faturamento.",
-      "tag": "TI para Serventias Notariais",
-      "headline1": "Sua serventia pode parar. ",
+      "title": "Infraestrutura de TI para Serventias Cartoriais",
+      "metaTitle": "TI para Cartórios | Tabelionatos, Registros Civis, Protestos e Ofícios — Provimento 213 | WMTi",
+      "metaDescription": "Infraestrutura de TI para todas as serventias extrajudiciais: tabelionatos de notas, registros civis, protestos, registros de imóveis e ofícios. Conformidade com o Provimento 213 do CNJ.",
+      "tag": "TI para Serventias Cartoriais",
+      "headline1": "Seu cartório pode parar. ",
       "headlineHighlight": "E a responsabilidade é do titular.",
       "headline2": "",
-      "description": "Não existe problema técnico em cartório. Existe responsabilidade do titular. O Provimento 213 do CNJ exige continuidade, segurança, integridade e rastreabilidade. Se houver falha: atendimento para, faturamento é perdido, atos podem ser comprometidos. E isso pode gerar problema com a corregedoria e o juiz corregedor.",
-      "whatsappMessage": "Olá! Preciso adequar a infraestrutura de TI da minha serventia notarial ao Provimento 213. Quero falar com um especialista.",
+      "description": "Não importa se é tabelionato de notas, registro civil, registro de imóveis, protesto ou ofício de notas. O Provimento 213 do CNJ exige o mesmo de todos: continuidade operacional, segurança, integridade, rastreabilidade e conformidade documentada. Se houver falha, o atendimento para, o faturamento é perdido, atos podem ser comprometidos e a responsabilidade recai diretamente sobre o titular. A WMTi é especialista em infraestrutura de TI para serventias extrajudiciais. Atendemos todos os tipos de cartórios com soluções adequadas à classe, ao porte e à criticidade de cada unidade.",
+      "whatsappMessage": "Olá! Preciso adequar a infraestrutura de TI do meu cartório ao Provimento 213 do CNJ. Quero falar com um especialista.",
       "painPoints": [
         "Sistemas cartoriais instáveis que travam no meio do atendimento",
-        "Backup manual ou que nunca foi testado — risco de perda total",
-        "Sem firewall — dados sigilosos de clientes expostos",
+        "Backup manual ou nunca testado — risco real de perda de acervo",
+        "Sem firewall dedicado — dados sigilosos de clientes expostos",
         "Apenas 1 link de internet sem redundância",
-        "Login compartilhado — impossível rastrear quem fez o quê",
+        "Login compartilhado entre funcionários — impossível rastrear quem fez o quê",
+        "Sem plano de continuidade (PCN) nem plano de recuperação (PRD)",
+        "Trilhas de auditoria inexistentes ou incompletas",
         "Falhas podem gerar sanções — a responsabilidade recai sobre o titular"
       ],
       "solutions": [
-        "Diagnóstico completo de conformidade com o Provimento 213",
+        "Diagnóstico completo de conformidade com o Provimento 213 — todas as etapas e classes",
         "Servidores Windows Server com RAID redundante para operação contínua",
-        "Backup corporativo automatizado com replicação local e nuvem",
-        "Firewall pfSense com segmentação de rede e IDS/IPS",
-        "Monitoramento 24/7 com alertas automáticos",
+        "Backup corporativo automatizado com replicação local e nuvem, testado periodicamente",
+        "Firewall pfSense com segmentação de rede, IDS/IPS e proteção perimetral",
+        "Autenticação individualizada e multifator para acessos críticos",
+        "Trilhas de auditoria imutáveis com sincronização de tempo por fonte confiável",
+        "Monitoramento 24/7 com alertas automáticos e gestão proativa de vulnerabilidades",
         "Suporte especializado com manutenção preventiva programada"
       ],
       "benefits": [
         {
-          "title": "Servidores de alta disponibilidade",
-          "text": "Windows Server com RAID e redundância. Seu sistema cartorial nunca mais trava no meio do atendimento."
+          "title": "Conformidade com o Provimento 213",
+          "text": "Implementamos todas as 5 etapas do Anexo IV — governança, infraestrutura, proteção do acervo, auditoria e interoperabilidade — para qualquer tipo de serventia."
         },
         {
-          "title": "Backup com restauração garantida",
-          "text": "Replicação local e nuvem com testes periódicos. Na hora da crise, funciona de verdade."
+          "title": "Servidores de alta disponibilidade",
+          "text": "Windows Server com RAID e redundância. Seu sistema cartorial funciona sem travamentos, independente do volume de atos."
+        },
+        {
+          "title": "Backup testado e restaurável",
+          "text": "Replicação local e nuvem com criptografia na origem e testes periódicos de restauração documentados."
         },
         {
           "title": "Rede blindada",
-          "text": "Firewall pfSense, segmentação de rede e políticas de segurança que protegem dados sigilosos."
+          "text": "Firewall pfSense, segmentação de rede, criptografia AES-256 e política de segurança formalizada conforme o Anexo III."
+        },
+        {
+          "title": "Rastreabilidade e auditoria",
+          "text": "Trilhas de auditoria imutáveis com retenção mínima de 5 anos, sincronização NTP e identificação inequívoca de cada operação."
         },
         {
           "title": "Monitoramento antes da falha",
-          "text": "Servidores e rede monitorados 24/7. Agimos antes do problema virar parada."
+          "text": "Servidores, rede e backup monitorados 24/7. Agimos antes do problema virar parada operacional."
         },
         {
-          "title": "Conformidade documentada",
-          "text": "Todos os requisitos do Provimento 213 atendidos, documentados e auditáveis."
+          "title": "Gestão de vulnerabilidades",
+          "text": "Tratamento de vulnerabilidades críticas em até 30 dias, com medidas imediatas quando há risco ativo."
         },
         {
-          "title": "Suporte que conhece cartório",
-          "text": "Equipe especializada na rotina de serventias. Não aparecemos só quando tudo já parou."
+          "title": "Suporte especializado em cartórios",
+          "text": "Equipe que conhece a rotina de serventias extrajudiciais — tabelionatos, registros, protestos e ofícios. Não somos suporte genérico."
         }
       ],
       "faq": [
         {
-          "question": "A WMTi garante conformidade total com o Provimento 213?",
-          "answer": "Sim. Fazemos diagnóstico, implementamos toda a infraestrutura e entregamos documentação de conformidade para todas as classes."
+          "question": "O Provimento 213 se aplica a todos os tipos de cartórios?",
+          "answer": "Sim. O Provimento 213 do CNJ se aplica a todos os serviços notariais e de registro do Brasil: tabelionatos de notas, registros civis, registros de imóveis, protestos, ofícios e demais serventias extrajudiciais."
         },
         {
-          "question": "O que acontece se minha serventia não se adequar?",
-          "answer": "O Provimento 213 é obrigatório. A não conformidade pode gerar advertências, multas e sanções pela corregedoria. A responsabilidade é pessoal do titular."
+          "question": "A WMTi atende qual tipo de cartório?",
+          "answer": "Atendemos todos: tabelionatos de notas, registros civis, registros de imóveis, cartórios de protesto, ofícios de notas e serventias mistas. A solução é adequada à classe, porte e criticidade de cada unidade."
+        },
+        {
+          "question": "O que acontece se meu cartório não se adequar ao Provimento 213?",
+          "answer": "O descumprimento injustificado pode ensejar procedimento administrativo disciplinar, além de responsabilidades civis e penais. A responsabilidade é pessoal e indelegável do titular."
         },
         {
           "question": "Meu backup está configurado. Preciso me preocupar?",
-          "answer": "Se nunca foi testado, é o mesmo que não ter. Mais de 60% dos backups falham na restauração. Testamos periodicamente."
+          "answer": "Se nunca foi testado formalmente, sim. O Provimento exige testes documentados de restauração — semestrais ou anuais conforme a classe. Backup sem teste comprovado é risco grave."
         },
         {
           "question": "Atendem serventias fora do Vale do Paraíba?",
-          "answer": "Sim. Atendemos serventias notariais em todo o Brasil."
+          "answer": "Sim. Atendemos serventias cartoriais em todo o Brasil, com suporte remoto e presencial conforme a necessidade."
+        },
+        {
+          "question": "A WMTi faz o dossiê técnico exigido pela corregedoria?",
+          "answer": "Sim. Entregamos dossiê técnico com evidências documentais, hash de integridade, atas de teste e relatórios de conformidade para cada etapa implementada."
         }
       ],
       "relatedLabels": [
         "TI para Cartórios",
         "Provimento 213",
         "Servidores Dell",
-        "Firewall pfSense"
+        "Firewall pfSense",
+        "Tabelionatos de Notas"
       ],
-      "localContent": "Atendemos serventias notariais em Jacareí, São José dos Campos, Taubaté, Sorocaba, Campinas e em todo o Brasil."
+      "localContent": "Atendemos todas as serventias extrajudiciais — tabelionatos de notas, registros civis, registros de imóveis, protestos e ofícios — em Jacareí, São José dos Campos, Taubaté, Campinas, Sorocaba e em todo o Brasil."
     },
     "tiTabelionatos": {
       "title": "Infraestrutura de TI para Tabelionatos de Notas",
