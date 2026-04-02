@@ -377,18 +377,37 @@ const Navbar = () => {
                 {items.map((item) => {
                   const Icon = item.icon;
                   return (
-                    <Link
-                      key={item.href + item.label}
-                      to={item.href}
-                      onClick={() => { closeMobileMenu(); setIsOpen(false); }}
-                      className={`flex items-center gap-4 py-3 px-4 transition-colors hover:bg-white/[0.04] ${
-                        location.pathname === item.href ? "text-primary" : "text-muted-foreground hover:text-primary"
-                      }`}
-                      style={{ borderRadius: "10px" }}
-                    >
-                      <Icon size={24} className="text-primary shrink-0" strokeWidth={1.5} />
-                      <span className="font-mono text-sm uppercase tracking-wider">{item.label}</span>
-                    </Link>
+                    <div key={item.href + item.label}>
+                      <Link
+                        to={item.href}
+                        onClick={() => { closeMobileMenu(); setIsOpen(false); }}
+                        className={`flex items-center gap-4 py-3 px-4 transition-colors hover:bg-white/[0.04] ${
+                          location.pathname === item.href ? "text-primary" : "text-muted-foreground hover:text-primary"
+                        }`}
+                        style={{ borderRadius: "10px" }}
+                      >
+                        <Icon size={24} className="text-primary shrink-0" strokeWidth={1.5} />
+                        <span className="font-mono text-sm uppercase tracking-wider">{item.label}</span>
+                      </Link>
+                      {item.children && item.children.map((child) => {
+                        const ChildIcon = child.icon;
+                        return (
+                          <Link
+                            key={child.href + child.label}
+                            to={child.href}
+                            onClick={() => { closeMobileMenu(); setIsOpen(false); }}
+                            className={`flex items-center gap-3 py-2.5 px-4 ml-8 transition-colors hover:bg-white/[0.04] ${
+                              location.pathname === child.href ? "text-primary" : "text-muted-foreground hover:text-primary"
+                            }`}
+                            style={{ borderRadius: "8px" }}
+                          >
+                            <ChevronRight size={14} className="text-muted-foreground shrink-0" />
+                            <ChildIcon size={20} className="text-primary shrink-0" strokeWidth={1.5} />
+                            <span className="font-mono text-xs uppercase tracking-wider">{child.label}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
                   );
                 })}
               </div>
