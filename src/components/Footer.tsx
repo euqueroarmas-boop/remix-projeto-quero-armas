@@ -1,5 +1,13 @@
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 import logoFull from "@/assets/logo-wmti-full.webp";
+
+const footerLinks = [
+  { label: "Serventias Cartoriais", href: "/ti-para-serventias-cartoriais" },
+  { label: "Tabelionatos de Notas", href: "/ti-para-tabelionatos-de-notas" },
+  { label: "Provimento 213", href: "/cartorios/provimento-213" },
+  { label: "Cartórios", href: "/ti-para-cartorios" },
+];
 
 const Footer = () => {
   const { t } = useTranslation();
@@ -28,6 +36,18 @@ const Footer = () => {
                 </span>
               ))}
             </div>
+          </div>
+
+          <div className="mt-6 flex flex-wrap items-center justify-center md:justify-start gap-x-6 gap-y-2">
+            {footerLinks.map((link) => (
+              <Link
+                key={link.href}
+                to={link.href}
+                className="font-mono text-[11px] tracking-[0.08em] text-muted-foreground/60 hover:text-primary transition-colors"
+              >
+                {link.label}
+              </Link>
+            ))}
           </div>
 
           <div className="mt-8 pt-6 border-t border-border/30 flex flex-col md:flex-row items-center justify-between gap-3">

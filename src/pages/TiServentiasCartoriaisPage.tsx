@@ -28,6 +28,7 @@ const TiServentiasCartoriaisPage = () => {
           { label: relatedLabels[1], href: "/cartorios/provimento-213" },
           { label: relatedLabels[2], href: "/servidor-dell-poweredge-jacarei" },
           { label: relatedLabels[3], href: "/firewall-pfsense-jacarei" },
+          { label: "Tabelionatos de Notas", href: "/ti-para-tabelionatos-de-notas" },
         ]}
         localContent={t(`${k}.localContent`)}
         extraSections={<CartorioDowntimeCalculator />}
