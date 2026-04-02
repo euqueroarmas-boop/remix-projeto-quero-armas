@@ -1900,6 +1900,114 @@
         "Firewall pfSense"
       ],
       "localContent": "Atendemos serventias notariais em Jacareí, São José dos Campos, Taubaté, Sorocaba, Campinas e em todo o Brasil."
+    },
+    "tiTabelionatos": {
+      "title": "Infraestrutura de TI para Tabelionatos de Notas",
+      "metaTitle": "TI para Tabelionatos de Notas | Provimento 213: seu tabelionato pode parar — e a responsabilidade é sua | WMTi",
+      "metaDescription": "Infraestrutura de TI especializada para tabelionatos de notas. Conformidade com o Provimento 213 do CNJ, backup automatizado, firewall, monitoramento 24/7 e continuidade operacional.",
+      "tag": "TI para Tabelionatos de Notas",
+      "headline1": "Seu tabelionato de notas pode parar. ",
+      "headlineHighlight": "E o Provimento 213 cobra isso de você.",
+      "headline2": "",
+      "description": "O Provimento 213 do CNJ não é uma recomendação — é uma exigência normativa com prazos definidos, etapas obrigatórias e responsabilidade pessoal do titular. Se o seu tabelionato de notas não tem backup testado, firewall implementado, trilhas de auditoria, plano de continuidade e criptografia de dados, você já está em não conformidade. E quando a corregedoria fiscalizar, não vai importar se o problema foi técnico. A responsabilidade é sempre do tabelião. Parada operacional não é só perda de faturamento. É comprometimento de atos, exposição de dados sensíveis de clientes, risco reputacional e, em casos graves, sanção disciplinar. O Provimento exige RPO, RTO, PCN, PRD, trilhas imutáveis, gestão de vulnerabilidades, segmentação de rede, autenticação multifator e dossiê técnico comprobatório — tudo isso em prazos que já estão correndo. A WMTi é especialista em infraestrutura de TI para tabelionatos. Não vendemos tecnologia genérica. Entregamos conformidade documentada, continuidade operacional e a tranquilidade de saber que, quando a fiscalização chegar, tudo estará em ordem.",
+      "whatsappMessage": "Olá! Sou tabelião de notas e preciso adequar a infraestrutura de TI do meu tabelionato ao Provimento 213 do CNJ. Quero falar com um especialista.",
+      "painPoints": [
+        "Backup que existe mas nunca foi testado — na hora da crise, não restaura",
+        "Sistema cartorial travando no meio de lavratura de escrituras e procurações",
+        "Sem plano de continuidade de negócios (PCN) nem plano de recuperação de desastres (PRD)",
+        "Login compartilhado entre funcionários — impossível rastrear atos e responsabilizar",
+        "Rede sem segmentação — dados sigilosos de clientes acessíveis por qualquer dispositivo",
+        "Sem firewall dedicado — exposição total a ataques e invasões",
+        "Trilhas de auditoria inexistentes ou incompletas — risco direto na fiscalização",
+        "Dependência de suporte reativo que só aparece quando tudo já parou"
+      ],
+      "solutions": [
+        "Diagnóstico completo de conformidade com o Provimento 213 — todas as etapas e classes",
+        "Implementação de PCN e PRD com RTO e RPO definidos conforme a classe do tabelionato",
+        "Backup corporativo automatizado com replicação local e nuvem, testado periodicamente",
+        "Firewall pfSense com segmentação de rede, IDS/IPS e proteção perimetral",
+        "Autenticação individualizada e multifator para acessos críticos",
+        "Trilhas de auditoria imutáveis com sincronização de tempo por fonte confiável",
+        "Criptografia de dados em trânsito e em repouso (AES-256 ou superior)",
+        "Monitoramento 24/7 com alertas automáticos e gestão proativa de vulnerabilidades"
+      ],
+      "benefits": [
+        {
+          "title": "Conformidade com o Provimento 213",
+          "text": "Implementamos todas as 5 etapas do Anexo IV — governança, infraestrutura, proteção do acervo, auditoria e interoperabilidade — com dossiê técnico comprobatório."
+        },
+        {
+          "title": "Servidores de alta disponibilidade",
+          "text": "Servidores Dell PowerEdge com RAID, tolerância a falhas e redundância. Seu sistema cartorial funciona sem travamentos."
+        },
+        {
+          "title": "Backup testado e restaurável",
+          "text": "Backup automatizado com replicação local e nuvem, criptografia na origem e testes periódicos de restauração documentados."
+        },
+        {
+          "title": "Segurança da informação",
+          "text": "Firewall pfSense, segmentação de rede, criptografia AES-256, gestão de chaves e política de segurança formalizada conforme o Anexo III."
+        },
+        {
+          "title": "Rastreabilidade e auditoria",
+          "text": "Trilhas de auditoria imutáveis com retenção mínima de 5 anos, sincronização NTP e identificação inequívoca de cada operação."
+        },
+        {
+          "title": "Monitoramento antes da falha",
+          "text": "Servidores, rede e backup monitorados 24/7. Agimos antes do problema virar parada operacional."
+        },
+        {
+          "title": "Gestão de vulnerabilidades",
+          "text": "Tratamento de vulnerabilidades críticas em até 30 dias, com medidas imediatas quando há risco ativo. Registro formal no dossiê técnico."
+        },
+        {
+          "title": "Suporte especializado em cartórios",
+          "text": "Equipe que conhece a rotina de tabelionatos de notas. Não somos um suporte genérico — somos parceiros técnicos do titular."
+        }
+      ],
+      "faq": [
+        {
+          "question": "O Provimento 213 se aplica a tabelionatos de notas?",
+          "answer": "Sim. O Provimento 213 do CNJ se aplica a todos os serviços notariais e de registro do Brasil, incluindo tabelionatos de notas, independente da classe ou volume de atos."
+        },
+        {
+          "question": "Quais são os prazos para adequação ao Provimento 213?",
+          "answer": "As Etapas 1 e 2 devem ser concluídas em 90 dias (Classe 3), 150 dias (Classe 2) ou 210 dias (Classe 1). A implementação integral de todas as 5 etapas deve ser finalizada em até 24, 30 ou 36 meses, conforme a classe."
+        },
+        {
+          "question": "O que acontece se meu tabelionato não se adequar?",
+          "answer": "O descumprimento injustificado pode ensejar procedimento administrativo disciplinar, além de responsabilidades civis e penais. A responsabilidade é pessoal e indelegável do titular."
+        },
+        {
+          "question": "Meu backup está configurado. Preciso me preocupar?",
+          "answer": "Se nunca foi testado formalmente, sim. O Provimento exige testes documentados de restauração — semestrais para Classe 3 e anuais para Classes 1 e 2. Backup sem teste comprovado é risco grave."
+        },
+        {
+          "question": "A WMTi faz o dossiê técnico exigido pela corregedoria?",
+          "answer": "Sim. Entregamos dossiê técnico com evidências documentais, hash de integridade, atas de teste e relatórios de conformidade para cada etapa implementada."
+        },
+        {
+          "question": "Preciso de autenticação multifator no meu tabelionato?",
+          "answer": "Sim. O Provimento 213 exige autenticação multifator obrigatória para acessos administrativos, gestão de sistemas, bancos de dados e funcionalidades críticas. Credenciais compartilhadas são expressamente vedadas."
+        },
+        {
+          "question": "A WMTi atende tabelionatos fora do Vale do Paraíba?",
+          "answer": "Sim. Atendemos tabelionatos de notas em todo o Brasil, com suporte remoto e presencial conforme a necessidade."
+        },
+        {
+          "question": "O que é RPO e RTO e por que meu tabelionato precisa definir isso?",
+          "answer": "RPO é o ponto máximo de perda de dados aceitável e RTO é o tempo máximo para restabelecimento das operações. O Provimento 213 define limites por classe: Classe 3 exige RPO de 4h e RTO de 8h. Sem isso definido no PCN/PRD, o tabelionato está em não conformidade."
+        }
+      ],
+      "relatedLabels": [
+        "TI para Serventias Cartoriais",
+        "TI para Cartórios",
+        "Provimento 213",
+        "Servidores Dell",
+        "Firewall pfSense",
+        "Backup Corporativo"
+      ],
+      "localContent": "Atendemos tabelionatos de notas em Jacareí, São José dos Campos, Taubaté, Campinas, Sorocaba e em todo o Brasil. Diagnóstico de conformidade com o Provimento 213 para todas as classes."
     }
   },
   "custom": {

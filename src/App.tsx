@@ -32,6 +32,7 @@ const LocacaoComputadoresPage = lazyRetry(() => import("./pages/LocacaoComputado
 const SuporteTiPage = lazyRetry(() => import("./pages/SuporteTiPage.tsx"), "SuporteTiPage");
 const TiCartoriosPage = lazyRetry(() => import("./pages/TiCartoriosPage.tsx"), "TiCartoriosPage");
 const TiServentiasCartoriaisPage = lazyRetry(() => import("./pages/TiServentiasCartoriaisPage.tsx"), "TiServentiasCartoriaisPage");
+const TiTabelionatosNotasPage = lazyRetry(() => import("./pages/TiTabelionatosNotasPage.tsx"), "TiTabelionatosNotasPage");
 const TiIndustriasAlimenticiaPage = lazyRetry(() => import("./pages/TiIndustriasAlimenticiaPage.tsx"), "TiIndustriasAlimenticiaPage");
 const TiIndustriasPetroliferasPage = lazyRetry(() => import("./pages/TiIndustriasPetroliferasPage.tsx"), "TiIndustriasPetroliferasPage");
 const TiEscritoriosAdvocaciaPage = lazyRetry(() => import("./pages/TiEscritoriosAdvocaciaPage.tsx"), "TiEscritoriosAdvocaciaPage");
@@ -133,6 +134,7 @@ const App = () => (
             {/* Segment dedicated pages */}
             <Route path="/ti-para-cartorios" element={<TiCartoriosPage />} />
             <Route path="/ti-para-serventias-cartoriais" element={<TiServentiasCartoriaisPage />} />
+            <Route path="/ti-para-tabelionatos-de-notas" element={<TiTabelionatosNotasPage />} />
             <Route path="/ti-para-industrias-alimenticias" element={<TiIndustriasAlimenticiaPage />} />
             <Route path="/ti-para-industrias-petroliferas" element={<TiIndustriasPetroliferasPage />} />
             <Route path="/ti-para-escritorios-de-advocacia" element={<TiEscritoriosAdvocaciaPage />} />

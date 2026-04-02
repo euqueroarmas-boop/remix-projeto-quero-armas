@@ -1900,6 +1900,114 @@
         "pfSense Firewall"
       ],
       "localContent": "We serve notarial registries in Jacareí, São José dos Campos, Taubaté, Sorocaba, Campinas and across Brazil."
+    },
+    "tiTabelionatos": {
+      "title": "IT Infrastructure for Notary Offices (Tabelionatos de Notas)",
+      "metaTitle": "IT for Notary Offices | Provision 213: your notary office could shut down — and you're liable | WMTi",
+      "metaDescription": "Specialized IT infrastructure for notary offices (tabelionatos de notas). Full compliance with CNJ Provision 213, automated backup, firewall, 24/7 monitoring and business continuity.",
+      "tag": "IT for Notary Offices",
+      "headline1": "Your notary office could shut down. ",
+      "headlineHighlight": "And Provision 213 holds you accountable.",
+      "headline2": "",
+      "description": "CNJ Provision 213 is not a recommendation — it's a binding regulation with defined deadlines, mandatory stages and personal liability for the holder. If your notary office lacks tested backups, an implemented firewall, audit trails, a continuity plan and data encryption, you're already non-compliant. And when the regulatory authority inspects, it won't matter if the problem was technical. The responsibility always falls on the notary. Operational downtime isn't just lost revenue. It's compromised legal acts, exposed sensitive client data, reputational risk and, in severe cases, disciplinary sanctions. Provision 213 requires RPO, RTO, BCP, DRP, immutable audit trails, vulnerability management, network segmentation, multi-factor authentication and a technical dossier — all on deadlines that are already running. WMTi specializes in IT infrastructure for notary offices. We don't sell generic technology. We deliver documented compliance, operational continuity and the peace of mind that when inspection comes, everything will be in order.",
+      "whatsappMessage": "Hi! I'm a notary and need to adapt my office's IT infrastructure to CNJ Provision 213. I'd like to speak with a specialist.",
+      "painPoints": [
+        "Backup that exists but was never tested — won't restore when crisis hits",
+        "Registry system freezing during deed and power of attorney drafting",
+        "No Business Continuity Plan (BCP) or Disaster Recovery Plan (DRP)",
+        "Shared logins among employees — impossible to trace actions and assign responsibility",
+        "Unsegmented network — sensitive client data accessible from any device",
+        "No dedicated firewall — fully exposed to attacks and intrusions",
+        "Missing or incomplete audit trails — direct risk during inspections",
+        "Dependence on reactive support that only shows up after everything has stopped"
+      ],
+      "solutions": [
+        "Complete Provision 213 compliance assessment — all stages and classes",
+        "BCP and DRP implementation with RTO and RPO defined per the office's class",
+        "Automated corporate backup with local and cloud replication, periodically tested",
+        "pfSense firewall with network segmentation, IDS/IPS and perimeter protection",
+        "Individualized and multi-factor authentication for critical access",
+        "Immutable audit trails with time synchronization from a reliable source",
+        "Data encryption in transit and at rest (AES-256 or higher)",
+        "24/7 monitoring with automatic alerts and proactive vulnerability management"
+      ],
+      "benefits": [
+        {
+          "title": "Provision 213 Compliance",
+          "text": "We implement all 5 stages of Annex IV — governance, infrastructure, digital archive protection, audit and interoperability — with a technical evidence dossier."
+        },
+        {
+          "title": "High-availability servers",
+          "text": "Dell PowerEdge servers with RAID, fault tolerance and redundancy. Your registry system runs without freezing."
+        },
+        {
+          "title": "Tested and restorable backup",
+          "text": "Automated backup with local and cloud replication, encryption at source and documented periodic restoration tests."
+        },
+        {
+          "title": "Information security",
+          "text": "pfSense firewall, network segmentation, AES-256 encryption, key management and formalized security policy per Annex III."
+        },
+        {
+          "title": "Traceability and audit",
+          "text": "Immutable audit trails with 5-year minimum retention, NTP synchronization and unambiguous identification of every operation."
+        },
+        {
+          "title": "Monitoring before failure",
+          "text": "Servers, network and backup monitored 24/7. We act before the problem becomes operational downtime."
+        },
+        {
+          "title": "Vulnerability management",
+          "text": "Critical vulnerability treatment within 30 days, with immediate measures when active risk is present. Formally recorded in the technical dossier."
+        },
+        {
+          "title": "Notary-specialized support",
+          "text": "A team that knows notary office routines. We're not generic support — we're the holder's technical partners."
+        }
+      ],
+      "faq": [
+        {
+          "question": "Does Provision 213 apply to notary offices?",
+          "answer": "Yes. CNJ Provision 213 applies to all notarial and registry services in Brazil, including notary offices, regardless of class or volume of acts."
+        },
+        {
+          "question": "What are the deadlines for Provision 213 compliance?",
+          "answer": "Stages 1 and 2 must be completed in 90 days (Class 3), 150 days (Class 2) or 210 days (Class 1). Full implementation of all 5 stages must be finalized within 24, 30 or 36 months, depending on class."
+        },
+        {
+          "question": "What happens if my notary office doesn't comply?",
+          "answer": "Unjustified non-compliance may lead to administrative disciplinary proceedings, plus civil and criminal liabilities. Responsibility is personal and non-delegable."
+        },
+        {
+          "question": "My backup is set up. Should I worry?",
+          "answer": "If it's never been formally tested, yes. Provision 213 requires documented restoration tests — biannual for Class 3 and annual for Classes 1 and 2. Untested backup is a serious risk."
+        },
+        {
+          "question": "Does WMTi prepare the technical dossier required by the regulatory authority?",
+          "answer": "Yes. We deliver a technical dossier with documentary evidence, integrity hashes, test records and compliance reports for each implemented stage."
+        },
+        {
+          "question": "Do I need multi-factor authentication in my notary office?",
+          "answer": "Yes. Provision 213 requires mandatory MFA for administrative access, system management, databases and critical functions. Shared credentials are expressly prohibited."
+        },
+        {
+          "question": "Does WMTi serve notary offices outside the Paraíba Valley?",
+          "answer": "Yes. We serve notary offices across Brazil, with remote and on-site support as needed."
+        },
+        {
+          "question": "What are RPO and RTO and why does my notary office need to define them?",
+          "answer": "RPO is the maximum acceptable data loss point and RTO is the maximum time to restore operations. Provision 213 defines limits by class: Class 3 requires 4h RPO and 8h RTO. Without these in your BCP/DRP, the office is non-compliant."
+        }
+      ],
+      "relatedLabels": [
+        "IT for Notarial Registries",
+        "IT for Notary Offices",
+        "Provision 213",
+        "Dell Servers",
+        "pfSense Firewall",
+        "Corporate Backup"
+      ],
+      "localContent": "We serve notary offices in Jacareí, São José dos Campos, Taubaté, Campinas, Sorocaba and across Brazil. Provision 213 compliance assessment for all classes."
     }
   },
   "custom": {
