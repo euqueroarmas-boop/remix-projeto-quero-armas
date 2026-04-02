@@ -77,7 +77,13 @@ const WEBMAIL_URL = "https://sigma.servidor.net.br:2096/cpsess3314771808/webmail
 const Navbar = () => {
   const { t } = useTranslation();
   const segmentos: MegaMenuItem[] = [...segmentosBase]
-    .map((item) => ({ ...item, label: t(item.labelKey) }))
+    .map((item) => ({
+      ...item,
+      label: t(item.labelKey),
+      children: 'children' in item && item.children
+        ? item.children.map((c) => ({ ...c, label: t(c.labelKey) }))
+        : undefined,
+    }))
     .sort((a, b) => a.label.localeCompare(b.label));
   const servicos: MegaMenuItem[] = [...servicosBase]
     .map((item) => ({ ...item, label: t(item.labelKey) }))
