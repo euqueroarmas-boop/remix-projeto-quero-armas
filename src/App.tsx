@@ -33,6 +33,8 @@ const SuporteTiPage = lazyRetry(() => import("./pages/SuporteTiPage.tsx"), "Supo
 const TiCartoriosPage = lazyRetry(() => import("./pages/TiCartoriosPage.tsx"), "TiCartoriosPage");
 const TiServentiasCartoriaisPage = lazyRetry(() => import("./pages/TiServentiasCartoriaisPage.tsx"), "TiServentiasCartoriaisPage");
 const TiTabelionatosNotasPage = lazyRetry(() => import("./pages/TiTabelionatosNotasPage.tsx"), "TiTabelionatosNotasPage");
+const TiTabelionatosRegistrosPage = lazyRetry(() => import("./pages/TiTabelionatosRegistrosPage.tsx"), "TiTabelionatosRegistrosPage");
+const TiTabelionatosProtestoPage = lazyRetry(() => import("./pages/TiTabelionatosProtestoPage.tsx"), "TiTabelionatosProtestoPage");
 const TiIndustriasAlimenticiaPage = lazyRetry(() => import("./pages/TiIndustriasAlimenticiaPage.tsx"), "TiIndustriasAlimenticiaPage");
 const TiIndustriasPetroliferasPage = lazyRetry(() => import("./pages/TiIndustriasPetroliferasPage.tsx"), "TiIndustriasPetroliferasPage");
 const TiEscritoriosAdvocaciaPage = lazyRetry(() => import("./pages/TiEscritoriosAdvocaciaPage.tsx"), "TiEscritoriosAdvocaciaPage");
