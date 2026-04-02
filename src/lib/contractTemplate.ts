@@ -181,10 +181,10 @@ export function templateToHtml(text: string, templateId?: string, versao?: strin
   htmlLines.push(`<br/><br/><br/>`);
   htmlLines.push(`<div data-traceability="true" style="padding-top: 16px; border-top: 1px solid #999;">`);
   htmlLines.push(`<h2 style="font-size: 10pt; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; color: #333;">DADOS DE RASTREABILIDADE DA ASSINATURA ELETRÔNICA</h2>`);
-  htmlLines.push(`<p style="font-size: 9pt; color: #444; margin: 4px 0;">IP de origem: <strong data-proof="ip">{{SIGN_IP}}</strong></p>`);
-  htmlLines.push(`<p style="font-size: 9pt; color: #444; margin: 4px 0;">Data da confirmação: <strong data-proof="date">{{SIGN_DATE}}</strong></p>`);
-  htmlLines.push(`<p style="font-size: 9pt; color: #444; margin: 4px 0;">Hora da confirmação: <strong data-proof="time">{{SIGN_TIME}}</strong></p>`);
-  htmlLines.push(`<p style="font-size: 9pt; color: #444; margin: 4px 0;">Dispositivo/Navegador: <strong data-proof="ua">{{SIGN_USER_AGENT}}</strong></p>`);
+  htmlLines.push(`<p style="font-size: 9pt; color: #444; margin: 4px 0;"><strong>IP de origem:</strong> <span data-proof="ip">{{SIGN_IP}}</span></p>`);
+  htmlLines.push(`<p style="font-size: 9pt; color: #444; margin: 4px 0;"><strong>Data da confirmação:</strong> <span data-proof="date">{{SIGN_DATE}}</span></p>`);
+  htmlLines.push(`<p style="font-size: 9pt; color: #444; margin: 4px 0;"><strong>Hora da confirmação:</strong> <span data-proof="time">{{SIGN_TIME}}</span></p>`);
+  htmlLines.push(`<p style="font-size: 9pt; color: #444; margin: 4px 0;"><strong>Dispositivo/Navegador:</strong> <span data-proof="ua">{{SIGN_USER_AGENT}}</span></p>`);
   htmlLines.push(`<p style="font-size: 8pt; color: #888; margin-top: 12px; font-style: italic;">Este documento foi assinado eletronicamente nos termos do art. 10 da Medida Provisória nº 2.200-2/2001. Os dados acima constituem prova eletrônica da manifestação de vontade do signatário.</p>`);
   htmlLines.push(`</div>`);
 

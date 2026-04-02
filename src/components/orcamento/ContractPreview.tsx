@@ -182,7 +182,7 @@ export const generateContractHtml = (
 
   <br/><br/><br/>
 
-  <p style="text-align: center; margin: 0; font-weight: bold;">Jacareí/SP, ${today}</p>
+  <p style="text-align: center; margin: 0;"><strong>Jacareí/SP,</strong> ${today}</p>
 
   <br/><br/><br/>
 
@@ -194,7 +194,7 @@ export const generateContractHtml = (
     </div>
   </div>
 
-  <br/><br/>
+  <br/>
 
   <div style="text-align: center; width: 60%; margin: 0 auto;">
     <div style="border-top: 1px solid #000; padding-top: 8px;">
@@ -208,10 +208,10 @@ export const generateContractHtml = (
 
   <div data-traceability="true" style="padding-top: 16px; border-top: 1px solid #999;">
     <h2 style="font-size: 10pt; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; color: #333;">DADOS DE RASTREABILIDADE DA ASSINATURA ELETRÔNICA</h2>
-    <p style="font-size: 9pt; color: #444; margin: 4px 0;">IP de origem: <strong data-proof="ip">{{SIGN_IP}}</strong></p>
-    <p style="font-size: 9pt; color: #444; margin: 4px 0;">Data da confirmação: <strong data-proof="date">{{SIGN_DATE}}</strong></p>
-    <p style="font-size: 9pt; color: #444; margin: 4px 0;">Hora da confirmação: <strong data-proof="time">{{SIGN_TIME}}</strong></p>
-    <p style="font-size: 9pt; color: #444; margin: 4px 0;">Dispositivo/Navegador: <strong data-proof="ua">{{SIGN_USER_AGENT}}</strong></p>
+    <p style="font-size: 9pt; color: #444; margin: 4px 0;"><strong>IP de origem:</strong> <span data-proof="ip">{{SIGN_IP}}</span></p>
+    <p style="font-size: 9pt; color: #444; margin: 4px 0;"><strong>Data da confirmação:</strong> <span data-proof="date">{{SIGN_DATE}}</span></p>
+    <p style="font-size: 9pt; color: #444; margin: 4px 0;"><strong>Hora da confirmação:</strong> <span data-proof="time">{{SIGN_TIME}}</span></p>
+    <p style="font-size: 9pt; color: #444; margin: 4px 0;"><strong>Dispositivo/Navegador:</strong> <span data-proof="ua">{{SIGN_USER_AGENT}}</span></p>
     <p style="font-size: 8pt; color: #888; margin-top: 12px; font-style: italic;">Este documento foi assinado eletronicamente nos termos do art. 10 da Medida Provisória nº 2.200-2/2001. Os dados acima constituem prova eletrônica da manifestação de vontade do signatário.</p>
   </div>
 </div>

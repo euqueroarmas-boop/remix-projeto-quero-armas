@@ -272,7 +272,13 @@ async function buildPdfBytes(context: Awaited<ReturnType<typeof getPostPurchaseC
 
   // Date line (bold)
   const contractDate = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric", timeZone: "America/Sao_Paulo" });
-  drawTextBlock(`Jacareí/SP, ${contractDate}`, { size: 10, bold: true });
+  // City bold, date normal — draw separately
+  ensureSpace(16);
+  const cityLabel = "Jacareí/SP, ";
+  const cityWidth = bold.widthOfTextAtSize(cityLabel, 10);
+  page.drawText(cityLabel, { x: marginLeft, y, size: 10, font: bold, color: rgb(0.15, 0.15, 0.15) });
+  page.drawText(contractDate, { x: marginLeft + cityWidth, y, size: 10, font, color: rgb(0.15, 0.15, 0.15) });
+  y -= 16;
 
   // 3 blank lines
   y -= 36;
