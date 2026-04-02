@@ -60,6 +60,12 @@ const Footer = () => {
               {t("footer.location")}
             </p>
           </div>
+
+          <div className="mt-6 pt-4 border-t border-border/20 text-center">
+            <p className="font-mono text-[10px] tracking-[0.08em] text-muted-foreground/40">
+              Desenvolvido por WMTi Tecnologia da Informação
+            </p>
+          </div>
         </div>
       </div>
     </footer>

@@ -212,11 +212,15 @@ const ServicePageTemplate = ({
   const handleModeSelect = useCallback((mode: ContractMode) => {
     setContractMode(mode);
     console.log(`[WMTi] CONTRACT_MODE_SELECTED`, { mode });
-    const slug = location.pathname.replace(/^\//, "");
-    const href = slug ? `/contratar/${slug}?modo=${mode}` : `/orcamento-ti`;
-    console.log("[WMTi] CHECKOUT_REDIRECT", { mode, href });
-    navigate(href);
-  }, [navigate, location.pathname]);
+    // Only navigate for interactive mode selection (allowedModes === "both")
+    // For recorrente_only / sob_demanda_only, the mode is auto-set but we don't redirect
+    if (allowedModes === "both") {
+      const slug = location.pathname.replace(/^\//, "");
+      const href = slug ? `/contratar/${slug}?modo=${mode}` : `/orcamento-ti`;
+      console.log("[WMTi] CHECKOUT_REDIRECT", { mode, href });
+      navigate(href);
+    }
+  }, [navigate, location.pathname, allowedModes]);
   const baseUrl = "https://www.wmti.com.br";
   const currentPath = location.pathname;
   const canonicalUrl = canonicalSlug
