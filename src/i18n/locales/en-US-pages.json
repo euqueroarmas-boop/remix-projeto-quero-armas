@@ -2029,6 +2029,126 @@
         "Corporate Backup"
       ],
       "localContent": "We serve notary offices in Jacareí, São José dos Campos, Taubaté, Campinas, Sorocaba and across Brazil. Provision 213 compliance assessment for all classes."
+    },
+    "tiRegistros": {
+      "title": "IT Infrastructure for Registry Offices",
+      "metaTitle": "IT for Registry Offices | Civil Registry, Real Estate & Title Registry — Provision 213 Compliance | WMTi",
+      "metaDescription": "Specialized IT infrastructure for registry offices — civil registry, real estate registry, title & document registry. Provision 213 compliance, archive integrity and operational continuity.",
+      "tag": "IT for Registry Offices",
+      "headline1": "Is your registry archive ",
+      "headlineHighlight": "truly protected?",
+      "headline2": " Provision 213 demands proof.",
+      "description": "Registry offices manage the most critical documentary heritage in the extrajudicial system: property registrations, birth, marriage and death certificates, titles and documents with permanent legal value. The loss or corruption of a single record can cause irreversible damage — lawsuits, compensation claims and compromised public faith. CNJ Provision 213 establishes specific requirements to protect this archive: geographically replicated backups, encryption at rest and in transit, immutable audit trails with 5-year retention, tested continuity and recovery plans, and a technical compliance dossier. Each service class has different RPO/RTO parameters — and deadlines are already running. WMTi specializes in IT infrastructure for registry offices. We understand the criticality of the registral archive, the need for integration with electronic service centers, and the requirement for uninterrupted availability.",
+      "whatsappMessage": "Hi! I'm a registry officer and need to adapt my office's IT infrastructure to CNJ Provision 213. I'd like to speak with a specialist.",
+      "painPoints": [
+        "Registry archive without geographic replication — total loss risk in case of disaster",
+        "Poor integration with electronic service centers (CRC, RCPN, RTD) causing inconsistencies",
+        "Single server with no redundancy — one hardware failure shuts down the entire office",
+        "No audit trails to track changes in registrations and records",
+        "Insufficient access control — employees with permissions beyond their role",
+        "No encryption on stored data — archive exposed in case of breach",
+        "No tested continuity plan — recovery time unknown",
+        "System updates without prior backup — data corruption risk"
+      ],
+      "solutions": [
+        "Complete registral compliance assessment with Provision 213 — by class and stage",
+        "Backup with geographic replication in certified datacenter and periodically tested restoration",
+        "Dell PowerEdge servers with RAID and redundancy for continuous archive operation",
+        "Stable, monitored integration with electronic centers and interoperability systems",
+        "Granular access control with multi-factor authentication and role segregation",
+        "AES-256 encryption at rest and TLS 1.2+ in transit for all digital archives",
+        "BCP and DRP implementation with RPO/RTO adjusted to the office's class",
+        "Vulnerability management with periodic scanning and documented remediation"
+      ],
+      "benefits": [
+        { "title": "Registry archive protection", "text": "Geographically replicated backup with source encryption and documented restoration tests. The most critical archive in the extrajudicial system, protected as regulation demands." },
+        { "title": "High-availability servers", "text": "Dell PowerEdge with RAID, redundant power supplies and proactive monitoring. Your registry system runs without interruptions." },
+        { "title": "Electronic center integration", "text": "Stable, monitored connectivity with CRC, RCPN, RTD and other centers. We ensure interoperability works flawlessly." },
+        { "title": "Full Provision 213 compliance", "text": "All 5 stages of Annex IV implemented and documented — governance, infrastructure, protection, audit and interoperability." },
+        { "title": "Access control & traceability", "text": "Individual multi-factor authentication, role segregation and immutable audit trails with 5-year retention." },
+        { "title": "Continuous monitoring", "text": "Infrastructure monitored 24/7. We identify failures before they cause downtime or data loss." },
+        { "title": "Dedicated network security", "text": "pfSense firewall with segmentation, IDS/IPS and access policies. Archive network isolated from administrative network." },
+        { "title": "Registry-aware support", "text": "Technical team familiar with registry office routines. We know the systems, centers and regulatory requirements." }
+      ],
+      "faq": [
+        { "question": "Does Provision 213 apply to civil registry offices?", "answer": "Yes. Provision 213 applies to all notarial and registry services in Brazil — including civil registry, real estate registry, title and document registry, and legal entity registry." },
+        { "question": "What's the difference in requirements between civil and real estate registry?", "answer": "The technical requirements are the same. What varies are RPO/RTO parameters based on the service class, defined by volume of acts and operational criticality." },
+        { "question": "Do I need geographic backup replication?", "answer": "Yes. Provision 213 requires backup copies stored in geographically distinct locations from the office headquarters, ensuring protection against regional disasters." },
+        { "question": "How does electronic center integration work?", "answer": "We ensure stable connectivity with all shared electronic service centers (CRC, RCPN, CENSEC, among others), with availability monitoring and configured fallback." },
+        { "question": "How long does Provision 213 compliance take?", "answer": "Depends on the class. Stages 1-2 must be completed in 90 days (Class 3), 150 days (Class 2) or 210 days (Class 1). Full compliance may take 24-36 months." },
+        { "question": "Does WMTi provide the technical dossier?", "answer": "Yes. We deliver a complete technical dossier with documentary evidence, integrity hashes, test reports and compliance reports for each stage." },
+        { "question": "Can my office be penalized for non-compliance?", "answer": "Yes. Non-compliance may trigger administrative disciplinary proceedings, plus civil and criminal liability. Responsibility is personal to the officer." },
+        { "question": "Do you serve registry offices outside São Paulo?", "answer": "Yes. We serve registry offices across Brazil with remote and on-site support as needed." }
+      ],
+      "relatedLabels": [
+        "Notary & Registry Services",
+        "Notary Offices",
+        "Protest Registries",
+        "Provision 213",
+        "Dell Servers",
+        "Corporate Backup"
+      ],
+      "localContent": "We serve civil registry, real estate registry and title registry offices in Jacareí, São José dos Campos, Taubaté, Campinas, Sorocaba and across Brazil."
+    },
+    "tiProtesto": {
+      "title": "IT Infrastructure for Protest Registries",
+      "metaTitle": "IT for Protest Registries | Provision 213: legal deadlines depend on your infrastructure | WMTi",
+      "metaDescription": "Specialized IT infrastructure for protest registries (tabelionatos de protesto). High availability, CRA/IEPTB integration, CNJ Provision 213 compliance and operational continuity.",
+      "tag": "IT for Protest Registries",
+      "headline1": "In protest registry, every hour of downtime is a ",
+      "headlineHighlight": "missed legal deadline.",
+      "headline2": " And Provision 213 demands accountability.",
+      "description": "Protest registries operate under constant legal deadline pressure. Summons have deadlines, payments have deadlines, cancellations have deadlines. When the system goes down, deadlines keep running — and responsibility falls on the notary. A server failure during business hours can mean unprocessed summons, expired titles and wrongful protests. In protest registry, there's no 'we'll fix it later'. CNJ Provision 213 makes this reality even more critical: it requires infrastructure with defined RPO/RTO, geographically replicated backups, firewall, audit trails, multi-factor authentication, tested continuity plans and a technical dossier. And integration with CRA and IEPTB must be uninterrupted. WMTi understands that in protest registry, downtime isn't a technical inconvenience — it's legal non-compliance. We deliver infrastructure sized for protest operations: high availability, stable center integration, data security and documented compliance.",
+      "whatsappMessage": "Hi! I'm a protest notary and need to adapt my IT infrastructure to Provision 213. I'd like to speak with a specialist.",
+      "painPoints": [
+        "Protest system freezing during CRA file processing",
+        "Server failure causing delays in legal summons deadlines",
+        "Unstable IEPTB and CRA integration causing file rejections",
+        "Untested backup — risk of losing title and summons data",
+        "Unsegmented network — debtor financial data accessible without controls",
+        "No server redundancy — one hardware failure stops everything",
+        "No monitoring — issues detected only after the system has stopped",
+        "Shared credentials among employees — impossible to trace who did what"
+      ],
+      "solutions": [
+        "High-availability infrastructure sized for protest volume and criticality",
+        "Stable, monitored integration with CRA, IEPTB and electronic filing systems",
+        "Automated backup with geographic replication and documented restoration tests",
+        "pfSense firewall with network segmentation — protest data isolated from general network",
+        "Individual multi-factor authentication for all protest system access",
+        "24/7 monitoring with automatic alerts — intervention before downtime",
+        "BCP and DRP implementation with RPO/RTO suited for protest operations",
+        "Immutable audit trails for every operation — summons, payment, stay, cancellation"
+      ],
+      "benefits": [
+        { "title": "High availability for protest", "text": "Dell PowerEdge servers with RAID and redundancy. Protest operations can't stop — and with WMTi, they don't." },
+        { "title": "Stable CRA & IEPTB integration", "text": "Monitored connectivity with CRA and IEPTB systems. Files processed without rejection due to technical failures." },
+        { "title": "Guaranteed backup restoration", "text": "Automated backup with geographic replication, source encryption and documented periodic tests. Your protest data secured." },
+        { "title": "Financial data security", "text": "Debtor data, amounts and titles protected with AES-256 encryption, network segmentation and granular access control." },
+        { "title": "Provision 213 compliance", "text": "All Annex IV stages implemented with technical dossier. Governance, infrastructure, protection, audit and interoperability." },
+        { "title": "Full operation traceability", "text": "Immutable audit trails for every act — summons, payment, stay, cancellation. Minimum 5-year retention." },
+        { "title": "Proactive risk management", "text": "24/7 monitoring, vulnerability management and periodic scanning. Issues resolved before they become downtime." },
+        { "title": "Protest-specialized support", "text": "Team that understands protest registry routines, legal deadlines and center integration. Not generic support." }
+      ],
+      "faq": [
+        { "question": "Does Provision 213 apply to protest registries?", "answer": "Yes. Provision 213 applies to all notarial and registry services in Brazil, including protest registries for titles and other debt instruments." },
+        { "question": "Why is availability more critical for protest?", "answer": "Because protest operates with strict legal deadlines. Summons must be processed within set timeframes, and any delay due to technology failure may create liability for the notary." },
+        { "question": "How does CRA integration work?", "answer": "We ensure stable connectivity with the Central File Filing system, monitoring availability and file integrity. Communication failures are detected and resolved before causing rejections." },
+        { "question": "Do I need a dedicated firewall for my protest registry?", "answer": "Yes. Provision 213 requires perimeter protection. Additionally, debtor financial data and protested titles are sensitive information that must be on a segmented, protected network." },
+        { "question": "What RPO/RTO does Provision 213 require for protest?", "answer": "Depends on the class. Class 3: RPO 4h, RTO 8h. Class 2: RPO 12h, RTO 16h. Class 1: RPO 24h, RTO 24h. These must be in the BCP/DRP." },
+        { "question": "Does WMTi provide the technical dossier?", "answer": "Yes. We deliver a complete dossier with documentary evidence, integrity hashes, test reports and compliance documentation for each stage." },
+        { "question": "Do you serve protest registries in other states?", "answer": "Yes. We serve protest registries across Brazil with remote and on-site support as needed." },
+        { "question": "Can the protest system be integrated with WMTi monitoring?", "answer": "Yes. We monitor server, network, backup and electronic center integration in real-time with automatic alerts and proactive intervention." }
+      ],
+      "relatedLabels": [
+        "Notary & Registry Services",
+        "Notary Offices",
+        "Registry Offices",
+        "Provision 213",
+        "pfSense Firewall",
+        "Corporate Backup"
+      ],
+      "localContent": "We serve protest registries in Jacareí, São José dos Campos, Taubaté, Campinas, Sorocaba and across Brazil. High-availability infrastructure and Provision 213 compliance."
     }
   },
   "custom": {

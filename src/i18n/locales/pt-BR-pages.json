@@ -2029,6 +2029,222 @@
         "Backup Corporativo"
       ],
       "localContent": "Atendemos tabelionatos de notas em Jacareí, São José dos Campos, Taubaté, Campinas, Sorocaba e em todo o Brasil. Diagnóstico de conformidade com o Provimento 213 para todas as classes."
+    },
+    "tiRegistros": {
+      "title": "Infraestrutura de TI para Ofícios de Registro",
+      "metaTitle": "TI para Ofícios de Registro | Registro Civil, Imóveis e Títulos em conformidade com o Provimento 213 | WMTi",
+      "metaDescription": "Infraestrutura de TI especializada para ofícios de registro civil, registro de imóveis e registro de títulos e documentos. Conformidade com o Provimento 213, integridade do acervo e continuidade operacional.",
+      "tag": "TI para Ofícios de Registro",
+      "headline1": "O acervo registral do seu ofício está ",
+      "headlineHighlight": "realmente protegido?",
+      "headline2": " O Provimento 213 exige prova disso.",
+      "description": "Ofícios de registro lidam com o maior patrimônio documental do sistema extrajudicial: matrículas de imóveis, certidões de nascimento, casamento e óbito, títulos e documentos com valor jurídico permanente. A perda ou corrupção de um único registro pode gerar danos irreversíveis — processos judiciais, indenizações e comprometimento da fé pública. O Provimento 213 do CNJ estabelece exigências específicas para a proteção desse acervo: backup com replicação geográfica, criptografia em repouso e em trânsito, trilhas de auditoria imutáveis com retenção de 5 anos, planos de continuidade e recuperação testados, e dossiê técnico comprobatório. Cada classe de serventia tem prazos e parâmetros de RPO/RTO diferentes — e os prazos já estão correndo. A WMTi é especialista em infraestrutura de TI para ofícios de registro. Entendemos a criticidade do acervo registral, a necessidade de integração com centrais eletrônicas e a exigência de disponibilidade ininterrupta. Não oferecemos TI genérica — entregamos conformidade documentada e proteção real do patrimônio documental.",
+      "whatsappMessage": "Olá! Sou oficial de registro e preciso adequar a infraestrutura de TI do meu ofício ao Provimento 213 do CNJ. Quero falar com um especialista.",
+      "painPoints": [
+        "Acervo registral sem replicação geográfica — risco de perda total em caso de sinistro",
+        "Integração precária com centrais eletrônicas (CRC, RCPN, RTD) gerando inconsistências",
+        "Servidor único sem redundância — uma falha de hardware paralisa todo o ofício",
+        "Ausência de trilhas de auditoria para rastrear alterações em matrículas e registros",
+        "Controle de acesso insuficiente — funcionários com permissões além do necessário",
+        "Sem criptografia nos dados armazenados — acervo exposto em caso de invasão",
+        "Falta de plano de continuidade testado — tempo de recuperação desconhecido",
+        "Atualizações de sistema feitas sem backup prévio — risco de corrupção de dados"
+      ],
+      "solutions": [
+        "Diagnóstico completo de conformidade registral com o Provimento 213 — por classe e etapa",
+        "Backup com replicação geográfica em datacenter certificado e restauração testada periodicamente",
+        "Servidores Dell PowerEdge com RAID e redundância para operação contínua do acervo",
+        "Integração estável e monitorada com centrais eletrônicas e sistemas de interoperabilidade",
+        "Controle de acesso granular com autenticação multifator e segregação de funções",
+        "Criptografia AES-256 em repouso e TLS 1.2+ em trânsito para todo o acervo digital",
+        "Implementação de PCN e PRD com RTO e RPO ajustados à classe do ofício",
+        "Gestão de vulnerabilidades com varredura periódica e tratamento documentado"
+      ],
+      "benefits": [
+        {
+          "title": "Proteção do acervo registral",
+          "text": "Backup com replicação geográfica, criptografia na origem e testes documentados de restauração. O acervo mais crítico do sistema extrajudicial protegido como exige a norma."
+        },
+        {
+          "title": "Servidores com alta disponibilidade",
+          "text": "Dell PowerEdge com RAID, fontes redundantes e monitoramento proativo. Seu sistema de registro funciona sem interrupções."
+        },
+        {
+          "title": "Integração com centrais eletrônicas",
+          "text": "Conectividade estável e monitorada com CRC, RCPN, RTD e demais centrais. Garantimos que a interoperabilidade funcione sem falhas."
+        },
+        {
+          "title": "Conformidade integral com o Provimento 213",
+          "text": "Todas as 5 etapas do Anexo IV implementadas e documentadas — governança, infraestrutura, proteção, auditoria e interoperabilidade."
+        },
+        {
+          "title": "Controle de acesso e rastreabilidade",
+          "text": "Autenticação individual e multifator, segregação de funções e trilhas de auditoria imutáveis com retenção de 5 anos."
+        },
+        {
+          "title": "Monitoramento contínuo",
+          "text": "Infraestrutura monitorada 24/7. Identificamos falhas antes que causem indisponibilidade ou perda de dados."
+        },
+        {
+          "title": "Segurança de rede dedicada",
+          "text": "Firewall pfSense com segmentação, IDS/IPS e políticas de acesso. Rede do acervo isolada da rede administrativa."
+        },
+        {
+          "title": "Suporte que entende registros",
+          "text": "Equipe técnica familiarizada com a rotina de ofícios de registro. Conhecemos os sistemas, as centrais e as exigências da corregedoria."
+        }
+      ],
+      "faq": [
+        {
+          "question": "O Provimento 213 se aplica a ofícios de registro civil?",
+          "answer": "Sim. O Provimento 213 se aplica a todos os serviços notariais e de registro do Brasil — incluindo registro civil de pessoas naturais, registro de imóveis, registro de títulos e documentos e registro civil de pessoas jurídicas."
+        },
+        {
+          "question": "Qual a diferença de exigências entre registro civil e registro de imóveis?",
+          "answer": "As exigências técnicas do Provimento 213 são as mesmas para todos os tipos de registro. O que varia são os parâmetros de RPO e RTO conforme a classe da serventia, definida pelo volume de atos e criticidade operacional."
+        },
+        {
+          "question": "Preciso de replicação geográfica do backup?",
+          "answer": "Sim. O Provimento 213 exige que cópias de segurança sejam armazenadas em localidades geograficamente distintas da sede do ofício, garantindo proteção contra sinistros regionais como incêndios ou inundações."
+        },
+        {
+          "question": "Como funciona a integração com centrais eletrônicas?",
+          "answer": "Garantimos conectividade estável com todas as centrais de serviços eletrônicos compartilhados (CRC, RCPN, CENSEC, entre outras), com monitoramento de disponibilidade e fallback configurado."
+        },
+        {
+          "question": "Quanto tempo leva para adequar o ofício ao Provimento 213?",
+          "answer": "Depende da classe. As Etapas 1 e 2 devem ser concluídas em 90 dias (Classe 3), 150 dias (Classe 2) ou 210 dias (Classe 1). A adequação integral pode levar de 24 a 36 meses."
+        },
+        {
+          "question": "A WMTi fornece o dossiê técnico para a corregedoria?",
+          "answer": "Sim. Entregamos dossiê técnico completo com evidências documentais, hash de integridade, atas de teste e relatórios de conformidade para cada etapa."
+        },
+        {
+          "question": "Meu ofício de registro pode ser penalizado por não conformidade?",
+          "answer": "Sim. O descumprimento pode ensejar procedimento administrativo disciplinar, além de responsabilidade civil e penal. A responsabilidade é pessoal do oficial."
+        },
+        {
+          "question": "Atendem ofícios de registro fora de São Paulo?",
+          "answer": "Sim. Atendemos ofícios de registro em todo o Brasil, com suporte remoto e presencial conforme a necessidade."
+        }
+      ],
+      "relatedLabels": [
+        "TI para Serventias Cartoriais",
+        "Tabelionatos de Notas",
+        "Tabelionatos de Protesto",
+        "Provimento 213",
+        "Servidores Dell",
+        "Backup Corporativo"
+      ],
+      "localContent": "Atendemos ofícios de registro civil, registro de imóveis, registro de títulos e documentos em Jacareí, São José dos Campos, Taubaté, Campinas, Sorocaba e em todo o Brasil."
+    },
+    "tiProtesto": {
+      "title": "Infraestrutura de TI para Tabelionatos de Protesto",
+      "metaTitle": "TI para Tabelionatos de Protesto | Provimento 213: prazos legais dependem da sua infraestrutura | WMTi",
+      "metaDescription": "Infraestrutura de TI especializada para tabelionatos de protesto. Alta disponibilidade, integração com IEPTB/CRA, conformidade com o Provimento 213 do CNJ e continuidade operacional.",
+      "tag": "TI para Tabelionatos de Protesto",
+      "headline1": "No protesto, cada hora parada é ",
+      "headlineHighlight": "prazo legal descumprido.",
+      "headline2": " E o Provimento 213 exige resposta.",
+      "description": "Tabelionatos de protesto operam sob pressão constante de prazos legais. A intimação tem prazo, o pagamento tem prazo, o cancelamento tem prazo. Quando o sistema para, os prazos continuam correndo — e a responsabilidade é do tabelião. Uma falha no servidor durante o expediente pode significar intimações não processadas, títulos com prazo vencido e devedor protestado indevidamente. No protesto, não existe 'depois a gente resolve'. O Provimento 213 do CNJ torna essa realidade ainda mais crítica: exige infraestrutura com RPO e RTO definidos, backup com replicação geográfica, firewall, trilhas de auditoria, autenticação multifator, plano de continuidade testado e dossiê técnico. E a integração com a Central de Remessa de Arquivos (CRA) e o IEPTB precisa ser ininterrupta. A WMTi entende que no protesto, indisponibilidade não é inconveniência técnica — é descumprimento legal. Entregamos infraestrutura dimensionada para a operação de protesto: alta disponibilidade, integração estável com centrais, segurança de dados e conformidade documentada.",
+      "whatsappMessage": "Olá! Sou tabelião de protesto e preciso adequar a infraestrutura de TI ao Provimento 213. Quero falar com um especialista.",
+      "painPoints": [
+        "Sistema de protesto travando durante processamento de remessas da CRA",
+        "Falha no servidor gerando atraso no cumprimento de prazos legais de intimação",
+        "Integração instável com IEPTB e CRA causando rejeição de arquivos",
+        "Backup sem teste — risco de perda de dados de títulos e intimações",
+        "Rede sem segmentação — dados financeiros de devedores acessíveis sem controle",
+        "Sem redundância de servidor — uma falha de hardware paralisa toda a operação",
+        "Ausência de monitoramento — problemas detectados só quando o sistema já parou",
+        "Credenciais compartilhadas entre funcionários — impossível rastrear quem fez o quê"
+      ],
+      "solutions": [
+        "Infraestrutura de alta disponibilidade dimensionada para o volume e criticidade do protesto",
+        "Integração estável e monitorada com CRA, IEPTB e sistemas de remessa eletrônica",
+        "Backup automatizado com replicação geográfica e testes documentados de restauração",
+        "Firewall pfSense com segmentação de rede — dados de protesto isolados da rede geral",
+        "Autenticação individual e multifator para todos os acessos ao sistema de protesto",
+        "Monitoramento 24/7 com alertas automáticos — intervenção antes da parada",
+        "Implementação de PCN e PRD com RTO e RPO adequados à operação de protesto",
+        "Trilhas de auditoria imutáveis para cada operação — intimação, pagamento, cancelamento"
+      ],
+      "benefits": [
+        {
+          "title": "Alta disponibilidade para protesto",
+          "text": "Servidores Dell PowerEdge com RAID e redundância. A operação de protesto não pode parar — e com a WMTi, não para."
+        },
+        {
+          "title": "Integração estável com CRA e IEPTB",
+          "text": "Conectividade monitorada com a Central de Remessa de Arquivos e sistemas do IEPTB. Remessas processadas sem rejeição por falha técnica."
+        },
+        {
+          "title": "Backup com restauração garantida",
+          "text": "Backup automatizado com replicação geográfica, criptografia na origem e testes periódicos documentados. Seus dados de protesto seguros."
+        },
+        {
+          "title": "Segurança de dados financeiros",
+          "text": "Dados de devedores, valores e títulos protegidos com criptografia AES-256, segmentação de rede e controle de acesso granular."
+        },
+        {
+          "title": "Conformidade com o Provimento 213",
+          "text": "Todas as etapas do Anexo IV implementadas com dossiê técnico. Governança, infraestrutura, proteção, auditoria e interoperabilidade."
+        },
+        {
+          "title": "Rastreabilidade total de operações",
+          "text": "Trilhas de auditoria imutáveis para cada ato — intimação, pagamento, sustação, cancelamento. Retenção mínima de 5 anos."
+        },
+        {
+          "title": "Gestão proativa de riscos",
+          "text": "Monitoramento 24/7, gestão de vulnerabilidades e varredura periódica. Problemas resolvidos antes de virar parada."
+        },
+        {
+          "title": "Suporte especializado em protesto",
+          "text": "Equipe que conhece a rotina de tabelionatos de protesto, os prazos legais e a integração com centrais. Não somos suporte genérico."
+        }
+      ],
+      "faq": [
+        {
+          "question": "O Provimento 213 se aplica a tabelionatos de protesto?",
+          "answer": "Sim. O Provimento 213 se aplica a todos os serviços notariais e de registro do Brasil, incluindo tabelionatos de protesto de títulos e outros documentos de dívida."
+        },
+        {
+          "question": "Por que a disponibilidade é mais crítica no protesto?",
+          "answer": "Porque o protesto opera com prazos legais rígidos. A intimação deve ser processada em prazo determinado, e qualquer atraso por falha tecnológica pode gerar responsabilidade do tabelião e prejuízo ao credor ou devedor."
+        },
+        {
+          "question": "Como funciona a integração com a CRA?",
+          "answer": "Garantimos conectividade estável com a Central de Remessa de Arquivos, monitorando a disponibilidade e integridade das remessas. Falhas de comunicação são detectadas e tratadas antes de causar rejeição de arquivos."
+        },
+        {
+          "question": "Preciso de firewall dedicado no meu tabelionato de protesto?",
+          "answer": "Sim. O Provimento 213 exige proteção perimetral. Além disso, dados financeiros de devedores e títulos protestados são informações sensíveis que devem estar em rede segmentada e protegida."
+        },
+        {
+          "question": "Qual RPO e RTO o Provimento 213 exige para protesto?",
+          "answer": "Depende da classe da serventia. Classe 3: RPO de 4h e RTO de 8h. Classe 2: RPO de 12h e RTO de 16h. Classe 1: RPO de 24h e RTO de 24h. Esses parâmetros devem constar no PCN/PRD."
+        },
+        {
+          "question": "A WMTi fornece dossiê técnico para fiscalização?",
+          "answer": "Sim. Entregamos dossiê técnico completo com evidências documentais, hash de integridade, atas de teste e relatórios de conformidade para cada etapa implementada."
+        },
+        {
+          "question": "Atendem tabelionatos de protesto em outros estados?",
+          "answer": "Sim. Atendemos tabelionatos de protesto em todo o Brasil, com suporte remoto e presencial conforme a necessidade."
+        },
+        {
+          "question": "É possível integrar o sistema de protesto com o monitoramento da WMTi?",
+          "answer": "Sim. Monitoramos o servidor, a rede, o backup e a integração com centrais eletrônicas em tempo real, com alertas automáticos e intervenção proativa."
+        }
+      ],
+      "relatedLabels": [
+        "TI para Serventias Cartoriais",
+        "Tabelionatos de Notas",
+        "Ofícios de Registro",
+        "Provimento 213",
+        "Firewall pfSense",
+        "Backup Corporativo"
+      ],
+      "localContent": "Atendemos tabelionatos de protesto em Jacareí, São José dos Campos, Taubaté, Campinas, Sorocaba e em todo o Brasil. Infraestrutura de alta disponibilidade e conformidade com o Provimento 213."
     }
   },
   "custom": {
