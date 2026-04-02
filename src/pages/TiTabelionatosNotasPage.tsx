@@ -35,6 +35,8 @@ const TiTabelionatosNotasPage = () => {
           { label: relatedLabels[3], href: "/servidor-dell-poweredge-jacarei" },
           { label: relatedLabels[4], href: "/firewall-pfsense-jacarei" },
           { label: relatedLabels[5], href: "/backup-corporativo" },
+          { label: relatedLabels[6], href: "/ti-para-oficios-de-registro" },
+          { label: relatedLabels[7], href: "/ti-para-tabelionatos-de-protesto" },
         ]}
         localContent={t(`${k}.localContent`)}
         extraSections={<CartorioDowntimeCalculator />}
