@@ -27,7 +27,6 @@ interface Props {
   visible: boolean;
   data: PurchaseData;
   quoteId: string;
-  pdfUrl?: string | null;
   pdfLoading?: boolean;
   pdfReady?: boolean;
   pdfError?: string | null;
@@ -37,7 +36,7 @@ interface Props {
 const formatCurrency = (v: number) =>
   `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-const PurchaseSuccessScreen = ({ visible, data, quoteId, pdfUrl, pdfLoading, pdfReady, pdfError, onGeneratePdf }: Props) => {
+const PurchaseSuccessScreen = ({ visible, data, quoteId, pdfLoading, pdfReady, pdfError, onGeneratePdf }: Props) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [downloading, setDownloading] = useState(false);
@@ -56,11 +55,10 @@ const PurchaseSuccessScreen = ({ visible, data, quoteId, pdfUrl, pdfLoading, pdf
   const whatsappRawMsg = `${t("purchaseSuccess.whatsapp")} — ${data.serviceName}${data.hours ? ` (${data.hours}h)` : ""} — ${formatCurrency(data.monthlyValue)}${contractRef ? ` — ${contractRef}` : ""}`;
 
   const handleDownloadPdf = async () => {
-    if (!pdfUrl) return;
     setDownloading(true);
     setLastError(null);
     const fileName = `contrato-wmti-${contractRef || quoteId.slice(0, 8).toUpperCase()}.pdf`;
-    const result = await downloadPdf(pdfUrl, fileName, { quoteId, contractId: data.contractId || undefined });
+    const result = await downloadPdf(fileName, { quoteId, contractId: data.contractId || undefined });
     if (!result.success && result.error) setLastError(result.error);
     setDownloading(false);
   };

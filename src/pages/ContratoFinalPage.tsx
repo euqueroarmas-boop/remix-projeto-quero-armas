@@ -162,8 +162,8 @@ const ContratoFinalPage = () => {
               <ErrorBlock
                 message={lastError.message}
                 error={lastError}
-                onRetry={state === "available" ? handleDownload : generatePdf}
-                retryLabel={state === "available" ? "Tentar download novamente" : "Regenerar contrato"}
+                onRetry={result?.has_pdf ? handleDownload : generatePdf}
+                retryLabel={result?.has_pdf ? "Tentar download novamente" : "Regenerar contrato"}
               />
             )}
 
