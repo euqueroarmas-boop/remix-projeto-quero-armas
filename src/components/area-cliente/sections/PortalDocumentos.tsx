@@ -33,7 +33,8 @@ export default function PortalDocumentos({ customer }: { customer: CustomerData 
            t("clientPortal.documents.contract"),
     status: c.signed ? "Assinado" : c.status || "draft",
     date: c.signed_at || c.created_at,
-    url: c.contract_pdf_path,
+    quoteId: c.quote_id,
+    url: c.quote_id ? `/contrato-final/${c.quote_id}` : null,
   }));
 
   const fiscalItems = fiscalDocs.map((d) => ({
