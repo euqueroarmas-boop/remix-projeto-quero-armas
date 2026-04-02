@@ -20,6 +20,9 @@ interface ContractVariables {
   data_hora_contratacao: string;
   user_agent: string;
   session_id: string;
+  // Rental-specific variables
+  WMTI_LOC_TABELA_EQUIPAMENTOS: string;
+  WMTI_SERVICOS_DESCRICAO: string;
 }
 
 /**

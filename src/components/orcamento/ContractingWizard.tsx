@@ -367,27 +367,32 @@ const ContractingWizard = ({
         ? getServiceContractObject(serviceSlug)
         : "Os serviços de T.I. objeto deste contrato serão aqueles especificamente definidos no momento da contratação, conforme escopo acordado entre as partes.";
 
+      // Common template variables
+      const commonVars = {
+        cliente_razao_social: registrationData.razaoSocial,
+        cliente_cnpj: registrationData.cnpjOuCpf,
+        cliente_endereco_completo: fullAddress + ", " + registrationData.cidade + "/" + registrationData.uf + ", CEP " + registrationData.cep,
+        representante_nome_completo: registrationData.responsavel,
+        representante_cpf: registrationData.responsavelCpf || (registrationData.cnpjOuCpf.replace(/\D/g, "").length <= 11 ? registrationData.cnpjOuCpf : ""),
+        representante_email: registrationData.email,
+        representante_telefone: registrationData.whatsapp || registrationData.telefone || "",
+        prazo_meses: String(config.termMonths),
+        data_contratacao: new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" }),
+        ip_contratante: proof.ip_contratante,
+        geo_contratante: proof.geo_contratante,
+        aceite_checkbox: "Sim",
+        valor_mensal: finalMonthlyValue.toLocaleString("pt-BR", { minimumFractionDigits: 2 }),
+        valor_mensal_extenso: valueToWords(finalMonthlyValue),
+        dia_vencimento: diaVencimento,
+        data_hora_contratacao: proof.data_hora_contratacao,
+        user_agent: proof.user_agent,
+        session_id: proof.session_id,
+      };
+
       if (contractType === "suporte") {
         const templateHtml = await generateContractFromTemplate("wmti_servicos_base_v1", {
-          cliente_razao_social: registrationData.razaoSocial,
-          cliente_cnpj: registrationData.cnpjOuCpf,
-          cliente_endereco_completo: fullAddress + ", " + registrationData.cidade + "/" + registrationData.uf + ", CEP " + registrationData.cep,
-          representante_nome_completo: registrationData.responsavel,
-          representante_cpf: registrationData.responsavelCpf || (registrationData.cnpjOuCpf.replace(/\D/g, "").length <= 11 ? registrationData.cnpjOuCpf : ""),
-          representante_email: registrationData.email,
-          representante_telefone: registrationData.whatsapp || registrationData.telefone || "",
-          prazo_meses: String(config.termMonths),
-          data_contratacao: new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" }),
-          ip_contratante: proof.ip_contratante,
-          geo_contratante: proof.geo_contratante,
-          aceite_checkbox: "Sim",
+          ...commonVars,
           objeto_servico_especifico: objetoServico,
-          valor_mensal: finalMonthlyValue.toLocaleString("pt-BR", { minimumFractionDigits: 2 }),
-          valor_mensal_extenso: valueToWords(finalMonthlyValue),
-          dia_vencimento: diaVencimento,
-          data_hora_contratacao: proof.data_hora_contratacao,
-          user_agent: proof.user_agent,
-          session_id: proof.session_id,
         });
         html = templateHtml || generateContractHtml(
           customerDataForContract,
@@ -397,7 +402,19 @@ const ContractingWizard = ({
           finalMonthlyValue,
         );
       } else {
-        html = generateContractHtml(
+        // Locação: use the rental template
+        const equipConfig = plan
+          ? `${plan.name} — ${plan.cpu}, ${plan.ram}, ${plan.ssd}, Monitor Dell 18.5", Teclado USB ABNT2, Mouse óptico USB`
+          : "Configuração padrão Dell OptiPlex";
+        const equipTable = `Quantidade: ${computersQty} equipamento(s)\nModelo: Dell OptiPlex\nConfiguração: ${equipConfig}\nValor unitário: R$ ${plan ? plan.price.toLocaleString("pt-BR", { minimumFractionDigits: 2 }) : "0,00"}/mês\nValor total mensal: R$ ${finalMonthlyValue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
+        const servicosDesc = "a) Suporte técnico corretivo local e remoto para manutenção de hardware e software básico;\nb) Manutenção preventiva periódica dos equipamentos locados;\nc) Monitoramento do desempenho e saúde dos equipamentos;\nd) Reposição de equipamentos defeituosos conforme cláusula contratual.";
+
+        const templateHtml = await generateContractFromTemplate("wmti_locacao_v1", {
+          ...commonVars,
+          WMTI_LOC_TABELA_EQUIPAMENTOS: equipTable,
+          WMTI_SERVICOS_DESCRICAO: servicosDesc,
+        });
+        html = templateHtml || generateContractHtml(
           customerDataForContract,
           "locacao",
           plan,
@@ -458,8 +475,8 @@ const ContractingWizard = ({
           customer_id: customerId,
           quote_id: activeQuoteId,
           contract_type: contractType,
-          template_id: contractType === "suporte" ? "wmti_recorrente_v1" : null,
-          template_version: contractType === "suporte" ? "1.0" : null,
+          template_id: contractType === "suporte" ? "wmti_recorrente_v1" : contractType === "locacao" ? "wmti_locacao_v1" : null,
+          template_version: (contractType === "suporte" || contractType === "locacao") ? "1.0" : null,
           term_months: config.termMonths,
           support_24h: config.support24h,
           valor_base: pricing.valorBase,
