@@ -145,10 +145,6 @@ const ContratarServicoPage = () => {
     navigate(`/contratar/administracao-de-servidores?${redirectParams.toString()}`, { replace: true });
   }, [isLegacyCartorioRecurringCheckout, navigate, searchParams]);
 
-  if (isLegacyCartorioRecurringCheckout) {
-    return null;
-  }
-
   // On mount: check if URL has a quote with confirmed payment (resilient return)
   useEffect(() => {
     const urlQuote = searchParams.get("quote");
@@ -374,6 +370,10 @@ const ContratarServicoPage = () => {
   };
 
   const paymentLockRef = useRef(false);
+
+  if (isLegacyCartorioRecurringCheckout) {
+    return null;
+  }
 
   const handlePayment = async () => {
     if (!selectedPayment) {
