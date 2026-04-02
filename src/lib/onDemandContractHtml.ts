@@ -285,24 +285,25 @@ export function generateOnDemandContractHtml(vars: OnDemandContractVars): string
 
   <br/><br/><br/>
 
-  <p style="text-align: center; margin: 0;">Jacareí/SP, ${v.WMTI_DATA_CONTRATACAO}</p>
+  <p style="text-align: center; margin: 0;"><strong>Jacareí/SP,</strong> ${v.WMTI_DATA_CONTRATACAO}</p>
 
   <br/><br/><br/>
 
-  <div style="display: flex; justify-content: space-between;">
-    <div style="text-align: center; width: 45%;">
-      <div style="border-top: 1px solid #000; padding-top: 8px;">
-        <p style="margin: 0;"><strong>${v.WMTI_CLIENTE_RESPONSAVEL}</strong></p>
-        <p style="margin: 0; font-size: 10pt;">${docType}: ${v.WMTI_CLIENTE_CNPJ}</p>
-        <p style="margin: 0; font-size: 10pt;">CONTRATANTE</p>
-      </div>
+  <div style="text-align: center; width: 60%; margin: 0 auto;">
+    <div style="border-top: 1px solid #000; padding-top: 8px;">
+      <p style="margin: 0; font-weight: bold; text-transform: uppercase;">${v.WMTI_CLIENTE_RAZAO_SOCIAL}</p>
+      <p style="margin: 0; font-size: 10pt;"><strong>${docType}:</strong> ${v.WMTI_CLIENTE_CNPJ}</p>
+      <p style="margin: 0; font-size: 10pt;">CONTRATANTE</p>
     </div>
-    <div style="text-align: center; width: 45%;">
-      <div style="border-top: 1px solid #000; padding-top: 8px;">
-        <p style="margin: 0;"><strong>WMTI TECNOLOGIA DA INFORMAÇÃO LTDA</strong></p>
-        <p style="margin: 0; font-size: 10pt;">CNPJ: 13.366.668/0001-07</p>
-        <p style="margin: 0; font-size: 10pt;">CONTRATADA</p>
-      </div>
+  </div>
+
+  <br/>
+
+  <div style="text-align: center; width: 60%; margin: 0 auto;">
+    <div style="border-top: 1px solid #000; padding-top: 8px;">
+      <p style="margin: 0; font-weight: bold;">WMTI TECNOLOGIA DA INFORMAÇÃO LTDA</p>
+      <p style="margin: 0; font-size: 10pt;"><strong>CNPJ:</strong> 13.366.668/0001-07</p>
+      <p style="margin: 0; font-size: 10pt;">CONTRATADA</p>
     </div>
   </div>
 
@@ -310,10 +311,10 @@ export function generateOnDemandContractHtml(vars: OnDemandContractVars): string
 
   <div data-traceability="true" style="padding-top: 16px; border-top: 1px solid #999;">
     <h2 style="font-size: 10pt; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; color: #333;">DADOS DE RASTREABILIDADE DA ASSINATURA ELETRÔNICA</h2>
-    <p style="font-size: 9pt; color: #444; margin: 4px 0;">IP de origem: <strong data-proof="ip">{{SIGN_IP}}</strong></p>
-    <p style="font-size: 9pt; color: #444; margin: 4px 0;">Data da confirmação: <strong data-proof="date">{{SIGN_DATE}}</strong></p>
-    <p style="font-size: 9pt; color: #444; margin: 4px 0;">Hora da confirmação: <strong data-proof="time">{{SIGN_TIME}}</strong></p>
-    <p style="font-size: 9pt; color: #444; margin: 4px 0;">Dispositivo/Navegador: <strong data-proof="ua">{{SIGN_USER_AGENT}}</strong></p>
+    <p style="font-size: 9pt; color: #444; margin: 4px 0;"><strong>IP de origem:</strong> <span data-proof="ip">{{SIGN_IP}}</span></p>
+    <p style="font-size: 9pt; color: #444; margin: 4px 0;"><strong>Data da confirmação:</strong> <span data-proof="date">{{SIGN_DATE}}</span></p>
+    <p style="font-size: 9pt; color: #444; margin: 4px 0;"><strong>Hora da confirmação:</strong> <span data-proof="time">{{SIGN_TIME}}</span></p>
+    <p style="font-size: 9pt; color: #444; margin: 4px 0;"><strong>Dispositivo/Navegador:</strong> <span data-proof="ua">{{SIGN_USER_AGENT}}</span></p>
     <p style="font-size: 8pt; color: #888; margin-top: 12px; font-style: italic;">Este documento foi assinado eletronicamente nos termos do art. 10 da Medida Provisória nº 2.200-2/2001. Os dados acima constituem prova eletrônica da manifestação de vontade do signatário.</p>
   </div>
 
