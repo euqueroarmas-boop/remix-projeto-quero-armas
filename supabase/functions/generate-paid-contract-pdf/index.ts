@@ -205,24 +205,56 @@ async function buildPdfBytes(context: Awaited<ReturnType<typeof getPostPurchaseC
 
   const contractBody = stripHtml(context.contract.contract_text);
   if (contractBody) {
-    drawSectionTitle("Texto contratual");
-    contractBody.split(/\n+/).forEach((paragraph) => {
-      if (paragraph.trim()) drawTextBlock(paragraph.trim(), { size: 9 });
-    });
+    // Remove old generic header - contract title comes from the clauses themselves
+    y -= 8;
+    const clauseRegex = /^CL[ÁA]USULA\s/i;
+    const paragraphs = contractBody.split(/\n+/).filter((p) => p.trim());
+
+    for (const paragraph of paragraphs) {
+      const trimmed = paragraph.trim();
+      if (!trimmed) continue;
+
+      const isClause = clauseRegex.test(trimmed);
+
+      if (isClause) {
+        // Add spacing before clause (blank line)
+        y -= 14;
+        // Draw clause title: BOLD, uppercase, left-aligned (no justify)
+        drawTextBlock(trimmed.toUpperCase(), {
+          size: 10,
+          bold: true,
+          color: rgb(0.15, 0.15, 0.15),
+        });
+      } else {
+        // Body paragraph: justified text
+        drawTextBlock(trimmed, { size: 9, justify: true });
+      }
+    }
   }
 
-  // Draw dynamic page numbers on all pages
+  // Draw dynamic page numbers (orange circle) on all pages
   const totalPages = pages.length;
+  const circleRadius = 12;
   for (let i = 0; i < totalPages; i++) {
     const pg = pages[i];
     const pageNumText = `${i + 1}`;
-    const numWidth = font.widthOfTextAtSize(pageNumText, 9);
+    const numWidth = bold.widthOfTextAtSize(pageNumText, 9);
+    const cx = pageWidth - marginRight - circleRadius;
+    const cy = pageHeight - 28;
+    // Orange circle background
+    pg.drawCircle({
+      x: cx,
+      y: cy,
+      size: circleRadius,
+      color: rgb(0.976, 0.451, 0.086),
+    });
+    // White number on top
     pg.drawText(pageNumText, {
-      x: pageWidth - marginRight - numWidth,
-      y: pageHeight - 32,
+      x: cx - numWidth / 2,
+      y: cy - 4,
       size: 9,
-      font,
-      color: rgb(0.5, 0.5, 0.5),
+      font: bold,
+      color: rgb(1, 1, 1),
     });
   }
 
