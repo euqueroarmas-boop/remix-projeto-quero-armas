@@ -123,6 +123,8 @@ export function usePulseLogger(onConflict?: () => void) {
         supabase.from("cipa_stress_daily_stats" as any).delete().gte("created_at", "2000-01-01"),
         supabase.from("cipa_stress_monthly_stats" as any).delete().gte("created_at", "2000-01-01"),
         supabase.from("cipa_voice_daily_stats" as any).delete().gte("created_at", "2000-01-01"),
+        supabase.from("user_streaks" as any).delete().gte("created_at", "2000-01-01"),
+        supabase.from("cipa_cycles" as any).delete().gte("created_at", "2000-01-01"),
       ]);
       lastSaved.current = null;
       eventState.current = createEventDetector();
