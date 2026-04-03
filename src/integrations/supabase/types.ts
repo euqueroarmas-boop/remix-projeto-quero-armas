@@ -2061,6 +2061,42 @@ export type Database = {
           },
         ]
       }
+      user_streaks: {
+        Row: {
+          consistency_score: number | null
+          created_at: string
+          current_streak: number
+          id: string
+          last_entry_date: string | null
+          longest_streak: number
+          total_days_logged: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          consistency_score?: number | null
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_entry_date?: string | null
+          longest_streak?: number
+          total_days_logged?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          consistency_score?: number | null
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_entry_date?: string | null
+          longest_streak?: number
+          total_days_logged?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       voice_emotion_logs: {
         Row: {
           anger_probability_estimate: number | null
