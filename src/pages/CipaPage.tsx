@@ -419,6 +419,57 @@ const CipaPage = () => {
           </p>
         </div>
 
+        {/* ═══ Tab Switcher ═══ */}
+        <div className="flex gap-1 mb-3 shrink-0 bg-card border border-border rounded-xl p-1">
+          <button
+            onClick={() => setActiveTab("contador")}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[11px] font-mono font-bold uppercase tracking-wider transition-all ${
+              activeTab === "contador"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Heart className="w-3 h-3" />
+            Contador
+          </button>
+          <button
+            onClick={() => setActiveTab("pulse")}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[11px] font-mono font-bold uppercase tracking-wider transition-all ${
+              activeTab === "pulse"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Activity className="w-3 h-3" />
+            Pulse
+          </button>
+        </div>
+
+        {activeTab === "pulse" ? (
+          <PulseDashboard onConflict={async () => {
+            // Reuse the same fight detection logic
+            const { data: cycle } = await supabase
+              .from("cipa_cycles")
+              .select("*")
+              .eq("is_current", true)
+              .maybeSingle();
+            if (cycle) {
+              const endedAt = new Date().toISOString();
+              const ms = new Date(endedAt).getTime() - new Date(cycle.started_at).getTime();
+              await supabase.from("cipa_cycles").update({
+                is_current: false, ended_at: endedAt,
+                duration_days: Math.floor(ms / 86400000),
+                duration_seconds: Math.floor(ms / 1000),
+                duration_label: durationLabelFull(ms),
+                note: "Conflito detectado via Pulse (≥ 81)", updated_at: endedAt,
+              }).eq("id", cycle.id);
+              await supabase.from("cipa_cycles").insert({ started_at: endedAt, is_current: true });
+              fetchData();
+            }
+          }} />
+        ) : (
+        <>
+
         {/* ═══ Main Counter Card ═══ */}
         <div className="relative overflow-hidden rounded-2xl bg-card border border-border p-5 mb-2.5 text-center shrink-0">
           {/* Subtle orange glow */}
