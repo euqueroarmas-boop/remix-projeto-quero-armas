@@ -1,5 +1,5 @@
 /**
- * CIPA Pulse — Dashboard (Phase 1 + 2 + 3 + 4 + 5 + 6)
+ * CIPA Pulse — Dashboard (Phase 1 + 2 + 3 + 4 + 5 + 6 + 7)
  * Main dashboard combining all Pulse components
  */
 
@@ -13,6 +13,7 @@ import PulseHealthKit from "./PulseHealthKit";
 import PulseChemicalIndicator from "./PulseChemicalIndicator";
 import PulseStatistics from "./PulseStatistics";
 import PulseWeeklyBars from "./PulseWeeklyBars";
+import PulseRiskBadge from "./PulseRiskBadge";
 import { usePulseLogger } from "./usePulseLogger";
 
 interface Props {
@@ -33,6 +34,9 @@ export default function PulseDashboard({ onConflict }: Props) {
 
       {/* Current Score */}
       <PulseCurrentScore />
+
+      {/* Risk Prediction Badge (Phase 7) */}
+      <PulseRiskBadge />
 
       {/* Trend Indicator (Phase 2) */}
       <PulseTrendIndicator />
