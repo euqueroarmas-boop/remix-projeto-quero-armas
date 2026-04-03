@@ -6,6 +6,10 @@ import { supabase } from "@/integrations/supabase/client";
 import StressThermometer from "@/components/cipa/StressThermometer";
 import { useStressLogger } from "@/components/cipa/useStressLogger";
 import DailyScoreCard from "@/components/cipa/DailyScoreCard";
+import StressLineChart from "@/components/cipa/StressLineChart";
+import StressHeatmap from "@/components/cipa/StressHeatmap";
+import StressInsights from "@/components/cipa/StressInsights";
+import MonthlyStatsPanel from "@/components/cipa/MonthlyStatsPanel";
 
 /* ── Types ── */
 interface CipaCycle {
@@ -360,12 +364,12 @@ const CipaPage = () => {
 
   return (
     <div
-      className="flex flex-col bg-background overflow-hidden"
-      style={{ height: "100dvh", maxHeight: "100dvh" }}
+      className="flex flex-col bg-background overflow-y-auto"
+      style={{ height: "100dvh" }}
     >
       <SeoHead title="CIPA — Contador de Dias" description="Acompanhe dias sem briga" noindex />
 
-      <div className="flex-1 flex flex-col max-w-lg mx-auto w-full px-4 pt-4 pb-3 overflow-hidden">
+      <div className="flex-1 flex flex-col max-w-lg mx-auto w-full px-4 pt-4 pb-3">
 
         {/* ═══ Header ═══ */}
         <div className="text-center mb-3 shrink-0">
@@ -452,6 +456,14 @@ const CipaPage = () => {
         {/* ═══ Daily Score ═══ */}
         <div className="mb-2.5 shrink-0">
           <DailyScoreCard />
+        </div>
+
+        {/* ═══ Analytics Section ═══ */}
+        <div className="space-y-2.5 shrink-0">
+          <StressLineChart />
+          <StressInsights />
+          <StressHeatmap />
+          <MonthlyStatsPanel />
         </div>
 
         {/* ═══ Footer Actions ═══ */}

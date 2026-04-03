@@ -1,6 +1,7 @@
 import { useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { calculateDailyStats, type StressLog } from "./stressEventEngine";
+import { updateMonthlyStats } from "./useMonthlyAggregator";
 
 const SESSION_ID = `s_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 const MIN_DELTA = 5;
@@ -66,6 +67,10 @@ export function useStressLogger() {
 
       // Update daily aggregated stats
       updateDailyStats(dayKey);
+
+      // Update monthly stats
+      const monthKey = dayKey.slice(0, 7);
+      updateMonthlyStats(monthKey);
     } catch (e) {
       console.error("[StressLogger] save failed:", e);
     }
