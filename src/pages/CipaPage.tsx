@@ -473,12 +473,12 @@ const CipaPage = () => {
         {/* ═══ Main Counter Card ═══ */}
         <div className="relative overflow-hidden rounded-2xl bg-card border border-border p-5 mb-2.5 text-center shrink-0">
           {/* Subtle orange glow */}
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/3 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/3 pointer-events-none" />
           <div className="relative">
-            <div className="text-6xl font-mono font-extrabold text-foreground tabular-nums leading-none tracking-tight">
+            <div className="text-7xl font-mono font-extrabold text-foreground tabular-nums leading-none tracking-tight">
               {days}
             </div>
-            <p className="text-sm text-muted-foreground font-medium mt-1.5 tracking-wide">
+            <p className="text-base text-muted-foreground font-medium mt-2 tracking-wide">
               {days === 1 ? "dia" : "dias"} sem briga
             </p>
             {currentCycle && (
@@ -521,14 +521,14 @@ const CipaPage = () => {
         {/* ═══ Interrupt Button ═══ */}
         <button
           onClick={() => setShowConfirmInterrupt(true)}
-          className="w-full flex items-center justify-center gap-2 bg-primary/10 border border-primary/30 text-primary font-mono font-bold text-xs uppercase tracking-wider py-3.5 rounded-xl hover:bg-primary/20 hover:border-primary/50 transition-all mb-2.5 shrink-0"
+          className="w-full flex items-center justify-center gap-2 bg-primary border border-primary text-primary-foreground font-mono font-bold text-sm uppercase tracking-wider py-4 rounded-xl hover:bg-primary/90 transition-all mb-3 shrink-0 shadow-lg shadow-primary/20"
         >
-          <AlertTriangle className="w-3.5 h-3.5" />
+          <AlertTriangle className="w-4 h-4" />
           Registrar interrupção
         </button>
 
         {/* ═══ Stats Grid ═══ */}
-        <div className="grid grid-cols-4 gap-2 mb-2 shrink-0">
+        <div className="grid grid-cols-4 gap-2 mb-3 shrink-0">
           <StatMini icon={Trophy} value={bestStreak ? durationText(bestStreak) : "—"} label="Recorde" accent="text-amber-500" />
           <StatMini icon={BarChart3} value={avgStreak ? durationText(avgStreak) : "—"} label="Média" accent="text-blue-400" />
           <StatMini icon={AlertTriangle} value={String(totalInterruptions)} label="Paradas" accent="text-destructive" />
