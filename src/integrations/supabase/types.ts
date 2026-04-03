@@ -840,30 +840,39 @@ export type Database = {
         Row: {
           conflict_flag: boolean
           created_at: string
+          device_id: string | null
           duration_minutes: number | null
           ended_at: string | null
           id: string
           peak_level: number
+          relationship_id: string | null
+          source_type: string | null
           started_at: string
           user_id: string
         }
         Insert: {
           conflict_flag?: boolean
           created_at?: string
+          device_id?: string | null
           duration_minutes?: number | null
           ended_at?: string | null
           id?: string
           peak_level?: number
+          relationship_id?: string | null
+          source_type?: string | null
           started_at?: string
           user_id?: string
         }
         Update: {
           conflict_flag?: boolean
           created_at?: string
+          device_id?: string | null
           duration_minutes?: number | null
           ended_at?: string | null
           id?: string
           peak_level?: number
+          relationship_id?: string | null
+          source_type?: string | null
           started_at?: string
           user_id?: string
         }
@@ -873,36 +882,51 @@ export type Database = {
         Row: {
           bio_source: string | null
           created_at: string
+          data_mode: string | null
+          device_id: string | null
           heart_rate: number | null
           hrv: number | null
           id: string
           manual_level: number
+          partner_user_id: string | null
+          relationship_id: string | null
           session_id: string | null
           sleep_score: number | null
+          source_type: string | null
           status_label: string
           user_id: string
         }
         Insert: {
           bio_source?: string | null
           created_at?: string
+          data_mode?: string | null
+          device_id?: string | null
           heart_rate?: number | null
           hrv?: number | null
           id?: string
           manual_level: number
+          partner_user_id?: string | null
+          relationship_id?: string | null
           session_id?: string | null
           sleep_score?: number | null
+          source_type?: string | null
           status_label?: string
           user_id?: string
         }
         Update: {
           bio_source?: string | null
           created_at?: string
+          data_mode?: string | null
+          device_id?: string | null
           heart_rate?: number | null
           hrv?: number | null
           id?: string
           manual_level?: number
+          partner_user_id?: string | null
+          relationship_id?: string | null
           session_id?: string | null
           sleep_score?: number | null
+          source_type?: string | null
           status_label?: string
           user_id?: string
         }
@@ -1085,6 +1109,53 @@ export type Database = {
           status?: string | null
         }
         Relationships: []
+      }
+      intervention_logs: {
+        Row: {
+          accepted: boolean | null
+          created_at: string
+          effectiveness_score: number | null
+          id: string
+          intervention_text: string | null
+          intervention_type: string
+          notes: string | null
+          relationship_id: string | null
+          trigger_event_id: string | null
+          user_id: string
+        }
+        Insert: {
+          accepted?: boolean | null
+          created_at?: string
+          effectiveness_score?: number | null
+          id?: string
+          intervention_text?: string | null
+          intervention_type?: string
+          notes?: string | null
+          relationship_id?: string | null
+          trigger_event_id?: string | null
+          user_id?: string
+        }
+        Update: {
+          accepted?: boolean | null
+          created_at?: string
+          effectiveness_score?: number | null
+          id?: string
+          intervention_text?: string | null
+          intervention_type?: string
+          notes?: string | null
+          relationship_id?: string | null
+          trigger_event_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "intervention_logs_trigger_event_id_fkey"
+            columns: ["trigger_event_id"]
+            isOneToOne: false
+            referencedRelation: "emotion_events"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       leads: {
         Row: {
@@ -1455,6 +1526,74 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      relationship_members: {
+        Row: {
+          consent_at: string | null
+          consent_given: boolean
+          created_at: string
+          id: string
+          relationship_id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          consent_at?: string | null
+          consent_given?: boolean
+          created_at?: string
+          id?: string
+          relationship_id: string
+          role?: string
+          user_id?: string
+        }
+        Update: {
+          consent_at?: string | null
+          consent_given?: boolean
+          created_at?: string
+          id?: string
+          relationship_id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "relationship_members_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationships"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      relationships: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          invite_code: string
+          partner_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          invite_code?: string
+          partner_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          invite_code?: string
+          partner_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       revenue_intelligence: {
         Row: {
