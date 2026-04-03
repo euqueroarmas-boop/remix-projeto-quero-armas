@@ -462,6 +462,7 @@ const CipaPage = () => {
         {/* ═══ Analytics Section ═══ */}
         <div className="space-y-2.5 shrink-0">
           <StressLineChart />
+          <VoiceTensionAnalyzer />
           <StressInsights />
           <StressHeatmap />
           <MonthlyStatsPanel />
