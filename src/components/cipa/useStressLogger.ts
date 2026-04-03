@@ -6,6 +6,7 @@ import { updateMonthlyStats } from "./useMonthlyAggregator";
 const SESSION_ID = `s_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 const MIN_DELTA = 5;
 const MIN_INTERVAL_MS = 3000;
+const FIGHT_THRESHOLD = 81;
 
 interface LogEntry {
   value: number;
@@ -25,7 +26,6 @@ async function updateDailyStats(dayKey: string) {
     const logs = data as unknown as StressLog[];
     const stats = calculateDailyStats(logs);
 
-    // Upsert daily stats
     await supabase.from("cipa_stress_daily_stats" as any).upsert({
       day_key: dayKey,
       ...stats,
@@ -36,7 +36,7 @@ async function updateDailyStats(dayKey: string) {
   }
 }
 
-export function useStressLogger() {
+export function useStressLogger(onFightDetected?: () => void) {
   const lastSaved = useRef<LogEntry | null>(null);
 
   const logStress = useCallback(async (value: number) => {
@@ -65,16 +65,32 @@ export function useStressLogger() {
         minutes_since_previous: Math.round(minutesSince * 100) / 100,
       });
 
-      // Update daily aggregated stats
       updateDailyStats(dayKey);
 
-      // Update monthly stats
       const monthKey = dayKey.slice(0, 7);
       updateMonthlyStats(monthKey);
+
+      // Auto-detect fight
+      if (value >= FIGHT_THRESHOLD && onFightDetected) {
+        onFightDetected();
+      }
     } catch (e) {
       console.error("[StressLogger] save failed:", e);
     }
+  }, [onFightDetected]);
+
+  const clearDayScore = useCallback(async () => {
+    const dayKey = new Date().toISOString().slice(0, 10);
+    try {
+      await supabase.from("cipa_stress_logs" as any).delete().eq("day_key", dayKey);
+      await supabase.from("cipa_stress_daily_stats" as any).delete().eq("day_key", dayKey);
+      await supabase.from("voice_emotion_logs" as any).delete().eq("day_key", dayKey);
+      await supabase.from("cipa_voice_daily_stats" as any).delete().eq("day_key", dayKey);
+      lastSaved.current = null;
+    } catch (e) {
+      console.error("[StressLogger] clear day failed:", e);
+    }
   }, []);
 
-  return { logStress };
+  return { logStress, clearDayScore };
 }
