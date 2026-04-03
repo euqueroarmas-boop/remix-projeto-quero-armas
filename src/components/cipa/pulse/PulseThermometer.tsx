@@ -117,8 +117,18 @@ export default function PulseThermometer({ onRelease }: Props) {
               {value}
             </motion.div>
             <p className="text-[10px] font-mono text-muted-foreground mt-0.5">
-              {dragging ? "Arraste para ajustar" : "Toque na barra para registrar"}
+              {dragging ? "Arraste para ajustar" : value === 0 ? "Toque abaixo para registrar calmo" : "Toque na barra para registrar"}
             </p>
+            {!dragging && value === 0 && (
+              <button
+                type="button"
+                onClick={() => onRelease(0)}
+                className="mt-2 px-3 py-1.5 rounded-lg text-[11px] font-mono font-bold transition-colors"
+                style={{ background: zone.color, color: "#fff" }}
+              >
+                ✓ Registrar Calmo
+              </button>
+            )}
           </div>
 
           {/* Zone bars */}
