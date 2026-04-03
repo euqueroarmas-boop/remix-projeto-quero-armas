@@ -528,41 +528,6 @@ const CipaPage = () => {
           <StatMini icon={Heart} value={durationText(elapsed)} label="Atual" accent="text-emerald-500" />
         </div>
 
-        {/* ═══ Stress Thermometer ═══ */}
-        <div className="mb-2.5 shrink-0">
-          <StressThermometer onRelease={logStress} />
-        </div>
-
-        {/* ═══ Daily Score ═══ */}
-        <div className="mb-2.5 shrink-0">
-          <DailyScoreCard onClearDay={async () => {
-            await clearDayScore();
-            // Also restart current cycle (zero the timer)
-            if (currentCycle) {
-              const endedAt = new Date().toISOString();
-              const ms = new Date(endedAt).getTime() - new Date(currentCycle.started_at).getTime();
-              await supabase.from("cipa_cycles").update({
-                is_current: false, ended_at: endedAt,
-                duration_days: Math.floor(ms / 86400000),
-                duration_seconds: Math.floor(ms / 1000),
-                duration_label: durationLabelFull(ms),
-                note: "Score zerado manualmente (sem briga)", updated_at: endedAt,
-              }).eq("id", currentCycle.id);
-              await supabase.from("cipa_cycles").insert({ started_at: endedAt, is_current: true });
-              await fetchData();
-            }
-          }} />
-        </div>
-
-        {/* ═══ Analytics Section ═══ */}
-        <div className="space-y-2.5 shrink-0">
-          <StressLineChart />
-          <VoiceTensionAnalyzer />
-          <StressInsights />
-          <StressHeatmap />
-          <MonthlyStatsPanel />
-        </div>
-
         {/* ═══ Footer Actions ═══ */}
         <div className="flex items-center justify-center gap-5 shrink-0 pt-1">
           {history.length > 0 && (
