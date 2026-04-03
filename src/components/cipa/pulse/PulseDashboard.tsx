@@ -35,6 +35,9 @@ export default function PulseDashboard({ onConflict }: Props) {
       {/* Current Score */}
       <PulseCurrentScore />
 
+      {/* Risk Prediction Badge (Phase 7) */}
+      <PulseRiskBadge />
+
       {/* Trend Indicator (Phase 2) */}
       <PulseTrendIndicator />
 
