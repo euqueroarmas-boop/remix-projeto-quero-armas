@@ -473,12 +473,12 @@ const CipaPage = () => {
         {/* ═══ Main Counter Card ═══ */}
         <div className="relative overflow-hidden rounded-2xl bg-card border border-border p-5 mb-2.5 text-center shrink-0">
           {/* Subtle orange glow */}
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/3 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/3 pointer-events-none" />
           <div className="relative">
-            <div className="text-6xl font-mono font-extrabold text-foreground tabular-nums leading-none tracking-tight">
+            <div className="text-7xl font-mono font-extrabold text-foreground tabular-nums leading-none tracking-tight">
               {days}
             </div>
-            <p className="text-sm text-muted-foreground font-medium mt-1.5 tracking-wide">
+            <p className="text-base text-muted-foreground font-medium mt-2 tracking-wide">
               {days === 1 ? "dia" : "dias"} sem briga
             </p>
             {currentCycle && (
