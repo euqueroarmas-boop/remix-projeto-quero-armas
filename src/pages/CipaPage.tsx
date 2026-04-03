@@ -60,6 +60,7 @@ function pad2(n: number) { return String(n).padStart(2, "0"); }
 
 /* ── Component ── */
 const CipaPage = () => {
+  const { logStress } = useStressLogger();
   const [currentCycle, setCurrentCycle] = useState<CipaCycle | null>(null);
   const [history, setHistory] = useState<CipaCycle[]>([]);
   const [loading, setLoading] = useState(true);
