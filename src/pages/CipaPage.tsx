@@ -66,7 +66,28 @@ function pad2(n: number) { return String(n).padStart(2, "0"); }
 
 /* ── Component ── */
 const CipaPage = () => {
-  const { logStress } = useStressLogger();
+  const fetchDataRef = useRef<() => Promise<void>>();
+  const { logStress, clearDayScore } = useStressLogger(useCallback(async () => {
+    // Auto-interrupt cycle when fight detected (value >= 81)
+    const { data: cycle } = await supabase
+      .from("cipa_cycles")
+      .select("*")
+      .eq("is_current", true)
+      .maybeSingle();
+    if (cycle) {
+      const endedAt = new Date().toISOString();
+      const ms = new Date(endedAt).getTime() - new Date(cycle.started_at).getTime();
+      await supabase.from("cipa_cycles").update({
+        is_current: false, ended_at: endedAt,
+        duration_days: Math.floor(ms / 86400000),
+        duration_seconds: Math.floor(ms / 1000),
+        duration_label: durationLabelFull(ms),
+        note: "Briga detectada automaticamente (tensão ≥ 81)", updated_at: endedAt,
+      }).eq("id", cycle.id);
+      await supabase.from("cipa_cycles").insert({ started_at: endedAt, is_current: true });
+      fetchDataRef.current?.();
+    }
+  }, []));
   const [currentCycle, setCurrentCycle] = useState<CipaCycle | null>(null);
   const [history, setHistory] = useState<CipaCycle[]>([]);
   const [loading, setLoading] = useState(true);
@@ -167,6 +188,7 @@ const CipaPage = () => {
     setLoading(false);
   }, []);
 
+  useEffect(() => { fetchDataRef.current = fetchData; }, [fetchData]);
   useEffect(() => { fetchData(); }, [fetchData]);
 
   // PWA: manifest, meta tags, service worker, install prompt
@@ -456,7 +478,7 @@ const CipaPage = () => {
 
         {/* ═══ Daily Score ═══ */}
         <div className="mb-2.5 shrink-0">
-          <DailyScoreCard />
+          <DailyScoreCard onClearDay={clearDayScore} />
         </div>
 
         {/* ═══ Analytics Section ═══ */}

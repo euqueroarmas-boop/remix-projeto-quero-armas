@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Activity, TrendingUp, TrendingDown, Flame, Shield, AlertTriangle, Zap, Mic } from "lucide-react";
+import { Activity, TrendingUp, TrendingDown, Flame, Shield, AlertTriangle, Zap, Mic, RotateCcw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { calculateDailyStats, detectEvents, type StressLog, type DailyStats } from "./stressEventEngine";
 import { calculateHybridScore, type HybridResult } from "./hybridScoreEngine";
@@ -19,65 +19,83 @@ interface VoiceDayStats {
   anger_spikes_count: number;
 }
 
-export default function DailyScoreCard() {
+interface DailyScoreCardProps {
+  onClearDay?: () => Promise<void>;
+}
+
+export default function DailyScoreCard({ onClearDay }: DailyScoreCardProps) {
   const [stats, setStats] = useState<DailyStats | null>(null);
   const [voiceStats, setVoiceStats] = useState<VoiceDayStats | null>(null);
   const [hybrid, setHybrid] = useState<HybridResult | null>(null);
   const [eventCount, setEventCount] = useState({ escalations: 0, nearFights: 0, fights: 0 });
   const [loading, setLoading] = useState(true);
+  const [confirmClear, setConfirmClear] = useState(false);
+  const [clearing, setClearing] = useState(false);
 
-  useEffect(() => {
+  const fetchToday = useCallback(async () => {
     const today = new Date().toISOString().slice(0, 10);
 
-    async function fetchToday() {
-      // Fetch manual stress logs
-      const { data: manualData } = await supabase
-        .from("cipa_stress_logs" as any)
-        .select("*")
-        .eq("day_key", today)
-        .order("created_at", { ascending: true });
+    const { data: manualData } = await supabase
+      .from("cipa_stress_logs" as any)
+      .select("*")
+      .eq("day_key", today)
+      .order("created_at", { ascending: true });
 
-      let manualStats: DailyStats | null = null;
-      if (manualData && manualData.length > 0) {
-        const logs = manualData as unknown as StressLog[];
-        manualStats = calculateDailyStats(logs);
-        setStats(manualStats);
-        const events = detectEvents(logs);
-        setEventCount({
-          escalations: events.filter(e => e.type === "rapid_escalation").length,
-          nearFights: events.filter(e => e.type === "near_fight").length,
-          fights: events.filter(e => e.type === "fight").length,
-        });
-      }
-
-      // Fetch voice daily stats
-      const { data: voiceData } = await supabase
-        .from("cipa_voice_daily_stats" as any)
-        .select("average_tension_score, peak_tension_score, anger_spikes_count")
-        .eq("day_key", today)
-        .maybeSingle();
-
-      const vStats = voiceData as unknown as VoiceDayStats | null;
-      setVoiceStats(vStats);
-
-      // Calculate hybrid score
-      const result = calculateHybridScore({
-        manualRisk: manualStats?.daily_conflict_risk ?? null,
-        manualPeak: manualStats?.max_value ?? null,
-        manualAvg: manualStats?.weighted_average ?? null,
-        voiceTension: vStats?.average_tension_score ?? null,
-        voicePeak: vStats?.peak_tension_score ?? null,
-        voiceAngerSpikes: vStats?.anger_spikes_count ?? null,
+    let manualStats: DailyStats | null = null;
+    if (manualData && manualData.length > 0) {
+      const logs = manualData as unknown as StressLog[];
+      manualStats = calculateDailyStats(logs);
+      setStats(manualStats);
+      const events = detectEvents(logs);
+      setEventCount({
+        escalations: events.filter(e => e.type === "rapid_escalation").length,
+        nearFights: events.filter(e => e.type === "near_fight").length,
+        fights: events.filter(e => e.type === "fight").length,
       });
-      setHybrid(result);
-
-      setLoading(false);
+    } else {
+      setStats(null);
+      setEventCount({ escalations: 0, nearFights: 0, fights: 0 });
     }
 
+    const { data: voiceData } = await supabase
+      .from("cipa_voice_daily_stats" as any)
+      .select("average_tension_score, peak_tension_score, anger_spikes_count")
+      .eq("day_key", today)
+      .maybeSingle();
+
+    const vStats = voiceData as unknown as VoiceDayStats | null;
+    setVoiceStats(vStats);
+
+    const result = calculateHybridScore({
+      manualRisk: manualStats?.daily_conflict_risk ?? null,
+      manualPeak: manualStats?.max_value ?? null,
+      manualAvg: manualStats?.weighted_average ?? null,
+      voiceTension: vStats?.average_tension_score ?? null,
+      voicePeak: vStats?.peak_tension_score ?? null,
+      voiceAngerSpikes: vStats?.anger_spikes_count ?? null,
+    });
+    setHybrid(result);
+
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
     fetchToday();
     const interval = setInterval(fetchToday, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchToday]);
+
+  const handleClear = useCallback(async () => {
+    if (!onClearDay) return;
+    setClearing(true);
+    await onClearDay();
+    setStats(null);
+    setVoiceStats(null);
+    setHybrid(null);
+    setEventCount({ escalations: 0, nearFights: 0, fights: 0 });
+    setConfirmClear(false);
+    setClearing(false);
+  }, [onClearDay]);
 
   if (loading || (!stats && !voiceStats)) {
     return (
@@ -104,12 +122,44 @@ export default function DailyScoreCard() {
             Score do Dia {isHybrid && "(Híbrido)"}
           </span>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
+          {/* Clear day button */}
+          {onClearDay && !confirmClear && (
+            <button
+              onClick={() => setConfirmClear(true)}
+              className="text-[8px] font-mono text-muted-foreground/50 hover:text-primary transition-colors flex items-center gap-0.5"
+              title="Zerar score do dia"
+            >
+              <RotateCcw className="w-2.5 h-2.5" />
+            </button>
+          )}
           {isHybrid && <Mic className="w-2.5 h-2.5 text-muted-foreground" />}
           <RiskIcon className={`w-3 h-3 ${info.color}`} />
           <span className={`text-[10px] font-mono font-bold ${info.color}`}>{info.label}</span>
         </div>
       </div>
+
+      {/* Confirm clear */}
+      {confirmClear && (
+        <div className="mb-2 px-2 py-1.5 rounded-md bg-muted border border-border flex items-center justify-between">
+          <p className="text-[9px] font-mono text-muted-foreground">Zerar score de hoje? (não briguei)</p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleClear}
+              disabled={clearing}
+              className="text-[9px] font-mono font-bold text-emerald-400 disabled:opacity-50"
+            >
+              {clearing ? "..." : "Sim"}
+            </button>
+            <button
+              onClick={() => setConfirmClear(false)}
+              className="text-[9px] font-mono text-muted-foreground"
+            >
+              Não
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Score */}
       <div className="flex items-end gap-3 mb-2">
@@ -123,7 +173,6 @@ export default function DailyScoreCard() {
         </motion.span>
         <span className="text-xs text-muted-foreground font-mono mb-1">/100</span>
 
-        {/* Trend + confidence */}
         <div className="ml-auto flex items-center gap-1.5">
           {hybrid && hybrid.confidence > 0 && (
             <span className="text-[8px] font-mono text-muted-foreground/60">{hybrid.confidence}% conf.</span>
