@@ -52,6 +52,9 @@ export default function PulseDashboard({ onConflict }: Props) {
       {/* Daily Chart */}
       <PulseDailyChart />
 
+      {/* Weekly Bars (Phase 6) */}
+      <PulseWeeklyBars />
+
       {/* Monthly Heatmap */}
       <PulseHeatmap />
 
