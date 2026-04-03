@@ -54,6 +54,10 @@ export function usePulseLogger(onConflict?: () => void) {
         await saveEvent(completedEvent);
       }
 
+      // Update chemical engine (Phase 4)
+      chemicalState.current = processReading(chemicalState.current, level);
+      window.dispatchEvent(new Event("pulse-chemical-update"));
+
       // Trigger conflict callback
       if (level >= 81 && onConflict) {
         onConflict();
