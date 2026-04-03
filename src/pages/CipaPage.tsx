@@ -66,31 +66,28 @@ function pad2(n: number) { return String(n).padStart(2, "0"); }
 
 /* ── Component ── */
 const CipaPage = () => {
-  const handleFightDetected = useCallback(async () => {
-    // Auto-interrupt the current cycle when a fight is detected
-    const { data: all } = await supabase
+  const fetchDataRef = useRef<() => Promise<void>>();
+  const { logStress, clearDayScore } = useStressLogger(useCallback(async () => {
+    // Auto-interrupt cycle when fight detected (value >= 81)
+    const { data: cycle } = await supabase
       .from("cipa_cycles")
       .select("*")
       .eq("is_current", true)
       .maybeSingle();
-    
-    if (all) {
+    if (cycle) {
       const endedAt = new Date().toISOString();
-      const ms = new Date(endedAt).getTime() - new Date(all.started_at).getTime();
-      const durDays = Math.floor(ms / 86400000);
-      const durSeconds = Math.floor(ms / 1000);
-      const label = durationLabelFull(ms);
+      const ms = new Date(endedAt).getTime() - new Date(cycle.started_at).getTime();
       await supabase.from("cipa_cycles").update({
-        is_current: false, ended_at: endedAt, duration_days: durDays,
-        duration_seconds: durSeconds, duration_label: label,
+        is_current: false, ended_at: endedAt,
+        duration_days: Math.floor(ms / 86400000),
+        duration_seconds: Math.floor(ms / 1000),
+        duration_label: durationLabelFull(ms),
         note: "Briga detectada automaticamente (tensão ≥ 81)", updated_at: endedAt,
-      }).eq("id", all.id);
+      }).eq("id", cycle.id);
       await supabase.from("cipa_cycles").insert({ started_at: endedAt, is_current: true });
-      fetchData();
+      fetchDataRef.current?.();
     }
-  }, []);
-
-  const { logStress, clearDayScore } = useStressLogger(handleFightDetected);
+  }, []));
   const [currentCycle, setCurrentCycle] = useState<CipaCycle | null>(null);
   const [history, setHistory] = useState<CipaCycle[]>([]);
   const [loading, setLoading] = useState(true);
