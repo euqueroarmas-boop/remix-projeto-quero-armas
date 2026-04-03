@@ -1,6 +1,5 @@
 /**
- * CIPA Pulse — Risk Badge (Phase 7)
- * Visual badge showing predicted risk level with expandable details
+ * CIPA Pulse — Risk Badge (Health App Card)
  */
 
 import { useEffect, useState } from "react";
@@ -9,10 +8,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { predictRisk, type PredictionResult } from "./PulsePredictionEngine";
 
 const RISK_STYLES: Record<string, { bg: string; text: string; border: string; icon: typeof ShieldAlert }> = {
-  baixo: { bg: "bg-green-500/10", text: "text-green-500", border: "border-green-500/30", icon: ShieldCheck },
-  moderado: { bg: "bg-yellow-500/10", text: "text-yellow-500", border: "border-yellow-500/30", icon: ShieldAlert },
-  alto: { bg: "bg-orange-500/10", text: "text-orange-500", border: "border-orange-500/30", icon: ShieldAlert },
-  critico: { bg: "bg-red-500/10", text: "text-red-500", border: "border-red-500/30", icon: ShieldAlert },
+  baixo: { bg: "bg-emerald-500/10", text: "text-emerald-400", border: "border-emerald-500/20", icon: ShieldCheck },
+  moderado: { bg: "bg-yellow-500/10", text: "text-yellow-400", border: "border-yellow-500/20", icon: ShieldAlert },
+  alto: { bg: "bg-orange-500/10", text: "text-orange-400", border: "border-orange-500/20", icon: ShieldAlert },
+  critico: { bg: "bg-red-500/10", text: "text-red-400", border: "border-red-500/20", icon: ShieldAlert },
 };
 
 export default function PulseRiskBadge() {
@@ -46,8 +45,6 @@ export default function PulseRiskBadge() {
     }
 
     load();
-
-    // Refresh on new readings
     const handler = () => { load(); };
     window.addEventListener("pulse-chemical-update", handler);
     return () => {
@@ -62,67 +59,42 @@ export default function PulseRiskBadge() {
   const Icon = style.icon;
 
   return (
-    <div className={`${style.bg} border ${style.border} rounded-lg overflow-hidden transition-all`}>
-      {/* Badge header */}
+    <div className={`rounded-2xl bg-card border border-border/50 overflow-hidden transition-all`}>
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-between p-2.5 text-left"
+        className="w-full p-3 text-left"
       >
-        <div className="flex items-center gap-2">
-          <Icon className={`w-4 h-4 ${style.text}`} />
-          <div>
-            <div className="flex items-center gap-1.5">
-              <span className={`text-xs font-mono font-bold ${style.text}`}>{prediction.riskLabel}</span>
-              <span className="text-[9px] font-mono text-muted-foreground">
-                ({prediction.riskScore}/100)
-              </span>
-            </div>
-            <div className="text-[9px] font-mono text-muted-foreground flex items-center gap-1">
-              <Brain className="w-2.5 h-2.5" />
-              Previsão próxima leitura: ~{prediction.predictedNext}
-            </div>
+        <div className="flex items-center gap-2 mb-1.5">
+          <div className={`w-7 h-7 rounded-full ${style.bg} flex items-center justify-center`}>
+            <Icon className={`w-3.5 h-3.5 ${style.text}`} />
           </div>
+          <span className={`text-xs font-bold ${style.text}`}>{prediction.riskLabel}</span>
         </div>
-        <div className="flex items-center gap-1">
-          {prediction.confidence > 0 && (
-            <span className="text-[8px] font-mono text-muted-foreground">
-              {Math.round(prediction.confidence * 100)}% conf.
-            </span>
-          )}
-          {expanded ? (
-            <ChevronUp className="w-3.5 h-3.5 text-muted-foreground" />
-          ) : (
-            <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
-          )}
+        <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+          <Brain className="w-2.5 h-2.5" />
+          <span>Previsão: ~{prediction.predictedNext}</span>
+          {expanded ? <ChevronUp className="w-3 h-3 ml-auto" /> : <ChevronDown className="w-3 h-3 ml-auto" />}
         </div>
       </button>
 
-      {/* Expanded details */}
       {expanded && (
-        <div className="px-2.5 pb-2.5 space-y-2 border-t border-border/30 pt-2">
-          {/* Factors */}
+        <div className="px-3 pb-3 space-y-2 border-t border-border/30 pt-2">
           {prediction.factors.length > 0 && (
             <div className="space-y-1">
-              <span className="text-[9px] font-mono font-bold text-muted-foreground uppercase tracking-wider">Fatores</span>
+              <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Fatores</span>
               {prediction.factors.map((f, i) => (
                 <div key={i} className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
-                    <div
-                      className={`w-1.5 h-1.5 rounded-full ${f.impact >= 10 ? "bg-red-500" : f.impact >= 5 ? "bg-yellow-500" : "bg-green-500"}`}
-                    />
-                    <span className="text-[10px] font-mono">{f.name}</span>
+                    <div className={`w-1.5 h-1.5 rounded-full ${f.impact >= 10 ? "bg-red-500" : f.impact >= 5 ? "bg-yellow-500" : "bg-emerald-500"}`} />
+                    <span className="text-[10px]">{f.name}</span>
                   </div>
-                  <span className="text-[9px] font-mono text-muted-foreground">
-                    {f.impact > 0 ? "+" : ""}{f.impact}
-                  </span>
+                  <span className="text-[9px] text-muted-foreground">{f.impact > 0 ? "+" : ""}{f.impact}</span>
                 </div>
               ))}
             </div>
           )}
-
-          {/* Recommendation */}
-          <div className="bg-background/50 rounded p-2">
-            <span className="text-[10px] font-mono leading-relaxed">{prediction.recommendation}</span>
+          <div className="bg-muted/30 rounded-xl p-2.5">
+            <span className="text-[10px] leading-relaxed">{prediction.recommendation}</span>
           </div>
         </div>
       )}

@@ -1,11 +1,11 @@
 /**
- * CIPA Pulse — Dashboard (Apple Health–inspired)
- * Clean sections, ring score, generous spacing, muted palette
+ * CIPA Pulse — Dashboard (Health App Design)
+ * Premium card-based layout with generous spacing
  */
 
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
-import { ChevronRight, RotateCcw } from "lucide-react";
+import { RotateCcw, ChevronDown } from "lucide-react";
 import PulseThermometer from "./PulseThermometer";
 import PulseCurrentScore from "./PulseCurrentScore";
 import PulseDailyChart from "./PulseDailyChart";
@@ -34,36 +34,47 @@ interface Props {
   onConflict?: () => void;
 }
 
-/* ── Apple Health–style Section ── */
-const HealthSection = ({
-  title,
-  color = "text-primary",
+/* ── Card wrapper — Apple Health style ── */
+const HealthCard = ({
   children,
-  collapsible = false,
-  defaultOpen = true,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) => (
+  <div className={`rounded-2xl bg-card border border-border/50 p-4 ${className}`}>
+    {children}
+  </div>
+);
+
+/* ── Section title ── */
+const SectionLabel = ({ children }: { children: React.ReactNode }) => (
+  <h2 className="text-sm font-semibold text-foreground tracking-tight px-1">{children}</h2>
+);
+
+/* ── Collapsible section ── */
+const CollapsibleSection = ({
+  title,
+  children,
+  defaultOpen = false,
 }: {
   title: string;
-  color?: string;
   children: React.ReactNode;
-  collapsible?: boolean;
   defaultOpen?: boolean;
 }) => {
   const [open, setOpen] = useState(defaultOpen);
-
   return (
-    <div className="space-y-2.5">
+    <div className="space-y-3">
       <button
-        onClick={collapsible ? () => setOpen(o => !o) : undefined}
-        className={`flex items-center justify-between w-full px-1 ${collapsible ? "cursor-pointer" : "cursor-default"}`}
+        onClick={() => setOpen(o => !o)}
+        className="flex items-center justify-between w-full px-1"
       >
-        <h2 className={`text-[15px] font-semibold tracking-tight ${color}`}>{title}</h2>
-        {collapsible && (
-          <ChevronRight
-            className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${open ? "rotate-90" : ""}`}
-          />
-        )}
+        <h2 className="text-sm font-semibold text-foreground tracking-tight">{title}</h2>
+        <ChevronDown
+          className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+        />
       </button>
-      {open && <div className="space-y-2">{children}</div>}
+      {open && <div className="space-y-3">{children}</div>}
     </div>
   );
 };
@@ -98,24 +109,22 @@ export default function PulseDashboard({ onConflict }: Props) {
   }, [clearAllPulse]);
 
   return (
-    <div className="space-y-5 pb-4" key={refreshKey}>
+    <div className="space-y-6 pb-6" key={refreshKey}>
       {/* Onboarding Modal */}
       <PulseOnboardingModal open={showOnboarding} onComplete={handleOnboardingComplete} />
 
-      {/* ── Header (Apple Health style) ── */}
-      <div className="px-1">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-              {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
-            </p>
-            <h1 className="text-2xl font-bold text-foreground tracking-tight mt-0.5">Pulse</h1>
-          </div>
+      {/* ── Header ── */}
+      <div className="px-1 pt-1">
+        <p className="text-xs text-muted-foreground font-medium">
+          {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
+        </p>
+        <div className="flex items-center justify-between mt-1">
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">Pulse</h1>
           <div className="flex items-center gap-2">
             <PulseDataModeBadge />
             <button
               onClick={handleReset}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-muted/60 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors text-xs font-medium"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/50 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors text-xs font-medium"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               Resetar
@@ -124,57 +133,52 @@ export default function PulseDashboard({ onConflict }: Props) {
         </div>
       </div>
 
-      {/* ── Alerts (contextual, only show when needed) ── */}
+      {/* ── Alerts ── */}
       <PulseEngagementAlert />
       <PulseDailyMission />
       <PulseInsightCard />
 
-      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-           RESUMO — Score + Risco + Tendência
-         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <HealthSection title="Resumo" color="text-primary">
-        <PulseCurrentScore />
-        <div className="grid grid-cols-2 gap-2">
-          <PulseRiskBadge />
-          <PulseTrendIndicator />
-        </div>
-      </HealthSection>
+      {/* ━━━ SCORE ATUAL ━━━ */}
+      <PulseCurrentScore />
 
-      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-           REGISTRAR — Termômetro + Pânico
-         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <HealthSection title="Registrar" color="text-red-400">
+      {/* ━━━ SCORE + RISCO ━━━ */}
+      <div className="grid grid-cols-2 gap-3">
+        <PulseRiskBadge />
+        <PulseTrendIndicator />
+      </div>
+
+      {/* ━━━ REGISTRAR ━━━ */}
+      <div className="space-y-3">
+        <SectionLabel>Registrar</SectionLabel>
         <PulseThermometer onRelease={handleLogEmotion} />
         <PulseWatchButton onTriggered={onConflict} />
-      </HealthSection>
+      </div>
 
-      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-           ATIVIDADE — Charts diários/semanais
-         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <HealthSection title="Atividade" color="text-cyan-400">
-        <PulseDailyChart />
-        <PulseWeeklyBars />
-        <PulseHeatmap />
-      </HealthSection>
+      {/* ━━━ ATIVIDADE ━━━ */}
+      <div className="space-y-3">
+        <SectionLabel>Atividade</SectionLabel>
+        <HealthCard><PulseDailyChart /></HealthCard>
+        <HealthCard><PulseWeeklyBars /></HealthCard>
+        <HealthCard><PulseHeatmap /></HealthCard>
+      </div>
 
-      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-           TENDÊNCIAS — Stats + Progresso
-         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <HealthSection title="Tendências" color="text-purple-400">
-        <PulseStatistics />
-        <PulseStreakCard />
+      {/* ━━━ TENDÊNCIAS ━━━ */}
+      <div className="space-y-3">
+        <SectionLabel>Tendências</SectionLabel>
+        <HealthCard><PulseStatistics /></HealthCard>
+        <div className="grid grid-cols-2 gap-3">
+          <PulseStreakCard />
+          <PulseConsistencyCard />
+        </div>
         <PulseProgressInsight />
-        <PulseConsistencyCard />
-      </HealthSection>
+      </div>
 
-      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-           ANÁLISE AVANÇADA — Colapsada
-         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <HealthSection title="Análise Avançada" color="text-orange-400" collapsible defaultOpen={false}>
-        <VoiceTensionAnalyzer />
-        <PulseHealthKit />
-        <PulseChemicalIndicator />
-      </HealthSection>
+      {/* ━━━ ANÁLISE AVANÇADA ━━━ */}
+      <CollapsibleSection title="Análise Avançada" defaultOpen={false}>
+        <HealthCard><VoiceTensionAnalyzer /></HealthCard>
+        <HealthCard><PulseHealthKit /></HealthCard>
+        <HealthCard><PulseChemicalIndicator /></HealthCard>
+      </CollapsibleSection>
     </div>
   );
 }

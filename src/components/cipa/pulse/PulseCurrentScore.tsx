@@ -1,11 +1,10 @@
 /**
- * CIPA Pulse — Current Score Display (Phase 1)
- * Shows the current emotional level prominently
+ * CIPA Pulse — Current Score (Health App Ring Design)
  */
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Gauge, TrendingUp } from "lucide-react";
+import { TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getZone } from "./PulseScoreEngine";
 
@@ -45,51 +44,82 @@ export default function PulseCurrentScore() {
 
   if (currentLevel === null) {
     return (
-      <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-center">
-        <Gauge className="w-6 h-6 text-primary/40 mx-auto mb-2" />
-        <p className="text-xs font-mono font-bold text-foreground">Registre seu estado agora</p>
-        <p className="text-[10px] font-mono text-muted-foreground mt-1">Use o termômetro abaixo para iniciar sua análise emocional</p>
+      <div className="rounded-2xl bg-card border border-border/50 p-6 text-center">
+        <div className="w-20 h-20 mx-auto mb-3 rounded-full border-4 border-dashed border-muted-foreground/20 flex items-center justify-center">
+          <span className="text-2xl text-muted-foreground/30">—</span>
+        </div>
+        <p className="text-sm font-semibold text-foreground">Registre seu estado agora</p>
+        <p className="text-xs text-muted-foreground mt-1">Use o termômetro abaixo para iniciar</p>
       </div>
     );
   }
 
   const zone = getZone(currentLevel);
   const avgZone = getZone(todayAvg);
+  const ringPercent = currentLevel;
+  const circumference = 2 * Math.PI * 42;
+  const strokeDashoffset = circumference - (circumference * ringPercent) / 100;
 
   return (
-    <div className={`rounded-xl border ${zone.borderColor} ${zone.bgColor} p-4 transition-all duration-300`}>
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <Gauge className={`w-4 h-4 ${zone.textColor}`} />
-          <span className="text-xs font-mono font-bold text-foreground uppercase tracking-wider">Score Atual</span>
+    <div className="rounded-2xl bg-card border border-border/50 p-5">
+      <div className="flex items-center gap-5">
+        {/* Ring */}
+        <div className="relative w-24 h-24 flex-shrink-0">
+          <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+            <circle
+              cx="50" cy="50" r="42"
+              fill="none"
+              stroke="hsl(var(--border))"
+              strokeWidth="6"
+              opacity={0.3}
+            />
+            <motion.circle
+              cx="50" cy="50" r="42"
+              fill="none"
+              stroke={zone.color}
+              strokeWidth="6"
+              strokeLinecap="round"
+              strokeDasharray={circumference}
+              initial={{ strokeDashoffset: circumference }}
+              animate={{ strokeDashoffset }}
+              transition={{ type: "spring", stiffness: 60, damping: 15 }}
+            />
+          </svg>
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <motion.span
+              className="text-3xl font-bold text-foreground tabular-nums leading-none"
+              key={currentLevel}
+              initial={{ scale: 1.1 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.15 }}
+            >
+              {currentLevel}
+            </motion.span>
+            <span className="text-[9px] text-muted-foreground mt-0.5">/100</span>
+          </div>
         </div>
-        <span className={`text-[10px] font-mono font-bold ${zone.textColor} uppercase`}>{zone.displayLabel}</span>
-      </div>
 
-      <div className="flex items-end gap-4">
-        <motion.div
-          className="text-5xl font-mono font-extrabold text-foreground tabular-nums"
-          key={currentLevel}
-          initial={{ scale: 1.1 }}
-          animate={{ scale: 1 }}
-          transition={{ duration: 0.2 }}
-        >
-          {currentLevel}
-        </motion.div>
-
-        <div className="flex-1 space-y-1 pb-1">
-          <div className="flex items-center gap-1.5">
-            <TrendingUp className="w-3 h-3 text-muted-foreground" />
-            <span className="text-[10px] font-mono text-muted-foreground">
+        {/* Info */}
+        <div className="flex-1 space-y-2">
+          <div>
+            <span
+              className={`inline-block text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${zone.bgColor} ${zone.textColor}`}
+            >
+              {zone.displayLabel}
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <TrendingUp className="w-3.5 h-3.5" />
+            <span>
               Média: <span className={`font-bold ${avgZone.textColor}`}>{todayAvg}</span>
             </span>
           </div>
-          <p className="text-[10px] font-mono text-muted-foreground">{todayCount} registros hoje</p>
+          <p className="text-xs text-muted-foreground">{todayCount} registro{todayCount !== 1 ? "s" : ""} hoje</p>
         </div>
       </div>
 
       {/* Progress bar */}
-      <div className="mt-3 h-1.5 bg-border/30 rounded-full overflow-hidden">
+      <div className="mt-4 h-1.5 bg-border/20 rounded-full overflow-hidden">
         <motion.div
           className="h-full rounded-full"
           style={{ background: zone.color }}
