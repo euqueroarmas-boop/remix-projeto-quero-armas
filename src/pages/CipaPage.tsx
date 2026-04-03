@@ -4,14 +4,7 @@ import { Heart, AlertTriangle, RotateCcw, Clock, Trophy, BarChart3, Edit3, Trash
 import PulseDashboard from "@/components/cipa/pulse/PulseDashboard";
 import SeoHead from "@/components/SeoHead";
 import { supabase } from "@/integrations/supabase/client";
-import StressThermometer from "@/components/cipa/StressThermometer";
 import { useStressLogger } from "@/components/cipa/useStressLogger";
-import DailyScoreCard from "@/components/cipa/DailyScoreCard";
-import StressLineChart from "@/components/cipa/StressLineChart";
-import StressHeatmap from "@/components/cipa/StressHeatmap";
-import StressInsights from "@/components/cipa/StressInsights";
-import MonthlyStatsPanel from "@/components/cipa/MonthlyStatsPanel";
-import VoiceTensionAnalyzer from "@/components/cipa/VoiceTensionAnalyzer";
 
 /* ── Types ── */
 interface CipaCycle {
