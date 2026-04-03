@@ -306,12 +306,23 @@ const CipaPage = () => {
   const handleResetAll = useCallback(async () => {
     if (saving) return;
     setSaving(true);
-    await supabase.from("cipa_cycles").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    // Only restart the current cycle — preserve history for Recorde and Média
+    if (currentCycle) {
+      const endedAt = new Date().toISOString();
+      const ms = new Date(endedAt).getTime() - new Date(currentCycle.started_at).getTime();
+      await supabase.from("cipa_cycles").update({
+        is_current: false, ended_at: endedAt,
+        duration_days: Math.floor(ms / 86400000),
+        duration_seconds: Math.floor(ms / 1000),
+        duration_label: durationLabelFull(ms),
+        note: "Reset manual", updated_at: endedAt,
+      }).eq("id", currentCycle.id);
+    }
     await supabase.from("cipa_cycles").insert({ started_at: new Date().toISOString(), is_current: true });
     setShowConfirmReset(false);
     setSaving(false);
     await fetchData();
-  }, [saving, fetchData]);
+  }, [saving, fetchData, currentCycle]);
 
   const handleEditStart = useCallback(async () => {
     if (!currentCycle) return;
