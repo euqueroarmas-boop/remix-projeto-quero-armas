@@ -18,7 +18,7 @@ export interface SyncResult {
 /**
  * Sync a single bio reading from an external device.
  */
-export async function syncBioData(payload: BioPayload & { deviceType?: DeviceType }): Promise<SyncResult> {
+export async function syncBioData(payload: Partial<BioIngestPayload> & { deviceType?: DeviceType }): Promise<SyncResult> {
   const validation = validateBioPayload(payload);
   if (!validation.valid) {
     return { success: false, error: `Validation failed: ${validation.errors.join(", ")}` };
