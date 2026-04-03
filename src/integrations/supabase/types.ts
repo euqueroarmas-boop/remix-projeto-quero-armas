@@ -836,6 +836,66 @@ export type Database = {
         }
         Relationships: []
       }
+      emotion_events: {
+        Row: {
+          conflict_flag: boolean
+          created_at: string
+          duration_minutes: number | null
+          ended_at: string | null
+          id: string
+          peak_level: number
+          started_at: string
+          user_id: string
+        }
+        Insert: {
+          conflict_flag?: boolean
+          created_at?: string
+          duration_minutes?: number | null
+          ended_at?: string | null
+          id?: string
+          peak_level?: number
+          started_at?: string
+          user_id?: string
+        }
+        Update: {
+          conflict_flag?: boolean
+          created_at?: string
+          duration_minutes?: number | null
+          ended_at?: string | null
+          id?: string
+          peak_level?: number
+          started_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      emotion_logs: {
+        Row: {
+          created_at: string
+          id: string
+          manual_level: number
+          session_id: string | null
+          status_label: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          manual_level: number
+          session_id?: string | null
+          status_label?: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          manual_level?: number
+          session_id?: string | null
+          status_label?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       fiscal_documents: {
         Row: {
           amount: number
