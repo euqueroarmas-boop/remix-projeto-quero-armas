@@ -449,6 +449,11 @@ const CipaPage = () => {
           <StressThermometer onRelease={logStress} />
         </div>
 
+        {/* ═══ Daily Score ═══ */}
+        <div className="mb-2.5 shrink-0">
+          <DailyScoreCard />
+        </div>
+
         {/* ═══ Footer Actions ═══ */}
         <div className="flex items-center justify-center gap-5 shrink-0 pt-1">
           {history.length > 0 && (
