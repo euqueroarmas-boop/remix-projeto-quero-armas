@@ -1,13 +1,38 @@
 import { useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { calculateDailyStats, type StressLog } from "./stressEventEngine";
 
 const SESSION_ID = `s_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-const MIN_DELTA = 5; // minimum change to save
-const MIN_INTERVAL_MS = 3000; // minimum 3s between saves
+const MIN_DELTA = 5;
+const MIN_INTERVAL_MS = 3000;
 
 interface LogEntry {
   value: number;
   timestamp: number;
+}
+
+async function updateDailyStats(dayKey: string) {
+  try {
+    const { data } = await supabase
+      .from("cipa_stress_logs" as any)
+      .select("*")
+      .eq("day_key", dayKey)
+      .order("created_at", { ascending: true });
+
+    if (!data || data.length === 0) return;
+
+    const logs = data as unknown as StressLog[];
+    const stats = calculateDailyStats(logs);
+
+    // Upsert daily stats
+    await supabase.from("cipa_stress_daily_stats" as any).upsert({
+      day_key: dayKey,
+      ...stats,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: "day_key" });
+  } catch (e) {
+    console.error("[StressLogger] daily stats update failed:", e);
+  }
 }
 
 export function useStressLogger() {
@@ -17,7 +42,6 @@ export function useStressLogger() {
     const now = Date.now();
     const prev = lastSaved.current;
 
-    // Skip if change is too small or too soon
     if (prev) {
       const delta = Math.abs(value - prev.value);
       const elapsed = now - prev.timestamp;
@@ -39,6 +63,9 @@ export function useStressLogger() {
         delta_from_previous: delta,
         minutes_since_previous: Math.round(minutesSince * 100) / 100,
       });
+
+      // Update daily aggregated stats
+      updateDailyStats(dayKey);
     } catch (e) {
       console.error("[StressLogger] save failed:", e);
     }

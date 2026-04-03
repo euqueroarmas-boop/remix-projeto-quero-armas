@@ -5,6 +5,7 @@ import SeoHead from "@/components/SeoHead";
 import { supabase } from "@/integrations/supabase/client";
 import StressThermometer from "@/components/cipa/StressThermometer";
 import { useStressLogger } from "@/components/cipa/useStressLogger";
+import DailyScoreCard from "@/components/cipa/DailyScoreCard";
 
 /* ── Types ── */
 interface CipaCycle {
@@ -446,6 +447,11 @@ const CipaPage = () => {
         {/* ═══ Stress Thermometer ═══ */}
         <div className="mb-2.5 shrink-0">
           <StressThermometer onRelease={logStress} />
+        </div>
+
+        {/* ═══ Daily Score ═══ */}
+        <div className="mb-2.5 shrink-0">
+          <DailyScoreCard />
         </div>
 
         {/* ═══ Footer Actions ═══ */}
