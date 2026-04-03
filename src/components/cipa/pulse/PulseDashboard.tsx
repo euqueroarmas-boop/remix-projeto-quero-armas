@@ -1,5 +1,5 @@
 /**
- * CIPA Pulse — Dashboard (Phase 1 + 2)
+ * CIPA Pulse — Dashboard (Phase 1 + 2 + 3)
  * Main dashboard combining all Pulse components
  */
 
@@ -8,6 +8,8 @@ import PulseCurrentScore from "./PulseCurrentScore";
 import PulseDailyChart from "./PulseDailyChart";
 import PulseHeatmap from "./PulseHeatmap";
 import PulseTrendIndicator from "./PulseTrendIndicator";
+import PulseWatchButton from "./PulseWatchButton";
+import PulseHealthKit from "./PulseHealthKit";
 import { usePulseLogger } from "./usePulseLogger";
 
 interface Props {
@@ -32,8 +34,14 @@ export default function PulseDashboard({ onConflict }: Props) {
       {/* Trend Indicator (Phase 2) */}
       <PulseTrendIndicator />
 
+      {/* Panic Button (Phase 3) */}
+      <PulseWatchButton onTriggered={onConflict} />
+
       {/* Thermometer */}
       <PulseThermometer onRelease={logEmotion} />
+
+      {/* Bio Data Input (Phase 3) */}
+      <PulseHealthKit />
 
       {/* Daily Chart */}
       <PulseDailyChart />

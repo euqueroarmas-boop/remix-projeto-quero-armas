@@ -871,26 +871,38 @@ export type Database = {
       }
       emotion_logs: {
         Row: {
+          bio_source: string | null
           created_at: string
+          heart_rate: number | null
+          hrv: number | null
           id: string
           manual_level: number
           session_id: string | null
+          sleep_score: number | null
           status_label: string
           user_id: string
         }
         Insert: {
+          bio_source?: string | null
           created_at?: string
+          heart_rate?: number | null
+          hrv?: number | null
           id?: string
           manual_level: number
           session_id?: string | null
+          sleep_score?: number | null
           status_label?: string
           user_id?: string
         }
         Update: {
+          bio_source?: string | null
           created_at?: string
+          heart_rate?: number | null
+          hrv?: number | null
           id?: string
           manual_level?: number
           session_id?: string | null
+          sleep_score?: number | null
           status_label?: string
           user_id?: string
         }
