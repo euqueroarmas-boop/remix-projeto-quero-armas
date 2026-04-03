@@ -77,7 +77,7 @@ export default function PulseDashboard({ onConflict }: Props) {
     setRefreshKey(k => k + 1);
   }, []);
 
-  const { logEmotion, clearDayLogs } = usePulseLogger(onConflict);
+  const { logEmotion, clearAllPulse } = usePulseLogger(onConflict);
 
   const handleLogEmotion = useCallback(async (level: number) => {
     incrementRealCount();
@@ -92,10 +92,10 @@ export default function PulseDashboard({ onConflict }: Props) {
   }, [logEmotion]);
 
   const handleReset = useCallback(async () => {
-    await clearDayLogs();
+    await clearAllPulse();
     setRefreshKey(k => k + 1);
-    toast.success("Pulse resetado", { description: "Dados do dia limpos", duration: 2000 });
-  }, [clearDayLogs]);
+    toast.success("Pulse resetado", { description: "Todos os dados foram limpos", duration: 2000 });
+  }, [clearAllPulse]);
 
   return (
     <div className="space-y-5 pb-4" key={refreshKey}>
