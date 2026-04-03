@@ -908,6 +908,84 @@ export type Database = {
         }
         Relationships: []
       }
+      emotion_statistics: {
+        Row: {
+          average_score: number | null
+          conflict_events: number | null
+          cooldown_avg_minutes: number | null
+          created_at: string
+          critical_events: number | null
+          id: string
+          max_score: number | null
+          month_key: string
+          stability_score: number | null
+          total_readings: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          average_score?: number | null
+          conflict_events?: number | null
+          cooldown_avg_minutes?: number | null
+          created_at?: string
+          critical_events?: number | null
+          id?: string
+          max_score?: number | null
+          month_key: string
+          stability_score?: number | null
+          total_readings?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          average_score?: number | null
+          conflict_events?: number | null
+          cooldown_avg_minutes?: number | null
+          created_at?: string
+          critical_events?: number | null
+          id?: string
+          max_score?: number | null
+          month_key?: string
+          stability_score?: number | null
+          total_readings?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      emotion_triggers: {
+        Row: {
+          avg_intensity: number | null
+          created_at: string
+          frequency: number | null
+          id: string
+          last_seen: string | null
+          trigger_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avg_intensity?: number | null
+          created_at?: string
+          frequency?: number | null
+          id?: string
+          last_seen?: string | null
+          trigger_name: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          avg_intensity?: number | null
+          created_at?: string
+          frequency?: number | null
+          id?: string
+          last_seen?: string | null
+          trigger_name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       fiscal_documents: {
         Row: {
           amount: number
