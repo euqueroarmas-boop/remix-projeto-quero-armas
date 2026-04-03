@@ -1,12 +1,29 @@
 /**
  * CIPA Pulse — Initial Dataset Generator (Phase 9, Module 2)
- * Generates 7 days of simulated data to avoid empty UI
+ * Generates 7 days of simulated data based on onboarding answers
  */
 
 import { supabase } from "@/integrations/supabase/client";
 import { getStatusLabel } from "../PulseScoreEngine";
 
-const SESSION_ID = `sim_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+const HOUR_SLOTS = [
+  [8, 9, 10],
+  [13, 14, 15],
+  [19, 20, 21],
+  [11, 16, 22],
+];
+
+function rand(min: number, max: number): number {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+type EmotionalProfile = "calmo" | "moderado" | "tenso";
+
+function getProfile(baseScore: number): EmotionalProfile {
+  if (baseScore <= 25) return "calmo";
+  if (baseScore <= 55) return "moderado";
+  return "tenso";
+}
 
 interface DayConfig {
   daysAgo: number;
@@ -15,32 +32,48 @@ interface DayConfig {
   readings: number;
 }
 
-const WEEK_PATTERN: DayConfig[] = [
-  { daysAgo: 7, minLevel: 10, maxLevel: 25, readings: 3 },  // calmo
-  { daysAgo: 6, minLevel: 12, maxLevel: 22, readings: 4 },  // calmo
-  { daysAgo: 5, minLevel: 30, maxLevel: 45, readings: 3 },  // atenção
-  { daysAgo: 4, minLevel: 15, maxLevel: 28, readings: 3 },  // calmo
-  { daysAgo: 3, minLevel: 50, maxLevel: 65, readings: 4 },  // tensão
-  { daysAgo: 2, minLevel: 35, maxLevel: 48, readings: 3 },  // atenção
-  { daysAgo: 1, minLevel: 70, maxLevel: 85, readings: 3 },  // crítico
-];
+const PROFILES: Record<EmotionalProfile, DayConfig[]> = {
+  calmo: [
+    { daysAgo: 7, minLevel: 0, maxLevel: 15, readings: 3 },
+    { daysAgo: 6, minLevel: 5, maxLevel: 18, readings: 3 },
+    { daysAgo: 5, minLevel: 0, maxLevel: 20, readings: 3 },
+    { daysAgo: 4, minLevel: 8, maxLevel: 22, readings: 3 },
+    { daysAgo: 3, minLevel: 0, maxLevel: 15, readings: 3 },
+    { daysAgo: 2, minLevel: 5, maxLevel: 20, readings: 3 },
+    { daysAgo: 1, minLevel: 0, maxLevel: 18, readings: 3 },
+  ],
+  moderado: [
+    { daysAgo: 7, minLevel: 10, maxLevel: 30, readings: 3 },
+    { daysAgo: 6, minLevel: 15, maxLevel: 35, readings: 3 },
+    { daysAgo: 5, minLevel: 20, maxLevel: 40, readings: 3 },
+    { daysAgo: 4, minLevel: 10, maxLevel: 25, readings: 3 },
+    { daysAgo: 3, minLevel: 25, maxLevel: 45, readings: 4 },
+    { daysAgo: 2, minLevel: 15, maxLevel: 35, readings: 3 },
+    { daysAgo: 1, minLevel: 20, maxLevel: 40, readings: 3 },
+  ],
+  tenso: [
+    { daysAgo: 7, minLevel: 30, maxLevel: 50, readings: 3 },
+    { daysAgo: 6, minLevel: 40, maxLevel: 60, readings: 3 },
+    { daysAgo: 5, minLevel: 50, maxLevel: 70, readings: 4 },
+    { daysAgo: 4, minLevel: 35, maxLevel: 55, readings: 3 },
+    { daysAgo: 3, minLevel: 55, maxLevel: 75, readings: 4 },
+    { daysAgo: 2, minLevel: 45, maxLevel: 65, readings: 3 },
+    { daysAgo: 1, minLevel: 60, maxLevel: 85, readings: 3 },
+  ],
+};
 
-const HOUR_SLOTS = [
-  [8, 9, 10],     // manhã
-  [13, 14, 15],   // tarde
-  [19, 20, 21],   // noite
-  [11, 16, 22],   // variado
-];
+/**
+ * @param baseScore - the score calculated from onboarding answers (0-100)
+ */
+export async function generateInitialDataset(baseScore: number = 50): Promise<void> {
+  const profile = getProfile(baseScore);
+  const pattern = PROFILES[profile];
+  const sessionId = `sim_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
-function rand(min: number, max: number): number {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-export async function generateInitialDataset(): Promise<void> {
   const logs: any[] = [];
   const events: any[] = [];
 
-  for (const day of WEEK_PATTERN) {
+  for (const day of pattern) {
     const date = new Date();
     date.setDate(date.getDate() - day.daysAgo);
     const dateStr = date.toISOString().slice(0, 10);
@@ -56,14 +89,13 @@ export async function generateInitialDataset(): Promise<void> {
       logs.push({
         manual_level: level,
         status_label: getStatusLabel(level),
-        session_id: SESSION_ID,
+        session_id: sessionId,
         created_at: ts.toISOString(),
         bio_source: "simulated",
         data_mode: "simulated",
         source_type: "manual",
       });
 
-      // Create event for high readings
       if (level > 60) {
         events.push({
           started_at: ts.toISOString(),

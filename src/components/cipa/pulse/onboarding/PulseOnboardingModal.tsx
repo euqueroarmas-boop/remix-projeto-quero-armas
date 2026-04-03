@@ -75,8 +75,8 @@ export default function PulseOnboardingModal({ open, onComplete }: Props) {
       const finalScore = Math.max(0, Math.min(100, baseScore + modifier));
 
       try {
-        // Generate historical dataset
-        await generateInitialDataset();
+        // Generate historical dataset based on answers
+        await generateInitialDataset(finalScore);
 
         // Register onboarding score
         await supabase.from("emotion_logs" as any).insert({
