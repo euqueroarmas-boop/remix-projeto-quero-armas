@@ -118,6 +118,7 @@ export function useVoiceCapture(onFeatures: (f: VoiceFeatures) => void): UseVoic
     analyserRef.current = null;
     setIsListening(false);
     setCurrentFeatures(null);
+    setRawEnergy(0);
   }, []);
 
   // Cleanup on unmount
