@@ -16,6 +16,7 @@ const MIN_INTERVAL_MS = 2000;
 export function usePulseLogger(onConflict?: () => void) {
   const lastSaved = useRef<{ value: number; timestamp: number } | null>(null);
   const eventState = useRef<EventDetectorState>(createEventDetector());
+  const chemicalState = useRef<ChemicalState>(createChemicalState());
 
   const logEmotion = useCallback(async (level: number) => {
     const now = Date.now();
