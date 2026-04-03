@@ -11,6 +11,7 @@ interface UseVoiceCaptureReturn {
   stop: () => void;
   currentFeatures: VoiceFeatures | null;
   error: string | null;
+  rawEnergy: number;
 }
 
 export function useVoiceCapture(onFeatures: (f: VoiceFeatures) => void): UseVoiceCaptureReturn {
