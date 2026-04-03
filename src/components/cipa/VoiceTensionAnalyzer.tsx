@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Mic, MicOff, Activity, Shield, AlertTriangle, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useVoiceCapture } from "./useVoiceCapture";
+import { updateVoiceDailyStats } from "./useVoiceDailyAggregator";
 import {
   updateBaseline,
   calculateVoiceTension,
@@ -58,6 +59,8 @@ export default function VoiceTensionAnalyzer() {
             confidence_score: result.confidence,
             source: "voice_analysis",
           });
+          // Aggregate voice daily stats
+          updateVoiceDailyStats(dayKey);
         } catch {}
       }
     }
