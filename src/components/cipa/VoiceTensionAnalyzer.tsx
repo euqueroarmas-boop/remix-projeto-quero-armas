@@ -59,6 +59,8 @@ export default function VoiceTensionAnalyzer() {
             confidence_score: result.confidence,
             source: "voice_analysis",
           });
+          // Aggregate voice daily stats
+          updateVoiceDailyStats(dayKey);
         } catch {}
       }
     }
