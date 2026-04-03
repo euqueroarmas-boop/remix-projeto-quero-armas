@@ -126,7 +126,7 @@ export function useVoiceCapture(onFeatures: (f: VoiceFeatures) => void): UseVoic
     return () => { stop(); };
   }, [stop]);
 
-  return { isListening, hasPermission, start, stop, currentFeatures, error };
+  return { isListening, hasPermission, start, stop, currentFeatures, error, rawEnergy };
 }
 
 /**
