@@ -6,6 +6,10 @@ import { supabase } from "@/integrations/supabase/client";
 import StressThermometer from "@/components/cipa/StressThermometer";
 import { useStressLogger } from "@/components/cipa/useStressLogger";
 import DailyScoreCard from "@/components/cipa/DailyScoreCard";
+import StressLineChart from "@/components/cipa/StressLineChart";
+import StressHeatmap from "@/components/cipa/StressHeatmap";
+import StressInsights from "@/components/cipa/StressInsights";
+import MonthlyStatsPanel from "@/components/cipa/MonthlyStatsPanel";
 
 /* ── Types ── */
 interface CipaCycle {

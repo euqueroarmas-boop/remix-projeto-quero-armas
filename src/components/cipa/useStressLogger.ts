@@ -67,6 +67,10 @@ export function useStressLogger() {
 
       // Update daily aggregated stats
       updateDailyStats(dayKey);
+
+      // Update monthly stats
+      const monthKey = dayKey.slice(0, 7);
+      updateMonthlyStats(monthKey);
     } catch (e) {
       console.error("[StressLogger] save failed:", e);
     }
