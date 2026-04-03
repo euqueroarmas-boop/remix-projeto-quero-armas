@@ -841,6 +841,7 @@ export type Database = {
           conflict_flag: boolean
           created_at: string
           device_id: string | null
+          device_type: string | null
           duration_minutes: number | null
           ended_at: string | null
           id: string
@@ -854,6 +855,7 @@ export type Database = {
           conflict_flag?: boolean
           created_at?: string
           device_id?: string | null
+          device_type?: string | null
           duration_minutes?: number | null
           ended_at?: string | null
           id?: string
@@ -867,6 +869,7 @@ export type Database = {
           conflict_flag?: boolean
           created_at?: string
           device_id?: string | null
+          device_type?: string | null
           duration_minutes?: number | null
           ended_at?: string | null
           id?: string
@@ -884,6 +887,7 @@ export type Database = {
           created_at: string
           data_mode: string | null
           device_id: string | null
+          device_type: string | null
           heart_rate: number | null
           hrv: number | null
           id: string
@@ -901,6 +905,7 @@ export type Database = {
           created_at?: string
           data_mode?: string | null
           device_id?: string | null
+          device_type?: string | null
           heart_rate?: number | null
           hrv?: number | null
           id?: string
@@ -918,6 +923,7 @@ export type Database = {
           created_at?: string
           data_mode?: string | null
           device_id?: string | null
+          device_type?: string | null
           heart_rate?: number | null
           hrv?: number | null
           id?: string
