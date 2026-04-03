@@ -28,7 +28,9 @@ export default function PulseThermometer({ onRelease }: Props) {
     if (!track) return 0;
     const rect = track.getBoundingClientRect();
     const ratio = 1 - (clientY - rect.top) / rect.height;
-    return Math.max(0, Math.min(100, Math.round(ratio * 100)));
+    const raw = Math.max(0, Math.min(100, Math.round(ratio * 100)));
+    // Snap to 0 when near bottom — allows registering absolute calm
+    return raw <= 3 ? 0 : raw;
   }, []);
 
   const handleStart = useCallback((clientY: number) => {
