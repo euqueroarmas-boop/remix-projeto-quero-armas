@@ -5,7 +5,7 @@
 
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
-import { ChevronRight, Heart, Flame } from "lucide-react";
+import { ChevronRight, RotateCcw } from "lucide-react";
 import PulseThermometer from "./PulseThermometer";
 import PulseCurrentScore from "./PulseCurrentScore";
 import PulseDailyChart from "./PulseDailyChart";
@@ -77,7 +77,7 @@ export default function PulseDashboard({ onConflict }: Props) {
     setRefreshKey(k => k + 1);
   }, []);
 
-  const { logEmotion } = usePulseLogger(onConflict);
+  const { logEmotion, clearDayLogs } = usePulseLogger(onConflict);
 
   const handleLogEmotion = useCallback(async (level: number) => {
     incrementRealCount();
@@ -90,6 +90,12 @@ export default function PulseDashboard({ onConflict }: Props) {
       duration: 2000,
     });
   }, [logEmotion]);
+
+  const handleReset = useCallback(async () => {
+    await clearDayLogs();
+    setRefreshKey(k => k + 1);
+    toast.success("Pulse resetado", { description: "Dados do dia limpos", duration: 2000 });
+  }, [clearDayLogs]);
 
   return (
     <div className="space-y-5 pb-4" key={refreshKey}>
@@ -105,7 +111,16 @@ export default function PulseDashboard({ onConflict }: Props) {
             </p>
             <h1 className="text-2xl font-bold text-foreground tracking-tight mt-0.5">Pulse</h1>
           </div>
-          <PulseDataModeBadge />
+          <div className="flex items-center gap-2">
+            <PulseDataModeBadge />
+            <button
+              onClick={handleReset}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-muted/60 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors text-xs font-medium"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              Resetar
+            </button>
+          </div>
         </div>
       </div>
 
