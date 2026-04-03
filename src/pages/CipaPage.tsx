@@ -188,6 +188,7 @@ const CipaPage = () => {
     setLoading(false);
   }, []);
 
+  useEffect(() => { fetchDataRef.current = fetchData; }, [fetchData]);
   useEffect(() => { fetchData(); }, [fetchData]);
 
   // PWA: manifest, meta tags, service worker, install prompt
