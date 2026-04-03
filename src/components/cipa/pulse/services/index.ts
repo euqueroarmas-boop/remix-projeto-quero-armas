@@ -66,3 +66,25 @@ export {
   isFightLevel,
   isCriticalLevel,
 } from "./PulseScoreService";
+
+// Bio ingestion contract (Module 2: iOS/Apple Watch)
+export {
+  validateBioPayload,
+  isSimulatedData,
+  getDataModeLabel,
+  getSourceLabel,
+  type BioIngestPayload,
+  type BioIngestResponse,
+} from "./PulseBioContract";
+
+// Relationship management (Module 3: Couple Mode)
+export {
+  createRelationshipInvite,
+  acceptRelationshipInvite,
+  getActiveRelationship,
+  calculateRelationalScore,
+  hasConsent,
+  type RelationshipInfo,
+  type RelationalScoreInput,
+  type RelationalScoreResult,
+} from "./PulseRelationshipService";
