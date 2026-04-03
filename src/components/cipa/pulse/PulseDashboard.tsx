@@ -53,6 +53,9 @@ export default function PulseDashboard({ onConflict }: Props) {
 
       {/* Monthly Heatmap */}
       <PulseHeatmap />
+
+      {/* Monthly Statistics (Phase 5) */}
+      <PulseStatistics />
     </div>
   );
 }
