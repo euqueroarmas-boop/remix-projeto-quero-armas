@@ -13,6 +13,28 @@ interface LogEntry {
   timestamp: number;
 }
 
+function getStatusLabel(level: number): string {
+  if (level <= 20) return "calmo";
+  if (level <= 40) return "atento";
+  if (level <= 60) return "tenso";
+  if (level <= 80) return "critico";
+  return "conflito";
+}
+
+/** Mirror Contador log to Pulse emotion_logs for data unification */
+async function mirrorToEmotionLogs(value: number) {
+  try {
+    await supabase.from("emotion_logs" as any).insert({
+      manual_level: value,
+      status_label: getStatusLabel(value),
+      session_id: SESSION_ID,
+      source_type: "contador_sync",
+    });
+  } catch (e) {
+    console.error("[StressLogger] mirror to emotion_logs failed:", e);
+  }
+}
+
 async function updateDailyStats(dayKey: string) {
   try {
     const { data } = await supabase
@@ -65,6 +87,9 @@ export function useStressLogger(onFightDetected?: () => void) {
         minutes_since_previous: Math.round(minutesSince * 100) / 100,
       });
 
+      // Mirror to Pulse emotion_logs (data unification)
+      mirrorToEmotionLogs(value);
+
       updateDailyStats(dayKey);
 
       const monthKey = dayKey.slice(0, 7);
@@ -82,10 +107,18 @@ export function useStressLogger(onFightDetected?: () => void) {
   const clearDayScore = useCallback(async () => {
     const dayKey = new Date().toISOString().slice(0, 10);
     try {
-      await supabase.from("cipa_stress_logs" as any).delete().eq("day_key", dayKey);
-      await supabase.from("cipa_stress_daily_stats" as any).delete().eq("day_key", dayKey);
-      await supabase.from("voice_emotion_logs" as any).delete().eq("day_key", dayKey);
-      await supabase.from("cipa_voice_daily_stats" as any).delete().eq("day_key", dayKey);
+      await Promise.all([
+        supabase.from("cipa_stress_logs" as any).delete().eq("day_key", dayKey),
+        supabase.from("cipa_stress_daily_stats" as any).delete().eq("day_key", dayKey),
+        supabase.from("voice_emotion_logs" as any).delete().eq("day_key", dayKey),
+        supabase.from("cipa_voice_daily_stats" as any).delete().eq("day_key", dayKey),
+        // Clear Pulse emotion_logs for today (data unification)
+        supabase
+          .from("emotion_logs" as any)
+          .delete()
+          .gte("created_at", `${dayKey}T00:00:00`)
+          .lt("created_at", `${dayKey}T23:59:59.999`),
+      ]);
       lastSaved.current = null;
     } catch (e) {
       console.error("[StressLogger] clear day failed:", e);
