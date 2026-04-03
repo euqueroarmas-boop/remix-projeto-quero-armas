@@ -4,14 +4,7 @@ import { Heart, AlertTriangle, RotateCcw, Clock, Trophy, BarChart3, Edit3, Trash
 import PulseDashboard from "@/components/cipa/pulse/PulseDashboard";
 import SeoHead from "@/components/SeoHead";
 import { supabase } from "@/integrations/supabase/client";
-import StressThermometer from "@/components/cipa/StressThermometer";
 import { useStressLogger } from "@/components/cipa/useStressLogger";
-import DailyScoreCard from "@/components/cipa/DailyScoreCard";
-import StressLineChart from "@/components/cipa/StressLineChart";
-import StressHeatmap from "@/components/cipa/StressHeatmap";
-import StressInsights from "@/components/cipa/StressInsights";
-import MonthlyStatsPanel from "@/components/cipa/MonthlyStatsPanel";
-import VoiceTensionAnalyzer from "@/components/cipa/VoiceTensionAnalyzer";
 
 /* ── Types ── */
 interface CipaCycle {
@@ -68,8 +61,7 @@ function pad2(n: number) { return String(n).padStart(2, "0"); }
 /* ── Component ── */
 const CipaPage = () => {
   const fetchDataRef = useRef<() => Promise<void>>();
-  const { logStress, clearDayScore } = useStressLogger(useCallback(async () => {
-    // Auto-interrupt cycle when fight detected (value >= 81)
+  useStressLogger(useCallback(async () => {
     const { data: cycle } = await supabase
       .from("cipa_cycles")
       .select("*")
@@ -533,41 +525,6 @@ const CipaPage = () => {
           <StatMini icon={BarChart3} value={avgStreak ? durationText(avgStreak) : "—"} label="Média" accent="text-blue-400" />
           <StatMini icon={AlertTriangle} value={String(totalInterruptions)} label="Paradas" accent="text-destructive" />
           <StatMini icon={Heart} value={durationText(elapsed)} label="Atual" accent="text-emerald-500" />
-        </div>
-
-        {/* ═══ Stress Thermometer ═══ */}
-        <div className="mb-2.5 shrink-0">
-          <StressThermometer onRelease={logStress} />
-        </div>
-
-        {/* ═══ Daily Score ═══ */}
-        <div className="mb-2.5 shrink-0">
-          <DailyScoreCard onClearDay={async () => {
-            await clearDayScore();
-            // Also restart current cycle (zero the timer)
-            if (currentCycle) {
-              const endedAt = new Date().toISOString();
-              const ms = new Date(endedAt).getTime() - new Date(currentCycle.started_at).getTime();
-              await supabase.from("cipa_cycles").update({
-                is_current: false, ended_at: endedAt,
-                duration_days: Math.floor(ms / 86400000),
-                duration_seconds: Math.floor(ms / 1000),
-                duration_label: durationLabelFull(ms),
-                note: "Score zerado manualmente (sem briga)", updated_at: endedAt,
-              }).eq("id", currentCycle.id);
-              await supabase.from("cipa_cycles").insert({ started_at: endedAt, is_current: true });
-              await fetchData();
-            }
-          }} />
-        </div>
-
-        {/* ═══ Analytics Section ═══ */}
-        <div className="space-y-2.5 shrink-0">
-          <StressLineChart />
-          <VoiceTensionAnalyzer />
-          <StressInsights />
-          <StressHeatmap />
-          <MonthlyStatsPanel />
         </div>
 
         {/* ═══ Footer Actions ═══ */}

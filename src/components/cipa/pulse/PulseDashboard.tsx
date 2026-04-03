@@ -1,11 +1,11 @@
 /**
- * CIPA Pulse — Dashboard (Phase 1–10 + UX Reorganization)
- * Two-level layout: Level 1 always visible, Level 2 collapsed
+ * CIPA Pulse — Dashboard (Reorganized UX)
+ * Clear sections: Registro → Monitoramento → Histórico → Avançado
  */
 
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
-import { ChevronDown, FlaskConical } from "lucide-react";
+import { ChevronDown, FlaskConical, Thermometer, BarChart3, TrendingUp, Shield } from "lucide-react";
 import PulseThermometer from "./PulseThermometer";
 import PulseCurrentScore from "./PulseCurrentScore";
 import PulseDailyChart from "./PulseDailyChart";
@@ -34,6 +34,16 @@ interface Props {
   onConflict?: () => void;
 }
 
+/* ── Section Header ── */
+const SectionLabel = ({ icon: Icon, label }: { icon: typeof Thermometer; label: string }) => (
+  <div className="flex items-center gap-2 px-1 pt-2 pb-1">
+    <Icon className="w-3.5 h-3.5 text-primary/70" />
+    <span className="text-[10px] font-mono font-bold text-muted-foreground uppercase tracking-[0.15em]">
+      {label}
+    </span>
+  </div>
+);
+
 export default function PulseDashboard({ onConflict }: Props) {
   const [showOnboarding, setShowOnboarding] = useState(() => isFirstSession());
   const [refreshKey, setRefreshKey] = useState(0);
@@ -59,7 +69,7 @@ export default function PulseDashboard({ onConflict }: Props) {
   }, [logEmotion]);
 
   return (
-    <div className="space-y-2.5" key={refreshKey}>
+    <div className="space-y-1" key={refreshKey}>
       {/* Onboarding Modal */}
       <PulseOnboardingModal open={showOnboarding} onComplete={handleOnboardingComplete} />
 
@@ -72,54 +82,67 @@ export default function PulseDashboard({ onConflict }: Props) {
         </div>
       </div>
 
-      {/* Engagement Alert */}
+      {/* Engagement Alert (only shows when needed) */}
       <PulseEngagementAlert />
 
       {/* Daily Mission */}
       <PulseDailyMission />
 
-      {/* Main Insight (max 1 visible) */}
+      {/* Main Insight */}
       <PulseInsightCard />
 
-      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-           NÍVEL 1 — SEMPRE VISÍVEL
-         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+           SEÇÃO 1 — REGISTRAR
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      <SectionLabel icon={Thermometer} label="Como você está?" />
 
-      {/* 1. Score Atual */}
-      <PulseCurrentScore />
-
-      {/* 2. Risco */}
-      <PulseRiskBadge />
-
-      {/* 3. Tendência */}
-      <PulseTrendIndicator />
-
-      {/* 4. Botão "Estou Esquentando" */}
-      <PulseWatchButton onTriggered={onConflict} />
-
-      {/* Termômetro */}
+      {/* Termômetro — ação principal */}
       <PulseThermometer onRelease={handleLogEmotion} />
 
-      {/* 5. Pulse Diário */}
+      {/* Botão "Estou Esquentando" */}
+      <PulseWatchButton onTriggered={onConflict} />
+
+      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+           SEÇÃO 2 — MONITORAMENTO
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      <SectionLabel icon={Shield} label="Seu estado" />
+
+      {/* Score + Risco + Tendência — compactos lado a lado */}
+      <div className="grid grid-cols-3 gap-2">
+        <div className="col-span-1"><PulseCurrentScore /></div>
+        <div className="col-span-1"><PulseRiskBadge /></div>
+        <div className="col-span-1"><PulseTrendIndicator /></div>
+      </div>
+
+      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+           SEÇÃO 3 — HISTÓRICO
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      <SectionLabel icon={BarChart3} label="Histórico" />
+
+      {/* Pulse Diário */}
       <PulseDailyChart />
 
-      {/* 6. Últimos 7 dias */}
+      {/* Últimos 7 dias */}
       <PulseWeeklyBars />
 
-      {/* 7. Heatmap */}
+      {/* Heatmap */}
       <PulseHeatmap />
 
-      {/* 8. Estatísticas Mensais */}
+      {/* Estatísticas Mensais */}
       <PulseStatistics />
 
-      {/* Streak & Consistency */}
+      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+           SEÇÃO 4 — PROGRESSO
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      <SectionLabel icon={TrendingUp} label="Progresso" />
+
       <PulseStreakCard />
       <PulseProgressInsight />
       <PulseConsistencyCard />
 
-      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-           NÍVEL 2 — COLAPSADO POR PADRÃO
-         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+           SEÇÃO 5 — ANÁLISE AVANÇADA (COLAPSADA)
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <div className="rounded-xl border border-border bg-card overflow-hidden">
         <button
           onClick={() => setAdvancedOpen(o => !o)}
@@ -138,13 +161,8 @@ export default function PulseDashboard({ onConflict }: Props) {
 
         {advancedOpen && (
           <div className="px-4 pb-4 space-y-2.5 border-t border-border pt-3">
-            {/* Análise de Tensão Vocal */}
             <VoiceTensionAnalyzer />
-
-            {/* Dados Biológicos */}
             <PulseHealthKit />
-
-            {/* Chemical Engine */}
             <PulseChemicalIndicator />
           </div>
         )}
