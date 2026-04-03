@@ -7,6 +7,7 @@ import { useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getStatusLabel } from "./PulseScoreEngine";
 import { createEventDetector, processLevel, type EventDetectorState, type PulseEvent } from "./PulseEventDetector";
+import { createChemicalState, processReading, type ChemicalState } from "./PulseChemicalEngine";
 
 const SESSION_ID = `pulse_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 const MIN_DELTA = 3;
