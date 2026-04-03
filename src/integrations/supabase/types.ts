@@ -437,6 +437,54 @@ export type Database = {
         }
         Relationships: []
       }
+      cipa_stress_monthly_stats: {
+        Row: {
+          average_cooldown_time: number | null
+          created_at: string
+          fight_events: number | null
+          high_risk_days: number | null
+          id: string
+          max_peak: number | null
+          month_key: string
+          month_over_month_variation: number | null
+          monthly_average: number | null
+          monthly_stability_score: number | null
+          near_fight_events: number | null
+          stable_days_percent: number | null
+          updated_at: string
+        }
+        Insert: {
+          average_cooldown_time?: number | null
+          created_at?: string
+          fight_events?: number | null
+          high_risk_days?: number | null
+          id?: string
+          max_peak?: number | null
+          month_key: string
+          month_over_month_variation?: number | null
+          monthly_average?: number | null
+          monthly_stability_score?: number | null
+          near_fight_events?: number | null
+          stable_days_percent?: number | null
+          updated_at?: string
+        }
+        Update: {
+          average_cooldown_time?: number | null
+          created_at?: string
+          fight_events?: number | null
+          high_risk_days?: number | null
+          id?: string
+          max_peak?: number | null
+          month_key?: string
+          month_over_month_variation?: number | null
+          monthly_average?: number | null
+          monthly_stability_score?: number | null
+          near_fight_events?: number | null
+          stable_days_percent?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       client_events: {
         Row: {
           created_at: string
