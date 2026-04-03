@@ -5,6 +5,7 @@ import SeoHead from "@/components/SeoHead";
 import { supabase } from "@/integrations/supabase/client";
 import StressThermometer from "@/components/cipa/StressThermometer";
 import { useStressLogger } from "@/components/cipa/useStressLogger";
+import DailyScoreCard from "@/components/cipa/DailyScoreCard";
 
 /* ── Types ── */
 interface CipaCycle {
