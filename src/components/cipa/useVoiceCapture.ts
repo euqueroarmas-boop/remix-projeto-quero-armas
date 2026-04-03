@@ -19,6 +19,7 @@ export function useVoiceCapture(onFeatures: (f: VoiceFeatures) => void): UseVoic
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [currentFeatures, setCurrentFeatures] = useState<VoiceFeatures | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [rawEnergy, setRawEnergy] = useState(0);
 
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
