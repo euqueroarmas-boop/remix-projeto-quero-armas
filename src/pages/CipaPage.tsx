@@ -369,7 +369,7 @@ const CipaPage = () => {
     >
       <SeoHead title="CIPA — Contador de Dias" description="Acompanhe dias sem briga" noindex />
 
-      <div className="flex-1 flex flex-col max-w-lg mx-auto w-full px-4 pt-4 pb-3 overflow-hidden">
+      <div className="flex-1 flex flex-col max-w-lg mx-auto w-full px-4 pt-4 pb-3">
 
         {/* ═══ Header ═══ */}
         <div className="text-center mb-3 shrink-0">
