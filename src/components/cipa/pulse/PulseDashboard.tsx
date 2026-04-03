@@ -1,5 +1,5 @@
 /**
- * CIPA Pulse — Dashboard (Phase 1 + 2 + 3 + 4 + 5 + 6)
+ * CIPA Pulse — Dashboard (Phase 1 + 2 + 3 + 4 + 5 + 6 + 7)
  * Main dashboard combining all Pulse components
  */
 
