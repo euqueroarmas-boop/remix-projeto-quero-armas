@@ -5,7 +5,7 @@
 
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
-import { ChevronRight, Heart, Flame } from "lucide-react";
+import { ChevronRight, RotateCcw } from "lucide-react";
 import PulseThermometer from "./PulseThermometer";
 import PulseCurrentScore from "./PulseCurrentScore";
 import PulseDailyChart from "./PulseDailyChart";
