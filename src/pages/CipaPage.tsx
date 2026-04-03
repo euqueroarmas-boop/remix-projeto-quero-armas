@@ -631,6 +631,8 @@ const CipaPage = () => {
             )}
           </div>
         )}
+        </>
+        )}
       </div>
 
       {/* ═══ iOS Install Guide — Bottom Sheet ═══ */}
