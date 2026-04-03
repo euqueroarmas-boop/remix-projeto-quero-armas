@@ -1,7 +1,6 @@
 /**
- * CIPA Pulse — Bio Sync Service (Phase iOS, Module 4)
+ * CIPA Pulse — Bio Sync Service (iOS Integration)
  * Client-side service for syncing bio data from external sources
- * Used by future iOS app via edge function, or web manual input
  */
 
 import { supabase } from "@/integrations/supabase/client";
@@ -15,10 +14,9 @@ export interface SyncResult {
   synced?: number;
 }
 
-/**
- * Sync a single bio reading from an external device.
- */
-export async function syncBioData(payload: Partial<BioIngestPayload> & { deviceType?: DeviceType }): Promise<SyncResult> {
+export async function syncBioData(
+  payload: Partial<BioIngestPayload> & { deviceType?: DeviceType }
+): Promise<SyncResult> {
   const validation = validateBioPayload(payload);
   if (!validation.valid) {
     return { success: false, error: `Validation failed: ${validation.errors.join(", ")}` };
@@ -31,7 +29,7 @@ export async function syncBioData(payload: Partial<BioIngestPayload> & { deviceT
       source_type: payload.source_type || "ios_watch",
       device_type: payload.deviceType || "watch",
       device_id: payload.device_id || null,
-      bio_source: payload.bio_source || "ios_watch",
+      bio_source: "ios_watch",
       data_mode: "real",
       heart_rate: payload.heart_rate || null,
       hrv: payload.hrv || null,
@@ -45,22 +43,16 @@ export async function syncBioData(payload: Partial<BioIngestPayload> & { deviceT
   }
 }
 
-/**
- * Sync multiple bio readings (batch from watch).
- */
 export async function syncBioBatch(
-  readings: (Partial<BioIngestPayload> & { deviceType?: DeviceType })[]);
+  readings: (Partial<BioIngestPayload> & { deviceType?: DeviceType })[]
 ): Promise<SyncResult> {
   let synced = 0;
   const errors: string[] = [];
 
   for (const reading of readings) {
     const result = await syncBioData(reading);
-    if (result.success) {
-      synced++;
-    } else {
-      errors.push(result.error || "Unknown error");
-    }
+    if (result.success) synced++;
+    else errors.push(result.error || "Unknown error");
   }
 
   return {
@@ -70,9 +62,6 @@ export async function syncBioBatch(
   };
 }
 
-/**
- * Check latest bio data timestamp to determine sync freshness.
- */
 export async function getLatestBioTimestamp(): Promise<string | null> {
   const { data } = await supabase
     .from("emotion_logs" as any)
@@ -81,8 +70,6 @@ export async function getLatestBioTimestamp(): Promise<string | null> {
     .order("created_at", { ascending: false })
     .limit(1);
 
-  if (data && data.length > 0) {
-    return (data as any[])[0].created_at;
-  }
+  if (data && data.length > 0) return (data as any[])[0].created_at;
   return null;
 }
