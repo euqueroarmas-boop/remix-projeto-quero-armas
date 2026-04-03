@@ -1,5 +1,5 @@
 /**
- * CIPA Pulse — Dashboard (Phase 1 + 2 + 3)
+ * CIPA Pulse — Dashboard (Phase 1 + 2 + 3 + 4)
  * Main dashboard combining all Pulse components
  */
 
@@ -10,6 +10,7 @@ import PulseHeatmap from "./PulseHeatmap";
 import PulseTrendIndicator from "./PulseTrendIndicator";
 import PulseWatchButton from "./PulseWatchButton";
 import PulseHealthKit from "./PulseHealthKit";
+import PulseChemicalIndicator from "./PulseChemicalIndicator";
 import { usePulseLogger } from "./usePulseLogger";
 
 interface Props {
@@ -39,6 +40,9 @@ export default function PulseDashboard({ onConflict }: Props) {
 
       {/* Thermometer */}
       <PulseThermometer onRelease={logEmotion} />
+
+      {/* Chemical Engine (Phase 4) */}
+      <PulseChemicalIndicator />
 
       {/* Bio Data Input (Phase 3) */}
       <PulseHealthKit />

@@ -7,6 +7,7 @@ import { useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getStatusLabel } from "./PulseScoreEngine";
 import { createEventDetector, processLevel, type EventDetectorState, type PulseEvent } from "./PulseEventDetector";
+import { createChemicalState, processReading, type ChemicalState } from "./PulseChemicalEngine";
 
 const SESSION_ID = `pulse_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 const MIN_DELTA = 3;
@@ -15,6 +16,7 @@ const MIN_INTERVAL_MS = 2000;
 export function usePulseLogger(onConflict?: () => void) {
   const lastSaved = useRef<{ value: number; timestamp: number } | null>(null);
   const eventState = useRef<EventDetectorState>(createEventDetector());
+  const chemicalState = useRef<ChemicalState>(createChemicalState());
 
   const logEmotion = useCallback(async (level: number) => {
     const now = Date.now();
@@ -51,6 +53,10 @@ export function usePulseLogger(onConflict?: () => void) {
       if (completedEvent) {
         await saveEvent(completedEvent);
       }
+
+      // Update chemical engine (Phase 4)
+      chemicalState.current = processReading(chemicalState.current, level);
+      window.dispatchEvent(new Event("pulse-chemical-update"));
 
       // Trigger conflict callback
       if (level >= 81 && onConflict) {
