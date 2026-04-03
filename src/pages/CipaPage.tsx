@@ -443,6 +443,11 @@ const CipaPage = () => {
           <StatMini icon={Heart} value={durationText(elapsed)} label="Atual" accent="text-emerald-500" />
         </div>
 
+        {/* ═══ Stress Thermometer ═══ */}
+        <div className="mb-2.5 shrink-0">
+          <StressThermometer onRelease={logStress} />
+        </div>
+
         {/* ═══ Footer Actions ═══ */}
         <div className="flex items-center justify-center gap-5 shrink-0 pt-1">
           {history.length > 0 && (
