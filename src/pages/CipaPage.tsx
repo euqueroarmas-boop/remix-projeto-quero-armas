@@ -61,8 +61,7 @@ function pad2(n: number) { return String(n).padStart(2, "0"); }
 /* ── Component ── */
 const CipaPage = () => {
   const fetchDataRef = useRef<() => Promise<void>>();
-  const { logStress, clearDayScore } = useStressLogger(useCallback(async () => {
-    // Auto-interrupt cycle when fight detected (value >= 81)
+  useStressLogger(useCallback(async () => {
     const { data: cycle } = await supabase
       .from("cipa_cycles")
       .select("*")
