@@ -10,6 +10,7 @@ import StressLineChart from "@/components/cipa/StressLineChart";
 import StressHeatmap from "@/components/cipa/StressHeatmap";
 import StressInsights from "@/components/cipa/StressInsights";
 import MonthlyStatsPanel from "@/components/cipa/MonthlyStatsPanel";
+import VoiceTensionAnalyzer from "@/components/cipa/VoiceTensionAnalyzer";
 
 /* ── Types ── */
 interface CipaCycle {
@@ -461,6 +462,7 @@ const CipaPage = () => {
         {/* ═══ Analytics Section ═══ */}
         <div className="space-y-2.5 shrink-0">
           <StressLineChart />
+          <VoiceTensionAnalyzer />
           <StressInsights />
           <StressHeatmap />
           <MonthlyStatsPanel />
