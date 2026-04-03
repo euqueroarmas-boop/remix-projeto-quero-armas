@@ -49,7 +49,7 @@ export async function syncBioData(payload: Partial<BioIngestPayload> & { deviceT
  * Sync multiple bio readings (batch from watch).
  */
 export async function syncBioBatch(
-  readings: (BioPayload & { deviceType?: DeviceType })[]
+  readings: (Partial<BioIngestPayload> & { deviceType?: DeviceType })[]);
 ): Promise<SyncResult> {
   let synced = 0;
   const errors: string[] = [];
