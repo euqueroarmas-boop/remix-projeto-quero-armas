@@ -5,7 +5,7 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
-import { validateBioPayload, type BioPayload } from "../services/PulseBioContract";
+import { validateBioPayload, type BioIngestPayload } from "../services/PulseBioContract";
 
 export type DeviceType = "web" | "ios" | "watch";
 
