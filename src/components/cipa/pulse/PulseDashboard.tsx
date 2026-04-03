@@ -1,10 +1,11 @@
 /**
- * CIPA Pulse — Dashboard (Phase 1 + 2 + 3 + 4 + 5 + 6 + 7 + 9 + 10)
- * Main dashboard combining all Pulse components
+ * CIPA Pulse — Dashboard (Phase 1–10 + UX Reorganization)
+ * Two-level layout: Level 1 always visible, Level 2 collapsed
  */
 
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
+import { ChevronDown, FlaskConical } from "lucide-react";
 import PulseThermometer from "./PulseThermometer";
 import PulseCurrentScore from "./PulseCurrentScore";
 import PulseDailyChart from "./PulseDailyChart";
@@ -27,6 +28,7 @@ import PulseEngagementAlert from "./retention/PulseEngagementAlert";
 import PulseProgressInsight from "./retention/PulseProgressInsight";
 import PulseConsistencyCard from "./retention/PulseConsistencyCard";
 import { updateStreak } from "./retention/PulseStreakService";
+import VoiceTensionAnalyzer from "../VoiceTensionAnalyzer";
 
 interface Props {
   onConflict?: () => void;
@@ -35,6 +37,7 @@ interface Props {
 export default function PulseDashboard({ onConflict }: Props) {
   const [showOnboarding, setShowOnboarding] = useState(() => isFirstSession());
   const [refreshKey, setRefreshKey] = useState(0);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   const handleOnboardingComplete = useCallback((_score: number) => {
     setShowOnboarding(false);
@@ -47,12 +50,8 @@ export default function PulseDashboard({ onConflict }: Props) {
     incrementRealCount();
     window.dispatchEvent(new Event("pulse-real-data"));
     await logEmotion(level);
-
-    // Update streak (Phase 10)
     await updateStreak();
     window.dispatchEvent(new Event("pulse-streak-update"));
-
-    // Feedback toast (Phase 10, Module 4)
     toast.success("Estado emocional atualizado", {
       description: `Nível ${level} registrado`,
       duration: 2000,
@@ -61,7 +60,7 @@ export default function PulseDashboard({ onConflict }: Props) {
 
   return (
     <div className="space-y-2.5" key={refreshKey}>
-      {/* Onboarding Modal (Phase 9) */}
+      {/* Onboarding Modal */}
       <PulseOnboardingModal open={showOnboarding} onComplete={handleOnboardingComplete} />
 
       {/* Header */}
@@ -70,60 +69,86 @@ export default function PulseDashboard({ onConflict }: Props) {
         <span className="text-xs font-mono font-bold text-primary uppercase tracking-[0.15em]">CIPA Pulse</span>
         <div className="ml-auto flex items-center gap-2">
           <PulseDataModeBadge />
-          <span className="text-[10px] font-mono text-muted-foreground">Análise Emocional</span>
         </div>
       </div>
 
-      {/* Engagement Alert (Phase 10) */}
+      {/* Engagement Alert */}
       <PulseEngagementAlert />
 
-      {/* Daily Mission (Phase 10) */}
+      {/* Daily Mission */}
       <PulseDailyMission />
 
-      {/* Insight Card (Phase 9) */}
+      {/* Main Insight (max 1 visible) */}
       <PulseInsightCard />
 
-      {/* Progress Insight (Phase 10) */}
-      <PulseProgressInsight />
+      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+           NÍVEL 1 — SEMPRE VISÍVEL
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
 
-      {/* Current Score */}
+      {/* 1. Score Atual */}
       <PulseCurrentScore />
 
-      {/* Streak Counter (Phase 10) */}
-      <PulseStreakCard />
-
-      {/* Risk Prediction Badge (Phase 7) */}
+      {/* 2. Risco */}
       <PulseRiskBadge />
 
-      {/* Trend Indicator (Phase 2) */}
+      {/* 3. Tendência */}
       <PulseTrendIndicator />
 
-      {/* Panic Button (Phase 3) */}
+      {/* 4. Botão "Estou Esquentando" */}
       <PulseWatchButton onTriggered={onConflict} />
 
-      {/* Thermometer */}
+      {/* Termômetro */}
       <PulseThermometer onRelease={handleLogEmotion} />
 
-      {/* Chemical Engine (Phase 4) */}
-      <PulseChemicalIndicator />
-
-      {/* Bio Data Input (Phase 3) */}
-      <PulseHealthKit />
-
-      {/* Daily Chart */}
+      {/* 5. Pulse Diário */}
       <PulseDailyChart />
 
-      {/* Weekly Bars (Phase 6) */}
+      {/* 6. Últimos 7 dias */}
       <PulseWeeklyBars />
 
-      {/* Monthly Heatmap */}
+      {/* 7. Heatmap */}
       <PulseHeatmap />
 
-      {/* Consistency Score (Phase 10) */}
+      {/* 8. Estatísticas Mensais */}
+      <PulseStatistics />
+
+      {/* Streak & Consistency */}
+      <PulseStreakCard />
+      <PulseProgressInsight />
       <PulseConsistencyCard />
 
-      {/* Monthly Statistics (Phase 5) */}
-      <PulseStatistics />
+      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+           NÍVEL 2 — COLAPSADO POR PADRÃO
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      <div className="rounded-xl border border-border bg-card overflow-hidden">
+        <button
+          onClick={() => setAdvancedOpen(o => !o)}
+          className="w-full flex items-center justify-between px-4 py-3 text-left"
+        >
+          <div className="flex items-center gap-2">
+            <FlaskConical className="w-3.5 h-3.5 text-muted-foreground" />
+            <span className="text-[11px] font-mono font-bold text-muted-foreground uppercase tracking-wider">
+              Análise Avançada
+            </span>
+          </div>
+          <ChevronDown
+            className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${advancedOpen ? "rotate-180" : ""}`}
+          />
+        </button>
+
+        {advancedOpen && (
+          <div className="px-4 pb-4 space-y-2.5 border-t border-border pt-3">
+            {/* Análise de Tensão Vocal */}
+            <VoiceTensionAnalyzer />
+
+            {/* Dados Biológicos */}
+            <PulseHealthKit />
+
+            {/* Chemical Engine */}
+            <PulseChemicalIndicator />
+          </div>
+        )}
+      </div>
     </div>
   );
 }

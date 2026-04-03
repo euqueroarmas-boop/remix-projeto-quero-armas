@@ -521,9 +521,9 @@ const CipaPage = () => {
         {/* ═══ Interrupt Button ═══ */}
         <button
           onClick={() => setShowConfirmInterrupt(true)}
-          className="w-full flex items-center justify-center gap-2 bg-primary/10 border border-primary/30 text-primary font-mono font-bold text-xs uppercase tracking-wider py-3.5 rounded-xl hover:bg-primary/20 hover:border-primary/50 transition-all mb-2.5 shrink-0"
+          className="w-full flex items-center justify-center gap-2 bg-primary border border-primary text-primary-foreground font-mono font-bold text-sm uppercase tracking-wider py-4 rounded-xl hover:bg-primary/90 transition-all mb-3 shrink-0 shadow-lg shadow-primary/20"
         >
-          <AlertTriangle className="w-3.5 h-3.5" />
+          <AlertTriangle className="w-4 h-4" />
           Registrar interrupção
         </button>
 
