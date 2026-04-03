@@ -1,6 +1,7 @@
 import { useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { calculateDailyStats, type StressLog } from "./stressEventEngine";
+import { updateMonthlyStats } from "./useMonthlyAggregator";
 
 const SESSION_ID = `s_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 const MIN_DELTA = 5;
