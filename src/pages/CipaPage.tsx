@@ -478,7 +478,7 @@ const CipaPage = () => {
 
         {/* ═══ Daily Score ═══ */}
         <div className="mb-2.5 shrink-0">
-          <DailyScoreCard />
+          <DailyScoreCard onClearDay={clearDayScore} />
         </div>
 
         {/* ═══ Analytics Section ═══ */}
