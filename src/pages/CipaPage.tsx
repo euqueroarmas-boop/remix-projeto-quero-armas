@@ -528,7 +528,7 @@ const CipaPage = () => {
         </button>
 
         {/* ═══ Stats Grid ═══ */}
-        <div className="grid grid-cols-4 gap-2 mb-2 shrink-0">
+        <div className="grid grid-cols-4 gap-2 mb-3 shrink-0">
           <StatMini icon={Trophy} value={bestStreak ? durationText(bestStreak) : "—"} label="Recorde" accent="text-amber-500" />
           <StatMini icon={BarChart3} value={avgStreak ? durationText(avgStreak) : "—"} label="Média" accent="text-blue-400" />
           <StatMini icon={AlertTriangle} value={String(totalInterruptions)} label="Paradas" accent="text-destructive" />
