@@ -364,8 +364,8 @@ const CipaPage = () => {
 
   return (
     <div
-      className="flex flex-col bg-background overflow-hidden"
-      style={{ height: "100dvh", maxHeight: "100dvh" }}
+      className="flex flex-col bg-background overflow-y-auto"
+      style={{ height: "100dvh" }}
     >
       <SeoHead title="CIPA — Contador de Dias" description="Acompanhe dias sem briga" noindex />
 
