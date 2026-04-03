@@ -485,6 +485,42 @@ export type Database = {
         }
         Relationships: []
       }
+      cipa_voice_daily_stats: {
+        Row: {
+          anger_spikes_count: number | null
+          average_tension_score: number | null
+          cooldown_voice_recovery_score: number | null
+          created_at: string
+          day_key: string
+          id: string
+          peak_tension_score: number | null
+          sustained_high_tension_minutes: number | null
+          updated_at: string
+        }
+        Insert: {
+          anger_spikes_count?: number | null
+          average_tension_score?: number | null
+          cooldown_voice_recovery_score?: number | null
+          created_at?: string
+          day_key: string
+          id?: string
+          peak_tension_score?: number | null
+          sustained_high_tension_minutes?: number | null
+          updated_at?: string
+        }
+        Update: {
+          anger_spikes_count?: number | null
+          average_tension_score?: number | null
+          cooldown_voice_recovery_score?: number | null
+          created_at?: string
+          day_key?: string
+          id?: string
+          peak_tension_score?: number | null
+          sustained_high_tension_minutes?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       client_events: {
         Row: {
           created_at: string
@@ -1735,6 +1771,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      voice_emotion_logs: {
+        Row: {
+          anger_probability_estimate: number | null
+          confidence_score: number | null
+          created_at: string
+          day_key: string
+          id: string
+          pitch_mean: number | null
+          pitch_variation: number | null
+          session_id: string | null
+          source: string
+          speech_rate_estimate: number | null
+          tension_score: number | null
+          voice_energy: number | null
+        }
+        Insert: {
+          anger_probability_estimate?: number | null
+          confidence_score?: number | null
+          created_at?: string
+          day_key?: string
+          id?: string
+          pitch_mean?: number | null
+          pitch_variation?: number | null
+          session_id?: string | null
+          source?: string
+          speech_rate_estimate?: number | null
+          tension_score?: number | null
+          voice_energy?: number | null
+        }
+        Update: {
+          anger_probability_estimate?: number | null
+          confidence_score?: number | null
+          created_at?: string
+          day_key?: string
+          id?: string
+          pitch_mean?: number | null
+          pitch_variation?: number | null
+          session_id?: string | null
+          source?: string
+          speech_rate_estimate?: number | null
+          tension_score?: number | null
+          voice_energy?: number | null
+        }
+        Relationships: []
       }
     }
     Views: {
