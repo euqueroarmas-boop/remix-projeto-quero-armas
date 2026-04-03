@@ -11,6 +11,7 @@ interface UseVoiceCaptureReturn {
   stop: () => void;
   currentFeatures: VoiceFeatures | null;
   error: string | null;
+  rawEnergy: number;
 }
 
 export function useVoiceCapture(onFeatures: (f: VoiceFeatures) => void): UseVoiceCaptureReturn {
@@ -18,6 +19,7 @@ export function useVoiceCapture(onFeatures: (f: VoiceFeatures) => void): UseVoic
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [currentFeatures, setCurrentFeatures] = useState<VoiceFeatures | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [rawEnergy, setRawEnergy] = useState(0);
 
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -89,9 +91,12 @@ export function useVoiceCapture(onFeatures: (f: VoiceFeatures) => void): UseVoic
       // Periodic feature extraction
       intervalRef.current = setInterval(() => {
         const features = extractFeatures();
-        if (features && features.energy > 1) { // Only when there's actual sound
-          setCurrentFeatures(features);
-          onFeatures(features);
+        if (features) {
+          setRawEnergy(features.energy);
+          if (features.energy > 0.3) { // Lower threshold to capture normal speech
+            setCurrentFeatures(features);
+            onFeatures(features);
+          }
         }
       }, ANALYSIS_INTERVAL_MS);
     } catch (e: any) {
@@ -113,6 +118,7 @@ export function useVoiceCapture(onFeatures: (f: VoiceFeatures) => void): UseVoic
     analyserRef.current = null;
     setIsListening(false);
     setCurrentFeatures(null);
+    setRawEnergy(0);
   }, []);
 
   // Cleanup on unmount
@@ -120,7 +126,7 @@ export function useVoiceCapture(onFeatures: (f: VoiceFeatures) => void): UseVoic
     return () => { stop(); };
   }, [stop]);
 
-  return { isListening, hasPermission, start, stop, currentFeatures, error };
+  return { isListening, hasPermission, start, stop, currentFeatures, error, rawEnergy };
 }
 
 /**

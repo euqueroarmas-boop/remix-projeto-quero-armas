@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mic, MicOff, Activity, Shield, AlertTriangle, Zap } from "lucide-react";
+import { Mic, MicOff, Activity, Shield, AlertTriangle, Zap, Volume2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useVoiceCapture } from "./useVoiceCapture";
 import { updateVoiceDailyStats } from "./useVoiceDailyAggregator";
@@ -41,7 +41,6 @@ export default function VoiceTensionAnalyzer() {
       setAngerProb(result.angerProbability);
       setConfidence(result.confidence);
 
-      // Log every 10 seconds max
       const now = Date.now();
       if (now - lastLogRef.current >= 10000) {
         lastLogRef.current = now;
@@ -59,17 +58,19 @@ export default function VoiceTensionAnalyzer() {
             confidence_score: result.confidence,
             source: "voice_analysis",
           });
-          // Aggregate voice daily stats
           updateVoiceDailyStats(dayKey);
         } catch {}
       }
     }
   }, []);
 
-  const { isListening, start, stop, error } = useVoiceCapture(handleFeatures);
+  const { isListening, start, stop, error, rawEnergy } = useVoiceCapture(handleFeatures);
 
   const zone = tensionZone(tensionScore);
   const ZoneIcon = zone.icon;
+  const energyPercent = Math.min(100, rawEnergy);
+  const isCapturing = isListening && rawEnergy > 0.3;
+  const isCalibrating = isListening && !baselineReady;
 
   return (
     <div className={`rounded-2xl border ${isListening ? zone.border : "border-border"} ${isListening ? zone.bg : "bg-card"} p-4 transition-all duration-300`}>
@@ -81,10 +82,48 @@ export default function VoiceTensionAnalyzer() {
             Análise de Tensão Vocal
           </span>
         </div>
-        <span className="text-[8px] font-mono text-muted-foreground/50">
-          {baselineReady ? "baseline ok" : `calibrando (${sampleCount}/5)`}
-        </span>
+        {isListening && (
+          <div className="flex items-center gap-1">
+            {isCapturing && (
+              <Volume2 className="w-3 h-3 text-emerald-400 animate-pulse" />
+            )}
+            <span className={`text-[8px] font-mono ${isCapturing ? "text-emerald-400" : "text-muted-foreground/50"}`}>
+              {baselineReady 
+                ? "analisando" 
+                : `calibrando (${sampleCount}/5)`}
+            </span>
+          </div>
+        )}
       </div>
+
+      {/* Live audio level bar — visible whenever listening */}
+      {isListening && (
+        <div className="mb-3 space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="text-[8px] font-mono text-muted-foreground">Nível do microfone</span>
+            <span className="text-[8px] font-mono text-muted-foreground tabular-nums">{energyPercent.toFixed(0)}%</span>
+          </div>
+          <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+            <motion.div
+              className="h-full rounded-full"
+              style={{
+                background: energyPercent > 50 
+                  ? "hsl(var(--destructive))" 
+                  : energyPercent > 10 
+                    ? "hsl(45 90% 55%)" 
+                    : "hsl(var(--muted-foreground))",
+              }}
+              animate={{ width: `${energyPercent}%` }}
+              transition={{ duration: 0.2 }}
+            />
+          </div>
+          {isCalibrating && (
+            <p className="text-[9px] font-mono text-muted-foreground/70 leading-snug">
+              Fale normalmente por alguns segundos para calibrar seu padrão vocal individual.
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Main toggle + score */}
       <div className="flex items-center gap-4">
@@ -115,29 +154,54 @@ export default function VoiceTensionAnalyzer() {
         <div className="flex-1">
           {isListening ? (
             <AnimatePresence mode="wait">
-              <motion.div
-                key={Math.floor(tensionScore / 10)}
-                initial={{ opacity: 0, y: 5 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-1"
-              >
-                <div className="flex items-center gap-1.5">
-                  <ZoneIcon className={`w-3.5 h-3.5 ${zone.color}`} />
-                  <span className={`text-xs font-mono font-bold ${zone.color}`}>{zone.label}</span>
-                </div>
-                <div className="flex items-end gap-2">
-                  <span className="text-2xl font-mono font-extrabold text-foreground tabular-nums">
-                    {tensionScore.toFixed(0)}
-                  </span>
-                  <span className="text-[10px] font-mono text-muted-foreground mb-0.5">/100</span>
-                </div>
-                {/* Mini bars */}
-                <div className="flex gap-2 text-[8px] font-mono text-muted-foreground">
-                  <span>Raiva: {angerProb.toFixed(0)}%</span>
-                  <span>•</span>
-                  <span>Confiança: {confidence}%</span>
-                </div>
-              </motion.div>
+              {isCalibrating ? (
+                <motion.div
+                  key="calibrating"
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="space-y-1"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <Activity className="w-3.5 h-3.5 text-blue-400 animate-pulse" />
+                    <span className="text-xs font-mono font-bold text-blue-400">Calibrando...</span>
+                  </div>
+                  <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
+                    <motion.div 
+                      className="h-full rounded-full bg-blue-400"
+                      animate={{ width: `${(sampleCount / 5) * 100}%` }}
+                      transition={{ duration: 0.3 }}
+                    />
+                  </div>
+                  <p className="text-[9px] font-mono text-muted-foreground">
+                    {sampleCount === 0 
+                      ? "Aguardando sua voz..."
+                      : `${sampleCount} de 5 amostras coletadas`}
+                  </p>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key={Math.floor(tensionScore / 10)}
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="space-y-1"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <ZoneIcon className={`w-3.5 h-3.5 ${zone.color}`} />
+                    <span className={`text-xs font-mono font-bold ${zone.color}`}>{zone.label}</span>
+                  </div>
+                  <div className="flex items-end gap-2">
+                    <span className="text-2xl font-mono font-extrabold text-foreground tabular-nums">
+                      {tensionScore.toFixed(0)}
+                    </span>
+                    <span className="text-[10px] font-mono text-muted-foreground mb-0.5">/100</span>
+                  </div>
+                  <div className="flex gap-2 text-[8px] font-mono text-muted-foreground">
+                    <span>Raiva: {angerProb.toFixed(0)}%</span>
+                    <span>•</span>
+                    <span>Confiança: {confidence}%</span>
+                  </div>
+                </motion.div>
+              )}
             </AnimatePresence>
           ) : (
             <div className="space-y-1">
@@ -145,15 +209,15 @@ export default function VoiceTensionAnalyzer() {
                 {error ? "Erro no microfone" : "Toque para ativar"}
               </p>
               <p className="text-[10px] font-mono text-muted-foreground leading-relaxed">
-                Análise local por sessão controlada. Nenhum áudio é armazenado.
+                Fale normalmente. O app aprende seu padrão e detecta tensão por desvio vocal. Nenhum áudio é gravado.
               </p>
             </div>
           )}
         </div>
       </div>
 
-      {/* Listening indicator bar */}
-      {isListening && (
+      {/* Tension bar — only after calibration */}
+      {isListening && baselineReady && (
         <div className="mt-3 flex gap-0.5">
           {Array.from({ length: 20 }).map((_, i) => (
             <motion.div
