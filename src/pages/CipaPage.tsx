@@ -458,6 +458,14 @@ const CipaPage = () => {
           <DailyScoreCard />
         </div>
 
+        {/* ═══ Analytics Section ═══ */}
+        <div className="space-y-2.5 shrink-0">
+          <StressLineChart />
+          <StressInsights />
+          <StressHeatmap />
+          <MonthlyStatsPanel />
+        </div>
+
         {/* ═══ Footer Actions ═══ */}
         <div className="flex items-center justify-center gap-5 shrink-0 pt-1">
           {history.length > 0 && (
