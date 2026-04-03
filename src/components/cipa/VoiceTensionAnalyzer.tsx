@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Mic, MicOff, Activity, Shield, AlertTriangle, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useVoiceCapture } from "./useVoiceCapture";
+import { updateVoiceDailyStats } from "./useVoiceDailyAggregator";
 import {
   updateBaseline,
   calculateVoiceTension,
