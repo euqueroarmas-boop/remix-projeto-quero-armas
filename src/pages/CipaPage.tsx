@@ -90,6 +90,7 @@ const CipaPage = () => {
     }
   }, []));
   const [activeTab, setActiveTab] = useState<"contador" | "pulse">("contador");
+  const [currentCycle, setCurrentCycle] = useState<CipaCycle | null>(null);
   const [history, setHistory] = useState<CipaCycle[]>([]);
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(Date.now());
