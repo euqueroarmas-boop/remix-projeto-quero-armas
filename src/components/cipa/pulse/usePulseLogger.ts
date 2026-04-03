@@ -100,28 +100,39 @@ export function usePulseLogger(onConflict?: () => void) {
   const clearDayLogs = useCallback(async () => {
     const today = new Date().toISOString().slice(0, 10);
     try {
-      // Clear both systems
       await Promise.all([
-        supabase
-          .from("emotion_logs" as any)
-          .delete()
-          .gte("created_at", `${today}T00:00:00`)
-          .lt("created_at", `${today}T23:59:59.999`),
-        supabase
-          .from("cipa_stress_logs" as any)
-          .delete()
-          .eq("day_key", today),
-        supabase
-          .from("cipa_stress_daily_stats" as any)
-          .delete()
-          .eq("day_key", today),
+        supabase.from("emotion_logs" as any).delete().gte("created_at", `${today}T00:00:00`).lt("created_at", `${today}T23:59:59.999`),
+        supabase.from("cipa_stress_logs" as any).delete().eq("day_key", today),
+        supabase.from("cipa_stress_daily_stats" as any).delete().eq("day_key", today),
       ]);
     } catch (e) {
-      console.error("[PulseLogger] clear failed:", e);
+      console.error("[PulseLogger] clear day failed:", e);
     }
   }, []);
 
-  return { logEmotion, clearDayLogs };
+  /** Full reset — wipes ALL Pulse data across all tables */
+  const clearAllPulse = useCallback(async () => {
+    try {
+      await Promise.all([
+        supabase.from("emotion_logs" as any).delete().gte("created_at", "2000-01-01"),
+        supabase.from("emotion_events" as any).delete().gte("created_at", "2000-01-01"),
+        supabase.from("emotion_statistics" as any).delete().gte("created_at", "2000-01-01"),
+        supabase.from("emotion_triggers" as any).delete().gte("created_at", "2000-01-01"),
+        supabase.from("intervention_logs" as any).delete().gte("created_at", "2000-01-01"),
+        supabase.from("cipa_stress_logs" as any).delete().gte("created_at", "2000-01-01"),
+        supabase.from("cipa_stress_daily_stats" as any).delete().gte("created_at", "2000-01-01"),
+        supabase.from("cipa_stress_monthly_stats" as any).delete().gte("created_at", "2000-01-01"),
+        supabase.from("cipa_voice_daily_stats" as any).delete().gte("created_at", "2000-01-01"),
+      ]);
+      lastSaved.current = null;
+      eventState.current = createEventDetector();
+      chemicalState.current = createChemicalState();
+    } catch (e) {
+      console.error("[PulseLogger] full reset failed:", e);
+    }
+  }, []);
+
+  return { logEmotion, clearDayLogs, clearAllPulse };
 }
 
 async function saveEvent(event: PulseEvent) {
