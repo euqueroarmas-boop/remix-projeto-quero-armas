@@ -91,9 +91,12 @@ export function useVoiceCapture(onFeatures: (f: VoiceFeatures) => void): UseVoic
       // Periodic feature extraction
       intervalRef.current = setInterval(() => {
         const features = extractFeatures();
-        if (features && features.energy > 1) { // Only when there's actual sound
-          setCurrentFeatures(features);
-          onFeatures(features);
+        if (features) {
+          setRawEnergy(features.energy);
+          if (features.energy > 0.3) { // Lower threshold to capture normal speech
+            setCurrentFeatures(features);
+            onFeatures(features);
+          }
         }
       }, ANALYSIS_INTERVAL_MS);
     } catch (e: any) {
