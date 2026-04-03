@@ -132,7 +132,7 @@ export function usePulseLogger(onConflict?: () => void) {
     }
   }, []);
 
-  return { logEmotion, clearDayLogs };
+  return { logEmotion, clearDayLogs, clearAllPulse };
 }
 
 async function saveEvent(event: PulseEvent) {
