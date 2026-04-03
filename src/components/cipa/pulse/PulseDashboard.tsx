@@ -111,7 +111,16 @@ export default function PulseDashboard({ onConflict }: Props) {
             </p>
             <h1 className="text-2xl font-bold text-foreground tracking-tight mt-0.5">Pulse</h1>
           </div>
-          <PulseDataModeBadge />
+          <div className="flex items-center gap-2">
+            <PulseDataModeBadge />
+            <button
+              onClick={handleReset}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-muted/60 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors text-xs font-medium"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              Resetar
+            </button>
+          </div>
         </div>
       </div>
 
