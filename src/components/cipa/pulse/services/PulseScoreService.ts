@@ -1,26 +1,29 @@
 /**
  * CIPA Pulse — Score Calculation Service (Module 1: Backend Scale)
  * Separates score calculation from UI components.
- * Can be used by both local UI and future API endpoints.
  */
 
-import { computeCompositeScore, type CompositeInput } from "../PulseCompositeScore";
-import { predictRisk, type PredictionInput, type PredictionResult } from "../PulsePredictionEngine";
+import { calculateCompositeScore, type BioData } from "../PulseCompositeScore";
+import { predictRisk, type PredictionResult } from "../PulsePredictionEngine";
+
+export interface StressScoreInput {
+  manualLevel: number;
+  bio?: BioData;
+  recentLevels?: number[];
+}
 
 /**
  * Calculate the composite stress score from multiple inputs.
- * This wraps the existing PulseCompositeScore for service-layer access.
  */
-export function calculateStressScore(input: CompositeInput): number {
-  return computeCompositeScore(input);
+export function calculateStressScore(input: StressScoreInput): number {
+  return calculateCompositeScore(input.manualLevel, input.bio, input.recentLevels);
 }
 
 /**
  * Calculate risk prediction from recent readings.
- * This wraps the existing PulsePredictionEngine.
  */
-export function calculatePrediction(input: PredictionInput): PredictionResult {
-  return predictRisk(input);
+export function calculatePrediction(readings: number[], timestamps?: string[]): PredictionResult {
+  return predictRisk(readings, timestamps);
 }
 
 /**
@@ -38,16 +41,10 @@ export function classifyLevel(level: number): {
   return { zone: "calmo", color: "#22c55e", label: "Calmo" };
 }
 
-/**
- * Check if a level triggers a fight detection.
- */
 export function isFightLevel(level: number): boolean {
   return level >= 81;
 }
 
-/**
- * Check if a level is in the critical zone.
- */
 export function isCriticalLevel(level: number): boolean {
   return level >= 61;
 }
