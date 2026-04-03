@@ -13,6 +13,7 @@ import PulseHealthKit from "./PulseHealthKit";
 import PulseChemicalIndicator from "./PulseChemicalIndicator";
 import PulseStatistics from "./PulseStatistics";
 import PulseWeeklyBars from "./PulseWeeklyBars";
+import PulseRiskBadge from "./PulseRiskBadge";
 import { usePulseLogger } from "./usePulseLogger";
 
 interface Props {
