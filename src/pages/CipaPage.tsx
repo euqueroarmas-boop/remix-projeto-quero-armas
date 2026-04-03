@@ -478,7 +478,23 @@ const CipaPage = () => {
 
         {/* ═══ Daily Score ═══ */}
         <div className="mb-2.5 shrink-0">
-          <DailyScoreCard onClearDay={clearDayScore} />
+          <DailyScoreCard onClearDay={async () => {
+            await clearDayScore();
+            // Also restart current cycle (zero the timer)
+            if (currentCycle) {
+              const endedAt = new Date().toISOString();
+              const ms = new Date(endedAt).getTime() - new Date(currentCycle.started_at).getTime();
+              await supabase.from("cipa_cycles").update({
+                is_current: false, ended_at: endedAt,
+                duration_days: Math.floor(ms / 86400000),
+                duration_seconds: Math.floor(ms / 1000),
+                duration_label: durationLabelFull(ms),
+                note: "Score zerado manualmente (sem briga)", updated_at: endedAt,
+              }).eq("id", currentCycle.id);
+              await supabase.from("cipa_cycles").insert({ started_at: endedAt, is_current: true });
+              await fetchData();
+            }
+          }} />
         </div>
 
         {/* ═══ Analytics Section ═══ */}
