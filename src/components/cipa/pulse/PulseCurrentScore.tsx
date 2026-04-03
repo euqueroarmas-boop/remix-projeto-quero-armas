@@ -45,10 +45,10 @@ export default function PulseCurrentScore() {
 
   if (currentLevel === null) {
     return (
-      <div className="rounded-xl border border-border bg-card p-4 text-center">
-        <Gauge className="w-6 h-6 text-muted-foreground/30 mx-auto mb-2" />
-        <p className="text-xs font-mono text-muted-foreground">Nenhum registro hoje</p>
-        <p className="text-[10px] font-mono text-muted-foreground/60 mt-1">Use o termômetro para começar</p>
+      <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-center">
+        <Gauge className="w-6 h-6 text-primary/40 mx-auto mb-2" />
+        <p className="text-xs font-mono font-bold text-foreground">Registre seu estado agora</p>
+        <p className="text-[10px] font-mono text-muted-foreground mt-1">Use o termômetro abaixo para iniciar sua análise emocional</p>
       </div>
     );
   }

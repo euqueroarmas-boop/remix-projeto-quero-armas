@@ -51,7 +51,11 @@ export default function PulseDailyChart() {
           <Activity className="w-4 h-4 text-primary" />
           <span className="text-xs font-mono font-bold text-foreground uppercase tracking-wider">Pulse Diário</span>
         </div>
-        <p className="text-[10px] text-muted-foreground font-mono">Registre emoções para ver o gráfico</p>
+        <div className="h-20 flex items-center justify-center">
+          <p className="text-[10px] text-muted-foreground font-mono text-center">
+            Seus padrões aparecerão aqui conforme você registra emoções
+          </p>
+        </div>
       </div>
     );
   }
