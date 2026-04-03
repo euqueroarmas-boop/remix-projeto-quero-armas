@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Heart, AlertTriangle, RotateCcw, Clock, Trophy, BarChart3, Edit3, Trash2, Play, Timer, X, History, Download, Share2 } from "lucide-react";
 import SeoHead from "@/components/SeoHead";
 import { supabase } from "@/integrations/supabase/client";
+import StressThermometer from "@/components/cipa/StressThermometer";
+import { useStressLogger } from "@/components/cipa/useStressLogger";
 
 /* ── Types ── */
 interface CipaCycle {
@@ -58,6 +60,7 @@ function pad2(n: number) { return String(n).padStart(2, "0"); }
 
 /* ── Component ── */
 const CipaPage = () => {
+  const { logStress } = useStressLogger();
   const [currentCycle, setCurrentCycle] = useState<CipaCycle | null>(null);
   const [history, setHistory] = useState<CipaCycle[]>([]);
   const [loading, setLoading] = useState(true);
@@ -438,6 +441,11 @@ const CipaPage = () => {
           <StatMini icon={BarChart3} value={avgStreak ? durationText(avgStreak) : "—"} label="Média" accent="text-blue-400" />
           <StatMini icon={AlertTriangle} value={String(totalInterruptions)} label="Paradas" accent="text-destructive" />
           <StatMini icon={Heart} value={durationText(elapsed)} label="Atual" accent="text-emerald-500" />
+        </div>
+
+        {/* ═══ Stress Thermometer ═══ */}
+        <div className="mb-2.5 shrink-0">
+          <StressThermometer onRelease={logStress} />
         </div>
 
         {/* ═══ Footer Actions ═══ */}

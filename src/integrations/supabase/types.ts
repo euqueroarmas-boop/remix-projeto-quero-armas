@@ -356,6 +356,87 @@ export type Database = {
         }
         Relationships: []
       }
+      cipa_stress_daily_stats: {
+        Row: {
+          cooldown_efficiency_score: number | null
+          created_at: string
+          critical_exposure_minutes: number | null
+          daily_conflict_risk: number | null
+          day_key: string
+          fight_events_count: number | null
+          id: string
+          max_value: number | null
+          min_value: number | null
+          near_fight_events_count: number | null
+          rapid_escalation_count: number | null
+          updated_at: string
+          weighted_average: number | null
+        }
+        Insert: {
+          cooldown_efficiency_score?: number | null
+          created_at?: string
+          critical_exposure_minutes?: number | null
+          daily_conflict_risk?: number | null
+          day_key: string
+          fight_events_count?: number | null
+          id?: string
+          max_value?: number | null
+          min_value?: number | null
+          near_fight_events_count?: number | null
+          rapid_escalation_count?: number | null
+          updated_at?: string
+          weighted_average?: number | null
+        }
+        Update: {
+          cooldown_efficiency_score?: number | null
+          created_at?: string
+          critical_exposure_minutes?: number | null
+          daily_conflict_risk?: number | null
+          day_key?: string
+          fight_events_count?: number | null
+          id?: string
+          max_value?: number | null
+          min_value?: number | null
+          near_fight_events_count?: number | null
+          rapid_escalation_count?: number | null
+          updated_at?: string
+          weighted_average?: number | null
+        }
+        Relationships: []
+      }
+      cipa_stress_logs: {
+        Row: {
+          created_at: string
+          day_key: string
+          delta_from_previous: number | null
+          id: string
+          minutes_since_previous: number | null
+          session_id: string | null
+          source: string
+          value: number
+        }
+        Insert: {
+          created_at?: string
+          day_key?: string
+          delta_from_previous?: number | null
+          id?: string
+          minutes_since_previous?: number | null
+          session_id?: string | null
+          source?: string
+          value: number
+        }
+        Update: {
+          created_at?: string
+          day_key?: string
+          delta_from_previous?: number | null
+          id?: string
+          minutes_since_previous?: number | null
+          session_id?: string | null
+          source?: string
+          value?: number
+        }
+        Relationships: []
+      }
       client_events: {
         Row: {
           created_at: string
