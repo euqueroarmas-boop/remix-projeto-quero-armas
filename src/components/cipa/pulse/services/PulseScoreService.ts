@@ -16,7 +16,8 @@ export interface StressScoreInput {
  * Calculate the composite stress score from multiple inputs.
  */
 export function calculateStressScore(input: StressScoreInput): number {
-  return calculateCompositeScore(input.manualLevel, input.bio, input.recentLevels);
+  const result = calculateCompositeScore(input.manualLevel, input.bio, input.recentLevels);
+  return result.score;
 }
 
 /**
