@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { adminQuerySingle, adminQuery } from "@/lib/adminApi";
 import {
@@ -66,8 +67,8 @@ const NAV_GROUPS = [
     items: [
       { id: "logs", label: "Logs", icon: ScrollText },
       { id: "errors", label: "Erros", icon: AlertTriangle },
-      { id: "financeiro", label: "Financeiro", icon: DollarSign },
       { id: "payments", label: "Pagamentos", icon: CreditCardIcon },
+      { id: "financeiro", label: "Financeiro", icon: DollarSign },
       { id: "clientes", label: "Clientes", icon: UserCog },
       { id: "leads", label: "Leads & Propostas", icon: Megaphone },
       { id: "cipa-locations", label: "CIPA Geo", icon: MapPin },
@@ -117,6 +118,8 @@ const NAV_GROUPS = [
     ],
   },
 ];
+
+const NAV_SECTION_IDS = new Set(NAV_GROUPS.flatMap((group) => group.items.map((item) => item.id)));
 
 // ─── Login ───
 function AdminLogin({ onLogin }: { onLogin: () => void }) {
@@ -884,10 +887,13 @@ function AdminTopbar({ title, onMenuOpen, onLogout }: { title: string; onMenuOpe
 // ─── Main Page ───
 export default function AdminPage() {
   const [authed, setAuthed] = useState(!!getValidAdminToken());
-  const [activeSection, setActiveSection] = useState("dashboard");
   const [menuOpen, setMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
+  const { section } = useParams<{ section?: string }>();
+
+  const activeSection = !section ? "dashboard" : NAV_SECTION_IDS.has(section) ? section : "dashboard";
 
   useEffect(() => {
     const syncSession = () => setAuthed(!!getValidAdminToken());
@@ -901,6 +907,12 @@ export default function AdminPage() {
     };
   }, []);
 
+  useEffect(() => {
+    if (section && !NAV_SECTION_IDS.has(section)) {
+      navigate("/admin", { replace: true });
+    }
+  }, [navigate, section]);
+
   if (!authed) return <AdminLogin onLogin={() => setAuthed(true)} />;
 
   const handleLogout = () => {
@@ -909,8 +921,8 @@ export default function AdminPage() {
   };
 
   const handleNavClick = (id: string) => {
-    setActiveSection(id);
     setMenuOpen(false);
+    navigate(id === "dashboard" ? "/admin" : `/admin/${id}`);
   };
 
   const currentLabel = NAV_GROUPS.flatMap(g => g.items).find(i => i.id === activeSection)?.label || "Dashboard";
