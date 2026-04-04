@@ -757,6 +757,7 @@ function ClientesTab({ onOpenClient }: { onOpenClient?: (id: string) => void }) 
                   <TableCell className="text-xs text-foreground font-medium">{c.nome_fantasia || c.razao_social}</TableCell>
                   <TableCell className="text-[11px] font-mono text-muted-foreground">{c.cnpj_ou_cpf}</TableCell>
                   <TableCell className="text-[11px] text-muted-foreground">{c.email}</TableCell>
+                  <TableCell>{getStatusBadge(c)}</TableCell>
                   <TableCell>{getAccessBadge(c)}</TableCell>
                   <TableCell className="text-[11px] text-muted-foreground">
                     {auditLogs[c.id]?.action === "auto_user_created" ? <span className="text-primary">🤖 Auto</span> : auditLogs[c.id]?.action === "auto_user_creation_failed" ? <span className="text-destructive">⚠️ Falha</span> : c.user_id ? "Manual" : "—"}

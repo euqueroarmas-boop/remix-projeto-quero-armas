@@ -244,6 +244,11 @@ export default function AdminClientDetail({ customerId, onBack }: AdminClientDet
   const nextDue = pendingPayments.find(p => p.due_date);
 
   const globalStatus = (() => {
+    const cs = customer?.status_cliente;
+    if (cs === "suspenso") return { text: "Suspenso", cls: "bg-red-500/15 text-red-400 border-red-500/25", icon: Ban };
+    if (cs === "cancelado") return { text: "Cancelado", cls: "bg-muted/50 text-muted-foreground border-border/60", icon: Ban };
+    if (cs === "inadimplente") return { text: "Inadimplente", cls: "bg-red-500/15 text-red-400 border-red-500/25", icon: AlertTriangle };
+    if (cs === "aguardando_ativacao") return { text: "Aguardando", cls: "bg-blue-500/15 text-blue-400 border-blue-500/25", icon: Clock };
     if (!contracts.length) return { text: "Lead", cls: "bg-muted/50 text-muted-foreground border-border/60", icon: Globe };
     if (isAnySuspended) return { text: "Suspenso", cls: "bg-red-500/15 text-red-400 border-red-500/25", icon: Ban };
     if (pendingPayments.some(p => p.payment_status === "OVERDUE")) return { text: "Inadimplente", cls: "bg-red-500/15 text-red-400 border-red-500/25", icon: AlertTriangle };
