@@ -171,6 +171,9 @@ const ContratarServicoPage = () => {
   const [popupBlocked, setPopupBlocked] = useState(false);
   const [paymentReady, setPaymentReady] = useState(false);
   const [boletoGenerated, setBoletoGenerated] = useState(false);
+  const [portalCredentials, setPortalCredentials] = useState<PortalCredentials | null>(null);
+  const [credentialsLoading, setCredentialsLoading] = useState(false);
+  const [credentialsError, setCredentialsError] = useState<string | null>(null);
   const [contractMode, setContractMode] = useState<ContractMode | null>(
     (searchParams.get("modo") as ContractMode) || null
   );
