@@ -305,7 +305,7 @@ const ContratarServicoPage = () => {
 
   // Poll for payment confirmation — runs whenever we have a quoteId and are on/past payment step
   useEffect(() => {
-    if (paymentConfirmed || !quoteId) return;
+    if (paymentConfirmed || !quoteId || boletoGenerated) return;
     // Only poll if payment was initiated or we're on the payment step
     if (!paymentComplete && currentStep !== "payment") return;
     const interval = setInterval(async () => {
