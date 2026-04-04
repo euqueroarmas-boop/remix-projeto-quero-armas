@@ -629,6 +629,7 @@ function ClientesTab({ onOpenClient }: { onOpenClient?: (id: string) => void }) 
       inadimplente: { label: "Inadimplente", cls: "border-amber-500/25 bg-amber-500/10 text-amber-400" },
       cancelado: { label: "Cancelado", cls: "border-border/60 bg-muted/30 text-muted-foreground" },
       aguardando_ativacao: { label: "Aguardando", cls: "border-blue-500/25 bg-blue-500/10 text-blue-400" },
+      excluido_lgpd: { label: "Excluído LGPD", cls: "border-red-500/25 bg-red-900/20 text-red-300" },
     };
     const badge = map[status] || map.ativo;
     return <span className={`inline-flex items-center px-1.5 py-0 rounded text-[9px] font-medium border ${badge.cls}`}>{badge.label}</span>;
