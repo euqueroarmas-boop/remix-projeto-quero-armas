@@ -143,6 +143,8 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({
       payment_status: mappedStatus,
       asaas_status: asaasStatus,
+      billing_type: payment.billing_type,
+      asaas_invoice_url: payment.asaas_invoice_url,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
