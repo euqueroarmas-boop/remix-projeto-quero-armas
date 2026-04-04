@@ -152,9 +152,23 @@ export default function AdminClientDetail({ customerId, onBack }: AdminClientDet
   const handleSuspend = async (suspend: boolean) => {
     setSuspending(true);
     try {
+      const newStatus = suspend ? "suspenso" : "ativo";
+      // Update customer status_cliente
+      await supabase.from("customers").update({
+        status_cliente: newStatus,
+        ...(suspend ? { suspended_at: new Date().toISOString() } : { suspended_at: null }),
+      }).eq("id", customerId);
+      // Also update contracts
       for (const c of contracts) {
         await supabase.from("contracts").update({ service_status: suspend ? "suspended" : "active" }).eq("id", c.id);
       }
+      // Log
+      await supabase.from("client_events").insert({
+        customer_id: customerId,
+        event_type: suspend ? "suspensao" : "reativacao",
+        title: suspend ? "Cliente suspenso" : "Cliente reativado",
+        description: `Status alterado para ${newStatus} via admin`,
+      });
       toast.success(suspend ? "Cliente suspenso" : "Cliente liberado");
       fetchAll();
     } catch (err: any) {
