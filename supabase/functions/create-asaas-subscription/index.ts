@@ -175,7 +175,7 @@ Deno.serve(async (req) => {
     console.log("[create-asaas-subscription] Criando assinatura...", JSON.stringify(subscriptionPayload));
     const subRes = await fetch(`${ASAAS_BASE_URL}/subscriptions`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", access_token: ASAAS_API_KEY },
+      headers: asaasHeaders,
       body: JSON.stringify(subscriptionPayload),
     });
 
