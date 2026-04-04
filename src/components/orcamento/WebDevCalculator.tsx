@@ -306,7 +306,7 @@ const WebDevCalculator = () => {
                   openWhatsApp({
                     pageTitle: "Desenvolvimento Web",
                     intent: "proposal",
-                    customMessage: `Olá! Gostaria de uma análise técnica para meu projeto (${projectLabel}). Estimativa: ${hours}h, R$ ${totalFinal}. Complexidade: ${complexidade}. Urgência: ${urgencia}.`,
+                    detail: `Projeto: ${projectLabel} | ${hours}h | R$ ${totalFinal} | Complexidade: ${complexidade} | Urgência: ${urgencia}`,
                   })
                 }
                 className="w-full inline-flex items-center justify-center gap-2 border border-border text-foreground px-6 py-3 font-mono text-sm uppercase tracking-wider hover:bg-muted transition-colors"
