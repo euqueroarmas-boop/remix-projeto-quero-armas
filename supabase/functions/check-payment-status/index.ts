@@ -112,7 +112,7 @@ Deno.serve(async (req) => {
       if (contractRows?.[0]) {
         await supabase
           .from("contracts")
-          .update({ status: "ATIVO" })
+          .update({ status: "ATIVO", service_status: "active", activated_at: new Date().toISOString() })
           .eq("id", contractRows[0].id);
       }
 
