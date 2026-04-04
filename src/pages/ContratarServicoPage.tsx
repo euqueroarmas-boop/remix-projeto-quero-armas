@@ -540,12 +540,22 @@ const ContratarServicoPage = () => {
       if (!url) throw new Error("O sistema de pagamento não retornou um link de cobrança.");
 
       setInvoiceUrl(url);
-      setPaymentComplete(true);
       setPopupBlocked(false);
-      const win = window.open(url, "_blank", "noopener,noreferrer");
-      if (!win || win.closed || typeof win.closed === "undefined") {
-        setPopupBlocked(true);
-        console.warn("[WMTi] Popup bloqueado pelo navegador");
+
+      if (selectedPayment === "BOLETO") {
+        // For boleto: don't poll, show success state immediately
+        setBoletoGenerated(true);
+        setPaymentComplete(true);
+        // Open boleto in new tab
+        window.open(url, "_blank", "noopener,noreferrer");
+      } else {
+        // For credit card: open checkout and start polling
+        setPaymentComplete(true);
+        const win = window.open(url, "_blank", "noopener,noreferrer");
+        if (!win || win.closed || typeof win.closed === "undefined") {
+          setPopupBlocked(true);
+          console.warn("[WMTi] Popup bloqueado pelo navegador");
+        }
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Erro desconhecido";
