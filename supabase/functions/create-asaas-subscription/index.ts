@@ -42,6 +42,16 @@ Deno.serve(async (req) => {
       customer_name,
       customer_email,
       customer_cpf_cnpj,
+      customer_phone,
+      customer_mobile_phone,
+      customer_postal_code,
+      customer_address,
+      customer_address_number,
+      customer_complement,
+      customer_province,
+      customer_city,
+      customer_state,
+      customer_company,
       billing_type,
       value,
       description,
@@ -109,12 +119,25 @@ Deno.serve(async (req) => {
       status: "started",
     });
 
-    // ── Create or find customer ──
-    const customerPayload = {
+    // Build full customer payload
+    const cleanPhone = (v?: string) => v ? v.replace(/\D/g, "") : undefined;
+    const cleanCep = (v?: string) => v ? v.replace(/\D/g, "") : undefined;
+
+    const customerPayload: Record<string, unknown> = {
       name: customer_name,
       email: customer_email,
       cpfCnpj: customer_cpf_cnpj.replace(/\D/g, ""),
     };
+    if (customer_phone) customerPayload.phone = cleanPhone(customer_phone);
+    if (customer_mobile_phone) customerPayload.mobilePhone = cleanPhone(customer_mobile_phone);
+    if (customer_postal_code) customerPayload.postalCode = cleanCep(customer_postal_code);
+    if (customer_address) customerPayload.address = customer_address;
+    if (customer_address_number) customerPayload.addressNumber = customer_address_number;
+    if (customer_complement) customerPayload.complement = customer_complement;
+    if (customer_province) customerPayload.province = customer_province;
+    if (customer_city) customerPayload.cityName = customer_city;
+    if (customer_state) customerPayload.state = customer_state;
+    if (customer_company) customerPayload.company = customer_company;
 
     const asaasHeaders = {
       "Content-Type": "application/json",
@@ -149,6 +172,18 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Falha ao criar/localizar cliente no Asaas", details: customerData }, 400);
       }
       asaasCustomerId = searchData.data[0].id;
+
+      // Update existing customer with full checkout data
+      try {
+        await fetch(`${ASAAS_BASE_URL}/customers/${asaasCustomerId}`, {
+          method: "PUT",
+          headers: asaasHeaders,
+          body: JSON.stringify(customerPayload),
+        });
+        console.log("[create-asaas-subscription] Cliente atualizado no Asaas:", asaasCustomerId);
+      } catch (updateErr) {
+        console.error("[create-asaas-subscription] Erro ao atualizar cliente:", updateErr);
+      }
     }
 
     // ── Calculate dates ──
