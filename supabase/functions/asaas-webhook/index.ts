@@ -325,7 +325,7 @@ Deno.serve(async (req) => {
       console.log("[asaas-webhook] Pagamento vencido. Marcando contrato como INADIMPLENTE.");
       await supabase
         .from("contracts")
-        .update({ status: "INADIMPLENTE" })
+        .update({ status: "INADIMPLENTE", service_status: "overdue" })
         .eq("quote_id", paymentRecord.quote_id);
 
       await supabase.from("integration_logs").insert({
