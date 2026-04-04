@@ -54,6 +54,27 @@
 @layer base {
   * {
     @apply border-border;
+    scrollbar-width: thin;
+    scrollbar-color: hsl(0 0% 22%) transparent;
+  }
+
+  /* Webkit scrollbar — premium dark */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(0 0% 22%);
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(0 0% 32%);
+  }
+  ::-webkit-scrollbar-corner {
+    background: transparent;
   }
 
   body {
