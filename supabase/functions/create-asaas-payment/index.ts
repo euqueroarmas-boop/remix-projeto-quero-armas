@@ -33,7 +33,10 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "ASAAS_API_KEY not configured" }, 500);
     }
 
-    const ASAAS_BASE_URL = Deno.env.get("ASAAS_BASE_URL") || "https://sandbox.asaas.com/api/v3";
+    const ASAAS_BASE_URL = Deno.env.get("ASAAS_BASE_URL");
+    if (!ASAAS_BASE_URL) {
+      return jsonResponse({ error: "ASAAS_BASE_URL not configured — refusing to default to sandbox in production" }, 500);
+    }
 
     const body = await req.json();
     const {
