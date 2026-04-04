@@ -1,14 +1,23 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Clock, TrendingDown, Code2, Gauge, Zap, FileText, ArrowRight, MessageSquare, AlertTriangle } from "lucide-react";
+import { Clock, TrendingDown, Code2, Gauge, Zap, FileText, ArrowRight, MessageSquare, AlertTriangle, Plus, Minus } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useInfraStore } from "@/stores/useInfraStore";
 import { openWhatsApp } from "@/lib/whatsapp";
 
-const PRICE_TABLE: Record<number, number> = {
-  1: 200, 2: 190, 3: 180, 4: 170, 5: 160, 6: 155, 7: 150, 8: 145,
-};
 const BASE_PRICE = 200;
+
+// Progressive discount: more hours → lower effective rate
+const getUnitPrice = (hours: number): number => {
+  if (hours <= 1) return 200;
+  if (hours <= 2) return 190;
+  if (hours <= 3) return 180;
+  if (hours <= 4) return 170;
+  if (hours <= 5) return 160;
+  if (hours <= 6) return 155;
+  if (hours <= 7) return 150;
+  return 145; // 8+
+};
 
 const PROJECT_TYPES = [
   { key: "site_institucional", label: "Site Institucional" },
@@ -29,37 +38,34 @@ type PrazoOption = { key: string; label: string; mult: number };
 
 const URGENCIA_CONFIG: Record<string, {
   label: string;
-  minHours: number;
   prazos: PrazoOption[];
   message?: string;
 }> = {
   normal: {
     label: "Normal",
-    minHours: 1,
     prazos: [
-      { key: "flexivel", label: "Flexível", mult: 1.0 },
       { key: "30_dias", label: "Até 30 dias", mult: 1.0 },
-      { key: "60_dias", label: "Até 60 dias", mult: 1.0 },
-      { key: "90_dias", label: "Até 90 dias", mult: 1.0 },
+      { key: "15_dias", label: "Até 15 dias", mult: 1.05 },
+      { key: "7_dias", label: "Até 7 dias", mult: 1.1 },
+      { key: "3_dias", label: "Até 3 dias", mult: 1.15 },
+      { key: "24h", label: "Em até 24h", mult: 1.2 },
     ],
   },
   prioritario: {
     label: "Prioritário",
-    minHours: 2,
     prazos: [
-      { key: "mesmo_dia", label: "Mesmo dia", mult: 1.25 },
       { key: "24h", label: "Em até 24h", mult: 1.15 },
+      { key: "mesmo_dia", label: "Mesmo dia", mult: 1.25 },
+      { key: "8h", label: "Em até 8h", mult: 1.35 },
     ],
     message: "Projeto entra em faixa de antecipação de execução",
   },
   urgente: {
     label: "Urgente",
-    minHours: 2,
     prazos: [
-      { key: "1h", label: "Até 1h", mult: 1.8 },
-      { key: "2h", label: "Até 2h", mult: 1.6 },
-      { key: "4h", label: "Até 4h", mult: 1.4 },
-      { key: "8h", label: "Até 8h", mult: 1.25 },
+      { key: "8h", label: "Em até 8h", mult: 1.25 },
+      { key: "4h", label: "Em até 4h", mult: 1.4 },
+      { key: "2h", label: "Em até 2h", mult: 1.6 },
     ],
     message: "Execução imediata com alocação prioritária da equipe técnica",
   },
@@ -126,26 +132,23 @@ const SummaryRow = ({ label, value, highlight }: { label: string; value: string;
 
 const WebDevCalculator = () => {
   const { sobDemanda, setSobDemanda } = useInfraStore();
-  const [hours, setHours] = useState(sobDemanda.horas);
+  const [hours, setHours] = useState(Math.max(1, sobDemanda.horas));
   const [projectType, setProjectType] = useState<string>("site_institucional");
   const [complexidade, setComplexidade] = useState<string>("baixa");
   const [urgencia, setUrgencia] = useState<string>("normal");
-  const [prazo, setPrazo] = useState<string>("flexivel");
+  const [prazo, setPrazo] = useState<string>("30_dias");
   const [continuidade, setContinuidade] = useState<string>("nao");
   const [observacoes, setObservacoes] = useState("");
 
   const urgConfig = URGENCIA_CONFIG[urgencia];
 
-  // When urgency changes, reset prazo to first available and enforce min hours
+  // When urgency changes, reset prazo to first available
   useEffect(() => {
     const cfg = URGENCIA_CONFIG[urgencia];
     if (!cfg) return;
     const validKeys = cfg.prazos.map((p) => p.key);
     if (!validKeys.includes(prazo)) {
       setPrazo(cfg.prazos[0].key);
-    }
-    if (hours < cfg.minHours) {
-      setHours(cfg.minHours);
     }
   }, [urgencia]); // intentionally only on urgencia change
 
@@ -154,7 +157,7 @@ const WebDevCalculator = () => {
     setSobDemanda({ horas: hours });
   }, [hours, setSobDemanda]);
 
-  const unitPrice = PRICE_TABLE[Math.min(hours, 8)] ?? 145;
+  const unitPrice = getUnitPrice(hours);
   const subtotal = hours * unitPrice;
   const fullPrice = hours * BASE_PRICE;
 
@@ -164,15 +167,12 @@ const WebDevCalculator = () => {
   const totalFinal = Math.round(subtotal * compMult * prazoMult);
   const savings = fullPrice - subtotal;
   const discountPct = hours > 1 ? Math.round(((BASE_PRICE - unitPrice) / BASE_PRICE) * 100) : 0;
-  const additionalsValue = totalFinal - subtotal;
 
   const projectLabel = PROJECT_TYPES.find((p) => p.key === projectType)?.label ?? "";
   const prazoLabel = urgConfig.prazos.find((p) => p.key === prazo)?.label ?? "";
 
-  const handleHoursChange = (v: number) => {
-    const min = urgConfig.minHours;
-    setHours(Math.max(min, Math.min(8, v || min)));
-  };
+  const incrementHours = () => setHours((h) => Math.min(8, h + 1));
+  const decrementHours = () => setHours((h) => Math.max(1, h - 1));
 
   return (
     <section className="section-dark py-16 md:py-24 border-t border-border">
@@ -194,21 +194,34 @@ const WebDevCalculator = () => {
             <div className="space-y-4">
               <SelectField icon={Code2} label="Tipo de projeto" value={projectType} onChange={setProjectType} options={PROJECT_TYPES} />
 
-              {/* Hours */}
+              {/* Hours with +/- buttons */}
               <div className="bg-secondary p-5">
                 <label className="font-mono text-xs uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
                   <Clock size={14} className="text-primary" />
-                  Quantidade de horas (mín. {urgConfig.minHours}h)
+                  Quantidade de horas
                 </label>
                 <div className="flex items-center gap-4">
-                  <input
-                    type="number"
-                    min={urgConfig.minHours}
-                    max={8}
-                    value={hours}
-                    onChange={(e) => handleHoursChange(Number(e.target.value))}
-                    className="w-24 bg-background border border-border px-3 py-2.5 text-center text-lg font-bold font-mono text-primary focus:outline-none focus:border-primary"
-                  />
+                  <div className="flex items-center">
+                    <button
+                      type="button"
+                      onClick={decrementHours}
+                      disabled={hours <= 1}
+                      className="w-10 h-10 flex items-center justify-center bg-background border border-border text-foreground hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <Minus size={16} />
+                    </button>
+                    <div className="w-16 h-10 flex items-center justify-center bg-background border-y border-border text-lg font-bold font-mono text-primary">
+                      {hours}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={incrementHours}
+                      disabled={hours >= 8}
+                      className="w-10 h-10 flex items-center justify-center bg-background border border-border text-foreground hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <Plus size={16} />
+                    </button>
+                  </div>
                   <div className="font-body text-sm text-muted-foreground">
                     <span className="text-foreground font-medium">R$ {unitPrice}/h</span>
                     {discountPct > 0 && (
@@ -228,8 +241,8 @@ const WebDevCalculator = () => {
                 onChange={setUrgencia}
                 options={[
                   { key: "normal", label: "Normal", desc: "Prazo padrão" },
-                  { key: "prioritario", label: "Prioritário", desc: "Antecipação de execução (mín. 2h)" },
-                  { key: "urgente", label: "Urgente", desc: "Execução imediata (mín. 2h)" },
+                  { key: "prioritario", label: "Prioritário", desc: "Antecipação de execução" },
+                  { key: "urgente", label: "Urgente", desc: "Execução imediata" },
                 ]}
               />
 
@@ -275,16 +288,17 @@ const WebDevCalculator = () => {
 
                 <SummaryRow label="Tipo" value={projectLabel} />
                 <SummaryRow label="Horas" value={`${hours}h`} />
-                <SummaryRow label="Valor/hora" value={`R$ ${unitPrice}`} highlight={discountPct > 0 ? `-${discountPct}%` : undefined} />
+                <SummaryRow label="Valor base/hora" value={`R$ ${BASE_PRICE}`} />
+                <SummaryRow label="Valor efetivo/hora" value={`R$ ${unitPrice}`} highlight={discountPct > 0 ? `-${discountPct}%` : undefined} />
 
                 <div className="h-px bg-muted-foreground/10" />
 
-                <SummaryRow label="Subtotal" value={`R$ ${subtotal.toLocaleString("pt-BR")}`} />
+                <SummaryRow label="Subtotal (com desconto)" value={`R$ ${subtotal.toLocaleString("pt-BR")}`} />
 
                 {savings > 0 && (
                   <div className="flex items-center justify-between font-mono text-sm">
                     <span className="flex items-center gap-1.5 text-muted-foreground">
-                      <TrendingDown size={12} className="text-primary" /> Desconto volume
+                      <TrendingDown size={12} className="text-primary" /> Economia
                     </span>
                     <span className="text-primary font-bold">-R$ {savings.toLocaleString("pt-BR")}</span>
                   </div>
@@ -297,19 +311,12 @@ const WebDevCalculator = () => {
                   value={COMPLEXIDADE.find((c) => c.key === complexidade)?.label ?? ""}
                   highlight={compMult > 1 ? `×${compMult}` : undefined}
                 />
-                <SummaryRow label="Urgência" value={urgConfig.label} />
                 <SummaryRow
                   label="Prazo"
-                  value={prazoLabel}
+                  value={`${prazoLabel} (${urgConfig.label})`}
                   highlight={prazoMult > 1 ? `×${prazoMult}` : undefined}
                 />
 
-                {additionalsValue > 0 && (
-                  <div className="flex items-center justify-between font-mono text-sm">
-                    <span className="text-muted-foreground">Adicionais</span>
-                    <span className="text-foreground">+R$ {additionalsValue.toLocaleString("pt-BR")}</span>
-                  </div>
-                )}
                 {continuidade !== "nao" && (
                   <SummaryRow label="Continuidade" value={CONTINUIDADE_OPTIONS.find((c) => c.key === continuidade)?.label ?? ""} />
                 )}
@@ -340,7 +347,7 @@ const WebDevCalculator = () => {
                   openWhatsApp({
                     pageTitle: "Desenvolvimento Web",
                     intent: "proposal",
-                    detail: `Projeto: ${projectLabel} | ${hours}h | R$ ${totalFinal} | Complexidade: ${complexidade} | Urgência: ${urgConfig.label} | Prazo: ${prazoLabel}`,
+                    detail: `Projeto: ${projectLabel} | ${hours}h | R$ ${totalFinal} | Complexidade: ${complexidade} | Prazo: ${prazoLabel} (${urgConfig.label})`,
                   })
                 }
                 className="w-full inline-flex items-center justify-center gap-2 border border-border text-foreground px-6 py-3 font-mono text-sm uppercase tracking-wider hover:bg-muted transition-colors"
