@@ -327,6 +327,63 @@ const UnifiedInfraCalculator = ({ contractHref = "/orcamento-ti", pageTitle }: P
                   </div>
                 )}
               </div>
+
+              {/* Section 3: SLA & Criticidade */}
+              <div className="bg-card border border-border rounded-xl p-6">
+                <p className="font-mono text-[10px] tracking-[0.3em] uppercase text-primary mb-4 font-bold">
+                  SLA e Criticidade
+                </p>
+
+                <div className="space-y-5">
+                  {/* SLA */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Shield size={14} className="text-primary shrink-0" />
+                      <p className="font-mono text-[10px] font-bold text-foreground">Nível de SLA</p>
+                    </div>
+                    <div className="flex gap-2">
+                      {(Object.keys(SLA_LABELS) as SlaType[]).map((s) => (
+                        <button
+                          key={s}
+                          onClick={() => setSla(s)}
+                          className={`flex-1 px-3 py-2 rounded text-xs font-mono font-bold transition-all border text-center ${
+                            sla === s
+                              ? "bg-primary/10 border-primary text-primary"
+                              : "border-border text-muted-foreground hover:border-primary/50"
+                          }`}
+                        >
+                          {s === "padrao" ? "Padrão" : "24 horas"}
+                          {s === "24h" && <span className="block text-[9px] font-normal mt-0.5">+35%</span>}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Criticidade */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Zap size={14} className="text-primary shrink-0" />
+                      <p className="font-mono text-[10px] font-bold text-foreground">Criticidade do ambiente</p>
+                    </div>
+                    <div className="flex gap-2">
+                      {(Object.keys(CRITICIDADE_LABELS) as CriticidadeType[]).map((c) => (
+                        <button
+                          key={c}
+                          onClick={() => setCriticidade(c)}
+                          className={`flex-1 px-3 py-2 rounded text-xs font-mono font-bold transition-all border text-center ${
+                            criticidade === c
+                              ? "bg-primary/10 border-primary text-primary"
+                              : "border-border text-muted-foreground hover:border-primary/50"
+                          }`}
+                        >
+                          {c === "baixo" ? "Baixo" : c === "medio" ? "Médio" : "Alto"}
+                          <span className="block text-[9px] font-normal mt-0.5">×{CRITICIDADE_MULTIPLIER[c].toFixed(1)}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* ── RIGHT: Summary ── */}
