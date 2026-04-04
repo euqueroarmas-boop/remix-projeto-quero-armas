@@ -595,7 +595,7 @@ function ClientesTab({ onOpenClient }: { onOpenClient?: (id: string) => void }) 
       
       const { data, error: fnErr } = await supabase.functions.invoke("create-client-user", {
         body: {
-          customer_id: selectedCustomerId === "none" ? undefined : selectedCustomerId || undefined,
+          customer_id: selectedCustomerId,
           email: form.email,
           user_password: form.password,
           name: form.name,
