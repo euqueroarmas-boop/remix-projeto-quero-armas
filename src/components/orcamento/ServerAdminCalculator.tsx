@@ -3,10 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Server, Minus, Plus, ArrowRight, Monitor, Layers } from "lucide-react";
 
-const HOST_PRICE_WIN_WIN = 350;
-const VM_PRICE_WIN_WIN = 200;
-const HOST_PRICE_WIN_LINUX = 500;
-const VM_PRICE_WIN_LINUX = 350;
+const HOST_PRICE = 350;
+const VM_PRICE = 200;
+const HOST_PRICE_LINUX = 500;
+const VM_PRICE_LINUX = 350;
 
 const fadeIn = {
   initial: { opacity: 0, y: 20 },
@@ -19,7 +19,7 @@ const ServerAdminCalculator = () => {
   const [hosts, setHosts] = useState(1);
   const [vms, setVms] = useState(0);
 
-  const totalMonthly = hosts * HOST_PRICE_WIN + vms * VM_PRICE_WIN;
+  const totalMonthly = hosts * HOST_PRICE + vms * VM_PRICE;
 
   const handleContract = () => {
     navigate(`/contratar/administracao-de-servidores?hosts=${hosts}&vms=${vms}`);
@@ -69,7 +69,7 @@ const ServerAdminCalculator = () => {
                 <Server size={18} className="text-primary" />
                 <div>
                   <p className="font-mono text-sm font-bold text-foreground">Hosts</p>
-                  <p className="font-body text-xs text-muted-foreground">R$ {HOST_PRICE_WIN.toLocaleString("pt-BR")}/mês cada</p>
+                  <p className="font-body text-xs text-muted-foreground">R$ {HOST_PRICE.toLocaleString("pt-BR")}/mês cada</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -102,7 +102,7 @@ const ServerAdminCalculator = () => {
                 <Layers size={18} className="text-primary" />
                 <div>
                   <p className="font-mono text-sm font-bold text-foreground">Máquinas Virtuais</p>
-                  <p className="font-body text-xs text-muted-foreground">R$ {VM_PRICE_WIN.toLocaleString("pt-BR")}/mês cada</p>
+                  <p className="font-body text-xs text-muted-foreground">R$ {VM_PRICE.toLocaleString("pt-BR")}/mês cada</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -133,14 +133,14 @@ const ServerAdminCalculator = () => {
             <div className="space-y-2">
               {hosts > 0 && (
                 <div className="flex justify-between font-mono text-sm text-muted-foreground">
-                  <span>{hosts} host{hosts > 1 ? "s" : ""} × R$ {HOST_PRICE_WIN.toLocaleString("pt-BR")}</span>
-                  <span>R$ {(hosts * HOST_PRICE_WIN).toLocaleString("pt-BR")}</span>
+                  <span>{hosts} host{hosts > 1 ? "s" : ""} × R$ {HOST_PRICE.toLocaleString("pt-BR")}</span>
+                  <span>R$ {(hosts * HOST_PRICE).toLocaleString("pt-BR")}</span>
                 </div>
               )}
               {vms > 0 && (
                 <div className="flex justify-between font-mono text-sm text-muted-foreground">
-                  <span>{vms} VM{vms > 1 ? "s" : ""} × R$ {VM_PRICE_WIN.toLocaleString("pt-BR")}</span>
-                  <span>R$ {(vms * VM_PRICE_WIN).toLocaleString("pt-BR")}</span>
+                  <span>{vms} VM{vms > 1 ? "s" : ""} × R$ {VM_PRICE.toLocaleString("pt-BR")}</span>
+                  <span>R$ {(vms * VM_PRICE).toLocaleString("pt-BR")}</span>
                 </div>
               )}
               <div className="h-px bg-border" />
