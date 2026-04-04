@@ -311,7 +311,7 @@ const SystemHealthPanel = memo(function SystemHealthPanel({ errors24h, webhookEr
                   el.textContent = "✓";
                   setTimeout(() => { el.textContent = "Copiar"; }, 1200);
                 }}
-                className="text-[9px] text-muted-foreground hover:text-foreground transition-colors opacity-0 group-hover:opacity-100 shrink-0"
+                className="text-[9px] text-muted-foreground hover:text-foreground transition-colors shrink-0"
               >
                 Copiar
               </button>
