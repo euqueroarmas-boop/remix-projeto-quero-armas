@@ -83,40 +83,6 @@ const WebDevCalculator = () => {
   const projectLabel = PROJECT_TYPES.find((p) => p.key === projectType)?.label ?? "";
   const prazoLabel = PRAZOS.find((p) => p.key === prazo)?.label ?? "";
 
-  const SelectField = ({
-    icon: Icon,
-    label,
-    value,
-    onChange,
-    options,
-  }: {
-    icon: React.ElementType;
-    label: string;
-    value: string;
-    onChange: (v: string) => void;
-    options: readonly { key: string; label: string; desc?: string; mult?: number }[];
-  }) => (
-    <div className="bg-secondary p-5">
-      <label className="font-mono text-xs uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
-        <Icon size={14} className="text-primary" />
-        {label}
-      </label>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full bg-background border border-border px-3 py-2.5 text-sm font-body text-foreground focus:outline-none focus:border-primary appearance-none cursor-pointer"
-      >
-        {options.map((opt) => (
-          <option key={opt.key} value={opt.key}>
-            {opt.label}
-            {opt.mult && opt.mult > 1 ? ` (+${Math.round((opt.mult - 1) * 100)}%)` : ""}
-            {opt.desc ? ` — ${opt.desc}` : ""}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
-
   return (
     <section className="section-dark py-16 md:py-24 border-t border-border">
       <div className="container">
