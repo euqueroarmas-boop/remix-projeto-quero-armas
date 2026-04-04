@@ -168,6 +168,7 @@ const ContratarServicoPage = () => {
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
   const [popupBlocked, setPopupBlocked] = useState(false);
   const [paymentReady, setPaymentReady] = useState(false);
+  const [boletoGenerated, setBoletoGenerated] = useState(false);
   const [contractMode, setContractMode] = useState<ContractMode | null>(
     (searchParams.get("modo") as ContractMode) || null
   );
@@ -274,11 +275,17 @@ const ContratarServicoPage = () => {
         checkoutStore.reset();
         navigate(`/compra-concluida?quote=${urlQuote}`);
       } else if (data && (data as any).asaas_invoice_url) {
-        // Payment exists but pending — resume polling state
+        // Payment exists but pending — check if it's a boleto
         setQuoteId(urlQuote);
         setInvoiceUrl((data as any).asaas_invoice_url);
-        setPaymentComplete(true);
         setCurrentStep("payment");
+        const billingType = (data as any).billing_type || "";
+        if (billingType === "BOLETO") {
+          setBoletoGenerated(true);
+          setPaymentComplete(true);
+        } else {
+          setPaymentComplete(true);
+        }
       }
     })();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -304,7 +311,7 @@ const ContratarServicoPage = () => {
 
   // Poll for payment confirmation — runs whenever we have a quoteId and are on/past payment step
   useEffect(() => {
-    if (paymentConfirmed || !quoteId) return;
+    if (paymentConfirmed || !quoteId || boletoGenerated) return;
     // Only poll if payment was initiated or we're on the payment step
     if (!paymentComplete && currentStep !== "payment") return;
     const interval = setInterval(async () => {
@@ -333,7 +340,7 @@ const ContratarServicoPage = () => {
       } catch (e) { console.error("[poll] check-payment-status error:", e); }
     }, 3000);
     return () => clearInterval(interval);
-  }, [paymentComplete, paymentConfirmed, quoteId, currentStep, registrationData, selectedPayment, contractId, serviceName, hours, promoPrice]);
+  }, [paymentComplete, paymentConfirmed, quoteId, currentStep, registrationData, selectedPayment, contractId, serviceName, hours, promoPrice, boletoGenerated]);
 
   const scrollToTop = () => {
     setTimeout(() => {
@@ -539,12 +546,22 @@ const ContratarServicoPage = () => {
       if (!url) throw new Error("O sistema de pagamento não retornou um link de cobrança.");
 
       setInvoiceUrl(url);
-      setPaymentComplete(true);
       setPopupBlocked(false);
-      const win = window.open(url, "_blank", "noopener,noreferrer");
-      if (!win || win.closed || typeof win.closed === "undefined") {
-        setPopupBlocked(true);
-        console.warn("[WMTi] Popup bloqueado pelo navegador");
+
+      if (selectedPayment === "BOLETO") {
+        // For boleto: don't poll, show success state immediately
+        setBoletoGenerated(true);
+        setPaymentComplete(true);
+        // Open boleto in new tab
+        window.open(url, "_blank", "noopener,noreferrer");
+      } else {
+        // For credit card: open checkout and start polling
+        setPaymentComplete(true);
+        const win = window.open(url, "_blank", "noopener,noreferrer");
+        if (!win || win.closed || typeof win.closed === "undefined") {
+          setPopupBlocked(true);
+          console.warn("[WMTi] Popup bloqueado pelo navegador");
+        }
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Erro desconhecido";
@@ -824,13 +841,59 @@ const ContratarServicoPage = () => {
               </WizardStepWrapper>
 
               {/* Step 4: Payment */}
-              <WizardStepWrapper stepNumber={4} title={paymentConfirmed ? "Pagamento Confirmado ✓" : paymentComplete ? "Aguardando Confirmação" : paymentReady ? "Pagamento" : "Revisão e Pagamento"} subtitle={paymentConfirmed ? "Pagamento confirmado com sucesso" : paymentComplete ? "Processando seu pagamento..." : paymentReady ? "Pagamento único via checkout seguro" : "Confirme os dados e prepare o pagamento"} status={paymentConfirmed ? "completed" : getStepStatus("payment")}>
+              <WizardStepWrapper stepNumber={4} title={paymentConfirmed ? "Pagamento Confirmado ✓" : boletoGenerated ? "Boleto Gerado ✓" : paymentComplete ? "Aguardando Confirmação" : paymentReady ? "Pagamento" : "Revisão e Pagamento"} subtitle={paymentConfirmed ? "Pagamento confirmado com sucesso" : boletoGenerated ? "Boleto gerado — aguardando compensação" : paymentComplete ? "Processando seu pagamento..." : paymentReady ? "Pagamento único via checkout seguro" : "Confirme os dados e prepare o pagamento"} status={paymentConfirmed || boletoGenerated ? "completed" : getStepStatus("payment")}>
                 {paymentConfirmed ? (
                   <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-3">
                     <CheckCircle className="w-10 h-10 text-green-500 mx-auto" />
                     <h4 className="text-lg font-heading font-bold">Pagamento confirmado!</h4>
                     <p className="text-sm text-muted-foreground">Preparando a conclusão da sua compra...</p>
                     <Loader2 className="w-5 h-5 animate-spin text-primary mx-auto" />
+                  </div>
+                ) : boletoGenerated ? (
+                  <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-4">
+                    <CheckCircle className="w-10 h-10 text-primary mx-auto" />
+                    <h4 className="text-lg font-heading font-bold text-foreground">Boleto gerado com sucesso!</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Seu cadastro, contrato e pedido foram criados. O serviço será ativado automaticamente após a compensação do boleto.
+                    </p>
+                    <div className="pt-2 space-y-1.5">
+                      <div className="flex items-center gap-2 text-xs justify-center">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
+                        <span className="text-muted-foreground">Cadastro criado</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs justify-center">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
+                        <span className="text-muted-foreground">Contrato gerado</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs justify-center">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
+                        <span className="text-muted-foreground">Boleto emitido</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs justify-center">
+                        <Clock className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                        <span className="text-muted-foreground">Aguardando compensação bancária</span>
+                      </div>
+                    </div>
+                    {invoiceUrl && (
+                      <Button
+                        onClick={() => window.open(invoiceUrl, "_blank", "noopener,noreferrer")}
+                        className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground"
+                      >
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        Abrir boleto / 2ª via
+                      </Button>
+                    )}
+                    <div className="bg-secondary/50 rounded-lg p-4 text-left space-y-2">
+                      <p className="text-xs font-semibold text-foreground">Resumo da compra</p>
+                      <div className="text-xs text-muted-foreground space-y-1">
+                        <p>Serviço: <strong className="text-foreground">{serviceName}</strong></p>
+                        <p>Horas: <strong className="text-foreground">{hours}</strong></p>
+                        <p>Valor total: <strong className="text-primary">R$ {promoPrice.toFixed(2).replace(".", ",")}</strong></p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground/60 font-mono">
+                      Após a compensação, você receberá um e-mail com as credenciais de acesso ao portal.
+                    </p>
                   </div>
                 ) : paymentComplete ? (
                   <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-4">
@@ -933,13 +996,24 @@ const ContratarServicoPage = () => {
               </WizardStepWrapper>
 
               {/* Step 5: Conclusão */}
-              <WizardStepWrapper stepNumber={5} title="Conclusão" subtitle="Fechamento e ativação do serviço" status={paymentConfirmed ? "active" : "pending"} isLast>
+              <WizardStepWrapper stepNumber={5} title="Conclusão" subtitle="Fechamento e ativação do serviço" status={paymentConfirmed ? "active" : boletoGenerated ? "completed" : "pending"} isLast>
                 {paymentConfirmed ? (
                   <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-3">
                     <CheckCircle className="w-10 h-10 text-green-500 mx-auto" />
                     <h4 className="text-lg font-heading font-bold">Finalizando seu pedido...</h4>
                     <p className="text-sm text-muted-foreground">Gerando credenciais e ativando seu serviço.</p>
                     <Loader2 className="w-5 h-5 animate-spin text-primary mx-auto" />
+                  </div>
+                ) : boletoGenerated ? (
+                  <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-3">
+                    <CheckCircle className="w-10 h-10 text-primary mx-auto" />
+                    <h4 className="text-lg font-heading font-bold">Pedido registrado com sucesso!</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Após a compensação do boleto, suas credenciais de acesso ao portal serão enviadas por e-mail e o serviço será ativado automaticamente.
+                    </p>
+                    <Link to="/area-do-cliente" className="inline-flex items-center gap-2 text-primary text-sm font-semibold hover:underline mt-2">
+                      Acessar área do cliente <ChevronRight className="w-4 h-4" />
+                    </Link>
                   </div>
                 ) : (
                   <div className="p-6 text-center">
