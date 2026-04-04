@@ -1,9 +1,9 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { Server, Layers, Monitor, Minus, Plus, ArrowRight, MessageCircle, TrendingDown, AlertTriangle } from "lucide-react";
 import { openWhatsApp } from "@/lib/whatsapp";
+import { useInfraStore } from "@/stores/useInfraStore";
 
 /* ── Pricing constants ── */
 const HOST_PRICE = 350;
