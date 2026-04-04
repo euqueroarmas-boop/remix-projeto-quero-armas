@@ -115,15 +115,17 @@ const WebDevCalculator = () => {
   const fullPrice = hours * BASE_PRICE;
 
   const compMult = COMPLEXIDADE.find((c) => c.key === complexidade)?.mult ?? 1;
-  const urgMult = URGENCIA.find((u) => u.key === urgencia)?.mult ?? 1;
+  const prazoUrgMult = PRAZO_URGENCIA_MULT[prazo]?.[urgencia] ?? 1;
+  const isFlexivel = prazo === "flexivel";
 
-  const totalFinal = Math.round(subtotal * compMult * urgMult);
+  const totalFinal = Math.round(subtotal * compMult * prazoUrgMult);
   const savings = fullPrice - subtotal;
   const discountPct = hours > 1 ? Math.round(((BASE_PRICE - unitPrice) / BASE_PRICE) * 100) : 0;
   const additionalsValue = totalFinal - subtotal;
 
   const projectLabel = PROJECT_TYPES.find((p) => p.key === projectType)?.label ?? "";
   const prazoLabel = PRAZOS.find((p) => p.key === prazo)?.label ?? "";
+  const urgenciaLabel = URGENCIA.find((u) => u.key === urgencia)?.label ?? "";
 
   return (
     <section className="section-dark py-16 md:py-24 border-t border-border">
