@@ -20,8 +20,14 @@ function workstationDiscount(qty: number): number {
 }
 
 type OsType = "windows" | "linux" | "macos";
+type ServerOsType = "windows_server" | "linux";
 
-const OS_OPTIONS: { id: OsType; label: string }[] = [
+const SERVER_OS_OPTIONS: { id: ServerOsType; label: string }[] = [
+  { id: "windows_server", label: "Windows Server" },
+  { id: "linux", label: "Linux" },
+];
+
+const WS_OS_OPTIONS: { id: OsType; label: string }[] = [
   { id: "windows", label: "Windows" },
   { id: "linux", label: "Linux" },
   { id: "macos", label: "Mac OS" },
@@ -104,11 +110,13 @@ const UnifiedInfraCalculator = ({ contractHref = "/orcamento-ti", pageTitle }: P
   const hosts = recorrente.hosts;
   const vms = recorrente.vms;
   const workstations = recorrente.estacoes;
-  const osType = recorrente.sistema;
+  const serverOs = recorrente.sistemaServidores;
+  const wsOs = recorrente.sistemaEstacoes;
   const setHosts = (v: number) => setRecorrente({ hosts: v });
   const setVms = (v: number) => setRecorrente({ vms: v });
   const setWorkstations = (v: number) => setRecorrente({ estacoes: v });
-  const setOsType = (v: OsType) => setRecorrente({ sistema: v });
+  const setServerOs = (v: "windows_server" | "linux") => setRecorrente({ sistemaServidores: v });
+  const setWsOs = (v: OsType) => setRecorrente({ sistemaEstacoes: v });
 
   const cur = t(`${k}.currency`, "R$");
   const fmt = (v: number) => `${cur} ${v.toLocaleString("pt-BR")}`;
@@ -131,12 +139,13 @@ const UnifiedInfraCalculator = ({ contractHref = "/orcamento-ti", pageTitle }: P
       hosts: String(hosts),
       vms: String(vms),
       estacoes: String(workstations),
-      os: osType,
+      os_servidores: serverOs,
+      os_estacoes: wsOs,
       subtotal_servidores: String(serverSubtotal),
       subtotal_estacoes: String(wsSubtotal),
       total_mensal: String(totalMonthly),
     });
-    console.log("[WMTi] CHECKOUT_REDIRECT_RECORRENTE", { hosts, vms, workstations, osType, serverSubtotal, wsSubtotal, totalMonthly });
+    console.log("[WMTi] CHECKOUT_REDIRECT_RECORRENTE", { hosts, vms, workstations, serverOs, wsOs, serverSubtotal, wsSubtotal, totalMonthly });
     navigate(`${contractHref}?${params.toString()}`);
   };
 
@@ -207,6 +216,26 @@ const UnifiedInfraCalculator = ({ contractHref = "/orcamento-ti", pageTitle }: P
                     increaseLabel={t(`${k}.increase`)}
                   />
                 </div>
+
+                {/* Server OS selection */}
+                <div className="mt-5">
+                  <p className="font-mono text-[10px] text-muted-foreground mb-2">Sistema operacional dos servidores</p>
+                  <div className="flex gap-2">
+                    {SERVER_OS_OPTIONS.map((os) => (
+                      <button
+                        key={os.id}
+                        onClick={() => setServerOs(os.id)}
+                        className={`px-3 py-1.5 rounded text-xs font-mono font-bold transition-all border ${
+                          serverOs === os.id
+                            ? "bg-primary/10 border-primary text-primary"
+                            : "border-border text-muted-foreground hover:border-primary/50"
+                        }`}
+                      >
+                        {os.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               {/* Section 2: Workstations */}
@@ -242,12 +271,12 @@ const UnifiedInfraCalculator = ({ contractHref = "/orcamento-ti", pageTitle }: P
                   <div className="mt-5">
                     <p className="font-mono text-[10px] text-muted-foreground mb-2">{t(`${k}.os`)}</p>
                     <div className="flex gap-2">
-                      {OS_OPTIONS.map((os) => (
+                      {WS_OS_OPTIONS.map((os) => (
                         <button
                           key={os.id}
-                          onClick={() => setOsType(os.id)}
+                          onClick={() => setWsOs(os.id)}
                           className={`px-3 py-1.5 rounded text-xs font-mono font-bold transition-all border ${
-                            osType === os.id
+                            wsOs === os.id
                               ? "bg-primary/10 border-primary text-primary"
                               : "border-border text-muted-foreground hover:border-primary/50"
                           }`}
@@ -300,17 +329,22 @@ const UnifiedInfraCalculator = ({ contractHref = "/orcamento-ti", pageTitle }: P
                 )}
 
                 {(hosts > 0 || vms > 0) && (
-                  <div className="flex justify-between font-mono text-sm font-bold text-foreground">
-                    <span>{t(`${k}.subtotalServers`)}</span>
-                    <span>{fmt(serverSubtotal)}/{t(`${k}.perMonth`).replace("/", "").trim().split(" ")[0]}</span>
-                  </div>
+                  <>
+                    <div className="flex justify-between font-mono text-sm font-bold text-foreground">
+                      <span>{t(`${k}.subtotalServers`)}</span>
+                      <span>{fmt(serverSubtotal)}/{t(`${k}.perMonth`).replace("/", "").trim().split(" ")[0]}</span>
+                    </div>
+                    <div className="flex justify-between font-mono text-xs text-muted-foreground">
+                      <span>SO: {SERVER_OS_OPTIONS.find(o => o.id === serverOs)?.label}</span>
+                    </div>
+                  </>
                 )}
 
                 {workstations > 0 && !wsExceedsLimit && (
                   <>
                     <div className="h-px bg-border" />
                     <div className="flex justify-between font-mono text-sm text-muted-foreground">
-                      <span>{workstations} {workstations > 1 ? t(`${k}.stationPlural`) : t(`${k}.station`)} ({OS_OPTIONS.find(o => o.id === osType)?.label})</span>
+                      <span>{workstations} {workstations > 1 ? t(`${k}.stationPlural`) : t(`${k}.station`)} ({WS_OS_OPTIONS.find(o => o.id === wsOs)?.label})</span>
                       <span className="line-through text-muted-foreground/50">{fmt(wsGross)}</span>
                     </div>
                     {discountPct > 0 && (

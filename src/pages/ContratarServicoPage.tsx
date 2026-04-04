@@ -1235,6 +1235,19 @@ const ContratarServicoPage = () => {
                       <span className="text-muted-foreground">VMs: </span><strong className="text-primary">{serverVms}</strong>
                     </div>
                   )}
+                  {serverEstacoes > 0 && (
+                    <div className="rounded-lg border border-border bg-card px-4 py-3 text-sm text-foreground">
+                      <span className="text-muted-foreground">Estações: </span><strong className="text-primary">{serverEstacoes}</strong>
+                    </div>
+                  )}
+                  <div className="rounded-lg border border-border bg-card px-4 py-3 text-sm text-foreground">
+                    <span className="text-muted-foreground">SO Servidores: </span><strong className="text-primary">{infraStore.recorrente.sistemaServidores === "windows_server" ? "Windows Server" : "Linux"}</strong>
+                  </div>
+                  {serverEstacoes > 0 && (
+                    <div className="rounded-lg border border-border bg-card px-4 py-3 text-sm text-foreground">
+                      <span className="text-muted-foreground">SO Estações: </span><strong className="text-primary">{infraStore.recorrente.sistemaEstacoes === "macos" ? "macOS" : infraStore.recorrente.sistemaEstacoes === "linux" ? "Linux" : "Windows"}</strong>
+                    </div>
+                  )}
                   <div className="rounded-lg border border-border bg-card px-4 py-3 text-sm text-foreground">
                     <span className="text-muted-foreground">Mensalidade: </span><strong className="text-primary">R$ {serverMonthlyValue.toLocaleString("pt-BR")}/mês</strong>
                   </div>

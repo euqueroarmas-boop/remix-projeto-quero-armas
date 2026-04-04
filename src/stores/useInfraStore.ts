@@ -2,13 +2,17 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 export type OsType = "windows" | "linux" | "macos";
+export type ServerOsType = "windows_server" | "linux";
 export type ContractModeType = "recorrente" | "sob_demanda";
 
 interface RecorrenteState {
   hosts: number;
   vms: number;
   estacoes: number;
-  sistema: OsType;
+  sistemaServidores: ServerOsType;
+  sistemaEstacoes: OsType;
+  /** @deprecated use sistemaEstacoes instead */
+  sistema?: OsType;
 }
 
 interface SobDemandaState {
@@ -34,7 +38,8 @@ export const useInfraStore = create<InfraState>()(
         hosts: 1,
         vms: 0,
         estacoes: 0,
-        sistema: "windows",
+        sistemaServidores: "windows_server",
+        sistemaEstacoes: "windows",
       },
       sobDemanda: {
         horas: 1,
@@ -52,14 +57,24 @@ export const useInfraStore = create<InfraState>()(
         const hosts = params.get("hosts");
         const vms = params.get("vms");
         const estacoes = params.get("estacoes");
-        const os = params.get("os");
+        const osServidores = params.get("os_servidores");
+        const osEstacoes = params.get("os_estacoes");
+        // Legacy compat
+        const osLegacy = params.get("os");
         const horas = params.get("horas");
 
         const rec: Partial<RecorrenteState> = {};
         if (hosts) rec.hosts = Math.max(1, Number(hosts));
         if (vms) rec.vms = Math.max(0, Number(vms));
         if (estacoes) rec.estacoes = Math.max(0, Number(estacoes));
-        if (os && ["windows", "linux", "macos"].includes(os)) rec.sistema = os as OsType;
+        if (osServidores && ["windows_server", "linux"].includes(osServidores)) {
+          rec.sistemaServidores = osServidores as ServerOsType;
+        }
+        if (osEstacoes && ["windows", "linux", "macos"].includes(osEstacoes)) {
+          rec.sistemaEstacoes = osEstacoes as OsType;
+        } else if (osLegacy && ["windows", "linux", "macos"].includes(osLegacy)) {
+          rec.sistemaEstacoes = osLegacy as OsType;
+        }
         if (Object.keys(rec).length > 0) {
           set((s) => ({ recorrente: { ...s.recorrente, ...rec } }));
         }
@@ -75,12 +90,26 @@ export const useInfraStore = create<InfraState>()(
         p.set("hosts", String(s.recorrente.hosts));
         p.set("vms", String(s.recorrente.vms));
         p.set("estacoes", String(s.recorrente.estacoes));
-        p.set("os", s.recorrente.sistema);
+        p.set("os_servidores", s.recorrente.sistemaServidores);
+        p.set("os_estacoes", s.recorrente.sistemaEstacoes);
         return p;
       },
     }),
     {
       name: "wmti-infra-calculator",
+      // Migrate old persisted state that had `sistema` instead of split fields
+      migrate: (persisted: any, version: number) => {
+        if (persisted && persisted.recorrente) {
+          if (!persisted.recorrente.sistemaServidores) {
+            persisted.recorrente.sistemaServidores = "windows_server";
+          }
+          if (!persisted.recorrente.sistemaEstacoes) {
+            persisted.recorrente.sistemaEstacoes = persisted.recorrente.sistema || "windows";
+          }
+        }
+        return persisted;
+      },
+      version: 1,
     }
   )
 );
