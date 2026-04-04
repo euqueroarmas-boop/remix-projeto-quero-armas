@@ -96,6 +96,8 @@ const ContratarServicoPage = () => {
   const isRentalContract = slug === "locacao-de-computadores-para-empresas-jacarei";
   const isServerAdmin = slug === "administracao-de-servidores";
   const isSupportTi = slug === "suporte-ti-jacarei";
+  const isWebDev = slug === "desenvolvimento-de-sites-e-sistemas-web";
+  const isFromServiceCalc = searchParams.get("source") === "service_calculator";
   const selectedRentalPlanId = searchParams.get("plano") || "equilibrio";
   const selectedRentalQty = Math.max(1, Number(searchParams.get("qty") || 1));
   const selectedRentalPlan = plans.find((item) => item.id === selectedRentalPlanId) || plans[1];
@@ -131,8 +133,25 @@ const ContratarServicoPage = () => {
   const serverMonthlyValue = Math.round(serverBaseValue * slaMultiplier * critMultiplier * 100) / 100;
 
   // Flow state
-  const [currentStep, setCurrentStep] = useState<FlowStep>("calculator");
-  const [hours, setHours] = useState(1);
+  const [currentStep, setCurrentStep] = useState<FlowStep>(
+    isWebDev && isFromServiceCalc && searchParams.get("horas") ? "registration" : "calculator"
+  );
+  const webDevPayload = isWebDev && isFromServiceCalc ? {
+    tipoProjeto: searchParams.get("tipoProjeto") || "",
+    horas: Number(searchParams.get("horas") || 1),
+    complexidade: searchParams.get("complexidade") || "",
+    urgencia: searchParams.get("urgencia") || "",
+    prazo: searchParams.get("prazo") || "",
+    continuidade: searchParams.get("continuidade") || "",
+    observacoes: searchParams.get("observacoes") || "",
+    valorHora: Number(searchParams.get("valorHora") || 200),
+    subtotal: Number(searchParams.get("subtotal") || 0),
+    descontoAplicado: Number(searchParams.get("descontoAplicado") || 0),
+    multiplicadorPrazoUrgencia: Number(searchParams.get("multiplicadorPrazoUrgencia") || 1),
+    multiplicadorComplexidade: Number(searchParams.get("multiplicadorComplexidade") || 1),
+    totalFinal: Number(searchParams.get("totalFinal") || 0),
+  } : null;
+  const [hours, setHours] = useState(webDevPayload?.horas || 1);
   const [registrationData, setRegistrationData] = useState<RegistrationData | null>(null);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [contractId, setContractId] = useState<string | null>(null);
@@ -151,10 +170,10 @@ const ContratarServicoPage = () => {
   );
 
   // Calculations
-  const unitPrice = priceTable[Math.min(hours, 8)] ?? (isEmergency ? 217.5 : 145);
+  const unitPrice = webDevPayload ? webDevPayload.valorHora : (priceTable[Math.min(hours, 8)] ?? (isEmergency ? 217.5 : 145));
   const fullPrice = hours * basePrice;
-  const promoPrice = hours * unitPrice;
-  const savings = fullPrice - promoPrice;
+  const promoPrice = webDevPayload ? webDevPayload.totalFinal : hours * unitPrice;
+  const savings = webDevPayload ? webDevPayload.descontoAplicado : fullPrice - promoPrice;
   const discountPct = hours > 1 ? Math.round(((basePrice - unitPrice) / basePrice) * 100) : 0;
 
   useEffect(() => { window.scrollTo(0, 0); }, [slug]);
@@ -1337,8 +1356,41 @@ const ContratarServicoPage = () => {
       <div ref={wizardRef} className="section-dark py-12 md:py-16">
         <div className="container max-w-3xl">
 
-          {/* Step 1: Calculator */}
-          <WizardStepWrapper stepNumber={1} title={t("contratar.stepCalculator")} subtitle={t("contratar.stepCalculatorSub")} status={getStepStatus("calculator")}>
+          {/* Step 1: Calculator or Project Summary */}
+          <WizardStepWrapper stepNumber={1} title={webDevPayload ? "Resumo do Projeto" : t("contratar.stepCalculator")} subtitle={webDevPayload ? "Dados preenchidos na calculadora do serviço" : t("contratar.stepCalculatorSub")} status={getStepStatus("calculator")}>
+            {webDevPayload ? (
+              <div className="space-y-4">
+                <div className="bg-card border border-border rounded-xl p-5">
+                  <p className="font-mono text-[10px] tracking-[0.3em] uppercase text-primary mb-4 font-bold">Resumo do projeto</p>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between"><span className="text-muted-foreground">Tipo de projeto</span><span className="text-foreground font-semibold">{webDevPayload.tipoProjeto.replace(/_/g, " ")}</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Horas</span><span className="text-foreground font-semibold">{webDevPayload.horas}h</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Valor/hora</span><span className="text-foreground font-semibold">R$ {webDevPayload.valorHora.toFixed(2).replace(".", ",")}</span></div>
+                    {webDevPayload.descontoAplicado > 0 && (
+                      <div className="flex justify-between"><span className="text-muted-foreground">Desconto progressivo</span><span className="text-primary font-semibold">-R$ {webDevPayload.descontoAplicado.toLocaleString("pt-BR")}</span></div>
+                    )}
+                    <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span className="text-foreground font-semibold">R$ {webDevPayload.subtotal.toLocaleString("pt-BR")}</span></div>
+                    <div className="h-px bg-muted-foreground/10" />
+                    <div className="flex justify-between"><span className="text-muted-foreground">Complexidade</span><span className="text-foreground font-semibold">{webDevPayload.complexidade} {webDevPayload.multiplicadorComplexidade > 1 ? `(×${webDevPayload.multiplicadorComplexidade})` : ""}</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Urgência / Prazo</span><span className="text-foreground font-semibold">{webDevPayload.urgencia} / {webDevPayload.prazo.replace(/_/g, " ")} {webDevPayload.multiplicadorPrazoUrgencia > 1 ? `(×${webDevPayload.multiplicadorPrazoUrgencia})` : ""}</span></div>
+                    {webDevPayload.continuidade !== "nao" && (
+                      <div className="flex justify-between"><span className="text-muted-foreground">Continuidade</span><span className="text-foreground font-semibold">{webDevPayload.continuidade === "mensal" ? "Suporte mensal" : "Sob demanda"}</span></div>
+                    )}
+                    {webDevPayload.observacoes && (
+                      <div className="flex justify-between"><span className="text-muted-foreground">Observações</span><span className="text-foreground font-semibold text-right max-w-[60%]">{webDevPayload.observacoes}</span></div>
+                    )}
+                    <div className="h-px bg-muted-foreground/10" />
+                    <div className="flex justify-between items-center pt-1">
+                      <span className="text-foreground font-bold">Total estimado</span>
+                      <span className="text-primary text-xl font-bold">R$ {webDevPayload.totalFinal.toLocaleString("pt-BR")}</span>
+                    </div>
+                  </div>
+                </div>
+                <p className="font-body text-xs text-center text-muted-foreground/60">
+                  Projeto configurado na página do serviço. Preencha seus dados abaixo para continuar.
+                </p>
+              </div>
+            ) : (
             <div className="space-y-6">
               {/* Service badge */}
               <div className="bg-secondary p-4 flex items-center justify-between">
@@ -1430,6 +1482,7 @@ const ContratarServicoPage = () => {
                 {t("contratar.continuarDesc")}
               </p>
             </div>
+            )}
           </WizardStepWrapper>
 
           {/* Step 2: Registration */}

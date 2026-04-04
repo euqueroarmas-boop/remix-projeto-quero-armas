@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Clock, TrendingDown, Code2, Gauge, Zap, FileText, ArrowRight, MessageSquare, AlertTriangle, Plus, Minus } from "lucide-react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useInfraStore } from "@/stores/useInfraStore";
 import { openWhatsApp } from "@/lib/whatsapp";
 
@@ -131,6 +131,7 @@ const SummaryRow = ({ label, value, highlight }: { label: string; value: string;
 );
 
 const WebDevCalculator = () => {
+  const navigate = useNavigate();
   const { sobDemanda, setSobDemanda } = useInfraStore();
   const [hours, setHours] = useState(Math.max(1, sobDemanda.horas));
   const [projectType, setProjectType] = useState<string>("site_institucional");
@@ -335,12 +336,32 @@ const WebDevCalculator = () => {
                 </p>
               </div>
 
-              <Link
-                to={`/contratar/desenvolvimento-de-sites-e-sistemas-web?modo=sob_demanda&horas=${hours}&valor=${totalFinal}&servico=${encodeURIComponent("Desenvolvimento Web — " + projectLabel)}`}
+              <button
+                onClick={() => {
+                  const params = new URLSearchParams();
+                  params.set("source", "service_calculator");
+                  params.set("modo", "sob_demanda");
+                  params.set("horas", String(hours));
+                  params.set("valor", String(totalFinal));
+                  params.set("tipoProjeto", projectType);
+                  params.set("complexidade", complexidade);
+                  params.set("urgencia", urgencia);
+                  params.set("prazo", prazo);
+                  params.set("continuidade", continuidade);
+                  params.set("observacoes", observacoes);
+                  params.set("valorHora", String(unitPrice));
+                  params.set("subtotal", String(subtotal));
+                  params.set("descontoAplicado", String(savings));
+                  params.set("multiplicadorPrazoUrgencia", String(prazoMult));
+                  params.set("multiplicadorComplexidade", String(compMult));
+                  params.set("totalFinal", String(totalFinal));
+                  params.set("servico", `Desenvolvimento Web — ${projectLabel}`);
+                  navigate(`/contratar/desenvolvimento-de-sites-e-sistemas-web?${params.toString()}`);
+                }}
                 className="w-full inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-6 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
               >
                 Contratar horas de desenvolvimento <ArrowRight size={16} />
-              </Link>
+              </button>
 
               <button
                 onClick={() =>
