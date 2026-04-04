@@ -242,6 +242,9 @@ export default function AdminClientDetail({ customerId, onBack }: AdminClientDet
             <Ban className="h-3.5 w-3.5" /> Suspender
           </Button>
         ) : null}
+        <Button size="sm" variant="outline" onClick={() => { setResetPwdOpen(true); setNewPwd(""); setGeneratedPwd(""); }} className="text-xs gap-1.5 h-8 text-amber-400 border-amber-500/30 hover:bg-amber-500/10">
+          <KeyRound className="h-3.5 w-3.5" /> Resetar Senha
+        </Button>
         <Button size="sm" variant="ghost" onClick={fetchAll} className="text-xs gap-1.5 h-8">
           <RefreshCw className="h-3.5 w-3.5" /> Atualizar
         </Button>
