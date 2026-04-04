@@ -1,208 +1,155 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Download, Loader2, Mail, RefreshCw, FileText, Eye, AlertTriangle } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SeoHead from "@/components/SeoHead";
-import { Button } from "@/components/ui/button";
-import { ErrorBlock } from "@/components/ui/ErrorBlock";
+import { ContractStatusCard } from "@/components/contrato-final/ContractStatusCard";
 import { resolvePaidContractPdf, type PdfGenerationResult } from "@/lib/postPurchase";
 import { downloadPdf, viewPdf } from "@/lib/pdfDownload";
 import { logAndPersistError, type WmtiError } from "@/lib/errorLogger";
+import { supabase } from "@/integrations/supabase/client";
 
-type ContractState = "checking" | "not_generated" | "available" | "error" | "generating" | "downloading";
+export type OrderStatus =
+  | "loading"
+  | "awaiting_payment"
+  | "processing_payment"
+  | "generating_contract"
+  | "ready"
+  | "technical_error";
+
+export interface OrderContext {
+  status: OrderStatus;
+  paymentMethod?: string;
+  paymentStatus?: string;
+  pdfResult?: PdfGenerationResult | null;
+  lastError?: WmtiError | null;
+  emailing?: boolean;
+}
 
 const ContratoFinalPage = () => {
   const { quoteId } = useParams();
   const navigate = useNavigate();
-  const [state, setState] = useState<ContractState>("checking");
-  const [result, setResult] = useState<PdfGenerationResult | null>(null);
-  const [lastError, setLastError] = useState<WmtiError | null>(null);
-  const [emailing, setEmailing] = useState(false);
+  const [ctx, setCtx] = useState<OrderContext>({ status: "loading" });
 
-  const checkStatus = async () => {
+  // Fetch payment info + contract status
+  const loadStatus = async () => {
     if (!quoteId) return;
-    setState("checking");
-    setLastError(null);
+    setCtx((p) => ({ ...p, status: "loading", lastError: null }));
+
     try {
-      const response = await resolvePaidContractPdf(quoteId, { generateIfMissing: false });
-      setResult(response);
-      setState(response.success && response.has_pdf ? "available" : "not_generated");
+      // Fetch payment info
+      const { data: payment } = await supabase
+        .from("payments")
+        .select("payment_status, billing_type, payment_method")
+        .eq("quote_id", quoteId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+
+      const paymentStatus = payment?.payment_status || "PENDING";
+      const paymentMethod = payment?.billing_type || payment?.payment_method || "BOLETO";
+      const isPaid = ["RECEIVED", "CONFIRMED", "RECEIVED_IN_CASH"].includes(paymentStatus);
+
+      // Check PDF
+      const pdfResult = await resolvePaidContractPdf(quoteId, { generateIfMissing: false });
+
+      let status: OrderStatus;
+      if (pdfResult.success && pdfResult.has_pdf) {
+        status = "ready";
+      } else if (!isPaid) {
+        status = "awaiting_payment";
+      } else {
+        status = "processing_payment";
+      }
+
+      setCtx({ status, paymentMethod, paymentStatus, pdfResult });
     } catch (err) {
       const wmtiErr = await logAndPersistError({
-        action: "check_contract_status",
-        message: "Falha ao verificar status do documento",
+        action: "check_order_status",
+        message: "Falha ao verificar status do pedido",
         error: err,
         quoteId,
         functionName: "generate-paid-contract-pdf",
       });
-      setLastError(wmtiErr);
-      setState("error");
+      setCtx((p) => ({ ...p, status: "technical_error", lastError: wmtiErr }));
     }
   };
 
-  useEffect(() => { checkStatus(); }, [quoteId]);
+  useEffect(() => { loadStatus(); }, [quoteId]);
 
-  const generatePdf = async () => {
+  const handleGenerateContract = async () => {
     if (!quoteId) return;
-    setState("generating");
-    setLastError(null);
+    setCtx((p) => ({ ...p, status: "generating_contract", lastError: null }));
     try {
-      const response = await resolvePaidContractPdf(quoteId, { generateIfMissing: true });
-      if (!response.success) {
-        throw new Error(response.error || "PDF não foi gerado");
-      }
-      setResult(response);
-      setState("available");
+      const result = await resolvePaidContractPdf(quoteId, { generateIfMissing: true });
+      if (!result.success) throw new Error(result.error || "Contrato não gerado");
+      setCtx((p) => ({ ...p, status: "ready", pdfResult: result }));
     } catch (err) {
       const wmtiErr = await logAndPersistError({
         action: "generate_contract_pdf",
-        message: "Falha ao gerar o contrato PDF",
+        message: "Falha ao gerar contrato",
         error: err,
         quoteId,
         functionName: "generate-paid-contract-pdf",
       });
-      setLastError(wmtiErr);
-      setState("error");
+      setCtx((p) => ({ ...p, status: "technical_error", lastError: wmtiErr }));
     }
   };
 
   const handleDownload = async () => {
     if (!quoteId) return;
-    setState("downloading");
-    setLastError(null);
-    const fileName = result?.file_name || `contrato-wmti-${quoteId.slice(0, 8).toUpperCase()}.pdf`;
-    const downloadResult = await downloadPdf(fileName, { quoteId });
-    if (!downloadResult.success) {
-      setLastError(downloadResult.error || null);
-      setState("error");
-    } else {
-      setState("available");
+    const fileName = ctx.pdfResult?.file_name || `contrato-wmti-${quoteId.slice(0, 8).toUpperCase()}.pdf`;
+    const result = await downloadPdf(fileName, { quoteId });
+    if (!result.success && result.error) {
+      setCtx((p) => ({ ...p, status: "technical_error", lastError: result.error }));
     }
   };
 
   const handleView = async () => {
     if (!quoteId) return;
-    const viewResult = await viewPdf({ quoteId });
-    if (!viewResult.success && viewResult.error) {
-      setLastError(viewResult.error);
-      setState("error");
+    const result = await viewPdf({ quoteId });
+    if (!result.success && result.error) {
+      setCtx((p) => ({ ...p, status: "technical_error", lastError: result.error }));
     }
   };
 
   const handleEmail = async () => {
     if (!quoteId) return;
-    setEmailing(true);
-    setLastError(null);
+    setCtx((p) => ({ ...p, emailing: true, lastError: null }));
     try {
-      const response = await resolvePaidContractPdf(quoteId, { generateIfMissing: true, sendEmail: true });
-      if (!response.success) throw new Error(response.error || "Falha ao enviar");
-      setResult(response);
-      if (response.has_pdf) setState("available");
+      const result = await resolvePaidContractPdf(quoteId, { generateIfMissing: true, sendEmail: true });
+      if (!result.success) throw new Error(result.error || "Falha ao enviar");
+      setCtx((p) => ({ ...p, emailing: false, pdfResult: result, status: result.has_pdf ? "ready" : p.status }));
     } catch (err) {
       const wmtiErr = await logAndPersistError({
         action: "email_contract_pdf",
-        message: "Falha ao reenviar contrato por e-mail",
+        message: "Falha ao enviar contrato por e-mail",
         error: err,
         quoteId,
         functionName: "generate-paid-contract-pdf",
       });
-      setLastError(wmtiErr);
-    } finally {
-      setEmailing(false);
+      setCtx((p) => ({ ...p, emailing: false, lastError: wmtiErr }));
     }
   };
 
-  const stateLabel: Record<ContractState, string> = {
-    checking: "Verificando status do documento...",
-    not_generated: "Documento ainda não gerado",
-    available: "Documento pronto",
-    error: "Erro no documento",
-    generating: "Gerando contrato PDF...",
-    downloading: "Preparando download...",
-  };
-
-  const isLoading = state === "checking" || state === "generating" || state === "downloading";
-
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <SeoHead title="Contrato final | WMTi" description="Geração e download do contrato final após pagamento confirmado." />
+      <SeoHead title="Status do Pedido | WMTi" description="Acompanhe o status do seu pedido e contrato." />
       <Navbar />
 
       <main className="section-dark pt-24 md:pt-28 pb-20">
-        <div className="container max-w-3xl space-y-6">
-          <div className="text-center space-y-3">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-primary/20 bg-primary/10">
-              <FileText className="h-8 w-8 text-primary" />
-            </div>
-            <h1 className="text-3xl font-heading font-bold">Contrato final do pedido</h1>
-            <p className="text-sm text-muted-foreground">O documento só é liberado após pagamento confirmado.</p>
-          </div>
-
-          <section className="rounded-2xl border border-border bg-card p-5 md:p-6 shadow-lg space-y-5">
-            <div className={`rounded-xl border p-4 text-sm flex items-center gap-3 ${
-              state === "error" ? "border-destructive/30 bg-destructive/10" :
-              state === "available" ? "border-green-500/30 bg-green-500/10" :
-              "border-border bg-muted/30"
-            }`}>
-              {isLoading && <Loader2 className="h-5 w-5 animate-spin text-primary shrink-0" />}
-              {state === "error" && <AlertTriangle className="h-5 w-5 text-destructive shrink-0" />}
-              <div>
-                <p className="font-semibold text-foreground">{stateLabel[state]}</p>
-                {state === "available" && result?.reused_existing && (
-                  <p className="text-xs text-muted-foreground mt-0.5">Arquivo existente reutilizado.</p>
-                )}
-                {state === "available" && result?.generated && (
-                  <p className="text-xs text-muted-foreground mt-0.5">PDF criado com os dados finais.</p>
-                )}
-              </div>
-            </div>
-
-            {state === "error" && lastError && (
-              <ErrorBlock
-                message={lastError.message}
-                error={lastError}
-                onRetry={result?.has_pdf ? handleDownload : generatePdf}
-                retryLabel={result?.has_pdf ? "Tentar download novamente" : "Regenerar contrato"}
-              />
-            )}
-
-            {!isLoading && (
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                {state === "available" ? (
-                  <>
-                    <Button onClick={handleView}>
-                      <Eye className="mr-2 h-4 w-4" />
-                      Visualizar
-                    </Button>
-                    <Button variant="outline" onClick={handleDownload}>
-                      <Download className="mr-2 h-4 w-4" />
-                      Baixar contrato
-                    </Button>
-                  </>
-                ) : state !== "error" ? (
-                  <Button onClick={generatePdf}>
-                    <FileText className="mr-2 h-4 w-4" />
-                    Gerar contrato PDF
-                  </Button>
-                ) : null}
-
-                <Button variant="outline" onClick={generatePdf} disabled={isLoading}>
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Regenerar
-                </Button>
-
-                <Button variant="outline" onClick={handleEmail} disabled={emailing}>
-                  {emailing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4" />}
-                  Reenviar por e-mail
-                </Button>
-
-                <Button variant="outline" onClick={() => navigate(`/ativacao-acesso?quote=${quoteId}`)}>
-                  Ver acesso liberado
-                </Button>
-              </div>
-            )}
-          </section>
+        <div className="container max-w-2xl">
+          <ContractStatusCard
+            ctx={ctx}
+            quoteId={quoteId || ""}
+            onRetry={loadStatus}
+            onGenerate={handleGenerateContract}
+            onDownload={handleDownload}
+            onView={handleView}
+            onEmail={handleEmail}
+            onGoToPayment={() => navigate(`/compra-concluida?quote=${quoteId}`)}
+            onGoToAccess={() => navigate(`/ativacao-acesso?quote=${quoteId}`)}
+          />
         </div>
       </main>
 
