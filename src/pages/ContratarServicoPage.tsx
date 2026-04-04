@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { useInfraStore } from "@/stores/useInfraStore";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -101,12 +102,26 @@ const ContratarServicoPage = () => {
   const basePrice = isServerAdmin ? 500 : isEmergency ? 300 : 200;
   const priceTable = isServerAdmin ? SERVER_ADMIN_PRICES : isEmergency ? EMERGENCY_PRICES : STANDARD_PRICES;
 
-  // Server admin params
-  const serverHosts = Math.max(1, Number(searchParams.get("hosts") || 1));
-  const serverVms = Math.max(0, Number(searchParams.get("vms") || 0));
+  // Hydrate store from URL params on mount
+  const infraStore = useInfraStore();
+  useEffect(() => {
+    infraStore.hydrateFromParams(searchParams);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Server admin params — read from store (which was hydrated from URL)
+  const serverHosts = infraStore.recorrente.hosts;
+  const serverVms = infraStore.recorrente.vms;
+  const serverEstacoes = infraStore.recorrente.estacoes;
   const SERVER_HOST_PRICE = 350;
   const SERVER_VM_PRICE = 200;
-  const serverMonthlyValue = serverHosts * SERVER_HOST_PRICE + serverVms * SERVER_VM_PRICE;
+  const WORKSTATION_BASE = 150;
+  const MAX_DISCOUNT_PCT = 27.5;
+  const MAX_AUTO_WS = 30;
+  const wsDiscountPctCalc = serverEstacoes <= 1 ? 0 : serverEstacoes >= MAX_AUTO_WS ? MAX_DISCOUNT_PCT : (MAX_DISCOUNT_PCT * (serverEstacoes - 1)) / (MAX_AUTO_WS - 1);
+  const wsGrossCalc = serverEstacoes * WORKSTATION_BASE;
+  const wsDiscountCalc = wsGrossCalc * (wsDiscountPctCalc / 100);
+  const wsSubtotalCalc = serverEstacoes > MAX_AUTO_WS ? 0 : wsGrossCalc - wsDiscountCalc;
+  const serverMonthlyValue = serverHosts * SERVER_HOST_PRICE + serverVms * SERVER_VM_PRICE + wsSubtotalCalc;
 
   // Flow state
   const [currentStep, setCurrentStep] = useState<FlowStep>("calculator");
@@ -545,11 +560,11 @@ const ContratarServicoPage = () => {
     };
 
     // Read recurring params from URL (when coming back from UnifiedInfraCalculator redirect)
-    const recurringHosts = Math.max(1, Number(searchParams.get("hosts") || 1));
-    const recurringVms = Math.max(0, Number(searchParams.get("vms") || 0));
-    const recurringEstacoes = Math.max(0, Number(searchParams.get("estacoes") || 0));
+    const recurringHosts = infraStore.recorrente.hosts;
+    const recurringVms = infraStore.recorrente.vms;
+    const recurringEstacoes = infraStore.recorrente.estacoes;
     const recurringTotalMensal = Number(searchParams.get("total_mensal") || 0);
-    const hasRecurringParams = recurringTotalMensal > 0;
+    const hasRecurringParams = recurringTotalMensal > 0 || recurringHosts > 1 || recurringVms > 0 || recurringEstacoes > 0;
 
     return (
       <div className="min-h-screen">
