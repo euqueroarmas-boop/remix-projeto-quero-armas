@@ -134,7 +134,7 @@ Deno.serve(async (req) => {
 
     if (!customerRes.ok && !asaasCustomerId) {
       const searchRes = await fetch(`${ASAAS_BASE_URL}/customers?cpfCnpj=${customerPayload.cpfCnpj}`, {
-        headers: { access_token: ASAAS_API_KEY },
+        headers: { access_token: ASAAS_API_KEY, "User-Agent": "WMTi-Integration/1.0" },
       });
       const searchData = await searchRes.json();
       if (!searchData.data?.[0]?.id) {
