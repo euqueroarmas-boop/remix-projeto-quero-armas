@@ -110,11 +110,13 @@ const UnifiedInfraCalculator = ({ contractHref = "/orcamento-ti", pageTitle }: P
   const hosts = recorrente.hosts;
   const vms = recorrente.vms;
   const workstations = recorrente.estacoes;
-  const osType = recorrente.sistema;
+  const serverOs = recorrente.sistemaServidores;
+  const wsOs = recorrente.sistemaEstacoes;
   const setHosts = (v: number) => setRecorrente({ hosts: v });
   const setVms = (v: number) => setRecorrente({ vms: v });
   const setWorkstations = (v: number) => setRecorrente({ estacoes: v });
-  const setOsType = (v: OsType) => setRecorrente({ sistema: v });
+  const setServerOs = (v: "windows_server" | "linux") => setRecorrente({ sistemaServidores: v });
+  const setWsOs = (v: OsType) => setRecorrente({ sistemaEstacoes: v });
 
   const cur = t(`${k}.currency`, "R$");
   const fmt = (v: number) => `${cur} ${v.toLocaleString("pt-BR")}`;
