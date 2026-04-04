@@ -389,6 +389,7 @@ const ContratarServicoPage = () => {
     purchaseDate: new Date().toLocaleDateString("pt-BR"),
   });
 
+  const scrollToTop = () => {
     setTimeout(() => {
       wizardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 150);
