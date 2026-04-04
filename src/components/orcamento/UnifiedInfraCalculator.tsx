@@ -100,10 +100,15 @@ const UnifiedInfraCalculator = ({ contractHref = "/orcamento-ti", pageTitle }: P
   const navigate = useNavigate();
   const { t } = useTranslation();
   const k = "infraCalc";
-  const [hosts, setHosts] = useState(1);
-  const [vms, setVms] = useState(0);
-  const [workstations, setWorkstations] = useState(0);
-  const [osType, setOsType] = useState<OsType>("windows");
+  const { recorrente, setRecorrente } = useInfraStore();
+  const hosts = recorrente.hosts;
+  const vms = recorrente.vms;
+  const workstations = recorrente.estacoes;
+  const osType = recorrente.sistema;
+  const setHosts = (v: number) => setRecorrente({ hosts: v });
+  const setVms = (v: number) => setRecorrente({ vms: v });
+  const setWorkstations = (v: number) => setRecorrente({ estacoes: v });
+  const setOsType = (v: OsType) => setRecorrente({ sistema: v });
 
   const cur = t(`${k}.currency`, "R$");
   const fmt = (v: number) => `${cur} ${v.toLocaleString("pt-BR")}`;
