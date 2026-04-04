@@ -216,6 +216,26 @@ const UnifiedInfraCalculator = ({ contractHref = "/orcamento-ti", pageTitle }: P
                     increaseLabel={t(`${k}.increase`)}
                   />
                 </div>
+
+                {/* Server OS selection */}
+                <div className="mt-5">
+                  <p className="font-mono text-[10px] text-muted-foreground mb-2">Sistema operacional dos servidores</p>
+                  <div className="flex gap-2">
+                    {SERVER_OS_OPTIONS.map((os) => (
+                      <button
+                        key={os.id}
+                        onClick={() => setServerOs(os.id)}
+                        className={`px-3 py-1.5 rounded text-xs font-mono font-bold transition-all border ${
+                          serverOs === os.id
+                            ? "bg-primary/10 border-primary text-primary"
+                            : "border-border text-muted-foreground hover:border-primary/50"
+                        }`}
+                      >
+                        {os.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               {/* Section 2: Workstations */}
