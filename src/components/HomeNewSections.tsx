@@ -113,7 +113,7 @@ export const HomeProblems = () => {
                   <p className="font-body text-xs text-muted-foreground leading-relaxed">
                     {t(item.descKey)}
                   </p>
-                  <span className="font-mono text-[10px] uppercase tracking-wider text-primary opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 mt-auto">
+                  <span className="font-mono text-[10px] uppercase tracking-wider text-primary opacity-60 group-hover:opacity-100 transition-opacity flex items-center gap-1 mt-auto">
                     {t("home.problemCards.solveNow")} →
                   </span>
                 </Link>
