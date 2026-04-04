@@ -103,7 +103,15 @@ const AreaDoClientePage = () => {
         {!session ? (
           <ClientLogin onLogin={handleLogin} />
         ) : customer ? (
-          <ClientPortal customer={customer} onLogout={handleLogout} />
+          customer.status_cliente === "suspenso" ? (
+            <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-4">
+              <p className="text-destructive text-center font-bold">{t("clientPortal.suspendedTitle", "Acesso Suspenso")}</p>
+              <p className="text-sm text-muted-foreground text-center">{t("clientPortal.suspendedDescription", "Seu acesso foi suspenso. Entre em contato com o suporte para mais informações.")}</p>
+              <button onClick={handleLogout} className="text-primary text-sm hover:underline">{t("clientPortal.logout")}</button>
+            </div>
+          ) : (
+            <ClientPortal customer={customer} onLogout={handleLogout} />
+          )
         ) : (
           <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-4">
              <p className="text-foreground text-center">{t("clientPortal.unlinkedTitle")}</p>
