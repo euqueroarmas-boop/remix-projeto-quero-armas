@@ -175,10 +175,11 @@ export async function ensureClientAccess(
   supabase: SupabaseClient,
   quoteId: string,
   source: AccessSource = "access_recovery",
+  options?: { skipPaymentCheck?: boolean },
 ): Promise<EnsureAccessResult> {
   const context = await getPostPurchaseContext(supabase, { quoteId });
 
-  if (!isPaymentConfirmed(context.payment.payment_status)) {
+  if (!options?.skipPaymentCheck && !isPaymentConfirmed(context.payment.payment_status)) {
     return {
       success: false,
       error: "Pagamento não confirmado",
