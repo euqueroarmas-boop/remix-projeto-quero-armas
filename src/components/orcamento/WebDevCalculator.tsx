@@ -336,12 +336,32 @@ const WebDevCalculator = () => {
                 </p>
               </div>
 
-              <Link
-                to={`/contratar/desenvolvimento-de-sites-e-sistemas-web?modo=sob_demanda&horas=${hours}&valor=${totalFinal}&servico=${encodeURIComponent("Desenvolvimento Web — " + projectLabel)}`}
+              <button
+                onClick={() => {
+                  const params = new URLSearchParams();
+                  params.set("source", "service_calculator");
+                  params.set("modo", "sob_demanda");
+                  params.set("horas", String(hours));
+                  params.set("valor", String(totalFinal));
+                  params.set("tipoProjeto", projectType);
+                  params.set("complexidade", complexidade);
+                  params.set("urgencia", urgencia);
+                  params.set("prazo", prazo);
+                  params.set("continuidade", continuidade);
+                  params.set("observacoes", observacoes);
+                  params.set("valorHora", String(unitPrice));
+                  params.set("subtotal", String(subtotal));
+                  params.set("descontoAplicado", String(savings));
+                  params.set("multiplicadorPrazoUrgencia", String(prazoMult));
+                  params.set("multiplicadorComplexidade", String(compMult));
+                  params.set("totalFinal", String(totalFinal));
+                  params.set("servico", `Desenvolvimento Web — ${projectLabel}`);
+                  navigate(`/contratar/desenvolvimento-de-sites-e-sistemas-web?${params.toString()}`);
+                }}
                 className="w-full inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-6 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
               >
                 Contratar horas de desenvolvimento <ArrowRight size={16} />
-              </Link>
+              </button>
 
               <button
                 onClick={() =>
