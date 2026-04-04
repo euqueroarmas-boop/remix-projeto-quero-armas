@@ -66,6 +66,7 @@ const NAV_GROUPS = [
     items: [
       { id: "logs", label: "Logs", icon: ScrollText },
       { id: "errors", label: "Erros", icon: AlertTriangle },
+      { id: "financeiro", label: "Financeiro", icon: DollarSign },
       { id: "payments", label: "Pagamentos", icon: CreditCardIcon },
       { id: "clientes", label: "Clientes", icon: UserCog },
       { id: "leads", label: "Leads & Propostas", icon: Megaphone },
