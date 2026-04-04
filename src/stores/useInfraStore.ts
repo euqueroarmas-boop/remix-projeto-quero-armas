@@ -4,6 +4,30 @@ import { persist } from "zustand/middleware";
 export type OsType = "windows" | "linux" | "macos";
 export type ServerOsType = "windows_server" | "linux";
 export type ContractModeType = "recorrente" | "sob_demanda";
+export type SlaType = "padrao" | "24h";
+export type CriticidadeType = "baixo" | "medio" | "alto";
+
+export const SLA_MULTIPLIER: Record<SlaType, number> = {
+  padrao: 1,
+  "24h": 1.35,
+};
+
+export const CRITICIDADE_MULTIPLIER: Record<CriticidadeType, number> = {
+  baixo: 1.0,
+  medio: 1.2,
+  alto: 1.5,
+};
+
+export const SLA_LABELS: Record<SlaType, string> = {
+  padrao: "Padrão (horário comercial)",
+  "24h": "24 horas (+35%)",
+};
+
+export const CRITICIDADE_LABELS: Record<CriticidadeType, string> = {
+  baixo: "Baixo (×1.0)",
+  medio: "Médio (×1.2)",
+  alto: "Alto (×1.5)",
+};
 
 interface RecorrenteState {
   hosts: number;
@@ -11,6 +35,8 @@ interface RecorrenteState {
   estacoes: number;
   sistemaServidores: ServerOsType;
   sistemaEstacoes: OsType;
+  sla: SlaType;
+  criticidade: CriticidadeType;
   /** @deprecated use sistemaEstacoes instead */
   sistema?: OsType;
 }
@@ -40,6 +66,8 @@ export const useInfraStore = create<InfraState>()(
         estacoes: 0,
         sistemaServidores: "windows_server",
         sistemaEstacoes: "windows",
+        sla: "padrao",
+        criticidade: "baixo",
       },
       sobDemanda: {
         horas: 1,
@@ -59,9 +87,10 @@ export const useInfraStore = create<InfraState>()(
         const estacoes = params.get("estacoes");
         const osServidores = params.get("os_servidores");
         const osEstacoes = params.get("os_estacoes");
-        // Legacy compat
         const osLegacy = params.get("os");
         const horas = params.get("horas");
+        const sla = params.get("sla");
+        const criticidade = params.get("criticidade");
 
         const rec: Partial<RecorrenteState> = {};
         if (hosts) rec.hosts = Math.max(1, Number(hosts));
@@ -74,6 +103,12 @@ export const useInfraStore = create<InfraState>()(
           rec.sistemaEstacoes = osEstacoes as OsType;
         } else if (osLegacy && ["windows", "linux", "macos"].includes(osLegacy)) {
           rec.sistemaEstacoes = osLegacy as OsType;
+        }
+        if (sla && ["padrao", "24h"].includes(sla)) {
+          rec.sla = sla as SlaType;
+        }
+        if (criticidade && ["baixo", "medio", "alto"].includes(criticidade)) {
+          rec.criticidade = criticidade as CriticidadeType;
         }
         if (Object.keys(rec).length > 0) {
           set((s) => ({ recorrente: { ...s.recorrente, ...rec } }));
@@ -92,12 +127,13 @@ export const useInfraStore = create<InfraState>()(
         p.set("estacoes", String(s.recorrente.estacoes));
         p.set("os_servidores", s.recorrente.sistemaServidores);
         p.set("os_estacoes", s.recorrente.sistemaEstacoes);
+        p.set("sla", s.recorrente.sla);
+        p.set("criticidade", s.recorrente.criticidade);
         return p;
       },
     }),
     {
       name: "wmti-infra-calculator",
-      // Migrate old persisted state that had `sistema` instead of split fields
       migrate: (persisted: any, version: number) => {
         if (persisted && persisted.recorrente) {
           if (!persisted.recorrente.sistemaServidores) {
@@ -106,10 +142,16 @@ export const useInfraStore = create<InfraState>()(
           if (!persisted.recorrente.sistemaEstacoes) {
             persisted.recorrente.sistemaEstacoes = persisted.recorrente.sistema || "windows";
           }
+          if (!persisted.recorrente.sla) {
+            persisted.recorrente.sla = "padrao";
+          }
+          if (!persisted.recorrente.criticidade) {
+            persisted.recorrente.criticidade = "baixo";
+          }
         }
         return persisted;
       },
-      version: 1,
+      version: 2,
     }
   )
 );

@@ -1,9 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
-import { Server, Layers, Monitor, Minus, Plus, ArrowRight, MessageCircle, TrendingDown, AlertTriangle } from "lucide-react";
+import { Server, Layers, Monitor, Minus, Plus, ArrowRight, MessageCircle, TrendingDown, AlertTriangle, Shield, Zap } from "lucide-react";
 import { openWhatsApp } from "@/lib/whatsapp";
-import { useInfraStore } from "@/stores/useInfraStore";
+import { useInfraStore, SLA_MULTIPLIER, CRITICIDADE_MULTIPLIER, SLA_LABELS, CRITICIDADE_LABELS, type SlaType, type CriticidadeType } from "@/stores/useInfraStore";
 
 /* ── Pricing constants ── */
 const WORKSTATION_BASE = 150;
@@ -115,14 +115,18 @@ const UnifiedInfraCalculator = ({ contractHref = "/orcamento-ti", pageTitle }: P
   const workstations = recorrente.estacoes;
   const serverOs = recorrente.sistemaServidores;
   const wsOs = recorrente.sistemaEstacoes;
+  const sla = recorrente.sla;
+  const criticidade = recorrente.criticidade;
   const setHosts = (v: number) => setRecorrente({ hosts: v });
   const setVms = (v: number) => setRecorrente({ vms: v });
   const setWorkstations = (v: number) => setRecorrente({ estacoes: v });
   const setServerOs = (v: "windows_server" | "linux") => setRecorrente({ sistemaServidores: v });
   const setWsOs = (v: OsType) => setRecorrente({ sistemaEstacoes: v });
+  const setSla = (v: SlaType) => setRecorrente({ sla: v });
+  const setCriticidade = (v: CriticidadeType) => setRecorrente({ criticidade: v });
 
   const cur = t(`${k}.currency`, "R$");
-  const fmt = (v: number) => `${cur} ${v.toLocaleString("pt-BR")}`;
+  const fmt = (v: number) => `${cur} ${Math.round(v).toLocaleString("pt-BR")}`;
 
   /* Server prices based on OS */
   const { host: HOST_PRICE, vm: VM_PRICE } = getServerPrices(serverOs);
@@ -137,7 +141,16 @@ const UnifiedInfraCalculator = ({ contractHref = "/orcamento-ti", pageTitle }: P
   const wsDiscount = wsGross * (discountPct / 100);
   const wsSubtotal = wsExceedsLimit ? 0 : wsGross - wsDiscount;
 
-  const totalMonthly = serverSubtotal + wsSubtotal;
+  /* Base total (before SLA/criticidade) */
+  const totalBase = serverSubtotal + wsSubtotal;
+
+  /* SLA & Criticidade multipliers */
+  const slaMultiplier = SLA_MULTIPLIER[sla];
+  const critMultiplier = CRITICIDADE_MULTIPLIER[criticidade];
+  const totalAfterSla = Math.round(totalBase * slaMultiplier * 100) / 100;
+  const totalMonthly = Math.round(totalAfterSla * critMultiplier * 100) / 100;
+  const slaAdditional = totalAfterSla - totalBase;
+  const critAdditional = totalMonthly - totalAfterSla;
 
   const handleContract = () => {
     const params = new URLSearchParams({
@@ -147,11 +160,13 @@ const UnifiedInfraCalculator = ({ contractHref = "/orcamento-ti", pageTitle }: P
       estacoes: String(workstations),
       os_servidores: serverOs,
       os_estacoes: wsOs,
+      sla,
+      criticidade,
       subtotal_servidores: String(serverSubtotal),
       subtotal_estacoes: String(wsSubtotal),
       total_mensal: String(totalMonthly),
     });
-    console.log("[WMTi] CHECKOUT_REDIRECT_RECORRENTE", { hosts, vms, workstations, serverOs, wsOs, serverSubtotal, wsSubtotal, totalMonthly });
+    console.log("[WMTi] CHECKOUT_REDIRECT_RECORRENTE", { hosts, vms, workstations, serverOs, wsOs, sla, criticidade, totalBase, totalMonthly });
     navigate(`${contractHref}?${params.toString()}`);
   };
 
@@ -312,6 +327,63 @@ const UnifiedInfraCalculator = ({ contractHref = "/orcamento-ti", pageTitle }: P
                   </div>
                 )}
               </div>
+
+              {/* Section 3: SLA & Criticidade */}
+              <div className="bg-card border border-border rounded-xl p-6">
+                <p className="font-mono text-[10px] tracking-[0.3em] uppercase text-primary mb-4 font-bold">
+                  SLA e Criticidade
+                </p>
+
+                <div className="space-y-5">
+                  {/* SLA */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Shield size={14} className="text-primary shrink-0" />
+                      <p className="font-mono text-[10px] font-bold text-foreground">Nível de SLA</p>
+                    </div>
+                    <div className="flex gap-2">
+                      {(Object.keys(SLA_LABELS) as SlaType[]).map((s) => (
+                        <button
+                          key={s}
+                          onClick={() => setSla(s)}
+                          className={`flex-1 px-3 py-2 rounded text-xs font-mono font-bold transition-all border text-center ${
+                            sla === s
+                              ? "bg-primary/10 border-primary text-primary"
+                              : "border-border text-muted-foreground hover:border-primary/50"
+                          }`}
+                        >
+                          {s === "padrao" ? "Padrão" : "24 horas"}
+                          {s === "24h" && <span className="block text-[9px] font-normal mt-0.5">+35%</span>}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Criticidade */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Zap size={14} className="text-primary shrink-0" />
+                      <p className="font-mono text-[10px] font-bold text-foreground">Criticidade do ambiente</p>
+                    </div>
+                    <div className="flex gap-2">
+                      {(Object.keys(CRITICIDADE_LABELS) as CriticidadeType[]).map((c) => (
+                        <button
+                          key={c}
+                          onClick={() => setCriticidade(c)}
+                          className={`flex-1 px-3 py-2 rounded text-xs font-mono font-bold transition-all border text-center ${
+                            criticidade === c
+                              ? "bg-primary/10 border-primary text-primary"
+                              : "border-border text-muted-foreground hover:border-primary/50"
+                          }`}
+                        >
+                          {c === "baixo" ? "Baixo" : c === "medio" ? "Médio" : "Alto"}
+                          <span className="block text-[9px] font-normal mt-0.5">×{CRITICIDADE_MULTIPLIER[c].toFixed(1)}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* ── RIGHT: Summary ── */}
@@ -372,6 +444,29 @@ const UnifiedInfraCalculator = ({ contractHref = "/orcamento-ti", pageTitle }: P
                     <div className="font-mono text-xs text-amber-600 text-center py-2">
                       {t(`${k}.customProposal`)}
                     </div>
+                  </>
+                )}
+
+                {/* SLA & Criticidade in summary */}
+                {(sla !== "padrao" || criticidade !== "baixo") && (
+                  <>
+                    <div className="h-px bg-border" />
+                    <div className="flex justify-between font-mono text-xs text-muted-foreground">
+                      <span>Subtotal base</span>
+                      <span>{fmt(totalBase)}</span>
+                    </div>
+                    {sla === "24h" && (
+                      <div className="flex justify-between font-mono text-xs text-primary">
+                        <span>SLA 24h (+35%)</span>
+                        <span>+ {fmt(slaAdditional)}</span>
+                      </div>
+                    )}
+                    {criticidade !== "baixo" && (
+                      <div className="flex justify-between font-mono text-xs text-primary">
+                        <span>Criticidade {criticidade === "medio" ? "média" : "alta"} (×{CRITICIDADE_MULTIPLIER[criticidade].toFixed(1)})</span>
+                        <span>+ {fmt(critAdditional)}</span>
+                      </div>
+                    )}
                   </>
                 )}
 
