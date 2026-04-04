@@ -172,6 +172,18 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Falha ao criar/localizar cliente no Asaas", details: customerData }, 400);
       }
       asaasCustomerId = searchData.data[0].id;
+
+      // Update existing customer with full checkout data
+      try {
+        await fetch(`${ASAAS_BASE_URL}/customers/${asaasCustomerId}`, {
+          method: "PUT",
+          headers: asaasHeaders,
+          body: JSON.stringify(customerPayload),
+        });
+        console.log("[create-asaas-subscription] Cliente atualizado no Asaas:", asaasCustomerId);
+      } catch (updateErr) {
+        console.error("[create-asaas-subscription] Erro ao atualizar cliente:", updateErr);
+      }
     }
 
     // ── Calculate dates ──
