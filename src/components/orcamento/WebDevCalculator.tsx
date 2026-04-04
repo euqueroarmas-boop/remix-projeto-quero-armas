@@ -268,20 +268,25 @@ const WebDevCalculator = () => {
                   value={COMPLEXIDADE.find((c) => c.key === complexidade)?.label ?? ""}
                   highlight={compMult > 1 ? `×${compMult}` : undefined}
                 />
-                <SummaryRow
-                  label="Urgência"
-                  value={URGENCIA.find((u) => u.key === urgencia)?.label ?? ""}
-                  highlight={urgMult > 1 ? `+${Math.round((urgMult - 1) * 100)}%` : undefined}
-                />
+                <SummaryRow label="Prazo" value={prazoLabel} />
+                {isFlexivel ? (
+                  <p className="font-body text-xs text-muted-foreground/60 italic">
+                    Prazo flexível reduz necessidade de priorização
+                  </p>
+                ) : (
+                  <SummaryRow
+                    label="Prioridade"
+                    value={urgenciaLabel}
+                    highlight={prazoUrgMult > 1 ? `×${prazoUrgMult}` : undefined}
+                  />
+                )}
 
                 {additionalsValue > 0 && (
                   <div className="flex items-center justify-between font-mono text-sm">
-                    <span className="text-muted-foreground">Adicionais</span>
+                    <span className="text-muted-foreground">Adicionais (prazo + complexidade)</span>
                     <span className="text-foreground">+R$ {additionalsValue.toLocaleString("pt-BR")}</span>
                   </div>
                 )}
-
-                {prazo !== "flexivel" && <SummaryRow label="Prazo" value={prazoLabel} />}
                 {continuidade !== "nao" && (
                   <SummaryRow
                     label="Continuidade"
