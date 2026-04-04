@@ -776,6 +776,11 @@ function AdminContent({ activeSection, onNavigate }: { activeSection: string; on
     case "digital-signature": return <Suspense fallback={fallback}><AdminDigitalSignature /></Suspense>;
     case "cert-diagnostic": return <Suspense fallback={fallback}><AdminCertDiagnostic /></Suspense>;
     case "cipa-locations": return <Suspense fallback={fallback}><AdminCipaLocations /></Suspense>;
+    case "services-builder": return <Suspense fallback={fallback}><ServicesBuilder /></Suspense>;
+    case "segments-builder": return <Suspense fallback={fallback}><SegmentsBuilder /></Suspense>;
+    case "pricing-engine": return <Suspense fallback={fallback}><PricingEngine /></Suspense>;
+    case "block-library": return <Suspense fallback={fallback}><BlockLibrary /></Suspense>;
+    case "sitemap-manager": return <Suspense fallback={fallback}><SitemapManager /></Suspense>;
     default: return <AdminCommandCenter onNavigate={onNavigate} />;
   }
 }
