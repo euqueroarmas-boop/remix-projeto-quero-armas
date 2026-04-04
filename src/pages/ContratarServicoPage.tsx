@@ -843,6 +843,52 @@ const ContratarServicoPage = () => {
                     <p className="text-sm text-muted-foreground">Preparando a conclusão da sua compra...</p>
                     <Loader2 className="w-5 h-5 animate-spin text-primary mx-auto" />
                   </div>
+                ) : boletoGenerated ? (
+                  <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-4">
+                    <CheckCircle className="w-10 h-10 text-primary mx-auto" />
+                    <h4 className="text-lg font-heading font-bold text-foreground">Boleto gerado com sucesso!</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Seu cadastro, contrato e pedido foram criados. O serviço será ativado automaticamente após a compensação do boleto.
+                    </p>
+                    <div className="pt-2 space-y-1.5">
+                      <div className="flex items-center gap-2 text-xs justify-center">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
+                        <span className="text-muted-foreground">Cadastro criado</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs justify-center">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
+                        <span className="text-muted-foreground">Contrato gerado</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs justify-center">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
+                        <span className="text-muted-foreground">Boleto emitido</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs justify-center">
+                        <Clock className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                        <span className="text-muted-foreground">Aguardando compensação bancária</span>
+                      </div>
+                    </div>
+                    {invoiceUrl && (
+                      <Button
+                        onClick={() => window.open(invoiceUrl, "_blank", "noopener,noreferrer")}
+                        className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground"
+                      >
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        Abrir boleto / 2ª via
+                      </Button>
+                    )}
+                    <div className="bg-secondary/50 rounded-lg p-4 text-left space-y-2">
+                      <p className="text-xs font-semibold text-foreground">Resumo da compra</p>
+                      <div className="text-xs text-muted-foreground space-y-1">
+                        <p>Serviço: <strong className="text-foreground">{serviceName}</strong></p>
+                        <p>Horas: <strong className="text-foreground">{hours}</strong></p>
+                        <p>Valor total: <strong className="text-primary">R$ {promoPrice.toFixed(2).replace(".", ",")}</strong></p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground/60 font-mono">
+                      Após a compensação, você receberá um e-mail com as credenciais de acesso ao portal.
+                    </p>
+                  </div>
                 ) : paymentComplete ? (
                   <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-4">
                     <Loader2 className="w-10 h-10 animate-spin text-primary mx-auto" />
