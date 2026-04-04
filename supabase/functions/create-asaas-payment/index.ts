@@ -137,11 +137,29 @@ Deno.serve(async (req) => {
       status: "started",
     });
 
-    const customerPayload = {
+    // Build full customer payload for Asaas
+    const cleanPhone = (v?: string) => v ? v.replace(/\D/g, "") : undefined;
+    const cleanCep = (v?: string) => v ? v.replace(/\D/g, "") : undefined;
+
+    const customerPayload: Record<string, unknown> = {
       name: customer_name,
       email: customer_email,
       cpfCnpj: customer_cpf_cnpj.replace(/\D/g, ""),
     };
+    // Only add optional fields if they have values
+    if (customer_phone) customerPayload.phone = cleanPhone(customer_phone);
+    if (customer_mobile_phone) customerPayload.mobilePhone = cleanPhone(customer_mobile_phone);
+    if (customer_postal_code) customerPayload.postalCode = cleanCep(customer_postal_code);
+    if (customer_address) customerPayload.address = customer_address;
+    if (customer_address_number) customerPayload.addressNumber = customer_address_number;
+    if (customer_complement) customerPayload.complement = customer_complement;
+    if (customer_province) customerPayload.province = customer_province;
+    if (customer_city) {
+      // Asaas expects city name without state suffix
+      customerPayload.cityName = customer_city;
+    }
+    if (customer_state) customerPayload.state = customer_state;
+    if (customer_company) customerPayload.company = customer_company;
 
     const asaasHeaders = {
       "Content-Type": "application/json",
