@@ -754,12 +754,16 @@ function ClientesTab({ onOpenClient }: { onOpenClient?: (id: string) => void }) 
 }
 
 // ─── Content Renderer ───
-function AdminContent({ activeSection, onNavigate }: { activeSection: string; onNavigate: (s: string) => void }) {
+function AdminContent({ activeSection, onNavigate, clientId }: { activeSection: string; onNavigate: (s: string) => void; clientId?: string }) {
   const fallback = (
     <div className="flex items-center justify-center py-16 text-muted-foreground text-sm">
       <Loader2 className="h-5 w-5 animate-spin mr-2" />Carregando módulo...
     </div>
   );
+
+  if (activeSection === "clientes-detail" && clientId) {
+    return <Suspense fallback={fallback}><AdminClientDetail customerId={clientId} onBack={() => onNavigate("clientes")} /></Suspense>;
+  }
 
   switch (activeSection) {
     case "dashboard": return <AdminCommandCenter onNavigate={onNavigate} />;
@@ -767,7 +771,7 @@ function AdminContent({ activeSection, onNavigate }: { activeSection: string; on
     case "errors": return <LogsTab onlyErrors />;
     case "financeiro": return <Suspense fallback={fallback}><AdminFinanceiro /></Suspense>;
     case "payments": return <PaymentsTab />;
-    case "clientes": return <ClientesTab />;
+    case "clientes": return <ClientesTab onOpenClient={(id) => onNavigate(`clientes-detail?id=${id}`)} />;
     case "leads": return <AdminLeadsProposals />;
     case "security": return <AdminSecurityEvents />;
     case "webhooks": return <AdminWebhooks />;
