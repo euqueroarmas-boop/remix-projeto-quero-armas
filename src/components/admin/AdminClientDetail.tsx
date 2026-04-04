@@ -396,7 +396,7 @@ export default function AdminClientDetail({ customerId, onBack }: AdminClientDet
             </div>
             <div>
               <label className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5 block">Mensagem</label>
-              <Textarea value={msgText} onChange={e => setMsgText(e.target.value)} rows={6} className="bg-muted/30 border-border/50 text-xs" />
+              <Textarea value={msgText} onChange={e => setMsgText(e.target.value)} rows={6} className="bg-muted/30 border-border/50 text-xs text-foreground" />
             </div>
           </div>
           <DialogFooter>
