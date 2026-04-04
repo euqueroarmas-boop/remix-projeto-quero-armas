@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useCheckoutStore } from "@/stores/useCheckoutStore";
 import {
   FileText,
   CreditCard,
