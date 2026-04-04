@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Clock, TrendingDown, Code2, Gauge, Zap, FileText, ArrowRight, MessageSquare } from "lucide-react";
+import { Clock, TrendingDown, Code2, Gauge, Zap, FileText, ArrowRight, MessageSquare, AlertTriangle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useInfraStore } from "@/stores/useInfraStore";
 import { openWhatsApp } from "@/lib/whatsapp";
 
-/* ── Reuse existing progressive discount table ── */
 const PRICE_TABLE: Record<number, number> = {
   1: 200, 2: 190, 3: 180, 4: 170, 5: 160, 6: 155, 7: 150, 8: 145,
 };
@@ -26,25 +25,44 @@ const COMPLEXIDADE = [
   { key: "alta", label: "Alta", mult: 1.5, desc: "Integrações complexas, IA, APIs" },
 ] as const;
 
-const URGENCIA = [
-  { key: "normal", label: "Normal", desc: "Prazo padrão" },
-  { key: "prioritario", label: "Prioritário", desc: "Entrega acelerada" },
-  { key: "urgente", label: "Urgente", desc: "Prazo crítico" },
-] as const;
+type PrazoOption = { key: string; label: string; mult: number };
 
-const PRAZOS = [
-  { key: "flexivel", label: "Flexível" },
-  { key: "7_dias", label: "Até 7 dias" },
-  { key: "15_dias", label: "Até 15 dias" },
-  { key: "30_dias", label: "Até 30 dias" },
-] as const;
-
-/* ── Combined prazo+urgência multiplier matrix ── */
-const PRAZO_URGENCIA_MULT: Record<string, Record<string, number>> = {
-  flexivel:  { normal: 1.0, prioritario: 1.0, urgente: 1.0 },
-  "30_dias": { normal: 1.0, prioritario: 1.1, urgente: 1.2 },
-  "15_dias": { normal: 1.0, prioritario: 1.2, urgente: 1.35 },
-  "7_dias":  { normal: 1.1, prioritario: 1.3, urgente: 1.5 },
+const URGENCIA_CONFIG: Record<string, {
+  label: string;
+  minHours: number;
+  prazos: PrazoOption[];
+  message?: string;
+}> = {
+  normal: {
+    label: "Normal",
+    minHours: 1,
+    prazos: [
+      { key: "flexivel", label: "Flexível", mult: 1.0 },
+      { key: "30_dias", label: "Até 30 dias", mult: 1.0 },
+      { key: "60_dias", label: "Até 60 dias", mult: 1.0 },
+      { key: "90_dias", label: "Até 90 dias", mult: 1.0 },
+    ],
+  },
+  prioritario: {
+    label: "Prioritário",
+    minHours: 2,
+    prazos: [
+      { key: "mesmo_dia", label: "Mesmo dia", mult: 1.25 },
+      { key: "24h", label: "Em até 24h", mult: 1.15 },
+    ],
+    message: "Projeto entra em faixa de antecipação de execução",
+  },
+  urgente: {
+    label: "Urgente",
+    minHours: 2,
+    prazos: [
+      { key: "1h", label: "Até 1h", mult: 1.8 },
+      { key: "2h", label: "Até 2h", mult: 1.6 },
+      { key: "4h", label: "Até 4h", mult: 1.4 },
+      { key: "8h", label: "Até 8h", mult: 1.25 },
+    ],
+    message: "Execução imediata com alocação prioritária da equipe técnica",
+  },
 };
 
 const CONTINUIDADE_OPTIONS = [
@@ -60,7 +78,8 @@ const fadeIn = {
   transition: { duration: 0.5 },
 };
 
-/* ── Extracted outside to avoid re-mount on parent re-render ── */
+/* ── Sub-components defined outside to avoid remount ── */
+
 const SelectField = ({
   icon: Icon,
   label,
@@ -95,6 +114,16 @@ const SelectField = ({
   </div>
 );
 
+const SummaryRow = ({ label, value, highlight }: { label: string; value: string; highlight?: string }) => (
+  <div className="flex items-center justify-between font-mono text-sm">
+    <span className="text-muted-foreground">{label}</span>
+    <span className="text-foreground">
+      {value}
+      {highlight && <span className="ml-2 text-xs text-primary">{highlight}</span>}
+    </span>
+  </div>
+);
+
 const WebDevCalculator = () => {
   const { sobDemanda, setSobDemanda } = useInfraStore();
   const [hours, setHours] = useState(sobDemanda.horas);
@@ -104,6 +133,21 @@ const WebDevCalculator = () => {
   const [prazo, setPrazo] = useState<string>("flexivel");
   const [continuidade, setContinuidade] = useState<string>("nao");
   const [observacoes, setObservacoes] = useState("");
+
+  const urgConfig = URGENCIA_CONFIG[urgencia];
+
+  // When urgency changes, reset prazo to first available and enforce min hours
+  useEffect(() => {
+    const cfg = URGENCIA_CONFIG[urgencia];
+    if (!cfg) return;
+    const validKeys = cfg.prazos.map((p) => p.key);
+    if (!validKeys.includes(prazo)) {
+      setPrazo(cfg.prazos[0].key);
+    }
+    if (hours < cfg.minHours) {
+      setHours(cfg.minHours);
+    }
+  }, [urgencia]); // intentionally only on urgencia change
 
   // Sync hours with global store
   useEffect(() => {
@@ -115,17 +159,20 @@ const WebDevCalculator = () => {
   const fullPrice = hours * BASE_PRICE;
 
   const compMult = COMPLEXIDADE.find((c) => c.key === complexidade)?.mult ?? 1;
-  const prazoUrgMult = PRAZO_URGENCIA_MULT[prazo]?.[urgencia] ?? 1;
-  const isFlexivel = prazo === "flexivel";
+  const prazoMult = urgConfig.prazos.find((p) => p.key === prazo)?.mult ?? 1;
 
-  const totalFinal = Math.round(subtotal * compMult * prazoUrgMult);
+  const totalFinal = Math.round(subtotal * compMult * prazoMult);
   const savings = fullPrice - subtotal;
   const discountPct = hours > 1 ? Math.round(((BASE_PRICE - unitPrice) / BASE_PRICE) * 100) : 0;
   const additionalsValue = totalFinal - subtotal;
 
   const projectLabel = PROJECT_TYPES.find((p) => p.key === projectType)?.label ?? "";
-  const prazoLabel = PRAZOS.find((p) => p.key === prazo)?.label ?? "";
-  const urgenciaLabel = URGENCIA.find((u) => u.key === urgencia)?.label ?? "";
+  const prazoLabel = urgConfig.prazos.find((p) => p.key === prazo)?.label ?? "";
+
+  const handleHoursChange = (v: number) => {
+    const min = urgConfig.minHours;
+    setHours(Math.max(min, Math.min(8, v || min)));
+  };
 
   return (
     <section className="section-dark py-16 md:py-24 border-t border-border">
@@ -145,31 +192,21 @@ const WebDevCalculator = () => {
           <div className="grid lg:grid-cols-[1fr_380px] gap-8">
             {/* ── Left: Form ── */}
             <div className="space-y-4">
-              {/* Project type */}
-              <SelectField
-                icon={Code2}
-                label="Tipo de projeto"
-                value={projectType}
-                onChange={setProjectType}
-                options={PROJECT_TYPES}
-              />
+              <SelectField icon={Code2} label="Tipo de projeto" value={projectType} onChange={setProjectType} options={PROJECT_TYPES} />
 
-              {/* Hours - numeric input */}
+              {/* Hours */}
               <div className="bg-secondary p-5">
                 <label className="font-mono text-xs uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
                   <Clock size={14} className="text-primary" />
-                  Quantidade de horas
+                  Quantidade de horas (mín. {urgConfig.minHours}h)
                 </label>
                 <div className="flex items-center gap-4">
                   <input
                     type="number"
-                    min={1}
+                    min={urgConfig.minHours}
                     max={8}
                     value={hours}
-                    onChange={(e) => {
-                      const v = Math.max(1, Math.min(8, Number(e.target.value) || 1));
-                      setHours(v);
-                    }}
+                    onChange={(e) => handleHoursChange(Number(e.target.value))}
                     className="w-24 bg-background border border-border px-3 py-2.5 text-center text-lg font-bold font-mono text-primary focus:outline-none focus:border-primary"
                   />
                   <div className="font-body text-sm text-muted-foreground">
@@ -181,41 +218,39 @@ const WebDevCalculator = () => {
                 </div>
               </div>
 
-              {/* Complexity */}
-              <SelectField
-                icon={Gauge}
-                label="Complexidade do projeto"
-                value={complexidade}
-                onChange={setComplexidade}
-                options={COMPLEXIDADE}
-              />
+              <SelectField icon={Gauge} label="Complexidade do projeto" value={complexidade} onChange={setComplexidade} options={COMPLEXIDADE} />
 
-              {/* Urgency */}
+              {/* Urgência */}
               <SelectField
                 icon={Zap}
                 label="Urgência"
                 value={urgencia}
                 onChange={setUrgencia}
-                options={URGENCIA}
+                options={[
+                  { key: "normal", label: "Normal", desc: "Prazo padrão" },
+                  { key: "prioritario", label: "Prioritário", desc: "Antecipação de execução (mín. 2h)" },
+                  { key: "urgente", label: "Urgente", desc: "Execução imediata (mín. 2h)" },
+                ]}
               />
 
-              {/* Prazo */}
+              {/* Urgency message */}
+              {urgConfig.message && (
+                <div className="flex items-start gap-2 bg-primary/10 border border-primary/20 px-4 py-3">
+                  <AlertTriangle size={16} className="text-primary mt-0.5 shrink-0" />
+                  <p className="font-body text-sm text-primary">{urgConfig.message}</p>
+                </div>
+              )}
+
+              {/* Prazo - dynamic based on urgency */}
               <SelectField
                 icon={Clock}
                 label="Prazo desejado"
                 value={prazo}
                 onChange={setPrazo}
-                options={PRAZOS}
+                options={urgConfig.prazos}
               />
 
-              {/* Continuidade */}
-              <SelectField
-                icon={FileText}
-                label="Continuidade / suporte pós-projeto"
-                value={continuidade}
-                onChange={setContinuidade}
-                options={CONTINUIDADE_OPTIONS}
-              />
+              <SelectField icon={FileText} label="Continuidade / suporte pós-projeto" value={continuidade} onChange={setContinuidade} options={CONTINUIDADE_OPTIONS} />
 
               {/* Observações */}
               <div className="bg-secondary p-5">
@@ -233,20 +268,14 @@ const WebDevCalculator = () => {
               </div>
             </div>
 
-            {/* ── Right: Summary sidebar ── */}
+            {/* ── Right: Summary ── */}
             <div className="lg:sticky lg:top-24 self-start space-y-4">
               <div className="bg-secondary p-6 space-y-3">
-                <h3 className="font-mono text-xs uppercase tracking-wider text-primary mb-3">
-                  Resumo do projeto
-                </h3>
+                <h3 className="font-mono text-xs uppercase tracking-wider text-primary mb-3">Resumo do projeto</h3>
 
                 <SummaryRow label="Tipo" value={projectLabel} />
                 <SummaryRow label="Horas" value={`${hours}h`} />
-                <SummaryRow
-                  label="Valor/hora"
-                  value={`R$ ${unitPrice}`}
-                  highlight={discountPct > 0 ? `-${discountPct}%` : undefined}
-                />
+                <SummaryRow label="Valor/hora" value={`R$ ${unitPrice}`} highlight={discountPct > 0 ? `-${discountPct}%` : undefined} />
 
                 <div className="h-px bg-muted-foreground/10" />
 
@@ -268,30 +297,21 @@ const WebDevCalculator = () => {
                   value={COMPLEXIDADE.find((c) => c.key === complexidade)?.label ?? ""}
                   highlight={compMult > 1 ? `×${compMult}` : undefined}
                 />
-                <SummaryRow label="Prazo" value={prazoLabel} />
-                {isFlexivel ? (
-                  <p className="font-body text-xs text-muted-foreground/60 italic">
-                    Prazo flexível reduz necessidade de priorização
-                  </p>
-                ) : (
-                  <SummaryRow
-                    label="Prioridade"
-                    value={urgenciaLabel}
-                    highlight={prazoUrgMult > 1 ? `×${prazoUrgMult}` : undefined}
-                  />
-                )}
+                <SummaryRow label="Urgência" value={urgConfig.label} />
+                <SummaryRow
+                  label="Prazo"
+                  value={prazoLabel}
+                  highlight={prazoMult > 1 ? `×${prazoMult}` : undefined}
+                />
 
                 {additionalsValue > 0 && (
                   <div className="flex items-center justify-between font-mono text-sm">
-                    <span className="text-muted-foreground">Adicionais (prazo + complexidade)</span>
+                    <span className="text-muted-foreground">Adicionais</span>
                     <span className="text-foreground">+R$ {additionalsValue.toLocaleString("pt-BR")}</span>
                   </div>
                 )}
                 {continuidade !== "nao" && (
-                  <SummaryRow
-                    label="Continuidade"
-                    value={CONTINUIDADE_OPTIONS.find((c) => c.key === continuidade)?.label ?? ""}
-                  />
+                  <SummaryRow label="Continuidade" value={CONTINUIDADE_OPTIONS.find((c) => c.key === continuidade)?.label ?? ""} />
                 )}
 
                 <div className="h-px bg-muted-foreground/10" />
@@ -308,7 +328,6 @@ const WebDevCalculator = () => {
                 </p>
               </div>
 
-              {/* CTAs */}
               <Link
                 to={`/contratar-servico?modo=sob_demanda&horas=${hours}&valor=${totalFinal}&servico=${encodeURIComponent("Desenvolvimento Web — " + projectLabel)}`}
                 className="w-full inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-6 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
@@ -321,7 +340,7 @@ const WebDevCalculator = () => {
                   openWhatsApp({
                     pageTitle: "Desenvolvimento Web",
                     intent: "proposal",
-                    detail: `Projeto: ${projectLabel} | ${hours}h | R$ ${totalFinal} | Complexidade: ${complexidade} | Prazo: ${prazoLabel} | Prioridade: ${urgenciaLabel}`,
+                    detail: `Projeto: ${projectLabel} | ${hours}h | R$ ${totalFinal} | Complexidade: ${complexidade} | Urgência: ${urgConfig.label} | Prazo: ${prazoLabel}`,
                   })
                 }
                 className="w-full inline-flex items-center justify-center gap-2 border border-border text-foreground px-6 py-3 font-mono text-sm uppercase tracking-wider hover:bg-muted transition-colors"
@@ -339,16 +358,5 @@ const WebDevCalculator = () => {
     </section>
   );
 };
-
-/* ── Helper ── */
-const SummaryRow = ({ label, value, highlight }: { label: string; value: string; highlight?: string }) => (
-  <div className="flex items-center justify-between font-mono text-sm">
-    <span className="text-muted-foreground">{label}</span>
-    <span className="text-foreground">
-      {value}
-      {highlight && <span className="ml-2 text-xs text-primary">{highlight}</span>}
-    </span>
-  </div>
-);
 
 export default WebDevCalculator;
