@@ -299,6 +299,7 @@ const ContractingWizard = ({
             purchaseDate: new Date().toLocaleDateString("pt-BR"),
           };
           try { sessionStorage.setItem("wmti_purchase_data", JSON.stringify(purchaseData)); } catch {}
+          checkoutStore.reset();
           navigate(`/compra-concluida?quote=${activeQuoteId}`);
         }
       } catch (e) { console.error("[poll] check-payment-status error:", e); }
