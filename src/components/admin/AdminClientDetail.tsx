@@ -411,6 +411,44 @@ export default function AdminClientDetail({ customerId, onBack }: AdminClientDet
         </CardContent>
       </Card>
 
+      {/* Reset Password Dialog */}
+      <Dialog open={resetPwdOpen} onOpenChange={setResetPwdOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Redefinir Senha do Cliente</DialogTitle>
+            <DialogDescription>Redefinir ou criar senha para {customer.email}</DialogDescription>
+          </DialogHeader>
+          {generatedPwd ? (
+            <div className="space-y-3">
+              <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-4 text-center">
+                <p className="text-xs text-muted-foreground mb-1">Nova senha gerada:</p>
+                <p className="text-lg font-mono font-bold text-emerald-400 select-all">{generatedPwd}</p>
+              </div>
+              <Button size="sm" variant="outline" className="w-full gap-1.5" onClick={() => { navigator.clipboard.writeText(generatedPwd); toast.success("Senha copiada!"); }}>
+                <Copy className="h-3.5 w-3.5" /> Copiar Senha
+              </Button>
+              <p className="text-[10px] text-muted-foreground text-center">O cliente será obrigado a trocar a senha no primeiro acesso.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div>
+                <label className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5 block">Nova senha (deixe vazio para gerar automaticamente)</label>
+                <Input value={newPwd} onChange={e => setNewPwd(e.target.value)} placeholder="Gerar senha automática..." className="bg-muted/30 border-border/50 text-xs h-8 text-foreground" />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" size="sm" onClick={() => setResetPwdOpen(false)}>Fechar</Button>
+            {!generatedPwd && (
+              <Button size="sm" onClick={handleResetPassword} disabled={resetPwdLoading} className="gap-1.5">
+                {resetPwdLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <KeyRound className="h-3.5 w-3.5" />}
+                Redefinir Senha
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Message Dialog */}
       <Dialog open={msgOpen} onOpenChange={setMsgOpen}>
         <DialogContent className="sm:max-w-md">
