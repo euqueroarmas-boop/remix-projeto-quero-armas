@@ -24,6 +24,8 @@ import { plans } from "@/components/orcamento/PlanSelector";
 import ServerAdminRegistrationForm, { type ServerAdminRegistrationData } from "@/components/orcamento/ServerAdminRegistrationForm";
 import ContractModeSelector, { type ContractMode } from "@/components/ContractModeSelector";
 import UnifiedInfraCalculator from "@/components/orcamento/UnifiedInfraCalculator";
+import PurchaseSummaryCard, { type PortalCredentials, type PurchaseSummaryData } from "@/components/orcamento/PurchaseSummaryCard";
+import { ensurePortalAccess } from "@/lib/postPurchase";
 
 import type { CustomerData } from "@/components/orcamento/CustomerDataForm";
 
@@ -169,6 +171,9 @@ const ContratarServicoPage = () => {
   const [popupBlocked, setPopupBlocked] = useState(false);
   const [paymentReady, setPaymentReady] = useState(false);
   const [boletoGenerated, setBoletoGenerated] = useState(false);
+  const [portalCredentials, setPortalCredentials] = useState<PortalCredentials | null>(null);
+  const [credentialsLoading, setCredentialsLoading] = useState(false);
+  const [credentialsError, setCredentialsError] = useState<string | null>(null);
   const [contractMode, setContractMode] = useState<ContractMode | null>(
     (searchParams.get("modo") as ContractMode) || null
   );
@@ -341,6 +346,48 @@ const ContratarServicoPage = () => {
     }, 3000);
     return () => clearInterval(interval);
   }, [paymentComplete, paymentConfirmed, quoteId, currentStep, registrationData, selectedPayment, contractId, serviceName, hours, promoPrice, boletoGenerated]);
+
+  // Fetch portal credentials when reaching success step
+  const fetchCredentials = useCallback(async () => {
+    if (!quoteId) return;
+    setCredentialsLoading(true);
+    setCredentialsError(null);
+    try {
+      const result = await ensurePortalAccess(quoteId);
+      if (result.success && result.email) {
+        setPortalCredentials({ email: result.email, temp_password: result.temp_password, password_change_required: result.password_change_required });
+      } else {
+        setCredentialsError(result.error || "Não foi possível gerar as credenciais.");
+      }
+    } catch (err) {
+      console.error("[WMTi] Erro ao buscar credenciais:", err);
+      setCredentialsError("Erro ao gerar credenciais de acesso.");
+    } finally {
+      setCredentialsLoading(false);
+    }
+  }, [quoteId]);
+
+  useEffect(() => {
+    if (currentStep !== "success") return;
+    if (portalCredentials || credentialsLoading) return;
+    // For boleto: generate credentials immediately (restricted access)
+    // For card: generate after payment confirmation
+    if (boletoGenerated || paymentConfirmed) {
+      fetchCredentials();
+    }
+  }, [currentStep, boletoGenerated, paymentConfirmed, fetchCredentials, portalCredentials, credentialsLoading]);
+
+  const buildSummaryData = (): PurchaseSummaryData => ({
+    serviceName,
+    hours: hours > 0 ? hours : undefined,
+    totalValue: promoPrice,
+    customerName: registrationData?.razaoSocial || "",
+    customerEmail: registrationData?.email || "",
+    customerCpfCnpj: registrationData?.cnpjOuCpf || "",
+    paymentMethod: selectedPayment || "",
+    contractRef: contractId,
+    purchaseDate: new Date().toLocaleDateString("pt-BR"),
+  });
 
   const scrollToTop = () => {
     setTimeout(() => {
@@ -1008,25 +1055,17 @@ const ContratarServicoPage = () => {
               </WizardStepWrapper>
 
               {/* Step 5: Conclusão */}
-              <WizardStepWrapper stepNumber={5} title="Conclusão" subtitle="Fechamento e ativação do serviço" status={boletoGenerated ? "active" : paymentConfirmed ? "active" : "pending"} isLast>
-                {paymentConfirmed ? (
-                  <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-3">
-                    <CheckCircle className="w-10 h-10 text-green-500 mx-auto" />
-                    <h4 className="text-lg font-heading font-bold">Finalizando seu pedido...</h4>
-                    <p className="text-sm text-muted-foreground">Gerando credenciais e ativando seu serviço.</p>
-                    <Loader2 className="w-5 h-5 animate-spin text-primary mx-auto" />
-                  </div>
-                ) : boletoGenerated ? (
-                  <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-3">
-                    <CheckCircle className="w-10 h-10 text-primary mx-auto" />
-                    <h4 className="text-lg font-heading font-bold">Pedido registrado com sucesso!</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Após a compensação do boleto, suas credenciais de acesso ao portal serão enviadas por e-mail e o serviço será ativado automaticamente.
-                    </p>
-                    <Link to="/area-do-cliente" className="inline-flex items-center gap-2 text-primary text-sm font-semibold hover:underline mt-2">
-                      Acessar área do cliente <ChevronRight className="w-4 h-4" />
-                    </Link>
-                  </div>
+              <WizardStepWrapper stepNumber={5} title="Compra Concluída" subtitle="Resumo do pedido e credenciais" status={boletoGenerated || paymentConfirmed ? "active" : "pending"} isLast>
+                {(boletoGenerated || paymentConfirmed) ? (
+                  <PurchaseSummaryCard
+                    data={buildSummaryData()}
+                    credentials={portalCredentials}
+                    credentialsLoading={credentialsLoading}
+                    credentialsError={credentialsError}
+                    invoiceUrl={invoiceUrl}
+                    isBoleto={boletoGenerated && !paymentConfirmed}
+                    onRetryCredentials={fetchCredentials}
+                  />
                 ) : (
                   <div className="p-6 text-center">
                     <p className="text-sm text-muted-foreground">Aguardando confirmação do pagamento para finalizar.</p>
@@ -1442,34 +1481,17 @@ const ContratarServicoPage = () => {
               </WizardStepWrapper>
 
               {/* Step 5: Conclusão */}
-              <WizardStepWrapper stepNumber={5} title="Compra Concluída" subtitle="Fechamento e ativação do serviço" status={boletoGenerated || paymentConfirmed ? "active" : "pending"} isLast>
-                {boletoGenerated && !paymentConfirmed ? (
-                  <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-4">
-                    <CheckCircle className="w-12 h-12 text-primary mx-auto" />
-                    <h4 className="text-lg font-heading font-bold text-foreground">Pedido registrado com sucesso!</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Após a compensação do boleto, suas credenciais de acesso ao portal serão enviadas por e-mail e o serviço será ativado automaticamente.
-                    </p>
-                    {invoiceUrl && (
-                      <Button
-                        onClick={() => window.open(invoiceUrl, "_blank", "noopener,noreferrer")}
-                        className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground"
-                      >
-                        <ExternalLink className="w-4 h-4 mr-2" />
-                        Abrir boleto / 2ª via
-                      </Button>
-                    )}
-                    <Link to="/area-do-cliente" className="inline-flex items-center gap-2 text-primary text-sm font-semibold hover:underline mt-2">
-                      Acessar área do cliente <ChevronRight className="w-4 h-4" />
-                    </Link>
-                  </div>
-                ) : paymentConfirmed ? (
-                  <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-3">
-                    <CheckCircle className="w-12 h-12 text-green-500 mx-auto" />
-                    <h4 className="text-lg font-heading font-bold text-foreground">Pedido concluído com sucesso!</h4>
-                    <p className="text-sm text-muted-foreground">Redirecionando para a página de confirmação...</p>
-                    <Loader2 className="w-5 h-5 animate-spin text-primary mx-auto" />
-                  </div>
+              <WizardStepWrapper stepNumber={5} title="Compra Concluída" subtitle="Resumo do pedido e credenciais" status={boletoGenerated || paymentConfirmed ? "active" : "pending"} isLast>
+                {(boletoGenerated || paymentConfirmed) ? (
+                  <PurchaseSummaryCard
+                    data={buildSummaryData()}
+                    credentials={portalCredentials}
+                    credentialsLoading={credentialsLoading}
+                    credentialsError={credentialsError}
+                    invoiceUrl={invoiceUrl}
+                    isBoleto={boletoGenerated && !paymentConfirmed}
+                    onRetryCredentials={fetchCredentials}
+                  />
                 ) : null}
               </WizardStepWrapper>
             </div>
@@ -1873,36 +1895,19 @@ const ContratarServicoPage = () => {
           </WizardStepWrapper>
 
           {/* Step 5: Conclusão */}
-           <WizardStepWrapper stepNumber={5} title="Compra Concluída" subtitle="Fechamento e ativação do serviço" status={boletoGenerated || paymentConfirmed ? "active" : "pending"} isLast>
-             {boletoGenerated && !paymentConfirmed ? (
-               <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-4">
-                 <CheckCircle className="w-12 h-12 text-primary mx-auto" />
-                 <h4 className="text-lg font-heading font-bold text-foreground">Pedido registrado com sucesso!</h4>
-                 <p className="text-sm text-muted-foreground">
-                   Após a compensação do boleto, suas credenciais de acesso ao portal serão enviadas por e-mail e o serviço será ativado automaticamente.
-                 </p>
-                 {invoiceUrl && (
-                   <Button
-                     onClick={() => window.open(invoiceUrl, "_blank", "noopener,noreferrer")}
-                     className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground"
-                   >
-                     <ExternalLink className="w-4 h-4 mr-2" />
-                     Abrir boleto / 2ª via
-                   </Button>
-                 )}
-                 <Link to="/area-do-cliente" className="inline-flex items-center gap-2 text-primary text-sm font-semibold hover:underline mt-2">
-                   Acessar área do cliente <ChevronRight className="w-4 h-4" />
-                 </Link>
-               </div>
-             ) : paymentConfirmed ? (
-               <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-3">
-                 <CheckCircle className="w-12 h-12 text-green-500 mx-auto" />
-                 <h4 className="text-lg font-heading font-bold text-foreground">Pedido concluído com sucesso!</h4>
-                 <p className="text-sm text-muted-foreground">Redirecionando para a página de confirmação...</p>
-                 <Loader2 className="w-5 h-5 animate-spin text-primary mx-auto" />
-               </div>
+           <WizardStepWrapper stepNumber={5} title="Compra Concluída" subtitle="Resumo do pedido e credenciais" status={boletoGenerated || paymentConfirmed ? "active" : "pending"} isLast>
+             {(boletoGenerated || paymentConfirmed) ? (
+               <PurchaseSummaryCard
+                 data={buildSummaryData()}
+                 credentials={portalCredentials}
+                 credentialsLoading={credentialsLoading}
+                 credentialsError={credentialsError}
+                 invoiceUrl={invoiceUrl}
+                 isBoleto={boletoGenerated && !paymentConfirmed}
+                 onRetryCredentials={fetchCredentials}
+               />
              ) : null}
-          </WizardStepWrapper>
+           </WizardStepWrapper>
         </div>
       </div>
 
