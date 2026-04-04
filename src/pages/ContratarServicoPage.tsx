@@ -996,13 +996,24 @@ const ContratarServicoPage = () => {
               </WizardStepWrapper>
 
               {/* Step 5: Conclusão */}
-              <WizardStepWrapper stepNumber={5} title="Conclusão" subtitle="Fechamento e ativação do serviço" status={paymentConfirmed ? "active" : "pending"} isLast>
+              <WizardStepWrapper stepNumber={5} title="Conclusão" subtitle="Fechamento e ativação do serviço" status={paymentConfirmed ? "active" : boletoGenerated ? "completed" : "pending"} isLast>
                 {paymentConfirmed ? (
                   <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-3">
                     <CheckCircle className="w-10 h-10 text-green-500 mx-auto" />
                     <h4 className="text-lg font-heading font-bold">Finalizando seu pedido...</h4>
                     <p className="text-sm text-muted-foreground">Gerando credenciais e ativando seu serviço.</p>
                     <Loader2 className="w-5 h-5 animate-spin text-primary mx-auto" />
+                  </div>
+                ) : boletoGenerated ? (
+                  <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-3">
+                    <CheckCircle className="w-10 h-10 text-primary mx-auto" />
+                    <h4 className="text-lg font-heading font-bold">Pedido registrado com sucesso!</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Após a compensação do boleto, suas credenciais de acesso ao portal serão enviadas por e-mail e o serviço será ativado automaticamente.
+                    </p>
+                    <Link to="/area-do-cliente" className="inline-flex items-center gap-2 text-primary text-sm font-semibold hover:underline mt-2">
+                      Acessar área do cliente <ChevronRight className="w-4 h-4" />
+                    </Link>
                   </div>
                 ) : (
                   <div className="p-6 text-center">
