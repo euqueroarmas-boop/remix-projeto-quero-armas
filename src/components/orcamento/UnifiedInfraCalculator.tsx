@@ -20,8 +20,14 @@ function workstationDiscount(qty: number): number {
 }
 
 type OsType = "windows" | "linux" | "macos";
+type ServerOsType = "windows_server" | "linux";
 
-const OS_OPTIONS: { id: OsType; label: string }[] = [
+const SERVER_OS_OPTIONS: { id: ServerOsType; label: string }[] = [
+  { id: "windows_server", label: "Windows Server" },
+  { id: "linux", label: "Linux" },
+];
+
+const WS_OS_OPTIONS: { id: OsType; label: string }[] = [
   { id: "windows", label: "Windows" },
   { id: "linux", label: "Linux" },
   { id: "macos", label: "Mac OS" },
