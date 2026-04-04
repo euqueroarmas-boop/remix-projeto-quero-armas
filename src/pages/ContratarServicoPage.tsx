@@ -1268,6 +1268,52 @@ const ContratarServicoPage = () => {
                     <h4 className="text-lg font-heading font-bold">Pagamento confirmado!</h4>
                     <p className="text-sm text-muted-foreground">Avançando para a conclusão...</p>
                   </div>
+                ) : paymentComplete && invoiceUrl ? (
+                  <div className="space-y-4">
+                    {/* Status indicators after boleto/payment generation */}
+                    <div className="bg-card border border-primary/20 rounded-xl p-5 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-5 h-5 text-green-500 shrink-0" />
+                        <span className="text-sm text-foreground font-semibold">Cadastro criado</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-5 h-5 text-green-500 shrink-0" />
+                        <span className="text-sm text-foreground font-semibold">Contrato gerado</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-5 h-5 text-green-500 shrink-0" />
+                        <span className="text-sm text-foreground font-semibold">{selectedPayment === "BOLETO" ? "Boleto gerado" : "Cobrança gerada"}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="w-5 h-5 text-primary animate-spin shrink-0" />
+                        <span className="text-sm text-muted-foreground font-semibold">Aguardando pagamento</span>
+                      </div>
+                    </div>
+
+                    {selectedPayment === "BOLETO" && (
+                      <div className="bg-primary/5 border border-primary/20 rounded-xl p-4">
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          Seu acesso restrito ao portal do cliente já foi liberado. Após a compensação do boleto, o acesso completo será ativado automaticamente.
+                        </p>
+                      </div>
+                    )}
+
+                    <Button onClick={() => window.open(invoiceUrl!, "_blank", "noopener,noreferrer")} variant="outline" className="w-full h-12">
+                      <ExternalLink className="w-4 h-4 mr-2" />
+                      {selectedPayment === "BOLETO" ? "Abrir boleto" : "Ir para pagamento"}
+                    </Button>
+
+                    {popupBlocked && (
+                      <p className="text-xs text-center text-muted-foreground">
+                        O link foi bloqueado pelo navegador. Clique no botão acima para abrir.
+                      </p>
+                    )}
+
+                    <p className="text-xs text-center text-muted-foreground flex items-center justify-center gap-1">
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      Verificando confirmação de pagamento automaticamente...
+                    </p>
+                  </div>
                 ) : (
                   <div className="space-y-4">
                     <p className="text-sm text-muted-foreground text-center">
@@ -1302,7 +1348,7 @@ const ContratarServicoPage = () => {
                       ))}
                     </div>
                     <Button onClick={handlePayment} disabled={!selectedPayment || paymentLoading} className="w-full h-14 text-base bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50">
-                      <ExternalLink className="w-5 h-5 mr-2" />
+                      {paymentLoading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <ExternalLink className="w-5 h-5 mr-2" />}
                       {paymentError ? "Tentar novamente" : "COMPRAR AGORA"}
                     </Button>
                   </div>
