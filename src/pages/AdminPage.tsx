@@ -49,6 +49,7 @@ const SegmentsBuilder = lazy(() => import("@/components/admin/cms/SegmentsBuilde
 const PricingEngine = lazy(() => import("@/components/admin/cms/PricingEngine"));
 const BlockLibrary = lazy(() => import("@/components/admin/cms/BlockLibrary"));
 const SitemapManager = lazy(() => import("@/components/admin/cms/SitemapManager"));
+const AdminFinanceiro = lazy(() => import("@/components/admin/AdminFinanceiro"));
 
 const ITEMS_PER_PAGE = 20;
 
