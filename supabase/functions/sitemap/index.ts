@@ -170,6 +170,59 @@ function buildServiceSegmentCityXml(): string {
   return wrapUrlset(urls);
 }
 
+/** CMS-managed pages (services + segments from DB) */
+async function buildCmsServicesXml(): Promise<string> {
+  const urls: string[] = [];
+  try {
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+    const { data } = await supabase
+      .from("cms_pages")
+      .select("slug")
+      .eq("status", "published")
+      .eq("noindex", false)
+      .eq("page_type", "service")
+      .limit(500);
+    if (data) {
+      for (const p of data) urls.push(urlEntry(`/${p.slug}`));
+    }
+  } catch (e) {
+    console.error("[sitemap] CMS services query failed:", e);
+  }
+  // Also include static service×city combos
+  for (const svc of serviceSlugs) {
+    for (const city of citySlugs) {
+      urls.push(urlEntry(`/${svc}-em-${city}`));
+    }
+  }
+  return wrapUrlset(urls);
+}
+
+async function buildCmsSegmentsXml(): Promise<string> {
+  const urls: string[] = [];
+  try {
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+    const { data } = await supabase
+      .from("cms_pages")
+      .select("slug")
+      .eq("status", "published")
+      .eq("noindex", false)
+      .eq("page_type", "segment")
+      .limit(500);
+    if (data) {
+      for (const p of data) urls.push(urlEntry(`/${p.slug}`));
+    }
+  } catch (e) {
+    console.error("[sitemap] CMS segments query failed:", e);
+  }
+  // Also include static segment×city combos
+  for (const seg of segmentEntries) {
+    for (const city of citySlugs) {
+      urls.push(urlEntry(`/${seg.prefix}-em-${city}`));
+    }
+  }
+  return wrapUrlset(urls);
+}
+
 function buildSitemapIndex(): string {
   const now = new Date().toISOString().split("T")[0];
   const sitemaps = [
@@ -179,8 +232,6 @@ function buildSitemapIndex(): string {
     "sitemap-services.xml",
     "sitemap-segments.xml",
     "sitemap-problems.xml",
-    "sitemap-blog-cities.xml",
-    "sitemap-service-segment-cities.xml",
   ];
   const entries = sitemaps
     .map((s) => `  <sitemap><loc>${BASE_URL}/${s}</loc><lastmod>${now}</lastmod></sitemap>`)
