@@ -33,7 +33,10 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "ASAAS_API_KEY not configured" }, 500);
     }
 
-    const ASAAS_BASE_URL = Deno.env.get("ASAAS_BASE_URL") || "https://sandbox.asaas.com/api/v3";
+    const ASAAS_BASE_URL = Deno.env.get("ASAAS_BASE_URL");
+    if (!ASAAS_BASE_URL) {
+      return jsonResponse({ error: "ASAAS_BASE_URL not configured — refusing to default to sandbox in production" }, 500);
+    }
 
     const body = await req.json();
     const {
@@ -129,13 +132,16 @@ Deno.serve(async (req) => {
       cpfCnpj: customer_cpf_cnpj.replace(/\D/g, ""),
     };
 
-    console.log("[create-asaas-payment] Criando cliente no Asaas...");
+    const asaasHeaders = {
+      "Content-Type": "application/json",
+      access_token: ASAAS_API_KEY,
+      "User-Agent": "WMTi-Integration/1.0",
+    };
+
+    console.log("[create-asaas-payment] Criando cliente no Asaas... ENV:", ASAAS_BASE_URL.includes("sandbox") ? "SANDBOX" : "PRODUCAO");
     const customerRes = await fetch(`${ASAAS_BASE_URL}/customers`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        access_token: ASAAS_API_KEY,
-      },
+      headers: asaasHeaders,
       body: JSON.stringify(customerPayload),
     });
 
@@ -147,7 +153,7 @@ Deno.serve(async (req) => {
     if (!customerRes.ok && !asaasCustomerId) {
       console.log("[create-asaas-payment] Cliente não criado, buscando existente...");
       const searchRes = await fetch(`${ASAAS_BASE_URL}/customers?cpfCnpj=${customer_cpf_cnpj.replace(/\D/g, "")}`, {
-        headers: { access_token: ASAAS_API_KEY },
+        headers: { access_token: ASAAS_API_KEY, "User-Agent": "WMTi-Integration/1.0" },
       });
       const searchData = await searchRes.json();
 
@@ -191,10 +197,7 @@ Deno.serve(async (req) => {
     console.log("[create-asaas-payment] Criando cobrança...", JSON.stringify(paymentPayload));
     const paymentRes = await fetch(`${ASAAS_BASE_URL}/payments`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        access_token: ASAAS_API_KEY,
-      },
+      headers: asaasHeaders,
       body: JSON.stringify(paymentPayload),
     });
 
@@ -219,7 +222,7 @@ Deno.serve(async (req) => {
     if (billing_type === "PIX" && paymentData.id) {
       try {
         const pixQrRes = await fetch(`${ASAAS_BASE_URL}/payments/${paymentData.id}/pixQrCode`, {
-          headers: { access_token: ASAAS_API_KEY },
+          headers: { access_token: ASAAS_API_KEY, "User-Agent": "WMTi-Integration/1.0" },
         });
         const pixQrData = await pixQrRes.json();
         console.log("[create-asaas-payment] Resposta QR Code PIX:", JSON.stringify(pixQrData));

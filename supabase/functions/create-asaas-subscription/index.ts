@@ -32,7 +32,10 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "ASAAS_API_KEY not configured" }, 500);
     }
 
-    const ASAAS_BASE_URL = Deno.env.get("ASAAS_BASE_URL") || "https://sandbox.asaas.com/api/v3";
+    const ASAAS_BASE_URL = Deno.env.get("ASAAS_BASE_URL");
+    if (!ASAAS_BASE_URL) {
+      return jsonResponse({ error: "ASAAS_BASE_URL not configured — refusing to default to sandbox in production" }, 500);
+    }
 
     const body = await req.json();
     const {
@@ -113,10 +116,16 @@ Deno.serve(async (req) => {
       cpfCnpj: customer_cpf_cnpj.replace(/\D/g, ""),
     };
 
-    console.log("[create-asaas-subscription] Criando cliente no Asaas...");
+    const asaasHeaders = {
+      "Content-Type": "application/json",
+      access_token: ASAAS_API_KEY,
+      "User-Agent": "WMTi-Integration/1.0",
+    };
+
+    console.log("[create-asaas-subscription] Criando cliente no Asaas... ENV:", ASAAS_BASE_URL.includes("sandbox") ? "SANDBOX" : "PRODUCAO");
     const customerRes = await fetch(`${ASAAS_BASE_URL}/customers`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", access_token: ASAAS_API_KEY },
+      headers: asaasHeaders,
       body: JSON.stringify(customerPayload),
     });
 
@@ -125,7 +134,7 @@ Deno.serve(async (req) => {
 
     if (!customerRes.ok && !asaasCustomerId) {
       const searchRes = await fetch(`${ASAAS_BASE_URL}/customers?cpfCnpj=${customerPayload.cpfCnpj}`, {
-        headers: { access_token: ASAAS_API_KEY },
+        headers: { access_token: ASAAS_API_KEY, "User-Agent": "WMTi-Integration/1.0" },
       });
       const searchData = await searchRes.json();
       if (!searchData.data?.[0]?.id) {
@@ -166,7 +175,7 @@ Deno.serve(async (req) => {
     console.log("[create-asaas-subscription] Criando assinatura...", JSON.stringify(subscriptionPayload));
     const subRes = await fetch(`${ASAAS_BASE_URL}/subscriptions`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", access_token: ASAAS_API_KEY },
+      headers: asaasHeaders,
       body: JSON.stringify(subscriptionPayload),
     });
 
@@ -194,7 +203,7 @@ Deno.serve(async (req) => {
     // List payments for this subscription to get the first one
     try {
       const paymentsRes = await fetch(`${ASAAS_BASE_URL}/subscriptions/${subData.id}/payments`, {
-        headers: { access_token: ASAAS_API_KEY },
+        headers: { access_token: ASAAS_API_KEY, "User-Agent": "WMTi-Integration/1.0" },
       });
       const paymentsData = await paymentsRes.json();
       const firstPayment = paymentsData.data?.[0];

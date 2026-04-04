@@ -55,7 +55,15 @@ Deno.serve(async (req) => {
 
     // Query Asaas API for real status
     const ASAAS_API_KEY = Deno.env.get("ASAAS_API_KEY");
-    const ASAAS_BASE_URL = Deno.env.get("ASAAS_BASE_URL") || "https://sandbox.asaas.com/api/v3";
+    const ASAAS_BASE_URL = Deno.env.get("ASAAS_BASE_URL");
+    if (!ASAAS_BASE_URL) {
+      return new Response(JSON.stringify({
+        payment_status: payment.payment_status,
+        error: "ASAAS_BASE_URL not configured",
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     if (!ASAAS_API_KEY) {
       return new Response(JSON.stringify({
@@ -67,7 +75,7 @@ Deno.serve(async (req) => {
     }
 
     const asaasRes = await fetch(`${ASAAS_BASE_URL}/payments/${payment.asaas_payment_id}`, {
-      headers: { access_token: ASAAS_API_KEY },
+      headers: { access_token: ASAAS_API_KEY, "User-Agent": "WMTi-Integration/1.0" },
     });
 
     if (!asaasRes.ok) {
