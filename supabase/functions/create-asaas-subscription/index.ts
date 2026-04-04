@@ -116,10 +116,16 @@ Deno.serve(async (req) => {
       cpfCnpj: customer_cpf_cnpj.replace(/\D/g, ""),
     };
 
-    console.log("[create-asaas-subscription] Criando cliente no Asaas...");
+    const asaasHeaders = {
+      "Content-Type": "application/json",
+      access_token: ASAAS_API_KEY,
+      "User-Agent": "WMTi-Integration/1.0",
+    };
+
+    console.log("[create-asaas-subscription] Criando cliente no Asaas... ENV:", ASAAS_BASE_URL.includes("sandbox") ? "SANDBOX" : "PRODUCAO");
     const customerRes = await fetch(`${ASAAS_BASE_URL}/customers`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", access_token: ASAAS_API_KEY },
+      headers: asaasHeaders,
       body: JSON.stringify(customerPayload),
     });
 
