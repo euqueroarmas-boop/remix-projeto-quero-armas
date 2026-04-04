@@ -447,6 +447,29 @@ const UnifiedInfraCalculator = ({ contractHref = "/orcamento-ti", pageTitle }: P
                   </>
                 )}
 
+                {/* SLA & Criticidade in summary */}
+                {(sla !== "padrao" || criticidade !== "baixo") && (
+                  <>
+                    <div className="h-px bg-border" />
+                    <div className="flex justify-between font-mono text-xs text-muted-foreground">
+                      <span>Subtotal base</span>
+                      <span>{fmt(totalBase)}</span>
+                    </div>
+                    {sla === "24h" && (
+                      <div className="flex justify-between font-mono text-xs text-primary">
+                        <span>SLA 24h (+35%)</span>
+                        <span>+ {fmt(slaAdditional)}</span>
+                      </div>
+                    )}
+                    {criticidade !== "baixo" && (
+                      <div className="flex justify-between font-mono text-xs text-primary">
+                        <span>Criticidade {criticidade === "medio" ? "média" : "alta"} (×{CRITICIDADE_MULTIPLIER[criticidade].toFixed(1)})</span>
+                        <span>+ {fmt(critAdditional)}</span>
+                      </div>
+                    )}
+                  </>
+                )}
+
                 <div className="h-px bg-border" />
                 <div className="flex justify-between font-mono text-lg font-bold">
                   <span className="text-foreground">{t(`${k}.totalMonthly`)}</span>

@@ -113,6 +113,8 @@ const ContratarServicoPage = () => {
   const serverVms = infraStore.recorrente.vms;
   const serverEstacoes = infraStore.recorrente.estacoes;
   const serverOsType = infraStore.recorrente.sistemaServidores;
+  const serverSla = infraStore.recorrente.sla;
+  const serverCriticidade = infraStore.recorrente.criticidade;
   const SERVER_HOST_PRICE = serverOsType === "linux" ? 500 : 350;
   const SERVER_VM_PRICE = serverOsType === "linux" ? 350 : 200;
   const WORKSTATION_BASE = 150;
@@ -122,7 +124,10 @@ const ContratarServicoPage = () => {
   const wsGrossCalc = serverEstacoes * WORKSTATION_BASE;
   const wsDiscountCalc = wsGrossCalc * (wsDiscountPctCalc / 100);
   const wsSubtotalCalc = serverEstacoes > MAX_AUTO_WS ? 0 : wsGrossCalc - wsDiscountCalc;
-  const serverMonthlyValue = serverHosts * SERVER_HOST_PRICE + serverVms * SERVER_VM_PRICE + wsSubtotalCalc;
+  const serverBaseValue = serverHosts * SERVER_HOST_PRICE + serverVms * SERVER_VM_PRICE + wsSubtotalCalc;
+  const slaMultiplier = serverSla === "24h" ? 1.35 : 1;
+  const critMultiplier = serverCriticidade === "alto" ? 1.5 : serverCriticidade === "medio" ? 1.2 : 1;
+  const serverMonthlyValue = Math.round(serverBaseValue * slaMultiplier * critMultiplier * 100) / 100;
 
   // Flow state
   const [currentStep, setCurrentStep] = useState<FlowStep>("calculator");
