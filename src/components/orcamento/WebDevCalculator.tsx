@@ -27,18 +27,25 @@ const COMPLEXIDADE = [
 ] as const;
 
 const URGENCIA = [
-  { key: "normal", label: "Normal", mult: 1.0, desc: "Prazo padrão" },
-  { key: "prioritario", label: "Prioritário", mult: 1.2, desc: "Entrega acelerada" },
-  { key: "urgente", label: "Urgente", mult: 1.35, desc: "Prazo crítico" },
+  { key: "normal", label: "Normal", desc: "Prazo padrão" },
+  { key: "prioritario", label: "Prioritário", desc: "Entrega acelerada" },
+  { key: "urgente", label: "Urgente", desc: "Prazo crítico" },
 ] as const;
 
 const PRAZOS = [
   { key: "flexivel", label: "Flexível" },
+  { key: "7_dias", label: "Até 7 dias" },
   { key: "15_dias", label: "Até 15 dias" },
   { key: "30_dias", label: "Até 30 dias" },
-  { key: "60_dias", label: "Até 60 dias" },
-  { key: "90_dias", label: "Até 90 dias" },
 ] as const;
+
+/* ── Combined prazo+urgência multiplier matrix ── */
+const PRAZO_URGENCIA_MULT: Record<string, Record<string, number>> = {
+  flexivel:  { normal: 1.0, prioritario: 1.0, urgente: 1.0 },
+  "30_dias": { normal: 1.0, prioritario: 1.1, urgente: 1.2 },
+  "15_dias": { normal: 1.0, prioritario: 1.2, urgente: 1.35 },
+  "7_dias":  { normal: 1.1, prioritario: 1.3, urgente: 1.5 },
+};
 
 const CONTINUIDADE_OPTIONS = [
   { key: "nao", label: "Não preciso" },
