@@ -1356,8 +1356,41 @@ const ContratarServicoPage = () => {
       <div ref={wizardRef} className="section-dark py-12 md:py-16">
         <div className="container max-w-3xl">
 
-          {/* Step 1: Calculator */}
-          <WizardStepWrapper stepNumber={1} title={t("contratar.stepCalculator")} subtitle={t("contratar.stepCalculatorSub")} status={getStepStatus("calculator")}>
+          {/* Step 1: Calculator or Project Summary */}
+          <WizardStepWrapper stepNumber={1} title={webDevPayload ? "Resumo do Projeto" : t("contratar.stepCalculator")} subtitle={webDevPayload ? "Dados preenchidos na calculadora do serviço" : t("contratar.stepCalculatorSub")} status={getStepStatus("calculator")}>
+            {webDevPayload ? (
+              <div className="space-y-4">
+                <div className="bg-card border border-border rounded-xl p-5">
+                  <p className="font-mono text-[10px] tracking-[0.3em] uppercase text-primary mb-4 font-bold">Resumo do projeto</p>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between"><span className="text-muted-foreground">Tipo de projeto</span><span className="text-foreground font-semibold">{webDevPayload.tipoProjeto.replace(/_/g, " ")}</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Horas</span><span className="text-foreground font-semibold">{webDevPayload.horas}h</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Valor/hora</span><span className="text-foreground font-semibold">R$ {webDevPayload.valorHora.toFixed(2).replace(".", ",")}</span></div>
+                    {webDevPayload.descontoAplicado > 0 && (
+                      <div className="flex justify-between"><span className="text-muted-foreground">Desconto progressivo</span><span className="text-primary font-semibold">-R$ {webDevPayload.descontoAplicado.toLocaleString("pt-BR")}</span></div>
+                    )}
+                    <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span className="text-foreground font-semibold">R$ {webDevPayload.subtotal.toLocaleString("pt-BR")}</span></div>
+                    <div className="h-px bg-muted-foreground/10" />
+                    <div className="flex justify-between"><span className="text-muted-foreground">Complexidade</span><span className="text-foreground font-semibold">{webDevPayload.complexidade} {webDevPayload.multiplicadorComplexidade > 1 ? `(×${webDevPayload.multiplicadorComplexidade})` : ""}</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Urgência / Prazo</span><span className="text-foreground font-semibold">{webDevPayload.urgencia} / {webDevPayload.prazo.replace(/_/g, " ")} {webDevPayload.multiplicadorPrazoUrgencia > 1 ? `(×${webDevPayload.multiplicadorPrazoUrgencia})` : ""}</span></div>
+                    {webDevPayload.continuidade !== "nao" && (
+                      <div className="flex justify-between"><span className="text-muted-foreground">Continuidade</span><span className="text-foreground font-semibold">{webDevPayload.continuidade === "mensal" ? "Suporte mensal" : "Sob demanda"}</span></div>
+                    )}
+                    {webDevPayload.observacoes && (
+                      <div className="flex justify-between"><span className="text-muted-foreground">Observações</span><span className="text-foreground font-semibold text-right max-w-[60%]">{webDevPayload.observacoes}</span></div>
+                    )}
+                    <div className="h-px bg-muted-foreground/10" />
+                    <div className="flex justify-between items-center pt-1">
+                      <span className="text-foreground font-bold">Total estimado</span>
+                      <span className="text-primary text-xl font-bold">R$ {webDevPayload.totalFinal.toLocaleString("pt-BR")}</span>
+                    </div>
+                  </div>
+                </div>
+                <p className="font-body text-xs text-center text-muted-foreground/60">
+                  Projeto configurado na página do serviço. Preencha seus dados abaixo para continuar.
+                </p>
+              </div>
+            ) : (
             <div className="space-y-6">
               {/* Service badge */}
               <div className="bg-secondary p-4 flex items-center justify-between">
@@ -1449,6 +1482,7 @@ const ContratarServicoPage = () => {
                 {t("contratar.continuarDesc")}
               </p>
             </div>
+            )}
           </WizardStepWrapper>
 
           {/* Step 2: Registration */}
