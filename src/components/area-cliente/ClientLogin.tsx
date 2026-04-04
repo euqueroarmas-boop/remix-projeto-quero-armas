@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { logSistema } from "@/lib/logSistema";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { resolveCustomerLoginEmail } from "@/lib/customerResolver";
 
 interface Props {
   onLogin: () => void;
@@ -32,45 +33,7 @@ export default function ClientLogin({ onLogin }: Props) {
     return digits.length >= 11 && digits.length <= 14;
   };
 
-  const resolveEmail = async (input: string): Promise<string | null> => {
-    // If it looks like an email, use directly
-    if (input.includes("@")) return input;
-
-    // Try to resolve CNPJ/CPF to email
-    const digits = input.replace(/\D/g, "");
-    if (digits.length < 11) return null;
-
-    // Try exact match first
-    const { data } = await supabase
-      .from("customers")
-      .select("email, cnpj_ou_cpf")
-      .eq("cnpj_ou_cpf", input)
-      .maybeSingle();
-
-    if (data?.email) return data.email;
-
-    // Build all common formatted variants for the digits
-    const variants: string[] = [digits];
-    if (digits.length === 14) {
-      // CNPJ: XX.XXX.XXX/XXXX-XX
-      variants.push(`${digits.slice(0,2)}.${digits.slice(2,5)}.${digits.slice(5,8)}/${digits.slice(8,12)}-${digits.slice(12)}`);
-    } else if (digits.length === 11) {
-      // CPF: XXX.XXX.XXX-XX
-      variants.push(`${digits.slice(0,3)}.${digits.slice(3,6)}.${digits.slice(6,9)}-${digits.slice(9)}`);
-    }
-
-    // Try each formatted variant
-    for (const variant of variants) {
-      const { data: match } = await supabase
-        .from("customers")
-        .select("email")
-        .eq("cnpj_ou_cpf", variant)
-        .maybeSingle();
-      if (match?.email) return match.email;
-    }
-
-    return null;
-  };
+  const resolveEmail = async (input: string): Promise<string | null> => resolveCustomerLoginEmail(input);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
