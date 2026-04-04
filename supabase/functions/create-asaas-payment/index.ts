@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { logSistemaBackend } from "../_shared/logSistema.ts";
+import { ensureClientAccess, generateTempPassword } from "../_shared/post-purchase.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
