@@ -152,9 +152,23 @@ export default function AdminClientDetail({ customerId, onBack }: AdminClientDet
   const handleSuspend = async (suspend: boolean) => {
     setSuspending(true);
     try {
+      const newStatus = suspend ? "suspenso" : "ativo";
+      // Update customer status_cliente
+      await supabase.from("customers").update({
+        status_cliente: newStatus,
+        ...(suspend ? { suspended_at: new Date().toISOString() } : { suspended_at: null }),
+      }).eq("id", customerId);
+      // Also update contracts
       for (const c of contracts) {
         await supabase.from("contracts").update({ service_status: suspend ? "suspended" : "active" }).eq("id", c.id);
       }
+      // Log
+      await supabase.from("client_events").insert({
+        customer_id: customerId,
+        event_type: suspend ? "suspensao" : "reativacao",
+        title: suspend ? "Cliente suspenso" : "Cliente reativado",
+        description: `Status alterado para ${newStatus} via admin`,
+      });
       toast.success(suspend ? "Cliente suspenso" : "Cliente liberado");
       fetchAll();
     } catch (err: any) {
@@ -218,7 +232,7 @@ export default function AdminClientDetail({ customerId, onBack }: AdminClientDet
     );
   }
 
-  const isAnySuspended = contracts.some(c => c.service_status === "suspended");
+  const isAnySuspended = customer?.status_cliente === "suspenso" || contracts.some(c => c.service_status === "suspended");
   const bestContract = contracts[0];
   const bestProposal = proposals[0];
   const bestQuote = quotes[0];
@@ -230,6 +244,11 @@ export default function AdminClientDetail({ customerId, onBack }: AdminClientDet
   const nextDue = pendingPayments.find(p => p.due_date);
 
   const globalStatus = (() => {
+    const cs = customer?.status_cliente;
+    if (cs === "suspenso") return { text: "Suspenso", cls: "bg-red-500/15 text-red-400 border-red-500/25", icon: Ban };
+    if (cs === "cancelado") return { text: "Cancelado", cls: "bg-muted/50 text-muted-foreground border-border/60", icon: Ban };
+    if (cs === "inadimplente") return { text: "Inadimplente", cls: "bg-red-500/15 text-red-400 border-red-500/25", icon: AlertTriangle };
+    if (cs === "aguardando_ativacao") return { text: "Aguardando", cls: "bg-blue-500/15 text-blue-400 border-blue-500/25", icon: Clock };
     if (!contracts.length) return { text: "Lead", cls: "bg-muted/50 text-muted-foreground border-border/60", icon: Globe };
     if (isAnySuspended) return { text: "Suspenso", cls: "bg-red-500/15 text-red-400 border-red-500/25", icon: Ban };
     if (pendingPayments.some(p => p.payment_status === "OVERDUE")) return { text: "Inadimplente", cls: "bg-red-500/15 text-red-400 border-red-500/25", icon: AlertTriangle };

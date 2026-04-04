@@ -13,6 +13,7 @@ export interface ResolvedCustomer {
   responsavel: string;
   user_id: string | null;
   created_at: string;
+  status_cliente: string | null;
 }
 
 function buildDocumentVariants(input: string): string[] {

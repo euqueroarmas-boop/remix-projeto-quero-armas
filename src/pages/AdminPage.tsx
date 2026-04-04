@@ -563,7 +563,7 @@ function ClientesTab({ onOpenClient }: { onOpenClient?: (id: string) => void }) 
     setLoading(true);
     try {
       const results = await adminQuery([
-        { table: "customers", select: "id, razao_social, nome_fantasia, cnpj_ou_cpf, email, user_id, created_at", order: { column: "created_at", ascending: false } },
+        { table: "customers", select: "id, razao_social, nome_fantasia, cnpj_ou_cpf, email, user_id, created_at, status_cliente, suspended_at", order: { column: "created_at", ascending: false } },
         { table: "admin_audit_logs", select: "target_id, action, after_state, created_at", filters: [{ column: "action", op: "in", value: ["auto_user_created", "auto_user_creation_failed"] }], order: { column: "created_at", ascending: false } },
       ]);
       setCustomers((results[0].data as any[]) || []);
@@ -619,6 +619,19 @@ function ClientesTab({ onOpenClient }: { onOpenClient?: (id: string) => void }) 
     navigator.clipboard.writeText(text);
     setCopied(field);
     setTimeout(() => setCopied(""), 2000);
+  };
+
+  const getStatusBadge = (c: any) => {
+    const status = c.status_cliente || "ativo";
+    const map: Record<string, { label: string; cls: string }> = {
+      ativo: { label: "Ativo", cls: "border-emerald-500/25 bg-emerald-500/10 text-emerald-400" },
+      suspenso: { label: "Suspenso", cls: "border-red-500/25 bg-red-500/10 text-red-400" },
+      inadimplente: { label: "Inadimplente", cls: "border-amber-500/25 bg-amber-500/10 text-amber-400" },
+      cancelado: { label: "Cancelado", cls: "border-border/60 bg-muted/30 text-muted-foreground" },
+      aguardando_ativacao: { label: "Aguardando", cls: "border-blue-500/25 bg-blue-500/10 text-blue-400" },
+    };
+    const badge = map[status] || map.ativo;
+    return <span className={`inline-flex items-center px-1.5 py-0 rounded text-[9px] font-medium border ${badge.cls}`}>{badge.label}</span>;
   };
 
   const getAccessBadge = (c: any) => {
@@ -711,7 +724,7 @@ function ClientesTab({ onOpenClient }: { onOpenClient?: (id: string) => void }) 
             <div key={c.id} className="rounded-lg border border-border/60 bg-card p-3 space-y-2 cursor-pointer hover:border-primary/30 transition-colors" onClick={() => onOpenClient?.(c.id)}>
               <div className="flex items-center justify-between gap-2">
                 <p className="text-xs font-medium text-foreground truncate">{c.nome_fantasia || c.razao_social}</p>
-                {getAccessBadge(c)}
+                <div className="flex items-center gap-1">{getStatusBadge(c)}{getAccessBadge(c)}</div>
               </div>
               <div className="text-[11px] space-y-1 text-muted-foreground">
                 <p><span className="text-foreground/70">CNPJ/CPF:</span> {c.cnpj_ou_cpf}</p>
@@ -732,6 +745,7 @@ function ClientesTab({ onOpenClient }: { onOpenClient?: (id: string) => void }) 
                 <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Empresa</TableHead>
                 <TableHead className="text-[10px] uppercase tracking-wider font-semibold">CNPJ/CPF</TableHead>
                 <TableHead className="text-[10px] uppercase tracking-wider font-semibold">E-mail</TableHead>
+                <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Status</TableHead>
                 <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Acesso Portal</TableHead>
                 <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Origem</TableHead>
                 <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Cadastro</TableHead>
@@ -743,6 +757,7 @@ function ClientesTab({ onOpenClient }: { onOpenClient?: (id: string) => void }) 
                   <TableCell className="text-xs text-foreground font-medium">{c.nome_fantasia || c.razao_social}</TableCell>
                   <TableCell className="text-[11px] font-mono text-muted-foreground">{c.cnpj_ou_cpf}</TableCell>
                   <TableCell className="text-[11px] text-muted-foreground">{c.email}</TableCell>
+                  <TableCell>{getStatusBadge(c)}</TableCell>
                   <TableCell>{getAccessBadge(c)}</TableCell>
                   <TableCell className="text-[11px] text-muted-foreground">
                     {auditLogs[c.id]?.action === "auto_user_created" ? <span className="text-primary">🤖 Auto</span> : auditLogs[c.id]?.action === "auto_user_creation_failed" ? <span className="text-destructive">⚠️ Falha</span> : c.user_id ? "Manual" : "—"}
