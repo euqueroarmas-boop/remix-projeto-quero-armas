@@ -139,12 +139,13 @@ const UnifiedInfraCalculator = ({ contractHref = "/orcamento-ti", pageTitle }: P
       hosts: String(hosts),
       vms: String(vms),
       estacoes: String(workstations),
-      os: osType,
+      os_servidores: serverOs,
+      os_estacoes: wsOs,
       subtotal_servidores: String(serverSubtotal),
       subtotal_estacoes: String(wsSubtotal),
       total_mensal: String(totalMonthly),
     });
-    console.log("[WMTi] CHECKOUT_REDIRECT_RECORRENTE", { hosts, vms, workstations, osType, serverSubtotal, wsSubtotal, totalMonthly });
+    console.log("[WMTi] CHECKOUT_REDIRECT_RECORRENTE", { hosts, vms, workstations, serverOs, wsOs, serverSubtotal, wsSubtotal, totalMonthly });
     navigate(`${contractHref}?${params.toString()}`);
   };
 
