@@ -622,6 +622,7 @@ const ContractingWizard = ({
 
       // If already paid, redirect immediately
       if (data?.already_paid) {
+        checkoutStore.reset();
         navigate(`/compra-concluida?quote=${activeQuoteId}`);
         return;
       }
