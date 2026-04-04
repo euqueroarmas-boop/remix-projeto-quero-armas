@@ -108,6 +108,7 @@ const ContratarServicoPage = () => {
 
   // Hydrate store from URL params on mount
   const infraStore = useInfraStore();
+  const checkoutStore = useCheckoutStore();
   useEffect(() => {
     infraStore.hydrateFromParams(searchParams);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
