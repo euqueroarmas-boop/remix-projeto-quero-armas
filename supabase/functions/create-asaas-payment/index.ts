@@ -281,6 +281,62 @@ Deno.serve(async (req) => {
       }
     }
 
+    // ══════════════════════════════════════════════════════════
+    // PROVISION CLIENT ACCESS immediately after payment creation
+    // This ensures the customer, contract, and portal access
+    // exist in the system even before payment is confirmed.
+    // ══════════════════════════════════════════════════════════
+    if (quote_id) {
+      try {
+        // Update contract status to payment_pending
+        const { data: contractRows } = await supabase
+          .from("contracts")
+          .select("id, service_status")
+          .eq("quote_id", quote_id)
+          .order("created_at", { ascending: false })
+          .limit(1);
+
+        if (contractRows?.[0]) {
+          await supabase
+            .from("contracts")
+            .update({ service_status: "payment_pending", status: "active" })
+            .eq("id", contractRows[0].id);
+        }
+
+        // Provision client portal access (skip payment check)
+        const accessResult = await ensureClientAccess(supabase, quote_id, "payment_webhook", { skipPaymentCheck: true });
+        console.log("[create-asaas-payment] Client access provisioned:", JSON.stringify({
+          success: accessResult.success,
+          user_created: accessResult.user_created,
+          user_recovered: accessResult.user_recovered,
+          email: accessResult.email,
+        }));
+
+        // Add provisioning info to response
+        (normalizedResponse as any).client_provisioned = accessResult.success;
+        (normalizedResponse as any).client_email = accessResult.email;
+
+        await logSistemaBackend({
+          tipo: "checkout",
+          status: accessResult.success ? "success" : "warning",
+          mensagem: accessResult.success
+            ? "Acesso do cliente provisionado após criação da cobrança"
+            : `Provisionamento do cliente pendente: ${accessResult.error || "desconhecido"}`,
+          payload: { quote_id, billing_type, ...accessResult },
+        });
+      } catch (provisionErr) {
+        const msg = provisionErr instanceof Error ? provisionErr.message : "Unknown";
+        console.error("[create-asaas-payment] Erro ao provisionar acesso:", msg);
+        // Non-blocking — payment was already created successfully
+        await logSistemaBackend({
+          tipo: "checkout",
+          status: "warning",
+          mensagem: `Provisionamento do cliente falhou (não-bloqueante): ${msg}`,
+          payload: { quote_id },
+        });
+      }
+    }
+
     await supabase.from("integration_logs").insert({
       integration_name: "asaas",
       operation_name: "create_payment_success",
