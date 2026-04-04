@@ -82,6 +82,11 @@ export default function AdminClientDetail({ customerId, onBack }: AdminClientDet
   const [newPwd, setNewPwd] = useState("");
   const [resetPwdLoading, setResetPwdLoading] = useState(false);
   const [generatedPwd, setGeneratedPwd] = useState("");
+  const [lgpdOpen, setLgpdOpen] = useState(false);
+  const [lgpdReason, setLgpdReason] = useState("");
+  const [lgpdConfirm, setLgpdConfirm] = useState("");
+  const [lgpdLoading, setLgpdLoading] = useState(false);
+  const [lgpdResult, setLgpdResult] = useState<any>(null);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
