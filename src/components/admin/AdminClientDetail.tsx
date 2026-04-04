@@ -19,6 +19,7 @@ import {
   ArrowLeft, Edit, FileText, CreditCard, Copy, Send, Ban, CheckCircle, Loader2,
   Save, X, MessageSquare, ExternalLink, RefreshCw, Phone, Mail, Building2, MapPin, User, Calendar,
   KeyRound, Shield, Globe, Clock, Hash, Briefcase, Award, Activity, Eye, Link2, AlertTriangle,
+  Trash2, ShieldAlert,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
