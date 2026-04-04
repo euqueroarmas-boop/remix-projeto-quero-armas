@@ -45,6 +45,7 @@ const DevChatPanel = lazy(() => import("@/components/admin/DevChatPanel"));
 const AdminDigitalSignature = lazy(() => import("@/components/admin/AdminDigitalSignature"));
 const AdminCertDiagnostic = lazy(() => import("@/components/admin/AdminCertDiagnostic"));
 const AdminCipaLocations = lazy(() => import("@/components/admin/AdminCipaLocations"));
+const AdminClientDetail = lazy(() => import("@/components/admin/AdminClientDetail"));
 const ServicesBuilder = lazy(() => import("@/components/admin/cms/ServicesBuilder"));
 const SegmentsBuilder = lazy(() => import("@/components/admin/cms/SegmentsBuilder"));
 const PricingEngine = lazy(() => import("@/components/admin/cms/PricingEngine"));
@@ -119,7 +120,7 @@ const NAV_GROUPS = [
   },
 ];
 
-const NAV_SECTION_IDS = new Set(NAV_GROUPS.flatMap((group) => group.items.map((item) => item.id)));
+const NAV_SECTION_IDS = new Set([...NAV_GROUPS.flatMap((group) => group.items.map((item) => item.id)), "clientes-detail"]);
 
 // ─── Login ───
 function AdminLogin({ onLogin }: { onLogin: () => void }) {
@@ -545,7 +546,7 @@ function PaymentsTab() {
 }
 
 // ─── Clientes Tab ───
-function ClientesTab() {
+function ClientesTab({ onOpenClient }: { onOpenClient?: (id: string) => void }) {
   const isMobile = useIsMobile();
   const [customers, setCustomers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -701,8 +702,8 @@ function ClientesTab() {
         <div className="text-center py-16 text-muted-foreground text-sm">Nenhum cliente cadastrado</div>
       ) : isMobile ? (
         <div className="space-y-2">
-          {customers.map((c) => (
-            <div key={c.id} className="rounded-lg border border-border/60 bg-card p-3 space-y-2">
+         {customers.map((c) => (
+            <div key={c.id} className="rounded-lg border border-border/60 bg-card p-3 space-y-2 cursor-pointer hover:border-primary/30 transition-colors" onClick={() => onOpenClient?.(c.id)}>
               <div className="flex items-center justify-between gap-2">
                 <p className="text-xs font-medium text-foreground truncate">{c.nome_fantasia || c.razao_social}</p>
                 {getAccessBadge(c)}
@@ -733,7 +734,7 @@ function ClientesTab() {
             </TableHeader>
             <TableBody>
               {customers.map((c) => (
-                <TableRow key={c.id} className="border-border/30 hover:bg-muted/20">
+                <TableRow key={c.id} className="border-border/30 hover:bg-muted/20 cursor-pointer" onClick={() => onOpenClient?.(c.id)}>
                   <TableCell className="text-xs text-foreground font-medium">{c.nome_fantasia || c.razao_social}</TableCell>
                   <TableCell className="text-[11px] font-mono text-muted-foreground">{c.cnpj_ou_cpf}</TableCell>
                   <TableCell className="text-[11px] text-muted-foreground">{c.email}</TableCell>
@@ -753,12 +754,16 @@ function ClientesTab() {
 }
 
 // ─── Content Renderer ───
-function AdminContent({ activeSection, onNavigate }: { activeSection: string; onNavigate: (s: string) => void }) {
+function AdminContent({ activeSection, onNavigate, clientId }: { activeSection: string; onNavigate: (s: string) => void; clientId?: string }) {
   const fallback = (
     <div className="flex items-center justify-center py-16 text-muted-foreground text-sm">
       <Loader2 className="h-5 w-5 animate-spin mr-2" />Carregando módulo...
     </div>
   );
+
+  if (activeSection === "clientes-detail" && clientId) {
+    return <Suspense fallback={fallback}><AdminClientDetail customerId={clientId} onBack={() => onNavigate("clientes")} /></Suspense>;
+  }
 
   switch (activeSection) {
     case "dashboard": return <AdminCommandCenter onNavigate={onNavigate} />;
@@ -766,7 +771,7 @@ function AdminContent({ activeSection, onNavigate }: { activeSection: string; on
     case "errors": return <LogsTab onlyErrors />;
     case "financeiro": return <Suspense fallback={fallback}><AdminFinanceiro /></Suspense>;
     case "payments": return <PaymentsTab />;
-    case "clientes": return <ClientesTab />;
+    case "clientes": return <ClientesTab onOpenClient={(id) => onNavigate(`clientes-detail?id=${id}`)} />;
     case "leads": return <AdminLeadsProposals />;
     case "security": return <AdminSecurityEvents />;
     case "webhooks": return <AdminWebhooks />;
@@ -889,11 +894,14 @@ export default function AdminPage() {
   const [authed, setAuthed] = useState(!!getValidAdminToken());
   const [menuOpen, setMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [clientDetailId, setClientDetailId] = useState<string | null>(null);
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const { section } = useParams<{ section?: string }>();
 
-  const activeSection = !section ? "dashboard" : NAV_SECTION_IDS.has(section) ? section : "dashboard";
+  const activeSection = clientDetailId
+    ? "clientes-detail"
+    : !section ? "dashboard" : NAV_SECTION_IDS.has(section) ? section : "dashboard";
 
   useEffect(() => {
     const syncSession = () => setAuthed(!!getValidAdminToken());
@@ -913,6 +921,13 @@ export default function AdminPage() {
     }
   }, [navigate, section]);
 
+  // Reset client detail when navigating away from clientes
+  useEffect(() => {
+    if (section !== "clientes" && section !== "clientes-detail") {
+      setClientDetailId(null);
+    }
+  }, [section]);
+
   if (!authed) return <AdminLogin onLogin={() => setAuthed(true)} />;
 
   const handleLogout = () => {
@@ -922,10 +937,20 @@ export default function AdminPage() {
 
   const handleNavClick = (id: string) => {
     setMenuOpen(false);
+    // Handle client detail navigation
+    if (id.startsWith("clientes-detail?id=")) {
+      const cid = id.replace("clientes-detail?id=", "");
+      setClientDetailId(cid);
+      navigate("/admin/clientes-detail");
+      return;
+    }
+    setClientDetailId(null);
     navigate(id === "dashboard" ? "/admin" : `/admin/${id}`);
   };
 
-  const currentLabel = NAV_GROUPS.flatMap(g => g.items).find(i => i.id === activeSection)?.label || "Dashboard";
+  const currentLabel = clientDetailId
+    ? "Detalhe do Cliente"
+    : NAV_GROUPS.flatMap(g => g.items).find(i => i.id === activeSection)?.label || "Dashboard";
 
   return (
     <div className="min-h-screen bg-background text-foreground flex" data-testid="admin-authenticated">
@@ -933,7 +958,7 @@ export default function AdminPage() {
       <AdminFullscreenMenu
         open={menuOpen}
         onClose={() => setMenuOpen(false)}
-        activeSection={activeSection}
+        activeSection={activeSection === "clientes-detail" ? "clientes" : activeSection}
         onNavigate={handleNavClick}
         onLogout={handleLogout}
       />
@@ -941,7 +966,7 @@ export default function AdminPage() {
       {/* Sidebar - Desktop */}
       {!isMobile && (
         <AdminSidebar
-          activeSection={activeSection}
+          activeSection={activeSection === "clientes-detail" ? "clientes" : activeSection}
           onNavigate={handleNavClick}
           collapsed={sidebarCollapsed}
           onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
@@ -958,7 +983,7 @@ export default function AdminPage() {
 
         {/* Page Content */}
         <main className="flex-1 p-4 md:p-6 overflow-auto">
-          <AdminContent activeSection={activeSection} onNavigate={handleNavClick} />
+          <AdminContent activeSection={activeSection} onNavigate={handleNavClick} clientId={clientDetailId || undefined} />
         </main>
       </div>
     </div>
