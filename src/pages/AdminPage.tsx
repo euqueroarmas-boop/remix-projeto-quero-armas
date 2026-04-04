@@ -702,8 +702,8 @@ function ClientesTab({ onOpenClient }: { onOpenClient?: (id: string) => void }) 
         <div className="text-center py-16 text-muted-foreground text-sm">Nenhum cliente cadastrado</div>
       ) : isMobile ? (
         <div className="space-y-2">
-          {customers.map((c) => (
-            <div key={c.id} className="rounded-lg border border-border/60 bg-card p-3 space-y-2">
+         {customers.map((c) => (
+            <div key={c.id} className="rounded-lg border border-border/60 bg-card p-3 space-y-2 cursor-pointer hover:border-primary/30 transition-colors" onClick={() => onOpenClient?.(c.id)}>
               <div className="flex items-center justify-between gap-2">
                 <p className="text-xs font-medium text-foreground truncate">{c.nome_fantasia || c.razao_social}</p>
                 {getAccessBadge(c)}
