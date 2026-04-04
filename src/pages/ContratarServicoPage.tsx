@@ -96,6 +96,8 @@ const ContratarServicoPage = () => {
   const isRentalContract = slug === "locacao-de-computadores-para-empresas-jacarei";
   const isServerAdmin = slug === "administracao-de-servidores";
   const isSupportTi = slug === "suporte-ti-jacarei";
+  const isWebDev = slug === "desenvolvimento-de-sites-e-sistemas-web";
+  const isFromServiceCalc = searchParams.get("source") === "service_calculator";
   const selectedRentalPlanId = searchParams.get("plano") || "equilibrio";
   const selectedRentalQty = Math.max(1, Number(searchParams.get("qty") || 1));
   const selectedRentalPlan = plans.find((item) => item.id === selectedRentalPlanId) || plans[1];
