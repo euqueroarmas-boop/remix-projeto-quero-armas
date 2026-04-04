@@ -98,6 +98,16 @@ const NAV_GROUPS = [
     ],
   },
   {
+    label: "CMS",
+    items: [
+      { id: "services-builder", label: "Serviços", icon: Wrench },
+      { id: "segments-builder", label: "Segmentos", icon: Layers },
+      { id: "pricing-engine", label: "Precificação", icon: Calculator },
+      { id: "block-library", label: "Blocos", icon: LayoutGrid },
+      { id: "sitemap-manager", label: "Sitemap", icon: Globe },
+    ],
+  },
+  {
     label: "Configurações",
     items: [
       { id: "digital-signature", label: "Assinatura Digital", icon: FileSignature },
