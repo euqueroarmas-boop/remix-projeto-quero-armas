@@ -170,10 +170,10 @@ const ContratarServicoPage = () => {
   );
 
   // Calculations
-  const unitPrice = priceTable[Math.min(hours, 8)] ?? (isEmergency ? 217.5 : 145);
+  const unitPrice = webDevPayload ? webDevPayload.valorHora : (priceTable[Math.min(hours, 8)] ?? (isEmergency ? 217.5 : 145));
   const fullPrice = hours * basePrice;
-  const promoPrice = hours * unitPrice;
-  const savings = fullPrice - promoPrice;
+  const promoPrice = webDevPayload ? webDevPayload.totalFinal : hours * unitPrice;
+  const savings = webDevPayload ? webDevPayload.descontoAplicado : fullPrice - promoPrice;
   const discountPct = hours > 1 ? Math.round(((basePrice - unitPrice) / basePrice) * 100) : 0;
 
   useEffect(() => { window.scrollTo(0, 0); }, [slug]);
