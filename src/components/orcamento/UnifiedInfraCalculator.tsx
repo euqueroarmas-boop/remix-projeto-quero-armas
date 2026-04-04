@@ -6,11 +6,14 @@ import { openWhatsApp } from "@/lib/whatsapp";
 import { useInfraStore } from "@/stores/useInfraStore";
 
 /* ── Pricing constants ── */
-const HOST_PRICE = 350;
-const VM_PRICE = 200;
 const WORKSTATION_BASE = 150;
 const MAX_AUTO_WORKSTATIONS = 30;
 const MAX_DISCOUNT_PCT = 27.5;
+
+function getServerPrices(os: ServerOsType) {
+  if (os === "linux") return { host: 500, vm: 350 };
+  return { host: 350, vm: 200 };
+}
 
 /* Progressive discount: linear from 0% at 1 station to 27.5% at 30 stations */
 function workstationDiscount(qty: number): number {
