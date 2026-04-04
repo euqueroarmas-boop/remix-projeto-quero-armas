@@ -198,6 +198,26 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Failed to create/find Asaas customer", details: customerData }, 400);
       }
       asaasCustomerId = searchData.data[0].id;
+
+      // Update existing customer with full data from checkout
+      try {
+        const updateRes = await fetch(`${ASAAS_BASE_URL}/customers/${asaasCustomerId}`, {
+          method: "PUT",
+          headers: asaasHeaders,
+          body: JSON.stringify(customerPayload),
+        });
+        const updateData = await updateRes.json();
+        console.log("[create-asaas-payment] Cliente atualizado no Asaas:", JSON.stringify(updateData));
+        await supabase.from("integration_logs").insert({
+          integration_name: "asaas",
+          operation_name: "update_customer",
+          request_payload: customerPayload,
+          response_payload: updateData,
+          status: updateRes.ok ? "success" : "warning",
+        });
+      } catch (updateErr) {
+        console.error("[create-asaas-payment] Erro ao atualizar cliente:", updateErr);
+      }
     }
 
     await supabase.from("integration_logs").insert({
