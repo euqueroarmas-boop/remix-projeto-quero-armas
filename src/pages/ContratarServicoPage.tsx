@@ -133,8 +133,25 @@ const ContratarServicoPage = () => {
   const serverMonthlyValue = Math.round(serverBaseValue * slaMultiplier * critMultiplier * 100) / 100;
 
   // Flow state
-  const [currentStep, setCurrentStep] = useState<FlowStep>("calculator");
-  const [hours, setHours] = useState(1);
+  const [currentStep, setCurrentStep] = useState<FlowStep>(
+    isWebDev && isFromServiceCalc && searchParams.get("horas") ? "registration" : "calculator"
+  );
+  const webDevPayload = isWebDev && isFromServiceCalc ? {
+    tipoProjeto: searchParams.get("tipoProjeto") || "",
+    horas: Number(searchParams.get("horas") || 1),
+    complexidade: searchParams.get("complexidade") || "",
+    urgencia: searchParams.get("urgencia") || "",
+    prazo: searchParams.get("prazo") || "",
+    continuidade: searchParams.get("continuidade") || "",
+    observacoes: searchParams.get("observacoes") || "",
+    valorHora: Number(searchParams.get("valorHora") || 200),
+    subtotal: Number(searchParams.get("subtotal") || 0),
+    descontoAplicado: Number(searchParams.get("descontoAplicado") || 0),
+    multiplicadorPrazoUrgencia: Number(searchParams.get("multiplicadorPrazoUrgencia") || 1),
+    multiplicadorComplexidade: Number(searchParams.get("multiplicadorComplexidade") || 1),
+    totalFinal: Number(searchParams.get("totalFinal") || 0),
+  } : null;
+  const [hours, setHours] = useState(webDevPayload?.horas || 1);
   const [registrationData, setRegistrationData] = useState<RegistrationData | null>(null);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [contractId, setContractId] = useState<string | null>(null);
