@@ -20,6 +20,7 @@ function formatDate(d: string) {
 interface Props {
   customer: CustomerData;
   onNavigate: (tab: string) => void;
+  accessLevel?: "restricted" | "full";
 }
 
 export default function PortalOverview({ customer, onNavigate }: Props) {
