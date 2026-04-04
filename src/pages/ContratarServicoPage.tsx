@@ -112,8 +112,9 @@ const ContratarServicoPage = () => {
   const serverHosts = infraStore.recorrente.hosts;
   const serverVms = infraStore.recorrente.vms;
   const serverEstacoes = infraStore.recorrente.estacoes;
-  const SERVER_HOST_PRICE = 350;
-  const SERVER_VM_PRICE = 200;
+  const serverOsType = infraStore.recorrente.sistemaServidores;
+  const SERVER_HOST_PRICE = serverOsType === "linux" ? 500 : 350;
+  const SERVER_VM_PRICE = serverOsType === "linux" ? 350 : 200;
   const WORKSTATION_BASE = 150;
   const MAX_DISCOUNT_PCT = 27.5;
   const MAX_AUTO_WS = 30;
