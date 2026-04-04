@@ -197,10 +197,7 @@ Deno.serve(async (req) => {
     console.log("[create-asaas-payment] Criando cobrança...", JSON.stringify(paymentPayload));
     const paymentRes = await fetch(`${ASAAS_BASE_URL}/payments`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        access_token: ASAAS_API_KEY,
-      },
+      headers: asaasHeaders,
       body: JSON.stringify(paymentPayload),
     });
 
