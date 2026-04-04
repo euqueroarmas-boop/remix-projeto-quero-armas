@@ -52,6 +52,7 @@ const SERVICE_CATALOG: ServiceInfo[] = [
   { name: "Suporte Técnico Para Redes Corporativas", slug: "suporte-tecnico-para-redes-corporativas", isEmergency: false },
   { name: "Suporte Windows Server", slug: "suporte-windows-server", isEmergency: false },
   { name: "Terceirização De TI", slug: "terceirizacao-de-mao-de-obra-ti", isEmergency: false },
+  { name: "Desenvolvimento De Sites E Sistemas Web", slug: "desenvolvimento-de-sites-e-sistemas-web", isEmergency: false },
 ];
 
 const CARTORIO_SEGMENT_CHECKOUT_ALIASES = new Set([

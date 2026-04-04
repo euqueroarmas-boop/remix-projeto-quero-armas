@@ -83,7 +83,7 @@ const DesenvolvimentoWebPage = () => {
             <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">// {t("custom.devWeb.deliverablesTag")}</p>
             <h2 className="text-2xl md:text-4xl mb-12">{t("custom.devWeb.deliverablesTitle")}</h2>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-px bg-border">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-px">
               {deliverables.map((block, i) => {
                 const Icon = block.icon;
                 return (
@@ -93,7 +93,7 @@ const DesenvolvimentoWebPage = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ delay: i * 0.08 }}
-                    className="bg-background p-6 md:p-8"
+                    className="bg-secondary p-6 md:p-8"
                   >
                     <div className="flex items-center gap-3 mb-4">
                       <Icon size={20} className="text-primary" strokeWidth={1.5} />
