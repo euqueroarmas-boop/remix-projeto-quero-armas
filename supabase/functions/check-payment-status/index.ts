@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
     }
 
     const asaasRes = await fetch(`${ASAAS_BASE_URL}/payments/${payment.asaas_payment_id}`, {
-      headers: { access_token: ASAAS_API_KEY },
+      headers: { access_token: ASAAS_API_KEY, "User-Agent": "WMTi-Integration/1.0" },
     });
 
     if (!asaasRes.ok) {

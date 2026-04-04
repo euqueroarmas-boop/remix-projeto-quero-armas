@@ -13,17 +13,23 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Verify Asaas webhook token
+  // Verify Asaas webhook token — MANDATORY in production
   const ASAAS_WEBHOOK_TOKEN = Deno.env.get("ASAAS_WEBHOOK_TOKEN");
-  if (ASAAS_WEBHOOK_TOKEN) {
-    const incomingToken = req.headers.get("asaas-access-token");
-    if (!incomingToken || incomingToken !== ASAAS_WEBHOOK_TOKEN) {
-      console.error("[asaas-webhook] Token de webhook inválido ou ausente");
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+  if (!ASAAS_WEBHOOK_TOKEN) {
+    console.error("[asaas-webhook] ASAAS_WEBHOOK_TOKEN não configurado — rejeitando requisição");
+    return new Response(JSON.stringify({ error: "Webhook token not configured" }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+  const incomingToken = req.headers.get("asaas-access-token");
+  if (!incomingToken || incomingToken !== ASAAS_WEBHOOK_TOKEN) {
+    console.error("[asaas-webhook] Token de webhook inválido ou ausente. Recebido:", incomingToken ? "***" : "null");
+    await logSistemaBackend({ tipo: "webhook", status: "error", mensagem: "Webhook rejeitado — token inválido" });
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;

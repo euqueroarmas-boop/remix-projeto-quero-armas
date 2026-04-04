@@ -203,7 +203,7 @@ Deno.serve(async (req) => {
     // List payments for this subscription to get the first one
     try {
       const paymentsRes = await fetch(`${ASAAS_BASE_URL}/subscriptions/${subData.id}/payments`, {
-        headers: { access_token: ASAAS_API_KEY },
+        headers: { access_token: ASAAS_API_KEY, "User-Agent": "WMTi-Integration/1.0" },
       });
       const paymentsData = await paymentsRes.json();
       const firstPayment = paymentsData.data?.[0];

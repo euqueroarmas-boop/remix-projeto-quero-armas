@@ -222,7 +222,7 @@ Deno.serve(async (req) => {
     if (billing_type === "PIX" && paymentData.id) {
       try {
         const pixQrRes = await fetch(`${ASAAS_BASE_URL}/payments/${paymentData.id}/pixQrCode`, {
-          headers: { access_token: ASAAS_API_KEY },
+          headers: { access_token: ASAAS_API_KEY, "User-Agent": "WMTi-Integration/1.0" },
         });
         const pixQrData = await pixQrRes.json();
         console.log("[create-asaas-payment] Resposta QR Code PIX:", JSON.stringify(pixQrData));
