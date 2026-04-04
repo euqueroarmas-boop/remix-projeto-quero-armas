@@ -11,6 +11,7 @@ import Footer from "@/components/Footer";
 import SeoHead from "@/components/SeoHead";
 import JsonLd from "@/components/JsonLd";
 import { openWhatsApp } from "@/lib/whatsapp";
+import WebDevCalculator from "@/components/orcamento/WebDevCalculator";
 
 const deliverableIcons = [Zap, ShieldCheck, Mail, CreditCard, Link2, Brain, Workflow];
 
