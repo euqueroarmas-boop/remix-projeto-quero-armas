@@ -1,9 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
-import { Server, Layers, Monitor, Minus, Plus, ArrowRight, MessageCircle, TrendingDown, AlertTriangle } from "lucide-react";
+import { Server, Layers, Monitor, Minus, Plus, ArrowRight, MessageCircle, TrendingDown, AlertTriangle, Shield, Zap } from "lucide-react";
 import { openWhatsApp } from "@/lib/whatsapp";
-import { useInfraStore } from "@/stores/useInfraStore";
+import { useInfraStore, SLA_MULTIPLIER, CRITICIDADE_MULTIPLIER, SLA_LABELS, CRITICIDADE_LABELS, type SlaType, type CriticidadeType } from "@/stores/useInfraStore";
 
 /* ── Pricing constants ── */
 const WORKSTATION_BASE = 150;
