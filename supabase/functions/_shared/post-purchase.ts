@@ -106,6 +106,64 @@ async function listAllUsersByEmail(supabase: SupabaseClient, email: string) {
   return null;
 }
 
+/**
+ * Deduplicate customers: if multiple records exist for the same email/cnpj,
+ * find the canonical one (the one with user_id set, or the oldest).
+ * Update the contract to point to the canonical customer.
+ */
+async function resolveCanonicalCustomer(
+  supabase: SupabaseClient,
+  customer: { id: string; email: string; cnpj_ou_cpf: string; user_id: string | null; razao_social: string; responsavel: string },
+  contractId: string,
+): Promise<typeof customer> {
+  // If this customer already has user_id, it's the canonical one
+  if (customer.user_id) return customer;
+
+  // Look for another customer with same email or CNPJ that already has user_id
+  const normalizedCnpj = customer.cnpj_ou_cpf.replace(/\D/g, "");
+
+  const { data: linkedCustomers } = await supabase
+    .from("customers")
+    .select("id, user_id, email, razao_social, cnpj_ou_cpf, responsavel")
+    .not("user_id", "is", null)
+    .or(`email.eq.${customer.email},cnpj_ou_cpf.eq.${customer.cnpj_ou_cpf}`)
+    .limit(1);
+
+  if (linkedCustomers?.[0]) {
+    const canonical = linkedCustomers[0];
+    console.log(`[post-purchase] Dedup: reutilizando customer ${canonical.id} (já vinculado) em vez de ${customer.id}`);
+
+    // Point the contract to the canonical customer
+    await supabase
+      .from("contracts")
+      .update({ customer_id: canonical.id })
+      .eq("id", contractId);
+
+    return canonical;
+  }
+
+  // Also try normalized CNPJ match
+  if (normalizedCnpj.length >= 11) {
+    const { data: cnpjMatches } = await supabase
+      .from("customers")
+      .select("id, user_id, email, razao_social, cnpj_ou_cpf, responsavel")
+      .not("user_id", "is", null)
+      .limit(50);
+
+    const match = cnpjMatches?.find(c => c.cnpj_ou_cpf.replace(/\D/g, "") === normalizedCnpj);
+    if (match) {
+      console.log(`[post-purchase] Dedup CNPJ: reutilizando customer ${match.id} em vez de ${customer.id}`);
+      await supabase
+        .from("contracts")
+        .update({ customer_id: match.id })
+        .eq("id", contractId);
+      return match;
+    }
+  }
+
+  return customer;
+}
+
 export async function getPostPurchaseContext(
   supabase: SupabaseClient,
   args: { quoteId?: string; contractId?: string },
@@ -188,7 +246,9 @@ export async function ensureClientAccess(
     };
   }
 
-  const customer = context.customer;
+  // ── DEDUPLICATION: resolve canonical customer ──
+  let customer = await resolveCanonicalCustomer(supabase, context.customer, context.contract.id);
+
   if (!customer.email) {
     return {
       success: false,
@@ -203,6 +263,7 @@ export async function ensureClientAccess(
   let userCreated = false;
   let userRecovered = false;
 
+  // Step 1: check if customer already has linked auth user
   if (customer.user_id) {
     const { data, error } = await supabase.auth.admin.getUserById(customer.user_id);
     if (!error && data?.user) {
@@ -210,11 +271,13 @@ export async function ensureClientAccess(
     }
   }
 
+  // Step 2: fallback — search by email in auth
   if (!authUser) {
     authUser = await listAllUsersByEmail(supabase, customer.email);
     if (authUser && customer.user_id !== authUser.id) {
       await supabase.from("customers").update({ user_id: authUser.id }).eq("id", customer.id);
       userRecovered = true;
+      console.log(`[post-purchase] Recovered user link: customer ${customer.id} → user ${authUser.id}`);
     }
   }
 
@@ -233,6 +296,7 @@ export async function ensureClientAccess(
     || !existingMetadata.created_via;
 
   if (!authUser) {
+    // Step 3: Create new auth user
     tempPassword = generateTempPassword();
     const { data, error } = await supabase.auth.admin.createUser({
       email: customer.email,
@@ -254,7 +318,10 @@ export async function ensureClientAccess(
     authUser = data.user;
     userCreated = true;
 
+    // CRITICAL: Link user to customer immediately
     await supabase.from("customers").update({ user_id: authUser.id }).eq("id", customer.id);
+    console.log(`[post-purchase] Created user ${authUser.id} and linked to customer ${customer.id}`);
+
     await supabase.from("client_events").insert({
       customer_id: customer.id,
       event_type: "cadastro",
@@ -283,8 +350,27 @@ export async function ensureClientAccess(
     userRecovered = true;
   }
 
+  // CRITICAL: Final verification — ensure user_id is set on customer
   if (customer.user_id !== authUser.id) {
     await supabase.from("customers").update({ user_id: authUser.id }).eq("id", customer.id);
+    console.log(`[post-purchase] Final link fix: customer ${customer.id} → user ${authUser.id}`);
+  }
+
+  // Also link any OTHER customer records with same email/cnpj that are missing user_id
+  const normalizedCnpj = customer.cnpj_ou_cpf.replace(/\D/g, "");
+  const { data: orphanCustomers } = await supabase
+    .from("customers")
+    .select("id, cnpj_ou_cpf")
+    .is("user_id", null)
+    .eq("email", customer.email);
+
+  if (orphanCustomers?.length) {
+    for (const orphan of orphanCustomers) {
+      if (orphan.cnpj_ou_cpf.replace(/\D/g, "") === normalizedCnpj) {
+        await supabase.from("customers").update({ user_id: authUser.id }).eq("id", orphan.id);
+        console.log(`[post-purchase] Fixed orphan customer ${orphan.id} → user ${authUser.id}`);
+      }
+    }
   }
 
   return {

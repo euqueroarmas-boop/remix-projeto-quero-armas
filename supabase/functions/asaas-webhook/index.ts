@@ -43,6 +43,24 @@ Deno.serve(async (req) => {
     console.log("[asaas-webhook] Evento recebido:", event, "Payment ID:", payment?.id);
     await logSistemaBackend({ tipo: "webhook", status: "info", mensagem: `Webhook recebido: ${event}`, payload: { event, paymentId: payment?.id } });
 
+    // ── IDEMPOTENCY CHECK ──
+    // Use event + payment.id as idempotency key
+    const idempotencyKey = `${event}:${payment?.id || body.id || "unknown"}`;
+    const { data: existingWebhook } = await supabase
+      .from("asaas_webhooks")
+      .select("id, processed")
+      .eq("event", event)
+      .eq("payload->>id", body.id || "")
+      .limit(1);
+
+    if (existingWebhook?.[0]?.processed) {
+      console.log("[asaas-webhook] Evento já processado (idempotência):", idempotencyKey);
+      return new Response(JSON.stringify({ received: true, idempotent: true }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Log webhook event
     await supabase.from("asaas_webhooks").insert({
       event: event,
@@ -81,8 +99,6 @@ Deno.serve(async (req) => {
     }
 
     // Find payment record — try by payment ID first, then by subscription ID.
-    // Important: this table may contain historical duplicates for the same quote,
-    // so we always pick the most recent record.
     let paymentRecord: { id: string; quote_id: string | null } | null = null;
 
     const { data: byPaymentIdRows } = await supabase
@@ -173,6 +189,52 @@ Deno.serve(async (req) => {
       .update({ payment_status: newStatus })
       .eq("id", paymentRecord.id);
 
+    // ── PAYMENT_CREATED: Backup provisioning (in case create-asaas-payment didn't do it) ──
+    if (event === "PAYMENT_CREATED" && paymentRecord.quote_id) {
+      console.log("[asaas-webhook] PAYMENT_CREATED — verificando provisionamento de acesso...");
+      try {
+        const accessResult = await ensureClientAccess(supabase, paymentRecord.quote_id, "payment_webhook", { skipPaymentCheck: true });
+        if (accessResult.success) {
+          console.log("[asaas-webhook] Acesso provisionado via PAYMENT_CREATED:", accessResult.email);
+          await logSistemaBackend({
+            tipo: "webhook",
+            status: "success",
+            mensagem: "Acesso do cliente provisionado via PAYMENT_CREATED (backup)",
+            payload: {
+              quote_id: paymentRecord.quote_id,
+              user_created: accessResult.user_created,
+              user_recovered: accessResult.user_recovered,
+              email: accessResult.email,
+            },
+          });
+
+          if (accessResult.user_created || accessResult.user_recovered) {
+            const { data: contractRows } = await supabase
+              .from("contracts")
+              .select("customer_id")
+              .eq("quote_id", paymentRecord.quote_id)
+              .limit(1);
+            if (contractRows?.[0]?.customer_id) {
+              await supabase.from("admin_audit_logs").insert({
+                action: accessResult.user_created ? "auto_user_created" : "auto_user_recovered",
+                target_type: "customer",
+                target_id: contractRows[0].customer_id,
+                after_state: { ...accessResult, source: "webhook_payment_created" },
+              });
+            }
+          }
+        }
+      } catch (e) {
+        console.error("[asaas-webhook] Erro ao provisionar via PAYMENT_CREATED:", e);
+        await logSistemaBackend({
+          tipo: "webhook",
+          status: "warning",
+          mensagem: `Provisionamento backup falhou (PAYMENT_CREATED): ${e instanceof Error ? e.message : String(e)}`,
+          payload: { quote_id: paymentRecord.quote_id },
+        });
+      }
+    }
+
     // ── Payment confirmed: activate contract + create client account ──
     if (event === "PAYMENT_RECEIVED" || event === "PAYMENT_CONFIRMED") {
       console.log("[asaas-webhook] Pagamento confirmado! Ativando contrato e criando acesso...");
@@ -214,7 +276,20 @@ Deno.serve(async (req) => {
                 action: accessResult.user_created ? "auto_user_created" : accessResult.user_recovered ? "auto_user_recovered" : "auto_user_verified",
                 target_type: "customer",
                 target_id: contractData.customer_id,
-                after_state: accessResult,
+                after_state: { ...accessResult, source: "webhook_payment_confirmed" },
+              });
+
+              await logSistemaBackend({
+                tipo: "webhook",
+                status: "success",
+                mensagem: "Acesso completo liberado após confirmação de pagamento",
+                payload: {
+                  quote_id: paymentRecord.quote_id,
+                  customer_id: contractData.customer_id,
+                  user_id: accessResult.user_id,
+                  user_created: accessResult.user_created,
+                  email: accessResult.email,
+                },
               });
 
               const pdfFunctionUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/generate-paid-contract-pdf`;
@@ -246,7 +321,7 @@ Deno.serve(async (req) => {
               tipo: "erro",
               status: "error",
               mensagem: "Exceção ao garantir conta automática",
-              payload: { email: customer.email, error: String(e) },
+              payload: { email: (customerInfo as any)?.email, error: String(e) },
             });
           }
         }
