@@ -225,6 +225,29 @@ export default function AdminClientDetail({ customerId, onBack }: AdminClientDet
     setResetPwdLoading(false);
   };
 
+  const handleLgpdDelete = async () => {
+    if (lgpdConfirm !== "EXCLUIR LGPD") return;
+    setLgpdLoading(true);
+    try {
+      const token = getValidAdminToken();
+      const res = await supabase.functions.invoke("lgpd-delete", {
+        body: { customer_id: customerId, reason: lgpdReason || "Solicitação do titular" },
+        headers: token ? { "x-admin-token": token } : {},
+      });
+      if (res.error || res.data?.error) {
+        toast.error(res.data?.error || "Erro na exclusão LGPD");
+        setLgpdLoading(false);
+        return;
+      }
+      setLgpdResult(res.data);
+      toast.success("Exclusão LGPD concluída com sucesso");
+      fetchAll();
+    } catch (err: any) {
+      toast.error(err.message || "Erro na exclusão LGPD");
+    }
+    setLgpdLoading(false);
+  };
+
   if (loading) {
     return <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
   }
@@ -234,6 +257,102 @@ export default function AdminClientDetail({ customerId, onBack }: AdminClientDet
       <div className="text-center py-20">
         <p className="text-muted-foreground text-sm">Cliente não encontrado</p>
         <Button variant="ghost" size="sm" onClick={onBack} className="mt-4 gap-1"><ArrowLeft className="h-3.5 w-3.5" />Voltar</Button>
+      </div>
+    );
+  }
+
+  // ── LGPD-deleted client: show minimal view ──
+  if (customer.status_cliente === "excluido_lgpd") {
+    return (
+      <div className="space-y-5">
+        <div className="rounded-xl border border-red-500/30 bg-red-500/5 p-6">
+          <div className="flex items-start gap-4">
+            <Button variant="ghost" size="sm" onClick={onBack} className="gap-1 text-muted-foreground hover:text-foreground h-8 shrink-0">
+              <ArrowLeft className="h-3.5 w-3.5" /> Voltar
+            </Button>
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-3">
+                <ShieldAlert className="h-6 w-6 text-red-400" />
+                <h1 className="text-xl font-bold text-foreground">Cliente Excluído — LGPD</h1>
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold border border-red-500/25 bg-red-500/15 text-red-400">
+                  <Trash2 className="h-3 w-3" /> Excluído LGPD
+                </span>
+              </div>
+              <p className="text-sm text-muted-foreground mb-4">
+                Os dados pessoais deste cliente foram permanentemente excluídos/anonimizados em conformidade com a LGPD. 
+                Apenas o lastro mínimo necessário para rastreabilidade contratual e financeira foi preservado.
+              </p>
+              <div className="grid grid-cols-2 gap-4 text-xs">
+                <div>
+                  <span className="text-muted-foreground block">ID Interno</span>
+                  <span className="font-mono text-foreground">{customer.id}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground block">Data de Cadastro</span>
+                  <span className="text-foreground">{fmtDate(customer.created_at)}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground block">Contratos Vinculados</span>
+                  <span className="text-foreground">{contracts.length}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground block">Data da Exclusão</span>
+                  <span className="text-foreground">{customer.suspended_at ? fmtDate(customer.suspended_at) : "—"}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {/* Minimal financial traceability */}
+        {contracts.length > 0 && (
+          <SectionCard icon={FileText} title="Lastro Contratual Mínimo">
+            <div className="overflow-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-border/40 hover:bg-transparent">
+                    <TableHead className="text-[10px] uppercase tracking-wider font-semibold">ID</TableHead>
+                    <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Tipo</TableHead>
+                    <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Valor</TableHead>
+                    <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Status</TableHead>
+                    <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Criação</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {contracts.map(c => (
+                    <TableRow key={c.id} className="border-border/30 hover:bg-muted/20">
+                      <TableCell className="text-[10px] font-mono text-muted-foreground">{c.id.slice(0, 8)}</TableCell>
+                      <TableCell className="text-[11px] text-muted-foreground">{c.contract_type || "—"}</TableCell>
+                      <TableCell className="text-[11px] font-mono text-foreground">{c.monthly_value ? fmt(Number(c.monthly_value)) : "—"}</TableCell>
+                      <TableCell><StatusBadge status={c.service_status} map={SERVICE_STATUS_MAP} /></TableCell>
+                      <TableCell className="text-[11px] text-muted-foreground font-mono">{fmtDate(c.created_at)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </SectionCard>
+        )}
+        {/* Timeline */}
+        <SectionCard icon={Activity} title="Histórico de Auditoria">
+          {events.length === 0 ? (
+            <p className="text-xs text-muted-foreground py-4 text-center">Nenhum evento registrado</p>
+          ) : (
+            <div className="relative pl-4 border-l border-border/30 space-y-3 max-h-[300px] overflow-y-auto">
+              {events.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 20).map((e: any, i: number) => (
+                <div key={i} className="relative">
+                  <div className="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full border-2 border-border bg-card" />
+                  <div className="flex items-start gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-foreground font-medium">{e.title}</p>
+                      {e.description && <p className="text-[10px] text-muted-foreground truncate">{e.description}</p>}
+                    </div>
+                    <span className="text-[10px] text-muted-foreground font-mono whitespace-nowrap shrink-0">{fmtDate(e.created_at)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </SectionCard>
       </div>
     );
   }
