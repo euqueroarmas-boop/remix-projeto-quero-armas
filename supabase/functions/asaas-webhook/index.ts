@@ -192,6 +192,17 @@ Deno.serve(async (req) => {
     // ── PAYMENT_CREATED: Backup provisioning (in case create-asaas-payment didn't do it) ──
     if (event === "PAYMENT_CREATED" && paymentRecord.quote_id) {
       console.log("[asaas-webhook] PAYMENT_CREATED — verificando provisionamento de acesso...");
+      // LGPD guard: check if customer is deleted before provisioning
+      const { data: contractCheck } = await supabase.from("contracts").select("customer_id").eq("quote_id", paymentRecord.quote_id).limit(1);
+      let lgpdBlocked = false;
+      if (contractCheck?.[0]?.customer_id) {
+        const { data: custCheck } = await supabase.from("customers").select("status_cliente").eq("id", contractCheck[0].customer_id).single();
+        if (custCheck?.status_cliente === "excluido_lgpd") {
+          lgpdBlocked = true;
+          console.log("[asaas-webhook] LGPD: cliente excluído, pulando provisionamento PAYMENT_CREATED");
+        }
+      }
+      if (!lgpdBlocked) {
       try {
         const accessResult = await ensureClientAccess(supabase, paymentRecord.quote_id, "payment_webhook", { skipPaymentCheck: true });
         if (accessResult.success) {
