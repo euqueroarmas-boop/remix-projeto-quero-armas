@@ -756,6 +756,69 @@ export default function AdminClientDetail({ customerId, onBack }: AdminClientDet
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* LGPD Deletion Dialog */}
+      <Dialog open={lgpdOpen} onOpenChange={setLgpdOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-400"><ShieldAlert className="h-5 w-5" /> Exclusão de Dados — LGPD</DialogTitle>
+            <DialogDescription>
+              Esta ação é <strong>irreversível</strong>. Os dados pessoais do cliente serão permanentemente excluídos ou anonimizados. 
+              Apenas o lastro mínimo necessário para rastreabilidade contratual e financeira será preservado.
+            </DialogDescription>
+          </DialogHeader>
+          {lgpdResult ? (
+            <div className="space-y-3">
+              <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-4">
+                <p className="text-sm font-semibold text-emerald-400 mb-2">✓ Exclusão LGPD concluída</p>
+                <div className="text-xs text-muted-foreground space-y-1">
+                  <p><strong className="text-foreground">Tabelas afetadas:</strong> {lgpdResult.affected_tables?.join(", ")}</p>
+                  <p><strong className="text-foreground">Campos excluídos:</strong> {lgpdResult.deleted_fields?.join(", ")}</p>
+                  <p><strong className="text-foreground">Campos anonimizados:</strong> {lgpdResult.anonymized_fields?.join(", ")}</p>
+                  <p><strong className="text-foreground">Lastro retido:</strong> {lgpdResult.retained_fields?.join(", ")}</p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-xs text-red-300">
+                <p className="font-semibold mb-1">⚠️ O que será excluído/anonimizado:</p>
+                <ul className="list-disc pl-4 space-y-0.5">
+                  <li>Nome, CPF/CNPJ, e-mail, telefone, WhatsApp, endereço</li>
+                  <li>Credenciais de acesso ao portal (conta deletada)</li>
+                  <li>Texto do contrato, IP, assinatura, user agent</li>
+                  <li>Dados de leads vinculados</li>
+                  <li>PII em logs do sistema</li>
+                </ul>
+                <p className="font-semibold mt-2 mb-1">O que será preservado (lastro mínimo):</p>
+                <ul className="list-disc pl-4 space-y-0.5">
+                  <li>IDs internos, tipo de contrato, valores, datas, status</li>
+                  <li>Registro de auditoria da exclusão</li>
+                </ul>
+              </div>
+              <div>
+                <label className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5 block">Motivo / Fundamento da Exclusão</label>
+                <Input value={lgpdReason} onChange={e => setLgpdReason(e.target.value)} placeholder="Solicitação do titular" className="bg-muted/30 border-border/50 text-xs h-8 text-foreground" />
+              </div>
+              <div>
+                <label className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5 block">
+                  Digite <span className="text-red-400 font-bold">EXCLUIR LGPD</span> para confirmar
+                </label>
+                <Input value={lgpdConfirm} onChange={e => setLgpdConfirm(e.target.value)} placeholder="EXCLUIR LGPD" className="bg-muted/30 border-red-500/30 text-xs h-8 text-foreground" />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" size="sm" onClick={() => setLgpdOpen(false)}>Fechar</Button>
+            {!lgpdResult && (
+              <Button size="sm" variant="destructive" onClick={handleLgpdDelete} disabled={lgpdLoading || lgpdConfirm !== "EXCLUIR LGPD"} className="gap-1.5">
+                {lgpdLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                Excluir Dados Pessoais
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
