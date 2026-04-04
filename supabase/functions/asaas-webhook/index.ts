@@ -269,6 +269,17 @@ Deno.serve(async (req) => {
             .single();
           if (customer) customerInfo = customer;
 
+          // ── LGPD GUARD: Skip provisioning for deleted clients ──
+          if (customer?.status_cliente === "excluido_lgpd") {
+            console.log("[asaas-webhook] Cliente excluído LGPD — pulando provisionamento de acesso");
+            await logSistemaBackend({
+              tipo: "webhook",
+              status: "warning",
+              mensagem: "Webhook recebido para cliente excluído LGPD — provisionamento bloqueado",
+              payload: { customer_id: contractData.customer_id, event },
+            });
+          } else {
+
           try {
             const accessResult = await ensureClientAccess(supabase, paymentRecord.quote_id, "payment_webhook");
             if (accessResult.success) {
