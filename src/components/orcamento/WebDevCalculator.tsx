@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Clock, TrendingDown, Code2, Gauge, Zap, FileText, ArrowRight, MessageSquare, AlertTriangle, Plus, Minus } from "lucide-react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useInfraStore } from "@/stores/useInfraStore";
 import { openWhatsApp } from "@/lib/whatsapp";
 
