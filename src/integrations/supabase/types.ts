@@ -955,6 +955,7 @@ export type Database = {
       contracts: {
         Row: {
           accepted_minimum_term: boolean | null
+          activated_at: string | null
           client_ip: string | null
           contract_hash: string | null
           contract_pdf_path: string | null
@@ -965,6 +966,7 @@ export type Database = {
           id: string
           monthly_value: number | null
           quote_id: string | null
+          service_status: string
           signed: boolean | null
           signed_at: string | null
           status: string | null
@@ -972,6 +974,7 @@ export type Database = {
         }
         Insert: {
           accepted_minimum_term?: boolean | null
+          activated_at?: string | null
           client_ip?: string | null
           contract_hash?: string | null
           contract_pdf_path?: string | null
@@ -982,6 +985,7 @@ export type Database = {
           id?: string
           monthly_value?: number | null
           quote_id?: string | null
+          service_status?: string
           signed?: boolean | null
           signed_at?: string | null
           status?: string | null
@@ -989,6 +993,7 @@ export type Database = {
         }
         Update: {
           accepted_minimum_term?: boolean | null
+          activated_at?: string | null
           client_ip?: string | null
           contract_hash?: string | null
           contract_pdf_path?: string | null
@@ -999,6 +1004,7 @@ export type Database = {
           id?: string
           monthly_value?: number | null
           quote_id?: string | null
+          service_status?: string
           signed?: boolean | null
           signed_at?: string | null
           status?: string | null

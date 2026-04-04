@@ -178,10 +178,10 @@ Deno.serve(async (req) => {
       console.log("[asaas-webhook] Pagamento confirmado! Ativando contrato e criando acesso...");
 
       if (paymentRecord.quote_id) {
-        // Activate contract
+        // Activate contract + set service_status
         await supabase
           .from("contracts")
-          .update({ status: "ATIVO" })
+          .update({ status: "ATIVO", service_status: "active", activated_at: new Date().toISOString() })
           .eq("quote_id", paymentRecord.quote_id);
 
         await supabase
@@ -325,7 +325,7 @@ Deno.serve(async (req) => {
       console.log("[asaas-webhook] Pagamento vencido. Marcando contrato como INADIMPLENTE.");
       await supabase
         .from("contracts")
-        .update({ status: "INADIMPLENTE" })
+        .update({ status: "INADIMPLENTE", service_status: "overdue" })
         .eq("quote_id", paymentRecord.quote_id);
 
       await supabase.from("integration_logs").insert({

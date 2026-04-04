@@ -171,6 +171,7 @@ const ContratoPage = () => {
           signed_at: signedAt.toISOString(),
           client_ip: clientIp,
           status: "AGUARDANDO PAGAMENTO",
+          service_status: "payment_pending",
           accepted_minimum_term: true,
           contract_text: currentHtml,
         } as any)
