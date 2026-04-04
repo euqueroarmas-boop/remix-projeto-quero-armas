@@ -115,14 +115,18 @@ const UnifiedInfraCalculator = ({ contractHref = "/orcamento-ti", pageTitle }: P
   const workstations = recorrente.estacoes;
   const serverOs = recorrente.sistemaServidores;
   const wsOs = recorrente.sistemaEstacoes;
+  const sla = recorrente.sla;
+  const criticidade = recorrente.criticidade;
   const setHosts = (v: number) => setRecorrente({ hosts: v });
   const setVms = (v: number) => setRecorrente({ vms: v });
   const setWorkstations = (v: number) => setRecorrente({ estacoes: v });
   const setServerOs = (v: "windows_server" | "linux") => setRecorrente({ sistemaServidores: v });
   const setWsOs = (v: OsType) => setRecorrente({ sistemaEstacoes: v });
+  const setSla = (v: SlaType) => setRecorrente({ sla: v });
+  const setCriticidade = (v: CriticidadeType) => setRecorrente({ criticidade: v });
 
   const cur = t(`${k}.currency`, "R$");
-  const fmt = (v: number) => `${cur} ${v.toLocaleString("pt-BR")}`;
+  const fmt = (v: number) => `${cur} ${Math.round(v).toLocaleString("pt-BR")}`;
 
   /* Server prices based on OS */
   const { host: HOST_PRICE, vm: VM_PRICE } = getServerPrices(serverOs);
@@ -137,7 +141,16 @@ const UnifiedInfraCalculator = ({ contractHref = "/orcamento-ti", pageTitle }: P
   const wsDiscount = wsGross * (discountPct / 100);
   const wsSubtotal = wsExceedsLimit ? 0 : wsGross - wsDiscount;
 
-  const totalMonthly = serverSubtotal + wsSubtotal;
+  /* Base total (before SLA/criticidade) */
+  const totalBase = serverSubtotal + wsSubtotal;
+
+  /* SLA & Criticidade multipliers */
+  const slaMultiplier = SLA_MULTIPLIER[sla];
+  const critMultiplier = CRITICIDADE_MULTIPLIER[criticidade];
+  const totalAfterSla = Math.round(totalBase * slaMultiplier * 100) / 100;
+  const totalMonthly = Math.round(totalAfterSla * critMultiplier * 100) / 100;
+  const slaAdditional = totalAfterSla - totalBase;
+  const critAdditional = totalMonthly - totalAfterSla;
 
   const handleContract = () => {
     const params = new URLSearchParams({
@@ -147,11 +160,13 @@ const UnifiedInfraCalculator = ({ contractHref = "/orcamento-ti", pageTitle }: P
       estacoes: String(workstations),
       os_servidores: serverOs,
       os_estacoes: wsOs,
+      sla,
+      criticidade,
       subtotal_servidores: String(serverSubtotal),
       subtotal_estacoes: String(wsSubtotal),
       total_mensal: String(totalMonthly),
     });
-    console.log("[WMTi] CHECKOUT_REDIRECT_RECORRENTE", { hosts, vms, workstations, serverOs, wsOs, serverSubtotal, wsSubtotal, totalMonthly });
+    console.log("[WMTi] CHECKOUT_REDIRECT_RECORRENTE", { hosts, vms, workstations, serverOs, wsOs, sla, criticidade, totalBase, totalMonthly });
     navigate(`${contractHref}?${params.toString()}`);
   };
 
