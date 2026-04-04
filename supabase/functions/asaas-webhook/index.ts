@@ -244,6 +244,7 @@ Deno.serve(async (req) => {
           payload: { quote_id: paymentRecord.quote_id },
         });
       }
+      } // close !lgpdBlocked
     }
 
     // ── Payment confirmed: activate contract + create client account ──
