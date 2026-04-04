@@ -1,12 +1,15 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import {
   LayoutDashboard, Package, MessageSquare, DollarSign,
-  FileText, FolderOpen, Building2, LogOut, Menu, X
+  FileText, FolderOpen, Building2, LogOut, Menu, X, Lock
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import type { CustomerData } from "@/pages/AreaDoClientePage";
+import { useClientContracts, useClientPayments } from "./hooks/useClientData";
+import { useServiceStatus } from "./hooks/useServiceStatus";
 import PortalOverview from "./sections/PortalOverview";
 import PortalServicos from "./sections/PortalServicos";
 import PortalSolicitacoes from "./sections/PortalSolicitacoes";
@@ -14,6 +17,8 @@ import PortalFinanceiro from "./sections/PortalFinanceiro";
 import PortalFiscal from "./sections/PortalFiscal";
 import PortalDocumentos from "./sections/PortalDocumentos";
 import PortalPerfil from "./sections/PortalPerfil";
+import PaymentPendingBanner from "./shared/PaymentPendingBanner";
+import { supabase } from "@/integrations/supabase/client";
 
 const tabs = [
   { id: "overview", label: "Visão Geral", icon: LayoutDashboard },
@@ -36,11 +41,45 @@ export default function ClientPortal({ customer, onLogout }: Props) {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<TabId>("overview");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const { contracts } = useClientContracts(customer.id);
+  const { payments } = useClientPayments(customer.id);
+  const { accessLevel, bestStatus, isTabAllowed, restrictedMessage } = useServiceStatus(contracts);
+
+  const latestInvoiceUrl = payments.find((p: any) => p.asaas_invoice_url)?.asaas_invoice_url || null;
+
+  const handleTabClick = (tabId: TabId) => {
+    if (!isTabAllowed(tabId)) {
+      toast.error("Acesso restrito. Aguarde a confirmação do pagamento.");
+      return;
+    }
+    setActiveTab(tabId);
+    setMobileMenuOpen(false);
+  };
+
+  const handleRequestReview = useCallback(async () => {
+    try {
+      // Find the latest contract for this customer
+      const latestContract = contracts[0];
+      if (latestContract) {
+        await supabase.from("client_events").insert({
+          customer_id: customer.id,
+          event_type: "solicitacao",
+          title: "Solicitação de revisão financeira",
+          description: "Cliente informou que já realizou o pagamento e solicitou revisão.",
+        });
+      }
+      toast.success("Solicitação enviada! Nossa equipe financeira irá verificar.");
+    } catch {
+      toast.error("Erro ao enviar solicitação. Tente novamente.");
+    }
+  }, [contracts, customer.id]);
+
   const localizedTabs = tabs.map((tab) => ({ ...tab, label: t(`clientPortal.tabs.${tab.id}`) }));
 
   const renderContent = () => {
     switch (activeTab) {
-      case "overview": return <PortalOverview customer={customer} onNavigate={(t: string) => setActiveTab(t as TabId)} />;
+      case "overview": return <PortalOverview customer={customer} onNavigate={(t: string) => handleTabClick(t as TabId)} accessLevel={accessLevel} />;
       case "servicos": return <PortalServicos customer={customer} />;
       case "solicitacoes": return <PortalSolicitacoes customer={customer} />;
       case "financeiro": return <PortalFinanceiro customer={customer} />;
@@ -63,18 +102,22 @@ export default function ClientPortal({ customer, onLogout }: Props) {
           {localizedTabs.map((tab) => {
             const Icon = tab.icon;
             const active = activeTab === tab.id;
+            const allowed = isTabAllowed(tab.id);
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => handleTabClick(tab.id)}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  active
+                  !allowed
+                    ? "text-muted-foreground/50 cursor-not-allowed"
+                    : active
                     ? "bg-primary/10 text-primary"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                 }`}
               >
-                <Icon size={18} />
+                {allowed ? <Icon size={18} /> : <Lock size={18} />}
                 {tab.label}
+                {!allowed && <span className="ml-auto text-[10px] text-muted-foreground/50">🔒</span>}
               </button>
             );
           })}
@@ -109,16 +152,20 @@ export default function ClientPortal({ customer, onLogout }: Props) {
               {localizedTabs.map((tab) => {
                 const Icon = tab.icon;
                 const active = activeTab === tab.id;
+                const allowed = isTabAllowed(tab.id);
                 return (
                   <button
                     key={tab.id}
-                    onClick={() => { setActiveTab(tab.id); setMobileMenuOpen(false); }}
+                    onClick={() => handleTabClick(tab.id)}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                      active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      !allowed
+                        ? "text-muted-foreground/50"
+                        : active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                     }`}
                   >
-                    <Icon size={18} />
+                    {allowed ? <Icon size={18} /> : <Lock size={18} />}
                     {tab.label}
+                    {!allowed && <span className="ml-auto text-[10px]">🔒</span>}
                   </button>
                 );
               })}
@@ -132,6 +179,18 @@ export default function ClientPortal({ customer, onLogout }: Props) {
 
       {/* Main Content */}
       <main className="flex-1 lg:p-8 p-4 pt-20 lg:pt-8 overflow-auto">
+        {/* Payment Pending Banner */}
+        {accessLevel === "restricted" && restrictedMessage && (
+          <div className="mb-6">
+            <PaymentPendingBanner
+              status={bestStatus}
+              message={restrictedMessage}
+              invoiceUrl={latestInvoiceUrl}
+              onRequestReview={handleRequestReview}
+            />
+          </div>
+        )}
+
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
