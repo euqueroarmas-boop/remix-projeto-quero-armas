@@ -151,6 +151,33 @@ export default function AdminClientDetail({ customerId, onBack }: AdminClientDet
     toast.success("Link copiado!");
   };
 
+  const handleResetPassword = async () => {
+    setResetPwdLoading(true);
+    try {
+      const token = getValidAdminToken();
+      const res = await supabase.functions.invoke("create-client-user", {
+        body: {
+          action: "reset_password",
+          customer_id: customerId,
+          email: customer?.email,
+          user_password: newPwd || undefined,
+        },
+        headers: token ? { "x-admin-token": token } : {},
+      });
+      if (res.error || res.data?.error) {
+        toast.error(res.data?.error || "Erro ao redefinir senha");
+        setResetPwdLoading(false);
+        return;
+      }
+      const pwd = newPwd || res.data?.temp_password || "";
+      setGeneratedPwd(pwd);
+      toast.success("Senha redefinida com sucesso");
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao redefinir senha");
+    }
+    setResetPwdLoading(false);
+  };
+
   const resendBilling = async (paymentId: string) => {
     toast.info("Funcionalidade de reenvio será conectada ao Asaas em breve.");
   };
