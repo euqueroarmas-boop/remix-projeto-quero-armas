@@ -40,6 +40,10 @@ export default function AdminClientDetail({ customerId, onBack }: AdminClientDet
   const [msgType, setMsgType] = useState<"email" | "whatsapp">("whatsapp");
   const [msgText, setMsgText] = useState("");
   const [suspending, setSuspending] = useState(false);
+  const [resetPwdOpen, setResetPwdOpen] = useState(false);
+  const [newPwd, setNewPwd] = useState("");
+  const [resetPwdLoading, setResetPwdLoading] = useState(false);
+  const [generatedPwd, setGeneratedPwd] = useState("");
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
