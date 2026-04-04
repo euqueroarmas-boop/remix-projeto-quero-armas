@@ -428,6 +428,9 @@ export default function AdminClientDetail({ customerId, onBack }: AdminClientDet
           </Button>
           <Button size="sm" variant="ghost" onClick={fetchAll} className="text-xs gap-1.5 h-7"><RefreshCw className="h-3 w-3" />Atualizar</Button>
           <Button size="sm" variant="ghost" onClick={() => copyText(`${customer.razao_social}\n${customer.cnpj_ou_cpf}\n${customer.email}\n${customer.telefone || ""}`, "Dados copiados!")} className="text-xs gap-1.5 h-7"><Copy className="h-3 w-3" />Copiar Dados</Button>
+          <Button size="sm" variant="outline" onClick={() => { setLgpdOpen(true); setLgpdConfirm(""); setLgpdReason(""); setLgpdResult(null); }} className="text-xs gap-1.5 h-7 text-red-400 border-red-500/30 hover:bg-red-500/10 ml-auto">
+            <Trash2 className="h-3 w-3" />Exclusão LGPD
+          </Button>
         </div>
       </div>
 
