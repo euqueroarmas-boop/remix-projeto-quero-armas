@@ -120,7 +120,7 @@ const NAV_GROUPS = [
   },
 ];
 
-const NAV_SECTION_IDS = new Set(NAV_GROUPS.flatMap((group) => group.items.map((item) => item.id)));
+const NAV_SECTION_IDS = new Set([...NAV_GROUPS.flatMap((group) => group.items.map((item) => item.id)), "clientes-detail"]);
 
 // ─── Login ───
 function AdminLogin({ onLogin }: { onLogin: () => void }) {
