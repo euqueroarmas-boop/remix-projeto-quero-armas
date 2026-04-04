@@ -114,6 +114,9 @@ const DesenvolvimentoWebPage = () => {
           </div>
         </section>
 
+        {/* Calculadora de Projeto Web */}
+        <WebDevCalculator />
+
         {/* Resultado final */}
         <section className="py-16 md:py-24 border-t border-border">
           <div className="container">
