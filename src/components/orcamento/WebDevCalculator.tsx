@@ -27,18 +27,25 @@ const COMPLEXIDADE = [
 ] as const;
 
 const URGENCIA = [
-  { key: "normal", label: "Normal", mult: 1.0, desc: "Prazo padrão" },
-  { key: "prioritario", label: "Prioritário", mult: 1.2, desc: "Entrega acelerada" },
-  { key: "urgente", label: "Urgente", mult: 1.35, desc: "Prazo crítico" },
+  { key: "normal", label: "Normal", desc: "Prazo padrão" },
+  { key: "prioritario", label: "Prioritário", desc: "Entrega acelerada" },
+  { key: "urgente", label: "Urgente", desc: "Prazo crítico" },
 ] as const;
 
 const PRAZOS = [
   { key: "flexivel", label: "Flexível" },
+  { key: "7_dias", label: "Até 7 dias" },
   { key: "15_dias", label: "Até 15 dias" },
   { key: "30_dias", label: "Até 30 dias" },
-  { key: "60_dias", label: "Até 60 dias" },
-  { key: "90_dias", label: "Até 90 dias" },
 ] as const;
+
+/* ── Combined prazo+urgência multiplier matrix ── */
+const PRAZO_URGENCIA_MULT: Record<string, Record<string, number>> = {
+  flexivel:  { normal: 1.0, prioritario: 1.0, urgente: 1.0 },
+  "30_dias": { normal: 1.0, prioritario: 1.1, urgente: 1.2 },
+  "15_dias": { normal: 1.0, prioritario: 1.2, urgente: 1.35 },
+  "7_dias":  { normal: 1.1, prioritario: 1.3, urgente: 1.5 },
+};
 
 const CONTINUIDADE_OPTIONS = [
   { key: "nao", label: "Não preciso" },
@@ -108,15 +115,17 @@ const WebDevCalculator = () => {
   const fullPrice = hours * BASE_PRICE;
 
   const compMult = COMPLEXIDADE.find((c) => c.key === complexidade)?.mult ?? 1;
-  const urgMult = URGENCIA.find((u) => u.key === urgencia)?.mult ?? 1;
+  const prazoUrgMult = PRAZO_URGENCIA_MULT[prazo]?.[urgencia] ?? 1;
+  const isFlexivel = prazo === "flexivel";
 
-  const totalFinal = Math.round(subtotal * compMult * urgMult);
+  const totalFinal = Math.round(subtotal * compMult * prazoUrgMult);
   const savings = fullPrice - subtotal;
   const discountPct = hours > 1 ? Math.round(((BASE_PRICE - unitPrice) / BASE_PRICE) * 100) : 0;
   const additionalsValue = totalFinal - subtotal;
 
   const projectLabel = PROJECT_TYPES.find((p) => p.key === projectType)?.label ?? "";
   const prazoLabel = PRAZOS.find((p) => p.key === prazo)?.label ?? "";
+  const urgenciaLabel = URGENCIA.find((u) => u.key === urgencia)?.label ?? "";
 
   return (
     <section className="section-dark py-16 md:py-24 border-t border-border">
@@ -259,20 +268,25 @@ const WebDevCalculator = () => {
                   value={COMPLEXIDADE.find((c) => c.key === complexidade)?.label ?? ""}
                   highlight={compMult > 1 ? `×${compMult}` : undefined}
                 />
-                <SummaryRow
-                  label="Urgência"
-                  value={URGENCIA.find((u) => u.key === urgencia)?.label ?? ""}
-                  highlight={urgMult > 1 ? `+${Math.round((urgMult - 1) * 100)}%` : undefined}
-                />
+                <SummaryRow label="Prazo" value={prazoLabel} />
+                {isFlexivel ? (
+                  <p className="font-body text-xs text-muted-foreground/60 italic">
+                    Prazo flexível reduz necessidade de priorização
+                  </p>
+                ) : (
+                  <SummaryRow
+                    label="Prioridade"
+                    value={urgenciaLabel}
+                    highlight={prazoUrgMult > 1 ? `×${prazoUrgMult}` : undefined}
+                  />
+                )}
 
                 {additionalsValue > 0 && (
                   <div className="flex items-center justify-between font-mono text-sm">
-                    <span className="text-muted-foreground">Adicionais</span>
+                    <span className="text-muted-foreground">Adicionais (prazo + complexidade)</span>
                     <span className="text-foreground">+R$ {additionalsValue.toLocaleString("pt-BR")}</span>
                   </div>
                 )}
-
-                {prazo !== "flexivel" && <SummaryRow label="Prazo" value={prazoLabel} />}
                 {continuidade !== "nao" && (
                   <SummaryRow
                     label="Continuidade"
@@ -307,7 +321,7 @@ const WebDevCalculator = () => {
                   openWhatsApp({
                     pageTitle: "Desenvolvimento Web",
                     intent: "proposal",
-                    detail: `Projeto: ${projectLabel} | ${hours}h | R$ ${totalFinal} | Complexidade: ${complexidade} | Urgência: ${urgencia}`,
+                    detail: `Projeto: ${projectLabel} | ${hours}h | R$ ${totalFinal} | Complexidade: ${complexidade} | Prazo: ${prazoLabel} | Prioridade: ${urgenciaLabel}`,
                   })
                 }
                 className="w-full inline-flex items-center justify-center gap-2 border border-border text-foreground px-6 py-3 font-mono text-sm uppercase tracking-wider hover:bg-muted transition-colors"
