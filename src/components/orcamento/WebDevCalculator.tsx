@@ -131,6 +131,7 @@ const SummaryRow = ({ label, value, highlight }: { label: string; value: string;
 );
 
 const WebDevCalculator = () => {
+  const navigate = useNavigate();
   const { sobDemanda, setSobDemanda } = useInfraStore();
   const [hours, setHours] = useState(Math.max(1, sobDemanda.horas));
   const [projectType, setProjectType] = useState<string>("site_institucional");
