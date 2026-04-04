@@ -40,22 +40,36 @@ export default function ClientLogin({ onLogin }: Props) {
     const digits = input.replace(/\D/g, "");
     if (digits.length < 11) return null;
 
+    // Try exact match first
     const { data } = await supabase
       .from("customers")
-      .select("email")
+      .select("email, cnpj_ou_cpf")
       .eq("cnpj_ou_cpf", input)
       .maybeSingle();
 
     if (data?.email) return data.email;
 
-    // Try with just digits format
-    const { data: data2 } = await supabase
-      .from("customers")
-      .select("email")
-      .ilike("cnpj_ou_cpf", `%${digits}%`)
-      .maybeSingle();
+    // Build all common formatted variants for the digits
+    const variants: string[] = [digits];
+    if (digits.length === 14) {
+      // CNPJ: XX.XXX.XXX/XXXX-XX
+      variants.push(`${digits.slice(0,2)}.${digits.slice(2,5)}.${digits.slice(5,8)}/${digits.slice(8,12)}-${digits.slice(12)}`);
+    } else if (digits.length === 11) {
+      // CPF: XXX.XXX.XXX-XX
+      variants.push(`${digits.slice(0,3)}.${digits.slice(3,6)}.${digits.slice(6,9)}-${digits.slice(9)}`);
+    }
 
-    return data2?.email || null;
+    // Try each formatted variant
+    for (const variant of variants) {
+      const { data: match } = await supabase
+        .from("customers")
+        .select("email")
+        .eq("cnpj_ou_cpf", variant)
+        .maybeSingle();
+      if (match?.email) return match.email;
+    }
+
+    return null;
   };
 
   const handleLogin = async (e: React.FormEvent) => {
