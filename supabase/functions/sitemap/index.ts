@@ -256,19 +256,13 @@ Deno.serve(async (req) => {
       xml = await buildBlogXml();
       break;
     case "services":
-      xml = buildServiceCityXml();
+      xml = await buildCmsServicesXml();
       break;
     case "segments":
-      xml = buildSegmentCityXml();
+      xml = await buildCmsSegmentsXml();
       break;
     case "problems":
       xml = buildProblemCityXml();
-      break;
-    case "blog-cities":
-      xml = buildBlogCityXml();
-      break;
-    case "service-segment-cities":
-      xml = buildServiceSegmentCityXml();
       break;
     case "programmatic":
       xml = buildServiceCityXml();
