@@ -336,7 +336,7 @@ const WebDevCalculator = () => {
               </div>
 
               <Link
-                to={`/contratar-servico?modo=sob_demanda&horas=${hours}&valor=${totalFinal}&servico=${encodeURIComponent("Desenvolvimento Web — " + projectLabel)}`}
+                to={`/contratar/desenvolvimento-de-sites-e-sistemas-web?modo=sob_demanda&horas=${hours}&valor=${totalFinal}&servico=${encodeURIComponent("Desenvolvimento Web — " + projectLabel)}`}
                 className="w-full inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-6 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
               >
                 Contratar horas de desenvolvimento <ArrowRight size={16} />
