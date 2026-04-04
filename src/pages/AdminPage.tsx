@@ -20,6 +20,7 @@ import {
   BarChart3, AlertTriangle, CreditCard, FileText, LogOut, RefreshCw, ChevronLeft, ChevronRight, Eye, Users, Plus, Loader2, Check, Copy, Shield,
   LayoutDashboard, ScrollText, CreditCard as CreditCardIcon, UserCog, Megaphone, ShieldAlert, Webhook, ClipboardCheck, Activity, Stethoscope, FlaskConical, PenTool, TestTube2, Brain, DollarSign, MessageSquareCode,
   Search, Bell, ChevronDown, PanelLeftClose, PanelLeft, Menu, Settings, FileSignature, MapPin,
+  Wrench, Layers, Calculator, LayoutGrid, Globe,
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { StatusPill, SectionHeader, DataPanel } from "@/components/admin/ui/AdminPrimitives";
