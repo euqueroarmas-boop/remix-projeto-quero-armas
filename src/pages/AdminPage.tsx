@@ -546,7 +546,7 @@ function PaymentsTab() {
 }
 
 // ─── Clientes Tab ───
-function ClientesTab() {
+function ClientesTab({ onOpenClient }: { onOpenClient?: (id: string) => void }) {
   const isMobile = useIsMobile();
   const [customers, setCustomers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
