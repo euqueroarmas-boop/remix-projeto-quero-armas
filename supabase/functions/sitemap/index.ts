@@ -148,27 +148,7 @@ function buildProblemCityXml(): string {
   return wrapUrlset(urls);
 }
 
-function buildBlogCityXml(): string {
-  const urls: string[] = [];
-  for (const slug of blogSlugs) {
-    for (const city of citySlugs) {
-      urls.push(urlEntry(`/blog-${slug}-${city}`));
-    }
-  }
-  return wrapUrlset(urls);
-}
-
-function buildServiceSegmentCityXml(): string {
-  const urls: string[] = [];
-  for (const svc of serviceSlugs) {
-    for (const seg of segmentEntries) {
-      for (const city of citySlugs) {
-        urls.push(urlEntry(`/${svc}-${seg.slug}-${city}`));
-      }
-    }
-  }
-  return wrapUrlset(urls);
-}
+// buildBlogCityXml and buildServiceSegmentCityXml removed — non-standard patterns
 
 /** CMS-managed pages (services + segments from DB) */
 async function buildCmsServicesXml(): Promise<string> {
