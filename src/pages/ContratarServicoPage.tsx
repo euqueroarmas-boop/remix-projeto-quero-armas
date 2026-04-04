@@ -24,6 +24,8 @@ import { plans } from "@/components/orcamento/PlanSelector";
 import ServerAdminRegistrationForm, { type ServerAdminRegistrationData } from "@/components/orcamento/ServerAdminRegistrationForm";
 import ContractModeSelector, { type ContractMode } from "@/components/ContractModeSelector";
 import UnifiedInfraCalculator from "@/components/orcamento/UnifiedInfraCalculator";
+import PurchaseSummaryCard, { type PortalCredentials, type PurchaseSummaryData } from "@/components/orcamento/PurchaseSummaryCard";
+import { ensurePortalAccess } from "@/lib/postPurchase";
 
 import type { CustomerData } from "@/components/orcamento/CustomerDataForm";
 
