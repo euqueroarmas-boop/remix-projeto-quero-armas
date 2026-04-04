@@ -49,6 +49,7 @@ const SegmentsBuilder = lazy(() => import("@/components/admin/cms/SegmentsBuilde
 const PricingEngine = lazy(() => import("@/components/admin/cms/PricingEngine"));
 const BlockLibrary = lazy(() => import("@/components/admin/cms/BlockLibrary"));
 const SitemapManager = lazy(() => import("@/components/admin/cms/SitemapManager"));
+const AdminFinanceiro = lazy(() => import("@/components/admin/AdminFinanceiro"));
 
 const ITEMS_PER_PAGE = 20;
 
@@ -65,6 +66,7 @@ const NAV_GROUPS = [
     items: [
       { id: "logs", label: "Logs", icon: ScrollText },
       { id: "errors", label: "Erros", icon: AlertTriangle },
+      { id: "financeiro", label: "Financeiro", icon: DollarSign },
       { id: "payments", label: "Pagamentos", icon: CreditCardIcon },
       { id: "clientes", label: "Clientes", icon: UserCog },
       { id: "leads", label: "Leads & Propostas", icon: Megaphone },
@@ -759,6 +761,7 @@ function AdminContent({ activeSection, onNavigate }: { activeSection: string; on
     case "dashboard": return <AdminCommandCenter onNavigate={onNavigate} />;
     case "logs": return <LogsTab />;
     case "errors": return <LogsTab onlyErrors />;
+    case "financeiro": return <Suspense fallback={fallback}><AdminFinanceiro /></Suspense>;
     case "payments": return <PaymentsTab />;
     case "clientes": return <ClientesTab />;
     case "leads": return <AdminLeadsProposals />;
