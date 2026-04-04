@@ -339,7 +339,7 @@ const UnifiedInfraCalculator = ({ contractHref = "/orcamento-ti", pageTitle }: P
                   <>
                     <div className="h-px bg-border" />
                     <div className="flex justify-between font-mono text-sm text-muted-foreground">
-                      <span>{workstations} {workstations > 1 ? t(`${k}.stationPlural`) : t(`${k}.station`)} ({OS_OPTIONS.find(o => o.id === osType)?.label})</span>
+                      <span>{workstations} {workstations > 1 ? t(`${k}.stationPlural`) : t(`${k}.station`)} ({WS_OS_OPTIONS.find(o => o.id === wsOs)?.label})</span>
                       <span className="line-through text-muted-foreground/50">{fmt(wsGross)}</span>
                     </div>
                     {discountPct > 0 && (
