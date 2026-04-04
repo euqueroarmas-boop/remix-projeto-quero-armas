@@ -894,11 +894,14 @@ export default function AdminPage() {
   const [authed, setAuthed] = useState(!!getValidAdminToken());
   const [menuOpen, setMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [clientDetailId, setClientDetailId] = useState<string | null>(null);
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const { section } = useParams<{ section?: string }>();
 
-  const activeSection = !section ? "dashboard" : NAV_SECTION_IDS.has(section) ? section : "dashboard";
+  const activeSection = clientDetailId
+    ? "clientes-detail"
+    : !section ? "dashboard" : NAV_SECTION_IDS.has(section) ? section : "dashboard";
 
   useEffect(() => {
     const syncSession = () => setAuthed(!!getValidAdminToken());
@@ -918,6 +921,13 @@ export default function AdminPage() {
     }
   }, [navigate, section]);
 
+  // Reset client detail when navigating away from clientes
+  useEffect(() => {
+    if (section !== "clientes" && section !== "clientes-detail") {
+      setClientDetailId(null);
+    }
+  }, [section]);
+
   if (!authed) return <AdminLogin onLogin={() => setAuthed(true)} />;
 
   const handleLogout = () => {
@@ -927,10 +937,20 @@ export default function AdminPage() {
 
   const handleNavClick = (id: string) => {
     setMenuOpen(false);
+    // Handle client detail navigation
+    if (id.startsWith("clientes-detail?id=")) {
+      const cid = id.replace("clientes-detail?id=", "");
+      setClientDetailId(cid);
+      navigate("/admin/clientes-detail");
+      return;
+    }
+    setClientDetailId(null);
     navigate(id === "dashboard" ? "/admin" : `/admin/${id}`);
   };
 
-  const currentLabel = NAV_GROUPS.flatMap(g => g.items).find(i => i.id === activeSection)?.label || "Dashboard";
+  const currentLabel = clientDetailId
+    ? "Detalhe do Cliente"
+    : NAV_GROUPS.flatMap(g => g.items).find(i => i.id === activeSection)?.label || "Dashboard";
 
   return (
     <div className="min-h-screen bg-background text-foreground flex" data-testid="admin-authenticated">
@@ -938,7 +958,7 @@ export default function AdminPage() {
       <AdminFullscreenMenu
         open={menuOpen}
         onClose={() => setMenuOpen(false)}
-        activeSection={activeSection}
+        activeSection={activeSection === "clientes-detail" ? "clientes" : activeSection}
         onNavigate={handleNavClick}
         onLogout={handleLogout}
       />
@@ -946,7 +966,7 @@ export default function AdminPage() {
       {/* Sidebar - Desktop */}
       {!isMobile && (
         <AdminSidebar
-          activeSection={activeSection}
+          activeSection={activeSection === "clientes-detail" ? "clientes" : activeSection}
           onNavigate={handleNavClick}
           collapsed={sidebarCollapsed}
           onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
@@ -963,7 +983,7 @@ export default function AdminPage() {
 
         {/* Page Content */}
         <main className="flex-1 p-4 md:p-6 overflow-auto">
-          <AdminContent activeSection={activeSection} onNavigate={handleNavClick} />
+          <AdminContent activeSection={activeSection} onNavigate={handleNavClick} clientId={clientDetailId || undefined} />
         </main>
       </div>
     </div>
