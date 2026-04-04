@@ -21,6 +21,7 @@ export interface CustomerData {
   cidade: string | null;
   cep: string | null;
   responsavel: string;
+  status_cliente?: string | null;
 }
 
 const AreaDoClientePage = () => {
