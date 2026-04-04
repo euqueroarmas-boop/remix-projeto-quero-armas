@@ -263,7 +263,7 @@ const UnifiedInfraCalculator = ({ contractHref = "/orcamento-ti", pageTitle }: P
                 <CounterRow
                   icon={Monitor}
                   label={t(`${k}.stations`)}
-                  sublabel={`${fmt(WORKSTATION_BASE)} ${t(`${k}.base`)}`}
+                  sublabel={`${fmt(WORKSTATION_BASE)}${t(`${k}.perMonth`)}`}
                   value={workstations}
                   min={0}
                   onDec={() => setWorkstations(Math.max(0, workstations - 1))}
