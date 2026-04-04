@@ -21,7 +21,8 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { password: adminPwd, customer_id, email, user_password, name } = await req.json();
+    const body = await req.json();
+    const { password: adminPwd, customer_id, email, user_password, name, action } = body;
     const password = user_password || "";
 
     const ADMIN_PASSWORD = Deno.env.get("ADMIN_PASSWORD");
@@ -32,7 +33,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Accept either HMAC token (preferred) or legacy password
+    // Auth check
     const adminToken = req.headers.get("x-admin-token");
     let authorized = false;
 
@@ -57,6 +58,84 @@ Deno.serve(async (req) => {
       });
     }
 
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    // ── RESET PASSWORD ACTION ──
+    if (action === "reset_password") {
+      if (!email && !customer_id) {
+        return new Response(JSON.stringify({ error: "E-mail ou customer_id obrigatório" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      let targetEmail = email;
+
+      // If customer_id provided, look up email
+      if (!targetEmail && customer_id) {
+        const { data: cust } = await supabase
+          .from("customers")
+          .select("email, user_id")
+          .eq("id", customer_id)
+          .single();
+        if (!cust) {
+          return new Response(JSON.stringify({ error: "Cliente não encontrado" }), {
+            status: 404,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        targetEmail = cust.email;
+      }
+
+      const newPassword = password || generateTempPassword();
+
+      // Find user by email
+      const { data: userList } = await supabase.auth.admin.listUsers();
+      const existingUser = userList?.users?.find(
+        (u: any) => u.email?.toLowerCase() === targetEmail.toLowerCase()
+      );
+
+      if (!existingUser) {
+        return new Response(JSON.stringify({ error: "Usuário não possui conta no portal. Crie o acesso primeiro." }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Update password
+      const { error: updateErr } = await supabase.auth.admin.updateUserById(existingUser.id, {
+        password: newPassword,
+        user_metadata: {
+          ...existingUser.user_metadata,
+          password_change_required: true,
+          temp_password: null,
+        },
+      });
+
+      if (updateErr) {
+        return new Response(JSON.stringify({ error: updateErr.message }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      await logSistemaBackend({
+        tipo: "admin",
+        status: "success",
+        mensagem: "Senha do cliente redefinida pelo admin",
+        payload: { email: targetEmail, customer_id },
+      });
+
+      return new Response(
+        JSON.stringify({ success: true, email: targetEmail, temp_password: newPassword }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // ── CREATE USER ACTION (default) ──
     if (!email || !password) {
       return new Response(JSON.stringify({ error: "E-mail e senha são obrigatórios" }), {
         status: 400,
@@ -64,12 +143,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
-
-    // Create auth user with admin API (auto-confirms email)
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email,
       password,
@@ -92,14 +165,12 @@ Deno.serve(async (req) => {
 
     const userId = authData.user.id;
 
-    // Link user_id to customer if customer_id provided
     if (customer_id) {
       await supabase
         .from("customers")
         .update({ user_id: userId })
         .eq("id", customer_id);
 
-      // Create client event
       await supabase.from("client_events").insert({
         customer_id,
         event_type: "cadastro",
@@ -132,3 +203,14 @@ Deno.serve(async (req) => {
     });
   }
 });
+
+function generateTempPassword(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+  let pwd = "";
+  const arr = new Uint8Array(10);
+  crypto.getRandomValues(arr);
+  for (let i = 0; i < 10; i++) {
+    pwd += chars[arr[i] % chars.length];
+  }
+  return pwd + "!1";
+}

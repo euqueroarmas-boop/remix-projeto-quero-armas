@@ -19,6 +19,7 @@ import {
 import {
   ArrowLeft, Edit, FileText, CreditCard, Copy, Send, Ban, CheckCircle, Loader2,
   Save, X, MessageSquare, ExternalLink, RefreshCw, Phone, Mail, Building2, MapPin, User, Calendar,
+  KeyRound,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -40,6 +41,10 @@ export default function AdminClientDetail({ customerId, onBack }: AdminClientDet
   const [msgType, setMsgType] = useState<"email" | "whatsapp">("whatsapp");
   const [msgText, setMsgText] = useState("");
   const [suspending, setSuspending] = useState(false);
+  const [resetPwdOpen, setResetPwdOpen] = useState(false);
+  const [newPwd, setNewPwd] = useState("");
+  const [resetPwdLoading, setResetPwdLoading] = useState(false);
+  const [generatedPwd, setGeneratedPwd] = useState("");
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -146,6 +151,33 @@ export default function AdminClientDetail({ customerId, onBack }: AdminClientDet
     toast.success("Link copiado!");
   };
 
+  const handleResetPassword = async () => {
+    setResetPwdLoading(true);
+    try {
+      const token = getValidAdminToken();
+      const res = await supabase.functions.invoke("create-client-user", {
+        body: {
+          action: "reset_password",
+          customer_id: customerId,
+          email: customer?.email,
+          user_password: newPwd || undefined,
+        },
+        headers: token ? { "x-admin-token": token } : {},
+      });
+      if (res.error || res.data?.error) {
+        toast.error(res.data?.error || "Erro ao redefinir senha");
+        setResetPwdLoading(false);
+        return;
+      }
+      const pwd = newPwd || res.data?.temp_password || "";
+      setGeneratedPwd(pwd);
+      toast.success("Senha redefinida com sucesso");
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao redefinir senha");
+    }
+    setResetPwdLoading(false);
+  };
+
   const resendBilling = async (paymentId: string) => {
     toast.info("Funcionalidade de reenvio será conectada ao Asaas em breve.");
   };
@@ -210,6 +242,9 @@ export default function AdminClientDetail({ customerId, onBack }: AdminClientDet
             <Ban className="h-3.5 w-3.5" /> Suspender
           </Button>
         ) : null}
+        <Button size="sm" variant="outline" onClick={() => { setResetPwdOpen(true); setNewPwd(""); setGeneratedPwd(""); }} className="text-xs gap-1.5 h-8 text-amber-400 border-amber-500/30 hover:bg-amber-500/10">
+          <KeyRound className="h-3.5 w-3.5" /> Resetar Senha
+        </Button>
         <Button size="sm" variant="ghost" onClick={fetchAll} className="text-xs gap-1.5 h-8">
           <RefreshCw className="h-3.5 w-3.5" /> Atualizar
         </Button>
@@ -375,6 +410,44 @@ export default function AdminClientDetail({ customerId, onBack }: AdminClientDet
           )}
         </CardContent>
       </Card>
+
+      {/* Reset Password Dialog */}
+      <Dialog open={resetPwdOpen} onOpenChange={setResetPwdOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Redefinir Senha do Cliente</DialogTitle>
+            <DialogDescription>Redefinir ou criar senha para {customer.email}</DialogDescription>
+          </DialogHeader>
+          {generatedPwd ? (
+            <div className="space-y-3">
+              <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-4 text-center">
+                <p className="text-xs text-muted-foreground mb-1">Nova senha gerada:</p>
+                <p className="text-lg font-mono font-bold text-emerald-400 select-all">{generatedPwd}</p>
+              </div>
+              <Button size="sm" variant="outline" className="w-full gap-1.5" onClick={() => { navigator.clipboard.writeText(generatedPwd); toast.success("Senha copiada!"); }}>
+                <Copy className="h-3.5 w-3.5" /> Copiar Senha
+              </Button>
+              <p className="text-[10px] text-muted-foreground text-center">O cliente será obrigado a trocar a senha no primeiro acesso.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div>
+                <label className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5 block">Nova senha (deixe vazio para gerar automaticamente)</label>
+                <Input value={newPwd} onChange={e => setNewPwd(e.target.value)} placeholder="Gerar senha automática..." className="bg-muted/30 border-border/50 text-xs h-8 text-foreground" />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" size="sm" onClick={() => setResetPwdOpen(false)}>Fechar</Button>
+            {!generatedPwd && (
+              <Button size="sm" onClick={handleResetPassword} disabled={resetPwdLoading} className="gap-1.5">
+                {resetPwdLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <KeyRound className="h-3.5 w-3.5" />}
+                Redefinir Senha
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Message Dialog */}
       <Dialog open={msgOpen} onOpenChange={setMsgOpen}>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Building2, ArrowRight, Loader2, Mail, Lock, KeyRound, AlertTriangle } from "lucide-react";
+import { Building2, ArrowRight, Loader2, Mail, Lock, KeyRound, AlertTriangle, Hash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,7 +15,7 @@ interface Props {
 export default function ClientLogin({ onLogin }: Props) {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -27,12 +27,50 @@ export default function ClientLogin({ onLogin }: Props) {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [changingPassword, setChangingPassword] = useState(false);
 
+  const isCnpjOrCpf = (value: string) => {
+    const digits = value.replace(/\D/g, "");
+    return digits.length >= 11 && digits.length <= 14;
+  };
+
+  const resolveEmail = async (input: string): Promise<string | null> => {
+    // If it looks like an email, use directly
+    if (input.includes("@")) return input;
+
+    // Try to resolve CNPJ/CPF to email
+    const digits = input.replace(/\D/g, "");
+    if (digits.length < 11) return null;
+
+    const { data } = await supabase
+      .from("customers")
+      .select("email")
+      .eq("cnpj_ou_cpf", input)
+      .maybeSingle();
+
+    if (data?.email) return data.email;
+
+    // Try with just digits format
+    const { data: data2 } = await supabase
+      .from("customers")
+      .select("email")
+      .ilike("cnpj_ou_cpf", `%${digits}%`)
+      .maybeSingle();
+
+    return data2?.email || null;
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) { setError(t("clientPortal.login.errors.fillEmailPassword")); return; }
+    if (!identifier || !password) { setError(t("clientPortal.login.errors.fillEmailPassword")); return; }
 
     setLoading(true);
     setError("");
+
+    const email = await resolveEmail(identifier);
+    if (!email) {
+      setError("Não foi possível encontrar uma conta com este identificador.");
+      setLoading(false);
+      return;
+    }
 
     const { data: signInData, error: err } = await supabase.auth.signInWithPassword({ email, password });
 
@@ -66,7 +104,6 @@ export default function ClientLogin({ onLogin }: Props) {
     setError("");
 
     try {
-      // Update password
       const { error: updateErr } = await supabase.auth.updateUser({
         password: newPassword,
         data: {
@@ -85,10 +122,9 @@ export default function ClientLogin({ onLogin }: Props) {
         tipo: "admin",
         status: "success",
         mensagem: "Senha alterada com sucesso no primeiro acesso",
-        payload: { email },
+        payload: { email: identifier },
       });
 
-      // Proceed to portal
       onLogin();
     } catch {
       setError(t("clientPortal.login.errors.unexpectedPasswordChange"));
@@ -99,10 +135,17 @@ export default function ClientLogin({ onLogin }: Props) {
 
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) { setError(t("clientPortal.login.errors.informEmail")); return; }
+    if (!identifier) { setError(t("clientPortal.login.errors.informEmail")); return; }
 
     setLoading(true);
     setError("");
+
+    const email = await resolveEmail(identifier);
+    if (!email) {
+      setError("Não foi possível encontrar uma conta com este identificador.");
+      setLoading(false);
+      return;
+    }
 
     const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/redefinir-senha`,
@@ -118,6 +161,10 @@ export default function ClientLogin({ onLogin }: Props) {
     setResetSent(true);
     logSistema({ tipo: "admin", status: "info", mensagem: "Recuperação de senha solicitada", payload: { email } });
   };
+
+  const identifierPlaceholder = isCnpjOrCpf(identifier)
+    ? "CNPJ/CPF detectado"
+    : t("clientPortal.login.emailPlaceholder");
 
   return (
     <section className="relative flex flex-col items-center justify-center min-h-screen py-24 px-4 text-center">
@@ -194,17 +241,25 @@ export default function ClientLogin({ onLogin }: Props) {
 
             <form onSubmit={handleLogin} className="space-y-4 text-left">
               <div>
-                 <label className="text-sm text-muted-foreground mb-1 block">{t("clientPortal.login.email")}</label>
+                 <label className="text-sm text-muted-foreground mb-1 block">E-mail ou CNPJ/CPF</label>
                 <div className="relative">
-                  <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  {isCnpjOrCpf(identifier)
+                    ? <Hash size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    : <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  }
                   <Input
-                    type="email"
-                     placeholder={t("clientPortal.login.emailPlaceholder")}
-                    value={email}
-                    onChange={(e) => { setEmail(e.target.value); setError(""); }}
+                    type="text"
+                    placeholder="seu@email.com ou 00.000.000/0000-00"
+                    value={identifier}
+                    onChange={(e) => { setIdentifier(e.target.value); setError(""); }}
                     className="bg-card border-border text-foreground pl-10"
                   />
                 </div>
+                {isCnpjOrCpf(identifier) && (
+                  <p className="text-[10px] text-primary mt-1 flex items-center gap-1">
+                    <Hash className="h-3 w-3" /> CNPJ/CPF detectado — o e-mail será localizado automaticamente
+                  </p>
+                )}
               </div>
 
               <div>
@@ -248,14 +303,17 @@ export default function ClientLogin({ onLogin }: Props) {
             {!resetSent ? (
               <form onSubmit={handleReset} className="space-y-4 text-left">
                 <div>
-                   <label className="text-sm text-muted-foreground mb-1 block">{t("clientPortal.login.email")}</label>
+                   <label className="text-sm text-muted-foreground mb-1 block">E-mail ou CNPJ/CPF</label>
                   <div className="relative">
-                    <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    {isCnpjOrCpf(identifier)
+                      ? <Hash size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                      : <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    }
                     <Input
-                      type="email"
-                       placeholder={t("clientPortal.login.emailPlaceholder")}
-                      value={email}
-                      onChange={(e) => { setEmail(e.target.value); setError(""); }}
+                      type="text"
+                      placeholder="seu@email.com ou 00.000.000/0000-00"
+                      value={identifier}
+                      onChange={(e) => { setIdentifier(e.target.value); setError(""); }}
                       className="bg-card border-border text-foreground pl-10"
                     />
                   </div>
