@@ -271,12 +271,12 @@ const UnifiedInfraCalculator = ({ contractHref = "/orcamento-ti", pageTitle }: P
                   <div className="mt-5">
                     <p className="font-mono text-[10px] text-muted-foreground mb-2">{t(`${k}.os`)}</p>
                     <div className="flex gap-2">
-                      {OS_OPTIONS.map((os) => (
+                      {WS_OS_OPTIONS.map((os) => (
                         <button
                           key={os.id}
-                          onClick={() => setOsType(os.id)}
+                          onClick={() => setWsOs(os.id)}
                           className={`px-3 py-1.5 rounded text-xs font-mono font-bold transition-all border ${
-                            osType === os.id
+                            wsOs === os.id
                               ? "bg-primary/10 border-primary text-primary"
                               : "border-border text-muted-foreground hover:border-primary/50"
                           }`}
