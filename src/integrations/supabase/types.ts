@@ -1039,6 +1039,8 @@ export type Database = {
           nome_fantasia: string | null
           razao_social: string
           responsavel: string
+          status_cliente: string
+          suspended_at: string | null
           telefone: string | null
           user_id: string | null
         }
@@ -1053,6 +1055,8 @@ export type Database = {
           nome_fantasia?: string | null
           razao_social: string
           responsavel: string
+          status_cliente?: string
+          suspended_at?: string | null
           telefone?: string | null
           user_id?: string | null
         }
@@ -1067,6 +1071,8 @@ export type Database = {
           nome_fantasia?: string | null
           razao_social?: string
           responsavel?: string
+          status_cliente?: string
+          suspended_at?: string | null
           telefone?: string | null
           user_id?: string | null
         }
