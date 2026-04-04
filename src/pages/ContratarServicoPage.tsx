@@ -271,6 +271,7 @@ const ContratarServicoPage = () => {
           contractId, purchaseDate: new Date().toLocaleDateString("pt-BR"),
         };
         try { sessionStorage.setItem("wmti_purchase_data", JSON.stringify(purchaseData)); } catch {}
+        checkoutStore.reset();
         navigate(`/compra-concluida?quote=${urlQuote}`);
       } else if (data && (data as any).asaas_invoice_url) {
         // Payment exists but pending — resume polling state
