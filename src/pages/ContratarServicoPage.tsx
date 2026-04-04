@@ -275,11 +275,17 @@ const ContratarServicoPage = () => {
         checkoutStore.reset();
         navigate(`/compra-concluida?quote=${urlQuote}`);
       } else if (data && (data as any).asaas_invoice_url) {
-        // Payment exists but pending — resume polling state
+        // Payment exists but pending — check if it's a boleto
         setQuoteId(urlQuote);
         setInvoiceUrl((data as any).asaas_invoice_url);
-        setPaymentComplete(true);
         setCurrentStep("payment");
+        const billingType = (data as any).billing_type || "";
+        if (billingType === "BOLETO") {
+          setBoletoGenerated(true);
+          setPaymentComplete(true);
+        } else {
+          setPaymentComplete(true);
+        }
       }
     })();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
