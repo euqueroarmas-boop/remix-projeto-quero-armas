@@ -621,6 +621,19 @@ function ClientesTab({ onOpenClient }: { onOpenClient?: (id: string) => void }) 
     setTimeout(() => setCopied(""), 2000);
   };
 
+  const getStatusBadge = (c: any) => {
+    const status = c.status_cliente || "ativo";
+    const map: Record<string, { label: string; cls: string }> = {
+      ativo: { label: "Ativo", cls: "border-emerald-500/25 bg-emerald-500/10 text-emerald-400" },
+      suspenso: { label: "Suspenso", cls: "border-red-500/25 bg-red-500/10 text-red-400" },
+      inadimplente: { label: "Inadimplente", cls: "border-amber-500/25 bg-amber-500/10 text-amber-400" },
+      cancelado: { label: "Cancelado", cls: "border-border/60 bg-muted/30 text-muted-foreground" },
+      aguardando_ativacao: { label: "Aguardando", cls: "border-blue-500/25 bg-blue-500/10 text-blue-400" },
+    };
+    const badge = map[status] || map.ativo;
+    return <span className={`inline-flex items-center px-1.5 py-0 rounded text-[9px] font-medium border ${badge.cls}`}>{badge.label}</span>;
+  };
+
   const getAccessBadge = (c: any) => {
     if (c.user_id) {
       const audit = auditLogs[c.id];
