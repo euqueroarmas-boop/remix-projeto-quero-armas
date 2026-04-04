@@ -559,9 +559,11 @@ const ContratarServicoPage = () => {
       setPopupBlocked(false);
 
       if (selectedPayment === "BOLETO") {
-        // For boleto: don't poll, show success state immediately
+        // For boleto: don't poll, advance to step 5 immediately
         setBoletoGenerated(true);
         setPaymentComplete(true);
+        setCurrentStep("success");
+        scrollToTop();
         // Open boleto in new tab
         window.open(url, "_blank", "noopener,noreferrer");
       } else {
