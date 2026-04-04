@@ -747,7 +747,7 @@ function ClientesTab({ onOpenClient }: { onOpenClient?: (id: string) => void }) 
                   <TableCell className="text-[11px] text-muted-foreground">
                     {auditLogs[c.id]?.action === "auto_user_created" ? <span className="text-primary">🤖 Auto</span> : auditLogs[c.id]?.action === "auto_user_creation_failed" ? <span className="text-destructive">⚠️ Falha</span> : c.user_id ? "Manual" : "—"}
                   </TableCell>
-                  <TableCell className="text-[11px] text-muted-foreground whitespace-nowrap font-mono">{new Date(c.created_at).toLocaleDateString("pt-BR")}</TableCell>
+                  <TableCell className="text-[11px] text-muted-foreground whitespace-nowrap font-mono">{new Date(c.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
