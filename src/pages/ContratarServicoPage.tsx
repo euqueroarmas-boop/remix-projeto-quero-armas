@@ -1008,7 +1008,7 @@ const ContratarServicoPage = () => {
               </WizardStepWrapper>
 
               {/* Step 5: Conclusão */}
-              <WizardStepWrapper stepNumber={5} title="Conclusão" subtitle="Fechamento e ativação do serviço" status={paymentConfirmed ? "active" : boletoGenerated ? "completed" : "pending"} isLast>
+              <WizardStepWrapper stepNumber={5} title="Conclusão" subtitle="Fechamento e ativação do serviço" status={boletoGenerated ? "active" : paymentConfirmed ? "active" : "pending"} isLast>
                 {paymentConfirmed ? (
                   <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-3">
                     <CheckCircle className="w-10 h-10 text-green-500 mx-auto" />
