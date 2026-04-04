@@ -192,6 +192,17 @@ Deno.serve(async (req) => {
     // ── PAYMENT_CREATED: Backup provisioning (in case create-asaas-payment didn't do it) ──
     if (event === "PAYMENT_CREATED" && paymentRecord.quote_id) {
       console.log("[asaas-webhook] PAYMENT_CREATED — verificando provisionamento de acesso...");
+      // LGPD guard: check if customer is deleted before provisioning
+      const { data: contractCheck } = await supabase.from("contracts").select("customer_id").eq("quote_id", paymentRecord.quote_id).limit(1);
+      let lgpdBlocked = false;
+      if (contractCheck?.[0]?.customer_id) {
+        const { data: custCheck } = await supabase.from("customers").select("status_cliente").eq("id", contractCheck[0].customer_id).single();
+        if (custCheck?.status_cliente === "excluido_lgpd") {
+          lgpdBlocked = true;
+          console.log("[asaas-webhook] LGPD: cliente excluído, pulando provisionamento PAYMENT_CREATED");
+        }
+      }
+      if (!lgpdBlocked) {
       try {
         const accessResult = await ensureClientAccess(supabase, paymentRecord.quote_id, "payment_webhook", { skipPaymentCheck: true });
         if (accessResult.success) {
@@ -233,6 +244,7 @@ Deno.serve(async (req) => {
           payload: { quote_id: paymentRecord.quote_id },
         });
       }
+      } // close !lgpdBlocked
     }
 
     // ── Payment confirmed: activate contract + create client account ──
@@ -268,6 +280,17 @@ Deno.serve(async (req) => {
             .eq("id", contractData.customer_id)
             .single();
           if (customer) customerInfo = customer;
+
+          // ── LGPD GUARD: Skip provisioning for deleted clients ──
+          if (customer?.status_cliente === "excluido_lgpd") {
+            console.log("[asaas-webhook] Cliente excluído LGPD — pulando provisionamento de acesso");
+            await logSistemaBackend({
+              tipo: "webhook",
+              status: "warning",
+              mensagem: "Webhook recebido para cliente excluído LGPD — provisionamento bloqueado",
+              payload: { customer_id: contractData.customer_id, event },
+            });
+          } else {
 
           try {
             const accessResult = await ensureClientAccess(supabase, paymentRecord.quote_id, "payment_webhook");
@@ -324,6 +347,7 @@ Deno.serve(async (req) => {
               payload: { email: (customerInfo as any)?.email, error: String(e) },
             });
           }
+          } // close else (LGPD guard)
         }
 
         // Log invoice generation
