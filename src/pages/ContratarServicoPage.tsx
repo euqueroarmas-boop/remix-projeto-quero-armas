@@ -334,7 +334,7 @@ const ContratarServicoPage = () => {
       } catch (e) { console.error("[poll] check-payment-status error:", e); }
     }, 3000);
     return () => clearInterval(interval);
-  }, [paymentComplete, paymentConfirmed, quoteId, currentStep, registrationData, selectedPayment, contractId, serviceName, hours, promoPrice]);
+  }, [paymentComplete, paymentConfirmed, quoteId, currentStep, registrationData, selectedPayment, contractId, serviceName, hours, promoPrice, boletoGenerated]);
 
   const scrollToTop = () => {
     setTimeout(() => {
