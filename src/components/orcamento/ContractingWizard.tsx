@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useCheckoutStore } from "@/stores/useCheckoutStore";
 import {
   FileText,
   CreditCard,
@@ -142,6 +143,7 @@ const ContractingWizard = ({
   const { toast } = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const checkoutStore = useCheckoutStore();
 
   type Step = "registration" | "planConfig" | "contract" | "payment";
   const [currentStep, setCurrentStep] = useState<Step>("registration");
@@ -170,6 +172,65 @@ const ContractingWizard = ({
 
   const wizardRef = useRef<HTMLDivElement>(null);
   const paymentLockRef = useRef(false);
+
+  // ─── Recurring checkout persistence: rehydrate on mount ───
+  useEffect(() => {
+    const savedSlug = serviceSlug || effectivePath || "recurring";
+    const saved = checkoutStore.getSafeSession(savedSlug);
+    if (!saved || saved.flowType !== "recurring") return;
+    if (saved.quoteId) setActiveQuoteId(saved.quoteId);
+    if (saved.customerId) setCustomerId(saved.customerId);
+    if (saved.contractId) setContractId(saved.contractId);
+    if (saved.contractSigned) setContractSigned(true);
+    if (saved.registrationData) setRegistrationData(saved.registrationData as any);
+    if (saved.selectedPayment) setSelectedPayment(saved.selectedPayment);
+    if (saved.invoiceUrl) setInvoiceUrl(saved.invoiceUrl);
+    if (saved.paymentComplete) setPaymentComplete(true);
+    if (saved.paymentReady) setPaymentReady(true);
+    if (saved.planConfig) setPlanConfig(saved.planConfig as any);
+    if (saved.recurringStep && saved.recurringStep !== "registration") {
+      setCurrentStep(saved.recurringStep);
+    }
+    console.log("[WMTi] Recurring checkout session restored", { step: saved.recurringStep, quoteId: saved.quoteId });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ─── Recurring checkout persistence: auto-save ───
+  useEffect(() => {
+    const savedSlug = serviceSlug || effectivePath || "recurring";
+    if (!registrationData && currentStep === "registration") return;
+    checkoutStore.patch({
+      flowType: "recurring",
+      serviceSlug: savedSlug,
+      recurringStep: currentStep,
+      quoteId: activeQuoteId,
+      customerId,
+      contractId,
+      registrationData: registrationData ? {
+        razaoSocial: registrationData.razaoSocial,
+        nomeFantasia: registrationData.nomeFantasia,
+        cnpjOuCpf: registrationData.cnpjOuCpf,
+        responsavel: registrationData.responsavel,
+        responsavelCpf: registrationData.responsavelCpf,
+        email: registrationData.email,
+        telefone: registrationData.telefone,
+        whatsapp: registrationData.whatsapp,
+        cep: registrationData.cep,
+        endereco: registrationData.endereco,
+        numero: registrationData.numero,
+        complemento: registrationData.complemento,
+        bairro: registrationData.bairro,
+        cidade: registrationData.cidade,
+        uf: registrationData.uf,
+        isPJ: registrationData.isPJ,
+      } : null,
+      selectedPayment,
+      invoiceUrl,
+      paymentComplete,
+      contractSigned,
+      paymentReady,
+      planConfig: planConfig ? { termMonths: planConfig.termMonths, support24h: planConfig.support24h } : null,
+    });
+  }, [currentStep, activeQuoteId, customerId, contractId, registrationData, selectedPayment, invoiceUrl, paymentComplete, contractSigned, paymentReady, planConfig]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     setActiveQuoteId(quoteId);
@@ -238,6 +299,7 @@ const ContractingWizard = ({
             purchaseDate: new Date().toLocaleDateString("pt-BR"),
           };
           try { sessionStorage.setItem("wmti_purchase_data", JSON.stringify(purchaseData)); } catch {}
+          checkoutStore.reset();
           navigate(`/compra-concluida?quote=${activeQuoteId}`);
         }
       } catch (e) { console.error("[poll] check-payment-status error:", e); }
@@ -560,6 +622,7 @@ const ContractingWizard = ({
 
       // If already paid, redirect immediately
       if (data?.already_paid) {
+        checkoutStore.reset();
         navigate(`/compra-concluida?quote=${activeQuoteId}`);
         return;
       }
