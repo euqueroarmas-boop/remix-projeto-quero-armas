@@ -183,7 +183,7 @@ export function generateOnDemandContractHtml(vars: OnDemandContractVars): string
   <!-- CLÁUSULA QUINTA -->
   <h2 style="${clauseStyle}">CLÁUSULA QUINTA — DA CONTRAPRESTAÇÃO E PAGAMENTO</h2>
 
-  <p style="${pStyle}">Em contraprestação aos serviços objeto deste contrato, o CONTRATANTE deverá efetuar o pagamento integral e antecipado do valor de <strong>${formatCurrency(v.WMTI_VALOR_TOTAL)}</strong> (${totalWords}), correspondente a ${horasLabel} ao valor unitário de ${formatCurrency(v.WMTI_VALOR_HORA)} por hora técnica, por meio de boleto bancário, PIX (QR Code da cobrança) ou cartão de crédito.</p>
+  <p style="${pStyle}">Em contraprestação aos serviços objeto deste contrato, o CONTRATANTE deverá efetuar o pagamento integral e antecipado do valor de <strong>${formatCurrency(v.WMTI_VALOR_TOTAL)}</strong> (${totalWords}), correspondente a ${horasLabel} ao valor final de ${formatCurrency(v.WMTI_VALOR_FINAL_HORA ?? v.WMTI_VALOR_HORA)} por hora técnica, por meio de boleto bancário, PIX (QR Code da cobrança) ou cartão de crédito.</p>
 
   <p style="${pStyle}"><em>Parágrafo Primeiro:</em> O início da prestação dos serviços está condicionado à confirmação do pagamento integral pela CONTRATADA. Não haverá prestação de serviços a crédito ou mediante promessa de pagamento futuro.</p>
 

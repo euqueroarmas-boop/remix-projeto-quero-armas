@@ -363,6 +363,12 @@ const ContratarServicoPage = () => {
         unitPrice,
         totalValue: promoPrice,
         savings,
+        valorHoraBase: basePrice,
+        multiplicadorComplexidade: webDevPayload?.multiplicadorComplexidade,
+        multiplicadorPrazoUrgencia: webDevPayload?.multiplicadorPrazoUrgencia,
+        descontoProgressivoPct: discountPct > 0 ? discountPct : undefined,
+        valorFinalHora: promoPrice / hours,
+        fatorExecucaoLabel: webDevPayload?.urgencia || undefined,
       });
       const html = generateOnDemandContractHtml(onDemandVars);
 
