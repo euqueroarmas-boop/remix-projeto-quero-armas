@@ -745,6 +745,7 @@ function ClientesTab({ onOpenClient }: { onOpenClient?: (id: string) => void }) 
                 <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Empresa</TableHead>
                 <TableHead className="text-[10px] uppercase tracking-wider font-semibold">CNPJ/CPF</TableHead>
                 <TableHead className="text-[10px] uppercase tracking-wider font-semibold">E-mail</TableHead>
+                <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Status</TableHead>
                 <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Acesso Portal</TableHead>
                 <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Origem</TableHead>
                 <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Cadastro</TableHead>
