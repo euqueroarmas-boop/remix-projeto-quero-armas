@@ -5,6 +5,8 @@ import { Server, Minus, Plus, ArrowRight, Monitor, Layers } from "lucide-react";
 
 const HOST_PRICE = 350;
 const VM_PRICE = 200;
+const HOST_PRICE_LINUX = 500;
+const VM_PRICE_LINUX = 350;
 
 const fadeIn = {
   initial: { opacity: 0, y: 20 },

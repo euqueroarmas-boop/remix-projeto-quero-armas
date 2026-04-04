@@ -6,11 +6,14 @@ import { openWhatsApp } from "@/lib/whatsapp";
 import { useInfraStore } from "@/stores/useInfraStore";
 
 /* ── Pricing constants ── */
-const HOST_PRICE = 350;
-const VM_PRICE = 200;
 const WORKSTATION_BASE = 150;
 const MAX_AUTO_WORKSTATIONS = 30;
 const MAX_DISCOUNT_PCT = 27.5;
+
+function getServerPrices(os: ServerOsType) {
+  if (os === "linux") return { host: 500, vm: 350 };
+  return { host: 350, vm: 200 };
+}
 
 /* Progressive discount: linear from 0% at 1 station to 27.5% at 30 stations */
 function workstationDiscount(qty: number): number {
@@ -120,6 +123,9 @@ const UnifiedInfraCalculator = ({ contractHref = "/orcamento-ti", pageTitle }: P
 
   const cur = t(`${k}.currency`, "R$");
   const fmt = (v: number) => `${cur} ${v.toLocaleString("pt-BR")}`;
+
+  /* Server prices based on OS */
+  const { host: HOST_PRICE, vm: VM_PRICE } = getServerPrices(serverOs);
 
   /* Server subtotal */
   const serverSubtotal = hosts * HOST_PRICE + vms * VM_PRICE;
@@ -257,7 +263,7 @@ const UnifiedInfraCalculator = ({ contractHref = "/orcamento-ti", pageTitle }: P
                 <CounterRow
                   icon={Monitor}
                   label={t(`${k}.stations`)}
-                  sublabel={`${fmt(WORKSTATION_BASE)} ${t(`${k}.base`)}`}
+                  sublabel={`${fmt(WORKSTATION_BASE)}${t(`${k}.perMonth`)}`}
                   value={workstations}
                   min={0}
                   onDec={() => setWorkstations(Math.max(0, workstations - 1))}
