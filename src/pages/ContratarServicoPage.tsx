@@ -347,7 +347,48 @@ const ContratarServicoPage = () => {
     return () => clearInterval(interval);
   }, [paymentComplete, paymentConfirmed, quoteId, currentStep, registrationData, selectedPayment, contractId, serviceName, hours, promoPrice, boletoGenerated]);
 
-  const scrollToTop = () => {
+  // Fetch portal credentials when reaching success step
+  const fetchCredentials = useCallback(async () => {
+    if (!quoteId) return;
+    setCredentialsLoading(true);
+    setCredentialsError(null);
+    try {
+      const result = await ensurePortalAccess(quoteId);
+      if (result.success && result.email) {
+        setPortalCredentials({ email: result.email, temp_password: result.temp_password, password_change_required: result.password_change_required });
+      } else {
+        setCredentialsError(result.error || "Não foi possível gerar as credenciais.");
+      }
+    } catch (err) {
+      console.error("[WMTi] Erro ao buscar credenciais:", err);
+      setCredentialsError("Erro ao gerar credenciais de acesso.");
+    } finally {
+      setCredentialsLoading(false);
+    }
+  }, [quoteId]);
+
+  useEffect(() => {
+    if (currentStep !== "success") return;
+    if (portalCredentials || credentialsLoading) return;
+    // For boleto: generate credentials immediately (restricted access)
+    // For card: generate after payment confirmation
+    if (boletoGenerated || paymentConfirmed) {
+      fetchCredentials();
+    }
+  }, [currentStep, boletoGenerated, paymentConfirmed, fetchCredentials, portalCredentials, credentialsLoading]);
+
+  const buildSummaryData = (): PurchaseSummaryData => ({
+    serviceName,
+    hours: hours > 0 ? hours : undefined,
+    totalValue: promoPrice,
+    customerName: registrationData?.razaoSocial || "",
+    customerEmail: registrationData?.email || "",
+    customerCpfCnpj: registrationData?.cnpjOuCpf || "",
+    paymentMethod: selectedPayment || "",
+    contractRef: contractId,
+    purchaseDate: new Date().toLocaleDateString("pt-BR"),
+  });
+
     setTimeout(() => {
       wizardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 150);
