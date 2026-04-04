@@ -563,7 +563,7 @@ function ClientesTab({ onOpenClient }: { onOpenClient?: (id: string) => void }) 
     setLoading(true);
     try {
       const results = await adminQuery([
-        { table: "customers", select: "id, razao_social, nome_fantasia, cnpj_ou_cpf, email, user_id, created_at", order: { column: "created_at", ascending: false } },
+        { table: "customers", select: "id, razao_social, nome_fantasia, cnpj_ou_cpf, email, user_id, created_at, status_cliente, suspended_at", order: { column: "created_at", ascending: false } },
         { table: "admin_audit_logs", select: "target_id, action, after_state, created_at", filters: [{ column: "action", op: "in", value: ["auto_user_created", "auto_user_creation_failed"] }], order: { column: "created_at", ascending: false } },
       ]);
       setCustomers((results[0].data as any[]) || []);
