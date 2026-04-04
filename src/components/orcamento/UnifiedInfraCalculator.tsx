@@ -124,6 +124,9 @@ const UnifiedInfraCalculator = ({ contractHref = "/orcamento-ti", pageTitle }: P
   const cur = t(`${k}.currency`, "R$");
   const fmt = (v: number) => `${cur} ${v.toLocaleString("pt-BR")}`;
 
+  /* Server prices based on OS */
+  const { host: HOST_PRICE, vm: VM_PRICE } = getServerPrices(serverOs);
+
   /* Server subtotal */
   const serverSubtotal = hosts * HOST_PRICE + vms * VM_PRICE;
 
