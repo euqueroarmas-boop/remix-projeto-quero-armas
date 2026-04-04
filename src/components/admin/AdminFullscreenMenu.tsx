@@ -29,8 +29,8 @@ const MENU_SECTIONS = [
     label: "Operações",
     items: [
       { id: "leads", label: "Leads & Propostas", icon: Megaphone },
-      { id: "financeiro", label: "Central Financeira", icon: DollarSign },
       { id: "payments", label: "Pagamentos", icon: CreditCard },
+      { id: "financeiro", label: "Financeiro", icon: DollarSign },
       { id: "clientes", label: "Clientes", icon: UserCog },
       { id: "cipa-locations", label: "CIPA Geo", icon: MapPin },
     ],
