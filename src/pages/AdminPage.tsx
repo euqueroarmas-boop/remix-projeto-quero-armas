@@ -582,6 +582,7 @@ function ClientesTab({ onOpenClient }: { onOpenClient?: (id: string) => void }) 
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedCustomerId || selectedCustomerId === "none") { setError("É obrigatório vincular a um cliente cadastrado."); return; }
     if (!form.email || !form.password) { setError("E-mail e senha são obrigatórios."); return; }
     if (form.password.length < 6) { setError("Senha deve ter ao menos 6 caracteres."); return; }
 
