@@ -181,6 +181,70 @@ const ContratarServicoPage = () => {
 
   useEffect(() => { window.scrollTo(0, 0); }, [slug]);
 
+  // ─── Checkout persistence: rehydrate on mount ───
+  useEffect(() => {
+    if (!slug) return;
+    const saved = checkoutStore.getSafeSession(slug);
+    if (!saved) return;
+    // Restore IDs (prevent duplication)
+    if (saved.quoteId) setQuoteId(saved.quoteId);
+    if (saved.customerId) setCustomerId(saved.customerId);
+    if (saved.contractId) setContractId(saved.contractId);
+    if (saved.contractSigned) setContractSigned(true);
+    if (saved.registrationData) setRegistrationData(saved.registrationData as any);
+    if (saved.selectedPayment) setSelectedPayment(saved.selectedPayment);
+    if (saved.invoiceUrl) setInvoiceUrl(saved.invoiceUrl);
+    if (saved.paymentComplete) setPaymentComplete(true);
+    if (saved.paymentReady) setPaymentReady(true);
+    if (saved.hours > 1) setHours(saved.hours);
+    if (saved.contractMode) setContractMode(saved.contractMode as any);
+    // Restore step
+    if (saved.onDemandStep && saved.onDemandStep !== "calculator") {
+      setCurrentStep(saved.onDemandStep as FlowStep);
+    }
+    console.log("[WMTi] Checkout session restored from persistence", { step: saved.onDemandStep, quoteId: saved.quoteId });
+  }, [slug]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ─── Checkout persistence: auto-save on changes ───
+  useEffect(() => {
+    if (!slug) return;
+    // Only save if there's meaningful progress
+    if (!registrationData && currentStep === "calculator") return;
+    checkoutStore.patch({
+      flowType: "on_demand",
+      serviceSlug: slug,
+      onDemandStep: currentStep,
+      quoteId,
+      customerId,
+      contractId,
+      registrationData: registrationData ? {
+        razaoSocial: registrationData.razaoSocial,
+        nomeFantasia: registrationData.nomeFantasia,
+        cnpjOuCpf: registrationData.cnpjOuCpf,
+        responsavel: registrationData.responsavel,
+        responsavelCpf: registrationData.responsavelCpf,
+        email: registrationData.email,
+        telefone: registrationData.telefone,
+        whatsapp: registrationData.whatsapp,
+        cep: registrationData.cep,
+        endereco: registrationData.endereco,
+        numero: registrationData.numero,
+        complemento: registrationData.complemento,
+        bairro: registrationData.bairro,
+        cidade: registrationData.cidade,
+        uf: registrationData.uf,
+        isPJ: registrationData.isPJ,
+      } : null,
+      selectedPayment,
+      invoiceUrl,
+      paymentComplete,
+      contractSigned,
+      paymentReady,
+      hours,
+      contractMode: contractMode as any,
+    });
+  }, [currentStep, quoteId, customerId, contractId, registrationData, selectedPayment, invoiceUrl, paymentComplete, contractSigned, paymentReady, hours, contractMode, slug]); // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     if (!isLegacyCartorioRecurringCheckout) return;
 
