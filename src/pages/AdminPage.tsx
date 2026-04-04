@@ -20,6 +20,7 @@ import {
   BarChart3, AlertTriangle, CreditCard, FileText, LogOut, RefreshCw, ChevronLeft, ChevronRight, Eye, Users, Plus, Loader2, Check, Copy, Shield,
   LayoutDashboard, ScrollText, CreditCard as CreditCardIcon, UserCog, Megaphone, ShieldAlert, Webhook, ClipboardCheck, Activity, Stethoscope, FlaskConical, PenTool, TestTube2, Brain, DollarSign, MessageSquareCode,
   Search, Bell, ChevronDown, PanelLeftClose, PanelLeft, Menu, Settings, FileSignature, MapPin,
+  Wrench, Layers, Calculator, LayoutGrid, Globe,
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { StatusPill, SectionHeader, DataPanel } from "@/components/admin/ui/AdminPrimitives";
@@ -43,6 +44,11 @@ const DevChatPanel = lazy(() => import("@/components/admin/DevChatPanel"));
 const AdminDigitalSignature = lazy(() => import("@/components/admin/AdminDigitalSignature"));
 const AdminCertDiagnostic = lazy(() => import("@/components/admin/AdminCertDiagnostic"));
 const AdminCipaLocations = lazy(() => import("@/components/admin/AdminCipaLocations"));
+const ServicesBuilder = lazy(() => import("@/components/admin/cms/ServicesBuilder"));
+const SegmentsBuilder = lazy(() => import("@/components/admin/cms/SegmentsBuilder"));
+const PricingEngine = lazy(() => import("@/components/admin/cms/PricingEngine"));
+const BlockLibrary = lazy(() => import("@/components/admin/cms/BlockLibrary"));
+const SitemapManager = lazy(() => import("@/components/admin/cms/SitemapManager"));
 
 const ITEMS_PER_PAGE = 20;
 
@@ -89,6 +95,16 @@ const NAV_GROUPS = [
       { id: "prompt-intelligence", label: "Prompt Intelligence", icon: Brain },
       { id: "revenue-intelligence", label: "Receita", icon: DollarSign },
       { id: "dev-chat", label: "DevChat", icon: MessageSquareCode },
+    ],
+  },
+  {
+    label: "CMS",
+    items: [
+      { id: "services-builder", label: "Serviços", icon: Wrench },
+      { id: "segments-builder", label: "Segmentos", icon: Layers },
+      { id: "pricing-engine", label: "Precificação", icon: Calculator },
+      { id: "block-library", label: "Blocos", icon: LayoutGrid },
+      { id: "sitemap-manager", label: "Sitemap", icon: Globe },
     ],
   },
   {
@@ -760,6 +776,11 @@ function AdminContent({ activeSection, onNavigate }: { activeSection: string; on
     case "digital-signature": return <Suspense fallback={fallback}><AdminDigitalSignature /></Suspense>;
     case "cert-diagnostic": return <Suspense fallback={fallback}><AdminCertDiagnostic /></Suspense>;
     case "cipa-locations": return <Suspense fallback={fallback}><AdminCipaLocations /></Suspense>;
+    case "services-builder": return <Suspense fallback={fallback}><ServicesBuilder /></Suspense>;
+    case "segments-builder": return <Suspense fallback={fallback}><SegmentsBuilder /></Suspense>;
+    case "pricing-engine": return <Suspense fallback={fallback}><PricingEngine /></Suspense>;
+    case "block-library": return <Suspense fallback={fallback}><BlockLibrary /></Suspense>;
+    case "sitemap-manager": return <Suspense fallback={fallback}><SitemapManager /></Suspense>;
     default: return <AdminCommandCenter onNavigate={onNavigate} />;
   }
 }

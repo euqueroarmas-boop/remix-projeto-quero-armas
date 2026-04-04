@@ -1,78 +1,43 @@
+## Plano de Implementação — CMS Builder (MVP Simplificado)
 
-## CIPA Pulse — Plano de Implementação
+### Fase 1: Banco de Dados (migração)
+Criar tabelas:
+- `cms_pages` — tabela principal (serviços + segmentos)
+- `cms_blocks` — blocos de cada página
+- `cms_pricing_rules` — regras de precificação globais
+- `cms_redirects` — redirects 301 automáticos
 
-### FASE 1 — Termômetro + Motor Básico
-**Tabelas novas:**
-- `emotion_logs` (user_id, manual_level, status_label, timestamp)
-- `emotion_events` (user_id, started_at, peak_level, ended_at, duration_minutes, conflict_flag)
+### Fase 2: Admin UI — Services Builder (`/admin/services-builder`)
+- Lista de serviços (existentes hardcoded + criados pelo admin)
+- Formulário estruturado com seções: identidade, SEO, hero, dores, solução, benefícios, calculadora, precificação, escopo, contrato, FAQ
+- Ações: criar, editar, duplicar, publicar/despublicar, arquivar
+- Preview inline
 
-**Arquivos novos:**
-- `src/components/cipa/pulse/PulseThermometer.tsx` — Termômetro touch 0-100 com zonas (Calmo/Atenção/Tensão/Crítico/Conflito)
-- `src/components/cipa/pulse/PulseScoreEngine.ts` — Motor de score inicial
-- `src/components/cipa/pulse/PulseDailyChart.tsx` — Gráfico de linha diário
-- `src/components/cipa/pulse/PulseHeatmap.tsx` — Heatmap mensal
-- `src/components/cipa/pulse/PulseEventDetector.ts` — Lógica de detecção de eventos (inicia >60, encerra <40)
-- `src/components/cipa/pulse/usePulseLogger.ts` — Hook de persistência
+### Fase 3: Admin UI — Segments Builder (`/admin/segments-builder`)
+- Lista de segmentos com mesma estrutura
+- Campos específicos: dores do nicho, compliance, serviços relacionados, prova social
 
-**Arquivos alterados:**
-- `src/pages/CipaPage.tsx` — Adicionar aba/seção "CIPA Pulse" (sem tocar no existente)
+### Fase 4: Pricing Engine (`/admin/pricing-engine`)
+- Painel visual com preços por SO, SLA, criticidade
+- Motor de criticidade (manual + assistido com perguntas)
+- Desconto progressivo configurável
 
----
+### Fase 5: Dynamic Renderer
+- Componente que renderiza página a partir do schema do banco
+- Dual-source: se existe no banco → renderiza dinamicamente; se não → usa legado
+- Rota dinâmica no React Router
 
-### FASE 2 — Motor de Tendência
-**Arquivos novos:**
-- `src/components/cipa/pulse/PulseTrendEngine.ts` — Cálculo de delta, aceleração, cooldown
-- `src/components/cipa/pulse/PulseTrendIndicator.tsx` — Indicadores visuais (↑ ↓ →)
+### Fase 6: Sitemap + SEO automático
+- Edge function `sitemap` atualizada para ler páginas publicadas do banco
+- Meta tags dinâmicas
+- Redirects 301 para slugs alterados
 
----
+### Fase 7: Módulos extras do admin
+- `/admin/block-library` — catálogo visual dos blocos disponíveis
+- `/admin/sitemap-manager` — visualização e refresh manual do sitemap
 
-### FASE 3 — Integração Biológica (Apple Watch / HealthKit)
-**Alteração de tabela:**
-- Adicionar campos em `emotion_logs`: heart_rate, hrv, sleep_score
-
-**Arquivos novos:**
-- `src/components/cipa/pulse/PulseHealthKit.ts` — Interface com HealthKit (preparação para PWA/nativo)
-- `src/components/cipa/pulse/PulseCompositeScore.ts` — Score composto (manual + bio + histórico)
-- `src/components/cipa/pulse/PulseWatchButton.tsx` — Botão "Estou esquentando"
-
----
-
-### FASE 4 — Motor Químico (Acúmulo e Recuperação)
-**Arquivos novos:**
-- `src/components/cipa/pulse/PulseChemicalEngine.ts` — Acúmulo de stress com decay (0.95/hora)
-
----
-
-### FASE 5 — Estatística Avançada
-**Tabelas novas:**
-- `emotion_statistics` (user_id, month, average_score, max_score, critical_events, conflict_events, cooldown_avg)
-- `emotion_triggers` (user_id, trigger_name, frequency, avg_intensity)
-
-**Arquivos novos:**
-- `src/components/cipa/pulse/PulseStatistics.tsx` — Painel de estatísticas mensais
-- `src/components/cipa/pulse/PulseStatsAggregator.ts` — Motor de agregação
-
----
-
-### FASE 6 — UI Premium
-**Arquivos novos:**
-- `src/components/cipa/pulse/PulseDashboard.tsx` — Dashboard principal (score, tendência, risco)
-- `src/components/cipa/pulse/PulseWeeklyBars.tsx` — Gráfico de barras semanal
-
----
-
-### FASE 7 — Previsão (IA Simplificada)
-**Arquivos novos:**
-- `src/components/cipa/pulse/PulsePredictionEngine.ts` — Motor de previsão baseado em histórico + tendência + frequência
-- `src/components/cipa/pulse/PulseRiskBadge.tsx` — Badge de risco (Baixo/Moderado/Alto)
-
----
-
-### Regras
-- ✅ 100% incremental — zero alteração no CIPA existente
-- ✅ Todos os novos arquivos dentro de `src/components/cipa/pulse/`
-- ✅ Integração via aba separada no CipaPage
-- ✅ Retrocompatibilidade total
-- ✅ Estrutura modular preparada para SaaS
-
-**Posso iniciar pela Fase 1 após sua aprovação.**
+### Não será incluído neste MVP:
+- Drag-and-drop visual
+- Theme manager (complexo demais para MVP)
+- Template manager (usaremos templates fixos por enquanto)
+- Editor de variantes de componente (cascata base→variante→instância fica para v2)

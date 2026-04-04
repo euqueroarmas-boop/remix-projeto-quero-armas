@@ -562,6 +562,236 @@ export type Database = {
           },
         ]
       }
+      cms_blocks: {
+        Row: {
+          active: boolean
+          block_type: string
+          created_at: string
+          default_data: Json | null
+          id: string
+          is_global: boolean
+          label: string
+          page_id: string | null
+          sort_order: number | null
+          updated_at: string
+          variant: string | null
+        }
+        Insert: {
+          active?: boolean
+          block_type: string
+          created_at?: string
+          default_data?: Json | null
+          id?: string
+          is_global?: boolean
+          label: string
+          page_id?: string | null
+          sort_order?: number | null
+          updated_at?: string
+          variant?: string | null
+        }
+        Update: {
+          active?: boolean
+          block_type?: string
+          created_at?: string
+          default_data?: Json | null
+          id?: string
+          is_global?: boolean
+          label?: string
+          page_id?: string | null
+          sort_order?: number | null
+          updated_at?: string
+          variant?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cms_blocks_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "cms_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cms_pages: {
+        Row: {
+          benefits_data: Json | null
+          blocks_order: Json | null
+          calculator_config: Json | null
+          canonical_url: string | null
+          compliance_data: Json | null
+          created_at: string
+          cta_data: Json | null
+          faq_data: Json | null
+          hero_data: Json | null
+          id: string
+          legacy_component: string | null
+          meta_description: string | null
+          meta_title: string | null
+          niche_data: Json | null
+          noindex: boolean
+          og_image: string | null
+          page_type: string
+          pain_data: Json | null
+          pricing_config: Json | null
+          proof_data: Json | null
+          published_at: string | null
+          related_segments: string[] | null
+          related_services: string[] | null
+          scope_data: Json | null
+          sitemap_changefreq: string | null
+          sitemap_priority: string | null
+          slug: string
+          solution_data: Json | null
+          status: string
+          template: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          benefits_data?: Json | null
+          blocks_order?: Json | null
+          calculator_config?: Json | null
+          canonical_url?: string | null
+          compliance_data?: Json | null
+          created_at?: string
+          cta_data?: Json | null
+          faq_data?: Json | null
+          hero_data?: Json | null
+          id?: string
+          legacy_component?: string | null
+          meta_description?: string | null
+          meta_title?: string | null
+          niche_data?: Json | null
+          noindex?: boolean
+          og_image?: string | null
+          page_type?: string
+          pain_data?: Json | null
+          pricing_config?: Json | null
+          proof_data?: Json | null
+          published_at?: string | null
+          related_segments?: string[] | null
+          related_services?: string[] | null
+          scope_data?: Json | null
+          sitemap_changefreq?: string | null
+          sitemap_priority?: string | null
+          slug: string
+          solution_data?: Json | null
+          status?: string
+          template?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          benefits_data?: Json | null
+          blocks_order?: Json | null
+          calculator_config?: Json | null
+          canonical_url?: string | null
+          compliance_data?: Json | null
+          created_at?: string
+          cta_data?: Json | null
+          faq_data?: Json | null
+          hero_data?: Json | null
+          id?: string
+          legacy_component?: string | null
+          meta_description?: string | null
+          meta_title?: string | null
+          niche_data?: Json | null
+          noindex?: boolean
+          og_image?: string | null
+          page_type?: string
+          pain_data?: Json | null
+          pricing_config?: Json | null
+          proof_data?: Json | null
+          published_at?: string | null
+          related_segments?: string[] | null
+          related_services?: string[] | null
+          scope_data?: Json | null
+          sitemap_changefreq?: string | null
+          sitemap_priority?: string | null
+          slug?: string
+          solution_data?: Json | null
+          status?: string
+          template?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      cms_pricing_rules: {
+        Row: {
+          active: boolean
+          base_price: number
+          created_at: string
+          criticality_high: number
+          criticality_low: number
+          criticality_medium: number
+          id: string
+          min_value: number | null
+          os_type: string
+          progressive_discount: Json | null
+          resource_type: string
+          sla_24h_multiplier: number
+          sla_standard_multiplier: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          base_price?: number
+          created_at?: string
+          criticality_high?: number
+          criticality_low?: number
+          criticality_medium?: number
+          id?: string
+          min_value?: number | null
+          os_type?: string
+          progressive_discount?: Json | null
+          resource_type: string
+          sla_24h_multiplier?: number
+          sla_standard_multiplier?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          base_price?: number
+          created_at?: string
+          criticality_high?: number
+          criticality_low?: number
+          criticality_medium?: number
+          id?: string
+          min_value?: number | null
+          os_type?: string
+          progressive_discount?: Json | null
+          resource_type?: string
+          sla_24h_multiplier?: number
+          sla_standard_multiplier?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      cms_redirects: {
+        Row: {
+          active: boolean
+          created_at: string
+          from_slug: string
+          id: string
+          to_slug: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          from_slug: string
+          id?: string
+          to_slug: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          from_slug?: string
+          id?: string
+          to_slug?: string
+        }
+        Relationships: []
+      }
       cnpj_cache: {
         Row: {
           cnpj: string

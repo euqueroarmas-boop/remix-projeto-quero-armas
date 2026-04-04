@@ -148,23 +148,56 @@ function buildProblemCityXml(): string {
   return wrapUrlset(urls);
 }
 
-function buildBlogCityXml(): string {
+// buildBlogCityXml and buildServiceSegmentCityXml removed — non-standard patterns
+
+/** CMS-managed pages (services + segments from DB) */
+async function buildCmsServicesXml(): Promise<string> {
   const urls: string[] = [];
-  for (const slug of blogSlugs) {
+  try {
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+    const { data } = await supabase
+      .from("cms_pages")
+      .select("slug")
+      .eq("status", "published")
+      .eq("noindex", false)
+      .eq("page_type", "service")
+      .limit(500);
+    if (data) {
+      for (const p of data) urls.push(urlEntry(`/${p.slug}`));
+    }
+  } catch (e) {
+    console.error("[sitemap] CMS services query failed:", e);
+  }
+  // Also include static service×city combos
+  for (const svc of serviceSlugs) {
     for (const city of citySlugs) {
-      urls.push(urlEntry(`/blog-${slug}-${city}`));
+      urls.push(urlEntry(`/${svc}-em-${city}`));
     }
   }
   return wrapUrlset(urls);
 }
 
-function buildServiceSegmentCityXml(): string {
+async function buildCmsSegmentsXml(): Promise<string> {
   const urls: string[] = [];
-  for (const svc of serviceSlugs) {
-    for (const seg of segmentEntries) {
-      for (const city of citySlugs) {
-        urls.push(urlEntry(`/${svc}-${seg.slug}-${city}`));
-      }
+  try {
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+    const { data } = await supabase
+      .from("cms_pages")
+      .select("slug")
+      .eq("status", "published")
+      .eq("noindex", false)
+      .eq("page_type", "segment")
+      .limit(500);
+    if (data) {
+      for (const p of data) urls.push(urlEntry(`/${p.slug}`));
+    }
+  } catch (e) {
+    console.error("[sitemap] CMS segments query failed:", e);
+  }
+  // Also include static segment×city combos
+  for (const seg of segmentEntries) {
+    for (const city of citySlugs) {
+      urls.push(urlEntry(`/${seg.prefix}-em-${city}`));
     }
   }
   return wrapUrlset(urls);
@@ -179,8 +212,6 @@ function buildSitemapIndex(): string {
     "sitemap-services.xml",
     "sitemap-segments.xml",
     "sitemap-problems.xml",
-    "sitemap-blog-cities.xml",
-    "sitemap-service-segment-cities.xml",
   ];
   const entries = sitemaps
     .map((s) => `  <sitemap><loc>${BASE_URL}/${s}</loc><lastmod>${now}</lastmod></sitemap>`)
@@ -205,19 +236,13 @@ Deno.serve(async (req) => {
       xml = await buildBlogXml();
       break;
     case "services":
-      xml = buildServiceCityXml();
+      xml = await buildCmsServicesXml();
       break;
     case "segments":
-      xml = buildSegmentCityXml();
+      xml = await buildCmsSegmentsXml();
       break;
     case "problems":
       xml = buildProblemCityXml();
-      break;
-    case "blog-cities":
-      xml = buildBlogCityXml();
-      break;
-    case "service-segment-cities":
-      xml = buildServiceSegmentCityXml();
       break;
     case "programmatic":
       xml = buildServiceCityXml();
