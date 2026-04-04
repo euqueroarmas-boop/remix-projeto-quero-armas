@@ -329,10 +329,15 @@ const UnifiedInfraCalculator = ({ contractHref = "/orcamento-ti", pageTitle }: P
                 )}
 
                 {(hosts > 0 || vms > 0) && (
-                  <div className="flex justify-between font-mono text-sm font-bold text-foreground">
-                    <span>{t(`${k}.subtotalServers`)}</span>
-                    <span>{fmt(serverSubtotal)}/{t(`${k}.perMonth`).replace("/", "").trim().split(" ")[0]}</span>
-                  </div>
+                  <>
+                    <div className="flex justify-between font-mono text-sm font-bold text-foreground">
+                      <span>{t(`${k}.subtotalServers`)}</span>
+                      <span>{fmt(serverSubtotal)}/{t(`${k}.perMonth`).replace("/", "").trim().split(" ")[0]}</span>
+                    </div>
+                    <div className="flex justify-between font-mono text-xs text-muted-foreground">
+                      <span>SO: {SERVER_OS_OPTIONS.find(o => o.id === serverOs)?.label}</span>
+                    </div>
+                  </>
                 )}
 
                 {workstations > 0 && !wsExceedsLimit && (
