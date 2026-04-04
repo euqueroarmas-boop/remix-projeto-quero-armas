@@ -734,7 +734,7 @@ function ClientesTab({ onOpenClient }: { onOpenClient?: (id: string) => void }) 
             </TableHeader>
             <TableBody>
               {customers.map((c) => (
-                <TableRow key={c.id} className="border-border/30 hover:bg-muted/20">
+                <TableRow key={c.id} className="border-border/30 hover:bg-muted/20 cursor-pointer" onClick={() => onOpenClient?.(c.id)}>
                   <TableCell className="text-xs text-foreground font-medium">{c.nome_fantasia || c.razao_social}</TableCell>
                   <TableCell className="text-[11px] font-mono text-muted-foreground">{c.cnpj_ou_cpf}</TableCell>
                   <TableCell className="text-[11px] text-muted-foreground">{c.email}</TableCell>
