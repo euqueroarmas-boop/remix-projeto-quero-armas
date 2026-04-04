@@ -168,6 +168,7 @@ const ContratarServicoPage = () => {
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
   const [popupBlocked, setPopupBlocked] = useState(false);
   const [paymentReady, setPaymentReady] = useState(false);
+  const [boletoGenerated, setBoletoGenerated] = useState(false);
   const [contractMode, setContractMode] = useState<ContractMode | null>(
     (searchParams.get("modo") as ContractMode) || null
   );
