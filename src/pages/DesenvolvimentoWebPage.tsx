@@ -83,7 +83,7 @@ const DesenvolvimentoWebPage = () => {
             <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">// {t("custom.devWeb.deliverablesTag")}</p>
             <h2 className="text-2xl md:text-4xl mb-12">{t("custom.devWeb.deliverablesTitle")}</h2>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-px bg-border">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-px">
               {deliverables.map((block, i) => {
                 const Icon = block.icon;
                 return (
