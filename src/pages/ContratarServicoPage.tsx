@@ -530,6 +530,7 @@ const ContratarServicoPage = () => {
       // If already paid, redirect immediately
       if (data?.already_paid) {
         setPaymentConfirmed(true);
+        checkoutStore.reset();
         navigate(`/compra-concluida?quote=${quoteId}`);
         return;
       }
