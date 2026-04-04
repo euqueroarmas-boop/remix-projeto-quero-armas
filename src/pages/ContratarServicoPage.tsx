@@ -560,11 +560,11 @@ const ContratarServicoPage = () => {
     };
 
     // Read recurring params from URL (when coming back from UnifiedInfraCalculator redirect)
-    const recurringHosts = Math.max(1, Number(searchParams.get("hosts") || 1));
-    const recurringVms = Math.max(0, Number(searchParams.get("vms") || 0));
-    const recurringEstacoes = Math.max(0, Number(searchParams.get("estacoes") || 0));
+    const recurringHosts = infraStore.recorrente.hosts;
+    const recurringVms = infraStore.recorrente.vms;
+    const recurringEstacoes = infraStore.recorrente.estacoes;
     const recurringTotalMensal = Number(searchParams.get("total_mensal") || 0);
-    const hasRecurringParams = recurringTotalMensal > 0;
+    const hasRecurringParams = recurringTotalMensal > 0 || recurringHosts > 1 || recurringVms > 0 || recurringEstacoes > 0;
 
     return (
       <div className="min-h-screen">
