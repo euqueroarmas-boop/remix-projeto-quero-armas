@@ -232,7 +232,7 @@ export default function AdminClientDetail({ customerId, onBack }: AdminClientDet
     );
   }
 
-  const isAnySuspended = contracts.some(c => c.service_status === "suspended");
+  const isAnySuspended = customer?.status_cliente === "suspenso" || contracts.some(c => c.service_status === "suspended");
   const bestContract = contracts[0];
   const bestProposal = proposals[0];
   const bestQuote = quotes[0];
