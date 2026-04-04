@@ -670,16 +670,20 @@ function ClientesTab({ onOpenClient }: { onOpenClient?: (id: string) => void }) 
             <form onSubmit={handleCreate} className="space-y-4">
               <h3 className="font-bold text-sm text-foreground">Criar Acesso para Cliente</h3>
               <div>
-                <label className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 block">Vincular a Cliente (opcional)</label>
-                <Select value={selectedCustomerId} onValueChange={setSelectedCustomerId}>
+                <label className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 block">Vincular a Cliente <span className="text-destructive">*</span></label>
+                <Select value={selectedCustomerId} onValueChange={(val) => {
+                  setSelectedCustomerId(val);
+                  const cust = customers.find(c => c.id === val);
+                  if (cust && !form.email) setForm(f => ({ ...f, email: cust.email, name: cust.responsavel || cust.razao_social }));
+                }}>
                   <SelectTrigger className="bg-muted/30 text-xs border-border/50"><SelectValue placeholder="Selecione um cliente" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">Nenhum (criar sem vínculo)</SelectItem>
                     {customers.filter((c) => !c.user_id).map((c) => (
                       <SelectItem key={c.id} value={c.id}>{c.razao_social} ({c.cnpj_ou_cpf})</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                {customers.filter(c => !c.user_id).length === 0 && <p className="text-[10px] text-amber-400 mt-1">Todos os clientes já possuem acesso.</p>}
               </div>
               <div><label className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 block">Nome</label><Input placeholder="Nome do usuário" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="bg-muted/30 border-border/50" /></div>
               <div><label className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 block">E-mail *</label><Input type="email" placeholder="email@cliente.com" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="bg-muted/30 border-border/50" /></div>

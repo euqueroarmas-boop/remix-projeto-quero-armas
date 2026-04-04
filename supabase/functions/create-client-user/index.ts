@@ -143,6 +143,33 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (!customer_id) {
+      await logSistemaBackend({
+        tipo: "admin",
+        status: "error",
+        mensagem: "Tentativa de criar usuário sem vínculo com cliente",
+        payload: { email },
+      });
+      return new Response(JSON.stringify({ error: "É obrigatório vincular o usuário a um cliente cadastrado (customer_id)" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Verify customer exists
+    const { data: customerCheck } = await supabase
+      .from("customers")
+      .select("id, razao_social, email")
+      .eq("id", customer_id)
+      .single();
+
+    if (!customerCheck) {
+      return new Response(JSON.stringify({ error: "Cliente não encontrado no sistema" }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email,
       password,
