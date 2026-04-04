@@ -43,6 +43,14 @@ export interface OnDemandContractVars {
   WMTI_MODALIDADE: string; // "AVULSO SOB DEMANDA" | "EMERGENCIAL"
   WMTI_IS_EMERGENCY: boolean;
 
+  // Detalhamento de precificação (opcional — Web Dev / calculadora avançada)
+  WMTI_VALOR_HORA_BASE?: number;
+  WMTI_MULTIPLICADOR_COMPLEXIDADE?: number;
+  WMTI_MULTIPLICADOR_PRAZO_URGENCIA?: number;
+  WMTI_DESCONTO_PROGRESSIVO_PCT?: number;
+  WMTI_VALOR_FINAL_HORA?: number;
+  WMTI_FATOR_EXECUCAO_LABEL?: string; // "normal" | "prioritário" | "urgente"
+
   // Garantia
   WMTI_GARANTIA_HORAS: number;
   WMTI_GARANTIA_PRAZO_DIAS: number;
@@ -116,8 +124,24 @@ export function generateOnDemandContractHtml(vars: OnDemandContractVars): string
       <td style="border: 1px solid #000; padding: 8px;">${horasLabel}</td>
     </tr>
     <tr style="background: #f5f5f5;">
-      <td style="border: 1px solid #000; padding: 8px; font-weight: bold;">Valor por Hora</td>
-      <td style="border: 1px solid #000; padding: 8px;">${formatCurrency(v.WMTI_VALOR_HORA)}</td>
+      <td style="border: 1px solid #000; padding: 8px; font-weight: bold;">Valor por Hora Base</td>
+      <td style="border: 1px solid #000; padding: 8px;">${formatCurrency(v.WMTI_VALOR_HORA_BASE ?? v.WMTI_VALOR_HORA)}</td>
+    </tr>
+    ${v.WMTI_DESCONTO_PROGRESSIVO_PCT && v.WMTI_DESCONTO_PROGRESSIVO_PCT > 0 ? `<tr>
+      <td style="border: 1px solid #000; padding: 8px; font-weight: bold;">Desconto Progressivo por Volume</td>
+      <td style="border: 1px solid #000; padding: 8px; color: green;">-${v.WMTI_DESCONTO_PROGRESSIVO_PCT}%</td>
+    </tr>` : ""}
+    ${v.WMTI_FATOR_EXECUCAO_LABEL && v.WMTI_FATOR_EXECUCAO_LABEL !== "normal" ? `<tr style="background: #f5f5f5;">
+      <td style="border: 1px solid #000; padding: 8px; font-weight: bold;">Fator de Execução</td>
+      <td style="border: 1px solid #000; padding: 8px;">${v.WMTI_FATOR_EXECUCAO_LABEL.charAt(0).toUpperCase() + v.WMTI_FATOR_EXECUCAO_LABEL.slice(1)} (×${(v.WMTI_MULTIPLICADOR_PRAZO_URGENCIA ?? 1).toFixed(2)})</td>
+    </tr>` : ""}
+    ${v.WMTI_MULTIPLICADOR_COMPLEXIDADE && v.WMTI_MULTIPLICADOR_COMPLEXIDADE > 1 ? `<tr>
+      <td style="border: 1px solid #000; padding: 8px; font-weight: bold;">Ajuste por Complexidade</td>
+      <td style="border: 1px solid #000; padding: 8px;">×${v.WMTI_MULTIPLICADOR_COMPLEXIDADE.toFixed(1)}</td>
+    </tr>` : ""}
+    <tr style="background: #f5f5f5;">
+      <td style="border: 1px solid #000; padding: 8px; font-weight: bold;">Valor Final por Hora</td>
+      <td style="border: 1px solid #000; padding: 8px;">${formatCurrency(v.WMTI_VALOR_FINAL_HORA ?? v.WMTI_VALOR_HORA)}</td>
     </tr>
     <tr>
       <td style="border: 1px solid #000; padding: 8px; font-weight: bold;">Valor Total</td>
@@ -159,7 +183,7 @@ export function generateOnDemandContractHtml(vars: OnDemandContractVars): string
   <!-- CLÁUSULA QUINTA -->
   <h2 style="${clauseStyle}">CLÁUSULA QUINTA — DA CONTRAPRESTAÇÃO E PAGAMENTO</h2>
 
-  <p style="${pStyle}">Em contraprestação aos serviços objeto deste contrato, o CONTRATANTE deverá efetuar o pagamento integral e antecipado do valor de <strong>${formatCurrency(v.WMTI_VALOR_TOTAL)}</strong> (${totalWords}), correspondente a ${horasLabel} ao valor unitário de ${formatCurrency(v.WMTI_VALOR_HORA)} por hora técnica, por meio de boleto bancário, PIX (QR Code da cobrança) ou cartão de crédito.</p>
+  <p style="${pStyle}">Em contraprestação aos serviços objeto deste contrato, o CONTRATANTE deverá efetuar o pagamento integral e antecipado do valor de <strong>${formatCurrency(v.WMTI_VALOR_TOTAL)}</strong> (${totalWords}), correspondente a ${horasLabel} ao valor final de ${formatCurrency(v.WMTI_VALOR_FINAL_HORA ?? v.WMTI_VALOR_HORA)} por hora técnica, por meio de boleto bancário, PIX (QR Code da cobrança) ou cartão de crédito.</p>
 
   <p style="${pStyle}"><em>Parágrafo Primeiro:</em> O início da prestação dos serviços está condicionado à confirmação do pagamento integral pela CONTRATADA. Não haverá prestação de serviços a crédito ou mediante promessa de pagamento futuro.</p>
 
@@ -359,6 +383,12 @@ export function buildOnDemandVarsFromCheckout(opts: {
   savings: number;
   contractId?: string;
   quoteId?: string;
+  valorHoraBase?: number;
+  multiplicadorComplexidade?: number;
+  multiplicadorPrazoUrgencia?: number;
+  descontoProgressivoPct?: number;
+  valorFinalHora?: number;
+  fatorExecucaoLabel?: string;
 }): OnDemandContractVars {
   const today = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
   return {
@@ -387,6 +417,12 @@ export function buildOnDemandVarsFromCheckout(opts: {
     WMTI_ECONOMIA: opts.savings,
     WMTI_MODALIDADE: opts.isEmergency ? "EMERGENCIAL" : "AVULSO SOB DEMANDA",
     WMTI_IS_EMERGENCY: opts.isEmergency,
+    WMTI_VALOR_HORA_BASE: opts.valorHoraBase ?? opts.unitPrice,
+    WMTI_MULTIPLICADOR_COMPLEXIDADE: opts.multiplicadorComplexidade,
+    WMTI_MULTIPLICADOR_PRAZO_URGENCIA: opts.multiplicadorPrazoUrgencia,
+    WMTI_DESCONTO_PROGRESSIVO_PCT: opts.descontoProgressivoPct,
+    WMTI_VALOR_FINAL_HORA: opts.valorFinalHora ?? opts.unitPrice,
+    WMTI_FATOR_EXECUCAO_LABEL: opts.fatorExecucaoLabel,
     WMTI_GARANTIA_HORAS: opts.hours,
     WMTI_GARANTIA_PRAZO_DIAS: 15,
     WMTI_DATA_CONTRATACAO: today,

@@ -166,6 +166,7 @@ const ContractingWizard = ({
 
   const [registrationLoading, setRegistrationLoading] = useState(false);
   const [popupBlocked, setPopupBlocked] = useState(false);
+  const [paymentReady, setPaymentReady] = useState(false);
 
   const wizardRef = useRef<HTMLDivElement>(null);
   const paymentLockRef = useRef(false);
@@ -704,7 +705,7 @@ const ContractingWizard = ({
             </WizardStepWrapper>
 
             {/* Step 4: Payment */}
-            <WizardStepWrapper stepNumber={4} title={paymentConfirmed ? "Pagamento Confirmado ✓" : "Pagamento"} subtitle={paymentConfirmed ? "Pagamento confirmado com sucesso" : "Ao prosseguir, você será direcionado para a página segura de checkout"} status={paymentConfirmed ? "completed" : getStepStatus("payment")}>
+            <WizardStepWrapper stepNumber={4} title={paymentConfirmed ? "Pagamento Confirmado ✓" : paymentReady ? "Pagamento" : "Revisão e Pagamento"} subtitle={paymentConfirmed ? "Pagamento confirmado com sucesso" : paymentReady ? "Escolha a forma de pagamento" : "Confirme os dados e prepare o pagamento"} status={paymentConfirmed ? "completed" : getStepStatus("payment")}>
               {paymentConfirmed ? (
                 <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-3">
                   <CheckCircle className="w-10 h-10 text-green-500 mx-auto" />
@@ -746,6 +747,27 @@ const ContractingWizard = ({
                       Escolher outra forma de pagamento
                     </Button>
                   </div>
+                </div>
+              ) : !paymentReady ? (
+                <div className="space-y-4">
+                  <div className="bg-card border border-border rounded-xl p-5 space-y-3">
+                    <p className="font-mono text-[10px] tracking-[0.3em] uppercase text-primary mb-2 font-bold">Resumo do pedido</p>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between"><span className="text-muted-foreground">Serviço</span><span className="text-foreground font-semibold">{pathLabel}</span></div>
+                      <div className="flex justify-between"><span className="text-muted-foreground">Prazo</span><span className="text-foreground font-semibold">{planConfig?.termMonths ?? 36} meses</span></div>
+                      <div className="flex justify-between"><span className="text-muted-foreground">Valor mensal</span><span className="text-primary font-bold">R$ {(pricingBreakdown?.valorFinalMensal ?? monthlyValue).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span></div>
+                      {registrationData && <div className="flex justify-between"><span className="text-muted-foreground">Empresa</span><span className="text-foreground font-semibold">{registrationData.razaoSocial}</span></div>}
+                    </div>
+                    <div className="pt-2 space-y-1.5">
+                      <div className="flex items-center gap-2 text-xs"><CheckCircle className="w-3.5 h-3.5 text-primary shrink-0" /><span className="text-muted-foreground">Cadastro salvo</span></div>
+                      <div className="flex items-center gap-2 text-xs"><CheckCircle className="w-3.5 h-3.5 text-primary shrink-0" /><span className="text-muted-foreground">Contrato gerado e assinado</span></div>
+                      <div className="flex items-center gap-2 text-xs"><CheckCircle className="w-3.5 h-3.5 text-primary shrink-0" /><span className="text-muted-foreground">Pedido registrado</span></div>
+                    </div>
+                  </div>
+                  <Button onClick={() => setPaymentReady(true)} className="w-full h-14 text-base bg-primary hover:bg-primary/90 text-primary-foreground">
+                    <ExternalLink className="w-5 h-5 mr-2" />
+                    Ir para pagamento seguro
+                  </Button>
                 </div>
               ) : (
                 <div className="space-y-4">
