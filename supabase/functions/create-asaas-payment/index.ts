@@ -153,7 +153,7 @@ Deno.serve(async (req) => {
     if (!customerRes.ok && !asaasCustomerId) {
       console.log("[create-asaas-payment] Cliente não criado, buscando existente...");
       const searchRes = await fetch(`${ASAAS_BASE_URL}/customers?cpfCnpj=${customer_cpf_cnpj.replace(/\D/g, "")}`, {
-        headers: { access_token: ASAAS_API_KEY },
+        headers: { access_token: ASAAS_API_KEY, "User-Agent": "WMTi-Integration/1.0" },
       });
       const searchData = await searchRes.json();
 
