@@ -185,7 +185,7 @@ export function QuickAction({ icon: Icon, label, onClick }: { icon: LucideIcon; 
     >
       <Icon className="h-3.5 w-3.5 shrink-0" />
       <span className="flex-1">{label}</span>
-      <ArrowRight className="h-3 w-3 opacity-0 group-hover:opacity-40 transition-opacity" />
+      <ArrowRight className="h-3 w-3 opacity-40 group-hover:opacity-70 transition-opacity" />
     </button>
   );
 }
