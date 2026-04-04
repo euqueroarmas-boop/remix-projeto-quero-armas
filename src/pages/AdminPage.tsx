@@ -45,6 +45,7 @@ const DevChatPanel = lazy(() => import("@/components/admin/DevChatPanel"));
 const AdminDigitalSignature = lazy(() => import("@/components/admin/AdminDigitalSignature"));
 const AdminCertDiagnostic = lazy(() => import("@/components/admin/AdminCertDiagnostic"));
 const AdminCipaLocations = lazy(() => import("@/components/admin/AdminCipaLocations"));
+const AdminClientDetail = lazy(() => import("@/components/admin/AdminClientDetail"));
 const ServicesBuilder = lazy(() => import("@/components/admin/cms/ServicesBuilder"));
 const SegmentsBuilder = lazy(() => import("@/components/admin/cms/SegmentsBuilder"));
 const PricingEngine = lazy(() => import("@/components/admin/cms/PricingEngine"));
