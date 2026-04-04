@@ -1786,7 +1786,7 @@ const ContratarServicoPage = () => {
           </WizardStepWrapper>
 
           {/* Step 4: Payment */}
-          <WizardStepWrapper stepNumber={4} title={paymentConfirmed ? "Pagamento Confirmado ✓" : "Pagamento"} subtitle={paymentConfirmed ? "Pagamento confirmado com sucesso" : "Pagamento único via checkout seguro"} status={paymentConfirmed ? "completed" : getStepStatus("payment")}>
+          <WizardStepWrapper stepNumber={4} title={paymentConfirmed ? "Pagamento Confirmado ✓" : boletoGenerated ? "Boleto Gerado ✓" : "Pagamento"} subtitle={paymentConfirmed ? "Pagamento confirmado com sucesso" : boletoGenerated ? "Boleto gerado — aguardando compensação" : "Pagamento único via checkout seguro"} status={paymentConfirmed || boletoGenerated ? "completed" : getStepStatus("payment")}>
              {paymentConfirmed ? (
                 <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-3">
                   <CheckCircle className="w-10 h-10 text-green-500 mx-auto" />
