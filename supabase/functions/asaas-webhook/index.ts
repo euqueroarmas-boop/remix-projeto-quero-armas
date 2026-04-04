@@ -335,6 +335,7 @@ Deno.serve(async (req) => {
               payload: { email: (customerInfo as any)?.email, error: String(e) },
             });
           }
+          } // close else (LGPD guard)
         }
 
         // Log invoice generation
