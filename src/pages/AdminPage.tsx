@@ -761,6 +761,7 @@ function AdminContent({ activeSection, onNavigate }: { activeSection: string; on
     case "dashboard": return <AdminCommandCenter onNavigate={onNavigate} />;
     case "logs": return <LogsTab />;
     case "errors": return <LogsTab onlyErrors />;
+    case "financeiro": return <Suspense fallback={fallback}><AdminFinanceiro /></Suspense>;
     case "payments": return <PaymentsTab />;
     case "clientes": return <ClientesTab />;
     case "leads": return <AdminLeadsProposals />;
