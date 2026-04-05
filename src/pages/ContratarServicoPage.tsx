@@ -136,9 +136,10 @@ const ContratarServicoPage = () => {
   const critMultiplier = serverCriticidade === "alto" ? 1.5 : serverCriticidade === "medio" ? 1.2 : 1;
   const serverMonthlyValue = Math.round(serverBaseValue * slaMultiplier * critMultiplier * 100) / 100;
 
-  // Flow state
+  // Flow state — skip calculator when coming from service page with valid selection
+  const hasServiceCalcContext = isFromServiceCalc && !!searchParams.get("horas") && Number(searchParams.get("horas")) >= 1;
   const [currentStep, setCurrentStep] = useState<FlowStep>(
-    isWebDev && isFromServiceCalc && searchParams.get("horas") ? "registration" : "calculator"
+    hasServiceCalcContext ? "registration" : "calculator"
   );
   const webDevPayload = isWebDev && isFromServiceCalc ? {
     tipoProjeto: searchParams.get("tipoProjeto") || "",
@@ -155,7 +156,7 @@ const ContratarServicoPage = () => {
     multiplicadorComplexidade: Number(searchParams.get("multiplicadorComplexidade") || 1),
     totalFinal: Number(searchParams.get("totalFinal") || 0),
   } : null;
-  const [hours, setHours] = useState(webDevPayload?.horas || 1);
+  const [hours, setHours] = useState(webDevPayload?.horas || (hasServiceCalcContext ? Number(searchParams.get("horas")) : 1));
   const [registrationData, setRegistrationData] = useState<RegistrationData | null>(null);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [contractId, setContractId] = useState<string | null>(null);
@@ -175,7 +176,7 @@ const ContratarServicoPage = () => {
   const [credentialsLoading, setCredentialsLoading] = useState(false);
   const [credentialsError, setCredentialsError] = useState<string | null>(null);
   const [contractMode, setContractMode] = useState<ContractMode | null>(
-    (searchParams.get("modo") as ContractMode) || null
+    (searchParams.get("modo") as ContractMode) || (hasServiceCalcContext ? "sob_demanda" : null)
   );
 
   // Calculations

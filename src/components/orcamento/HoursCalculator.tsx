@@ -166,8 +166,8 @@ const HoursCalculator = ({
 
           <Link
             to={contractHref
-              ? `${contractHref}?modo=sob_demanda&horas=${hours}&valor=${promoPrice}`
-              : `/orcamento-ti?servico=${encodeURIComponent(serviceName || "Horas Técnicas")}&horas=${hours}&valor=${promoPrice}`
+              ? `${contractHref}?modo=sob_demanda&horas=${hours}&valor=${promoPrice}&source=service_calculator`
+              : `/orcamento-ti?servico=${encodeURIComponent(serviceName || "Horas Técnicas")}&horas=${hours}&valor=${promoPrice}&source=service_calculator`
             }
             onClick={() => console.log("[WMTi] CHECKOUT_REDIRECT_AVULSO", { contractHref, hours, promoPrice, serviceName })}
             className="w-full inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all mb-3"
