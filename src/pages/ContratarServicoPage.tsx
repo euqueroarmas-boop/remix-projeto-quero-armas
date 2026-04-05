@@ -309,7 +309,7 @@ const ContratarServicoPage = () => {
         setContractSigned(true);
         setCurrentStep("payment");
         scrollToTop();
-        toast({ title: "Contrato assinado!", description: "Prossiga com o pagamento." });
+        toast({ title: t("checkout.wizard.contractSignedToast"), description: t("checkout.wizard.proceedPayment") });
       }
     }, 3000);
     return () => clearInterval(interval);
