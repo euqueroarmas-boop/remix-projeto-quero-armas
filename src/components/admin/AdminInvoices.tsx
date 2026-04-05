@@ -70,7 +70,7 @@ export default function AdminInvoices() {
           order: { column: "issue_date", ascending: false },
           range: { from: page * PER_PAGE, to: (page + 1) * PER_PAGE - 1 },
         },
-        { table: "customers", select: "id, razao_social, nome_fantasia, cnpj_ou_cpf" },
+        { table: "customers", select: "id, razao_social, nome_fantasia, cnpj_ou_cpf, status_cliente" },
       ]);
 
       setDocs((results[0].data as any[]) || []);
@@ -103,8 +103,22 @@ export default function AdminInvoices() {
     setReconciling(false);
   };
 
-  const filtered = filterSearch
-    ? docs.filter(d => {
+  // Build LGPD exclusion set
+  const lgpdCustomerIds = useMemo(() =>
+    new Set(customers.filter((c: any) => c.status_cliente === "excluido_lgpd").map((c: any) => c.id)),
+    [customers]
+  );
+
+  const filtered = useMemo(() => {
+    // First exclude LGPD documents
+    let result = docs.filter((d: any) => !lgpdCustomerIds.has(d.customer_id));
+    // Then apply status filter
+    if (filter !== "todos") {
+      result = result.filter((d: any) => (d.status || "").toLowerCase() === filter.toLowerCase());
+    }
+    // Then apply search filter
+    if (filterSearch) {
+      result = result.filter((d: any) => {
         const cust = getCustomer(d.customer_id);
         const search = filterSearch.toLowerCase();
         return (
@@ -113,8 +127,10 @@ export default function AdminInvoices() {
           cust?.razao_social?.toLowerCase().includes(search) ||
           cust?.cnpj_ou_cpf?.includes(search)
         );
-      })
-    : docs;
+      });
+    }
+    return result;
+  }, [docs, lgpdCustomerIds, filter, filterSearch, customers]);
 
   const totalPages = Math.ceil(total / PER_PAGE);
 
