@@ -2,7 +2,6 @@ import { useTranslation } from "react-i18next";
 import { Server, Shield, Activity, HardDrive, Wrench, Headphones } from "lucide-react";
 import ServicePageTemplate from "@/components/ServicePageTemplate";
 import UnifiedInfraCalculator from "@/components/orcamento/UnifiedInfraCalculator";
-import GuaranteeBlock from "@/components/GuaranteeBlock";
 
 const icons = [Server, Shield, Activity, HardDrive, Wrench, Headphones];
 const AdministracaoServidoresPage = () => {
