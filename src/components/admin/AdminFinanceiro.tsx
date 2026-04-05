@@ -274,11 +274,15 @@ function BillingDetail({ payment, customers, contracts, webhooks, onClose }: {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="rounded-lg border border-border/60 bg-card p-4 space-y-2">
           <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Cliente</p>
-          {customer ? (<>
-            <p className="text-xs text-foreground">{customer.nome_fantasia || customer.razao_social}</p>
-            <p className="text-[11px] text-muted-foreground">{customer.email}</p>
-            <p className="text-[11px] text-muted-foreground font-mono">{customer.cnpj_ou_cpf}</p>
-          </>) : <p className="text-xs text-muted-foreground">Cliente não vinculado</p>}
+          {customer ? (
+            customer.status_cliente === "excluido_lgpd" ? (
+              <p className="text-xs text-red-400 italic">Titular anonimizado (LGPD)</p>
+            ) : (<>
+              <p className="text-xs text-foreground">{customer.nome_fantasia || customer.razao_social}</p>
+              <p className="text-[11px] text-muted-foreground">{customer.email}</p>
+              <p className="text-[11px] text-muted-foreground font-mono">{customer.cnpj_ou_cpf}</p>
+            </>)
+          ) : <p className="text-xs text-muted-foreground">Cliente não vinculado</p>}
         </div>
         <div className="rounded-lg border border-border/60 bg-card p-4 space-y-2">
           <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Pagamento</p>
@@ -713,7 +717,7 @@ export default function AdminFinanceiro() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {customers.map((cu) => {
+                    {customers.filter((cu: any) => cu.status_cliente !== "excluido_lgpd").map((cu) => {
                       const contract = contracts.find((c: any) => c.customer_id === cu.id);
                       return (
                         <TableRow key={cu.id} className="border-border/30 hover:bg-muted/20">
