@@ -19,6 +19,7 @@ import WizardStepWrapper from "@/components/orcamento/WizardStepWrapper";
 import QuickRegistrationForm, { type RegistrationData } from "@/components/orcamento/QuickRegistrationForm";
 import { generateContractHtml } from "@/components/orcamento/ContractPreview";
 import { generateOnDemandContractHtml, buildOnDemandVarsFromCheckout } from "@/lib/onDemandContractHtml";
+import { getServicePricing, generatePriceTable } from "@/data/servicePricingCatalog";
 import ContractingWizard from "@/components/orcamento/ContractingWizard";
 import { plans } from "@/components/orcamento/PlanSelector";
 import ServerAdminRegistrationForm, { type ServerAdminRegistrationData } from "@/components/orcamento/ServerAdminRegistrationForm";
@@ -66,10 +67,8 @@ const CARTORIO_SEGMENT_CHECKOUT_ALIASES = new Set([
   "ti-para-tabelionatos-de-protesto",
 ]);
 
-/* ─── Price tables ─── */
+/* ─── Price tables (legacy fallback only) ─── */
 const STANDARD_PRICES: Record<number, number> = { 1: 200, 2: 190, 3: 180, 4: 170, 5: 160, 6: 155, 7: 150, 8: 145 };
-const EMERGENCY_PRICES: Record<number, number> = { 1: 300, 2: 285, 3: 270, 4: 255, 5: 240, 6: 232.5, 7: 225, 8: 217.5 };
-const SERVER_ADMIN_PRICES: Record<number, number> = { 1: 500, 2: 475, 3: 450, 4: 425, 5: 400, 6: 387.5, 7: 375, 8: 362.5 };
 
 type BillingType = "BOLETO" | "CREDIT_CARD";
 type FlowStep = "calculator" | "registration" | "contract" | "payment" | "success";
@@ -105,8 +104,11 @@ const ContratarServicoPage = () => {
   const selectedRentalQty = Math.max(1, Number(searchParams.get("qty") || 1));
   const selectedRentalPlan = plans.find((item) => item.id === selectedRentalPlanId) || plans[1];
   const rentalMonthlyValue = selectedRentalPlan.price * selectedRentalQty;
-  const basePrice = isServerAdmin ? 500 : isEmergency ? 300 : 200;
-  const priceTable = isServerAdmin ? SERVER_ADMIN_PRICES : isEmergency ? EMERGENCY_PRICES : STANDARD_PRICES;
+  const catalogPricing = slug ? getServicePricing(slug) : null;
+  const basePrice = catalogPricing?.basePrice ?? (isEmergency ? 300 : 200);
+  const priceTable = catalogPricing
+    ? generatePriceTable(catalogPricing.basePrice, catalogPricing.hasProgressiveDiscount, catalogPricing.maxDiscountPercent)
+    : STANDARD_PRICES;
 
   // Hydrate store from URL params on mount
   const infraStore = useInfraStore();
@@ -1187,14 +1189,14 @@ const ContratarServicoPage = () => {
               <ol className="flex items-center gap-1 font-mono text-xs text-muted-foreground/50">
                 <li><Link to="/" className="hover:text-primary transition-colors">Home</Link></li>
                 <ChevronRight size={10} className="shrink-0" />
-                <li><Link to="/administracao-de-servidores" className="hover:text-primary transition-colors">Administração de Servidores</Link></li>
+                <li><Link to={`/${slug}`} className="hover:text-primary transition-colors">{serviceName}</Link></li>
                 <ChevronRight size={10} className="shrink-0" />
-                <li className="text-primary" aria-current="page">Contratar</li>
+                <li className="text-primary" aria-current="page">{t("contratar.contratar")}</li>
               </ol>
             </nav>
-            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">Contratação de serviço</p>
+            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">{t("contratar.contratacaoServico")}</p>
             <h1 className="text-2xl md:text-4xl lg:text-5xl mb-4">
-              Contratar <span className="text-primary">Administração de Servidores</span>
+              {t("contratar.contratar")} <span className="text-primary">{serviceName}</span>
             </h1>
             <p className="font-body text-lg text-muted-foreground/70 max-w-2xl leading-relaxed">
               Escolha o modelo ideal: atendimento urgente sob demanda ou proteção contínua com plano recorrente.
@@ -1234,7 +1236,7 @@ const ContratarServicoPage = () => {
 
                 {/* Premium positioning */}
                 <div className="bg-card border border-border rounded-xl p-5 space-y-3">
-                  <p className="font-mono text-[10px] tracking-[0.3em] uppercase text-primary font-bold">Por que R$ 500/h?</p>
+                  <p className="font-mono text-[10px] tracking-[0.3em] uppercase text-primary font-bold">Por que R$ {basePrice.toFixed(0)}/h?</p>
                   <div className="space-y-2 text-sm text-muted-foreground leading-relaxed">
                     <p>Você não está pagando por uma hora. Está pagando para alguém <strong className="text-foreground">experiente</strong> entrar no seu servidor e resolver o problema <strong className="text-foreground">sem piorar a situação</strong>.</p>
                     <p>Um erro em servidor pode custar <strong className="text-foreground">dias de operação</strong>. Aqui, você resolve em horas.</p>
@@ -1244,15 +1246,15 @@ const ContratarServicoPage = () => {
               </motion.div>
 
               {/* Step 1: Hours Calculator */}
-              <WizardStepWrapper stepNumber={1} title="Calculadora de Horas" subtitle="Escolha a quantidade de horas técnicas" status={getStepStatus("calculator")}>
+              <WizardStepWrapper stepNumber={1} title={t("checkout.wizard.hoursCalculator")} subtitle={t("checkout.wizard.hoursCalculatorSub")} status={getStepStatus("calculator")}>
                 <div className="space-y-6">
                   <div className="bg-secondary p-4 flex items-center justify-between">
                     <div>
-                      <p className="font-mono text-xs text-muted-foreground">Serviço selecionado</p>
-                      <p className="font-bold text-foreground">Administração de Servidores</p>
+                      <p className="font-mono text-xs text-muted-foreground">{t("checkout.wizard.selectedService")}</p>
+                      <p className="font-bold text-foreground">{serviceName}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-mono text-xs text-muted-foreground">Sob demanda</p>
+                      <p className="font-mono text-xs text-muted-foreground">{t("checkout.wizard.onDemand")}</p>
                       <p className="font-bold text-primary">R$ {basePrice.toFixed(2).replace(".", ",")}/h</p>
                     </div>
                   </div>
