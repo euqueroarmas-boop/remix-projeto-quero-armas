@@ -137,40 +137,44 @@ const RentalSection = () => {
               </table>
             </div>
 
-            {/* Mobile: vertical cards */}
-            <div className="md:hidden flex flex-col gap-4">
-              {/* Card Comprar */}
-              <div className="border border-border bg-background p-5 space-y-3">
-                <h4 className="font-mono text-base font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                  ❌ {t("custom.rentalSection.comparisonHeaders.buy")}
-                </h4>
-                <div className="space-y-3">
-                  {comparisons.map((row) => (
-                    <div key={row.item} className="space-y-0.5">
-                      <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground/70">{row.item}</p>
-                      <p className="font-body text-sm text-muted-foreground">{row.compra}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
+            {/* Mobile: vertical per-item blocks */}
+            <div className="md:hidden flex flex-col gap-5">
+              {comparisons.map((row, i) => (
+                <motion.div
+                  key={row.item}
+                  initial={{ opacity: 0, y: 12 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.3, delay: i * 0.06 }}
+                  className="space-y-2"
+                >
+                  <h4 className="font-mono text-sm font-bold uppercase tracking-wider text-foreground">
+                    {row.item}
+                  </h4>
 
-              {/* Card Locar */}
-              <div className="border-2 border-primary bg-primary/5 p-5 space-y-3">
-                <h4 className="font-mono text-base font-bold uppercase tracking-wider text-primary flex items-center gap-2">
-                  ✅ {t("custom.rentalSection.comparisonHeaders.lease")}
-                </h4>
-                <div className="space-y-3">
-                  {comparisons.map((row) => (
-                    <div key={row.item} className="space-y-0.5">
-                      <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground/70">{row.item}</p>
-                      <p className="font-body text-sm text-primary font-medium flex items-center gap-2">
-                        <CheckCircle2 size={12} className="text-primary flex-shrink-0" />
-                        {row.locacao}
+                  {/* Comprar — neutro/negativo */}
+                  <div className="bg-muted/50 border border-border p-4 flex items-start gap-3">
+                    <span className="text-base leading-none mt-0.5">💸</span>
+                    <div>
+                      <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground mb-1">
+                        {t("custom.rentalSection.comparisonHeaders.buy")}
                       </p>
+                      <p className="font-body text-sm text-muted-foreground leading-relaxed">{row.compra}</p>
                     </div>
-                  ))}
-                </div>
-              </div>
+                  </div>
+
+                  {/* Locar — destaque positivo */}
+                  <div className="bg-primary/5 border-2 border-primary p-4 flex items-start gap-3">
+                    <CheckCircle2 size={18} className="text-primary flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-mono text-xs uppercase tracking-wider text-primary mb-1">
+                        {t("custom.rentalSection.comparisonHeaders.lease")}
+                      </p>
+                      <p className="font-body text-sm text-primary font-medium leading-relaxed">{row.locacao}</p>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
             </div>
           </motion.div>
 
