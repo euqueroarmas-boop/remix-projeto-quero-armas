@@ -766,12 +766,15 @@ const ContratarServicoPage = () => {
                 <li className="text-primary" aria-current="page">Contratar</li>
               </ol>
             </nav>
-            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">Contratação de serviço</p>
+            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">{t("contratar.tag")}</p>
             <h1 className="text-2xl md:text-4xl lg:text-5xl mb-4">
-              Contratar <span className="text-primary">Suporte Técnico Empresarial</span>
+              {t("contratar.titlePrefix")} <span className="text-primary">{serviceName}</span>
             </h1>
             <p className="font-body text-lg text-muted-foreground/70 max-w-2xl leading-relaxed">
-              Escolha o modelo ideal para sua empresa: atendimento avulso por hora ou plano recorrente com gestão contínua.
+              {t("contratar.headerPain")}
+            </p>
+            <p className="font-body text-sm text-primary/80 mt-2">
+              {t("contratar.investimentoAPartir")} <strong className="text-primary">R$ {basePrice.toFixed(2).replace(".", ",")}/h</strong>
             </p>
           </div>
         </section>
