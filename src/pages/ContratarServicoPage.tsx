@@ -1634,9 +1634,10 @@ const ContratarServicoPage = () => {
             {t("contratar.titlePrefix")} <span className="text-primary">{serviceName}</span>
           </h1>
           <p className="font-body text-lg text-muted-foreground/70 max-w-2xl leading-relaxed">
-            {isEmergency
-              ? t("contratar.emergencialDesc")
-              : t("contratar.avulsoDesc")}
+            {t("contratar.headerPain")}
+          </p>
+          <p className="font-body text-sm text-primary/80 mt-2">
+            {t("contratar.investimentoAPartir")} <strong className="text-primary">R$ {basePrice.toFixed(2).replace(".", ",")}/h</strong>
           </p>
         </div>
       </section>
