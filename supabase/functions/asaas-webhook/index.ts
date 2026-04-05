@@ -90,6 +90,181 @@ Deno.serve(async (req) => {
       });
     }
 
+    // ── Handle INVOICE (Nota Fiscal) events — PRIMARY source of fiscal state ──
+    const INVOICE_EVENTS = [
+      "INVOICE_CREATED", "INVOICE_UPDATED", "INVOICE_SYNCHRONIZED",
+      "INVOICE_AUTHORIZED", "INVOICE_PROCESSING_CANCELLATION",
+      "INVOICE_CANCELED", "INVOICE_CANCELLATION_DENIED", "INVOICE_ERROR",
+    ];
+
+    if (INVOICE_EVENTS.includes(event)) {
+      const invoice = body.invoice || body;
+      const invoiceId = invoice?.id;
+      console.log("[asaas-webhook] Evento fiscal recebido:", event, "Invoice ID:", invoiceId);
+
+      if (invoiceId) {
+        // Map Asaas event → internal status
+        const STATUS_MAP: Record<string, string> = {
+          INVOICE_CREATED: "criada",
+          INVOICE_UPDATED: "atualizada",
+          INVOICE_SYNCHRONIZED: "sincronizada",
+          INVOICE_AUTHORIZED: "emitido",
+          INVOICE_PROCESSING_CANCELLATION: "cancelamento_processando",
+          INVOICE_CANCELED: "cancelada",
+          INVOICE_CANCELLATION_DENIED: "cancelamento_negado",
+          INVOICE_ERROR: "erro",
+        };
+        const newStatus = STATUS_MAP[event] || "criada";
+
+        // Extract data from invoice payload
+        const invoiceNumber = invoice.invoiceNumber ? String(invoice.invoiceNumber) : invoice.number ? String(invoice.number) : null;
+        const accessKey = invoice.accessKey || null;
+        const pdfUrl = invoice.pdfUrl || invoice.invoiceUrl || null;
+        const xmlUrl = invoice.xmlUrl || null;
+        const invoiceSeries = invoice.series ? String(invoice.series) : null;
+        const issueDate = invoice.issuedDate || invoice.effectiveDate || new Date().toISOString().split("T")[0];
+        const amount = invoice.value || invoice.grossValue || 0;
+
+        // Resolve customer: try via payment reference first
+        let custId: string | null = null;
+        let contractId: string | null = null;
+        let paymentId: string | null = null;
+        const asaasPaymentId = invoice.payment || invoice.paymentId || null;
+
+        if (asaasPaymentId) {
+          const { data: payRec } = await supabase
+            .from("payments")
+            .select("id, quote_id")
+            .eq("asaas_payment_id", asaasPaymentId)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (payRec) {
+            paymentId = payRec.id;
+            if (payRec.quote_id) {
+              const { data: contractRec } = await supabase
+                .from("contracts")
+                .select("customer_id, id")
+                .eq("quote_id", payRec.quote_id)
+                .order("created_at", { ascending: false })
+                .limit(1)
+                .maybeSingle();
+              if (contractRec) {
+                custId = contractRec.customer_id;
+                contractId = contractRec.id;
+              }
+            }
+          }
+        }
+
+        // Fallback: try to find customer by Asaas customer ID
+        if (!custId && invoice.customer) {
+          // invoice.customer is the Asaas customer ID — we could look it up if stored
+          console.log("[asaas-webhook] Invoice sem payment linkado, customer Asaas:", invoice.customer);
+        }
+
+        if (custId) {
+          // Upsert: check if fiscal_document already exists for this invoice
+          const { data: existingDoc } = await supabase
+            .from("fiscal_documents")
+            .select("id")
+            .eq("asaas_invoice_id", String(invoiceId))
+            .limit(1)
+            .maybeSingle();
+
+          if (existingDoc) {
+            // UPDATE existing fiscal document
+            await supabase.from("fiscal_documents")
+              .update({
+                status: newStatus,
+                document_number: invoiceNumber || undefined,
+                access_key: accessKey || undefined,
+                file_url: pdfUrl || undefined,
+                xml_url: xmlUrl || undefined,
+                invoice_series: invoiceSeries || undefined,
+                amount: amount || undefined,
+                raw_payload: body,
+              })
+              .eq("id", existingDoc.id);
+
+            // Upsert invoice_files
+            if (pdfUrl) {
+              const { data: existPdf } = await supabase
+                .from("invoice_files").select("id").eq("invoice_id", existingDoc.id).eq("type", "pdf").limit(1).maybeSingle();
+              if (existPdf) {
+                await supabase.from("invoice_files").update({ file_url: pdfUrl, filename: `NF-${invoiceNumber || invoiceId}.pdf` }).eq("id", existPdf.id);
+              } else {
+                await supabase.from("invoice_files").insert({ invoice_id: existingDoc.id, type: "pdf", file_url: pdfUrl, filename: `NF-${invoiceNumber || invoiceId}.pdf`, mime_type: "application/pdf" });
+              }
+            }
+            if (xmlUrl) {
+              const { data: existXml } = await supabase
+                .from("invoice_files").select("id").eq("invoice_id", existingDoc.id).eq("type", "xml").limit(1).maybeSingle();
+              if (existXml) {
+                await supabase.from("invoice_files").update({ file_url: xmlUrl, filename: `NF-${invoiceNumber || invoiceId}.xml` }).eq("id", existXml.id);
+              } else {
+                await supabase.from("invoice_files").insert({ invoice_id: existingDoc.id, type: "xml", file_url: xmlUrl, filename: `NF-${invoiceNumber || invoiceId}.xml`, mime_type: "application/xml" });
+              }
+            }
+
+            console.log("[asaas-webhook] Fiscal document atualizado:", existingDoc.id, "→", newStatus);
+          } else {
+            // INSERT new fiscal document
+            const { data: insertedDoc } = await supabase.from("fiscal_documents").insert({
+              customer_id: custId,
+              payment_id: paymentId,
+              contract_id: contractId,
+              asaas_invoice_id: String(invoiceId),
+              document_type: "nota_fiscal",
+              document_number: invoiceNumber,
+              issue_date: issueDate,
+              amount,
+              status: newStatus,
+              file_url: pdfUrl,
+              xml_url: xmlUrl,
+              access_key: accessKey,
+              invoice_series: invoiceSeries,
+              service_reference: null,
+              raw_payload: body,
+              notes: `NF via evento ${event}`,
+            }).select("id").single();
+
+            if (insertedDoc?.id) {
+              const files: { invoice_id: string; type: string; file_url: string; filename: string; mime_type: string }[] = [];
+              if (pdfUrl) files.push({ invoice_id: insertedDoc.id, type: "pdf", file_url: pdfUrl, filename: `NF-${invoiceNumber || invoiceId}.pdf`, mime_type: "application/pdf" });
+              if (xmlUrl) files.push({ invoice_id: insertedDoc.id, type: "xml", file_url: xmlUrl, filename: `NF-${invoiceNumber || invoiceId}.xml`, mime_type: "application/xml" });
+              if (files.length) await supabase.from("invoice_files").insert(files);
+            }
+            console.log("[asaas-webhook] Fiscal document criado via evento:", event);
+          }
+
+          await supabase.from("integration_logs").insert({
+            integration_name: "asaas",
+            operation_name: `invoice_event_${event.toLowerCase()}`,
+            request_payload: { event, invoice_id: invoiceId, customer_id: custId, status: newStatus },
+            status: "success",
+          });
+        } else {
+          console.warn("[asaas-webhook] Invoice event sem customer resolvido:", event, invoiceId);
+          await supabase.from("integration_logs").insert({
+            integration_name: "asaas",
+            operation_name: `invoice_event_unresolved`,
+            request_payload: { event, invoice_id: invoiceId, payment_ref: asaasPaymentId },
+            status: "warning",
+            error_message: "Customer não encontrado para este evento de invoice",
+          });
+        }
+      }
+
+      // Mark webhook processed and return
+      await supabase.from("asaas_webhooks").update({ processed: true }).eq("payload->>id", body.id || "");
+      return new Response(JSON.stringify({ received: true, event, type: "invoice_event" }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (!payment?.id) {
       console.log("[asaas-webhook] Sem payment.id, ignorando.");
       return new Response(JSON.stringify({ received: true }), {
