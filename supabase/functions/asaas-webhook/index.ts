@@ -251,8 +251,14 @@ Deno.serve(async (req) => {
             status: "error",
             error_message: "Customer não resolvido — NF não persistida",
           });
+          // Audit: log rejected event
+          await logFiscalEvent(supabase, {
+            asaas_invoice_id: String(invoiceId), event_type: event, event_source: "invoice_event",
+            payload_snapshot: body, normalized_status: STATUS_MAP[event] || "unknown",
+            overwrite_decision: "rejected", decision_reason: "Customer não resolvido — NF não persistida",
+            created_by_process: "asaas_webhook",
+          });
 
-          await supabase.from("asaas_webhooks").update({ processed: true }).eq("payload->>id", body.id || "");
           return new Response(JSON.stringify({ received: true, event, rejected: true, reason: "customer_not_resolved" }), {
             status: 200,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
