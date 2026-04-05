@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { logFiscalEvent } from "../_shared/fiscalAudit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -140,6 +141,20 @@ Deno.serve(async (req) => {
           if (xmlUrl) filesToInsert.push({ invoice_id: insertedDoc.id, type: "xml", file_url: xmlUrl, filename: `NF-${invoiceNumber || payment.asaas_payment_id}.xml`, mime_type: "application/xml" });
           if (filesToInsert.length) await supabase.from("invoice_files").insert(filesToInsert);
         }
+
+        // Audit: log reconciliation creation
+        await logFiscalEvent(supabase, {
+          fiscal_document_id: insertedDoc?.id || null,
+          asaas_invoice_id: payment.asaas_payment_id,
+          customer_id: contractRow.customer_id,
+          event_type: "RECONCILE_CREATED",
+          event_source: "reconcile",
+          payload_snapshot: { payment_id: payment.id, quote_id: payment.quote_id, amount: payment.amount },
+          normalized_status: pdfUrl ? "emitido" : "aguardando",
+          overwrite_decision: "accepted",
+          decision_reason: "Missing fiscal document created via reconciliation",
+          created_by_process: "invoice_reconcile",
+        });
 
         synced++;
       } catch (err) {

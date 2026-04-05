@@ -1,6 +1,8 @@
 import { logSistemaBackend } from "../_shared/logSistema.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { ensureClientAccess } from "../_shared/post-purchase.ts";
+import { logFiscalEvent, logFiscalChanges, detectSensitiveChanges } from "../_shared/fiscalAudit.ts";
+import { ensureClientAccess } from "../_shared/post-purchase.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -249,8 +251,14 @@ Deno.serve(async (req) => {
             status: "error",
             error_message: "Customer não resolvido — NF não persistida",
           });
+          // Audit: log rejected event
+          await logFiscalEvent(supabase, {
+            asaas_invoice_id: String(invoiceId), event_type: event, event_source: "invoice_event",
+            payload_snapshot: body, normalized_status: STATUS_MAP[event] || "unknown",
+            overwrite_decision: "rejected", decision_reason: "Customer não resolvido — NF não persistida",
+            created_by_process: "asaas_webhook",
+          });
 
-          await supabase.from("asaas_webhooks").update({ processed: true }).eq("payload->>id", body.id || "");
           return new Response(JSON.stringify({ received: true, event, rejected: true, reason: "customer_not_resolved" }), {
             status: 200,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -272,6 +280,13 @@ Deno.serve(async (req) => {
           const currentTime = new Date(eventTimestamp).getTime();
           if (existingDoc.last_event_source === "invoice_event" && existingTime > currentTime) {
             console.log("[asaas-webhook] Evento invoice descartado (mais antigo que existente):", existingDoc.id);
+            await logFiscalEvent(supabase, {
+              fiscal_document_id: existingDoc.id, asaas_invoice_id: String(invoiceId), customer_id: custId,
+              event_type: event, event_source: "invoice_event", event_timestamp: eventTimestamp,
+              payload_snapshot: body, normalized_status: newStatus,
+              overwrite_decision: "discarded_temporal", decision_reason: `Existing event from ${existingDoc.last_event_at} is newer`,
+              created_by_process: "asaas_webhook",
+            });
             await supabase.from("integration_logs").insert({
               integration_name: "asaas", operation_name: "invoice_event_temporal_skip",
               request_payload: { event, invoice_id: invoiceId, existing_time: existingDoc.last_event_at, current_time: eventTimestamp },
@@ -281,22 +296,39 @@ Deno.serve(async (req) => {
             // ── VERSIONING: if canceling, mark as inactive ──
             const isActiveFlag = !["cancelada", "erro"].includes(newStatus);
 
-            await supabase.from("fiscal_documents")
-              .update({
-                status: newStatus,
-                document_number: invoiceNumber || undefined,
-                access_key: accessKey || undefined,
-                file_url: pdfUrl || undefined,
-                xml_url: xmlUrl || undefined,
-                invoice_series: invoiceSeries || undefined,
-                amount: amount || undefined,
-                raw_payload: body,
-                last_event_at: eventTimestamp,
-                last_event_source: "invoice_event",
-                is_active: isActiveFlag,
-                notes: `Atualizado via ${event} (fonte primária)`,
-              })
-              .eq("id", existingDoc.id);
+            const updatePayload: Record<string, unknown> = {
+              status: newStatus,
+              document_number: invoiceNumber || undefined,
+              access_key: accessKey || undefined,
+              file_url: pdfUrl || undefined,
+              xml_url: xmlUrl || undefined,
+              invoice_series: invoiceSeries || undefined,
+              amount: amount || undefined,
+              raw_payload: body,
+              last_event_at: eventTimestamp,
+              last_event_source: "invoice_event",
+              is_active: isActiveFlag,
+              notes: `Atualizado via ${event} (fonte primária)`,
+            };
+
+            // Detect sensitive field changes BEFORE update
+            const changes = detectSensitiveChanges(existingDoc as Record<string, unknown>, updatePayload, "invoice_event", "asaas_webhook", existingDoc.id);
+
+            await supabase.from("fiscal_documents").update(updatePayload).eq("id", existingDoc.id);
+
+            // Log audit event
+            const ehId = await logFiscalEvent(supabase, {
+              fiscal_document_id: existingDoc.id, asaas_invoice_id: String(invoiceId), customer_id: custId,
+              event_type: event, event_source: "invoice_event", event_timestamp: eventTimestamp,
+              payload_snapshot: body, normalized_status: newStatus,
+              overwrite_decision: "accepted", decision_reason: "Invoice event is primary source",
+              created_by_process: "asaas_webhook",
+            });
+
+            // Log sensitive changes
+            if (changes.length) {
+              await logFiscalChanges(supabase, changes.map(c => ({ ...c, related_event_history_id: ehId })));
+            }
 
             // Upsert invoice_files
             if (pdfUrl) {
@@ -306,6 +338,14 @@ Deno.serve(async (req) => {
               } else {
                 await supabase.from("invoice_files").insert({ invoice_id: existingDoc.id, type: "pdf", file_url: pdfUrl, filename: `NF-${invoiceNumber || invoiceId}.pdf`, mime_type: "application/pdf" });
               }
+              // Log file change in audit
+              await logFiscalEvent(supabase, {
+                fiscal_document_id: existingDoc.id, asaas_invoice_id: String(invoiceId), customer_id: custId,
+                event_type: "FILE_UPSERT_PDF", event_source: "invoice_event",
+                normalized_status: newStatus, overwrite_decision: "accepted",
+                decision_reason: existPdf ? "PDF updated" : "PDF created",
+                created_by_process: "asaas_webhook",
+              });
             }
             if (xmlUrl) {
               const { data: existXml } = await supabase.from("invoice_files").select("id").eq("invoice_id", existingDoc.id).eq("type", "xml").limit(1).maybeSingle();
@@ -345,8 +385,25 @@ Deno.serve(async (req) => {
             const files: { invoice_id: string; type: string; file_url: string; filename: string; mime_type: string }[] = [];
             if (pdfUrl) files.push({ invoice_id: insertedDoc.id, type: "pdf", file_url: pdfUrl, filename: `NF-${invoiceNumber || invoiceId}.pdf`, mime_type: "application/pdf" });
             if (xmlUrl) files.push({ invoice_id: insertedDoc.id, type: "xml", file_url: xmlUrl, filename: `NF-${invoiceNumber || invoiceId}.xml`, mime_type: "application/xml" });
-            if (files.length) await supabase.from("invoice_files").insert(files);
+            // Audit: log file creation
+            if (files.length) {
+              await logFiscalEvent(supabase, {
+                fiscal_document_id: insertedDoc.id, asaas_invoice_id: String(invoiceId), customer_id: custId,
+                event_type: "FILES_CREATED", event_source: "invoice_event",
+                normalized_status: newStatus, overwrite_decision: "accepted",
+                decision_reason: `${files.length} arquivo(s) vinculados na criação`,
+                created_by_process: "asaas_webhook",
+              });
+            }
           }
+          // Audit: log document creation event
+          await logFiscalEvent(supabase, {
+            fiscal_document_id: insertedDoc?.id || null, asaas_invoice_id: String(invoiceId), customer_id: custId,
+            event_type: event, event_source: "invoice_event", event_timestamp: eventTimestamp,
+            payload_snapshot: body, normalized_status: newStatus,
+            overwrite_decision: "accepted", decision_reason: "New fiscal document created (invoice event primary)",
+            created_by_process: "asaas_webhook",
+          });
           console.log("[asaas-webhook] Fiscal doc criado (INVOICE_EVENT, primário):", event);
         }
 
@@ -635,13 +692,29 @@ Deno.serve(async (req) => {
               }
               if (Object.keys(enrichUpdates).length) {
                 enrichUpdates.notes = "Enriquecido via payment event (campos vazios)";
+                const enrichChanges = detectSensitiveChanges(existingInvoice as Record<string, unknown>, enrichUpdates, "payment_event", "asaas_webhook", existingInvoice.id);
                 await supabase.from("fiscal_documents").update(enrichUpdates).eq("id", existingInvoice.id);
+                const ehId = await logFiscalEvent(supabase, {
+                  fiscal_document_id: existingInvoice.id, asaas_invoice_id: asaasInvoiceId, customer_id: custId,
+                  event_type: event, event_source: "payment_event",
+                  payload_snapshot: body, normalized_status: existingInvoice.status,
+                  overwrite_decision: "enriched", decision_reason: "Payment enriched empty fields only",
+                  created_by_process: "asaas_webhook",
+                });
+                if (enrichChanges.length) await logFiscalChanges(supabase, enrichChanges.map(c => ({ ...c, related_event_history_id: ehId })));
                 console.log("[asaas-webhook] Fiscal doc enriquecido (payment, secundário):", existingInvoice.id);
               } else {
                 console.log("[asaas-webhook] Fiscal doc já existe, nada a enriquecer (payment secundário):", existingInvoice.id);
               }
             } else {
               console.log("[asaas-webhook] Fiscal doc protegido por invoice event, payment ignorado:", existingInvoice.id, existingInvoice.status);
+              await logFiscalEvent(supabase, {
+                fiscal_document_id: existingInvoice.id, asaas_invoice_id: asaasInvoiceId, customer_id: custId,
+                event_type: event, event_source: "payment_event",
+                payload_snapshot: body, normalized_status: existingInvoice.status,
+                overwrite_decision: "blocked_priority", decision_reason: `Protected by ${existingInvoice.last_event_source}, status=${existingInvoice.status}`,
+                created_by_process: "asaas_webhook",
+              });
             }
 
             await supabase.from("integration_logs").insert({
@@ -701,6 +774,14 @@ Deno.serve(async (req) => {
             }
 
             console.log("[asaas-webhook] Fiscal doc criado (payment fallback):", custId);
+            // Audit: log payment fallback creation
+            await logFiscalEvent(supabase, {
+              fiscal_document_id: insertedDoc?.id || null, asaas_invoice_id: asaasInvoiceId, customer_id: custId,
+              event_type: event, event_source: "payment_event",
+              payload_snapshot: body, normalized_status: pdfUrl ? "emitido" : "aguardando",
+              overwrite_decision: "accepted", decision_reason: "New fiscal document created via payment fallback",
+              created_by_process: "asaas_webhook",
+            });
             await supabase.from("integration_logs").insert({
               integration_name: "asaas",
               operation_name: "fiscal_document_created_payment_fallback",
