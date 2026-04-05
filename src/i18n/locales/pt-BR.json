@@ -1490,7 +1490,7 @@
       "planConfigured": "Plano configurado!",
       "stepContract": "Contrato e Assinatura",
       "contractSignedSub": "Contrato assinado ✓",
-      "readAndSign": "Leia e assine o contrato em página dedicada",
+      "readAndSign": "Leia e assine o contrato",
       "contractSigned": "Contrato assinado!",
       "proceedToPayment": "Prossiga para o pagamento abaixo.",
       "contractOf": "Contrato de {{path}}",
