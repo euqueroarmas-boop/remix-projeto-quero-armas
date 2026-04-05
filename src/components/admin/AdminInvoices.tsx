@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { adminQuery } from "@/lib/adminApi";
 import { supabase } from "@/integrations/supabase/client";
 import { getValidAdminToken } from "@/lib/adminSession";
