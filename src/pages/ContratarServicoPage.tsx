@@ -766,12 +766,15 @@ const ContratarServicoPage = () => {
                 <li className="text-primary" aria-current="page">Contratar</li>
               </ol>
             </nav>
-            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">Contratação de serviço</p>
+            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">{t("contratar.tag")}</p>
             <h1 className="text-2xl md:text-4xl lg:text-5xl mb-4">
-              Contratar <span className="text-primary">Suporte Técnico Empresarial</span>
+              {t("contratar.titlePrefix")} <span className="text-primary">{serviceName}</span>
             </h1>
             <p className="font-body text-lg text-muted-foreground/70 max-w-2xl leading-relaxed">
-              Escolha o modelo ideal para sua empresa: atendimento avulso por hora ou plano recorrente com gestão contínua.
+              {t("contratar.headerPain")}
+            </p>
+            <p className="font-body text-sm text-primary/80 mt-2">
+              {t("contratar.investimentoAPartir")} <strong className="text-primary">R$ {basePrice.toFixed(2).replace(".", ",")}/h</strong>
             </p>
           </div>
         </section>
@@ -794,7 +797,7 @@ const ContratarServicoPage = () => {
                       <p className="font-bold text-foreground">{serviceName}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-mono text-xs text-muted-foreground">{t("checkout.wizard.onDemand")}</p>
+                      <p className="font-mono text-xs text-muted-foreground">{t("contratar.investimentoAPartir")}</p>
                       <p className="font-bold text-primary">R$ {basePrice.toFixed(2).replace(".", ",")}/h</p>
                     </div>
                   </div>
@@ -1194,12 +1197,15 @@ const ContratarServicoPage = () => {
                 <li className="text-primary" aria-current="page">{t("contratar.contratar")}</li>
               </ol>
             </nav>
-            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">{t("contratar.contratacaoServico")}</p>
+            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">{t("contratar.tag")}</p>
             <h1 className="text-2xl md:text-4xl lg:text-5xl mb-4">
-              {t("contratar.contratar")} <span className="text-primary">{serviceName}</span>
+              {t("contratar.titlePrefix")} <span className="text-primary">{serviceName}</span>
             </h1>
             <p className="font-body text-lg text-muted-foreground/70 max-w-2xl leading-relaxed">
-              Escolha o modelo ideal: atendimento urgente sob demanda ou proteção contínua com plano recorrente.
+              {t("contratar.headerPain")}
+            </p>
+            <p className="font-body text-sm text-primary/80 mt-2">
+              {t("contratar.investimentoAPartir")} <strong className="text-primary">R$ {basePrice.toFixed(2).replace(".", ",")}/h</strong>
             </p>
           </div>
         </section>
@@ -1236,7 +1242,7 @@ const ContratarServicoPage = () => {
 
                 {/* Premium positioning */}
                 <div className="bg-card border border-border rounded-xl p-5 space-y-3">
-                  <p className="font-mono text-[10px] tracking-[0.3em] uppercase text-primary font-bold">Por que R$ {basePrice.toFixed(0)}/h?</p>
+                  <p className="font-mono text-[10px] tracking-[0.3em] uppercase text-primary font-bold">{t("checkout.wizard.whyPrice", { price: basePrice.toFixed(0) })}</p>
                   <div className="space-y-2 text-sm text-muted-foreground leading-relaxed">
                     <p>Você não está pagando por uma hora. Está pagando para alguém <strong className="text-foreground">experiente</strong> entrar no seu servidor e resolver o problema <strong className="text-foreground">sem piorar a situação</strong>.</p>
                     <p>Um erro em servidor pode custar <strong className="text-foreground">dias de operação</strong>. Aqui, você resolve em horas.</p>
@@ -1254,7 +1260,7 @@ const ContratarServicoPage = () => {
                       <p className="font-bold text-foreground">{serviceName}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-mono text-xs text-muted-foreground">{t("checkout.wizard.onDemand")}</p>
+                      <p className="font-mono text-xs text-muted-foreground">{t("contratar.investimentoAPartir")}</p>
                       <p className="font-bold text-primary">R$ {basePrice.toFixed(2).replace(".", ",")}/h</p>
                     </div>
                   </div>
@@ -1634,15 +1640,39 @@ const ContratarServicoPage = () => {
             {t("contratar.titlePrefix")} <span className="text-primary">{serviceName}</span>
           </h1>
           <p className="font-body text-lg text-muted-foreground/70 max-w-2xl leading-relaxed">
-            {isEmergency
-              ? t("contratar.emergencialDesc")
-              : t("contratar.avulsoDesc")}
+            {t("contratar.headerPain")}
+          </p>
+          <p className="font-body text-sm text-primary/80 mt-2">
+            {t("contratar.investimentoAPartir")} <strong className="text-primary">R$ {basePrice.toFixed(2).replace(".", ",")}/h</strong>
           </p>
         </div>
       </section>
 
       <div ref={wizardRef} className="section-dark py-12 md:py-16">
         <div className="container max-w-3xl">
+
+          {/* Pain Block */}
+          <div className="bg-destructive/5 border border-destructive/20 rounded-xl p-5 mb-6 space-y-3">
+            <p className="font-bold text-foreground text-sm">{t("contratar.painBlockTitle")}</p>
+            <ul className="space-y-1 text-sm text-muted-foreground">
+              <li className="flex items-center gap-2"><AlertTriangle size={14} className="text-destructive shrink-0" />{t("contratar.painItem1")}</li>
+              <li className="flex items-center gap-2"><AlertTriangle size={14} className="text-destructive shrink-0" />{t("contratar.painItem2")}</li>
+              <li className="flex items-center gap-2"><AlertTriangle size={14} className="text-destructive shrink-0" />{t("contratar.painItem3")}</li>
+            </ul>
+            <p className="text-xs text-primary font-semibold">{t("contratar.painBlockFooter")}</p>
+          </div>
+
+          {/* Value Block */}
+          <div className="bg-primary/5 border border-primary/20 rounded-xl p-5 mb-6 space-y-3">
+            <p className="font-bold text-foreground text-sm">{t("contratar.valueBlockTitle")}</p>
+            <ul className="space-y-1 text-sm text-muted-foreground">
+              <li className="flex items-center gap-2"><ShieldCheck size={14} className="text-primary shrink-0" />{t("contratar.valueItem1")}</li>
+              <li className="flex items-center gap-2"><ShieldCheck size={14} className="text-primary shrink-0" />{t("contratar.valueItem2")}</li>
+              <li className="flex items-center gap-2"><ShieldCheck size={14} className="text-primary shrink-0" />{t("contratar.valueItem3")}</li>
+              <li className="flex items-center gap-2"><ShieldCheck size={14} className="text-primary shrink-0" />{t("contratar.valueItem4")}</li>
+            </ul>
+            <p className="text-xs text-primary font-semibold">{t("contratar.valueBlockFooter")}</p>
+          </div>
 
           {/* Step 1: Calculator or Project Summary */}
           <WizardStepWrapper stepNumber={1} title={webDevPayload ? "Resumo do Projeto" : t("contratar.stepCalculator")} subtitle={webDevPayload ? "Dados preenchidos na calculadora do serviço" : t("contratar.stepCalculatorSub")} status={getStepStatus("calculator")}>
@@ -1687,7 +1717,7 @@ const ContratarServicoPage = () => {
                   <p className="font-bold text-foreground">{serviceName}</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-mono text-xs text-muted-foreground">{isEmergency ? t("contratar.emergencial") : t("contratar.avulso")}</p>
+                  <p className="font-mono text-xs text-muted-foreground">{t("contratar.investimentoAPartir")}</p>
                   <p className="font-bold text-primary">R$ {basePrice.toFixed(2).replace(".", ",")}/h</p>
                 </div>
               </div>
@@ -1735,6 +1765,13 @@ const ContratarServicoPage = () => {
                   </div>
                 )}
               </div>
+
+              {/* Microcopy */}
+              {catalogPricing?.hasProgressiveDiscount && (
+                <p className="font-body text-xs text-center text-muted-foreground/70">
+                  {t("contratar.calcMicrocopy")} {t("contratar.calcSavingsMax", { pct: catalogPricing.maxDiscountPercent })}
+                </p>
+              )}
 
               {/* Discount table */}
               <details className="bg-secondary group">
