@@ -45,6 +45,7 @@ const ALLOWED_TABLES = [
   "blog_posts_ai", "prompt_intelligence", "revenue_intelligence",
   "certificate_config", "signature_logs", "cipa_locations",
   "cms_pages", "cms_blocks", "cms_pricing_rules", "cms_redirects",
+  "asaas_customer_map",
 ];
 
 Deno.serve(async (req) => {
