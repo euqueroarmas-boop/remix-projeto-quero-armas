@@ -2,7 +2,42 @@ import { logSistemaBackend } from "../_shared/logSistema.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { ensureClientAccess } from "../_shared/post-purchase.ts";
 import { logFiscalEvent, logFiscalChanges, detectSensitiveChanges } from "../_shared/fiscalAudit.ts";
-import { ensureClientAccess } from "../_shared/post-purchase.ts";
+
+// ── LGPD LOGICAL LOCK: check if customer is anonymized ──
+async function isCustomerLgpdLocked(
+  supabase: ReturnType<typeof createClient>,
+  customerId: string | null
+): Promise<boolean> {
+  if (!customerId) return false;
+  const { data } = await supabase
+    .from("customers")
+    .select("status_cliente")
+    .eq("id", customerId)
+    .limit(1)
+    .maybeSingle();
+  return data?.status_cliente === "excluido_lgpd";
+}
+
+async function logLgpdBlock(
+  supabase: ReturnType<typeof createClient>,
+  operation: string,
+  details: Record<string, unknown>
+) {
+  console.log(`[asaas-webhook] LGPD_LOGICAL_LOCK: ${operation} bloqueado`, details);
+  await supabase.from("integration_logs").insert({
+    integration_name: "lgpd_lock",
+    operation_name: operation,
+    request_payload: details,
+    status: "blocked",
+    error_message: "LGPD_LOGICAL_LOCK — mutação operacional bloqueada para titular anonimizado",
+  });
+  await logSistemaBackend({
+    tipo: "lgpd",
+    status: "warning",
+    mensagem: `LGPD_LOGICAL_LOCK: ${operation} bloqueado para titular anonimizado`,
+    payload: details,
+  });
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
