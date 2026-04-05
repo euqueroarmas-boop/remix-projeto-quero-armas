@@ -2,8 +2,6 @@ import { useTranslation } from "react-i18next";
 import { Server, Shield, Lock, Activity, Wrench, Headphones } from "lucide-react";
 import ServicePageTemplate from "@/components/ServicePageTemplate";
 import HoursCalculator from "@/components/orcamento/HoursCalculator";
-import GuaranteeBlock from "@/components/GuaranteeBlock";
-import ServiceContactForm from "@/components/ServiceContactForm";
 
 const icons = [Server, Shield, Lock, Activity, Wrench, Headphones];
 
@@ -29,7 +27,7 @@ const SuporteLinuxPage = () => {
       ]}
       localContent={t(`${k}.localContent`)}
       showHoursCalculator={false}
-      extraSections={<><HoursCalculator serviceName="Suporte Linux" contractHref="/contratar/suporte-linux" basePrice={400} hasProgressiveDiscount={true} maxDiscountPercent={27.5} /><GuaranteeBlock /><ServiceContactForm serviceName="Suporte Linux" /></>}
+      extraSections={<HoursCalculator serviceName="Suporte Linux" contractHref="/contratar/suporte-linux" basePrice={400} hasProgressiveDiscount={true} maxDiscountPercent={27.5} />}
     />
   );
 };

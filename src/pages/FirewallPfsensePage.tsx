@@ -2,8 +2,6 @@ import { useTranslation } from "react-i18next";
 import { Shield, Lock, Eye, Wifi, Server, Activity } from "lucide-react";
 import ServicePageTemplate from "@/components/ServicePageTemplate";
 import HoursCalculator from "@/components/orcamento/HoursCalculator";
-import GuaranteeBlock from "@/components/GuaranteeBlock";
-import ServiceContactForm from "@/components/ServiceContactForm";
 
 const icons = [Shield, Lock, Eye, Wifi, Server, Activity];
 
@@ -29,11 +27,7 @@ const FirewallPfsensePage = () => {
       localContent={t("p.firewall.localContent")}
       showHoursCalculator={false}
       extraSections={
-        <>
-          <HoursCalculator serviceName="Firewall Corporativo pfSense" contractHref="/contratar/firewall-pfsense-jacarei" basePrice={400} hasProgressiveDiscount={true} maxDiscountPercent={27.5} />
-          <GuaranteeBlock />
-          <ServiceContactForm serviceName="Firewall Corporativo pfSense" />
-        </>
+        <HoursCalculator serviceName="Firewall Corporativo pfSense" contractHref="/contratar/firewall-pfsense-jacarei" basePrice={400} hasProgressiveDiscount={true} maxDiscountPercent={27.5} />
       }
     />
   );

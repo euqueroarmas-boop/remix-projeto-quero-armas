@@ -2,8 +2,6 @@ import { useTranslation } from "react-i18next";
 import { Server, Shield, Cpu, HardDrive, Activity, Wrench } from "lucide-react";
 import ServicePageTemplate from "@/components/ServicePageTemplate";
 import HoursCalculator from "@/components/orcamento/HoursCalculator";
-import GuaranteeBlock from "@/components/GuaranteeBlock";
-import ServiceContactForm from "@/components/ServiceContactForm";
 
 const icons = [Server, Shield, Cpu, HardDrive, Activity, Wrench];
 
@@ -31,11 +29,7 @@ const ServidoresDellPage = () => {
       localContent={t(`${k}.localContent`)}
       showHoursCalculator={false}
       extraSections={
-        <>
-          <HoursCalculator serviceName="Implantação de Servidores Dell PowerEdge" contractHref="/contratar/servidor-dell-poweredge-jacarei" basePrice={500} hasProgressiveDiscount={false} />
-          <GuaranteeBlock />
-          <ServiceContactForm serviceName="Implantação de Servidores Dell PowerEdge" />
-        </>
+        <HoursCalculator serviceName="Implantação de Servidores Dell PowerEdge" contractHref="/contratar/servidor-dell-poweredge-jacarei" basePrice={500} hasProgressiveDiscount={false} />
       }
     />
   );

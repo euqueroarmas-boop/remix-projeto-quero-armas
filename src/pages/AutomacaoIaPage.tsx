@@ -2,8 +2,6 @@ import { useTranslation } from "react-i18next";
 import { Bot, Zap, BarChart3, RefreshCw, MessageCircle, Workflow } from "lucide-react";
 import ServicePageTemplate from "@/components/ServicePageTemplate";
 import HoursCalculator from "@/components/orcamento/HoursCalculator";
-import GuaranteeBlock from "@/components/GuaranteeBlock";
-import ServiceContactForm from "@/components/ServiceContactForm";
 
 const icons = [Bot, Zap, RefreshCw, BarChart3, Workflow, MessageCircle];
 
@@ -32,11 +30,7 @@ const AutomacaoIaPage = () => {
       localContent={t(`${k}.localContent`)}
       showHoursCalculator={false}
       extraSections={
-        <>
-          <HoursCalculator serviceName="Automação de TI com IA" contractHref="/contratar/automacao-de-ti-com-inteligencia-artificial" basePrice={500} hasProgressiveDiscount={false} />
-          <GuaranteeBlock />
-          <ServiceContactForm serviceName="Automação de TI com IA" />
-        </>
+        <HoursCalculator serviceName="Automação de TI com IA" contractHref="/contratar/automacao-de-ti-com-inteligencia-artificial" basePrice={500} hasProgressiveDiscount={false} />
       }
     />
   );

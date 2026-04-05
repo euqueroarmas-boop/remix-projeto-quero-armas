@@ -2,8 +2,6 @@ import { useTranslation } from "react-i18next";
 import { HardDrive, Shield, Cloud, Server, Activity, Headphones } from "lucide-react";
 import ServicePageTemplate from "@/components/ServicePageTemplate";
 import HoursCalculator from "@/components/orcamento/HoursCalculator";
-import GuaranteeBlock from "@/components/GuaranteeBlock";
-import ServiceContactForm from "@/components/ServiceContactForm";
 
 const icons = [HardDrive, Cloud, Shield, Server, Activity, Headphones];
 
@@ -28,11 +26,7 @@ const BackupCorporativoPage = () => {
       localContent={t("p.backup.localContent")}
       showHoursCalculator={false}
       extraSections={
-        <>
-          <HoursCalculator serviceName="Backup Corporativo" contractHref="/contratar/backup-empresarial-jacarei" basePrice={400} hasProgressiveDiscount={true} maxDiscountPercent={27.5} />
-          <GuaranteeBlock />
-          <ServiceContactForm serviceName="Backup Corporativo" />
-        </>
+        <HoursCalculator serviceName="Backup Corporativo" contractHref="/contratar/backup-empresarial-jacarei" basePrice={400} hasProgressiveDiscount={true} maxDiscountPercent={27.5} />
       }
     />
   );
