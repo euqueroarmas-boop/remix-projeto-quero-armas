@@ -265,12 +265,23 @@ function BillingDetail({ payment, customers, contracts, webhooks, onClose }: {
   });
   const copyText = (text: string) => navigator.clipboard.writeText(text);
 
+  const isLgpd = customer?.status_cliente === "excluido_lgpd";
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-2">
         <Button variant="ghost" size="sm" onClick={onClose} className="h-8 gap-1 text-xs"><ArrowLeft className="h-3.5 w-3.5" /> Voltar</Button>
         <h3 className="text-sm font-bold text-foreground">Detalhe da Cobrança</h3>
       </div>
+      {isLgpd && (
+        <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 flex items-center gap-3">
+          <AlertTriangle className="h-4 w-4 text-red-400 shrink-0" />
+          <div>
+            <p className="text-xs font-bold text-red-400">Registro histórico restrito (LGPD)</p>
+            <p className="text-[10px] text-red-400/80">Titular anonimizado. Operação bloqueada por LGPD. Sem ações de cobrança, reenvio ou reativação.</p>
+          </div>
+        </div>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="rounded-lg border border-border/60 bg-card p-4 space-y-2">
           <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Cliente</p>

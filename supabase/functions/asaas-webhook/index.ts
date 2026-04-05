@@ -2,7 +2,42 @@ import { logSistemaBackend } from "../_shared/logSistema.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { ensureClientAccess } from "../_shared/post-purchase.ts";
 import { logFiscalEvent, logFiscalChanges, detectSensitiveChanges } from "../_shared/fiscalAudit.ts";
-import { ensureClientAccess } from "../_shared/post-purchase.ts";
+
+// ── LGPD LOGICAL LOCK: check if customer is anonymized ──
+async function isCustomerLgpdLocked(
+  supabase: ReturnType<typeof createClient>,
+  customerId: string | null
+): Promise<boolean> {
+  if (!customerId) return false;
+  const { data } = await supabase
+    .from("customers")
+    .select("status_cliente")
+    .eq("id", customerId)
+    .limit(1)
+    .maybeSingle();
+  return data?.status_cliente === "excluido_lgpd";
+}
+
+async function logLgpdBlock(
+  supabase: ReturnType<typeof createClient>,
+  operation: string,
+  details: Record<string, unknown>
+) {
+  console.log(`[asaas-webhook] LGPD_LOGICAL_LOCK: ${operation} bloqueado`, details);
+  await supabase.from("integration_logs").insert({
+    integration_name: "lgpd_lock",
+    operation_name: operation,
+    request_payload: details,
+    status: "blocked",
+    error_message: "LGPD_LOGICAL_LOCK — mutação operacional bloqueada para titular anonimizado",
+  });
+  await logSistemaBackend({
+    tipo: "lgpd",
+    status: "warning",
+    mensagem: `LGPD_LOGICAL_LOCK: ${operation} bloqueado para titular anonimizado`,
+    payload: details,
+  });
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -265,6 +300,23 @@ Deno.serve(async (req) => {
           });
         }
 
+        // ── LGPD LOGICAL LOCK: block operational mutation for anonymized customers ──
+        if (await isCustomerLgpdLocked(supabase, custId)) {
+          await logLgpdBlock(supabase, "invoice_event_blocked", { event, invoice_id: invoiceId, customer_id: custId });
+          // Still log audit trail but do NOT mutate operational state
+          await logFiscalEvent(supabase, {
+            asaas_invoice_id: String(invoiceId), customer_id: custId,
+            event_type: event, event_source: "invoice_event",
+            payload_snapshot: body, normalized_status: STATUS_MAP[event] || "unknown",
+            overwrite_decision: "blocked_lgpd", decision_reason: "LGPD_LOGICAL_LOCK — titular anonimizado, mutação operacional bloqueada",
+            created_by_process: "asaas_webhook",
+          });
+          await supabase.from("asaas_webhooks").update({ processed: true }).eq("payload->>id", body.id || "");
+          return new Response(JSON.stringify({ received: true, event, lgpd_locked: true }), {
+            status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
         // ── UPSERT with INVOICE EVENT as PRIMARY source (can overwrite everything) ──
         const eventTimestamp = new Date().toISOString();
         const { data: existingDoc } = await supabase
@@ -515,7 +567,26 @@ Deno.serve(async (req) => {
 
     console.log("[asaas-webhook] Atualizando pagamento", paymentRecord.id, "→ status:", newStatus);
 
-    // Update payment status
+    // ── LGPD LOGICAL LOCK: resolve customer and check before operational mutations ──
+    let paymentCustomerId: string | null = null;
+    let isLgpdLocked = false;
+    if (paymentRecord.quote_id) {
+      const { data: cForLgpd } = await supabase.from("contracts").select("customer_id").eq("quote_id", paymentRecord.quote_id).limit(1).maybeSingle();
+      paymentCustomerId = cForLgpd?.customer_id || null;
+      isLgpdLocked = await isCustomerLgpdLocked(supabase, paymentCustomerId);
+    }
+
+    if (isLgpdLocked) {
+      // Block ALL operational mutations but log the event
+      await logLgpdBlock(supabase, "payment_event_blocked", { event, payment_id: payment.id, customer_id: paymentCustomerId, attempted_status: newStatus });
+      // Still record webhook as processed
+      await supabase.from("asaas_webhooks").update({ processed: true }).eq("payload->>id", body.id);
+      return new Response(JSON.stringify({ received: true, lgpd_locked: true, event }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Update payment status (only for non-LGPD customers)
     await supabase.from("payments").update({ payment_status: newStatus }).eq("id", paymentRecord.id);
 
     // ── Auto-populate customer mapping when we have payment context ──
