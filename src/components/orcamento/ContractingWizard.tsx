@@ -142,6 +142,7 @@ const ContractingWizard = ({
   customRegistrationForm,
 }: Props) => {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const checkoutStore = useCheckoutStore();
