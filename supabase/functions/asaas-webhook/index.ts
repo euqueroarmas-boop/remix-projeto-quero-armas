@@ -567,7 +567,26 @@ Deno.serve(async (req) => {
 
     console.log("[asaas-webhook] Atualizando pagamento", paymentRecord.id, "→ status:", newStatus);
 
-    // Update payment status
+    // ── LGPD LOGICAL LOCK: resolve customer and check before operational mutations ──
+    let paymentCustomerId: string | null = null;
+    let isLgpdLocked = false;
+    if (paymentRecord.quote_id) {
+      const { data: cForLgpd } = await supabase.from("contracts").select("customer_id").eq("quote_id", paymentRecord.quote_id).limit(1).maybeSingle();
+      paymentCustomerId = cForLgpd?.customer_id || null;
+      isLgpdLocked = await isCustomerLgpdLocked(supabase, paymentCustomerId);
+    }
+
+    if (isLgpdLocked) {
+      // Block ALL operational mutations but log the event
+      await logLgpdBlock(supabase, "payment_event_blocked", { event, payment_id: payment.id, customer_id: paymentCustomerId, attempted_status: newStatus });
+      // Still record webhook as processed
+      await supabase.from("asaas_webhooks").update({ processed: true }).eq("payload->>id", body.id);
+      return new Response(JSON.stringify({ received: true, lgpd_locked: true, event }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Update payment status (only for non-LGPD customers)
     await supabase.from("payments").update({ payment_status: newStatus }).eq("id", paymentRecord.id);
 
     // ── Auto-populate customer mapping when we have payment context ──
