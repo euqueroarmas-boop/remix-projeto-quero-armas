@@ -10,7 +10,6 @@ import { trackWhatsApp, track } from "@/lib/tracking";
 
 interface ServiceContactFormProps {
   serviceName: string;
-  /** Extra context from calculator (e.g. "3 horas selecionadas — R$ 540") */
   calculatorContext?: string;
 }
 
@@ -30,7 +29,7 @@ const ServiceContactForm = ({ serviceName, calculatorContext }: ServiceContactFo
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.nome || !form.email || !form.mensagem) {
-      toast({ title: "Preencha os campos obrigatórios.", variant: "destructive" });
+      toast({ title: t("serviceContact.validationError", "Preencha os campos obrigatórios."), variant: "destructive" });
       return;
     }
     setLoading(true);
@@ -47,11 +46,11 @@ const ServiceContactForm = ({ serviceName, calculatorContext }: ServiceContactFo
         },
       });
       if (error) throw error;
-      toast({ title: "Mensagem enviada com sucesso!" });
+      toast({ title: t("serviceContact.successMessage", "Mensagem enviada com sucesso!") });
       track("form_submit", "service-contact-form", { service: serviceName });
       setForm({ nome: "", email: "", whatsapp: "", empresa: "", mensagem: "" });
     } catch {
-      toast({ title: "Erro ao enviar. Tente novamente.", variant: "destructive" });
+      toast({ title: t("serviceContact.errorMessage", "Erro ao enviar. Tente novamente."), variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -67,21 +66,21 @@ const ServiceContactForm = ({ serviceName, calculatorContext }: ServiceContactFo
           transition={{ duration: 0.5 }}
         >
           <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">
-            // FALE CONOSCO
+            // {t("serviceContact.tag", "FALE CONOSCO")}
           </p>
           <h2 className="text-2xl md:text-3xl mb-2">
-            Fale com a WMTi sobre <span className="text-primary">{serviceName}</span>
+            {t("serviceContact.title", "Fale com a WMTi sobre")} <span className="text-primary">{serviceName}</span>
           </h2>
           <p className="font-body text-muted-foreground mb-8">
-            Preencha o formulário e nossa equipe entrará em contato.
+            {t("serviceContact.subtitle", "Preencha o formulário e nossa equipe entrará em contato.")}
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-5 bg-card border border-border p-6 md:p-8 rounded-lg">
             {[
-              { label: "Nome *", key: "nome" as const, type: "text", placeholder: "Seu nome completo" },
-              { label: "E-mail *", key: "email" as const, type: "email", placeholder: "seu@email.com.br" },
+              { label: t("serviceContact.labelName", "Nome *"), key: "nome" as const, type: "text", placeholder: t("serviceContact.placeholderName", "Seu nome completo") },
+              { label: t("serviceContact.labelEmail", "E-mail *"), key: "email" as const, type: "email", placeholder: t("serviceContact.placeholderEmail", "seu@email.com.br") },
               { label: "WhatsApp", key: "whatsapp" as const, type: "tel", placeholder: "(11) 99999-9999" },
-              { label: "Empresa", key: "empresa" as const, type: "text", placeholder: "Nome da empresa" },
+              { label: t("serviceContact.labelCompany", "Empresa"), key: "empresa" as const, type: "text", placeholder: t("serviceContact.placeholderCompany", "Nome da empresa") },
             ].map((field) => (
               <div key={field.key}>
                 <label className="font-mono text-xs tracking-[0.2em] uppercase text-primary mb-2 block">
@@ -99,11 +98,11 @@ const ServiceContactForm = ({ serviceName, calculatorContext }: ServiceContactFo
 
             <div>
               <label className="font-mono text-xs tracking-[0.2em] uppercase text-primary mb-2 block">
-                Mensagem *
+                {t("serviceContact.labelMessage", "Mensagem *")}
               </label>
               <textarea
                 rows={4}
-                placeholder="Descreva sua necessidade..."
+                placeholder={t("serviceContact.placeholderMessage", "Descreva sua necessidade...")}
                 value={form.mensagem}
                 onChange={(e) => setForm((prev) => ({ ...prev, mensagem: e.target.value }))}
                 className="w-full bg-input border border-border px-4 py-3 font-body text-sm text-foreground placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none transition-colors resize-none rounded"
@@ -117,7 +116,7 @@ const ServiceContactForm = ({ serviceName, calculatorContext }: ServiceContactFo
                 className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all flex-1 justify-center disabled:opacity-50 rounded"
               >
                 {loading ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-                {loading ? "Enviando..." : "Enviar Mensagem"}
+                {loading ? t("serviceContact.sending", "Enviando...") : t("serviceContact.submit", "Enviar Mensagem")}
               </button>
               <button
                 type="button"

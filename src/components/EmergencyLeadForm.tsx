@@ -29,14 +29,14 @@ const EmergencyLeadForm = ({ problemName, cityName, sourcePage }: EmergencyLeadF
     const company = (data.get("company") as string || "").trim();
 
     if (!name || !email || !phone) {
-      toast.error("Preencha todos os campos obrigatórios.");
+      toast.error(t("emergency.validationError", "Preencha todos os campos obrigatórios."));
       return;
     }
 
     setLoading(true);
     try {
       const serviceInterest = cityName
-        ? `${problemName} em ${cityName}`
+        ? `${problemName} ${t("emergency.inCity", "em")} ${cityName}`
         : problemName;
 
       await supabase.functions.invoke("submit-lead", {
@@ -52,9 +52,9 @@ const EmergencyLeadForm = ({ problemName, cityName, sourcePage }: EmergencyLeadF
       });
 
       setSubmitted(true);
-      toast.success("Recebemos seu contato! Nossa equipe entrará em contato em breve.");
+      toast.success(t("emergency.successMessage", "Recebemos seu contato! Nossa equipe entrará em contato em breve."));
     } catch {
-      toast.error("Erro ao enviar. Tente pelo WhatsApp.");
+      toast.error(t("emergency.errorMessage", "Erro ao enviar. Tente pelo WhatsApp."));
     } finally {
       setLoading(false);
     }
@@ -70,9 +70,9 @@ const EmergencyLeadForm = ({ problemName, cityName, sourcePage }: EmergencyLeadF
             transition={{ duration: 0.4 }}
           >
             <CheckCircle2 size={48} className="text-primary mx-auto mb-4" />
-            <h3 className="text-2xl md:text-3xl font-bold mb-2">Contato recebido!</h3>
+            <h3 className="text-2xl md:text-3xl font-bold mb-2">{t("emergency.successTitle", "Contato recebido!")}</h3>
             <p className="font-body text-muted-foreground">
-              Nossa equipe técnica entrará em contato em breve para resolver seu problema.
+              {t("emergency.successDesc", "Nossa equipe técnica entrará em contato em breve para resolver seu problema.")}
             </p>
           </motion.div>
         </div>
@@ -92,24 +92,24 @@ const EmergencyLeadForm = ({ problemName, cityName, sourcePage }: EmergencyLeadF
           <div className="flex items-center gap-3 mb-2">
             <AlertTriangle size={20} className="text-destructive" />
             <p className="font-mono text-xs tracking-[0.3em] uppercase text-destructive">
-              // ATENDIMENTO PRIORITÁRIO
+              // {t("emergency.tag", "ATENDIMENTO PRIORITÁRIO")}
             </p>
           </div>
           <h2 className="text-2xl md:text-3xl mb-2">
-            Resolva agora:{" "}
-            <span className="text-destructive">diagnóstico gratuito</span>
+            {t("emergency.title", "Resolva agora:")}{" "}
+            <span className="text-destructive">{t("emergency.titleHighlight", "diagnóstico gratuito")}</span>
           </h2>
           <p className="font-body text-muted-foreground mb-8 leading-relaxed">
-            Preencha o formulário e nossa equipe técnica entrará em contato em até{" "}
-            <strong className="text-foreground">2 horas úteis</strong>
-            {cityName ? ` para atender sua empresa em ${cityName}` : ""}.
+            {t("emergency.desc", "Preencha o formulário e nossa equipe técnica entrará em contato em até")}{" "}
+            <strong className="text-foreground">{t("emergency.descTime", "2 horas úteis")}</strong>
+            {cityName ? ` ${t("emergency.descCity", "para atender sua empresa em")} ${cityName}` : ""}.
           </p>
 
           <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
                 <label htmlFor="emergency-name" className="flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-muted-foreground mb-1.5">
-                  <User size={12} /> Nome *
+                  <User size={12} /> {t("emergency.labelName", "Nome *")}
                 </label>
                 <input
                   id="emergency-name"
@@ -117,20 +117,20 @@ const EmergencyLeadForm = ({ problemName, cityName, sourcePage }: EmergencyLeadF
                   type="text"
                   required
                   maxLength={100}
-                  placeholder="Seu nome"
+                  placeholder={t("emergency.placeholderName", "Seu nome")}
                   className="w-full px-4 py-3 bg-background border border-border rounded font-body text-sm focus:border-primary focus:outline-none transition-colors"
                 />
               </div>
               <div>
                 <label htmlFor="emergency-company" className="flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-muted-foreground mb-1.5">
-                  <Building2 size={12} /> Empresa
+                  <Building2 size={12} /> {t("emergency.labelCompany", "Empresa")}
                 </label>
                 <input
                   id="emergency-company"
                   name="company"
                   type="text"
                   maxLength={100}
-                  placeholder="Nome da empresa"
+                  placeholder={t("emergency.placeholderCompany", "Nome da empresa")}
                   className="w-full px-4 py-3 bg-background border border-border rounded font-body text-sm focus:border-primary focus:outline-none transition-colors"
                 />
               </div>
@@ -138,7 +138,7 @@ const EmergencyLeadForm = ({ problemName, cityName, sourcePage }: EmergencyLeadF
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
                 <label htmlFor="emergency-email" className="flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-muted-foreground mb-1.5">
-                  <Mail size={12} /> E-mail *
+                  <Mail size={12} /> {t("emergency.labelEmail", "E-mail *")}
                 </label>
                 <input
                   id="emergency-email"
@@ -146,13 +146,13 @@ const EmergencyLeadForm = ({ problemName, cityName, sourcePage }: EmergencyLeadF
                   type="email"
                   required
                   maxLength={255}
-                  placeholder="seu@email.com"
+                  placeholder={t("emergency.placeholderEmail", "seu@email.com")}
                   className="w-full px-4 py-3 bg-background border border-border rounded font-body text-sm focus:border-primary focus:outline-none transition-colors"
                 />
               </div>
               <div>
                 <label htmlFor="emergency-phone" className="flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-muted-foreground mb-1.5">
-                  <Phone size={12} /> Telefone *
+                  <Phone size={12} /> {t("emergency.labelPhone", "Telefone *")}
                 </label>
                 <input
                   id="emergency-phone"
@@ -176,12 +176,12 @@ const EmergencyLeadForm = ({ problemName, cityName, sourcePage }: EmergencyLeadF
               ) : (
                 <Send size={16} />
               )}
-              {loading ? "Enviando..." : "Solicitar diagnóstico gratuito"}
+              {loading ? t("emergency.sending", "Enviando...") : t("emergency.submit", "Solicitar diagnóstico gratuito")}
             </button>
           </form>
 
           <p className="font-body text-xs text-muted-foreground mt-4 text-center">
-            Sem compromisso. Diagnóstico e proposta totalmente gratuitos.
+            {t("emergency.disclaimer", "Sem compromisso. Diagnóstico e proposta totalmente gratuitos.")}
           </p>
         </motion.div>
       </div>
