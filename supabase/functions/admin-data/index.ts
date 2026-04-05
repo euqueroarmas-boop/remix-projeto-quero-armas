@@ -40,7 +40,7 @@ const ALLOWED_TABLES = [
   "logs_sistema", "integration_logs", "admin_audit_logs", "security_events",
   "asaas_webhooks", "customers", "payments", "contracts", "leads",
   "proposals", "budget_leads", "contract_signatures", "quotes",
-  "fiscal_documents", "client_events", "service_requests", "contract_equipment",
+  "fiscal_documents", "invoice_files", "client_events", "service_requests", "contract_equipment",
   "network_diagnostics", "test_runs", "test_run_events", "test_alert_config",
   "blog_posts_ai", "prompt_intelligence", "revenue_intelligence",
   "certificate_config", "signature_logs", "cipa_locations",

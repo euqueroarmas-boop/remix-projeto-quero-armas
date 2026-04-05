@@ -492,7 +492,7 @@ Deno.serve(async (req) => {
               }
             }
 
-            await supabase.from("fiscal_documents").insert({
+            const { data: insertedDoc } = await supabase.from("fiscal_documents").insert({
               customer_id: custId,
               payment_id: paymentRecord.id,
               contract_id: contractId || null,
@@ -508,7 +508,15 @@ Deno.serve(async (req) => {
               service_reference: contractForInvoice?.[0]?.contract_type || null,
               raw_payload: body,
               notes: `NF gerada automaticamente via webhook ${event}`,
-            });
+            }).select("id").single();
+
+            // Persist files in invoice_files table
+            if (insertedDoc?.id) {
+              const filesToInsert: { invoice_id: string; type: string; file_url: string; filename: string; mime_type: string }[] = [];
+              if (pdfUrl) filesToInsert.push({ invoice_id: insertedDoc.id, type: "pdf", file_url: pdfUrl, filename: `NF-${invoiceNumber || asaasInvoiceId}.pdf`, mime_type: "application/pdf" });
+              if (xmlUrl) filesToInsert.push({ invoice_id: insertedDoc.id, type: "xml", file_url: xmlUrl, filename: `NF-${invoiceNumber || asaasInvoiceId}.xml`, mime_type: "application/xml" });
+              if (filesToInsert.length) await supabase.from("invoice_files").insert(filesToInsert);
+            }
 
             console.log("[asaas-webhook] Documento fiscal persistido para customer:", custId);
             await supabase.from("integration_logs").insert({
