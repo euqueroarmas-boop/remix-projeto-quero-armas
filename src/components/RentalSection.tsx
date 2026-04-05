@@ -100,7 +100,7 @@ const RentalSection = () => {
             ))}
           </div>
 
-          {/* Comparison table */}
+          {/* Comparison table — desktop */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -111,21 +111,23 @@ const RentalSection = () => {
             <h3 className="text-xl md:text-2xl mb-6">
                {t("custom.rentalSection.comparisonTitle1")}<span className="text-primary">{t("custom.rentalSection.comparisonHighlight")}</span>
             </h3>
-            <div className="border border-border overflow-x-auto">
-              <table className="w-full min-w-[400px]">
+
+            {/* Desktop: table */}
+            <div className="hidden md:block border border-border overflow-x-auto">
+              <table className="w-full">
                 <thead>
                   <tr className="bg-muted">
-                    <th className="text-left font-mono text-xs md:text-sm uppercase tracking-wider p-3 md:p-4 text-muted-foreground"></th>
-                     <th className="text-left font-mono text-xs md:text-sm uppercase tracking-wider p-3 md:p-4 text-muted-foreground">{t("custom.rentalSection.comparisonHeaders.buy")}</th>
-                     <th className="text-left font-mono text-xs md:text-sm uppercase tracking-wider p-3 md:p-4 text-primary">{t("custom.rentalSection.comparisonHeaders.lease")}</th>
+                    <th className="text-left font-mono text-sm uppercase tracking-wider p-4 text-muted-foreground"></th>
+                    <th className="text-left font-mono text-sm uppercase tracking-wider p-4 text-muted-foreground">{t("custom.rentalSection.comparisonHeaders.buy")}</th>
+                    <th className="text-left font-mono text-sm uppercase tracking-wider p-4 text-primary">{t("custom.rentalSection.comparisonHeaders.lease")}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {comparisons.map((row) => (
                     <tr key={row.item} className="border-t border-border">
-                      <td className="p-3 md:p-4 font-body text-sm md:text-base font-medium">{row.item}</td>
-                      <td className="p-3 md:p-4 font-body text-sm md:text-base text-muted-foreground">{row.compra}</td>
-                      <td className="p-3 md:p-4 font-body text-sm md:text-base text-primary font-medium flex items-center gap-2">
+                      <td className="p-4 font-body text-base font-medium">{row.item}</td>
+                      <td className="p-4 font-body text-base text-muted-foreground">{row.compra}</td>
+                      <td className="p-4 font-body text-base text-primary font-medium flex items-center gap-2">
                         <CheckCircle2 size={14} className="text-primary flex-shrink-0" />
                         {row.locacao}
                       </td>
@@ -133,6 +135,42 @@ const RentalSection = () => {
                   ))}
                 </tbody>
               </table>
+            </div>
+
+            {/* Mobile: vertical cards */}
+            <div className="md:hidden flex flex-col gap-4">
+              {/* Card Comprar */}
+              <div className="border border-border bg-background p-5 space-y-3">
+                <h4 className="font-mono text-base font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                  ❌ {t("custom.rentalSection.comparisonHeaders.buy")}
+                </h4>
+                <div className="space-y-3">
+                  {comparisons.map((row) => (
+                    <div key={row.item} className="space-y-0.5">
+                      <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground/70">{row.item}</p>
+                      <p className="font-body text-sm text-muted-foreground">{row.compra}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Card Locar */}
+              <div className="border-2 border-primary bg-primary/5 p-5 space-y-3">
+                <h4 className="font-mono text-base font-bold uppercase tracking-wider text-primary flex items-center gap-2">
+                  ✅ {t("custom.rentalSection.comparisonHeaders.lease")}
+                </h4>
+                <div className="space-y-3">
+                  {comparisons.map((row) => (
+                    <div key={row.item} className="space-y-0.5">
+                      <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground/70">{row.item}</p>
+                      <p className="font-body text-sm text-primary font-medium flex items-center gap-2">
+                        <CheckCircle2 size={12} className="text-primary flex-shrink-0" />
+                        {row.locacao}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </motion.div>
 
