@@ -19,6 +19,7 @@ import WizardStepWrapper from "@/components/orcamento/WizardStepWrapper";
 import QuickRegistrationForm, { type RegistrationData } from "@/components/orcamento/QuickRegistrationForm";
 import { generateContractHtml } from "@/components/orcamento/ContractPreview";
 import { generateOnDemandContractHtml, buildOnDemandVarsFromCheckout } from "@/lib/onDemandContractHtml";
+import { getServicePricing, generatePriceTable } from "@/data/servicePricingCatalog";
 import ContractingWizard from "@/components/orcamento/ContractingWizard";
 import { plans } from "@/components/orcamento/PlanSelector";
 import ServerAdminRegistrationForm, { type ServerAdminRegistrationData } from "@/components/orcamento/ServerAdminRegistrationForm";
@@ -66,10 +67,8 @@ const CARTORIO_SEGMENT_CHECKOUT_ALIASES = new Set([
   "ti-para-tabelionatos-de-protesto",
 ]);
 
-/* ─── Price tables ─── */
+/* ─── Price tables (legacy fallback only) ─── */
 const STANDARD_PRICES: Record<number, number> = { 1: 200, 2: 190, 3: 180, 4: 170, 5: 160, 6: 155, 7: 150, 8: 145 };
-const EMERGENCY_PRICES: Record<number, number> = { 1: 300, 2: 285, 3: 270, 4: 255, 5: 240, 6: 232.5, 7: 225, 8: 217.5 };
-const SERVER_ADMIN_PRICES: Record<number, number> = { 1: 500, 2: 475, 3: 450, 4: 425, 5: 400, 6: 387.5, 7: 375, 8: 362.5 };
 
 type BillingType = "BOLETO" | "CREDIT_CARD";
 type FlowStep = "calculator" | "registration" | "contract" | "payment" | "success";
@@ -105,8 +104,11 @@ const ContratarServicoPage = () => {
   const selectedRentalQty = Math.max(1, Number(searchParams.get("qty") || 1));
   const selectedRentalPlan = plans.find((item) => item.id === selectedRentalPlanId) || plans[1];
   const rentalMonthlyValue = selectedRentalPlan.price * selectedRentalQty;
-  const basePrice = isServerAdmin ? 500 : isEmergency ? 300 : 200;
-  const priceTable = isServerAdmin ? SERVER_ADMIN_PRICES : isEmergency ? EMERGENCY_PRICES : STANDARD_PRICES;
+  const catalogPricing = slug ? getServicePricing(slug) : null;
+  const basePrice = catalogPricing?.basePrice ?? (isEmergency ? 300 : 200);
+  const priceTable = catalogPricing
+    ? generatePriceTable(catalogPricing.basePrice, catalogPricing.hasProgressiveDiscount, catalogPricing.maxDiscountPercent)
+    : STANDARD_PRICES;
 
   // Hydrate store from URL params on mount
   const infraStore = useInfraStore();
