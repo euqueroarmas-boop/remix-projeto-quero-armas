@@ -202,6 +202,7 @@ export default function AdminInvoices() {
                   <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Valor</TableHead>
                   <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Emissão</TableHead>
                   <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Status</TableHead>
+                  <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Fonte</TableHead>
                   <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Asaas ID</TableHead>
                   <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Arquivos</TableHead>
                 </TableRow>
