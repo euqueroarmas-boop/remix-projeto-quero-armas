@@ -385,8 +385,25 @@ Deno.serve(async (req) => {
             const files: { invoice_id: string; type: string; file_url: string; filename: string; mime_type: string }[] = [];
             if (pdfUrl) files.push({ invoice_id: insertedDoc.id, type: "pdf", file_url: pdfUrl, filename: `NF-${invoiceNumber || invoiceId}.pdf`, mime_type: "application/pdf" });
             if (xmlUrl) files.push({ invoice_id: insertedDoc.id, type: "xml", file_url: xmlUrl, filename: `NF-${invoiceNumber || invoiceId}.xml`, mime_type: "application/xml" });
-            if (files.length) await supabase.from("invoice_files").insert(files);
+            // Audit: log file creation
+            if (files.length) {
+              await logFiscalEvent(supabase, {
+                fiscal_document_id: insertedDoc.id, asaas_invoice_id: String(invoiceId), customer_id: custId,
+                event_type: "FILES_CREATED", event_source: "invoice_event",
+                normalized_status: newStatus, overwrite_decision: "accepted",
+                decision_reason: `${files.length} arquivo(s) vinculados na criação`,
+                created_by_process: "asaas_webhook",
+              });
+            }
           }
+          // Audit: log document creation event
+          await logFiscalEvent(supabase, {
+            fiscal_document_id: insertedDoc?.id || null, asaas_invoice_id: String(invoiceId), customer_id: custId,
+            event_type: event, event_source: "invoice_event", event_timestamp: eventTimestamp,
+            payload_snapshot: body, normalized_status: newStatus,
+            overwrite_decision: "accepted", decision_reason: "New fiscal document created (invoice event primary)",
+            created_by_process: "asaas_webhook",
+          });
           console.log("[asaas-webhook] Fiscal doc criado (INVOICE_EVENT, primário):", event);
         }
 
