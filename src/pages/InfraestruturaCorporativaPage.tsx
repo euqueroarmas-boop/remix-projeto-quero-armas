@@ -29,7 +29,8 @@ const InfraestruturaCorporativaPage = () => {
         { label: relatedLabels[3], href: "/microsoft-365-para-empresas-jacarei" },
         { label: relatedLabels[4], href: "/suporte-ti-empresarial-jacarei" },
       ]}
-      localContent={t(`${k}.localContent`)} showHoursCalculator
+      localContent={t(`${k}.localContent`)}
+      showHoursCalculator
     />
   );
 };

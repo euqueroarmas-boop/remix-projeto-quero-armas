@@ -24,7 +24,8 @@ const MontagemRedesPage = () => {
         { label: relatedLabels[1], href: "/servidor-dell-poweredge-jacarei" },
         { label: relatedLabels[2], href: "/suporte-ti-jacarei" },
       ]}
-      localContent={t(`${k}.localContent`)} showHoursCalculator
+      localContent={t(`${k}.localContent`)}
+      showHoursCalculator
     />
   );
 };

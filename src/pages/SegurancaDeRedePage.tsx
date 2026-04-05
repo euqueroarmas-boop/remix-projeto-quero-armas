@@ -24,7 +24,8 @@ const SegurancaDeRedePage = () => {
         { label: relatedLabels[1], href: "/montagem-e-monitoramento-de-redes-jacarei" },
         { label: relatedLabels[2], href: "/infraestrutura-ti-corporativa-jacarei" },
       ]}
-      localContent={t(`${k}.localContent`)} showHoursCalculator
+      localContent={t(`${k}.localContent`)}
+      showHoursCalculator
     />
   );
 };

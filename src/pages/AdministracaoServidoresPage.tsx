@@ -2,7 +2,6 @@ import { useTranslation } from "react-i18next";
 import { Server, Shield, Activity, HardDrive, Wrench, Headphones } from "lucide-react";
 import ServicePageTemplate from "@/components/ServicePageTemplate";
 import UnifiedInfraCalculator from "@/components/orcamento/UnifiedInfraCalculator";
-import GuaranteeBlock from "@/components/GuaranteeBlock";
 
 const icons = [Server, Shield, Activity, HardDrive, Wrench, Headphones];
 const AdministracaoServidoresPage = () => {
@@ -30,8 +29,8 @@ const AdministracaoServidoresPage = () => {
         { label: relatedLabels[2], href: "/infraestrutura-ti-corporativa-jacarei" },
       ]}
       localContent={t(`${k}.localContent`)}
-      showHoursCalculator={false}
-      extraSections={<><GuaranteeBlock /><UnifiedInfraCalculator contractHref="/contratar/administracao-de-servidores" pageTitle={t(`${k}.title`)} /></>}
+      showHoursCalculator={true}
+      extraSections={<UnifiedInfraCalculator contractHref="/contratar/administracao-de-servidores" pageTitle={t(`${k}.title`)} />}
     />
   );
 };

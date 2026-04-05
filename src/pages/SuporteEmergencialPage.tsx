@@ -29,7 +29,7 @@ const SuporteEmergencialPage = () => {
         { label: relatedLabels[2], href: "/infraestrutura-ti-corporativa-jacarei" },
       ]}
       localContent={t(`${k}.localContent`)}
-      showHoursCalculator
+      showHoursCalculator={true}
     />
   );
 };

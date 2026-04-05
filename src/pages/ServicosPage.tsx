@@ -14,7 +14,7 @@ const sections = [
   {
     title: "Serviços de TI",
     items: [
-      { icon: MonitorCog, label: "Suporte TI", desc: "NOC 24/7, SLA por criticidade, atendimento remoto e presencial.", href: "/suporte-ti-jacarei" },
+      /* Suporte Técnico Empresarial removed from listing per catalog adjustment */
       { icon: Server, label: "Servidores Dell PowerEdge", desc: "Implementação e gestão de servidores Dell R750, R650, T550.", href: "/servidor-dell-poweredge-jacarei" },
       { icon: Cloud, label: "Microsoft 365 & Azure", desc: "Migração, Azure AD, Exchange Online, SharePoint e Teams.", href: "/microsoft-365-para-empresas-jacarei" },
       { icon: Shield, label: "Firewall pfSense", desc: "VPN, IDS/IPS Suricata, filtro de conteúdo e failover WAN.", href: "/firewall-pfsense-jacarei" },
