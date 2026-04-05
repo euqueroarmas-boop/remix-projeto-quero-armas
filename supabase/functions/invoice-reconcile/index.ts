@@ -110,7 +110,7 @@ Deno.serve(async (req) => {
           }
         } catch { /* Asaas fiscal info not available */ }
 
-        await supabase.from("fiscal_documents").insert({
+        const { data: insertedDoc } = await supabase.from("fiscal_documents").insert({
           customer_id: contractRow.customer_id,
           payment_id: payment.id,
           contract_id: contractRow.id || null,
@@ -125,7 +125,15 @@ Deno.serve(async (req) => {
           access_key: accessKey,
           service_reference: contractRow.contract_type || null,
           notes: "NF criada via reconciliação",
-        });
+        }).select("id").single();
+
+        // Persist files in invoice_files
+        if (insertedDoc?.id) {
+          const filesToInsert: { invoice_id: string; type: string; file_url: string; filename: string; mime_type: string }[] = [];
+          if (pdfUrl) filesToInsert.push({ invoice_id: insertedDoc.id, type: "pdf", file_url: pdfUrl, filename: `NF-${invoiceNumber || payment.asaas_payment_id}.pdf`, mime_type: "application/pdf" });
+          if (xmlUrl) filesToInsert.push({ invoice_id: insertedDoc.id, type: "xml", file_url: xmlUrl, filename: `NF-${invoiceNumber || payment.asaas_payment_id}.xml`, mime_type: "application/xml" });
+          if (filesToInsert.length) await supabase.from("invoice_files").insert(filesToInsert);
+        }
 
         synced++;
       } catch (err) {
