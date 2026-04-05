@@ -794,7 +794,7 @@ const ContratarServicoPage = () => {
                       <p className="font-bold text-foreground">{serviceName}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-mono text-xs text-muted-foreground">{t("checkout.wizard.onDemand")}</p>
+                      <p className="font-mono text-xs text-muted-foreground">{t("contratar.investimentoAPartir")}</p>
                       <p className="font-bold text-primary">R$ {basePrice.toFixed(2).replace(".", ",")}/h</p>
                     </div>
                   </div>
@@ -1236,7 +1236,7 @@ const ContratarServicoPage = () => {
 
                 {/* Premium positioning */}
                 <div className="bg-card border border-border rounded-xl p-5 space-y-3">
-                  <p className="font-mono text-[10px] tracking-[0.3em] uppercase text-primary font-bold">Por que R$ {basePrice.toFixed(0)}/h?</p>
+                  <p className="font-mono text-[10px] tracking-[0.3em] uppercase text-primary font-bold">{t("checkout.wizard.whyPrice", { price: basePrice.toFixed(0) })}</p>
                   <div className="space-y-2 text-sm text-muted-foreground leading-relaxed">
                     <p>Você não está pagando por uma hora. Está pagando para alguém <strong className="text-foreground">experiente</strong> entrar no seu servidor e resolver o problema <strong className="text-foreground">sem piorar a situação</strong>.</p>
                     <p>Um erro em servidor pode custar <strong className="text-foreground">dias de operação</strong>. Aqui, você resolve em horas.</p>
@@ -1254,7 +1254,7 @@ const ContratarServicoPage = () => {
                       <p className="font-bold text-foreground">{serviceName}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-mono text-xs text-muted-foreground">{t("checkout.wizard.onDemand")}</p>
+                      <p className="font-mono text-xs text-muted-foreground">{t("contratar.investimentoAPartir")}</p>
                       <p className="font-bold text-primary">R$ {basePrice.toFixed(2).replace(".", ",")}/h</p>
                     </div>
                   </div>
