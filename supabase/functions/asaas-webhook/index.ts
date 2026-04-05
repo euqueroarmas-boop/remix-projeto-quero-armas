@@ -258,9 +258,10 @@ Deno.serve(async (req) => {
         }
 
         // ── UPSERT with INVOICE EVENT as PRIMARY source (can overwrite everything) ──
+        const eventTimestamp = new Date().toISOString();
         const { data: existingDoc } = await supabase
           .from("fiscal_documents")
-          .select("id")
+          .select("id, last_event_at, last_event_source, status")
           .eq("asaas_invoice_id", String(invoiceId))
           .limit(1)
           .maybeSingle();
