@@ -614,7 +614,7 @@ Deno.serve(async (req) => {
             // ── PRIORITY RULE: payment event CANNOT overwrite protected fields ──
             // Only enrich empty fields; never overwrite data set by invoice events
             const PROTECTED_STATUSES = ["emitido", "sincronizada", "cancelada", "cancelamento_processando", "cancelamento_negado", "erro"];
-            const isProtected = PROTECTED_STATUSES.includes(existingInvoice.status);
+            const isProtected = PROTECTED_STATUSES.includes(existingInvoice.status) || existingInvoice.last_event_source === "invoice_event";
 
             if (!isProtected) {
               // Only update status if current status is weak (criada, aguardando, pending)
