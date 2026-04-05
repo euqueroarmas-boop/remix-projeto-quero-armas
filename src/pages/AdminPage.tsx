@@ -796,6 +796,7 @@ function AdminContent({ activeSection, onNavigate, clientId }: { activeSection: 
     case "errors": return <LogsTab onlyErrors />;
     case "financeiro": return <Suspense fallback={fallback}><AdminFinanceiro /></Suspense>;
     case "invoices": return <Suspense fallback={fallback}><AdminInvoices /></Suspense>;
+    case "fiscal-audit": return <Suspense fallback={fallback}><AdminFiscalAudit /></Suspense>;
     case "payments": return <PaymentsTab />;
     case "clientes": return <ClientesTab onOpenClient={(id) => onNavigate(`clientes-detail?id=${id}`)} />;
     case "leads": return <AdminLeadsProposals />;
