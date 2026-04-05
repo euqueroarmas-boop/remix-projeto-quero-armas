@@ -687,6 +687,9 @@ Deno.serve(async (req) => {
               access_key: accessKey,
               service_reference: contractForInvoice?.[0]?.contract_type || null,
               raw_payload: body,
+              last_event_at: new Date().toISOString(),
+              last_event_source: "payment_event",
+              is_active: true,
               notes: "NF criada via payment event (fallback)",
             }).select("id").single();
 
