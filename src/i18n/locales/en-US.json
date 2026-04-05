@@ -2535,8 +2535,8 @@
     "colHours": "Hours",
     "colPerHour": "$/hour",
     "colTotal": "Total",
-    "buyHours": "Buy Hours",
-    "buyDesc": "You will be directed to fill in your details, generate the contract and proceed to secure payment.",
+    "buyHours": "RESOLVE NOW",
+    "buyDesc": "Start immediate service. Fill in your details, generate the contract, and proceed to secure payment.",
     "whatsappMsg": "Hello! I'd like to hire {{hours}} technical hour(s){{service}}. Amount: R$ {{price}}.",
     "descService": "Calculate the investment for {{service}}.",
     "descFixed": "Fixed rate per technical hour — no volume-based price variation."
