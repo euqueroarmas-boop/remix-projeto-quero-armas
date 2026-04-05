@@ -1189,14 +1189,14 @@ const ContratarServicoPage = () => {
               <ol className="flex items-center gap-1 font-mono text-xs text-muted-foreground/50">
                 <li><Link to="/" className="hover:text-primary transition-colors">Home</Link></li>
                 <ChevronRight size={10} className="shrink-0" />
-                <li><Link to="/administracao-de-servidores" className="hover:text-primary transition-colors">Administração de Servidores</Link></li>
+                <li><Link to={`/${slug}`} className="hover:text-primary transition-colors">{serviceName}</Link></li>
                 <ChevronRight size={10} className="shrink-0" />
-                <li className="text-primary" aria-current="page">Contratar</li>
+                <li className="text-primary" aria-current="page">{t("contratar.contratar")}</li>
               </ol>
             </nav>
-            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">Contratação de serviço</p>
+            <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">{t("contratar.contratacaoServico")}</p>
             <h1 className="text-2xl md:text-4xl lg:text-5xl mb-4">
-              Contratar <span className="text-primary">Administração de Servidores</span>
+              {t("contratar.contratar")} <span className="text-primary">{serviceName}</span>
             </h1>
             <p className="font-body text-lg text-muted-foreground/70 max-w-2xl leading-relaxed">
               Escolha o modelo ideal: atendimento urgente sob demanda ou proteção contínua com plano recorrente.
