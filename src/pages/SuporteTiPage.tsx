@@ -32,7 +32,7 @@ const SuporteTiPage = () => {
         { label: relatedLabels[3], href: "/infraestrutura-ti-corporativa" },
       ]}
       localContent={t("p.suporteTi.localContent")}
-      showHoursCalculator
+      showHoursCalculator={true}
     />
   );
 };

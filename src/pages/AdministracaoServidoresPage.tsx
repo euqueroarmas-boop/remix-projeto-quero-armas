@@ -30,8 +30,8 @@ const AdministracaoServidoresPage = () => {
         { label: relatedLabels[2], href: "/infraestrutura-ti-corporativa-jacarei" },
       ]}
       localContent={t(`${k}.localContent`)}
-      showHoursCalculator={false}
-      extraSections={<><GuaranteeBlock /><UnifiedInfraCalculator contractHref="/contratar/administracao-de-servidores" pageTitle={t(`${k}.title`)} /></>}
+      showHoursCalculator={true}
+      extraSections={<UnifiedInfraCalculator contractHref="/contratar/administracao-de-servidores" pageTitle={t(`${k}.title`)} />}
     />
   );
 };

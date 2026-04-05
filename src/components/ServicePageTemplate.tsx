@@ -8,12 +8,15 @@ import EmergencyLeadForm from "@/components/EmergencyLeadForm";
 import ContractModeSelector, { type ContractMode, type AllowedModes } from "@/components/ContractModeSelector";
 import ServiceScopeDisplay from "@/components/ServiceScopeDisplay";
 import { getServiceScopeBySlug } from "@/data/serviceScopes";
+import { getServicePricingByPartialSlug } from "@/data/servicePricingCatalog";
+import HoursCalculator from "@/components/orcamento/HoursCalculator";
+import GuaranteeBlock from "@/components/GuaranteeBlock";
+import ServiceContactForm from "@/components/ServiceContactForm";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SeoHead from "@/components/SeoHead";
 import JsonLd, { buildFaqSchema, buildBreadcrumbSchema, buildServiceSchema } from "@/components/JsonLd";
 import { openWhatsApp } from "@/lib/whatsapp";
-
 interface FAQ {
   question: string;
   answer: string;
@@ -531,8 +534,33 @@ const ServicePageTemplate = ({
       </section>
 
 
+      {/* ══ HOURS CALCULATOR (auto from catalog) ══ */}
+      {(() => {
+        const pricing = getServicePricingByPartialSlug(currentPath);
+        if (!pricing || !pricing.hasHoursCalculator || !showHoursCalculator) return null;
+        return (
+          <HoursCalculator
+            serviceName={pricing.name}
+            contractHref={contractHref}
+            basePrice={pricing.basePrice}
+            hasProgressiveDiscount={pricing.hasProgressiveDiscount}
+            maxDiscountPercent={pricing.maxDiscountPercent}
+          />
+        );
+      })()}
+
+      {/* ══ GUARANTEE BLOCK (auto for all service pages) ══ */}
+      <GuaranteeBlock serviceName={title} />
+
       {/* ══ Extra Sections (e.g. downtime calculator) ══ */}
       {extraSections}
+
+      {/* ══ CONTACT FORM (auto from catalog) ══ */}
+      {(() => {
+        const pricing = getServicePricingByPartialSlug(currentPath);
+        if (!pricing || !pricing.hasContactForm) return null;
+        return <ServiceContactForm serviceName={pricing.name} />;
+      })()}
 
       {/* ══ CTA FINAL FORTE ══ */}
       <section id="contato-servico" className="section-dark py-16 md:py-24 border-t-4 border-primary">
