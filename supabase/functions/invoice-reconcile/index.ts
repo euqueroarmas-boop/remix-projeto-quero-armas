@@ -79,6 +79,7 @@ Deno.serve(async (req) => {
     const missing = confirmedPayments.filter(p => !existingMap.has(p.asaas_payment_id));
 
     let synced = 0;
+    let lgpdSkipped = 0;
     const errors: string[] = [];
 
     for (const payment of missing) {
@@ -93,6 +94,39 @@ Deno.serve(async (req) => {
 
         if (!contractRow?.customer_id) {
           console.log("[invoice-reconcile] Sem customer para quote:", payment.quote_id);
+          continue;
+        }
+
+        // ── LGPD LOGICAL LOCK: skip anonymized customers ──
+        const { data: custCheck } = await supabase
+          .from("customers")
+          .select("status_cliente")
+          .eq("id", contractRow.customer_id)
+          .limit(1)
+          .maybeSingle();
+
+        if (custCheck?.status_cliente === "excluido_lgpd") {
+          lgpdSkipped++;
+          console.log("[invoice-reconcile] LGPD_LOGICAL_LOCK: skip customer", contractRow.customer_id);
+          await supabase.from("integration_logs").insert({
+            integration_name: "lgpd_lock",
+            operation_name: "reconcile_skipped",
+            request_payload: { customer_id: contractRow.customer_id, payment_id: payment.id, asaas_payment_id: payment.asaas_payment_id },
+            status: "blocked",
+            error_message: "LGPD_LOGICAL_LOCK — reconciliação bloqueada para titular anonimizado",
+          });
+          // Audit trail only
+          await logFiscalEvent(supabase, {
+            asaas_invoice_id: payment.asaas_payment_id,
+            customer_id: contractRow.customer_id,
+            event_type: "RECONCILE_SKIPPED_LGPD",
+            event_source: "reconcile",
+            payload_snapshot: { payment_id: payment.id, skipped_by_lgpd: true },
+            normalized_status: "blocked",
+            overwrite_decision: "blocked_lgpd",
+            decision_reason: "LGPD_LOGICAL_LOCK — titular anonimizado, reconciliação operacional bloqueada",
+            created_by_process: "invoice_reconcile",
+          });
           continue;
         }
 
