@@ -136,7 +136,8 @@
     "finalCtaWhatsapp": "Fix it now via WhatsApp",
     "finalCtaOnline": "Get my online proposal",
     "relatedTag": "Related services",
-    "relatedTagCity": "Related services in {{city}}"
+    "relatedTagCity": "Related services in {{city}}",
+    "allServicesInCity": "All our IT services available for businesses in {{city}}:"
   },
   "authority": {
     "years": "15+ years in the market",
