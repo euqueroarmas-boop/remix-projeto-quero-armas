@@ -1760,6 +1760,13 @@ const ContratarServicoPage = () => {
                 )}
               </div>
 
+              {/* Microcopy */}
+              {catalogPricing?.hasProgressiveDiscount && (
+                <p className="font-body text-xs text-center text-muted-foreground/70">
+                  {t("contratar.calcMicrocopy")} {t("contratar.calcSavingsMax", { pct: catalogPricing.maxDiscountPercent })}
+                </p>
+              )}
+
               {/* Discount table */}
               <details className="bg-secondary group">
                 <summary className="p-4 cursor-pointer font-mono text-xs uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors flex justify-between items-center">
