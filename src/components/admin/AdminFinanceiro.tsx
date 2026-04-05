@@ -364,7 +364,7 @@ export default function AdminFinanceiro() {
         // 0: paginated payments
         { table: "payments", select: "*", count: true, filters: paymentFilters, order: { column: "created_at", ascending: false }, range: { from: page * PER_PAGE, to: (page + 1) * PER_PAGE - 1 } },
         // 1: customers
-        { table: "customers", select: "id, razao_social, nome_fantasia, cnpj_ou_cpf, email, user_id, responsavel" },
+        { table: "customers", select: "id, razao_social, nome_fantasia, cnpj_ou_cpf, email, user_id, responsavel, status_cliente" },
         // 2: contracts
         { table: "contracts", select: "id, customer_id, quote_id, contract_type, monthly_value, service_status, signed, activated_at, status, created_at" },
         // 3: webhooks
@@ -391,12 +391,27 @@ export default function AdminFinanceiro() {
         { table: "asaas_webhooks", select: "id", count: true, limit: 0, filters: [{ column: "processed", op: "eq", value: false }] },
       ]);
 
-      setPayments((results[0].data as any[]) || []);
-      setTotalPayments(results[0].count || 0);
-      setCustomers((results[1].data as any[]) || []);
-      setContracts((results[2].data as any[]) || []);
+      const allCustomers = (results[1].data as any[]) || [];
+      const allContracts = (results[2].data as any[]) || [];
+
+      // Build LGPD exclusion set
+      const lgpdCustomerIds = new Set(
+        allCustomers.filter((c: any) => c.status_cliente === "excluido_lgpd").map((c: any) => c.id)
+      );
+      const lgpdQuoteIds = new Set(
+        allContracts.filter((c: any) => lgpdCustomerIds.has(c.customer_id)).map((c: any) => c.quote_id).filter(Boolean)
+      );
+      const isLgpdPayment = (p: any) => lgpdQuoteIds.has(p.quote_id);
+
+      // Filter LGPD payments from operational views
+      const rawPayments = (results[0].data as any[]) || [];
+      const rawAllPayments = (results[4].data as any[]) || [];
+      setPayments(rawPayments.filter((p: any) => !isLgpdPayment(p)));
+      setTotalPayments((results[0].count || 0) - rawPayments.filter(isLgpdPayment).length);
+      setCustomers(allCustomers);
+      setContracts(allContracts);
       setWebhooks((results[3].data as any[]) || []);
-      setAllPayments((results[4].data as any[]) || []);
+      setAllPayments(rawAllPayments.filter((p: any) => !isLgpdPayment(p)));
 
       const monthRevenue = ((results[5].data as any[]) || []).reduce((s: number, p: any) => s + (Number(p.amount) || 0), 0);
       const prevMonthRevenue = ((results[6].data as any[]) || []).reduce((s: number, p: any) => s + (Number(p.amount) || 0), 0);
