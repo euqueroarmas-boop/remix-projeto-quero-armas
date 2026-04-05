@@ -335,6 +335,9 @@ Deno.serve(async (req) => {
             invoice_series: invoiceSeries,
             service_reference: null,
             raw_payload: body,
+            last_event_at: eventTimestamp,
+            last_event_source: "invoice_event",
+            is_active: !["cancelada", "erro"].includes(newStatus),
             notes: `NF criada via ${event} (fonte primária)`,
           }).select("id").single();
 
