@@ -774,6 +774,14 @@ Deno.serve(async (req) => {
             }
 
             console.log("[asaas-webhook] Fiscal doc criado (payment fallback):", custId);
+            // Audit: log payment fallback creation
+            await logFiscalEvent(supabase, {
+              fiscal_document_id: insertedDoc?.id || null, asaas_invoice_id: asaasInvoiceId, customer_id: custId,
+              event_type: event, event_source: "payment_event",
+              payload_snapshot: body, normalized_status: pdfUrl ? "emitido" : "aguardando",
+              overwrite_decision: "accepted", decision_reason: "New fiscal document created via payment fallback",
+              created_by_process: "asaas_webhook",
+            });
             await supabase.from("integration_logs").insert({
               integration_name: "asaas",
               operation_name: "fiscal_document_created_payment_fallback",
