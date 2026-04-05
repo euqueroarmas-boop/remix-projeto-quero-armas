@@ -613,26 +613,26 @@ const ServicePageTemplate = ({
 
 /** Dense internal link cluster for SEO — shows related + all services in the same city */
 const SERVICE_LINKS = [
-  { slug: "infraestrutura-ti", label: "Infraestrutura de TI" },
-  { slug: "suporte-ti", label: "Suporte Técnico" },
-  { slug: "seguranca-rede", label: "Segurança de Rede" },
-  { slug: "monitoramento-rede", label: "Monitoramento de Rede" },
-  { slug: "servidores-dell", label: "Servidores Dell" },
-  { slug: "microsoft-365", label: "Microsoft 365" },
-  { slug: "backup-corporativo", label: "Backup Corporativo" },
-  { slug: "firewall-corporativo", label: "Firewall pfSense" },
-  { slug: "locacao-computadores", label: "Locação de Computadores" },
-  { slug: "administracao-servidores", label: "Administração de Servidores" },
-  { slug: "suporte-emergencial", label: "Suporte Emergencial" },
-  { slug: "terceirizacao-ti", label: "Terceirização de TI" },
+  { slug: "infraestrutura-ti", labelKey: "links.infraestruturaTi" },
+  { slug: "suporte-ti", labelKey: "links.suporteTi" },
+  { slug: "seguranca-rede", labelKey: "links.segurancaRede" },
+  { slug: "monitoramento-rede", labelKey: "links.monitoramentoRede" },
+  { slug: "servidores-dell", labelKey: "links.servidoresDell" },
+  { slug: "microsoft-365", labelKey: "links.microsoft365" },
+  { slug: "backup-corporativo", labelKey: "links.backupCorporativo" },
+  { slug: "firewall-corporativo", labelKey: "links.firewallPfsense" },
+  { slug: "locacao-computadores", labelKey: "links.locacaoComputadores" },
+  { slug: "administracao-servidores", labelKey: "links.adminServidores" },
+  { slug: "suporte-emergencial", labelKey: "links.suporteEmergencial" },
+  { slug: "terceirizacao-ti", labelKey: "links.terceirizacaoTi" },
 ];
 
 const SEGMENT_LINKS = [
-  { prefix: "ti-para-serventias-notariais", label: "TI para Cartórios" },
-  { prefix: "ti-para-hospitais", label: "TI para Hospitais" },
-  { prefix: "ti-para-escritorios-de-advocacia", label: "TI para Advocacia" },
-  { prefix: "ti-para-contabilidades", label: "TI para Contabilidades" },
-  { prefix: "ti-para-industrias-alimenticias", label: "TI para Indústrias" },
+  { prefix: "ti-para-serventias-notariais", labelKey: "links.tiCartorios" },
+  { prefix: "ti-para-hospitais", labelKey: "links.tiHospitais" },
+  { prefix: "ti-para-escritorios-de-advocacia", labelKey: "links.tiAdvocacia" },
+  { prefix: "ti-para-contabilidades", labelKey: "links.tiContabilidades" },
+  { prefix: "ti-para-industrias-alimenticias", labelKey: "links.tiIndustrias" },
 ];
 
 interface InternalLinkClusterProps {
@@ -663,7 +663,7 @@ const InternalLinkCluster = ({ relatedLinks, cityName, citySlug, currentPath }: 
       const href = `/${svc.slug}-em-${citySlug}`;
       if (!seen.has(href)) {
         seen.add(href);
-        links.push({ label: `${svc.label} em ${cityName}`, href });
+        links.push({ label: `${t(svc.labelKey)} ${t("links.inCity", "em")} ${cityName}`, href });
       }
     }
 
@@ -671,7 +671,7 @@ const InternalLinkCluster = ({ relatedLinks, cityName, citySlug, currentPath }: 
       const href = `/${seg.prefix}-em-${citySlug}`;
       if (!seen.has(href)) {
         seen.add(href);
-        links.push({ label: `${seg.label} em ${cityName}`, href });
+        links.push({ label: `${t(seg.labelKey)} ${t("links.inCity", "em")} ${cityName}`, href });
       }
     }
 
@@ -690,7 +690,7 @@ const InternalLinkCluster = ({ relatedLinks, cityName, citySlug, currentPath }: 
         </p>
         {cityName && (
           <p className="font-body text-sm text-muted-foreground/70 mb-6">
-            Todos os nossos serviços de TI disponíveis para empresas em {cityName}:
+            {t("service.allServicesInCity", { city: cityName, defaultValue: `Todos os nossos serviços de TI disponíveis para empresas em ${cityName}:` })}
           </p>
         )}
         <div className="flex flex-wrap gap-2 md:gap-3">
