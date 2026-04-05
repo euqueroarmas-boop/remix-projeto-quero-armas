@@ -1,4 +1,4 @@
-import { FileText, Download } from "lucide-react";
+import { FileText, Download, FileCode } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { CustomerData } from "@/pages/AreaDoClientePage";
@@ -55,16 +55,26 @@ export default function PortalFiscal({ customer }: { customer: CustomerData }) {
                        {d.document_number && <span>{t("clientPortal.fiscal.number", { value: d.document_number })}</span>}
                        <span>{t("clientPortal.fiscal.issueDate", { date: formatDate(d.issue_date) })}</span>
                        <span>{t("clientPortal.fiscal.amount", { value: formatCurrency(d.amount) })}</span>
+                       {d.service_reference && <span>Serviço: {d.service_reference}</span>}
                     </div>
                     {d.notes && <p className="text-xs text-muted-foreground mt-1">{d.notes}</p>}
                   </div>
-                  {d.file_url && (
-                    <a href={d.file_url} target="_blank" rel="noopener noreferrer">
-                      <Button size="sm" variant="outline" className="text-xs">
-                         <Download size={12} className="mr-1" /> {t("clientPortal.download")}
-                      </Button>
-                    </a>
-                  )}
+                  <div className="flex gap-2">
+                    {d.file_url && (
+                      <a href={d.file_url} target="_blank" rel="noopener noreferrer">
+                        <Button size="sm" variant="outline" className="text-xs">
+                          <Download size={12} className="mr-1" /> PDF
+                        </Button>
+                      </a>
+                    )}
+                    {d.xml_url && (
+                      <a href={d.xml_url} target="_blank" rel="noopener noreferrer">
+                        <Button size="sm" variant="outline" className="text-xs">
+                          <FileCode size={12} className="mr-1" /> XML
+                        </Button>
+                      </a>
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
