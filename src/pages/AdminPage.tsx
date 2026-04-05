@@ -35,6 +35,7 @@ import AdminCommandCenter from "@/components/admin/AdminCommandCenter";
 import AdminFullscreenMenu from "@/components/admin/AdminFullscreenMenu";
 import LogFullscreenViewer from "@/components/admin/LogFullscreenViewer";
 import { cn } from "@/lib/utils";
+import { ADMIN_NAV_GROUPS, getAdminLabel, getAdminRoute, resolveAdminSection } from "@/components/admin/adminNavigation";
 
 const QAPanel = lazy(() => import("@/components/admin/qa/QAPanel"));
 const AdminBlogGenerator = lazy(() => import("@/components/admin/AdminBlogGenerator"));
@@ -56,75 +57,6 @@ const AdminInvoices = lazy(() => import("@/components/admin/AdminInvoices"));
 const AdminFiscalAudit = lazy(() => import("@/components/admin/AdminFiscalAudit"));
 
 const ITEMS_PER_PAGE = 20;
-
-// ─── Navigation Structure ───
-const NAV_GROUPS = [
-  {
-    label: "Visão Geral",
-    items: [
-      { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-    ],
-  },
-  {
-    label: "Operações",
-    items: [
-      { id: "logs", label: "Logs", icon: ScrollText },
-      { id: "errors", label: "Erros", icon: AlertTriangle },
-      { id: "payments", label: "Pagamentos", icon: CreditCardIcon },
-      { id: "financeiro", label: "Financeiro", icon: DollarSign },
-      { id: "invoices", label: "Notas Fiscais", icon: FileText },
-      { id: "fiscal-audit", label: "Auditoria Fiscal", icon: Shield },
-      { id: "clientes", label: "Clientes", icon: UserCog },
-      { id: "leads", label: "Leads & Propostas", icon: Megaphone },
-      { id: "cipa-locations", label: "CIPA Geo", icon: MapPin },
-    ],
-  },
-  {
-    label: "Segurança",
-    items: [
-      { id: "security", label: "Eventos", icon: ShieldAlert },
-      { id: "webhooks", label: "Webhooks", icon: Webhook },
-      { id: "audit", label: "Auditoria", icon: ClipboardCheck },
-      { id: "risk", label: "Monitor de Risco", icon: Activity },
-    ],
-  },
-  {
-    label: "Qualidade & Conteúdo",
-    items: [
-      { id: "diagnostics", label: "Diagnóstico", icon: Stethoscope },
-      { id: "qa", label: "QA", icon: FlaskConical },
-      { id: "test-center", label: "Centro de Testes", icon: TestTube2 },
-      { id: "blog-ai", label: "Blog IA", icon: PenTool },
-    ],
-  },
-  {
-    label: "Inteligência",
-    items: [
-      { id: "prompt-intelligence", label: "Prompt Intelligence", icon: Brain },
-      { id: "revenue-intelligence", label: "Receita", icon: DollarSign },
-      { id: "dev-chat", label: "DevChat", icon: MessageSquareCode },
-    ],
-  },
-  {
-    label: "CMS",
-    items: [
-      { id: "services-builder", label: "Serviços", icon: Wrench },
-      { id: "segments-builder", label: "Segmentos", icon: Layers },
-      { id: "pricing-engine", label: "Precificação", icon: Calculator },
-      { id: "block-library", label: "Blocos", icon: LayoutGrid },
-      { id: "sitemap-manager", label: "Sitemap", icon: Globe },
-    ],
-  },
-  {
-    label: "Configurações",
-    items: [
-      { id: "digital-signature", label: "Assinatura Digital", icon: FileSignature },
-      { id: "cert-diagnostic", label: "Diag. Certificado", icon: Stethoscope },
-    ],
-  },
-];
-
-const NAV_SECTION_IDS = new Set([...NAV_GROUPS.flatMap((group) => group.items.map((item) => item.id)), "clientes-detail"]);
 
 // ─── Login ───
 function AdminLogin({ onLogin }: { onLogin: () => void }) {
@@ -850,7 +782,7 @@ function AdminSidebar({ activeSection, onNavigate, collapsed, onToggle }: {
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-3">
-        {NAV_GROUPS.map((group) => (
+        {ADMIN_NAV_GROUPS.map((group) => (
           <div key={group.label} className="mb-2">
             {!collapsed && (
               <p className="px-4 py-1.5 text-[9px] font-bold uppercase tracking-[0.12em] text-muted-foreground/60">
@@ -925,10 +857,11 @@ export default function AdminPage() {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const { section } = useParams<{ section?: string }>();
+  const resolvedSection = resolveAdminSection(section);
 
   const activeSection = clientDetailId
     ? "clientes-detail"
-    : !section ? "dashboard" : NAV_SECTION_IDS.has(section) ? section : "dashboard";
+    : resolvedSection ?? "dashboard";
 
   useEffect(() => {
     const syncSession = () => setAuthed(!!getValidAdminToken());
@@ -943,10 +876,10 @@ export default function AdminPage() {
   }, []);
 
   useEffect(() => {
-    if (section && !NAV_SECTION_IDS.has(section)) {
+    if (section && !resolvedSection) {
       navigate("/admin", { replace: true });
     }
-  }, [navigate, section]);
+  }, [navigate, resolvedSection, section]);
 
   // Reset client detail when navigating away from clientes
   useEffect(() => {
@@ -972,12 +905,12 @@ export default function AdminPage() {
       return;
     }
     setClientDetailId(null);
-    navigate(id === "dashboard" ? "/admin" : `/admin/${id}`);
+    navigate(getAdminRoute(id));
   };
 
   const currentLabel = clientDetailId
     ? "Detalhe do Cliente"
-    : NAV_GROUPS.flatMap(g => g.items).find(i => i.id === activeSection)?.label || "Dashboard";
+    : getAdminLabel(activeSection);
 
   return (
     <div className="min-h-screen bg-background text-foreground flex" data-testid="admin-authenticated">

@@ -1,12 +1,8 @@
 import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import {
-  X, LogOut,
-  LayoutDashboard, ScrollText, AlertTriangle, CreditCard, UserCog, Megaphone,
-  ShieldAlert, Webhook, ClipboardCheck, Activity, Stethoscope, FlaskConical,
-  TestTube2, PenTool, Settings, Users, MessageSquareCode, FileSignature, Brain, DollarSign, MapPin, FileText,
-} from "lucide-react";
+import { LogOut, X } from "lucide-react";
+import { ADMIN_NAV_GROUPS } from "@/components/admin/adminNavigation";
 
 interface AdminFullscreenMenuProps {
   open: boolean;
@@ -16,64 +12,7 @@ interface AdminFullscreenMenuProps {
   onLogout: () => void;
 }
 
-const MENU_SECTIONS = [
-  {
-    label: "Principal",
-    items: [
-      { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-      { id: "test-center", label: "Centro de Testes", icon: TestTube2 },
-      { id: "errors", label: "Alertas / Erros", icon: AlertTriangle },
-    ],
-  },
-  {
-    label: "Operações",
-    items: [
-      { id: "leads", label: "Leads & Propostas", icon: Megaphone },
-      { id: "payments", label: "Pagamentos", icon: CreditCard },
-      { id: "financeiro", label: "Financeiro", icon: DollarSign },
-      { id: "invoices", label: "Notas Fiscais", icon: FileText },
-      { id: "clientes", label: "Clientes", icon: UserCog },
-      { id: "cipa-locations", label: "CIPA Geo", icon: MapPin },
-    ],
-  },
-  {
-    label: "Segurança",
-    items: [
-      { id: "security", label: "Eventos de Segurança", icon: ShieldAlert },
-      { id: "webhooks", label: "Webhooks", icon: Webhook },
-      { id: "audit", label: "Auditoria", icon: ClipboardCheck },
-      { id: "fiscal-audit", label: "Auditoria Fiscal", icon: ClipboardCheck },
-      { id: "risk", label: "Monitor de Risco", icon: Activity },
-    ],
-  },
-  {
-    label: "Inteligência",
-    items: [
-      { id: "prompt-intelligence", label: "Prompt Intelligence", icon: Brain },
-      { id: "revenue-intelligence", label: "Receita", icon: DollarSign },
-      { id: "dev-chat", label: "DevChat", icon: MessageSquareCode },
-    ],
-  },
-  {
-    label: "Qualidade & Conteúdo",
-    items: [
-      { id: "logs", label: "Logs Técnicos", icon: ScrollText },
-      { id: "diagnostics", label: "Diagnóstico", icon: Stethoscope },
-      { id: "qa", label: "Homologação / QA", icon: FlaskConical },
-      { id: "blog-ai", label: "Blog IA", icon: PenTool },
-    ],
-  },
-  {
-    label: "Configurações",
-    items: [
-      { id: "digital-signature", label: "Assinatura Digital", icon: FileSignature },
-      { id: "cert-diagnostic", label: "Diag. Certificado", icon: Stethoscope },
-    ],
-  },
-];
-
 export default function AdminFullscreenMenu({ open, onClose, activeSection, onNavigate, onLogout }: AdminFullscreenMenuProps) {
-  // Lock body scroll
   useEffect(() => {
     if (open) {
       document.body.style.overflow = "hidden";
@@ -99,7 +38,6 @@ export default function AdminFullscreenMenu({ open, onClose, activeSection, onNa
           className="fixed inset-0 z-[9999] bg-[#0A0A0A] flex flex-col shadow-inner"
           style={{ background: "linear-gradient(to bottom, #0A0A0A, #050505)" }}
         >
-          {/* Header */}
           <div className="flex items-center justify-between px-5 py-4 border-b border-border">
             <div>
               <h1 className="text-base font-bold text-foreground">🛡️ WMTi Admin</h1>
@@ -110,10 +48,9 @@ export default function AdminFullscreenMenu({ open, onClose, activeSection, onNa
             </Button>
           </div>
 
-          {/* Menu Content */}
           <div className="flex-1 overflow-y-auto px-5 py-6">
             <div className="max-w-2xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {MENU_SECTIONS.map((section, sIdx) => (
+              {ADMIN_NAV_GROUPS.map((section, sIdx) => (
                 <motion.div
                   key={section.label}
                   initial={{ opacity: 0, y: 12 }}
@@ -148,7 +85,6 @@ export default function AdminFullscreenMenu({ open, onClose, activeSection, onNa
             </div>
           </div>
 
-          {/* Footer */}
           <div className="border-t border-border px-5 py-4">
             <div className="max-w-2xl mx-auto flex items-center justify-between">
               <p className="text-[11px] text-muted-foreground">admin@wmti</p>
