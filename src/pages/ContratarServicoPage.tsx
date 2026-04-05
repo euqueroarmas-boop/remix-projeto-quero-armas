@@ -784,15 +784,15 @@ const ContratarServicoPage = () => {
               {(() => { console.log("[WMTi] HOURS_CALCULATOR_RENDERED"); return null; })()}
 
               {/* Step 1: Hours Calculator */}
-              <WizardStepWrapper stepNumber={1} title="Calculadora de Horas" subtitle="Escolha a quantidade de horas técnicas" status={getStepStatus("calculator")}>
+              <WizardStepWrapper stepNumber={1} title={t("checkout.wizard.hoursCalculator")} subtitle={t("checkout.wizard.hoursCalculatorSub")} status={getStepStatus("calculator")}>
                 <div className="space-y-6">
                   <div className="bg-secondary p-4 flex items-center justify-between">
                     <div>
-                      <p className="font-mono text-xs text-muted-foreground">Serviço selecionado</p>
+                      <p className="font-mono text-xs text-muted-foreground">{t("checkout.wizard.selectedService")}</p>
                       <p className="font-bold text-foreground">{serviceName}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-mono text-xs text-muted-foreground">Avulso</p>
+                      <p className="font-mono text-xs text-muted-foreground">{t("checkout.wizard.onDemand")}</p>
                       <p className="font-bold text-primary">R$ {basePrice.toFixed(2).replace(".", ",")}/h</p>
                     </div>
                   </div>
@@ -804,7 +804,7 @@ const ContratarServicoPage = () => {
                       </button>
                       <div className="text-center">
                         <span className="text-5xl font-bold text-primary">{hours}</span>
-                        <p className="font-mono text-xs text-muted-foreground mt-1">{hours} hora{hours > 1 ? "s" : ""} técnica{hours > 1 ? "s" : ""}</p>
+                        <p className="font-mono text-xs text-muted-foreground mt-1">{hours} {hours > 1 ? t("checkout.wizard.technicalHours") : t("checkout.wizard.technicalHour")}</p>
                       </div>
                       <button onClick={() => setHours(Math.min(8, hours + 1))} className="w-12 h-12 flex items-center justify-center border border-muted-foreground/30 text-muted-foreground hover:border-primary hover:text-primary transition-colors" aria-label="Aumentar horas">
                         <Plus size={20} />
@@ -813,19 +813,19 @@ const ContratarServicoPage = () => {
 
                     <div className="space-y-3 mb-6">
                       <div className="flex items-center justify-between font-mono text-sm">
-                        <span className="flex items-center gap-2 text-muted-foreground"><Clock size={14} /> Valor por hora</span>
+                        <span className="flex items-center gap-2 text-muted-foreground"><Clock size={14} /> {t("checkout.wizard.valuePerHour")}</span>
                         <span className="text-foreground">
                           R$ {unitPrice.toFixed(2).replace(".", ",")}
                           {discountPct > 0 && <span className="ml-2 text-xs text-primary">-{discountPct}%</span>}
                         </span>
                       </div>
                       <div className="flex items-center justify-between font-mono text-sm">
-                        <span className="text-muted-foreground">Preço cheio</span>
+                        <span className="text-muted-foreground">{t("checkout.wizard.fullPrice")}</span>
                         <span className="text-muted-foreground/50 line-through">R$ {fullPrice.toFixed(2).replace(".", ",")}</span>
                       </div>
                       <div className="h-px bg-muted-foreground/10" />
                       <div className="flex items-center justify-between font-mono text-base font-bold">
-                        <span className="text-foreground">Valor promocional</span>
+                        <span className="text-foreground">{t("checkout.wizard.promoPrice")}</span>
                         <span className="text-primary text-xl">R$ {promoPrice.toFixed(2).replace(".", ",")}</span>
                       </div>
                     </div>
@@ -834,7 +834,7 @@ const ContratarServicoPage = () => {
                       <div className="bg-primary/10 border border-primary/30 p-4 flex items-center gap-3">
                         <TrendingDown size={20} className="text-primary shrink-0" />
                         <p className="font-mono text-sm font-bold text-primary">
-                          Economizando R$ {savings.toFixed(2).replace(".", ",")}
+                          {t("checkout.wizard.saving")} R$ {savings.toFixed(2).replace(".", ",")}
                         </p>
                       </div>
                     )}
@@ -842,12 +842,12 @@ const ContratarServicoPage = () => {
 
                   {/* Summary */}
                   <div className="bg-card border border-border rounded-xl p-5">
-                    <p className="font-mono text-[10px] tracking-[0.3em] uppercase text-primary mb-3 font-bold">Resumo da contratação</p>
+                    <p className="font-mono text-[10px] tracking-[0.3em] uppercase text-primary mb-3 font-bold">{t("checkout.wizard.hiringSummary")}</p>
                     <div className="space-y-2 text-sm">
-                      <div className="flex justify-between"><span className="text-muted-foreground">Serviço</span><span className="text-foreground font-semibold">{serviceName}</span></div>
-                      <div className="flex justify-between"><span className="text-muted-foreground">Modelo</span><span className="text-foreground font-semibold">Avulso / Sob demanda</span></div>
-                      <div className="flex justify-between"><span className="text-muted-foreground">Horas</span><span className="text-foreground font-semibold">{hours}</span></div>
-                      <div className="flex justify-between"><span className="text-muted-foreground">Valor total</span><span className="text-primary font-bold">R$ {promoPrice.toFixed(2).replace(".", ",")}</span></div>
+                      <div className="flex justify-between"><span className="text-muted-foreground">{t("checkout.wizard.service")}</span><span className="text-foreground font-semibold">{serviceName}</span></div>
+                      <div className="flex justify-between"><span className="text-muted-foreground">{t("checkout.wizard.model")}</span><span className="text-foreground font-semibold">{t("checkout.wizard.onDemandModel")}</span></div>
+                      <div className="flex justify-between"><span className="text-muted-foreground">{t("checkout.wizard.hours")}</span><span className="text-foreground font-semibold">{hours}</span></div>
+                      <div className="flex justify-between"><span className="text-muted-foreground">{t("checkout.wizard.totalValue")}</span><span className="text-primary font-bold">R$ {promoPrice.toFixed(2).replace(".", ",")}</span></div>
                     </div>
                   </div>
 
@@ -859,13 +859,13 @@ const ContratarServicoPage = () => {
                     className="w-full inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
                   >
                     <ArrowRight size={16} />
-                    Contratar sob demanda
+                    {t("checkout.wizard.hireOnDemand")}
                   </button>
                 </div>
               </WizardStepWrapper>
 
               {/* Step 2: Registration */}
-              <WizardStepWrapper stepNumber={2} title="Dados da empresa" subtitle="Preencha os dados para gerar o contrato" status={getStepStatus("registration")}>
+              <WizardStepWrapper stepNumber={2} title={t("checkout.wizard.companyDataStep")} subtitle={t("checkout.wizard.companyDataStepSub")} status={getStepStatus("registration")}>
                 <QuickRegistrationForm onComplete={handleRegistrationComplete} loading={registrationLoading} initialData={{}} />
               </WizardStepWrapper>
 
