@@ -70,6 +70,7 @@ export default function AdminClientDetail({ customerId, onBack }: AdminClientDet
   const [leads, setLeads] = useState<any[]>([]);
   const [events, setEvents] = useState<any[]>([]);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  const [fiscalDocs, setFiscalDocs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -97,6 +98,7 @@ export default function AdminClientDetail({ customerId, onBack }: AdminClientDet
         { table: "proposals", select: "*", filters: [{ column: "customer_id", op: "eq", value: customerId }], order: { column: "created_at", ascending: false } },
         { table: "client_events", select: "*", filters: [{ column: "customer_id", op: "eq", value: customerId }], order: { column: "created_at", ascending: false }, limit: 50 },
         { table: "admin_audit_logs", select: "*", filters: [{ column: "target_id", op: "eq", value: customerId }], order: { column: "created_at", ascending: false }, limit: 20 },
+        { table: "fiscal_documents", select: "*", filters: [{ column: "customer_id", op: "eq", value: customerId }], order: { column: "issue_date", ascending: false } },
       ]);
       const cust = results[0].data as any;
       setCustomer(cust);
@@ -106,6 +108,7 @@ export default function AdminClientDetail({ customerId, onBack }: AdminClientDet
       setProposals((results[2].data as any[]) || []);
       setEvents((results[3].data as any[]) || []);
       setAuditLogs((results[4].data as any[]) || []);
+      setFiscalDocs((results[5].data as any[]) || []);
 
       // Fetch payments via quote_ids
       const quoteIds = ctrs.map((c: any) => c.quote_id).filter(Boolean);
