@@ -1290,6 +1290,60 @@ export type Database = {
         }
         Relationships: []
       }
+      fiscal_change_log: {
+        Row: {
+          change_source: string
+          changed_at: string
+          changed_by_process: string | null
+          created_at: string
+          field_name: string
+          fiscal_document_id: string
+          id: string
+          new_value: string | null
+          old_value: string | null
+          related_event_history_id: string | null
+        }
+        Insert: {
+          change_source?: string
+          changed_at?: string
+          changed_by_process?: string | null
+          created_at?: string
+          field_name: string
+          fiscal_document_id: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          related_event_history_id?: string | null
+        }
+        Update: {
+          change_source?: string
+          changed_at?: string
+          changed_by_process?: string | null
+          created_at?: string
+          field_name?: string
+          fiscal_document_id?: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          related_event_history_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fiscal_change_log_fiscal_document_id_fkey"
+            columns: ["fiscal_document_id"]
+            isOneToOne: false
+            referencedRelation: "fiscal_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fiscal_change_log_related_event_history_id_fkey"
+            columns: ["related_event_history_id"]
+            isOneToOne: false
+            referencedRelation: "fiscal_event_history"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fiscal_documents: {
         Row: {
           access_key: string | null
@@ -1391,6 +1445,68 @@ export type Database = {
           {
             foreignKeyName: "fiscal_documents_replaced_by_invoice_id_fkey"
             columns: ["replaced_by_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "fiscal_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fiscal_event_history: {
+        Row: {
+          asaas_invoice_id: string | null
+          correlation_id: string | null
+          created_at: string
+          created_by_process: string | null
+          customer_id: string | null
+          decision_reason: string | null
+          event_source: string
+          event_timestamp: string
+          event_type: string
+          fiscal_document_id: string | null
+          id: string
+          normalized_status: string | null
+          overwrite_decision: string | null
+          payload_snapshot: Json | null
+          received_at: string
+        }
+        Insert: {
+          asaas_invoice_id?: string | null
+          correlation_id?: string | null
+          created_at?: string
+          created_by_process?: string | null
+          customer_id?: string | null
+          decision_reason?: string | null
+          event_source?: string
+          event_timestamp?: string
+          event_type: string
+          fiscal_document_id?: string | null
+          id?: string
+          normalized_status?: string | null
+          overwrite_decision?: string | null
+          payload_snapshot?: Json | null
+          received_at?: string
+        }
+        Update: {
+          asaas_invoice_id?: string | null
+          correlation_id?: string | null
+          created_at?: string
+          created_by_process?: string | null
+          customer_id?: string | null
+          decision_reason?: string | null
+          event_source?: string
+          event_timestamp?: string
+          event_type?: string
+          fiscal_document_id?: string | null
+          id?: string
+          normalized_status?: string | null
+          overwrite_decision?: string | null
+          payload_snapshot?: Json | null
+          received_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fiscal_event_history_fiscal_document_id_fkey"
+            columns: ["fiscal_document_id"]
             isOneToOne: false
             referencedRelation: "fiscal_documents"
             referencedColumns: ["id"]
