@@ -41,6 +41,7 @@ const MENU_SECTIONS = [
       { id: "security", label: "Eventos de Segurança", icon: ShieldAlert },
       { id: "webhooks", label: "Webhooks", icon: Webhook },
       { id: "audit", label: "Auditoria", icon: ClipboardCheck },
+      { id: "fiscal-audit", label: "Auditoria Fiscal", icon: ClipboardCheck },
       { id: "risk", label: "Monitor de Risco", icon: Activity },
     ],
   },
