@@ -870,12 +870,12 @@ const ContratarServicoPage = () => {
               </WizardStepWrapper>
 
               {/* Step 3: Contract */}
-              <WizardStepWrapper stepNumber={3} title="Contrato e Assinatura" subtitle={contractSigned ? "Contrato assinado ✓" : "Leia e assine o contrato"} status={getStepStatus("contract")}>
+              <WizardStepWrapper stepNumber={3} title={t("checkout.wizard.stepContract")} subtitle={contractSigned ? t("checkout.wizard.contractSignedSub") : t("checkout.wizard.readAndSign")} status={getStepStatus("contract")}>
                 {contractSigned ? (
                   <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-3">
                     <CheckCircle className="w-10 h-10 text-primary mx-auto" />
-                    <h4 className="text-lg font-heading font-bold">Contrato assinado!</h4>
-                    <p className="text-sm text-muted-foreground">Prossiga para o pagamento abaixo.</p>
+                    <h4 className="text-lg font-heading font-bold">{t("checkout.wizard.contractSigned")}</h4>
+                    <p className="text-sm text-muted-foreground">{t("checkout.wizard.proceedToPayment")}</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -883,25 +883,25 @@ const ContratarServicoPage = () => {
                       <div className="flex items-center gap-3 mb-3">
                         <FileText className="w-6 h-6 text-primary" />
                         <div>
-                          <p className="font-semibold text-sm">Contrato de Horas Técnicas — {serviceName}</p>
-                          <p className="text-xs text-muted-foreground">O contrato será aberto em uma página separada.</p>
+                          <p className="font-semibold text-sm">{t("checkout.wizard.technicalHoursContract")} — {serviceName}</p>
+                          <p className="text-xs text-muted-foreground">{t("checkout.wizard.contractOpenSeparate")}</p>
                         </div>
                       </div>
                     </div>
                     <Button onClick={handleOpenContract} disabled={!contractId} className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground">
                       <ExternalLink className="w-4 h-4 mr-2" />
-                      Abrir contrato para leitura e assinatura
+                      {t("checkout.wizard.openContract")}
                     </Button>
                     <p className="text-xs text-muted-foreground text-center">
                       <Loader2 className="w-3 h-3 animate-spin inline mr-1" />
-                      Aguardando assinatura do contrato...
+                      {t("checkout.wizard.waitingSignature")}
                     </p>
                   </div>
                 )}
               </WizardStepWrapper>
 
               {/* Step 4: Payment */}
-              <WizardStepWrapper stepNumber={4} title={paymentConfirmed ? "Pagamento Confirmado ✓" : boletoGenerated ? "Boleto Gerado ✓" : paymentComplete ? "Aguardando Confirmação" : paymentReady ? "Pagamento" : "Revisão e Pagamento"} subtitle={paymentConfirmed ? "Pagamento confirmado com sucesso" : boletoGenerated ? "Boleto gerado — aguardando compensação" : paymentComplete ? "Processando seu pagamento..." : paymentReady ? "Pagamento único via checkout seguro" : "Confirme os dados e prepare o pagamento"} status={paymentConfirmed || boletoGenerated ? "completed" : getStepStatus("payment")}>
+              <WizardStepWrapper stepNumber={4} title={paymentConfirmed ? t("checkout.wizard.paymentConfirmedCheck") : boletoGenerated ? t("checkout.wizard.boletoGeneratedTitle") : paymentComplete ? t("checkout.wizard.waitingConfirmation") : paymentReady ? t("checkout.wizard.stepPayment") : t("checkout.wizard.reviewAndPayment")} subtitle={paymentConfirmed ? t("checkout.wizard.paymentConfirmedMsg") : boletoGenerated ? t("checkout.wizard.boletoGeneratedMsg") : paymentComplete ? t("checkout.wizard.processingPayment") : paymentReady ? t("checkout.wizard.paymentSecure") : t("checkout.wizard.reviewAndPaymentSub")} status={paymentConfirmed || boletoGenerated ? "completed" : getStepStatus("payment")}>
                 {paymentConfirmed ? (
                   <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-3">
                     <CheckCircle className="w-10 h-10 text-green-500 mx-auto" />
