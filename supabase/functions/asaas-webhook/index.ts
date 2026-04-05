@@ -1,6 +1,8 @@
 import { logSistemaBackend } from "../_shared/logSistema.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { ensureClientAccess } from "../_shared/post-purchase.ts";
+import { logFiscalEvent, logFiscalChanges, detectSensitiveChanges } from "../_shared/fiscalAudit.ts";
+import { ensureClientAccess } from "../_shared/post-purchase.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
