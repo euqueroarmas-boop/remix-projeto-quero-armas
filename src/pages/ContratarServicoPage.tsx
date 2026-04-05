@@ -1515,7 +1515,7 @@ const ContratarServicoPage = () => {
                   className="bg-primary/5 border border-primary/20 rounded-xl p-5"
                 >
                   <p className="text-sm text-foreground leading-relaxed">
-                    <strong>Empresas que não monitoram seus servidores</strong> descobrem o problema quando já perderam dados ou ficaram horas paradas. Com o plano recorrente, você tem monitoramento 24h, atualizações, backup e SLA garantido.
+                    {t("checkout.wizard.recurringDesc")}
                   </p>
                 </motion.div>
               </div>
