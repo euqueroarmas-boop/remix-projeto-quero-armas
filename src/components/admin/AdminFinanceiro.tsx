@@ -387,21 +387,21 @@ export default function AdminFinanceiro() {
         // 4: ALL payments for analytics
         { table: "payments", select: "id, amount, payment_status, billing_type, payment_method, created_at, due_date, quote_id, asaas_payment_id" },
         // 5: this month confirmed
-        { table: "payments", select: "amount", filters: [{ column: "payment_status", op: "in", value: ["RECEIVED", "CONFIRMED"] }, { column: "created_at", op: "gte", value: monthStart }] },
+        { table: "payments", select: "amount, quote_id", filters: [{ column: "payment_status", op: "in", value: ["RECEIVED", "CONFIRMED"] }, { column: "created_at", op: "gte", value: monthStart }] },
         // 6: prev month confirmed
-        { table: "payments", select: "amount", filters: [{ column: "payment_status", op: "in", value: ["RECEIVED", "CONFIRMED"] }, { column: "created_at", op: "gte", value: prevMonthStart }, { column: "created_at", op: "lte", value: prevMonthEnd }] },
-        // 7: pending count
-        { table: "payments", select: "id, amount", count: true, limit: 0, filters: [{ column: "payment_status", op: "in", value: ["pending", "PENDING"] }] },
-        // 8: overdue count
-        { table: "payments", select: "id", count: true, limit: 0, filters: [{ column: "payment_status", op: "eq", value: "OVERDUE" }] },
-        // 9: active contracts
-        { table: "contracts", select: "id", count: true, limit: 0, filters: [{ column: "service_status", op: "in", value: ["active", "paid"] }] },
-        // 10: open amounts
-        { table: "payments", select: "amount", filters: [{ column: "payment_status", op: "in", value: ["pending", "PENDING", "OVERDUE"] }] },
-        // 11: due today
-        { table: "payments", select: "id", count: true, limit: 0, filters: [{ column: "due_date", op: "eq", value: today }, { column: "payment_status", op: "in", value: ["pending", "PENDING"] }] },
-        // 12: pending contracts
-        { table: "contracts", select: "id", count: true, limit: 0, filters: [{ column: "service_status", op: "eq", value: "payment_pending" }] },
+        { table: "payments", select: "amount, quote_id", filters: [{ column: "payment_status", op: "in", value: ["RECEIVED", "CONFIRMED"] }, { column: "created_at", op: "gte", value: prevMonthStart }, { column: "created_at", op: "lte", value: prevMonthEnd }] },
+        // 7: pending payments (fetch data for LGPD filtering)
+        { table: "payments", select: "id, amount, quote_id", filters: [{ column: "payment_status", op: "in", value: ["pending", "PENDING"] }] },
+        // 8: overdue payments (fetch data for LGPD filtering)
+        { table: "payments", select: "id, quote_id", filters: [{ column: "payment_status", op: "eq", value: "OVERDUE" }] },
+        // 9: active contracts (fetch data for LGPD filtering)
+        { table: "contracts", select: "id, customer_id", filters: [{ column: "service_status", op: "in", value: ["active", "paid"] }] },
+        // 10: open amounts (fetch data for LGPD filtering)
+        { table: "payments", select: "amount, quote_id", filters: [{ column: "payment_status", op: "in", value: ["pending", "PENDING", "OVERDUE"] }] },
+        // 11: due today (fetch data for LGPD filtering)
+        { table: "payments", select: "id, quote_id", filters: [{ column: "due_date", op: "eq", value: today }, { column: "payment_status", op: "in", value: ["pending", "PENDING"] }] },
+        // 12: pending contracts (fetch data for LGPD filtering)
+        { table: "contracts", select: "id, customer_id", filters: [{ column: "service_status", op: "eq", value: "payment_pending" }] },
         // 13: unprocessed webhooks
         { table: "asaas_webhooks", select: "id", count: true, limit: 0, filters: [{ column: "processed", op: "eq", value: false }] },
       ]);
@@ -409,41 +409,53 @@ export default function AdminFinanceiro() {
       const allCustomers = (results[1].data as any[]) || [];
       const allContracts = (results[2].data as any[]) || [];
 
-      // Build LGPD exclusion set
+      // Build LGPD exclusion set — single source of truth for operational filtering
       const lgpdCustomerIds = new Set(
         allCustomers.filter((c: any) => c.status_cliente === "excluido_lgpd").map((c: any) => c.id)
       );
       const lgpdQuoteIds = new Set(
         allContracts.filter((c: any) => lgpdCustomerIds.has(c.customer_id)).map((c: any) => c.quote_id).filter(Boolean)
       );
-      const isLgpdPayment = (p: any) => lgpdQuoteIds.has(p.quote_id);
+      // Central operational filter: excludes LGPD-anonymized payments
+      const isOperationalPayment = (p: any) => !lgpdQuoteIds.has(p.quote_id);
+      const isOperationalContract = (c: any) => !lgpdCustomerIds.has(c.customer_id);
 
       // Filter LGPD payments from operational views
       const rawPayments = (results[0].data as any[]) || [];
       const rawAllPayments = (results[4].data as any[]) || [];
-      setPayments(rawPayments.filter((p: any) => !isLgpdPayment(p)));
-      setTotalPayments((results[0].count || 0) - rawPayments.filter(isLgpdPayment).length);
+      setPayments(rawPayments.filter(isOperationalPayment));
+      setTotalPayments((results[0].count || 0) - rawPayments.filter((p: any) => !isOperationalPayment(p)).length);
       setCustomers(allCustomers);
       setContracts(allContracts);
       setWebhooks((results[3].data as any[]) || []);
-      setAllPayments(rawAllPayments.filter((p: any) => !isLgpdPayment(p)));
+      setAllPayments(rawAllPayments.filter(isOperationalPayment));
 
-      const monthRevenue = ((results[5].data as any[]) || []).reduce((s: number, p: any) => s + (Number(p.amount) || 0), 0);
-      const prevMonthRevenue = ((results[6].data as any[]) || []).reduce((s: number, p: any) => s + (Number(p.amount) || 0), 0);
-      const openAmount = ((results[10].data as any[]) || []).reduce((s: number, p: any) => s + (Number(p.amount) || 0), 0);
+      // Apply LGPD filter to ALL metric sources
+      const opMonthConfirmed = ((results[5].data as any[]) || []).filter(isOperationalPayment);
+      const opPrevMonthConfirmed = ((results[6].data as any[]) || []).filter(isOperationalPayment);
+      const opPending = ((results[7].data as any[]) || []).filter(isOperationalPayment);
+      const opOverdue = ((results[8].data as any[]) || []).filter(isOperationalPayment);
+      const opActiveContracts = ((results[9].data as any[]) || []).filter(isOperationalContract);
+      const opOpenAmounts = ((results[10].data as any[]) || []).filter(isOperationalPayment);
+      const opDueToday = ((results[11].data as any[]) || []).filter(isOperationalPayment);
+      const opPendingContracts = ((results[12].data as any[]) || []).filter(isOperationalContract);
+
+      const monthRevenue = opMonthConfirmed.reduce((s: number, p: any) => s + (Number(p.amount) || 0), 0);
+      const prevMonthRevenue = opPrevMonthConfirmed.reduce((s: number, p: any) => s + (Number(p.amount) || 0), 0);
+      const openAmount = opOpenAmounts.reduce((s: number, p: any) => s + (Number(p.amount) || 0), 0);
 
       setDashData({
         monthRevenue, prevMonthRevenue, openAmount,
-        confirmedPayments: results[5].count || ((results[5].data as any[]) || []).length,
-        pendingPayments: results[7].count || 0,
-        overduePayments: results[8].count || 0,
-        activeContracts: results[9].count || 0,
+        confirmedPayments: opMonthConfirmed.length,
+        pendingPayments: opPending.length,
+        overduePayments: opOverdue.length,
+        activeContracts: opActiveContracts.length,
       });
 
       setAlerts({
-        dueTodayCount: results[11].count || 0,
-        overdueCount: results[8].count || 0,
-        pendingContractsCount: results[12].count || 0,
+        dueTodayCount: opDueToday.length,
+        overdueCount: opOverdue.length,
+        pendingContractsCount: opPendingContracts.length,
         webhookErrorsCount: results[13].count || 0,
       });
     } catch (err) { console.error("Finance fetch error:", err); }
