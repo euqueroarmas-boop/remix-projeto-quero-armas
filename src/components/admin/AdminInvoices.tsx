@@ -18,10 +18,22 @@ const PER_PAGE = 20;
 const STATUS_MAP: Record<string, { label: string; cls: string }> = {
   emitido: { label: "Emitida", cls: "bg-emerald-500/15 text-emerald-400 border-emerald-500/25" },
   autorizado: { label: "Autorizada", cls: "bg-emerald-500/15 text-emerald-400 border-emerald-500/25" },
+  sincronizada: { label: "Sincronizada", cls: "bg-sky-500/15 text-sky-400 border-sky-500/25" },
+  atualizada: { label: "Atualizada", cls: "bg-blue-500/15 text-blue-400 border-blue-500/25" },
   aguardando: { label: "Aguardando", cls: "bg-amber-500/15 text-amber-400 border-amber-500/25" },
   criada: { label: "Criada", cls: "bg-blue-500/15 text-blue-400 border-blue-500/25" },
+  cancelamento_processando: { label: "Cancelando", cls: "bg-orange-500/15 text-orange-400 border-orange-500/25" },
+  cancelamento_negado: { label: "Cancel. Negado", cls: "bg-rose-500/15 text-rose-400 border-rose-500/25" },
   erro: { label: "Erro", cls: "bg-red-500/15 text-red-400 border-red-500/25" },
   cancelada: { label: "Cancelada", cls: "bg-muted/50 text-muted-foreground border-border/60" },
+};
+
+const SOURCE_MAP: Record<string, string> = {
+  invoice_event: "Invoice",
+  payment_event: "Payment",
+  fiscal_info: "FiscalInfo",
+  reconcile: "Reconciliação",
+  manual: "Manual",
 };
 
 function StatusBadge({ status }: { status: string }) {
@@ -190,6 +202,7 @@ export default function AdminInvoices() {
                   <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Valor</TableHead>
                   <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Emissão</TableHead>
                   <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Status</TableHead>
+                  <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Fonte</TableHead>
                   <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Asaas ID</TableHead>
                   <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Arquivos</TableHead>
                 </TableRow>
@@ -205,7 +218,13 @@ export default function AdminInvoices() {
                       <TableCell className="text-[11px] text-muted-foreground">{doc.service_reference || "—"}</TableCell>
                       <TableCell className="text-[11px] font-mono text-foreground">{doc.amount ? fmt(Number(doc.amount)) : "—"}</TableCell>
                       <TableCell className="text-[11px] text-muted-foreground font-mono">{fmtDate(doc.issue_date)}</TableCell>
-                      <TableCell><StatusBadge status={doc.status} /></TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <StatusBadge status={doc.status} />
+                          {doc.is_active === false && <span className="text-[9px] text-muted-foreground italic">(inativa)</span>}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-[10px] text-muted-foreground">{SOURCE_MAP[doc.last_event_source] || doc.last_event_source || "—"}</TableCell>
                       <TableCell className="text-[10px] font-mono text-muted-foreground">{doc.asaas_invoice_id?.slice(0, 12) || "—"}</TableCell>
                       <TableCell>
                         <div className="flex gap-1">

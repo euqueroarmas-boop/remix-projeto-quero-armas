@@ -258,47 +258,66 @@ Deno.serve(async (req) => {
         }
 
         // ── UPSERT with INVOICE EVENT as PRIMARY source (can overwrite everything) ──
+        const eventTimestamp = new Date().toISOString();
         const { data: existingDoc } = await supabase
           .from("fiscal_documents")
-          .select("id")
+          .select("id, last_event_at, last_event_source, status")
           .eq("asaas_invoice_id", String(invoiceId))
           .limit(1)
           .maybeSingle();
 
         if (existingDoc) {
-          await supabase.from("fiscal_documents")
-            .update({
-              status: newStatus,
-              document_number: invoiceNumber || undefined,
-              access_key: accessKey || undefined,
-              file_url: pdfUrl || undefined,
-              xml_url: xmlUrl || undefined,
-              invoice_series: invoiceSeries || undefined,
-              amount: amount || undefined,
-              raw_payload: body,
-              notes: `Atualizado via ${event} (fonte primária)`,
-            })
-            .eq("id", existingDoc.id);
+          // ── TEMPORAL ORDERING: skip if existing event is newer and from invoice source ──
+          const existingTime = existingDoc.last_event_at ? new Date(existingDoc.last_event_at).getTime() : 0;
+          const currentTime = new Date(eventTimestamp).getTime();
+          if (existingDoc.last_event_source === "invoice_event" && existingTime > currentTime) {
+            console.log("[asaas-webhook] Evento invoice descartado (mais antigo que existente):", existingDoc.id);
+            await supabase.from("integration_logs").insert({
+              integration_name: "asaas", operation_name: "invoice_event_temporal_skip",
+              request_payload: { event, invoice_id: invoiceId, existing_time: existingDoc.last_event_at, current_time: eventTimestamp },
+              status: "info",
+            });
+          } else {
+            // ── VERSIONING: if canceling, mark as inactive ──
+            const isActiveFlag = !["cancelada", "erro"].includes(newStatus);
 
-          // Upsert invoice_files
-          if (pdfUrl) {
-            const { data: existPdf } = await supabase.from("invoice_files").select("id").eq("invoice_id", existingDoc.id).eq("type", "pdf").limit(1).maybeSingle();
-            if (existPdf) {
-              await supabase.from("invoice_files").update({ file_url: pdfUrl, filename: `NF-${invoiceNumber || invoiceId}.pdf` }).eq("id", existPdf.id);
-            } else {
-              await supabase.from("invoice_files").insert({ invoice_id: existingDoc.id, type: "pdf", file_url: pdfUrl, filename: `NF-${invoiceNumber || invoiceId}.pdf`, mime_type: "application/pdf" });
-            }
-          }
-          if (xmlUrl) {
-            const { data: existXml } = await supabase.from("invoice_files").select("id").eq("invoice_id", existingDoc.id).eq("type", "xml").limit(1).maybeSingle();
-            if (existXml) {
-              await supabase.from("invoice_files").update({ file_url: xmlUrl, filename: `NF-${invoiceNumber || invoiceId}.xml` }).eq("id", existXml.id);
-            } else {
-              await supabase.from("invoice_files").insert({ invoice_id: existingDoc.id, type: "xml", file_url: xmlUrl, filename: `NF-${invoiceNumber || invoiceId}.xml`, mime_type: "application/xml" });
-            }
-          }
+            await supabase.from("fiscal_documents")
+              .update({
+                status: newStatus,
+                document_number: invoiceNumber || undefined,
+                access_key: accessKey || undefined,
+                file_url: pdfUrl || undefined,
+                xml_url: xmlUrl || undefined,
+                invoice_series: invoiceSeries || undefined,
+                amount: amount || undefined,
+                raw_payload: body,
+                last_event_at: eventTimestamp,
+                last_event_source: "invoice_event",
+                is_active: isActiveFlag,
+                notes: `Atualizado via ${event} (fonte primária)`,
+              })
+              .eq("id", existingDoc.id);
 
-          console.log("[asaas-webhook] Fiscal doc atualizado (INVOICE_EVENT, primário):", existingDoc.id, "→", newStatus);
+            // Upsert invoice_files
+            if (pdfUrl) {
+              const { data: existPdf } = await supabase.from("invoice_files").select("id").eq("invoice_id", existingDoc.id).eq("type", "pdf").limit(1).maybeSingle();
+              if (existPdf) {
+                await supabase.from("invoice_files").update({ file_url: pdfUrl, filename: `NF-${invoiceNumber || invoiceId}.pdf` }).eq("id", existPdf.id);
+              } else {
+                await supabase.from("invoice_files").insert({ invoice_id: existingDoc.id, type: "pdf", file_url: pdfUrl, filename: `NF-${invoiceNumber || invoiceId}.pdf`, mime_type: "application/pdf" });
+              }
+            }
+            if (xmlUrl) {
+              const { data: existXml } = await supabase.from("invoice_files").select("id").eq("invoice_id", existingDoc.id).eq("type", "xml").limit(1).maybeSingle();
+              if (existXml) {
+                await supabase.from("invoice_files").update({ file_url: xmlUrl, filename: `NF-${invoiceNumber || invoiceId}.xml` }).eq("id", existXml.id);
+              } else {
+                await supabase.from("invoice_files").insert({ invoice_id: existingDoc.id, type: "xml", file_url: xmlUrl, filename: `NF-${invoiceNumber || invoiceId}.xml`, mime_type: "application/xml" });
+              }
+            }
+
+            console.log("[asaas-webhook] Fiscal doc atualizado (INVOICE_EVENT, primário):", existingDoc.id, "→", newStatus);
+          }
         } else {
           const { data: insertedDoc } = await supabase.from("fiscal_documents").insert({
             customer_id: custId,
@@ -316,6 +335,9 @@ Deno.serve(async (req) => {
             invoice_series: invoiceSeries,
             service_reference: null,
             raw_payload: body,
+            last_event_at: eventTimestamp,
+            last_event_source: "invoice_event",
+            is_active: !["cancelada", "erro"].includes(newStatus),
             notes: `NF criada via ${event} (fonte primária)`,
           }).select("id").single();
 
@@ -583,7 +605,7 @@ Deno.serve(async (req) => {
           // Idempotency: check if already exists
           const { data: existingInvoice } = await supabase
             .from("fiscal_documents")
-            .select("id, status, document_number, access_key, invoice_series")
+            .select("id, status, document_number, access_key, invoice_series, last_event_source, last_event_at")
             .eq("asaas_invoice_id", asaasInvoiceId)
             .limit(1)
             .maybeSingle();
@@ -592,7 +614,7 @@ Deno.serve(async (req) => {
             // ── PRIORITY RULE: payment event CANNOT overwrite protected fields ──
             // Only enrich empty fields; never overwrite data set by invoice events
             const PROTECTED_STATUSES = ["emitido", "sincronizada", "cancelada", "cancelamento_processando", "cancelamento_negado", "erro"];
-            const isProtected = PROTECTED_STATUSES.includes(existingInvoice.status);
+            const isProtected = PROTECTED_STATUSES.includes(existingInvoice.status) || existingInvoice.last_event_source === "invoice_event";
 
             if (!isProtected) {
               // Only update status if current status is weak (criada, aguardando, pending)
@@ -665,6 +687,9 @@ Deno.serve(async (req) => {
               access_key: accessKey,
               service_reference: contractForInvoice?.[0]?.contract_type || null,
               raw_payload: body,
+              last_event_at: new Date().toISOString(),
+              last_event_source: "payment_event",
+              is_active: true,
               notes: "NF criada via payment event (fallback)",
             }).select("id").single();
 
