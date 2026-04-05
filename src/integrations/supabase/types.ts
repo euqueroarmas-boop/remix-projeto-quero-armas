@@ -1303,10 +1303,14 @@ export type Database = {
           file_url: string | null
           id: string
           invoice_series: string | null
+          is_active: boolean | null
           issue_date: string
+          last_event_at: string | null
+          last_event_source: string | null
           notes: string | null
           payment_id: string | null
           raw_payload: Json | null
+          replaced_by_invoice_id: string | null
           service_reference: string | null
           status: string
           updated_at: string
@@ -1324,10 +1328,14 @@ export type Database = {
           file_url?: string | null
           id?: string
           invoice_series?: string | null
+          is_active?: boolean | null
           issue_date?: string
+          last_event_at?: string | null
+          last_event_source?: string | null
           notes?: string | null
           payment_id?: string | null
           raw_payload?: Json | null
+          replaced_by_invoice_id?: string | null
           service_reference?: string | null
           status?: string
           updated_at?: string
@@ -1345,10 +1353,14 @@ export type Database = {
           file_url?: string | null
           id?: string
           invoice_series?: string | null
+          is_active?: boolean | null
           issue_date?: string
+          last_event_at?: string | null
+          last_event_source?: string | null
           notes?: string | null
           payment_id?: string | null
           raw_payload?: Json | null
+          replaced_by_invoice_id?: string | null
           service_reference?: string | null
           status?: string
           updated_at?: string
@@ -1374,6 +1386,13 @@ export type Database = {
             columns: ["payment_id"]
             isOneToOne: false
             referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fiscal_documents_replaced_by_invoice_id_fkey"
+            columns: ["replaced_by_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "fiscal_documents"
             referencedColumns: ["id"]
           },
         ]
