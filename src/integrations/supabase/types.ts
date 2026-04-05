@@ -1277,6 +1277,7 @@ export type Database = {
           raw_payload: Json | null
           service_reference: string | null
           status: string
+          updated_at: string
           xml_url: string | null
         }
         Insert: {
@@ -1297,6 +1298,7 @@ export type Database = {
           raw_payload?: Json | null
           service_reference?: string | null
           status?: string
+          updated_at?: string
           xml_url?: string | null
         }
         Update: {
@@ -1317,6 +1319,7 @@ export type Database = {
           raw_payload?: Json | null
           service_reference?: string | null
           status?: string
+          updated_at?: string
           xml_url?: string | null
         }
         Relationships: [
@@ -1419,6 +1422,44 @@ export type Database = {
             columns: ["trigger_event_id"]
             isOneToOne: false
             referencedRelation: "emotion_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoice_files: {
+        Row: {
+          created_at: string
+          file_url: string
+          filename: string | null
+          id: string
+          invoice_id: string
+          mime_type: string | null
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          file_url: string
+          filename?: string | null
+          id?: string
+          invoice_id: string
+          mime_type?: string | null
+          type?: string
+        }
+        Update: {
+          created_at?: string
+          file_url?: string
+          filename?: string | null
+          id?: string
+          invoice_id?: string
+          mime_type?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_files_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "fiscal_documents"
             referencedColumns: ["id"]
           },
         ]
