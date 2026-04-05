@@ -199,8 +199,8 @@ Deno.serve(async (req) => {
     await supabase.from("integration_logs").insert({
       integration_name: "asaas",
       operation_name: "invoice_reconciliation",
-      request_payload: { total_checked: confirmedPayments.length, missing: missing.length, skipped_protected: confirmedPayments.length - missing.length },
-      response_payload: { synced, errors: errors.length },
+      request_payload: { total_checked: confirmedPayments.length, missing: missing.length, skipped_protected: confirmedPayments.length - missing.length, lgpd_skipped: lgpdSkipped },
+      response_payload: { synced, errors: errors.length, lgpd_skipped: lgpdSkipped },
       status: errors.length > 0 ? "warning" : "success",
       error_message: errors.length > 0 ? errors.join("; ") : null,
     });
@@ -210,6 +210,7 @@ Deno.serve(async (req) => {
       total_checked: confirmedPayments.length,
       already_synced: confirmedPayments.length - missing.length,
       synced,
+      lgpd_skipped: lgpdSkipped,
       errors: errors.length,
       error_details: errors.slice(0, 5),
     });
