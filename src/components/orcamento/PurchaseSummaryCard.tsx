@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import {
   CheckCircle, ExternalLink, Download, Copy, Eye, EyeOff,
@@ -49,12 +50,13 @@ const PurchaseSummaryCard = ({
   isBoleto,
   onRetryCredentials,
 }: Props) => {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
 
   const paymentLabel =
-    data.paymentMethod === "CREDIT_CARD" ? "Cartão de Crédito"
-    : data.paymentMethod === "BOLETO" ? "Boleto Bancário"
+    data.paymentMethod === "CREDIT_CARD" ? t("checkout.summary.creditCard")
+    : data.paymentMethod === "BOLETO" ? t("checkout.summary.bankSlip")
     : data.paymentMethod === "PIX" ? "PIX"
     : data.paymentMethod;
 
@@ -62,7 +64,7 @@ const PurchaseSummaryCard = ({
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
-    toast({ title: `${label} copiado!`, duration: 2000 });
+    toast({ title: t("checkout.summary.copied", { label }), duration: 2000 });
   };
 
   const handleDownloadReceipt = () => {
@@ -93,12 +95,10 @@ const PurchaseSummaryCard = ({
       <div className="text-center space-y-3">
         <CheckCircle className="w-14 h-14 text-green-500 mx-auto" />
         <h4 className="text-xl font-heading font-bold text-foreground">
-          {isBoleto ? "Pedido registrado com sucesso!" : "Compra concluída com sucesso!"}
+          {isBoleto ? t("checkout.summary.orderRegisteredSuccess") : t("checkout.summary.purchaseCompleted")}
         </h4>
         <p className="text-sm text-muted-foreground max-w-md mx-auto">
-          {isBoleto
-            ? "Seu contrato e cadastro foram gerados. Após a compensação do boleto, o serviço será ativado automaticamente."
-            : "Seu pagamento foi confirmado e o serviço está sendo ativado."}
+          {isBoleto ? t("checkout.summary.boletoDesc") : t("checkout.summary.paymentConfirmedDesc")}
         </p>
       </div>
 
@@ -107,23 +107,23 @@ const PurchaseSummaryCard = ({
         <div className="bg-muted/50 border-b border-border px-5 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <FileText className="w-4 h-4 text-primary" />
-            <span className="text-sm font-heading font-bold text-foreground">Resumo do Pedido</span>
+            <span className="text-sm font-heading font-bold text-foreground">{t("checkout.summary.orderSummary")}</span>
           </div>
           {contractRef && (
             <span className="font-mono text-xs text-muted-foreground">#{contractRef}</span>
           )}
         </div>
         <div className="divide-y divide-border">
-          <SummaryRow label="Serviço" value={data.serviceName} />
-          {data.hours && <SummaryRow label="Horas técnicas" value={`${data.hours}h`} />}
-          <SummaryRow label="Valor" value={formatCurrency(data.totalValue)} highlight />
-          <SummaryRow label="Pagamento" value={paymentLabel} />
-          <SummaryRow label="Data" value={data.purchaseDate} />
-          <SummaryRow label="Contratante" value={data.customerName} />
-          <SummaryRow label="E-mail" value={data.customerEmail} />
+          <SummaryRow label={t("checkout.summary.service")} value={data.serviceName} />
+          {data.hours && <SummaryRow label={t("checkout.summary.technicalHours")} value={`${data.hours}h`} />}
+          <SummaryRow label={t("checkout.summary.value")} value={formatCurrency(data.totalValue)} highlight />
+          <SummaryRow label={t("checkout.summary.payment")} value={paymentLabel} />
+          <SummaryRow label={t("checkout.summary.date")} value={data.purchaseDate} />
+          <SummaryRow label={t("checkout.summary.contractor")} value={data.customerName} />
+          <SummaryRow label={t("checkout.summary.email")} value={data.customerEmail} />
           <SummaryRow
-            label="Status"
-            value={isBoleto ? "Aguardando compensação" : "Pagamento confirmado"}
+            label={t("checkout.summary.status")}
+            value={isBoleto ? t("checkout.summary.waitingClearing") : t("checkout.summary.paymentConfirmed")}
             status={isBoleto ? "warning" : "success"}
           />
         </div>
@@ -132,13 +132,13 @@ const PurchaseSummaryCard = ({
       {/* Credentials */}
       <div className="bg-card border-2 border-primary/20 rounded-xl overflow-hidden">
         <div className="bg-primary/10 border-b border-primary/20 px-5 py-3">
-          <span className="text-sm font-heading font-bold text-foreground">Credenciais do Portal do Cliente</span>
+          <span className="text-sm font-heading font-bold text-foreground">{t("checkout.summary.portalCredentials")}</span>
         </div>
         <div className="px-5 py-4">
           {credentialsLoading ? (
             <div className="flex items-center justify-center gap-3 py-4">
               <Loader2 className="w-5 h-5 animate-spin text-primary" />
-              <span className="text-sm text-muted-foreground">Gerando credenciais de acesso...</span>
+              <span className="text-sm text-muted-foreground">{t("checkout.summary.generatingCredentials")}</span>
             </div>
           ) : credentialsError ? (
             <div className="space-y-3">
@@ -148,7 +148,7 @@ const PurchaseSummaryCard = ({
               </div>
               {onRetryCredentials && (
                 <Button onClick={onRetryCredentials} variant="outline" size="sm" className="w-full">
-                  Tentar novamente
+                  {t("checkout.summary.tryAgain")}
                 </Button>
               )}
             </div>
@@ -156,7 +156,7 @@ const PurchaseSummaryCard = ({
             <div className="space-y-3">
               <div className="flex items-center justify-between gap-2 p-3 rounded-lg bg-muted/50">
                 <div>
-                  <p className="text-xs text-muted-foreground">Login (e-mail)</p>
+                  <p className="text-xs text-muted-foreground">{t("checkout.summary.loginEmail")}</p>
                   <p className="text-sm font-semibold text-foreground font-mono">{credentials.email}</p>
                 </div>
                 <button
@@ -168,7 +168,7 @@ const PurchaseSummaryCard = ({
               </div>
               <div className="flex items-center justify-between gap-2 p-3 rounded-lg bg-muted/50">
                 <div>
-                  <p className="text-xs text-muted-foreground">Senha temporária</p>
+                  <p className="text-xs text-muted-foreground">{t("checkout.summary.tempPassword")}</p>
                   <p className="text-sm font-semibold text-foreground font-mono">
                     {showPassword ? credentials.temp_password : "••••••••"}
                   </p>
@@ -181,7 +181,7 @@ const PurchaseSummaryCard = ({
                     {showPassword ? <EyeOff className="w-4 h-4 text-muted-foreground" /> : <Eye className="w-4 h-4 text-muted-foreground" />}
                   </button>
                   <button
-                    onClick={() => copyToClipboard(credentials.temp_password, "Senha")}
+                    onClick={() => copyToClipboard(credentials.temp_password, t("checkout.summary.tempPassword"))}
                     className="p-2 hover:bg-muted rounded-md transition-colors"
                   >
                     <Copy className="w-4 h-4 text-muted-foreground" />
@@ -189,15 +189,13 @@ const PurchaseSummaryCard = ({
                 </div>
               </div>
               <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
-                <p className="text-xs text-amber-300 font-semibold">⚠️ Troque sua senha no primeiro acesso.</p>
-                <p className="text-xs text-muted-foreground mt-1">Esta senha é temporária e deverá ser alterada obrigatoriamente.</p>
+                <p className="text-xs text-amber-300 font-semibold">{t("checkout.summary.changePasswordWarning")}</p>
+                <p className="text-xs text-muted-foreground mt-1">{t("checkout.summary.tempPasswordDesc")}</p>
               </div>
             </div>
           ) : (
             <p className="text-sm text-muted-foreground text-center py-3">
-              {isBoleto
-                ? "As credenciais serão geradas após a compensação do boleto."
-                : "Credenciais em preparação..."}
+              {isBoleto ? t("checkout.summary.credentialsBoleto") : t("checkout.summary.credentialsPreparing")}
             </p>
           )}
         </div>
@@ -211,18 +209,18 @@ const PurchaseSummaryCard = ({
             className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground"
           >
             <ExternalLink className="w-4 h-4 mr-2" />
-            Abrir boleto / 2ª via
+            {t("checkout.summary.openBoleto")}
           </Button>
         )}
         <Link to="/area-do-cliente" className="w-full">
           <Button variant="outline" className="w-full h-12">
             <ChevronRight className="w-4 h-4 mr-2" />
-            Acessar Portal do Cliente
+            {t("checkout.summary.accessPortal")}
           </Button>
         </Link>
         <Button onClick={handleDownloadReceipt} variant="outline" className="w-full h-12">
           <Download className="w-4 h-4 mr-2" />
-          Baixar comprovante PDF
+          {t("checkout.summary.downloadReceipt")}
         </Button>
       </div>
     </motion.div>
