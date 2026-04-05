@@ -1598,6 +1598,7 @@
       "totalValue": "Valor total",
       "hireOnDemand": "RESOLVER AGORA",
       "resolveNow": "INICIAR ATENDIMENTO IMEDIATO",
+      "companyDataStep": "Dados da empresa",
       "companyDataStepSub": "Preencha os dados para gerar o contrato",
       "technicalHoursContract": "Contrato de Horas Técnicas",
       "contractOpenSeparate": "O contrato será aberto em uma página separada.",

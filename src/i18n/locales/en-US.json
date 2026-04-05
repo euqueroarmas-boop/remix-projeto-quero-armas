@@ -3164,6 +3164,7 @@
       "totalValue": "Total value",
       "hireOnDemand": "RESOLVE NOW",
       "resolveNow": "START IMMEDIATE SERVICE",
+      "companyDataStep": "Company details",
       "companyDataStepSub": "Fill in data to generate the contract",
       "technicalHoursContract": "Technical Hours Contract",
       "contractOpenSeparate": "The contract will open on a separate page.",
