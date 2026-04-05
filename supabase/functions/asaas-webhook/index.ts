@@ -435,6 +435,104 @@ Deno.serve(async (req) => {
       });
     }
 
+    // ── FISCAL DOCUMENT: Persist invoice from Asaas when payment is confirmed ──
+    if ((event === "PAYMENT_RECEIVED" || event === "PAYMENT_CONFIRMED") && paymentRecord.quote_id) {
+      try {
+        // Find customer for this payment
+        const { data: contractForInvoice } = await supabase
+          .from("contracts")
+          .select("customer_id, contract_type, id")
+          .eq("quote_id", paymentRecord.quote_id)
+          .order("created_at", { ascending: false })
+          .limit(1);
+
+        const custId = contractForInvoice?.[0]?.customer_id;
+        const contractId = contractForInvoice?.[0]?.id;
+
+        if (custId) {
+          const asaasInvoiceId = payment.invoiceNumber || payment.id;
+
+          // Idempotency check
+          const { data: existingInvoice } = await supabase
+            .from("fiscal_documents")
+            .select("id")
+            .eq("asaas_invoice_id", asaasInvoiceId)
+            .limit(1);
+
+          if (!existingInvoice?.length) {
+            // Determine NF URLs from Asaas
+            const invoiceUrl = payment.invoiceUrl || payment.bankSlipUrl || null;
+            const transactionReceiptUrl = payment.transactionReceiptUrl || null;
+
+            // Try to fetch invoice details from Asaas API if available
+            let pdfUrl: string | null = invoiceUrl;
+            let xmlUrl: string | null = null;
+            let invoiceNumber: string | null = payment.invoiceNumber || null;
+            let accessKey: string | null = null;
+
+            const ASAAS_API_KEY = Deno.env.get("ASAAS_API_KEY");
+            const ASAAS_BASE_URL = Deno.env.get("ASAAS_BASE_URL");
+
+            if (ASAAS_API_KEY && ASAAS_BASE_URL && payment.id) {
+              try {
+                // Check if Asaas has fiscal info for this payment
+                const fiscalRes = await fetch(`${ASAAS_BASE_URL}/payments/${payment.id}/fiscalInfo`, {
+                  headers: { access_token: ASAAS_API_KEY, "User-Agent": "WMTi-Integration/1.0" },
+                });
+                if (fiscalRes.ok) {
+                  const fiscalData = await fiscalRes.json();
+                  if (fiscalData.invoiceUrl) pdfUrl = fiscalData.invoiceUrl;
+                  if (fiscalData.xmlUrl) xmlUrl = fiscalData.xmlUrl;
+                  if (fiscalData.invoiceNumber) invoiceNumber = String(fiscalData.invoiceNumber);
+                  if (fiscalData.accessKey) accessKey = fiscalData.accessKey;
+                  console.log("[asaas-webhook] Dados fiscais obtidos do Asaas:", { invoiceNumber, hasXml: !!xmlUrl });
+                }
+              } catch (fiscalErr) {
+                console.warn("[asaas-webhook] Não foi possível obter dados fiscais:", fiscalErr);
+              }
+            }
+
+            await supabase.from("fiscal_documents").insert({
+              customer_id: custId,
+              payment_id: paymentRecord.id,
+              contract_id: contractId || null,
+              asaas_invoice_id: asaasInvoiceId,
+              document_type: "nota_fiscal",
+              document_number: invoiceNumber,
+              issue_date: new Date().toISOString().split("T")[0],
+              amount: payment.value || 0,
+              status: "emitido",
+              file_url: pdfUrl,
+              xml_url: xmlUrl,
+              access_key: accessKey,
+              service_reference: contractForInvoice?.[0]?.contract_type || null,
+              raw_payload: body,
+              notes: `NF gerada automaticamente via webhook ${event}`,
+            });
+
+            console.log("[asaas-webhook] Documento fiscal persistido para customer:", custId);
+            await supabase.from("integration_logs").insert({
+              integration_name: "asaas",
+              operation_name: "fiscal_document_created",
+              request_payload: { event, payment_id: payment.id, customer_id: custId, invoice_number: invoiceNumber },
+              status: "success",
+            });
+          } else {
+            console.log("[asaas-webhook] Documento fiscal já existe para asaas_invoice_id:", asaasInvoiceId);
+          }
+        }
+      } catch (fiscalErr) {
+        console.error("[asaas-webhook] Erro ao persistir documento fiscal:", fiscalErr);
+        await supabase.from("integration_logs").insert({
+          integration_name: "asaas",
+          operation_name: "fiscal_document_error",
+          request_payload: { event, payment_id: payment.id },
+          status: "error",
+          error_message: fiscalErr instanceof Error ? fiscalErr.message : String(fiscalErr),
+        });
+      }
+    }
+
     // Mark webhook as processed
     await supabase
       .from("asaas_webhooks")
