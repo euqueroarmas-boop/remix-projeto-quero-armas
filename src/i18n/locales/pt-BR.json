@@ -957,7 +957,9 @@
     "colTotal": "Total",
     "buyHours": "Comprar Horas",
     "buyDesc": "Você será direcionado para preencher seus dados, gerar o contrato e seguir para o pagamento seguro.",
-    "whatsappMsg": "Olá! Gostaria de contratar {{hours}} hora(s) técnica(s){{service}} . Valor: R$ {{price}}."
+    "whatsappMsg": "Olá! Gostaria de contratar {{hours}} hora(s) técnica(s){{service}} . Valor: R$ {{price}}.",
+    "descService": "Calcule o investimento para {{service}}.",
+    "descFixed": "Valor fixo por hora técnica — sem variação de preço por volume."
   },
   "investCalc": {
     "tag": "Calculadora",
