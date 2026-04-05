@@ -1645,6 +1645,29 @@ const ContratarServicoPage = () => {
       <div ref={wizardRef} className="section-dark py-12 md:py-16">
         <div className="container max-w-3xl">
 
+          {/* Pain Block */}
+          <div className="bg-destructive/5 border border-destructive/20 rounded-xl p-5 mb-6 space-y-3">
+            <p className="font-bold text-foreground text-sm">{t("contratar.painBlockTitle")}</p>
+            <ul className="space-y-1 text-sm text-muted-foreground">
+              <li className="flex items-center gap-2"><AlertTriangle size={14} className="text-destructive shrink-0" />{t("contratar.painItem1")}</li>
+              <li className="flex items-center gap-2"><AlertTriangle size={14} className="text-destructive shrink-0" />{t("contratar.painItem2")}</li>
+              <li className="flex items-center gap-2"><AlertTriangle size={14} className="text-destructive shrink-0" />{t("contratar.painItem3")}</li>
+            </ul>
+            <p className="text-xs text-primary font-semibold">{t("contratar.painBlockFooter")}</p>
+          </div>
+
+          {/* Value Block */}
+          <div className="bg-primary/5 border border-primary/20 rounded-xl p-5 mb-6 space-y-3">
+            <p className="font-bold text-foreground text-sm">{t("contratar.valueBlockTitle")}</p>
+            <ul className="space-y-1 text-sm text-muted-foreground">
+              <li className="flex items-center gap-2"><ShieldCheck size={14} className="text-primary shrink-0" />{t("contratar.valueItem1")}</li>
+              <li className="flex items-center gap-2"><ShieldCheck size={14} className="text-primary shrink-0" />{t("contratar.valueItem2")}</li>
+              <li className="flex items-center gap-2"><ShieldCheck size={14} className="text-primary shrink-0" />{t("contratar.valueItem3")}</li>
+              <li className="flex items-center gap-2"><ShieldCheck size={14} className="text-primary shrink-0" />{t("contratar.valueItem4")}</li>
+            </ul>
+            <p className="text-xs text-primary font-semibold">{t("contratar.valueBlockFooter")}</p>
+          </div>
+
           {/* Step 1: Calculator or Project Summary */}
           <WizardStepWrapper stepNumber={1} title={webDevPayload ? "Resumo do Projeto" : t("contratar.stepCalculator")} subtitle={webDevPayload ? "Dados preenchidos na calculadora do serviço" : t("contratar.stepCalculatorSub")} status={getStepStatus("calculator")}>
             {webDevPayload ? (
