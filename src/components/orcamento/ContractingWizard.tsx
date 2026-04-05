@@ -339,7 +339,7 @@ const ContractingWizard = ({
   };
 
   const contractType = effectivePath === "locacao" ? "locacao" : "suporte";
-  const pathLabel = effectivePath === "locacao" ? "Locação de Equipamentos" : "Serviços de TI";
+  const pathLabel = effectivePath === "locacao" ? t("contratar.locacaoLabel", "Locação de Equipamentos") : t("contratar.suporteLabel", "Serviços de TI");
 
   const handleRegistrationComplete = async (data: RegistrationData) => {
     setRegistrationLoading(true);
@@ -394,7 +394,7 @@ const ContractingWizard = ({
       scrollToWizardTop();
     } catch (err) {
       console.error("[WMTi] Erro no cadastro:", err);
-      toast({ title: "Erro ao salvar dados", description: "Tente novamente.", variant: "destructive" });
+      toast({ title: t("checkout.wizard.registrationError"), description: t("checkout.saveErrorDesc"), variant: "destructive" });
     } finally {
       setRegistrationLoading(false);
     }
@@ -569,7 +569,7 @@ const ContractingWizard = ({
       scrollToWizardTop();
     } catch (err) {
       console.error("[WMTi] Erro ao gerar contrato:", err);
-      toast({ title: "Erro ao gerar contrato", description: "Tente novamente.", variant: "destructive" });
+      toast({ title: t("checkout.wizard.contractError"), description: t("checkout.saveErrorDesc"), variant: "destructive" });
     } finally {
       setRegistrationLoading(false);
     }
@@ -630,7 +630,7 @@ const ContractingWizard = ({
         },
       });
 
-      if (error) throw new Error(error.message || "Erro ao criar assinatura");
+      if (error) throw new Error(error.message || t("checkout.wizard.subscriptionError"));
 
       // If already paid, redirect immediately
       if (data?.already_paid) {
@@ -642,11 +642,11 @@ const ContractingWizard = ({
       const normalized = normalizePaymentPayload(data, selectedPayment);
 
       if (!normalized.success) {
-        throw new Error("A assinatura não foi confirmada pelo backend.");
+        throw new Error(t("checkout.wizard.subscriptionNotConfirmed"));
       }
 
       if (!normalized.invoiceUrl) {
-        throw new Error("O sistema de pagamento não retornou um link de cobrança. Tente novamente.");
+        throw new Error(t("checkout.wizard.noPaymentLink"));
       }
 
       setPaymentData(normalized);
