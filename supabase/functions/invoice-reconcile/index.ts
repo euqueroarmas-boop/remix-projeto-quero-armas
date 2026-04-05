@@ -66,22 +66,23 @@ Deno.serve(async (req) => {
       return jsonResponse({ success: true, message: "No confirmed payments to reconcile", synced: 0 });
     }
 
-    // Get existing fiscal docs by asaas_invoice_id
+    // Get existing fiscal docs
     const asaasIds = confirmedPayments.map(p => p.asaas_payment_id).filter(Boolean);
     const { data: existingDocs } = await supabase
       .from("fiscal_documents")
-      .select("asaas_invoice_id")
+      .select("asaas_invoice_id, status")
       .in("asaas_invoice_id", asaasIds);
 
-    const existingSet = new Set((existingDocs || []).map(d => d.asaas_invoice_id));
-    const missing = confirmedPayments.filter(p => !existingSet.has(p.asaas_payment_id));
+    const existingMap = new Map((existingDocs || []).map(d => [d.asaas_invoice_id, d.status]));
+    // Only reconcile truly missing docs — never overwrite existing ones
+    const missing = confirmedPayments.filter(p => !existingMap.has(p.asaas_payment_id));
 
     let synced = 0;
     const errors: string[] = [];
 
     for (const payment of missing) {
       try {
-        // Find customer
+        // Find customer via contract chain
         const { data: contractRow } = await supabase
           .from("contracts")
           .select("customer_id, contract_type, id")
@@ -89,7 +90,10 @@ Deno.serve(async (req) => {
           .limit(1)
           .maybeSingle();
 
-        if (!contractRow?.customer_id) continue;
+        if (!contractRow?.customer_id) {
+          console.log("[invoice-reconcile] Sem customer para quote:", payment.quote_id);
+          continue;
+        }
 
         // Try to fetch fiscal info from Asaas
         let pdfUrl: string | null = null;
@@ -124,10 +128,9 @@ Deno.serve(async (req) => {
           xml_url: xmlUrl,
           access_key: accessKey,
           service_reference: contractRow.contract_type || null,
-          notes: "NF criada via reconciliação",
+          notes: "NF criada via reconciliação (somente faltantes)",
         }).select("id").single();
 
-        // Persist files in invoice_files
         if (insertedDoc?.id) {
           const filesToInsert: { invoice_id: string; type: string; file_url: string; filename: string; mime_type: string }[] = [];
           if (pdfUrl) filesToInsert.push({ invoice_id: insertedDoc.id, type: "pdf", file_url: pdfUrl, filename: `NF-${invoiceNumber || payment.asaas_payment_id}.pdf`, mime_type: "application/pdf" });
@@ -144,7 +147,7 @@ Deno.serve(async (req) => {
     await supabase.from("integration_logs").insert({
       integration_name: "asaas",
       operation_name: "invoice_reconciliation",
-      request_payload: { total_checked: confirmedPayments.length, missing: missing.length },
+      request_payload: { total_checked: confirmedPayments.length, missing: missing.length, skipped_protected: confirmedPayments.length - missing.length },
       response_payload: { synced, errors: errors.length },
       status: errors.length > 0 ? "warning" : "success",
       error_message: errors.length > 0 ? errors.join("; ") : null,

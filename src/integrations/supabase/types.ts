@@ -50,6 +50,38 @@ export type Database = {
         }
         Relationships: []
       }
+      asaas_customer_map: {
+        Row: {
+          asaas_customer_id: string
+          created_at: string
+          customer_id: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          asaas_customer_id: string
+          created_at?: string
+          customer_id: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          asaas_customer_id?: string
+          created_at?: string
+          customer_id?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asaas_customer_map_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       asaas_webhooks: {
         Row: {
           created_at: string
