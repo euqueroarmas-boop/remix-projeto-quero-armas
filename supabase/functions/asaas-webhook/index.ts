@@ -605,7 +605,7 @@ Deno.serve(async (req) => {
           // Idempotency: check if already exists
           const { data: existingInvoice } = await supabase
             .from("fiscal_documents")
-            .select("id, status, document_number, access_key, invoice_series")
+            .select("id, status, document_number, access_key, invoice_series, last_event_source, last_event_at")
             .eq("asaas_invoice_id", asaasInvoiceId)
             .limit(1)
             .maybeSingle();
