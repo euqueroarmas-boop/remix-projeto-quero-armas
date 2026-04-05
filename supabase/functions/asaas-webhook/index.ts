@@ -274,6 +274,13 @@ Deno.serve(async (req) => {
           const currentTime = new Date(eventTimestamp).getTime();
           if (existingDoc.last_event_source === "invoice_event" && existingTime > currentTime) {
             console.log("[asaas-webhook] Evento invoice descartado (mais antigo que existente):", existingDoc.id);
+            await logFiscalEvent(supabase, {
+              fiscal_document_id: existingDoc.id, asaas_invoice_id: String(invoiceId), customer_id: custId,
+              event_type: event, event_source: "invoice_event", event_timestamp: eventTimestamp,
+              payload_snapshot: body, normalized_status: newStatus,
+              overwrite_decision: "discarded_temporal", decision_reason: `Existing event from ${existingDoc.last_event_at} is newer`,
+              created_by_process: "asaas_webhook",
+            });
             await supabase.from("integration_logs").insert({
               integration_name: "asaas", operation_name: "invoice_event_temporal_skip",
               request_payload: { event, invoice_id: invoiceId, existing_time: existingDoc.last_event_at, current_time: eventTimestamp },
@@ -283,22 +290,39 @@ Deno.serve(async (req) => {
             // ── VERSIONING: if canceling, mark as inactive ──
             const isActiveFlag = !["cancelada", "erro"].includes(newStatus);
 
-            await supabase.from("fiscal_documents")
-              .update({
-                status: newStatus,
-                document_number: invoiceNumber || undefined,
-                access_key: accessKey || undefined,
-                file_url: pdfUrl || undefined,
-                xml_url: xmlUrl || undefined,
-                invoice_series: invoiceSeries || undefined,
-                amount: amount || undefined,
-                raw_payload: body,
-                last_event_at: eventTimestamp,
-                last_event_source: "invoice_event",
-                is_active: isActiveFlag,
-                notes: `Atualizado via ${event} (fonte primária)`,
-              })
-              .eq("id", existingDoc.id);
+            const updatePayload: Record<string, unknown> = {
+              status: newStatus,
+              document_number: invoiceNumber || undefined,
+              access_key: accessKey || undefined,
+              file_url: pdfUrl || undefined,
+              xml_url: xmlUrl || undefined,
+              invoice_series: invoiceSeries || undefined,
+              amount: amount || undefined,
+              raw_payload: body,
+              last_event_at: eventTimestamp,
+              last_event_source: "invoice_event",
+              is_active: isActiveFlag,
+              notes: `Atualizado via ${event} (fonte primária)`,
+            };
+
+            // Detect sensitive field changes BEFORE update
+            const changes = detectSensitiveChanges(existingDoc as Record<string, unknown>, updatePayload, "invoice_event", "asaas_webhook", existingDoc.id);
+
+            await supabase.from("fiscal_documents").update(updatePayload).eq("id", existingDoc.id);
+
+            // Log audit event
+            const ehId = await logFiscalEvent(supabase, {
+              fiscal_document_id: existingDoc.id, asaas_invoice_id: String(invoiceId), customer_id: custId,
+              event_type: event, event_source: "invoice_event", event_timestamp: eventTimestamp,
+              payload_snapshot: body, normalized_status: newStatus,
+              overwrite_decision: "accepted", decision_reason: "Invoice event is primary source",
+              created_by_process: "asaas_webhook",
+            });
+
+            // Log sensitive changes
+            if (changes.length) {
+              await logFiscalChanges(supabase, changes.map(c => ({ ...c, related_event_history_id: ehId })));
+            }
 
             // Upsert invoice_files
             if (pdfUrl) {
@@ -308,6 +332,14 @@ Deno.serve(async (req) => {
               } else {
                 await supabase.from("invoice_files").insert({ invoice_id: existingDoc.id, type: "pdf", file_url: pdfUrl, filename: `NF-${invoiceNumber || invoiceId}.pdf`, mime_type: "application/pdf" });
               }
+              // Log file change in audit
+              await logFiscalEvent(supabase, {
+                fiscal_document_id: existingDoc.id, asaas_invoice_id: String(invoiceId), customer_id: custId,
+                event_type: "FILE_UPSERT_PDF", event_source: "invoice_event",
+                normalized_status: newStatus, overwrite_decision: "accepted",
+                decision_reason: existPdf ? "PDF updated" : "PDF created",
+                created_by_process: "asaas_webhook",
+              });
             }
             if (xmlUrl) {
               const { data: existXml } = await supabase.from("invoice_files").select("id").eq("invoice_id", existingDoc.id).eq("type", "xml").limit(1).maybeSingle();
