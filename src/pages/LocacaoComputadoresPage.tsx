@@ -189,8 +189,9 @@ const LocacaoComputadoresPage = () => {
             <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">{t(`${k}.compTag`)}</p>
             <h2 className="text-2xl md:text-3xl mb-8">{t(`${k}.compTitle1`)}<span className="text-primary">{t(`${k}.compHighlight`)}</span></h2>
           </motion.div>
-          <div className="border border-border overflow-x-auto rounded-lg">
-            <table className="w-full min-w-[420px]">
+          {/* Desktop: table */}
+          <div className="hidden md:block border border-border overflow-x-auto rounded-lg">
+            <table className="w-full">
               <thead><tr className="bg-muted">
                 <th className="text-left font-mono text-xs uppercase tracking-wider p-4 text-muted-foreground" />
                 <th className="text-left font-mono text-xs uppercase tracking-wider p-4 text-muted-foreground">{compHeaders[1]}</th>
@@ -204,6 +205,46 @@ const LocacaoComputadoresPage = () => {
                 </tr>
               ))}</tbody>
             </table>
+          </div>
+
+          {/* Mobile: vertical per-item blocks */}
+          <div className="md:hidden flex flex-col gap-5">
+            {comparisons.map((r, i) => (
+              <motion.div
+                key={r.item}
+                initial={{ opacity: 0, y: 12 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.3, delay: i * 0.06 }}
+                className="space-y-2"
+              >
+                <h4 className="font-mono text-sm font-bold uppercase tracking-wider text-foreground">
+                  {r.item}
+                </h4>
+
+                {/* Comprar — neutro/negativo */}
+                <div className="bg-muted/50 border border-border rounded-lg p-4 flex items-start gap-3">
+                  <span className="text-base leading-none mt-0.5">💸</span>
+                  <div>
+                    <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground mb-1">
+                      {compHeaders[1]}
+                    </p>
+                    <p className="font-body text-sm text-muted-foreground leading-relaxed">{r.compra}</p>
+                  </div>
+                </div>
+
+                {/* Locar — destaque positivo */}
+                <div className="bg-primary/5 border-2 border-primary rounded-lg p-4 flex items-start gap-3">
+                  <CheckCircle2 size={18} className="text-primary flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-mono text-xs uppercase tracking-wider text-primary mb-1">
+                      {compHeaders[2]}
+                    </p>
+                    <p className="font-body text-sm text-primary font-medium leading-relaxed">{r.locacao}</p>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
