@@ -113,8 +113,8 @@ export default function AdminInvoices() {
     // First exclude LGPD documents
     let result = docs.filter((d: any) => !lgpdCustomerIds.has(d.customer_id));
     // Then apply status filter
-    if (filter !== "todos") {
-      result = result.filter((d: any) => (d.status || "").toLowerCase() === filter.toLowerCase());
+    if (filterStatus !== "all") {
+      result = result.filter((d: any) => (d.status || "").toLowerCase() === filterStatus.toLowerCase());
     }
     // Then apply search filter
     if (filterSearch) {
@@ -130,7 +130,7 @@ export default function AdminInvoices() {
       });
     }
     return result;
-  }, [docs, lgpdCustomerIds, filter, filterSearch, customers]);
+  }, [docs, lgpdCustomerIds, filterStatus, filterSearch, customers]);
 
   const totalPages = Math.ceil(total / PER_PAGE);
 
