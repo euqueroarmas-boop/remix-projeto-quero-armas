@@ -409,28 +409,39 @@ export default function AdminFinanceiro() {
       const allCustomers = (results[1].data as any[]) || [];
       const allContracts = (results[2].data as any[]) || [];
 
-      // Build LGPD exclusion set — single source of truth for operational filtering
-      const lgpdCustomerIds = new Set(
-        allCustomers.filter((c: any) => c.status_cliente === "excluido_lgpd").map((c: any) => c.id)
-      );
-      const lgpdQuoteIds = new Set(
-        allContracts.filter((c: any) => lgpdCustomerIds.has(c.customer_id)).map((c: any) => c.quote_id).filter(Boolean)
-      );
-      // Central operational filter: excludes LGPD-anonymized payments
-      const isOperationalPayment = (p: any) => !lgpdQuoteIds.has(p.quote_id);
-      const isOperationalContract = (c: any) => !lgpdCustomerIds.has(c.customer_id);
+      // Single source of truth for the operational financial layer
+      const isOperationalCustomer = (customer: any) =>
+        Boolean(customer) && String(customer.status_cliente || "").toLowerCase() !== "excluido_lgpd";
 
-      // Filter LGPD payments from operational views
+      const operationalCustomers = allCustomers.filter(isOperationalCustomer);
+      const operationalCustomerIds = new Set(operationalCustomers.map((customer: any) => customer.id));
+
+      const isOperationalContract = (contract: any) =>
+        Boolean(contract?.customer_id) && operationalCustomerIds.has(contract.customer_id);
+
+      const operationalContracts = allContracts.filter(isOperationalContract);
+      const operationalQuoteIds = new Set(
+        operationalContracts.map((contract: any) => contract.quote_id).filter(Boolean)
+      );
+
+      const isOperationalPayment = (payment: any) =>
+        Boolean(payment?.quote_id) && operationalQuoteIds.has(payment.quote_id);
+
       const rawPayments = (results[0].data as any[]) || [];
       const rawAllPayments = (results[4].data as any[]) || [];
-      setPayments(rawPayments.filter(isOperationalPayment));
-      setTotalPayments((results[0].count || 0) - rawPayments.filter((p: any) => !isOperationalPayment(p)).length);
-      setCustomers(allCustomers);
-      setContracts(allContracts);
-      setWebhooks((results[3].data as any[]) || []);
-      setAllPayments(rawAllPayments.filter(isOperationalPayment));
+      const operationalPayments = rawPayments.filter(isOperationalPayment);
+      const operationalAllPayments = rawAllPayments.filter(isOperationalPayment);
+      const statusFilteredOperationalPayments = filterStatus === "all"
+        ? operationalAllPayments
+        : operationalAllPayments.filter((payment: any) => payment.payment_status === filterStatus);
 
-      // Apply LGPD filter to ALL metric sources
+      setPayments(operationalPayments);
+      setTotalPayments(statusFilteredOperationalPayments.length);
+      setCustomers(operationalCustomers);
+      setContracts(operationalContracts);
+      setWebhooks((results[3].data as any[]) || []);
+      setAllPayments(operationalAllPayments);
+
       const opMonthConfirmed = ((results[5].data as any[]) || []).filter(isOperationalPayment);
       const opPrevMonthConfirmed = ((results[6].data as any[]) || []).filter(isOperationalPayment);
       const opPending = ((results[7].data as any[]) || []).filter(isOperationalPayment);
