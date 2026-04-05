@@ -142,6 +142,20 @@ Deno.serve(async (req) => {
           if (filesToInsert.length) await supabase.from("invoice_files").insert(filesToInsert);
         }
 
+        // Audit: log reconciliation creation
+        await logFiscalEvent(supabase, {
+          fiscal_document_id: insertedDoc?.id || null,
+          asaas_invoice_id: payment.asaas_payment_id,
+          customer_id: contractRow.customer_id,
+          event_type: "RECONCILE_CREATED",
+          event_source: "reconcile",
+          payload_snapshot: { payment_id: payment.id, quote_id: payment.quote_id, amount: payment.amount },
+          normalized_status: pdfUrl ? "emitido" : "aguardando",
+          overwrite_decision: "accepted",
+          decision_reason: "Missing fiscal document created via reconciliation",
+          created_by_process: "invoice_reconcile",
+        });
+
         synced++;
       } catch (err) {
         errors.push(`${payment.asaas_payment_id}: ${err instanceof Error ? err.message : String(err)}`);
