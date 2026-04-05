@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { useCheckoutStore } from "@/stores/useCheckoutStore";
 import {
@@ -141,6 +142,7 @@ const ContractingWizard = ({
   customRegistrationForm,
 }: Props) => {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const checkoutStore = useCheckoutStore();
@@ -269,7 +271,7 @@ const ContractingWizard = ({
         setContractSigned(true);
         setCurrentStep("payment");
         scrollToWizardTop();
-        toast({ title: "Contrato assinado!", description: "Prossiga com o pagamento." });
+        toast({ title: t("checkout.wizard.contractSignedToast"), description: t("checkout.wizard.proceedPayment") });
       }
     }, 3000);
     return () => clearInterval(interval);
@@ -337,7 +339,7 @@ const ContractingWizard = ({
   };
 
   const contractType = effectivePath === "locacao" ? "locacao" : "suporte";
-  const pathLabel = effectivePath === "locacao" ? "Locação de Equipamentos" : "Serviços de TI";
+  const pathLabel = effectivePath === "locacao" ? t("contratar.locacaoLabel", "Locação de Equipamentos") : t("contratar.suporteLabel", "Serviços de TI");
 
   const handleRegistrationComplete = async (data: RegistrationData) => {
     setRegistrationLoading(true);
@@ -392,7 +394,7 @@ const ContractingWizard = ({
       scrollToWizardTop();
     } catch (err) {
       console.error("[WMTi] Erro no cadastro:", err);
-      toast({ title: "Erro ao salvar dados", description: "Tente novamente.", variant: "destructive" });
+      toast({ title: t("checkout.wizard.registrationError"), description: t("checkout.saveErrorDesc"), variant: "destructive" });
     } finally {
       setRegistrationLoading(false);
     }
@@ -567,7 +569,7 @@ const ContractingWizard = ({
       scrollToWizardTop();
     } catch (err) {
       console.error("[WMTi] Erro ao gerar contrato:", err);
-      toast({ title: "Erro ao gerar contrato", description: "Tente novamente.", variant: "destructive" });
+      toast({ title: t("checkout.wizard.contractError"), description: t("checkout.saveErrorDesc"), variant: "destructive" });
     } finally {
       setRegistrationLoading(false);
     }
@@ -628,7 +630,7 @@ const ContractingWizard = ({
         },
       });
 
-      if (error) throw new Error(error.message || "Erro ao criar assinatura");
+      if (error) throw new Error(error.message || t("checkout.wizard.subscriptionError"));
 
       // If already paid, redirect immediately
       if (data?.already_paid) {
@@ -640,11 +642,11 @@ const ContractingWizard = ({
       const normalized = normalizePaymentPayload(data, selectedPayment);
 
       if (!normalized.success) {
-        throw new Error("A assinatura não foi confirmada pelo backend.");
+        throw new Error(t("checkout.wizard.subscriptionNotConfirmed"));
       }
 
       if (!normalized.invoiceUrl) {
-        throw new Error("O sistema de pagamento não retornou um link de cobrança. Tente novamente.");
+        throw new Error(t("checkout.wizard.noPaymentLink"));
       }
 
       setPaymentData(normalized);
@@ -690,13 +692,13 @@ const ContractingWizard = ({
         <div className="container mx-auto px-4">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-10">
             <span className="inline-block px-4 py-1.5 mb-4 text-xs font-semibold tracking-widest uppercase bg-primary/10 text-primary rounded-full border border-primary/20">
-              Contratação
+              {t("checkout.wizard.hiring")}
             </span>
             <h2 className="text-2xl md:text-3xl font-heading font-bold mb-2">
-              Finalize sua <span className="text-primary">contratação</span>
+              {t("checkout.wizard.finalize")} <span className="text-primary">{t("checkout.wizard.hiringWord")}</span>
             </h2>
             <p className="text-muted-foreground text-sm max-w-xl mx-auto">
-              Preencha os dados uma única vez. Tudo será reaproveitado automaticamente.
+              {t("checkout.wizard.fillOnce")}
             </p>
           </motion.div>
 
@@ -704,8 +706,8 @@ const ContractingWizard = ({
             {/* Step 1: Registration */}
             <WizardStepWrapper
               stepNumber={1}
-              title="Dados do Contratante"
-              subtitle="Preenchimento automático por CNPJ e CEP"
+              title={t("checkout.wizard.stepRegistration")}
+              subtitle={t("checkout.wizard.stepRegistrationSub")}
               status={getStepStatus("registration")}
             >
               {customRegistrationForm
@@ -717,16 +719,16 @@ const ContractingWizard = ({
             {/* Step 2: Plan Configuration */}
             <WizardStepWrapper
               stepNumber={2}
-              title="Configuração do Plano"
-              subtitle={pricingBreakdown ? `${planConfig?.termMonths} meses${planConfig?.support24h ? " • 24h" : ""} ✓` : "Escolha o prazo e nível de atendimento"}
+              title={t("checkout.wizard.stepPlanConfig")}
+              subtitle={pricingBreakdown ? `${planConfig?.termMonths} ${t("checkout.planConfig.months")}${planConfig?.support24h ? " • 24h" : ""} ✓` : t("checkout.wizard.stepPlanConfigSub")}
               status={getStepStatus("planConfig")}
             >
               {pricingBreakdown && currentStep !== "planConfig" ? (
                 <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-3">
                   <Settings2 className="w-10 h-10 text-primary mx-auto" />
-                  <h4 className="text-lg font-heading font-bold">Plano configurado!</h4>
+                  <h4 className="text-lg font-heading font-bold">{t("checkout.wizard.planConfigured")}</h4>
                   <p className="text-sm text-muted-foreground">
-                    {planConfig?.termMonths} meses{planConfig?.support24h ? " • Suporte 24h" : ""} — R$ {pricingBreakdown.valorFinalMensal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}/mês
+                    {planConfig?.termMonths} {t("checkout.planConfig.months")}{planConfig?.support24h ? ` • ${t("checkout.planConfig.support24h")}` : ""} — R$ {pricingBreakdown.valorFinalMensal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}/{t("checkout.planConfig.months").slice(0, 3)}
                   </p>
                 </div>
               ) : (
@@ -741,15 +743,15 @@ const ContractingWizard = ({
             {/* Step 3: Contract */}
             <WizardStepWrapper
               stepNumber={3}
-              title="Contrato e Assinatura"
-              subtitle={contractSigned ? "Contrato assinado ✓" : "Leia e assine o contrato em página dedicada"}
+              title={t("checkout.wizard.stepContract")}
+              subtitle={contractSigned ? t("checkout.wizard.contractSignedSub") : t("checkout.wizard.readAndSign")}
               status={getStepStatus("contract")}
             >
               {contractSigned ? (
                 <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-3">
                   <CheckCircle className="w-10 h-10 text-primary mx-auto" />
-                  <h4 className="text-lg font-heading font-bold">Contrato assinado!</h4>
-                  <p className="text-sm text-muted-foreground">Prossiga para o pagamento abaixo.</p>
+                  <h4 className="text-lg font-heading font-bold">{t("checkout.wizard.contractSigned")}</h4>
+                  <p className="text-sm text-muted-foreground">{t("checkout.wizard.proceedToPayment")}</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -757,109 +759,109 @@ const ContractingWizard = ({
                     <div className="flex items-center gap-3 mb-3">
                       <FileText className="w-6 h-6 text-primary" />
                       <div>
-                        <p className="font-semibold text-sm">Contrato de {pathLabel}</p>
-                        <p className="text-xs text-muted-foreground">O contrato será aberto em uma página separada com aparência de documento formal.</p>
+                        <p className="font-semibold text-sm">{t("checkout.wizard.contractOf", { path: pathLabel })}</p>
+                        <p className="text-xs text-muted-foreground">{t("checkout.wizard.contractOpenDesc")}</p>
                       </div>
                     </div>
-                    <p className="text-xs text-muted-foreground mb-3">Após ler e assinar o contrato, esta página será atualizada automaticamente.</p>
+                    <p className="text-xs text-muted-foreground mb-3">{t("checkout.wizard.afterSignUpdate")}</p>
                   </div>
 
                   <Button onClick={handleOpenContract} disabled={!contractId} className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground" data-testid="botao-abrir-contrato">
                     <ExternalLink className="w-4 h-4 mr-2" />
-                    Abrir contrato para leitura e assinatura
+                    {t("checkout.wizard.openContract")}
                   </Button>
 
                   <p className="text-xs text-muted-foreground text-center">
                     <Loader2 className="w-3 h-3 animate-spin inline mr-1" />
-                    Aguardando assinatura do contrato...
+                    {t("checkout.wizard.waitingSignature")}
                   </p>
                 </div>
               )}
             </WizardStepWrapper>
 
             {/* Step 4: Payment */}
-            <WizardStepWrapper stepNumber={4} title={paymentConfirmed ? "Pagamento Confirmado ✓" : paymentReady ? "Pagamento" : "Revisão e Pagamento"} subtitle={paymentConfirmed ? "Pagamento confirmado com sucesso" : paymentReady ? "Escolha a forma de pagamento" : "Confirme os dados e prepare o pagamento"} status={paymentConfirmed ? "completed" : getStepStatus("payment")}>
+            <WizardStepWrapper stepNumber={4} title={paymentConfirmed ? t("checkout.wizard.paymentConfirmed") : paymentReady ? t("checkout.wizard.stepPayment") : t("checkout.wizard.reviewAndPayment")} subtitle={paymentConfirmed ? t("checkout.wizard.paymentConfirmedSuccess") : paymentReady ? t("checkout.wizard.choosePaymentMethod") : t("checkout.wizard.confirmAndPrepare")} status={paymentConfirmed ? "completed" : getStepStatus("payment")}>
               {paymentConfirmed ? (
                 <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-3">
                   <CheckCircle className="w-10 h-10 text-green-500 mx-auto" />
-                  <h4 className="text-lg font-heading font-bold">Pagamento confirmado!</h4>
-                  <p className="text-sm text-muted-foreground">Redirecionando para a página de confirmação...</p>
+                  <h4 className="text-lg font-heading font-bold">{t("checkout.wizard.paymentConfirmedTitle")}</h4>
+                  <p className="text-sm text-muted-foreground">{t("checkout.wizard.redirectingConfirmation")}</p>
                   <Loader2 className="w-5 h-5 animate-spin text-primary mx-auto" />
                 </div>
               ) : paymentLoading ? (
                 <div className="bg-card border border-primary/20 rounded-xl p-6 space-y-4">
                   <div className="flex flex-col items-center justify-center text-center space-y-3">
                     <Loader2 className="w-10 h-10 animate-spin text-primary" />
-                    <h4 className="text-lg font-heading font-bold">Aguarde, estamos conectando você ao checkout...</h4>
-                    <p className="text-sm text-muted-foreground">Não feche esta página.</p>
+                    <h4 className="text-lg font-heading font-bold">{t("checkout.wizard.connectingCheckout")}</h4>
+                    <p className="text-sm text-muted-foreground">{t("checkout.wizard.doNotClose")}</p>
                   </div>
                 </div>
               ) : paymentComplete && paymentData?.invoiceUrl ? (
                 <div className="bg-card border border-primary/20 rounded-xl p-6 space-y-4">
                   <div className="flex flex-col items-center justify-center text-center space-y-3">
                     <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                    <h4 className="text-lg font-heading font-bold">Aguardando confirmação do pagamento...</h4>
+                    <h4 className="text-lg font-heading font-bold">{t("checkout.wizard.waitingPaymentConfirmation")}</h4>
                     {popupBlocked ? (
                       <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg px-4 py-3 text-left">
-                        <p className="text-sm text-amber-300 font-semibold mb-1">⚠️ O navegador bloqueou a abertura automática</p>
-                        <p className="text-xs text-muted-foreground">Clique no botão abaixo para abrir o checkout manualmente.</p>
+                        <p className="text-sm text-amber-300 font-semibold mb-1">{t("checkout.wizard.popupBlocked")}</p>
+                        <p className="text-xs text-muted-foreground">{t("checkout.wizard.popupBlockedDesc")}</p>
                       </div>
                     ) : (
                       <p className="text-sm text-muted-foreground">
-                        A página segura de pagamento foi aberta em outra aba. Conclua por lá sua contratação.
+                        {t("checkout.wizard.securePageOpened")}
                       </p>
                     )}
                   </div>
                   <div className="flex flex-col gap-2">
                     <Button onClick={() => handleRedirectToCheckout(paymentData.invoiceUrl!)} className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground">
                       <ExternalLink className="w-4 h-4 mr-2" />
-                      {popupBlocked ? "Abrir checkout" : "Abrir checkout novamente"}
+                      {popupBlocked ? t("checkout.wizard.openCheckout") : t("checkout.wizard.reopenCheckout")}
                     </Button>
                     <Button onClick={handleRetryPayment} variant="ghost" className="w-full h-10 text-muted-foreground">
                       <RotateCcw className="w-4 h-4 mr-2" />
-                      Escolher outra forma de pagamento
+                      {t("checkout.wizard.chooseAnotherPayment")}
                     </Button>
                   </div>
                 </div>
               ) : !paymentReady ? (
                 <div className="space-y-4">
                   <div className="bg-card border border-border rounded-xl p-5 space-y-3">
-                    <p className="font-mono text-[10px] tracking-[0.3em] uppercase text-primary mb-2 font-bold">Resumo do pedido</p>
+                    <p className="font-mono text-[10px] tracking-[0.3em] uppercase text-primary mb-2 font-bold">{t("checkout.wizard.orderSummary")}</p>
                     <div className="space-y-2 text-sm">
-                      <div className="flex justify-between"><span className="text-muted-foreground">Serviço</span><span className="text-foreground font-semibold">{pathLabel}</span></div>
-                      <div className="flex justify-between"><span className="text-muted-foreground">Prazo</span><span className="text-foreground font-semibold">{planConfig?.termMonths ?? 36} meses</span></div>
-                      <div className="flex justify-between"><span className="text-muted-foreground">Valor mensal</span><span className="text-primary font-bold">R$ {(pricingBreakdown?.valorFinalMensal ?? monthlyValue).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span></div>
-                      {registrationData && <div className="flex justify-between"><span className="text-muted-foreground">Empresa</span><span className="text-foreground font-semibold">{registrationData.razaoSocial}</span></div>}
+                      <div className="flex justify-between"><span className="text-muted-foreground">{t("checkout.wizard.service")}</span><span className="text-foreground font-semibold">{pathLabel}</span></div>
+                      <div className="flex justify-between"><span className="text-muted-foreground">{t("checkout.wizard.term")}</span><span className="text-foreground font-semibold">{planConfig?.termMonths ?? 36} {t("checkout.planConfig.months")}</span></div>
+                      <div className="flex justify-between"><span className="text-muted-foreground">{t("checkout.wizard.monthlyValue")}</span><span className="text-primary font-bold">R$ {(pricingBreakdown?.valorFinalMensal ?? monthlyValue).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span></div>
+                      {registrationData && <div className="flex justify-between"><span className="text-muted-foreground">{t("checkout.wizard.company")}</span><span className="text-foreground font-semibold">{registrationData.razaoSocial}</span></div>}
                     </div>
                     <div className="pt-2 space-y-1.5">
-                      <div className="flex items-center gap-2 text-xs"><CheckCircle className="w-3.5 h-3.5 text-primary shrink-0" /><span className="text-muted-foreground">Cadastro salvo</span></div>
-                      <div className="flex items-center gap-2 text-xs"><CheckCircle className="w-3.5 h-3.5 text-primary shrink-0" /><span className="text-muted-foreground">Contrato gerado e assinado</span></div>
-                      <div className="flex items-center gap-2 text-xs"><CheckCircle className="w-3.5 h-3.5 text-primary shrink-0" /><span className="text-muted-foreground">Pedido registrado</span></div>
+                      <div className="flex items-center gap-2 text-xs"><CheckCircle className="w-3.5 h-3.5 text-primary shrink-0" /><span className="text-muted-foreground">{t("checkout.wizard.registrationSaved")}</span></div>
+                      <div className="flex items-center gap-2 text-xs"><CheckCircle className="w-3.5 h-3.5 text-primary shrink-0" /><span className="text-muted-foreground">{t("checkout.wizard.contractGenerated")}</span></div>
+                      <div className="flex items-center gap-2 text-xs"><CheckCircle className="w-3.5 h-3.5 text-primary shrink-0" /><span className="text-muted-foreground">{t("checkout.wizard.orderRegistered")}</span></div>
                     </div>
                   </div>
                   <Button onClick={() => setPaymentReady(true)} className="w-full h-14 text-base bg-primary hover:bg-primary/90 text-primary-foreground">
                     <ExternalLink className="w-5 h-5 mr-2" />
-                    Ir para pagamento seguro
+                    {t("checkout.wizard.goToSecurePayment")}
                   </Button>
                 </div>
               ) : (
                 <div className="space-y-4">
                   <p className="text-sm text-muted-foreground text-center">
-                    Ao prosseguir, você será direcionado para a página segura de checkout para preencher seus dados e concluir a contratação.
+                    {t("checkout.wizard.paymentRedirectDesc")}
                   </p>
                   <p className="text-sm text-muted-foreground text-center">
-                    Valor mensal: <strong className="text-primary">R$ {(pricingBreakdown?.valorFinalMensal ?? monthlyValue).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</strong>
+                    {t("checkout.wizard.monthlyValue")}: <strong className="text-primary">R$ {(pricingBreakdown?.valorFinalMensal ?? monthlyValue).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</strong>
                   </p>
                   <p className="text-xs text-muted-foreground text-center">
-                    Assinatura recorrente mensal — prazo de {planConfig?.termMonths ?? 36} meses com renovação automática
-                    {planConfig?.support24h ? " • Suporte 24h" : ""}
+                    {t("checkout.wizard.recurringSubscription", { term: planConfig?.termMonths ?? 36 })}
+                    {planConfig?.support24h ? ` • ${t("checkout.planConfig.support24h")}` : ""}
                   </p>
 
                   {paymentError && (
                     <div className="p-3 rounded-lg border border-destructive/30 bg-destructive/5 flex items-start gap-2">
                       <AlertTriangle className="w-4 h-4 text-destructive mt-0.5 shrink-0" />
                       <div>
-                        <p className="text-sm font-semibold text-destructive">Erro ao gerar cobrança</p>
+                        <p className="text-sm font-semibold text-destructive">{t("checkout.wizard.paymentError")}</p>
                         <p className="text-xs text-muted-foreground mt-1">{paymentError}</p>
                       </div>
                     </div>
@@ -867,8 +869,8 @@ const ContractingWizard = ({
 
                   <div className="grid grid-cols-2 gap-3">
                     {[
-                      { id: "BOLETO" as BillingType, icon: FileBarChart, label: "Boleto Bancário", desc: "Recorrente mensal" },
-                      { id: "CREDIT_CARD" as BillingType, icon: CreditCard, label: "Cartão de Crédito", desc: "Recorrente mensal" },
+                      { id: "BOLETO" as BillingType, icon: FileBarChart, label: t("checkout.wizard.bankSlip"), desc: t("checkout.wizard.recurringMonthly") },
+                      { id: "CREDIT_CARD" as BillingType, icon: CreditCard, label: t("checkout.wizard.creditCard"), desc: t("checkout.wizard.recurringMonthly") },
                     ].map((method) => (
                       <button
                         key={method.id}
@@ -886,29 +888,29 @@ const ContractingWizard = ({
                   </div>
 
                   <p className="text-xs text-muted-foreground text-center italic">
-                    Você será direcionado para a página segura de pagamento.
+                    {t("checkout.wizard.securePaymentRedirect")}
                   </p>
 
                   <Button onClick={handlePayment} disabled={!selectedPayment || paymentLoading} className="w-full h-14 text-base bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50" data-testid="botao-ir-checkout">
                     <ExternalLink className="w-5 h-5 mr-2" />
-                    {paymentError ? "Tentar novamente" : "COMPRAR AGORA"}
+                    {paymentError ? t("checkout.wizard.tryAgain") : t("checkout.wizard.buyNow")}
                   </Button>
                 </div>
               )}
             </WizardStepWrapper>
 
             {/* Step 5: Conclusão */}
-            <WizardStepWrapper stepNumber={5} title="Compra Concluída" subtitle="Fechamento e ativação do serviço" status={paymentConfirmed ? "active" : "pending"} isLast>
+            <WizardStepWrapper stepNumber={5} title={t("checkout.wizard.stepCompletion")} subtitle={t("checkout.wizard.completionSub")} status={paymentConfirmed ? "active" : "pending"} isLast>
               {paymentConfirmed ? (
                 <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-3">
                   <CheckCircle className="w-12 h-12 text-green-500 mx-auto" />
-                  <h4 className="text-lg font-heading font-bold text-foreground">Pedido concluído com sucesso!</h4>
-                  <p className="text-sm text-muted-foreground">Redirecionando para a página de confirmação...</p>
+                  <h4 className="text-lg font-heading font-bold text-foreground">{t("checkout.wizard.orderCompleted")}</h4>
+                  <p className="text-sm text-muted-foreground">{t("checkout.wizard.redirectingConfirmation")}</p>
                   <Loader2 className="w-5 h-5 animate-spin text-primary mx-auto" />
                 </div>
               ) : (
                 <div className="p-6 text-center">
-                  <p className="text-sm text-muted-foreground">Aguardando confirmação do pagamento para finalizar.</p>
+                  <p className="text-sm text-muted-foreground">{t("checkout.wizard.waitingPaymentToFinish")}</p>
                 </div>
               )}
             </WizardStepWrapper>

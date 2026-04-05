@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { Loader2, ArrowRight, Building2, User, MapPin, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -43,19 +44,20 @@ const validateCpf = (cpf: string): boolean => {
   return rest === parseInt(digits[10]);
 };
 
-const schema = z.object({
-  cnpjOuCpf: z.string().trim().min(11, "Informe o CPF ou CNPJ"),
-  razaoSocial: z.string().trim().min(2, "Informe o nome ou razão social"),
-  responsavel: z.string().trim().min(2, "Informe o responsável"),
-  responsavelCpf: z.string().refine((v) => validateCpf(v), "CPF do responsável inválido"),
-  email: z.string().trim().email("E-mail inválido"),
-  whatsapp: z.string().trim().min(14, "WhatsApp inválido"),
-  cep: z.string().refine((v) => v.replace(/\D/g, "").length === 8, "CEP inválido"),
-  endereco: z.string().trim().min(3, "Informe o logradouro"),
-  numero: z.string().trim().min(1, "Informe o número"),
-  cidade: z.string().trim().min(2, "Informe a cidade"),
-  uf: z.string().trim().min(2, "Informe o estado"),
-});
+const buildSchema = (t: (key: string) => string) =>
+  z.object({
+    cnpjOuCpf: z.string().trim().min(11, t("checkout.validationCpfCnpj")),
+    razaoSocial: z.string().trim().min(2, t("checkout.validationName")),
+    responsavel: z.string().trim().min(2, t("checkout.validationResponsible")),
+    responsavelCpf: z.string().refine((v) => validateCpf(v), t("checkout.validationCpfInvalid")),
+    email: z.string().trim().email(t("checkout.validationEmail")),
+    whatsapp: z.string().trim().min(14, t("checkout.validationWhatsapp")),
+    cep: z.string().refine((v) => v.replace(/\D/g, "").length === 8, t("checkout.validationCep")),
+    endereco: z.string().trim().min(3, t("checkout.validationAddress")),
+    numero: z.string().trim().min(1, t("checkout.validationNumber")),
+    cidade: z.string().trim().min(2, t("checkout.validationCity")),
+    uf: z.string().trim().min(2, t("checkout.validationState")),
+  });
 
 /* ─── Masks ─── */
 const maskCnpjCpf = (v: string) => {
@@ -92,6 +94,7 @@ interface Props {
 const fieldClass = "h-12 bg-card border-border";
 
 const CompanyDataForm = ({ onComplete, loading: externalLoading, initialData, submitLabel }: Props) => {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const { lookupCnpj, lookupCep, cnpjLoading, cepLoading } = useBrasilApiLookup();
   const [submitting, setSubmitting] = useState(false);
@@ -118,7 +121,7 @@ const CompanyDataForm = ({ onComplete, loading: externalLoading, initialData, su
     if (rawDoc.length !== 14) return;
     lookupCnpj(rawDoc).then((data) => {
       if (!data) {
-        toast({ title: "CNPJ não encontrado", description: "Preencha os dados manualmente.", variant: "destructive" });
+        toast({ title: t("checkout.cnpjNotFound"), description: t("checkout.cnpjNotFoundDesc"), variant: "destructive" });
         return;
       }
       setForm((prev) => ({
@@ -135,7 +138,7 @@ const CompanyDataForm = ({ onComplete, loading: externalLoading, initialData, su
         telefone: data.ddd_telefone_1 ? maskPhone(data.ddd_telefone_1.replace(/\D/g, "")) : prev.telefone,
         isPJ: true,
       }));
-      toast({ title: "Dados encontrados!", description: data.razao_social || "" });
+      toast({ title: t("checkout.dataFound"), description: data.razao_social || "" });
     });
   }, [rawDoc]);
 
@@ -157,16 +160,17 @@ const CompanyDataForm = ({ onComplete, loading: externalLoading, initialData, su
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const schema = buildSchema(t);
     const parsed = schema.safeParse(form);
     if (!parsed.success) {
-      toast({ title: "Revise os dados", description: parsed.error.issues[0]?.message || "Dados inválidos", variant: "destructive" });
+      toast({ title: t("checkout.reviewData"), description: parsed.error.issues[0]?.message || t("checkout.invalidData"), variant: "destructive" });
       return;
     }
     setSubmitting(true);
     try {
       await onComplete({ ...form, isPJ });
     } catch {
-      toast({ title: "Erro ao salvar", description: "Tente novamente.", variant: "destructive" });
+      toast({ title: t("checkout.saveError"), description: t("checkout.saveErrorDesc"), variant: "destructive" });
     } finally {
       setSubmitting(false);
     }
@@ -180,7 +184,7 @@ const CompanyDataForm = ({ onComplete, loading: externalLoading, initialData, su
       <div className="flex items-start gap-3 bg-primary/5 border border-primary/20 rounded-lg p-4">
         <Info className="w-5 h-5 text-primary shrink-0 mt-0.5" />
         <p className="text-sm text-muted-foreground">
-          Informe os dados da empresa e do responsável pela contratação. O sistema preencherá automaticamente CNPJ e CEP quando possível.
+          {t("checkout.introText")}
         </p>
       </div>
 
@@ -188,17 +192,17 @@ const CompanyDataForm = ({ onComplete, loading: externalLoading, initialData, su
       <div className="space-y-4">
         <div className="flex items-center gap-2 pb-2 border-b border-border">
           <Building2 className="w-5 h-5 text-primary" />
-          <h3 className="text-base font-bold text-foreground">Dados da Empresa</h3>
+          <h3 className="text-base font-bold text-foreground">{t("checkout.companyData")}</h3>
         </div>
 
         <div>
-          <Label className="mb-1.5 block text-sm">CPF ou CNPJ *</Label>
+          <Label className="mb-1.5 block text-sm">{t("checkout.cpfCnpj")} *</Label>
           <div className="relative">
             <Input
               value={form.cnpjOuCpf}
               onChange={(e) => update("cnpjOuCpf", maskCnpjCpf(e.target.value))}
               className={`${fieldClass} pr-10`}
-              placeholder="000.000.000-00 ou 00.000.000/0001-00"
+              placeholder={t("checkout.cpfCnpjPlaceholder")}
               maxLength={18}
               autoComplete="off"
               inputMode="numeric"
@@ -207,18 +211,18 @@ const CompanyDataForm = ({ onComplete, loading: externalLoading, initialData, su
             />
             {cnpjLoading && <Loader2 className="w-4 h-4 animate-spin absolute right-3 top-4 text-primary" />}
           </div>
-          {isPJ && <p className="text-xs text-primary mt-1">Empresa identificada — preenchimento automático ativado</p>}
+          {isPJ && <p className="text-xs text-primary mt-1">{t("checkout.companyIdentified")}</p>}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label className="mb-1.5 block text-sm">{isPJ ? "Razão Social" : "Nome Completo"} *</Label>
-            <Input value={form.razaoSocial} onChange={(e) => update("razaoSocial", e.target.value)} className={fieldClass} placeholder={isPJ ? "Razão social da empresa" : "Seu nome completo"} required data-testid="campo-razao-social" />
+            <Label className="mb-1.5 block text-sm">{isPJ ? t("checkout.razaoSocial") : t("checkout.nomeCompleto")} *</Label>
+            <Input value={form.razaoSocial} onChange={(e) => update("razaoSocial", e.target.value)} className={fieldClass} placeholder={isPJ ? t("checkout.razaoSocialPlaceholder") : t("checkout.nomeCompletoPlaceholder")} required data-testid="campo-razao-social" />
           </div>
           {isPJ && (
             <div>
-              <Label className="mb-1.5 block text-sm">Nome Fantasia</Label>
-              <Input value={form.nomeFantasia} onChange={(e) => update("nomeFantasia", e.target.value)} className={fieldClass} placeholder="Nome fantasia (opcional)" />
+              <Label className="mb-1.5 block text-sm">{t("checkout.nomeFantasia")}</Label>
+              <Input value={form.nomeFantasia} onChange={(e) => update("nomeFantasia", e.target.value)} className={fieldClass} placeholder={t("checkout.nomeFantasiaPlaceholder")} />
             </div>
           )}
         </div>
@@ -228,31 +232,31 @@ const CompanyDataForm = ({ onComplete, loading: externalLoading, initialData, su
       <div className="space-y-4">
         <div className="flex items-center gap-2 pb-2 border-b border-border">
           <User className="w-5 h-5 text-primary" />
-          <h3 className="text-base font-bold text-foreground">Responsável pela Contratação</h3>
+          <h3 className="text-base font-bold text-foreground">{t("checkout.responsibleSection")}</h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label className="mb-1.5 block text-sm">Responsável *</Label>
-            <Input value={form.responsavel} onChange={(e) => update("responsavel", e.target.value)} className={fieldClass} placeholder="Nome completo do responsável" autoComplete="name" required data-testid="campo-representante-nome" />
-            <p className="text-xs text-muted-foreground mt-1">Pessoa que está autorizando esta contratação</p>
+            <Label className="mb-1.5 block text-sm">{t("checkout.responsavel")} *</Label>
+            <Input value={form.responsavel} onChange={(e) => update("responsavel", e.target.value)} className={fieldClass} placeholder={t("checkout.responsavelPlaceholder")} autoComplete="name" required data-testid="campo-representante-nome" />
+            <p className="text-xs text-muted-foreground mt-1">{t("checkout.responsavelHelper")}</p>
           </div>
           <div>
-            <Label className="mb-1.5 block text-sm">CPF do Responsável *</Label>
+            <Label className="mb-1.5 block text-sm">{t("checkout.responsavelCpf")} *</Label>
             <Input value={form.responsavelCpf} onChange={(e) => update("responsavelCpf", maskCpf(e.target.value))} className={fieldClass} placeholder="000.000.000-00" maxLength={14} autoComplete="off" inputMode="numeric" required data-testid="campo-representante-cpf" />
           </div>
           <div>
-            <Label className="mb-1.5 block text-sm">E-mail *</Label>
-            <Input type="email" value={form.email} onChange={(e) => update("email", e.target.value)} className={fieldClass} placeholder="responsavel@email.com" autoComplete="email" required data-testid="campo-representante-email" />
+            <Label className="mb-1.5 block text-sm">{t("checkout.email")} *</Label>
+            <Input type="email" value={form.email} onChange={(e) => update("email", e.target.value)} className={fieldClass} placeholder={t("checkout.emailPlaceholder")} autoComplete="email" required data-testid="campo-representante-email" />
           </div>
           <div>
-            <Label className="mb-1.5 block text-sm">WhatsApp do Responsável *</Label>
-            <Input value={form.whatsapp} onChange={(e) => update("whatsapp", maskPhone(e.target.value))} className={fieldClass} placeholder="(00) 00000-0000" maxLength={15} autoComplete="tel" inputMode="tel" required data-testid="campo-whatsapp" />
-            <p className="text-xs text-muted-foreground mt-1">Utilizado para contato direto sobre este atendimento</p>
+            <Label className="mb-1.5 block text-sm">{t("checkout.whatsapp")} *</Label>
+            <Input value={form.whatsapp} onChange={(e) => update("whatsapp", maskPhone(e.target.value))} className={fieldClass} placeholder={t("checkout.whatsappPlaceholder")} maxLength={15} autoComplete="tel" inputMode="tel" required data-testid="campo-whatsapp" />
+            <p className="text-xs text-muted-foreground mt-1">{t("checkout.whatsappHelper")}</p>
           </div>
           <div>
-            <Label className="mb-1.5 block text-sm">Telefone Comercial</Label>
-            <Input value={form.telefone} onChange={(e) => update("telefone", maskPhone(e.target.value))} className={fieldClass} placeholder="(00) 0000-0000" maxLength={15} autoComplete="tel" inputMode="tel" data-testid="campo-representante-telefone" />
+            <Label className="mb-1.5 block text-sm">{t("checkout.telefoneComercial")}</Label>
+            <Input value={form.telefone} onChange={(e) => update("telefone", maskPhone(e.target.value))} className={fieldClass} placeholder={t("checkout.telefonePlaceholder")} maxLength={15} autoComplete="tel" inputMode="tel" data-testid="campo-representante-telefone" />
           </div>
         </div>
       </div>
@@ -261,47 +265,47 @@ const CompanyDataForm = ({ onComplete, loading: externalLoading, initialData, su
       <div className="space-y-4">
         <div className="flex items-center gap-2 pb-2 border-b border-border">
           <MapPin className="w-5 h-5 text-primary" />
-          <h3 className="text-base font-bold text-foreground">Endereço</h3>
+          <h3 className="text-base font-bold text-foreground">{t("checkout.addressSection")}</h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <Label className="mb-1.5 block text-sm">CEP *</Label>
+            <Label className="mb-1.5 block text-sm">{t("checkout.cep")} *</Label>
             <div className="relative">
-              <Input value={form.cep} onChange={(e) => update("cep", maskCep(e.target.value))} className={`${fieldClass} pr-10`} placeholder="00000-000" maxLength={9} autoComplete="postal-code" inputMode="numeric" required data-testid="campo-cep" />
+              <Input value={form.cep} onChange={(e) => update("cep", maskCep(e.target.value))} className={`${fieldClass} pr-10`} placeholder={t("checkout.cepPlaceholder")} maxLength={9} autoComplete="postal-code" inputMode="numeric" required data-testid="campo-cep" />
               {cepLoading && <Loader2 className="w-4 h-4 animate-spin absolute right-3 top-4 text-primary" />}
             </div>
           </div>
           <div className="md:col-span-2">
-            <Label className="mb-1.5 block text-sm">Logradouro *</Label>
-            <Input value={form.endereco} onChange={(e) => update("endereco", e.target.value)} className={fieldClass} placeholder="Rua, Avenida..." autoComplete="street-address" required data-testid="campo-logradouro" />
+            <Label className="mb-1.5 block text-sm">{t("checkout.logradouro")} *</Label>
+            <Input value={form.endereco} onChange={(e) => update("endereco", e.target.value)} className={fieldClass} placeholder={t("checkout.logradouroPlaceholder")} autoComplete="street-address" required data-testid="campo-logradouro" />
           </div>
           <div>
-            <Label className="mb-1.5 block text-sm">Número *</Label>
-            <Input value={form.numero} onChange={(e) => update("numero", e.target.value)} className={fieldClass} placeholder="123" required data-testid="campo-numero" />
+            <Label className="mb-1.5 block text-sm">{t("checkout.numero")} *</Label>
+            <Input value={form.numero} onChange={(e) => update("numero", e.target.value)} className={fieldClass} placeholder={t("checkout.numeroPlaceholder")} required data-testid="campo-numero" />
           </div>
           <div>
-            <Label className="mb-1.5 block text-sm">Complemento</Label>
-            <Input value={form.complemento} onChange={(e) => update("complemento", e.target.value)} className={fieldClass} placeholder="Sala, andar..." data-testid="campo-complemento" />
+            <Label className="mb-1.5 block text-sm">{t("checkout.complemento")}</Label>
+            <Input value={form.complemento} onChange={(e) => update("complemento", e.target.value)} className={fieldClass} placeholder={t("checkout.complementoPlaceholder")} data-testid="campo-complemento" />
           </div>
           <div>
-            <Label className="mb-1.5 block text-sm">Bairro</Label>
-            <Input value={form.bairro} onChange={(e) => update("bairro", e.target.value)} className={fieldClass} placeholder="Bairro" data-testid="campo-bairro" />
+            <Label className="mb-1.5 block text-sm">{t("checkout.bairro")}</Label>
+            <Input value={form.bairro} onChange={(e) => update("bairro", e.target.value)} className={fieldClass} placeholder={t("checkout.bairroPlaceholder")} data-testid="campo-bairro" />
           </div>
           <div>
-            <Label className="mb-1.5 block text-sm">Cidade *</Label>
-            <Input value={form.cidade} onChange={(e) => update("cidade", e.target.value)} className={fieldClass} placeholder="Sua cidade" autoComplete="address-level2" required data-testid="campo-cidade" />
+            <Label className="mb-1.5 block text-sm">{t("checkout.cidade")} *</Label>
+            <Input value={form.cidade} onChange={(e) => update("cidade", e.target.value)} className={fieldClass} placeholder={t("checkout.cidadePlaceholder")} autoComplete="address-level2" required data-testid="campo-cidade" />
           </div>
           <div>
-            <Label className="mb-1.5 block text-sm">UF *</Label>
-            <Input value={form.uf} onChange={(e) => update("uf", e.target.value.toUpperCase().slice(0, 2))} className={fieldClass} placeholder="SP" maxLength={2} autoComplete="address-level1" required data-testid="campo-uf" />
+            <Label className="mb-1.5 block text-sm">{t("checkout.uf")} *</Label>
+            <Input value={form.uf} onChange={(e) => update("uf", e.target.value.toUpperCase().slice(0, 2))} className={fieldClass} placeholder={t("checkout.ufPlaceholder")} maxLength={2} autoComplete="address-level1" required data-testid="campo-uf" />
           </div>
         </div>
       </div>
 
       <Button type="submit" disabled={isLoading} className="w-full h-14 text-base bg-primary hover:bg-primary/90 text-primary-foreground" data-testid="botao-prosseguir-cadastro">
         {isLoading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <ArrowRight className="w-5 h-5 mr-2" />}
-        {submitLabel || "Continuar para o contrato"}
+        {submitLabel || t("checkout.continueToContract")}
       </Button>
     </form>
   );
