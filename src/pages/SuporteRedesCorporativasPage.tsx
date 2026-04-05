@@ -29,7 +29,7 @@ const SuporteRedesCorporativasPage = () => {
       ]}
       localContent={t(`${k}.localContent`)}
       showHoursCalculator={false}
-      extraSections={<><HoursCalculator serviceName="Suporte para Redes Corporativas" contractHref="/contratar/suporte-tecnico-para-redes-corporativas" basePrice={500} hasProgressiveDiscount={true} maxDiscountPercent={27.5} /><GuaranteeBlock /><ServiceContactForm serviceName="Suporte Técnico para Redes Corporativas" /></>}
+      extraSections={<HoursCalculator serviceName="Suporte para Redes Corporativas" contractHref="/contratar/suporte-tecnico-para-redes-corporativas" basePrice={500} hasProgressiveDiscount={true} maxDiscountPercent={27.5} />}
     />
   );
 };

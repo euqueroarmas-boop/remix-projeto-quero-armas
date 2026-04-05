@@ -29,11 +29,7 @@ const FirewallPfsensePage = () => {
       localContent={t("p.firewall.localContent")}
       showHoursCalculator={false}
       extraSections={
-        <>
-          <HoursCalculator serviceName="Firewall Corporativo pfSense" contractHref="/contratar/firewall-pfsense-jacarei" basePrice={400} hasProgressiveDiscount={true} maxDiscountPercent={27.5} />
-          <GuaranteeBlock />
-          <ServiceContactForm serviceName="Firewall Corporativo pfSense" />
-        </>
+        <HoursCalculator serviceName="Firewall Corporativo pfSense" contractHref="/contratar/firewall-pfsense-jacarei" basePrice={400} hasProgressiveDiscount={true} maxDiscountPercent={27.5} />
       }
     />
   );

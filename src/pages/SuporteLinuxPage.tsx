@@ -29,7 +29,7 @@ const SuporteLinuxPage = () => {
       ]}
       localContent={t(`${k}.localContent`)}
       showHoursCalculator={false}
-      extraSections={<><HoursCalculator serviceName="Suporte Linux" contractHref="/contratar/suporte-linux" basePrice={400} hasProgressiveDiscount={true} maxDiscountPercent={27.5} /><GuaranteeBlock /><ServiceContactForm serviceName="Suporte Linux" /></>}
+      extraSections={<HoursCalculator serviceName="Suporte Linux" contractHref="/contratar/suporte-linux" basePrice={400} hasProgressiveDiscount={true} maxDiscountPercent={27.5} />}
     />
   );
 };

@@ -31,11 +31,7 @@ const ServidoresDellPage = () => {
       localContent={t(`${k}.localContent`)}
       showHoursCalculator={false}
       extraSections={
-        <>
-          <HoursCalculator serviceName="Implantação de Servidores Dell PowerEdge" contractHref="/contratar/servidor-dell-poweredge-jacarei" basePrice={500} hasProgressiveDiscount={false} />
-          <GuaranteeBlock />
-          <ServiceContactForm serviceName="Implantação de Servidores Dell PowerEdge" />
-        </>
+        <HoursCalculator serviceName="Implantação de Servidores Dell PowerEdge" contractHref="/contratar/servidor-dell-poweredge-jacarei" basePrice={500} hasProgressiveDiscount={false} />
       }
     />
   );

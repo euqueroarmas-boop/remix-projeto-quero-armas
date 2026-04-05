@@ -32,11 +32,7 @@ const AutomacaoIaPage = () => {
       localContent={t(`${k}.localContent`)}
       showHoursCalculator={false}
       extraSections={
-        <>
-          <HoursCalculator serviceName="Automação de TI com IA" contractHref="/contratar/automacao-de-ti-com-inteligencia-artificial" basePrice={500} hasProgressiveDiscount={false} />
-          <GuaranteeBlock />
-          <ServiceContactForm serviceName="Automação de TI com IA" />
-        </>
+        <HoursCalculator serviceName="Automação de TI com IA" contractHref="/contratar/automacao-de-ti-com-inteligencia-artificial" basePrice={500} hasProgressiveDiscount={false} />
       }
     />
   );

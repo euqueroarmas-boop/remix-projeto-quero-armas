@@ -29,7 +29,7 @@ const ManutencaoInfraestruturaPage = () => {
       ]}
       localContent={t(`${k}.localContent`)}
       showHoursCalculator={false}
-      extraSections={<><HoursCalculator serviceName="Manutenção de Infraestrutura de TI" contractHref="/contratar/manutencao-de-infraestrutura-de-ti" basePrice={500} hasProgressiveDiscount={true} maxDiscountPercent={27.5} /><GuaranteeBlock /><ServiceContactForm serviceName="Manutenção de Infraestrutura de TI" /></>}
+      extraSections={<HoursCalculator serviceName="Manutenção de Infraestrutura de TI" contractHref="/contratar/manutencao-de-infraestrutura-de-ti" basePrice={500} hasProgressiveDiscount={true} maxDiscountPercent={27.5} />}
     />
   );
 };

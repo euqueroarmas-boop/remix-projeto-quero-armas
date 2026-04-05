@@ -32,11 +32,7 @@ const AutomacaoAlexaPage = () => {
       localContent={t(`${k}.localContent`)}
       showHoursCalculator={false}
       extraSections={
-        <>
-          <HoursCalculator serviceName="Automação com Alexa" contractHref="/contratar/automacao-alexa" basePrice={350} hasProgressiveDiscount={true} maxDiscountPercent={27.5} />
-          <GuaranteeBlock />
-          <ServiceContactForm serviceName="Automação com Alexa" />
-        </>
+        <HoursCalculator serviceName="Automação com Alexa" contractHref="/contratar/automacao-alexa" basePrice={350} hasProgressiveDiscount={true} maxDiscountPercent={27.5} />
       }
     />
   );

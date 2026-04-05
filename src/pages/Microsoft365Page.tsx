@@ -30,11 +30,7 @@ const Microsoft365Page = () => {
       localContent={t(`${k}.localContent`)}
       showHoursCalculator={false}
       extraSections={
-        <>
-          <HoursCalculator serviceName="Microsoft 365" contractHref="/contratar/microsoft-365-para-empresas-jacarei" basePrice={200} hasProgressiveDiscount={true} maxDiscountPercent={27.5} />
-          <GuaranteeBlock />
-          <ServiceContactForm serviceName="Microsoft 365 Para Empresas" />
-        </>
+        <HoursCalculator serviceName="Microsoft 365" contractHref="/contratar/microsoft-365-para-empresas-jacarei" basePrice={200} hasProgressiveDiscount={true} maxDiscountPercent={27.5} />
       }
     />
   );

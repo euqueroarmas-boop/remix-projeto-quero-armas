@@ -28,11 +28,7 @@ const BackupCorporativoPage = () => {
       localContent={t("p.backup.localContent")}
       showHoursCalculator={false}
       extraSections={
-        <>
-          <HoursCalculator serviceName="Backup Corporativo" contractHref="/contratar/backup-empresarial-jacarei" basePrice={400} hasProgressiveDiscount={true} maxDiscountPercent={27.5} />
-          <GuaranteeBlock />
-          <ServiceContactForm serviceName="Backup Corporativo" />
-        </>
+        <HoursCalculator serviceName="Backup Corporativo" contractHref="/contratar/backup-empresarial-jacarei" basePrice={400} hasProgressiveDiscount={true} maxDiscountPercent={27.5} />
       }
     />
   );

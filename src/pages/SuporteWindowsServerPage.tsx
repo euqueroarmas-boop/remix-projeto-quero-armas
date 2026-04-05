@@ -29,7 +29,7 @@ const SuporteWindowsServerPage = () => {
       ]}
       localContent={t(`${k}.localContent`)}
       showHoursCalculator={false}
-      extraSections={<><HoursCalculator serviceName="Suporte Windows Server" contractHref="/contratar/suporte-windows-server" basePrice={500} hasProgressiveDiscount={true} maxDiscountPercent={27.5} /><GuaranteeBlock /><ServiceContactForm serviceName="Suporte Windows Server" /></>}
+      extraSections={<HoursCalculator serviceName="Suporte Windows Server" contractHref="/contratar/suporte-windows-server" basePrice={500} hasProgressiveDiscount={true} maxDiscountPercent={27.5} />}
     />
   );
 };

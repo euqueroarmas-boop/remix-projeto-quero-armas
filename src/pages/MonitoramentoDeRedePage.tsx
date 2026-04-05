@@ -29,7 +29,7 @@ const MonitoramentoDeRedePage = () => {
       ]}
       localContent={t(`${k}.localContent`)}
       showHoursCalculator={false}
-      extraSections={<><HoursCalculator serviceName="Monitoramento de Rede" contractHref="/contratar/monitoramento-de-rede" basePrice={500} hasProgressiveDiscount={true} maxDiscountPercent={27.5} /><GuaranteeBlock /><ServiceContactForm serviceName="Monitoramento de Rede" /></>}
+      extraSections={<HoursCalculator serviceName="Monitoramento de Rede" contractHref="/contratar/monitoramento-de-rede" basePrice={500} hasProgressiveDiscount={true} maxDiscountPercent={27.5} />}
     />
   );
 };
