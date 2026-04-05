@@ -136,7 +136,8 @@
     "finalCtaWhatsapp": "Resolver agora pelo WhatsApp",
     "finalCtaOnline": "Quero minha proposta online",
     "relatedTag": "Serviços relacionados",
-    "relatedTagCity": "Serviços relacionados em {{city}}"
+    "relatedTagCity": "Serviços relacionados em {{city}}",
+    "allServicesInCity": "Todos os nossos serviços de TI disponíveis para empresas em {{city}}:"
   },
   "authority": {
     "years": "15+ anos no mercado",
@@ -956,7 +957,9 @@
     "colTotal": "Total",
     "buyHours": "Comprar Horas",
     "buyDesc": "Você será direcionado para preencher seus dados, gerar o contrato e seguir para o pagamento seguro.",
-    "whatsappMsg": "Olá! Gostaria de contratar {{hours}} hora(s) técnica(s){{service}} . Valor: R$ {{price}}."
+    "whatsappMsg": "Olá! Gostaria de contratar {{hours}} hora(s) técnica(s){{service}} . Valor: R$ {{price}}.",
+    "descService": "Calcule o investimento para {{service}}.",
+    "descFixed": "Valor fixo por hora técnica — sem variação de preço por volume."
   },
   "investCalc": {
     "tag": "Calculadora",
@@ -1320,5 +1323,79 @@
     "decrease": "Diminuir",
     "increase": "Aumentar",
     "currency": "R$"
+  },
+  "guarantee": {
+    "title": "Você não corre risco com a WMTi.",
+    "highlight": "A GARANTIA É A MESMA QUANTIDADE DE HORAS COMPRADAS.",
+    "highlightDesc": "Comprou 3 horas = 3 horas de garantia. Comprou 5 horas = 5 horas de garantia. Comprou 10 horas = 10 horas de garantia.",
+    "desc1": "Se algo não sair exatamente como deveria, nós voltamos e corrigimos — sem custo adicional.",
+    "desc2": "A quantidade de horas que você contrata também funciona como garantia para ajustes e correções dentro do escopo do serviço. Sem cobrança surpresa. Sem risco para sua operação.",
+    "bullet1": "Correções incluídas dentro do escopo contratado",
+    "bullet2": "Mais previsibilidade para sua empresa",
+    "bullet3": "Redução de risco técnico e financeiro",
+    "bullet4": "Compromisso real com a entrega",
+    "cta": "Fale com a WMTi"
+  },
+  "serviceContact": {
+    "tag": "FALE CONOSCO",
+    "title": "Fale com a WMTi sobre",
+    "subtitle": "Preencha o formulário e nossa equipe entrará em contato.",
+    "labelName": "Nome *",
+    "placeholderName": "Seu nome completo",
+    "labelEmail": "E-mail *",
+    "placeholderEmail": "seu@email.com.br",
+    "labelCompany": "Empresa",
+    "placeholderCompany": "Nome da empresa",
+    "labelMessage": "Mensagem *",
+    "placeholderMessage": "Descreva sua necessidade...",
+    "submit": "Enviar Mensagem",
+    "sending": "Enviando...",
+    "validationError": "Preencha os campos obrigatórios.",
+    "successMessage": "Mensagem enviada com sucesso!",
+    "errorMessage": "Erro ao enviar. Tente novamente."
+  },
+  "emergency": {
+    "tag": "ATENDIMENTO PRIORITÁRIO",
+    "title": "Resolva agora:",
+    "titleHighlight": "diagnóstico gratuito",
+    "desc": "Preencha o formulário e nossa equipe técnica entrará em contato em até",
+    "descTime": "2 horas úteis",
+    "descCity": "para atender sua empresa em",
+    "inCity": "em",
+    "labelName": "Nome *",
+    "placeholderName": "Seu nome",
+    "labelCompany": "Empresa",
+    "placeholderCompany": "Nome da empresa",
+    "labelEmail": "E-mail *",
+    "placeholderEmail": "seu@email.com",
+    "labelPhone": "Telefone *",
+    "submit": "Solicitar diagnóstico gratuito",
+    "sending": "Enviando...",
+    "validationError": "Preencha todos os campos obrigatórios.",
+    "successMessage": "Recebemos seu contato! Nossa equipe entrará em contato em breve.",
+    "errorMessage": "Erro ao enviar. Tente pelo WhatsApp.",
+    "successTitle": "Contato recebido!",
+    "successDesc": "Nossa equipe técnica entrará em contato em breve para resolver seu problema.",
+    "disclaimer": "Sem compromisso. Diagnóstico e proposta totalmente gratuitos."
+  },
+  "links": {
+    "infraestruturaTi": "Infraestrutura de TI",
+    "suporteTi": "Suporte Técnico",
+    "segurancaRede": "Segurança de Rede",
+    "monitoramentoRede": "Monitoramento de Rede",
+    "servidoresDell": "Servidores Dell",
+    "microsoft365": "Microsoft 365",
+    "backupCorporativo": "Backup Corporativo",
+    "firewallPfsense": "Firewall pfSense",
+    "locacaoComputadores": "Locação de Computadores",
+    "adminServidores": "Administração de Servidores",
+    "suporteEmergencial": "Suporte Emergencial",
+    "terceirizacaoTi": "Terceirização de TI",
+    "tiCartorios": "TI para Cartórios",
+    "tiHospitais": "TI para Hospitais",
+    "tiAdvocacia": "TI para Advocacia",
+    "tiContabilidades": "TI para Contabilidades",
+    "tiIndustrias": "TI para Indústrias",
+    "inCity": "em"
   }
 }

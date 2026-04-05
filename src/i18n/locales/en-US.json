@@ -136,7 +136,8 @@
     "finalCtaWhatsapp": "Fix it now via WhatsApp",
     "finalCtaOnline": "Get my online proposal",
     "relatedTag": "Related services",
-    "relatedTagCity": "Related services in {{city}}"
+    "relatedTagCity": "Related services in {{city}}",
+    "allServicesInCity": "All our IT services available for businesses in {{city}}:"
   },
   "authority": {
     "years": "15+ years in the market",
@@ -2521,7 +2522,9 @@
     "colTotal": "Total",
     "buyHours": "Buy Hours",
     "buyDesc": "You will be directed to fill in your details, generate the contract and proceed to secure payment.",
-    "whatsappMsg": "Hello! I'd like to hire {{hours}} technical hour(s){{service}}. Amount: R$ {{price}}."
+    "whatsappMsg": "Hello! I'd like to hire {{hours}} technical hour(s){{service}}. Amount: R$ {{price}}.",
+    "descService": "Calculate the investment for {{service}}.",
+    "descFixed": "Fixed rate per technical hour — no volume-based price variation."
   },
   "investCalc": {
     "tag": "Calculator",
@@ -2886,5 +2889,79 @@
     "decrease": "Decrease",
     "increase": "Increase",
     "currency": "R$"
+  },
+  "guarantee": {
+    "title": "You take no risk with WMTi.",
+    "highlight": "THE WARRANTY EQUALS THE HOURS PURCHASED.",
+    "highlightDesc": "Bought 3 hours = 3 hours of warranty. Bought 5 hours = 5 hours of warranty. Bought 10 hours = 10 hours of warranty.",
+    "desc1": "If something doesn't go exactly as expected, we come back and fix it — at no additional cost.",
+    "desc2": "The hours you purchase also serve as warranty for adjustments and fixes within the service scope. No surprise charges. No risk to your operation.",
+    "bullet1": "Fixes included within the contracted scope",
+    "bullet2": "More predictability for your business",
+    "bullet3": "Reduced technical and financial risk",
+    "bullet4": "Real commitment to delivery",
+    "cta": "Talk to WMTi"
+  },
+  "serviceContact": {
+    "tag": "CONTACT US",
+    "title": "Talk to WMTi about",
+    "subtitle": "Fill out the form and our team will get in touch.",
+    "labelName": "Name *",
+    "placeholderName": "Your full name",
+    "labelEmail": "Email *",
+    "placeholderEmail": "you@company.com",
+    "labelCompany": "Company",
+    "placeholderCompany": "Company name",
+    "labelMessage": "Message *",
+    "placeholderMessage": "Describe your needs...",
+    "submit": "Send Message",
+    "sending": "Sending...",
+    "validationError": "Please fill in all required fields.",
+    "successMessage": "Message sent successfully!",
+    "errorMessage": "Failed to send. Please try again."
+  },
+  "emergency": {
+    "tag": "PRIORITY SUPPORT",
+    "title": "Resolve now:",
+    "titleHighlight": "free diagnostic",
+    "desc": "Fill out the form and our technical team will contact you within",
+    "descTime": "2 business hours",
+    "descCity": "to assist your company in",
+    "inCity": "in",
+    "labelName": "Name *",
+    "placeholderName": "Your name",
+    "labelCompany": "Company",
+    "placeholderCompany": "Company name",
+    "labelEmail": "Email *",
+    "placeholderEmail": "you@email.com",
+    "labelPhone": "Phone *",
+    "submit": "Request free diagnostic",
+    "sending": "Sending...",
+    "validationError": "Please fill in all required fields.",
+    "successMessage": "We received your request! Our team will contact you shortly.",
+    "errorMessage": "Failed to send. Try via WhatsApp.",
+    "successTitle": "Contact received!",
+    "successDesc": "Our technical team will contact you shortly to resolve your issue.",
+    "disclaimer": "No commitment. Diagnostic and proposal completely free."
+  },
+  "links": {
+    "infraestruturaTi": "IT Infrastructure",
+    "suporteTi": "Technical Support",
+    "segurancaRede": "Network Security",
+    "monitoramentoRede": "Network Monitoring",
+    "servidoresDell": "Dell Servers",
+    "microsoft365": "Microsoft 365",
+    "backupCorporativo": "Enterprise Backup",
+    "firewallPfsense": "pfSense Firewall",
+    "locacaoComputadores": "Computer Leasing",
+    "adminServidores": "Server Management",
+    "suporteEmergencial": "Emergency Support",
+    "terceirizacaoTi": "IT Outsourcing",
+    "tiCartorios": "IT for Notary Offices",
+    "tiHospitais": "IT for Hospitals",
+    "tiAdvocacia": "IT for Law Firms",
+    "tiContabilidades": "IT for Accounting Firms",
+    "tiIndustrias": "IT for Industries",
+    "inCity": "in"
   }
 }

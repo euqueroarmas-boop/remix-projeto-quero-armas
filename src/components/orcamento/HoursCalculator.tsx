@@ -59,8 +59,8 @@ const HoursCalculator = ({
             {t("hoursCalc.title")} <span className="text-primary">{t("hoursCalc.titleHighlight")}</span>
           </h2>
           <p className="font-body text-muted-foreground mb-2 leading-relaxed">
-            {serviceName
-              ? `Calcule o investimento para ${serviceName}.`
+          {serviceName
+              ? t("hoursCalc.descService", { service: serviceName, defaultValue: `Calcule o investimento para ${serviceName}.` })
               : t("hoursCalc.desc")}
           </p>
           {hasProgressiveDiscount && (
@@ -70,7 +70,7 @@ const HoursCalculator = ({
           )}
           {!hasProgressiveDiscount && (
             <p className="font-body text-sm text-muted-foreground/70 mb-10 leading-relaxed">
-              Valor fixo por hora técnica — sem variação de preço por volume.
+              {t("hoursCalc.descFixed", "Valor fixo por hora técnica — sem variação de preço por volume.")}
             </p>
           )}
 
