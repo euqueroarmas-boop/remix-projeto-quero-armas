@@ -5,7 +5,7 @@ import {
   X, LogOut,
   LayoutDashboard, ScrollText, AlertTriangle, CreditCard, UserCog, Megaphone,
   ShieldAlert, Webhook, ClipboardCheck, Activity, Stethoscope, FlaskConical,
-  TestTube2, PenTool, Settings, Users, MessageSquareCode, FileSignature, Brain, DollarSign, MapPin,
+  TestTube2, PenTool, Settings, Users, MessageSquareCode, FileSignature, Brain, DollarSign, MapPin, FileText,
 } from "lucide-react";
 
 interface AdminFullscreenMenuProps {
@@ -31,6 +31,7 @@ const MENU_SECTIONS = [
       { id: "leads", label: "Leads & Propostas", icon: Megaphone },
       { id: "payments", label: "Pagamentos", icon: CreditCard },
       { id: "financeiro", label: "Financeiro", icon: DollarSign },
+      { id: "invoices", label: "Notas Fiscais", icon: FileText },
       { id: "clientes", label: "Clientes", icon: UserCog },
       { id: "cipa-locations", label: "CIPA Geo", icon: MapPin },
     ],
