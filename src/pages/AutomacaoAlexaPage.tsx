@@ -1,6 +1,9 @@
 import { useTranslation } from "react-i18next";
 import { Home, Building2, Wifi, ShieldCheck, Clock, Zap } from "lucide-react";
 import ServicePageTemplate from "@/components/ServicePageTemplate";
+import HoursCalculator from "@/components/orcamento/HoursCalculator";
+import GuaranteeBlock from "@/components/GuaranteeBlock";
+import ServiceContactForm from "@/components/ServiceContactForm";
 
 const icons = [Home, Building2, Wifi, ShieldCheck, Clock, Zap];
 
@@ -26,7 +29,15 @@ const AutomacaoAlexaPage = () => {
         { label: relatedLabels[3], href: "/automacao-de-ti-com-inteligencia-artificial" },
         { label: relatedLabels[4], href: "/monitoramento-de-rede" },
       ]}
-      localContent={t(`${k}.localContent`)} showHoursCalculator
+      localContent={t(`${k}.localContent`)}
+      showHoursCalculator={false}
+      extraSections={
+        <>
+          <HoursCalculator serviceName="Automação com Alexa" contractHref="/contratar/automacao-alexa" basePrice={350} hasProgressiveDiscount={true} maxDiscountPercent={27.5} />
+          <GuaranteeBlock />
+          <ServiceContactForm serviceName="Automação com Alexa" />
+        </>
+      }
     />
   );
 };

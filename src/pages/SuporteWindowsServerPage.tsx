@@ -1,6 +1,9 @@
 import { useTranslation } from "react-i18next";
 import { Server, Shield, HardDrive, Activity, Headphones, Wrench } from "lucide-react";
 import ServicePageTemplate from "@/components/ServicePageTemplate";
+import HoursCalculator from "@/components/orcamento/HoursCalculator";
+import GuaranteeBlock from "@/components/GuaranteeBlock";
+import ServiceContactForm from "@/components/ServiceContactForm";
 
 const icons = [Server, Shield, HardDrive, Activity, Wrench, Headphones];
 
@@ -24,7 +27,9 @@ const SuporteWindowsServerPage = () => {
         { label: relatedLabels[1], href: "/servidor-dell-poweredge-jacarei" },
         { label: relatedLabels[2], href: "/administracao-de-servidores" },
       ]}
-      localContent={t(`${k}.localContent`)} showHoursCalculator
+      localContent={t(`${k}.localContent`)}
+      showHoursCalculator={false}
+      extraSections={<><HoursCalculator serviceName="Suporte Windows Server" contractHref="/contratar/suporte-windows-server" basePrice={500} hasProgressiveDiscount={true} maxDiscountPercent={27.5} /><GuaranteeBlock /><ServiceContactForm serviceName="Suporte Windows Server" /></>}
     />
   );
 };

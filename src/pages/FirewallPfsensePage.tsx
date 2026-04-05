@@ -1,6 +1,9 @@
 import { useTranslation } from "react-i18next";
 import { Shield, Lock, Eye, Wifi, Server, Activity } from "lucide-react";
 import ServicePageTemplate from "@/components/ServicePageTemplate";
+import HoursCalculator from "@/components/orcamento/HoursCalculator";
+import GuaranteeBlock from "@/components/GuaranteeBlock";
+import ServiceContactForm from "@/components/ServiceContactForm";
 
 const icons = [Shield, Lock, Eye, Wifi, Server, Activity];
 
@@ -10,13 +13,9 @@ const FirewallPfsensePage = () => {
 
   return (
     <ServicePageTemplate
-      title={t("p.firewall.title")}
-      metaTitle={t("p.firewall.metaTitle")}
-      metaDescription={t("p.firewall.metaDescription")}
-      tag={t("p.firewall.tag")}
+      title={t("p.firewall.title")} metaTitle={t("p.firewall.metaTitle")} metaDescription={t("p.firewall.metaDescription")} tag={t("p.firewall.tag")}
       headline={<>{t("p.firewall.headline1")}<span className="text-primary">{t("p.firewall.headlineHighlight")}</span>{t("p.firewall.headline2")}</>}
-      description={t("p.firewall.description")}
-      whatsappMessage={t("p.firewall.whatsappMessage")}
+      description={t("p.firewall.description")} whatsappMessage={t("p.firewall.whatsappMessage")}
       painPoints={t("p.firewall.painPoints", { returnObjects: true }) as string[]}
       solutions={t("p.firewall.solutions", { returnObjects: true }) as string[]}
       benefits={benefits}
@@ -28,7 +27,14 @@ const FirewallPfsensePage = () => {
         { label: (t("p.firewall.relatedLabels", { returnObjects: true }) as string[])[3], href: "/infraestrutura-ti-corporativa" },
       ]}
       localContent={t("p.firewall.localContent")}
-      showHoursCalculator
+      showHoursCalculator={false}
+      extraSections={
+        <>
+          <HoursCalculator serviceName="Firewall Corporativo pfSense" contractHref="/contratar/firewall-pfsense-jacarei" basePrice={400} hasProgressiveDiscount={true} maxDiscountPercent={27.5} />
+          <GuaranteeBlock />
+          <ServiceContactForm serviceName="Firewall Corporativo pfSense" />
+        </>
+      }
     />
   );
 };
