@@ -2,8 +2,6 @@ import { useTranslation } from "react-i18next";
 import { HardDrive, Shield, Cloud, Server, Activity, Headphones } from "lucide-react";
 import ServicePageTemplate from "@/components/ServicePageTemplate";
 import HoursCalculator from "@/components/orcamento/HoursCalculator";
-import GuaranteeBlock from "@/components/GuaranteeBlock";
-import ServiceContactForm from "@/components/ServiceContactForm";
 
 const icons = [HardDrive, Cloud, Shield, Server, Activity, Headphones];
 

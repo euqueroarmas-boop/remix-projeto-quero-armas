@@ -2,8 +2,6 @@ import { useTranslation } from "react-i18next";
 import { Activity, Network, AlertTriangle, Eye, Shield, Headphones } from "lucide-react";
 import ServicePageTemplate from "@/components/ServicePageTemplate";
 import HoursCalculator from "@/components/orcamento/HoursCalculator";
-import GuaranteeBlock from "@/components/GuaranteeBlock";
-import ServiceContactForm from "@/components/ServiceContactForm";
 
 const icons = [Activity, Network, AlertTriangle, Eye, Shield, Headphones];
 
