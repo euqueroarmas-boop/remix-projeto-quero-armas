@@ -692,13 +692,29 @@ Deno.serve(async (req) => {
               }
               if (Object.keys(enrichUpdates).length) {
                 enrichUpdates.notes = "Enriquecido via payment event (campos vazios)";
+                const enrichChanges = detectSensitiveChanges(existingInvoice as Record<string, unknown>, enrichUpdates, "payment_event", "asaas_webhook", existingInvoice.id);
                 await supabase.from("fiscal_documents").update(enrichUpdates).eq("id", existingInvoice.id);
+                const ehId = await logFiscalEvent(supabase, {
+                  fiscal_document_id: existingInvoice.id, asaas_invoice_id: asaasInvoiceId, customer_id: custId,
+                  event_type: event, event_source: "payment_event",
+                  payload_snapshot: body, normalized_status: existingInvoice.status,
+                  overwrite_decision: "enriched", decision_reason: "Payment enriched empty fields only",
+                  created_by_process: "asaas_webhook",
+                });
+                if (enrichChanges.length) await logFiscalChanges(supabase, enrichChanges.map(c => ({ ...c, related_event_history_id: ehId })));
                 console.log("[asaas-webhook] Fiscal doc enriquecido (payment, secundário):", existingInvoice.id);
               } else {
                 console.log("[asaas-webhook] Fiscal doc já existe, nada a enriquecer (payment secundário):", existingInvoice.id);
               }
             } else {
               console.log("[asaas-webhook] Fiscal doc protegido por invoice event, payment ignorado:", existingInvoice.id, existingInvoice.status);
+              await logFiscalEvent(supabase, {
+                fiscal_document_id: existingInvoice.id, asaas_invoice_id: asaasInvoiceId, customer_id: custId,
+                event_type: event, event_source: "payment_event",
+                payload_snapshot: body, normalized_status: existingInvoice.status,
+                overwrite_decision: "blocked_priority", decision_reason: `Protected by ${existingInvoice.last_event_source}, status=${existingInvoice.status}`,
+                created_by_process: "asaas_webhook",
+              });
             }
 
             await supabase.from("integration_logs").insert({
