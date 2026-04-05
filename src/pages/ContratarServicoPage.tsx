@@ -1711,7 +1711,7 @@ const ContratarServicoPage = () => {
                   <p className="font-bold text-foreground">{serviceName}</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-mono text-xs text-muted-foreground">{isEmergency ? t("contratar.emergencial") : t("contratar.avulso")}</p>
+                  <p className="font-mono text-xs text-muted-foreground">{t("contratar.investimentoAPartir")}</p>
                   <p className="font-bold text-primary">R$ {basePrice.toFixed(2).replace(".", ",")}/h</p>
                 </div>
               </div>
