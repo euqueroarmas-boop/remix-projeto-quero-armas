@@ -1260,7 +1260,9 @@ export type Database = {
       }
       fiscal_documents: {
         Row: {
+          access_key: string | null
           amount: number
+          asaas_invoice_id: string | null
           contract_id: string | null
           created_at: string
           customer_id: string
@@ -1268,13 +1270,19 @@ export type Database = {
           document_type: string
           file_url: string | null
           id: string
+          invoice_series: string | null
           issue_date: string
           notes: string | null
           payment_id: string | null
+          raw_payload: Json | null
+          service_reference: string | null
           status: string
+          xml_url: string | null
         }
         Insert: {
+          access_key?: string | null
           amount?: number
+          asaas_invoice_id?: string | null
           contract_id?: string | null
           created_at?: string
           customer_id: string
@@ -1282,13 +1290,19 @@ export type Database = {
           document_type?: string
           file_url?: string | null
           id?: string
+          invoice_series?: string | null
           issue_date?: string
           notes?: string | null
           payment_id?: string | null
+          raw_payload?: Json | null
+          service_reference?: string | null
           status?: string
+          xml_url?: string | null
         }
         Update: {
+          access_key?: string | null
           amount?: number
+          asaas_invoice_id?: string | null
           contract_id?: string | null
           created_at?: string
           customer_id?: string
@@ -1296,10 +1310,14 @@ export type Database = {
           document_type?: string
           file_url?: string | null
           id?: string
+          invoice_series?: string | null
           issue_date?: string
           notes?: string | null
           payment_id?: string | null
+          raw_payload?: Json | null
+          service_reference?: string | null
           status?: string
+          xml_url?: string | null
         }
         Relationships: [
           {
