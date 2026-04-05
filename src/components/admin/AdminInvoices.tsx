@@ -218,7 +218,13 @@ export default function AdminInvoices() {
                       <TableCell className="text-[11px] text-muted-foreground">{doc.service_reference || "—"}</TableCell>
                       <TableCell className="text-[11px] font-mono text-foreground">{doc.amount ? fmt(Number(doc.amount)) : "—"}</TableCell>
                       <TableCell className="text-[11px] text-muted-foreground font-mono">{fmtDate(doc.issue_date)}</TableCell>
-                      <TableCell><StatusBadge status={doc.status} /></TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <StatusBadge status={doc.status} />
+                          {doc.is_active === false && <span className="text-[9px] text-muted-foreground italic">(inativa)</span>}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-[10px] text-muted-foreground">{SOURCE_MAP[doc.last_event_source] || doc.last_event_source || "—"}</TableCell>
                       <TableCell className="text-[10px] font-mono text-muted-foreground">{doc.asaas_invoice_id?.slice(0, 12) || "—"}</TableCell>
                       <TableCell>
                         <div className="flex gap-1">
