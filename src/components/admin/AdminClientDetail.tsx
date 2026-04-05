@@ -70,6 +70,7 @@ export default function AdminClientDetail({ customerId, onBack }: AdminClientDet
   const [leads, setLeads] = useState<any[]>([]);
   const [events, setEvents] = useState<any[]>([]);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  const [fiscalDocs, setFiscalDocs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -97,6 +98,7 @@ export default function AdminClientDetail({ customerId, onBack }: AdminClientDet
         { table: "proposals", select: "*", filters: [{ column: "customer_id", op: "eq", value: customerId }], order: { column: "created_at", ascending: false } },
         { table: "client_events", select: "*", filters: [{ column: "customer_id", op: "eq", value: customerId }], order: { column: "created_at", ascending: false }, limit: 50 },
         { table: "admin_audit_logs", select: "*", filters: [{ column: "target_id", op: "eq", value: customerId }], order: { column: "created_at", ascending: false }, limit: 20 },
+        { table: "fiscal_documents", select: "*", filters: [{ column: "customer_id", op: "eq", value: customerId }], order: { column: "issue_date", ascending: false } },
       ]);
       const cust = results[0].data as any;
       setCustomer(cust);
@@ -106,6 +108,7 @@ export default function AdminClientDetail({ customerId, onBack }: AdminClientDet
       setProposals((results[2].data as any[]) || []);
       setEvents((results[3].data as any[]) || []);
       setAuditLogs((results[4].data as any[]) || []);
+      setFiscalDocs((results[5].data as any[]) || []);
 
       // Fetch payments via quote_ids
       const quoteIds = ctrs.map((c: any) => c.quote_id).filter(Boolean);
@@ -650,6 +653,59 @@ export default function AdminClientDetail({ customerId, onBack }: AdminClientDet
                             </a>
                           </>
                         )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </SectionCard>
+      )}
+
+      {/* ═══════════════════ FISCAL DOCUMENTS ═══════════════════ */}
+      {fiscalDocs.length > 0 && (
+        <SectionCard icon={FileText} title={`Notas Fiscais (${fiscalDocs.length})`}>
+          <div className="overflow-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-border/40 hover:bg-transparent">
+                  <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Nº NF</TableHead>
+                  <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Emissão</TableHead>
+                  <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Valor</TableHead>
+                  <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Status</TableHead>
+                  <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Serviço</TableHead>
+                  <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Arquivos</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {fiscalDocs.map((d: any) => (
+                  <TableRow key={d.id} className="border-border/30 hover:bg-muted/20">
+                    <TableCell className="text-[11px] font-mono text-foreground">{d.document_number || "—"}</TableCell>
+                    <TableCell className="text-[11px] text-muted-foreground font-mono">{fmtDateShort(d.issue_date)}</TableCell>
+                    <TableCell className="text-[11px] font-mono text-foreground">{d.amount ? fmt(Number(d.amount)) : "—"}</TableCell>
+                    <TableCell>
+                      <span className={cn(
+                        "inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium border whitespace-nowrap",
+                        d.status === "emitido" ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/25" :
+                        d.status === "aguardando" ? "bg-amber-500/15 text-amber-400 border-amber-500/25" :
+                        "bg-muted/50 text-muted-foreground border-border/60"
+                      )}>{d.status || "—"}</span>
+                    </TableCell>
+                    <TableCell className="text-[11px] text-muted-foreground">{d.service_reference || "—"}</TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        {d.file_url && (
+                          <a href={d.file_url} target="_blank" rel="noopener noreferrer">
+                            <Button size="sm" variant="ghost" className="h-6 px-1.5 text-[10px] gap-1"><ExternalLink className="h-3 w-3" /> PDF</Button>
+                          </a>
+                        )}
+                        {d.xml_url && (
+                          <a href={d.xml_url} target="_blank" rel="noopener noreferrer">
+                            <Button size="sm" variant="ghost" className="h-6 px-1.5 text-[10px] gap-1"><ExternalLink className="h-3 w-3" /> XML</Button>
+                          </a>
+                        )}
+                        {!d.file_url && !d.xml_url && <span className="text-[10px] text-muted-foreground">—</span>}
                       </div>
                     </TableCell>
                   </TableRow>

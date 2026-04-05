@@ -52,6 +52,7 @@ const PricingEngine = lazy(() => import("@/components/admin/cms/PricingEngine"))
 const BlockLibrary = lazy(() => import("@/components/admin/cms/BlockLibrary"));
 const SitemapManager = lazy(() => import("@/components/admin/cms/SitemapManager"));
 const AdminFinanceiro = lazy(() => import("@/components/admin/AdminFinanceiro"));
+const AdminInvoices = lazy(() => import("@/components/admin/AdminInvoices"));
 
 const ITEMS_PER_PAGE = 20;
 
@@ -70,6 +71,7 @@ const NAV_GROUPS = [
       { id: "errors", label: "Erros", icon: AlertTriangle },
       { id: "payments", label: "Pagamentos", icon: CreditCardIcon },
       { id: "financeiro", label: "Financeiro", icon: DollarSign },
+      { id: "invoices", label: "Notas Fiscais", icon: FileText },
       { id: "clientes", label: "Clientes", icon: UserCog },
       { id: "leads", label: "Leads & Propostas", icon: Megaphone },
       { id: "cipa-locations", label: "CIPA Geo", icon: MapPin },
@@ -791,6 +793,7 @@ function AdminContent({ activeSection, onNavigate, clientId }: { activeSection: 
     case "logs": return <LogsTab />;
     case "errors": return <LogsTab onlyErrors />;
     case "financeiro": return <Suspense fallback={fallback}><AdminFinanceiro /></Suspense>;
+    case "invoices": return <Suspense fallback={fallback}><AdminInvoices /></Suspense>;
     case "payments": return <PaymentsTab />;
     case "clientes": return <ClientesTab onOpenClient={(id) => onNavigate(`clientes-detail?id=${id}`)} />;
     case "leads": return <AdminLeadsProposals />;
