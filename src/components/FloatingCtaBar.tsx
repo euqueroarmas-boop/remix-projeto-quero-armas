@@ -18,6 +18,36 @@ const HIDDEN_ROUTES = [
   "/cipa",
 ];
 
+/** Sections where the CTA should auto-hide to avoid obstruction */
+const OBSTRUCTIVE_SELECTORS = [
+  '[data-section-type="calculator"]',
+  '[data-section-type="guarantee"]',
+  '[data-section-type="contact-form"]',
+  '[data-testid="faq-section"]',
+  "#calculadora-recorrente",
+  "#contato-servico",
+];
+
+function isNearObstructiveSection(): boolean {
+  if (typeof window === "undefined") return false;
+  const viewportBottom = window.scrollY + window.innerHeight;
+  const viewportTop = window.scrollY;
+
+  for (const selector of OBSTRUCTIVE_SELECTORS) {
+    const els = document.querySelectorAll(selector);
+    for (const el of els) {
+      const rect = el.getBoundingClientRect();
+      const elTop = rect.top + window.scrollY;
+      const elBottom = rect.bottom + window.scrollY;
+      // Check if the section is currently visible (with 80px buffer)
+      if (elBottom > viewportTop + 80 && elTop < viewportBottom - 40) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 const FloatingCtaBar = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -25,6 +55,7 @@ const FloatingCtaBar = () => {
   const [visible, setVisible] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [nearSection, setNearSection] = useState(false);
 
   const isHidden =
     HIDDEN_ROUTES.some((r) => location.pathname.startsWith(r)) ||
@@ -35,7 +66,10 @@ const FloatingCtaBar = () => {
   useEffect(() => {
     setDismissed(false);
     setCollapsed(false);
-    const onScroll = () => setVisible(window.scrollY > 400);
+    const onScroll = () => {
+      setVisible(window.scrollY > 400);
+      setNearSection(isNearObstructiveSection());
+    };
     window.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
     return () => window.removeEventListener("scroll", onScroll);
@@ -49,7 +83,6 @@ const FloatingCtaBar = () => {
         : href.includes("proposta") || href.includes("proposal") ? "proposal"
         : "specialist";
       trackWhatsApp(location.pathname, label);
-      // Let openWhatsApp auto-detect the H1/og:title — no need to pass pageTitle
       openWhatsApp({ intent });
       return;
     }
@@ -63,13 +96,18 @@ const FloatingCtaBar = () => {
 
   return (
     <AnimatePresence>
+      {/* Mobile: bottom bar — auto-hides near interactive sections */}
       <motion.div
         key="cta-mobile"
         initial={{ y: 80, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
+        animate={{
+          y: nearSection ? 80 : 0,
+          opacity: nearSection ? 0 : 1,
+        }}
         exit={{ y: 80, opacity: 0 }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        className="fixed bottom-0 left-0 right-0 z-40 md:hidden"
+        className="fixed bottom-0 left-0 right-0 z-40 md:hidden pointer-events-auto"
+        style={{ pointerEvents: nearSection ? "none" : "auto" }}
       >
         <div className="bg-card/95 backdrop-blur-md border-t border-border px-3 py-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))]">
           <div className="flex items-center gap-2">
@@ -94,13 +132,19 @@ const FloatingCtaBar = () => {
         </div>
       </motion.div>
 
+      {/* Desktop: side panel — reduces opacity near interactive sections */}
       <motion.div
         key="cta-desktop"
         initial={{ x: 80, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
+        animate={{
+          x: 0,
+          opacity: nearSection ? 0.3 : 1,
+          scale: nearSection ? 0.9 : 1,
+        }}
         exit={{ x: 80, opacity: 0 }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
         className="fixed right-4 bottom-24 z-40 hidden md:flex flex-col items-end gap-2"
+        style={{ pointerEvents: nearSection ? "none" : "auto" }}
       >
         <AnimatePresence>
           {!collapsed && (

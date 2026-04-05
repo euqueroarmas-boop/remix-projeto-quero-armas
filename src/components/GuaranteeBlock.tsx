@@ -9,13 +9,19 @@ const bullets = [
   "Compromisso real com a entrega",
 ];
 
-const GuaranteeBlock = () => (
+interface GuaranteeBlockProps {
+  /** Override the service name displayed (optional) */
+  serviceName?: string;
+}
+
+const GuaranteeBlock = ({ serviceName }: GuaranteeBlockProps) => (
   <motion.section
     initial={{ opacity: 0, y: 24 }}
     whileInView={{ opacity: 1, y: 0 }}
     viewport={{ once: true, margin: "-40px" }}
     transition={{ duration: 0.5 }}
     className="w-full py-10 md:py-14"
+    data-section-type="guarantee"
   >
     <div className="max-w-4xl mx-auto px-4 sm:px-6">
       <div className="relative rounded-2xl border border-primary/20 bg-card/60 backdrop-blur-sm p-6 sm:p-10 shadow-lg shadow-primary/5">
@@ -27,6 +33,16 @@ const GuaranteeBlock = () => (
           <h2 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
             Você não corre risco com a WMTi.
           </h2>
+        </div>
+
+        {/* GUARANTEE HIGHLIGHT */}
+        <div className="bg-primary/10 border border-primary/30 rounded-lg p-4 mb-4">
+          <p className="text-primary font-bold text-sm sm:text-base leading-relaxed">
+            🛡️ A GARANTIA É A MESMA QUANTIDADE DE HORAS COMPRADAS.
+          </p>
+          <p className="text-muted-foreground text-sm mt-1 leading-relaxed">
+            Comprou 3 horas = 3 horas de garantia. Comprou 5 horas = 5 horas de garantia. Comprou 10 horas = 10 horas de garantia.
+          </p>
         </div>
 
         <p className="text-muted-foreground leading-relaxed mb-2">
