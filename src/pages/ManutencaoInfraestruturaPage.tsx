@@ -1,6 +1,9 @@
 import { useTranslation } from "react-i18next";
 import { Wrench, Server, Shield, Activity, HardDrive, Headphones } from "lucide-react";
 import ServicePageTemplate from "@/components/ServicePageTemplate";
+import HoursCalculator from "@/components/orcamento/HoursCalculator";
+import GuaranteeBlock from "@/components/GuaranteeBlock";
+import ServiceContactForm from "@/components/ServiceContactForm";
 
 const icons = [Wrench, Server, Shield, Activity, HardDrive, Headphones];
 
@@ -24,7 +27,9 @@ const ManutencaoInfraestruturaPage = () => {
         { label: relatedLabels[1], href: "/monitoramento-de-servidores" },
         { label: relatedLabels[2], href: "/infraestrutura-ti-corporativa-jacarei" },
       ]}
-      localContent={t(`${k}.localContent`)} showHoursCalculator
+      localContent={t(`${k}.localContent`)}
+      showHoursCalculator={false}
+      extraSections={<><HoursCalculator serviceName="Manutenção de Infraestrutura de TI" contractHref="/contratar/manutencao-de-infraestrutura-de-ti" basePrice={500} hasProgressiveDiscount={true} maxDiscountPercent={27.5} /><GuaranteeBlock /><ServiceContactForm serviceName="Manutenção de Infraestrutura de TI" /></>}
     />
   );
 };

@@ -1,6 +1,9 @@
 import { useTranslation } from "react-i18next";
-import { Network, Shield, Activity, Wrench, Headphones, Eye } from "lucide-react";
+import { Network, Shield, Activity, Wrench, Eye, Headphones } from "lucide-react";
 import ServicePageTemplate from "@/components/ServicePageTemplate";
+import HoursCalculator from "@/components/orcamento/HoursCalculator";
+import GuaranteeBlock from "@/components/GuaranteeBlock";
+import ServiceContactForm from "@/components/ServiceContactForm";
 
 const icons = [Network, Shield, Activity, Wrench, Eye, Headphones];
 
@@ -24,7 +27,9 @@ const SuporteRedesCorporativasPage = () => {
         { label: relatedLabels[1], href: "/monitoramento-de-rede" },
         { label: relatedLabels[2], href: "/suporte-ti-jacarei" },
       ]}
-      localContent={t(`${k}.localContent`)} showHoursCalculator
+      localContent={t(`${k}.localContent`)}
+      showHoursCalculator={false}
+      extraSections={<><HoursCalculator serviceName="Suporte para Redes Corporativas" contractHref="/contratar/suporte-tecnico-para-redes-corporativas" basePrice={500} hasProgressiveDiscount={true} maxDiscountPercent={27.5} /><GuaranteeBlock /><ServiceContactForm serviceName="Suporte Técnico para Redes Corporativas" /></>}
     />
   );
 };

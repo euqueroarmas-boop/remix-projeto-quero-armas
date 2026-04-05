@@ -1,6 +1,9 @@
 import { useTranslation } from "react-i18next";
 import { Activity, Server, Shield, AlertTriangle, Headphones, Eye } from "lucide-react";
 import ServicePageTemplate from "@/components/ServicePageTemplate";
+import HoursCalculator from "@/components/orcamento/HoursCalculator";
+import GuaranteeBlock from "@/components/GuaranteeBlock";
+import ServiceContactForm from "@/components/ServiceContactForm";
 
 const icons = [Activity, AlertTriangle, Eye, Server, Shield, Headphones];
 
@@ -24,7 +27,9 @@ const MonitoramentoServidoresPage = () => {
         { label: relatedLabels[1], href: "/servidor-dell-poweredge-jacarei" },
         { label: relatedLabels[2], href: "/suporte-ti-jacarei" },
       ]}
-      localContent={t(`${k}.localContent`)} showHoursCalculator
+      localContent={t(`${k}.localContent`)}
+      showHoursCalculator={false}
+      extraSections={<><HoursCalculator serviceName="Monitoramento de Servidores" contractHref="/contratar/monitoramento-de-servidores" basePrice={400} hasProgressiveDiscount={true} maxDiscountPercent={27.5} /><GuaranteeBlock /><ServiceContactForm serviceName="Monitoramento de Servidores" /></>}
     />
   );
 };
