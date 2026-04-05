@@ -1,6 +1,9 @@
 import { useTranslation } from "react-i18next";
 import { Cloud, Shield, Users, Mail, HardDrive, Activity } from "lucide-react";
 import ServicePageTemplate from "@/components/ServicePageTemplate";
+import HoursCalculator from "@/components/orcamento/HoursCalculator";
+import GuaranteeBlock from "@/components/GuaranteeBlock";
+import ServiceContactForm from "@/components/ServiceContactForm";
 
 const icons = [Cloud, Mail, Users, Shield, HardDrive, Activity];
 
@@ -24,7 +27,15 @@ const Microsoft365Page = () => {
         { label: relatedLabels[1], href: "/suporte-ti-empresarial-jacarei" },
         { label: relatedLabels[2], href: "/infraestrutura-ti-corporativa" },
       ]}
-      localContent={t(`${k}.localContent`)} showHoursCalculator
+      localContent={t(`${k}.localContent`)}
+      showHoursCalculator={false}
+      extraSections={
+        <>
+          <HoursCalculator serviceName="Microsoft 365" contractHref="/contratar/microsoft-365-para-empresas-jacarei" basePrice={200} hasProgressiveDiscount={true} maxDiscountPercent={27.5} />
+          <GuaranteeBlock />
+          <ServiceContactForm serviceName="Microsoft 365 Para Empresas" />
+        </>
+      }
     />
   );
 };
