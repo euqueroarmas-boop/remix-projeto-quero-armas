@@ -300,6 +300,23 @@ Deno.serve(async (req) => {
           });
         }
 
+        // ── LGPD LOGICAL LOCK: block operational mutation for anonymized customers ──
+        if (await isCustomerLgpdLocked(supabase, custId)) {
+          await logLgpdBlock(supabase, "invoice_event_blocked", { event, invoice_id: invoiceId, customer_id: custId });
+          // Still log audit trail but do NOT mutate operational state
+          await logFiscalEvent(supabase, {
+            asaas_invoice_id: String(invoiceId), customer_id: custId,
+            event_type: event, event_source: "invoice_event",
+            payload_snapshot: body, normalized_status: STATUS_MAP[event] || "unknown",
+            overwrite_decision: "blocked_lgpd", decision_reason: "LGPD_LOGICAL_LOCK — titular anonimizado, mutação operacional bloqueada",
+            created_by_process: "asaas_webhook",
+          });
+          await supabase.from("asaas_webhooks").update({ processed: true }).eq("payload->>id", body.id || "");
+          return new Response(JSON.stringify({ received: true, event, lgpd_locked: true }), {
+            status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
         // ── UPSERT with INVOICE EVENT as PRIMARY source (can overwrite everything) ──
         const eventTimestamp = new Date().toISOString();
         const { data: existingDoc } = await supabase
