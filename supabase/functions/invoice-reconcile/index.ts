@@ -128,6 +128,9 @@ Deno.serve(async (req) => {
           xml_url: xmlUrl,
           access_key: accessKey,
           service_reference: contractRow.contract_type || null,
+          last_event_at: new Date().toISOString(),
+          last_event_source: "reconcile",
+          is_active: true,
           notes: "NF criada via reconciliação (somente faltantes)",
         }).select("id").single();
 
