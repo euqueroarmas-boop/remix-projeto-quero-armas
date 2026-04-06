@@ -102,6 +102,7 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
     items: [
       { id: "digital-signature", route: "digital-signature", label: "Assinatura Digital", icon: FileSignature },
       { id: "cert-diagnostic", route: "cert-diagnostic", label: "Diag. Certificado", icon: Stethoscope },
+      { id: "support-tools", route: "suporte", label: "Ferramentas de Suporte", icon: Wrench },
     ],
   },
 ];

@@ -2315,6 +2315,48 @@ export type Database = {
           },
         ]
       }
+      support_tools: {
+        Row: {
+          created_at: string
+          description: string | null
+          external_url: string | null
+          file_url: string | null
+          icon_url: string | null
+          id: string
+          is_active: boolean
+          name: string
+          sort_order: number
+          tool_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          external_url?: string | null
+          file_url?: string | null
+          icon_url?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          sort_order?: number
+          tool_type?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          external_url?: string | null
+          file_url?: string | null
+          icon_url?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          sort_order?: number
+          tool_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       test_alert_config: {
         Row: {
           channel: string

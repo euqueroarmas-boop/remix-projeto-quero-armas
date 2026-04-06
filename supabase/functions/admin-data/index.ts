@@ -48,6 +48,7 @@ const ALLOWED_TABLES = [
   "asaas_customer_map",
   "fiscal_event_history",
   "fiscal_change_log",
+  "support_tools",
 ];
 
 Deno.serve(async (req) => {
