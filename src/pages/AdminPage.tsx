@@ -55,6 +55,7 @@ const SitemapManager = lazy(() => import("@/components/admin/cms/SitemapManager"
 const AdminFinanceiro = lazy(() => import("@/components/admin/AdminFinanceiro"));
 const AdminInvoices = lazy(() => import("@/components/admin/AdminInvoices"));
 const AdminFiscalAudit = lazy(() => import("@/components/admin/AdminFiscalAudit"));
+const AdminSupportTools = lazy(() => import("@/components/admin/AdminSupportTools"));
 
 const ITEMS_PER_PAGE = 20;
 
@@ -751,6 +752,7 @@ function AdminContent({ activeSection, onNavigate, clientId }: { activeSection: 
     case "pricing-engine": return <Suspense fallback={fallback}><PricingEngine /></Suspense>;
     case "block-library": return <Suspense fallback={fallback}><BlockLibrary /></Suspense>;
     case "sitemap-manager": return <Suspense fallback={fallback}><SitemapManager /></Suspense>;
+    case "support-tools": return <Suspense fallback={fallback}><AdminSupportTools /></Suspense>;
     default: return <AdminCommandCenter onNavigate={onNavigate} />;
   }
 }
