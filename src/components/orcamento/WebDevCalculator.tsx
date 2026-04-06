@@ -178,8 +178,8 @@ const WebDevCalculator = () => {
 
   const totalFinal = Math.round(subtotal * compMult * prazoMult);
   const savings = fullPrice - subtotal;
-  const discountPct = hours > 1 ? Math.round(((BASE_PRICE - unitPrice) / BASE_PRICE) * 100) : 0;
-
+  const discountPct = !isPremium && hours > 1 ? Math.round(((BASE_PRICE - unitPrice) / BASE_PRICE) * 100) : 0;
+  const savings = isPremium ? 0 : fullPrice - subtotal;
   const projectLabel = PROJECT_TYPES.find((p) => p.key === projectType)?.label ?? "";
   const prazoLabel = urgConfig.prazos.find((p) => p.key === prazo)?.label ?? "";
 
