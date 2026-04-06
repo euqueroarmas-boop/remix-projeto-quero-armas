@@ -168,7 +168,10 @@ const ContractingWizard = ({
   const [paymentComplete, setPaymentComplete] = useState(false);
   const [paymentData, setPaymentData] = useState<NormalizedPaymentData | null>(null);
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
-  
+  const [boletoGenerated, setBoletoGenerated] = useState(false);
+  const [portalCredentials, setPortalCredentials] = useState<PortalCredentials | null>(null);
+  const [credentialsLoading, setCredentialsLoading] = useState(false);
+  const [credentialsError, setCredentialsError] = useState<string | null>(null);
 
   const [registrationLoading, setRegistrationLoading] = useState(false);
   const [popupBlocked, setPopupBlocked] = useState(false);
