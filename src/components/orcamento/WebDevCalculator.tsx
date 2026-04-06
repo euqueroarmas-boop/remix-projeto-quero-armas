@@ -168,7 +168,8 @@ const WebDevCalculator = () => {
     setSobDemanda({ horas: hours });
   }, [hours, setSobDemanda]);
 
-  const unitPrice = getUnitPrice(hours);
+  const unitPrice = getUnitPrice(hours, projectType);
+  const isPremium = PREMIUM_PROJECT_TYPES.has(projectType);
   const subtotal = hours * unitPrice;
   const fullPrice = hours * BASE_PRICE;
 
