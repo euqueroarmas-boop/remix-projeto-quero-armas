@@ -6,7 +6,7 @@ import {
   Monitor, Wrench, DollarSign, RefreshCw, Headphones, ShieldCheck,
   CheckCircle2, ArrowRight, AlertTriangle, TrendingDown, Clock, Ban,
   Zap, Building2, Award, Calculator, Send, Loader2,
-  Minus, Plus, Laptop, MessageCircle,
+  Minus, Plus, Laptop, MessageCircle, Star, Package, XCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
