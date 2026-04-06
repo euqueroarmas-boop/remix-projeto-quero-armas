@@ -830,7 +830,7 @@ const ContractingWizard = ({
             </WizardStepWrapper>
 
             {/* Step 4: Payment */}
-            <WizardStepWrapper stepNumber={4} title={paymentConfirmed ? t("checkout.wizard.paymentConfirmed") : paymentReady ? t("checkout.wizard.stepPayment") : t("checkout.wizard.reviewAndPayment")} subtitle={paymentConfirmed ? t("checkout.wizard.paymentConfirmedSuccess") : paymentReady ? t("checkout.wizard.choosePaymentMethod") : t("checkout.wizard.confirmAndPrepare")} status={paymentConfirmed ? "completed" : getStepStatus("payment")}>
+            <WizardStepWrapper stepNumber={4} title={paymentConfirmed ? t("checkout.wizard.paymentConfirmed") : boletoGenerated ? t("checkout.wizard.boletoGeneratedTitle") : paymentReady ? t("checkout.wizard.stepPayment") : t("checkout.wizard.reviewAndPayment")} subtitle={paymentConfirmed ? t("checkout.wizard.paymentConfirmedSuccess") : boletoGenerated ? t("checkout.wizard.boletoGeneratedMsg") : paymentReady ? t("checkout.wizard.choosePaymentMethod") : t("checkout.wizard.confirmAndPrepare")} status={paymentConfirmed || boletoGenerated ? "completed" : getStepStatus("payment")}>
               {paymentConfirmed ? (
                 <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-3">
                   <CheckCircle className="w-10 h-10 text-green-500 mx-auto" />
@@ -846,6 +846,18 @@ const ContractingWizard = ({
                     <p className="text-sm text-muted-foreground">{t("checkout.wizard.doNotClose")}</p>
                   </div>
                 </div>
+              ) : boletoGenerated ? (
+                <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-4">
+                  <CheckCircle className="w-10 h-10 text-primary mx-auto" />
+                  <h4 className="text-lg font-heading font-bold">{t("checkout.wizard.boletoGeneratedTitle")}</h4>
+                  <p className="text-sm text-muted-foreground">{t("checkout.wizard.boletoGeneratedMsg")}</p>
+                  {invoiceUrl && (
+                    <Button onClick={() => handleRedirectToCheckout(invoiceUrl)} className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground">
+                      <ExternalLink className="w-4 h-4 mr-2" />
+                      {t("checkout.wizard.openBoletoShort")}
+                    </Button>
+                  )}
+                </div>
               ) : paymentComplete && paymentData?.invoiceUrl ? (
                 <div className="bg-card border border-primary/20 rounded-xl p-6 space-y-4">
                   <div className="flex flex-col items-center justify-center text-center space-y-3">
@@ -853,7 +865,7 @@ const ContractingWizard = ({
                     <h4 className="text-lg font-heading font-bold">{t("checkout.wizard.waitingPaymentConfirmation")}</h4>
                     {popupBlocked ? (
                       <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg px-4 py-3 text-left">
-                        <p className="text-sm text-amber-300 font-semibold mb-1">{t("checkout.wizard.popupBlocked")}</p>
+                        <p className="text-sm font-semibold mb-1">{t("checkout.wizard.popupBlocked")}</p>
                         <p className="text-xs text-muted-foreground">{t("checkout.wizard.popupBlockedDesc")}</p>
                       </div>
                     ) : (
