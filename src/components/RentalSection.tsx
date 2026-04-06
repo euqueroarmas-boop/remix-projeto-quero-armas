@@ -39,8 +39,7 @@ const RentalSection = () => {
   ];
 
   const handleSimulate = () => {
-    trackWhatsApp("rental-comparison", "simulacao");
-    openWhatsApp({ pageTitle: "Simular Locação de Computadores", intent: "proposal" });
+    window.location.href = "/locacao-de-computadores-para-empresas-jacarei#calculadora";
   };
 
   const handleSpecialist = () => {
