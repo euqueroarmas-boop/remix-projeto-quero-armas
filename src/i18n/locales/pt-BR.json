@@ -1674,7 +1674,7 @@
       "tempPassword": "Senha temporária",
       "changePasswordWarning": "⚠️ Troque sua senha no primeiro acesso.",
       "tempPasswordDesc": "Esta senha é temporária e deverá ser alterada obrigatoriamente.",
-      "credentialsBoleto": "As credenciais serão geradas após a compensação do boleto.",
+      "credentialsBoleto": "Gerando credenciais de acesso restrito...",
       "credentialsPreparing": "Credenciais em preparação...",
       "openBoleto": "Abrir boleto / 2ª via",
       "accessPortal": "Acessar Portal do Cliente",
