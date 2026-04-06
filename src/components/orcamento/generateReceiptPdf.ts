@@ -71,7 +71,7 @@ export function generateReceiptPdf(data: ReceiptData): void {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
   doc.setTextColor(40, 40, 40);
-  doc.text("Comprovante de Contratação", margin, y);
+  doc.text(isBoleto ? "Comprovante de Contratação — Aguardando Pagamento" : "Comprovante de Contratação", margin, y);
   y += 6;
 
   doc.setFontSize(9);
