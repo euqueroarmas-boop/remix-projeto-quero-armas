@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import {
   LayoutDashboard, Package, MessageSquare, DollarSign,
-  FileText, FolderOpen, Building2, LogOut, Menu, X, Lock
+  FileText, FolderOpen, Building2, LogOut, Menu, X, Lock, Headphones
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -17,6 +17,7 @@ import PortalFinanceiro from "./sections/PortalFinanceiro";
 import PortalFiscal from "./sections/PortalFiscal";
 import PortalDocumentos from "./sections/PortalDocumentos";
 import PortalPerfil from "./sections/PortalPerfil";
+import PortalSuporte from "./sections/PortalSuporte";
 import PaymentPendingBanner from "./shared/PaymentPendingBanner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -27,6 +28,7 @@ const tabs = [
   { id: "financeiro", label: "Financeiro", icon: DollarSign },
   { id: "fiscal", label: "Fiscal", icon: FileText },
   { id: "documentos", label: "Documentos", icon: FolderOpen },
+  { id: "suporte", label: "Suporte", icon: Headphones },
   { id: "perfil", label: "Perfil", icon: Building2 },
 ] as const;
 
@@ -85,6 +87,7 @@ export default function ClientPortal({ customer, onLogout }: Props) {
       case "financeiro": return <PortalFinanceiro customer={customer} />;
       case "fiscal": return <PortalFiscal customer={customer} />;
       case "documentos": return <PortalDocumentos customer={customer} />;
+      case "suporte": return <PortalSuporte customer={customer} />;
       case "perfil": return <PortalPerfil customer={customer} />;
     }
   };
