@@ -227,7 +227,7 @@ const LocacaoComputadoresPage = () => {
               </ul>
               <div className="flex flex-col gap-3">
                 <button
-                  onClick={() => { trackWhatsApp("rental-card-locar", "simulacao"); openWhatsApp({ pageTitle: "Simular Locação", intent: "proposal" }); }}
+                  onClick={scrollToCalc}
                   className="w-full rounded-lg bg-primary text-primary-foreground px-6 py-3.5 font-bold text-sm uppercase tracking-wider hover:brightness-110 transition-all"
                 >
                   Simular locação
@@ -322,7 +322,7 @@ const LocacaoComputadoresPage = () => {
             </h3>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-8 max-w-md mx-auto">
               <button
-                onClick={() => { trackWhatsApp("rental-cta-final", "simulacao"); openWhatsApp({ pageTitle: "Simular Locação", intent: "proposal" }); }}
+                onClick={scrollToCalc}
                 className="w-full sm:w-auto rounded-lg bg-primary text-primary-foreground px-8 py-4 font-bold text-sm uppercase tracking-wider hover:brightness-110 transition-all"
               >
                 Simular locação
