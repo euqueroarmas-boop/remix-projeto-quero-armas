@@ -1,215 +1,224 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Monitor, Wrench, Headphones, RefreshCw, DollarSign, ShieldCheck, ArrowRight, CheckCircle2 } from "lucide-react";
+import { CheckCircle2, XCircle, ArrowRight, Star, Wrench, DollarSign, TrendingDown, Headphones, AlertTriangle, Package } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import optiplexImage from "@/assets/optiplex-desktop.webp";
 import { openWhatsApp } from "@/lib/whatsapp";
 import { trackWhatsApp } from "@/lib/tracking";
 
-
-const benefitIcons = [Monitor, Wrench, RefreshCw, Headphones, DollarSign, ShieldCheck];
-
 const RentalSection = () => {
   const { t } = useTranslation();
-  const benefits = (t("custom.rentalSection.benefits", { returnObjects: true }) as { title: string; desc: string }[]).map((item, index) => ({
-    ...item,
-    icon: benefitIcons[index],
-  }));
-  const comparisons = t("custom.rentalSection.comparisons", { returnObjects: true }) as { item: string; compra: string; locacao: string }[];
+
+  const leaseFeatures = [
+    { text: "R$ 0 de entrada", icon: CheckCircle2 },
+    { text: "Manutenção inclusa", icon: CheckCircle2 },
+    { text: "Peças sem custo", icon: CheckCircle2 },
+    { text: "Sem depreciação", icon: CheckCircle2 },
+    { text: "Suporte 24/7 incluso", icon: CheckCircle2 },
+  ];
+
+  const buyFeatures = [
+    { text: "R$ 4.000+ por máquina", icon: DollarSign },
+    { text: "Manutenção por sua conta", icon: Wrench },
+    { text: "Peças com custo extra", icon: Package },
+    { text: "Depreciação constante", icon: TrendingDown },
+    { text: "Suporte pago à parte", icon: AlertTriangle },
+  ];
+
+  const summaryBuy = [
+    "R$4.000+ por máquina",
+    "Manutenção por sua conta",
+    "Custo extra com peças",
+    "Suporte pago à parte",
+  ];
+
+  const summaryLease = [
+    "R$ 0 para começar",
+    "Manutenção inclusa",
+    "Peças sem custo",
+    "Suporte 24/7 incluso",
+  ];
+
+  const handleSimulate = () => {
+    trackWhatsApp("rental-comparison", "simulacao");
+    openWhatsApp({ pageTitle: "Simular Locação de Computadores", intent: "proposal" });
+  };
+
+  const handleSpecialist = () => {
+    trackWhatsApp("rental-comparison", "especialista");
+    openWhatsApp({ pageTitle: "Falar com Especialista - Locação", intent: "proposal" });
+  };
 
   return (
-    <section id="locacao" className="section-light">
+    <section id="locacao" className="relative py-20 md:py-28 overflow-hidden bg-[hsl(var(--background))]">
+      <div className="container px-4 sm:px-6">
 
-      {/* Full content */}
-      <div className="py-20 md:py-24">
-        <div className="container">
-          {/* Header */}
+        {/* BLOCO 1 — HEADLINE */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="mb-10 md:mb-14"
+        >
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-3">
+            Comprar vs. <span className="text-primary">Locar</span>
+          </h2>
+          <p className="text-base md:text-lg text-muted-foreground max-w-xl">
+            Locar elimina <strong className="text-foreground">surpresas</strong> e mantém sua operação rodando.
+          </p>
+        </motion.div>
+
+        {/* BLOCO 2 — DOIS CARDS PRINCIPAIS */}
+        <div className="grid md:grid-cols-2 gap-5 md:gap-6 mb-10 md:mb-14">
+
+          {/* CARD LOCAR (destaque) */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-            className="mb-12 md:mb-16"
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="relative order-1 rounded-xl border-2 border-primary bg-primary/[0.04] p-6 sm:p-8 shadow-[0_0_40px_-12px_hsl(var(--primary)/0.25)]"
           >
-             <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">// {t("custom.rentalSection.desktopTag")}</p>
-            <h2 className="text-3xl md:text-5xl max-w-3xl mb-6">
-               {t("custom.rentalSection.desktopTitle1").split("\n")[0]}
-               <br />
-               {t("custom.rentalSection.desktopTitle1").split("\n")[1]}<span className="text-primary">{t("custom.rentalSection.desktopHighlight")}</span>
-            </h2>
-            <p className="font-body text-base md:text-lg text-muted-foreground max-w-2xl leading-relaxed">
-               {t("custom.rentalSection.desktopDescription")}
-            </p>
-          </motion.div>
-
-          {/* Hero image + CTA */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-            className="relative overflow-hidden mb-12 md:mb-16"
-          >
-            <img
-              src={optiplexImage}
-              alt="Dell OptiPlex completo com monitor, teclado e mouse em escritório corporativo"
-              className="w-full h-56 md:h-80 object-cover"
-              loading="lazy"
-            />
-            <div className="absolute inset-0 flex items-center">
-              <div className="p-6 md:p-12 max-w-lg bg-secondary/80 backdrop-blur-sm">
-                 <p className="font-mono text-xs md:text-sm text-primary mb-2">{t("custom.rentalSection.heroOverlayTag")}</p>
-                <h3 className="text-xl md:text-3xl text-foreground mb-3 md:mb-4">
-                   {t("custom.rentalSection.heroOverlayTitle")}
-                </h3>
-                <button
-                  onClick={() => {
-                    trackWhatsApp("rental-hero", "proposta");
-                    openWhatsApp({ pageTitle: t("custom.rentalSection.heroOverlayTitle"), intent: "proposal" });
-                  }}
-                  className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 font-mono text-xs md:text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
-                >
-                   {t("custom.rentalSection.heroOverlayCta")}
-                  <ArrowRight size={16} />
-                </button>
-              </div>
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 bg-primary/15 border border-primary/30 rounded-full px-4 py-1.5 mb-5">
+              <Star size={14} className="text-primary fill-primary" />
+              <span className="text-xs font-mono font-bold uppercase tracking-wider text-primary">
+                Mais escolhido pelas empresas
+              </span>
             </div>
-          </motion.div>
 
-          {/* Benefits grid */}
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-px bg-border mb-12 md:mb-16">
-            {benefits.map((benefit, i) => (
-              <motion.div
-                key={benefit.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: i * 0.08 }}
-                className="bg-background p-6 md:p-8 group hover:bg-muted transition-colors"
-              >
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 border border-border flex items-center justify-center group-hover:border-primary group-hover:bg-primary/5 transition-all">
-                    <benefit.icon size={18} className="text-primary" strokeWidth={1.5} />
-                  </div>
-                  <h3 className="text-base md:text-lg font-mono font-bold">{benefit.title}</h3>
-                </div>
-                <p className="font-body text-sm md:text-base text-muted-foreground leading-relaxed">
-                  {benefit.desc}
-                </p>
-              </motion.div>
-            ))}
-          </div>
-
-          {/* Comparison table — desktop */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-            className="mb-12 md:mb-16"
-          >
-            <h3 className="text-xl md:text-2xl mb-6">
-               {t("custom.rentalSection.comparisonTitle1")}<span className="text-primary">{t("custom.rentalSection.comparisonHighlight")}</span>
+            <h3 className="text-xl sm:text-2xl font-bold text-foreground mb-5">
+              Locar com WMTi
             </h3>
 
-            {/* Desktop: table */}
-            <div className="hidden md:block border border-border overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-muted">
-                    <th className="text-left font-mono text-sm uppercase tracking-wider p-4 text-muted-foreground"></th>
-                    <th className="text-left font-mono text-sm uppercase tracking-wider p-4 text-muted-foreground">{t("custom.rentalSection.comparisonHeaders.buy")}</th>
-                    <th className="text-left font-mono text-sm uppercase tracking-wider p-4 text-primary">{t("custom.rentalSection.comparisonHeaders.lease")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {comparisons.map((row) => (
-                    <tr key={row.item} className="border-t border-border">
-                      <td className="p-4 font-body text-base font-medium">{row.item}</td>
-                      <td className="p-4 font-body text-base text-muted-foreground">{row.compra}</td>
-                      <td className="p-4 font-body text-base text-primary font-medium flex items-center gap-2">
-                        <CheckCircle2 size={14} className="text-primary flex-shrink-0" />
-                        {row.locacao}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Mobile: vertical per-item blocks */}
-            <div className="md:hidden flex flex-col gap-5">
-              {comparisons.map((row, i) => (
-                <motion.div
-                  key={row.item}
-                  initial={{ opacity: 0, y: 12 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.3, delay: i * 0.06 }}
-                  className="space-y-2"
-                >
-                  <h4 className="font-mono text-sm font-bold uppercase tracking-wider text-foreground">
-                    {row.item}
-                  </h4>
-
-                  {/* Comprar — neutro/negativo */}
-                  <div className="bg-muted/50 border border-border p-4 flex items-start gap-3">
-                    <span className="text-base leading-none mt-0.5">💸</span>
-                    <div>
-                      <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground mb-1">
-                        {t("custom.rentalSection.comparisonHeaders.buy")}
-                      </p>
-                      <p className="font-body text-sm text-muted-foreground leading-relaxed">{row.compra}</p>
-                    </div>
-                  </div>
-
-                  {/* Locar — destaque positivo */}
-                  <div className="bg-primary/5 border-2 border-primary p-4 flex items-start gap-3">
-                    <CheckCircle2 size={18} className="text-primary flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p className="font-mono text-xs uppercase tracking-wider text-primary mb-1">
-                        {t("custom.rentalSection.comparisonHeaders.lease")}
-                      </p>
-                      <p className="font-body text-sm text-primary font-medium leading-relaxed">{row.locacao}</p>
-                    </div>
-                  </div>
-                </motion.div>
+            <ul className="space-y-3 mb-7">
+              {leaseFeatures.map((f) => (
+                <li key={f.text} className="flex items-start gap-3">
+                  <f.icon size={18} className="text-green-500 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm sm:text-base text-foreground">{f.text}</span>
+                </li>
               ))}
+            </ul>
+
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={handleSimulate}
+                className="w-full rounded-lg bg-primary text-primary-foreground px-6 py-3.5 font-bold text-sm uppercase tracking-wider hover:brightness-110 transition-all"
+              >
+                Simular locação
+              </button>
+              <button
+                onClick={handleSpecialist}
+                className="w-full rounded-lg border border-border text-foreground px-6 py-3.5 font-medium text-sm hover:border-primary hover:text-primary transition-all"
+              >
+                Falar com especialista
+              </button>
             </div>
           </motion.div>
 
-          {/* Final CTA */}
+          {/* CARD COMPRAR (neutro) */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-            className="bg-secondary p-8 md:p-12 text-center"
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="relative order-2 rounded-xl border border-border bg-muted/30 p-6 sm:p-8"
           >
-            <h3 className="text-xl md:text-3xl text-secondary-foreground mb-3 md:mb-4">
-               {t("custom.rentalSection.finalTitle1")}<span className="text-primary">{t("custom.rentalSection.finalHighlight")}</span>{t("custom.rentalSection.finalTitle2")}
+            <h3 className="text-xl sm:text-2xl font-bold text-foreground mb-5 mt-2">
+              Comprar
             </h3>
-            <p className="font-body text-sm md:text-base text-secondary-foreground/70 max-w-xl mx-auto mb-6 md:mb-8 leading-relaxed">
-               {t("custom.rentalSection.finalDescription")}
-            </p>
+
+            <ul className="space-y-3 mb-7">
+              {buyFeatures.map((f) => (
+                <li key={f.text} className="flex items-start gap-3">
+                  <f.icon size={18} className="text-muted-foreground flex-shrink-0 mt-0.5" />
+                  <span className="text-sm sm:text-base text-muted-foreground">{f.text}</span>
+                </li>
+              ))}
+            </ul>
+
             <button
               onClick={() => {
-                trackWhatsApp("rental-section", "proposta");
-                openWhatsApp({ pageTitle: t("custom.rentalSection.heroOverlayTitle"), intent: "proposal" });
+                trackWhatsApp("rental-buy", "comprar");
+                openWhatsApp({ pageTitle: "Comprar Computadores", intent: "proposal" });
               }}
-              className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
+              className="w-full rounded-lg border border-border text-muted-foreground px-6 py-3.5 font-medium text-sm hover:border-foreground hover:text-foreground transition-all flex items-center justify-center gap-2"
             >
-               {t("custom.rentalSection.finalCta")}
-              <ArrowRight size={16} />
+              Comprar <ArrowRight size={14} />
+            </button>
+          </motion.div>
+        </div>
+
+        {/* BLOCO 3 — COMPARATIVO RESUMIDO */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="grid grid-cols-2 gap-4 md:gap-6 mb-10 md:mb-14"
+        >
+          {/* Comprar */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 mb-4">
+              <XCircle size={20} className="text-primary" />
+              <h4 className="text-base sm:text-lg font-bold text-primary">Comprar</h4>
+            </div>
+            <ul className="space-y-2.5">
+              {summaryBuy.map((item) => (
+                <li key={item} className="flex items-start gap-2.5 text-xs sm:text-sm text-muted-foreground">
+                  <span className="flex-shrink-0 mt-0.5">💸</span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Locar */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 mb-4">
+              <CheckCircle2 size={20} className="text-green-500" />
+              <h4 className="text-base sm:text-lg font-bold text-green-500">Locar com WMTi</h4>
+            </div>
+            <ul className="space-y-2.5">
+              {summaryLease.map((item) => (
+                <li key={item} className="flex items-start gap-2.5 text-xs sm:text-sm text-foreground">
+                  <CheckCircle2 size={14} className="text-green-500 flex-shrink-0 mt-0.5" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </motion.div>
+
+        {/* BLOCO 4 — CTA FINAL */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="text-center"
+        >
+          <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-2 leading-tight">
+            Pare de gastar com equipamentos.
+            <br />
+            Foque no seu crescimento.
+          </h3>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-8 max-w-md mx-auto">
+            <button
+              onClick={handleSimulate}
+              className="w-full sm:w-auto rounded-lg bg-primary text-primary-foreground px-8 py-4 font-bold text-sm uppercase tracking-wider hover:brightness-110 transition-all"
+            >
+              Simular locação
             </button>
             <Link
               to="/locacao-de-computadores-para-empresas-jacarei"
-              className="inline-flex items-center gap-2 border border-border text-foreground px-8 py-4 font-mono text-sm uppercase tracking-wider hover:border-primary hover:text-primary transition-all"
+              className="w-full sm:w-auto rounded-lg border border-border text-foreground px-8 py-4 font-medium text-sm hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-2"
             >
-               {t("custom.rentalSection.finalLink")}
+              Falar com especialista <ArrowRight size={14} />
             </Link>
-          </motion.div>
-        </div>
+          </div>
+        </motion.div>
       </div>
     </section>
   );
