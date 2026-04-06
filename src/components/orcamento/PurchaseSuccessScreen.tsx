@@ -166,10 +166,10 @@ const PurchaseSuccessScreen = ({ visible, data, quoteId, pdfLoading, pdfReady, p
   );
 };
 
-const DetailRow = ({ label, value, mono, status }: { label: string; value: string; mono?: boolean; status?: "success" }) => (
+const DetailRow = ({ label, value, mono, status }: { label: string; value: string; mono?: boolean; status?: "success" | "warning" }) => (
   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-0.5 sm:gap-4 px-4 py-2.5 even:bg-muted/20">
     <span className="text-xs text-muted-foreground whitespace-nowrap">{label}</span>
-    <span className={`text-sm font-semibold text-right break-words ${status === "success" ? "text-green-400" : mono ? "font-mono text-xs text-foreground" : "text-foreground"}`}>{value}</span>
+    <span className={`text-sm font-semibold text-right break-words ${status === "success" ? "text-green-400" : status === "warning" ? "text-amber-400" : mono ? "font-mono text-xs text-foreground" : "text-foreground"}`}>{value}</span>
   </div>
 );
 
