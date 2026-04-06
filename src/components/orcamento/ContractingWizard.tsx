@@ -962,14 +962,17 @@ const ContractingWizard = ({
             </WizardStepWrapper>
 
             {/* Step 5: Conclusão */}
-            <WizardStepWrapper stepNumber={5} title={t("checkout.wizard.stepCompletion")} subtitle={t("checkout.wizard.completionSub")} status={paymentConfirmed ? "active" : "pending"} isLast>
-              {paymentConfirmed ? (
-                <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-3">
-                  <CheckCircle className="w-12 h-12 text-green-500 mx-auto" />
-                  <h4 className="text-lg font-heading font-bold text-foreground">{t("checkout.wizard.orderCompleted")}</h4>
-                  <p className="text-sm text-muted-foreground">{t("checkout.wizard.redirectingConfirmation")}</p>
-                  <Loader2 className="w-5 h-5 animate-spin text-primary mx-auto" />
-                </div>
+            <WizardStepWrapper stepNumber={5} title={t("checkout.wizard.stepCompletion")} subtitle={t("checkout.wizard.orderSummaryCredentials")} status={boletoGenerated || paymentConfirmed ? "active" : "pending"} isLast>
+              {(boletoGenerated || paymentConfirmed) ? (
+                <PurchaseSummaryCard
+                  data={buildSummaryData()}
+                  credentials={portalCredentials}
+                  credentialsLoading={credentialsLoading}
+                  credentialsError={credentialsError}
+                  invoiceUrl={invoiceUrl}
+                  isBoleto={boletoGenerated && !paymentConfirmed}
+                  onRetryCredentials={fetchCredentials}
+                />
               ) : (
                 <div className="p-6 text-center">
                   <p className="text-sm text-muted-foreground">{t("checkout.wizard.waitingPaymentToFinish")}</p>
