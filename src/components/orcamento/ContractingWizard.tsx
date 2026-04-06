@@ -698,6 +698,11 @@ const ContractingWizard = ({
       setInvoiceUrl(normalized.invoiceUrl);
       setPaymentComplete(true);
 
+      if (selectedPayment === "BOLETO") {
+        // For boleto: advance to step 5 immediately (don't poll)
+        setBoletoGenerated(true);
+      }
+
       handleRedirectToCheckout(normalized.invoiceUrl);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Erro desconhecido";
