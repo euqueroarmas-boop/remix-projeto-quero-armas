@@ -5,18 +5,28 @@ import { useNavigate } from "react-router-dom";
 import { useInfraStore } from "@/stores/useInfraStore";
 import { openWhatsApp } from "@/lib/whatsapp";
 
-const BASE_PRICE = 200;
+const BASE_PRICE = 500;
 
-// Progressive discount: more hours → lower effective rate
-const getUnitPrice = (hours: number): number => {
-  if (hours <= 1) return 200;
-  if (hours <= 2) return 190;
-  if (hours <= 3) return 180;
-  if (hours <= 4) return 170;
-  if (hours <= 5) return 160;
-  if (hours <= 6) return 155;
-  if (hours <= 7) return 150;
-  return 145; // 8+
+// Premium project types: fixed rate, no progressive discount
+const PREMIUM_PROJECT_TYPES = new Set([
+  "site_institucional",
+  "sistema_web",
+  "painel_admin",
+  "integracao_api",
+]);
+
+// Unit price: fixed R$500/h for premium types, progressive for others
+const getUnitPrice = (_hours: number, projectType: string): number => {
+  if (PREMIUM_PROJECT_TYPES.has(projectType)) return 500;
+  // Non-premium (manutenção, landing_page) keep progressive
+  if (_hours <= 1) return 500;
+  if (_hours <= 2) return 475;
+  if (_hours <= 3) return 450;
+  if (_hours <= 4) return 430;
+  if (_hours <= 5) return 410;
+  if (_hours <= 6) return 395;
+  if (_hours <= 7) return 380;
+  return 365; // 8+
 };
 
 const PROJECT_TYPES = [
