@@ -152,7 +152,7 @@ export function generateReceiptPdf(data: ReceiptData): void {
     if (label.includes("Valor")) {
       doc.setTextColor(255, 90, 31);
     } else if (label === "Status") {
-      doc.setTextColor(34, 120, 60);
+      doc.setTextColor(isBoleto ? 180 : 34, isBoleto ? 130 : 120, isBoleto ? 30 : 60);
     } else {
       doc.setTextColor(40, 40, 40);
     }
