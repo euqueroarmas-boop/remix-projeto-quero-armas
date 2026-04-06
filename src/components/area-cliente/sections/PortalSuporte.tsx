@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
 import { Download, ExternalLink, Wrench, Loader2, Headphones } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { SectionHeader } from "../shared/SectionHeader";
+import SectionHeader from "../shared/SectionHeader";
 import type { CustomerData } from "@/pages/AreaDoClientePage";
 
 interface SupportTool {
