@@ -282,9 +282,9 @@ const ContractingWizard = ({
     return () => clearInterval(interval);
   }, [currentStep, contractId, contractSigned, toast]);
 
-  // Poll for payment confirmation — runs when payment started or on payment step
+  // Poll for payment confirmation — runs when payment started or on payment step (skip boleto)
   useEffect(() => {
-    if (paymentConfirmed || !activeQuoteId) return;
+    if (paymentConfirmed || !activeQuoteId || boletoGenerated) return;
     if (!paymentComplete && currentStep !== "payment") return;
     const interval = setInterval(async () => {
       try {
@@ -312,7 +312,47 @@ const ContractingWizard = ({
       } catch (e) { console.error("[poll] check-payment-status error:", e); }
     }, 3000);
     return () => clearInterval(interval);
-  }, [paymentComplete, paymentConfirmed, activeQuoteId, currentStep, registrationData, selectedPayment, contractId, effectivePath, computersQty, monthlyValue, pricingBreakdown]);
+  }, [paymentComplete, paymentConfirmed, activeQuoteId, currentStep, registrationData, selectedPayment, contractId, effectivePath, computersQty, monthlyValue, pricingBreakdown, boletoGenerated]);
+
+  // Fetch portal credentials for boleto or confirmed payments
+  const fetchCredentials = useCallback(async () => {
+    if (!activeQuoteId) return;
+    setCredentialsLoading(true);
+    setCredentialsError(null);
+    try {
+      const result = await ensurePortalAccess(activeQuoteId);
+      if (result.success && result.email) {
+        setPortalCredentials({ email: result.email, temp_password: result.temp_password, password_change_required: result.password_change_required });
+      } else {
+        setCredentialsError(result.error || "Não foi possível gerar as credenciais.");
+      }
+    } catch (err) {
+      console.error("[WMTi] Erro ao buscar credenciais:", err);
+      setCredentialsError("Erro ao gerar credenciais de acesso.");
+    } finally {
+      setCredentialsLoading(false);
+    }
+  }, [activeQuoteId]);
+
+  // Auto-fetch credentials when boleto is generated or payment confirmed
+  useEffect(() => {
+    if (portalCredentials || credentialsLoading) return;
+    if (boletoGenerated || paymentConfirmed) {
+      fetchCredentials();
+    }
+  }, [boletoGenerated, paymentConfirmed, fetchCredentials, portalCredentials, credentialsLoading]);
+
+  // Build summary data for PurchaseSummaryCard
+  const buildSummaryData = useCallback((): PurchaseSummaryData => ({
+    serviceName: effectivePath === "locacao" ? "Locação de Equipamentos" : "Serviços de TI",
+    totalValue: pricingBreakdown?.valorFinalMensal ?? monthlyValue,
+    customerName: registrationData?.razaoSocial || "",
+    customerEmail: registrationData?.email || "",
+    customerCpfCnpj: registrationData?.cnpjOuCpf || "",
+    paymentMethod: selectedPayment || "",
+    contractRef: contractId,
+    purchaseDate: new Date().toLocaleDateString("pt-BR"),
+  }), [effectivePath, pricingBreakdown, monthlyValue, registrationData, selectedPayment, contractId]);
 
   // Open checkout in new tab — detects popup blocker
   const handleRedirectToCheckout = useCallback((url: string) => {
