@@ -114,6 +114,7 @@ const CompraConcluida = () => {
               pdfReady={pdfReady}
               pdfError={pdfError}
               onGeneratePdf={handleGeneratePdf}
+              isBoleto={data.paymentMethod === "BOLETO"}
             />
           )}
         </div>

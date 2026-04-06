@@ -31,12 +31,13 @@ interface Props {
   pdfReady?: boolean;
   pdfError?: string | null;
   onGeneratePdf: () => void;
+  isBoleto?: boolean;
 }
 
 const formatCurrency = (v: number) =>
   `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-const PurchaseSuccessScreen = ({ visible, data, quoteId, pdfLoading, pdfReady, pdfError, onGeneratePdf }: Props) => {
+const PurchaseSuccessScreen = ({ visible, data, quoteId, pdfLoading, pdfReady, pdfError, onGeneratePdf, isBoleto }: Props) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [downloading, setDownloading] = useState(false);
@@ -66,11 +67,15 @@ const PurchaseSuccessScreen = ({ visible, data, quoteId, pdfLoading, pdfReady, p
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="space-y-6 md:space-y-8 pb-20">
       <div className="flex flex-col items-center text-center space-y-4 pt-4">
-        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", delay: 0.2, stiffness: 200 }} className="w-20 h-20 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center">
-          <CheckCircle className="w-12 h-12 text-green-500" />
+        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", delay: 0.2, stiffness: 200 }} className={`w-20 h-20 rounded-full flex items-center justify-center ${isBoleto ? "bg-amber-500/10 border border-amber-500/20" : "bg-green-500/10 border border-green-500/20"}`}>
+          <CheckCircle className={`w-12 h-12 ${isBoleto ? "text-amber-500" : "text-green-500"}`} />
         </motion.div>
-        <h1 className="text-2xl md:text-3xl font-heading font-bold text-foreground leading-tight">{t("purchaseSuccess.title")}</h1>
-        <p className="text-muted-foreground text-sm md:text-base max-w-md leading-relaxed">{t("purchaseSuccess.desc")}</p>
+        <h1 className="text-2xl md:text-3xl font-heading font-bold text-foreground leading-tight">
+          {isBoleto ? "Pedido registrado com sucesso" : t("purchaseSuccess.title")}
+        </h1>
+        <p className="text-muted-foreground text-sm md:text-base max-w-md leading-relaxed">
+          {isBoleto ? "Seu cadastro e contrato foram gerados. O serviço será ativado após a compensação do boleto." : t("purchaseSuccess.desc")}
+        </p>
       </div>
 
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="bg-card border-2 border-primary/20 rounded-xl overflow-hidden shadow-lg">
@@ -98,9 +103,9 @@ const PurchaseSuccessScreen = ({ visible, data, quoteId, pdfLoading, pdfReady, p
               {contractRef && <p className="font-mono text-[11px] text-muted-foreground truncate">{t("purchaseSuccess.order")} #{contractRef}</p>}
             </div>
           </div>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-semibold whitespace-nowrap self-start sm:self-auto">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-            {t("purchaseSuccess.confirmed")}
+          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap self-start sm:self-auto ${isBoleto ? "bg-amber-500/10 border border-amber-500/20 text-amber-400" : "bg-green-500/10 border border-green-500/20 text-green-400"}`}>
+            <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${isBoleto ? "bg-amber-500" : "bg-green-500"}`} />
+            {isBoleto ? "Aguardando compensação" : t("purchaseSuccess.confirmed")}
           </span>
         </div>
 
@@ -111,7 +116,7 @@ const PurchaseSuccessScreen = ({ visible, data, quoteId, pdfLoading, pdfReady, p
           </div>
 
           <div className="bg-primary/5 border border-primary/15 rounded-lg px-4 py-3 flex items-center justify-between gap-4 flex-wrap">
-            <span className="text-sm text-muted-foreground">{data.isRecurring ? t("purchaseSuccess.monthlyValue") : t("purchaseSuccess.amountPaid")}</span>
+            <span className="text-sm text-muted-foreground">{data.isRecurring ? t("purchaseSuccess.monthlyValue") : (isBoleto ? "Valor a pagar" : t("purchaseSuccess.amountPaid"))}</span>
             <span className="text-xl md:text-2xl font-heading font-bold text-primary">{formatCurrency(data.monthlyValue)}</span>
           </div>
 
@@ -123,7 +128,7 @@ const PurchaseSuccessScreen = ({ visible, data, quoteId, pdfLoading, pdfReady, p
             <DetailRow label={t("purchaseSuccess.emailLabel")} value={data.customerEmail} />
             <DetailRow label={t("purchaseSuccess.payment")} value={paymentLabel} />
             <DetailRow label={t("purchaseSuccess.date")} value={data.purchaseDate} />
-            <DetailRow label={t("purchaseSuccess.status")} value={t("purchaseSuccess.confirmed")} status="success" />
+            <DetailRow label={t("purchaseSuccess.status")} value={isBoleto ? "Aguardando compensação" : t("purchaseSuccess.confirmed")} status={isBoleto ? "warning" : "success"} />
             {contractRef && <DetailRow label={t("purchaseSuccess.contract")} value={contractRef} mono />}
           </div>
         </div>
@@ -161,10 +166,10 @@ const PurchaseSuccessScreen = ({ visible, data, quoteId, pdfLoading, pdfReady, p
   );
 };
 
-const DetailRow = ({ label, value, mono, status }: { label: string; value: string; mono?: boolean; status?: "success" }) => (
+const DetailRow = ({ label, value, mono, status }: { label: string; value: string; mono?: boolean; status?: "success" | "warning" }) => (
   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-0.5 sm:gap-4 px-4 py-2.5 even:bg-muted/20">
     <span className="text-xs text-muted-foreground whitespace-nowrap">{label}</span>
-    <span className={`text-sm font-semibold text-right break-words ${status === "success" ? "text-green-400" : mono ? "font-mono text-xs text-foreground" : "text-foreground"}`}>{value}</span>
+    <span className={`text-sm font-semibold text-right break-words ${status === "success" ? "text-green-400" : status === "warning" ? "text-amber-400" : mono ? "font-mono text-xs text-foreground" : "text-foreground"}`}>{value}</span>
   </div>
 );
 

@@ -14,6 +14,7 @@ interface ReceiptData {
   purchaseDate: string;
   loginEmail?: string;
   tempPassword?: string;
+  isBoleto?: boolean;
 }
 
 const formatCurrency = (v: number) =>
@@ -51,14 +52,18 @@ export function generateReceiptPdf(data: ReceiptData): void {
   doc.text("CNPJ: 13.366.668/0001-07", margin, y + 18);
   doc.text("Jacareí/SP", margin, y + 23);
 
-  // Status badge
-  const badgeText = "PAGAMENTO CONFIRMADO";
-  doc.setFillColor(34, 120, 60);
-  doc.roundedRect(pageWidth - margin - 60, y + 4, 60, 10, 2, 2, "F");
+  // Status badge — boleto-aware
+  const isBoleto = data.isBoleto || data.paymentMethod === "BOLETO";
+  const badgeText = isBoleto ? "AGUARDANDO COMPENSAÇÃO" : "PAGAMENTO CONFIRMADO";
+  const badgeR = isBoleto ? 180 : 34;
+  const badgeG = isBoleto ? 130 : 120;
+  const badgeB = isBoleto ? 30 : 60;
+  doc.setFillColor(badgeR, badgeG, badgeB);
+  doc.roundedRect(pageWidth - margin - 65, y + 4, 65, 10, 2, 2, "F");
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(7.5);
+  doc.setFontSize(7);
   doc.setTextColor(255, 255, 255);
-  doc.text(badgeText, pageWidth - margin - 30, y + 11, { align: "center" });
+  doc.text(badgeText, pageWidth - margin - 32.5, y + 11, { align: "center" });
 
   y = 60;
 
@@ -66,7 +71,7 @@ export function generateReceiptPdf(data: ReceiptData): void {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
   doc.setTextColor(40, 40, 40);
-  doc.text("Comprovante de Contratação", margin, y);
+  doc.text(isBoleto ? "Comprovante de Contratação — Aguardando Pagamento" : "Comprovante de Contratação", margin, y);
   y += 6;
 
   doc.setFontSize(9);
@@ -125,12 +130,12 @@ export function generateReceiptPdf(data: ReceiptData): void {
   if (data.hours) serviceRows.push(["Quantidade de Horas", `${data.hours}h`]);
   if (data.computersQty) serviceRows.push(["Computadores", String(data.computersQty)]);
   serviceRows.push([
-    data.isRecurring ? "Valor Mensal" : "Valor Pago",
+    data.isRecurring ? "Valor Mensal" : (isBoleto ? "Valor a Pagar" : "Valor Pago"),
     formatCurrency(data.monthlyValue),
   ]);
   serviceRows.push(["Forma de Pagamento", getPaymentLabel(data.paymentMethod)]);
   serviceRows.push(["Data da Contratação", data.purchaseDate]);
-  serviceRows.push(["Status", "Pagamento Confirmado"]);
+  serviceRows.push(["Status", isBoleto ? "Aguardando compensação" : "Pagamento Confirmado"]);
   if (contractRef) serviceRows.push(["Contrato", contractRef]);
 
   serviceRows.forEach(([label, value], i) => {
@@ -147,7 +152,7 @@ export function generateReceiptPdf(data: ReceiptData): void {
     if (label.includes("Valor")) {
       doc.setTextColor(255, 90, 31);
     } else if (label === "Status") {
-      doc.setTextColor(34, 120, 60);
+      doc.setTextColor(isBoleto ? 180 : 34, isBoleto ? 130 : 120, isBoleto ? 30 : 60);
     } else {
       doc.setTextColor(40, 40, 40);
     }

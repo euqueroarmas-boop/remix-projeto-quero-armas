@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import PurchaseSummaryCard, { type PortalCredentials, type PurchaseSummaryData } from "./PurchaseSummaryCard";
+import { ensurePortalAccess } from "@/lib/postPurchase";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -166,7 +168,10 @@ const ContractingWizard = ({
   const [paymentComplete, setPaymentComplete] = useState(false);
   const [paymentData, setPaymentData] = useState<NormalizedPaymentData | null>(null);
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
-  
+  const [boletoGenerated, setBoletoGenerated] = useState(false);
+  const [portalCredentials, setPortalCredentials] = useState<PortalCredentials | null>(null);
+  const [credentialsLoading, setCredentialsLoading] = useState(false);
+  const [credentialsError, setCredentialsError] = useState<string | null>(null);
 
   const [registrationLoading, setRegistrationLoading] = useState(false);
   const [popupBlocked, setPopupBlocked] = useState(false);
@@ -277,9 +282,9 @@ const ContractingWizard = ({
     return () => clearInterval(interval);
   }, [currentStep, contractId, contractSigned, toast]);
 
-  // Poll for payment confirmation — runs when payment started or on payment step
+  // Poll for payment confirmation — runs when payment started or on payment step (skip boleto)
   useEffect(() => {
-    if (paymentConfirmed || !activeQuoteId) return;
+    if (paymentConfirmed || !activeQuoteId || boletoGenerated) return;
     if (!paymentComplete && currentStep !== "payment") return;
     const interval = setInterval(async () => {
       try {
@@ -307,7 +312,47 @@ const ContractingWizard = ({
       } catch (e) { console.error("[poll] check-payment-status error:", e); }
     }, 3000);
     return () => clearInterval(interval);
-  }, [paymentComplete, paymentConfirmed, activeQuoteId, currentStep, registrationData, selectedPayment, contractId, effectivePath, computersQty, monthlyValue, pricingBreakdown]);
+  }, [paymentComplete, paymentConfirmed, activeQuoteId, currentStep, registrationData, selectedPayment, contractId, effectivePath, computersQty, monthlyValue, pricingBreakdown, boletoGenerated]);
+
+  // Fetch portal credentials for boleto or confirmed payments
+  const fetchCredentials = useCallback(async () => {
+    if (!activeQuoteId) return;
+    setCredentialsLoading(true);
+    setCredentialsError(null);
+    try {
+      const result = await ensurePortalAccess(activeQuoteId);
+      if (result.success && result.email) {
+        setPortalCredentials({ email: result.email, temp_password: result.temp_password, password_change_required: result.password_change_required });
+      } else {
+        setCredentialsError(result.error || "Não foi possível gerar as credenciais.");
+      }
+    } catch (err) {
+      console.error("[WMTi] Erro ao buscar credenciais:", err);
+      setCredentialsError("Erro ao gerar credenciais de acesso.");
+    } finally {
+      setCredentialsLoading(false);
+    }
+  }, [activeQuoteId]);
+
+  // Auto-fetch credentials when boleto is generated or payment confirmed
+  useEffect(() => {
+    if (portalCredentials || credentialsLoading) return;
+    if (boletoGenerated || paymentConfirmed) {
+      fetchCredentials();
+    }
+  }, [boletoGenerated, paymentConfirmed, fetchCredentials, portalCredentials, credentialsLoading]);
+
+  // Build summary data for PurchaseSummaryCard
+  const buildSummaryData = useCallback((): PurchaseSummaryData => ({
+    serviceName: effectivePath === "locacao" ? "Locação de Equipamentos" : "Serviços de TI",
+    totalValue: pricingBreakdown?.valorFinalMensal ?? monthlyValue,
+    customerName: registrationData?.razaoSocial || "",
+    customerEmail: registrationData?.email || "",
+    customerCpfCnpj: registrationData?.cnpjOuCpf || "",
+    paymentMethod: selectedPayment || "",
+    contractRef: contractId,
+    purchaseDate: new Date().toLocaleDateString("pt-BR"),
+  }), [effectivePath, pricingBreakdown, monthlyValue, registrationData, selectedPayment, contractId]);
 
   // Open checkout in new tab — detects popup blocker
   const handleRedirectToCheckout = useCallback((url: string) => {
@@ -653,6 +698,11 @@ const ContractingWizard = ({
       setInvoiceUrl(normalized.invoiceUrl);
       setPaymentComplete(true);
 
+      if (selectedPayment === "BOLETO") {
+        // For boleto: advance to step 5 immediately (don't poll)
+        setBoletoGenerated(true);
+      }
+
       handleRedirectToCheckout(normalized.invoiceUrl);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Erro desconhecido";
@@ -780,7 +830,7 @@ const ContractingWizard = ({
             </WizardStepWrapper>
 
             {/* Step 4: Payment */}
-            <WizardStepWrapper stepNumber={4} title={paymentConfirmed ? t("checkout.wizard.paymentConfirmed") : paymentReady ? t("checkout.wizard.stepPayment") : t("checkout.wizard.reviewAndPayment")} subtitle={paymentConfirmed ? t("checkout.wizard.paymentConfirmedSuccess") : paymentReady ? t("checkout.wizard.choosePaymentMethod") : t("checkout.wizard.confirmAndPrepare")} status={paymentConfirmed ? "completed" : getStepStatus("payment")}>
+            <WizardStepWrapper stepNumber={4} title={paymentConfirmed ? t("checkout.wizard.paymentConfirmed") : boletoGenerated ? t("checkout.wizard.boletoGeneratedTitle") : paymentReady ? t("checkout.wizard.stepPayment") : t("checkout.wizard.reviewAndPayment")} subtitle={paymentConfirmed ? t("checkout.wizard.paymentConfirmedSuccess") : boletoGenerated ? t("checkout.wizard.boletoGeneratedMsg") : paymentReady ? t("checkout.wizard.choosePaymentMethod") : t("checkout.wizard.confirmAndPrepare")} status={paymentConfirmed || boletoGenerated ? "completed" : getStepStatus("payment")}>
               {paymentConfirmed ? (
                 <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-3">
                   <CheckCircle className="w-10 h-10 text-green-500 mx-auto" />
@@ -796,6 +846,18 @@ const ContractingWizard = ({
                     <p className="text-sm text-muted-foreground">{t("checkout.wizard.doNotClose")}</p>
                   </div>
                 </div>
+              ) : boletoGenerated ? (
+                <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-4">
+                  <CheckCircle className="w-10 h-10 text-primary mx-auto" />
+                  <h4 className="text-lg font-heading font-bold">{t("checkout.wizard.boletoGeneratedTitle")}</h4>
+                  <p className="text-sm text-muted-foreground">{t("checkout.wizard.boletoGeneratedMsg")}</p>
+                  {invoiceUrl && (
+                    <Button onClick={() => handleRedirectToCheckout(invoiceUrl)} className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground">
+                      <ExternalLink className="w-4 h-4 mr-2" />
+                      {t("checkout.wizard.openBoletoShort")}
+                    </Button>
+                  )}
+                </div>
               ) : paymentComplete && paymentData?.invoiceUrl ? (
                 <div className="bg-card border border-primary/20 rounded-xl p-6 space-y-4">
                   <div className="flex flex-col items-center justify-center text-center space-y-3">
@@ -803,7 +865,7 @@ const ContractingWizard = ({
                     <h4 className="text-lg font-heading font-bold">{t("checkout.wizard.waitingPaymentConfirmation")}</h4>
                     {popupBlocked ? (
                       <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg px-4 py-3 text-left">
-                        <p className="text-sm text-amber-300 font-semibold mb-1">{t("checkout.wizard.popupBlocked")}</p>
+                        <p className="text-sm font-semibold mb-1">{t("checkout.wizard.popupBlocked")}</p>
                         <p className="text-xs text-muted-foreground">{t("checkout.wizard.popupBlockedDesc")}</p>
                       </div>
                     ) : (
@@ -900,14 +962,17 @@ const ContractingWizard = ({
             </WizardStepWrapper>
 
             {/* Step 5: Conclusão */}
-            <WizardStepWrapper stepNumber={5} title={t("checkout.wizard.stepCompletion")} subtitle={t("checkout.wizard.completionSub")} status={paymentConfirmed ? "active" : "pending"} isLast>
-              {paymentConfirmed ? (
-                <div className="bg-card border border-primary/20 rounded-xl p-6 text-center space-y-3">
-                  <CheckCircle className="w-12 h-12 text-green-500 mx-auto" />
-                  <h4 className="text-lg font-heading font-bold text-foreground">{t("checkout.wizard.orderCompleted")}</h4>
-                  <p className="text-sm text-muted-foreground">{t("checkout.wizard.redirectingConfirmation")}</p>
-                  <Loader2 className="w-5 h-5 animate-spin text-primary mx-auto" />
-                </div>
+            <WizardStepWrapper stepNumber={5} title={t("checkout.wizard.stepCompletion")} subtitle={t("checkout.wizard.orderSummaryCredentials")} status={boletoGenerated || paymentConfirmed ? "active" : "pending"} isLast>
+              {(boletoGenerated || paymentConfirmed) ? (
+                <PurchaseSummaryCard
+                  data={buildSummaryData()}
+                  credentials={portalCredentials}
+                  credentialsLoading={credentialsLoading}
+                  credentialsError={credentialsError}
+                  invoiceUrl={invoiceUrl}
+                  isBoleto={boletoGenerated && !paymentConfirmed}
+                  onRetryCredentials={fetchCredentials}
+                />
               ) : (
                 <div className="p-6 text-center">
                   <p className="text-sm text-muted-foreground">{t("checkout.wizard.waitingPaymentToFinish")}</p>
