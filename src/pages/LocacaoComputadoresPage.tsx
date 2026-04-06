@@ -182,70 +182,158 @@ const LocacaoComputadoresPage = () => {
         </div>
       </section>
 
-      {/* COMPARISON */}
-      <section className="section-light py-16 md:py-20">
-        <div className="container">
-          <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
+      {/* COMPARISON — Premium cards */}
+      <section className="py-16 md:py-24 bg-[hsl(var(--background))]">
+        <div className="container px-4 sm:px-6">
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-10 md:mb-14">
             <p className="font-mono text-xs tracking-[0.3em] uppercase text-primary mb-4">{t(`${k}.compTag`)}</p>
-            <h2 className="text-2xl md:text-3xl mb-8">{t(`${k}.compTitle1`)}<span className="text-primary">{t(`${k}.compHighlight`)}</span></h2>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3">
+              {t(`${k}.compTitle1`)}<span className="text-primary">{t(`${k}.compHighlight`)}</span>
+            </h2>
+            <p className="text-sm md:text-base text-muted-foreground max-w-xl">
+              Locar elimina <strong className="text-foreground">surpresas</strong> e mantém sua operação rodando.
+            </p>
           </motion.div>
-          {/* Desktop: table */}
-          <div className="hidden md:block border border-border overflow-x-auto rounded-lg">
-            <table className="w-full">
-              <thead><tr className="bg-muted">
-                <th className="text-left font-mono text-xs uppercase tracking-wider p-4 text-muted-foreground" />
-                <th className="text-left font-mono text-xs uppercase tracking-wider p-4 text-muted-foreground">{compHeaders[1]}</th>
-                <th className="text-left font-mono text-xs uppercase tracking-wider p-4 text-primary">{compHeaders[2]}</th>
-              </tr></thead>
-              <tbody>{comparisons.map((r) => (
-                <tr key={r.item} className="border-t border-border">
-                  <td className="p-4 text-sm font-medium">{r.item}</td>
-                  <td className="p-4 text-sm text-muted-foreground">{r.compra}</td>
-                  <td className="p-4 text-sm text-primary font-medium flex items-center gap-2"><CheckCircle2 size={14} className="text-primary shrink-0" /> {r.locacao}</td>
-                </tr>
-              ))}</tbody>
-            </table>
-          </div>
 
-          {/* Mobile: vertical per-item blocks */}
-          <div className="md:hidden flex flex-col gap-5">
-            {comparisons.map((r, i) => (
-              <motion.div
-                key={r.item}
-                initial={{ opacity: 0, y: 12 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.3, delay: i * 0.06 }}
-                className="space-y-2"
+          {/* Two main cards */}
+          <div className="grid md:grid-cols-2 gap-5 md:gap-6 mb-10 md:mb-14">
+            {/* LOCAR card (highlighted) */}
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="relative order-1 rounded-xl border-2 border-primary bg-primary/[0.04] p-6 sm:p-8 shadow-[0_0_40px_-12px_hsl(var(--primary)/0.25)]"
+            >
+              <div className="inline-flex items-center gap-2 bg-primary/15 border border-primary/30 rounded-full px-4 py-1.5 mb-5">
+                <Star size={14} className="text-primary fill-primary" />
+                <span className="text-xs font-mono font-bold uppercase tracking-wider text-primary">Mais escolhido pelas empresas</span>
+              </div>
+              <h3 className="text-xl sm:text-2xl font-bold text-foreground mb-5">Locar com WMTi</h3>
+              <ul className="space-y-3 mb-7">
+                {[
+                  "R$ 0 de entrada",
+                  "Manutenção inclusa",
+                  "Peças sem custo",
+                  "Sem depreciação",
+                  "Suporte 24/7 incluso",
+                ].map((txt) => (
+                  <li key={txt} className="flex items-start gap-3">
+                    <CheckCircle2 size={18} className="text-[hsl(142,71%,45%)] flex-shrink-0 mt-0.5" />
+                    <span className="text-sm sm:text-base text-foreground">{txt}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={() => { trackWhatsApp("rental-card-locar", "simulacao"); openWhatsApp({ pageTitle: "Simular Locação", intent: "proposal" }); }}
+                  className="w-full rounded-lg bg-primary text-primary-foreground px-6 py-3.5 font-bold text-sm uppercase tracking-wider hover:brightness-110 transition-all"
+                >
+                  Simular locação
+                </button>
+                <button
+                  onClick={() => { trackWhatsApp("rental-card-locar", "especialista"); openWhatsApp({ pageTitle: "Falar com Especialista", intent: "proposal" }); }}
+                  className="w-full rounded-lg border border-border text-foreground px-6 py-3.5 font-medium text-sm hover:border-primary hover:text-primary transition-all"
+                >
+                  Falar com especialista
+                </button>
+              </div>
+            </motion.div>
+
+            {/* COMPRAR card (neutral) */}
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="relative order-2 rounded-xl border border-border bg-muted/30 p-6 sm:p-8"
+            >
+              <h3 className="text-xl sm:text-2xl font-bold text-foreground mb-5 mt-2">Comprar</h3>
+              <ul className="space-y-3 mb-7">
+                {[
+                  { txt: "R$ 4.000+ por máquina", Icon: DollarSign },
+                  { txt: "Manutenção por sua conta", Icon: Wrench },
+                  { txt: "Peças com custo extra", Icon: Package },
+                  { txt: "Depreciação constante", Icon: TrendingDown },
+                  { txt: "Suporte pago à parte", Icon: AlertTriangle },
+                ].map(({ txt, Icon }) => (
+                  <li key={txt} className="flex items-start gap-3">
+                    <Icon size={18} className="text-muted-foreground flex-shrink-0 mt-0.5" />
+                    <span className="text-sm sm:text-base text-muted-foreground">{txt}</span>
+                  </li>
+                ))}
+              </ul>
+              <button
+                onClick={() => { trackWhatsApp("rental-card-comprar", "comprar"); openWhatsApp({ pageTitle: "Comprar Computadores", intent: "proposal" }); }}
+                className="w-full rounded-lg border border-border text-muted-foreground px-6 py-3.5 font-medium text-sm hover:border-foreground hover:text-foreground transition-all flex items-center justify-center gap-2"
               >
-                <h4 className="font-mono text-sm font-bold uppercase tracking-wider text-foreground">
-                  {r.item}
-                </h4>
-
-                {/* Comprar — neutro/negativo */}
-                <div className="bg-muted/50 border border-border rounded-lg p-4 flex items-start gap-3">
-                  <span className="text-base leading-none mt-0.5">💸</span>
-                  <div>
-                    <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground mb-1">
-                      {compHeaders[1]}
-                    </p>
-                    <p className="font-body text-sm text-muted-foreground leading-relaxed">{r.compra}</p>
-                  </div>
-                </div>
-
-                {/* Locar — destaque positivo */}
-                <div className="bg-primary/5 border-2 border-primary rounded-lg p-4 flex items-start gap-3">
-                  <CheckCircle2 size={18} className="text-primary flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="font-mono text-xs uppercase tracking-wider text-primary mb-1">
-                      {compHeaders[2]}
-                    </p>
-                    <p className="font-body text-sm text-primary font-medium leading-relaxed">{r.locacao}</p>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
+                Comprar <ArrowRight size={14} />
+              </button>
+            </motion.div>
           </div>
+
+          {/* Summary comparison */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="grid grid-cols-2 gap-4 md:gap-6 mb-10 md:mb-14"
+          >
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 mb-4">
+                <XCircle size={20} className="text-primary" />
+                <h4 className="text-base sm:text-lg font-bold text-primary">Comprar</h4>
+              </div>
+              <ul className="space-y-2.5">
+                {["R$4.000+ por máquina", "Manutenção por sua conta", "Custo extra com peças", "Suporte pago à parte"].map((item) => (
+                  <li key={item} className="flex items-start gap-2.5 text-xs sm:text-sm text-muted-foreground">
+                    <span className="flex-shrink-0 mt-0.5">💸</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 mb-4">
+                <CheckCircle2 size={20} className="text-[hsl(142,71%,45%)]" />
+                <h4 className="text-base sm:text-lg font-bold text-[hsl(142,71%,45%)]">Locar com WMTi</h4>
+              </div>
+              <ul className="space-y-2.5">
+                {["R$ 0 para começar", "Manutenção inclusa", "Peças sem custo", "Suporte 24/7 incluso"].map((item) => (
+                  <li key={item} className="flex items-start gap-2.5 text-xs sm:text-sm text-foreground">
+                    <CheckCircle2 size={14} className="text-[hsl(142,71%,45%)] flex-shrink-0 mt-0.5" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </motion.div>
+
+          {/* CTA Final */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center"
+          >
+            <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-2 leading-tight">
+              Pare de gastar com equipamentos.<br />Foque no seu crescimento.
+            </h3>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-8 max-w-md mx-auto">
+              <button
+                onClick={() => { trackWhatsApp("rental-cta-final", "simulacao"); openWhatsApp({ pageTitle: "Simular Locação", intent: "proposal" }); }}
+                className="w-full sm:w-auto rounded-lg bg-primary text-primary-foreground px-8 py-4 font-bold text-sm uppercase tracking-wider hover:brightness-110 transition-all"
+              >
+                Simular locação
+              </button>
+              <button
+                onClick={() => { trackWhatsApp("rental-cta-final", "especialista"); openWhatsApp({ pageTitle: "Falar com Especialista", intent: "proposal" }); }}
+                className="w-full sm:w-auto rounded-lg border border-border text-foreground px-8 py-4 font-medium text-sm hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-2"
+              >
+                Falar com especialista <ArrowRight size={14} />
+              </button>
+            </div>
+          </motion.div>
         </div>
       </section>
 
