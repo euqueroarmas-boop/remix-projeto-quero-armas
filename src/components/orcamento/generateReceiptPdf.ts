@@ -14,6 +14,7 @@ interface ReceiptData {
   purchaseDate: string;
   loginEmail?: string;
   tempPassword?: string;
+  isBoleto?: boolean;
 }
 
 const formatCurrency = (v: number) =>

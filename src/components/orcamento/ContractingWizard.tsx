@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import PurchaseSummaryCard, { type PortalCredentials, type PurchaseSummaryData } from "./PurchaseSummaryCard";
+import { ensurePortalAccess } from "@/lib/postPurchase";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
