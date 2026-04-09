@@ -911,7 +911,7 @@ export default function AdminPage() {
     if (id.startsWith("clientes-detail?id=")) {
       const cid = id.replace("clientes-detail?id=", "");
       setClientDetailId(cid);
-      navigate("/admin/clientes-detail");
+      navigate("/admin/clientes", { replace: true });
       return;
     }
     setClientDetailId(null);
