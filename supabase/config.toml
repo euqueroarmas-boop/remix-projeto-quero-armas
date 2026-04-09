@@ -43,4 +43,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.invoice-reconcile]
+
+[functions.send-smtp-email]
 verify_jwt = false
+
