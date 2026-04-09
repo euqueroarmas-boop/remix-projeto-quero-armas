@@ -878,7 +878,7 @@ export default function AdminPage() {
   }, []);
 
   useEffect(() => {
-    if (section && !resolvedSection) {
+    if (section && !resolvedSection && section !== "clientes-detail") {
       navigate("/admin", { replace: true });
     }
   }, [navigate, resolvedSection, section]);
@@ -889,6 +889,14 @@ export default function AdminPage() {
       setClientDetailId(null);
     }
   }, [section]);
+
+  // Restore client detail id from URL if navigating back
+  useEffect(() => {
+    if (section === "clientes-detail" && !clientDetailId) {
+      // No client id available, go back to clients list
+      navigate("/admin/clientes", { replace: true });
+    }
+  }, [section, clientDetailId, navigate]);
 
   if (!authed) return <AdminLogin onLogin={() => setAuthed(true)} />;
 
