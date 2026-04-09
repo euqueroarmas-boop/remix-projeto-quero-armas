@@ -890,13 +890,6 @@ export default function AdminPage() {
     }
   }, [section]);
 
-  // Restore client detail id from URL if navigating back
-  useEffect(() => {
-    if (section === "clientes-detail" && !clientDetailId) {
-      // No client id available, go back to clients list
-      navigate("/admin/clientes", { replace: true });
-    }
-  }, [section, clientDetailId, navigate]);
 
   if (!authed) return <AdminLogin onLogin={() => setAuthed(true)} />;
 
