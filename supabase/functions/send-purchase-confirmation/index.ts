@@ -12,15 +12,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-    if (!RESEND_API_KEY) {
-      console.error("[send-purchase-confirmation] RESEND_API_KEY not configured");
-      return new Response(JSON.stringify({ error: "RESEND_API_KEY not configured" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     const body = await req.json();
     const {
       customer_name,
@@ -161,40 +152,30 @@ Deno.serve(async (req) => {
     console.log(`[send-purchase-confirmation] Service: ${service_name}, Value: ${valueFormatted}`);
     await logSistemaBackend({ tipo: "email", status: "info", mensagem: `Enviando confirmação para ${customer_email}`, payload: { service_name, value } });
 
-    // Send email via Resend API
-    const resendResponse = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-      },
-      body: JSON.stringify({
-        from: "WMTi Tecnologia <onboarding@resend.dev>",
-        to: [customer_email],
-        subject: `✅ Pagamento confirmado — ${service_name} — WMTi`,
-        html: emailHtml,
-        attachments: attachment_base64 ? [{
-          filename: attachment_filename || "contrato-final.pdf",
-          content: attachment_base64,
-        }] : undefined,
-      }),
-    });
-
-    const resendResult = await resendResponse.json();
-
-    if (!resendResponse.ok) {
-      console.error("[send-purchase-confirmation] Resend error:", JSON.stringify(resendResult));
-      await logSistemaBackend({ tipo: "email", status: "error", mensagem: `Falha envio email: ${customer_email}`, payload: resendResult });
-    } else {
-      console.log("[send-purchase-confirmation] Email sent successfully:", resendResult.id);
-      await logSistemaBackend({ tipo: "email", status: "success", mensagem: `Email enviado: ${customer_email}`, payload: { resend_id: resendResult.id } });
-    }
-
-    // Log to integration_logs for audit
+    // Send email via central SMTP function
     const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const supabase = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
+    const smtpResponse = await supabase.functions.invoke("send-smtp-email", {
+      body: {
+        to: customer_email,
+        subject: `✅ Pagamento confirmado — ${service_name} — WMTi`,
+        html: emailHtml,
+      },
+    });
+
+    const smtpOk = !smtpResponse.error && smtpResponse.data?.success;
+
+    if (!smtpOk) {
+      console.error("[send-purchase-confirmation] SMTP error:", JSON.stringify(smtpResponse.error || smtpResponse.data));
+      await logSistemaBackend({ tipo: "email", status: "error", mensagem: `Falha envio email: ${customer_email}`, payload: smtpResponse.error || smtpResponse.data });
+    } else {
+      console.log("[send-purchase-confirmation] Email sent successfully via SMTP");
+      await logSistemaBackend({ tipo: "email", status: "success", mensagem: `Email enviado: ${customer_email}`, payload: { messageId: smtpResponse.data?.messageId } });
+    }
+
+    // Log to integration_logs for audit
     await supabase.from("integration_logs").insert({
       integration_name: "email",
       operation_name: "purchase_confirmation_sent",
@@ -207,19 +188,19 @@ Deno.serve(async (req) => {
         contract_ref,
       },
       response_payload: {
-        resend_id: resendResult?.id || null,
-        resend_status: resendResponse.ok ? "sent" : "failed",
-        resend_error: !resendResponse.ok ? resendResult : null,
+        smtp_message_id: smtpResponse.data?.messageId || null,
+        smtp_status: smtpOk ? "sent" : "failed",
+        smtp_error: !smtpOk ? (smtpResponse.error || smtpResponse.data) : null,
       },
-      status: resendResponse.ok ? "success" : "error",
-      error_message: !resendResponse.ok ? JSON.stringify(resendResult) : null,
+      status: smtpOk ? "success" : "error",
+      error_message: !smtpOk ? JSON.stringify(smtpResponse.error || smtpResponse.data) : null,
     });
 
     return new Response(
       JSON.stringify({
-        success: resendResponse.ok,
-        message: resendResponse.ok ? "Email sent successfully" : "Email send failed but logged",
-        resend_id: resendResult?.id || null,
+        success: smtpOk,
+        message: smtpOk ? "Email sent successfully" : "Email send failed but logged",
+        messageId: smtpResponse.data?.messageId || null,
       }),
       {
         status: 200,
