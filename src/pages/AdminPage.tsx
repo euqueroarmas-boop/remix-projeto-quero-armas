@@ -878,7 +878,7 @@ export default function AdminPage() {
   }, []);
 
   useEffect(() => {
-    if (section && !resolvedSection) {
+    if (section && !resolvedSection && section !== "clientes-detail") {
       navigate("/admin", { replace: true });
     }
   }, [navigate, resolvedSection, section]);
@@ -889,6 +889,7 @@ export default function AdminPage() {
       setClientDetailId(null);
     }
   }, [section]);
+
 
   if (!authed) return <AdminLogin onLogin={() => setAuthed(true)} />;
 
@@ -903,7 +904,7 @@ export default function AdminPage() {
     if (id.startsWith("clientes-detail?id=")) {
       const cid = id.replace("clientes-detail?id=", "");
       setClientDetailId(cid);
-      navigate("/admin/clientes-detail");
+      navigate("/admin/clientes", { replace: true });
       return;
     }
     setClientDetailId(null);
