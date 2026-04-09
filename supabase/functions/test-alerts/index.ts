@@ -11,7 +11,7 @@ const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ADMIN_PASSWORD = Deno.env.get("ADMIN_PASSWORD")!;
 const EVOLUTION_API_URL = Deno.env.get("EVOLUTION_API_URL") || "";
 const EVOLUTION_API_TOKEN = Deno.env.get("EVOLUTION_API_TOKEN") || "";
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") || "";
+// Email sending now uses central SMTP function
 
 interface AlertPayload {
   run_id: string;
@@ -58,27 +58,17 @@ async function sendWhatsApp(phone: string, message: string): Promise<{ ok: boole
   }
 }
 
-// ─── Email via Resend ───
+// ─── Email via SMTP central ───
 async function sendEmail(to: string, subject: string, html: string): Promise<{ ok: boolean; error?: string }> {
-  if (!RESEND_API_KEY) {
-    return { ok: false, error: "Resend API key não configurada" };
-  }
   try {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-      },
-      body: JSON.stringify({
-        from: "WMTi Testes <noreply@wmti.com.br>",
-        to: [to],
-        subject,
-        html,
-      }),
+    const supabaseEmail = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+    const res = await supabaseEmail.functions.invoke("send-smtp-email", {
+      body: { to, subject, html },
     });
-    const data = await res.json();
-    return { ok: res.ok, error: res.ok ? undefined : JSON.stringify(data) };
+    if (res.error || !res.data?.success) {
+      return { ok: false, error: JSON.stringify(res.error || res.data) };
+    }
+    return { ok: true };
   } catch (e) {
     return { ok: false, error: String(e) };
   }
