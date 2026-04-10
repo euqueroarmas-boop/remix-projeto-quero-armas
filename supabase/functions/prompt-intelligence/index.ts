@@ -454,7 +454,7 @@ Deno.serve(async (req) => {
           "AdminPage", "AreaDoClientePage", "CartoriosPage", "LocacaoPage",
           "AdministracaoServidoresPage", "SuporteTiPage", "TerceirizacaoPage",
         ],
-        integrations: ["Asaas", "BrasilAPI", "WhatsApp", "Cypress/GitHub Actions", "Resend"],
+        integrations: ["Asaas", "BrasilAPI", "WhatsApp", "Cypress/GitHub Actions", "SMTP (wmti.com.br)"],
         testSuites: ["smoke", "contracts", "seo", "checkout", "full"],
         coreFlows: ["lead-capture", "budget-calculator", "contract-generation", "payment", "client-portal"],
       };
