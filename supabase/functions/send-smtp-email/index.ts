@@ -40,8 +40,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    const fromName = "WMTi";
-    const fromEmail = SMTP_USER; // naoresponda@wmti.com.br
+    const fromName = Deno.env.get("SMTP_FROM_NAME") || "WMTi";
+    const fromEmail = Deno.env.get("SMTP_FROM_EMAIL") || SMTP_USER;
 
     console.log(`[send-smtp-email] Sending to ${to} | Subject: ${subject}`);
 

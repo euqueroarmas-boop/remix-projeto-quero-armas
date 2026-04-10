@@ -124,13 +124,16 @@ export default function ClientLogin({ onLogin }: Props) {
       return;
     }
 
-    const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/redefinir-senha`,
+    const { data, error: err } = await supabase.functions.invoke("request-password-reset", {
+      body: {
+        email,
+        redirectTo: `${window.location.origin}/redefinir-senha`,
+      },
     });
 
     setLoading(false);
 
-    if (err) {
+    if (err || data?.error) {
       setError(t("clientPortal.login.errors.resetEmail"));
       return;
     }
