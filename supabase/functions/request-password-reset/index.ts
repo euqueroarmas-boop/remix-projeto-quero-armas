@@ -11,6 +11,7 @@ const corsHeaders = {
 const BodySchema = z.object({
   email: z.string().trim().email("E-mail inválido").transform((value) => value.toLowerCase()),
   redirectTo: z.string().url("URL de redirecionamento inválida").optional(),
+  trace_id: z.string().trim().min(8).max(200).optional(),
 });
 
 const DEFAULT_REDIRECT_TO = "https://dell-shine-solutions.lovable.app/redefinir-senha";
@@ -46,6 +47,10 @@ function resolveRedirectTo(req: Request, explicitRedirect?: string) {
   }
 
   return DEFAULT_REDIRECT_TO;
+}
+
+function createTraceId(explicitTraceId?: string) {
+  return explicitTraceId || `wmti-reset-${crypto.randomUUID()}`;
 }
 
 function buildRecoveryEmailHtml(recoveryLink: string) {
@@ -122,16 +127,24 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json();
     const parsedBody = BodySchema.safeParse(body);
+    const traceId = createTraceId(body?.trace_id);
 
     if (!parsedBody.success) {
-      return new Response(JSON.stringify({ error: parsedBody.error.flatten().fieldErrors }), {
+      console.warn(`[request-password-reset][${traceId}] validation_failed`, JSON.stringify(parsedBody.error.flatten().fieldErrors));
+      return new Response(JSON.stringify({ error: parsedBody.error.flatten().fieldErrors, traceId }), {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json", "X-WMTi-Trace-Id": traceId },
       });
     }
 
     const { email, redirectTo } = parsedBody.data;
     const finalRedirectTo = resolveRedirectTo(req, redirectTo);
+
+    console.info(`[request-password-reset][${traceId}] received`, JSON.stringify({
+      email,
+      origin: req.headers.get("origin"),
+      redirectTo: finalRedirectTo,
+    }));
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -148,46 +161,66 @@ Deno.serve(async (req) => {
 
     const recoveryLink = linkData?.properties?.action_link;
 
+    console.info(`[request-password-reset][${traceId}] generate_link_result`, JSON.stringify({
+      ok: !linkError && Boolean(recoveryLink),
+      error: linkError?.message ?? null,
+      hasRecoveryLink: Boolean(recoveryLink),
+    }));
+
     if (linkError || !recoveryLink) {
       await logSistemaBackend({
         tipo: "auth",
         status: "warning",
         mensagem: "Solicitação de recuperação sem link emitido",
-        payload: { email, error: linkError?.message || "recovery_link_unavailable" },
+        payload: { email, error: linkError?.message || "recovery_link_unavailable", trace_id: traceId },
       });
 
       return new Response(JSON.stringify({
         success: true,
         message: "Se existir uma conta vinculada a este identificador, o e-mail de recuperação será enviado.",
+        traceId,
       }), {
         status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json", "X-WMTi-Trace-Id": traceId },
       });
     }
 
     const subject = "🔐 Redefinição de senha — Portal do Cliente WMTi";
+    console.info(`[request-password-reset][${traceId}] invoking_send_smtp_email`, JSON.stringify({
+      functionName: "send-smtp-email",
+      to: email,
+      subject,
+    }));
+
     const smtpResponse = await supabase.functions.invoke("send-smtp-email", {
       body: {
         to: email,
         subject,
         html: buildRecoveryEmailHtml(recoveryLink),
         text: buildRecoveryEmailText(recoveryLink),
+        trace_id: traceId,
       },
     });
 
     const smtpOk = !smtpResponse.error && smtpResponse.data?.success;
+
+    console.info(`[request-password-reset][${traceId}] send_smtp_email_result`, JSON.stringify({
+      ok: smtpOk,
+      error: smtpResponse.error?.message ?? null,
+      data: smtpResponse.data ?? null,
+    }));
 
     if (!smtpOk) {
       await logSistemaBackend({
         tipo: "auth",
         status: "error",
         mensagem: "Falha ao enviar recuperação de senha via SMTP",
-        payload: { email, error: smtpResponse.error || smtpResponse.data },
+        payload: { email, error: smtpResponse.error || smtpResponse.data, trace_id: traceId },
       });
 
-      return new Response(JSON.stringify({ error: "Falha ao enviar o e-mail de recuperação." }), {
+      return new Response(JSON.stringify({ error: "Falha ao enviar o e-mail de recuperação.", traceId }), {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json", "X-WMTi-Trace-Id": traceId },
       });
     }
 
@@ -200,6 +233,7 @@ Deno.serve(async (req) => {
         subject,
         messageId: smtpResponse.data?.messageId || null,
         redirectTo: finalRedirectTo,
+        trace_id: traceId,
       },
     });
 
@@ -209,23 +243,26 @@ Deno.serve(async (req) => {
       provider: "wmti_smtp",
       subject,
       messageId: smtpResponse.data?.messageId || null,
+      traceId,
+      mailFunction: "send-smtp-email",
     }), {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "application/json", "X-WMTi-Trace-Id": traceId },
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    console.error("[request-password-reset] Error:", message);
+    const traceId = `wmti-reset-${crypto.randomUUID()}`;
+    console.error(`[request-password-reset][${traceId}] error`, message);
     await logSistemaBackend({
       tipo: "auth",
       status: "error",
       mensagem: `Erro na recuperação de senha: ${message}`,
-      payload: {},
+      payload: { trace_id: traceId },
     }).catch(() => {});
 
-    return new Response(JSON.stringify({ error: "Erro interno ao processar a recuperação." }), {
+    return new Response(JSON.stringify({ error: "Erro interno ao processar a recuperação.", traceId }), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "application/json", "X-WMTi-Trace-Id": traceId },
     });
   }
 });

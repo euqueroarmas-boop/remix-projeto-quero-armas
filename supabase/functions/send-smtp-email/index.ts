@@ -6,6 +6,10 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+function createTraceId(explicitTraceId?: string) {
+  return explicitTraceId || `smtp-${crypto.randomUUID()}`;
+}
+
 /**
  * Central SMTP email sender for WMTi.
  * All transactional/operational emails go through this function.
@@ -31,21 +35,29 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { to, subject, html, text, reply_to } = body;
+    const { to, subject, html, text, reply_to, trace_id } = body;
+    const traceId = createTraceId(trace_id);
 
     if (!to || !subject || (!html && !text)) {
-      return new Response(JSON.stringify({ error: "Missing required fields: to, subject, html or text" }), {
+      console.warn(`[send-smtp-email][${traceId}] missing_required_fields`);
+      return new Response(JSON.stringify({ error: "Missing required fields: to, subject, html or text", traceId }), {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json", "X-WMTi-Trace-Id": traceId },
       });
     }
 
     const fromName = Deno.env.get("SMTP_FROM_NAME") || "WMTi";
     const fromEmail = Deno.env.get("SMTP_FROM_EMAIL") || SMTP_USER;
 
-    console.log(`[send-smtp-email] Sending to ${to} | Subject: ${subject}`);
+    console.info(`[send-smtp-email][${traceId}] request_received`, JSON.stringify({
+      to,
+      subject,
+      from: `${fromName} <${fromEmail}>`,
+      hasHtml: Boolean(html),
+      hasText: Boolean(text),
+      replyTo: reply_to ?? null,
+    }));
 
-    // Build SMTP connection using Deno's native TLS
     const conn = SMTP_PORT === 465
       ? await Deno.connectTls({ hostname: SMTP_HOST, port: SMTP_PORT })
       : await Deno.connect({ hostname: SMTP_HOST, port: SMTP_PORT });
@@ -65,57 +77,43 @@ Deno.serve(async (req) => {
       return await readResponse();
     }
 
-    // Read initial greeting
     await readResponse();
+    const ehloRes = await sendCommand(`EHLO wmti.com.br`);
 
-    // EHLO
-    let ehloRes = await sendCommand(`EHLO wmti.com.br`);
-
-    // For port 587, upgrade to TLS via STARTTLS
     if (SMTP_PORT === 587 && ehloRes.includes("STARTTLS")) {
       await sendCommand("STARTTLS");
       const tlsConn = await Deno.startTls(conn as Deno.TcpConn, { hostname: SMTP_HOST });
-      // Reassign conn to TLS connection — but since conn is const, we handle inline
-      // For simplicity with port 587 STARTTLS we use the simpler fetch-based approach
       tlsConn.close();
-      // Fallback: use fetch-based SMTP relay or direct TLS
-      // Since port 465 is recommended, this path is a safety net
-      console.warn("[send-smtp-email] STARTTLS upgrade attempted — using port 465 is recommended");
+      console.warn(`[send-smtp-email][${traceId}] starttls_attempted_port_587`);
     }
 
-    // AUTH LOGIN
     await sendCommand("AUTH LOGIN");
     await sendCommand(btoa(SMTP_USER));
     const authRes = await sendCommand(btoa(SMTP_PASS));
 
     if (!authRes.includes("235") && !authRes.includes("Authentication successful")) {
-      console.error("[send-smtp-email] SMTP auth failed:", authRes);
-      await logSistemaBackend({ tipo: "email", status: "error", mensagem: `SMTP auth failed for ${to}`, payload: { error: authRes } });
+      console.error(`[send-smtp-email][${traceId}] smtp_auth_failed`, authRes);
+      await logSistemaBackend({ tipo: "email", status: "error", mensagem: `SMTP auth failed for ${to}`, payload: { error: authRes, trace_id: traceId } });
       conn.close();
-      return new Response(JSON.stringify({ error: "SMTP authentication failed" }), {
+      return new Response(JSON.stringify({ error: "SMTP authentication failed", traceId }), {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json", "X-WMTi-Trace-Id": traceId },
       });
     }
 
-    // MAIL FROM
     await sendCommand(`MAIL FROM:<${fromEmail}>`);
-
-    // RCPT TO
     const rcptRes = await sendCommand(`RCPT TO:<${to}>`);
     if (!rcptRes.startsWith("2")) {
-      console.error("[send-smtp-email] RCPT TO failed:", rcptRes);
+      console.error(`[send-smtp-email][${traceId}] rcpt_to_failed`, rcptRes);
       conn.close();
-      return new Response(JSON.stringify({ error: "Recipient rejected", detail: rcptRes }), {
+      return new Response(JSON.stringify({ error: "Recipient rejected", detail: rcptRes, traceId }), {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json", "X-WMTi-Trace-Id": traceId },
       });
     }
 
-    // DATA
     await sendCommand("DATA");
 
-    // Build email headers + body
     const boundary = `----=_Part_${Date.now()}_${Math.random().toString(36).slice(2)}`;
     const date = new Date().toUTCString();
     const messageId = `<${Date.now()}.${Math.random().toString(36).slice(2)}@wmti.com.br>`;
@@ -147,49 +145,52 @@ Deno.serve(async (req) => {
       emailContent += `${text}\r\n`;
     }
 
-    // End DATA
     const dataRes = await sendCommand(emailContent + "\r\n.");
 
     if (!dataRes.startsWith("2")) {
-      console.error("[send-smtp-email] DATA send failed:", dataRes);
-      await logSistemaBackend({ tipo: "email", status: "error", mensagem: `Falha envio SMTP: ${to}`, payload: { error: dataRes } });
+      console.error(`[send-smtp-email][${traceId}] data_send_failed`, dataRes);
+      await logSistemaBackend({ tipo: "email", status: "error", mensagem: `Falha envio SMTP: ${to}`, payload: { error: dataRes, trace_id: traceId } });
       conn.close();
-      return new Response(JSON.stringify({ error: "Email delivery failed", detail: dataRes }), {
+      return new Response(JSON.stringify({ error: "Email delivery failed", detail: dataRes, traceId }), {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json", "X-WMTi-Trace-Id": traceId },
       });
     }
 
-    // QUIT
     await sendCommand("QUIT");
     conn.close();
 
-    console.log(`[send-smtp-email] Email sent successfully to ${to}`);
-    await logSistemaBackend({ tipo: "email", status: "success", mensagem: `Email SMTP enviado: ${to}`, payload: { subject, messageId } });
+    console.info(`[send-smtp-email][${traceId}] email_sent`, JSON.stringify({
+      to,
+      subject,
+      from: `${fromName} <${fromEmail}>`,
+      messageId,
+    }));
+    await logSistemaBackend({ tipo: "email", status: "success", mensagem: `Email SMTP enviado: ${to}`, payload: { subject, messageId, trace_id: traceId } });
 
-    // Log to integration_logs
     const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
     const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
     await supabase.from("integration_logs").insert({
       integration_name: "smtp_email",
       operation_name: "email_sent",
-      request_payload: { to, subject, from: `${fromName} <${fromEmail}>` },
+      request_payload: { to, subject, from: `${fromName} <${fromEmail}>`, trace_id: traceId },
       response_payload: { messageId, status: "sent" },
       status: "success",
     });
 
     return new Response(
-      JSON.stringify({ success: true, message: "Email sent via SMTP", messageId }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ success: true, message: "Email sent via SMTP", messageId, traceId, from: `${fromName} <${fromEmail}>` }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json", "X-WMTi-Trace-Id": traceId } }
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    console.error("[send-smtp-email] Error:", message);
-    await logSistemaBackend({ tipo: "email", status: "error", mensagem: `Erro SMTP: ${message}`, payload: {} }).catch(() => {});
-    return new Response(JSON.stringify({ error: message }), {
+    const traceId = `smtp-${crypto.randomUUID()}`;
+    console.error(`[send-smtp-email][${traceId}] error`, message);
+    await logSistemaBackend({ tipo: "email", status: "error", mensagem: `Erro SMTP: ${message}`, payload: { trace_id: traceId } }).catch(() => {});
+    return new Response(JSON.stringify({ error: message, traceId }), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "application/json", "X-WMTi-Trace-Id": traceId },
     });
   }
 });
