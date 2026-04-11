@@ -22,6 +22,13 @@ export default function ClientLogin({ onLogin }: Props) {
   const [error, setError] = useState("");
   const [mode, setMode] = useState<"login" | "reset" | "change_password">("login");
   const [resetSent, setResetSent] = useState(false);
+  const [resetTraceId, setResetTraceId] = useState<string | null>(null);
+
+  const createResetTraceId = () => `wmti-reset-${crypto.randomUUID()}`;
+
+  const logResetUi = (stage: string, payload: Record<string, unknown> = {}) => {
+    console.info(`[wmti-reset][ui][${stage}]`, payload);
+  };
 
   // Password change state
   const [newPassword, setNewPassword] = useState("");
@@ -114,21 +121,46 @@ export default function ClientLogin({ onLogin }: Props) {
     e.preventDefault();
     if (!identifier) { setError(t("clientPortal.login.errors.informEmail")); return; }
 
+    const traceId = resetTraceId || createResetTraceId();
+    setResetTraceId(traceId);
     setLoading(true);
     setError("");
 
+    logResetUi("submit", {
+      traceId,
+      functionName: "request-password-reset",
+      identifier,
+      route: window.location.pathname,
+    });
+
     const email = await resolveEmail(identifier);
     if (!email) {
+      logResetUi("resolve-email-miss", { traceId, identifier });
       setError("Não foi possível encontrar uma conta com este identificador.");
       setLoading(false);
       return;
     }
 
+    logResetUi("invoke-request-password-reset", {
+      traceId,
+      functionName: "request-password-reset",
+      email,
+      redirectTo: `${window.location.origin}/redefinir-senha`,
+    });
+
     const { data, error: err } = await supabase.functions.invoke("request-password-reset", {
       body: {
         email,
         redirectTo: `${window.location.origin}/redefinir-senha`,
+        trace_id: traceId,
       },
+    });
+
+    logResetUi("response", {
+      traceId,
+      functionName: "request-password-reset",
+      responseData: data,
+      responseError: err?.message ?? null,
     });
 
     setLoading(false);
@@ -139,7 +171,7 @@ export default function ClientLogin({ onLogin }: Props) {
     }
 
     setResetSent(true);
-    logSistema({ tipo: "admin", status: "info", mensagem: "Recuperação de senha solicitada", payload: { email } });
+    logSistema({ tipo: "admin", status: "info", mensagem: "Recuperação de senha solicitada", payload: { email, trace_id: traceId } });
   };
 
   const identifierPlaceholder = isCnpjOrCpf(identifier)
@@ -265,7 +297,18 @@ export default function ClientLogin({ onLogin }: Props) {
 
               <button
                 type="button"
-                onClick={() => { setMode("reset"); setError(""); }}
+                onClick={() => {
+                  const traceId = createResetTraceId();
+                  setResetTraceId(traceId);
+                  logResetUi("forgot-password-click", {
+                    traceId,
+                    label: t("clientPortal.login.forgotPassword"),
+                    route: window.location.pathname,
+                    identifier,
+                  });
+                  setMode("reset");
+                  setError("");
+                }}
                 className="w-full text-sm text-primary hover:underline mt-2"
               >
                  {t("clientPortal.login.forgotPassword")}
