@@ -2076,6 +2076,7 @@ export type Database = {
       qa_documentos_conhecimento: {
         Row: {
           ativo: boolean
+          ativo_na_ia: boolean
           categoria: string | null
           created_at: string
           descricao: string | null
@@ -2086,6 +2087,7 @@ export type Database = {
           mime_type: string | null
           nome_arquivo: string
           origem: string | null
+          referencia_preferencial: boolean
           resumo_extraido: string | null
           status_processamento: string
           status_validacao: string
@@ -2098,6 +2100,7 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
+          ativo_na_ia?: boolean
           categoria?: string | null
           created_at?: string
           descricao?: string | null
@@ -2108,6 +2111,7 @@ export type Database = {
           mime_type?: string | null
           nome_arquivo: string
           origem?: string | null
+          referencia_preferencial?: boolean
           resumo_extraido?: string | null
           status_processamento?: string
           status_validacao?: string
@@ -2120,6 +2124,7 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
+          ativo_na_ia?: boolean
           categoria?: string | null
           created_at?: string
           descricao?: string | null
@@ -2130,6 +2135,7 @@ export type Database = {
           mime_type?: string | null
           nome_arquivo?: string
           origem?: string | null
+          referencia_preferencial?: boolean
           resumo_extraido?: string | null
           status_processamento?: string
           status_validacao?: string
