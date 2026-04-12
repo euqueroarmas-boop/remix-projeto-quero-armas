@@ -320,7 +320,7 @@ const QUALITY_MARKERS = {
   maxGenericHits: 2,
 };
 
-function validateQuality(text: string, hasBos: boolean, boCount: number): { pass: boolean; issues: string[] } {
+function validateQuality(text: string, evidenceDocs: EvidenceDoc[]): { pass: boolean; issues: string[] } {
   const issues: string[] = [];
   for (const section of QUALITY_MARKERS.requiredSections) {
     if (!text.includes(section)) issues.push(`seção_ausente:${section}`);
@@ -342,21 +342,48 @@ function validateQuality(text: string, hasBos: boolean, boCount: number): { pass
   if (normsUsed < 3) issues.push(`base_normativa_insuficiente:${normsUsed}/4`);
   if (!text.includes("pelos fatos e fundamentos a seguir expostos")) issues.push("preambulo_sem_formula_legal");
 
-  // BO-specific quality validation
-  if (hasBos) {
-    // Check if BOs are substantively referenced (not just generically)
+  // Per-type quality validation
+  const bos = evidenceDocs.filter(d => d.tipo === "boletim_ocorrencia");
+  const laudos = evidenceDocs.filter(d => HIGH_PRIORITY_TYPES.includes(d.tipo) && d.tipo !== "boletim_ocorrencia");
+  const notifs = evidenceDocs.filter(d => d.tipo === "notificacao_administrativa" || d.tipo === "indeferimento_administrativo");
+
+  if (bos.length > 0) {
     const boGenericOnly = /boletins?\s+de\s+ocorr[eê]ncia/i.test(text) &&
       !/B\.?O\.?\s*(?:n[ºo°]?\.?\s*)?\d/i.test(text) &&
       !/ocorr[eê]ncia\s+(?:registrada|lavrada|datada)/i.test(text);
-    
-    // Check if the text has concrete BO facts (dates, descriptions, specific events)
-    const hasConcreteBoFacts = 
-      /(?:registr(?:ou|ado|ada)|relat(?:ou|ado|ada)|narra(?:do|da)|descrev(?:eu|e)|consta(?:m|ndo)?)\s+(?:no|na|nos|nas)\s+(?:boletim|B\.?O\.?|ocorr[eê]ncia)/i.test(text) ||
+    const hasConcreteBoFacts =
+      /(?:registr(?:ou|ado|ada)|relat(?:ou|ado|ada)|narra(?:do|da)|descrev(?:eu|e))\s+(?:no|na|nos|nas)\s+(?:boletim|B\.?O\.?|ocorr[eê]ncia)/i.test(text) ||
       /B\.?O\.?\s*(?:n[ºo°]?\.?\s*)?\d/i.test(text) ||
       /(?:amea[çc]|agress|intimi|persegui|risco|ataque)/i.test(text);
-
     if (boGenericOnly && !hasConcreteBoFacts) {
-      issues.push(`bo_subutilizado:${boCount}_bos_sem_exploracao_factual`);
+      issues.push(`bo_subutilizado:${bos.length}_bos_sem_exploracao_factual`);
+    }
+  }
+
+  if (laudos.length > 0) {
+    const hasLaudoRef = /(?:laudo|atestado|relat[oó]rio\s+cl[ií]nico|diagn[oó]stico|CRM|CRP|psic[oó]log|psiqui[aá]tr)/i.test(text);
+    const hasConcreteLaudo = /(?:profissional|m[eé]dic[oa]|Dr\.?|Dra\.?|diagn[oó]stic|sintoma|ansiedade|depress|TEPT|trauma|abalo|sofrimento|impacto)/i.test(text);
+    if (!hasLaudoRef || !hasConcreteLaudo) {
+      issues.push(`laudo_subutilizado:${laudos.length}_laudos_sem_exploracao_clinica`);
+    }
+  }
+
+  if (notifs.length > 0) {
+    const hasNotifRef = /(?:notifica[çc][ãa]o|indeferimento|despacho|decis[ãa]o\s+administrativa)/i.test(text);
+    const hasConcreteNotif = /(?:v[ií]cio|motiva[çc][ãa]o|erro\s+material|omiss[ãa]o|fundamenta[çc][ãa]o|prazo|exig[eê]ncia|pend[eê]ncia)/i.test(text);
+    if (!hasNotifRef || !hasConcreteNotif) {
+      issues.push(`notificacao_subutilizada:${notifs.length}_docs_sem_analise_critica`);
+    }
+  }
+
+  // Generic check for any probatory doc
+  if (evidenceDocs.length > 0) {
+    const totalProbatorio = evidenceDocs.filter(d => PROBATORIO_TYPES.includes(d.tipo)).length;
+    if (totalProbatorio > 0) {
+      const hasAnyConcreteRef = /(?:registr|relat|narra|descrev|consta|comprova|demonstra|evidencia|atesta|diagnosti)/i.test(text);
+      if (!hasAnyConcreteRef) {
+        issues.push(`prova_factual_subutilizada:${totalProbatorio}_docs_probatorios_sem_uso_concreto`);
+      }
     }
   }
 
