@@ -80,7 +80,7 @@ export default function QACasosPage() {
 
       {/* List */}
       {loading ? (
-        <div className="flex justify-center py-10"><div className="w-4 h-4 border-2 border-slate-700 border-t-slate-400 rounded-full animate-spin" /></div>
+        <div className="flex justify-center py-10"><div className="w-4 h-4 border-2 border-[#1a1a1a] border-t-slate-400 rounded-full animate-spin" /></div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-10 text-slate-600 text-[11px]">Nenhum caso encontrado</div>
       ) : (

@@ -74,7 +74,7 @@ export default function QAConfiguracoesPage() {
   if (loading) {
     return (
       <div className="flex justify-center py-12">
-        <div className="w-4 h-4 border-2 border-slate-700 border-t-slate-400 rounded-full animate-spin" />
+        <div className="w-4 h-4 border-2 border-[#1a1a1a] border-t-slate-400 rounded-full animate-spin" />
       </div>
     );
   }

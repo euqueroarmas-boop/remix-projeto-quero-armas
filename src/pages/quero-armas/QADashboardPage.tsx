@@ -74,7 +74,7 @@ export default function QADashboardPage() {
   if (loading) {
     return (
       <div className="flex justify-center py-12">
-        <div className="w-5 h-5 border-2 border-slate-700 border-t-slate-400 rounded-full animate-spin" />
+        <div className="w-5 h-5 border-2 border-[#1a1a1a] border-t-slate-400 rounded-full animate-spin" />
       </div>
     );
   }
@@ -109,15 +109,15 @@ export default function QADashboardPage() {
       {/* Quick actions — compact on mobile */}
       <div className="flex gap-1.5 md:gap-2">
         <Link to="/quero-armas/gerar-peca"
-          className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#0d0d0d] border border-[#1a1a1a] rounded hover:border-slate-700 transition-colors text-[11px] text-slate-400 hover:text-slate-300">
+          className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#0d0d0d] border border-[#1a1a1a] rounded hover:border-[#1a1a1a] transition-colors text-[11px] text-slate-400 hover:text-slate-300">
           <PenTool className="h-3 w-3" /> <span className="hidden xs:inline">Nova</span> Peça
         </Link>
         <Link to="/quero-armas/base-conhecimento"
-          className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#0d0d0d] border border-[#1a1a1a] rounded hover:border-slate-700 transition-colors text-[11px] text-slate-400 hover:text-slate-300">
+          className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#0d0d0d] border border-[#1a1a1a] rounded hover:border-[#1a1a1a] transition-colors text-[11px] text-slate-400 hover:text-slate-300">
           <BookOpen className="h-3 w-3" /> Base
         </Link>
         <Link to="/quero-armas/ia"
-          className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#0d0d0d] border border-[#1a1a1a] rounded hover:border-slate-700 transition-colors text-[11px] text-slate-400 hover:text-slate-300">
+          className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#0d0d0d] border border-[#1a1a1a] rounded hover:border-[#1a1a1a] transition-colors text-[11px] text-slate-400 hover:text-slate-300">
           <Shield className="h-3 w-3" /> IA
         </Link>
       </div>

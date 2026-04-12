@@ -98,8 +98,8 @@ export default function QAHistoricoPage() {
 
   const statusBadge = (s: string) => {
     const map: Record<string, string> = {
-      rascunho: "text-slate-500", em_revisao: "text-amber-400", corrigido: "text-blue-400",
-      aprovado: "text-emerald-400", aprovado_como_referencia: "text-purple-400", rejeitado: "text-red-400",
+      rascunho: "text-slate-500", em_revisao: "text-amber-400", corrigido: "text-slate-300",
+      aprovado: "text-emerald-400", aprovado_como_referencia: "text-emerald-300", rejeitado: "text-red-400",
     };
     return map[s] || "text-slate-500";
   };
@@ -121,7 +121,7 @@ export default function QAHistoricoPage() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-10"><div className="w-4 h-4 border-2 border-slate-700 border-t-slate-400 rounded-full animate-spin" /></div>
+        <div className="flex justify-center py-10"><div className="w-4 h-4 border-2 border-[#1a1a1a] border-t-slate-400 rounded-full animate-spin" /></div>
       ) : items.length === 0 ? (
         <div className="text-center py-10 text-slate-600 text-[11px]">Nenhum registro</div>
       ) : (
@@ -218,11 +218,11 @@ export default function QAHistoricoPage() {
                 <ThumbsUp className="h-3 w-3 mr-1" /> Aprovar
               </Button>
               <Button onClick={() => submitReview("referencia", true)} disabled={saving} size="sm"
-                className="bg-purple-600/20 text-purple-400 hover:bg-purple-600/30 border border-purple-600/20 h-7 text-[10px]">
+                className="bg-emerald-600/10 text-emerald-300 hover:bg-emerald-600/20 border border-emerald-600/20 h-7 text-[10px]">
                 <Star className="h-3 w-3 mr-1" /> Ref
               </Button>
               <Button onClick={() => submitReview("correcao")} disabled={saving} size="sm"
-                className="bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 border border-blue-600/20 h-7 text-[10px]">
+                className="bg-slate-600/20 text-slate-300 hover:bg-slate-600/30 border border-slate-600/20 h-7 text-[10px]">
                 <PenTool className="h-3 w-3 mr-1" /> Corrigir
               </Button>
               <Button onClick={() => submitReview("rejeicao")} disabled={saving} size="sm"

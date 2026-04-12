@@ -10,7 +10,7 @@ export default function QALayout() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#050505]">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-6 h-6 border-2 border-slate-700 border-t-slate-400 rounded-full animate-spin" />
+          <div className="w-6 h-6 border-2 border-[#1a1a1a] border-t-slate-400 rounded-full animate-spin" />
           <span className="text-[10px] text-slate-600 tracking-wider uppercase">Carregando</span>
         </div>
       </div>

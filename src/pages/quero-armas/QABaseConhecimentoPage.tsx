@@ -137,10 +137,10 @@ function ActivityItem({ item, onDismiss, onReprocess }: { item: TrackedImport; o
     <div className={`flex items-center gap-3 px-4 py-2.5 rounded-lg border transition-all ${
       isFailed ? "bg-red-500/5 border-red-500/20" :
       isDone ? "bg-emerald-500/5 border-emerald-500/20" :
-      "bg-blue-500/5 border-blue-500/20"
+      "bg-slate-500/5 border-slate-500/20"
     }`}>
       <div className="shrink-0">
-        {isActive && <Loader2 className="h-4 w-4 text-blue-400 animate-spin" />}
+        {isActive && <Loader2 className="h-4 w-4 text-slate-400 animate-spin" />}
         {isDone && <CheckCircle className="h-4 w-4 text-emerald-400" />}
         {isFailed && <AlertCircle className="h-4 w-4 text-red-400" />}
       </div>
@@ -150,7 +150,7 @@ function ActivityItem({ item, onDismiss, onReprocess }: { item: TrackedImport; o
           <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium whitespace-nowrap ${
             isFailed ? "bg-red-500/10 text-red-400" :
             isDone ? "bg-emerald-500/10 text-emerald-400" :
-            "bg-blue-500/10 text-blue-400"
+            "bg-blue-500/10 text-slate-300"
           }`}>{stage.label}</span>
           {duration > 0 && (
             <span className="text-[10px] text-slate-500 tabular-nums">{formatDuration(duration)}</span>
@@ -159,13 +159,13 @@ function ActivityItem({ item, onDismiss, onReprocess }: { item: TrackedImport; o
         {/* Meta info on success */}
         {isDone && (tipoLabel || origemLabel) && (
           <div className="flex items-center gap-2 mt-0.5">
-            {tipoLabel && <span className="text-[10px] text-slate-500 bg-slate-800/60 px-1.5 py-0.5 rounded">{tipoLabel}</span>}
+            {tipoLabel && <span className="text-[10px] text-slate-500 bg-[#161616] px-1.5 py-0.5 rounded">{tipoLabel}</span>}
             <span className="text-[10px] text-slate-600">{origemLabel}</span>
           </div>
         )}
         {isActive && (
           <div className="mt-1.5">
-            <Progress value={stage.pct} className="h-1.5 bg-slate-800" />
+            <Progress value={stage.pct} className="h-1.5 bg-[#161616]" />
           </div>
         )}
         {isFailed && item.resumo && (
@@ -508,7 +508,7 @@ export default function QABaseConhecimentoPage() {
     if (s === "erro" || s === "texto_invalido") return <AlertCircle className="h-4 w-4 text-red-400" />;
     if (TERMINAL.includes(s)) return <Clock className="h-4 w-4 text-slate-500" />;
     // Any processing stage
-    if (s !== "pendente") return <Loader2 className="h-4 w-4 text-blue-400 animate-spin" />;
+    if (s !== "pendente") return <Loader2 className="h-4 w-4 text-slate-400 animate-spin" />;
     return <Clock className="h-4 w-4 text-slate-500" />;
   };
 
@@ -517,12 +517,12 @@ export default function QABaseConhecimentoPage() {
     if (s === "concluido") return { text: "Concluído", cls: "bg-emerald-500/10 text-emerald-400" };
     if (s === "texto_invalido") return { text: "Texto Inválido", cls: "bg-orange-500/10 text-orange-400" };
     if (s === "erro") return { text: "Falhou", cls: "bg-red-500/10 text-red-400" };
-    if (s !== "pendente" && !TERMINAL.includes(s)) return { text: stage.label, cls: "bg-blue-500/10 text-blue-400" };
-    return { text: "Pendente", cls: "bg-slate-800 text-slate-400" };
+    if (s !== "pendente" && !TERMINAL.includes(s)) return { text: stage.label, cls: "bg-blue-500/10 text-slate-300" };
+    return { text: "Pendente", cls: "bg-[#161616] text-slate-400" };
   };
 
   const origemIcon = (t: string) => {
-    if (t === "link_publico") return <Globe className="h-3 w-3 text-blue-400" />;
+    if (t === "link_publico") return <Globe className="h-3 w-3 text-slate-300" />;
     return <Upload className="h-3 w-3 text-slate-500" />;
   };
 
@@ -545,10 +545,10 @@ export default function QABaseConhecimentoPage() {
           <p className="text-sm text-slate-500 mt-1">Documentos que alimentam a IA jurídica</p>
         </div>
         <div className="flex gap-2 flex-wrap">
-          <Button variant="outline" onClick={() => setShowLinkDialog(true)} className="border-blue-600/40 text-blue-400 hover:bg-blue-500/10 gap-1.5">
+          <Button variant="outline" onClick={() => setShowLinkDialog(true)} className="border-blue-600/40 text-slate-300 hover:bg-blue-500/10 gap-1.5">
             <Link2 className="h-4 w-4" /> Importar por Link
           </Button>
-          <Button variant="outline" onClick={() => setShowBulkDialog(true)} className="border-purple-600/40 text-purple-400 hover:bg-purple-500/10 gap-1.5">
+          <Button variant="outline" onClick={() => setShowBulkDialog(true)} className="border-purple-600/40 text-emerald-400 hover:bg-purple-500/10 gap-1.5">
             <Plus className="h-4 w-4" /> Carga em Lote
           </Button>
           <label className="cursor-pointer">
@@ -565,14 +565,14 @@ export default function QABaseConhecimentoPage() {
         <div className="bg-[#050505] border border-[#1a1a1a] rounded p-4 space-y-2">
           <div className="flex items-center justify-between mb-1">
             <button onClick={() => setQueueCollapsed(c => !c)} className="flex items-center gap-2 text-xs font-semibold text-slate-400 uppercase tracking-wider hover:text-slate-300 transition-colors">
-              {activeTracked.length > 0 && <Loader2 className="h-3 w-3 animate-spin text-blue-400" />}
+              {activeTracked.length > 0 && <Loader2 className="h-3 w-3 animate-spin text-slate-300" />}
               Fila de Processamento
               {queueCollapsed ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />}
             </button>
             <div className="flex items-center gap-2">
               {/* Counters */}
               {activeTracked.length > 0 && (
-                <span className="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded-full font-medium">
+                <span className="text-[10px] bg-blue-500/10 text-slate-300 px-2 py-0.5 rounded-full font-medium">
                   {activeTracked.length} ativa{activeTracked.length > 1 ? "s" : ""}
                 </span>
               )}
@@ -606,10 +606,10 @@ export default function QABaseConhecimentoPage() {
 
       {/* Dashboard Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <StatCard icon={FileText} label="Total" value={totalDocs} color="bg-slate-800 text-slate-400" />
+        <StatCard icon={FileText} label="Total" value={totalDocs} color="bg-[#161616] text-slate-400" />
         <StatCard icon={ShieldCheck} label="Validados" value={validados} color="bg-emerald-500/10 text-emerald-400" />
         <StatCard icon={Clock} label="Pendentes" value={pendentes} color="bg-amber-500/10 text-amber-400" />
-        <StatCard icon={Zap} label="Ativos na IA" value={ativosIA} color="bg-purple-500/10 text-purple-400" />
+        <StatCard icon={Zap} label="Ativos na IA" value={ativosIA} color="bg-purple-500/10 text-emerald-400" />
         <StatCard icon={Star} label="Referências" value={referencias} color="bg-amber-500/10 text-amber-300" />
       </div>
 
@@ -679,7 +679,7 @@ export default function QABaseConhecimentoPage() {
                     {isRef && <Star className="h-3 w-3 text-amber-400 shrink-0" />}
                   </div>
                   <div className="text-xs text-slate-500 flex items-center gap-2 mt-0.5 flex-wrap">
-                    <span className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">{d.tipo_documento?.replace(/_/g, " ")}</span>
+                    <span className="px-1.5 py-0.5 rounded bg-[#161616] text-slate-400">{d.tipo_documento?.replace(/_/g, " ")}</span>
                     <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${d.papel_documento === "auxiliar_caso" ? "bg-cyan-500/10 text-cyan-400" : "bg-indigo-500/10 text-indigo-400"}`}>
                       {d.papel_documento === "auxiliar_caso" ? "Auxiliar" : "Aprendizado"}
                     </span>
@@ -689,15 +689,15 @@ export default function QABaseConhecimentoPage() {
                     {d.caso_id && <span className="text-[10px] text-cyan-400/60">caso: {d.caso_id}</span>}
                   </div>
                   {d.url_origem && (
-                    <div className="text-[10px] text-blue-400/60 truncate mt-0.5">{d.url_origem}</div>
+                    <div className="text-[10px] text-slate-300/60 truncate mt-0.5">{d.url_origem}</div>
                   )}
                   {isError && d.resumo_extraido && (
                     <div className="text-xs text-red-400/80 mt-1 truncate">{d.resumo_extraido}</div>
                   )}
                   {isProcessing && (
                     <div className="mt-1.5 flex items-center gap-2">
-                      <Progress value={getStageInfo(d.status_processamento).pct} className="h-1 bg-slate-800 flex-1 max-w-[200px]" />
-                      <span className="text-[10px] text-blue-400">{getStageInfo(d.status_processamento).label}</span>
+                      <Progress value={getStageInfo(d.status_processamento).pct} className="h-1 bg-[#161616] flex-1 max-w-[200px]" />
+                      <span className="text-[10px] text-slate-300">{getStageInfo(d.status_processamento).label}</span>
                     </div>
                   )}
                 </Link>
@@ -709,12 +709,12 @@ export default function QABaseConhecimentoPage() {
                   <span className={`text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-medium whitespace-nowrap ${
                     isValidado ? "bg-emerald-500/10 text-emerald-400" :
                     isRejeitado ? "bg-red-500/10 text-red-400" :
-                    "bg-slate-800 text-slate-500"
+                    "bg-[#161616] text-slate-500"
                   }`}>
                     {isValidado ? "validado" : isRejeitado ? "rejeitado" : "pendente"}
                   </span>
                   {isAtivoIA && isValidado && (
-                    <span className="text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-medium bg-purple-500/10 text-purple-400 whitespace-nowrap">
+                    <span className="text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-medium bg-purple-500/10 text-emerald-400 whitespace-nowrap">
                       IA
                     </span>
                   )}
@@ -742,7 +742,7 @@ export default function QABaseConhecimentoPage() {
       <Dialog open={showLinkDialog} onOpenChange={setShowLinkDialog}>
         <DialogContent className="bg-[#0d0d0d] border-[#1a1a1a] text-slate-300 max-w-lg">
           <DialogHeader>
-            <DialogTitle className="text-slate-300 flex items-center gap-2"><Link2 className="h-5 w-5 text-blue-400" /> Importar por Link Público</DialogTitle>
+            <DialogTitle className="text-slate-300 flex items-center gap-2"><Link2 className="h-5 w-5 text-slate-300" /> Importar por Link Público</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             {/* Papel do documento — choice first */}
@@ -799,7 +799,7 @@ export default function QABaseConhecimentoPage() {
       <Dialog open={showBulkDialog} onOpenChange={setShowBulkDialog}>
         <DialogContent className="bg-[#0d0d0d] border-[#1a1a1a] text-slate-300 max-w-lg">
           <DialogHeader>
-            <DialogTitle className="text-slate-300 flex items-center gap-2"><Plus className="h-5 w-5 text-purple-400" /> Carga em Lote</DialogTitle>
+            <DialogTitle className="text-slate-300 flex items-center gap-2"><Plus className="h-5 w-5 text-emerald-400" /> Carga em Lote</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -821,7 +821,7 @@ export default function QABaseConhecimentoPage() {
             {bulkImporting && (
               <div className="space-y-1.5">
                 <div className="text-xs text-amber-400">{bulkProgress.done}/{bulkProgress.total} importados...</div>
-                <Progress value={(bulkProgress.done / Math.max(bulkProgress.total, 1)) * 100} className="h-1.5 bg-slate-800" />
+                <Progress value={(bulkProgress.done / Math.max(bulkProgress.total, 1)) * 100} className="h-1.5 bg-[#161616]" />
               </div>
             )}
             <div>
@@ -855,7 +855,7 @@ export default function QABaseConhecimentoPage() {
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col gap-2 sm:flex-col">
             <Button variant="outline" disabled={deleting} onClick={() => handleDeactivate(deleteTarget)}
-              className="w-full border-amber-600/40 text-amber-400 hover:bg-amber-500/10 justify-start gap-2">
+              className="w-full border-[#1a1a1a] text-amber-400 hover:bg-amber-500/10 justify-start gap-2">
               <Power className="h-4 w-4" /> Desativar da IA
               <span className="text-[10px] text-slate-500 ml-auto">reversível</span>
             </Button>

@@ -924,7 +924,7 @@ export default function QAGerarPecaPage() {
             docActive > 0 ? "border-cyan-500/30 bg-cyan-500/5 text-cyan-400" :
             hasDocsUnclassified ? "border-amber-500/30 bg-amber-500/5 text-amber-400" :
             docDone === docTotal ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-400" :
-            "border-slate-700 bg-slate-800/50 text-slate-400"
+            "border-[#1a1a1a] bg-slate-800/50 text-slate-400"
           }`}>
             {docDone === docTotal && docTotal > 0 && <CheckCircle className="h-3.5 w-3.5" />}
             {docFailed > 0 && <XCircle className="h-3.5 w-3.5" />}
@@ -976,7 +976,7 @@ export default function QAGerarPecaPage() {
                 <div key={step.key} className={`flex items-center gap-2 text-[11px] py-0.5 px-2 rounded ${
                   isActive ? "text-slate-300" : isDone ? "text-emerald-400/60" : "text-slate-700"
                 }`}>
-                  {isDone && !isActive ? <CheckCircle className="h-3 w-3 shrink-0" /> : isActive ? <Loader2 className="h-3 w-3 animate-spin shrink-0" /> : <div className="h-3 w-3 rounded-full border border-slate-800 shrink-0" />}
+                  {isDone && !isActive ? <CheckCircle className="h-3 w-3 shrink-0" /> : isActive ? <Loader2 className="h-3 w-3 animate-spin shrink-0" /> : <div className="h-3 w-3 rounded-full border border-[#1a1a1a] shrink-0" />}
                   <span>{step.label}</span>
                   {isActive && step.key === "uploading_docs" && docTotal > 0 && <span className="text-[9px] text-slate-600 ml-auto">{docDone}/{docTotal}</span>}
                 </div>
@@ -1054,8 +1054,8 @@ export default function QAGerarPecaPage() {
                 {resultado.fontes_utilizadas.map((f: any, i: number) => (
                   <div key={i} className="flex items-center gap-2 text-[11px]">
                     {f.tipo === "norma" && <Scale className="h-3 w-3 text-emerald-400" />}
-                    {f.tipo === "jurisprudencia" && <Gavel className="h-3 w-3 text-purple-400" />}
-                    {f.tipo === "documento" && <BookOpen className="h-3 w-3 text-blue-400" />}
+                    {f.tipo === "jurisprudencia" && <Gavel className="h-3 w-3 text-emerald-400" />}
+                    {f.tipo === "documento" && <BookOpen className="h-3 w-3 text-slate-300" />}
                     {f.tipo === "referencia_aprovada" && <CheckCircle className="h-3 w-3 text-slate-400" />}
                     <span className="text-slate-400">{f.titulo}</span>
                     <span className="text-slate-700">• {f.referencia}</span>
