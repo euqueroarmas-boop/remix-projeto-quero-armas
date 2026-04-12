@@ -22,10 +22,19 @@ import {
 import { Label } from "@/components/ui/label";
 
 const TIPOS_DOC = [
-  "lei", "decreto", "instrucao_normativa", "portaria", "jurisprudencia",
-  "peticao", "recurso_administrativo", "resposta_a_notificacao",
-  "decisao_favoravel", "decisao_desfavoravel", "modelo_interno",
-  "nota_tecnica", "parecer", "mandado_seguranca", "outro",
+  { value: "defesa_posse_arma", label: "Defesa para Posse de Arma" },
+  { value: "defesa_porte_arma", label: "Defesa para Porte de Arma" },
+  { value: "recurso_administrativo", label: "Recurso Administrativo" },
+  { value: "resposta_a_notificacao", label: "Resposta à Notificação" },
+  { value: "lei", label: "Lei" },
+  { value: "decreto", label: "Decreto" },
+  { value: "instrucao_normativa", label: "Instrução Normativa" },
+  { value: "portaria", label: "Portaria" },
+  { value: "jurisprudencia", label: "Jurisprudência" },
+  { value: "decisao_favoravel", label: "Decisão Favorável" },
+  { value: "decisao_desfavoravel", label: "Decisão Desfavorável" },
+  { value: "modelo_interno", label: "Modelo Interno" },
+  { value: "outro", label: "Outro" },
 ];
 
 const TIPOS_ORIGEM_FILTER = [
