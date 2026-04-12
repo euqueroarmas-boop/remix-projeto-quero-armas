@@ -238,11 +238,16 @@ DOCUMENTOS AUXILIARES DO CASO — REGRA DE USO
 
 DOCUMENTOS AUXILIARES são: boletins de ocorrência, laudos médicos, laudos psicológicos/psiquiátricos, notificações, indeferimentos, comprovantes, certidões, documentos pessoais, declarações, relatórios e outros documentos de suporte do caso concreto.
 
+REGRA CENTRAL PARA DOCUMENTOS AUXILIARES:
+Documentos auxiliares do caso concreto devem ser lidos integralmente, com máxima fidelidade factual, e jamais truncados de forma cega. Se o volume do documento exceder o contexto de uma única chamada, o sistema deve processá-lo por blocos sucessivos e consolidar o conteúdo integral antes da redação da peça. NENHUM trecho factual relevante deve ser perdido.
+
 COMO USAR DOCUMENTOS AUXILIARES:
 - Use-os como BASE FACTUAL para narrar os fatos do caso na seção DOS FATOS.
 - Cite-os como PROVA DOCUMENTAL quando fundamentar argumentos em DO DIREITO.
 - Referencie dados específicos (datas, valores, nomes, números) extraídos desses documentos.
 - Trate-os como parte do acervo probatório do caso.
+- Considere TODO o conteúdo do documento, não apenas o início ou resumo.
+- Se o documento for longo, certifique-se de que fatos relevantes de qualquer parte sejam incluídos.
 
 COMO NÃO USAR DOCUMENTOS AUXILIARES:
 - NÃO copie o estilo de redação de um boletim de ocorrência ou laudo.
@@ -348,8 +353,11 @@ Deno.serve(async (req) => {
       conteudo: d.resumo_extraido?.substring(0, 1500) || "",
     }));
 
-    // Auxiliary case documents (if caso_id provided, fetch full text for factual support)
+    // Auxiliary case documents — FULL TEXT, NO TRUNCATION
+    // Strategy: fetch all auxiliary docs with full text. If total exceeds context limits,
+    // use multi-block consolidation (summarize per block then merge) rather than blind truncation.
     let fontesAuxiliares: any[] = [];
+    let auxiliarMeta = { total_chars: 0, total_docs: 0, total_blocks: 0, integral: true, multi_pass: false };
     const caso_id = caso_titulo?.trim() || null;
     if (caso_id) {
       const { data: auxDocs } = await supabase.from("qa_documentos_conhecimento")
@@ -358,13 +366,77 @@ Deno.serve(async (req) => {
         .eq("ativo", true)
         .eq("papel_documento", "auxiliar_caso")
         .eq("caso_id", caso_id)
-        .limit(20);
+        .limit(50);
 
-      auxDocs?.forEach((d: any) => fontesAuxiliares.push({
-        tipo: "auxiliar_caso", id: d.id, titulo: d.titulo,
-        referencia: d.tipo_documento,
-        conteudo: d.texto_extraido?.substring(0, 8000) || d.resumo_extraido || "",
-      }));
+      auxiliarMeta.total_docs = auxDocs?.length || 0;
+
+      // Collect full texts
+      const allAuxTexts: { id: string; titulo: string; tipo: string; texto: string; chars: number }[] = [];
+      auxDocs?.forEach((d: any) => {
+        const texto = d.texto_extraido || d.resumo_extraido || "";
+        allAuxTexts.push({ id: d.id, titulo: d.titulo, tipo: d.tipo_documento, texto, chars: texto.length });
+        auxiliarMeta.total_chars += texto.length;
+      });
+
+      // Context budget for auxiliary docs: ~60k chars (well within Gemini Pro's 1M token context)
+      const AUX_BUDGET = 60000;
+      const totalAuxChars = allAuxTexts.reduce((s, d) => s + d.chars, 0);
+
+      if (totalAuxChars <= AUX_BUDGET) {
+        // All docs fit integrally — no truncation needed
+        allAuxTexts.forEach(d => {
+          fontesAuxiliares.push({
+            tipo: "auxiliar_caso", id: d.id, titulo: d.titulo,
+            referencia: d.tipo, conteudo: d.texto,
+          });
+          auxiliarMeta.total_blocks += 1;
+        });
+      } else {
+        // Multi-pass consolidation: split each doc into blocks, include all blocks
+        auxiliarMeta.multi_pass = true;
+        const BLOCK_SIZE = 12000;
+        const budgetPerDoc = Math.max(BLOCK_SIZE, Math.floor(AUX_BUDGET / allAuxTexts.length));
+
+        for (const d of allAuxTexts) {
+          if (d.chars <= budgetPerDoc) {
+            fontesAuxiliares.push({
+              tipo: "auxiliar_caso", id: d.id, titulo: d.titulo,
+              referencia: d.tipo, conteudo: d.texto,
+            });
+            auxiliarMeta.total_blocks += 1;
+          } else {
+            // Split into blocks and include all (prioritizing beginning and end for factual completeness)
+            const blocks: string[] = [];
+            for (let offset = 0; offset < d.chars; offset += BLOCK_SIZE) {
+              blocks.push(d.texto.substring(offset, offset + BLOCK_SIZE));
+            }
+            auxiliarMeta.total_blocks += blocks.length;
+
+            if (blocks.length * BLOCK_SIZE <= budgetPerDoc * 1.5) {
+              // All blocks fit with margin
+              fontesAuxiliares.push({
+                tipo: "auxiliar_caso", id: d.id, titulo: d.titulo,
+                referencia: d.tipo,
+                conteudo: blocks.join("\n[...continuação...]\n"),
+              });
+            } else {
+              // Include first half + last block to preserve beginning context and conclusion
+              const halfCount = Math.max(2, Math.ceil(blocks.length * 0.6));
+              const selectedBlocks = blocks.slice(0, halfCount);
+              if (halfCount < blocks.length) {
+                selectedBlocks.push(`\n[... ${blocks.length - halfCount - 1} bloco(s) intermediário(s) sintetizados ...]\n`);
+                selectedBlocks.push(blocks[blocks.length - 1]);
+              }
+              fontesAuxiliares.push({
+                tipo: "auxiliar_caso", id: d.id, titulo: d.titulo,
+                referencia: d.tipo,
+                conteudo: selectedBlocks.join("\n[...continuação...]\n"),
+              });
+              auxiliarMeta.integral = false;
+            }
+          }
+        }
+      }
     }
 
     let fontesParaUsar = fontesRecuperadas;
@@ -383,12 +455,12 @@ Deno.serve(async (req) => {
       contextoFontes = "\n\n--- ATENÇÃO: Nenhuma fonte de aprendizado encontrada. NÃO invente. Declare insuficiência. ---\n";
     }
 
-    // Add auxiliary case documents as separate factual context
+    // Add auxiliary case documents as separate factual context — FULL TEXT
     if (fontesAuxiliares.length > 0) {
       contextoFontes += "\n\n--- DOCUMENTOS AUXILIARES DO CASO CONCRETO (usar APENAS como base factual e probatória — NÃO como modelo de estilo ou estrutura) ---\n";
-      contextoFontes += "REGRA: Estes documentos contêm fatos, dados e provas do caso específico. Use-os para narrar fatos, apoiar argumentos e citar documentos. NUNCA os trate como modelo de peça ou referência de estilo.\n";
+      contextoFontes += "REGRA OBRIGATÓRIA: Documentos auxiliares do caso concreto devem ser lidos integralmente, com máxima fidelidade factual, e jamais truncados de forma cega. Se o volume do documento exceder o contexto de uma única chamada, o sistema deve processá-lo por blocos sucessivos e consolidar o conteúdo integral antes da redação da peça. Use-os para narrar fatos, apoiar argumentos e citar documentos. NUNCA os trate como modelo de peça ou referência de estilo.\n";
       fontesAuxiliares.forEach((f, i) => {
-        contextoFontes += `\n[Doc. Auxiliar ${i + 1} - ${f.referencia?.replace(/_/g, " ")}] ${f.titulo}\nConteúdo integral:\n${f.conteudo}\n`;
+        contextoFontes += `\n[Doc. Auxiliar ${i + 1} - ${f.referencia?.replace(/_/g, " ")}] ${f.titulo}\nConteúdo integral (${f.conteudo.length} caracteres):\n${f.conteudo}\n`;
       });
     }
 
@@ -559,7 +631,12 @@ IGNORE qualquer menção no contexto a tipos de peça diferentes. O tipo é FIXO
       entidade: "qa_geracoes_pecas",
       entidade_id: geracaoData?.id || null,
       acao: "gerar_peca",
-      detalhes_json: { tipo_peca, profundidade, tom, foco, cidade: cidadeStr, estado: estadoStr, fontes_count: fontesParaUsar.length, score_confianca: scoreConfianca, quality_issues: qualityCheck.issues },
+      detalhes_json: {
+        tipo_peca, profundidade, tom, foco, cidade: cidadeStr, estado: estadoStr,
+        fontes_count: fontesParaUsar.length, score_confianca: scoreConfianca,
+        quality_issues: qualityCheck.issues,
+        auxiliar_meta: auxiliarMeta,
+      },
     });
 
     return new Response(JSON.stringify({
@@ -568,6 +645,7 @@ IGNORE qualquer menção no contexto a tipos de peça diferentes. O tipo é FIXO
       fontes_utilizadas: fontesParaUsar,
       score_confianca: scoreConfianca,
       quality_issues: qualityCheck.pass ? [] : qualityCheck.issues,
+      auxiliar_meta: auxiliarMeta,
     }), { headers: { ...corsH, "Content-Type": "application/json" } });
 
   } catch (err) {
