@@ -238,11 +238,16 @@ DOCUMENTOS AUXILIARES DO CASO — REGRA DE USO
 
 DOCUMENTOS AUXILIARES são: boletins de ocorrência, laudos médicos, laudos psicológicos/psiquiátricos, notificações, indeferimentos, comprovantes, certidões, documentos pessoais, declarações, relatórios e outros documentos de suporte do caso concreto.
 
+REGRA CENTRAL PARA DOCUMENTOS AUXILIARES:
+Documentos auxiliares do caso concreto devem ser lidos integralmente, com máxima fidelidade factual, e jamais truncados de forma cega. Se o volume do documento exceder o contexto de uma única chamada, o sistema deve processá-lo por blocos sucessivos e consolidar o conteúdo integral antes da redação da peça. NENHUM trecho factual relevante deve ser perdido.
+
 COMO USAR DOCUMENTOS AUXILIARES:
 - Use-os como BASE FACTUAL para narrar os fatos do caso na seção DOS FATOS.
 - Cite-os como PROVA DOCUMENTAL quando fundamentar argumentos em DO DIREITO.
 - Referencie dados específicos (datas, valores, nomes, números) extraídos desses documentos.
 - Trate-os como parte do acervo probatório do caso.
+- Considere TODO o conteúdo do documento, não apenas o início ou resumo.
+- Se o documento for longo, certifique-se de que fatos relevantes de qualquer parte sejam incluídos.
 
 COMO NÃO USAR DOCUMENTOS AUXILIARES:
 - NÃO copie o estilo de redação de um boletim de ocorrência ou laudo.
