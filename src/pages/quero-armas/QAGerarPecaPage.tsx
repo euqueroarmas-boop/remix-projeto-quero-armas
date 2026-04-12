@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -6,8 +6,34 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { PenTool, Send, Loader2, AlertTriangle, Download, CheckCircle, Scale, Gavel, BookOpen, MapPin, Building2, Info } from "lucide-react";
+import { PenTool, Send, Loader2, AlertTriangle, Download, CheckCircle, Scale, Gavel, BookOpen, MapPin, Building2, Info, Paperclip, FileText, X, Upload } from "lucide-react";
 import { useQAAuth } from "@/components/quero-armas/hooks/useQAAuth";
+
+interface ArquivoAuxiliar {
+  file: File;
+  nome: string;
+  tipo: string;
+  uploading: boolean;
+  uploaded: boolean;
+  docId?: string;
+  error?: string;
+}
+
+const TIPOS_DOC_AUXILIAR = [
+  { value: "boletim_ocorrencia", label: "Boletim de Ocorrência" },
+  { value: "laudo_medico", label: "Laudo Médico" },
+  { value: "laudo_psiquiatrico", label: "Laudo Psiquiátrico" },
+  { value: "laudo_psicologico", label: "Laudo Psicológico" },
+  { value: "notificacao", label: "Notificação" },
+  { value: "indeferimento", label: "Indeferimento" },
+  { value: "comprovante", label: "Comprovante" },
+  { value: "certidao", label: "Certidão" },
+  { value: "documento_pessoal", label: "Documento Pessoal" },
+  { value: "declaracao", label: "Declaração" },
+  { value: "relatorio", label: "Relatório" },
+  { value: "decisao_administrativa", label: "Decisão Administrativa" },
+  { value: "outro", label: "Outro documento de suporte" },
+];
 
 const TIPOS_PECA = [
   { value: "defesa_posse_arma", label: "Defesa para Posse de Arma" },
