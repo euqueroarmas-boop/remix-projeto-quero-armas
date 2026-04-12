@@ -47,7 +47,8 @@ type TipoDocProbatorio =
   | "boletim_ocorrencia" | "laudo_medico" | "laudo_psiquiatrico" | "laudo_psicologico"
   | "relatorio_clinico" | "atestado_medico" | "notificacao_administrativa"
   | "indeferimento_administrativo" | "certidao" | "documento_pessoal"
-  | "comprovante_residencia" | "outro_documento_probatorio" | "outro";
+  | "comprovante_residencia" | "requerimento_sinarm" | "funcional_ocupacao"
+  | "outro_documento_probatorio" | "outro";
 
 const PROBATORIO_TYPES: TipoDocProbatorio[] = [
   "boletim_ocorrencia", "laudo_medico", "laudo_psiquiatrico", "laudo_psicologico",
@@ -89,6 +90,8 @@ function detectDocType(titulo: string, tipoDoc: string, text: string): TipoDocPr
   for (const p of NOTIFICACAO_PATTERNS) { if (p.test(combined) || p.test(header)) return "notificacao_administrativa"; }
   if (/certid[ãa]o/i.test(combined)) return "certidao";
   if (/comprovante\s+(?:de\s+)?resid/i.test(combined)) return "comprovante_residencia";
+  if (/(?:funcional|ocupação|emprego|cargo|ctps)/i.test(combined)) return "funcional_ocupacao";
+  if (/(?:SINARM|requerimento|solicita[çc][ãa]o)/i.test(combined)) return "requerimento_sinarm";
   if (/(?:documento\s+pessoal|identidade|CPF|RG|CNH)/i.test(combined)) return "documento_pessoal";
   // Direct tipo mapping
   const map: Record<string, TipoDocProbatorio> = {
@@ -97,6 +100,8 @@ function detectDocType(titulo: string, tipoDoc: string, text: string): TipoDocPr
     notificacao: "notificacao_administrativa", indeferimento: "indeferimento_administrativo",
     certidao: "certidao", documento_pessoal: "documento_pessoal", comprovante: "comprovante_residencia",
     relatorio_clinico: "relatorio_clinico", atestado_medico: "atestado_medico",
+    comprovante_residencia: "comprovante_residencia", funcional_ocupacao: "funcional_ocupacao",
+    requerimento_sinarm: "requerimento_sinarm",
   };
   if (map[tipoDoc]) return map[tipoDoc];
   return "outro";
@@ -182,13 +187,55 @@ function extractStructuredData(text: string, tipo: TipoDocProbatorio): Structure
     if (campos.omissao) riscos.push("omissão");
   }
 
-  if (tipo === "certidao" || tipo === "documento_pessoal" || tipo === "comprovante_residencia") {
+  if (tipo === "certidao" || tipo === "documento_pessoal" || tipo === "comprovante_residencia" || tipo === "requerimento_sinarm" || tipo === "funcional_ocupacao") {
     const nome = text.match(/(?:nome|titular)[:\s]+([^\n]{3,80})/i);
     campos.nome = nome?.[1]?.trim() || null;
     const cpf = text.match(/CPF\s*[:\s]*(\d{3}\.?\d{3}\.?\d{3}[-.]?\d{2})/i);
     campos.cpf = cpf?.[1]?.trim() || null;
+    const rg = text.match(/(?:RG|identidade)\s*[:\s]*([\d./-]+)/i);
+    campos.rg = rg?.[1]?.trim() || null;
     const dt = text.match(/(?:data|emitido)\s*[:\s]*(\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4})/i);
     campos.data = dt?.[1] || null;
+    const orgao = text.match(/(?:[oó]rg[ãa]o\s+emissor|expedid[oa])[:\s]+([^\n]{3,60})/i);
+    campos.orgao_emissor = orgao?.[1]?.trim() || null;
+    const end = text.match(/(?:endere[çc]o|logradouro|resid[eê]ncia)[:\s]+([^\n]{5,120})/i);
+    campos.endereco = end?.[1]?.trim() || null;
+    if (tipo === "funcional_ocupacao") {
+      const cargo = text.match(/(?:cargo|fun[çc][ãa]o|ocupa[çc][ãa]o)[:\s]+([^\n]{3,80})/i);
+      campos.cargo = cargo?.[1]?.trim() || null;
+      const orgaoFunc = text.match(/(?:[oó]rg[ãa]o|institui[çc][ãa]o|empresa)[:\s]+([^\n]{3,80})/i);
+      campos.orgao = orgaoFunc?.[1]?.trim() || null;
+      const mat = text.match(/(?:matr[ií]cula|SIAPE)[:\s]*([^\n]{3,30})/i);
+      campos.matricula = mat?.[1]?.trim() || null;
+      campos.atividade_risco = /(?:seguran[çc]a|vigilante|transporte\s+de\s+valores|policial|agente|militar)/i.test(text);
+      if (campos.atividade_risco) riscos.push("atividade de risco");
+    }
+    if (tipo === "requerimento_sinarm") {
+      const proc = text.match(/(?:SINARM|processo|protocolo)\s*[:\s]*(\d[\d./-]+\d)/i);
+      campos.numero_processo = proc?.[1]?.trim() || null;
+      const tipoReq = text.match(/(?:tipo|objeto|solicita[çc][ãa]o)[:\s]+([^\n]{5,100})/i);
+      campos.tipo_requerimento = tipoReq?.[1]?.trim() || null;
+    }
+    if (tipo === "comprovante_residencia") {
+      const bairro = text.match(/(?:bairro|setor)[:\s]+([^\n]{3,60})/i);
+      campos.bairro = bairro?.[1]?.trim() || null;
+      const cidade = text.match(/(?:cidade|munic[ií]pio)[:\s]+([^\n]{3,60})/i);
+      campos.cidade = cidade?.[1]?.trim() || null;
+      const uf = text.match(/(?:UF|estado)[:\s]+([A-Z]{2})/i);
+      campos.uf = uf?.[1] || null;
+      const cep = text.match(/CEP\s*[:\s]*(\d{5}[-.]?\d{3})/i);
+      campos.cep = cep?.[1] || null;
+    }
+    if (tipo === "documento_pessoal") {
+      const nasc = text.match(/(?:nascimento|DN)[:\s]*(\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4})/i);
+      campos.data_nascimento = nasc?.[1] || null;
+      const mae = text.match(/(?:m[ãa]e|filia[çc][ãa]o\s*materna?)[:\s]+([^\n]{3,80})/i);
+      campos.filiacao_mae = mae?.[1]?.trim() || null;
+      const cnh = text.match(/(?:CNH|habilita[çc][ãa]o)\s*[:\sn°º]*(\d{9,11})/i);
+      campos.numero_cnh = cnh?.[1] || null;
+      const cat = text.match(/(?:categoria)[:\s]*([A-E]{1,2})/i);
+      campos.categoria_cnh = cat?.[1] || null;
+    }
   }
 
   return { tipo_detectado: tipo, campos, indicadores_risco: riscos };
@@ -205,8 +252,10 @@ const DOC_TYPE_LABELS: Record<string, string> = {
   notificacao_administrativa: "NOTIFICAÇÃO ADMINISTRATIVA",
   indeferimento_administrativo: "INDEFERIMENTO ADMINISTRATIVO",
   certidao: "CERTIDÃO",
-  documento_pessoal: "DOCUMENTO PESSOAL",
+  documento_pessoal: "DOCUMENTO PESSOAL / IDENTIFICAÇÃO",
   comprovante_residencia: "COMPROVANTE DE RESIDÊNCIA",
+  requerimento_sinarm: "REQUERIMENTO / PROCESSO SINARM",
+  funcional_ocupacao: "FUNCIONAL / OCUPAÇÃO LÍCITA",
 };
 
 interface EvidenceDoc {
@@ -383,6 +432,17 @@ function validateQuality(text: string, evidenceDocs: EvidenceDoc[]): { pass: boo
       const hasAnyConcreteRef = /(?:registr|relat|narra|descrev|consta|comprova|demonstra|evidencia|atesta|diagnosti)/i.test(text);
       if (!hasAnyConcreteRef) {
         issues.push(`prova_factual_subutilizada:${totalProbatorio}_docs_probatorios_sem_uso_concreto`);
+      }
+    }
+    // Check if structured data was rich but piece is generic
+    const totalCampos = evidenceDocs.reduce((sum, d) => sum + Object.values(d.structured.campos).filter(v => v !== null && v !== false).length, 0);
+    if (totalCampos > 8 && text.length < 3000) {
+      issues.push(`extracao_subutilizada:${totalCampos}_campos_extraidos_peca_curta`);
+    }
+    if (totalCampos > 5) {
+      const usesConcreteData = /\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4}/.test(text) || /CPF|RG|CRM|CRP|n[ºo°]/i.test(text);
+      if (!usesConcreteData) {
+        issues.push(`dados_documentais_nao_aproveitados:${totalCampos}_campos_sem_uso_concreto`);
       }
     }
   }
