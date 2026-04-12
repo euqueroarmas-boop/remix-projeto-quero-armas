@@ -348,7 +348,7 @@ export default function QABaseConhecimentoPage() {
           tipo_origem: "arquivo_upload",
         }).select("id").single();
         if (insertErr) throw insertErr;
-        if (insertData) addTrackedImport((insertData as any).id, file.name, file.name.replace(/\.[^.]+$/, ""));
+        if (insertData) addTrackedImport((insertData as any).id, file.name, file.name.replace(/\.[^.]+$/, ""), "outro", "arquivo_upload");
         supabase.functions.invoke("qa-ingest-document", { body: { storage_path: path, user_id: user.id } }).catch(() => {});
       }
       toast.success(`${files.length} documento(s) enviado(s). Acompanhe o progresso acima.`);
