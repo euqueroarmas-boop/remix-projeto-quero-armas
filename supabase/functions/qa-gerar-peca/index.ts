@@ -252,8 +252,10 @@ const DOC_TYPE_LABELS: Record<string, string> = {
   notificacao_administrativa: "NOTIFICAÇÃO ADMINISTRATIVA",
   indeferimento_administrativo: "INDEFERIMENTO ADMINISTRATIVO",
   certidao: "CERTIDÃO",
-  documento_pessoal: "DOCUMENTO PESSOAL",
+  documento_pessoal: "DOCUMENTO PESSOAL / IDENTIFICAÇÃO",
   comprovante_residencia: "COMPROVANTE DE RESIDÊNCIA",
+  requerimento_sinarm: "REQUERIMENTO / PROCESSO SINARM",
+  funcional_ocupacao: "FUNCIONAL / OCUPAÇÃO LÍCITA",
 };
 
 interface EvidenceDoc {
