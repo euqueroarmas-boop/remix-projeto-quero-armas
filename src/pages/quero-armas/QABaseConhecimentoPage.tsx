@@ -200,11 +200,12 @@ export default function QABaseConhecimentoPage() {
     if (filtroTipo !== "todos") q = q.eq("tipo_documento", filtroTipo);
     if (filtroStatus !== "todos") q = q.eq("status_processamento", filtroStatus);
     if (filtroOrigem !== "todos") q = q.eq("tipo_origem", filtroOrigem);
+    if (filtroPapel !== "todos") q = q.eq("papel_documento", filtroPapel);
     if (busca) q = q.ilike("titulo", `%${busca}%`);
     const { data } = await q;
     setDocs((data as any[]) ?? []);
     setLoading(false);
-  }, [filtroTipo, filtroStatus, filtroOrigem, busca]);
+  }, [filtroTipo, filtroStatus, filtroOrigem, filtroPapel, busca]);
 
   useEffect(() => { setLoading(true); loadDocs(); }, [loadDocs]);
 
