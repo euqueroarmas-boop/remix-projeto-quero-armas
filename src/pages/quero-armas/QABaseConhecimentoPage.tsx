@@ -382,7 +382,7 @@ export default function QABaseConhecimentoPage() {
       if (error) throw error;
       const docId = data?.doc_id;
       if (docId) {
-        addTrackedImport(docId, linkUrl.trim(), linkTitulo.trim() || linkUrl.trim());
+        addTrackedImport(docId, linkUrl.trim(), linkTitulo.trim() || linkUrl.trim(), linkTipo, "link_publico");
         // Set papel_documento on the created doc
         await supabase.from("qa_documentos_conhecimento" as any)
           .update({ papel_documento: linkPapel, caso_id: linkPapel === "auxiliar_caso" ? linkCasoId.trim() : null } as any)
