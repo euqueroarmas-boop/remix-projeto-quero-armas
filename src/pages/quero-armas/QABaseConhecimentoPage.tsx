@@ -225,6 +225,7 @@ export default function QABaseConhecimentoPage() {
 
   // Tracked imports (activity queue)
   const [trackedImports, setTrackedImports] = useState<TrackedImport[]>([]);
+  const [queueCollapsed, setQueueCollapsed] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const loadDocs = useCallback(async () => {
