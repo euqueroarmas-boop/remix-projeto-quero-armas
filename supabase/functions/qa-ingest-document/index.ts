@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { extractText } from "https://esm.sh/unpdf@0.12.1";
 
 const corsH = {
   "Access-Control-Allow-Origin": "*",
@@ -13,14 +14,93 @@ function getSupabase() {
 }
 
 function sanitizeText(text: string): string {
-  // Remove null bytes, control chars, and invalid unicode sequences
   return text
     .replace(/\0/g, "")
     .replace(/\\u0000/g, "")
     .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, " ")
     .replace(/\uFFFD/g, "")
-    .replace(/\\u[0-9a-fA-F]{0,3}[^0-9a-fA-F]/g, " ")
-    .replace(/\s+/g, " ");
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** Check if extracted text is real human-readable content, not binary garbage */
+function isTextValid(text: string): boolean {
+  if (!text || text.length < 50) return false;
+  // Reject if starts with PDF header
+  if (text.trimStart().startsWith("%PDF")) return false;
+  // Count alphabetic chars vs total
+  const letters = (text.match(/[a-zA-ZÀ-ÿ]/g) || []).length;
+  const ratio = letters / text.length;
+  // Real text should have at least 30% letters
+  if (ratio < 0.3) return false;
+  // Check for excessive PDF structure markers
+  const pdfMarkers = (text.match(/\b(endobj|endstream|obj|Type|Page|Font|Filter)\b/g) || []).length;
+  if (pdfMarkers > 10) return false;
+  return true;
+}
+
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
+async function extractPdfWithUnpdf(rawBytes: Uint8Array): Promise<string> {
+  try {
+    const { text } = await extractText(new Uint8Array(rawBytes), { mergePages: true });
+    return sanitizeText(text);
+  } catch (e) {
+    console.error("unpdf extraction failed:", e);
+    return "";
+  }
+}
+
+async function extractPdfWithVisionApi(rawBytes: Uint8Array, mime: string): Promise<string> {
+  const apiKey = Deno.env.get("LOVABLE_API_KEY");
+  if (!apiKey) {
+    console.error("No LOVABLE_API_KEY for Vision fallback");
+    return "";
+  }
+  try {
+    // Limit to 4MB for the API call
+    const limitedBytes = rawBytes.slice(0, 4_000_000);
+    const base64 = arrayBufferToBase64(limitedBytes.buffer);
+
+    const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: "Extraia todo o texto deste documento PDF. Retorne APENAS o texto extraído, sem comentários." },
+              { type: "image_url", image_url: { url: `data:${mime || "application/pdf"};base64,${base64}` } }
+            ]
+          }
+        ],
+        max_tokens: 8000,
+      }),
+    });
+
+    if (!resp.ok) {
+      console.error("Vision API status:", resp.status);
+      return resp.status === 402 ? "__402__" : "";
+    }
+    const data = await resp.json();
+    const extracted = data.choices?.[0]?.message?.content || "";
+    return sanitizeText(extracted);
+  } catch (e) {
+    console.error("Vision extraction error:", e);
+    return "";
+  }
 }
 
 async function processDocument(storage_path: string, user_id: string | null) {
@@ -37,7 +117,6 @@ async function processDocument(storage_path: string, user_id: string | null) {
     return;
   }
 
-  // Mark as processing
   await supabase.from("qa_documentos_conhecimento")
     .update({ status_processamento: "processando", updated_at: new Date().toISOString() })
     .eq("id", doc.id);
@@ -48,90 +127,84 @@ async function processDocument(storage_path: string, user_id: string | null) {
       .from("qa-documentos")
       .download(storage_path);
 
-    if (dlErr || !fileData) {
-      throw new Error("Falha no download do arquivo");
-    }
+    if (dlErr || !fileData) throw new Error("Falha no download do arquivo");
 
-    // Step 2: Extract text - handle PDFs properly
-    let textoExtraido = "";
-    const mime = doc.mime_type || "";
-    
-    // Get raw bytes first (before consuming the blob)
     const rawArrayBuf = await fileData.arrayBuffer();
     const rawBytes = new Uint8Array(rawArrayBuf);
+    const mime = doc.mime_type || "";
+
+    // Step 2: Extract text
+    let textoExtraido = "";
+    let extractionMethod = "none";
 
     if (mime.includes("text") || mime.includes("rtf")) {
+      // Plain text files
       textoExtraido = sanitizeText(new TextDecoder().decode(rawBytes));
+      extractionMethod = "text-decode";
     } else {
-      // For PDFs: attempt raw text extraction from binary
-      try {
-        // Decode as text, limit to first 500KB to avoid huge strings
-        const limitedBytes = rawBytes.slice(0, 500000);
-        const rawText = new TextDecoder("utf-8", { fatal: false }).decode(limitedBytes);
-        // Filter out binary garbage - keep only printable chars
-        const printable = rawText.replace(/[^\x20-\x7E\xA0-\xFF\u0100-\uFFFF\n\r\t]/g, " ");
-        const cleaned = printable.replace(/\s+/g, " ").trim();
-        if (cleaned.length > 100) {
-          textoExtraido = sanitizeText(cleaned.substring(0, 200000));
+      // PDF or binary document — use unpdf for native extraction
+      console.log("Attempting unpdf native extraction...");
+      const nativeText = await extractPdfWithUnpdf(rawBytes);
+
+      if (isTextValid(nativeText)) {
+        textoExtraido = nativeText;
+        extractionMethod = "unpdf-native";
+        console.log(`unpdf OK: ${nativeText.length} chars`);
+      } else {
+        // Fallback: Vision API (OCR) for scanned PDFs
+        console.log("Native extraction yielded invalid text. Trying Vision API OCR...");
+        const visionText = await extractPdfWithVisionApi(rawBytes, mime);
+
+        if (visionText === "__402__") {
+          // AI credits exhausted — mark as failed with clear reason
+          extractionMethod = "vision-402";
+          textoExtraido = "";
+        } else if (isTextValid(visionText)) {
+          textoExtraido = visionText;
+          extractionMethod = "vision-ocr";
+          console.log(`Vision OCR OK: ${visionText.length} chars`);
+        } else {
+          extractionMethod = "failed";
+          textoExtraido = "";
         }
-      } catch {
-        // binary file, can't extract as text
-      }
-
-      // If text extraction yielded little, use Vision API
-      if (textoExtraido.length < 100) {
-        try {
-          const limitedBuf = rawBytes.slice(0, 400000);
-          let binary = "";
-          for (let i = 0; i < limitedBuf.length; i++) {
-            binary += String.fromCharCode(limitedBuf[i]);
-          }
-          const base64 = btoa(binary);
-
-          const visionResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${Deno.env.get("LOVABLE_API_KEY")}`,
-            },
-            body: JSON.stringify({
-              model: "google/gemini-2.5-flash-lite",
-              messages: [
-                { role: "user", content: [
-                  { type: "text", text: "Extraia todo o texto deste documento PDF. Retorne apenas o texto extraído." },
-                  { type: "image_url", image_url: { url: `data:application/pdf;base64,${base64}` } }
-                ]}
-              ],
-              max_tokens: 4000,
-            }),
-          });
-
-          if (visionResp.ok) {
-            const visionData = await visionResp.json();
-            const extracted = visionData.choices?.[0]?.message?.content || "";
-            if (extracted.length > 50) {
-              textoExtraido = sanitizeText(extracted);
-            }
-          } else {
-            console.log("Vision API status:", visionResp.status);
-          }
-        } catch (e) {
-          console.error("Vision extraction failed:", e);
-        }
-      }
-
-      // Final fallback
-      if (!textoExtraido || textoExtraido.length < 20) {
-        textoExtraido = `[Documento: ${doc.nome_arquivo}. Tipo: ${mime}. Tamanho: ${doc.tamanho_bytes} bytes. Extração de texto não foi possível.]`;
       }
     }
-    
-    // Hard cap at 200K chars to avoid DB/memory issues
+
+    // Hard cap
     if (textoExtraido.length > 200000) {
       textoExtraido = textoExtraido.substring(0, 200000);
     }
 
-    // Step 3: Compute file hash
+    // Step 3: Validate extracted text quality
+    if (!isTextValid(textoExtraido)) {
+      const failReason = extractionMethod === "vision-402"
+        ? "Extração nativa não encontrou texto legível e o OCR por IA está indisponível (saldo insuficiente). Reprocesse quando o saldo for recarregado."
+        : "Texto extraído é ilegível ou corrompido. O PDF pode ser escaneado/imagem e requer OCR.";
+
+      await supabase.from("qa_documentos_conhecimento")
+        .update({
+          status_processamento: "texto_invalido",
+          resumo_extraido: failReason,
+          texto_extraido: null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", doc.id);
+
+      console.log(`Document ${doc.id} marked as texto_invalido: ${extractionMethod}`);
+
+      try {
+        await supabase.from("qa_logs_auditoria").insert({
+          usuario_id: user_id || null,
+          entidade: "qa_documentos_conhecimento",
+          entidade_id: doc.id,
+          acao: "ingestao_texto_invalido",
+          detalhes_json: { extractionMethod, textLength: textoExtraido.length },
+        });
+      } catch { /* non-critical */ }
+      return;
+    }
+
+    // Step 4: Compute file hash
     let hashHex = "";
     try {
       const hashBuffer = await crypto.subtle.digest("SHA-256", rawArrayBuf);
@@ -140,7 +213,7 @@ async function processDocument(storage_path: string, user_id: string | null) {
       hashHex = "hash_unavailable";
     }
 
-    // Step 4: Save extracted text immediately
+    // Step 5: Save extracted text
     await supabase.from("qa_documentos_conhecimento")
       .update({
         texto_extraido: textoExtraido,
@@ -149,7 +222,7 @@ async function processDocument(storage_path: string, user_id: string | null) {
       })
       .eq("id", doc.id);
 
-    // Step 5: Generate summary (graceful on 402/credits)
+    // Step 6: Generate summary (graceful on 402)
     let resumo = "Resumo pendente.";
     try {
       const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -171,16 +244,20 @@ async function processDocument(storage_path: string, user_id: string | null) {
         const aiData = await aiResp.json();
         resumo = aiData.choices?.[0]?.message?.content || "Resumo gerado sem conteúdo.";
       } else {
-        console.log("AI summary status:", aiResp.status);
-        resumo = aiResp.status === 402 
-          ? "Resumo indisponível (créditos IA esgotados). O texto foi extraído com sucesso."
+        resumo = aiResp.status === 402
+          ? "Resumo indisponível (saldo de IA insuficiente). O texto foi extraído com sucesso."
           : `Resumo indisponível (erro ${aiResp.status}).`;
       }
     } catch {
       resumo = "Resumo indisponível (erro de conexão).";
     }
 
-    // Step 6: Chunk text (sanitized)
+    // Step 7: Delete any old corrupted chunks for this document before creating new ones
+    await supabase.from("qa_chunks_conhecimento")
+      .delete()
+      .eq("documento_id", doc.id);
+
+    // Step 8: Chunk text
     const safeText = sanitizeText(textoExtraido);
     const CHUNK_SIZE = 800;
     const OVERLAP = 150;
@@ -192,7 +269,7 @@ async function processDocument(storage_path: string, user_id: string | null) {
     }
     if (chunks.length === 0) chunks.push(safeText);
 
-    // Step 7: Insert chunks
+    // Step 9: Insert chunks
     const chunkInserts = chunks.map((texto, i) => ({
       documento_id: doc.id,
       ordem_chunk: i,
@@ -206,7 +283,6 @@ async function processDocument(storage_path: string, user_id: string | null) {
 
     if (chunkErr) {
       console.error("Chunk insert error:", chunkErr.message);
-      // Try inserting chunks one by one as fallback
       let insertedCount = 0;
       for (const chunk of chunkInserts) {
         const { error } = await supabase.from("qa_chunks_conhecimento").insert(chunk);
@@ -215,7 +291,7 @@ async function processDocument(storage_path: string, user_id: string | null) {
       console.log(`Fallback: inserted ${insertedCount}/${chunkInserts.length} chunks`);
     }
 
-    // Step 8: Mark as complete
+    // Step 10: Mark as complete
     await supabase.from("qa_documentos_conhecimento")
       .update({
         resumo_extraido: resumo,
@@ -224,22 +300,20 @@ async function processDocument(storage_path: string, user_id: string | null) {
       })
       .eq("id", doc.id);
 
-    console.log(`Document ${doc.id} processed OK: ${chunks.length} chunks, ${textoExtraido.length} chars`);
+    console.log(`Document ${doc.id} processed OK (${extractionMethod}): ${chunks.length} chunks, ${textoExtraido.length} chars`);
 
-    // Step 9: Audit log (no .catch() chaining issue)
+    // Step 11: Audit log
     try {
       await supabase.from("qa_logs_auditoria").insert({
         usuario_id: user_id || null,
         entidade: "qa_documentos_conhecimento",
         entidade_id: doc.id,
         acao: "ingestao_concluida",
-        detalhes_json: { chunks_criados: chunks.length, tamanho_texto: textoExtraido.length },
+        detalhes_json: { chunks_criados: chunks.length, tamanho_texto: textoExtraido.length, extractionMethod },
       });
-    } catch {
-      // audit log is non-critical
-    }
+    } catch { /* non-critical */ }
 
-    // Step 10: Trigger embeddings asynchronously
+    // Step 12: Trigger embeddings
     try {
       const resp = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/qa-generate-embeddings`, {
         method: "POST",
@@ -273,9 +347,7 @@ async function processDocument(storage_path: string, user_id: string | null) {
         acao: "ingestao_erro",
         detalhes_json: { erro: err.message },
       });
-    } catch {
-      // non-critical
-    }
+    } catch { /* non-critical */ }
   }
 }
 
@@ -290,7 +362,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Return immediately, process in background
     EdgeRuntime.waitUntil(processDocument(storage_path, user_id));
 
     return new Response(JSON.stringify({
