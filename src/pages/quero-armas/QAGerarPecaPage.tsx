@@ -166,11 +166,8 @@ export default function QAGerarPecaPage() {
   const { lookupCep, cepLoading } = useBrasilApiLookup();
 
   // Form fields
-  const [casoTitulo, setCasoTitulo] = useState("");
   const [nomeRequerente, setNomeRequerente] = useState("");
   const [cpfCnpj, setCpfCnpj] = useState("");
-  const [tipoServico, setTipoServico] = useState("");
-  const [tipoServicoCustom, setTipoServicoCustom] = useState("");
   const [entradaCaso, setEntradaCaso] = useState("");
   const [tipoPeca, setTipoPeca] = useState("defesa_posse_arma");
   const [foco, setFoco] = useState("legalidade");
