@@ -3521,6 +3521,12 @@ export type Database = {
           texto_chunk: string
         }[]
       }
+      qa_listar_municipios_por_uf: {
+        Args: { p_uf: string }
+        Returns: {
+          municipio: string
+        }[]
+      }
       qa_resolver_circunscricao_pf: {
         Args: { p_municipio: string; p_uf: string }
         Returns: {
