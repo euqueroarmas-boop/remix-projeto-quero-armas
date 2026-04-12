@@ -7,13 +7,14 @@ const QALayout = lazyRetry(() => import("@/components/quero-armas/QALayout"), "Q
 const QALoginPage = lazyRetry(() => import("./QALoginPage"), "QALoginPage");
 const QADashboardPage = lazyRetry(() => import("./QADashboardPage"), "QADashboardPage");
 const QABaseConhecimentoPage = lazyRetry(() => import("./QABaseConhecimentoPage"), "QABaseConhecimentoPage");
+const QADocumentoDetalhePage = lazyRetry(() => import("./QADocumentoDetalhePage"), "QADocumentoDetalhePage");
 const QALegislacaoPage = lazyRetry(() => import("./QALegislacaoPage"), "QALegislacaoPage");
 const QAJurisprudenciaPage = lazyRetry(() => import("./QAJurisprudenciaPage"), "QAJurisprudenciaPage");
 const QAIAPage = lazyRetry(() => import("./QAIAPage"), "QAIAPage");
 const QAGerarPecaPage = lazyRetry(() => import("./QAGerarPecaPage"), "QAGerarPecaPage");
+const QAModelosDocxPage = lazyRetry(() => import("./QAModelosDocxPage"), "QAModelosDocxPage");
 const QAHistoricoPage = lazyRetry(() => import("./QAHistoricoPage"), "QAHistoricoPage");
 const QAConfiguracoesPage = lazyRetry(() => import("./QAConfiguracoesPage"), "QAConfiguracoesPage");
-const QAPlaceholderPage = lazyRetry(() => import("./QAPlaceholderPage"), "QAPlaceholderPage");
 
 const Loader = () => (
   <div className="min-h-screen flex items-center justify-center bg-[#0c0c14]">
@@ -31,10 +32,10 @@ export default function QARoutes() {
           <Route path="dashboard" element={<QADashboardPage />} />
           <Route path="ia" element={<QAIAPage />} />
           <Route path="base-conhecimento" element={<QABaseConhecimentoPage />} />
-          <Route path="base-conhecimento/:id" element={<QAPlaceholderPage />} />
+          <Route path="base-conhecimento/:id" element={<QADocumentoDetalhePage />} />
           <Route path="legislacao" element={<QALegislacaoPage />} />
           <Route path="jurisprudencia" element={<QAJurisprudenciaPage />} />
-          <Route path="modelos-docx" element={<QAPlaceholderPage />} />
+          <Route path="modelos-docx" element={<QAModelosDocxPage />} />
           <Route path="gerar-peca" element={<QAGerarPecaPage />} />
           <Route path="historico" element={<QAHistoricoPage />} />
           <Route path="configuracoes" element={<QAConfiguracoesPage />} />

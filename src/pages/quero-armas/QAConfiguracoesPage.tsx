@@ -4,17 +4,27 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Settings, Loader2, Database, Users, Shield, BarChart3 } from "lucide-react";
+import { Settings, Loader2, Database, Shield, BarChart3, Save } from "lucide-react";
 import { useQAAuth } from "@/components/quero-armas/hooks/useQAAuth";
+
+interface ConfigItem {
+  id: string;
+  chave: string;
+  valor: number;
+  descricao: string | null;
+}
 
 export default function QAConfiguracoesPage() {
   const { profile } = useQAAuth();
   const [stats, setStats] = useState<any>(null);
+  const [config, setConfig] = useState<ConfigItem[]>([]);
+  const [editedValues, setEditedValues] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const load = async () => {
-      const [docs, normas, jurisps, pecas, consultas, refs, revisoes] = await Promise.all([
+      const [docs, normas, jurisps, pecas, consultas, refs, revisoes, configRes] = await Promise.all([
         supabase.from("qa_documentos_conhecimento" as any).select("id", { count: "exact", head: true }),
         supabase.from("qa_fontes_normativas" as any).select("id", { count: "exact", head: true }),
         supabase.from("qa_jurisprudencias" as any).select("id", { count: "exact", head: true }),
@@ -22,6 +32,7 @@ export default function QAConfiguracoesPage() {
         supabase.from("qa_consultas_ia" as any).select("id", { count: "exact", head: true }),
         supabase.from("qa_referencias_preferenciais" as any).select("id", { count: "exact", head: true }).eq("ativo", true),
         supabase.from("qa_revisoes_pecas" as any).select("id", { count: "exact", head: true }),
+        supabase.from("qa_config" as any).select("*").order("chave"),
       ]);
       setStats({
         documentos: docs.count ?? 0,
@@ -32,10 +43,37 @@ export default function QAConfiguracoesPage() {
         referencias: refs.count ?? 0,
         revisoes: revisoes.count ?? 0,
       });
+      const items = (configRes.data as any[]) ?? [];
+      setConfig(items);
+      const initial: Record<string, string> = {};
+      items.forEach((c: any) => { initial[c.id] = String(c.valor); });
+      setEditedValues(initial);
       setLoading(false);
     };
     load();
   }, []);
+
+  const handleSaveWeights = async () => {
+    setSaving(true);
+    try {
+      for (const item of config) {
+        const newVal = parseFloat(editedValues[item.id] || "0");
+        if (newVal !== item.valor) {
+          await supabase.from("qa_config" as any).update({ valor: newVal, updated_at: new Date().toISOString() }).eq("id", item.id);
+        }
+      }
+      toast.success("Pesos de ranking atualizados");
+      // Reload
+      const { data } = await supabase.from("qa_config" as any).select("*").order("chave");
+      setConfig((data as any[]) ?? []);
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao salvar");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const isAdmin = profile?.perfil === "administrador";
 
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-amber-500" /></div>;
 
@@ -71,30 +109,36 @@ export default function QAConfiguracoesPage() {
         </div>
       </div>
 
-      {/* Ranking Parameters */}
+      {/* Ranking Weights - EDITABLE */}
       <div className="bg-[#12121c] border border-slate-800/40 rounded-xl p-5">
-        <h2 className="text-sm font-medium text-slate-300 mb-4 flex items-center gap-2">
-          <BarChart3 className="h-4 w-4" /> Parâmetros de Ranking (futuro)
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label className="text-slate-400 text-xs">Peso — Validação Humana</Label>
-            <Input value="0.30" disabled className="bg-[#0c0c14] border-slate-700 text-slate-500" />
-          </div>
-          <div className="space-y-2">
-            <Label className="text-slate-400 text-xs">Peso — Feedback Positivo</Label>
-            <Input value="0.25" disabled className="bg-[#0c0c14] border-slate-700 text-slate-500" />
-          </div>
-          <div className="space-y-2">
-            <Label className="text-slate-400 text-xs">Peso — Busca Textual</Label>
-            <Input value="0.30" disabled className="bg-[#0c0c14] border-slate-700 text-slate-500" />
-          </div>
-          <div className="space-y-2">
-            <Label className="text-slate-400 text-xs">Peso — Busca Semântica</Label>
-            <Input value="0.15" disabled className="bg-[#0c0c14] border-slate-700 text-slate-500" />
-          </div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-sm font-medium text-slate-300 flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" /> Pesos de Ranking
+          </h2>
+          {isAdmin && (
+            <Button onClick={handleSaveWeights} disabled={saving} size="sm" className="bg-amber-600 hover:bg-amber-700">
+              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Save className="h-3.5 w-3.5 mr-1" />}
+              Salvar
+            </Button>
+          )}
         </div>
-        <p className="text-xs text-slate-600 mt-3">Configuração de pesos será editável na próxima fase.</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {config.map(c => (
+            <div key={c.id} className="space-y-1">
+              <Label className="text-slate-400 text-xs">{c.descricao || c.chave}</Label>
+              <Input
+                value={editedValues[c.id] || ""}
+                onChange={e => setEditedValues(prev => ({ ...prev, [c.id]: e.target.value }))}
+                disabled={!isAdmin}
+                type="number"
+                step="0.01"
+                className={`bg-[#0c0c14] border-slate-700 ${isAdmin ? "text-slate-100" : "text-slate-500"}`}
+              />
+              <div className="text-[10px] text-slate-600 font-mono">{c.chave}</div>
+            </div>
+          ))}
+        </div>
+        {!isAdmin && <p className="text-xs text-slate-600 mt-3">Apenas administradores podem editar os pesos de ranking.</p>}
       </div>
 
       {/* Access Profile */}
