@@ -114,11 +114,24 @@ function StatCard({ icon: Icon, label, value, color }: { icon: any; label: strin
 }
 
 /* ─── Activity bar item ─── */
-function ActivityItem({ item, onDismiss }: { item: TrackedImport; onDismiss: () => void }) {
+function ActivityItem({ item, onDismiss, onReprocess }: { item: TrackedImport; onDismiss: () => void; onReprocess: () => void }) {
   const stage = getStageInfo(item.status);
   const isFailed = item.status === "erro" || item.status === "texto_invalido";
   const isDone = item.status === "concluido";
   const isActive = !TERMINAL.includes(item.status);
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    if (!isActive) return;
+    const iv = setInterval(() => setElapsed(Date.now() - item.started_at), 1000);
+    return () => clearInterval(iv);
+  }, [isActive, item.started_at]);
+
+  const duration = isActive ? elapsed : (item.finished_at ? item.finished_at - item.started_at : 0);
+  const tipoLabel = TIPOS_DOC.find(t => t.value === item.tipo_documento)?.label
+    || TIPOS_AUXILIAR.find(t => t.value === item.tipo_documento)?.label
+    || item.tipo_documento;
+  const origemLabel = item.tipo_origem === "link_publico" ? "Link público" : item.tipo_origem === "arquivo_upload" ? "Upload" : "Manual";
 
   return (
     <div className={`flex items-center gap-3 px-4 py-2.5 rounded-lg border transition-all ${
@@ -132,14 +145,24 @@ function ActivityItem({ item, onDismiss }: { item: TrackedImport; onDismiss: () 
         {isFailed && <AlertCircle className="h-4 w-4 text-red-400" />}
       </div>
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <span className="text-xs font-medium text-slate-200 truncate">{item.titulo || item.url}</span>
           <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium whitespace-nowrap ${
             isFailed ? "bg-red-500/10 text-red-400" :
             isDone ? "bg-emerald-500/10 text-emerald-400" :
             "bg-blue-500/10 text-blue-400"
           }`}>{stage.label}</span>
+          {duration > 0 && (
+            <span className="text-[10px] text-slate-500 tabular-nums">{formatDuration(duration)}</span>
+          )}
         </div>
+        {/* Meta info on success */}
+        {isDone && (tipoLabel || origemLabel) && (
+          <div className="flex items-center gap-2 mt-0.5">
+            {tipoLabel && <span className="text-[10px] text-slate-500 bg-slate-800/60 px-1.5 py-0.5 rounded">{tipoLabel}</span>}
+            <span className="text-[10px] text-slate-600">{origemLabel}</span>
+          </div>
+        )}
         {isActive && (
           <div className="mt-1.5">
             <Progress value={stage.pct} className="h-1.5 bg-slate-800" />
@@ -155,6 +178,11 @@ function ActivityItem({ item, onDismiss }: { item: TrackedImport; onDismiss: () 
             Abrir <ArrowRight className="h-3 w-3" />
           </Button>
         </Link>
+      )}
+      {isFailed && (
+        <Button size="sm" variant="ghost" onClick={onReprocess} className="text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 h-7 px-2 text-[10px] gap-1 shrink-0">
+          <RefreshCw className="h-3 w-3" /> Reprocessar
+        </Button>
       )}
       {TERMINAL.includes(item.status) && (
         <button onClick={onDismiss} className="shrink-0 text-slate-600 hover:text-slate-400 transition-colors">
