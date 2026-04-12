@@ -340,6 +340,15 @@ export default function QAGerarPecaPage() {
     await resolverCircunscricao(clienteCidade, clienteUf);
   };
 
+  /* ── File name sanitization ── */
+  const sanitizeFileName = (name: string): string => {
+    let s = name.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    s = s.replace(/[^a-zA-Z0-9._-]/g, "_");
+    s = s.toLowerCase();
+    s = s.replace(/_{2,}/g, "_").replace(/^_+|_+$/g, "");
+    return s || "file";
+  };
+
   /* ── Auxiliary documents ── */
   const handleAddFiles = (files: FileList | null) => {
     if (!files) return;
@@ -365,7 +374,8 @@ export default function QAGerarPecaPage() {
     if (arq.stage === "done" && arq.docId) return arq.docId;
     setDocStage(index, "uploading", { startedAt: Date.now(), error: undefined });
     try {
-      const storagePath = `auxiliares/${Date.now()}_${arq.file.name}`;
+      const safeName = sanitizeFileName(arq.file.name);
+      const storagePath = `auxiliares/${Date.now()}_${crypto.randomUUID().slice(0,8)}_${safeName}`;
       const { error: upErr } = await supabase.storage.from("qa-documentos").upload(storagePath, arq.file);
       if (upErr) throw upErr;
       setDocStage(index, "saved");
