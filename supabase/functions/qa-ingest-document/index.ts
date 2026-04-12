@@ -13,8 +13,14 @@ function getSupabase() {
 }
 
 function sanitizeText(text: string): string {
-  // Remove null bytes and other problematic unicode
-  return text.replace(/\0/g, "").replace(/\\u0000/g, "");
+  // Remove null bytes, control chars, and invalid unicode sequences
+  return text
+    .replace(/\0/g, "")
+    .replace(/\\u0000/g, "")
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, " ")
+    .replace(/\uFFFD/g, "")
+    .replace(/\\u[0-9a-fA-F]{0,3}[^0-9a-fA-F]/g, " ")
+    .replace(/\s+/g, " ");
 }
 
 async function processDocument(storage_path: string, user_id: string | null) {
