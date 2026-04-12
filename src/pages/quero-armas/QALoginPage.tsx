@@ -13,6 +13,19 @@ export default function QALoginPage() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  const handleForgotPassword = async () => {
+    if (!email) { toast.error("Informe seu e-mail primeiro."); return; }
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/redefinir-senha`,
+      });
+      if (error) throw error;
+      toast.success("E-mail de redefinição enviado. Verifique sua caixa de entrada.");
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao enviar e-mail de redefinição.");
+    }
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
