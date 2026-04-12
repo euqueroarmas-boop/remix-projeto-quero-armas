@@ -523,31 +523,18 @@ export default function QAGerarPecaPage() {
         setGenStep("extracting_docs");
         await new Promise(r => setTimeout(r, 500));
 
-        // Gate: check all docs reached a final state
-        const currentDocs = arquivosAuxiliares;
-        const failedDocs = currentDocs.filter(a => a.stage === "failed");
-        const pendingDocs = currentDocs.filter(a => !["done", "failed"].includes(a.stage));
-        if (failedDocs.length > 0 || pendingDocs.length > 0) {
-          const failedNames = failedDocs.map(d => d.nome).join(", ");
-          const pendingNames = pendingDocs.map(d => d.nome).join(", ");
-          let msg = "Geração bloqueada: ";
-          if (failedDocs.length > 0) msg += `${failedDocs.length} documento(s) com erro (${failedNames}). `;
-          if (pendingDocs.length > 0) msg += `${pendingDocs.length} documento(s) ainda processando (${pendingNames}).`;
-          msg += " Reprocesse ou remova os documentos com problema antes de gerar.";
-
-          // Audit blocked attempt
+        // Gate: compare successful IDs vs total docs to detect failures
+        const totalDocs = arquivosAuxiliares.length;
+        const failedCount = totalDocs - auxiliarDocIds.length;
+        if (failedCount > 0) {
+          const msg = `Geração bloqueada: ${failedCount} de ${totalDocs} documento(s) falharam no processamento. Reprocesse ou remova os documentos com erro antes de gerar.`;
           try {
             await supabase.from("qa_logs_auditoria" as any).insert({
               usuario_id: user?.id, entidade: "qa_casos", entidade_id: casoId || "new",
               acao: "geracao_bloqueada_anexos_incompletos",
-              detalhes_json: {
-                total: currentDocs.length, concluidos: auxiliarDocIds.length,
-                falhos: failedDocs.length, pendentes: pendingDocs.length,
-                docs_falhos: failedDocs.map(d => ({ nome: d.nome, erro: d.error })),
-              },
+              detalhes_json: { total: totalDocs, concluidos: auxiliarDocIds.length, falhos: failedCount },
             });
           } catch { /* non-critical */ }
-
           throw new Error(msg);
         }
       }
