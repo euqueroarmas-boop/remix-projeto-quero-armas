@@ -318,14 +318,41 @@ export default function QAGerarPecaPage() {
     }
   };
 
+  /* ── Load municipalities when UF changes ── */
+  const loadMunicipios = useCallback(async (uf: string) => {
+    if (!uf) { setMunicipiosList([]); return; }
+    setMunicipiosLoading(true);
+    try {
+      const { data, error } = await supabase.rpc("qa_listar_municipios_por_uf" as any, { p_uf: uf });
+      if (!error && data) {
+        setMunicipiosList((data as any[]).map((r: any) => r.municipio));
+      } else {
+        setMunicipiosList([]);
+      }
+    } catch {
+      setMunicipiosList([]);
+    } finally {
+      setMunicipiosLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (clienteUf) loadMunicipios(clienteUf);
+    else setMunicipiosList([]);
+  }, [clienteUf, loadMunicipios]);
+
   const handleUfChange = async (uf: string) => {
     const u = uf.trim().toUpperCase();
-    setClienteUf(u); resetCircunscricaoState();
-    if (clienteCidade.trim() && u) await resolverCircunscricao(clienteCidade, u);
+    setClienteUf(u);
+    setClienteCidade("");
+    resetCircunscricaoState();
   };
 
-  const handleCidadeBlur = async () => {
-    if (clienteCidade.trim() && clienteUf) await resolverCircunscricao(clienteCidade, clienteUf);
+  const handleCidadeSelect = async (cidade: string) => {
+    setClienteCidade(cidade);
+    setCidadePopoverOpen(false);
+    resetCircunscricaoState();
+    if (cidade && clienteUf) await resolverCircunscricao(cidade, clienteUf);
   };
 
   const handleRetryCircunscricao = async () => {
