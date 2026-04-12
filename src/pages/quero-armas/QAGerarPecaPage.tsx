@@ -642,7 +642,7 @@ export default function QAGerarPecaPage() {
             <User className="h-3.5 w-3.5 text-slate-500" />
             <span className="text-[10px] text-slate-600 uppercase tracking-[0.15em] font-medium">Dados do Requerente</span>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="space-y-1.5">
               <Label className="text-slate-500 text-[11px]">Nome completo do requerente *</Label>
               <Input value={nomeRequerente} onChange={e => setNomeRequerente(e.target.value)}
@@ -652,15 +652,16 @@ export default function QAGerarPecaPage() {
               <Label className="text-slate-500 text-[11px]">CPF / CNPJ</Label>
               <Input value={cpfCnpj} onChange={e => setCpfCnpj(e.target.value)}
                 className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm" placeholder="Opcional" />
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-slate-500 text-[11px]">Tipo de Peça *</Label>
-            <Select value={tipoPeca} onValueChange={setTipoPeca}>
-              <SelectTrigger className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {TIPOS_PECA.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-slate-500 text-[11px]">Tipo de Peça *</Label>
+              <Select value={tipoPeca} onValueChange={setTipoPeca}>
+                <SelectTrigger className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {TIPOS_PECA.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
 
