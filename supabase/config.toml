@@ -57,3 +57,6 @@ verify_jwt = false
 [functions.qa-consulta-ia]
 verify_jwt = false
 
+[functions.qa-process-job]
+verify_jwt = false
+
