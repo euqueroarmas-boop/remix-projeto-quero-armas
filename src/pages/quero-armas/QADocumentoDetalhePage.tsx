@@ -227,10 +227,23 @@ export default function QADocumentoDetalhePage() {
             <div className="flex items-center gap-3 mt-2 text-xs text-slate-500 flex-wrap">
               <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-400">{doc.tipo_documento?.replace(/_/g, " ")}</span>
               {doc.categoria && <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-400">{doc.categoria}</span>}
+              <span className="flex items-center gap-1">
+                {doc.tipo_origem === "link_publico" ? <Globe className="h-3 w-3 text-blue-400" /> : <Upload className="h-3 w-3 text-slate-500" />}
+                {doc.tipo_origem === "link_publico" ? "Link público" : doc.tipo_origem === "cadastro_manual" ? "Manual" : "Upload"}
+              </span>
               <span>{new Date(doc.created_at).toLocaleDateString("pt-BR")}</span>
               {doc.tamanho_bytes && <span>{(doc.tamanho_bytes / 1024).toFixed(0)} KB</span>}
               <span>{doc.mime_type}</span>
+              {doc.metodo_extracao && <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-400">parser: {doc.metodo_extracao}</span>}
             </div>
+            {doc.url_origem && (
+              <div className="flex items-center gap-1.5 mt-1.5">
+                <Link2 className="h-3 w-3 text-blue-400 shrink-0" />
+                <a href={doc.url_origem} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-400/80 hover:text-blue-300 truncate">
+                  {doc.url_origem}
+                </a>
+              </div>
+            )}
           </div>
           <div className="flex gap-2 shrink-0 flex-wrap">
             <Button variant="outline" size="sm" onClick={reprocess} disabled={reprocessing} className="border-slate-700 text-slate-300">
