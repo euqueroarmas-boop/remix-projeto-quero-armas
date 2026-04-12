@@ -65,6 +65,7 @@ const AutomacaoAlexaPage = lazyRetry(() => import("./pages/AutomacaoAlexaPage.ts
 const AdminPage = lazyRetry(() => import("./pages/AdminPage.tsx"), "AdminPage");
 const RedefinirSenhaPage = lazyRetry(() => import("./pages/RedefinirSenhaPage.tsx"), "RedefinirSenhaPage");
 const CipaPage = lazyRetry(() => import("./pages/CipaPage.tsx"), "CipaPage");
+const QARoutes = lazyRetry(() => import("./pages/quero-armas/QARoutes.tsx"), "QARoutes");
 
 const queryClient = new QueryClient();
 
@@ -134,6 +135,8 @@ const App = () => (
             <Route path="/admin" element={<AdminPage />} />
             <Route path="/admin/:section" element={<AdminPage />} />
             <Route path="/cipa" element={<CipaPage />} />
+            {/* Quero Armas - IA Jurídica */}
+            <Route path="/quero-armas/*" element={<QARoutes />} />
             {/* Segment dedicated pages */}
             <Route path="/ti-para-cartorios" element={<TiCartoriosPage />} />
             <Route path="/ti-para-serventias-cartoriais" element={<TiServentiasCartoriaisPage />} />
