@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useBrasilApiLookup } from "@/hooks/useBrasilApiLookup";
@@ -8,11 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { toast } from "sonner";
 import {
   PenTool, Send, Loader2, AlertTriangle, Download, CheckCircle, Scale, Gavel,
   BookOpen, MapPin, Building2, Info, Paperclip, FileText, X, Upload, RefreshCw,
-  Search, ChevronDown, ChevronUp, XCircle, Clock, FolderOpen, User,
+  Search, ChevronDown, ChevronUp, XCircle, Clock, FolderOpen, User, ChevronsUpDown,
 } from "lucide-react";
 import { useQAAuth } from "@/components/quero-armas/hooks/useQAAuth";
 import { logSistema } from "@/lib/logSistema";
@@ -72,6 +74,10 @@ function stepIndex(s: GenerationStep): number {
 
 /* ── Constants ── */
 const CIRCUNSCRICAO_TIMEOUT_MS = 12000;
+
+const toTitleCase = (s: string) =>
+  s.toLowerCase().replace(/(?:^|\s|'|-)\S/g, c => c.toUpperCase())
+    .replace(/\b(Da|Das|De|Do|Dos|E)\b/g, m => m.toLowerCase());
 
 const TIPOS_DOC_AUXILIAR = [
   { value: "boletim_ocorrencia", label: "Boletim de Ocorrência" },
@@ -178,6 +184,11 @@ export default function QAGerarPecaPage() {
   const [cepStatus, setCepStatus] = useState<CepStatus>("idle");
   const cepTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Municipality autocomplete
+  const [municipiosList, setMunicipiosList] = useState<string[]>([]);
+  const [municipiosLoading, setMunicipiosLoading] = useState(false);
+  const [cidadePopoverOpen, setCidadePopoverOpen] = useState(false);
+
   // Auxiliary documents
   const [arquivosAuxiliares, setArquivosAuxiliares] = useState<ArquivoAuxiliar[]>([]);
   const [showDocList, setShowDocList] = useState(true);
@@ -259,11 +270,14 @@ export default function QAGerarPecaPage() {
       const data = await lookupCep(digits);
       if (!data) { setCepStatus("not_found"); return; }
       setCepStatus("found");
-      if (data.city) setClienteCidade(data.city);
       if (data.state) setClienteUf(data.state);
       if (data.street) setClienteEndereco(data.street);
       if (data.neighborhood) setClienteBairro(data.neighborhood);
-      if (data.city && data.state) void resolverCircunscricao(data.city, data.state);
+      // City from CEP: set it and resolve circumscription directly
+      if (data.city && data.state) {
+        setClienteCidade(data.city);
+        void resolverCircunscricao(data.city, data.state);
+      }
     } catch { setCepStatus("error"); }
   };
 
@@ -311,14 +325,41 @@ export default function QAGerarPecaPage() {
     }
   };
 
+  /* ── Load municipalities when UF changes ── */
+  const loadMunicipios = useCallback(async (uf: string) => {
+    if (!uf) { setMunicipiosList([]); return; }
+    setMunicipiosLoading(true);
+    try {
+      const { data, error } = await supabase.rpc("qa_listar_municipios_por_uf" as any, { p_uf: uf });
+      if (!error && data) {
+        setMunicipiosList((data as any[]).map((r: any) => r.municipio));
+      } else {
+        setMunicipiosList([]);
+      }
+    } catch {
+      setMunicipiosList([]);
+    } finally {
+      setMunicipiosLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (clienteUf) loadMunicipios(clienteUf);
+    else setMunicipiosList([]);
+  }, [clienteUf, loadMunicipios]);
+
   const handleUfChange = async (uf: string) => {
     const u = uf.trim().toUpperCase();
-    setClienteUf(u); resetCircunscricaoState();
-    if (clienteCidade.trim() && u) await resolverCircunscricao(clienteCidade, u);
+    setClienteUf(u);
+    setClienteCidade("");
+    resetCircunscricaoState();
   };
 
-  const handleCidadeBlur = async () => {
-    if (clienteCidade.trim() && clienteUf) await resolverCircunscricao(clienteCidade, clienteUf);
+  const handleCidadeSelect = async (cidade: string) => {
+    setClienteCidade(cidade);
+    setCidadePopoverOpen(false);
+    resetCircunscricaoState();
+    if (cidade && clienteUf) await resolverCircunscricao(cidade, clienteUf);
   };
 
   const handleRetryCircunscricao = async () => {
@@ -696,8 +737,36 @@ export default function QAGerarPecaPage() {
             </div>
             <div className="space-y-1.5">
               <Label className="text-slate-500 text-[11px]">Cidade *</Label>
-              <Input value={clienteCidade} onChange={e => { setClienteCidade(e.target.value); resetCircunscricaoState(); }}
-                onBlur={handleCidadeBlur} className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm" placeholder="Ex: São Paulo" />
+              <Popover open={cidadePopoverOpen} onOpenChange={setCidadePopoverOpen}>
+                <PopoverTrigger asChild>
+                  <Button type="button" variant="outline" role="combobox" aria-expanded={cidadePopoverOpen}
+                    disabled={!clienteUf || municipiosLoading}
+                    className="w-full justify-between bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm font-normal hover:bg-[#0c0c18] hover:text-slate-200">
+                    {clienteCidade ? toTitleCase(clienteCidade) : (municipiosLoading ? "Carregando..." : !clienteUf ? "Selecione UF primeiro" : "Selecione a cidade...")}
+                    {municipiosLoading ? <Loader2 className="ml-2 h-3.5 w-3.5 shrink-0 animate-spin opacity-50" /> : <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0 bg-[#0c0c18] border-[#1a1a2e]" align="start">
+                  <Command className="bg-transparent">
+                    <CommandInput placeholder="Digite para buscar..." className="h-9 text-sm text-slate-300" />
+                    <CommandList className="max-h-[240px]">
+                      <CommandEmpty className="py-4 text-center text-[11px] text-slate-500">
+                        Nenhum município encontrado. Verifique a grafia ou selecione outra UF.
+                      </CommandEmpty>
+                      <CommandGroup>
+                        {municipiosList.map(m => (
+                          <CommandItem key={m} value={m} onSelect={() => handleCidadeSelect(m)}
+                            className="text-sm text-slate-300 cursor-pointer data-[selected=true]:bg-cyan-500/10 data-[selected=true]:text-cyan-300">
+                            <CheckCircle className={`mr-2 h-3.5 w-3.5 ${clienteCidade === m ? "opacity-100 text-emerald-400" : "opacity-0"}`} />
+                            {toTitleCase(m)}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+              {!clienteUf && <span className="text-[10px] text-slate-600">Selecione o estado primeiro</span>}
             </div>
             <div className="space-y-1.5">
               <Label className="text-slate-500 text-[11px]">UF *</Label>
