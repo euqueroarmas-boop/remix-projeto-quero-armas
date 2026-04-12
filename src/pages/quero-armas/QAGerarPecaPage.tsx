@@ -652,37 +652,9 @@ export default function QAGerarPecaPage() {
               <Label className="text-slate-500 text-[11px]">CPF / CNPJ</Label>
               <Input value={cpfCnpj} onChange={e => setCpfCnpj(e.target.value)}
                 className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm" placeholder="Opcional" />
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label className="text-slate-500 text-[11px]">Tipo de serviço solicitado *</Label>
-              <Select value={tipoServico} onValueChange={setTipoServico}>
-                <SelectTrigger className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                <SelectContent>
-                  {TIPOS_SERVICO.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            {tipoServico === "outro" && (
-              <div className="space-y-1.5">
-                <Label className="text-slate-500 text-[11px]">Especifique o serviço</Label>
-                <Input value={tipoServicoCustom} onChange={e => setTipoServicoCustom(e.target.value)}
-                  className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm" placeholder="Descreva o serviço" />
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* ── Título + Tipo de Peça ── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="space-y-1.5">
-            <Label className="text-slate-500 text-[11px]">Título do Caso</Label>
-            <Input value={casoTitulo} onChange={e => setCasoTitulo(e.target.value)}
-              className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm" placeholder="Ex: Defesa para registro de arma" />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-slate-500 text-[11px]">Tipo de Peça</Label>
+            <Label className="text-slate-500 text-[11px]">Tipo de Peça *</Label>
             <Select value={tipoPeca} onValueChange={setTipoPeca}>
               <SelectTrigger className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm"><SelectValue /></SelectTrigger>
               <SelectContent>
