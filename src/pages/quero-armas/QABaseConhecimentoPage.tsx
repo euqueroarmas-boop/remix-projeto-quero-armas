@@ -538,7 +538,13 @@ export default function QABaseConhecimentoPage() {
         <Select value={filtroOrigem} onValueChange={setFiltroOrigem}>
           <SelectTrigger className="w-[160px] bg-[#12121c] border-slate-700 text-slate-300"><SelectValue placeholder="Origem" /></SelectTrigger>
           <SelectContent>
-            {TIPOS_ORIGEM_FILTER.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+          {TIPOS_ORIGEM_FILTER.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={filtroPapel} onValueChange={setFiltroPapel}>
+          <SelectTrigger className="w-[170px] bg-[#12121c] border-slate-700 text-slate-300"><SelectValue placeholder="Papel" /></SelectTrigger>
+          <SelectContent>
+            {PAPEIS_DOC_FILTER.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={filtroStatus} onValueChange={setFiltroStatus}>
@@ -583,9 +589,13 @@ export default function QABaseConhecimentoPage() {
                   </div>
                   <div className="text-xs text-slate-500 flex items-center gap-2 mt-0.5 flex-wrap">
                     <span className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">{d.tipo_documento?.replace(/_/g, " ")}</span>
+                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${d.papel_documento === "auxiliar_caso" ? "bg-cyan-500/10 text-cyan-400" : "bg-indigo-500/10 text-indigo-400"}`}>
+                      {d.papel_documento === "auxiliar_caso" ? "Auxiliar" : "Aprendizado"}
+                    </span>
                     <span className="flex items-center gap-1">{origemIcon(d.tipo_origem)}{d.tipo_origem === "link_publico" ? "Link" : "Upload"}</span>
                     <span>{new Date(d.created_at).toLocaleDateString("pt-BR")}</span>
                     {d.tamanho_bytes && <span>{(d.tamanho_bytes / 1024).toFixed(0)} KB</span>}
+                    {d.caso_id && <span className="text-[10px] text-cyan-400/60">caso: {d.caso_id}</span>}
                   </div>
                   {d.url_origem && (
                     <div className="text-[10px] text-blue-400/60 truncate mt-0.5">{d.url_origem}</div>
@@ -644,6 +654,28 @@ export default function QABaseConhecimentoPage() {
             <DialogTitle className="text-slate-100 flex items-center gap-2"><Link2 className="h-5 w-5 text-blue-400" /> Importar por Link Público</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            {/* Papel do documento — choice first */}
+            <div>
+              <Label className="text-slate-300 text-xs">Este documento será usado como: *</Label>
+              <Select value={linkPapel} onValueChange={(v: "aprendizado" | "auxiliar_caso") => setLinkPapel(v)}>
+                <SelectTrigger className="bg-[#0c0c14] border-slate-700 text-slate-300 mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="aprendizado">Base de aprendizado / modelo</SelectItem>
+                  <SelectItem value="auxiliar_caso">Documento auxiliar do caso concreto</SelectItem>
+                </SelectContent>
+              </Select>
+              {linkPapel === "auxiliar_caso" && (
+                <p className="text-[10px] text-cyan-400/80 mt-1 bg-cyan-500/5 rounded px-2 py-1 border border-cyan-500/10">
+                  Este documento será usado apenas como suporte factual do caso e não alimentará o aprendizado global da IA.
+                </p>
+              )}
+            </div>
+            {linkPapel === "auxiliar_caso" && (
+              <div>
+                <Label className="text-slate-300 text-xs">Identificador do caso *</Label>
+                <Input value={linkCasoId} onChange={e => setLinkCasoId(e.target.value)} placeholder="Ex: caso-joao-silva-2026" className="bg-[#0c0c14] border-slate-700 text-slate-100 mt-1" />
+              </div>
+            )}
             <div>
               <Label className="text-slate-300 text-xs">URL pública *</Label>
               <Input value={linkUrl} onChange={e => setLinkUrl(e.target.value)} placeholder="https://www.planalto.gov.br/ccivil_03/leis/..." className="bg-[#0c0c14] border-slate-700 text-slate-100 mt-1" />
@@ -658,7 +690,7 @@ export default function QABaseConhecimentoPage() {
               <Select value={linkTipo} onValueChange={setLinkTipo}>
                 <SelectTrigger className="bg-[#0c0c14] border-slate-700 text-slate-300 mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {TIPOS_DOC.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                  {(linkPapel === "auxiliar_caso" ? TIPOS_AUXILIAR : TIPOS_DOC).map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
