@@ -74,7 +74,7 @@ export default function QAConfiguracoesPage() {
   if (loading) {
     return (
       <div className="flex justify-center py-12">
-        <div className="w-4 h-4 border-2 border-slate-700 border-t-slate-400 rounded-full animate-spin" />
+        <div className="w-4 h-4 border-2 border-[#1a1a1a] border-t-slate-400 rounded-full animate-spin" />
       </div>
     );
   }
@@ -84,7 +84,7 @@ export default function QAConfiguracoesPage() {
       <h1 className="text-sm md:text-base font-semibold text-slate-300">Configurações</h1>
 
       {/* System Status — compact grid */}
-      <div className="bg-[#0c0c16] border border-[#1a1a2e] rounded p-2.5 md:p-4">
+      <div className="bg-[#0d0d0d] border border-[#1a1a1a] rounded p-2.5 md:p-4">
         <span className="text-[9px] text-slate-600 uppercase tracking-[0.12em] font-medium">Status</span>
         <div className="grid grid-cols-4 md:grid-cols-7 gap-1.5 md:gap-3 mt-2">
           {[
@@ -96,7 +96,7 @@ export default function QAConfiguracoesPage() {
             { label: "Refs", value: stats?.referencias },
             { label: "Revisões", value: stats?.revisoes },
           ].map(s => (
-            <div key={s.label} className="bg-[#08080f] rounded px-2 py-1.5 text-center">
+            <div key={s.label} className="bg-[#050505] rounded px-2 py-1.5 text-center">
               <div className="text-sm md:text-base font-semibold text-slate-300 font-mono tabular-nums leading-tight">{s.value}</div>
               <div className="text-[7px] md:text-[9px] text-slate-600 uppercase tracking-[0.08em]">{s.label}</div>
             </div>
@@ -105,12 +105,12 @@ export default function QAConfiguracoesPage() {
       </div>
 
       {/* Ranking Weights */}
-      <div className="bg-[#0c0c16] border border-[#1a1a2e] rounded p-2.5 md:p-4">
+      <div className="bg-[#0d0d0d] border border-[#1a1a1a] rounded p-2.5 md:p-4">
         <div className="flex items-center justify-between mb-2 md:mb-3">
           <span className="text-[9px] text-slate-600 uppercase tracking-[0.12em] font-medium">Pesos de Ranking</span>
           {isAdmin && (
             <Button onClick={handleSaveWeights} disabled={saving} size="sm"
-              className="bg-[#14142a] hover:bg-[#1a1a35] text-slate-400 border border-[#1a1a2e] h-6 md:h-7 text-[9px] md:text-[10px]">
+              className="bg-[#161616] hover:bg-[#1f1f1f] text-slate-400 border border-[#1a1a1a] h-6 md:h-7 text-[9px] md:text-[10px]">
               {saving ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Save className="h-3 w-3 mr-1" />}
               Salvar
             </Button>
@@ -125,7 +125,7 @@ export default function QAConfiguracoesPage() {
                 onChange={e => setEditedValues(prev => ({ ...prev, [c.id]: e.target.value }))}
                 disabled={!isAdmin}
                 type="number" step="0.01"
-                className="bg-[#08080f] border-[#1a1a2e] text-slate-400 h-7 md:h-8 text-[11px] font-mono"
+                className="bg-[#050505] border-[#1a1a1a] text-slate-400 h-7 md:h-8 text-[11px] font-mono"
               />
               <div className="text-[8px] text-slate-700 font-mono">{c.chave}</div>
             </div>
@@ -135,7 +135,7 @@ export default function QAConfiguracoesPage() {
       </div>
 
       {/* Profile — compact */}
-      <div className="bg-[#0c0c16] border border-[#1a1a2e] rounded p-2.5 md:p-4">
+      <div className="bg-[#0d0d0d] border border-[#1a1a1a] rounded p-2.5 md:p-4">
         <span className="text-[9px] text-slate-600 uppercase tracking-[0.12em] font-medium">Perfil</span>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 md:gap-3 mt-2 text-[11px]">
           <div><span className="text-slate-600">Nome:</span> <span className="text-slate-400 ml-1">{profile?.nome || "—"}</span></div>

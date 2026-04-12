@@ -670,7 +670,7 @@ export default function QAGerarPecaPage() {
         </div>
         {(savedCasoId || casoId) && (
           <Button variant="outline" size="sm" onClick={() => navigate(`/quero-armas/casos`)}
-            className="bg-[#0c0c16] border-[#1a1a2e] text-slate-400 hover:text-slate-300 h-6 md:h-7 text-[10px] shrink-0">
+            className="bg-[#0d0d0d] border-[#1a1a1a] text-slate-400 hover:text-slate-300 h-6 md:h-7 text-[10px] shrink-0">
             <FolderOpen className="h-3 w-3 mr-1" /> Casos
           </Button>
         )}
@@ -681,7 +681,7 @@ export default function QAGerarPecaPage() {
         <span>Toda minuta deve ser revisada por profissional habilitado.</span>
       </div>
 
-      <div className="space-y-3 md:space-y-4 bg-[#0c0c16] border border-[#1a1a2e] rounded p-2.5 md:p-4">
+      <div className="space-y-3 md:space-y-4 bg-[#0d0d0d] border border-[#1a1a1a] rounded p-2.5 md:p-4">
         {/* ── Requerente + Serviço ── */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
@@ -692,17 +692,17 @@ export default function QAGerarPecaPage() {
             <div className="space-y-1.5">
               <Label className="text-slate-500 text-[11px]">Nome completo do requerente *</Label>
               <Input value={nomeRequerente} onChange={e => setNomeRequerente(e.target.value)}
-                className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm" placeholder="Nome completo" />
+                className="bg-[#050505] border-[#1a1a1a] text-slate-300 h-9 text-sm" placeholder="Nome completo" />
             </div>
             <div className="space-y-1.5">
               <Label className="text-slate-500 text-[11px]">CPF / CNPJ</Label>
               <Input value={cpfCnpj} onChange={e => setCpfCnpj(e.target.value)}
-                className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm" placeholder="Opcional" />
+                className="bg-[#050505] border-[#1a1a1a] text-slate-300 h-9 text-sm" placeholder="Opcional" />
             </div>
             <div className="space-y-1.5">
               <Label className="text-slate-500 text-[11px]">Tipo de Peça *</Label>
               <Select value={tipoPeca} onValueChange={setTipoPeca}>
-                <SelectTrigger className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="bg-[#050505] border-[#1a1a1a] text-slate-300 h-9 text-sm"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {TIPOS_PECA.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
                 </SelectContent>
@@ -722,7 +722,7 @@ export default function QAGerarPecaPage() {
               <Label className="text-slate-500 text-[11px]">CEP</Label>
               <div className="relative">
                 <Input value={clienteCep} onChange={e => handleCepChange(e.target.value)} maxLength={9}
-                  className="bg-[#08080f] border-[#1a1a2e] text-slate-300 pr-8 h-9 text-sm" placeholder="00000-000" />
+                  className="bg-[#050505] border-[#1a1a1a] text-slate-300 pr-8 h-9 text-sm" placeholder="00000-000" />
                 <div className="absolute right-2 top-1/2 -translate-y-1/2">
                   {cepStatus === "loading" && <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-500" />}
                   {cepStatus === "found" && <CheckCircle className="h-3.5 w-3.5 text-emerald-400" />}
@@ -741,12 +741,12 @@ export default function QAGerarPecaPage() {
                 <PopoverTrigger asChild>
                   <Button type="button" variant="outline" role="combobox" aria-expanded={cidadePopoverOpen}
                     disabled={!clienteUf || municipiosLoading}
-                    className="w-full justify-between bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm font-normal hover:bg-[#0c0c18] hover:text-slate-200">
+                    className="w-full justify-between bg-[#050505] border-[#1a1a1a] text-slate-300 h-9 text-sm font-normal hover:bg-[#0d0d0d] hover:text-slate-200">
                     {clienteCidade ? toTitleCase(clienteCidade) : (municipiosLoading ? "Carregando..." : !clienteUf ? "Selecione UF primeiro" : "Selecione a cidade...")}
                     {municipiosLoading ? <Loader2 className="ml-2 h-3.5 w-3.5 shrink-0 animate-spin opacity-50" /> : <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-[--radix-popover-trigger-width] p-0 bg-[#0c0c18] border-[#1a1a2e]" align="start">
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0 bg-[#0d0d0d] border-[#1a1a1a]" align="start">
                   <Command className="bg-transparent">
                     <CommandInput placeholder="Digite para buscar..." className="h-9 text-sm text-slate-300" />
                     <CommandList className="max-h-[240px]">
@@ -771,7 +771,7 @@ export default function QAGerarPecaPage() {
             <div className="space-y-1.5">
               <Label className="text-slate-500 text-[11px]">UF *</Label>
               <Select value={clienteUf} onValueChange={handleUfChange}>
-                <SelectTrigger className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm"><SelectValue placeholder="UF" /></SelectTrigger>
+                <SelectTrigger className="bg-[#050505] border-[#1a1a1a] text-slate-300 h-9 text-sm"><SelectValue placeholder="UF" /></SelectTrigger>
                 <SelectContent>{ESTADOS_BR.map(uf => <SelectItem key={uf} value={uf}>{uf}</SelectItem>)}</SelectContent>
               </Select>
             </div>
@@ -780,12 +780,12 @@ export default function QAGerarPecaPage() {
             <div className="space-y-1.5">
               <Label className="text-slate-500 text-[11px]">Endereço</Label>
               <Input value={clienteEndereco} onChange={e => setClienteEndereco(e.target.value)}
-                className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm" placeholder="Rua, número..." />
+                className="bg-[#050505] border-[#1a1a1a] text-slate-300 h-9 text-sm" placeholder="Rua, número..." />
             </div>
             <div className="space-y-1.5">
               <Label className="text-slate-500 text-[11px]">Bairro</Label>
               <Input value={clienteBairro} onChange={e => setClienteBairro(e.target.value)}
-                className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm" placeholder="Bairro" />
+                className="bg-[#050505] border-[#1a1a1a] text-slate-300 h-9 text-sm" placeholder="Bairro" />
             </div>
           </div>
 
@@ -821,7 +821,7 @@ export default function QAGerarPecaPage() {
           <div className="space-y-1.5">
             <Label className="text-slate-500 text-[11px]">Foco Argumentativo</Label>
             <Select value={foco} onValueChange={setFoco}>
-              <SelectTrigger className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="bg-[#050505] border-[#1a1a1a] text-slate-300 h-9 text-sm"><SelectValue /></SelectTrigger>
               <SelectContent>{FOCOS.map(f => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}</SelectContent>
             </Select>
           </div>
@@ -832,11 +832,11 @@ export default function QAGerarPecaPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-amber-500/5 border border-amber-500/10 rounded p-3">
             <div className="space-y-1.5">
               <Label className="text-amber-400/70 text-[11px]">Data da notificação / decisão</Label>
-              <Input type="date" value={dataNotificacao} onChange={e => setDataNotificacao(e.target.value)} className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm" />
+              <Input type="date" value={dataNotificacao} onChange={e => setDataNotificacao(e.target.value)} className="bg-[#050505] border-[#1a1a1a] text-slate-300 h-9 text-sm" />
             </div>
             <div className="space-y-1.5">
               <Label className="text-amber-400/70 text-[11px]">Informações sobre prazo</Label>
-              <Input value={infoTempestividade} onChange={e => setInfoTempestividade(e.target.value)} className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm" placeholder="Ex: prazo de 15 dias" />
+              <Input value={infoTempestividade} onChange={e => setInfoTempestividade(e.target.value)} className="bg-[#050505] border-[#1a1a1a] text-slate-300 h-9 text-sm" placeholder="Ex: prazo de 15 dias" />
             </div>
           </div>
         )}
@@ -845,7 +845,7 @@ export default function QAGerarPecaPage() {
         <div className="space-y-1.5">
           <Label className="text-slate-500 text-[11px]">Descrição completa do caso *</Label>
           <Textarea value={entradaCaso} onChange={e => setEntradaCaso(e.target.value)}
-            className="bg-[#08080f] border-[#1a1a2e] text-slate-300 min-h-[180px] text-sm"
+            className="bg-[#050505] border-[#1a1a1a] text-slate-300 min-h-[180px] text-sm"
             placeholder="Descreva detalhadamente os fatos, a situação jurídica, o histórico do caso..." />
         </div>
 
@@ -856,7 +856,7 @@ export default function QAGerarPecaPage() {
               <Paperclip className="h-3.5 w-3.5 text-slate-500" />
               <span className="text-[10px] text-slate-600 uppercase tracking-[0.15em] font-medium">Documentos Auxiliares</span>
               {docTotal > 0 && (
-                <span className="text-[9px] bg-[#14142a] text-slate-500 px-2 py-0.5 rounded">
+                <span className="text-[9px] bg-[#161616] text-slate-500 px-2 py-0.5 rounded">
                   {docDone}/{docTotal}
                   {docFailed > 0 && <span className="text-red-400 ml-1">• {docFailed} falha(s)</span>}
                 </span>
@@ -871,7 +871,7 @@ export default function QAGerarPecaPage() {
 
           <input ref={fileInputRef} type="file" multiple accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg" className="hidden"
             onChange={e => { handleAddFiles(e.target.files); e.target.value = ""; }} />
-          <Button type="button" variant="outline" size="sm" className="bg-[#08080f] border-[#1a1a2e] text-slate-500 hover:text-slate-300 h-7 text-[11px]"
+          <Button type="button" variant="outline" size="sm" className="bg-[#050505] border-[#1a1a1a] text-slate-500 hover:text-slate-300 h-7 text-[11px]"
             onClick={() => fileInputRef.current?.click()}>
             <Upload className="h-3 w-3 mr-1.5" /> Anexar documentos
           </Button>
@@ -879,8 +879,8 @@ export default function QAGerarPecaPage() {
           {docTotal > 0 && showDocList && (
             <div className="space-y-1.5">
               {arquivosAuxiliares.map((arq, i) => (
-                <div key={i} className={`bg-[#08080f] border rounded p-2.5 space-y-1.5 ${
-                  arq.stage === "done" ? "border-emerald-500/10" : arq.stage === "failed" ? "border-red-500/10" : "border-[#1a1a2e]"
+                <div key={i} className={`bg-[#050505] border rounded p-2.5 space-y-1.5 ${
+                  arq.stage === "done" ? "border-emerald-500/10" : arq.stage === "failed" ? "border-red-500/10" : "border-[#1a1a1a]"
                 }`}>
                   <div className="flex items-center gap-2">
                     <FileText className={`h-3.5 w-3.5 shrink-0 ${stageColor(arq.stage)}`} />
@@ -894,7 +894,7 @@ export default function QAGerarPecaPage() {
                     <div className="flex items-center gap-1.5 shrink-0">
                       {arq.stage === "pending" && (
                         <Select value={arq.tipo} onValueChange={v => handleChangeTipoDoc(i, v)}>
-                          <SelectTrigger className="h-6 text-[10px] bg-[#0c0c16] border-[#1a1a2e] text-slate-500 w-36"><SelectValue /></SelectTrigger>
+                          <SelectTrigger className="h-6 text-[10px] bg-[#0d0d0d] border-[#1a1a1a] text-slate-500 w-36"><SelectValue /></SelectTrigger>
                           <SelectContent>{TIPOS_DOC_AUXILIAR.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
                         </Select>
                       )}
@@ -924,7 +924,7 @@ export default function QAGerarPecaPage() {
             docActive > 0 ? "border-cyan-500/30 bg-cyan-500/5 text-cyan-400" :
             hasDocsUnclassified ? "border-amber-500/30 bg-amber-500/5 text-amber-400" :
             docDone === docTotal ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-400" :
-            "border-slate-700 bg-slate-800/50 text-slate-400"
+            "border-[#1a1a1a] bg-[#161616] text-slate-400"
           }`}>
             {docDone === docTotal && docTotal > 0 && <CheckCircle className="h-3.5 w-3.5" />}
             {docFailed > 0 && <XCircle className="h-3.5 w-3.5" />}
@@ -950,7 +950,7 @@ export default function QAGerarPecaPage() {
           </div>
         )}
 
-        <Button onClick={gerar} disabled={!canGenerate} className="bg-[#14142a] hover:bg-[#1a1a35] text-slate-300 border border-[#1a1a2e] w-full md:w-auto h-9 text-sm disabled:opacity-40">
+        <Button onClick={gerar} disabled={!canGenerate} className="bg-[#161616] hover:bg-[#1f1f1f] text-slate-300 border border-[#1a1a1a] w-full md:w-auto h-9 text-sm disabled:opacity-40">
           {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
           Gerar Peça
         </Button>
@@ -958,7 +958,7 @@ export default function QAGerarPecaPage() {
 
       {/* ── Generation Progress Panel ── */}
       {genStep !== "idle" && (
-        <div className="bg-[#0c0c16] border border-[#1a1a2e] rounded p-4 space-y-3">
+        <div className="bg-[#0d0d0d] border border-[#1a1a1a] rounded p-4 space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-[10px] text-slate-600 uppercase tracking-[0.15em] font-medium">Progresso</span>
             <div className="flex items-center gap-2">
@@ -976,7 +976,7 @@ export default function QAGerarPecaPage() {
                 <div key={step.key} className={`flex items-center gap-2 text-[11px] py-0.5 px-2 rounded ${
                   isActive ? "text-slate-300" : isDone ? "text-emerald-400/60" : "text-slate-700"
                 }`}>
-                  {isDone && !isActive ? <CheckCircle className="h-3 w-3 shrink-0" /> : isActive ? <Loader2 className="h-3 w-3 animate-spin shrink-0" /> : <div className="h-3 w-3 rounded-full border border-slate-800 shrink-0" />}
+                  {isDone && !isActive ? <CheckCircle className="h-3 w-3 shrink-0" /> : isActive ? <Loader2 className="h-3 w-3 animate-spin shrink-0" /> : <div className="h-3 w-3 rounded-full border border-[#1a1a1a] shrink-0" />}
                   <span>{step.label}</span>
                   {isActive && step.key === "uploading_docs" && docTotal > 0 && <span className="text-[9px] text-slate-600 ml-auto">{docDone}/{docTotal}</span>}
                 </div>
@@ -984,7 +984,7 @@ export default function QAGerarPecaPage() {
             })}
           </div>
           {docTotal > 0 && (
-            <div className="text-[9px] text-slate-600 border-t border-[#1a1a2e] pt-2">
+            <div className="text-[9px] text-slate-600 border-t border-[#1a1a1a] pt-2">
               Docs: {docTotal} anexados • {docDone} ok{docFailed > 0 && <span className="text-red-400"> • {docFailed} falha(s)</span>}
             </div>
           )}
@@ -1016,7 +1016,7 @@ export default function QAGerarPecaPage() {
               <FolderOpen className="h-3 w-3 mr-1" /> Abrir Caso
             </Button>
             <Button variant="outline" size="sm" onClick={() => navigate("/quero-armas/casos")}
-              className="h-7 text-[10px] border-[#1a1a2e] text-slate-400">
+              className="h-7 text-[10px] border-[#1a1a1a] text-slate-400">
               Ver Todos
             </Button>
           </div>
@@ -1026,7 +1026,7 @@ export default function QAGerarPecaPage() {
       {/* ── Result ── */}
       {resultado && (
         <div className="space-y-3">
-          <div className="flex items-center gap-3 bg-[#0c0c16] border border-[#1a1a2e] rounded p-3">
+          <div className="flex items-center gap-3 bg-[#0d0d0d] border border-[#1a1a1a] rounded p-3">
             <div className="text-center">
               <div className={`text-lg font-semibold font-mono ${scoreColor(resultado.score_confianca)}`}>
                 {(resultado.score_confianca * 100).toFixed(0)}%
@@ -1039,23 +1039,23 @@ export default function QAGerarPecaPage() {
                 <div className="text-emerald-400/60 mt-0.5 text-[10px]">✓ {resultado.circunscricao_utilizada.unidade_pf}</div>
               )}
             </div>
-            <Button variant="outline" size="sm" onClick={copiarMinuta} className="bg-[#08080f] border-[#1a1a2e] text-slate-400 h-7 text-[10px]">
+            <Button variant="outline" size="sm" onClick={copiarMinuta} className="bg-[#050505] border-[#1a1a1a] text-slate-400 h-7 text-[10px]">
               Copiar
             </Button>
-            <Button size="sm" onClick={exportarDocx} className="bg-[#14142a] hover:bg-[#1a1a35] text-slate-300 border border-[#1a1a2e] h-7 text-[10px]">
+            <Button size="sm" onClick={exportarDocx} className="bg-[#161616] hover:bg-[#1f1f1f] text-slate-300 border border-[#1a1a1a] h-7 text-[10px]">
               <Download className="h-3 w-3 mr-1" /> DOCX
             </Button>
           </div>
 
           {resultado.fontes_utilizadas?.length > 0 && (
-            <div className="bg-[#0c0c16] border border-[#1a1a2e] rounded p-3">
+            <div className="bg-[#0d0d0d] border border-[#1a1a1a] rounded p-3">
               <span className="text-[9px] text-slate-600 uppercase tracking-[0.15em]">Fontes</span>
               <div className="space-y-0.5 mt-2">
                 {resultado.fontes_utilizadas.map((f: any, i: number) => (
                   <div key={i} className="flex items-center gap-2 text-[11px]">
                     {f.tipo === "norma" && <Scale className="h-3 w-3 text-emerald-400" />}
-                    {f.tipo === "jurisprudencia" && <Gavel className="h-3 w-3 text-purple-400" />}
-                    {f.tipo === "documento" && <BookOpen className="h-3 w-3 text-blue-400" />}
+                    {f.tipo === "jurisprudencia" && <Gavel className="h-3 w-3 text-emerald-400" />}
+                    {f.tipo === "documento" && <BookOpen className="h-3 w-3 text-slate-300" />}
                     {f.tipo === "referencia_aprovada" && <CheckCircle className="h-3 w-3 text-slate-400" />}
                     <span className="text-slate-400">{f.titulo}</span>
                     <span className="text-slate-700">• {f.referencia}</span>
@@ -1066,7 +1066,7 @@ export default function QAGerarPecaPage() {
             </div>
           )}
 
-          <div className="bg-[#0c0c16] border border-[#1a1a2e] rounded p-4">
+          <div className="bg-[#0d0d0d] border border-[#1a1a1a] rounded p-4">
             <span className="text-[9px] text-slate-600 uppercase tracking-[0.15em]">Minuta</span>
             <div className="text-[12px] text-slate-300 whitespace-pre-wrap leading-relaxed font-serif mt-2">
               {resultado.minuta_gerada}
