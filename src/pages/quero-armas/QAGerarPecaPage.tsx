@@ -857,20 +857,32 @@ export default function QAGerarPecaPage() {
             docDone === docTotal ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-400" :
             "border-slate-700 bg-slate-800/50 text-slate-400"
           }`}>
-            {docDone === docTotal && <CheckCircle className="h-3.5 w-3.5" />}
-            {docFailed > 0 && <XCircle className="h-3.5 w-3.5" />}
-            {docActive > 0 && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-            <span>{docDone}/{docTotal} documentos prontos</span>
-            {docFailed > 0 && <span className="text-red-400 font-medium">· {docFailed} com erro</span>}
-            {docActive > 0 && <span>· {docActive} processando</span>}
+          const docUnclassified = arquivosAuxiliares.filter(a => a.stage === "pending").length;
+          return (
+            <>
+              {docDone === docTotal && docTotal > 0 && <CheckCircle className="h-3.5 w-3.5" />}
+              {docFailed > 0 && <XCircle className="h-3.5 w-3.5" />}
+              {docActive > 0 && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              <span>{docDone}/{docTotal} documentos prontos</span>
+              {docUnclassified > 0 && <span className="text-amber-400 font-medium">· {docUnclassified} aguardando classificação</span>}
+              {docFailed > 0 && <span className="text-red-400 font-medium">· {docFailed} com erro</span>}
+              {docActive > 0 && <span>· {docActive} processando</span>}
+            </>
+          );
+        })()}
           </div>
         )}
 
         {/* Generation blocked warning */}
-        {docTotal > 0 && (hasDocsFailed || hasDocsPending) && (
+        {docTotal > 0 && (hasDocsFailed || hasDocsPending || hasDocsUnclassified) && (
           <div className="text-[10px] text-amber-400/80 bg-amber-500/5 border border-amber-500/20 rounded px-3 py-1.5 flex items-start gap-1.5">
             <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" />
-            <span>Geração bloqueada até todos os documentos serem concluídos ou removidos. {hasDocsFailed ? "Reprocesse ou remova os documentos com erro." : "Aguarde o processamento."}</span>
+            <span>
+              {hasDocsUnclassified ? "Classifique o tipo de cada documento para iniciar o processamento. " : ""}
+              {hasDocsFailed ? "Reprocesse ou remova os documentos com erro. " : ""}
+              {hasDocsPending ? "Aguarde o processamento dos documentos. " : ""}
+              Geração bloqueada até todos os documentos estarem concluídos.
+            </span>
           </div>
         )}
 
