@@ -331,7 +331,7 @@ Deno.serve(async (req) => {
       .insert({
         titulo: docTitle,
         nome_arquivo: url,
-        storage_path: null,
+        storage_path: `link/${Date.now()}_${encodeURIComponent(new URL(url).hostname)}`,
         mime_type: "text/html",
         tamanho_bytes: null,
         enviado_por: user_id || null,
