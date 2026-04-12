@@ -412,7 +412,7 @@ export default function QAGerarPecaPage() {
     setArquivosAuxiliares(prev => prev.map((a, i) => i === index ? { ...a, stage, ...extra } : a));
   };
 
-  /** Upload file to storage, create job in DB, dispatch to background edge function */
+  /** Upload file to storage, then dispatch background job separately */
   const startDocJob = async (arq: ArquivoAuxiliar, index: number): Promise<string | null> => {
     if (arq.stage === "done" && arq.docId) return arq.docId;
     if (!arq.tipo) { toast.error("Selecione o tipo documental primeiro"); return null; }
@@ -420,17 +420,34 @@ export default function QAGerarPecaPage() {
     setDocStage(index, "uploading", { startedAt: Date.now(), error: undefined });
 
     try {
-      // Step 1: Upload file to storage (this is the only sync wait)
+      // Step 1: Upload file to storage — the ONLY blocking wait
       const safeName = sanitizeFileName(arq.file.name);
       const storagePath = `auxiliares/${Date.now()}_${crypto.randomUUID().slice(0, 8)}_${safeName}`;
 
       const { error: upErr } = await supabase.storage.from("qa-documentos").upload(storagePath, arq.file);
       if (upErr) throw new Error(`Upload falhou: ${upErr.message}`);
 
+      // Immediately confirm to user: file is saved
       setDocStage(index, "saved", { storagePath });
 
-      // Step 2: Create persistent job in DB
+      // Step 2: Dispatch job creation + processing in background (non-blocking)
+      void dispatchBackgroundJob(arq, index, storagePath);
+
+      return storagePath;
+    } catch (err: any) {
+      setDocStage(index, "failed", { error: err.message || "Falha no upload" });
+      return null;
+    }
+  };
+
+  /** Create job record and dispatch to edge function — runs after UI already shows "saved" */
+  const dispatchBackgroundJob = async (arq: ArquivoAuxiliar, index: number, storagePath: string) => {
+    try {
+      // Small delay so user sees "arquivo salvo" before transitioning
+      await new Promise(r => setTimeout(r, 800));
+
       setDocStage(index, "queued");
+
       const { data: jobData, error: jobErr } = await supabase.from("qa_document_jobs" as any).insert({
         caso_id: nomeRequerente || null,
         tipo_documental: arq.tipo,
@@ -444,21 +461,21 @@ export default function QAGerarPecaPage() {
         started_at: new Date().toISOString(),
       }).select("id").single();
 
-      if (jobErr) throw new Error(`Erro ao criar job: ${jobErr.message}`);
-      const jobId = (jobData as any).id;
+      if (jobErr) {
+        setDocStage(index, "failed", { error: `Erro ao criar job: ${jobErr.message}` });
+        return;
+      }
 
+      const jobId = (jobData as any).id;
       setDocStage(index, "extracting", { jobId });
 
-      // Step 3: Dispatch to background edge function (fire-and-forget)
+      // Fire-and-forget to edge function
       supabase.functions.invoke("qa-process-job", { body: { job_id: jobId } }).catch(() => {});
 
-      // Step 4: Start polling the job status
+      // Poll job status
       void pollJobStatus(jobId, index);
-
-      return jobId;
     } catch (err: any) {
-      setDocStage(index, "failed", { error: err.message || "Falha no processamento" });
-      return null;
+      setDocStage(index, "failed", { error: err.message || "Falha ao iniciar processamento" });
     }
   };
 
