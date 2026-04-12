@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useBrasilApiLookup } from "@/hooks/useBrasilApiLookup";
 import { Button } from "@/components/ui/button";
@@ -11,7 +12,7 @@ import { toast } from "sonner";
 import {
   PenTool, Send, Loader2, AlertTriangle, Download, CheckCircle, Scale, Gavel,
   BookOpen, MapPin, Building2, Info, Paperclip, FileText, X, Upload, RefreshCw,
-  Search, ChevronDown, ChevronUp, XCircle, Clock,
+  Search, ChevronDown, ChevronUp, XCircle, Clock, FolderOpen, User,
 } from "lucide-react";
 import { useQAAuth } from "@/components/quero-armas/hooks/useQAAuth";
 import { logSistema } from "@/lib/logSistema";
@@ -50,6 +51,7 @@ type GenerationStep =
   | "recovering_sources"
   | "generating_draft"
   | "validating"
+  | "saving_case"
   | "done"
   | "error";
 
@@ -61,6 +63,7 @@ const GENERATION_STEPS: { key: GenerationStep; label: string }[] = [
   { key: "recovering_sources", label: "Recuperando fontes jurídicas" },
   { key: "generating_draft", label: "Gerando minuta" },
   { key: "validating", label: "Validando qualidade" },
+  { key: "saving_case", label: "Salvando caso" },
 ];
 
 function stepIndex(s: GenerationStep): number {
@@ -92,6 +95,15 @@ const TIPOS_PECA = [
   { value: "defesa_porte_arma", label: "Defesa para Porte de Arma" },
   { value: "recurso_administrativo", label: "Recurso Administrativo" },
   { value: "resposta_a_notificacao", label: "Resposta à Notificação" },
+];
+
+const TIPOS_SERVICO = [
+  { value: "aquisicao_arma_fogo", label: "Aquisição de arma de fogo" },
+  { value: "defesa_administrativa_posse", label: "Defesa administrativa de posse" },
+  { value: "defesa_administrativa_porte", label: "Defesa administrativa de porte" },
+  { value: "recurso_administrativo", label: "Recurso administrativo" },
+  { value: "resposta_notificacao", label: "Resposta à notificação" },
+  { value: "outro", label: "Outro" },
 ];
 
 const FOCOS = [
@@ -148,10 +160,16 @@ function ElapsedTime({ startedAt }: { startedAt?: number }) {
 /* ── Component ── */
 export default function QAGerarPecaPage() {
   const { user } = useQAAuth();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { lookupCep, cepLoading } = useBrasilApiLookup();
 
   // Form fields
   const [casoTitulo, setCasoTitulo] = useState("");
+  const [nomeRequerente, setNomeRequerente] = useState("");
+  const [cpfCnpj, setCpfCnpj] = useState("");
+  const [tipoServico, setTipoServico] = useState("");
+  const [tipoServicoCustom, setTipoServicoCustom] = useState("");
   const [entradaCaso, setEntradaCaso] = useState("");
   const [tipoPeca, setTipoPeca] = useState("defesa_posse_arma");
   const [foco, setFoco] = useState("legalidade");
@@ -162,6 +180,9 @@ export default function QAGerarPecaPage() {
   const [clienteCep, setClienteCep] = useState("");
   const [dataNotificacao, setDataNotificacao] = useState("");
   const [infoTempestividade, setInfoTempestividade] = useState("");
+
+  // Editing existing case
+  const [casoId, setCasoId] = useState<string | null>(null);
 
   // CEP
   const [cepStatus, setCepStatus] = useState<CepStatus>("idle");
@@ -184,6 +205,7 @@ export default function QAGerarPecaPage() {
   const [genStep, setGenStep] = useState<GenerationStep>("idle");
   const [genError, setGenError] = useState("");
   const [genStartedAt, setGenStartedAt] = useState<number | undefined>();
+  const [savedCasoId, setSavedCasoId] = useState<string | null>(null);
 
   const needsTempestividade = tipoPeca === "recurso_administrativo" || tipoPeca === "resposta_a_notificacao";
 
@@ -193,17 +215,48 @@ export default function QAGerarPecaPage() {
   const docFailed = arquivosAuxiliares.filter(a => a.stage === "failed").length;
   const docActive = arquivosAuxiliares.filter(a => !["pending", "done", "failed"].includes(a.stage)).length;
 
+  const tipoServicoFinal = tipoServico === "outro" ? tipoServicoCustom : (TIPOS_SERVICO.find(t => t.value === tipoServico)?.label || tipoServico);
+
+  /* ── Load existing case if ?caso=ID ── */
+  useEffect(() => {
+    const casoParam = searchParams.get("caso");
+    if (!casoParam) return;
+    const loadCase = async () => {
+      const { data } = await supabase.from("qa_casos" as any).select("*").eq("id", casoParam).maybeSingle();
+      if (!data) return;
+      const c = data as any;
+      setCasoId(c.id);
+      setCasoTitulo(c.titulo || "");
+      setNomeRequerente(c.nome_requerente || "");
+      setCpfCnpj(c.cpf_cnpj || "");
+      setEntradaCaso(c.descricao_caso || "");
+      setTipoPeca(c.tipo_peca || "defesa_posse_arma");
+      setFoco(c.foco_argumentativo || "legalidade");
+      setClienteCidade(c.cidade || "");
+      setClienteUf(c.uf || "");
+      setClienteCep(c.cep || "");
+      setClienteEndereco(c.endereco || "");
+      setClienteBairro(c.bairro || "");
+      if (c.minuta_gerada) setResultado({ minuta_gerada: c.minuta_gerada, geracao_id: c.geracao_id, score_confianca: 0, fontes_utilizadas: [] });
+      // Try to match tipo_servico
+      const match = TIPOS_SERVICO.find(t => t.label === c.tipo_servico);
+      if (match) { setTipoServico(match.value); } else if (c.tipo_servico) { setTipoServico("outro"); setTipoServicoCustom(c.tipo_servico); }
+      if (c.unidade_pf) {
+        setCircunscricaoResolvida({ unidade_pf: c.unidade_pf, sigla_unidade: c.sigla_unidade_pf || "", tipo_unidade: "", municipio_sede: "", uf: c.uf || "", base_legal: "" });
+        setCircunscricaoStatus("resolved");
+      }
+    };
+    loadCase();
+  }, [searchParams]);
+
   /* ── CEP auto-lookup ── */
   const handleCepChange = (raw: string) => {
     const digits = raw.replace(/\D/g, "");
-    // Format as 00000-000
     let formatted = digits;
     if (digits.length > 5) formatted = digits.slice(0, 5) + "-" + digits.slice(5, 8);
     setClienteCep(formatted);
     setCepStatus("idle");
-
     if (cepTimeoutRef.current) clearTimeout(cepTimeoutRef.current);
-
     if (digits.length === 8) {
       cepTimeoutRef.current = setTimeout(() => void doCepLookup(digits), 400);
     }
@@ -213,23 +266,14 @@ export default function QAGerarPecaPage() {
     setCepStatus("loading");
     try {
       const data = await lookupCep(digits);
-      if (!data) {
-        setCepStatus("not_found");
-        return;
-      }
+      if (!data) { setCepStatus("not_found"); return; }
       setCepStatus("found");
       if (data.city) setClienteCidade(data.city);
       if (data.state) setClienteUf(data.state);
       if (data.street) setClienteEndereco(data.street);
       if (data.neighborhood) setClienteBairro(data.neighborhood);
-
-      // Auto-resolve circumscription
-      if (data.city && data.state) {
-        void resolverCircunscricao(data.city, data.state);
-      }
-    } catch {
-      setCepStatus("error");
-    }
+      if (data.city && data.state) void resolverCircunscricao(data.city, data.state);
+    } catch { setCepStatus("error"); }
   };
 
   /* ── Circumscription ── */
@@ -244,56 +288,41 @@ export default function QAGerarPecaPage() {
     const c = cidade.replace(/\s+/g, " ").trim();
     const u = uf.trim().toUpperCase();
     if (!c || !u) return null;
-
     const requestId = ++circunscricaoRequestRef.current;
     setCircunscricaoStatus("resolving");
     setCircunscricaoMensagem("");
-
     try {
       const { data, error } = await Promise.race([
         supabase.rpc("qa_resolver_circunscricao_pf", { p_municipio: c, p_uf: u }),
         new Promise<never>((_, reject) => setTimeout(() => reject(new Error("circunscricao_timeout")), CIRCUNSCRICAO_TIMEOUT_MS)),
       ]);
-
       if (requestId !== circunscricaoRequestRef.current) return null;
-
       if (error) {
-        setCircunscricaoResolvida(null);
-        setCircunscricaoStatus("error");
-        setCircunscricaoMensagem("Erro ao resolver a circunscrição da PF. Tente novamente.");
-        void logSistema({ tipo: "erro", status: "error", mensagem: "Erro circunscrição PF", payload: { cidade: c, uf: u, detalhe: error.message, modulo: "quero-armas" }, user_id: user?.id });
+        setCircunscricaoResolvida(null); setCircunscricaoStatus("error");
+        setCircunscricaoMensagem("Erro ao resolver a circunscrição da PF.");
         return null;
       }
-
       if (!data || data.length === 0) {
-        setCircunscricaoResolvida(null);
-        setCircunscricaoStatus("not_found");
+        setCircunscricaoResolvida(null); setCircunscricaoStatus("not_found");
         setCircunscricaoMensagem("Circunscrição não encontrada para o município/UF informado.");
         return null;
       }
-
       const resultado = data[0] as CircunscricaoResolvida;
-      setCircunscricaoResolvida(resultado);
-      setCircunscricaoStatus("resolved");
-      setCircunscricaoMensagem("");
+      setCircunscricaoResolvida(resultado); setCircunscricaoStatus("resolved");
       return resultado;
     } catch (err: any) {
       if (requestId !== circunscricaoRequestRef.current) return null;
-      const timeout = err?.message === "circunscricao_timeout";
-      setCircunscricaoResolvida(null);
-      setCircunscricaoStatus("error");
-      setCircunscricaoMensagem(timeout
-        ? "A resolução excedeu o tempo limite. Tente novamente ou siga com revisão pendente."
-        : "Erro ao resolver a circunscrição da PF. Tente novamente.");
-      void logSistema({ tipo: "erro", status: "warning", mensagem: timeout ? "Timeout circunscrição PF" : "Erro circunscrição PF", payload: { cidade: c, uf: u, detalhe: err?.message, modulo: "quero-armas" }, user_id: user?.id });
+      setCircunscricaoResolvida(null); setCircunscricaoStatus("error");
+      setCircunscricaoMensagem(err?.message === "circunscricao_timeout"
+        ? "Tempo limite excedido. Tente novamente."
+        : "Erro ao resolver circunscrição.");
       return null;
     }
   };
 
   const handleUfChange = async (uf: string) => {
     const u = uf.trim().toUpperCase();
-    setClienteUf(u);
-    resetCircunscricaoState();
+    setClienteUf(u); resetCircunscricaoState();
     if (clienteCidade.trim() && u) await resolverCircunscricao(clienteCidade, u);
   };
 
@@ -304,7 +333,7 @@ export default function QAGerarPecaPage() {
   const handleRetryCircunscricao = async () => {
     if (!clienteCidade.trim() || !clienteUf.trim()) {
       setCircunscricaoStatus("error");
-      setCircunscricaoMensagem("Informe cidade e UF para tentar novamente.");
+      setCircunscricaoMensagem("Informe cidade e UF.");
       return;
     }
     await resolverCircunscricao(clienteCidade, clienteUf);
@@ -333,15 +362,12 @@ export default function QAGerarPecaPage() {
 
   const uploadSingleDoc = async (arq: ArquivoAuxiliar, index: number): Promise<string | null> => {
     if (arq.stage === "done" && arq.docId) return arq.docId;
-
     setDocStage(index, "uploading", { startedAt: Date.now(), error: undefined });
     try {
       const storagePath = `auxiliares/${Date.now()}_${arq.file.name}`;
       const { error: upErr } = await supabase.storage.from("qa-documentos").upload(storagePath, arq.file);
       if (upErr) throw upErr;
-
       setDocStage(index, "saved");
-
       const { data: docData, error: dbErr } = await supabase.from("qa_documentos_conhecimento").insert({
         titulo: arq.nome, nome_arquivo: arq.file.name, storage_path: storagePath,
         tipo_documento: arq.tipo, tipo_origem: "upload", papel_documento: "auxiliar_caso",
@@ -350,35 +376,17 @@ export default function QAGerarPecaPage() {
         enviado_por: user?.id || null, mime_type: arq.file.type || null, tamanho_bytes: arq.file.size,
       }).select("id").single();
       if (dbErr) throw dbErr;
-
       setDocStage(index, "extracting");
-
-      await supabase.functions.invoke("qa-ingest-document", {
-        body: { storage_path: storagePath, user_id: user?.id },
-      });
-
+      await supabase.functions.invoke("qa-ingest-document", { body: { storage_path: storagePath, user_id: user?.id } });
       setDocStage(index, "processing");
-
-      // Poll for extraction completion (max 60s)
       const docId = docData.id;
       const pollStart = Date.now();
       while (Date.now() - pollStart < 60000) {
         await new Promise(r => setTimeout(r, 3000));
-        const { data: check } = await supabase
-          .from("qa_documentos_conhecimento")
-          .select("status_processamento")
-          .eq("id", docId)
-          .maybeSingle();
-        if (check?.status_processamento === "concluido") {
-          setDocStage(index, "done", { docId });
-          return docId;
-        }
-        if (check?.status_processamento === "erro" || check?.status_processamento === "texto_invalido") {
-          throw new Error(`Extração falhou: ${check.status_processamento}`);
-        }
+        const { data: check } = await supabase.from("qa_documentos_conhecimento").select("status_processamento").eq("id", docId).maybeSingle();
+        if (check?.status_processamento === "concluido") { setDocStage(index, "done", { docId }); return docId; }
+        if (check?.status_processamento === "erro" || check?.status_processamento === "texto_invalido") throw new Error(`Extração falhou: ${check.status_processamento}`);
       }
-
-      // Timeout — still proceed
       setDocStage(index, "done", { docId });
       return docId;
     } catch (err: any) {
@@ -388,9 +396,7 @@ export default function QAGerarPecaPage() {
   };
 
   const uploadAllAuxiliares = async (): Promise<string[]> => {
-    const results = await Promise.all(
-      arquivosAuxiliares.map((arq, i) => uploadSingleDoc(arq, i))
-    );
+    const results = await Promise.all(arquivosAuxiliares.map((arq, i) => uploadSingleDoc(arq, i)));
     return results.filter((id): id is string => id !== null);
   };
 
@@ -401,17 +407,87 @@ export default function QAGerarPecaPage() {
     if (id) toast.success(`${arq.nome} processado com sucesso`);
   };
 
+  /* ── Save case ── */
+  const saveCaso = async (geracaoResult: any, auxiliarDocIds: string[], circ: CircunscricaoResolvida | null): Promise<string | null> => {
+    try {
+      const docsJson = arquivosAuxiliares.map(a => ({
+        nome: a.nome, tipo: a.tipo, stage: a.stage, docId: a.docId || null, error: a.error || null,
+      }));
+      const errosJson = arquivosAuxiliares.filter(a => a.stage === "failed").map(a => ({
+        nome: a.nome, tipo: a.tipo, error: a.error || "Erro desconhecido",
+      }));
+
+      const casoData: Record<string, any> = {
+        titulo: casoTitulo || `Caso ${nomeRequerente || "sem título"}`,
+        nome_requerente: nomeRequerente,
+        cpf_cnpj: cpfCnpj || null,
+        tipo_peca: tipoPeca,
+        tipo_servico: tipoServicoFinal || null,
+        cidade: clienteCidade || null,
+        uf: clienteUf || null,
+        cep: clienteCep || null,
+        endereco: clienteEndereco || null,
+        bairro: clienteBairro || null,
+        unidade_pf: circ?.unidade_pf || null,
+        sigla_unidade_pf: circ?.sigla_unidade || null,
+        descricao_caso: entradaCaso,
+        foco_argumentativo: foco,
+        status: "gerado",
+        minuta_gerada: geracaoResult?.minuta_gerada || null,
+        geracao_id: geracaoResult?.geracao_id || null,
+        documentos_auxiliares_json: docsJson,
+        erros_documentos_json: errosJson.length > 0 ? errosJson : null,
+        usuario_id: user?.id || null,
+        updated_at: new Date().toISOString(),
+      };
+
+      let savedId: string;
+      if (casoId) {
+        // Update existing case
+        await supabase.from("qa_casos" as any).update(casoData).eq("id", casoId);
+        savedId = casoId;
+      } else {
+        const { data, error } = await supabase.from("qa_casos" as any).insert(casoData).select("id").single();
+        if (error) throw error;
+        savedId = (data as any).id;
+        setCasoId(savedId);
+      }
+
+      // Audit log
+      await supabase.from("qa_logs_auditoria" as any).insert({
+        usuario_id: user?.id,
+        entidade: "qa_casos",
+        entidade_id: savedId,
+        acao: casoId ? "atualizar_caso" : "criar_caso",
+        detalhes_json: {
+          nome_requerente: nomeRequerente,
+          tipo_servico: tipoServicoFinal,
+          tipo_peca: tipoPeca,
+          docs_total: docTotal,
+          docs_ok: docDone,
+          docs_falha: docFailed,
+          unidade_pf: circ?.sigla_unidade || null,
+        },
+      });
+
+      return savedId;
+    } catch (err: any) {
+      console.error("Erro ao salvar caso:", err);
+      return null;
+    }
+  };
+
   /* ── Generation ── */
   const gerar = async () => {
+    if (!nomeRequerente.trim()) { toast.error("Informe o nome completo do requerente"); return; }
     if (!entradaCaso.trim()) { toast.error("Descreva o caso"); return; }
-    if (!clienteCidade.trim() || !clienteUf.trim()) {
-      toast.error("Informe a cidade e o estado do cliente."); return;
-    }
+    if (!clienteCidade.trim() || !clienteUf.trim()) { toast.error("Informe a cidade e o estado do cliente."); return; }
 
     setLoading(true);
     setResultado(null);
     setGenError("");
     setGenStartedAt(Date.now());
+    setSavedCasoId(null);
 
     try {
       // Step 1: Circumscription
@@ -430,25 +506,24 @@ export default function QAGerarPecaPage() {
         setGenStep("uploading_docs");
         auxiliarDocIds = await uploadAllAuxiliares();
         setGenStep("extracting_docs");
-        // Small delay to show extracting step visually
         await new Promise(r => setTimeout(r, 500));
       }
 
       // Step 4-7: Generate
       setGenStep("building_context");
       await new Promise(r => setTimeout(r, 300));
-
       setGenStep("recovering_sources");
       await new Promise(r => setTimeout(r, 300));
-
       setGenStep("generating_draft");
 
       const { data, error } = await supabase.functions.invoke("qa-gerar-peca", {
         body: {
-          usuario_id: user?.id, caso_titulo: casoTitulo, entrada_caso: entradaCaso,
+          usuario_id: user?.id, caso_titulo: casoTitulo || nomeRequerente, entrada_caso: entradaCaso,
           tipo_peca: tipoPeca, foco,
           cliente_cidade: clienteCidade.trim(), cliente_uf: clienteUf.trim(),
           cliente_endereco: clienteEndereco.trim() || null, cliente_cep: clienteCep.trim() || null,
+          nome_requerente: nomeRequerente.trim(),
+          tipo_servico: tipoServicoFinal || null,
           circunscricao_resolvida: circ ? {
             unidade_pf: circ.unidade_pf, sigla_unidade: circ.sigla_unidade,
             tipo_unidade: circ.tipo_unidade, municipio_sede: circ.municipio_sede,
@@ -466,8 +541,14 @@ export default function QAGerarPecaPage() {
       await new Promise(r => setTimeout(r, 400));
 
       setResultado(data);
+
+      // Step 8: Save case
+      setGenStep("saving_case");
+      const sId = await saveCaso(data, auxiliarDocIds, circ);
+      setSavedCasoId(sId);
+
       setGenStep("done");
-      toast.success("Peça gerada com sucesso");
+      toast.success("Peça gerada e caso salvo com sucesso");
     } catch (err: any) {
       setGenStep("error");
       setGenError(err.message || "Erro na geração");
@@ -488,14 +569,19 @@ export default function QAGerarPecaPage() {
     if (!resultado?.geracao_id) return;
     try {
       const { data, error } = await supabase.functions.invoke("qa-export-docx", {
-        body: { geracao_id: resultado.geracao_id, variables: { cliente_nome: casoTitulo } },
+        body: { geracao_id: resultado.geracao_id, variables: { cliente_nome: nomeRequerente || casoTitulo } },
       });
       if (error) throw error;
       const blob = new Blob([data], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = url; a.download = `${casoTitulo || "peca"}.docx`; a.click();
+      a.href = url; a.download = `${nomeRequerente || casoTitulo || "peca"}.docx`; a.click();
       URL.revokeObjectURL(url);
+
+      // Update case with docx path
+      if (savedCasoId || casoId) {
+        await supabase.from("qa_casos" as any).update({ docx_path: `exported_${resultado.geracao_id}.docx`, updated_at: new Date().toISOString() }).eq("id", savedCasoId || casoId);
+      }
       toast.success("DOCX exportado");
     } catch (err: any) { toast.error(err.message || "Erro ao exportar DOCX"); }
   };
@@ -507,31 +593,78 @@ export default function QAGerarPecaPage() {
   const genPercent = genStep === "done" ? 100 : genStep === "error" ? 0 : currentStepIdx >= 0 ? Math.round(((currentStepIdx + 1) / GENERATION_STEPS.length) * 100) : 0;
 
   return (
-    <div className="space-y-6 max-w-5xl">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-100 flex items-center gap-2">
-          <PenTool className="h-6 w-6 text-amber-500" /> Gerar Peça Jurídica
-        </h1>
-        <p className="text-sm text-slate-500 mt-1">Geração assistida com base viva de conhecimento</p>
+    <div className="space-y-5 max-w-5xl">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-base font-semibold text-slate-300 flex items-center gap-2">
+            <PenTool className="h-4 w-4 text-slate-500" />
+            {casoId ? "Editar Caso" : "Gerar Peça Jurídica"}
+          </h1>
+          <p className="text-[11px] text-slate-600 mt-0.5">Geração assistida com base viva de conhecimento</p>
+        </div>
+        {(savedCasoId || casoId) && (
+          <Button variant="outline" size="sm" onClick={() => navigate(`/quero-armas/casos`)}
+            className="bg-[#0c0c16] border-[#1a1a2e] text-slate-400 hover:text-slate-300 h-7 text-[11px]">
+            <FolderOpen className="h-3 w-3 mr-1" /> Ver Casos
+          </Button>
+        )}
       </div>
 
-      <div className="bg-amber-500/5 border border-amber-500/20 rounded-lg p-3 text-xs text-amber-400/80 flex items-start gap-2">
-        <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
-        <span>A peça será gerada com base exclusiva nas fontes cadastradas. Toda minuta deve ser revisada por profissional habilitado antes do uso.</span>
+      <div className="bg-slate-500/5 border border-slate-500/10 rounded p-2.5 text-[11px] text-slate-500 flex items-start gap-2">
+        <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+        <span>A peça será gerada com base exclusiva nas fontes cadastradas. Toda minuta deve ser revisada por profissional habilitado.</span>
       </div>
 
-      <div className="space-y-4 bg-[#12121c] border border-slate-800/40 rounded-xl p-5">
-        {/* Title + Type */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label className="text-slate-300">Título do Caso</Label>
-            <Input value={casoTitulo} onChange={e => setCasoTitulo(e.target.value)}
-              className="bg-[#0c0c14] border-slate-700 text-slate-100" placeholder="Ex: Defesa para registro de arma" />
+      <div className="space-y-4 bg-[#0c0c16] border border-[#1a1a2e] rounded p-4">
+        {/* ── Requerente + Serviço ── */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <User className="h-3.5 w-3.5 text-slate-500" />
+            <span className="text-[10px] text-slate-600 uppercase tracking-[0.15em] font-medium">Dados do Requerente</span>
           </div>
-          <div className="space-y-2">
-            <Label className="text-slate-300">Tipo de Peça</Label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-slate-500 text-[11px]">Nome completo do requerente *</Label>
+              <Input value={nomeRequerente} onChange={e => setNomeRequerente(e.target.value)}
+                className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm" placeholder="Nome completo" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-slate-500 text-[11px]">CPF / CNPJ</Label>
+              <Input value={cpfCnpj} onChange={e => setCpfCnpj(e.target.value)}
+                className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm" placeholder="Opcional" />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-slate-500 text-[11px]">Tipo de serviço solicitado *</Label>
+              <Select value={tipoServico} onValueChange={setTipoServico}>
+                <SelectTrigger className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>
+                  {TIPOS_SERVICO.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            {tipoServico === "outro" && (
+              <div className="space-y-1.5">
+                <Label className="text-slate-500 text-[11px]">Especifique o serviço</Label>
+                <Input value={tipoServicoCustom} onChange={e => setTipoServicoCustom(e.target.value)}
+                  className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm" placeholder="Descreva o serviço" />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── Título + Tipo de Peça ── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label className="text-slate-500 text-[11px]">Título do Caso</Label>
+            <Input value={casoTitulo} onChange={e => setCasoTitulo(e.target.value)}
+              className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm" placeholder="Ex: Defesa para registro de arma" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-slate-500 text-[11px]">Tipo de Peça</Label>
             <Select value={tipoPeca} onValueChange={setTipoPeca}>
-              <SelectTrigger className="bg-[#0c0c14] border-slate-700 text-slate-300"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {TIPOS_PECA.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
               </SelectContent>
@@ -539,162 +672,113 @@ export default function QAGerarPecaPage() {
           </div>
         </div>
 
-        {/* Client address */}
+        {/* ── Client address ── */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <Building2 className="h-4 w-4 text-cyan-400" />
-            <Label className="text-slate-300 text-sm font-medium">Endereço do Cliente / Caso</Label>
-            <span className="text-[10px] text-slate-600 ml-1">(resolução automática da unidade PF)</span>
+            <Building2 className="h-3.5 w-3.5 text-slate-500" />
+            <span className="text-[10px] text-slate-600 uppercase tracking-[0.15em] font-medium">Endereço / Localidade</span>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* CEP with auto-lookup */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-slate-400 text-xs">CEP</Label>
+              <Label className="text-slate-500 text-[11px]">CEP</Label>
               <div className="relative">
-                <Input
-                  value={clienteCep}
-                  onChange={e => handleCepChange(e.target.value)}
-                  maxLength={9}
-                  className="bg-[#0c0c14] border-slate-700 text-slate-100 pr-8"
-                  placeholder="00000-000"
-                />
+                <Input value={clienteCep} onChange={e => handleCepChange(e.target.value)} maxLength={9}
+                  className="bg-[#08080f] border-[#1a1a2e] text-slate-300 pr-8 h-9 text-sm" placeholder="00000-000" />
                 <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                  {cepStatus === "loading" && <Loader2 className="h-3.5 w-3.5 animate-spin text-cyan-400" />}
+                  {cepStatus === "loading" && <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-500" />}
                   {cepStatus === "found" && <CheckCircle className="h-3.5 w-3.5 text-emerald-400" />}
                   {cepStatus === "not_found" && <XCircle className="h-3.5 w-3.5 text-amber-400" />}
                   {cepStatus === "error" && <AlertTriangle className="h-3.5 w-3.5 text-red-400" />}
                 </div>
               </div>
-              {cepStatus === "loading" && <span className="text-[10px] text-cyan-400/70">Buscando CEP...</span>}
+              {cepStatus === "loading" && <span className="text-[10px] text-slate-600">Buscando CEP...</span>}
               {cepStatus === "found" && <span className="text-[10px] text-emerald-400/70">CEP encontrado</span>}
               {cepStatus === "not_found" && <span className="text-[10px] text-amber-400/70">CEP não encontrado</span>}
               {cepStatus === "error" && <span className="text-[10px] text-red-400/70">Erro ao consultar CEP</span>}
             </div>
-
             <div className="space-y-1.5">
-              <Label className="text-slate-400 text-xs">Cidade do cliente *</Label>
+              <Label className="text-slate-500 text-[11px]">Cidade *</Label>
               <Input value={clienteCidade} onChange={e => { setClienteCidade(e.target.value); resetCircunscricaoState(); }}
-                onBlur={handleCidadeBlur}
-                className="bg-[#0c0c14] border-slate-700 text-slate-100" placeholder="Ex: São Paulo" />
+                onBlur={handleCidadeBlur} className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm" placeholder="Ex: São Paulo" />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-slate-400 text-xs">Estado (UF) *</Label>
+              <Label className="text-slate-500 text-[11px]">UF *</Label>
               <Select value={clienteUf} onValueChange={handleUfChange}>
-                <SelectTrigger className="bg-[#0c0c14] border-slate-700 text-slate-300">
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent>
-                  {ESTADOS_BR.map(uf => <SelectItem key={uf} value={uf}>{uf}</SelectItem>)}
-                </SelectContent>
+                <SelectTrigger className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm"><SelectValue placeholder="UF" /></SelectTrigger>
+                <SelectContent>{ESTADOS_BR.map(uf => <SelectItem key={uf} value={uf}>{uf}</SelectItem>)}</SelectContent>
               </Select>
             </div>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-slate-400 text-xs">Endereço (logradouro)</Label>
+              <Label className="text-slate-500 text-[11px]">Endereço</Label>
               <Input value={clienteEndereco} onChange={e => setClienteEndereco(e.target.value)}
-                className="bg-[#0c0c14] border-slate-700 text-slate-100" placeholder="Rua, número..." />
+                className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm" placeholder="Rua, número..." />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-slate-400 text-xs">Bairro</Label>
+              <Label className="text-slate-500 text-[11px]">Bairro</Label>
               <Input value={clienteBairro} onChange={e => setClienteBairro(e.target.value)}
-                className="bg-[#0c0c14] border-slate-700 text-slate-100" placeholder="Bairro" />
+                className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm" placeholder="Bairro" />
             </div>
           </div>
 
           {/* Circumscription feedback */}
           {circunscricaoStatus === "resolving" && (
-            <div className="flex items-center gap-2 text-xs text-cyan-400/70">
-              <Loader2 className="h-3 w-3 animate-spin" /> Resolvendo circunscrição da PF...
-            </div>
+            <div className="flex items-center gap-2 text-[11px] text-slate-500"><Loader2 className="h-3 w-3 animate-spin" /> Resolvendo circunscrição da PF...</div>
           )}
           {circunscricaoStatus === "resolved" && circunscricaoResolvida && (
-            <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-lg p-3 text-xs space-y-1">
-              <div className="flex items-center gap-1.5 text-emerald-400 font-medium">
-                <CheckCircle className="h-3.5 w-3.5" /> Unidade PF competente resolvida
-              </div>
-              <div className="text-slate-300">
-                <span className="font-medium">{circunscricaoResolvida.unidade_pf}</span>
-                {circunscricaoResolvida.sigla_unidade && <span className="text-slate-500 ml-1.5">({circunscricaoResolvida.sigla_unidade})</span>}
-              </div>
-              <div className="text-slate-500">
-                {circunscricaoResolvida.tipo_unidade === "superintendencia" ? "Superintendência Regional" : "Delegacia"} — Sede: {circunscricaoResolvida.municipio_sede}/{circunscricaoResolvida.uf}
-              </div>
-              <div className="text-slate-600 text-[10px]">Base legal: {circunscricaoResolvida.base_legal}</div>
+            <div className="bg-emerald-500/5 border border-emerald-500/10 rounded p-2.5 text-[11px] space-y-1">
+              <div className="flex items-center gap-1.5 text-emerald-400 font-medium"><CheckCircle className="h-3 w-3" /> Unidade PF resolvida</div>
+              <div className="text-slate-400"><span className="font-medium">{circunscricaoResolvida.unidade_pf}</span>{circunscricaoResolvida.sigla_unidade && <span className="text-slate-600 ml-1.5">({circunscricaoResolvida.sigla_unidade})</span>}</div>
+              <div className="text-slate-600 text-[10px]">{circunscricaoResolvida.municipio_sede}/{circunscricaoResolvida.uf}</div>
             </div>
           )}
-          {circunscricaoStatus === "not_found" && (
-            <div className="bg-amber-500/5 border border-amber-500/20 rounded-lg p-2.5 text-[11px] text-amber-400/80 flex items-start gap-1.5">
-              <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-              <div className="space-y-2">
-                <span>{circunscricaoMensagem || "Circunscrição não encontrada."}</span>
-                <Button type="button" variant="outline" size="sm" className="h-7 border-amber-500/30 text-amber-400 hover:bg-amber-500/10" onClick={handleRetryCircunscricao}>
-                  <RefreshCw className="h-3 w-3 mr-1" /> Tentar novamente
-                </Button>
-              </div>
-            </div>
-          )}
-          {circunscricaoStatus === "error" && (
-            <div className="bg-red-500/5 border border-red-500/20 rounded-lg p-2.5 text-[11px] text-red-400/90 flex items-start gap-1.5">
-              <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-              <div className="space-y-2">
+          {(circunscricaoStatus === "not_found" || circunscricaoStatus === "error") && (
+            <div className={`border rounded p-2.5 text-[11px] flex items-start gap-1.5 ${circunscricaoStatus === "error" ? "bg-red-500/5 border-red-500/10 text-red-400" : "bg-amber-500/5 border-amber-500/10 text-amber-400"}`}>
+              <AlertTriangle className="h-3 w-3 shrink-0 mt-0.5" />
+              <div className="space-y-1.5">
                 <span>{circunscricaoMensagem}</span>
-                <Button type="button" variant="outline" size="sm" className="h-7 border-red-500/30 text-red-300 hover:bg-red-500/10" onClick={handleRetryCircunscricao}>
-                  <RefreshCw className="h-3 w-3 mr-1" /> Tentar novamente
-                </Button>
+                <Button type="button" variant="outline" size="sm" className="h-6 text-[10px]" onClick={handleRetryCircunscricao}><RefreshCw className="h-3 w-3 mr-1" /> Tentar</Button>
               </div>
             </div>
           )}
           {circunscricaoStatus === "pending_review" && (
-            <div className="bg-amber-500/5 border border-amber-500/20 rounded-lg p-2.5 text-[11px] text-amber-400/80 flex items-start gap-1.5">
-              <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-              <span>{circunscricaoMensagem}</span>
+            <div className="bg-amber-500/5 border border-amber-500/10 rounded p-2 text-[10px] text-amber-400 flex items-center gap-1.5">
+              <Info className="h-3 w-3" /> {circunscricaoMensagem}
             </div>
           )}
         </div>
 
-        {/* Foco */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label className="text-slate-300">Foco Argumentativo</Label>
+        {/* ── Foco ── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label className="text-slate-500 text-[11px]">Foco Argumentativo</Label>
             <Select value={foco} onValueChange={setFoco}>
-              <SelectTrigger className="bg-[#0c0c14] border-slate-700 text-slate-300"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {FOCOS.map(f => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}
-              </SelectContent>
+              <SelectTrigger className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm"><SelectValue /></SelectTrigger>
+              <SelectContent>{FOCOS.map(f => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}</SelectContent>
             </Select>
-          </div>
-          <div className="flex items-end pb-1">
-            <div className="text-[10px] text-slate-600 flex items-center gap-1">
-              <Info className="h-3 w-3" /> Profundidade e tom fixados: técnico, preciso e conciso.
-            </div>
           </div>
         </div>
 
-        {/* Tempestividade */}
+        {/* ── Tempestividade ── */}
         {needsTempestividade && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-amber-500/5 border border-amber-500/10 rounded-lg p-4">
-            <div className="space-y-2">
-              <Label className="text-amber-400 text-xs">Data da notificação / decisão</Label>
-              <Input type="date" value={dataNotificacao} onChange={e => setDataNotificacao(e.target.value)}
-                className="bg-[#0c0c14] border-slate-700 text-slate-100" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-amber-500/5 border border-amber-500/10 rounded p-3">
+            <div className="space-y-1.5">
+              <Label className="text-amber-400/70 text-[11px]">Data da notificação / decisão</Label>
+              <Input type="date" value={dataNotificacao} onChange={e => setDataNotificacao(e.target.value)} className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm" />
             </div>
-            <div className="space-y-2">
-              <Label className="text-amber-400 text-xs">Informações sobre prazo / tempestividade</Label>
-              <Input value={infoTempestividade} onChange={e => setInfoTempestividade(e.target.value)}
-                className="bg-[#0c0c14] border-slate-700 text-slate-100"
-                placeholder="Ex: notificado em 01/03/2026, prazo de 15 dias" />
+            <div className="space-y-1.5">
+              <Label className="text-amber-400/70 text-[11px]">Informações sobre prazo</Label>
+              <Input value={infoTempestividade} onChange={e => setInfoTempestividade(e.target.value)} className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm" placeholder="Ex: prazo de 15 dias" />
             </div>
           </div>
         )}
 
-        {/* Case description */}
-        <div className="space-y-2">
-          <Label className="text-slate-300">Descrição completa do caso</Label>
+        {/* ── Case description ── */}
+        <div className="space-y-1.5">
+          <Label className="text-slate-500 text-[11px]">Descrição completa do caso *</Label>
           <Textarea value={entradaCaso} onChange={e => setEntradaCaso(e.target.value)}
-            className="bg-[#0c0c14] border-slate-700 text-slate-100 min-h-[200px]"
+            className="bg-[#08080f] border-[#1a1a2e] text-slate-300 min-h-[180px] text-sm"
             placeholder="Descreva detalhadamente os fatos, a situação jurídica, o histórico do caso..." />
         </div>
 
@@ -702,91 +786,71 @@ export default function QAGerarPecaPage() {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Paperclip className="h-4 w-4 text-amber-400" />
-              <Label className="text-slate-300 text-sm font-medium">Documentos Auxiliares do Caso</Label>
+              <Paperclip className="h-3.5 w-3.5 text-slate-500" />
+              <span className="text-[10px] text-slate-600 uppercase tracking-[0.15em] font-medium">Documentos Auxiliares</span>
               {docTotal > 0 && (
-                <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full">
-                  {docDone}/{docTotal} prontos
+                <span className="text-[9px] bg-[#14142a] text-slate-500 px-2 py-0.5 rounded">
+                  {docDone}/{docTotal}
                   {docFailed > 0 && <span className="text-red-400 ml-1">• {docFailed} falha(s)</span>}
-                  {docActive > 0 && <span className="text-cyan-400 ml-1">• {docActive} ativo(s)</span>}
                 </span>
               )}
             </div>
             {docTotal > 0 && (
-              <button onClick={() => setShowDocList(!showDocList)} className="text-slate-500 hover:text-slate-300 transition-colors">
-                {showDocList ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              <button onClick={() => setShowDocList(!showDocList)} className="text-slate-600 hover:text-slate-400">
+                {showDocList ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
               </button>
             )}
           </div>
-          <p className="text-[11px] text-slate-500">
-            Anexe provas e documentos de suporte. Serão lidos integralmente como base factual da peça.
-          </p>
 
           <input ref={fileInputRef} type="file" multiple accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg" className="hidden"
             onChange={e => { handleAddFiles(e.target.files); e.target.value = ""; }} />
-
-          <Button type="button" variant="outline" size="sm" className="border-amber-500/30 text-amber-400 hover:bg-amber-500/10"
+          <Button type="button" variant="outline" size="sm" className="bg-[#08080f] border-[#1a1a2e] text-slate-500 hover:text-slate-300 h-7 text-[11px]"
             onClick={() => fileInputRef.current?.click()}>
-            <Upload className="h-3.5 w-3.5 mr-1.5" /> Anexar documentos
+            <Upload className="h-3 w-3 mr-1.5" /> Anexar documentos
           </Button>
 
           {docTotal > 0 && showDocList && (
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {arquivosAuxiliares.map((arq, i) => (
-                <div key={i} className={`bg-slate-900/50 border rounded-lg p-3 space-y-2 ${
-                  arq.stage === "done" ? "border-emerald-500/20" :
-                  arq.stage === "failed" ? "border-red-500/20" : "border-slate-800/50"
+                <div key={i} className={`bg-[#08080f] border rounded p-2.5 space-y-1.5 ${
+                  arq.stage === "done" ? "border-emerald-500/10" : arq.stage === "failed" ? "border-red-500/10" : "border-[#1a1a2e]"
                 }`}>
-                  <div className="flex items-center gap-3">
-                    <FileText className={`h-4 w-4 shrink-0 ${stageColor(arq.stage)}`} />
-                    <div className="flex-1 min-w-0 space-y-1">
-                      <div className="text-xs text-slate-200 truncate">{arq.nome}</div>
+                  <div className="flex items-center gap-2">
+                    <FileText className={`h-3.5 w-3.5 shrink-0 ${stageColor(arq.stage)}`} />
+                    <div className="flex-1 min-w-0 space-y-0.5">
+                      <div className="text-[12px] text-slate-400 truncate">{arq.nome}</div>
                       <div className="flex items-center gap-2">
-                        <span className={`text-[10px] font-medium ${stageColor(arq.stage)}`}>
-                          {STAGE_LABELS[arq.stage]}
-                        </span>
+                        <span className={`text-[10px] ${stageColor(arq.stage)}`}>{STAGE_LABELS[arq.stage]}</span>
                         {!["pending", "done", "failed"].includes(arq.stage) && <ElapsedTime startedAt={arq.startedAt} />}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-1.5 shrink-0">
                       {arq.stage === "pending" && (
                         <Select value={arq.tipo} onValueChange={v => handleChangeTipoDoc(i, v)}>
-                          <SelectTrigger className="h-7 text-[11px] bg-[#0c0c14] border-slate-700 text-slate-400 w-40">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {TIPOS_DOC_AUXILIAR.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
-                          </SelectContent>
+                          <SelectTrigger className="h-6 text-[10px] bg-[#0c0c16] border-[#1a1a2e] text-slate-500 w-36"><SelectValue /></SelectTrigger>
+                          <SelectContent>{TIPOS_DOC_AUXILIAR.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
                         </Select>
                       )}
                       {arq.stage === "failed" && (
-                        <Button type="button" variant="outline" size="sm" className="h-6 text-[10px] border-red-500/30 text-red-300 hover:bg-red-500/10"
-                          onClick={() => handleRetryDoc(i)}>
-                          <RefreshCw className="h-3 w-3 mr-1" /> Reprocessar
+                        <Button type="button" variant="outline" size="sm" className="h-5 text-[9px] border-red-500/20 text-red-400" onClick={() => handleRetryDoc(i)}>
+                          <RefreshCw className="h-2.5 w-2.5 mr-1" /> Retry
                         </Button>
                       )}
-                      {arq.stage === "done" && <CheckCircle className="h-4 w-4 text-emerald-400" />}
+                      {arq.stage === "done" && <CheckCircle className="h-3.5 w-3.5 text-emerald-400" />}
                       {!["uploading", "saved", "extracting", "processing"].includes(arq.stage) && (
-                        <button onClick={() => handleRemoveFile(i)} className="text-slate-600 hover:text-red-400 transition-colors">
-                          <X className="h-3.5 w-3.5" />
-                        </button>
+                        <button onClick={() => handleRemoveFile(i)} className="text-slate-700 hover:text-red-400"><X className="h-3 w-3" /></button>
                       )}
                     </div>
                   </div>
-                  {/* Progress bar */}
-                  {!["pending", "done"].includes(arq.stage) && (
-                    <Progress value={stageProgress(arq.stage)} className="h-1.5" />
-                  )}
-                  {arq.error && (
-                    <div className="text-[10px] text-red-400/80 bg-red-500/5 rounded px-2 py-1">{arq.error}</div>
-                  )}
+                  {!["pending", "done"].includes(arq.stage) && <Progress value={stageProgress(arq.stage)} className="h-1" />}
+                  {arq.error && <div className="text-[9px] text-red-400/80 bg-red-500/5 rounded px-2 py-0.5">{arq.error}</div>}
                 </div>
               ))}
             </div>
           )}
         </div>
 
-        <Button onClick={gerar} disabled={loading} className="bg-amber-600 hover:bg-amber-700 w-full md:w-auto">
+        <Button onClick={gerar} disabled={loading} className="bg-[#14142a] hover:bg-[#1a1a35] text-slate-300 border border-[#1a1a2e] w-full md:w-auto h-9 text-sm">
           {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
           Gerar Peça
         </Button>
@@ -794,67 +858,41 @@ export default function QAGerarPecaPage() {
 
       {/* ── Generation Progress Panel ── */}
       {genStep !== "idle" && (
-        <div className="bg-[#12121c] border border-slate-800/40 rounded-xl p-5 space-y-4">
+        <div className="bg-[#0c0c16] border border-[#1a1a2e] rounded p-4 space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium text-slate-300">Progresso da Geração</h3>
+            <span className="text-[10px] text-slate-600 uppercase tracking-[0.15em] font-medium">Progresso</span>
             <div className="flex items-center gap-2">
               <ElapsedTime startedAt={genStartedAt} />
-              {genStep === "done" && <CheckCircle className="h-4 w-4 text-emerald-400" />}
-              {genStep === "error" && <XCircle className="h-4 w-4 text-red-400" />}
+              {genStep === "done" && <CheckCircle className="h-3.5 w-3.5 text-emerald-400" />}
+              {genStep === "error" && <XCircle className="h-3.5 w-3.5 text-red-400" />}
             </div>
           </div>
-
-          <Progress value={genPercent} className="h-2" />
-
-          <div className="space-y-1.5">
+          <Progress value={genPercent} className="h-1.5" />
+          <div className="space-y-1">
             {GENERATION_STEPS.map((step, idx) => {
               const isActive = step.key === genStep;
               const isDone = currentStepIdx > idx || genStep === "done";
-              const isError = genStep === "error" && step.key === genStep;
-
               return (
-                <div key={step.key} className={`flex items-center gap-2 text-xs py-1 px-2 rounded ${
-                  isActive ? "bg-cyan-500/5 text-cyan-400" :
-                  isDone ? "text-emerald-400/70" :
-                  "text-slate-600"
+                <div key={step.key} className={`flex items-center gap-2 text-[11px] py-0.5 px-2 rounded ${
+                  isActive ? "text-slate-300" : isDone ? "text-emerald-400/60" : "text-slate-700"
                 }`}>
-                  {isDone && !isActive ? (
-                    <CheckCircle className="h-3 w-3 shrink-0" />
-                  ) : isActive ? (
-                    <Loader2 className="h-3 w-3 animate-spin shrink-0" />
-                  ) : (
-                    <div className="h-3 w-3 rounded-full border border-slate-700 shrink-0" />
-                  )}
+                  {isDone && !isActive ? <CheckCircle className="h-3 w-3 shrink-0" /> : isActive ? <Loader2 className="h-3 w-3 animate-spin shrink-0" /> : <div className="h-3 w-3 rounded-full border border-slate-800 shrink-0" />}
                   <span>{step.label}</span>
-                  {isActive && step.key === "uploading_docs" && docTotal > 0 && (
-                    <span className="text-[10px] text-slate-500 ml-auto">{docDone}/{docTotal}</span>
-                  )}
+                  {isActive && step.key === "uploading_docs" && docTotal > 0 && <span className="text-[9px] text-slate-600 ml-auto">{docDone}/{docTotal}</span>}
                 </div>
               );
             })}
           </div>
-
-          {/* Doc summary */}
           {docTotal > 0 && (
-            <div className="text-[10px] text-slate-500 border-t border-slate-800/50 pt-2">
-              Documentos auxiliares: {docTotal} anexados • {docDone} processados
-              {docFailed > 0 && <span className="text-red-400"> • {docFailed} falha(s)</span>}
-              {docDone === docTotal && docFailed === 0 && (
-                <span className="text-emerald-400"> • ✓ todos prontos</span>
-              )}
+            <div className="text-[9px] text-slate-600 border-t border-[#1a1a2e] pt-2">
+              Docs: {docTotal} anexados • {docDone} ok{docFailed > 0 && <span className="text-red-400"> • {docFailed} falha(s)</span>}
             </div>
           )}
-
           {genError && (
-            <div className="bg-red-500/5 border border-red-500/20 rounded-lg p-3 text-xs text-red-400 space-y-2">
-              <div className="flex items-center gap-1.5">
-                <AlertTriangle className="h-3.5 w-3.5" />
-                <span className="font-medium">Erro na geração</span>
-              </div>
-              <p>{genError}</p>
-              <Button type="button" variant="outline" size="sm"
-                className="h-7 border-red-500/30 text-red-300 hover:bg-red-500/10"
-                onClick={() => { setGenStep("idle"); setGenError(""); gerar(); }}>
+            <div className="bg-red-500/5 border border-red-500/10 rounded p-2.5 text-[11px] text-red-400 space-y-2">
+              <div className="flex items-center gap-1.5"><AlertTriangle className="h-3 w-3" /> Erro</div>
+              <p className="text-[10px]">{genError}</p>
+              <Button type="button" variant="outline" size="sm" className="h-6 text-[10px]" onClick={() => { setGenStep("idle"); setGenError(""); gerar(); }}>
                 <RefreshCw className="h-3 w-3 mr-1" /> Tentar novamente
               </Button>
             </div>
@@ -862,53 +900,75 @@ export default function QAGerarPecaPage() {
         </div>
       )}
 
+      {/* ── Case Saved Confirmation ── */}
+      {genStep === "done" && savedCasoId && (
+        <div className="bg-emerald-500/5 border border-emerald-500/10 rounded p-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <CheckCircle className="h-4 w-4 text-emerald-400" />
+            <div>
+              <div className="text-[12px] text-emerald-400 font-medium">Caso salvo com sucesso</div>
+              <div className="text-[9px] text-slate-600 font-mono">ID: {savedCasoId.slice(0, 8)}...</div>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => navigate(`/quero-armas/gerar-peca?caso=${savedCasoId}`)}
+              className="h-7 text-[10px] border-emerald-500/20 text-emerald-400">
+              <FolderOpen className="h-3 w-3 mr-1" /> Abrir Caso
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => navigate("/quero-armas/casos")}
+              className="h-7 text-[10px] border-[#1a1a2e] text-slate-400">
+              Ver Todos
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* ── Result ── */}
       {resultado && (
-        <div className="space-y-4">
-          <div className="flex items-center gap-4 bg-[#12121c] border border-slate-800/40 rounded-xl p-4">
+        <div className="space-y-3">
+          <div className="flex items-center gap-3 bg-[#0c0c16] border border-[#1a1a2e] rounded p-3">
             <div className="text-center">
-              <div className={`text-2xl font-bold ${scoreColor(resultado.score_confianca)}`}>
+              <div className={`text-lg font-semibold font-mono ${scoreColor(resultado.score_confianca)}`}>
                 {(resultado.score_confianca * 100).toFixed(0)}%
               </div>
-              <div className="text-[10px] text-slate-500 uppercase tracking-wider">Confiança</div>
+              <div className="text-[9px] text-slate-600 uppercase tracking-wider">Confiança</div>
             </div>
-            <div className="flex-1 text-xs text-slate-400">
-              {resultado.fontes_utilizadas?.length || 0} fontes recuperadas •
-              {resultado.fontes_utilizadas?.filter((f: any) => f.validada).length || 0} validadas
+            <div className="flex-1 text-[11px] text-slate-500">
+              {resultado.fontes_utilizadas?.length || 0} fontes • {resultado.fontes_utilizadas?.filter((f: any) => f.validada).length || 0} validadas
               {resultado.circunscricao_utilizada && (
-                <div className="text-emerald-400/70 mt-0.5">✓ Unidade PF: {resultado.circunscricao_utilizada.unidade_pf}</div>
+                <div className="text-emerald-400/60 mt-0.5 text-[10px]">✓ {resultado.circunscricao_utilizada.unidade_pf}</div>
               )}
             </div>
-            <Button variant="outline" size="sm" onClick={copiarMinuta} className="border-slate-700 text-slate-300">
-              <Download className="h-3.5 w-3.5 mr-1" /> Copiar
+            <Button variant="outline" size="sm" onClick={copiarMinuta} className="bg-[#08080f] border-[#1a1a2e] text-slate-400 h-7 text-[10px]">
+              Copiar
             </Button>
-            <Button size="sm" onClick={exportarDocx} className="bg-amber-600 hover:bg-amber-700 text-white">
-              <Download className="h-3.5 w-3.5 mr-1" /> DOCX
+            <Button size="sm" onClick={exportarDocx} className="bg-[#14142a] hover:bg-[#1a1a35] text-slate-300 border border-[#1a1a2e] h-7 text-[10px]">
+              <Download className="h-3 w-3 mr-1" /> DOCX
             </Button>
           </div>
 
           {resultado.fontes_utilizadas?.length > 0 && (
-            <div className="bg-[#12121c] border border-slate-800/40 rounded-xl p-5">
-              <h3 className="text-sm font-medium text-slate-300 mb-3">Fontes Utilizadas</h3>
-              <div className="space-y-2">
+            <div className="bg-[#0c0c16] border border-[#1a1a2e] rounded p-3">
+              <span className="text-[9px] text-slate-600 uppercase tracking-[0.15em]">Fontes</span>
+              <div className="space-y-0.5 mt-2">
                 {resultado.fontes_utilizadas.map((f: any, i: number) => (
-                  <div key={i} className="flex items-center gap-2 text-xs">
-                    {f.tipo === "norma" && <Scale className="h-3.5 w-3.5 text-emerald-400" />}
-                    {f.tipo === "jurisprudencia" && <Gavel className="h-3.5 w-3.5 text-purple-400" />}
-                    {f.tipo === "documento" && <BookOpen className="h-3.5 w-3.5 text-blue-400" />}
-                    {f.tipo === "referencia_aprovada" && <CheckCircle className="h-3.5 w-3.5 text-amber-400" />}
-                    <span className="text-slate-300">{f.titulo}</span>
-                    <span className="text-slate-600">• {f.referencia}</span>
-                    {f.validada && <CheckCircle className="h-3 w-3 text-emerald-500" />}
+                  <div key={i} className="flex items-center gap-2 text-[11px]">
+                    {f.tipo === "norma" && <Scale className="h-3 w-3 text-emerald-400" />}
+                    {f.tipo === "jurisprudencia" && <Gavel className="h-3 w-3 text-purple-400" />}
+                    {f.tipo === "documento" && <BookOpen className="h-3 w-3 text-blue-400" />}
+                    {f.tipo === "referencia_aprovada" && <CheckCircle className="h-3 w-3 text-slate-400" />}
+                    <span className="text-slate-400">{f.titulo}</span>
+                    <span className="text-slate-700">• {f.referencia}</span>
+                    {f.validada && <CheckCircle className="h-2.5 w-2.5 text-emerald-500" />}
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          <div className="bg-[#12121c] border border-slate-800/40 rounded-xl p-5">
-            <h3 className="text-sm font-medium text-slate-300 mb-3">Minuta Gerada</h3>
-            <div className="text-sm text-slate-200 whitespace-pre-wrap leading-relaxed font-serif">
+          <div className="bg-[#0c0c16] border border-[#1a1a2e] rounded p-4">
+            <span className="text-[9px] text-slate-600 uppercase tracking-[0.15em]">Minuta</span>
+            <div className="text-[12px] text-slate-300 whitespace-pre-wrap leading-relaxed font-serif mt-2">
               {resultado.minuta_gerada}
             </div>
           </div>

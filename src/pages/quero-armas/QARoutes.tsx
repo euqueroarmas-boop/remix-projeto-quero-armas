@@ -12,13 +12,14 @@ const QALegislacaoPage = lazyRetry(() => import("./QALegislacaoPage"), "QALegisl
 const QAJurisprudenciaPage = lazyRetry(() => import("./QAJurisprudenciaPage"), "QAJurisprudenciaPage");
 const QAIAPage = lazyRetry(() => import("./QAIAPage"), "QAIAPage");
 const QAGerarPecaPage = lazyRetry(() => import("./QAGerarPecaPage"), "QAGerarPecaPage");
+const QACasosPage = lazyRetry(() => import("./QACasosPage"), "QACasosPage");
 const QAModelosDocxPage = lazyRetry(() => import("./QAModelosDocxPage"), "QAModelosDocxPage");
 const QAHistoricoPage = lazyRetry(() => import("./QAHistoricoPage"), "QAHistoricoPage");
 const QAConfiguracoesPage = lazyRetry(() => import("./QAConfiguracoesPage"), "QAConfiguracoesPage");
 
 const Loader = () => (
-  <div className="min-h-screen flex items-center justify-center bg-[#0c0c14]">
-    <Loader2 className="h-6 w-6 animate-spin text-amber-500" />
+  <div className="min-h-screen flex items-center justify-center bg-[#08080f]">
+    <div className="w-6 h-6 border-2 border-slate-700 border-t-slate-400 rounded-full animate-spin" />
   </div>
 );
 
@@ -37,6 +38,7 @@ export default function QARoutes() {
           <Route path="jurisprudencia" element={<QAJurisprudenciaPage />} />
           <Route path="modelos-docx" element={<QAModelosDocxPage />} />
           <Route path="gerar-peca" element={<QAGerarPecaPage />} />
+          <Route path="casos" element={<QACasosPage />} />
           <Route path="historico" element={<QAHistoricoPage />} />
           <Route path="configuracoes" element={<QAConfiguracoesPage />} />
         </Route>
