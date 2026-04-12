@@ -266,11 +266,14 @@ export default function QAGerarPecaPage() {
       const data = await lookupCep(digits);
       if (!data) { setCepStatus("not_found"); return; }
       setCepStatus("found");
-      if (data.city) setClienteCidade(data.city);
       if (data.state) setClienteUf(data.state);
       if (data.street) setClienteEndereco(data.street);
       if (data.neighborhood) setClienteBairro(data.neighborhood);
-      if (data.city && data.state) void resolverCircunscricao(data.city, data.state);
+      // City from CEP: set it and resolve circumscription directly
+      if (data.city && data.state) {
+        setClienteCidade(data.city);
+        void resolverCircunscricao(data.city, data.state);
+      }
     } catch { setCepStatus("error"); }
   };
 
