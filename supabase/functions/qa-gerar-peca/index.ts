@@ -85,6 +85,15 @@ function validateQuality(text: string): { pass: boolean; issues: string[] } {
   const paragraphs = text.split(/\n\s*\n/).filter(p => p.trim().length > 40);
   if (paragraphs.length < QUALITY_MARKERS.minParagraphs) issues.push(`paragrafos_insuficientes:${paragraphs.length}`);
   if (text.length < 1500) issues.push(`texto_muito_curto:${text.length}`);
+  // Check priority normative base usage
+  const hasLei10826 = /10\.826/i.test(text);
+  const hasDecreto11615 = /11\.615/i.test(text);
+  const hasIN201 = /201\/2021|IN\s*n?º?\s*201/i.test(text);
+  const hasLei9784 = /9\.784/i.test(text);
+  const normsUsed = [hasLei10826, hasDecreto11615, hasIN201, hasLei9784].filter(Boolean).length;
+  if (normsUsed < 2) issues.push(`base_normativa_insuficiente:${normsUsed}/4`);
+  // Check preamble fluidity
+  if (!text.includes("pelos fatos e fundamentos a seguir expostos")) issues.push("preambulo_sem_formula_legal");
   return { pass: issues.length === 0, issues };
 }
 
