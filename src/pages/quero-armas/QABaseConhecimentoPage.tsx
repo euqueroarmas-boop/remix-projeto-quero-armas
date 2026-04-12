@@ -279,8 +279,8 @@ export default function QABaseConhecimentoPage() {
     return () => clearInterval(interval);
   }, [docs, loadDocs]);
 
-  const addTrackedImport = (doc_id: string, url: string, titulo: string) => {
-    setTrackedImports(prev => [{ doc_id, url, titulo, status: "pendente", started_at: Date.now() }, ...prev]);
+  const addTrackedImport = (doc_id: string, url: string, titulo: string, tipo_documento?: string, tipo_origem?: string) => {
+    setTrackedImports(prev => [{ doc_id, url, titulo, status: "pendente", started_at: Date.now(), tipo_documento, tipo_origem }, ...prev]);
   };
 
   const dismissTracked = (doc_id: string) => {
