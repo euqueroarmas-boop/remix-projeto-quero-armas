@@ -10,6 +10,9 @@ const QABaseConhecimentoPage = lazyRetry(() => import("./QABaseConhecimentoPage"
 const QALegislacaoPage = lazyRetry(() => import("./QALegislacaoPage"), "QALegislacaoPage");
 const QAJurisprudenciaPage = lazyRetry(() => import("./QAJurisprudenciaPage"), "QAJurisprudenciaPage");
 const QAIAPage = lazyRetry(() => import("./QAIAPage"), "QAIAPage");
+const QAGerarPecaPage = lazyRetry(() => import("./QAGerarPecaPage"), "QAGerarPecaPage");
+const QAHistoricoPage = lazyRetry(() => import("./QAHistoricoPage"), "QAHistoricoPage");
+const QAConfiguracoesPage = lazyRetry(() => import("./QAConfiguracoesPage"), "QAConfiguracoesPage");
 const QAPlaceholderPage = lazyRetry(() => import("./QAPlaceholderPage"), "QAPlaceholderPage");
 
 const Loader = () => (
@@ -32,9 +35,9 @@ export default function QARoutes() {
           <Route path="legislacao" element={<QALegislacaoPage />} />
           <Route path="jurisprudencia" element={<QAJurisprudenciaPage />} />
           <Route path="modelos-docx" element={<QAPlaceholderPage />} />
-          <Route path="gerar-peca" element={<QAPlaceholderPage />} />
-          <Route path="historico" element={<QAPlaceholderPage />} />
-          <Route path="configuracoes" element={<QAPlaceholderPage />} />
+          <Route path="gerar-peca" element={<QAGerarPecaPage />} />
+          <Route path="historico" element={<QAHistoricoPage />} />
+          <Route path="configuracoes" element={<QAConfiguracoesPage />} />
         </Route>
       </Routes>
     </Suspense>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
-import { BookOpen, Scale, Gavel, PenTool, AlertTriangle, Clock, Bot, FileText } from "lucide-react";
+import { BookOpen, Scale, Gavel, PenTool, AlertTriangle, Clock, Bot, FileText, Star, CheckCircle, BarChart3 } from "lucide-react";
 
 interface Stats {
   documentos: number;
@@ -9,19 +9,25 @@ interface Stats {
   jurisprudencias: number;
   pecas: number;
   pendentes: number;
+  consultas: number;
+  aprovadas: number;
+  referencias: number;
 }
 
 export default function QADashboardPage() {
-  const [stats, setStats] = useState<Stats>({ documentos: 0, normas: 0, jurisprudencias: 0, pecas: 0, pendentes: 0 });
+  const [stats, setStats] = useState<Stats>({ documentos: 0, normas: 0, jurisprudencias: 0, pecas: 0, pendentes: 0, consultas: 0, aprovadas: 0, referencias: 0 });
 
   useEffect(() => {
     const load = async () => {
-      const [d, n, j, p, pend] = await Promise.all([
+      const [d, n, j, p, pend, c, apr, ref] = await Promise.all([
         supabase.from("qa_documentos_conhecimento" as any).select("id", { count: "exact", head: true }),
         supabase.from("qa_fontes_normativas" as any).select("id", { count: "exact", head: true }),
         supabase.from("qa_jurisprudencias" as any).select("id", { count: "exact", head: true }),
         supabase.from("qa_geracoes_pecas" as any).select("id", { count: "exact", head: true }),
         supabase.from("qa_documentos_conhecimento" as any).select("id", { count: "exact", head: true }).eq("status_validacao", "nao_validado"),
+        supabase.from("qa_consultas_ia" as any).select("id", { count: "exact", head: true }),
+        supabase.from("qa_geracoes_pecas" as any).select("id", { count: "exact", head: true }).eq("status_revisao", "aprovado"),
+        supabase.from("qa_referencias_preferenciais" as any).select("id", { count: "exact", head: true }).eq("ativo", true),
       ]);
       setStats({
         documentos: d.count ?? 0,
@@ -29,6 +35,9 @@ export default function QADashboardPage() {
         jurisprudencias: j.count ?? 0,
         pecas: p.count ?? 0,
         pendentes: pend.count ?? 0,
+        consultas: c.count ?? 0,
+        aprovadas: apr.count ?? 0,
+        referencias: ref.count ?? 0,
       });
     };
     load();
@@ -39,7 +48,10 @@ export default function QADashboardPage() {
     { label: "Normas", value: stats.normas, icon: Scale, color: "text-emerald-400", bg: "bg-emerald-500/10", link: "/quero-armas/legislacao" },
     { label: "Jurisprudências", value: stats.jurisprudencias, icon: Gavel, color: "text-purple-400", bg: "bg-purple-500/10", link: "/quero-armas/jurisprudencia" },
     { label: "Peças Geradas", value: stats.pecas, icon: PenTool, color: "text-amber-400", bg: "bg-amber-500/10", link: "/quero-armas/historico" },
-    { label: "Pendentes Validação", value: stats.pendentes, icon: AlertTriangle, color: "text-red-400", bg: "bg-red-500/10", link: "/quero-armas/base-conhecimento" },
+    { label: "Consultas IA", value: stats.consultas, icon: Bot, color: "text-cyan-400", bg: "bg-cyan-500/10", link: "/quero-armas/historico" },
+    { label: "Aprovadas", value: stats.aprovadas, icon: CheckCircle, color: "text-green-400", bg: "bg-green-500/10", link: "/quero-armas/historico" },
+    { label: "Referências", value: stats.referencias, icon: Star, color: "text-yellow-400", bg: "bg-yellow-500/10", link: "/quero-armas/historico" },
+    { label: "Pend. Validação", value: stats.pendentes, icon: AlertTriangle, color: "text-red-400", bg: "bg-red-500/10", link: "/quero-armas/base-conhecimento" },
   ];
 
   const shortcuts = [
@@ -47,16 +59,17 @@ export default function QADashboardPage() {
     { label: "Gerar Peça", icon: PenTool, link: "/quero-armas/gerar-peca" },
     { label: "Enviar Documento", icon: BookOpen, link: "/quero-armas/base-conhecimento" },
     { label: "Modelos DOCX", icon: FileText, link: "/quero-armas/modelos-docx" },
+    { label: "Histórico", icon: BarChart3, link: "/quero-armas/historico" },
   ];
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-slate-100">Dashboard</h1>
-        <p className="text-sm text-slate-500 mt-1">Visão geral da base jurídica</p>
+        <p className="text-sm text-slate-500 mt-1">Visão geral da base jurídica e produtividade</p>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {cards.map(c => (
           <Link key={c.label} to={c.link} className={`${c.bg} border border-slate-800/40 rounded-xl p-4 hover:border-slate-700 transition-all`}>
             <c.icon className={`h-5 w-5 ${c.color} mb-2`} />
@@ -70,7 +83,7 @@ export default function QADashboardPage() {
         <h2 className="text-sm font-medium text-slate-400 mb-3 flex items-center gap-2">
           <Clock className="h-4 w-4" /> Atalhos Rápidos
         </h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           {shortcuts.map(s => (
             <Link key={s.label} to={s.link} className="flex items-center gap-3 bg-[#12121c] border border-slate-800/40 rounded-xl p-4 hover:border-amber-500/30 transition-all group">
               <s.icon className="h-5 w-5 text-slate-500 group-hover:text-amber-400 transition-colors" />

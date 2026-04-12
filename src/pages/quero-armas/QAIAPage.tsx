@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Bot, Send, Loader2, BookOpen, Scale, Gavel, AlertTriangle } from "lucide-react";
+import { Bot, Send, Loader2, BookOpen, Scale, Gavel, AlertTriangle, CheckCircle, BarChart3 } from "lucide-react";
 import { useQAAuth } from "@/components/quero-armas/hooks/useQAAuth";
 
 const TIPOS_PECA = [
@@ -14,11 +14,35 @@ const TIPOS_PECA = [
   "defesa", "memoriais", "contrarrazoes", "embargo", "outro",
 ];
 
+const PROFUNDIDADES = [
+  { value: "objetiva", label: "Objetiva" },
+  { value: "intermediaria", label: "Intermediária" },
+  { value: "aprofundada", label: "Aprofundada" },
+];
+
+const TONS = [
+  { value: "tecnico_padrao", label: "Técnico Padrão" },
+  { value: "mais_combativo", label: "Mais Combativo" },
+  { value: "mais_conservador", label: "Mais Conservador" },
+];
+
+const FOCOS = [
+  { value: "legalidade", label: "Legalidade" },
+  { value: "motivacao", label: "Motivação" },
+  { value: "efetiva_necessidade", label: "Efetiva Necessidade" },
+  { value: "proporcionalidade", label: "Proporcionalidade" },
+  { value: "erro_material", label: "Erro Material" },
+  { value: "controle_judicial", label: "Controle Judicial" },
+];
+
 export default function QAIAPage() {
   const { user } = useQAAuth();
   const [casoTitulo, setCasoTitulo] = useState("");
   const [entrada, setEntrada] = useState("");
   const [tipoPeca, setTipoPeca] = useState("peticao_inicial");
+  const [profundidade, setProfundidade] = useState("intermediaria");
+  const [tom, setTom] = useState("tecnico_padrao");
+  const [foco, setFoco] = useState("legalidade");
   const [loading, setLoading] = useState(false);
   const [resposta, setResposta] = useState<any>(null);
 
@@ -33,6 +57,7 @@ export default function QAIAPage() {
           caso_titulo: casoTitulo,
           entrada_usuario: entrada,
           tipo_peca: tipoPeca,
+          profundidade, tom, foco,
         },
       });
       if (error) throw error;
@@ -42,6 +67,12 @@ export default function QAIAPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const scoreColor = (s: number) => {
+    if (s >= 0.7) return "text-emerald-400";
+    if (s >= 0.4) return "text-amber-400";
+    return "text-red-400";
   };
 
   return (
@@ -55,7 +86,7 @@ export default function QAIAPage() {
 
       <div className="bg-amber-500/5 border border-amber-500/20 rounded-lg p-3 text-xs text-amber-400/80 flex items-start gap-2">
         <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
-        <span>A IA consulta exclusivamente as fontes cadastradas e validadas no sistema. Ela não inventa fatos, leis, artigos, jurisprudência ou precedentes.</span>
+        <span>A IA consulta exclusivamente as fontes cadastradas e validadas. Nunca inventa fatos, leis, artigos, jurisprudência ou precedentes. Fontes são ranqueadas por confiança.</span>
       </div>
 
       <div className="space-y-4 bg-[#12121c] border border-slate-800/40 rounded-xl p-5">
@@ -75,6 +106,37 @@ export default function QAIAPage() {
             </Select>
           </div>
         </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <Label className="text-slate-300">Profundidade</Label>
+            <Select value={profundidade} onValueChange={setProfundidade}>
+              <SelectTrigger className="bg-[#0c0c14] border-slate-700 text-slate-300"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {PROFUNDIDADES.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-slate-300">Tom</Label>
+            <Select value={tom} onValueChange={setTom}>
+              <SelectTrigger className="bg-[#0c0c14] border-slate-700 text-slate-300"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {TONS.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-slate-300">Foco</Label>
+            <Select value={foco} onValueChange={setFoco}>
+              <SelectTrigger className="bg-[#0c0c14] border-slate-700 text-slate-300"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {FOCOS.map(f => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
         <div className="space-y-2">
           <Label className="text-slate-300">Descreva o caso e o que precisa</Label>
           <Textarea value={entrada} onChange={e => setEntrada(e.target.value)}
@@ -89,16 +151,35 @@ export default function QAIAPage() {
 
       {resposta && (
         <div className="space-y-4">
+          {/* Confidence Score */}
+          <div className="flex items-center gap-4 bg-[#12121c] border border-slate-800/40 rounded-xl p-4">
+            <div className="text-center">
+              <div className={`text-2xl font-bold ${scoreColor(resposta.score_confianca)}`}>
+                {((resposta.score_confianca || 0) * 100).toFixed(0)}%
+              </div>
+              <div className="text-[10px] text-slate-500 uppercase tracking-wider">Confiança</div>
+            </div>
+            <div className="flex-1 text-xs text-slate-400">
+              <BarChart3 className="inline h-3 w-3 mr-1" />
+              {resposta.fontes_recuperadas?.length || 0} fontes recuperadas
+            </div>
+          </div>
+
           {resposta.fontes_recuperadas?.length > 0 && (
             <div className="bg-[#12121c] border border-slate-800/40 rounded-xl p-5">
-              <h3 className="text-sm font-medium text-slate-300 mb-3">Fontes Utilizadas</h3>
+              <h3 className="text-sm font-medium text-slate-300 mb-3">Fontes Utilizadas (por relevância)</h3>
               <div className="space-y-2">
                 {resposta.fontes_recuperadas.map((f: any, i: number) => (
                   <div key={i} className="flex items-center gap-2 text-xs">
                     {f.tipo === "norma" && <Scale className="h-3.5 w-3.5 text-emerald-400" />}
                     {f.tipo === "jurisprudencia" && <Gavel className="h-3.5 w-3.5 text-purple-400" />}
                     {f.tipo === "documento" && <BookOpen className="h-3.5 w-3.5 text-blue-400" />}
-                    <span className="text-slate-400">{f.titulo || f.referencia}</span>
+                    {f.tipo === "referencia_aprovada" && <CheckCircle className="h-3.5 w-3.5 text-amber-400" />}
+                    <span className="text-slate-300 flex-1">{f.titulo || f.referencia}</span>
+                    <span className="text-slate-600 tabular-nums">
+                      {(f.score_final || 0).toFixed(2)}
+                    </span>
+                    {f.score_validacao > 0 && <CheckCircle className="h-3 w-3 text-emerald-500" />}
                   </div>
                 ))}
               </div>
