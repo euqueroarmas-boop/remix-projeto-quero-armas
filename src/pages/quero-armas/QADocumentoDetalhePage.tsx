@@ -1,34 +1,40 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { ArrowLeft, FileText, CheckCircle, Clock, AlertCircle, Loader2, RefreshCw, Database, Hash, Star } from "lucide-react";
+import { ArrowLeft, FileText, CheckCircle, Clock, AlertCircle, Loader2, RefreshCw, Database, Hash, Star, Trash2, Power } from "lucide-react";
+import { useQAAuth } from "@/components/quero-armas/hooks/useQAAuth";
+import {
+  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 
 export default function QADocumentoDetalhePage() {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const { user } = useQAAuth();
   const [doc, setDoc] = useState<any>(null);
   const [chunks, setChunks] = useState<any[]>([]);
   const [embedCount, setEmbedCount] = useState(0);
   const [refCount, setRefCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [reprocessing, setReprocessing] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const load = async () => {
     if (!id) return;
     setLoading(true);
-    const [docRes, chunksRes, embedRes, refRes] = await Promise.all([
+    const [docRes, chunksRes, , refRes] = await Promise.all([
       supabase.from("qa_documentos_conhecimento" as any).select("*").eq("id", id).single(),
       supabase.from("qa_chunks_conhecimento" as any).select("id, ordem_chunk, texto_chunk, resumo_chunk, embedding_status").eq("documento_id", id).order("ordem_chunk"),
-      supabase.from("qa_embeddings" as any).select("id, chunk_id", { count: "exact", head: false })
-        .in("chunk_id", []),  // will be replaced
+      Promise.resolve(null),
       supabase.from("qa_referencias_preferenciais" as any).select("id", { count: "exact", head: true }).eq("origem_id", id).eq("ativo", true),
     ]);
     setDoc(docRes.data);
     setChunks(chunksRes.data ?? []);
     setRefCount(refRes.count ?? 0);
-
-    // Get embed count from chunks
     if (chunksRes.data?.length) {
       const chunkIds = chunksRes.data.map((c: any) => c.id);
       const { count } = await supabase.from("qa_embeddings" as any).select("id", { count: "exact", head: true }).in("chunk_id", chunkIds);
@@ -53,6 +59,53 @@ export default function QADocumentoDetalhePage() {
       toast.error(err.message || "Erro ao reprocessar");
     } finally {
       setReprocessing(false);
+    }
+  };
+
+  const handleDeactivate = async () => {
+    if (!doc || !user) return;
+    setDeleting(true);
+    try {
+      await supabase.from("qa_documentos_conhecimento" as any)
+        .update({ ativo: false, updated_at: new Date().toISOString() } as any)
+        .eq("id", doc.id);
+      await supabase.from("qa_logs_auditoria" as any).insert({
+        usuario_id: user.id, acao: "documento_desativado",
+        entidade_tipo: "documento", entidade_id: doc.id,
+        detalhes: { titulo: doc.titulo, tipo: doc.tipo_documento },
+      });
+      toast.success("Documento desativado da IA.");
+      navigate("/quero-armas/base-conhecimento");
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao desativar");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handlePermanentDelete = async () => {
+    if (!doc || !user) return;
+    setDeleting(true);
+    try {
+      const { data: chunkRows } = await supabase.from("qa_chunks_conhecimento" as any).select("id").eq("documento_id", doc.id);
+      if (chunkRows?.length) {
+        await supabase.from("qa_embeddings" as any).delete().in("chunk_id", chunkRows.map((c: any) => c.id));
+      }
+      await supabase.from("qa_chunks_conhecimento" as any).delete().eq("documento_id", doc.id);
+      await supabase.from("qa_referencias_preferenciais" as any).delete().eq("origem_id", doc.id);
+      if (doc.storage_path) await supabase.storage.from("qa-documentos").remove([doc.storage_path]);
+      await supabase.from("qa_logs_auditoria" as any).insert({
+        usuario_id: user.id, acao: "documento_excluido_permanente",
+        entidade_tipo: "documento", entidade_id: doc.id,
+        detalhes: { titulo: doc.titulo, tipo: doc.tipo_documento, storage_path: doc.storage_path },
+      });
+      await supabase.from("qa_documentos_conhecimento" as any).delete().eq("id", doc.id);
+      toast.success("Documento excluído permanentemente.");
+      navigate("/quero-armas/base-conhecimento");
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao excluir");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -89,10 +142,15 @@ export default function QADocumentoDetalhePage() {
               <span>{doc.mime_type}</span>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={reprocess} disabled={reprocessing} className="border-slate-700 text-slate-300 shrink-0">
-            {reprocessing ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <RefreshCw className="h-3.5 w-3.5 mr-1" />}
-            Reprocessar
-          </Button>
+          <div className="flex gap-2 shrink-0">
+            <Button variant="outline" size="sm" onClick={reprocess} disabled={reprocessing} className="border-slate-700 text-slate-300">
+              {reprocessing ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <RefreshCw className="h-3.5 w-3.5 mr-1" />}
+              Reprocessar
+            </Button>
+            <Button variant="destructive" size="sm" onClick={() => setShowDeleteDialog(true)} className="gap-1">
+              <Trash2 className="h-3.5 w-3.5" /> Excluir
+            </Button>
+          </div>
         </div>
 
         {/* Status badges */}
@@ -120,14 +178,12 @@ export default function QADocumentoDetalhePage() {
         </div>
       </div>
 
-      {/* Hash */}
       {doc.hash_arquivo && (
         <div className="flex items-center gap-2 text-xs text-slate-600 bg-[#12121c] border border-slate-800/40 rounded-lg px-4 py-2">
           <Hash className="h-3.5 w-3.5" /> SHA-256: <code className="text-slate-500 font-mono">{doc.hash_arquivo}</code>
         </div>
       )}
 
-      {/* Summary */}
       {doc.resumo_extraido && (
         <div className="bg-[#12121c] border border-slate-800/40 rounded-xl p-5">
           <h2 className="text-sm font-medium text-slate-300 mb-2">Resumo Extraído</h2>
@@ -135,7 +191,6 @@ export default function QADocumentoDetalhePage() {
         </div>
       )}
 
-      {/* Extracted text */}
       {doc.texto_extraido && (
         <div className="bg-[#12121c] border border-slate-800/40 rounded-xl p-5">
           <h2 className="text-sm font-medium text-slate-300 mb-2">Texto Extraído</h2>
@@ -145,12 +200,11 @@ export default function QADocumentoDetalhePage() {
         </div>
       )}
 
-      {/* Chunks */}
       {chunks.length > 0 && (
         <div className="bg-[#12121c] border border-slate-800/40 rounded-xl p-5">
           <h2 className="text-sm font-medium text-slate-300 mb-3">Chunks ({chunks.length})</h2>
           <div className="space-y-2 max-h-[500px] overflow-y-auto">
-            {chunks.map((c: any, i: number) => (
+            {chunks.map((c: any) => (
               <div key={c.id} className="bg-[#0c0c14] rounded-lg p-3 border border-slate-800/20">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[10px] text-slate-600 uppercase tracking-wider">Chunk {c.ordem_chunk + 1}</span>
@@ -165,7 +219,6 @@ export default function QADocumentoDetalhePage() {
         </div>
       )}
 
-      {/* Metadata */}
       {doc.metadados_json && Object.keys(doc.metadados_json).length > 0 && (
         <div className="bg-[#12121c] border border-slate-800/40 rounded-xl p-5">
           <h2 className="text-sm font-medium text-slate-300 mb-2">Metadados</h2>
@@ -174,6 +227,32 @@ export default function QADocumentoDetalhePage() {
           </pre>
         </div>
       )}
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent className="bg-[#12121c] border-slate-700 text-slate-100 max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-slate-100">Excluir documento</AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-400">
+              <strong className="text-slate-200 block mb-1">{doc.titulo}</strong>
+              Tem certeza que deseja remover este documento da base de conhecimento? A IA não utilizará mais esse conteúdo em consultas futuras.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col gap-2 sm:flex-col">
+            <Button variant="outline" disabled={deleting} onClick={handleDeactivate}
+              className="w-full border-amber-600/40 text-amber-400 hover:bg-amber-500/10 justify-start gap-2">
+              <Power className="h-4 w-4" /> Desativar da IA
+              <span className="text-[10px] text-slate-500 ml-auto">reversível</span>
+            </Button>
+            <Button variant="destructive" disabled={deleting} onClick={handlePermanentDelete}
+              className="w-full justify-start gap-2">
+              {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />} Excluir permanentemente
+              <span className="text-[10px] text-red-300/60 ml-auto">irreversível</span>
+            </Button>
+            <AlertDialogCancel className="w-full border-slate-700 text-slate-400">Cancelar</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -4,9 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Upload, Search, FileText, CheckCircle, Clock, AlertCircle, Loader2, ExternalLink, RefreshCw } from "lucide-react";
+import { Upload, Search, FileText, CheckCircle, Clock, AlertCircle, Loader2, ExternalLink, RefreshCw, Trash2, Power } from "lucide-react";
 import { useQAAuth } from "@/components/quero-armas/hooks/useQAAuth";
 import { Link } from "react-router-dom";
+import {
+  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 
 const TIPOS_DOC = [
   "peticao", "recurso", "mandado_seguranca", "parecer", "jurisprudencia",
@@ -24,9 +28,11 @@ export default function QABaseConhecimentoPage() {
   const [filtroTipo, setFiltroTipo] = useState("todos");
   const [filtroStatus, setFiltroStatus] = useState("todos");
   const [busca, setBusca] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<any>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const loadDocs = useCallback(async () => {
-    let q = supabase.from("qa_documentos_conhecimento" as any).select("*").order("created_at", { ascending: false });
+    let q = supabase.from("qa_documentos_conhecimento" as any).select("*").eq("ativo", true).order("created_at", { ascending: false });
     if (filtroTipo !== "todos") q = q.eq("tipo_documento", filtroTipo);
     if (filtroStatus !== "todos") q = q.eq("status_processamento", filtroStatus);
     if (busca) q = q.ilike("titulo", `%${busca}%`);
@@ -35,20 +41,12 @@ export default function QABaseConhecimentoPage() {
     setLoading(false);
   }, [filtroTipo, filtroStatus, busca]);
 
-  useEffect(() => { 
-    setLoading(true);
-    loadDocs(); 
-  }, [loadDocs]);
+  useEffect(() => { setLoading(true); loadDocs(); }, [loadDocs]);
 
-  // Poll for documents that are still processing
   useEffect(() => {
     const hasProcessing = docs.some(d => d.status_processamento === "pendente" || d.status_processamento === "processando");
     if (!hasProcessing) return;
-
-    const interval = setInterval(() => {
-      loadDocs();
-    }, 5000);
-
+    const interval = setInterval(() => { loadDocs(); }, 5000);
     return () => clearInterval(interval);
   }, [docs, loadDocs]);
 
@@ -60,7 +58,6 @@ export default function QABaseConhecimentoPage() {
       const path = `${user.id}/${Date.now()}_${file.name}`;
       const { error: uploadErr } = await supabase.storage.from("qa-documentos").upload(path, file);
       if (uploadErr) throw uploadErr;
-
       const { error: insertErr } = await supabase.from("qa_documentos_conhecimento" as any).insert({
         titulo: file.name.replace(/\.[^.]+$/, ""),
         nome_arquivo: file.name,
@@ -73,14 +70,9 @@ export default function QABaseConhecimentoPage() {
         status_validacao: "nao_validado",
       });
       if (insertErr) throw insertErr;
-
       toast.success("Documento enviado. Processamento iniciado.");
       loadDocs();
-
-      // Trigger ingestion (fire-and-forget)
-      supabase.functions.invoke("qa-ingest-document", {
-        body: { storage_path: path, user_id: user.id },
-      }).catch(() => {});
+      supabase.functions.invoke("qa-ingest-document", { body: { storage_path: path, user_id: user.id } }).catch(() => {});
     } catch (err: any) {
       toast.error(err.message || "Erro ao enviar");
     } finally {
@@ -93,27 +85,79 @@ export default function QABaseConhecimentoPage() {
     if (!user) return;
     setReprocessingId(doc.id);
     try {
-      // Reset status to pendente
       await supabase.from("qa_documentos_conhecimento" as any)
         .update({ status_processamento: "pendente", resumo_extraido: null, updated_at: new Date().toISOString() })
         .eq("id", doc.id);
-
-      // Delete old chunks
-      await supabase.from("qa_chunks_conhecimento" as any)
-        .delete()
-        .eq("documento_id", doc.id);
-
-      // Re-trigger ingestion
-      await supabase.functions.invoke("qa-ingest-document", {
-        body: { storage_path: doc.storage_path, user_id: user.id },
-      });
-
+      await supabase.from("qa_chunks_conhecimento" as any).delete().eq("documento_id", doc.id);
+      await supabase.functions.invoke("qa-ingest-document", { body: { storage_path: doc.storage_path, user_id: user.id } });
       toast.success("Reprocessamento iniciado.");
       loadDocs();
     } catch (err: any) {
       toast.error("Erro ao reprocessar: " + (err.message || ""));
     } finally {
       setReprocessingId(null);
+    }
+  };
+
+  const handleDeactivate = async (doc: any) => {
+    if (!user) return;
+    setDeleting(true);
+    try {
+      await supabase.from("qa_documentos_conhecimento" as any)
+        .update({ ativo: false, updated_at: new Date().toISOString() } as any)
+        .eq("id", doc.id);
+      await supabase.from("qa_logs_auditoria" as any).insert({
+        usuario_id: user.id,
+        acao: "documento_desativado",
+        entidade_tipo: "documento",
+        entidade_id: doc.id,
+        detalhes: { titulo: doc.titulo, tipo: doc.tipo_documento },
+      });
+      toast.success("Documento desativado da IA.");
+      setDeleteTarget(null);
+      loadDocs();
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao desativar");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handlePermanentDelete = async (doc: any) => {
+    if (!user) return;
+    setDeleting(true);
+    try {
+      // 1. Delete embeddings via chunks
+      const { data: chunks } = await supabase.from("qa_chunks_conhecimento" as any).select("id").eq("documento_id", doc.id);
+      if (chunks?.length) {
+        const chunkIds = chunks.map((c: any) => c.id);
+        await supabase.from("qa_embeddings" as any).delete().in("chunk_id", chunkIds);
+      }
+      // 2. Delete chunks
+      await supabase.from("qa_chunks_conhecimento" as any).delete().eq("documento_id", doc.id);
+      // 3. Delete preferential references
+      await supabase.from("qa_referencias_preferenciais" as any).delete().eq("origem_id", doc.id);
+      // 4. Delete storage file
+      if (doc.storage_path) {
+        await supabase.storage.from("qa-documentos").remove([doc.storage_path]);
+      }
+      // 5. Audit log before deleting the document
+      await supabase.from("qa_logs_auditoria" as any).insert({
+        usuario_id: user.id,
+        acao: "documento_excluido_permanente",
+        entidade_tipo: "documento",
+        entidade_id: doc.id,
+        detalhes: { titulo: doc.titulo, tipo: doc.tipo_documento, storage_path: doc.storage_path },
+      });
+      // 6. Delete the document record
+      await supabase.from("qa_documentos_conhecimento" as any).delete().eq("id", doc.id);
+      toast.success("Documento excluído permanentemente.");
+      setDeleteTarget(null);
+      loadDocs();
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao excluir");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -154,18 +198,14 @@ export default function QABaseConhecimentoPage() {
             className="pl-10 bg-[#12121c] border-slate-700 text-slate-100" />
         </div>
         <Select value={filtroTipo} onValueChange={setFiltroTipo}>
-          <SelectTrigger className="w-[180px] bg-[#12121c] border-slate-700 text-slate-300">
-            <SelectValue placeholder="Tipo" />
-          </SelectTrigger>
+          <SelectTrigger className="w-[180px] bg-[#12121c] border-slate-700 text-slate-300"><SelectValue placeholder="Tipo" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="todos">Todos os tipos</SelectItem>
             {TIPOS_DOC.map(t => <SelectItem key={t} value={t}>{t.replace(/_/g, " ")}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={filtroStatus} onValueChange={setFiltroStatus}>
-          <SelectTrigger className="w-[180px] bg-[#12121c] border-slate-700 text-slate-300">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
+          <SelectTrigger className="w-[180px] bg-[#12121c] border-slate-700 text-slate-300"><SelectValue placeholder="Status" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="todos">Todos</SelectItem>
             <SelectItem value="pendente">Pendente</SelectItem>
@@ -191,7 +231,6 @@ export default function QABaseConhecimentoPage() {
             const status = statusLabel(d.status_processamento);
             const isError = d.status_processamento === "erro" || d.status_processamento === "texto_invalido";
             const isReprocessing = reprocessingId === d.id;
-
             return (
               <div key={d.id} className="flex items-center gap-4 bg-[#12121c] border border-slate-800/40 rounded-lg p-4 hover:border-amber-500/30 transition-all group">
                 {statusIcon(d.status_processamento)}
@@ -210,17 +249,16 @@ export default function QABaseConhecimentoPage() {
                   {status.text}
                 </span>
                 {isError && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    disabled={isReprocessing}
-                    onClick={() => handleReprocess(d)}
-                    className="text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 shrink-0"
-                  >
+                  <Button size="sm" variant="ghost" disabled={isReprocessing} onClick={() => handleReprocess(d)}
+                    className="text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 shrink-0">
                     {isReprocessing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
                     <span className="ml-1 text-xs">Reprocessar</span>
                   </Button>
                 )}
+                <Button size="sm" variant="ghost" onClick={(e) => { e.preventDefault(); setDeleteTarget(d); }}
+                  className="text-red-400/60 hover:text-red-400 hover:bg-red-500/10 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
                 <span className={`text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-medium ${
                   d.status_validacao === "validado" ? "bg-emerald-500/10 text-emerald-400" :
                   d.status_validacao === "rejeitado" ? "bg-red-500/10 text-red-400" :
@@ -236,6 +274,34 @@ export default function QABaseConhecimentoPage() {
           })}
         </div>
       )}
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) setDeleteTarget(null); }}>
+        <AlertDialogContent className="bg-[#12121c] border-slate-700 text-slate-100 max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-slate-100">Excluir documento</AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-400">
+              <strong className="text-slate-200 block mb-1">{deleteTarget?.titulo}</strong>
+              Tem certeza que deseja remover este documento da base de conhecimento? A IA não utilizará mais esse conteúdo em consultas futuras.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col gap-2 sm:flex-col">
+            <Button variant="outline" disabled={deleting} onClick={() => handleDeactivate(deleteTarget)}
+              className="w-full border-amber-600/40 text-amber-400 hover:bg-amber-500/10 justify-start gap-2">
+              <Power className="h-4 w-4" /> Desativar da IA
+              <span className="text-[10px] text-slate-500 ml-auto">reversível</span>
+            </Button>
+            <Button variant="destructive" disabled={deleting} onClick={() => handlePermanentDelete(deleteTarget)}
+              className="w-full justify-start gap-2">
+              {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />} Excluir permanentemente
+              <span className="text-[10px] text-red-300/60 ml-auto">irreversível</span>
+            </Button>
+            <AlertDialogCancel className="w-full border-slate-700 text-slate-400">Cancelar</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
+
+
