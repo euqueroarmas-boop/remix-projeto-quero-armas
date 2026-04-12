@@ -293,14 +293,42 @@ export default function QADocumentoDetalhePage() {
         </div>
 
         {isAuxiliar && (
-          <div className="mt-3 bg-cyan-500/5 border border-cyan-500/15 rounded-lg px-4 py-2.5 text-xs text-cyan-400/80">
-            <strong>Documento auxiliar do caso.</strong> Este documento é utilizado apenas como suporte factual do caso concreto. Não alimenta o aprendizado global da IA, não aparece no ranking de referências e não serve como modelo de peça.
-            {doc.caso_id && <span className="block mt-1 text-cyan-400/60">Vinculado ao caso: <strong>{doc.caso_id}</strong></span>}
+          <div className="mt-3 bg-cyan-500/5 border border-cyan-500/15 rounded-lg px-4 py-3 text-xs text-cyan-400/80 space-y-2">
+            <div>
+              <strong>Documento auxiliar do caso.</strong> Este documento é utilizado apenas como suporte factual do caso concreto. Não alimenta o aprendizado global da IA, não aparece no ranking de referências e não serve como modelo de peça.
+            </div>
+            {doc.caso_id && <div className="text-cyan-400/60">Vinculado ao caso: <strong>{doc.caso_id}</strong></div>}
+            {/* Extraction integrity stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2">
+              <div className="bg-cyan-500/5 border border-cyan-500/10 rounded-lg p-2 text-center">
+                <div className="text-xs font-medium text-cyan-300">
+                  {doc.texto_extraido ? `${(doc.texto_extraido.length).toLocaleString("pt-BR")}` : "—"}
+                </div>
+                <div className="text-[10px] text-cyan-400/50 mt-0.5">Caracteres extraídos</div>
+              </div>
+              <div className="bg-cyan-500/5 border border-cyan-500/10 rounded-lg p-2 text-center">
+                <div className="text-xs font-medium text-cyan-300">
+                  {doc.texto_extraido ? (doc.texto_extraido ? "✓ Sim" : "✗ Não") : "—"}
+                </div>
+                <div className="text-[10px] text-cyan-400/50 mt-0.5">Texto integral extraído</div>
+              </div>
+              <div className="bg-cyan-500/5 border border-cyan-500/10 rounded-lg p-2 text-center">
+                <div className="text-xs font-medium text-cyan-300">{chunks.length}</div>
+                <div className="text-[10px] text-cyan-400/50 mt-0.5">Blocos analisáveis</div>
+              </div>
+              <div className="bg-cyan-500/5 border border-cyan-500/10 rounded-lg p-2 text-center">
+                <div className="text-xs font-medium text-cyan-300">✓ Integral</div>
+                <div className="text-[10px] text-cyan-400/50 mt-0.5">Uso na geração</div>
+              </div>
+            </div>
+            <div className="text-[10px] text-cyan-400/40 mt-1">
+              Sem limite artificial de caracteres. O documento é considerado integralmente na formulação da peça, com processamento por múltiplos blocos se necessário.
+            </div>
           </div>
         )}
 
         {/* Stats row */}
-        <div className="grid grid-cols-3 gap-3 mt-3">
+        <div className={`grid ${isAuxiliar ? "grid-cols-2" : "grid-cols-3"} gap-3 mt-3`}>
           <div className="bg-[#0c0c14] rounded-lg p-3 text-center">
             <div className="text-xs font-medium text-slate-300">{chunks.length}</div>
             <div className="text-[10px] text-slate-600 mt-0.5">Chunks</div>
@@ -309,10 +337,12 @@ export default function QADocumentoDetalhePage() {
             <div className="flex items-center justify-center gap-1"><Database className="h-3 w-3 text-purple-400" /><span className="text-xs font-medium text-slate-300">{embedCount}</span></div>
             <div className="text-[10px] text-slate-600 mt-0.5">Embeddings</div>
           </div>
-          <div className="bg-[#0c0c14] rounded-lg p-3 text-center">
-            <div className="flex items-center justify-center gap-1"><Star className="h-3 w-3 text-amber-400" /><span className="text-xs font-medium text-slate-300">{refCount}</span></div>
-            <div className="text-[10px] text-slate-600 mt-0.5">Referências</div>
-          </div>
+          {!isAuxiliar && (
+            <div className="bg-[#0c0c14] rounded-lg p-3 text-center">
+              <div className="flex items-center justify-center gap-1"><Star className="h-3 w-3 text-amber-400" /><span className="text-xs font-medium text-slate-300">{refCount}</span></div>
+              <div className="text-[10px] text-slate-600 mt-0.5">Referências</div>
+            </div>
+          )}
         </div>
       </div>
 
