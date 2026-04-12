@@ -417,7 +417,7 @@ export default function QABaseConhecimentoPage() {
         const { data } = await supabase.functions.invoke("qa-ingest-url", {
           body: { url, tipo_documento: bulkTipo, user_id: user.id },
         });
-        if (data?.doc_id) addTrackedImport(data.doc_id, url, url);
+        if (data?.doc_id) addTrackedImport(data.doc_id, url, url, bulkTipo, "link_publico");
         ok++;
       } catch { /* skip */ }
       setBulkProgress({ done: ok, total: urls.length });
