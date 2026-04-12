@@ -3451,6 +3451,7 @@ export type Database = {
           unidade_pf: string
         }[]
       }
+      unaccent: { Args: { "": string }; Returns: string }
     }
     Enums: {
       [_ in never]: never
