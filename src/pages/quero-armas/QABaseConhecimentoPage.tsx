@@ -1,14 +1,15 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import {
   Upload, Search, FileText, CheckCircle, Clock, AlertCircle, Loader2,
   ExternalLink, RefreshCw, Trash2, Power, Star, Zap, ShieldCheck,
-  Link2, Globe, Plus,
+  Link2, Globe, Plus, X, ArrowRight,
 } from "lucide-react";
 import { useQAAuth } from "@/components/quero-armas/hooks/useQAAuth";
 import { Link } from "react-router-dom";
@@ -44,6 +45,35 @@ const TIPOS_ORIGEM_FILTER = [
   { value: "cadastro_manual", label: "Manual" },
 ];
 
+/* ─── Import stage definitions ─── */
+const IMPORT_STAGES = [
+  { key: "pendente", label: "Iniciando importação", pct: 5 },
+  { key: "acessando_url", label: "Acessando URL", pct: 15 },
+  { key: "extraindo_texto", label: "Extraindo texto", pct: 35 },
+  { key: "gerando_resumo", label: "Gerando resumo com IA", pct: 55 },
+  { key: "criando_chunks", label: "Criando chunks", pct: 70 },
+  { key: "gerando_embeddings", label: "Gerando embeddings", pct: 85 },
+  { key: "concluido", label: "Concluído", pct: 100 },
+  { key: "erro", label: "Falhou", pct: 0 },
+  { key: "texto_invalido", label: "Texto inválido", pct: 0 },
+];
+
+function getStageInfo(status: string) {
+  return IMPORT_STAGES.find(s => s.key === status) || IMPORT_STAGES[0];
+}
+
+const TERMINAL = ["concluido", "erro", "texto_invalido"];
+
+/* ─── Tracked import type ─── */
+type TrackedImport = {
+  doc_id: string;
+  url: string;
+  titulo: string;
+  status: string;
+  resumo?: string;
+  started_at: number;
+};
+
 /* ─── Dashboard stat card ─── */
 function StatCard({ icon: Icon, label, value, color }: { icon: any; label: string; value: number; color: string }) {
   return (
@@ -53,6 +83,58 @@ function StatCard({ icon: Icon, label, value, color }: { icon: any; label: strin
         <div className="text-lg font-bold text-slate-100">{value}</div>
         <div className="text-[11px] text-slate-500">{label}</div>
       </div>
+    </div>
+  );
+}
+
+/* ─── Activity bar item ─── */
+function ActivityItem({ item, onDismiss }: { item: TrackedImport; onDismiss: () => void }) {
+  const stage = getStageInfo(item.status);
+  const isFailed = item.status === "erro" || item.status === "texto_invalido";
+  const isDone = item.status === "concluido";
+  const isActive = !TERMINAL.includes(item.status);
+
+  return (
+    <div className={`flex items-center gap-3 px-4 py-2.5 rounded-lg border transition-all ${
+      isFailed ? "bg-red-500/5 border-red-500/20" :
+      isDone ? "bg-emerald-500/5 border-emerald-500/20" :
+      "bg-blue-500/5 border-blue-500/20"
+    }`}>
+      <div className="shrink-0">
+        {isActive && <Loader2 className="h-4 w-4 text-blue-400 animate-spin" />}
+        {isDone && <CheckCircle className="h-4 w-4 text-emerald-400" />}
+        {isFailed && <AlertCircle className="h-4 w-4 text-red-400" />}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-slate-200 truncate">{item.titulo || item.url}</span>
+          <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium whitespace-nowrap ${
+            isFailed ? "bg-red-500/10 text-red-400" :
+            isDone ? "bg-emerald-500/10 text-emerald-400" :
+            "bg-blue-500/10 text-blue-400"
+          }`}>{stage.label}</span>
+        </div>
+        {isActive && (
+          <div className="mt-1.5">
+            <Progress value={stage.pct} className="h-1.5 bg-slate-800" />
+          </div>
+        )}
+        {isFailed && item.resumo && (
+          <p className="text-[10px] text-red-400/70 mt-0.5 truncate">{item.resumo}</p>
+        )}
+      </div>
+      {isDone && (
+        <Link to={`/quero-armas/base-conhecimento/${item.doc_id}`} className="shrink-0">
+          <Button size="sm" variant="ghost" className="text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 h-7 px-2 text-[10px] gap-1">
+            Abrir <ArrowRight className="h-3 w-3" />
+          </Button>
+        </Link>
+      )}
+      {TERMINAL.includes(item.status) && (
+        <button onClick={onDismiss} className="shrink-0 text-slate-600 hover:text-slate-400 transition-colors">
+          <X className="h-3.5 w-3.5" />
+        </button>
+      )}
     </div>
   );
 }
@@ -84,6 +166,10 @@ export default function QABaseConhecimentoPage() {
   const [bulkImporting, setBulkImporting] = useState(false);
   const [bulkProgress, setBulkProgress] = useState({ done: 0, total: 0 });
 
+  // Tracked imports (activity queue)
+  const [trackedImports, setTrackedImports] = useState<TrackedImport[]>([]);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   const loadDocs = useCallback(async () => {
     let q = supabase.from("qa_documentos_conhecimento" as any).select("*").eq("ativo", true).order("created_at", { ascending: false });
     if (filtroTipo !== "todos") q = q.eq("tipo_documento", filtroTipo);
@@ -97,12 +183,51 @@ export default function QABaseConhecimentoPage() {
 
   useEffect(() => { setLoading(true); loadDocs(); }, [loadDocs]);
 
+  // Poll tracked imports for status updates
   useEffect(() => {
-    const hasProcessing = docs.some(d => d.status_processamento === "pendente" || d.status_processamento === "processando");
+    const activeImports = trackedImports.filter(t => !TERMINAL.includes(t.status));
+    if (activeImports.length === 0) {
+      if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
+      return;
+    }
+    if (pollRef.current) clearInterval(pollRef.current);
+    pollRef.current = setInterval(async () => {
+      const ids = activeImports.map(t => t.doc_id);
+      const { data } = await supabase.from("qa_documentos_conhecimento" as any)
+        .select("id, status_processamento, resumo_extraido").in("id", ids);
+      if (!data) return;
+      let anyCompleted = false;
+      setTrackedImports(prev => prev.map(t => {
+        const updated = (data as any[]).find((d: any) => d.id === t.doc_id);
+        if (!updated) return t;
+        if (TERMINAL.includes(updated.status_processamento) && !TERMINAL.includes(t.status)) {
+          anyCompleted = true;
+        }
+        return { ...t, status: updated.status_processamento, resumo: updated.resumo_extraido || t.resumo };
+      }));
+      if (anyCompleted) loadDocs();
+    }, 2000);
+    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+  }, [trackedImports, loadDocs]);
+
+  // Also auto-poll docs that are processing (legacy behavior)
+  useEffect(() => {
+    const hasProcessing = docs.some(d => d.status_processamento === "pendente" || d.status_processamento === "processando"
+      || d.status_processamento === "acessando_url" || d.status_processamento === "extraindo_texto"
+      || d.status_processamento === "gerando_resumo" || d.status_processamento === "criando_chunks"
+      || d.status_processamento === "gerando_embeddings");
     if (!hasProcessing) return;
     const interval = setInterval(() => { loadDocs(); }, 5000);
     return () => clearInterval(interval);
   }, [docs, loadDocs]);
+
+  const addTrackedImport = (doc_id: string, url: string, titulo: string) => {
+    setTrackedImports(prev => [{ doc_id, url, titulo, status: "pendente", started_at: Date.now() }, ...prev]);
+  };
+
+  const dismissTracked = (doc_id: string) => {
+    setTrackedImports(prev => prev.filter(t => t.doc_id !== doc_id));
+  };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -113,7 +238,7 @@ export default function QABaseConhecimentoPage() {
         const path = `${user.id}/${Date.now()}_${file.name}`;
         const { error: uploadErr } = await supabase.storage.from("qa-documentos").upload(path, file);
         if (uploadErr) throw uploadErr;
-        const { error: insertErr } = await supabase.from("qa_documentos_conhecimento" as any).insert({
+        const { data: insertData, error: insertErr } = await supabase.from("qa_documentos_conhecimento" as any).insert({
           titulo: file.name.replace(/\.[^.]+$/, ""),
           nome_arquivo: file.name,
           storage_path: path,
@@ -124,11 +249,12 @@ export default function QABaseConhecimentoPage() {
           status_processamento: "pendente",
           status_validacao: "nao_validado",
           tipo_origem: "arquivo_upload",
-        });
+        }).select("id").single();
         if (insertErr) throw insertErr;
+        if (insertData) addTrackedImport((insertData as any).id, file.name, file.name.replace(/\.[^.]+$/, ""));
         supabase.functions.invoke("qa-ingest-document", { body: { storage_path: path, user_id: user.id } }).catch(() => {});
       }
-      toast.success(`${files.length} documento(s) enviado(s). Processamento iniciado.`);
+      toast.success(`${files.length} documento(s) enviado(s). Acompanhe o progresso acima.`);
       loadDocs();
     } catch (err: any) {
       toast.error(err.message || "Erro ao enviar");
@@ -146,7 +272,9 @@ export default function QABaseConhecimentoPage() {
         body: { url: linkUrl.trim(), titulo: linkTitulo.trim() || undefined, tipo_documento: linkTipo, user_id: user.id },
       });
       if (error) throw error;
-      toast.success("Importação por link iniciada.");
+      const docId = data?.doc_id;
+      if (docId) addTrackedImport(docId, linkUrl.trim(), linkTitulo.trim() || linkUrl.trim());
+      toast.success("Importação iniciada. Acompanhe o progresso na fila de atividade.");
       setShowLinkDialog(false);
       setLinkUrl("");
       setLinkTitulo("");
@@ -168,14 +296,15 @@ export default function QABaseConhecimentoPage() {
     let ok = 0;
     for (const url of urls) {
       try {
-        await supabase.functions.invoke("qa-ingest-url", {
+        const { data } = await supabase.functions.invoke("qa-ingest-url", {
           body: { url, tipo_documento: bulkTipo, user_id: user.id },
         });
+        if (data?.doc_id) addTrackedImport(data.doc_id, url, url);
         ok++;
       } catch { /* skip */ }
       setBulkProgress({ done: ok, total: urls.length });
     }
-    toast.success(`${ok}/${urls.length} links importados com sucesso.`);
+    toast.success(`${ok}/${urls.length} links importados. Acompanhe na fila de atividade.`);
     setBulkImporting(false);
     setShowBulkDialog(false);
     setBulkLinks("");
@@ -190,7 +319,7 @@ export default function QABaseConhecimentoPage() {
         .update({ status_processamento: "pendente", resumo_extraido: null, updated_at: new Date().toISOString() })
         .eq("id", doc.id);
       await supabase.from("qa_chunks_conhecimento" as any).delete().eq("documento_id", doc.id);
-
+      addTrackedImport(doc.id, doc.url_origem || doc.nome_arquivo, doc.titulo);
       if (doc.tipo_origem === "link_publico" && doc.url_origem) {
         await supabase.functions.invoke("qa-ingest-url", {
           body: { url: doc.url_origem, titulo: doc.titulo, tipo_documento: doc.tipo_documento, user_id: user.id },
@@ -258,16 +387,19 @@ export default function QABaseConhecimentoPage() {
 
   const statusIcon = (s: string) => {
     if (s === "concluido") return <CheckCircle className="h-4 w-4 text-emerald-400" />;
-    if (s === "processando") return <Loader2 className="h-4 w-4 text-amber-400 animate-spin" />;
     if (s === "erro" || s === "texto_invalido") return <AlertCircle className="h-4 w-4 text-red-400" />;
+    if (TERMINAL.includes(s)) return <Clock className="h-4 w-4 text-slate-500" />;
+    // Any processing stage
+    if (s !== "pendente") return <Loader2 className="h-4 w-4 text-blue-400 animate-spin" />;
     return <Clock className="h-4 w-4 text-slate-500" />;
   };
 
   const statusLabel = (s: string) => {
+    const stage = getStageInfo(s);
     if (s === "concluido") return { text: "Concluído", cls: "bg-emerald-500/10 text-emerald-400" };
-    if (s === "processando") return { text: "Processando...", cls: "bg-amber-500/10 text-amber-400" };
     if (s === "texto_invalido") return { text: "Texto Inválido", cls: "bg-orange-500/10 text-orange-400" };
     if (s === "erro") return { text: "Falhou", cls: "bg-red-500/10 text-red-400" };
+    if (s !== "pendente" && !TERMINAL.includes(s)) return { text: stage.label, cls: "bg-blue-500/10 text-blue-400" };
     return { text: "Pendente", cls: "bg-slate-800 text-slate-400" };
   };
 
@@ -282,6 +414,9 @@ export default function QABaseConhecimentoPage() {
   const pendentes = docs.filter(d => d.status_validacao === "nao_validado" || d.status_validacao === "pendente_validacao").length;
   const ativosIA = docs.filter(d => d.ativo_na_ia === true && d.status_validacao === "validado" && d.status_processamento === "concluido").length;
   const referencias = docs.filter(d => d.referencia_preferencial === true).length;
+
+  const activeTracked = trackedImports.filter(t => !TERMINAL.includes(t.status));
+  const recentTracked = trackedImports.filter(t => TERMINAL.includes(t.status)).slice(0, 5);
 
   return (
     <div className="space-y-6">
@@ -305,6 +440,31 @@ export default function QABaseConhecimentoPage() {
           </label>
         </div>
       </div>
+
+      {/* ─── Activity Queue ─── */}
+      {trackedImports.length > 0 && (
+        <div className="bg-[#0c0c14] border border-slate-800/60 rounded-xl p-4 space-y-2">
+          <div className="flex items-center justify-between mb-1">
+            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+              {activeTracked.length > 0 && <Loader2 className="h-3 w-3 animate-spin text-blue-400" />}
+              Fila de Processamento
+              {activeTracked.length > 0 && (
+                <span className="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded-full font-medium">
+                  {activeTracked.length} em andamento
+                </span>
+              )}
+            </h3>
+            {trackedImports.length > 0 && trackedImports.every(t => TERMINAL.includes(t.status)) && (
+              <button onClick={() => setTrackedImports([])} className="text-[10px] text-slate-600 hover:text-slate-400 transition-colors">
+                Limpar tudo
+              </button>
+            )}
+          </div>
+          {trackedImports.map(item => (
+            <ActivityItem key={item.doc_id} item={item} onDismiss={() => dismissTracked(item.doc_id)} />
+          ))}
+        </div>
+      )}
 
       {/* Dashboard Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
@@ -365,6 +525,7 @@ export default function QABaseConhecimentoPage() {
             const isRejeitado = d.status_validacao === "rejeitado";
             const isRef = d.referencia_preferencial === true;
             const isAtivoIA = d.ativo_na_ia === true;
+            const isProcessing = !TERMINAL.includes(d.status_processamento) && d.status_processamento !== "pendente";
             return (
               <div key={d.id} className="flex items-center gap-3 bg-[#12121c] border border-slate-800/40 rounded-lg p-4 hover:border-amber-500/30 transition-all group">
                 {statusIcon(d.status_processamento)}
@@ -384,6 +545,12 @@ export default function QABaseConhecimentoPage() {
                   )}
                   {isError && d.resumo_extraido && (
                     <div className="text-xs text-red-400/80 mt-1 truncate">{d.resumo_extraido}</div>
+                  )}
+                  {isProcessing && (
+                    <div className="mt-1.5 flex items-center gap-2">
+                      <Progress value={getStageInfo(d.status_processamento).pct} className="h-1 bg-slate-800 flex-1 max-w-[200px]" />
+                      <span className="text-[10px] text-blue-400">{getStageInfo(d.status_processamento).label}</span>
+                    </div>
                   )}
                 </Link>
                 {/* Governance badges */}
@@ -452,7 +619,7 @@ export default function QABaseConhecimentoPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowLinkDialog(false)} className="border-slate-700 text-slate-400">Cancelar</Button>
             <Button onClick={handleImportLink} disabled={!linkUrl.trim() || importingLink} className="bg-blue-600 hover:bg-blue-700">
-              {importingLink ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Globe className="h-4 w-4 mr-2" />} Importar
+              {importingLink ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Enviando...</> : <><Globe className="h-4 w-4 mr-2" /> Importar</>}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -482,7 +649,10 @@ export default function QABaseConhecimentoPage() {
               </Select>
             </div>
             {bulkImporting && (
-              <div className="text-xs text-amber-400">{bulkProgress.done}/{bulkProgress.total} importados...</div>
+              <div className="space-y-1.5">
+                <div className="text-xs text-amber-400">{bulkProgress.done}/{bulkProgress.total} importados...</div>
+                <Progress value={(bulkProgress.done / Math.max(bulkProgress.total, 1)) * 100} className="h-1.5 bg-slate-800" />
+              </div>
             )}
             <div>
               <Label className="text-slate-300 text-xs">Ou envie múltiplos arquivos</Label>

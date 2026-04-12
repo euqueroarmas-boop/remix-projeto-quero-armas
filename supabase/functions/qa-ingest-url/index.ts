@@ -53,12 +53,16 @@ function stripHtmlToText(html: string): string {
   return sanitizeText(clean);
 }
 
+async function updateStatus(supabase: any, doc_id: string, status: string) {
+  await supabase.from("qa_documentos_conhecimento")
+    .update({ status_processamento: status, updated_at: new Date().toISOString() })
+    .eq("id", doc_id);
+}
+
 async function processUrl(url: string, titulo: string, tipo_documento: string, user_id: string, doc_id: string) {
   const supabase = getSupabase();
 
-  await supabase.from("qa_documentos_conhecimento")
-    .update({ status_processamento: "processando", updated_at: new Date().toISOString() })
-    .eq("id", doc_id);
+  await updateStatus(supabase, doc_id, "acessando_url");
 
   try {
     // Fetch URL
@@ -143,6 +147,8 @@ async function processUrl(url: string, titulo: string, tipo_documento: string, u
       }
     }
 
+    await updateStatus(supabase, doc_id, "extraindo_texto");
+
     // Hard cap
     if (textoExtraido.length > 200000) {
       textoExtraido = textoExtraido.substring(0, 200000);
@@ -188,7 +194,7 @@ async function processUrl(url: string, titulo: string, tipo_documento: string, u
       })
       .eq("id", doc_id);
 
-    // Generate summary
+    await updateStatus(supabase, doc_id, "gerando_resumo");
     let resumo = "Resumo pendente.";
     try {
       const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -218,7 +224,7 @@ async function processUrl(url: string, titulo: string, tipo_documento: string, u
       resumo = "Resumo indisponível (erro de conexão).";
     }
 
-    // Delete old chunks
+    await updateStatus(supabase, doc_id, "criando_chunks");
     await supabase.from("qa_chunks_conhecimento").delete().eq("documento_id", doc_id);
 
     // Chunk text
@@ -271,7 +277,7 @@ async function processUrl(url: string, titulo: string, tipo_documento: string, u
       detalhes_json: { url, chunks_criados: chunks.length, tamanho_texto: textoExtraido.length, metodoExtracao },
     }).catch(() => {});
 
-    // Trigger embeddings
+    await updateStatus(supabase, doc_id, "gerando_embeddings");
     try {
       await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/qa-generate-embeddings`, {
         method: "POST",
