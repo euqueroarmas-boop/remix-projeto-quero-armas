@@ -120,13 +120,14 @@ export default function QABaseConhecimentoPage() {
   const statusIcon = (s: string) => {
     if (s === "concluido") return <CheckCircle className="h-4 w-4 text-emerald-400" />;
     if (s === "processando") return <Loader2 className="h-4 w-4 text-amber-400 animate-spin" />;
-    if (s === "erro") return <AlertCircle className="h-4 w-4 text-red-400" />;
+    if (s === "erro" || s === "texto_invalido") return <AlertCircle className="h-4 w-4 text-red-400" />;
     return <Clock className="h-4 w-4 text-slate-500" />;
   };
 
   const statusLabel = (s: string) => {
     if (s === "concluido") return { text: "Concluído", cls: "bg-emerald-500/10 text-emerald-400" };
     if (s === "processando") return { text: "Processando...", cls: "bg-amber-500/10 text-amber-400" };
+    if (s === "texto_invalido") return { text: "Texto Inválido", cls: "bg-orange-500/10 text-orange-400" };
     if (s === "erro") return { text: "Falhou", cls: "bg-red-500/10 text-red-400" };
     return { text: "Pendente", cls: "bg-slate-800 text-slate-400" };
   };
@@ -170,6 +171,7 @@ export default function QABaseConhecimentoPage() {
             <SelectItem value="pendente">Pendente</SelectItem>
             <SelectItem value="processando">Processando</SelectItem>
             <SelectItem value="concluido">Concluído</SelectItem>
+            <SelectItem value="texto_invalido">Texto Inválido</SelectItem>
             <SelectItem value="erro">Erro</SelectItem>
           </SelectContent>
         </Select>
@@ -187,7 +189,7 @@ export default function QABaseConhecimentoPage() {
         <div className="space-y-2">
           {docs.map((d: any) => {
             const status = statusLabel(d.status_processamento);
-            const isError = d.status_processamento === "erro";
+            const isError = d.status_processamento === "erro" || d.status_processamento === "texto_invalido";
             const isReprocessing = reprocessingId === d.id;
 
             return (
