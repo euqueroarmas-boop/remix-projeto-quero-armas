@@ -59,12 +59,12 @@ export function QASidebar({ perfil }: Props) {
   };
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-[#1a1a2e] bg-[#08080f]">
+    <Sidebar collapsible="icon" className="border-r border-[#1a1a1a] bg-[#050505]">
       <SidebarContent className="py-3">
         {!collapsed && (
-          <div className="px-4 pb-3 mb-1 border-b border-[#1a1a2e]">
+          <div className="px-4 pb-3 mb-1 border-b border-[#1a1a1a]">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded bg-[#1a1a2e] flex items-center justify-center">
+              <div className="w-7 h-7 rounded bg-[#1a1a1a] flex items-center justify-center">
                 <Shield className="h-3.5 w-3.5 text-slate-400" />
               </div>
               <div>
@@ -96,8 +96,8 @@ export function QASidebar({ perfil }: Props) {
                             to={item.url}
                             className={`flex items-center gap-2.5 px-3 py-1.5 rounded text-[13px] transition-all ${
                               active
-                                ? "bg-[#14142a] text-slate-200 border-l-2 border-slate-400"
-                                : "text-slate-500 hover:text-slate-300 hover:bg-[#0e0e1a]"
+                                ? "bg-[#161616] text-slate-200 border-l-2 border-slate-400"
+                                : "text-slate-500 hover:text-slate-300 hover:bg-[#121212]"
                             }`}
                           >
                             <item.icon className={`h-3.5 w-3.5 shrink-0 ${active ? "text-slate-300" : ""}`} />
@@ -113,7 +113,7 @@ export function QASidebar({ perfil }: Props) {
           );
         })}
 
-        <div className="mt-auto pt-2 border-t border-[#1a1a2e] mx-2">
+        <div className="mt-auto pt-2 border-t border-[#1a1a1a] mx-2">
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton asChild>

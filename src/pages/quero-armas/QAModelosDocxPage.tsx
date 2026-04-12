@@ -103,29 +103,29 @@ export default function QAModelosDocxPage() {
       </div>
 
       {/* Variables info */}
-      <div className="bg-[#12121c] border border-slate-800/40 rounded-xl p-4">
+      <div className="bg-[#111111] border border-slate-800/40 rounded-xl p-4">
         <h3 className="text-xs font-medium text-slate-400 mb-2">Variáveis Suportadas</h3>
         <div className="flex flex-wrap gap-2">
           {VARIAVEIS.map(v => (
-            <code key={v} className="text-[10px] px-2 py-1 rounded bg-[#0c0c14] text-amber-400/70 border border-slate-800/40 font-mono">{v}</code>
+            <code key={v} className="text-[10px] px-2 py-1 rounded bg-[#0d0d0d] text-amber-400/70 border border-slate-800/40 font-mono">{v}</code>
           ))}
         </div>
       </div>
 
       {/* New model form */}
       {showForm && (
-        <div className="bg-[#12121c] border border-amber-500/20 rounded-xl p-5 space-y-4">
+        <div className="bg-[#111111] border border-amber-500/20 rounded-xl p-5 space-y-4">
           <h3 className="text-sm font-medium text-slate-300">Cadastrar Novo Modelo</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label className="text-slate-400 text-xs">Nome do Modelo</Label>
               <Input value={nomeModelo} onChange={e => setNomeModelo(e.target.value)}
-                className="bg-[#0c0c14] border-slate-700 text-slate-100" placeholder="Ex: Petição Inicial - Registro de Arma" />
+                className="bg-[#0d0d0d] border-slate-700 text-slate-100" placeholder="Ex: Petição Inicial - Registro de Arma" />
             </div>
             <div className="space-y-2">
               <Label className="text-slate-400 text-xs">Tipo de Peça</Label>
               <Select value={tipoPeca} onValueChange={setTipoPeca}>
-                <SelectTrigger className="bg-[#0c0c14] border-slate-700 text-slate-300"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="bg-[#0d0d0d] border-slate-700 text-slate-300"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {TIPOS_PECA.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
                 </SelectContent>
@@ -135,12 +135,12 @@ export default function QAModelosDocxPage() {
           <div className="space-y-2">
             <Label className="text-slate-400 text-xs">Descrição</Label>
             <Textarea value={descricao} onChange={e => setDescricao(e.target.value)}
-              className="bg-[#0c0c14] border-slate-700 text-slate-100" rows={2} placeholder="Descrição do modelo e quando utilizá-lo..." />
+              className="bg-[#0d0d0d] border-slate-700 text-slate-100" rows={2} placeholder="Descrição do modelo e quando utilizá-lo..." />
           </div>
           <div className="space-y-2">
             <Label className="text-slate-400 text-xs">Arquivo Template (.docx)</Label>
             <Input type="file" accept=".docx" onChange={e => setSelectedFile(e.target.files?.[0] || null)}
-              className="bg-[#0c0c14] border-slate-700 text-slate-400" />
+              className="bg-[#0d0d0d] border-slate-700 text-slate-400" />
           </div>
           <div className="flex gap-2">
             <Button onClick={handleSubmit} disabled={uploading} className="bg-amber-600 hover:bg-amber-700">
@@ -163,7 +163,7 @@ export default function QAModelosDocxPage() {
       ) : (
         <div className="space-y-2">
           {modelos.map((m: any) => (
-            <div key={m.id} className="flex items-center gap-4 bg-[#12121c] border border-slate-800/40 rounded-lg p-4 hover:border-slate-700 transition-all">
+            <div key={m.id} className="flex items-center gap-4 bg-[#111111] border border-slate-800/40 rounded-lg p-4 hover:border-slate-700 transition-all">
               {m.ativo ? <CheckCircle className="h-4 w-4 text-emerald-400 shrink-0" /> : <XCircle className="h-4 w-4 text-slate-600 shrink-0" />}
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-medium text-slate-200">{m.nome_modelo}</div>

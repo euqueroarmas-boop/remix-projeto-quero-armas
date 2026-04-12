@@ -225,7 +225,7 @@ export default function QADocumentoDetalhePage() {
       </div>
 
       {/* Header */}
-      <div className="bg-[#12121c] border border-slate-800/40 rounded-xl p-5">
+      <div className="bg-[#111111] border border-slate-800/40 rounded-xl p-5">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
             <h1 className="text-xl font-bold text-slate-100 flex items-center gap-2">
@@ -307,15 +307,15 @@ export default function QADocumentoDetalhePage() {
 
         {/* Stats row */}
         <div className="grid grid-cols-3 gap-3 mt-3">
-          <div className="bg-[#0c0c14] rounded-lg p-3 text-center">
+          <div className="bg-[#0d0d0d] rounded-lg p-3 text-center">
             <div className="text-xs font-medium text-slate-300">{chunks.length}</div>
             <div className="text-[10px] text-slate-600 mt-0.5">Chunks</div>
           </div>
-          <div className="bg-[#0c0c14] rounded-lg p-3 text-center">
+          <div className="bg-[#0d0d0d] rounded-lg p-3 text-center">
             <div className="flex items-center justify-center gap-1"><Database className="h-3 w-3 text-purple-400" /><span className="text-xs font-medium text-slate-300">{embedCount}</span></div>
             <div className="text-[10px] text-slate-600 mt-0.5">Embeddings</div>
           </div>
-          <div className="bg-[#0c0c14] rounded-lg p-3 text-center">
+          <div className="bg-[#0d0d0d] rounded-lg p-3 text-center">
             <div className="flex items-center justify-center gap-1"><Star className="h-3 w-3 text-amber-400" /><span className="text-xs font-medium text-slate-300">{refCount}</span></div>
             <div className="text-[10px] text-slate-600 mt-0.5">Referências</div>
           </div>
@@ -323,7 +323,7 @@ export default function QADocumentoDetalhePage() {
       </div>
 
       {/* ─── Governance Actions ─── */}
-      <div className="bg-[#12121c] border border-slate-800/40 rounded-xl p-5">
+      <div className="bg-[#111111] border border-slate-800/40 rounded-xl p-5">
         <h2 className="text-sm font-medium text-slate-300 mb-3">Ações de Governança</h2>
         {isAuxiliar ? (
           <p className="text-xs text-slate-500">Documentos auxiliares do caso não possuem ações de governança de aprendizado. São utilizados apenas como suporte factual.</p>
@@ -370,33 +370,33 @@ export default function QADocumentoDetalhePage() {
       </div>
 
       {doc.hash_arquivo && (
-        <div className="flex items-center gap-2 text-xs text-slate-600 bg-[#12121c] border border-slate-800/40 rounded-lg px-4 py-2">
+        <div className="flex items-center gap-2 text-xs text-slate-600 bg-[#111111] border border-slate-800/40 rounded-lg px-4 py-2">
           <Hash className="h-3.5 w-3.5" /> SHA-256: <code className="text-slate-500 font-mono">{doc.hash_arquivo}</code>
         </div>
       )}
 
       {doc.resumo_extraido && (
-        <div className="bg-[#12121c] border border-slate-800/40 rounded-xl p-5">
+        <div className="bg-[#111111] border border-slate-800/40 rounded-xl p-5">
           <h2 className="text-sm font-medium text-slate-300 mb-2">Resumo Extraído</h2>
           <p className="text-sm text-slate-400 leading-relaxed whitespace-pre-wrap">{doc.resumo_extraido}</p>
         </div>
       )}
 
       {doc.texto_extraido && (
-        <div className="bg-[#12121c] border border-slate-800/40 rounded-xl p-5">
+        <div className="bg-[#111111] border border-slate-800/40 rounded-xl p-5">
           <h2 className="text-sm font-medium text-slate-300 mb-2">Texto Extraído</h2>
-          <div className="text-xs text-slate-500 leading-relaxed whitespace-pre-wrap max-h-[400px] overflow-y-auto font-mono bg-[#0c0c14] rounded-lg p-4">
+          <div className="text-xs text-slate-500 leading-relaxed whitespace-pre-wrap max-h-[400px] overflow-y-auto font-mono bg-[#0d0d0d] rounded-lg p-4">
             {doc.texto_extraido}
           </div>
         </div>
       )}
 
       {chunks.length > 0 && (
-        <div className="bg-[#12121c] border border-slate-800/40 rounded-xl p-5">
+        <div className="bg-[#111111] border border-slate-800/40 rounded-xl p-5">
           <h2 className="text-sm font-medium text-slate-300 mb-3">Chunks ({chunks.length})</h2>
           <div className="space-y-2 max-h-[500px] overflow-y-auto">
             {chunks.map((c: any) => (
-              <div key={c.id} className="bg-[#0c0c14] rounded-lg p-3 border border-slate-800/20">
+              <div key={c.id} className="bg-[#0d0d0d] rounded-lg p-3 border border-slate-800/20">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[10px] text-slate-600 uppercase tracking-wider">Chunk {c.ordem_chunk + 1}</span>
                   <span className={`text-[10px] px-1.5 py-0.5 rounded ${c.embedding_status === "concluido" ? "bg-emerald-500/10 text-emerald-400" : c.embedding_status === "erro" ? "bg-red-500/10 text-red-400" : "bg-slate-800 text-slate-500"}`}>
@@ -411,9 +411,9 @@ export default function QADocumentoDetalhePage() {
       )}
 
       {doc.metadados_json && Object.keys(doc.metadados_json).length > 0 && (
-        <div className="bg-[#12121c] border border-slate-800/40 rounded-xl p-5">
+        <div className="bg-[#111111] border border-slate-800/40 rounded-xl p-5">
           <h2 className="text-sm font-medium text-slate-300 mb-2">Metadados</h2>
-          <pre className="text-xs text-slate-500 font-mono bg-[#0c0c14] rounded-lg p-3 overflow-x-auto">
+          <pre className="text-xs text-slate-500 font-mono bg-[#0d0d0d] rounded-lg p-3 overflow-x-auto">
             {JSON.stringify(doc.metadados_json, null, 2)}
           </pre>
         </div>
@@ -421,7 +421,7 @@ export default function QADocumentoDetalhePage() {
 
       {/* Delete confirmation dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent className="bg-[#12121c] border-slate-700 text-slate-100 max-w-md">
+        <AlertDialogContent className="bg-[#111111] border-slate-700 text-slate-100 max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-slate-100">Excluir documento</AlertDialogTitle>
             <AlertDialogDescription className="text-slate-400">

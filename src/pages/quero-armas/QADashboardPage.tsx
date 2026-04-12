@@ -109,15 +109,15 @@ export default function QADashboardPage() {
       {/* Quick actions — compact on mobile */}
       <div className="flex gap-1.5 md:gap-2">
         <Link to="/quero-armas/gerar-peca"
-          className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#0c0c16] border border-[#1a1a2e] rounded hover:border-slate-700 transition-colors text-[11px] text-slate-400 hover:text-slate-300">
+          className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#0d0d0d] border border-[#1a1a1a] rounded hover:border-slate-700 transition-colors text-[11px] text-slate-400 hover:text-slate-300">
           <PenTool className="h-3 w-3" /> <span className="hidden xs:inline">Nova</span> Peça
         </Link>
         <Link to="/quero-armas/base-conhecimento"
-          className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#0c0c16] border border-[#1a1a2e] rounded hover:border-slate-700 transition-colors text-[11px] text-slate-400 hover:text-slate-300">
+          className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#0d0d0d] border border-[#1a1a1a] rounded hover:border-slate-700 transition-colors text-[11px] text-slate-400 hover:text-slate-300">
           <BookOpen className="h-3 w-3" /> Base
         </Link>
         <Link to="/quero-armas/ia"
-          className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#0c0c16] border border-[#1a1a2e] rounded hover:border-slate-700 transition-colors text-[11px] text-slate-400 hover:text-slate-300">
+          className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#0d0d0d] border border-[#1a1a1a] rounded hover:border-slate-700 transition-colors text-[11px] text-slate-400 hover:text-slate-300">
           <Shield className="h-3 w-3" /> IA
         </Link>
       </div>
@@ -132,7 +132,7 @@ export default function QADashboardPage() {
           { label: "Aprovadas", value: stats.aprovadas },
           { label: "Refs", value: stats.referencias },
         ].map(m => (
-          <div key={m.label} className="bg-[#0c0c16] border border-[#1a1a2e] rounded px-2 py-1.5 md:px-3 md:py-2.5 text-center">
+          <div key={m.label} className="bg-[#0d0d0d] border border-[#1a1a1a] rounded px-2 py-1.5 md:px-3 md:py-2.5 text-center">
             <div className="text-sm md:text-lg font-semibold text-slate-300 font-mono tabular-nums leading-tight">{m.value}</div>
             <div className="text-[8px] md:text-[9px] text-slate-600 uppercase tracking-[0.1em] mt-0.5">{m.label}</div>
           </div>
@@ -142,7 +142,7 @@ export default function QADashboardPage() {
       {/* Recent: stacked on mobile, side-by-side on desktop */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
         {/* Recent Pieces */}
-        <div className="bg-[#0c0c16] border border-[#1a1a2e] rounded p-2 md:p-3">
+        <div className="bg-[#0d0d0d] border border-[#1a1a1a] rounded p-2 md:p-3">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[9px] text-slate-600 uppercase tracking-[0.12em] font-medium">Últimas Peças</span>
             <Link to="/quero-armas/historico" className="text-[9px] text-slate-700 hover:text-slate-400">→</Link>
@@ -152,7 +152,7 @@ export default function QADashboardPage() {
           ) : (
             <div className="space-y-px">
               {recentPecas.map(p => (
-                <div key={p.id} className="flex items-center gap-1.5 py-1 px-1.5 rounded hover:bg-[#14142a]/50 transition-colors">
+                <div key={p.id} className="flex items-center gap-1.5 py-1 px-1.5 rounded hover:bg-[#161616]/50 transition-colors">
                   <PenTool className="h-2.5 w-2.5 text-slate-700 shrink-0" />
                   <span className="text-[11px] text-slate-400 truncate flex-1 min-w-0">{p.titulo}</span>
                   <span className={`text-[8px] font-mono shrink-0 ${statusColor(p.status || "")}`}>
@@ -168,7 +168,7 @@ export default function QADashboardPage() {
         </div>
 
         {/* Recent Docs */}
-        <div className="bg-[#0c0c16] border border-[#1a1a2e] rounded p-2 md:p-3">
+        <div className="bg-[#0d0d0d] border border-[#1a1a1a] rounded p-2 md:p-3">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[9px] text-slate-600 uppercase tracking-[0.12em] font-medium">Últimos Documentos</span>
             <Link to="/quero-armas/base-conhecimento" className="text-[9px] text-slate-700 hover:text-slate-400">→</Link>
@@ -179,7 +179,7 @@ export default function QADashboardPage() {
             <div className="space-y-px">
               {recentDocs.map(d => (
                 <Link key={d.id} to={`/quero-armas/base-conhecimento/${d.id}`}
-                  className="flex items-center gap-1.5 py-1 px-1.5 rounded hover:bg-[#14142a]/50 transition-colors">
+                  className="flex items-center gap-1.5 py-1 px-1.5 rounded hover:bg-[#161616]/50 transition-colors">
                   <FileText className="h-2.5 w-2.5 text-slate-700 shrink-0" />
                   <span className="text-[11px] text-slate-400 truncate flex-1 min-w-0">{d.titulo}</span>
                   <span className={`text-[8px] font-mono shrink-0 ${statusColor(d.status || "")}`}>

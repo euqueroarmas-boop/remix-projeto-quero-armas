@@ -111,11 +111,11 @@ export default function QAHistoricoPage() {
         <div className="flex gap-0.5">
           <button onClick={() => setTab("geracoes")}
             className={`px-2.5 py-1 rounded text-[10px] md:text-[11px] uppercase tracking-wider font-medium transition-colors ${
-              tab === "geracoes" ? "bg-[#14142a] text-slate-300" : "text-slate-600 hover:text-slate-400"
+              tab === "geracoes" ? "bg-[#161616] text-slate-300" : "text-slate-600 hover:text-slate-400"
             }`}>Peças</button>
           <button onClick={() => setTab("consultas")}
             className={`px-2.5 py-1 rounded text-[10px] md:text-[11px] uppercase tracking-wider font-medium transition-colors ${
-              tab === "consultas" ? "bg-[#14142a] text-slate-300" : "text-slate-600 hover:text-slate-400"
+              tab === "consultas" ? "bg-[#161616] text-slate-300" : "text-slate-600 hover:text-slate-400"
             }`}>Consultas</button>
         </div>
       </div>
@@ -125,13 +125,13 @@ export default function QAHistoricoPage() {
       ) : items.length === 0 ? (
         <div className="text-center py-10 text-slate-600 text-[11px]">Nenhum registro</div>
       ) : (
-        <div className="bg-[#0c0c16] border border-[#1a1a2e] rounded overflow-hidden">
+        <div className="bg-[#0d0d0d] border border-[#1a1a1a] rounded overflow-hidden">
           {/* Desktop header */}
-          <div className="hidden md:grid grid-cols-[1fr_120px_80px_80px_60px] gap-2 px-3 py-1.5 border-b border-[#1a1a2e] text-[9px] text-slate-600 uppercase tracking-[0.12em]">
+          <div className="hidden md:grid grid-cols-[1fr_120px_80px_80px_60px] gap-2 px-3 py-1.5 border-b border-[#1a1a1a] text-[9px] text-slate-600 uppercase tracking-[0.12em]">
             <span>Título</span><span>Tipo</span><span>Status</span><span>Data</span><span className="text-right">Ações</span>
           </div>
           {items.map((item: any) => (
-            <div key={item.id} className="border-b border-[#1a1a2e]/40 hover:bg-[#14142a]/50 transition-colors">
+            <div key={item.id} className="border-b border-[#1a1a1a]/40 hover:bg-[#161616]/50 transition-colors">
               {/* Mobile */}
               <div className="md:hidden px-2.5 py-1.5">
                 <div className="flex items-center justify-between gap-2">
@@ -169,7 +169,7 @@ export default function QAHistoricoPage() {
 
       {/* Detail Dialog */}
       <Dialog open={!!detailItem} onOpenChange={() => setDetailItem(null)}>
-        <DialogContent className="bg-[#0a0a12] border-[#1a1a2e] text-slate-300 max-w-3xl max-h-[90vh] overflow-y-auto p-3 md:p-6">
+        <DialogContent className="bg-[#0a0a0a] border-[#1a1a1a] text-slate-300 max-w-3xl max-h-[90vh] overflow-y-auto p-3 md:p-6">
           <DialogHeader>
             <DialogTitle className="text-slate-300 text-sm">{detailItem?.titulo_geracao || detailItem?.caso_titulo || "Detalhes"}</DialogTitle>
           </DialogHeader>
@@ -189,7 +189,7 @@ export default function QAHistoricoPage() {
             )}
             <div>
               <span className="text-[9px] text-slate-600 uppercase tracking-[0.12em]">{tab === "geracoes" ? "Minuta" : "Resposta"}</span>
-              <div className="text-[11px] text-slate-400 whitespace-pre-wrap leading-relaxed bg-[#08080f] rounded p-2.5 max-h-[350px] overflow-y-auto mt-1 font-serif">
+              <div className="text-[11px] text-slate-400 whitespace-pre-wrap leading-relaxed bg-[#050505] rounded p-2.5 max-h-[350px] overflow-y-auto mt-1 font-serif">
                 {detailItem?.minuta_gerada || detailItem?.resposta_ia}
               </div>
             </div>
@@ -199,18 +199,18 @@ export default function QAHistoricoPage() {
 
       {/* Review Dialog */}
       <Dialog open={reviewOpen} onOpenChange={setReviewOpen}>
-        <DialogContent className="bg-[#0a0a12] border-[#1a1a2e] text-slate-300 max-w-4xl max-h-[90vh] overflow-y-auto p-3 md:p-6">
+        <DialogContent className="bg-[#0a0a0a] border-[#1a1a1a] text-slate-300 max-w-4xl max-h-[90vh] overflow-y-auto p-3 md:p-6">
           <DialogHeader><DialogTitle className="text-slate-300 text-sm">Revisão</DialogTitle></DialogHeader>
           <div className="space-y-3 mt-1">
             <div className="space-y-1">
               <Label className="text-[9px] text-slate-600 uppercase tracking-wider">Minuta (editável)</Label>
               <Textarea value={reviewText} onChange={e => setReviewText(e.target.value)}
-                className="bg-[#08080f] border-[#1a1a2e] text-slate-400 min-h-[200px] md:min-h-[300px] font-serif text-[11px]" />
+                className="bg-[#050505] border-[#1a1a1a] text-slate-400 min-h-[200px] md:min-h-[300px] font-serif text-[11px]" />
             </div>
             <div className="space-y-1">
               <Label className="text-[9px] text-slate-600 uppercase tracking-wider">Justificativa</Label>
               <Textarea value={reviewJustificativa} onChange={e => setReviewJustificativa(e.target.value)}
-                className="bg-[#08080f] border-[#1a1a2e] text-slate-400 min-h-[50px] text-[11px]" placeholder="Opcional" />
+                className="bg-[#050505] border-[#1a1a1a] text-slate-400 min-h-[50px] text-[11px]" placeholder="Opcional" />
             </div>
             <div className="flex flex-wrap gap-1.5">
               <Button onClick={() => submitReview("aprovacao")} disabled={saving} size="sm"

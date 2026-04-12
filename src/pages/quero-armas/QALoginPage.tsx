@@ -55,23 +55,23 @@ export default function QALoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#08080f] px-4">
+    <div className="min-h-screen flex items-center justify-center bg-[#050505] px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded bg-[#14142a] border border-[#1a1a2e] mb-4">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded bg-[#161616] border border-[#1a1a1a] mb-4">
             <Shield className="h-5 w-5 text-slate-500" />
           </div>
           <h1 className="text-lg font-semibold text-slate-300 tracking-tight">Quero Armas</h1>
           <p className="text-[11px] text-slate-600 mt-1 tracking-wider uppercase">Acesso Restrito</p>
         </div>
 
-        <form onSubmit={handleLogin} className="space-y-4 bg-[#0a0a12] border border-[#1a1a2e] rounded-lg p-5">
+        <form onSubmit={handleLogin} className="space-y-4 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg p-5">
           <div className="space-y-1.5">
             <Label htmlFor="email" className="text-slate-500 text-[11px] uppercase tracking-wider">E-mail</Label>
             <Input
               id="email" type="email" required value={email}
               onChange={e => setEmail(e.target.value)}
-              className="bg-[#08080f] border-[#1a1a2e] text-slate-300 focus:border-slate-600 h-9 text-sm"
+              className="bg-[#050505] border-[#1a1a1a] text-slate-300 focus:border-slate-600 h-9 text-sm"
               placeholder="seu@email.com"
             />
           </div>
@@ -80,11 +80,11 @@ export default function QALoginPage() {
             <Input
               id="password" type="password" required value={password}
               onChange={e => setPassword(e.target.value)}
-              className="bg-[#08080f] border-[#1a1a2e] text-slate-300 focus:border-slate-600 h-9 text-sm"
+              className="bg-[#050505] border-[#1a1a1a] text-slate-300 focus:border-slate-600 h-9 text-sm"
               placeholder="••••••••"
             />
           </div>
-          <Button type="submit" disabled={loading} className="w-full bg-[#14142a] hover:bg-[#1a1a35] text-slate-300 border border-[#1a1a2e] h-9 text-sm">
+          <Button type="submit" disabled={loading} className="w-full bg-[#161616] hover:bg-[#1f1f1f] text-slate-300 border border-[#1a1a1a] h-9 text-sm">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Entrar"}
           </Button>
           <div className="text-center pt-1">

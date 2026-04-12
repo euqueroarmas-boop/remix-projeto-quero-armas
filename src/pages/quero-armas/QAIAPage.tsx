@@ -89,17 +89,17 @@ export default function QAIAPage() {
         <span>A IA consulta exclusivamente as fontes cadastradas e validadas. Nunca inventa fatos, leis, artigos, jurisprudência ou precedentes. Fontes são ranqueadas por confiança.</span>
       </div>
 
-      <div className="space-y-4 bg-[#12121c] border border-slate-800/40 rounded-xl p-5">
+      <div className="space-y-4 bg-[#111111] border border-slate-800/40 rounded-xl p-5">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label className="text-slate-300">Título do Caso</Label>
             <Input value={casoTitulo} onChange={e => setCasoTitulo(e.target.value)}
-              className="bg-[#0c0c14] border-slate-700 text-slate-100" placeholder="Ex: Mandado de Segurança - CAC" />
+              className="bg-[#0d0d0d] border-slate-700 text-slate-100" placeholder="Ex: Mandado de Segurança - CAC" />
           </div>
           <div className="space-y-2">
             <Label className="text-slate-300">Tipo de Peça</Label>
             <Select value={tipoPeca} onValueChange={setTipoPeca}>
-              <SelectTrigger className="bg-[#0c0c14] border-slate-700 text-slate-300"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="bg-[#0d0d0d] border-slate-700 text-slate-300"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {TIPOS_PECA.map(t => <SelectItem key={t} value={t}>{t.replace(/_/g, " ")}</SelectItem>)}
               </SelectContent>
@@ -111,7 +111,7 @@ export default function QAIAPage() {
           <div className="space-y-2">
             <Label className="text-slate-300">Profundidade</Label>
             <Select value={profundidade} onValueChange={setProfundidade}>
-              <SelectTrigger className="bg-[#0c0c14] border-slate-700 text-slate-300"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="bg-[#0d0d0d] border-slate-700 text-slate-300"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {PROFUNDIDADES.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
               </SelectContent>
@@ -120,7 +120,7 @@ export default function QAIAPage() {
           <div className="space-y-2">
             <Label className="text-slate-300">Tom</Label>
             <Select value={tom} onValueChange={setTom}>
-              <SelectTrigger className="bg-[#0c0c14] border-slate-700 text-slate-300"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="bg-[#0d0d0d] border-slate-700 text-slate-300"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {TONS.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
               </SelectContent>
@@ -129,7 +129,7 @@ export default function QAIAPage() {
           <div className="space-y-2">
             <Label className="text-slate-300">Foco</Label>
             <Select value={foco} onValueChange={setFoco}>
-              <SelectTrigger className="bg-[#0c0c14] border-slate-700 text-slate-300"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="bg-[#0d0d0d] border-slate-700 text-slate-300"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {FOCOS.map(f => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}
               </SelectContent>
@@ -140,7 +140,7 @@ export default function QAIAPage() {
         <div className="space-y-2">
           <Label className="text-slate-300">Descreva o caso e o que precisa</Label>
           <Textarea value={entrada} onChange={e => setEntrada(e.target.value)}
-            className="bg-[#0c0c14] border-slate-700 text-slate-100 min-h-[150px]"
+            className="bg-[#0d0d0d] border-slate-700 text-slate-100 min-h-[150px]"
             placeholder="Descreva os fatos, a situação jurídica e o que espera da IA..." />
         </div>
         <Button onClick={consultar} disabled={loading} className="bg-amber-600 hover:bg-amber-700">
@@ -152,7 +152,7 @@ export default function QAIAPage() {
       {resposta && (
         <div className="space-y-4">
           {/* Confidence Score */}
-          <div className="flex items-center gap-4 bg-[#12121c] border border-slate-800/40 rounded-xl p-4">
+          <div className="flex items-center gap-4 bg-[#111111] border border-slate-800/40 rounded-xl p-4">
             <div className="text-center">
               <div className={`text-2xl font-bold ${scoreColor(resposta.score_confianca)}`}>
                 {((resposta.score_confianca || 0) * 100).toFixed(0)}%
@@ -166,7 +166,7 @@ export default function QAIAPage() {
           </div>
 
           {resposta.fontes_recuperadas?.length > 0 && (
-            <div className="bg-[#12121c] border border-slate-800/40 rounded-xl p-5">
+            <div className="bg-[#111111] border border-slate-800/40 rounded-xl p-5">
               <h3 className="text-sm font-medium text-slate-300 mb-3">Fontes Utilizadas (por relevância)</h3>
               <div className="space-y-2">
                 {resposta.fontes_recuperadas.map((f: any, i: number) => (
@@ -186,7 +186,7 @@ export default function QAIAPage() {
             </div>
           )}
 
-          <div className="bg-[#12121c] border border-slate-800/40 rounded-xl p-5">
+          <div className="bg-[#111111] border border-slate-800/40 rounded-xl p-5">
             <h3 className="text-sm font-medium text-slate-300 mb-3">Resposta da IA</h3>
             <div className="text-sm text-slate-200 whitespace-pre-wrap leading-relaxed">
               {resposta.resposta_ia}
