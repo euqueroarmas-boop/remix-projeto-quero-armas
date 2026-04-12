@@ -1,6 +1,6 @@
 import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate, useLocation } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -75,6 +75,23 @@ const PageLoader = () => (
   </div>
 );
 
+const GlobalChrome = () => {
+  const location = useLocation();
+  const isQueroArmasRoute = location.pathname.startsWith("/quero-armas");
+
+  return (
+    <>
+      <RouteTracker />
+      {!isQueroArmasRoute && (
+        <>
+          <FloatingCtaBar />
+          <LanguageSuggestion />
+        </>
+      )}
+    </>
+  );
+};
+
 const App = () => (
   <ErrorBoundary>
   <QueryClientProvider client={queryClient}>
@@ -82,9 +99,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <RouteTracker />
-        <FloatingCtaBar />
-        <LanguageSuggestion />
+        <GlobalChrome />
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/" element={<Index />} />
