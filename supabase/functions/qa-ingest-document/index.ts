@@ -1,4 +1,3 @@
-import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2.99.1/dist/module/lib/cors.js";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsH = {
