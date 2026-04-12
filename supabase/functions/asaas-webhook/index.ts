@@ -602,7 +602,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // ── PAYMENT_CREATED: Backup provisioning ──
+    // ── PAYMENT_CREATED: Backup provisioning + email notification ──
     if (event === "PAYMENT_CREATED" && paymentRecord.quote_id) {
       console.log("[asaas-webhook] PAYMENT_CREATED — verificando provisionamento de acesso...");
       const { data: contractCheck } = await supabase.from("contracts").select("customer_id").eq("quote_id", paymentRecord.quote_id).limit(1);
@@ -640,6 +640,29 @@ Deno.serve(async (req) => {
         } catch (e) {
           console.error("[asaas-webhook] Erro ao provisionar via PAYMENT_CREATED:", e);
           await logSistemaBackend({ tipo: "webhook", status: "warning", mensagem: `Provisionamento backup falhou (PAYMENT_CREATED): ${e instanceof Error ? e.message : String(e)}`, payload: { quote_id: paymentRecord.quote_id } });
+        }
+
+        // ── EMAIL: Notify customer about pending payment ──
+        try {
+          const { data: contractForEmail } = await supabase.from("contracts").select("customer_id").eq("quote_id", paymentRecord.quote_id).limit(1);
+          if (contractForEmail?.[0]?.customer_id) {
+            const { data: custData } = await supabase.from("customers").select("email, razao_social, responsavel").eq("id", contractForEmail[0].customer_id).single();
+            if (custData?.email) {
+              await supabase.functions.invoke("notify-payment-pending", {
+                body: {
+                  customer_email: custData.email,
+                  customer_name: custData.responsavel || custData.razao_social,
+                  value: payment.value || 0,
+                  due_date: payment.dueDate || null,
+                  billing_type: payment.billingType || null,
+                  invoice_url: payment.invoiceUrl || payment.bankSlipUrl || null,
+                },
+              });
+              console.log("[asaas-webhook] Email de pagamento pendente disparado para:", custData.email);
+            }
+          }
+        } catch (emailErr) {
+          console.error("[asaas-webhook] Erro ao enviar email pagamento pendente:", emailErr);
         }
       }
     }
@@ -710,6 +733,28 @@ Deno.serve(async (req) => {
       console.log("[asaas-webhook] Pagamento vencido. Marcando contrato como INADIMPLENTE.");
       await supabase.from("contracts").update({ status: "INADIMPLENTE", service_status: "overdue" }).eq("quote_id", paymentRecord.quote_id);
       await supabase.from("integration_logs").insert({ integration_name: "asaas", operation_name: "contract_overdue", request_payload: { event, payment_id: payment.id, quote_id: paymentRecord.quote_id }, status: "warning" });
+
+      // ── EMAIL: Notify customer about overdue payment ──
+      try {
+        const { data: contractForOverdue } = await supabase.from("contracts").select("customer_id").eq("quote_id", paymentRecord.quote_id).limit(1);
+        if (contractForOverdue?.[0]?.customer_id) {
+          const { data: custData } = await supabase.from("customers").select("email, razao_social, responsavel").eq("id", contractForOverdue[0].customer_id).single();
+          if (custData?.email) {
+            await supabase.functions.invoke("notify-payment-overdue", {
+              body: {
+                customer_email: custData.email,
+                customer_name: custData.responsavel || custData.razao_social,
+                value: payment.value || 0,
+                due_date: payment.dueDate || null,
+                invoice_url: payment.invoiceUrl || payment.bankSlipUrl || null,
+              },
+            });
+            console.log("[asaas-webhook] Email de pagamento vencido disparado para:", custData.email);
+          }
+        }
+      } catch (emailErr) {
+        console.error("[asaas-webhook] Erro ao enviar email pagamento vencido:", emailErr);
+      }
     }
 
     // ══════════════════════════════════════════════════════════════
