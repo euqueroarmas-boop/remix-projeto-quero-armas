@@ -412,11 +412,11 @@ ${contextoFontes}
 
 Redija a peça jurídica do tipo "${tipo_peca}" seguindo RIGOROSAMENTE a estrutura obrigatória:
 1. Endereçamento: "${enderecamento}"
-2. Preâmbulo completo com fórmula: "vem, respeitosamente, ${tipoServico}, conforme a Lei nº 10.826/2003, pelos fatos e fundamentos a seguir expostos."
-3. I — DOS FATOS
-4. II — DO DIREITO
-5. III — ALEGAÇÕES FINAIS
-6. IV — FECHAMENTO (com "Nestes termos, pede deferimento." e espaço para local/data/assinatura)
+2. Preâmbulo fluido e jurídico com fórmula integrada: "vem, respeitosamente, ${tipoServico}, conforme a Lei nº 10.826/2003 e demais normas aplicáveis, pelos fatos e fundamentos a seguir expostos."
+3. I — DOS FATOS (cronológico, objetivo, sem floreio)
+4. II — DO DIREITO (usar base normativa prioritária: Lei 10.826/2003 + Decreto 11.615/2023 + IN 201/2021-DG/PF + Lei 9.784/1999)
+5. III — ALEGAÇÕES FINAIS (consolidar sem repetir)
+6. IV — FECHAMENTO (pedido claro + "Nestes termos, pede deferimento." + local/data/assinatura)
 
 REGRAS DE QUALIDADE PARA ESTA GERAÇÃO:
 - Escreva como advogado experiente, NÃO como assistente de IA.
