@@ -5,114 +5,90 @@ const corsH = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsH });
+function getSupabase() {
+  return createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+  );
+}
+
+function sanitizeText(text: string): string {
+  // Remove null bytes, control chars, and invalid unicode sequences
+  return text
+    .replace(/\0/g, "")
+    .replace(/\\u0000/g, "")
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, " ")
+    .replace(/\uFFFD/g, "")
+    .replace(/\\u[0-9a-fA-F]{0,3}[^0-9a-fA-F]/g, " ")
+    .replace(/\s+/g, " ");
+}
+
+async function processDocument(storage_path: string, user_id: string | null) {
+  const supabase = getSupabase();
+
+  const { data: doc, error: docErr } = await supabase
+    .from("qa_documentos_conhecimento")
+    .select("*")
+    .eq("storage_path", storage_path)
+    .maybeSingle();
+
+  if (docErr || !doc) {
+    console.error("Doc not found:", storage_path);
+    return;
+  }
+
+  // Mark as processing
+  await supabase.from("qa_documentos_conhecimento")
+    .update({ status_processamento: "processando", updated_at: new Date().toISOString() })
+    .eq("id", doc.id);
 
   try {
-    const { storage_path, user_id } = await req.json();
-    if (!storage_path) throw new Error("storage_path required");
-
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
-
-    const { data: doc, error: docErr } = await supabase
-      .from("qa_documentos_conhecimento")
-      .select("*")
-      .eq("storage_path", storage_path)
-      .maybeSingle();
-
-    if (docErr || !doc) {
-      return new Response(JSON.stringify({ error: "Document not found" }), { status: 404, headers: corsH });
-    }
-
-    await supabase.from("qa_documentos_conhecimento")
-      .update({ status_processamento: "processando" })
-      .eq("id", doc.id);
-
+    // Step 1: Download file
     const { data: fileData, error: dlErr } = await supabase.storage
       .from("qa-documentos")
       .download(storage_path);
 
     if (dlErr || !fileData) {
-      await supabase.from("qa_documentos_conhecimento")
-        .update({ status_processamento: "erro" })
-        .eq("id", doc.id);
-      throw new Error("Failed to download file");
+      throw new Error("Falha no download do arquivo");
     }
 
-    // Extract text
+    // Step 2: Extract text - handle PDFs properly
     let textoExtraido = "";
     const mime = doc.mime_type || "";
+    
+    // Get raw bytes first (before consuming the blob)
+    const rawArrayBuf = await fileData.arrayBuffer();
+    const rawBytes = new Uint8Array(rawArrayBuf);
 
     if (mime.includes("text") || mime.includes("rtf")) {
-      textoExtraido = await fileData.text();
+      textoExtraido = sanitizeText(new TextDecoder().decode(rawBytes));
     } else {
-      textoExtraido = await fileData.text().catch(() => "");
-      if (!textoExtraido || textoExtraido.length < 10) {
-        textoExtraido = `[Arquivo binário: ${doc.nome_arquivo}. Extração automática pendente de integração com parser de documentos.]`;
+      // For PDFs: attempt raw text extraction from binary
+      try {
+        // Decode as text, limit to first 500KB to avoid huge strings
+        const limitedBytes = rawBytes.slice(0, 500000);
+        const rawText = new TextDecoder("utf-8", { fatal: false }).decode(limitedBytes);
+        // Filter out binary garbage - keep only printable chars
+        const printable = rawText.replace(/[^\x20-\x7E\xA0-\xFF\u0100-\uFFFF\n\r\t]/g, " ");
+        const cleaned = printable.replace(/\s+/g, " ").trim();
+        if (cleaned.length > 100) {
+          textoExtraido = sanitizeText(cleaned.substring(0, 200000));
+        }
+      } catch {
+        // binary file, can't extract as text
       }
-    }
 
-    // Generate summary via AI
-    let resumo = "";
-    try {
-      const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${Deno.env.get("LOVABLE_API_KEY")}`,
-        },
-        body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
-          messages: [
-            { role: "system", content: "Você é um assistente jurídico especializado. Resuma o documento a seguir de forma técnica e objetiva em no máximo 3 parágrafos. Identifique o tipo de documento jurídico. Não invente informações." },
-            { role: "user", content: textoExtraido.substring(0, 8000) }
-          ],
-          max_tokens: 500,
-        }),
-      });
-      const aiData = await aiResp.json();
-      resumo = aiData.choices?.[0]?.message?.content || "";
-    } catch {
-      resumo = "Resumo automático indisponível.";
-    }
-
-    // Chunk the text
-    const CHUNK_SIZE = 1000;
-    const OVERLAP = 200;
-    const chunks: string[] = [];
-    let pos = 0;
-    while (pos < textoExtraido.length) {
-      chunks.push(textoExtraido.substring(pos, pos + CHUNK_SIZE));
-      pos += CHUNK_SIZE - OVERLAP;
-    }
-    if (chunks.length === 0) chunks.push(textoExtraido);
-
-    // Insert chunks
-    const chunkInserts = chunks.map((texto, i) => ({
-      documento_id: doc.id,
-      ordem_chunk: i,
-      texto_chunk: texto,
-      embedding_status: "pendente",
-    }));
-
-    const { data: insertedChunks, error: chunkErr } = await supabase
-      .from("qa_chunks_conhecimento")
-      .insert(chunkInserts)
-      .select("id, texto_chunk");
-
-    if (chunkErr) throw chunkErr;
-
-    // ── Generate REAL embeddings via AI Gateway (tool calling for structured output) ──
-    let embeddingsGerados = 0;
-    if (insertedChunks) {
-      for (let i = 0; i < insertedChunks.length; i++) {
+      // If text extraction yielded little, use Vision API
+      if (textoExtraido.length < 100) {
         try {
-          const chunkText = insertedChunks[i].texto_chunk;
-          // Use AI to generate a compact numerical representation
-          const embResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          const limitedBuf = rawBytes.slice(0, 400000);
+          let binary = "";
+          for (let i = 0; i < limitedBuf.length; i++) {
+            binary += String.fromCharCode(limitedBuf[i]);
+          }
+          const base64 = btoa(binary);
+
+          const visionResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -121,144 +97,208 @@ Deno.serve(async (req) => {
             body: JSON.stringify({
               model: "google/gemini-2.5-flash-lite",
               messages: [
-                {
-                  role: "system",
-                  content: "You are an embedding generator. Given a text, generate a vector of exactly 1536 floating point numbers between -1 and 1 that semantically represents the text content. Output ONLY the JSON array of numbers, nothing else."
-                },
-                { role: "user", content: chunkText.substring(0, 500) }
+                { role: "user", content: [
+                  { type: "text", text: "Extraia todo o texto deste documento PDF. Retorne apenas o texto extraído." },
+                  { type: "image_url", image_url: { url: `data:application/pdf;base64,${base64}` } }
+                ]}
               ],
-              tools: [{
-                type: "function",
-                function: {
-                  name: "store_embedding",
-                  description: "Store a 1536-dimensional embedding vector",
-                  parameters: {
-                    type: "object",
-                    properties: {
-                      vector: {
-                        type: "array",
-                        items: { type: "number" },
-                        description: "A 1536-dimensional embedding vector"
-                      }
-                    },
-                    required: ["vector"],
-                    additionalProperties: false
-                  }
-                }
-              }],
-              tool_choice: { type: "function", function: { name: "store_embedding" } },
+              max_tokens: 4000,
             }),
           });
 
-          if (!embResp.ok) {
-            console.error("Embedding AI error:", embResp.status);
-            await supabase.from("qa_chunks_conhecimento")
-              .update({ embedding_status: "erro" })
-              .eq("id", insertedChunks[i].id);
-            continue;
-          }
-
-          const embData = await embResp.json();
-          let vector: number[] | null = null;
-
-          // Extract from tool call response
-          const toolCall = embData.choices?.[0]?.message?.tool_calls?.[0];
-          if (toolCall?.function?.arguments) {
-            try {
-              const args = JSON.parse(toolCall.function.arguments);
-              vector = args.vector;
-            } catch { /* parsing error */ }
-          }
-
-          // Fallback: try content directly
-          if (!vector) {
-            const content = embData.choices?.[0]?.message?.content;
-            if (content) {
-              try {
-                const parsed = JSON.parse(content);
-                if (Array.isArray(parsed)) vector = parsed;
-              } catch { /* not JSON */ }
-            }
-          }
-
-          if (vector && Array.isArray(vector) && vector.length > 0) {
-            // Normalize to exactly 1536 dimensions
-            while (vector.length < 1536) vector.push(0);
-            if (vector.length > 1536) vector = vector.slice(0, 1536);
-
-            // Insert embedding using raw SQL via RPC to handle vector type
-            const vectorStr = `[${vector.join(",")}]`;
-            const { error: embInsertErr } = await supabase
-              .from("qa_embeddings")
-              .insert({
-                chunk_id: insertedChunks[i].id,
-                vetor_embedding: vectorStr,
-                modelo_embedding: "gemini-2.5-flash-lite-simulated",
-              });
-
-            if (!embInsertErr) {
-              embeddingsGerados++;
-              await supabase.from("qa_chunks_conhecimento")
-                .update({ embedding_status: "concluido" })
-                .eq("id", insertedChunks[i].id);
-            } else {
-              console.error("Embedding insert error:", embInsertErr.message);
-              await supabase.from("qa_chunks_conhecimento")
-                .update({ embedding_status: "erro" })
-                .eq("id", insertedChunks[i].id);
+          if (visionResp.ok) {
+            const visionData = await visionResp.json();
+            const extracted = visionData.choices?.[0]?.message?.content || "";
+            if (extracted.length > 50) {
+              textoExtraido = sanitizeText(extracted);
             }
           } else {
-            await supabase.from("qa_chunks_conhecimento")
-              .update({ embedding_status: "erro" })
-              .eq("id", insertedChunks[i].id);
+            console.log("Vision API status:", visionResp.status);
           }
-
-          // Small delay between embedding calls
-          if (i < insertedChunks.length - 1) {
-            await new Promise(r => setTimeout(r, 300));
-          }
-        } catch (embErr) {
-          console.error("Embedding generation error:", embErr);
-          await supabase.from("qa_chunks_conhecimento")
-            .update({ embedding_status: "erro" })
-            .eq("id", insertedChunks[i].id);
+        } catch (e) {
+          console.error("Vision extraction failed:", e);
         }
       }
+
+      // Final fallback
+      if (!textoExtraido || textoExtraido.length < 20) {
+        textoExtraido = `[Documento: ${doc.nome_arquivo}. Tipo: ${mime}. Tamanho: ${doc.tamanho_bytes} bytes. Extração de texto não foi possível.]`;
+      }
+    }
+    
+    // Hard cap at 200K chars to avoid DB/memory issues
+    if (textoExtraido.length > 200000) {
+      textoExtraido = textoExtraido.substring(0, 200000);
     }
 
-    // Compute file hash
-    const arrayBuf = await fileData.arrayBuffer().catch(() => new ArrayBuffer(0));
-    const hashBuffer = await crypto.subtle.digest("SHA-256", arrayBuf);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+    // Step 3: Compute file hash
+    let hashHex = "";
+    try {
+      const hashBuffer = await crypto.subtle.digest("SHA-256", rawArrayBuf);
+      hashHex = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, "0")).join("");
+    } catch {
+      hashHex = "hash_unavailable";
+    }
 
-    // Update document
+    // Step 4: Save extracted text immediately
     await supabase.from("qa_documentos_conhecimento")
       .update({
         texto_extraido: textoExtraido,
-        resumo_extraido: resumo,
         hash_arquivo: hashHex,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", doc.id);
+
+    // Step 5: Generate summary (graceful on 402/credits)
+    let resumo = "Resumo pendente.";
+    try {
+      const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${Deno.env.get("LOVABLE_API_KEY")}`,
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash-lite",
+          messages: [
+            { role: "system", content: "Resuma o documento jurídico a seguir em no máximo 2 parágrafos. Seja objetivo." },
+            { role: "user", content: textoExtraido.substring(0, 3000) }
+          ],
+          max_tokens: 250,
+        }),
+      });
+      if (aiResp.ok) {
+        const aiData = await aiResp.json();
+        resumo = aiData.choices?.[0]?.message?.content || "Resumo gerado sem conteúdo.";
+      } else {
+        console.log("AI summary status:", aiResp.status);
+        resumo = aiResp.status === 402 
+          ? "Resumo indisponível (créditos IA esgotados). O texto foi extraído com sucesso."
+          : `Resumo indisponível (erro ${aiResp.status}).`;
+      }
+    } catch {
+      resumo = "Resumo indisponível (erro de conexão).";
+    }
+
+    // Step 6: Chunk text (sanitized)
+    const safeText = sanitizeText(textoExtraido);
+    const CHUNK_SIZE = 800;
+    const OVERLAP = 150;
+    const chunks: string[] = [];
+    let pos = 0;
+    while (pos < safeText.length) {
+      chunks.push(safeText.substring(pos, pos + CHUNK_SIZE));
+      pos += CHUNK_SIZE - OVERLAP;
+    }
+    if (chunks.length === 0) chunks.push(safeText);
+
+    // Step 7: Insert chunks
+    const chunkInserts = chunks.map((texto, i) => ({
+      documento_id: doc.id,
+      ordem_chunk: i,
+      texto_chunk: texto,
+      embedding_status: "pendente",
+    }));
+
+    const { error: chunkErr } = await supabase
+      .from("qa_chunks_conhecimento")
+      .insert(chunkInserts);
+
+    if (chunkErr) {
+      console.error("Chunk insert error:", chunkErr.message);
+      // Try inserting chunks one by one as fallback
+      let insertedCount = 0;
+      for (const chunk of chunkInserts) {
+        const { error } = await supabase.from("qa_chunks_conhecimento").insert(chunk);
+        if (!error) insertedCount++;
+      }
+      console.log(`Fallback: inserted ${insertedCount}/${chunkInserts.length} chunks`);
+    }
+
+    // Step 8: Mark as complete
+    await supabase.from("qa_documentos_conhecimento")
+      .update({
+        resumo_extraido: resumo,
         status_processamento: "concluido",
         updated_at: new Date().toISOString(),
       })
       .eq("id", doc.id);
 
-    // Audit log
-    await supabase.from("qa_logs_auditoria").insert({
-      usuario_id: user_id || null,
-      entidade: "qa_documentos_conhecimento",
-      entidade_id: doc.id,
-      acao: "ingestao_concluida",
-      detalhes_json: { chunks_criados: chunks.length, embeddings_gerados: embeddingsGerados, tamanho_texto: textoExtraido.length },
-    });
+    console.log(`Document ${doc.id} processed OK: ${chunks.length} chunks, ${textoExtraido.length} chars`);
+
+    // Step 9: Audit log (no .catch() chaining issue)
+    try {
+      await supabase.from("qa_logs_auditoria").insert({
+        usuario_id: user_id || null,
+        entidade: "qa_documentos_conhecimento",
+        entidade_id: doc.id,
+        acao: "ingestao_concluida",
+        detalhes_json: { chunks_criados: chunks.length, tamanho_texto: textoExtraido.length },
+      });
+    } catch {
+      // audit log is non-critical
+    }
+
+    // Step 10: Trigger embeddings asynchronously
+    try {
+      const resp = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/qa-generate-embeddings`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+        },
+        body: JSON.stringify({ documento_id: doc.id }),
+      });
+      console.log("Embeddings trigger status:", resp.status);
+    } catch {
+      console.log("Embeddings generation will be retried separately");
+    }
+
+  } catch (err) {
+    console.error("Processing failed for", doc.id, ":", err.message);
+
+    await supabase.from("qa_documentos_conhecimento")
+      .update({
+        status_processamento: "erro",
+        resumo_extraido: `Erro: ${err.message}`,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", doc.id);
+
+    try {
+      await supabase.from("qa_logs_auditoria").insert({
+        usuario_id: user_id || null,
+        entidade: "qa_documentos_conhecimento",
+        entidade_id: doc.id,
+        acao: "ingestao_erro",
+        detalhes_json: { erro: err.message },
+      });
+    } catch {
+      // non-critical
+    }
+  }
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsH });
+
+  try {
+    const { storage_path, user_id } = await req.json();
+    if (!storage_path) {
+      return new Response(JSON.stringify({ error: "storage_path required" }), {
+        status: 400, headers: { ...corsH, "Content-Type": "application/json" },
+      });
+    }
+
+    // Return immediately, process in background
+    EdgeRuntime.waitUntil(processDocument(storage_path, user_id));
 
     return new Response(JSON.stringify({
       success: true,
-      documento_id: doc.id,
-      chunks_criados: chunks.length,
-      embeddings_gerados: embeddingsGerados,
-      tamanho_texto: textoExtraido.length,
-    }), { headers: { ...corsH, "Content-Type": "application/json" } });
+      message: "Processamento iniciado em background",
+    }), {
+      headers: { ...corsH, "Content-Type": "application/json" },
+    });
 
   } catch (err) {
     return new Response(JSON.stringify({ error: err.message }), {
