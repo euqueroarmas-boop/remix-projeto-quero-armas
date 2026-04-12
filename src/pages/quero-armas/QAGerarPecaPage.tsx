@@ -217,7 +217,7 @@ export default function QAGerarPecaPage() {
       if (!data) return;
       const c = data as any;
       setCasoId(c.id);
-      setCasoTitulo(c.titulo || "");
+      // titulo auto-gerado a partir do nome
       setNomeRequerente(c.nome_requerente || "");
       setCpfCnpj(c.cpf_cnpj || "");
       setEntradaCaso(c.descricao_caso || "");
@@ -230,8 +230,9 @@ export default function QAGerarPecaPage() {
       setClienteBairro(c.bairro || "");
       if (c.minuta_gerada) setResultado({ minuta_gerada: c.minuta_gerada, geracao_id: c.geracao_id, score_confianca: 0, fontes_utilizadas: [] });
       // Try to match tipo_servico
-      const match = TIPOS_SERVICO.find(t => t.label === c.tipo_servico);
-      if (match) { setTipoServico(match.value); } else if (c.tipo_servico) { setTipoServico("outro"); setTipoServicoCustom(c.tipo_servico); }
+      // tipo_servico derivado de tipo_peca
+      const matchPeca = TIPOS_PECA.find(t => t.label === c.tipo_servico || t.value === c.tipo_peca);
+      if (matchPeca) setTipoPeca(matchPeca.value);
       if (c.unidade_pf) {
         setCircunscricaoResolvida({ unidade_pf: c.unidade_pf, sigla_unidade: c.sigla_unidade_pf || "", tipo_unidade: "", municipio_sede: "", uf: c.uf || "", base_legal: "" });
         setCircunscricaoStatus("resolved");
@@ -373,7 +374,7 @@ export default function QAGerarPecaPage() {
         titulo: arq.nome, nome_arquivo: arq.file.name, storage_path: storagePath,
         tipo_documento: arq.tipo, tipo_origem: "upload", papel_documento: "auxiliar_caso",
         categoria: arq.tipo, status_processamento: "pendente", status_validacao: "validado",
-        ativo: true, ativo_na_ia: false, caso_id: casoTitulo || null,
+        ativo: true, ativo_na_ia: false, caso_id: nomeRequerente || null,
         enviado_por: user?.id || null, mime_type: arq.file.type || null, tamanho_bytes: arq.file.size,
       }).select("id").single();
       if (dbErr) throw dbErr;
@@ -419,11 +420,11 @@ export default function QAGerarPecaPage() {
       }));
 
       const casoData: Record<string, any> = {
-        titulo: casoTitulo || `Caso ${nomeRequerente || "sem título"}`,
+        titulo: `Caso ${nomeRequerente || "sem título"}`,
         nome_requerente: nomeRequerente,
         cpf_cnpj: cpfCnpj || null,
         tipo_peca: tipoPeca,
-        tipo_servico: tipoServicoFinal || null,
+        tipo_servico: tipoPecaLabel || null,
         cidade: clienteCidade || null,
         uf: clienteUf || null,
         cep: clienteCep || null,
@@ -462,7 +463,7 @@ export default function QAGerarPecaPage() {
         acao: casoId ? "atualizar_caso" : "criar_caso",
         detalhes_json: {
           nome_requerente: nomeRequerente,
-          tipo_servico: tipoServicoFinal,
+          tipo_servico: tipoPecaLabel,
           tipo_peca: tipoPeca,
           docs_total: docTotal,
           docs_ok: docDone,
@@ -538,12 +539,12 @@ export default function QAGerarPecaPage() {
 
       const { data, error } = await supabase.functions.invoke("qa-gerar-peca", {
         body: {
-          usuario_id: user?.id, caso_titulo: casoTitulo || nomeRequerente, entrada_caso: entradaCaso,
+          usuario_id: user?.id, caso_titulo: nomeRequerente, entrada_caso: entradaCaso,
           tipo_peca: tipoPeca, foco,
           cliente_cidade: clienteCidade.trim(), cliente_uf: clienteUf.trim(),
           cliente_endereco: clienteEndereco.trim() || null, cliente_cep: clienteCep.trim() || null,
           nome_requerente: nomeRequerente.trim(),
-          tipo_servico: tipoServicoFinal || null,
+          tipo_servico: tipoPecaLabel || null,
           circunscricao_resolvida: circ ? {
             unidade_pf: circ.unidade_pf, sigla_unidade: circ.sigla_unidade,
             tipo_unidade: circ.tipo_unidade, municipio_sede: circ.municipio_sede,
@@ -589,13 +590,13 @@ export default function QAGerarPecaPage() {
     if (!resultado?.geracao_id) return;
     try {
       const { data, error } = await supabase.functions.invoke("qa-export-docx", {
-        body: { geracao_id: resultado.geracao_id, variables: { cliente_nome: nomeRequerente || casoTitulo } },
+        body: { geracao_id: resultado.geracao_id, variables: { cliente_nome: nomeRequerente } },
       });
       if (error) throw error;
       const blob = new Blob([data], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = url; a.download = `${nomeRequerente || casoTitulo || "peca"}.docx`; a.click();
+      a.href = url; a.download = `${nomeRequerente || "peca"}.docx`; a.click();
       URL.revokeObjectURL(url);
 
       // Update case with docx path
