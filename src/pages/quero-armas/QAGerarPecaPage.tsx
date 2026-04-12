@@ -75,6 +75,10 @@ function stepIndex(s: GenerationStep): number {
 /* ── Constants ── */
 const CIRCUNSCRICAO_TIMEOUT_MS = 12000;
 
+const toTitleCase = (s: string) =>
+  s.toLowerCase().replace(/(?:^|\s|'|-)\S/g, c => c.toUpperCase())
+    .replace(/\b(Da|Das|De|Do|Dos|E)\b/g, m => m.toLowerCase());
+
 const TIPOS_DOC_AUXILIAR = [
   { value: "boletim_ocorrencia", label: "Boletim de Ocorrência" },
   { value: "laudo_medico", label: "Laudo Médico" },
