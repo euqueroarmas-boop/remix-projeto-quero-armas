@@ -434,6 +434,17 @@ function validateQuality(text: string, evidenceDocs: EvidenceDoc[]): { pass: boo
         issues.push(`prova_factual_subutilizada:${totalProbatorio}_docs_probatorios_sem_uso_concreto`);
       }
     }
+    // Check if structured data was rich but piece is generic
+    const totalCampos = evidenceDocs.reduce((sum, d) => sum + Object.values(d.structured.campos).filter(v => v !== null && v !== false).length, 0);
+    if (totalCampos > 8 && text.length < 3000) {
+      issues.push(`extracao_subutilizada:${totalCampos}_campos_extraidos_peca_curta`);
+    }
+    if (totalCampos > 5) {
+      const usesConcreteData = /\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4}/.test(text) || /CPF|RG|CRM|CRP|n[ºo°]/i.test(text);
+      if (!usesConcreteData) {
+        issues.push(`dados_documentais_nao_aproveitados:${totalCampos}_campos_sem_uso_concreto`);
+      }
+    }
   }
 
   return { pass: issues.length === 0, issues };
