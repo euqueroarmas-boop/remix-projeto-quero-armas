@@ -208,6 +208,7 @@ export default function QADocumentoDetalhePage() {
   const isAtivoIA = doc.ativo_na_ia === true;
   const isRef = doc.referencia_preferencial === true;
   const isConcluido = doc.status_processamento === "concluido";
+  const isAuxiliar = doc.papel_documento === "auxiliar_caso";
 
   return (
     <div className="space-y-6 max-w-5xl">
@@ -226,6 +227,12 @@ export default function QADocumentoDetalhePage() {
             </h1>
             <div className="flex items-center gap-3 mt-2 text-xs text-slate-500 flex-wrap">
               <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-400">{doc.tipo_documento?.replace(/_/g, " ")}</span>
+              <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${isAuxiliar ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20" : "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20"}`}>
+                {isAuxiliar ? "Auxiliar do Caso" : "Aprendizado"}
+              </span>
+              {isAuxiliar && doc.caso_id && (
+                <span className="px-2 py-0.5 rounded bg-cyan-500/5 text-cyan-400/70 text-[10px]">caso: {doc.caso_id}</span>
+              )}
               {doc.categoria && <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-400">{doc.categoria}</span>}
               <span className="flex items-center gap-1">
                 {doc.tipo_origem === "link_publico" ? <Globe className="h-3 w-3 text-blue-400" /> : <Upload className="h-3 w-3 text-slate-500" />}
@@ -257,7 +264,12 @@ export default function QADocumentoDetalhePage() {
         </div>
 
         {/* Governance Status Badges */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mt-4">
+          <GovBadge
+            label="Papel"
+            value={isAuxiliar ? "Auxiliar do Caso" : "Aprendizado"}
+            variant={isAuxiliar ? "neutral" : "ok"}
+          />
           <GovBadge
             label="Processamento"
             value={doc.status_processamento === "concluido" ? "Concluído" : doc.status_processamento === "processando" ? "Processando" : doc.status_processamento === "erro" || doc.status_processamento === "texto_invalido" ? "Falhou" : "Pendente"}
@@ -265,20 +277,27 @@ export default function QADocumentoDetalhePage() {
           />
           <GovBadge
             label="Validação"
-            value={isValidado ? "Validado" : isRejeitado ? "Rejeitado" : "Pendente"}
-            variant={isValidado ? "ok" : isRejeitado ? "off" : "warn"}
+            value={isAuxiliar ? "N/A" : isValidado ? "Validado" : isRejeitado ? "Rejeitado" : "Pendente"}
+            variant={isAuxiliar ? "neutral" : isValidado ? "ok" : isRejeitado ? "off" : "warn"}
           />
           <GovBadge
-            label="Uso na IA"
-            value={isAtivoIA ? "Ativo" : "Desativado"}
-            variant={isAtivoIA ? "ok" : "off"}
+            label="Uso na IA Global"
+            value={isAuxiliar ? "Somente caso" : isAtivoIA ? "Ativo" : "Desativado"}
+            variant={isAuxiliar ? "neutral" : isAtivoIA ? "ok" : "off"}
           />
           <GovBadge
             label="Referência"
-            value={isRef ? "Sim" : "Não"}
-            variant={isRef ? "ok" : "neutral"}
+            value={isAuxiliar ? "Bloqueado" : isRef ? "Sim" : "Não"}
+            variant={isAuxiliar ? "off" : isRef ? "ok" : "neutral"}
           />
         </div>
+
+        {isAuxiliar && (
+          <div className="mt-3 bg-cyan-500/5 border border-cyan-500/15 rounded-lg px-4 py-2.5 text-xs text-cyan-400/80">
+            <strong>Documento auxiliar do caso.</strong> Este documento é utilizado apenas como suporte factual do caso concreto. Não alimenta o aprendizado global da IA, não aparece no ranking de referências e não serve como modelo de peça.
+            {doc.caso_id && <span className="block mt-1 text-cyan-400/60">Vinculado ao caso: <strong>{doc.caso_id}</strong></span>}
+          </div>
+        )}
 
         {/* Stats row */}
         <div className="grid grid-cols-3 gap-3 mt-3">
@@ -300,8 +319,10 @@ export default function QADocumentoDetalhePage() {
       {/* ─── Governance Actions ─── */}
       <div className="bg-[#12121c] border border-slate-800/40 rounded-xl p-5">
         <h2 className="text-sm font-medium text-slate-300 mb-3">Ações de Governança</h2>
+        {isAuxiliar ? (
+          <p className="text-xs text-slate-500">Documentos auxiliares do caso não possuem ações de governança de aprendizado. São utilizados apenas como suporte factual.</p>
+        ) : (
         <div className="flex flex-wrap gap-2">
-          {/* Validar / Rejeitar */}
           {!isValidado && isConcluido && (
             <Button size="sm" disabled={acting} onClick={() => handleAction("validar")}
               className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5">
@@ -314,8 +335,6 @@ export default function QADocumentoDetalhePage() {
               <ShieldX className="h-3.5 w-3.5" /> Rejeitar documento
             </Button>
           )}
-
-          {/* Ativar / Desativar IA */}
           {isAtivoIA ? (
             <Button size="sm" variant="outline" disabled={acting} onClick={() => handleAction("desativar_ia")}
               className="border-amber-600/40 text-amber-400 hover:bg-amber-500/10 gap-1.5">
@@ -327,8 +346,6 @@ export default function QADocumentoDetalhePage() {
               <Zap className="h-3.5 w-3.5" /> Ativar na IA
             </Button>
           )}
-
-          {/* Referência */}
           {isValidado && !isRef && (
             <Button size="sm" variant="outline" disabled={acting} onClick={() => handleAction("promover_referencia")}
               className="border-amber-500/40 text-amber-300 hover:bg-amber-500/10 gap-1.5">
@@ -341,9 +358,9 @@ export default function QADocumentoDetalhePage() {
               <StarOff className="h-3.5 w-3.5" /> Remover da referência
             </Button>
           )}
-
           {acting && <Loader2 className="h-4 w-4 animate-spin text-amber-400 ml-2 self-center" />}
         </div>
+        )}
       </div>
 
       {doc.hash_arquivo && (

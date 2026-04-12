@@ -233,6 +233,25 @@ REGRAS INVIOLÁVEIS
 13. O endereçamento deve seguir o padrão sem invenção de comarca.
 
 ═══════════════════════════════════════════
+DOCUMENTOS AUXILIARES DO CASO — REGRA DE USO
+═══════════════════════════════════════════
+
+DOCUMENTOS AUXILIARES são: boletins de ocorrência, laudos médicos, laudos psicológicos/psiquiátricos, notificações, indeferimentos, comprovantes, certidões, documentos pessoais, declarações, relatórios e outros documentos de suporte do caso concreto.
+
+COMO USAR DOCUMENTOS AUXILIARES:
+- Use-os como BASE FACTUAL para narrar os fatos do caso na seção DOS FATOS.
+- Cite-os como PROVA DOCUMENTAL quando fundamentar argumentos em DO DIREITO.
+- Referencie dados específicos (datas, valores, nomes, números) extraídos desses documentos.
+- Trate-os como parte do acervo probatório do caso.
+
+COMO NÃO USAR DOCUMENTOS AUXILIARES:
+- NÃO copie o estilo de redação de um boletim de ocorrência ou laudo.
+- NÃO trate documento auxiliar como modelo de peça jurídica.
+- NÃO use documento auxiliar como referência de estrutura argumentativa.
+- NÃO confunda laudo médico com tese jurídica.
+- Documentos auxiliares são FATOS, não DIREITO.
+
+═══════════════════════════════════════════
 AUTOAVALIAÇÃO ANTES DE ENTREGAR
 ═══════════════════════════════════════════
 
@@ -314,11 +333,13 @@ Deno.serve(async (req) => {
       validada: j.validada_humanamente,
     }));
 
+    // Learning documents only (exclude auxiliar_caso from global AI learning)
     const { data: docs } = await supabase.from("qa_documentos_conhecimento")
       .select("id, titulo, tipo_documento, resumo_extraido")
       .eq("status_processamento", "concluido")
       .eq("ativo_na_ia", true)
       .eq("status_validacao", "validado")
+      .eq("papel_documento", "aprendizado")
       .textSearch("resumo_extraido", searchTerms, { type: "websearch" }).limit(5);
 
     docs?.forEach((d: any) => fontesRecuperadas.push({
@@ -326,6 +347,25 @@ Deno.serve(async (req) => {
       referencia: d.tipo_documento,
       conteudo: d.resumo_extraido?.substring(0, 1500) || "",
     }));
+
+    // Auxiliary case documents (if caso_id provided, fetch full text for factual support)
+    let fontesAuxiliares: any[] = [];
+    const caso_id = caso_titulo?.trim() || null;
+    if (caso_id) {
+      const { data: auxDocs } = await supabase.from("qa_documentos_conhecimento")
+        .select("id, titulo, tipo_documento, texto_extraido, resumo_extraido")
+        .eq("status_processamento", "concluido")
+        .eq("ativo", true)
+        .eq("papel_documento", "auxiliar_caso")
+        .eq("caso_id", caso_id)
+        .limit(20);
+
+      auxDocs?.forEach((d: any) => fontesAuxiliares.push({
+        tipo: "auxiliar_caso", id: d.id, titulo: d.titulo,
+        referencia: d.tipo_documento,
+        conteudo: d.texto_extraido?.substring(0, 8000) || d.resumo_extraido || "",
+      }));
+    }
 
     let fontesParaUsar = fontesRecuperadas;
     if (fontes_selecionadas?.length > 0) {
@@ -335,12 +375,21 @@ Deno.serve(async (req) => {
 
     let contextoFontes = "";
     if (fontesParaUsar.length > 0) {
-      contextoFontes = "\n\n--- FONTES PARA FUNDAMENTAÇÃO ---\n";
+      contextoFontes = "\n\n--- FONTES DE APRENDIZADO (base normativa, estrutural e argumentativa) ---\n";
       fontesParaUsar.forEach((f, i) => {
         contextoFontes += `\n[Fonte ${i + 1} - ${f.tipo.toUpperCase()}] ${f.titulo}\nReferência: ${f.referencia}\nConteúdo completo: ${f.conteudo}\n`;
       });
     } else {
-      contextoFontes = "\n\n--- ATENÇÃO: Nenhuma fonte encontrada. NÃO invente. Declare insuficiência. ---\n";
+      contextoFontes = "\n\n--- ATENÇÃO: Nenhuma fonte de aprendizado encontrada. NÃO invente. Declare insuficiência. ---\n";
+    }
+
+    // Add auxiliary case documents as separate factual context
+    if (fontesAuxiliares.length > 0) {
+      contextoFontes += "\n\n--- DOCUMENTOS AUXILIARES DO CASO CONCRETO (usar APENAS como base factual e probatória — NÃO como modelo de estilo ou estrutura) ---\n";
+      contextoFontes += "REGRA: Estes documentos contêm fatos, dados e provas do caso específico. Use-os para narrar fatos, apoiar argumentos e citar documentos. NUNCA os trate como modelo de peça ou referência de estilo.\n";
+      fontesAuxiliares.forEach((f, i) => {
+        contextoFontes += `\n[Doc. Auxiliar ${i + 1} - ${f.referencia?.replace(/_/g, " ")}] ${f.titulo}\nConteúdo integral:\n${f.conteudo}\n`;
+      });
     }
 
     const profundidadeMap: any = {

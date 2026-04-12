@@ -2077,6 +2077,7 @@ export type Database = {
         Row: {
           ativo: boolean
           ativo_na_ia: boolean
+          caso_id: string | null
           categoria: string | null
           created_at: string
           descricao: string | null
@@ -2088,6 +2089,7 @@ export type Database = {
           mime_type: string | null
           nome_arquivo: string
           origem: string | null
+          papel_documento: string
           referencia_preferencial: boolean
           resumo_extraido: string | null
           status_processamento: string
@@ -2104,6 +2106,7 @@ export type Database = {
         Insert: {
           ativo?: boolean
           ativo_na_ia?: boolean
+          caso_id?: string | null
           categoria?: string | null
           created_at?: string
           descricao?: string | null
@@ -2115,6 +2118,7 @@ export type Database = {
           mime_type?: string | null
           nome_arquivo: string
           origem?: string | null
+          papel_documento?: string
           referencia_preferencial?: boolean
           resumo_extraido?: string | null
           status_processamento?: string
@@ -2131,6 +2135,7 @@ export type Database = {
         Update: {
           ativo?: boolean
           ativo_na_ia?: boolean
+          caso_id?: string | null
           categoria?: string | null
           created_at?: string
           descricao?: string | null
@@ -2142,6 +2147,7 @@ export type Database = {
           mime_type?: string | null
           nome_arquivo?: string
           origem?: string | null
+          papel_documento?: string
           referencia_preferencial?: boolean
           resumo_extraido?: string | null
           status_processamento?: string
@@ -3363,6 +3369,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      qa_busca_auxiliar_caso: {
+        Args: {
+          match_count?: number
+          match_threshold?: number
+          p_caso_id: string
+          query_embedding: string
+        }
+        Returns: {
+          chunk_id: string
+          documento_id: string
+          resumo_chunk: string
+          similarity: number
+          texto_chunk: string
+        }[]
+      }
       qa_busca_similar: {
         Args: {
           match_count?: number
