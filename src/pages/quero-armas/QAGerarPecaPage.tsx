@@ -490,7 +490,8 @@ export default function QAGerarPecaPage() {
   /* ── Generation ── */
   const hasDocsPending = arquivosAuxiliares.some(a => !["done", "failed", "pending"].includes(a.stage));
   const hasDocsFailed = arquivosAuxiliares.some(a => a.stage === "failed");
-  const canGenerate = !loading && !hasDocsPending && !hasDocsFailed;
+  const hasDocsUnclassified = arquivosAuxiliares.some(a => a.stage === "pending");
+  const canGenerate = !loading && !hasDocsPending && !hasDocsFailed && !hasDocsUnclassified;
 
   const gerar = async () => {
     if (!nomeRequerente.trim()) { toast.error("Informe o nome completo do requerente"); return; }
@@ -514,24 +515,21 @@ export default function QAGerarPecaPage() {
         toast.warning("Circunscrição não resolvida. A peça seguirá com marcador pendente.", { duration: 5000 });
       }
 
-      // Step 2-3: Upload docs
+      // Step 2: Collect already-processed doc IDs (upload happened on classification)
       let auxiliarDocIds: string[] = [];
       if (arquivosAuxiliares.length > 0) {
         setGenStep("uploading_docs");
-        auxiliarDocIds = await uploadAllAuxiliares();
-        setGenStep("extracting_docs");
-        await new Promise(r => setTimeout(r, 500));
+        auxiliarDocIds = arquivosAuxiliares.filter(a => a.stage === "done" && a.docId).map(a => a.docId!);
+        await new Promise(r => setTimeout(r, 300));
 
-        // Gate: compare successful IDs vs total docs to detect failures
-        const totalDocs = arquivosAuxiliares.length;
-        const failedCount = totalDocs - auxiliarDocIds.length;
-        if (failedCount > 0) {
-          const msg = `Geração bloqueada: ${failedCount} de ${totalDocs} documento(s) falharam no processamento. Reprocesse ou remova os documentos com erro antes de gerar.`;
+        const unfinished = arquivosAuxiliares.filter(a => a.stage !== "done");
+        if (unfinished.length > 0) {
+          const msg = `Geração bloqueada: ${unfinished.length} documento(s) não foram processados. Classifique, reprocesse ou remova antes de gerar.`;
           try {
             await supabase.from("qa_logs_auditoria" as any).insert({
               usuario_id: user?.id, entidade: "qa_casos", entidade_id: casoId || "new",
               acao: "geracao_bloqueada_anexos_incompletos",
-              detalhes_json: { total: totalDocs, concluidos: auxiliarDocIds.length, falhos: failedCount },
+              detalhes_json: { total: arquivosAuxiliares.length, concluidos: auxiliarDocIds.length, pendentes: unfinished.length },
             });
           } catch { /* non-critical */ }
           throw new Error(msg);
