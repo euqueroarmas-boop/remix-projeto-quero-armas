@@ -730,8 +730,36 @@ export default function QAGerarPecaPage() {
             </div>
             <div className="space-y-1.5">
               <Label className="text-slate-500 text-[11px]">Cidade *</Label>
-              <Input value={clienteCidade} onChange={e => { setClienteCidade(e.target.value); resetCircunscricaoState(); }}
-                onBlur={handleCidadeBlur} className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm" placeholder="Ex: São Paulo" />
+              <Popover open={cidadePopoverOpen} onOpenChange={setCidadePopoverOpen}>
+                <PopoverTrigger asChild>
+                  <Button type="button" variant="outline" role="combobox" aria-expanded={cidadePopoverOpen}
+                    disabled={!clienteUf || municipiosLoading}
+                    className="w-full justify-between bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm font-normal hover:bg-[#0c0c18] hover:text-slate-200">
+                    {clienteCidade || (municipiosLoading ? "Carregando..." : !clienteUf ? "Selecione UF primeiro" : "Selecione a cidade...")}
+                    {municipiosLoading ? <Loader2 className="ml-2 h-3.5 w-3.5 shrink-0 animate-spin opacity-50" /> : <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0 bg-[#0c0c18] border-[#1a1a2e]" align="start">
+                  <Command className="bg-transparent">
+                    <CommandInput placeholder="Digite para buscar..." className="h-9 text-sm text-slate-300" />
+                    <CommandList className="max-h-[240px]">
+                      <CommandEmpty className="py-4 text-center text-[11px] text-slate-500">
+                        Nenhum município encontrado. Verifique a grafia ou selecione outra UF.
+                      </CommandEmpty>
+                      <CommandGroup>
+                        {municipiosList.map(m => (
+                          <CommandItem key={m} value={m} onSelect={() => handleCidadeSelect(m)}
+                            className="text-sm text-slate-300 cursor-pointer data-[selected=true]:bg-cyan-500/10 data-[selected=true]:text-cyan-300">
+                            <CheckCircle className={`mr-2 h-3.5 w-3.5 ${clienteCidade === m ? "opacity-100 text-emerald-400" : "opacity-0"}`} />
+                            {m}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+              {!clienteUf && <span className="text-[10px] text-slate-600">Selecione o estado primeiro</span>}
             </div>
             <div className="space-y-1.5">
               <Label className="text-slate-500 text-[11px]">UF *</Label>
