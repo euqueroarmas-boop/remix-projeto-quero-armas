@@ -12,6 +12,11 @@ function getSupabase() {
   );
 }
 
+function sanitizeText(text: string): string {
+  // Remove null bytes and other problematic unicode
+  return text.replace(/\0/g, "").replace(/\\u0000/g, "");
+}
+
 async function processDocument(storage_path: string, user_id: string | null) {
   const supabase = getSupabase();
 
@@ -38,30 +43,45 @@ async function processDocument(storage_path: string, user_id: string | null) {
       .download(storage_path);
 
     if (dlErr || !fileData) {
-      throw new Error("download_failed: " + (dlErr?.message || "no data"));
+      throw new Error("Falha no download do arquivo");
     }
 
-    // Step 2: Extract text
+    // Step 2: Extract text - handle PDFs properly
     let textoExtraido = "";
     const mime = doc.mime_type || "";
 
     if (mime.includes("text") || mime.includes("rtf")) {
-      textoExtraido = await fileData.text();
+      textoExtraido = sanitizeText(await fileData.text());
     } else {
-      // For PDFs and binary, try text extraction first
+      // For PDFs: attempt raw text extraction
       try {
-        textoExtraido = await fileData.text();
+        const rawText = await fileData.text();
+        // Filter out binary garbage - keep only printable chars
+        const printable = rawText.replace(/[^\x20-\x7E\xA0-\xFF\u0100-\uFFFF\n\r\t]/g, " ");
+        const cleaned = printable.replace(/\s+/g, " ").trim();
+        if (cleaned.length > 100) {
+          textoExtraido = sanitizeText(cleaned);
+        }
       } catch {
-        textoExtraido = "";
+        // binary file, can't extract as text
       }
-      
-      const cleaned = textoExtraido.replace(/\s+/g, " ").trim();
-      if (!cleaned || cleaned.length < 50) {
-        // Try vision API for scanned PDFs
+
+      // If text extraction yielded little, use Vision API
+      if (textoExtraido.length < 100) {
         try {
+          // Read file as array buffer for base64
           const arrayBuf = await fileData.arrayBuffer();
-          const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuf.slice(0, 500000))));
+          // Limit to 500KB for the vision API
+          const limitedBuf = arrayBuf.slice(0, 500000);
+          const bytes = new Uint8Array(limitedBuf);
           
+          // Convert to base64 manually
+          let binary = "";
+          for (let i = 0; i < bytes.length; i++) {
+            binary += String.fromCharCode(bytes[i]);
+          }
+          const base64 = btoa(binary);
+
           const visionResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
             method: "POST",
             headers: {
@@ -71,10 +91,9 @@ async function processDocument(storage_path: string, user_id: string | null) {
             body: JSON.stringify({
               model: "google/gemini-2.5-flash-lite",
               messages: [
-                { role: "system", content: "Extract all text content from this document image. Return only the extracted text, nothing else." },
                 { role: "user", content: [
-                  { type: "text", text: "Extract all text from this document:" },
-                  { type: "image_url", image_url: { url: `data:${mime};base64,${base64}` } }
+                  { type: "text", text: "Extraia todo o texto deste documento PDF. Retorne apenas o texto extraído, sem comentários." },
+                  { type: "image_url", image_url: { url: `data:application/pdf;base64,${base64}` } }
                 ]}
               ],
               max_tokens: 4000,
@@ -84,17 +103,20 @@ async function processDocument(storage_path: string, user_id: string | null) {
           if (visionResp.ok) {
             const visionData = await visionResp.json();
             const extracted = visionData.choices?.[0]?.message?.content || "";
-            if (extracted.length > cleaned.length) {
-              textoExtraido = extracted;
+            if (extracted.length > 50) {
+              textoExtraido = sanitizeText(extracted);
             }
+          } else {
+            console.log("Vision API status:", visionResp.status);
           }
         } catch (e) {
           console.error("Vision extraction failed:", e);
         }
+      }
 
-        if (!textoExtraido || textoExtraido.replace(/\s+/g, " ").trim().length < 10) {
-          textoExtraido = `[Arquivo binário: ${doc.nome_arquivo}. Conteúdo não pôde ser extraído automaticamente.]`;
-        }
+      // Final fallback
+      if (!textoExtraido || textoExtraido.length < 20) {
+        textoExtraido = `[Documento: ${doc.nome_arquivo}. Tipo: ${mime}. Tamanho: ${doc.tamanho_bytes} bytes. Extração de texto não foi possível - documento pode ser imagem escaneada ou protegido.]`;
       }
     }
 
@@ -108,7 +130,7 @@ async function processDocument(storage_path: string, user_id: string | null) {
       hashHex = "hash_unavailable";
     }
 
-    // Step 4: Update with extracted text (mark as partially done)
+    // Step 4: Save extracted text immediately
     await supabase.from("qa_documentos_conhecimento")
       .update({
         texto_extraido: textoExtraido,
@@ -117,8 +139,8 @@ async function processDocument(storage_path: string, user_id: string | null) {
       })
       .eq("id", doc.id);
 
-    // Step 5: Generate summary via AI
-    let resumo = "";
+    // Step 5: Generate summary (graceful on 402/credits)
+    let resumo = "Resumo pendente.";
     try {
       const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
@@ -129,35 +151,36 @@ async function processDocument(storage_path: string, user_id: string | null) {
         body: JSON.stringify({
           model: "google/gemini-2.5-flash-lite",
           messages: [
-            { role: "system", content: "Você é um assistente jurídico. Resuma o documento a seguir em no máximo 2 parágrafos curtos. Seja objetivo." },
-            { role: "user", content: textoExtraido.substring(0, 4000) }
+            { role: "system", content: "Resuma o documento jurídico a seguir em no máximo 2 parágrafos. Seja objetivo." },
+            { role: "user", content: textoExtraido.substring(0, 3000) }
           ],
-          max_tokens: 300,
+          max_tokens: 250,
         }),
       });
       if (aiResp.ok) {
         const aiData = await aiResp.json();
-        resumo = aiData.choices?.[0]?.message?.content || "Resumo indisponível.";
+        resumo = aiData.choices?.[0]?.message?.content || "Resumo gerado sem conteúdo.";
       } else {
-        const status = aiResp.status;
-        resumo = `Resumo indisponível (erro ${status}).`;
-        console.error("AI summary error:", status);
+        console.log("AI summary status:", aiResp.status);
+        resumo = aiResp.status === 402 
+          ? "Resumo indisponível (créditos IA esgotados). O texto foi extraído com sucesso."
+          : `Resumo indisponível (erro ${aiResp.status}).`;
       }
-    } catch (e) {
+    } catch {
       resumo = "Resumo indisponível (erro de conexão).";
-      console.error("AI summary exception:", e);
     }
 
-    // Step 6: Chunk text
+    // Step 6: Chunk text (sanitized)
+    const safeText = sanitizeText(textoExtraido);
     const CHUNK_SIZE = 800;
     const OVERLAP = 150;
     const chunks: string[] = [];
     let pos = 0;
-    while (pos < textoExtraido.length) {
-      chunks.push(textoExtraido.substring(pos, pos + CHUNK_SIZE));
+    while (pos < safeText.length) {
+      chunks.push(safeText.substring(pos, pos + CHUNK_SIZE));
       pos += CHUNK_SIZE - OVERLAP;
     }
-    if (chunks.length === 0) chunks.push(textoExtraido);
+    if (chunks.length === 0) chunks.push(safeText);
 
     // Step 7: Insert chunks
     const chunkInserts = chunks.map((texto, i) => ({
@@ -173,9 +196,16 @@ async function processDocument(storage_path: string, user_id: string | null) {
 
     if (chunkErr) {
       console.error("Chunk insert error:", chunkErr.message);
+      // Try inserting chunks one by one as fallback
+      let insertedCount = 0;
+      for (const chunk of chunkInserts) {
+        const { error } = await supabase.from("qa_chunks_conhecimento").insert(chunk);
+        if (!error) insertedCount++;
+      }
+      console.log(`Fallback: inserted ${insertedCount}/${chunkInserts.length} chunks`);
     }
 
-    // Step 8: Mark as complete (skip embeddings in this call to avoid timeout)
+    // Step 8: Mark as complete
     await supabase.from("qa_documentos_conhecimento")
       .update({
         resumo_extraido: resumo,
@@ -184,45 +214,58 @@ async function processDocument(storage_path: string, user_id: string | null) {
       })
       .eq("id", doc.id);
 
-    // Step 9: Audit log
-    await supabase.from("qa_logs_auditoria").insert({
-      usuario_id: user_id || null,
-      entidade: "qa_documentos_conhecimento",
-      entidade_id: doc.id,
-      acao: "ingestao_concluida",
-      detalhes_json: { chunks_criados: chunks.length, tamanho_texto: textoExtraido.length },
-    }).catch(() => {});
+    console.log(`Document ${doc.id} processed OK: ${chunks.length} chunks, ${textoExtraido.length} chars`);
 
-    console.log(`Document ${doc.id} processed: ${chunks.length} chunks, text: ${textoExtraido.length} chars`);
-
-    // Step 10: Trigger embeddings generation asynchronously (separate function call)
+    // Step 9: Audit log (no .catch() chaining issue)
     try {
-      await supabase.functions.invoke("qa-generate-embeddings", {
-        body: { documento_id: doc.id },
+      await supabase.from("qa_logs_auditoria").insert({
+        usuario_id: user_id || null,
+        entidade: "qa_documentos_conhecimento",
+        entidade_id: doc.id,
+        acao: "ingestao_concluida",
+        detalhes_json: { chunks_criados: chunks.length, tamanho_texto: textoExtraido.length },
       });
+    } catch {
+      // audit log is non-critical
+    }
+
+    // Step 10: Trigger embeddings asynchronously
+    try {
+      const resp = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/qa-generate-embeddings`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+        },
+        body: JSON.stringify({ documento_id: doc.id }),
+      });
+      console.log("Embeddings trigger status:", resp.status);
     } catch {
       console.log("Embeddings generation will be retried separately");
     }
 
   } catch (err) {
     console.error("Processing failed for", doc.id, ":", err.message);
-    
+
     await supabase.from("qa_documentos_conhecimento")
       .update({
         status_processamento: "erro",
-        resumo_extraido: `Erro no processamento: ${err.message}`,
+        resumo_extraido: `Erro: ${err.message}`,
         updated_at: new Date().toISOString(),
       })
       .eq("id", doc.id);
 
-    // Audit log for error
-    await supabase.from("qa_logs_auditoria").insert({
-      usuario_id: user_id || null,
-      entidade: "qa_documentos_conhecimento",
-      entidade_id: doc.id,
-      acao: "ingestao_erro",
-      detalhes_json: { erro: err.message },
-    }).catch(() => {});
+    try {
+      await supabase.from("qa_logs_auditoria").insert({
+        usuario_id: user_id || null,
+        entidade: "qa_documentos_conhecimento",
+        entidade_id: doc.id,
+        acao: "ingestao_erro",
+        detalhes_json: { erro: err.message },
+      });
+    } catch {
+      // non-critical
+    }
   }
 }
 
