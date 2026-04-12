@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { PenTool, Send, Loader2, AlertTriangle, Download, CheckCircle, Scale, Gavel, BookOpen, MapPin, Building2, Info, Paperclip, FileText, X, Upload } from "lucide-react";
 import { useQAAuth } from "@/components/quero-armas/hooks/useQAAuth";
+import { logSistema } from "@/lib/logSistema";
 
 interface ArquivoAuxiliar {
   file: File;
@@ -65,6 +66,10 @@ interface CircunscricaoResolvida {
   base_legal: string;
 }
 
+type CircunscricaoStatus = "idle" | "resolving" | "resolved" | "not_found" | "error" | "pending_review";
+
+const CIRCUNSCRICAO_TIMEOUT_MS = 12000;
+
 export default function QAGerarPecaPage() {
   const { user } = useQAAuth();
   const [casoTitulo, setCasoTitulo] = useState("");
@@ -82,11 +87,13 @@ export default function QAGerarPecaPage() {
   // Auxiliary documents
   const [arquivosAuxiliares, setArquivosAuxiliares] = useState<ArquivoAuxiliar[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const circunscricaoRequestRef = useRef(0);
   // State
   const [loading, setLoading] = useState(false);
   const [resultado, setResultado] = useState<any>(null);
   const [circunscricaoResolvida, setCircunscricaoResolvida] = useState<CircunscricaoResolvida | null>(null);
-  const [resolvendoCircunscricao, setResolvendoCircunscricao] = useState(false);
+  const [circunscricaoStatus, setCircunscricaoStatus] = useState<CircunscricaoStatus>("idle");
+  const [circunscricaoMensagem, setCircunscricaoMensagem] = useState("");
 
   const handleAddFiles = (files: FileList | null) => {
     if (!files) return;
@@ -152,39 +159,124 @@ export default function QAGerarPecaPage() {
 
   const needsTempestividade = tipoPeca === "recurso_administrativo" || tipoPeca === "resposta_a_notificacao";
 
+  const resetCircunscricaoState = () => {
+    circunscricaoRequestRef.current += 1;
+    setCircunscricaoResolvida(null);
+    setCircunscricaoStatus("idle");
+    setCircunscricaoMensagem("");
+  };
+
+  const normalizarCidade = (cidade: string) => cidade.replace(/\s+/g, " ").trim();
+  const normalizarUf = (uf: string) => uf.trim().toUpperCase();
+
+  const registrarFalhaCircunscricao = async (
+    tipoFalha: "timeout" | "error",
+    cidade: string,
+    uf: string,
+    detalhe?: string,
+  ) => {
+    await logSistema({
+      tipo: "erro",
+      status: tipoFalha === "timeout" ? "warning" : "error",
+      mensagem: tipoFalha === "timeout"
+        ? "Timeout ao resolver circunscrição da PF"
+        : "Erro ao resolver circunscrição da PF",
+      payload: {
+        cidade,
+        uf,
+        detalhe: detalhe || null,
+        modulo: "quero-armas",
+      },
+      user_id: user?.id,
+    });
+  };
+
   const resolverCircunscricao = async (cidade: string, uf: string): Promise<CircunscricaoResolvida | null> => {
-    if (!cidade.trim() || !uf.trim()) return null;
-    setResolvendoCircunscricao(true);
+    const cidadeNormalizada = normalizarCidade(cidade);
+    const ufNormalizada = normalizarUf(uf);
+    if (!cidadeNormalizada || !ufNormalizada) return null;
+
+    const requestId = ++circunscricaoRequestRef.current;
+    setCircunscricaoStatus("resolving");
+    setCircunscricaoMensagem("");
+
     try {
-      const { data, error } = await supabase.rpc("qa_resolver_circunscricao_pf", {
-        p_municipio: cidade.trim(),
-        p_uf: uf.trim(),
-      });
-      if (error || !data || data.length === 0) return null;
-      return data[0] as CircunscricaoResolvida;
-    } catch {
+      const { data, error } = await Promise.race([
+        supabase.rpc("qa_resolver_circunscricao_pf", {
+          p_municipio: cidadeNormalizada,
+          p_uf: ufNormalizada,
+        }),
+        new Promise<never>((_, reject) => {
+          window.setTimeout(() => reject(new Error("circunscricao_timeout")), CIRCUNSCRICAO_TIMEOUT_MS);
+        }),
+      ]);
+
+      if (requestId !== circunscricaoRequestRef.current) return null;
+
+      if (error) {
+        setCircunscricaoResolvida(null);
+        setCircunscricaoStatus("error");
+        setCircunscricaoMensagem("Erro ao resolver a circunscrição da PF. Tente novamente.");
+        void registrarFalhaCircunscricao("error", cidadeNormalizada, ufNormalizada, error.message);
+        return null;
+      }
+
+      if (!data || data.length === 0) {
+        setCircunscricaoResolvida(null);
+        setCircunscricaoStatus("not_found");
+        setCircunscricaoMensagem("Circunscrição não encontrada para o município/UF informado.");
+        return null;
+      }
+
+      const resultado = data[0] as CircunscricaoResolvida;
+      setCircunscricaoResolvida(resultado);
+      setCircunscricaoStatus("resolved");
+      setCircunscricaoMensagem("");
+      return resultado;
+    } catch (err: any) {
+      if (requestId !== circunscricaoRequestRef.current) return null;
+
+      const timeout = err instanceof Error && err.message === "circunscricao_timeout";
+      const mensagem = timeout
+        ? "A resolução da circunscrição excedeu o tempo limite. Tente novamente ou siga com revisão pendente."
+        : "Erro ao resolver a circunscrição da PF. Tente novamente.";
+
+      setCircunscricaoResolvida(null);
+      setCircunscricaoStatus("error");
+      setCircunscricaoMensagem(mensagem);
+      void registrarFalhaCircunscricao(timeout ? "timeout" : "error", cidadeNormalizada, ufNormalizada, err?.message);
       return null;
     } finally {
-      setResolvendoCircunscricao(false);
+      if (requestId === circunscricaoRequestRef.current && circunscricaoStatus === "resolving") {
+        setCircunscricaoStatus((current) => (current === "resolving" ? "idle" : current));
+      }
     }
   };
 
   // Auto-resolve when city/state change
   const handleUfChange = async (uf: string) => {
-    setClienteUf(uf);
-    setCircunscricaoResolvida(null);
-    if (clienteCidade.trim() && uf) {
-      const result = await resolverCircunscricao(clienteCidade, uf);
-      setCircunscricaoResolvida(result);
+    const ufNormalizada = normalizarUf(uf);
+    setClienteUf(ufNormalizada);
+    resetCircunscricaoState();
+    if (clienteCidade.trim() && ufNormalizada) {
+      await resolverCircunscricao(clienteCidade, ufNormalizada);
     }
   };
 
   const handleCidadeBlur = async () => {
-    setCircunscricaoResolvida(null);
     if (clienteCidade.trim() && clienteUf) {
-      const result = await resolverCircunscricao(clienteCidade, clienteUf);
-      setCircunscricaoResolvida(result);
+      await resolverCircunscricao(clienteCidade, clienteUf);
     }
+  };
+
+  const handleRetryCircunscricao = async () => {
+    if (!clienteCidade.trim() || !clienteUf.trim()) {
+      setCircunscricaoStatus("error");
+      setCircunscricaoMensagem("Informe cidade e UF para tentar novamente.");
+      return;
+    }
+
+    await resolverCircunscricao(clienteCidade, clienteUf);
   };
 
   const gerar = async () => {
@@ -198,10 +290,11 @@ export default function QAGerarPecaPage() {
     let circ = circunscricaoResolvida;
     if (!circ) {
       circ = await resolverCircunscricao(clienteCidade, clienteUf);
-      setCircunscricaoResolvida(circ);
     }
 
     if (!circ) {
+      setCircunscricaoStatus("pending_review");
+      setCircunscricaoMensagem("Circunscrição pendente para revisão. A peça seguirá sem travar o formulário.");
       toast.warning("Não foi possível resolver automaticamente a unidade da PF para o município informado. A peça será gerada com marcador pendente.", { duration: 5000 });
     }
 
@@ -330,7 +423,10 @@ export default function QAGerarPecaPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-1.5">
               <Label className="text-slate-400 text-xs">Cidade do cliente *</Label>
-              <Input value={clienteCidade} onChange={e => setClienteCidade(e.target.value)}
+              <Input value={clienteCidade} onChange={e => {
+                setClienteCidade(e.target.value);
+                resetCircunscricaoState();
+              }}
                 onBlur={handleCidadeBlur}
                 className="bg-[#0c0c14] border-slate-700 text-slate-100" placeholder="Ex: São Paulo" />
             </div>
@@ -354,18 +450,18 @@ export default function QAGerarPecaPage() {
 
           <div className="space-y-1.5">
             <Label className="text-slate-400 text-xs">Endereço completo (opcional)</Label>
-            <Input value={clienteEndereco} onChange={e => setClienteEndereco(e.target.value)}
+              <Input value={clienteEndereco} onChange={e => setClienteEndereco(e.target.value)}
               className="bg-[#0c0c14] border-slate-700 text-slate-100" placeholder="Rua, número, bairro..." />
           </div>
 
           {/* Circumscription resolution feedback */}
-          {resolvendoCircunscricao && (
+          {circunscricaoStatus === "resolving" && (
             <div className="flex items-center gap-2 text-xs text-cyan-400/70">
               <Loader2 className="h-3 w-3 animate-spin" />
               Resolvendo circunscrição da PF...
             </div>
           )}
-          {circunscricaoResolvida && (
+          {circunscricaoStatus === "resolved" && circunscricaoResolvida && (
             <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-lg p-3 text-xs space-y-1">
               <div className="flex items-center gap-1.5 text-emerald-400 font-medium">
                 <CheckCircle className="h-3.5 w-3.5" />
@@ -385,10 +481,32 @@ export default function QAGerarPecaPage() {
               </div>
             </div>
           )}
-          {!resolvendoCircunscricao && !circunscricaoResolvida && clienteCidade && clienteUf && (
+          {circunscricaoStatus === "not_found" && (
             <div className="bg-amber-500/5 border border-amber-500/20 rounded-lg p-2.5 text-[11px] text-amber-400/80 flex items-start gap-1.5">
               <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-              <span>Município não encontrado na tabela de circunscrições da PF. O endereçamento será marcado como pendente para revisão manual.</span>
+              <div className="space-y-2">
+                <span>{circunscricaoMensagem || "Circunscrição não encontrada. O endereçamento ficará pendente para revisão manual."}</span>
+                <Button type="button" variant="outline" size="sm" className="h-7 border-amber-500/30 text-amber-400 hover:bg-amber-500/10" onClick={handleRetryCircunscricao}>
+                  Tentar novamente
+                </Button>
+              </div>
+            </div>
+          )}
+          {circunscricaoStatus === "error" && (
+            <div className="bg-red-500/5 border border-red-500/20 rounded-lg p-2.5 text-[11px] text-red-400/90 flex items-start gap-1.5">
+              <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+              <div className="space-y-2">
+                <span>{circunscricaoMensagem || "Erro ao resolver a circunscrição da PF."}</span>
+                <Button type="button" variant="outline" size="sm" className="h-7 border-red-500/30 text-red-300 hover:bg-red-500/10" onClick={handleRetryCircunscricao}>
+                  Tentar novamente
+                </Button>
+              </div>
+            </div>
+          )}
+          {circunscricaoStatus === "pending_review" && (
+            <div className="bg-amber-500/5 border border-amber-500/20 rounded-lg p-2.5 text-[11px] text-amber-400/80 flex items-start gap-1.5">
+              <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+              <span>{circunscricaoMensagem}</span>
             </div>
           )}
         </div>
