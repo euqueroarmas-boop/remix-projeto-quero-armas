@@ -851,25 +851,21 @@ export default function QAGerarPecaPage() {
 
         {/* Doc status indicator */}
         {docTotal > 0 && (
-          <div className={`flex items-center gap-2 text-xs px-3 py-1.5 rounded border ${
+          <div className={`flex items-center flex-wrap gap-2 text-xs px-3 py-1.5 rounded border ${
             docFailed > 0 ? "border-red-500/30 bg-red-500/5 text-red-400" :
             docActive > 0 ? "border-cyan-500/30 bg-cyan-500/5 text-cyan-400" :
+            hasDocsUnclassified ? "border-amber-500/30 bg-amber-500/5 text-amber-400" :
             docDone === docTotal ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-400" :
             "border-slate-700 bg-slate-800/50 text-slate-400"
           }`}>
-          const docUnclassified = arquivosAuxiliares.filter(a => a.stage === "pending").length;
-          return (
-            <>
-              {docDone === docTotal && docTotal > 0 && <CheckCircle className="h-3.5 w-3.5" />}
-              {docFailed > 0 && <XCircle className="h-3.5 w-3.5" />}
-              {docActive > 0 && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-              <span>{docDone}/{docTotal} documentos prontos</span>
-              {docUnclassified > 0 && <span className="text-amber-400 font-medium">· {docUnclassified} aguardando classificação</span>}
-              {docFailed > 0 && <span className="text-red-400 font-medium">· {docFailed} com erro</span>}
-              {docActive > 0 && <span>· {docActive} processando</span>}
-            </>
-          );
-        })()}
+            {docDone === docTotal && docTotal > 0 && <CheckCircle className="h-3.5 w-3.5" />}
+            {docFailed > 0 && <XCircle className="h-3.5 w-3.5" />}
+            {docActive > 0 && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+            {hasDocsUnclassified && !docActive && !docFailed && <AlertTriangle className="h-3.5 w-3.5" />}
+            <span>{docDone}/{docTotal} documentos prontos</span>
+            {hasDocsUnclassified && <span className="text-amber-400 font-medium">· {arquivosAuxiliares.filter(a => a.stage === "pending").length} aguardando classificação</span>}
+            {docFailed > 0 && <span className="text-red-400 font-medium">· {docFailed} com erro</span>}
+            {docActive > 0 && <span>· {docActive} processando</span>}
           </div>
         )}
 
