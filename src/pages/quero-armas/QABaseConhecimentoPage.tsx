@@ -294,6 +294,38 @@ export default function QABaseConhecimentoPage() {
     setTrackedImports(prev => prev.filter(t => t.doc_id !== doc_id));
   };
 
+  // Auto-dismiss completed items after 2 minutes
+  useEffect(() => {
+    const completed = trackedImports.filter(t => t.status === "concluido" && t.finished_at);
+    if (!completed.length) return;
+    const timers = completed.map(t => {
+      const remaining = Math.max(0, 120_000 - (Date.now() - (t.finished_at || Date.now())));
+      return setTimeout(() => dismissTracked(t.doc_id), remaining);
+    });
+    return () => timers.forEach(clearTimeout);
+  }, [trackedImports]);
+
+  const handleReprocessFromQueue = async (item: TrackedImport) => {
+    if (!user) return;
+    try {
+      await supabase.from("qa_documentos_conhecimento" as any)
+        .update({ status_processamento: "pendente", resumo_extraido: null, updated_at: new Date().toISOString() })
+        .eq("id", item.doc_id);
+      await supabase.from("qa_chunks_conhecimento" as any).delete().eq("documento_id", item.doc_id);
+      setTrackedImports(prev => prev.map(t => t.doc_id === item.doc_id ? { ...t, status: "pendente", started_at: Date.now(), finished_at: undefined, resumo: undefined } : t));
+      if (item.tipo_origem === "link_publico" || item.url.startsWith("http")) {
+        await supabase.functions.invoke("qa-ingest-url", {
+          body: { url: item.url, titulo: item.titulo, tipo_documento: item.tipo_documento, user_id: user.id },
+        });
+      } else {
+        await supabase.functions.invoke("qa-ingest-document", { body: { storage_path: item.url, user_id: user.id } });
+      }
+      toast.success("Reprocessamento iniciado.");
+    } catch (err: any) {
+      toast.error("Erro ao reprocessar: " + (err.message || ""));
+    }
+  };
+
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files?.length || !user) return;
