@@ -208,6 +208,7 @@ export default function QADocumentoDetalhePage() {
   const isAtivoIA = doc.ativo_na_ia === true;
   const isRef = doc.referencia_preferencial === true;
   const isConcluido = doc.status_processamento === "concluido";
+  const isAuxiliar = doc.papel_documento === "auxiliar_caso";
 
   return (
     <div className="space-y-6 max-w-5xl">
@@ -226,6 +227,12 @@ export default function QADocumentoDetalhePage() {
             </h1>
             <div className="flex items-center gap-3 mt-2 text-xs text-slate-500 flex-wrap">
               <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-400">{doc.tipo_documento?.replace(/_/g, " ")}</span>
+              <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${isAuxiliar ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20" : "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20"}`}>
+                {isAuxiliar ? "Auxiliar do Caso" : "Aprendizado"}
+              </span>
+              {isAuxiliar && doc.caso_id && (
+                <span className="px-2 py-0.5 rounded bg-cyan-500/5 text-cyan-400/70 text-[10px]">caso: {doc.caso_id}</span>
+              )}
               {doc.categoria && <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-400">{doc.categoria}</span>}
               <span className="flex items-center gap-1">
                 {doc.tipo_origem === "link_publico" ? <Globe className="h-3 w-3 text-blue-400" /> : <Upload className="h-3 w-3 text-slate-500" />}
@@ -257,7 +264,12 @@ export default function QADocumentoDetalhePage() {
         </div>
 
         {/* Governance Status Badges */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mt-4">
+          <GovBadge
+            label="Papel"
+            value={isAuxiliar ? "Auxiliar do Caso" : "Aprendizado"}
+            variant={isAuxiliar ? "neutral" : "ok"}
+          />
           <GovBadge
             label="Processamento"
             value={doc.status_processamento === "concluido" ? "Concluído" : doc.status_processamento === "processando" ? "Processando" : doc.status_processamento === "erro" || doc.status_processamento === "texto_invalido" ? "Falhou" : "Pendente"}
@@ -265,20 +277,27 @@ export default function QADocumentoDetalhePage() {
           />
           <GovBadge
             label="Validação"
-            value={isValidado ? "Validado" : isRejeitado ? "Rejeitado" : "Pendente"}
-            variant={isValidado ? "ok" : isRejeitado ? "off" : "warn"}
+            value={isAuxiliar ? "N/A" : isValidado ? "Validado" : isRejeitado ? "Rejeitado" : "Pendente"}
+            variant={isAuxiliar ? "neutral" : isValidado ? "ok" : isRejeitado ? "off" : "warn"}
           />
           <GovBadge
-            label="Uso na IA"
-            value={isAtivoIA ? "Ativo" : "Desativado"}
-            variant={isAtivoIA ? "ok" : "off"}
+            label="Uso na IA Global"
+            value={isAuxiliar ? "Somente caso" : isAtivoIA ? "Ativo" : "Desativado"}
+            variant={isAuxiliar ? "neutral" : isAtivoIA ? "ok" : "off"}
           />
           <GovBadge
             label="Referência"
-            value={isRef ? "Sim" : "Não"}
-            variant={isRef ? "ok" : "neutral"}
+            value={isAuxiliar ? "Bloqueado" : isRef ? "Sim" : "Não"}
+            variant={isAuxiliar ? "off" : isRef ? "ok" : "neutral"}
           />
         </div>
+
+        {isAuxiliar && (
+          <div className="mt-3 bg-cyan-500/5 border border-cyan-500/15 rounded-lg px-4 py-2.5 text-xs text-cyan-400/80">
+            <strong>Documento auxiliar do caso.</strong> Este documento é utilizado apenas como suporte factual do caso concreto. Não alimenta o aprendizado global da IA, não aparece no ranking de referências e não serve como modelo de peça.
+            {doc.caso_id && <span className="block mt-1 text-cyan-400/60">Vinculado ao caso: <strong>{doc.caso_id}</strong></span>}
+          </div>
+        )}
 
         {/* Stats row */}
         <div className="grid grid-cols-3 gap-3 mt-3">
