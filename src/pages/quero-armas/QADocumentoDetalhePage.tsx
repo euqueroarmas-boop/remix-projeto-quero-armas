@@ -396,7 +396,7 @@ export default function QADocumentoDetalhePage() {
           <h2 className="text-sm font-medium text-slate-300 mb-3">Chunks ({chunks.length})</h2>
           <div className="space-y-2 max-h-[500px] overflow-y-auto">
             {chunks.map((c: any) => (
-              <div key={c.id} className="bg-[#0d0d0d] rounded-lg p-3 border border-slate-800/20">
+              <div key={c.id} className="bg-[#0d0d0d] rounded-lg p-3 border border-[#1a1a1a]">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[10px] text-slate-600 uppercase tracking-wider">Chunk {c.ordem_chunk + 1}</span>
                   <span className={`text-[10px] px-1.5 py-0.5 rounded ${c.embedding_status === "concluido" ? "bg-emerald-500/10 text-emerald-400" : c.embedding_status === "erro" ? "bg-red-500/10 text-red-400" : "bg-[#161616] text-slate-500"}`}>

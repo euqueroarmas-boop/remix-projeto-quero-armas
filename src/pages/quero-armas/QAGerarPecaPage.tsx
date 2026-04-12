@@ -924,7 +924,7 @@ export default function QAGerarPecaPage() {
             docActive > 0 ? "border-cyan-500/30 bg-cyan-500/5 text-cyan-400" :
             hasDocsUnclassified ? "border-amber-500/30 bg-amber-500/5 text-amber-400" :
             docDone === docTotal ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-400" :
-            "border-[#1a1a1a] bg-slate-800/50 text-slate-400"
+            "border-[#1a1a1a] bg-[#161616] text-slate-400"
           }`}>
             {docDone === docTotal && docTotal > 0 && <CheckCircle className="h-3.5 w-3.5" />}
             {docFailed > 0 && <XCircle className="h-3.5 w-3.5" />}
