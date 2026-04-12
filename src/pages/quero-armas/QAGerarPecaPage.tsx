@@ -411,32 +411,46 @@ export default function QAGerarPecaPage() {
 
   const uploadSingleDoc = async (arq: ArquivoAuxiliar, index: number): Promise<string | null> => {
     if (arq.stage === "done" && arq.docId) return arq.docId;
+    if (!arq.tipo) { toast.error("Selecione o tipo documental primeiro"); return null; }
     setDocStage(index, "uploading", { startedAt: Date.now(), error: undefined });
     try {
       const safeName = sanitizeFileName(arq.file.name);
       const storagePath = `auxiliares/${Date.now()}_${crypto.randomUUID().slice(0,8)}_${safeName}`;
-      const { error: upErr } = await supabase.storage.from("qa-documentos").upload(storagePath, arq.file);
+
+      // Upload with 90s timeout
+      const uploadPromise = supabase.storage.from("qa-documentos").upload(storagePath, arq.file);
+      const timeoutPromise = new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Upload excedeu o tempo limite (90s). Tente novamente.")), 90000));
+      const { error: upErr } = await Promise.race([uploadPromise, timeoutPromise]);
       if (upErr) throw upErr;
+
       setDocStage(index, "saved");
-      const { data: docData, error: dbErr } = await supabase.from("qa_documentos_conhecimento").insert({
+
+      // DB insert with 15s timeout
+      const dbPromise = supabase.from("qa_documentos_conhecimento").insert({
         titulo: arq.nome, nome_arquivo: arq.file.name, storage_path: storagePath,
         tipo_documento: arq.tipo, tipo_origem: "upload", papel_documento: "auxiliar_caso",
         categoria: arq.tipo, status_processamento: "pendente", status_validacao: "validado",
         ativo: true, ativo_na_ia: false, caso_id: nomeRequerente || null,
         enviado_por: user?.id || null, mime_type: arq.file.type || null, tamanho_bytes: arq.file.size,
       }).select("id").single();
+      const dbTimeout = new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Registro no banco excedeu tempo limite.")), 15000));
+      const { data: docData, error: dbErr } = await Promise.race([dbPromise, dbTimeout]);
       if (dbErr) throw dbErr;
+
       setDocStage(index, "extracting");
       await supabase.functions.invoke("qa-ingest-document", { body: { storage_path: storagePath, user_id: user?.id } });
       setDocStage(index, "processing");
       const docId = docData.id;
+
+      // Poll with 90s timeout
       const pollStart = Date.now();
-      while (Date.now() - pollStart < 60000) {
+      while (Date.now() - pollStart < 90000) {
         await new Promise(r => setTimeout(r, 3000));
         const { data: check } = await supabase.from("qa_documentos_conhecimento").select("status_processamento").eq("id", docId).maybeSingle();
         if (check?.status_processamento === "concluido") { setDocStage(index, "done", { docId }); return docId; }
         if (check?.status_processamento === "erro" || check?.status_processamento === "texto_invalido") throw new Error(`Extração falhou: ${check.status_processamento}`);
       }
+      // Timeout on poll — mark as done anyway (processing continues in background)
       setDocStage(index, "done", { docId });
       return docId;
     } catch (err: any) {
