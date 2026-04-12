@@ -160,7 +160,7 @@ async function processUrl(url: string, titulo: string, tipo_documento: string, u
         .eq("id", doc_id);
 
       await supabase.from("qa_logs_auditoria").insert({
-        usuario_id: user_id,
+        usuario_id: user_id || null,
         entidade: "qa_documentos_conhecimento",
         entidade_id: doc_id,
         acao: "ingestao_url_texto_invalido",
@@ -264,7 +264,7 @@ async function processUrl(url: string, titulo: string, tipo_documento: string, u
 
     // Audit log
     await supabase.from("qa_logs_auditoria").insert({
-      usuario_id: user_id,
+      usuario_id: user_id || null,
       entidade: "qa_documentos_conhecimento",
       entidade_id: doc_id,
       acao: "ingestao_url_concluida",
@@ -296,7 +296,7 @@ async function processUrl(url: string, titulo: string, tipo_documento: string, u
       .eq("id", doc_id);
 
     await supabase.from("qa_logs_auditoria").insert({
-      usuario_id: user_id,
+      usuario_id: user_id || null,
       entidade: "qa_documentos_conhecimento",
       entidade_id: doc_id,
       acao: "ingestao_url_erro",
