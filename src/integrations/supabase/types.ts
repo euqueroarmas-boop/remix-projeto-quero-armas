@@ -1992,6 +1992,48 @@ export type Database = {
           },
         ]
       }
+      qa_circunscricoes_pf: {
+        Row: {
+          ato_normativo: string | null
+          base_legal: string | null
+          created_at: string
+          id: string
+          municipio_sede: string
+          municipios_cobertos: string[]
+          sigla_unidade: string | null
+          tipo_unidade: string
+          uf: string
+          unidade_pf: string
+          updated_at: string
+        }
+        Insert: {
+          ato_normativo?: string | null
+          base_legal?: string | null
+          created_at?: string
+          id?: string
+          municipio_sede: string
+          municipios_cobertos?: string[]
+          sigla_unidade?: string | null
+          tipo_unidade?: string
+          uf: string
+          unidade_pf: string
+          updated_at?: string
+        }
+        Update: {
+          ato_normativo?: string | null
+          base_legal?: string | null
+          created_at?: string
+          id?: string
+          municipio_sede?: string
+          municipios_cobertos?: string[]
+          sigla_unidade?: string | null
+          tipo_unidade?: string
+          uf?: string
+          unidade_pf?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       qa_config: {
         Row: {
           chave: string
@@ -3396,6 +3438,17 @@ export type Database = {
           resumo_chunk: string
           similarity: number
           texto_chunk: string
+        }[]
+      }
+      qa_resolver_circunscricao_pf: {
+        Args: { p_municipio: string; p_uf: string }
+        Returns: {
+          base_legal: string
+          municipio_sede: string
+          sigla_unidade: string
+          tipo_unidade: string
+          uf: string
+          unidade_pf: string
         }[]
       }
     }
