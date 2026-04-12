@@ -213,6 +213,23 @@ Deno.serve(async (req) => {
       payload: { email, user_id: userId, customer_id },
     });
 
+    // ── EMAIL: Send invite with credentials via SMTP ──
+    try {
+      const customerName = customerCheck.razao_social || name || email;
+      const portalOrigin = req.headers.get("origin") || "https://wmti.com.br";
+      await supabase.functions.invoke("notify-user-invite", {
+        body: {
+          customer_email: email,
+          customer_name: customerName,
+          temp_password: password,
+          portal_url: `${portalOrigin.replace(/\/$/, "")}/area-do-cliente`,
+        },
+      });
+      console.log("[create-client-user] Email de convite enviado para:", email);
+    } catch (emailErr) {
+      console.error("[create-client-user] Erro ao enviar email de convite:", emailErr);
+    }
+
     return new Response(
       JSON.stringify({ success: true, user_id: userId, email }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
