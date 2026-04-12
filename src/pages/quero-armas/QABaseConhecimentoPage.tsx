@@ -95,6 +95,9 @@ type TrackedImport = {
   status: string;
   resumo?: string;
   started_at: number;
+  finished_at?: number;
+  tipo_documento?: string;
+  tipo_origem?: string;
 };
 
 /* ─── Dashboard stat card ─── */
