@@ -83,6 +83,12 @@ export default function QADocumentoDetalhePage() {
 
   const handleAction = async (action: string) => {
     if (!doc || !user) return;
+    // Block learning-related actions for case auxiliary documents
+    const isAux = doc.papel_documento === "auxiliar_caso";
+    if (isAux && ["ativar_ia", "promover_referencia"].includes(action)) {
+      toast.error("Documentos auxiliares do caso não podem ser ativados no aprendizado global.");
+      return;
+    }
     setActing(true);
     try {
       switch (action) {
