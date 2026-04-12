@@ -835,7 +835,7 @@ export default function QAGerarPecaPage() {
           </div>
 
           {/* Doc summary */}
-          {docTotal > 0 && (genStep !== "idle") && (
+          {docTotal > 0 && (
             <div className="text-[10px] text-slate-500 border-t border-slate-800/50 pt-2">
               Documentos auxiliares: {docTotal} anexados • {docDone} processados
               {docFailed > 0 && <span className="text-red-400"> • {docFailed} falha(s)</span>}
