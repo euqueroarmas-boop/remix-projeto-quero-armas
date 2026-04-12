@@ -156,11 +156,13 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 1d. Search knowledge base documents (text)
+    // 1d. Search knowledge base documents (text) — EXCLUDE case-specific evidence
     const { data: docs } = await supabase
       .from("qa_documentos_conhecimento")
-      .select("id, titulo, tipo_documento, resumo_extraido, status_validacao")
+      .select("id, titulo, tipo_documento, resumo_extraido, status_validacao, papel_documento")
       .eq("status_processamento", "concluido")
+      .eq("ativo_na_ia", true)
+      .neq("papel_documento", "auxiliar_caso")
       .textSearch("resumo_extraido", searchTerms, { type: "websearch" })
       .limit(8);
 
