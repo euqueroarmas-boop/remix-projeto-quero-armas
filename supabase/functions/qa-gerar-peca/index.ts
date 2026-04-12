@@ -872,16 +872,18 @@ Deno.serve(async (req) => {
     if (cliente_endereco) dadosAdicionais += `\nENDEREÇO DO CLIENTE: ${cliente_endereco}`;
     if (cliente_cep) dadosAdicionais += `\nCEP DO CLIENTE: ${cliente_cep}`;
 
-    // BO-specific instructions for the user prompt
-    let boInstrucoes = "";
-    if (boDocuments.length > 0) {
-      boInstrucoes = `\n\nINSTRUÇÕES ESPECIAIS SOBRE BOLETINS DE OCORRÊNCIA (${boDocuments.length} BO(s) anexado(s)):
-- OBRIGATÓRIO explorar os fatos CONCRETOS de cada BO na seção DOS FATOS.
-- Para cada BO: mencione número (se disponível), data, natureza da ocorrência e DESCREVA os fatos relatados.
-- Se há múltiplos BOs: organize cronologicamente e demonstre a PROGRESSÃO/ESCALADA do risco.
-- Use os BOs como prova do risco CONCRETO na seção DO DIREITO, vinculando ao conceito de efetiva necessidade.
-- PROIBIDO: dizer genericamente "os BOs comprovam o risco". Cite FATOS ESPECÍFICOS.
-- A reiteração de ocorrências policiais é ARGUMENTO CENTRAL para demonstrar efetiva necessidade — EXPLORE.`;
+    // Evidence-specific instructions for the user prompt
+    const bos = evidenceDocs.filter(d => d.tipo === "boletim_ocorrencia");
+    const laudos = evidenceDocs.filter(d => ["laudo_medico", "laudo_psiquiatrico", "laudo_psicologico", "relatorio_clinico", "atestado_medico"].includes(d.tipo));
+    const notifs = evidenceDocs.filter(d => d.tipo === "notificacao_administrativa" || d.tipo === "indeferimento_administrativo");
+
+    let evidenceInstrucoes = "";
+    if (evidenceDocs.length > 0) {
+      evidenceInstrucoes += `\n\nDOCUMENTOS PROBATÓRIOS ANEXADOS: ${evidenceDocs.length} documento(s) — TRATAMENTO PRIORITÁRIO OBRIGATÓRIO`;
+      if (bos.length > 0) evidenceInstrucoes += `\n- ${bos.length} Boletim(ns) de Ocorrência: explorar FATOS CONCRETOS, cronologia e escalada.`;
+      if (laudos.length > 0) evidenceInstrucoes += `\n- ${laudos.length} Laudo(s)/Atestado(s): citar profissional, diagnóstico, sintomas, impacto. Usar como prova de dano/abalo.`;
+      if (notifs.length > 0) evidenceInstrucoes += `\n- ${notifs.length} Notificação(ões)/Indeferimento(s): identificar vícios, erros, omissões. Responder ponto a ponto.`;
+      evidenceInstrucoes += `\nPROIBIDO: menção genérica a qualquer documento. OBRIGATÓRIO: fatos concretos de cada um.`;
     }
 
     const parametros = `\n\nINSTRUÇÕES ESPECÍFICAS:
@@ -892,10 +894,22 @@ Deno.serve(async (req) => {
 - ${instrucaoTipo}
 - Redija de forma TÉCNICA, PRECISA e CONCISA. Sem prolixidade, sem enchimento.
 - Use tom TÉCNICO-JURÍDICO PROFISSIONAL, formal e sóbrio.
-- ${focoMap[foco] || focoMap.legalidade}${dadosAdicionais}${boInstrucoes}`;
+- ${focoMap[foco] || focoMap.legalidade}${dadosAdicionais}${evidenceInstrucoes}`;
 
     const cidadeParaFechamento = circunscricao ? circunscricao.municipio_sede : (cliente_cidade || "[CIDADE]");
     const ufParaFechamento = circunscricao ? circunscricao.uf : (cliente_uf || "[UF]");
+
+    const evidenceSummaryForPrompt = evidenceDocs.length > 0
+      ? `\nDOCUMENTOS PROBATÓRIOS: ${evidenceDocs.length} (${bos.length} BOs, ${laudos.length} laudos, ${notifs.length} notif/indef) — TRATAMENTO PRIORITÁRIO`
+      : "";
+
+    const dosFactosInstr = evidenceDocs.length > 0
+      ? ` — EXPLORAR CONCRETAMENTE os fatos dos ${evidenceDocs.length} documento(s) probatório(s)${bos.length > 0 ? " (BOs com datas e naturezas)" : ""}${laudos.length > 0 ? " (laudos com diagnósticos e impactos)" : ""}${notifs.length > 0 ? " (notificações com vícios e omissões)" : ""}`
+      : "";
+
+    const doDireitoInstr = evidenceDocs.length > 0
+      ? ` — usar documentos probatórios como PROVA MATERIAL${bos.length > 0 ? " do risco concreto" : ""}${laudos.length > 0 ? " e do impacto clínico" : ""}`
+      : "";
 
     const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -917,7 +931,7 @@ TIPO DE SERVIÇO PARA PREÂMBULO: ${tipoServico}
 MUNICÍPIO DO CLIENTE: ${cliente_cidade || "não informado"}
 UF DO CLIENTE: ${cliente_uf || "não informado"}
 UNIDADE PF COMPETENTE: ${circunscricao ? `${circunscricao.unidade_pf} (${circunscricao.sigla_unidade}) — Base: ${circunscricao.base_legal}` : "NÃO RESOLVIDA — usar endereçamento com marcador pendente"}
-${boDocuments.length > 0 ? `\nBOLETINS DE OCORRÊNCIA ANEXADOS: ${boDocuments.length} — TRATAMENTO PRIORITÁRIO OBRIGATÓRIO` : ""}
+${evidenceSummaryForPrompt}
 ${parametros}
 
 DESCRIÇÃO COMPLETA DO CASO:
@@ -927,9 +941,9 @@ ${contextoFontes}
 Redija a peça jurídica do tipo "${tipo_peca}" seguindo RIGOROSAMENTE a estrutura obrigatória:
 1. Endereçamento: "${enderecamento}"
 2. Preâmbulo fluido e jurídico com fórmula integrada: "vem, respeitosamente, ${tipoServico}, conforme a Lei nº 10.826/2003 e demais normas aplicáveis, pelos fatos e fundamentos a seguir expostos."
-3. I — DOS FATOS (cronológico, objetivo, sem floreio)${boDocuments.length > 0 ? " — EXPLORAR CONCRETAMENTE os fatos dos " + boDocuments.length + " BO(s) com datas, naturezas e descrições específicas" : ""}
-4. II — DO DIREITO (usar base normativa prioritária: Lei 10.826/2003 + Decreto 11.615/2023 + IN 201/2021-DG/PF + Lei 9.784/1999)${boDocuments.length > 0 ? " — usar BOs como PROVA MATERIAL do risco concreto" : ""}
-5. III — ALEGAÇÕES FINAIS (consolidar sem repetir)${boDocuments.length > 0 ? " — reforçar materialidade probatória dos BOs" : ""}
+3. I — DOS FATOS (cronológico, objetivo, sem floreio)${dosFactosInstr}
+4. II — DO DIREITO (usar base normativa prioritária: Lei 10.826/2003 + Decreto 11.615/2023 + IN 201/2021-DG/PF + Lei 9.784/1999)${doDireitoInstr}
+5. III — ALEGAÇÕES FINAIS (consolidar sem repetir)${evidenceDocs.length > 0 ? " — reforçar materialidade probatória" : ""}
 6. IV — FECHAMENTO (pedido claro + "Nestes termos, pede deferimento." + "${cidadeParaFechamento}, [DATA].\\n\\n[NOME DO REQUERENTE/ADVOGADO]\\n[OAB/REGISTRO]")
 
 REGRAS DE QUALIDADE PARA ESTA GERAÇÃO:
@@ -940,12 +954,10 @@ REGRAS DE QUALIDADE PARA ESTA GERAÇÃO:
 - Tom: formal, técnico, sóbrio, persuasivo pela lógica. Sem exagero retórico.
 - Se a base jurídica for insuficiente, declare expressamente ao invés de inventar.
 - O texto deve ser aproveitável como minuta real com mínima revisão humana.
-${boDocuments.length > 0 ? `\nREGRA CRÍTICA DE QUALIDADE PARA BOs:
-- Cada BO DEVE ser mencionado com fatos concretos na seção DOS FATOS.
-- A narrativa dos BOs deve demonstrar cronologia, progressão e gravidade.
-- PROIBIDO menção genérica a "boletins de ocorrência" sem explorar o conteúdo factual.
-- Se há ${boDocuments.length} BO(s), todos devem ser individualmente referenciados.` : ""}
-
+${evidenceDocs.length > 0 ? `\nREGRA CRÍTICA — DOCUMENTOS PROBATÓRIOS:
+- Cada documento probatório DEVE ser mencionado com fatos concretos.
+- PROIBIDO menção genérica a "documentos anexos" sem explorar conteúdo factual.
+${bos.length > 0 ? `- ${bos.length} BO(s): narrar cronologia, progressão e fatos específicos de cada um.\n` : ""}${laudos.length > 0 ? `- ${laudos.length} Laudo(s): citar profissional, diagnóstico, sintomas e impacto concreto.\n` : ""}${notifs.length > 0 ? `- ${notifs.length} Notificação(ões)/Indeferimento(s): apontar vícios e responder ponto a ponto.\n` : ""}` : ""}
 IGNORE qualquer menção no contexto a tipos de peça diferentes. O tipo é FIXO: ${tipo_peca}.`,
           },
         ],
