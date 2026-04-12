@@ -78,6 +78,15 @@ export default function QALoginPage() {
           <Button type="submit" disabled={loading} className="w-full bg-amber-600 hover:bg-amber-700 text-white">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Entrar"}
           </Button>
+          <div className="text-center pt-2">
+            <button
+              type="button"
+              onClick={handleForgotPassword}
+              className="text-xs text-amber-500/70 hover:text-amber-400 underline underline-offset-2 transition-colors"
+            >
+              Esqueci minha senha
+            </button>
+          </div>
         </form>
 
         <p className="text-center text-xs text-slate-600 mt-6">
