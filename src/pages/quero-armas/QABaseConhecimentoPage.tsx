@@ -22,10 +22,19 @@ import {
 import { Label } from "@/components/ui/label";
 
 const TIPOS_DOC = [
-  "lei", "decreto", "instrucao_normativa", "portaria", "jurisprudencia",
-  "peticao", "recurso_administrativo", "resposta_a_notificacao",
-  "decisao_favoravel", "decisao_desfavoravel", "modelo_interno",
-  "nota_tecnica", "parecer", "mandado_seguranca", "outro",
+  { value: "defesa_posse_arma", label: "Defesa para Posse de Arma" },
+  { value: "defesa_porte_arma", label: "Defesa para Porte de Arma" },
+  { value: "recurso_administrativo", label: "Recurso Administrativo" },
+  { value: "resposta_a_notificacao", label: "Resposta à Notificação" },
+  { value: "lei", label: "Lei" },
+  { value: "decreto", label: "Decreto" },
+  { value: "instrucao_normativa", label: "Instrução Normativa" },
+  { value: "portaria", label: "Portaria" },
+  { value: "jurisprudencia", label: "Jurisprudência" },
+  { value: "decisao_favoravel", label: "Decisão Favorável" },
+  { value: "decisao_desfavoravel", label: "Decisão Desfavorável" },
+  { value: "modelo_interno", label: "Modelo Interno" },
+  { value: "outro", label: "Outro" },
 ];
 
 const TIPOS_ORIGEM_FILTER = [
@@ -316,7 +325,7 @@ export default function QABaseConhecimentoPage() {
           <SelectTrigger className="w-[180px] bg-[#12121c] border-slate-700 text-slate-300"><SelectValue placeholder="Tipo" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="todos">Todos os tipos</SelectItem>
-            {TIPOS_DOC.map(t => <SelectItem key={t} value={t}>{t.replace(/_/g, " ")}</SelectItem>)}
+            {TIPOS_DOC.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={filtroOrigem} onValueChange={setFiltroOrigem}>
@@ -435,7 +444,7 @@ export default function QABaseConhecimentoPage() {
               <Select value={linkTipo} onValueChange={setLinkTipo}>
                 <SelectTrigger className="bg-[#0c0c14] border-slate-700 text-slate-300 mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {TIPOS_DOC.map(t => <SelectItem key={t} value={t}>{t.replace(/_/g, " ")}</SelectItem>)}
+                  {TIPOS_DOC.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -468,7 +477,7 @@ export default function QABaseConhecimentoPage() {
               <Select value={bulkTipo} onValueChange={setBulkTipo}>
                 <SelectTrigger className="bg-[#0c0c14] border-slate-700 text-slate-300 mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {TIPOS_DOC.map(t => <SelectItem key={t} value={t}>{t.replace(/_/g, " ")}</SelectItem>)}
+                  {TIPOS_DOC.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>

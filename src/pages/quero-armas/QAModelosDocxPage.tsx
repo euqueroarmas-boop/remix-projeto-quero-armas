@@ -11,8 +11,11 @@ import { FileText, Upload, Plus, Loader2, CheckCircle, XCircle } from "lucide-re
 import { useQAAuth } from "@/components/quero-armas/hooks/useQAAuth";
 
 const TIPOS_PECA = [
-  "peticao_inicial", "recurso", "mandado_seguranca", "parecer",
-  "defesa", "memoriais", "contrarrazoes", "embargo", "generico", "outro",
+  { value: "defesa_posse_arma", label: "Defesa para Posse de Arma" },
+  { value: "defesa_porte_arma", label: "Defesa para Porte de Arma" },
+  { value: "recurso_administrativo", label: "Recurso Administrativo" },
+  { value: "resposta_a_notificacao", label: "Resposta à Notificação" },
+  { value: "generico", label: "Genérico" },
 ];
 
 const VARIAVEIS = [
@@ -29,7 +32,7 @@ export default function QAModelosDocxPage() {
 
   // Form state
   const [nomeModelo, setNomeModelo] = useState("");
-  const [tipoPeca, setTipoPeca] = useState("generico");
+  const [tipoPeca, setTipoPeca] = useState("defesa_posse_arma");
   const [descricao, setDescricao] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
@@ -123,7 +126,7 @@ export default function QAModelosDocxPage() {
               <Select value={tipoPeca} onValueChange={setTipoPeca}>
                 <SelectTrigger className="bg-[#0c0c14] border-slate-700 text-slate-300"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {TIPOS_PECA.map(t => <SelectItem key={t} value={t}>{t.replace(/_/g, " ")}</SelectItem>)}
+                  {TIPOS_PECA.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
