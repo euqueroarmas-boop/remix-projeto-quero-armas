@@ -439,6 +439,72 @@ export default function QAGerarPecaPage() {
             placeholder="Descreva detalhadamente os fatos, a situação jurídica, o histórico do caso, documentos relevantes e o que precisa na peça..." />
         </div>
 
+        {/* Row 6: Documentos auxiliares do caso */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Paperclip className="h-4 w-4 text-amber-400" />
+            <Label className="text-slate-300 text-sm font-medium">Documentos Auxiliares do Caso</Label>
+            <span className="text-[10px] text-slate-600 ml-1">(BOs, laudos, notificações, certidões, comprovantes...)</span>
+          </div>
+          <p className="text-[11px] text-slate-500">
+            Anexe provas e documentos de suporte. Eles serão lidos integralmente e usados como base factual da peça, sem alimentar o aprendizado global.
+          </p>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg"
+            className="hidden"
+            onChange={e => { handleAddFiles(e.target.files); e.target.value = ""; }}
+          />
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="border-amber-500/30 text-amber-400 hover:bg-amber-500/10"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Upload className="h-3.5 w-3.5 mr-1.5" />
+            Anexar documentos
+          </Button>
+
+          {arquivosAuxiliares.length > 0 && (
+            <div className="space-y-2">
+              {arquivosAuxiliares.map((arq, i) => (
+                <div key={i} className="flex items-center gap-3 bg-slate-900/50 border border-slate-800/50 rounded-lg p-3">
+                  <FileText className="h-4 w-4 text-slate-400 shrink-0" />
+                  <div className="flex-1 min-w-0 space-y-1.5">
+                    <div className="text-xs text-slate-200 truncate">{arq.nome}</div>
+                    <Select value={arq.tipo} onValueChange={v => handleChangeTipoDoc(i, v)}>
+                      <SelectTrigger className="h-7 text-[11px] bg-[#0c0c14] border-slate-700 text-slate-400 w-52">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {TIPOS_DOC_AUXILIAR.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {arq.uploading && <Loader2 className="h-3.5 w-3.5 animate-spin text-cyan-400" />}
+                    {arq.uploaded && <CheckCircle className="h-3.5 w-3.5 text-emerald-400" />}
+                    {arq.error && (
+                      <span className="text-[10px] text-red-400 max-w-[100px] truncate" title={arq.error}>Erro</span>
+                    )}
+                    <button onClick={() => handleRemoveFile(i)} className="text-slate-600 hover:text-red-400 transition-colors">
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+              <p className="text-[10px] text-slate-600">
+                {arquivosAuxiliares.length} documento(s) anexado(s) — serão enviados automaticamente ao gerar a peça.
+              </p>
+            </div>
+          )}
+        </div>
+
         <Button onClick={gerar} disabled={loading} className="bg-amber-600 hover:bg-amber-700">
           {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
           Gerar Peça
