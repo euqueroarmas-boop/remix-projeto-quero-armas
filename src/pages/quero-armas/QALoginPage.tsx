@@ -20,9 +20,9 @@ export default function QALoginPage() {
         redirectTo: `${window.location.origin}/redefinir-senha`,
       });
       if (error) throw error;
-      toast.success("E-mail de redefinição enviado. Verifique sua caixa de entrada.");
+      toast.success("E-mail de redefinição enviado.");
     } catch (err: any) {
-      toast.error(err.message || "Erro ao enviar e-mail de redefinição.");
+      toast.error(err.message || "Erro ao enviar e-mail.");
     }
   };
 
@@ -32,23 +32,19 @@ export default function QALoginPage() {
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Falha ao obter usuário");
-
       const { data: profile } = await supabase
         .from("qa_usuarios_perfis" as any)
         .select("*")
         .eq("user_id", user.id)
         .eq("ativo", true)
         .maybeSingle();
-
       if (!profile) {
         await supabase.auth.signOut();
-        toast.error("Acesso negado. Você não possui perfil ativo no módulo Quero Armas.");
+        toast.error("Acesso negado. Perfil não encontrado.");
         return;
       }
-
       toast.success("Acesso autorizado");
       navigate("/quero-armas/dashboard", { replace: true });
     } catch (err: any) {
@@ -59,51 +55,48 @@ export default function QALoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0c0c14] px-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-[#08080f] px-4">
+      <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 mb-4">
-            <Shield className="h-8 w-8 text-amber-500" />
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded bg-[#14142a] border border-[#1a1a2e] mb-4">
+            <Shield className="h-5 w-5 text-slate-500" />
           </div>
-          <h1 className="text-2xl font-bold text-slate-100 tracking-tight">Quero Armas</h1>
-          <p className="text-sm text-slate-500 mt-1">IA Jurídica | Acesso Restrito</p>
+          <h1 className="text-lg font-semibold text-slate-300 tracking-tight">Quero Armas</h1>
+          <p className="text-[11px] text-slate-600 mt-1 tracking-wider uppercase">Acesso Restrito</p>
         </div>
 
-        <form onSubmit={handleLogin} className="space-y-4 bg-[#12121c] border border-slate-800/60 rounded-xl p-6">
-          <div className="space-y-2">
-            <Label htmlFor="email" className="text-slate-300 text-sm">E-mail</Label>
+        <form onSubmit={handleLogin} className="space-y-4 bg-[#0a0a12] border border-[#1a1a2e] rounded-lg p-5">
+          <div className="space-y-1.5">
+            <Label htmlFor="email" className="text-slate-500 text-[11px] uppercase tracking-wider">E-mail</Label>
             <Input
               id="email" type="email" required value={email}
               onChange={e => setEmail(e.target.value)}
-              className="bg-[#0c0c14] border-slate-700 text-slate-100 focus:border-amber-500/50"
+              className="bg-[#08080f] border-[#1a1a2e] text-slate-300 focus:border-slate-600 h-9 text-sm"
               placeholder="seu@email.com"
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="password" className="text-slate-300 text-sm">Senha</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="password" className="text-slate-500 text-[11px] uppercase tracking-wider">Senha</Label>
             <Input
               id="password" type="password" required value={password}
               onChange={e => setPassword(e.target.value)}
-              className="bg-[#0c0c14] border-slate-700 text-slate-100 focus:border-amber-500/50"
+              className="bg-[#08080f] border-[#1a1a2e] text-slate-300 focus:border-slate-600 h-9 text-sm"
               placeholder="••••••••"
             />
           </div>
-          <Button type="submit" disabled={loading} className="w-full bg-amber-600 hover:bg-amber-700 text-white">
+          <Button type="submit" disabled={loading} className="w-full bg-[#14142a] hover:bg-[#1a1a35] text-slate-300 border border-[#1a1a2e] h-9 text-sm">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Entrar"}
           </Button>
-          <div className="text-center pt-2">
-            <button
-              type="button"
-              onClick={handleForgotPassword}
-              className="text-xs text-amber-500/70 hover:text-amber-400 underline underline-offset-2 transition-colors"
-            >
+          <div className="text-center pt-1">
+            <button type="button" onClick={handleForgotPassword}
+              className="text-[10px] text-slate-600 hover:text-slate-400 transition-colors">
               Esqueci minha senha
             </button>
           </div>
         </form>
 
-        <p className="text-center text-xs text-slate-600 mt-6">
-          Ambiente seguro • Acesso auditado • Dados protegidos
+        <p className="text-center text-[10px] text-slate-700 mt-6 tracking-wider">
+          Ambiente seguro · Acesso auditado
         </p>
       </div>
     </div>
