@@ -9,10 +9,11 @@ import { toast } from "sonner";
 import {
   Upload, Search, FileText, CheckCircle, Clock, AlertCircle, Loader2,
   ExternalLink, RefreshCw, Trash2, Power, Star, Zap, ShieldCheck,
-  Link2, Globe, Plus, X, ArrowRight,
+  Link2, Globe, Plus, X, ArrowRight, ChevronDown, ChevronUp,
 } from "lucide-react";
 import { useQAAuth } from "@/components/quero-armas/hooks/useQAAuth";
 import { Link } from "react-router-dom";
+import { formatDuration } from "@/lib/formatDuration";
 import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
   AlertDialogDescription, AlertDialogFooter, AlertDialogCancel,
@@ -94,6 +95,9 @@ type TrackedImport = {
   status: string;
   resumo?: string;
   started_at: number;
+  finished_at?: number;
+  tipo_documento?: string;
+  tipo_origem?: string;
 };
 
 /* ─── Dashboard stat card ─── */
@@ -110,11 +114,24 @@ function StatCard({ icon: Icon, label, value, color }: { icon: any; label: strin
 }
 
 /* ─── Activity bar item ─── */
-function ActivityItem({ item, onDismiss }: { item: TrackedImport; onDismiss: () => void }) {
+function ActivityItem({ item, onDismiss, onReprocess }: { item: TrackedImport; onDismiss: () => void; onReprocess: () => void }) {
   const stage = getStageInfo(item.status);
   const isFailed = item.status === "erro" || item.status === "texto_invalido";
   const isDone = item.status === "concluido";
   const isActive = !TERMINAL.includes(item.status);
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    if (!isActive) return;
+    const iv = setInterval(() => setElapsed(Date.now() - item.started_at), 1000);
+    return () => clearInterval(iv);
+  }, [isActive, item.started_at]);
+
+  const duration = isActive ? elapsed : (item.finished_at ? item.finished_at - item.started_at : 0);
+  const tipoLabel = TIPOS_DOC.find(t => t.value === item.tipo_documento)?.label
+    || TIPOS_AUXILIAR.find(t => t.value === item.tipo_documento)?.label
+    || item.tipo_documento;
+  const origemLabel = item.tipo_origem === "link_publico" ? "Link público" : item.tipo_origem === "arquivo_upload" ? "Upload" : "Manual";
 
   return (
     <div className={`flex items-center gap-3 px-4 py-2.5 rounded-lg border transition-all ${
@@ -128,14 +145,24 @@ function ActivityItem({ item, onDismiss }: { item: TrackedImport; onDismiss: () 
         {isFailed && <AlertCircle className="h-4 w-4 text-red-400" />}
       </div>
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <span className="text-xs font-medium text-slate-200 truncate">{item.titulo || item.url}</span>
           <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium whitespace-nowrap ${
             isFailed ? "bg-red-500/10 text-red-400" :
             isDone ? "bg-emerald-500/10 text-emerald-400" :
             "bg-blue-500/10 text-blue-400"
           }`}>{stage.label}</span>
+          {duration > 0 && (
+            <span className="text-[10px] text-slate-500 tabular-nums">{formatDuration(duration)}</span>
+          )}
         </div>
+        {/* Meta info on success */}
+        {isDone && (tipoLabel || origemLabel) && (
+          <div className="flex items-center gap-2 mt-0.5">
+            {tipoLabel && <span className="text-[10px] text-slate-500 bg-slate-800/60 px-1.5 py-0.5 rounded">{tipoLabel}</span>}
+            <span className="text-[10px] text-slate-600">{origemLabel}</span>
+          </div>
+        )}
         {isActive && (
           <div className="mt-1.5">
             <Progress value={stage.pct} className="h-1.5 bg-slate-800" />
@@ -151,6 +178,11 @@ function ActivityItem({ item, onDismiss }: { item: TrackedImport; onDismiss: () 
             Abrir <ArrowRight className="h-3 w-3" />
           </Button>
         </Link>
+      )}
+      {isFailed && (
+        <Button size="sm" variant="ghost" onClick={onReprocess} className="text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 h-7 px-2 text-[10px] gap-1 shrink-0">
+          <RefreshCw className="h-3 w-3" /> Reprocessar
+        </Button>
       )}
       {TERMINAL.includes(item.status) && (
         <button onClick={onDismiss} className="shrink-0 text-slate-600 hover:text-slate-400 transition-colors">
@@ -193,6 +225,7 @@ export default function QABaseConhecimentoPage() {
 
   // Tracked imports (activity queue)
   const [trackedImports, setTrackedImports] = useState<TrackedImport[]>([]);
+  const [queueCollapsed, setQueueCollapsed] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const loadDocs = useCallback(async () => {
@@ -220,16 +253,22 @@ export default function QABaseConhecimentoPage() {
     pollRef.current = setInterval(async () => {
       const ids = activeImports.map(t => t.doc_id);
       const { data } = await supabase.from("qa_documentos_conhecimento" as any)
-        .select("id, status_processamento, resumo_extraido").in("id", ids);
+        .select("id, status_processamento, resumo_extraido, tipo_documento, tipo_origem").in("id", ids);
       if (!data) return;
       let anyCompleted = false;
       setTrackedImports(prev => prev.map(t => {
         const updated = (data as any[]).find((d: any) => d.id === t.doc_id);
         if (!updated) return t;
-        if (TERMINAL.includes(updated.status_processamento) && !TERMINAL.includes(t.status)) {
-          anyCompleted = true;
-        }
-        return { ...t, status: updated.status_processamento, resumo: updated.resumo_extraido || t.resumo };
+        const nowTerminal = TERMINAL.includes(updated.status_processamento) && !TERMINAL.includes(t.status);
+        if (nowTerminal) anyCompleted = true;
+        return {
+          ...t,
+          status: updated.status_processamento,
+          resumo: updated.resumo_extraido || t.resumo,
+          tipo_documento: updated.tipo_documento || t.tipo_documento,
+          tipo_origem: updated.tipo_origem || t.tipo_origem,
+          finished_at: nowTerminal ? Date.now() : t.finished_at,
+        };
       }));
       if (anyCompleted) loadDocs();
     }, 2000);
@@ -247,12 +286,44 @@ export default function QABaseConhecimentoPage() {
     return () => clearInterval(interval);
   }, [docs, loadDocs]);
 
-  const addTrackedImport = (doc_id: string, url: string, titulo: string) => {
-    setTrackedImports(prev => [{ doc_id, url, titulo, status: "pendente", started_at: Date.now() }, ...prev]);
+  const addTrackedImport = (doc_id: string, url: string, titulo: string, tipo_documento?: string, tipo_origem?: string) => {
+    setTrackedImports(prev => [{ doc_id, url, titulo, status: "pendente", started_at: Date.now(), tipo_documento, tipo_origem }, ...prev]);
   };
 
   const dismissTracked = (doc_id: string) => {
     setTrackedImports(prev => prev.filter(t => t.doc_id !== doc_id));
+  };
+
+  // Auto-dismiss completed items after 2 minutes
+  useEffect(() => {
+    const completed = trackedImports.filter(t => t.status === "concluido" && t.finished_at);
+    if (!completed.length) return;
+    const timers = completed.map(t => {
+      const remaining = Math.max(0, 120_000 - (Date.now() - (t.finished_at || Date.now())));
+      return setTimeout(() => dismissTracked(t.doc_id), remaining);
+    });
+    return () => timers.forEach(clearTimeout);
+  }, [trackedImports]);
+
+  const handleReprocessFromQueue = async (item: TrackedImport) => {
+    if (!user) return;
+    try {
+      await supabase.from("qa_documentos_conhecimento" as any)
+        .update({ status_processamento: "pendente", resumo_extraido: null, updated_at: new Date().toISOString() })
+        .eq("id", item.doc_id);
+      await supabase.from("qa_chunks_conhecimento" as any).delete().eq("documento_id", item.doc_id);
+      setTrackedImports(prev => prev.map(t => t.doc_id === item.doc_id ? { ...t, status: "pendente", started_at: Date.now(), finished_at: undefined, resumo: undefined } : t));
+      if (item.tipo_origem === "link_publico" || item.url.startsWith("http")) {
+        await supabase.functions.invoke("qa-ingest-url", {
+          body: { url: item.url, titulo: item.titulo, tipo_documento: item.tipo_documento, user_id: user.id },
+        });
+      } else {
+        await supabase.functions.invoke("qa-ingest-document", { body: { storage_path: item.url, user_id: user.id } });
+      }
+      toast.success("Reprocessamento iniciado.");
+    } catch (err: any) {
+      toast.error("Erro ao reprocessar: " + (err.message || ""));
+    }
   };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -277,7 +348,7 @@ export default function QABaseConhecimentoPage() {
           tipo_origem: "arquivo_upload",
         }).select("id").single();
         if (insertErr) throw insertErr;
-        if (insertData) addTrackedImport((insertData as any).id, file.name, file.name.replace(/\.[^.]+$/, ""));
+        if (insertData) addTrackedImport((insertData as any).id, file.name, file.name.replace(/\.[^.]+$/, ""), "outro", "arquivo_upload");
         supabase.functions.invoke("qa-ingest-document", { body: { storage_path: path, user_id: user.id } }).catch(() => {});
       }
       toast.success(`${files.length} documento(s) enviado(s). Acompanhe o progresso acima.`);
@@ -311,7 +382,7 @@ export default function QABaseConhecimentoPage() {
       if (error) throw error;
       const docId = data?.doc_id;
       if (docId) {
-        addTrackedImport(docId, linkUrl.trim(), linkTitulo.trim() || linkUrl.trim());
+        addTrackedImport(docId, linkUrl.trim(), linkTitulo.trim() || linkUrl.trim(), linkTipo, "link_publico");
         // Set papel_documento on the created doc
         await supabase.from("qa_documentos_conhecimento" as any)
           .update({ papel_documento: linkPapel, caso_id: linkPapel === "auxiliar_caso" ? linkCasoId.trim() : null } as any)
@@ -346,7 +417,7 @@ export default function QABaseConhecimentoPage() {
         const { data } = await supabase.functions.invoke("qa-ingest-url", {
           body: { url, tipo_documento: bulkTipo, user_id: user.id },
         });
-        if (data?.doc_id) addTrackedImport(data.doc_id, url, url);
+        if (data?.doc_id) addTrackedImport(data.doc_id, url, url, bulkTipo, "link_publico");
         ok++;
       } catch { /* skip */ }
       setBulkProgress({ done: ok, total: urls.length });
@@ -463,7 +534,8 @@ export default function QABaseConhecimentoPage() {
   const referencias = docs.filter(d => d.referencia_preferencial === true).length;
 
   const activeTracked = trackedImports.filter(t => !TERMINAL.includes(t.status));
-  const recentTracked = trackedImports.filter(t => TERMINAL.includes(t.status)).slice(0, 5);
+  const doneTracked = trackedImports.filter(t => t.status === "concluido");
+  const errorTracked = trackedImports.filter(t => t.status === "erro" || t.status === "texto_invalido");
 
   return (
     <div className="space-y-6">
@@ -492,23 +564,42 @@ export default function QABaseConhecimentoPage() {
       {trackedImports.length > 0 && (
         <div className="bg-[#0c0c14] border border-slate-800/60 rounded-xl p-4 space-y-2">
           <div className="flex items-center justify-between mb-1">
-            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+            <button onClick={() => setQueueCollapsed(c => !c)} className="flex items-center gap-2 text-xs font-semibold text-slate-400 uppercase tracking-wider hover:text-slate-300 transition-colors">
               {activeTracked.length > 0 && <Loader2 className="h-3 w-3 animate-spin text-blue-400" />}
               Fila de Processamento
+              {queueCollapsed ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />}
+            </button>
+            <div className="flex items-center gap-2">
+              {/* Counters */}
               {activeTracked.length > 0 && (
                 <span className="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded-full font-medium">
-                  {activeTracked.length} em andamento
+                  {activeTracked.length} ativa{activeTracked.length > 1 ? "s" : ""}
                 </span>
               )}
-            </h3>
-            {trackedImports.length > 0 && trackedImports.every(t => TERMINAL.includes(t.status)) && (
-              <button onClick={() => setTrackedImports([])} className="text-[10px] text-slate-600 hover:text-slate-400 transition-colors">
-                Limpar tudo
-              </button>
-            )}
+              {doneTracked.length > 0 && (
+                <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full font-medium">
+                  {doneTracked.length} concluída{doneTracked.length > 1 ? "s" : ""}
+                </span>
+              )}
+              {errorTracked.length > 0 && (
+                <span className="text-[10px] bg-red-500/10 text-red-400 px-2 py-0.5 rounded-full font-medium">
+                  {errorTracked.length} erro{errorTracked.length > 1 ? "s" : ""}
+                </span>
+              )}
+              {trackedImports.every(t => TERMINAL.includes(t.status)) && (
+                <button onClick={() => setTrackedImports([])} className="text-[10px] text-slate-600 hover:text-slate-400 transition-colors">
+                  Limpar tudo
+                </button>
+              )}
+            </div>
           </div>
-          {trackedImports.map(item => (
-            <ActivityItem key={item.doc_id} item={item} onDismiss={() => dismissTracked(item.doc_id)} />
+          {!queueCollapsed && trackedImports.map(item => (
+            <ActivityItem
+              key={item.doc_id}
+              item={item}
+              onDismiss={() => dismissTracked(item.doc_id)}
+              onReprocess={() => handleReprocessFromQueue(item)}
+            />
           ))}
         </div>
       )}
