@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useBrasilApiLookup } from "@/hooks/useBrasilApiLookup";
@@ -8,11 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { toast } from "sonner";
 import {
   PenTool, Send, Loader2, AlertTriangle, Download, CheckCircle, Scale, Gavel,
   BookOpen, MapPin, Building2, Info, Paperclip, FileText, X, Upload, RefreshCw,
-  Search, ChevronDown, ChevronUp, XCircle, Clock, FolderOpen, User,
+  Search, ChevronDown, ChevronUp, XCircle, Clock, FolderOpen, User, ChevronsUpDown,
 } from "lucide-react";
 import { useQAAuth } from "@/components/quero-armas/hooks/useQAAuth";
 import { logSistema } from "@/lib/logSistema";
