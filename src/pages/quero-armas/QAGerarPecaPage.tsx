@@ -180,6 +180,11 @@ export default function QAGerarPecaPage() {
   const [cepStatus, setCepStatus] = useState<CepStatus>("idle");
   const cepTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Municipality autocomplete
+  const [municipiosList, setMunicipiosList] = useState<string[]>([]);
+  const [municipiosLoading, setMunicipiosLoading] = useState(false);
+  const [cidadePopoverOpen, setCidadePopoverOpen] = useState(false);
+
   // Auxiliary documents
   const [arquivosAuxiliares, setArquivosAuxiliares] = useState<ArquivoAuxiliar[]>([]);
   const [showDocList, setShowDocList] = useState(true);
