@@ -98,14 +98,7 @@ const TIPOS_PECA = [
   { value: "resposta_a_notificacao", label: "Resposta à Notificação" },
 ];
 
-const TIPOS_SERVICO = [
-  { value: "aquisicao_arma_fogo", label: "Aquisição de arma de fogo" },
-  { value: "defesa_administrativa_posse", label: "Defesa administrativa de posse" },
-  { value: "defesa_administrativa_porte", label: "Defesa administrativa de porte" },
-  { value: "recurso_administrativo", label: "Recurso administrativo" },
-  { value: "resposta_notificacao", label: "Resposta à notificação" },
-  { value: "outro", label: "Outro" },
-];
+// TIPOS_SERVICO removido — redundante com TIPOS_PECA
 
 const FOCOS = [
   { value: "legalidade", label: "Legalidade" },
@@ -166,11 +159,8 @@ export default function QAGerarPecaPage() {
   const { lookupCep, cepLoading } = useBrasilApiLookup();
 
   // Form fields
-  const [casoTitulo, setCasoTitulo] = useState("");
   const [nomeRequerente, setNomeRequerente] = useState("");
   const [cpfCnpj, setCpfCnpj] = useState("");
-  const [tipoServico, setTipoServico] = useState("");
-  const [tipoServicoCustom, setTipoServicoCustom] = useState("");
   const [entradaCaso, setEntradaCaso] = useState("");
   const [tipoPeca, setTipoPeca] = useState("defesa_posse_arma");
   const [foco, setFoco] = useState("legalidade");
@@ -216,7 +206,7 @@ export default function QAGerarPecaPage() {
   const docFailed = arquivosAuxiliares.filter(a => a.stage === "failed").length;
   const docActive = arquivosAuxiliares.filter(a => !["pending", "done", "failed"].includes(a.stage)).length;
 
-  const tipoServicoFinal = tipoServico === "outro" ? tipoServicoCustom : (TIPOS_SERVICO.find(t => t.value === tipoServico)?.label || tipoServico);
+  const tipoPecaLabel = TIPOS_PECA.find(t => t.value === tipoPeca)?.label || tipoPeca;
 
   /* ── Load existing case if ?caso=ID ── */
   useEffect(() => {
@@ -227,7 +217,7 @@ export default function QAGerarPecaPage() {
       if (!data) return;
       const c = data as any;
       setCasoId(c.id);
-      setCasoTitulo(c.titulo || "");
+      // titulo auto-gerado a partir do nome
       setNomeRequerente(c.nome_requerente || "");
       setCpfCnpj(c.cpf_cnpj || "");
       setEntradaCaso(c.descricao_caso || "");
@@ -240,8 +230,9 @@ export default function QAGerarPecaPage() {
       setClienteBairro(c.bairro || "");
       if (c.minuta_gerada) setResultado({ minuta_gerada: c.minuta_gerada, geracao_id: c.geracao_id, score_confianca: 0, fontes_utilizadas: [] });
       // Try to match tipo_servico
-      const match = TIPOS_SERVICO.find(t => t.label === c.tipo_servico);
-      if (match) { setTipoServico(match.value); } else if (c.tipo_servico) { setTipoServico("outro"); setTipoServicoCustom(c.tipo_servico); }
+      // tipo_servico derivado de tipo_peca
+      const matchPeca = TIPOS_PECA.find(t => t.label === c.tipo_servico || t.value === c.tipo_peca);
+      if (matchPeca) setTipoPeca(matchPeca.value);
       if (c.unidade_pf) {
         setCircunscricaoResolvida({ unidade_pf: c.unidade_pf, sigla_unidade: c.sigla_unidade_pf || "", tipo_unidade: "", municipio_sede: "", uf: c.uf || "", base_legal: "" });
         setCircunscricaoStatus("resolved");
@@ -383,7 +374,7 @@ export default function QAGerarPecaPage() {
         titulo: arq.nome, nome_arquivo: arq.file.name, storage_path: storagePath,
         tipo_documento: arq.tipo, tipo_origem: "upload", papel_documento: "auxiliar_caso",
         categoria: arq.tipo, status_processamento: "pendente", status_validacao: "validado",
-        ativo: true, ativo_na_ia: false, caso_id: casoTitulo || null,
+        ativo: true, ativo_na_ia: false, caso_id: nomeRequerente || null,
         enviado_por: user?.id || null, mime_type: arq.file.type || null, tamanho_bytes: arq.file.size,
       }).select("id").single();
       if (dbErr) throw dbErr;
@@ -429,11 +420,11 @@ export default function QAGerarPecaPage() {
       }));
 
       const casoData: Record<string, any> = {
-        titulo: casoTitulo || `Caso ${nomeRequerente || "sem título"}`,
+        titulo: `Caso ${nomeRequerente || "sem título"}`,
         nome_requerente: nomeRequerente,
         cpf_cnpj: cpfCnpj || null,
         tipo_peca: tipoPeca,
-        tipo_servico: tipoServicoFinal || null,
+        tipo_servico: tipoPecaLabel || null,
         cidade: clienteCidade || null,
         uf: clienteUf || null,
         cep: clienteCep || null,
@@ -472,7 +463,7 @@ export default function QAGerarPecaPage() {
         acao: casoId ? "atualizar_caso" : "criar_caso",
         detalhes_json: {
           nome_requerente: nomeRequerente,
-          tipo_servico: tipoServicoFinal,
+          tipo_servico: tipoPecaLabel,
           tipo_peca: tipoPeca,
           docs_total: docTotal,
           docs_ok: docDone,
@@ -548,12 +539,12 @@ export default function QAGerarPecaPage() {
 
       const { data, error } = await supabase.functions.invoke("qa-gerar-peca", {
         body: {
-          usuario_id: user?.id, caso_titulo: casoTitulo || nomeRequerente, entrada_caso: entradaCaso,
+          usuario_id: user?.id, caso_titulo: nomeRequerente, entrada_caso: entradaCaso,
           tipo_peca: tipoPeca, foco,
           cliente_cidade: clienteCidade.trim(), cliente_uf: clienteUf.trim(),
           cliente_endereco: clienteEndereco.trim() || null, cliente_cep: clienteCep.trim() || null,
           nome_requerente: nomeRequerente.trim(),
-          tipo_servico: tipoServicoFinal || null,
+          tipo_servico: tipoPecaLabel || null,
           circunscricao_resolvida: circ ? {
             unidade_pf: circ.unidade_pf, sigla_unidade: circ.sigla_unidade,
             tipo_unidade: circ.tipo_unidade, municipio_sede: circ.municipio_sede,
@@ -599,13 +590,13 @@ export default function QAGerarPecaPage() {
     if (!resultado?.geracao_id) return;
     try {
       const { data, error } = await supabase.functions.invoke("qa-export-docx", {
-        body: { geracao_id: resultado.geracao_id, variables: { cliente_nome: nomeRequerente || casoTitulo } },
+        body: { geracao_id: resultado.geracao_id, variables: { cliente_nome: nomeRequerente } },
       });
       if (error) throw error;
       const blob = new Blob([data], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = url; a.download = `${nomeRequerente || casoTitulo || "peca"}.docx`; a.click();
+      a.href = url; a.download = `${nomeRequerente || "peca"}.docx`; a.click();
       URL.revokeObjectURL(url);
 
       // Update case with docx path
@@ -651,7 +642,7 @@ export default function QAGerarPecaPage() {
             <User className="h-3.5 w-3.5 text-slate-500" />
             <span className="text-[10px] text-slate-600 uppercase tracking-[0.15em] font-medium">Dados do Requerente</span>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="space-y-1.5">
               <Label className="text-slate-500 text-[11px]">Nome completo do requerente *</Label>
               <Input value={nomeRequerente} onChange={e => setNomeRequerente(e.target.value)}
@@ -662,42 +653,15 @@ export default function QAGerarPecaPage() {
               <Input value={cpfCnpj} onChange={e => setCpfCnpj(e.target.value)}
                 className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm" placeholder="Opcional" />
             </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-slate-500 text-[11px]">Tipo de serviço solicitado *</Label>
-              <Select value={tipoServico} onValueChange={setTipoServico}>
-                <SelectTrigger className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm"><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <Label className="text-slate-500 text-[11px]">Tipo de Peça *</Label>
+              <Select value={tipoPeca} onValueChange={setTipoPeca}>
+                <SelectTrigger className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {TIPOS_SERVICO.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                  {TIPOS_PECA.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
-            {tipoServico === "outro" && (
-              <div className="space-y-1.5">
-                <Label className="text-slate-500 text-[11px]">Especifique o serviço</Label>
-                <Input value={tipoServicoCustom} onChange={e => setTipoServicoCustom(e.target.value)}
-                  className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm" placeholder="Descreva o serviço" />
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* ── Título + Tipo de Peça ── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="space-y-1.5">
-            <Label className="text-slate-500 text-[11px]">Título do Caso</Label>
-            <Input value={casoTitulo} onChange={e => setCasoTitulo(e.target.value)}
-              className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm" placeholder="Ex: Defesa para registro de arma" />
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-slate-500 text-[11px]">Tipo de Peça</Label>
-            <Select value={tipoPeca} onValueChange={setTipoPeca}>
-              <SelectTrigger className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {TIPOS_PECA.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
           </div>
         </div>
 
