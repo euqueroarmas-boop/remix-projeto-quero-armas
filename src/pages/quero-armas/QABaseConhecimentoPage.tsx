@@ -253,16 +253,22 @@ export default function QABaseConhecimentoPage() {
     pollRef.current = setInterval(async () => {
       const ids = activeImports.map(t => t.doc_id);
       const { data } = await supabase.from("qa_documentos_conhecimento" as any)
-        .select("id, status_processamento, resumo_extraido").in("id", ids);
+        .select("id, status_processamento, resumo_extraido, tipo_documento, tipo_origem").in("id", ids);
       if (!data) return;
       let anyCompleted = false;
       setTrackedImports(prev => prev.map(t => {
         const updated = (data as any[]).find((d: any) => d.id === t.doc_id);
         if (!updated) return t;
-        if (TERMINAL.includes(updated.status_processamento) && !TERMINAL.includes(t.status)) {
-          anyCompleted = true;
-        }
-        return { ...t, status: updated.status_processamento, resumo: updated.resumo_extraido || t.resumo };
+        const nowTerminal = TERMINAL.includes(updated.status_processamento) && !TERMINAL.includes(t.status);
+        if (nowTerminal) anyCompleted = true;
+        return {
+          ...t,
+          status: updated.status_processamento,
+          resumo: updated.resumo_extraido || t.resumo,
+          tipo_documento: updated.tipo_documento || t.tipo_documento,
+          tipo_origem: updated.tipo_origem || t.tipo_origem,
+          finished_at: nowTerminal ? Date.now() : t.finished_at,
+        };
       }));
       if (anyCompleted) loadDocs();
     }, 2000);
