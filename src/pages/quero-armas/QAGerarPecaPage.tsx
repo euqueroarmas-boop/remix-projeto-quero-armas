@@ -79,11 +79,76 @@ export default function QAGerarPecaPage() {
   // Tempestividade fields
   const [dataNotificacao, setDataNotificacao] = useState("");
   const [infoTempestividade, setInfoTempestividade] = useState("");
+  // Auxiliary documents
+  const [arquivosAuxiliares, setArquivosAuxiliares] = useState<ArquivoAuxiliar[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   // State
   const [loading, setLoading] = useState(false);
   const [resultado, setResultado] = useState<any>(null);
   const [circunscricaoResolvida, setCircunscricaoResolvida] = useState<CircunscricaoResolvida | null>(null);
   const [resolvendoCircunscricao, setResolvendoCircunscricao] = useState(false);
+
+  const handleAddFiles = (files: FileList | null) => {
+    if (!files) return;
+    const newFiles: ArquivoAuxiliar[] = Array.from(files).map(f => ({
+      file: f,
+      nome: f.name,
+      tipo: "outro",
+      uploading: false,
+      uploaded: false,
+    }));
+    setArquivosAuxiliares(prev => [...prev, ...newFiles]);
+  };
+
+  const handleRemoveFile = (index: number) => {
+    setArquivosAuxiliares(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleChangeTipoDoc = (index: number, tipo: string) => {
+    setArquivosAuxiliares(prev => prev.map((a, i) => i === index ? { ...a, tipo } : a));
+  };
+
+  const uploadAuxiliares = async (): Promise<string[]> => {
+    const docIds: string[] = [];
+    for (let i = 0; i < arquivosAuxiliares.length; i++) {
+      const arq = arquivosAuxiliares[i];
+      if (arq.uploaded && arq.docId) { docIds.push(arq.docId); continue; }
+      setArquivosAuxiliares(prev => prev.map((a, j) => j === i ? { ...a, uploading: true, error: undefined } : a));
+      try {
+        const storagePath = `auxiliares/${Date.now()}_${arq.file.name}`;
+        const { error: upErr } = await supabase.storage.from("qa-documentos").upload(storagePath, arq.file);
+        if (upErr) throw upErr;
+
+        const { data: docData, error: dbErr } = await supabase.from("qa_documentos_conhecimento").insert({
+          titulo: arq.nome,
+          nome_arquivo: arq.file.name,
+          storage_path: storagePath,
+          tipo_documento: arq.tipo,
+          tipo_origem: "upload",
+          papel_documento: "auxiliar_caso",
+          categoria: arq.tipo,
+          status_processamento: "pendente",
+          status_validacao: "validado",
+          ativo: true,
+          ativo_na_ia: false,
+          caso_id: casoTitulo || null,
+          enviado_por: user?.id || null,
+          mime_type: arq.file.type || null,
+          tamanho_bytes: arq.file.size,
+        }).select("id").single();
+        if (dbErr) throw dbErr;
+
+        // Trigger ingestion for text extraction
+        await supabase.functions.invoke("qa-ingest-document", { body: { document_id: docData.id } });
+
+        setArquivosAuxiliares(prev => prev.map((a, j) => j === i ? { ...a, uploading: false, uploaded: true, docId: docData.id } : a));
+        docIds.push(docData.id);
+      } catch (err: any) {
+        setArquivosAuxiliares(prev => prev.map((a, j) => j === i ? { ...a, uploading: false, error: err.message || "Falha no upload" } : a));
+      }
+    }
+    return docIds;
+  };
 
   const needsTempestividade = tipoPeca === "recurso_administrativo" || tipoPeca === "resposta_a_notificacao";
 
