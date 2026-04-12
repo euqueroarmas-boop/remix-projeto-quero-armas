@@ -384,7 +384,7 @@ export default function QAGerarPecaPage() {
   const handleAddFiles = (files: FileList | null) => {
     if (!files) return;
     const newFiles: ArquivoAuxiliar[] = Array.from(files).map(f => ({
-      file: f, nome: f.name, tipo: "outro", stage: "pending" as DocUploadStage,
+      file: f, nome: f.name, tipo: "", stage: "pending" as DocUploadStage,
     }));
     setArquivosAuxiliares(prev => [...prev, ...newFiles]);
   };
@@ -394,11 +394,11 @@ export default function QAGerarPecaPage() {
   };
 
   const handleChangeTipoDoc = (index: number, tipo: string) => {
+    if (!tipo) return;
     setArquivosAuxiliares(prev => prev.map((a, i) => i === index ? { ...a, tipo } : a));
     // Immediately trigger upload+processing after classification
     const arq = arquivosAuxiliares[index];
     if (arq && arq.stage === "pending") {
-      // Use a microtask so state updates first
       setTimeout(() => {
         void uploadSingleDoc({ ...arq, tipo }, index);
       }, 50);
