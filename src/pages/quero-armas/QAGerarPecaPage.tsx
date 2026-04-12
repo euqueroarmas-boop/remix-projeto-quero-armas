@@ -98,14 +98,7 @@ const TIPOS_PECA = [
   { value: "resposta_a_notificacao", label: "Resposta à Notificação" },
 ];
 
-const TIPOS_SERVICO = [
-  { value: "aquisicao_arma_fogo", label: "Aquisição de arma de fogo" },
-  { value: "defesa_administrativa_posse", label: "Defesa administrativa de posse" },
-  { value: "defesa_administrativa_porte", label: "Defesa administrativa de porte" },
-  { value: "recurso_administrativo", label: "Recurso administrativo" },
-  { value: "resposta_notificacao", label: "Resposta à notificação" },
-  { value: "outro", label: "Outro" },
-];
+// TIPOS_SERVICO removido — redundante com TIPOS_PECA
 
 const FOCOS = [
   { value: "legalidade", label: "Legalidade" },
