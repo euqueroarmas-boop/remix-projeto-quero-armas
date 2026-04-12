@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -6,8 +6,34 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { PenTool, Send, Loader2, AlertTriangle, Download, CheckCircle, Scale, Gavel, BookOpen, MapPin, Building2, Info } from "lucide-react";
+import { PenTool, Send, Loader2, AlertTriangle, Download, CheckCircle, Scale, Gavel, BookOpen, MapPin, Building2, Info, Paperclip, FileText, X, Upload } from "lucide-react";
 import { useQAAuth } from "@/components/quero-armas/hooks/useQAAuth";
+
+interface ArquivoAuxiliar {
+  file: File;
+  nome: string;
+  tipo: string;
+  uploading: boolean;
+  uploaded: boolean;
+  docId?: string;
+  error?: string;
+}
+
+const TIPOS_DOC_AUXILIAR = [
+  { value: "boletim_ocorrencia", label: "Boletim de Ocorrência" },
+  { value: "laudo_medico", label: "Laudo Médico" },
+  { value: "laudo_psiquiatrico", label: "Laudo Psiquiátrico" },
+  { value: "laudo_psicologico", label: "Laudo Psicológico" },
+  { value: "notificacao", label: "Notificação" },
+  { value: "indeferimento", label: "Indeferimento" },
+  { value: "comprovante", label: "Comprovante" },
+  { value: "certidao", label: "Certidão" },
+  { value: "documento_pessoal", label: "Documento Pessoal" },
+  { value: "declaracao", label: "Declaração" },
+  { value: "relatorio", label: "Relatório" },
+  { value: "decisao_administrativa", label: "Decisão Administrativa" },
+  { value: "outro", label: "Outro documento de suporte" },
+];
 
 const TIPOS_PECA = [
   { value: "defesa_posse_arma", label: "Defesa para Posse de Arma" },
@@ -53,11 +79,76 @@ export default function QAGerarPecaPage() {
   // Tempestividade fields
   const [dataNotificacao, setDataNotificacao] = useState("");
   const [infoTempestividade, setInfoTempestividade] = useState("");
+  // Auxiliary documents
+  const [arquivosAuxiliares, setArquivosAuxiliares] = useState<ArquivoAuxiliar[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   // State
   const [loading, setLoading] = useState(false);
   const [resultado, setResultado] = useState<any>(null);
   const [circunscricaoResolvida, setCircunscricaoResolvida] = useState<CircunscricaoResolvida | null>(null);
   const [resolvendoCircunscricao, setResolvendoCircunscricao] = useState(false);
+
+  const handleAddFiles = (files: FileList | null) => {
+    if (!files) return;
+    const newFiles: ArquivoAuxiliar[] = Array.from(files).map(f => ({
+      file: f,
+      nome: f.name,
+      tipo: "outro",
+      uploading: false,
+      uploaded: false,
+    }));
+    setArquivosAuxiliares(prev => [...prev, ...newFiles]);
+  };
+
+  const handleRemoveFile = (index: number) => {
+    setArquivosAuxiliares(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleChangeTipoDoc = (index: number, tipo: string) => {
+    setArquivosAuxiliares(prev => prev.map((a, i) => i === index ? { ...a, tipo } : a));
+  };
+
+  const uploadAuxiliares = async (): Promise<string[]> => {
+    const docIds: string[] = [];
+    for (let i = 0; i < arquivosAuxiliares.length; i++) {
+      const arq = arquivosAuxiliares[i];
+      if (arq.uploaded && arq.docId) { docIds.push(arq.docId); continue; }
+      setArquivosAuxiliares(prev => prev.map((a, j) => j === i ? { ...a, uploading: true, error: undefined } : a));
+      try {
+        const storagePath = `auxiliares/${Date.now()}_${arq.file.name}`;
+        const { error: upErr } = await supabase.storage.from("qa-documentos").upload(storagePath, arq.file);
+        if (upErr) throw upErr;
+
+        const { data: docData, error: dbErr } = await supabase.from("qa_documentos_conhecimento").insert({
+          titulo: arq.nome,
+          nome_arquivo: arq.file.name,
+          storage_path: storagePath,
+          tipo_documento: arq.tipo,
+          tipo_origem: "upload",
+          papel_documento: "auxiliar_caso",
+          categoria: arq.tipo,
+          status_processamento: "pendente",
+          status_validacao: "validado",
+          ativo: true,
+          ativo_na_ia: false,
+          caso_id: casoTitulo || null,
+          enviado_por: user?.id || null,
+          mime_type: arq.file.type || null,
+          tamanho_bytes: arq.file.size,
+        }).select("id").single();
+        if (dbErr) throw dbErr;
+
+        // Trigger ingestion for text extraction
+        await supabase.functions.invoke("qa-ingest-document", { body: { document_id: docData.id } });
+
+        setArquivosAuxiliares(prev => prev.map((a, j) => j === i ? { ...a, uploading: false, uploaded: true, docId: docData.id } : a));
+        docIds.push(docData.id);
+      } catch (err: any) {
+        setArquivosAuxiliares(prev => prev.map((a, j) => j === i ? { ...a, uploading: false, error: err.message || "Falha no upload" } : a));
+      }
+    }
+    return docIds;
+  };
 
   const needsTempestividade = tipoPeca === "recurso_administrativo" || tipoPeca === "resposta_a_notificacao";
 
@@ -117,6 +208,13 @@ export default function QAGerarPecaPage() {
     setLoading(true);
     setResultado(null);
     try {
+      // Upload auxiliary documents first
+      let auxiliarDocIds: string[] = [];
+      if (arquivosAuxiliares.length > 0) {
+        toast.info("Enviando documentos auxiliares...");
+        auxiliarDocIds = await uploadAuxiliares();
+      }
+
       const { data, error } = await supabase.functions.invoke("qa-gerar-peca", {
         body: {
           usuario_id: user?.id,
@@ -124,12 +222,10 @@ export default function QAGerarPecaPage() {
           entrada_caso: entradaCaso,
           tipo_peca: tipoPeca,
           foco,
-          // Client address for circumscription
           cliente_cidade: clienteCidade.trim(),
           cliente_uf: clienteUf.trim(),
           cliente_endereco: clienteEndereco.trim() || null,
           cliente_cep: clienteCep.trim() || null,
-          // Resolved circumscription (pre-resolved on client)
           circunscricao_resolvida: circ ? {
             unidade_pf: circ.unidade_pf,
             sigla_unidade: circ.sigla_unidade,
@@ -138,9 +234,9 @@ export default function QAGerarPecaPage() {
             uf: circ.uf,
             base_legal: circ.base_legal,
           } : null,
-          // Tempestividade
           data_notificacao: dataNotificacao.trim() || null,
           info_tempestividade: infoTempestividade.trim() || null,
+          documentos_auxiliares_ids: auxiliarDocIds.length > 0 ? auxiliarDocIds : null,
         },
       });
       if (error) throw error;
@@ -341,6 +437,72 @@ export default function QAGerarPecaPage() {
           <Textarea value={entradaCaso} onChange={e => setEntradaCaso(e.target.value)}
             className="bg-[#0c0c14] border-slate-700 text-slate-100 min-h-[200px]"
             placeholder="Descreva detalhadamente os fatos, a situação jurídica, o histórico do caso, documentos relevantes e o que precisa na peça..." />
+        </div>
+
+        {/* Row 6: Documentos auxiliares do caso */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Paperclip className="h-4 w-4 text-amber-400" />
+            <Label className="text-slate-300 text-sm font-medium">Documentos Auxiliares do Caso</Label>
+            <span className="text-[10px] text-slate-600 ml-1">(BOs, laudos, notificações, certidões, comprovantes...)</span>
+          </div>
+          <p className="text-[11px] text-slate-500">
+            Anexe provas e documentos de suporte. Eles serão lidos integralmente e usados como base factual da peça, sem alimentar o aprendizado global.
+          </p>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg"
+            className="hidden"
+            onChange={e => { handleAddFiles(e.target.files); e.target.value = ""; }}
+          />
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="border-amber-500/30 text-amber-400 hover:bg-amber-500/10"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Upload className="h-3.5 w-3.5 mr-1.5" />
+            Anexar documentos
+          </Button>
+
+          {arquivosAuxiliares.length > 0 && (
+            <div className="space-y-2">
+              {arquivosAuxiliares.map((arq, i) => (
+                <div key={i} className="flex items-center gap-3 bg-slate-900/50 border border-slate-800/50 rounded-lg p-3">
+                  <FileText className="h-4 w-4 text-slate-400 shrink-0" />
+                  <div className="flex-1 min-w-0 space-y-1.5">
+                    <div className="text-xs text-slate-200 truncate">{arq.nome}</div>
+                    <Select value={arq.tipo} onValueChange={v => handleChangeTipoDoc(i, v)}>
+                      <SelectTrigger className="h-7 text-[11px] bg-[#0c0c14] border-slate-700 text-slate-400 w-52">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {TIPOS_DOC_AUXILIAR.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {arq.uploading && <Loader2 className="h-3.5 w-3.5 animate-spin text-cyan-400" />}
+                    {arq.uploaded && <CheckCircle className="h-3.5 w-3.5 text-emerald-400" />}
+                    {arq.error && (
+                      <span className="text-[10px] text-red-400 max-w-[100px] truncate" title={arq.error}>Erro</span>
+                    )}
+                    <button onClick={() => handleRemoveFile(i)} className="text-slate-600 hover:text-red-400 transition-colors">
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+              <p className="text-[10px] text-slate-600">
+                {arquivosAuxiliares.length} documento(s) anexado(s) — serão enviados automaticamente ao gerar a peça.
+              </p>
+            </div>
+          )}
         </div>
 
         <Button onClick={gerar} disabled={loading} className="bg-amber-600 hover:bg-amber-700">
