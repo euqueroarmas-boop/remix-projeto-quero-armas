@@ -1017,6 +1017,14 @@ export default function QAGerarPecaPage() {
                   </div>
                   {!["pending", "done"].includes(arq.stage) && <Progress value={stageProgress(arq.stage)} className="h-1" />}
                   {arq.error && <div className="text-[9px] text-red-400/80 bg-red-500/5 rounded px-2 py-0.5">{arq.error}</div>}
+                  {!["pending", "done", "failed"].includes(arq.stage) && (
+                    <div className="text-[9px] text-slate-600 italic">O processamento continua mesmo se você sair da tela.</div>
+                  )}
+                      )}
+                    </div>
+                  </div>
+                  {!["pending", "done"].includes(arq.stage) && <Progress value={stageProgress(arq.stage)} className="h-1" />}
+                  {arq.error && <div className="text-[9px] text-red-400/80 bg-red-500/5 rounded px-2 py-0.5">{arq.error}</div>}
                 </div>
               ))}
             </div>
