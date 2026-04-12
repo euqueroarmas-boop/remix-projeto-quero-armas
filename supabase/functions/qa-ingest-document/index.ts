@@ -34,7 +34,7 @@ function isTextValid(text: string): boolean {
   // Real text should have at least 30% letters
   if (ratio < 0.3) return false;
   // Check for excessive PDF structure markers
-  const pdfMarkers = (text.match(/\b(endobj|endstream|obj\b|\/Type|\/Page|\/Font|\/Filter|<</g) || []).length;
+  const pdfMarkers = (text.match(/\b(endobj|endstream|obj|Type|Page|Font|Filter)\b/g) || []).length;
   if (pdfMarkers > 10) return false;
   return true;
 }
