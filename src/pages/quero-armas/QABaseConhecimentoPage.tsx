@@ -3,10 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import {
   Upload, Search, FileText, CheckCircle, Clock, AlertCircle, Loader2,
   ExternalLink, RefreshCw, Trash2, Power, Star, Zap, ShieldCheck,
+  Link2, Globe, Plus,
 } from "lucide-react";
 import { useQAAuth } from "@/components/quero-armas/hooks/useQAAuth";
 import { Link } from "react-router-dom";
@@ -14,12 +16,23 @@ import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
   AlertDialogDescription, AlertDialogFooter, AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 
 const TIPOS_DOC = [
-  "peticao", "recurso", "mandado_seguranca", "parecer", "jurisprudencia",
-  "decisao_favoravel", "decisao_desfavoravel", "lei", "decreto",
-  "instrucao_normativa", "portaria", "nota_tecnica", "modelo_interno",
-  "estrategia_interna", "outro",
+  "lei", "decreto", "instrucao_normativa", "portaria", "jurisprudencia",
+  "peticao", "recurso_administrativo", "resposta_a_notificacao",
+  "decisao_favoravel", "decisao_desfavoravel", "modelo_interno",
+  "nota_tecnica", "parecer", "mandado_seguranca", "outro",
+];
+
+const TIPOS_ORIGEM_FILTER = [
+  { value: "todos", label: "Todas origens" },
+  { value: "arquivo_upload", label: "Upload" },
+  { value: "link_publico", label: "Link público" },
+  { value: "cadastro_manual", label: "Manual" },
 ];
 
 /* ─── Dashboard stat card ─── */
@@ -43,19 +56,35 @@ export default function QABaseConhecimentoPage() {
   const [reprocessingId, setReprocessingId] = useState<string | null>(null);
   const [filtroTipo, setFiltroTipo] = useState("todos");
   const [filtroStatus, setFiltroStatus] = useState("todos");
+  const [filtroOrigem, setFiltroOrigem] = useState("todos");
   const [busca, setBusca] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
   const [deleting, setDeleting] = useState(false);
+
+  // Link import
+  const [showLinkDialog, setShowLinkDialog] = useState(false);
+  const [linkUrl, setLinkUrl] = useState("");
+  const [linkTitulo, setLinkTitulo] = useState("");
+  const [linkTipo, setLinkTipo] = useState("outro");
+  const [importingLink, setImportingLink] = useState(false);
+
+  // Bulk import
+  const [showBulkDialog, setShowBulkDialog] = useState(false);
+  const [bulkLinks, setBulkLinks] = useState("");
+  const [bulkTipo, setBulkTipo] = useState("outro");
+  const [bulkImporting, setBulkImporting] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState({ done: 0, total: 0 });
 
   const loadDocs = useCallback(async () => {
     let q = supabase.from("qa_documentos_conhecimento" as any).select("*").eq("ativo", true).order("created_at", { ascending: false });
     if (filtroTipo !== "todos") q = q.eq("tipo_documento", filtroTipo);
     if (filtroStatus !== "todos") q = q.eq("status_processamento", filtroStatus);
+    if (filtroOrigem !== "todos") q = q.eq("tipo_origem", filtroOrigem);
     if (busca) q = q.ilike("titulo", `%${busca}%`);
     const { data } = await q;
     setDocs((data as any[]) ?? []);
     setLoading(false);
-  }, [filtroTipo, filtroStatus, busca]);
+  }, [filtroTipo, filtroStatus, filtroOrigem, busca]);
 
   useEffect(() => { setLoading(true); loadDocs(); }, [loadDocs]);
 
@@ -67,34 +96,81 @@ export default function QABaseConhecimentoPage() {
   }, [docs, loadDocs]);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !user) return;
+    const files = e.target.files;
+    if (!files?.length || !user) return;
     setUploading(true);
     try {
-      const path = `${user.id}/${Date.now()}_${file.name}`;
-      const { error: uploadErr } = await supabase.storage.from("qa-documentos").upload(path, file);
-      if (uploadErr) throw uploadErr;
-      const { error: insertErr } = await supabase.from("qa_documentos_conhecimento" as any).insert({
-        titulo: file.name.replace(/\.[^.]+$/, ""),
-        nome_arquivo: file.name,
-        storage_path: path,
-        mime_type: file.type,
-        tamanho_bytes: file.size,
-        enviado_por: user.id,
-        tipo_documento: "outro",
-        status_processamento: "pendente",
-        status_validacao: "nao_validado",
-      });
-      if (insertErr) throw insertErr;
-      toast.success("Documento enviado. Processamento iniciado.");
+      for (const file of Array.from(files)) {
+        const path = `${user.id}/${Date.now()}_${file.name}`;
+        const { error: uploadErr } = await supabase.storage.from("qa-documentos").upload(path, file);
+        if (uploadErr) throw uploadErr;
+        const { error: insertErr } = await supabase.from("qa_documentos_conhecimento" as any).insert({
+          titulo: file.name.replace(/\.[^.]+$/, ""),
+          nome_arquivo: file.name,
+          storage_path: path,
+          mime_type: file.type,
+          tamanho_bytes: file.size,
+          enviado_por: user.id,
+          tipo_documento: "outro",
+          status_processamento: "pendente",
+          status_validacao: "nao_validado",
+          tipo_origem: "arquivo_upload",
+        });
+        if (insertErr) throw insertErr;
+        supabase.functions.invoke("qa-ingest-document", { body: { storage_path: path, user_id: user.id } }).catch(() => {});
+      }
+      toast.success(`${files.length} documento(s) enviado(s). Processamento iniciado.`);
       loadDocs();
-      supabase.functions.invoke("qa-ingest-document", { body: { storage_path: path, user_id: user.id } }).catch(() => {});
     } catch (err: any) {
       toast.error(err.message || "Erro ao enviar");
     } finally {
       setUploading(false);
       e.target.value = "";
     }
+  };
+
+  const handleImportLink = async () => {
+    if (!linkUrl.trim() || !user) return;
+    setImportingLink(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-ingest-url", {
+        body: { url: linkUrl.trim(), titulo: linkTitulo.trim() || undefined, tipo_documento: linkTipo, user_id: user.id },
+      });
+      if (error) throw error;
+      toast.success("Importação por link iniciada.");
+      setShowLinkDialog(false);
+      setLinkUrl("");
+      setLinkTitulo("");
+      setLinkTipo("outro");
+      loadDocs();
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao importar link");
+    } finally {
+      setImportingLink(false);
+    }
+  };
+
+  const handleBulkImport = async () => {
+    if (!bulkLinks.trim() || !user) return;
+    const urls = bulkLinks.split("\n").map(l => l.trim()).filter(l => l.length > 5);
+    if (!urls.length) { toast.error("Nenhum link válido encontrado."); return; }
+    setBulkImporting(true);
+    setBulkProgress({ done: 0, total: urls.length });
+    let ok = 0;
+    for (const url of urls) {
+      try {
+        await supabase.functions.invoke("qa-ingest-url", {
+          body: { url, tipo_documento: bulkTipo, user_id: user.id },
+        });
+        ok++;
+      } catch { /* skip */ }
+      setBulkProgress({ done: ok, total: urls.length });
+    }
+    toast.success(`${ok}/${urls.length} links importados com sucesso.`);
+    setBulkImporting(false);
+    setShowBulkDialog(false);
+    setBulkLinks("");
+    loadDocs();
   };
 
   const handleReprocess = async (doc: any) => {
@@ -105,7 +181,14 @@ export default function QABaseConhecimentoPage() {
         .update({ status_processamento: "pendente", resumo_extraido: null, updated_at: new Date().toISOString() })
         .eq("id", doc.id);
       await supabase.from("qa_chunks_conhecimento" as any).delete().eq("documento_id", doc.id);
-      await supabase.functions.invoke("qa-ingest-document", { body: { storage_path: doc.storage_path, user_id: user.id } });
+
+      if (doc.tipo_origem === "link_publico" && doc.url_origem) {
+        await supabase.functions.invoke("qa-ingest-url", {
+          body: { url: doc.url_origem, titulo: doc.titulo, tipo_documento: doc.tipo_documento, user_id: user.id },
+        });
+      } else {
+        await supabase.functions.invoke("qa-ingest-document", { body: { storage_path: doc.storage_path, user_id: user.id } });
+      }
       toast.success("Reprocessamento iniciado.");
       loadDocs();
     } catch (err: any) {
@@ -179,6 +262,11 @@ export default function QABaseConhecimentoPage() {
     return { text: "Pendente", cls: "bg-slate-800 text-slate-400" };
   };
 
+  const origemIcon = (t: string) => {
+    if (t === "link_publico") return <Globe className="h-3 w-3 text-blue-400" />;
+    return <Upload className="h-3 w-3 text-slate-500" />;
+  };
+
   // Dashboard stats
   const totalDocs = docs.length;
   const validados = docs.filter(d => d.status_validacao === "validado").length;
@@ -193,12 +281,20 @@ export default function QABaseConhecimentoPage() {
           <h1 className="text-2xl font-bold text-slate-100">Base de Conhecimento</h1>
           <p className="text-sm text-slate-500 mt-1">Documentos que alimentam a IA jurídica</p>
         </div>
-        <label className="cursor-pointer">
-          <input type="file" className="hidden" onChange={handleUpload} accept=".pdf,.doc,.docx,.txt,.rtf" />
-          <Button asChild disabled={uploading} className="bg-amber-600 hover:bg-amber-700">
-            <span>{uploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />} Enviar Documento</span>
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" onClick={() => setShowLinkDialog(true)} className="border-blue-600/40 text-blue-400 hover:bg-blue-500/10 gap-1.5">
+            <Link2 className="h-4 w-4" /> Importar por Link
           </Button>
-        </label>
+          <Button variant="outline" onClick={() => setShowBulkDialog(true)} className="border-purple-600/40 text-purple-400 hover:bg-purple-500/10 gap-1.5">
+            <Plus className="h-4 w-4" /> Carga em Lote
+          </Button>
+          <label className="cursor-pointer">
+            <input type="file" className="hidden" onChange={handleUpload} accept=".pdf,.doc,.docx,.txt,.rtf" multiple />
+            <Button asChild disabled={uploading} className="bg-amber-600 hover:bg-amber-700">
+              <span>{uploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />} Enviar Documento</span>
+            </Button>
+          </label>
+        </div>
       </div>
 
       {/* Dashboard Stats */}
@@ -223,8 +319,14 @@ export default function QABaseConhecimentoPage() {
             {TIPOS_DOC.map(t => <SelectItem key={t} value={t}>{t.replace(/_/g, " ")}</SelectItem>)}
           </SelectContent>
         </Select>
+        <Select value={filtroOrigem} onValueChange={setFiltroOrigem}>
+          <SelectTrigger className="w-[160px] bg-[#12121c] border-slate-700 text-slate-300"><SelectValue placeholder="Origem" /></SelectTrigger>
+          <SelectContent>
+            {TIPOS_ORIGEM_FILTER.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
         <Select value={filtroStatus} onValueChange={setFiltroStatus}>
-          <SelectTrigger className="w-[180px] bg-[#12121c] border-slate-700 text-slate-300"><SelectValue placeholder="Status" /></SelectTrigger>
+          <SelectTrigger className="w-[160px] bg-[#12121c] border-slate-700 text-slate-300"><SelectValue placeholder="Status" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="todos">Todos</SelectItem>
             <SelectItem value="pendente">Pendente</SelectItem>
@@ -242,7 +344,7 @@ export default function QABaseConhecimentoPage() {
         <div className="text-center py-12 text-slate-500">
           <FileText className="h-12 w-12 mx-auto mb-3 opacity-30" />
           <p>Nenhum documento encontrado</p>
-          <p className="text-xs mt-1">Envie documentos para alimentar a base de conhecimento</p>
+          <p className="text-xs mt-1">Envie documentos ou importe por link para alimentar a base</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -264,9 +366,13 @@ export default function QABaseConhecimentoPage() {
                   </div>
                   <div className="text-xs text-slate-500 flex items-center gap-2 mt-0.5 flex-wrap">
                     <span className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">{d.tipo_documento?.replace(/_/g, " ")}</span>
+                    <span className="flex items-center gap-1">{origemIcon(d.tipo_origem)}{d.tipo_origem === "link_publico" ? "Link" : "Upload"}</span>
                     <span>{new Date(d.created_at).toLocaleDateString("pt-BR")}</span>
                     {d.tamanho_bytes && <span>{(d.tamanho_bytes / 1024).toFixed(0)} KB</span>}
                   </div>
+                  {d.url_origem && (
+                    <div className="text-[10px] text-blue-400/60 truncate mt-0.5">{d.url_origem}</div>
+                  )}
                   {isError && d.resumo_extraido && (
                     <div className="text-xs text-red-400/80 mt-1 truncate">{d.resumo_extraido}</div>
                   )}
@@ -307,6 +413,86 @@ export default function QABaseConhecimentoPage() {
           })}
         </div>
       )}
+
+      {/* Import by Link Dialog */}
+      <Dialog open={showLinkDialog} onOpenChange={setShowLinkDialog}>
+        <DialogContent className="bg-[#12121c] border-slate-700 text-slate-100 max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-slate-100 flex items-center gap-2"><Link2 className="h-5 w-5 text-blue-400" /> Importar por Link Público</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label className="text-slate-300 text-xs">URL pública *</Label>
+              <Input value={linkUrl} onChange={e => setLinkUrl(e.target.value)} placeholder="https://www.planalto.gov.br/ccivil_03/leis/..." className="bg-[#0c0c14] border-slate-700 text-slate-100 mt-1" />
+              <p className="text-[10px] text-slate-600 mt-1">Páginas HTML, PDFs públicos, documentos governamentais</p>
+            </div>
+            <div>
+              <Label className="text-slate-300 text-xs">Título (opcional)</Label>
+              <Input value={linkTitulo} onChange={e => setLinkTitulo(e.target.value)} placeholder="Ex: Lei 10.826/2003 - Estatuto do Desarmamento" className="bg-[#0c0c14] border-slate-700 text-slate-100 mt-1" />
+            </div>
+            <div>
+              <Label className="text-slate-300 text-xs">Classificação</Label>
+              <Select value={linkTipo} onValueChange={setLinkTipo}>
+                <SelectTrigger className="bg-[#0c0c14] border-slate-700 text-slate-300 mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {TIPOS_DOC.map(t => <SelectItem key={t} value={t}>{t.replace(/_/g, " ")}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowLinkDialog(false)} className="border-slate-700 text-slate-400">Cancelar</Button>
+            <Button onClick={handleImportLink} disabled={!linkUrl.trim() || importingLink} className="bg-blue-600 hover:bg-blue-700">
+              {importingLink ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Globe className="h-4 w-4 mr-2" />} Importar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Import Dialog */}
+      <Dialog open={showBulkDialog} onOpenChange={setShowBulkDialog}>
+        <DialogContent className="bg-[#12121c] border-slate-700 text-slate-100 max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-slate-100 flex items-center gap-2"><Plus className="h-5 w-5 text-purple-400" /> Carga em Lote</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label className="text-slate-300 text-xs">Links (um por linha)</Label>
+              <Textarea value={bulkLinks} onChange={e => setBulkLinks(e.target.value)} rows={8}
+                placeholder={"https://www.planalto.gov.br/ccivil_03/leis/2003/l10.826.htm\nhttps://www.planalto.gov.br/ccivil_03/_ato2004-2006/2004/decreto/d5.123.htm"}
+                className="bg-[#0c0c14] border-slate-700 text-slate-100 mt-1 font-mono text-xs" />
+              <p className="text-[10px] text-slate-600 mt-1">{bulkLinks.split("\n").filter(l => l.trim().length > 5).length} links detectados</p>
+            </div>
+            <div>
+              <Label className="text-slate-300 text-xs">Classificação padrão</Label>
+              <Select value={bulkTipo} onValueChange={setBulkTipo}>
+                <SelectTrigger className="bg-[#0c0c14] border-slate-700 text-slate-300 mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {TIPOS_DOC.map(t => <SelectItem key={t} value={t}>{t.replace(/_/g, " ")}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            {bulkImporting && (
+              <div className="text-xs text-amber-400">{bulkProgress.done}/{bulkProgress.total} importados...</div>
+            )}
+            <div>
+              <Label className="text-slate-300 text-xs">Ou envie múltiplos arquivos</Label>
+              <label className="cursor-pointer block mt-1">
+                <input type="file" className="hidden" onChange={handleUpload} accept=".pdf,.doc,.docx,.txt,.rtf" multiple />
+                <Button asChild variant="outline" disabled={uploading} className="border-slate-700 text-slate-400 w-full">
+                  <span>{uploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />} Selecionar arquivos</span>
+                </Button>
+              </label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowBulkDialog(false)} className="border-slate-700 text-slate-400">Cancelar</Button>
+            <Button onClick={handleBulkImport} disabled={!bulkLinks.trim() || bulkImporting} className="bg-purple-600 hover:bg-purple-700">
+              {bulkImporting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />} Importar Links
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete confirmation dialog */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) setDeleteTarget(null); }}>
