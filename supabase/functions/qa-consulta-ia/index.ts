@@ -30,6 +30,33 @@ ESTRUTURA DESEJADA PARA MINUTAS:
 - Fechamento técnico
 - Lista de fontes efetivamente utilizadas`;
 
+// Generate embedding via Lovable AI
+async function generateEmbedding(text: string): Promise<number[] | null> {
+  try {
+    const apiKey = Deno.env.get("LOVABLE_API_KEY");
+    if (!apiKey) return null;
+    const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash-lite",
+        messages: [
+          { role: "system", content: "You are an embedding generator. Given the user text, output ONLY a JSON array of 1536 floating-point numbers representing a semantic embedding vector. No other text." },
+          { role: "user", content: text.substring(0, 2000) },
+        ],
+        max_tokens: 8000,
+      }),
+    });
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    const content = data.choices?.[0]?.message?.content || "";
+    const match = content.match(/\[[\s\S]*\]/);
+    if (!match) return null;
+    const arr = JSON.parse(match[0]);
+    return Array.isArray(arr) && arr.length === 1536 ? arr : null;
+  } catch { return null; }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsH });
 
@@ -42,12 +69,50 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // ── 1. Hybrid retrieval with scoring ──
+    // ── 0. Load ranking weights from qa_config ──
+    const { data: configRows } = await supabase.from("qa_config").select("chave, valor");
+    const w: Record<string, number> = {};
+    (configRows || []).forEach((r: any) => { w[r.chave] = parseFloat(r.valor) || 0; });
+    const W = {
+      vetorial: w.peso_similaridade_vetorial ?? 0.25,
+      textual: w.peso_relevancia_textual ?? 0.25,
+      validacao: w.peso_validacao_humana ?? 0.20,
+      feedbackPos: w.peso_feedback_positivo ?? 0.15,
+      feedbackNeg: w.peso_feedback_negativo ?? -0.10,
+      refAprovada: w.peso_referencia_aprovada ?? 0.30,
+      recencia: w.peso_recencia ?? 0.05,
+      manual: w.peso_manual ?? 0.10,
+    };
+
+    // ── 1. Hybrid retrieval ──
     const fontesRecuperadas: any[] = [];
     const searchTerms = entrada_usuario.split(" ").slice(0, 5).join(" & ");
     const searchTermIlike = entrada_usuario.split(" ").slice(0, 3).join(" ");
 
-    // 1a. Search legislation (text search + ilike fallback)
+    // 1a. Vector search via embeddings
+    const queryEmbedding = await generateEmbedding(entrada_usuario);
+    if (queryEmbedding) {
+      const { data: vectorHits } = await supabase.rpc("qa_busca_similar", {
+        query_embedding: `[${queryEmbedding.join(",")}]`,
+        match_threshold: 0.5,
+        match_count: 10,
+      });
+      if (vectorHits?.length) {
+        for (const hit of vectorHits) {
+          fontesRecuperadas.push({
+            tipo: "documento_chunk", id: hit.documento_id, chunk_id: hit.chunk_id,
+            titulo: hit.resumo_chunk || "Trecho de documento",
+            referencia: "chunk vetorial",
+            conteudo: hit.texto_chunk?.substring(0, 1500) || "",
+            score_semantico: hit.similarity || 0,
+            score_textual: 0, score_validacao: 0, score_feedback: 0,
+            score_final: (hit.similarity || 0) * W.vetorial,
+          });
+        }
+      }
+    }
+
+    // 1b. Search legislation (text search + ilike fallback)
     const { data: normas } = await supabase
       .from("qa_fontes_normativas")
       .select("id, titulo_norma, tipo_norma, numero_norma, ano_norma, ementa, texto_integral, revisada_humanamente")
@@ -57,18 +122,19 @@ Deno.serve(async (req) => {
 
     if (normas?.length) {
       normas.forEach((n: any) => {
-        const scoreValidacao = n.revisada_humanamente ? 0.3 : 0;
+        const sv = 0, st = 1.0, svl = n.revisada_humanamente ? 1.0 : 0;
         fontesRecuperadas.push({
           tipo: "norma", id: n.id, titulo: n.titulo_norma,
           referencia: `${n.tipo_norma} ${n.numero_norma || ""}/${n.ano_norma || ""}`.trim(),
           conteudo: n.ementa || n.texto_integral?.substring(0, 2000) || "",
-          score_textual: 0.7, score_validacao: scoreValidacao,
-          score_feedback: 0, score_final: 0.7 + scoreValidacao,
+          score_semantico: sv, score_textual: st, score_validacao: svl,
+          score_feedback: 0,
+          score_final: (st * W.textual) + (svl * W.validacao),
         });
       });
     }
 
-    // 1b. Search jurisprudence
+    // 1c. Search jurisprudence
     const { data: jurisps } = await supabase
       .from("qa_jurisprudencias")
       .select("id, tribunal, numero_processo, relator, tema, ementa_resumida, tese_aplicavel, validada_humanamente")
@@ -77,19 +143,20 @@ Deno.serve(async (req) => {
 
     if (jurisps?.length) {
       jurisps.forEach((j: any) => {
-        const scoreValidacao = j.validada_humanamente ? 0.4 : 0;
+        const svl = j.validada_humanamente ? 1.0 : 0;
         fontesRecuperadas.push({
           tipo: "jurisprudencia", id: j.id,
           titulo: `${j.tribunal} - ${j.numero_processo || ""}`,
           referencia: j.tema || "",
           conteudo: j.ementa_resumida || j.tese_aplicavel || "",
-          score_textual: 0.6, score_validacao: scoreValidacao,
-          score_feedback: 0, score_final: 0.6 + scoreValidacao,
+          score_semantico: 0, score_textual: 1.0, score_validacao: svl,
+          score_feedback: 0,
+          score_final: (1.0 * W.textual) + (svl * W.validacao),
         });
       });
     }
 
-    // 1c. Search knowledge base documents
+    // 1d. Search knowledge base documents (text)
     const { data: docs } = await supabase
       .from("qa_documentos_conhecimento")
       .select("id, titulo, tipo_documento, resumo_extraido, status_validacao")
@@ -99,18 +166,19 @@ Deno.serve(async (req) => {
 
     if (docs?.length) {
       docs.forEach((d: any) => {
-        const scoreValidacao = d.status_validacao === "validado" ? 0.3 : 0;
+        const svl = d.status_validacao === "validado" ? 1.0 : 0;
         fontesRecuperadas.push({
           tipo: "documento", id: d.id, titulo: d.titulo,
           referencia: d.tipo_documento,
           conteudo: d.resumo_extraido?.substring(0, 1000) || "",
-          score_textual: 0.5, score_validacao: scoreValidacao,
-          score_feedback: 0, score_final: 0.5 + scoreValidacao,
+          score_semantico: 0, score_textual: 1.0, score_validacao: svl,
+          score_feedback: 0,
+          score_final: (1.0 * W.textual) + (svl * W.validacao),
         });
       });
     }
 
-    // 1d. Search approved pieces as reference
+    // 1e. Search approved pieces as reference
     const { data: refs } = await supabase
       .from("qa_referencias_preferenciais")
       .select("id, tipo_referencia, origem_id, peso_manual, motivo_priorizacao")
@@ -118,7 +186,7 @@ Deno.serve(async (req) => {
       .limit(20);
 
     if (refs?.length) {
-      const geracaoIds = refs.filter(r => r.tipo_referencia === "geracao_aprovada").map(r => r.origem_id);
+      const geracaoIds = refs.filter((r: any) => r.tipo_referencia === "geracao_aprovada").map((r: any) => r.origem_id);
       if (geracaoIds.length > 0) {
         const { data: geracoes } = await supabase
           .from("qa_geracoes_pecas")
@@ -127,19 +195,21 @@ Deno.serve(async (req) => {
           .limit(5);
 
         geracoes?.forEach((g: any) => {
-          const ref = refs.find(r => r.origem_id === g.id);
+          const ref = refs.find((r: any) => r.origem_id === g.id);
+          const pesoM = ref?.peso_manual || 1;
           fontesRecuperadas.push({
             tipo: "referencia_aprovada", id: g.id, titulo: g.titulo_geracao || "Peça aprovada",
-            referencia: g.tipo_peca, conteudo: g.minuta_gerada?.substring(0, 1500) || "",
-            score_textual: 0.3, score_validacao: 0.5,
-            score_feedback: (ref?.peso_manual || 1) * 0.3,
-            score_final: 0.3 + 0.5 + (ref?.peso_manual || 1) * 0.3,
+            referencia: g.tipo_peca,
+            conteudo: g.minuta_gerada?.substring(0, 1500) || "",
+            score_semantico: 0, score_textual: 0.5, score_validacao: 1.0,
+            score_feedback: pesoM,
+            score_final: (0.5 * W.textual) + (1.0 * W.validacao) + (1.0 * W.refAprovada) + (pesoM * W.manual),
           });
         });
       }
     }
 
-    // 1e. ilike fallback if nothing found
+    // 1f. ilike fallback if nothing found
     if (fontesRecuperadas.length === 0) {
       const { data: normasFb } = await supabase
         .from("qa_fontes_normativas")
@@ -149,8 +219,9 @@ Deno.serve(async (req) => {
       normasFb?.forEach((n: any) => fontesRecuperadas.push({
         tipo: "norma", id: n.id, titulo: n.titulo_norma,
         referencia: `${n.tipo_norma} ${n.numero_norma || ""}`, conteudo: n.ementa || "",
-        score_textual: 0.3, score_validacao: n.revisada_humanamente ? 0.3 : 0,
-        score_feedback: 0, score_final: 0.3 + (n.revisada_humanamente ? 0.3 : 0),
+        score_semantico: 0, score_textual: 0.3, score_validacao: n.revisada_humanamente ? 1.0 : 0,
+        score_feedback: 0,
+        score_final: (0.3 * W.textual) + (n.revisada_humanamente ? W.validacao : 0),
       }));
 
       const { data: jurispFb } = await supabase
@@ -161,26 +232,34 @@ Deno.serve(async (req) => {
       jurispFb?.forEach((j: any) => fontesRecuperadas.push({
         tipo: "jurisprudencia", id: j.id, titulo: `${j.tribunal} - ${j.numero_processo || ""}`,
         referencia: j.tema || "", conteudo: j.ementa_resumida || "",
-        score_textual: 0.3, score_validacao: j.validada_humanamente ? 0.4 : 0,
-        score_feedback: 0, score_final: 0.3 + (j.validada_humanamente ? 0.4 : 0),
+        score_semantico: 0, score_textual: 0.3, score_validacao: j.validada_humanamente ? 1.0 : 0,
+        score_feedback: 0,
+        score_final: (0.3 * W.textual) + (j.validada_humanamente ? W.validacao : 0),
       }));
     }
 
-    // ── 2. Sort by score_final descending ──
-    fontesRecuperadas.sort((a, b) => (b.score_final || 0) - (a.score_final || 0));
+    // ── 2. Deduplicate by id+tipo and sort by score_final ──
+    const seen = new Set<string>();
+    const fontesFinal = fontesRecuperadas.filter(f => {
+      const key = `${f.tipo}:${f.id}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    fontesFinal.sort((a, b) => (b.score_final || 0) - (a.score_final || 0));
+    const topFontes = fontesFinal.slice(0, 20);
 
     // ── 3. Build context for AI ──
     let contextoFontes = "";
-    if (fontesRecuperadas.length > 0) {
+    if (topFontes.length > 0) {
       contextoFontes = "\n\n--- FONTES DISPONÍVEIS NA BASE (ordenadas por relevância) ---\n";
-      fontesRecuperadas.forEach((f, i) => {
+      topFontes.forEach((f, i) => {
         contextoFontes += `\n[Fonte ${i + 1} - ${f.tipo.toUpperCase()}] ${f.titulo}\nReferência: ${f.referencia}\nScore de confiança: ${(f.score_final || 0).toFixed(2)}\nConteúdo: ${f.conteudo}\n`;
       });
     } else {
       contextoFontes = "\n\n--- ATENÇÃO: Nenhuma fonte foi encontrada na base de conhecimento. NÃO invente fontes. Declare insuficiência. ---\n";
     }
 
-    // Depth/tone/focus context
     let parametros = "\n\nPARÂMETROS DE GERAÇÃO:";
     parametros += `\n- Profundidade: ${profundidade || "intermediaria"}`;
     parametros += `\n- Tom: ${tom || "tecnico_padrao"}`;
@@ -191,7 +270,7 @@ Deno.serve(async (req) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${Deno.env.get("LOVABLE_API_KEY")}`,
+        Authorization: `Bearer ${Deno.env.get("LOVABLE_API_KEY")}`,
       },
       body: JSON.stringify({
         model: "google/gemini-2.5-pro",
@@ -225,19 +304,25 @@ Deno.serve(async (req) => {
     const aiData = await aiResp.json();
     const respostaIa = aiData.choices?.[0]?.message?.content || "Não foi possível gerar resposta.";
 
-    // ── 5. Calculate confidence score ──
-    const totalFontes = fontesRecuperadas.length;
-    const fontesValidadas = fontesRecuperadas.filter(f => f.score_validacao > 0).length;
-    const scoreConfianca = totalFontes === 0 ? 0 : Math.min(1, (totalFontes * 0.1) + (fontesValidadas * 0.15));
+    // ── 5. Confidence score ──
+    const totalFontes = topFontes.length;
+    const fontesValidadas = topFontes.filter(f => f.score_validacao > 0).length;
+    const fontesVetoriais = topFontes.filter(f => f.score_semantico > 0).length;
+    const scoreConfianca = totalFontes === 0 ? 0 : Math.min(1,
+      (totalFontes * 0.08) + (fontesValidadas * 0.12) + (fontesVetoriais * 0.05)
+    );
 
     // ── 6. Observations ──
     let observacoesIa = "";
     if (totalFontes === 0) {
       observacoesIa = "ATENÇÃO: Nenhuma fonte foi encontrada na base de conhecimento. A resposta é limitada e deve ser validada manualmente.";
-    } else if (fontesRecuperadas.filter(f => f.tipo === "jurisprudencia").length === 0) {
+    } else if (topFontes.filter(f => f.tipo === "jurisprudencia").length === 0) {
       observacoesIa = "Nenhuma jurisprudência foi encontrada na base. Considere cadastrar precedentes relevantes.";
-    } else if (fontesRecuperadas.filter(f => f.tipo === "norma").length === 0) {
+    } else if (topFontes.filter(f => f.tipo === "norma").length === 0) {
       observacoesIa = "Nenhuma norma foi encontrada na base. Considere cadastrar legislação aplicável.";
+    }
+    if (!queryEmbedding) {
+      observacoesIa += (observacoesIa ? " " : "") + "Busca vetorial indisponível nesta consulta (embedding não gerado).";
     }
 
     // ── 7. Save consultation ──
@@ -247,7 +332,7 @@ Deno.serve(async (req) => {
       caso_resumo: entrada_usuario.substring(0, 500),
       tipo_peca: tipo_peca || null,
       entrada_usuario,
-      fontes_recuperadas_json: fontesRecuperadas,
+      fontes_recuperadas_json: topFontes,
       resposta_ia: respostaIa,
       observacoes_ia: observacoesIa || null,
       score_confianca: scoreConfianca,
@@ -258,11 +343,11 @@ Deno.serve(async (req) => {
 
     // ── 8. Save retrieval metrics ──
     if (consultaData?.id) {
-      const metricas = fontesRecuperadas.map(f => ({
+      const metricas = topFontes.map(f => ({
         consulta_id: consultaData.id,
         fonte_tipo: f.tipo,
         fonte_id: f.id,
-        score_semantico: 0,
+        score_semantico: f.score_semantico || 0,
         score_textual: f.score_textual || 0,
         score_feedback: f.score_feedback || 0,
         score_validacao: f.score_validacao || 0,
@@ -280,13 +365,19 @@ Deno.serve(async (req) => {
       entidade: "qa_consultas_ia",
       entidade_id: consultaData?.id || null,
       acao: "consulta_ia",
-      detalhes_json: { tipo_peca, profundidade, tom, foco, fontes_count: totalFontes, score_confianca: scoreConfianca },
+      detalhes_json: {
+        tipo_peca, profundidade, tom, foco,
+        fontes_count: totalFontes,
+        fontes_vetoriais: fontesVetoriais,
+        score_confianca: scoreConfianca,
+        pesos_utilizados: W,
+      },
     });
 
     return new Response(JSON.stringify({
       consulta_id: consultaData?.id,
       resposta_ia: respostaIa,
-      fontes_recuperadas: fontesRecuperadas,
+      fontes_recuperadas: topFontes,
       observacoes_ia: observacoesIa,
       score_confianca: scoreConfianca,
     }), { headers: { ...corsH, "Content-Type": "application/json" } });
