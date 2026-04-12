@@ -2075,6 +2075,7 @@ export type Database = {
       }
       qa_documentos_conhecimento: {
         Row: {
+          ativo: boolean
           categoria: string | null
           created_at: string
           descricao: string | null
@@ -2096,6 +2097,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          ativo?: boolean
           categoria?: string | null
           created_at?: string
           descricao?: string | null
@@ -2117,6 +2119,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          ativo?: boolean
           categoria?: string | null
           created_at?: string
           descricao?: string | null
