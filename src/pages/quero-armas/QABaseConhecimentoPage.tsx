@@ -9,10 +9,11 @@ import { toast } from "sonner";
 import {
   Upload, Search, FileText, CheckCircle, Clock, AlertCircle, Loader2,
   ExternalLink, RefreshCw, Trash2, Power, Star, Zap, ShieldCheck,
-  Link2, Globe, Plus, X, ArrowRight,
+  Link2, Globe, Plus, X, ArrowRight, ChevronDown, ChevronUp,
 } from "lucide-react";
 import { useQAAuth } from "@/components/quero-armas/hooks/useQAAuth";
 import { Link } from "react-router-dom";
+import { formatDuration } from "@/lib/formatDuration";
 import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
   AlertDialogDescription, AlertDialogFooter, AlertDialogCancel,
