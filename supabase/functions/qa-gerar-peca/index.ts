@@ -389,6 +389,15 @@ Redija a peça jurídica do tipo "${tipo_peca}" seguindo RIGOROSAMENTE a estrutu
 5. III — ALEGAÇÕES FINAIS
 6. IV — FECHAMENTO (com "Nestes termos, pede deferimento." e espaço para local/data/assinatura)
 
+REGRAS DE QUALIDADE PARA ESTA GERAÇÃO:
+- Escreva como advogado experiente, NÃO como assistente de IA.
+- Cada parágrafo deve ter conteúdo substantivo. Zero enchimento.
+- Conecte CADA fundamento jurídico a um fato concreto do caso.
+- NÃO use clichês: "é cediço", "resta cristalino", "data venia" em excesso, "é sabido que", "vale ressaltar".
+- Tom: formal, técnico, sóbrio, persuasivo pela lógica. Sem exagero retórico.
+- Se a base jurídica for insuficiente, declare expressamente ao invés de inventar.
+- O texto deve ser aproveitável como minuta real com mínima revisão humana.
+
 IGNORE qualquer menção no contexto a tipos de peça diferentes. O tipo é FIXO: ${tipo_peca}.`,
           },
         ],
