@@ -1992,6 +1992,33 @@ export type Database = {
           },
         ]
       }
+      qa_config: {
+        Row: {
+          chave: string
+          created_at: string
+          descricao: string | null
+          id: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          chave: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          updated_at?: string
+          valor?: number
+        }
+        Update: {
+          chave?: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: []
+      }
       qa_consultas_ia: {
         Row: {
           caso_resumo: string | null

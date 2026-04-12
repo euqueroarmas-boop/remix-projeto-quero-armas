@@ -77,6 +77,27 @@ export default function QAGerarPecaPage() {
     }
   };
 
+  const exportarDocx = async () => {
+    if (!resultado?.geracao_id) return;
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-export-docx", {
+        body: { geracao_id: resultado.geracao_id, variables: { cliente_nome: casoTitulo } },
+      });
+      if (error) throw error;
+      // Download the blob
+      const blob = new Blob([data], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${casoTitulo || "peca"}.docx`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("DOCX exportado com sucesso");
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao exportar DOCX");
+    }
+  };
+
   const scoreColor = (s: number) => {
     if (s >= 0.7) return "text-emerald-400";
     if (s >= 0.4) return "text-amber-400";
@@ -174,6 +195,9 @@ export default function QAGerarPecaPage() {
             </div>
             <Button variant="outline" size="sm" onClick={copiarMinuta} className="border-slate-700 text-slate-300">
               <Download className="h-3.5 w-3.5 mr-1" /> Copiar
+            </Button>
+            <Button size="sm" onClick={exportarDocx} className="bg-amber-600 hover:bg-amber-700 text-white">
+              <Download className="h-3.5 w-3.5 mr-1" /> Exportar DOCX
             </Button>
           </div>
 
