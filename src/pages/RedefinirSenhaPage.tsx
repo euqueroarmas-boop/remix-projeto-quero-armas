@@ -53,6 +53,17 @@ export default function RedefinirSenhaPage() {
       return;
     }
 
+    // Notify password change via SMTP (fire-and-forget)
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userEmail = sessionData?.session?.user?.email;
+      if (userEmail) {
+        supabase.functions.invoke("notify-password-changed", {
+          body: { email: userEmail },
+        }).catch(() => {});
+      }
+    } catch {}
+
     setSuccess(true);
     setTimeout(() => navigate("/area-do-cliente"), 3000);
   };
