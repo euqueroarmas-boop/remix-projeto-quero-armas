@@ -20,7 +20,7 @@ function GovBadge({ label, value, variant }: { label: string; value: string; var
     ok: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
     warn: "bg-amber-500/10 text-amber-400 border-amber-500/20",
     off: "bg-red-500/10 text-red-400 border-red-500/20",
-    neutral: "bg-[#161616] text-slate-400 border-[#1a1a1a]",
+    neutral: "bg-slate-800 text-slate-400 border-slate-700/40",
   };
   return (
     <div className={`rounded-lg p-3 text-center border ${colors[variant]}`}>
@@ -199,7 +199,7 @@ export default function QADocumentoDetalhePage() {
     }
   };
 
-  if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-slate-400" /></div>;
+  if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-amber-500" /></div>;
   if (!doc) return <div className="text-center py-12 text-slate-500">Documento não encontrado</div>;
 
   const statusIcon = (s: string) => {
@@ -225,41 +225,41 @@ export default function QADocumentoDetalhePage() {
       </div>
 
       {/* Header */}
-      <div className="bg-[#111111] border border-[#1a1a1a] rounded-xl p-5">
+      <div className="bg-[#12121c] border border-slate-800/40 rounded-xl p-5">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
             <h1 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-              <FileText className="h-5 w-5 text-slate-300" /> {doc.titulo}
+              <FileText className="h-5 w-5 text-amber-500" /> {doc.titulo}
             </h1>
             <div className="flex items-center gap-3 mt-2 text-xs text-slate-500 flex-wrap">
-              <span className="px-2 py-0.5 rounded bg-[#161616] text-slate-400">{doc.tipo_documento?.replace(/_/g, " ")}</span>
+              <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-400">{doc.tipo_documento?.replace(/_/g, " ")}</span>
               <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${isAuxiliar ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20" : "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20"}`}>
                 {isAuxiliar ? "Auxiliar do Caso" : "Aprendizado"}
               </span>
               {isAuxiliar && doc.caso_id && (
                 <span className="px-2 py-0.5 rounded bg-cyan-500/5 text-cyan-400/70 text-[10px]">caso: {doc.caso_id}</span>
               )}
-              {doc.categoria && <span className="px-2 py-0.5 rounded bg-[#161616] text-slate-400">{doc.categoria}</span>}
+              {doc.categoria && <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-400">{doc.categoria}</span>}
               <span className="flex items-center gap-1">
-                {doc.tipo_origem === "link_publico" ? <Globe className="h-3 w-3 text-slate-300" /> : <Upload className="h-3 w-3 text-slate-500" />}
+                {doc.tipo_origem === "link_publico" ? <Globe className="h-3 w-3 text-blue-400" /> : <Upload className="h-3 w-3 text-slate-500" />}
                 {doc.tipo_origem === "link_publico" ? "Link público" : doc.tipo_origem === "cadastro_manual" ? "Manual" : "Upload"}
               </span>
               <span>{new Date(doc.created_at).toLocaleDateString("pt-BR")}</span>
               {doc.tamanho_bytes && <span>{(doc.tamanho_bytes / 1024).toFixed(0)} KB</span>}
               <span>{doc.mime_type}</span>
-              {doc.metodo_extracao && <span className="px-2 py-0.5 rounded bg-[#161616] text-slate-400">parser: {doc.metodo_extracao}</span>}
+              {doc.metodo_extracao && <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-400">parser: {doc.metodo_extracao}</span>}
             </div>
             {doc.url_origem && (
               <div className="flex items-center gap-1.5 mt-1.5">
-                <Link2 className="h-3 w-3 text-slate-300 shrink-0" />
-                <a href={doc.url_origem} target="_blank" rel="noopener noreferrer" className="text-xs text-slate-300/80 hover:text-blue-300 truncate">
+                <Link2 className="h-3 w-3 text-blue-400 shrink-0" />
+                <a href={doc.url_origem} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-400/80 hover:text-blue-300 truncate">
                   {doc.url_origem}
                 </a>
               </div>
             )}
           </div>
           <div className="flex gap-2 shrink-0 flex-wrap">
-            <Button variant="outline" size="sm" onClick={reprocess} disabled={reprocessing} className="border-[#1a1a1a] text-slate-300">
+            <Button variant="outline" size="sm" onClick={reprocess} disabled={reprocessing} className="border-slate-700 text-slate-300">
               {reprocessing ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <RefreshCw className="h-3.5 w-3.5 mr-1" />}
               Reprocessar
             </Button>
@@ -307,15 +307,15 @@ export default function QADocumentoDetalhePage() {
 
         {/* Stats row */}
         <div className="grid grid-cols-3 gap-3 mt-3">
-          <div className="bg-[#0d0d0d] rounded-lg p-3 text-center">
+          <div className="bg-[#0c0c14] rounded-lg p-3 text-center">
             <div className="text-xs font-medium text-slate-300">{chunks.length}</div>
             <div className="text-[10px] text-slate-600 mt-0.5">Chunks</div>
           </div>
-          <div className="bg-[#0d0d0d] rounded-lg p-3 text-center">
-            <div className="flex items-center justify-center gap-1"><Database className="h-3 w-3 text-emerald-400" /><span className="text-xs font-medium text-slate-300">{embedCount}</span></div>
+          <div className="bg-[#0c0c14] rounded-lg p-3 text-center">
+            <div className="flex items-center justify-center gap-1"><Database className="h-3 w-3 text-purple-400" /><span className="text-xs font-medium text-slate-300">{embedCount}</span></div>
             <div className="text-[10px] text-slate-600 mt-0.5">Embeddings</div>
           </div>
-          <div className="bg-[#0d0d0d] rounded-lg p-3 text-center">
+          <div className="bg-[#0c0c14] rounded-lg p-3 text-center">
             <div className="flex items-center justify-center gap-1"><Star className="h-3 w-3 text-amber-400" /><span className="text-xs font-medium text-slate-300">{refCount}</span></div>
             <div className="text-[10px] text-slate-600 mt-0.5">Referências</div>
           </div>
@@ -323,7 +323,7 @@ export default function QADocumentoDetalhePage() {
       </div>
 
       {/* ─── Governance Actions ─── */}
-      <div className="bg-[#111111] border border-[#1a1a1a] rounded-xl p-5">
+      <div className="bg-[#12121c] border border-slate-800/40 rounded-xl p-5">
         <h2 className="text-sm font-medium text-slate-300 mb-3">Ações de Governança</h2>
         {isAuxiliar ? (
           <p className="text-xs text-slate-500">Documentos auxiliares do caso não possuem ações de governança de aprendizado. São utilizados apenas como suporte factual.</p>
@@ -343,7 +343,7 @@ export default function QADocumentoDetalhePage() {
           )}
           {isAtivoIA ? (
             <Button size="sm" variant="outline" disabled={acting} onClick={() => handleAction("desativar_ia")}
-              className="border-[#1a1a1a] text-amber-400 hover:bg-amber-500/10 gap-1.5">
+              className="border-amber-600/40 text-amber-400 hover:bg-amber-500/10 gap-1.5">
               <ZapOff className="h-3.5 w-3.5" /> Desativar da IA
             </Button>
           ) : (
@@ -354,7 +354,7 @@ export default function QADocumentoDetalhePage() {
           )}
           {isValidado && !isRef && (
             <Button size="sm" variant="outline" disabled={acting} onClick={() => handleAction("promover_referencia")}
-              className="border-[#1a1a1a] text-amber-300 hover:bg-amber-500/10 gap-1.5">
+              className="border-amber-500/40 text-amber-300 hover:bg-amber-500/10 gap-1.5">
               <Star className="h-3.5 w-3.5" /> Promover como referência
             </Button>
           )}
@@ -370,36 +370,36 @@ export default function QADocumentoDetalhePage() {
       </div>
 
       {doc.hash_arquivo && (
-        <div className="flex items-center gap-2 text-xs text-slate-600 bg-[#111111] border border-[#1a1a1a] rounded-lg px-4 py-2">
+        <div className="flex items-center gap-2 text-xs text-slate-600 bg-[#12121c] border border-slate-800/40 rounded-lg px-4 py-2">
           <Hash className="h-3.5 w-3.5" /> SHA-256: <code className="text-slate-500 font-mono">{doc.hash_arquivo}</code>
         </div>
       )}
 
       {doc.resumo_extraido && (
-        <div className="bg-[#111111] border border-[#1a1a1a] rounded-xl p-5">
+        <div className="bg-[#12121c] border border-slate-800/40 rounded-xl p-5">
           <h2 className="text-sm font-medium text-slate-300 mb-2">Resumo Extraído</h2>
           <p className="text-sm text-slate-400 leading-relaxed whitespace-pre-wrap">{doc.resumo_extraido}</p>
         </div>
       )}
 
       {doc.texto_extraido && (
-        <div className="bg-[#111111] border border-[#1a1a1a] rounded-xl p-5">
+        <div className="bg-[#12121c] border border-slate-800/40 rounded-xl p-5">
           <h2 className="text-sm font-medium text-slate-300 mb-2">Texto Extraído</h2>
-          <div className="text-xs text-slate-500 leading-relaxed whitespace-pre-wrap max-h-[400px] overflow-y-auto font-mono bg-[#0d0d0d] rounded-lg p-4">
+          <div className="text-xs text-slate-500 leading-relaxed whitespace-pre-wrap max-h-[400px] overflow-y-auto font-mono bg-[#0c0c14] rounded-lg p-4">
             {doc.texto_extraido}
           </div>
         </div>
       )}
 
       {chunks.length > 0 && (
-        <div className="bg-[#111111] border border-[#1a1a1a] rounded-xl p-5">
+        <div className="bg-[#12121c] border border-slate-800/40 rounded-xl p-5">
           <h2 className="text-sm font-medium text-slate-300 mb-3">Chunks ({chunks.length})</h2>
           <div className="space-y-2 max-h-[500px] overflow-y-auto">
             {chunks.map((c: any) => (
-              <div key={c.id} className="bg-[#0d0d0d] rounded-lg p-3 border border-[#1a1a1a]">
+              <div key={c.id} className="bg-[#0c0c14] rounded-lg p-3 border border-slate-800/20">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[10px] text-slate-600 uppercase tracking-wider">Chunk {c.ordem_chunk + 1}</span>
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded ${c.embedding_status === "concluido" ? "bg-emerald-500/10 text-emerald-400" : c.embedding_status === "erro" ? "bg-red-500/10 text-red-400" : "bg-[#161616] text-slate-500"}`}>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded ${c.embedding_status === "concluido" ? "bg-emerald-500/10 text-emerald-400" : c.embedding_status === "erro" ? "bg-red-500/10 text-red-400" : "bg-slate-800 text-slate-500"}`}>
                     {c.embedding_status}
                   </span>
                 </div>
@@ -411,9 +411,9 @@ export default function QADocumentoDetalhePage() {
       )}
 
       {doc.metadados_json && Object.keys(doc.metadados_json).length > 0 && (
-        <div className="bg-[#111111] border border-[#1a1a1a] rounded-xl p-5">
+        <div className="bg-[#12121c] border border-slate-800/40 rounded-xl p-5">
           <h2 className="text-sm font-medium text-slate-300 mb-2">Metadados</h2>
-          <pre className="text-xs text-slate-500 font-mono bg-[#0d0d0d] rounded-lg p-3 overflow-x-auto">
+          <pre className="text-xs text-slate-500 font-mono bg-[#0c0c14] rounded-lg p-3 overflow-x-auto">
             {JSON.stringify(doc.metadados_json, null, 2)}
           </pre>
         </div>
@@ -421,7 +421,7 @@ export default function QADocumentoDetalhePage() {
 
       {/* Delete confirmation dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent className="bg-[#111111] border-[#1a1a1a] text-slate-100 max-w-md">
+        <AlertDialogContent className="bg-[#12121c] border-slate-700 text-slate-100 max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-slate-100">Excluir documento</AlertDialogTitle>
             <AlertDialogDescription className="text-slate-400">
@@ -431,7 +431,7 @@ export default function QADocumentoDetalhePage() {
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col gap-2 sm:flex-col">
             <Button variant="outline" disabled={deleting} onClick={handleDeactivate}
-              className="w-full border-[#1a1a1a] text-amber-400 hover:bg-amber-500/10 justify-start gap-2">
+              className="w-full border-amber-600/40 text-amber-400 hover:bg-amber-500/10 justify-start gap-2">
               <Power className="h-4 w-4" /> Desativar da IA
               <span className="text-[10px] text-slate-500 ml-auto">reversível</span>
             </Button>
@@ -440,7 +440,7 @@ export default function QADocumentoDetalhePage() {
               {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />} Excluir permanentemente
               <span className="text-[10px] text-red-300/60 ml-auto">irreversível</span>
             </Button>
-            <AlertDialogCancel className="w-full border-[#1a1a1a] text-slate-400">Cancelar</AlertDialogCancel>
+            <AlertDialogCancel className="w-full border-slate-700 text-slate-400">Cancelar</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

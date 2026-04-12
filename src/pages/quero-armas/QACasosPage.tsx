@@ -60,7 +60,7 @@ export default function QACasosPage() {
       <div className="flex items-center justify-between gap-2">
         <h1 className="text-sm md:text-base font-semibold text-slate-300">Casos</h1>
         <Button size="sm" onClick={() => navigate("/quero-armas/gerar-peca")}
-          className="bg-[#161616] hover:bg-[#1f1f1f] text-slate-300 border border-[#1a1a1a] h-7 text-[10px] md:text-[11px]">
+          className="bg-[#14142a] hover:bg-[#1a1a35] text-slate-300 border border-[#1a1a2e] h-7 text-[10px] md:text-[11px]">
           <PenTool className="h-3 w-3 mr-1" /> Novo
         </Button>
       </div>
@@ -70,27 +70,27 @@ export default function QACasosPage() {
         <div className="relative flex-1">
           <Search className="h-3 w-3 absolute left-2 top-1/2 -translate-y-1/2 text-slate-600" />
           <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar..."
-            className="bg-[#050505] border-[#1a1a1a] text-slate-300 pl-7 h-7 md:h-8 text-[11px]" />
+            className="bg-[#08080f] border-[#1a1a2e] text-slate-300 pl-7 h-7 md:h-8 text-[11px]" />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="bg-[#050505] border-[#1a1a1a] text-slate-400 h-7 md:h-8 w-full sm:w-28 text-[10px]"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="bg-[#08080f] border-[#1a1a2e] text-slate-400 h-7 md:h-8 w-full sm:w-28 text-[10px]"><SelectValue /></SelectTrigger>
           <SelectContent>{STATUS_OPTIONS.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
         </Select>
       </div>
 
       {/* List */}
       {loading ? (
-        <div className="flex justify-center py-10"><div className="w-4 h-4 border-2 border-[#1a1a1a] border-t-slate-400 rounded-full animate-spin" /></div>
+        <div className="flex justify-center py-10"><div className="w-4 h-4 border-2 border-slate-700 border-t-slate-400 rounded-full animate-spin" /></div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-10 text-slate-600 text-[11px]">Nenhum caso encontrado</div>
       ) : (
-        <div className="bg-[#0d0d0d] border border-[#1a1a1a] rounded overflow-hidden">
+        <div className="bg-[#0c0c16] border border-[#1a1a2e] rounded overflow-hidden">
           {/* Desktop header */}
-          <div className="hidden md:grid grid-cols-[1fr_140px_120px_100px_80px_80px_50px] gap-2 px-3 py-1.5 border-b border-[#1a1a1a] text-[9px] text-slate-600 uppercase tracking-[0.12em]">
+          <div className="hidden md:grid grid-cols-[1fr_140px_120px_100px_80px_80px_50px] gap-2 px-3 py-1.5 border-b border-[#1a1a2e] text-[9px] text-slate-600 uppercase tracking-[0.12em]">
             <span>Requerente / Título</span><span>Serviço</span><span>Tipo Peça</span><span>Unidade PF</span><span>Status</span><span>Data</span><span></span>
           </div>
           {filtered.map((c: any) => (
-            <div key={c.id} className="border-b border-[#1a1a1a]/40 hover:bg-[#161616]/30 transition-colors">
+            <div key={c.id} className="border-b border-[#1a1a2e]/40 hover:bg-[#14142a]/30 transition-colors">
               {/* Mobile layout */}
               <div className="md:hidden px-2.5 py-2 space-y-1">
                 <div className="flex items-center justify-between gap-2">
@@ -133,7 +133,7 @@ export default function QACasosPage() {
 
       {/* Detail Dialog */}
       <Dialog open={!!detailCase} onOpenChange={() => setDetailCase(null)}>
-        <DialogContent className="bg-[#0a0a0a] border-[#1a1a1a] text-slate-300 max-w-3xl max-h-[90vh] overflow-y-auto p-3 md:p-6">
+        <DialogContent className="bg-[#0a0a12] border-[#1a1a2e] text-slate-300 max-w-3xl max-h-[90vh] overflow-y-auto p-3 md:p-6">
           <DialogHeader><DialogTitle className="text-slate-300 text-sm">{detailCase?.titulo || "Detalhes"}</DialogTitle></DialogHeader>
           {detailCase && (
             <div className="space-y-3 mt-1">
@@ -151,7 +151,7 @@ export default function QACasosPage() {
               {detailCase.descricao_caso && (
                 <div>
                   <span className="text-[9px] text-slate-600 uppercase tracking-[0.12em]">Descrição</span>
-                  <div className="text-[10px] text-slate-400 bg-[#050505] rounded p-2 mt-1 whitespace-pre-wrap max-h-[100px] overflow-y-auto">{detailCase.descricao_caso}</div>
+                  <div className="text-[10px] text-slate-400 bg-[#08080f] rounded p-2 mt-1 whitespace-pre-wrap max-h-[100px] overflow-y-auto">{detailCase.descricao_caso}</div>
                 </div>
               )}
 
@@ -173,13 +173,13 @@ export default function QACasosPage() {
               {detailCase.minuta_gerada && (
                 <div>
                   <span className="text-[9px] text-slate-600 uppercase tracking-[0.12em]">Minuta</span>
-                  <div className="text-[11px] text-slate-400 whitespace-pre-wrap leading-relaxed bg-[#050505] rounded p-2.5 max-h-[200px] overflow-y-auto mt-1 font-serif">{detailCase.minuta_gerada}</div>
+                  <div className="text-[11px] text-slate-400 whitespace-pre-wrap leading-relaxed bg-[#08080f] rounded p-2.5 max-h-[200px] overflow-y-auto mt-1 font-serif">{detailCase.minuta_gerada}</div>
                 </div>
               )}
 
-              <div className="flex gap-1.5 pt-2 border-t border-[#1a1a1a]">
+              <div className="flex gap-1.5 pt-2 border-t border-[#1a1a2e]">
                 <Button size="sm" onClick={() => { setDetailCase(null); navigate(`/quero-armas/gerar-peca?caso=${detailCase.id}`); }}
-                  className="bg-[#161616] hover:bg-[#1f1f1f] text-slate-300 border border-[#1a1a1a] h-7 text-[10px]">
+                  className="bg-[#14142a] hover:bg-[#1a1a35] text-slate-300 border border-[#1a1a2e] h-7 text-[10px]">
                   <PenTool className="h-3 w-3 mr-1" /> Editar
                 </Button>
               </div>

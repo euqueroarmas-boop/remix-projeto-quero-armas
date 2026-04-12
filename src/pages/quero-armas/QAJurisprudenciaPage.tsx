@@ -65,56 +65,56 @@ export default function QAJurisprudenciaPage() {
         {canEdit && (
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-white/10 hover:bg-white/15 text-white border border-white/10"><Plus className="h-4 w-4 mr-2" /> Nova Jurisprudência</Button>
+              <Button className="bg-amber-600 hover:bg-amber-700"><Plus className="h-4 w-4 mr-2" /> Nova Jurisprudência</Button>
             </DialogTrigger>
-            <DialogContent className="bg-[#111111] border-[#1a1a1a] text-slate-100 max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="bg-[#12121c] border-slate-800 text-slate-100 max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader><DialogTitle className="text-slate-100">Cadastrar Jurisprudência</DialogTitle></DialogHeader>
               <div className="space-y-4 mt-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label className="text-slate-300">Tribunal *</Label>
-                    <Input value={form.tribunal} onChange={e => f("tribunal", e.target.value)} className="bg-[#0d0d0d] border-[#1a1a1a] text-slate-100" placeholder="STF, STJ, TRF1..." />
+                    <Input value={form.tribunal} onChange={e => f("tribunal", e.target.value)} className="bg-[#0c0c14] border-slate-700 text-slate-100" placeholder="STF, STJ, TRF1..." />
                   </div>
                   <div className="space-y-2">
                     <Label className="text-slate-300">Nº Processo</Label>
-                    <Input value={form.numero_processo} onChange={e => f("numero_processo", e.target.value)} className="bg-[#0d0d0d] border-[#1a1a1a] text-slate-100" />
+                    <Input value={form.numero_processo} onChange={e => f("numero_processo", e.target.value)} className="bg-[#0c0c14] border-slate-700 text-slate-100" />
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label className="text-slate-300">Relator</Label>
-                    <Input value={form.relator} onChange={e => f("relator", e.target.value)} className="bg-[#0d0d0d] border-[#1a1a1a] text-slate-100" />
+                    <Input value={form.relator} onChange={e => f("relator", e.target.value)} className="bg-[#0c0c14] border-slate-700 text-slate-100" />
                   </div>
                   <div className="space-y-2">
                     <Label className="text-slate-300">Órgão Julgador</Label>
-                    <Input value={form.orgao_julgador} onChange={e => f("orgao_julgador", e.target.value)} className="bg-[#0d0d0d] border-[#1a1a1a] text-slate-100" />
+                    <Input value={form.orgao_julgador} onChange={e => f("orgao_julgador", e.target.value)} className="bg-[#0c0c14] border-slate-700 text-slate-100" />
                   </div>
                   <div className="space-y-2">
                     <Label className="text-slate-300">Data Julgamento</Label>
-                    <Input type="date" value={form.data_julgamento} onChange={e => f("data_julgamento", e.target.value)} className="bg-[#0d0d0d] border-[#1a1a1a] text-slate-100" />
+                    <Input type="date" value={form.data_julgamento} onChange={e => f("data_julgamento", e.target.value)} className="bg-[#0c0c14] border-slate-700 text-slate-100" />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label className="text-slate-300">Tema</Label>
-                  <Input value={form.tema} onChange={e => f("tema", e.target.value)} className="bg-[#0d0d0d] border-[#1a1a1a] text-slate-100" placeholder="Posse de arma de fogo" />
+                  <Input value={form.tema} onChange={e => f("tema", e.target.value)} className="bg-[#0c0c14] border-slate-700 text-slate-100" placeholder="Posse de arma de fogo" />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-slate-300">Ementa Resumida *</Label>
-                  <Textarea value={form.ementa_resumida} onChange={e => f("ementa_resumida", e.target.value)} className="bg-[#0d0d0d] border-[#1a1a1a] text-slate-100 min-h-[80px]" />
+                  <Textarea value={form.ementa_resumida} onChange={e => f("ementa_resumida", e.target.value)} className="bg-[#0c0c14] border-slate-700 text-slate-100 min-h-[80px]" />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-slate-300">Tese Aplicável</Label>
-                  <Textarea value={form.tese_aplicavel} onChange={e => f("tese_aplicavel", e.target.value)} className="bg-[#0d0d0d] border-[#1a1a1a] text-slate-100 min-h-[60px]" />
+                  <Textarea value={form.tese_aplicavel} onChange={e => f("tese_aplicavel", e.target.value)} className="bg-[#0c0c14] border-slate-700 text-slate-100 min-h-[60px]" />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-slate-300">Texto Controlado</Label>
-                  <Textarea value={form.texto_controlado} onChange={e => f("texto_controlado", e.target.value)} className="bg-[#0d0d0d] border-[#1a1a1a] text-slate-100 min-h-[100px]" />
+                  <Textarea value={form.texto_controlado} onChange={e => f("texto_controlado", e.target.value)} className="bg-[#0c0c14] border-slate-700 text-slate-100 min-h-[100px]" />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-slate-300">Palavras-chave (vírgula)</Label>
-                  <Input value={form.palavras_chave} onChange={e => f("palavras_chave", e.target.value)} className="bg-[#0d0d0d] border-[#1a1a1a] text-slate-100" />
+                  <Input value={form.palavras_chave} onChange={e => f("palavras_chave", e.target.value)} className="bg-[#0c0c14] border-slate-700 text-slate-100" />
                 </div>
-                <Button onClick={handleSave} disabled={saving} className="w-full bg-white/10 hover:bg-white/15 text-white border border-white/10">
+                <Button onClick={handleSave} disabled={saving} className="w-full bg-amber-600 hover:bg-amber-700">
                   {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar"}
                 </Button>
               </div>
@@ -126,11 +126,11 @@ export default function QAJurisprudenciaPage() {
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
         <Input placeholder="Buscar por tribunal, processo, tema..." value={busca} onChange={e => setBusca(e.target.value)}
-          className="pl-10 bg-[#111111] border-[#1a1a1a] text-slate-100" />
+          className="pl-10 bg-[#12121c] border-slate-700 text-slate-100" />
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-slate-400" /></div>
+        <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-amber-500" /></div>
       ) : items.length === 0 ? (
         <div className="text-center py-12 text-slate-500">
           <Gavel className="h-12 w-12 mx-auto mb-3 opacity-30" />
@@ -139,11 +139,11 @@ export default function QAJurisprudenciaPage() {
       ) : (
         <div className="space-y-2">
           {items.map((j: any) => (
-            <div key={j.id} className="bg-[#111111] border border-[#1a1a1a] rounded-lg p-4 hover:border-[#1a1a1a] transition-all">
+            <div key={j.id} className="bg-[#12121c] border border-slate-800/40 rounded-lg p-4 hover:border-slate-700 transition-all">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 text-sm">
-                    <span className="font-medium text-white">{j.tribunal}</span>
+                    <span className="font-medium text-amber-400">{j.tribunal}</span>
                     {j.numero_processo && <span className="text-slate-400">• {j.numero_processo}</span>}
                   </div>
                   {j.tema && <div className="text-xs text-slate-500 mt-0.5">{j.tema}</div>}

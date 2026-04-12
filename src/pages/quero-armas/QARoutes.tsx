@@ -18,7 +18,7 @@ const QAHistoricoPage = lazyRetry(() => import("./QAHistoricoPage"), "QAHistoric
 const QAConfiguracoesPage = lazyRetry(() => import("./QAConfiguracoesPage"), "QAConfiguracoesPage");
 
 const Loader = () => (
-  <div className="min-h-screen flex items-center justify-center bg-[#050505]">
+  <div className="min-h-screen flex items-center justify-center bg-[#08080f]">
     <div className="w-6 h-6 border-2 border-slate-700 border-t-slate-400 rounded-full animate-spin" />
   </div>
 );
