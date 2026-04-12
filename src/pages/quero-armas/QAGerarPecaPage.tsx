@@ -206,7 +206,7 @@ export default function QAGerarPecaPage() {
   const docFailed = arquivosAuxiliares.filter(a => a.stage === "failed").length;
   const docActive = arquivosAuxiliares.filter(a => !["pending", "done", "failed"].includes(a.stage)).length;
 
-  const tipoServicoFinal = tipoServico === "outro" ? tipoServicoCustom : (TIPOS_SERVICO.find(t => t.value === tipoServico)?.label || tipoServico);
+  const tipoPecaLabel = TIPOS_PECA.find(t => t.value === tipoPeca)?.label || tipoPeca;
 
   /* ── Load existing case if ?caso=ID ── */
   useEffect(() => {
