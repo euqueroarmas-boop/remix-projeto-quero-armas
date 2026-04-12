@@ -292,19 +292,40 @@ export default function QABaseConhecimentoPage() {
 
   const handleImportLink = async () => {
     if (!linkUrl.trim() || !user) return;
+    if (linkPapel === "auxiliar_caso" && !linkCasoId.trim()) {
+      toast.error("Informe o identificador do caso para documentos auxiliares.");
+      return;
+    }
     setImportingLink(true);
     try {
       const { data, error } = await supabase.functions.invoke("qa-ingest-url", {
-        body: { url: linkUrl.trim(), titulo: linkTitulo.trim() || undefined, tipo_documento: linkTipo, user_id: user.id },
+        body: {
+          url: linkUrl.trim(),
+          titulo: linkTitulo.trim() || undefined,
+          tipo_documento: linkTipo,
+          user_id: user.id,
+          papel_documento: linkPapel,
+          caso_id: linkPapel === "auxiliar_caso" ? linkCasoId.trim() : null,
+        },
       });
       if (error) throw error;
       const docId = data?.doc_id;
-      if (docId) addTrackedImport(docId, linkUrl.trim(), linkTitulo.trim() || linkUrl.trim());
-      toast.success("Importação iniciada. Acompanhe o progresso na fila de atividade.");
+      if (docId) {
+        addTrackedImport(docId, linkUrl.trim(), linkTitulo.trim() || linkUrl.trim());
+        // Set papel_documento on the created doc
+        await supabase.from("qa_documentos_conhecimento" as any)
+          .update({ papel_documento: linkPapel, caso_id: linkPapel === "auxiliar_caso" ? linkCasoId.trim() : null } as any)
+          .eq("id", docId);
+      }
+      toast.success(linkPapel === "auxiliar_caso"
+        ? "Documento auxiliar importado. Será usado apenas como suporte factual do caso."
+        : "Importação iniciada. Acompanhe o progresso na fila de atividade.");
       setShowLinkDialog(false);
       setLinkUrl("");
       setLinkTitulo("");
       setLinkTipo("outro");
+      setLinkPapel("aprendizado");
+      setLinkCasoId("");
       loadDocs();
     } catch (err: any) {
       toast.error(err.message || "Erro ao importar link");
