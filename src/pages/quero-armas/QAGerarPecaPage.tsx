@@ -1010,7 +1010,7 @@ export default function QAGerarPecaPage() {
                         </Button>
                       )}
                       {arq.stage === "done" && <CheckCircle className="h-3.5 w-3.5 text-emerald-400" />}
-                      {!["uploading", "saved", "extracting", "processing"].includes(arq.stage) && (
+                      {!["queued", "uploading", "saved", "extracting", "processing"].includes(arq.stage) && (
                         <button onClick={() => handleRemoveFile(i)} className="text-slate-700 hover:text-red-400"><X className="h-3 w-3" /></button>
                       )}
                     </div>
