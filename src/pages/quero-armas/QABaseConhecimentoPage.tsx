@@ -534,7 +534,8 @@ export default function QABaseConhecimentoPage() {
   const referencias = docs.filter(d => d.referencia_preferencial === true).length;
 
   const activeTracked = trackedImports.filter(t => !TERMINAL.includes(t.status));
-  const recentTracked = trackedImports.filter(t => TERMINAL.includes(t.status)).slice(0, 5);
+  const doneTracked = trackedImports.filter(t => t.status === "concluido");
+  const errorTracked = trackedImports.filter(t => t.status === "erro" || t.status === "texto_invalido");
 
   return (
     <div className="space-y-6">
@@ -563,23 +564,42 @@ export default function QABaseConhecimentoPage() {
       {trackedImports.length > 0 && (
         <div className="bg-[#0c0c14] border border-slate-800/60 rounded-xl p-4 space-y-2">
           <div className="flex items-center justify-between mb-1">
-            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+            <button onClick={() => setQueueCollapsed(c => !c)} className="flex items-center gap-2 text-xs font-semibold text-slate-400 uppercase tracking-wider hover:text-slate-300 transition-colors">
               {activeTracked.length > 0 && <Loader2 className="h-3 w-3 animate-spin text-blue-400" />}
               Fila de Processamento
+              {queueCollapsed ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />}
+            </button>
+            <div className="flex items-center gap-2">
+              {/* Counters */}
               {activeTracked.length > 0 && (
                 <span className="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded-full font-medium">
-                  {activeTracked.length} em andamento
+                  {activeTracked.length} ativa{activeTracked.length > 1 ? "s" : ""}
                 </span>
               )}
-            </h3>
-            {trackedImports.length > 0 && trackedImports.every(t => TERMINAL.includes(t.status)) && (
-              <button onClick={() => setTrackedImports([])} className="text-[10px] text-slate-600 hover:text-slate-400 transition-colors">
-                Limpar tudo
-              </button>
-            )}
+              {doneTracked.length > 0 && (
+                <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full font-medium">
+                  {doneTracked.length} concluída{doneTracked.length > 1 ? "s" : ""}
+                </span>
+              )}
+              {errorTracked.length > 0 && (
+                <span className="text-[10px] bg-red-500/10 text-red-400 px-2 py-0.5 rounded-full font-medium">
+                  {errorTracked.length} erro{errorTracked.length > 1 ? "s" : ""}
+                </span>
+              )}
+              {trackedImports.every(t => TERMINAL.includes(t.status)) && (
+                <button onClick={() => setTrackedImports([])} className="text-[10px] text-slate-600 hover:text-slate-400 transition-colors">
+                  Limpar tudo
+                </button>
+              )}
+            </div>
           </div>
-          {trackedImports.map(item => (
-            <ActivityItem key={item.doc_id} item={item} onDismiss={() => dismissTracked(item.doc_id)} />
+          {!queueCollapsed && trackedImports.map(item => (
+            <ActivityItem
+              key={item.doc_id}
+              item={item}
+              onDismiss={() => dismissTracked(item.doc_id)}
+              onReprocess={() => handleReprocessFromQueue(item)}
+            />
           ))}
         </div>
       )}
