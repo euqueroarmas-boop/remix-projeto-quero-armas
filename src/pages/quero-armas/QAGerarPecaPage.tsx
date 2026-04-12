@@ -758,7 +758,7 @@ export default function QAGerarPecaPage() {
                           <CommandItem key={m} value={m} onSelect={() => handleCidadeSelect(m)}
                             className="text-sm text-slate-300 cursor-pointer data-[selected=true]:bg-cyan-500/10 data-[selected=true]:text-cyan-300">
                             <CheckCircle className={`mr-2 h-3.5 w-3.5 ${clienteCidade === m ? "opacity-100 text-emerald-400" : "opacity-0"}`} />
-                            {m}
+                            {toTitleCase(m)}
                           </CommandItem>
                         ))}
                       </CommandGroup>
