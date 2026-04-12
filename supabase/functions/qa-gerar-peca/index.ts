@@ -133,7 +133,8 @@ Deno.serve(async (req) => {
       controle_judicial: "Foque no CONTROLE JUDICIAL — limites da atuação administrativa.",
     };
 
-    const parametros = `\n\nINSTRUÇÕES ESPECÍFICAS:\n- ${profundidadeMap[profundidade] || profundidadeMap.intermediaria}\n- ${tomMap[tom] || tomMap.tecnico_padrao}\n- ${focoMap[foco] || focoMap.legalidade}`;
+    const instrucaoTipo = TIPO_PECA_INSTRUCOES[tipoPecaValido] || "";
+    const parametros = `\n\nINSTRUÇÕES ESPECÍFICAS:\n- TIPO: ${tipoPecaValido}\n- ${instrucaoTipo}\n- ${profundidadeMap[profundidade] || profundidadeMap.intermediaria}\n- ${tomMap[tom] || tomMap.tecnico_padrao}\n- ${focoMap[foco] || focoMap.legalidade}`;
 
     const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -147,7 +148,7 @@ Deno.serve(async (req) => {
           { role: "system", content: SYSTEM_PROMPT },
           {
             role: "user",
-            content: `TIPO DE PEÇA: ${tipo_peca || "não especificado"}\nTÍTULO: ${caso_titulo || "Sem título"}${parametros}\n\nDESCRIÇÃO COMPLETA DO CASO:\n${entrada_caso}${contextoFontes}\n\nRedija a peça jurídica completa com base EXCLUSIVAMENTE nas fontes acima. Estruture com seções claras. Liste as fontes utilizadas ao final.`,
+            content: `TIPO DE PEÇA (OBRIGATÓRIO): ${tipoPecaValido}\nTÍTULO: ${caso_titulo || "Sem título"}${parametros}\n\nDESCRIÇÃO COMPLETA DO CASO:\n${entrada_caso}${contextoFontes}\n\nRedija a peça jurídica do tipo "${tipoPecaValido}" com base EXCLUSIVAMENTE nas fontes acima. Estruture com seções claras. Liste as fontes utilizadas ao final. NÃO altere o tipo da peça.`,
           },
         ],
         max_tokens: 8000,
@@ -172,7 +173,7 @@ Deno.serve(async (req) => {
     const { data: geracaoData } = await supabase.from("qa_geracoes_pecas").insert({
       usuario_id,
       titulo_geracao: caso_titulo || "Peça sem título",
-      tipo_peca: tipo_peca || null,
+      tipo_peca: tipoPecaValido,
       entrada_caso,
       minuta_gerada: minutaGerada,
       normas_utilizadas_json: fontesParaUsar.filter(f => f.tipo === "norma"),
