@@ -115,7 +115,7 @@ const ESTADOS_BR = [
 ];
 
 const STAGE_LABELS: Record<DocUploadStage, string> = {
-  pending: "Aguardando",
+  pending: "Aguardando classificação",
   uploading: "Enviando arquivo...",
   saved: "Arquivo salvo",
   extracting: "Extraindo texto...",
@@ -355,6 +355,14 @@ export default function QAGerarPecaPage() {
 
   const handleChangeTipoDoc = (index: number, tipo: string) => {
     setArquivosAuxiliares(prev => prev.map((a, i) => i === index ? { ...a, tipo } : a));
+    // Immediately trigger upload+processing after classification
+    const arq = arquivosAuxiliares[index];
+    if (arq && arq.stage === "pending") {
+      // Use a microtask so state updates first
+      setTimeout(() => {
+        void uploadSingleDoc({ ...arq, tipo }, index);
+      }, 50);
+    }
   };
 
   const setDocStage = (index: number, stage: DocUploadStage, extra?: Partial<ArquivoAuxiliar>) => {
