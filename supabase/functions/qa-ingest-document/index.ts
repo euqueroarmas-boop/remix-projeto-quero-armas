@@ -218,6 +218,7 @@ async function processDocument(storage_path: string, user_id: string | null) {
       .update({
         texto_extraido: textoExtraido,
         hash_arquivo: hashHex,
+        metodo_extracao: extractionMethod,
         updated_at: new Date().toISOString(),
       })
       .eq("id", doc.id);

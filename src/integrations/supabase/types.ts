@@ -2084,6 +2084,7 @@ export type Database = {
           hash_arquivo: string | null
           id: string
           metadados_json: Json | null
+          metodo_extracao: string | null
           mime_type: string | null
           nome_arquivo: string
           origem: string | null
@@ -2095,8 +2096,10 @@ export type Database = {
           tamanho_bytes: number | null
           texto_extraido: string | null
           tipo_documento: string
+          tipo_origem: string
           titulo: string
           updated_at: string
+          url_origem: string | null
         }
         Insert: {
           ativo?: boolean
@@ -2108,6 +2111,7 @@ export type Database = {
           hash_arquivo?: string | null
           id?: string
           metadados_json?: Json | null
+          metodo_extracao?: string | null
           mime_type?: string | null
           nome_arquivo: string
           origem?: string | null
@@ -2119,8 +2123,10 @@ export type Database = {
           tamanho_bytes?: number | null
           texto_extraido?: string | null
           tipo_documento?: string
+          tipo_origem?: string
           titulo: string
           updated_at?: string
+          url_origem?: string | null
         }
         Update: {
           ativo?: boolean
@@ -2132,6 +2138,7 @@ export type Database = {
           hash_arquivo?: string | null
           id?: string
           metadados_json?: Json | null
+          metodo_extracao?: string | null
           mime_type?: string | null
           nome_arquivo?: string
           origem?: string | null
@@ -2143,8 +2150,10 @@ export type Database = {
           tamanho_bytes?: number | null
           texto_extraido?: string | null
           tipo_documento?: string
+          tipo_origem?: string
           titulo?: string
           updated_at?: string
+          url_origem?: string | null
         }
         Relationships: []
       }
