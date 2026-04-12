@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Upload, Search, FileText, CheckCircle, Clock, AlertCircle, Loader2 } from "lucide-react";
+import { Upload, Search, FileText, CheckCircle, Clock, AlertCircle, Loader2, ExternalLink } from "lucide-react";
 import { useQAAuth } from "@/components/quero-armas/hooks/useQAAuth";
+import { Link } from "react-router-dom";
 
 const TIPOS_DOC = [
   "peticao", "recurso", "mandado_seguranca", "parecer", "jurisprudencia",
@@ -135,10 +136,10 @@ export default function QABaseConhecimentoPage() {
       ) : (
         <div className="space-y-2">
           {docs.map((d: any) => (
-            <div key={d.id} className="flex items-center gap-4 bg-[#12121c] border border-slate-800/40 rounded-lg p-4 hover:border-slate-700 transition-all">
+            <Link key={d.id} to={`/quero-armas/base-conhecimento/${d.id}`} className="flex items-center gap-4 bg-[#12121c] border border-slate-800/40 rounded-lg p-4 hover:border-amber-500/30 transition-all cursor-pointer group">
               {statusIcon(d.status_processamento)}
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium text-slate-200 truncate">{d.titulo}</div>
+                <div className="text-sm font-medium text-slate-200 truncate group-hover:text-amber-400 transition-colors">{d.titulo}</div>
                 <div className="text-xs text-slate-500 flex items-center gap-2 mt-0.5">
                   <span className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">{d.tipo_documento?.replace(/_/g, " ")}</span>
                   <span>{new Date(d.created_at).toLocaleDateString("pt-BR")}</span>
@@ -152,7 +153,8 @@ export default function QABaseConhecimentoPage() {
               }`}>
                 {d.status_validacao?.replace(/_/g, " ")}
               </span>
-            </div>
+              <ExternalLink className="h-3.5 w-3.5 text-slate-600 group-hover:text-amber-400 shrink-0" />
+            </Link>
           ))}
         </div>
       )}
