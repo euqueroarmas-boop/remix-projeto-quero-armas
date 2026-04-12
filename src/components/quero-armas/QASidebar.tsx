@@ -15,6 +15,7 @@ const NAV_GROUPS = [
     items: [
       { title: "Dashboard", url: "/quero-armas/dashboard", icon: LayoutDashboard },
       { title: "Gerar Peça", url: "/quero-armas/gerar-peca", icon: PenTool },
+      { title: "Casos", url: "/quero-armas/casos", icon: FolderOpen },
       { title: "Assistente Jurídico", url: "/quero-armas/ia", icon: Shield },
     ],
   },
