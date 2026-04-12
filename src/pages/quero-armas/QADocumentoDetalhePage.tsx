@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import {
   ArrowLeft, FileText, CheckCircle, Clock, AlertCircle, Loader2, RefreshCw,
   Database, Hash, Star, Trash2, Power, ShieldCheck, ShieldX, Zap, ZapOff,
-  StarOff,
+  StarOff, Globe, Upload, Link2,
 } from "lucide-react";
 import { useQAAuth } from "@/components/quero-armas/hooks/useQAAuth";
 import {
