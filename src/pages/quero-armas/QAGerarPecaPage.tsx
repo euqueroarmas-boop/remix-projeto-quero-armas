@@ -196,6 +196,9 @@ export default function QAGerarPecaPage() {
             <Button variant="outline" size="sm" onClick={copiarMinuta} className="border-slate-700 text-slate-300">
               <Download className="h-3.5 w-3.5 mr-1" /> Copiar
             </Button>
+            <Button size="sm" onClick={exportarDocx} className="bg-amber-600 hover:bg-amber-700 text-white">
+              <Download className="h-3.5 w-3.5 mr-1" /> Exportar DOCX
+            </Button>
           </div>
 
           {/* Sources used */}
