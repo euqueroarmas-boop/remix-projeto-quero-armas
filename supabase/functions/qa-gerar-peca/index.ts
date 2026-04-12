@@ -696,103 +696,107 @@ Deno.serve(async (req) => {
       conteudo: d.resumo_extraido?.substring(0, 1500) || "",
     }));
 
-    // === AUXILIARY CASE DOCUMENTS WITH BO PRIORITY ===
+    // === AUXILIARY CASE DOCUMENTS — TYPED EVIDENCE PROCESSING ===
     let fontesAuxiliares: any[] = [];
-    let boDocuments: { titulo: string; conteudo: string; structured: BoStructuredData }[] = [];
+    let evidenceDocs: EvidenceDoc[] = [];
     const caso_id = caso_titulo?.trim() || null;
 
     if (caso_id) {
       const { data: auxDocs } = await supabase.from("qa_documentos_conhecimento")
-        .select("id, titulo, tipo_documento, texto_extraido, resumo_extraido")
+        .select("id, titulo, tipo_documento, texto_extraido, resumo_extraido, categoria")
         .eq("status_processamento", "concluido")
         .eq("ativo", true)
         .eq("papel_documento", "auxiliar_caso")
         .eq("caso_id", caso_id)
-        .limit(20);
+        .limit(30);
 
-      // Separate BOs from other auxiliaries — BOs get priority budget
-      const boDocs: typeof auxDocs = [];
+      // Classify each doc by type
+      const priorityDocs: typeof auxDocs = [];
       const otherDocs: typeof auxDocs = [];
 
       auxDocs?.forEach((d: any) => {
         const fullText = d.texto_extraido || d.resumo_extraido || "";
-        if (isBoletimOcorrencia(d.titulo || "", d.tipo_documento || "", fullText)) {
-          boDocs.push(d);
+        const tipo = detectDocType(d.titulo || "", d.tipo_documento || d.categoria || "", fullText);
+        (d as any)._tipo_detectado = tipo;
+        if (HIGH_PRIORITY_TYPES.includes(tipo)) {
+          priorityDocs.push(d);
         } else {
           otherDocs.push(d);
         }
       });
 
-      const TOTAL_AUX_BUDGET = 80000; // Increased budget
-      const BO_PRIORITY_BUDGET = Math.min(50000, TOTAL_AUX_BUDGET * 0.65); // 65% for BOs
-      const OTHER_BUDGET = TOTAL_AUX_BUDGET - BO_PRIORITY_BUDGET;
+      const TOTAL_AUX_BUDGET = 100000;
+      const PRIORITY_BUDGET = Math.min(70000, TOTAL_AUX_BUDGET * 0.70);
+      const OTHER_BUDGET = TOTAL_AUX_BUDGET - PRIORITY_BUDGET;
       const BLOCK_SIZE = 15000;
 
-      // Process BOs FIRST with priority budget — FULL text, no truncation if possible
-      let boUsedBudget = 0;
-      boDocs.forEach((d: any) => {
+      // Process priority docs FIRST with full text
+      let priorityUsed = 0;
+      priorityDocs.forEach((d: any) => {
         const fullText = d.texto_extraido || d.resumo_extraido || "";
+        const tipo = (d as any)._tipo_detectado as TipoDocProbatorio;
         let content: string;
 
-        if (fullText.length <= BLOCK_SIZE || boUsedBudget + fullText.length <= BO_PRIORITY_BUDGET) {
-          content = fullText; // Full text — no truncation
+        if (fullText.length <= BLOCK_SIZE || priorityUsed + fullText.length <= PRIORITY_BUDGET) {
+          content = fullText;
         } else {
-          const remaining = BO_PRIORITY_BUDGET - boUsedBudget;
+          const remaining = PRIORITY_BUDGET - priorityUsed;
           if (remaining <= 500) return;
-          // For BOs, preserve more of the beginning (facts) and end (conclusions)
           const headPortion = Math.floor(remaining * 0.6);
           const tailPortion = remaining - headPortion;
           content = fullText.substring(0, headPortion) +
-            "\n\n[...seção intermediária omitida por limite — início e fim preservados...]\n\n" +
+            "\n\n[...seção intermediária omitida — início e fim preservados...]\n\n" +
             fullText.substring(fullText.length - tailPortion);
         }
 
-        boUsedBudget += content.length;
+        priorityUsed += content.length;
+        const structured = extractStructuredData(content, tipo);
 
-        // Extract structured data from BO
-        const structured = extractBoStructuredData(content);
-
-        boDocuments.push({ titulo: d.titulo, conteudo: content, structured });
+        evidenceDocs.push({ titulo: d.titulo, conteudo: content, tipo, structured });
 
         fontesAuxiliares.push({
-          tipo: "auxiliar_caso_bo",
+          tipo: `auxiliar_caso_${tipo}`,
           id: d.id,
           titulo: d.titulo,
           referencia: d.tipo_documento,
           conteudo: content,
-          is_bo: true,
+          tipo_detectado: tipo,
           structured_data: structured,
         });
       });
 
-      // Then process other auxiliary docs with remaining budget
-      let otherUsedBudget = 0;
-      // If BOs didn't use all their budget, donate remainder to others
-      const effectiveOtherBudget = OTHER_BUDGET + Math.max(0, BO_PRIORITY_BUDGET - boUsedBudget);
+      // Other docs with remaining budget
+      let otherUsed = 0;
+      const effectiveOtherBudget = OTHER_BUDGET + Math.max(0, PRIORITY_BUDGET - priorityUsed);
 
       otherDocs.forEach((d: any) => {
         const fullText = d.texto_extraido || d.resumo_extraido || "";
+        const tipo = (d as any)._tipo_detectado as TipoDocProbatorio;
         let content: string;
-        if (fullText.length <= BLOCK_SIZE || otherUsedBudget + fullText.length <= effectiveOtherBudget) {
+        if (fullText.length <= BLOCK_SIZE || otherUsed + fullText.length <= effectiveOtherBudget) {
           content = fullText;
         } else {
-          const remaining = effectiveOtherBudget - otherUsedBudget;
+          const remaining = effectiveOtherBudget - otherUsed;
           if (remaining <= 0) return;
           const half = Math.floor(remaining / 2);
-          content = fullText.substring(0, half) + "\n\n[...conteúdo intermediário omitido por limite de contexto...]\n\n" + fullText.substring(fullText.length - half);
+          content = fullText.substring(0, half) + "\n\n[...omitido por limite...]\n\n" + fullText.substring(fullText.length - half);
         }
-        otherUsedBudget += content.length;
+        otherUsed += content.length;
+        const structured = extractStructuredData(content, tipo);
+        evidenceDocs.push({ titulo: d.titulo, conteudo: content, tipo, structured });
+
         fontesAuxiliares.push({
-          tipo: "auxiliar_caso",
+          tipo: `auxiliar_caso_${tipo}`,
           id: d.id,
           titulo: d.titulo,
           referencia: d.tipo_documento,
           conteudo: content,
-          is_bo: false,
+          tipo_detectado: tipo,
+          structured_data: structured,
         });
       });
 
-      console.log(`Auxiliary docs: ${boDocs.length} BOs (${boUsedBudget} chars), ${otherDocs.length} other (${otherUsedBudget} chars)`);
+      console.log(`Evidence docs: ${priorityDocs.length} priority (${priorityUsed} chars), ${otherDocs.length} other (${otherUsed} chars). Types: ${evidenceDocs.map(d => d.tipo).join(", ")}`);
     }
 
     let fontesParaUsar = fontesRecuperadas;
@@ -811,41 +815,40 @@ Deno.serve(async (req) => {
       contextoFontes = "\n\n--- ATENÇÃO: Nenhuma fonte de aprendizado encontrada. NÃO invente. Declare insuficiência. ---\n";
     }
 
-    // === BUILD BO FACTUAL ANALYSIS (before other auxiliaries) ===
-    if (boDocuments.length > 0) {
-      contextoFontes += buildBoFactualSummary(boDocuments);
+    // === BUILD STRUCTURED EVIDENCE ANALYSIS ===
+    if (evidenceDocs.length > 0) {
+      contextoFontes += buildEvidenceFactualSummary(evidenceDocs);
     }
 
-    // Add auxiliary documents context
+    // Add full text of auxiliary documents grouped by type
     if (fontesAuxiliares.length > 0) {
-      // BOs section
-      const bosAux = fontesAuxiliares.filter(f => f.is_bo);
-      const othersAux = fontesAuxiliares.filter(f => !f.is_bo);
+      const byType = new Map<string, any[]>();
+      fontesAuxiliares.forEach(f => {
+        const tipo = f.tipo_detectado || "outro";
+        const arr = byType.get(tipo) || [];
+        arr.push(f);
+        byType.set(tipo, arr);
+      });
 
-      if (bosAux.length > 0) {
-        contextoFontes += "\n\n═══ BOLETINS DE OCORRÊNCIA — DOCUMENTOS PROBATÓRIOS PRIORITÁRIOS ═══\n";
-        contextoFontes += `ATENÇÃO: ${bosAux.length} boletim(ns) de ocorrência anexado(s). Estes documentos são FONTE PRIORITÁRIA de fatos. Leia-os integralmente e use os fatos CONCRETOS na peça.\n`;
-        contextoFontes += "PROIBIDO: menção genérica. OBRIGATÓRIO: explorar fatos específicos de cada BO.\n\n";
-        bosAux.forEach((f, i) => {
-          contextoFontes += `\n[BOLETIM DE OCORRÊNCIA ${i + 1}/${bosAux.length}] ${f.titulo}\n`;
+      for (const [tipo, group] of byType) {
+        const label = DOC_TYPE_LABELS[tipo] || tipo.replace(/_/g, " ").toUpperCase();
+        contextoFontes += `\n\n═══ ${label} — DOCUMENTOS PROBATÓRIOS (${group.length}) ═══\n`;
+        contextoFontes += `ATENÇÃO: Leia integralmente. Use fatos CONCRETOS na peça. PROIBIDO menção genérica.\n\n`;
+        group.forEach((f: any, i: number) => {
+          contextoFontes += `\n[${label} ${i + 1}/${group.length}] ${f.titulo}\n`;
           if (f.structured_data) {
-            const s = f.structured_data;
-            if (s.numero_bo) contextoFontes += `Nº do BO: ${s.numero_bo}\n`;
-            if (s.data_fato) contextoFontes += `Data do fato: ${s.data_fato}\n`;
-            if (s.data_registro) contextoFontes += `Data do registro: ${s.data_registro}\n`;
-            if (s.tipo_ocorrencia) contextoFontes += `Natureza: ${s.tipo_ocorrencia}\n`;
-            if (s.local_fato) contextoFontes += `Local: ${s.local_fato}\n`;
-            if (s.indicadores_risco.length > 0) contextoFontes += `Indicadores de risco detectados: ${s.indicadores_risco.join(", ")}\n`;
+            const c = f.structured_data.campos || {};
+            for (const [k, v] of Object.entries(c)) {
+              if (v === null || v === false) continue;
+              if (v === true) { contextoFontes += `  ${k}: SIM\n`; continue; }
+              if (Array.isArray(v)) { contextoFontes += `  ${k}: ${(v as string[]).join(", ")}\n`; continue; }
+              contextoFontes += `  ${k}: ${v}\n`;
+            }
+            if (f.structured_data.indicadores_risco?.length > 0) {
+              contextoFontes += `  Indicadores de risco: ${f.structured_data.indicadores_risco.join(", ")}\n`;
+            }
           }
-          contextoFontes += `\nConteúdo integral do BO:\n${f.conteudo}\n`;
-        });
-      }
-
-      if (othersAux.length > 0) {
-        contextoFontes += "\n\n--- OUTROS DOCUMENTOS AUXILIARES DO CASO CONCRETO (usar como base factual e probatória) ---\n";
-        contextoFontes += "REGRA: Estes documentos contêm fatos, dados e provas do caso específico. Use-os para narrar fatos, apoiar argumentos e citar documentos. NUNCA os trate como modelo de peça ou referência de estilo.\n";
-        othersAux.forEach((f, i) => {
-          contextoFontes += `\n[Doc. Auxiliar ${i + 1} - ${f.referencia?.replace(/_/g, " ")}] ${f.titulo}\nConteúdo integral:\n${f.conteudo}\n`;
+          contextoFontes += `\nConteúdo integral:\n${f.conteudo}\n`;
         });
       }
     }
