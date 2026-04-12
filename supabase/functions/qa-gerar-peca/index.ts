@@ -626,7 +626,12 @@ IGNORE qualquer menção no contexto a tipos de peça diferentes. O tipo é FIXO
       entidade: "qa_geracoes_pecas",
       entidade_id: geracaoData?.id || null,
       acao: "gerar_peca",
-      detalhes_json: { tipo_peca, profundidade, tom, foco, cidade: cidadeStr, estado: estadoStr, fontes_count: fontesParaUsar.length, score_confianca: scoreConfianca, quality_issues: qualityCheck.issues },
+      detalhes_json: {
+        tipo_peca, profundidade, tom, foco, cidade: cidadeStr, estado: estadoStr,
+        fontes_count: fontesParaUsar.length, score_confianca: scoreConfianca,
+        quality_issues: qualityCheck.issues,
+        auxiliar_meta: auxiliarMeta,
+      },
     });
 
     return new Response(JSON.stringify({
@@ -635,6 +640,7 @@ IGNORE qualquer menção no contexto a tipos de peça diferentes. O tipo é FIXO
       fontes_utilizadas: fontesParaUsar,
       score_confianca: scoreConfianca,
       quality_issues: qualityCheck.pass ? [] : qualityCheck.issues,
+      auxiliar_meta: auxiliarMeta,
     }), { headers: { ...corsH, "Content-Type": "application/json" } });
 
   } catch (err) {
