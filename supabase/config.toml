@@ -48,3 +48,9 @@ verify_jwt = false
 [functions.send-smtp-email]
 verify_jwt = false
 
+[functions.qa-ingest-document]
+verify_jwt = false
+
+[functions.qa-consulta-ia]
+verify_jwt = false
+
