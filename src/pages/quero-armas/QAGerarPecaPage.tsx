@@ -79,15 +79,16 @@ const TIPOS_DOC_AUXILIAR = [
   { value: "laudo_medico", label: "Laudo Médico" },
   { value: "laudo_psiquiatrico", label: "Laudo Psiquiátrico" },
   { value: "laudo_psicologico", label: "Laudo Psicológico" },
-  { value: "notificacao", label: "Notificação" },
-  { value: "indeferimento", label: "Indeferimento" },
-  { value: "comprovante", label: "Comprovante" },
+  { value: "relatorio_clinico", label: "Relatório Clínico" },
+  { value: "atestado_medico", label: "Atestado Médico" },
+  { value: "notificacao_administrativa", label: "Notificação Administrativa" },
+  { value: "indeferimento_administrativo", label: "Indeferimento Administrativo" },
   { value: "certidao", label: "Certidão" },
   { value: "documento_pessoal", label: "Documento Pessoal" },
+  { value: "comprovante_residencia", label: "Comprovante de Residência" },
   { value: "declaracao", label: "Declaração" },
-  { value: "relatorio", label: "Relatório" },
   { value: "decisao_administrativa", label: "Decisão Administrativa" },
-  { value: "outro", label: "Outro documento de suporte" },
+  { value: "outro", label: "Outro documento probatório" },
 ];
 
 const TIPOS_PECA = [

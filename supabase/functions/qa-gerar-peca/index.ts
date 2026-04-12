@@ -41,188 +41,251 @@ const FORBIDDEN_TYPE_PATTERNS = [
   /contraraz[õo]es/i,
 ];
 
-// ═══ BO DETECTION & STRUCTURED EXTRACTION ═══
+// ═══ EVIDENTIARY DOCUMENT DETECTION & STRUCTURED EXTRACTION ═══
 
-const BO_PATTERNS = [
-  /boletim\s+de\s+ocorr[eê]ncia/i,
-  /\bB\.?O\.?\b/,
-  /ocorr[eê]ncia\s+policial/i,
-  /registro\s+policial/i,
-  /registro\s+de\s+ocorr[eê]ncia/i,
-  /\bTCO\b/i, // Termo Circunstanciado de Ocorrência
+type TipoDocProbatorio =
+  | "boletim_ocorrencia" | "laudo_medico" | "laudo_psiquiatrico" | "laudo_psicologico"
+  | "relatorio_clinico" | "atestado_medico" | "notificacao_administrativa"
+  | "indeferimento_administrativo" | "certidao" | "documento_pessoal"
+  | "comprovante_residencia" | "outro_documento_probatorio" | "outro";
+
+const PROBATORIO_TYPES: TipoDocProbatorio[] = [
+  "boletim_ocorrencia", "laudo_medico", "laudo_psiquiatrico", "laudo_psicologico",
+  "relatorio_clinico", "atestado_medico", "notificacao_administrativa",
+  "indeferimento_administrativo",
 ];
 
-function isBoletimOcorrencia(titulo: string, tipoDoc: string, conteudo: string): boolean {
+const HIGH_PRIORITY_TYPES: TipoDocProbatorio[] = [
+  "boletim_ocorrencia", "laudo_medico", "laudo_psiquiatrico", "laudo_psicologico",
+  "relatorio_clinico", "atestado_medico",
+];
+
+const BO_PATTERNS = [
+  /boletim\s+de\s+ocorr[eê]ncia/i, /\bB\.?O\.?\b/, /ocorr[eê]ncia\s+policial/i,
+  /registro\s+policial/i, /registro\s+de\s+ocorr[eê]ncia/i, /\bTCO\b/i,
+];
+const LAUDO_PATTERNS = [
+  /laudo\s+m[eé]dico/i, /laudo\s+psiqui[aá]trico/i, /laudo\s+psicol[oó]gico/i,
+  /relat[oó]rio\s+cl[ií]nico/i, /relat[oó]rio\s+m[eé]dico/i, /atestado\s+m[eé]dico/i,
+  /prontu[aá]rio/i, /avalia[çc][ãa]o\s+psicol[oó]gica/i, /parecer\s+m[eé]dico/i,
+];
+const NOTIFICACAO_PATTERNS = [/notifica[çc][ãa]o/i, /intima[çc][ãa]o/i];
+const INDEFERIMENTO_PATTERNS = [/indeferimento/i, /despacho\s+denegat[oó]rio/i, /decis[ãa]o\s+(?:administrativa|desfavor)/i];
+
+function detectDocType(titulo: string, tipoDoc: string, text: string): TipoDocProbatorio {
   const combined = `${titulo} ${tipoDoc}`.toLowerCase();
-  for (const pat of BO_PATTERNS) {
-    if (pat.test(combined)) return true;
-  }
-  // Also check first 500 chars of content for BO indicators
-  const header = conteudo.substring(0, 500);
-  for (const pat of BO_PATTERNS) {
-    if (pat.test(header)) return true;
-  }
-  return false;
-}
-
-interface BoStructuredData {
-  numero_bo: string | null;
-  data_fato: string | null;
-  data_registro: string | null;
-  tipo_ocorrencia: string | null;
-  local_fato: string | null;
-  resumo_factual: string | null;
-  indicadores_risco: string[];
-  relacao_profissional: boolean;
-  menciona_arma: boolean;
-  menciona_familiares: boolean;
-  reiteracao: boolean;
-}
-
-function extractBoStructuredData(text: string): BoStructuredData {
-  const result: BoStructuredData = {
-    numero_bo: null,
-    data_fato: null,
-    data_registro: null,
-    tipo_ocorrencia: null,
-    local_fato: null,
-    resumo_factual: null,
-    indicadores_risco: [],
-    relacao_profissional: false,
-    menciona_arma: false,
-    menciona_familiares: false,
-    reiteracao: false,
-  };
-
-  // Extract BO number
-  const numMatch = text.match(/(?:B\.?O\.?|boletim|ocorr[eê]ncia|registro)\s*(?:n[ºo°]?\.?\s*|:?\s*)(\d[\d./-]+\d)/i);
-  if (numMatch) result.numero_bo = numMatch[1].trim();
-
-  // Extract dates
-  const dataFatoMatch = text.match(/data\s+(?:do\s+)?fato[:\s]+(\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4})/i);
-  if (dataFatoMatch) result.data_fato = dataFatoMatch[1];
-
-  const dataRegistroMatch = text.match(/data\s+(?:do\s+)?registro[:\s]+(\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4})/i);
-  if (dataRegistroMatch) result.data_registro = dataRegistroMatch[1];
-
-  // Fallback: any date in first 300 chars
-  if (!result.data_fato && !result.data_registro) {
-    const anyDate = text.substring(0, 500).match(/(\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4})/);
-    if (anyDate) result.data_registro = anyDate[1];
-  }
-
-  // Tipo de ocorrência / natureza
-  const naturezaMatch = text.match(/(?:natureza|tipo\s+(?:da\s+)?ocorr[eê]ncia|tipifica[çc][ãa]o)[:\s]+([^\n]{5,80})/i);
-  if (naturezaMatch) result.tipo_ocorrencia = naturezaMatch[1].trim();
-
-  // Local
-  const localMatch = text.match(/(?:local\s+(?:do\s+)?fato|local\s+da\s+ocorr[eê]ncia|endere[çc]o)[:\s]+([^\n]{5,120})/i);
-  if (localMatch) result.local_fato = localMatch[1].trim();
-
-  // Risk indicators
-  const riskPatterns: [RegExp, string][] = [
-    [/amea[çc]a/i, "ameaça"],
-    [/agress[ãa]o/i, "agressão"],
-    [/les[ãa]o\s+corporal/i, "lesão corporal"],
-    [/intimida[çc][ãa]o/i, "intimidação"],
-    [/persegui[çc][ãa]o/i, "perseguição"],
-    [/stalking/i, "perseguição/stalking"],
-    [/risco\s+(?:de\s+)?(?:vida|morte|integridade)/i, "risco à vida/integridade"],
-    [/viol[eê]ncia\s+dom[eé]stica/i, "violência doméstica"],
-    [/tentativa\s+de\s+homic[ií]dio/i, "tentativa de homicídio"],
-    [/roubo/i, "roubo"],
-    [/furto/i, "furto"],
-    [/invas[ãa]o/i, "invasão"],
-    [/arromba/i, "arrombamento"],
-    [/disparo/i, "disparo de arma"],
-    [/extors[ãa]o/i, "extorsão"],
-    [/sequest/i, "sequestro/cárcere"],
-    [/c[áa]rcere/i, "cárcere privado"],
-    [/dano\s+(?:ao\s+)?patrim[oô]nio/i, "dano patrimonial"],
-    [/destrui[çc][ãa]o/i, "destruição"],
-  ];
-  for (const [pat, label] of riskPatterns) {
-    if (pat.test(text)) result.indicadores_risco.push(label);
-  }
-
-  // Arma references
-  result.menciona_arma = /arma|faca|facão|rev[oó]lver|pistola|espingarda|arma\s+(?:de\s+fogo|branca)|objeto\s+cortante|objeto\s+perfurante/i.test(text);
-
-  // Family
-  result.menciona_familiares = /fam[ií]lia|esposa|marido|filh[oa]|m[ãa]e|pai|irm[ãa]o|companheira|companheiro|c[oô]njuge|menor|crian[çc]a/i.test(text);
-
-  // Professional
-  result.relacao_profissional = /profiss[ãa]o|trabalho|emprego|com[eé]rcio|empresa|estabelecimento|atividade\s+profissional|transporte\s+de\s+valores|seguran[çc]a\s+(?:privada|patrimonial)|vigilante/i.test(text);
-
-  // Reiteracao
-  result.reiteracao = /reiter|recorr[eê]n|novamente|outra\s+vez|mais\s+uma\s+vez|j[aá]\s+(?:havia|houve|tinha)|anterior|pregressa|reincid|pela\s+\d+[ªa]\s+vez/i.test(text);
-
-  return result;
-}
-
-function buildBoFactualSummary(bos: { titulo: string; conteudo: string; structured: BoStructuredData }[]): string {
-  if (bos.length === 0) return "";
-
-  let summary = "\n\n═══════════════════════════════════════════\n";
-  summary += "ANÁLISE FACTUAL ESTRUTURADA DOS BOLETINS DE OCORRÊNCIA\n";
-  summary += "═══════════════════════════════════════════\n\n";
-  summary += `Total de BOs anexados: ${bos.length}\n\n`;
-
-  // Sort chronologically by date if available
-  const sorted = [...bos].sort((a, b) => {
-    const dateA = a.structured.data_fato || a.structured.data_registro || "";
-    const dateB = b.structured.data_fato || b.structured.data_registro || "";
-    return dateA.localeCompare(dateB);
-  });
-
-  // Consolidated risk indicators across all BOs
-  const allRisks = new Set<string>();
-  let hasArma = false;
-  let hasFamilia = false;
-  let hasProfissional = false;
-  let hasReiteracao = false;
-
-  sorted.forEach((bo, i) => {
-    const s = bo.structured;
-    summary += `── BO ${i + 1} de ${bos.length}: ${bo.titulo} ──\n`;
-    if (s.numero_bo) summary += `  Número: ${s.numero_bo}\n`;
-    if (s.data_fato) summary += `  Data do fato: ${s.data_fato}\n`;
-    if (s.data_registro) summary += `  Data do registro: ${s.data_registro}\n`;
-    if (s.tipo_ocorrencia) summary += `  Natureza: ${s.tipo_ocorrencia}\n`;
-    if (s.local_fato) summary += `  Local: ${s.local_fato}\n`;
-    if (s.indicadores_risco.length > 0) {
-      summary += `  Indicadores de risco: ${s.indicadores_risco.join(", ")}\n`;
-      s.indicadores_risco.forEach(r => allRisks.add(r));
+  const header = text.substring(0, 800);
+  for (const p of BO_PATTERNS) { if (p.test(combined) || p.test(header)) return "boletim_ocorrencia"; }
+  for (const p of LAUDO_PATTERNS) {
+    if (p.test(combined) || p.test(header)) {
+      if (/psiqui[aá]tr/i.test(combined) || /psiqui[aá]tr/i.test(header)) return "laudo_psiquiatrico";
+      if (/psicol[oó]g/i.test(combined) || /psicol[oó]g/i.test(header)) return "laudo_psicologico";
+      if (/atestado/i.test(combined)) return "atestado_medico";
+      if (/relat[oó]rio\s+cl[ií]n/i.test(combined)) return "relatorio_clinico";
+      return "laudo_medico";
     }
-    if (s.menciona_arma) { summary += `  Menção a arma: SIM\n`; hasArma = true; }
-    if (s.menciona_familiares) { summary += `  Envolve familiares: SIM\n`; hasFamilia = true; }
-    if (s.relacao_profissional) { summary += `  Relação profissional: SIM\n`; hasProfissional = true; }
-    if (s.reiteracao) { summary += `  Indica reiteração: SIM\n`; hasReiteracao = true; }
-    summary += "\n";
-  });
+  }
+  for (const p of INDEFERIMENTO_PATTERNS) { if (p.test(combined) || p.test(header)) return "indeferimento_administrativo"; }
+  for (const p of NOTIFICACAO_PATTERNS) { if (p.test(combined) || p.test(header)) return "notificacao_administrativa"; }
+  if (/certid[ãa]o/i.test(combined)) return "certidao";
+  if (/comprovante\s+(?:de\s+)?resid/i.test(combined)) return "comprovante_residencia";
+  if (/(?:documento\s+pessoal|identidade|CPF|RG|CNH)/i.test(combined)) return "documento_pessoal";
+  // Direct tipo mapping
+  const map: Record<string, TipoDocProbatorio> = {
+    boletim_ocorrencia: "boletim_ocorrencia", laudo_medico: "laudo_medico",
+    laudo_psiquiatrico: "laudo_psiquiatrico", laudo_psicologico: "laudo_psicologico",
+    notificacao: "notificacao_administrativa", indeferimento: "indeferimento_administrativo",
+    certidao: "certidao", documento_pessoal: "documento_pessoal", comprovante: "comprovante_residencia",
+    relatorio_clinico: "relatorio_clinico", atestado_medico: "atestado_medico",
+  };
+  if (map[tipoDoc]) return map[tipoDoc];
+  return "outro";
+}
 
-  // Cross-BO analysis
-  if (bos.length > 1) {
-    summary += "── ANÁLISE CRUZADA DOS BOLETINS ──\n";
-    summary += `Quantidade de ocorrências registradas: ${bos.length}\n`;
-    if (bos.length >= 2) summary += "ATENÇÃO: A existência de MÚLTIPLOS boletins demonstra CONTINUIDADE e REITERAÇÃO do cenário de risco. Explore a CRONOLOGIA e a ESCALADA na narrativa dos fatos.\n";
-    if (allRisks.size > 0) summary += `Indicadores de risco consolidados: ${[...allRisks].join(", ")}\n`;
-    if (hasArma) summary += "Há menção a arma em pelo menos um BO — reforça efetiva necessidade.\n";
-    if (hasFamilia) summary += "Há envolvimento de familiares — reforça urgência e proteção.\n";
-    if (hasProfissional) summary += "Há vínculo com atividade profissional — reforça fundamentação para porte/posse.\n";
-    summary += "\n";
+interface StructuredDocData {
+  tipo_detectado: TipoDocProbatorio;
+  campos: Record<string, string | string[] | boolean | null>;
+  indicadores_risco: string[];
+}
+
+function extractStructuredData(text: string, tipo: TipoDocProbatorio): StructuredDocData {
+  const campos: Record<string, string | string[] | boolean | null> = {};
+  const riscos: string[] = [];
+
+  // Common risk patterns
+  const riskPatterns: [RegExp, string][] = [
+    [/amea[çc]a/i, "ameaça"], [/agress[ãa]o/i, "agressão"], [/les[ãa]o\s+corporal/i, "lesão corporal"],
+    [/intimida[çc][ãa]o/i, "intimidação"], [/persegui[çc][ãa]o/i, "perseguição"],
+    [/risco\s+(?:de\s+)?(?:vida|morte|integridade)/i, "risco à vida"],
+    [/viol[eê]ncia\s+dom[eé]stica/i, "violência doméstica"], [/roubo/i, "roubo"],
+    [/invas[ãa]o/i, "invasão"], [/disparo/i, "disparo de arma"], [/extors[ãa]o/i, "extorsão"],
+  ];
+
+  if (tipo === "boletim_ocorrencia") {
+    const numMatch = text.match(/(?:B\.?O\.?|boletim|ocorr[eê]ncia|registro)\s*(?:n[ºo°]?\.?\s*|:?\s*)(\d[\d./-]+\d)/i);
+    campos.numero_bo = numMatch?.[1]?.trim() || null;
+    const df = text.match(/data\s+(?:do\s+)?fato[:\s]+(\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4})/i);
+    campos.data_fato = df?.[1] || null;
+    const dr = text.match(/data\s+(?:do\s+)?registro[:\s]+(\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4})/i);
+    campos.data_registro = dr?.[1] || null;
+    if (!campos.data_fato && !campos.data_registro) {
+      const anyD = text.substring(0, 500).match(/(\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4})/);
+      if (anyD) campos.data_registro = anyD[1];
+    }
+    const nat = text.match(/(?:natureza|tipo\s+(?:da\s+)?ocorr[eê]ncia)[:\s]+([^\n]{5,80})/i);
+    campos.tipo_ocorrencia = nat?.[1]?.trim() || null;
+    const loc = text.match(/(?:local\s+(?:do\s+)?fato|endere[çc]o)[:\s]+([^\n]{5,120})/i);
+    campos.local_fato = loc?.[1]?.trim() || null;
+    campos.menciona_arma = /arma|faca|facão|rev[oó]lver|pistola|espingarda|arma\s+(?:de\s+fogo|branca)/i.test(text);
+    campos.menciona_familiares = /fam[ií]lia|esposa|marido|filh[oa]|m[ãa]e|pai|irm[ãa]o|companheira|c[oô]njuge|menor|crian[çc]a/i.test(text);
+    campos.relacao_profissional = /profiss[ãa]o|trabalho|emprego|com[eé]rcio|empresa|atividade\s+profissional|transporte\s+de\s+valores|seguran[çc]a/i.test(text);
+    campos.reiteracao = /reiter|recorr[eê]n|novamente|outra\s+vez|j[aá]\s+(?:havia|houve)|anterior|reincid|pela\s+\d+[ªa]\s+vez/i.test(text);
+    riskPatterns.forEach(([p, l]) => { if (p.test(text)) riscos.push(l); });
   }
 
-  summary += "═══════════════════════════════════════════\n";
-  summary += "INSTRUÇÕES DE USO DOS BOs NA PEÇA:\n";
-  summary += "═══════════════════════════════════════════\n\n";
-  summary += "1. Na seção DOS FATOS: Narre cronologicamente cada ocorrência com dados CONCRETOS extraídos dos BOs (número, data, natureza, fatos descritos, ameaças/agressões). NÃO se limite a dizer 'conforme BOs anexos'. CITE os fatos.\n";
-  summary += "2. Na seção DO DIREITO: Use os BOs como PROVA DOCUMENTAL do risco concreto. Conecte os fatos dos BOs aos requisitos legais da efetiva necessidade (art. 4º da Lei 10.826/2003, Decreto 11.615/2023).\n";
-  summary += "3. Se há MÚLTIPLOS BOs: Demonstre a PROGRESSÃO TEMPORAL e a ESCALADA da gravidade. Mostre que não é episódio isolado.\n";
-  summary += "4. Nas ALEGAÇÕES FINAIS: Reforce a materialidade do cenário de ameaça com referência aos BOs.\n";
-  summary += "5. PROIBIDO: dizer apenas 'os boletins de ocorrência comprovam a situação de risco' de forma genérica. Mencione FATOS CONCRETOS.\n\n";
+  if (["laudo_medico", "laudo_psiquiatrico", "laudo_psicologico", "relatorio_clinico", "atestado_medico"].includes(tipo)) {
+    const prof = text.match(/(?:Dr\.?|Dra\.?|Psic[oó]log[oa]|M[eé]dic[oa]|CRM|CRP)\s*[:\s]*([^\n]{3,80})/i);
+    campos.profissional_emissor = prof?.[1]?.trim() || null;
+    const cid = text.match(/(?:CID|diagn[oó]stico|hip[oó]tese\s+diagn[oó]stica)[:\s-]*([^\n]{3,120})/i);
+    campos.diagnostico = cid?.[1]?.trim() || null;
+    const dt = text.match(/(?:data|emitido\s+em)\s*[:\s]*(\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4})/i);
+    campos.data_documento = dt?.[1] || null;
+    const rec = text.match(/(?:recomend|orient|encaminh|prescrev)[:\s]*([^\n]{5,200})/i);
+    campos.recomendacao = rec?.[1]?.trim() || null;
+    campos.impacto_funcional = /(?:incapacidad|afastamento|restrição|limitação|impacto\s+funcional)/i.test(text);
+    campos.impacto_psiquico = /(?:abalo\s+ps[ií]quic|sofrimento\s+ps[ií]|desestabiliza|fragilidade\s+emocional)/i.test(text);
+    campos.necessidade_protecao = /(?:prote[çc][ãa]o|seguran[çc]a|afastamento|risco|salvaguarda)/i.test(text);
+    // Symptoms
+    const sintomas: string[] = [];
+    [/ansiedade/i, /depress[ãa]o/i, /ins[oô]nia/i, /TEPT/i, /p[aâ]nico/i, /trauma/i, /hipervigilância/i, /pesadelos/i].forEach(p => { if (p.test(text)) sintomas.push(p.source.replace(/\\/g, "")); });
+    if (sintomas.length > 0) campos.sintomas_detectados = sintomas;
+    if (campos.impacto_funcional) riscos.push("impacto funcional");
+    if (campos.impacto_psiquico) riscos.push("abalo psíquico");
+    if (campos.necessidade_protecao) riscos.push("necessidade de proteção");
+    if (sintomas.length >= 3) riscos.push("quadro clínico relevante");
+  }
 
-  return summary;
+  if (tipo === "notificacao_administrativa" || tipo === "indeferimento_administrativo") {
+    const proc = text.match(/(?:processo|protocolo|n[ºo°])\s*[:\s]*(\d[\d./-]+\d)/i);
+    campos.numero_processo = proc?.[1]?.trim() || null;
+    const dt = text.match(/(?:data|em)\s*[:\s]*(\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4})/i);
+    campos.data = dt?.[1] || null;
+    const prazo = text.match(/prazo\s*(?:de)?\s*(\d+)\s*(?:dias?|horas?)/i);
+    campos.prazo = prazo ? `${prazo[1]} ${prazo[2] || "dias"}` : null;
+    const fund = text.match(/(?:fundamenta[çc][ãa]o|motivo|fundamento|com\s+base\s+em)[:\s]*([^\n]{10,200})/i);
+    campos.fundamento = fund?.[1]?.trim() || null;
+    campos.vicio_motivacao = /motiva[çc][ãa]o\s+(?:insuficiente|gen[eé]rica|ausente)|aus[eê]ncia\s+de\s+motiva/i.test(text);
+    campos.erro_material = /erro\s+material|equívoco|inconsist[eê]ncia/i.test(text);
+    campos.omissao = /omiss[ãa]o|n[ãa]o\s+considerou|deixou\s+de\s+analisar/i.test(text);
+    if (campos.vicio_motivacao) riscos.push("vício de motivação");
+    if (campos.erro_material) riscos.push("erro material");
+    if (campos.omissao) riscos.push("omissão");
+  }
+
+  if (tipo === "certidao" || tipo === "documento_pessoal" || tipo === "comprovante_residencia") {
+    const nome = text.match(/(?:nome|titular)[:\s]+([^\n]{3,80})/i);
+    campos.nome = nome?.[1]?.trim() || null;
+    const cpf = text.match(/CPF\s*[:\s]*(\d{3}\.?\d{3}\.?\d{3}[-.]?\d{2})/i);
+    campos.cpf = cpf?.[1]?.trim() || null;
+    const dt = text.match(/(?:data|emitido)\s*[:\s]*(\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4})/i);
+    campos.data = dt?.[1] || null;
+  }
+
+  return { tipo_detectado: tipo, campos, indicadores_risco: riscos };
+}
+
+// Labels for probatory doc types
+const DOC_TYPE_LABELS: Record<string, string> = {
+  boletim_ocorrencia: "BOLETIM DE OCORRÊNCIA",
+  laudo_medico: "LAUDO MÉDICO",
+  laudo_psiquiatrico: "LAUDO PSIQUIÁTRICO",
+  laudo_psicologico: "LAUDO PSICOLÓGICO",
+  relatorio_clinico: "RELATÓRIO CLÍNICO",
+  atestado_medico: "ATESTADO MÉDICO",
+  notificacao_administrativa: "NOTIFICAÇÃO ADMINISTRATIVA",
+  indeferimento_administrativo: "INDEFERIMENTO ADMINISTRATIVO",
+  certidao: "CERTIDÃO",
+  documento_pessoal: "DOCUMENTO PESSOAL",
+  comprovante_residencia: "COMPROVANTE DE RESIDÊNCIA",
+};
+
+interface EvidenceDoc {
+  titulo: string;
+  conteudo: string;
+  tipo: TipoDocProbatorio;
+  structured: StructuredDocData;
+}
+
+function buildEvidenceFactualSummary(docs: EvidenceDoc[]): string {
+  if (docs.length === 0) return "";
+
+  let s = "\n\n═══════════════════════════════════════════\n";
+  s += "ANÁLISE FACTUAL ESTRUTURADA DOS DOCUMENTOS PROBATÓRIOS\n";
+  s += "═══════════════════════════════════════════\n\n";
+
+  // Group by type
+  const byType = new Map<TipoDocProbatorio, EvidenceDoc[]>();
+  docs.forEach(d => {
+    const arr = byType.get(d.tipo) || [];
+    arr.push(d);
+    byType.set(d.tipo, arr);
+  });
+
+  const allRisks = new Set<string>();
+
+  for (const [tipo, group] of byType) {
+    const label = DOC_TYPE_LABELS[tipo] || tipo.toUpperCase();
+    s += `\n── ${label} (${group.length} documento(s)) ──\n\n`;
+
+    group.forEach((d, i) => {
+      s += `[${label} ${i + 1}/${group.length}] ${d.titulo}\n`;
+      const c = d.structured.campos;
+      for (const [k, v] of Object.entries(c)) {
+        if (v === null || v === false) continue;
+        if (v === true) { s += `  ${k}: SIM\n`; continue; }
+        if (Array.isArray(v)) { s += `  ${k}: ${v.join(", ")}\n`; continue; }
+        s += `  ${k}: ${v}\n`;
+      }
+      if (d.structured.indicadores_risco.length > 0) {
+        s += `  Indicadores de risco: ${d.structured.indicadores_risco.join(", ")}\n`;
+        d.structured.indicadores_risco.forEach(r => allRisks.add(r));
+      }
+      s += "\n";
+    });
+  }
+
+  // Cross-document analysis
+  const bos = byType.get("boletim_ocorrencia") || [];
+  const laudos = [...(byType.get("laudo_medico") || []), ...(byType.get("laudo_psiquiatrico") || []),
+    ...(byType.get("laudo_psicologico") || []), ...(byType.get("relatorio_clinico") || []),
+    ...(byType.get("atestado_medico") || [])];
+  const notifs = [...(byType.get("notificacao_administrativa") || []), ...(byType.get("indeferimento_administrativo") || [])];
+
+  if (docs.length > 1) {
+    s += "\n── ANÁLISE CRUZADA ──\n";
+    if (bos.length >= 2) s += `${bos.length} BOs = cenário de risco CONTINUADO e REITERADO. Explorar cronologia.\n`;
+    if (bos.length > 0 && laudos.length > 0) s += "BOs + Laudos = corroboração factual + impacto clínico documentado. ARGUMENTO FORTE.\n";
+    if (laudos.length > 0 && laudos.some(l => l.structured.campos.impacto_psiquico)) s += "Impacto psíquico documentado por profissional de saúde — reforça efetiva necessidade.\n";
+    if (notifs.length > 0) s += `${notifs.length} notificação(ões)/indeferimento(s) — analisar vícios, erros e omissões.\n`;
+    if (allRisks.size > 0) s += `Indicadores consolidados: ${[...allRisks].join(", ")}\n`;
+  }
+
+  s += "\n═══════════════════════════════════════════\n";
+  s += "INSTRUÇÕES DE USO DOS DOCUMENTOS PROBATÓRIOS NA PEÇA:\n";
+  s += "═══════════════════════════════════════════\n\n";
+
+  if (bos.length > 0) {
+    s += "BOs: Narre cronologicamente com dados CONCRETOS (número, data, natureza, fatos). PROIBIDO menção genérica.\n";
+  }
+  if (laudos.length > 0) {
+    s += "LAUDOS/ATESTADOS: Cite o profissional, diagnóstico, sintomas e impacto funcional/psíquico. Conecte ao cenário de risco e efetiva necessidade. Use como prova do dano/abalo sofrido.\n";
+  }
+  if (notifs.length > 0) {
+    s += "NOTIFICAÇÕES/INDEFERIMENTOS: Identifique vícios, erros materiais e omissões. Fundamente a resposta/recurso ponto a ponto.\n";
+  }
+  s += "REGRA: Cada documento probatório deve ser mencionado com FATOS CONCRETOS, não genericamente.\n\n";
+
+  return s;
 }
 
 // ═══════════════════════════════════════════
@@ -257,7 +320,7 @@ const QUALITY_MARKERS = {
   maxGenericHits: 2,
 };
 
-function validateQuality(text: string, hasBos: boolean, boCount: number): { pass: boolean; issues: string[] } {
+function validateQuality(text: string, evidenceDocs: EvidenceDoc[]): { pass: boolean; issues: string[] } {
   const issues: string[] = [];
   for (const section of QUALITY_MARKERS.requiredSections) {
     if (!text.includes(section)) issues.push(`seção_ausente:${section}`);
@@ -279,21 +342,48 @@ function validateQuality(text: string, hasBos: boolean, boCount: number): { pass
   if (normsUsed < 3) issues.push(`base_normativa_insuficiente:${normsUsed}/4`);
   if (!text.includes("pelos fatos e fundamentos a seguir expostos")) issues.push("preambulo_sem_formula_legal");
 
-  // BO-specific quality validation
-  if (hasBos) {
-    // Check if BOs are substantively referenced (not just generically)
+  // Per-type quality validation
+  const bos = evidenceDocs.filter(d => d.tipo === "boletim_ocorrencia");
+  const laudos = evidenceDocs.filter(d => HIGH_PRIORITY_TYPES.includes(d.tipo) && d.tipo !== "boletim_ocorrencia");
+  const notifs = evidenceDocs.filter(d => d.tipo === "notificacao_administrativa" || d.tipo === "indeferimento_administrativo");
+
+  if (bos.length > 0) {
     const boGenericOnly = /boletins?\s+de\s+ocorr[eê]ncia/i.test(text) &&
       !/B\.?O\.?\s*(?:n[ºo°]?\.?\s*)?\d/i.test(text) &&
       !/ocorr[eê]ncia\s+(?:registrada|lavrada|datada)/i.test(text);
-    
-    // Check if the text has concrete BO facts (dates, descriptions, specific events)
-    const hasConcreteBoFacts = 
-      /(?:registr(?:ou|ado|ada)|relat(?:ou|ado|ada)|narra(?:do|da)|descrev(?:eu|e)|consta(?:m|ndo)?)\s+(?:no|na|nos|nas)\s+(?:boletim|B\.?O\.?|ocorr[eê]ncia)/i.test(text) ||
+    const hasConcreteBoFacts =
+      /(?:registr(?:ou|ado|ada)|relat(?:ou|ado|ada)|narra(?:do|da)|descrev(?:eu|e))\s+(?:no|na|nos|nas)\s+(?:boletim|B\.?O\.?|ocorr[eê]ncia)/i.test(text) ||
       /B\.?O\.?\s*(?:n[ºo°]?\.?\s*)?\d/i.test(text) ||
       /(?:amea[çc]|agress|intimi|persegui|risco|ataque)/i.test(text);
-
     if (boGenericOnly && !hasConcreteBoFacts) {
-      issues.push(`bo_subutilizado:${boCount}_bos_sem_exploracao_factual`);
+      issues.push(`bo_subutilizado:${bos.length}_bos_sem_exploracao_factual`);
+    }
+  }
+
+  if (laudos.length > 0) {
+    const hasLaudoRef = /(?:laudo|atestado|relat[oó]rio\s+cl[ií]nico|diagn[oó]stico|CRM|CRP|psic[oó]log|psiqui[aá]tr)/i.test(text);
+    const hasConcreteLaudo = /(?:profissional|m[eé]dic[oa]|Dr\.?|Dra\.?|diagn[oó]stic|sintoma|ansiedade|depress|TEPT|trauma|abalo|sofrimento|impacto)/i.test(text);
+    if (!hasLaudoRef || !hasConcreteLaudo) {
+      issues.push(`laudo_subutilizado:${laudos.length}_laudos_sem_exploracao_clinica`);
+    }
+  }
+
+  if (notifs.length > 0) {
+    const hasNotifRef = /(?:notifica[çc][ãa]o|indeferimento|despacho|decis[ãa]o\s+administrativa)/i.test(text);
+    const hasConcreteNotif = /(?:v[ií]cio|motiva[çc][ãa]o|erro\s+material|omiss[ãa]o|fundamenta[çc][ãa]o|prazo|exig[eê]ncia|pend[eê]ncia)/i.test(text);
+    if (!hasNotifRef || !hasConcreteNotif) {
+      issues.push(`notificacao_subutilizada:${notifs.length}_docs_sem_analise_critica`);
+    }
+  }
+
+  // Generic check for any probatory doc
+  if (evidenceDocs.length > 0) {
+    const totalProbatorio = evidenceDocs.filter(d => PROBATORIO_TYPES.includes(d.tipo)).length;
+    if (totalProbatorio > 0) {
+      const hasAnyConcreteRef = /(?:registr|relat|narra|descrev|consta|comprova|demonstra|evidencia|atesta|diagnosti)/i.test(text);
+      if (!hasAnyConcreteRef) {
+        issues.push(`prova_factual_subutilizada:${totalProbatorio}_docs_probatorios_sem_uso_concreto`);
+      }
     }
   }
 
@@ -448,40 +538,38 @@ COMO NÃO USAR DOCUMENTOS AUXILIARES:
 - Documentos auxiliares são FATOS, não DIREITO.
 
 REGRA CENTRAL PARA DOCUMENTOS AUXILIARES:
-Documentos auxiliares do caso concreto devem ser lidos integralmente, com máxima fidelidade factual, e jamais truncados de forma cega. Se o volume do documento exceder o contexto de uma única chamada, o sistema deve processá-lo por blocos sucessivos e consolidar o conteúdo integral antes da redação da peça.
+Documentos auxiliares do caso concreto devem ser lidos integralmente, com máxima fidelidade factual, e jamais truncados de forma cega.
 
 ═══════════════════════════════════════════
-BOLETINS DE OCORRÊNCIA — TRATAMENTO PRIORITÁRIO
+DOCUMENTOS PROBATÓRIOS — TRATAMENTO PRIORITÁRIO POR TIPO
 ═══════════════════════════════════════════
 
-BOs são documentos de ALTÍSSIMA RELEVÂNCIA FACTUAL E PROBATÓRIA. Devem receber tratamento diferenciado:
+Cada tipo de documento probatório tem tratamento específico:
 
-REGRA ABSOLUTA: NUNCA trate BOs de forma genérica. NUNCA escreva apenas "conforme BOs anexos" ou "os boletins de ocorrência comprovam o risco". Isso é INSUFICIENTE e PROIBIDO.
+BOLETINS DE OCORRÊNCIA (BOs):
+- ALTÍSSIMA relevância factual e probatória.
+- Mencionar cada BO pelo número e data. Descrever fatos concretos: ameaças, agressões, circunstâncias.
+- Múltiplos BOs: organizar cronologicamente, demonstrar progressão e escalada do risco.
+- PROIBIDO: menção genérica como "os BOs comprovam o risco".
 
-COMO USAR CADA BO:
-1. Mencione o BO pelo número (quando disponível) e data.
-2. Descreva CONCRETAMENTE o que foi relatado: tipo de ameaça, tipo de agressão, circunstâncias.
-3. Identifique e narre os fatos específicos que demonstram risco: ameaças verbais, agressões físicas, intimidações, uso ou menção a armas, perseguição.
-4. Conecte cada fato a um fundamento jurídico na seção DO DIREITO.
+LAUDOS MÉDICOS / PSIQUIÁTRICOS / PSICOLÓGICOS:
+- Citar o profissional emissor e registro (CRM/CRP).
+- Mencionar diagnóstico, sintomas documentados, impacto funcional e psíquico.
+- Conectar o quadro clínico ao cenário de risco e à efetiva necessidade.
+- Se há recomendação de proteção/afastamento, explorar como reforço argumentativo.
+- PROIBIDO: ignorar dados clínicos ou tratar laudo como documento acessório.
 
-MÚLTIPLOS BOs:
-- Quando houver mais de um BO, a narrativa DEVE ser CRONOLÓGICA.
-- Demonstre a PROGRESSÃO e ESCALADA do risco.
-- Mostre que não é episódio isolado, mas cenário CONTINUADO de ameaça.
-- A reiteração de ocorrências é ARGUMENTO FORTE para efetiva necessidade — EXPLORE isso.
+NOTIFICAÇÕES / INDEFERIMENTOS:
+- Identificar número do processo, data, autoridade emissora e fundamento.
+- Apontar vícios de motivação, erros materiais, omissões e contradições.
+- Responder ponto a ponto cada exigência ou fundamento de indeferimento.
+- PROIBIDO: aceitar passivamente a decisão sem análise crítica.
 
-NA SEÇÃO DOS FATOS:
-- Narre cronologicamente cada ocorrência policial com dados concretos.
-- Para cada BO: data, natureza, descrição dos fatos, indicadores de risco.
+CERTIDÕES / DOCUMENTOS PESSOAIS / COMPROVANTES:
+- Extrair dados de identificação úteis ao caso (nome, CPF, endereço).
+- Usar como complemento de qualificação e comprovação de requisitos.
 
-NA SEÇÃO DO DIREITO:
-- Use os BOs como PROVA MATERIAL do risco concreto.
-- Vincule ao conceito de "efetiva necessidade" (art. 4º, Lei 10.826/2003).
-- Se há múltiplos BOs, argumente a reiteração como demonstração inequívoca do cenário permanente de ameaça.
-
-NAS ALEGAÇÕES FINAIS:
-- Consolide o cenário factual demonstrado pelos BOs.
-- Reforce a materialidade probatória.
+REGRA GERAL: Cada documento probatório deve ser mencionado com FATOS CONCRETOS extraídos, nunca genericamente.
 
 ═══════════════════════════════════════════
 AUTOAVALIAÇÃO ANTES DE ENTREGAR
@@ -608,103 +696,107 @@ Deno.serve(async (req) => {
       conteudo: d.resumo_extraido?.substring(0, 1500) || "",
     }));
 
-    // === AUXILIARY CASE DOCUMENTS WITH BO PRIORITY ===
+    // === AUXILIARY CASE DOCUMENTS — TYPED EVIDENCE PROCESSING ===
     let fontesAuxiliares: any[] = [];
-    let boDocuments: { titulo: string; conteudo: string; structured: BoStructuredData }[] = [];
+    let evidenceDocs: EvidenceDoc[] = [];
     const caso_id = caso_titulo?.trim() || null;
 
     if (caso_id) {
       const { data: auxDocs } = await supabase.from("qa_documentos_conhecimento")
-        .select("id, titulo, tipo_documento, texto_extraido, resumo_extraido")
+        .select("id, titulo, tipo_documento, texto_extraido, resumo_extraido, categoria")
         .eq("status_processamento", "concluido")
         .eq("ativo", true)
         .eq("papel_documento", "auxiliar_caso")
         .eq("caso_id", caso_id)
-        .limit(20);
+        .limit(30);
 
-      // Separate BOs from other auxiliaries — BOs get priority budget
-      const boDocs: typeof auxDocs = [];
+      // Classify each doc by type
+      const priorityDocs: typeof auxDocs = [];
       const otherDocs: typeof auxDocs = [];
 
       auxDocs?.forEach((d: any) => {
         const fullText = d.texto_extraido || d.resumo_extraido || "";
-        if (isBoletimOcorrencia(d.titulo || "", d.tipo_documento || "", fullText)) {
-          boDocs.push(d);
+        const tipo = detectDocType(d.titulo || "", d.tipo_documento || d.categoria || "", fullText);
+        (d as any)._tipo_detectado = tipo;
+        if (HIGH_PRIORITY_TYPES.includes(tipo)) {
+          priorityDocs.push(d);
         } else {
           otherDocs.push(d);
         }
       });
 
-      const TOTAL_AUX_BUDGET = 80000; // Increased budget
-      const BO_PRIORITY_BUDGET = Math.min(50000, TOTAL_AUX_BUDGET * 0.65); // 65% for BOs
-      const OTHER_BUDGET = TOTAL_AUX_BUDGET - BO_PRIORITY_BUDGET;
+      const TOTAL_AUX_BUDGET = 100000;
+      const PRIORITY_BUDGET = Math.min(70000, TOTAL_AUX_BUDGET * 0.70);
+      const OTHER_BUDGET = TOTAL_AUX_BUDGET - PRIORITY_BUDGET;
       const BLOCK_SIZE = 15000;
 
-      // Process BOs FIRST with priority budget — FULL text, no truncation if possible
-      let boUsedBudget = 0;
-      boDocs.forEach((d: any) => {
+      // Process priority docs FIRST with full text
+      let priorityUsed = 0;
+      priorityDocs.forEach((d: any) => {
         const fullText = d.texto_extraido || d.resumo_extraido || "";
+        const tipo = (d as any)._tipo_detectado as TipoDocProbatorio;
         let content: string;
 
-        if (fullText.length <= BLOCK_SIZE || boUsedBudget + fullText.length <= BO_PRIORITY_BUDGET) {
-          content = fullText; // Full text — no truncation
+        if (fullText.length <= BLOCK_SIZE || priorityUsed + fullText.length <= PRIORITY_BUDGET) {
+          content = fullText;
         } else {
-          const remaining = BO_PRIORITY_BUDGET - boUsedBudget;
+          const remaining = PRIORITY_BUDGET - priorityUsed;
           if (remaining <= 500) return;
-          // For BOs, preserve more of the beginning (facts) and end (conclusions)
           const headPortion = Math.floor(remaining * 0.6);
           const tailPortion = remaining - headPortion;
           content = fullText.substring(0, headPortion) +
-            "\n\n[...seção intermediária omitida por limite — início e fim preservados...]\n\n" +
+            "\n\n[...seção intermediária omitida — início e fim preservados...]\n\n" +
             fullText.substring(fullText.length - tailPortion);
         }
 
-        boUsedBudget += content.length;
+        priorityUsed += content.length;
+        const structured = extractStructuredData(content, tipo);
 
-        // Extract structured data from BO
-        const structured = extractBoStructuredData(content);
-
-        boDocuments.push({ titulo: d.titulo, conteudo: content, structured });
+        evidenceDocs.push({ titulo: d.titulo, conteudo: content, tipo, structured });
 
         fontesAuxiliares.push({
-          tipo: "auxiliar_caso_bo",
+          tipo: `auxiliar_caso_${tipo}`,
           id: d.id,
           titulo: d.titulo,
           referencia: d.tipo_documento,
           conteudo: content,
-          is_bo: true,
+          tipo_detectado: tipo,
           structured_data: structured,
         });
       });
 
-      // Then process other auxiliary docs with remaining budget
-      let otherUsedBudget = 0;
-      // If BOs didn't use all their budget, donate remainder to others
-      const effectiveOtherBudget = OTHER_BUDGET + Math.max(0, BO_PRIORITY_BUDGET - boUsedBudget);
+      // Other docs with remaining budget
+      let otherUsed = 0;
+      const effectiveOtherBudget = OTHER_BUDGET + Math.max(0, PRIORITY_BUDGET - priorityUsed);
 
       otherDocs.forEach((d: any) => {
         const fullText = d.texto_extraido || d.resumo_extraido || "";
+        const tipo = (d as any)._tipo_detectado as TipoDocProbatorio;
         let content: string;
-        if (fullText.length <= BLOCK_SIZE || otherUsedBudget + fullText.length <= effectiveOtherBudget) {
+        if (fullText.length <= BLOCK_SIZE || otherUsed + fullText.length <= effectiveOtherBudget) {
           content = fullText;
         } else {
-          const remaining = effectiveOtherBudget - otherUsedBudget;
+          const remaining = effectiveOtherBudget - otherUsed;
           if (remaining <= 0) return;
           const half = Math.floor(remaining / 2);
-          content = fullText.substring(0, half) + "\n\n[...conteúdo intermediário omitido por limite de contexto...]\n\n" + fullText.substring(fullText.length - half);
+          content = fullText.substring(0, half) + "\n\n[...omitido por limite...]\n\n" + fullText.substring(fullText.length - half);
         }
-        otherUsedBudget += content.length;
+        otherUsed += content.length;
+        const structured = extractStructuredData(content, tipo);
+        evidenceDocs.push({ titulo: d.titulo, conteudo: content, tipo, structured });
+
         fontesAuxiliares.push({
-          tipo: "auxiliar_caso",
+          tipo: `auxiliar_caso_${tipo}`,
           id: d.id,
           titulo: d.titulo,
           referencia: d.tipo_documento,
           conteudo: content,
-          is_bo: false,
+          tipo_detectado: tipo,
+          structured_data: structured,
         });
       });
 
-      console.log(`Auxiliary docs: ${boDocs.length} BOs (${boUsedBudget} chars), ${otherDocs.length} other (${otherUsedBudget} chars)`);
+      console.log(`Evidence docs: ${priorityDocs.length} priority (${priorityUsed} chars), ${otherDocs.length} other (${otherUsed} chars). Types: ${evidenceDocs.map(d => d.tipo).join(", ")}`);
     }
 
     let fontesParaUsar = fontesRecuperadas;
@@ -723,41 +815,40 @@ Deno.serve(async (req) => {
       contextoFontes = "\n\n--- ATENÇÃO: Nenhuma fonte de aprendizado encontrada. NÃO invente. Declare insuficiência. ---\n";
     }
 
-    // === BUILD BO FACTUAL ANALYSIS (before other auxiliaries) ===
-    if (boDocuments.length > 0) {
-      contextoFontes += buildBoFactualSummary(boDocuments);
+    // === BUILD STRUCTURED EVIDENCE ANALYSIS ===
+    if (evidenceDocs.length > 0) {
+      contextoFontes += buildEvidenceFactualSummary(evidenceDocs);
     }
 
-    // Add auxiliary documents context
+    // Add full text of auxiliary documents grouped by type
     if (fontesAuxiliares.length > 0) {
-      // BOs section
-      const bosAux = fontesAuxiliares.filter(f => f.is_bo);
-      const othersAux = fontesAuxiliares.filter(f => !f.is_bo);
+      const byType = new Map<string, any[]>();
+      fontesAuxiliares.forEach(f => {
+        const tipo = f.tipo_detectado || "outro";
+        const arr = byType.get(tipo) || [];
+        arr.push(f);
+        byType.set(tipo, arr);
+      });
 
-      if (bosAux.length > 0) {
-        contextoFontes += "\n\n═══ BOLETINS DE OCORRÊNCIA — DOCUMENTOS PROBATÓRIOS PRIORITÁRIOS ═══\n";
-        contextoFontes += `ATENÇÃO: ${bosAux.length} boletim(ns) de ocorrência anexado(s). Estes documentos são FONTE PRIORITÁRIA de fatos. Leia-os integralmente e use os fatos CONCRETOS na peça.\n`;
-        contextoFontes += "PROIBIDO: menção genérica. OBRIGATÓRIO: explorar fatos específicos de cada BO.\n\n";
-        bosAux.forEach((f, i) => {
-          contextoFontes += `\n[BOLETIM DE OCORRÊNCIA ${i + 1}/${bosAux.length}] ${f.titulo}\n`;
+      for (const [tipo, group] of byType) {
+        const label = DOC_TYPE_LABELS[tipo] || tipo.replace(/_/g, " ").toUpperCase();
+        contextoFontes += `\n\n═══ ${label} — DOCUMENTOS PROBATÓRIOS (${group.length}) ═══\n`;
+        contextoFontes += `ATENÇÃO: Leia integralmente. Use fatos CONCRETOS na peça. PROIBIDO menção genérica.\n\n`;
+        group.forEach((f: any, i: number) => {
+          contextoFontes += `\n[${label} ${i + 1}/${group.length}] ${f.titulo}\n`;
           if (f.structured_data) {
-            const s = f.structured_data;
-            if (s.numero_bo) contextoFontes += `Nº do BO: ${s.numero_bo}\n`;
-            if (s.data_fato) contextoFontes += `Data do fato: ${s.data_fato}\n`;
-            if (s.data_registro) contextoFontes += `Data do registro: ${s.data_registro}\n`;
-            if (s.tipo_ocorrencia) contextoFontes += `Natureza: ${s.tipo_ocorrencia}\n`;
-            if (s.local_fato) contextoFontes += `Local: ${s.local_fato}\n`;
-            if (s.indicadores_risco.length > 0) contextoFontes += `Indicadores de risco detectados: ${s.indicadores_risco.join(", ")}\n`;
+            const c = f.structured_data.campos || {};
+            for (const [k, v] of Object.entries(c)) {
+              if (v === null || v === false) continue;
+              if (v === true) { contextoFontes += `  ${k}: SIM\n`; continue; }
+              if (Array.isArray(v)) { contextoFontes += `  ${k}: ${(v as string[]).join(", ")}\n`; continue; }
+              contextoFontes += `  ${k}: ${v}\n`;
+            }
+            if (f.structured_data.indicadores_risco?.length > 0) {
+              contextoFontes += `  Indicadores de risco: ${f.structured_data.indicadores_risco.join(", ")}\n`;
+            }
           }
-          contextoFontes += `\nConteúdo integral do BO:\n${f.conteudo}\n`;
-        });
-      }
-
-      if (othersAux.length > 0) {
-        contextoFontes += "\n\n--- OUTROS DOCUMENTOS AUXILIARES DO CASO CONCRETO (usar como base factual e probatória) ---\n";
-        contextoFontes += "REGRA: Estes documentos contêm fatos, dados e provas do caso específico. Use-os para narrar fatos, apoiar argumentos e citar documentos. NUNCA os trate como modelo de peça ou referência de estilo.\n";
-        othersAux.forEach((f, i) => {
-          contextoFontes += `\n[Doc. Auxiliar ${i + 1} - ${f.referencia?.replace(/_/g, " ")}] ${f.titulo}\nConteúdo integral:\n${f.conteudo}\n`;
+          contextoFontes += `\nConteúdo integral:\n${f.conteudo}\n`;
         });
       }
     }
@@ -781,16 +872,18 @@ Deno.serve(async (req) => {
     if (cliente_endereco) dadosAdicionais += `\nENDEREÇO DO CLIENTE: ${cliente_endereco}`;
     if (cliente_cep) dadosAdicionais += `\nCEP DO CLIENTE: ${cliente_cep}`;
 
-    // BO-specific instructions for the user prompt
-    let boInstrucoes = "";
-    if (boDocuments.length > 0) {
-      boInstrucoes = `\n\nINSTRUÇÕES ESPECIAIS SOBRE BOLETINS DE OCORRÊNCIA (${boDocuments.length} BO(s) anexado(s)):
-- OBRIGATÓRIO explorar os fatos CONCRETOS de cada BO na seção DOS FATOS.
-- Para cada BO: mencione número (se disponível), data, natureza da ocorrência e DESCREVA os fatos relatados.
-- Se há múltiplos BOs: organize cronologicamente e demonstre a PROGRESSÃO/ESCALADA do risco.
-- Use os BOs como prova do risco CONCRETO na seção DO DIREITO, vinculando ao conceito de efetiva necessidade.
-- PROIBIDO: dizer genericamente "os BOs comprovam o risco". Cite FATOS ESPECÍFICOS.
-- A reiteração de ocorrências policiais é ARGUMENTO CENTRAL para demonstrar efetiva necessidade — EXPLORE.`;
+    // Evidence-specific instructions for the user prompt
+    const bos = evidenceDocs.filter(d => d.tipo === "boletim_ocorrencia");
+    const laudos = evidenceDocs.filter(d => ["laudo_medico", "laudo_psiquiatrico", "laudo_psicologico", "relatorio_clinico", "atestado_medico"].includes(d.tipo));
+    const notifs = evidenceDocs.filter(d => d.tipo === "notificacao_administrativa" || d.tipo === "indeferimento_administrativo");
+
+    let evidenceInstrucoes = "";
+    if (evidenceDocs.length > 0) {
+      evidenceInstrucoes += `\n\nDOCUMENTOS PROBATÓRIOS ANEXADOS: ${evidenceDocs.length} documento(s) — TRATAMENTO PRIORITÁRIO OBRIGATÓRIO`;
+      if (bos.length > 0) evidenceInstrucoes += `\n- ${bos.length} Boletim(ns) de Ocorrência: explorar FATOS CONCRETOS, cronologia e escalada.`;
+      if (laudos.length > 0) evidenceInstrucoes += `\n- ${laudos.length} Laudo(s)/Atestado(s): citar profissional, diagnóstico, sintomas, impacto. Usar como prova de dano/abalo.`;
+      if (notifs.length > 0) evidenceInstrucoes += `\n- ${notifs.length} Notificação(ões)/Indeferimento(s): identificar vícios, erros, omissões. Responder ponto a ponto.`;
+      evidenceInstrucoes += `\nPROIBIDO: menção genérica a qualquer documento. OBRIGATÓRIO: fatos concretos de cada um.`;
     }
 
     const parametros = `\n\nINSTRUÇÕES ESPECÍFICAS:
@@ -801,10 +894,22 @@ Deno.serve(async (req) => {
 - ${instrucaoTipo}
 - Redija de forma TÉCNICA, PRECISA e CONCISA. Sem prolixidade, sem enchimento.
 - Use tom TÉCNICO-JURÍDICO PROFISSIONAL, formal e sóbrio.
-- ${focoMap[foco] || focoMap.legalidade}${dadosAdicionais}${boInstrucoes}`;
+- ${focoMap[foco] || focoMap.legalidade}${dadosAdicionais}${evidenceInstrucoes}`;
 
     const cidadeParaFechamento = circunscricao ? circunscricao.municipio_sede : (cliente_cidade || "[CIDADE]");
     const ufParaFechamento = circunscricao ? circunscricao.uf : (cliente_uf || "[UF]");
+
+    const evidenceSummaryForPrompt = evidenceDocs.length > 0
+      ? `\nDOCUMENTOS PROBATÓRIOS: ${evidenceDocs.length} (${bos.length} BOs, ${laudos.length} laudos, ${notifs.length} notif/indef) — TRATAMENTO PRIORITÁRIO`
+      : "";
+
+    const dosFactosInstr = evidenceDocs.length > 0
+      ? ` — EXPLORAR CONCRETAMENTE os fatos dos ${evidenceDocs.length} documento(s) probatório(s)${bos.length > 0 ? " (BOs com datas e naturezas)" : ""}${laudos.length > 0 ? " (laudos com diagnósticos e impactos)" : ""}${notifs.length > 0 ? " (notificações com vícios e omissões)" : ""}`
+      : "";
+
+    const doDireitoInstr = evidenceDocs.length > 0
+      ? ` — usar documentos probatórios como PROVA MATERIAL${bos.length > 0 ? " do risco concreto" : ""}${laudos.length > 0 ? " e do impacto clínico" : ""}`
+      : "";
 
     const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -826,7 +931,7 @@ TIPO DE SERVIÇO PARA PREÂMBULO: ${tipoServico}
 MUNICÍPIO DO CLIENTE: ${cliente_cidade || "não informado"}
 UF DO CLIENTE: ${cliente_uf || "não informado"}
 UNIDADE PF COMPETENTE: ${circunscricao ? `${circunscricao.unidade_pf} (${circunscricao.sigla_unidade}) — Base: ${circunscricao.base_legal}` : "NÃO RESOLVIDA — usar endereçamento com marcador pendente"}
-${boDocuments.length > 0 ? `\nBOLETINS DE OCORRÊNCIA ANEXADOS: ${boDocuments.length} — TRATAMENTO PRIORITÁRIO OBRIGATÓRIO` : ""}
+${evidenceSummaryForPrompt}
 ${parametros}
 
 DESCRIÇÃO COMPLETA DO CASO:
@@ -836,9 +941,9 @@ ${contextoFontes}
 Redija a peça jurídica do tipo "${tipo_peca}" seguindo RIGOROSAMENTE a estrutura obrigatória:
 1. Endereçamento: "${enderecamento}"
 2. Preâmbulo fluido e jurídico com fórmula integrada: "vem, respeitosamente, ${tipoServico}, conforme a Lei nº 10.826/2003 e demais normas aplicáveis, pelos fatos e fundamentos a seguir expostos."
-3. I — DOS FATOS (cronológico, objetivo, sem floreio)${boDocuments.length > 0 ? " — EXPLORAR CONCRETAMENTE os fatos dos " + boDocuments.length + " BO(s) com datas, naturezas e descrições específicas" : ""}
-4. II — DO DIREITO (usar base normativa prioritária: Lei 10.826/2003 + Decreto 11.615/2023 + IN 201/2021-DG/PF + Lei 9.784/1999)${boDocuments.length > 0 ? " — usar BOs como PROVA MATERIAL do risco concreto" : ""}
-5. III — ALEGAÇÕES FINAIS (consolidar sem repetir)${boDocuments.length > 0 ? " — reforçar materialidade probatória dos BOs" : ""}
+3. I — DOS FATOS (cronológico, objetivo, sem floreio)${dosFactosInstr}
+4. II — DO DIREITO (usar base normativa prioritária: Lei 10.826/2003 + Decreto 11.615/2023 + IN 201/2021-DG/PF + Lei 9.784/1999)${doDireitoInstr}
+5. III — ALEGAÇÕES FINAIS (consolidar sem repetir)${evidenceDocs.length > 0 ? " — reforçar materialidade probatória" : ""}
 6. IV — FECHAMENTO (pedido claro + "Nestes termos, pede deferimento." + "${cidadeParaFechamento}, [DATA].\\n\\n[NOME DO REQUERENTE/ADVOGADO]\\n[OAB/REGISTRO]")
 
 REGRAS DE QUALIDADE PARA ESTA GERAÇÃO:
@@ -849,12 +954,10 @@ REGRAS DE QUALIDADE PARA ESTA GERAÇÃO:
 - Tom: formal, técnico, sóbrio, persuasivo pela lógica. Sem exagero retórico.
 - Se a base jurídica for insuficiente, declare expressamente ao invés de inventar.
 - O texto deve ser aproveitável como minuta real com mínima revisão humana.
-${boDocuments.length > 0 ? `\nREGRA CRÍTICA DE QUALIDADE PARA BOs:
-- Cada BO DEVE ser mencionado com fatos concretos na seção DOS FATOS.
-- A narrativa dos BOs deve demonstrar cronologia, progressão e gravidade.
-- PROIBIDO menção genérica a "boletins de ocorrência" sem explorar o conteúdo factual.
-- Se há ${boDocuments.length} BO(s), todos devem ser individualmente referenciados.` : ""}
-
+${evidenceDocs.length > 0 ? `\nREGRA CRÍTICA — DOCUMENTOS PROBATÓRIOS:
+- Cada documento probatório DEVE ser mencionado com fatos concretos.
+- PROIBIDO menção genérica a "documentos anexos" sem explorar conteúdo factual.
+${bos.length > 0 ? `- ${bos.length} BO(s): narrar cronologia, progressão e fatos específicos de cada um.\n` : ""}${laudos.length > 0 ? `- ${laudos.length} Laudo(s): citar profissional, diagnóstico, sintomas e impacto concreto.\n` : ""}${notifs.length > 0 ? `- ${notifs.length} Notificação(ões)/Indeferimento(s): apontar vícios e responder ponto a ponto.\n` : ""}` : ""}
 IGNORE qualquer menção no contexto a tipos de peça diferentes. O tipo é FIXO: ${tipo_peca}.`,
           },
         ],
@@ -894,8 +997,7 @@ IGNORE qualquer menção no contexto a tipos de peça diferentes. O tipo é FIXO
       }), { status: 422, headers: { ...corsH, "Content-Type": "application/json" } });
     }
 
-    const hasBos = boDocuments.length > 0;
-    const qualityCheck = validateQuality(minutaGerada, hasBos, boDocuments.length);
+    const qualityCheck = validateQuality(minutaGerada, evidenceDocs);
     if (!qualityCheck.pass) {
       console.warn(`Quality issues detected: ${qualityCheck.issues.join(", ")}`);
       await supabase.from("qa_logs_auditoria").insert({
@@ -907,8 +1009,9 @@ IGNORE qualquer menção no contexto a tipos de peça diferentes. O tipo é FIXO
           tipo_peca,
           issues: qualityCheck.issues,
           texto_length: minutaGerada.length,
-          bo_count: boDocuments.length,
-          bo_structured: boDocuments.map(b => b.structured),
+          evidence_count: evidenceDocs.length,
+          evidence_types: evidenceDocs.map(d => d.tipo),
+          evidence_structured: evidenceDocs.map(d => ({ titulo: d.titulo, tipo: d.tipo, campos: Object.keys(d.structured.campos).filter(k => d.structured.campos[k] !== null), riscos: d.structured.indicadores_risco })),
         },
       });
     }
@@ -941,26 +1044,17 @@ IGNORE qualquer menção no contexto a tipos de peça diferentes. O tipo é FIXO
       entidade_id: geracaoData?.id || null,
       acao: "gerar_peca",
       detalhes_json: {
-        tipo_peca,
-        foco,
-        cliente_cidade,
-        cliente_uf,
+        tipo_peca, foco, cliente_cidade, cliente_uf,
         circunscricao_resolvida: circunscricao ? {
-          unidade_pf: circunscricao.unidade_pf,
-          sigla_unidade: circunscricao.sigla_unidade,
-          tipo_unidade: circunscricao.tipo_unidade,
-          municipio_sede: circunscricao.municipio_sede,
+          unidade_pf: circunscricao.unidade_pf, sigla_unidade: circunscricao.sigla_unidade,
+          tipo_unidade: circunscricao.tipo_unidade, municipio_sede: circunscricao.municipio_sede,
           base_legal: circunscricao.base_legal,
         } : null,
         circunscricao_resolvida_automaticamente: !!circunscricao,
         fontes_count: fontesParaUsar.length,
-        bo_count: boDocuments.length,
-        bo_structured_data: boDocuments.map(b => ({
-          titulo: b.titulo,
-          numero_bo: b.structured.numero_bo,
-          data_fato: b.structured.data_fato,
-          indicadores_risco: b.structured.indicadores_risco,
-        })),
+        evidence_count: evidenceDocs.length,
+        evidence_types: evidenceDocs.map(d => d.tipo),
+        evidence_structured: evidenceDocs.map(d => ({ titulo: d.titulo, tipo: d.tipo, indicadores_risco: d.structured.indicadores_risco })),
         score_confianca: scoreConfianca,
         quality_issues: qualityCheck.issues,
       },
@@ -973,9 +1067,10 @@ IGNORE qualquer menção no contexto a tipos de peça diferentes. O tipo é FIXO
       score_confianca: scoreConfianca,
       quality_issues: qualityCheck.pass ? [] : qualityCheck.issues,
       circunscricao_utilizada: circunscricao || null,
-      bo_analysis: boDocuments.length > 0 ? {
-        count: boDocuments.length,
-        structured: boDocuments.map(b => b.structured),
+      evidence_analysis: evidenceDocs.length > 0 ? {
+        count: evidenceDocs.length,
+        by_type: Object.fromEntries([...new Set(evidenceDocs.map(d => d.tipo))].map(t => [t, evidenceDocs.filter(d => d.tipo === t).length])),
+        structured: evidenceDocs.map(d => ({ titulo: d.titulo, tipo: d.tipo, structured: d.structured })),
       } : null,
     }), { headers: { ...corsH, "Content-Type": "application/json" } });
 

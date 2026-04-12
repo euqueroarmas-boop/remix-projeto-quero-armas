@@ -51,6 +51,9 @@ verify_jwt = false
 [functions.qa-ingest-document]
 verify_jwt = false
 
+[functions.qa-processar-documento]
+verify_jwt = false
+
 [functions.qa-consulta-ia]
 verify_jwt = false
 
