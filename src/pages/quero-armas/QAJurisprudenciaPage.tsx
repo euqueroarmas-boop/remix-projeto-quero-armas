@@ -150,7 +150,7 @@ export default function QAJurisprudenciaPage() {
                   {j.ementa_resumida && <p className="text-xs text-slate-400 mt-2 line-clamp-3">{j.ementa_resumida}</p>}
                   {j.tese_aplicavel && <p className="text-xs text-emerald-400/70 mt-1 line-clamp-2 italic">Tese: {j.tese_aplicavel}</p>}
                 </div>
-                {j.validada_humanamente && <CheckCircle className="h-4 w-4 text-emerald-400 shrink-0" title="Validada" />}
+                {j.validada_humanamente && <span title="Validada"><CheckCircle className="h-4 w-4 text-emerald-400 shrink-0" /></span>}
               </div>
             </div>
           ))}

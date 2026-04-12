@@ -159,7 +159,7 @@ export default function QALegislacaoPage() {
                   </div>
                   {n.ementa && <p className="text-xs text-slate-400 mt-2 line-clamp-2">{n.ementa}</p>}
                 </div>
-                {n.revisada_humanamente && <CheckCircle className="h-4 w-4 text-emerald-400 shrink-0" title="Revisada" />}
+                {n.revisada_humanamente && <span title="Revisada"><CheckCircle className="h-4 w-4 text-emerald-400 shrink-0" /></span>}
               </div>
             </div>
           ))}

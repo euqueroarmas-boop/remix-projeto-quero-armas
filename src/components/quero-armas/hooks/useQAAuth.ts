@@ -27,7 +27,7 @@ export function useQAAuth() {
           .eq("user_id", u.id)
           .eq("ativo", true)
           .maybeSingle();
-        setProfile(data as QAProfile | null);
+        setProfile(data as unknown as QAProfile | null);
       } else {
         setProfile(null);
       }
@@ -44,7 +44,7 @@ export function useQAAuth() {
           .eq("user_id", u.id)
           .eq("ativo", true)
           .maybeSingle();
-        setProfile(data as QAProfile | null);
+        setProfile(data as unknown as QAProfile | null);
       }
       setLoading(false);
     });
