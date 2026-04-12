@@ -1,24 +1,39 @@
 import { useLocation, Link } from "react-router-dom";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
-  SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar,
+  SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar,
 } from "@/components/ui/sidebar";
 import {
-  LayoutDashboard, Bot, BookOpen, Scale, Gavel,
-  FileText, PenTool, History, Settings, LogOut,
+  LayoutDashboard, PenTool, FolderOpen, FileText, Scale, Gavel,
+  BookOpen, FileBox, History, ClipboardList, Settings, LogOut, Shield,
 } from "lucide-react";
 import { useQAAuth } from "./hooks/useQAAuth";
 
-const items = [
-  { title: "Dashboard", url: "/quero-armas/dashboard", icon: LayoutDashboard },
-  { title: "IA Jurídica", url: "/quero-armas/ia", icon: Bot },
-  { title: "Base de Conhecimento", url: "/quero-armas/base-conhecimento", icon: BookOpen },
-  { title: "Legislação", url: "/quero-armas/legislacao", icon: Scale },
-  { title: "Jurisprudência", url: "/quero-armas/jurisprudencia", icon: Gavel },
-  { title: "Modelos DOCX", url: "/quero-armas/modelos-docx", icon: FileText },
-  { title: "Gerar Peça", url: "/quero-armas/gerar-peca", icon: PenTool },
-  { title: "Histórico", url: "/quero-armas/historico", icon: History },
-  { title: "Configurações", url: "/quero-armas/configuracoes", icon: Settings },
+const NAV_GROUPS = [
+  {
+    label: "Operação",
+    items: [
+      { title: "Dashboard", url: "/quero-armas/dashboard", icon: LayoutDashboard },
+      { title: "Gerar Peça", url: "/quero-armas/gerar-peca", icon: PenTool },
+      { title: "Assistente Jurídico", url: "/quero-armas/ia", icon: Shield },
+    ],
+  },
+  {
+    label: "Acervo",
+    items: [
+      { title: "Base Jurídica", url: "/quero-armas/base-conhecimento", icon: BookOpen },
+      { title: "Legislação", url: "/quero-armas/legislacao", icon: Scale },
+      { title: "Jurisprudência", url: "/quero-armas/jurisprudencia", icon: Gavel },
+      { title: "Modelos DOCX", url: "/quero-armas/modelos-docx", icon: FileBox },
+    ],
+  },
+  {
+    label: "Registro",
+    items: [
+      { title: "Histórico", url: "/quero-armas/historico", icon: History },
+      { title: "Configurações", url: "/quero-armas/configuracoes", icon: Settings },
+    ],
+  },
 ];
 
 interface Props { perfil: string }
@@ -29,62 +44,89 @@ export function QASidebar({ perfil }: Props) {
   const location = useLocation();
   const { signOut } = useQAAuth();
 
-  const visible = items.filter(i => {
+  const isActive = (url: string) =>
+    location.pathname === url || location.pathname.startsWith(url + "/");
+
+  const canAccess = (url: string) => {
     if (perfil === "leitura_auditoria") {
-      return !["/quero-armas/gerar-peca", "/quero-armas/modelos-docx"].includes(i.url);
+      return !["/quero-armas/gerar-peca", "/quero-armas/modelos-docx"].includes(url);
     }
     if (perfil === "assistente_juridico") {
-      return i.url !== "/quero-armas/configuracoes";
+      return url !== "/quero-armas/configuracoes";
     }
     return true;
-  });
+  };
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-slate-800/60 bg-[#0a0a12]">
-      <SidebarContent className="py-4">
+    <Sidebar collapsible="icon" className="border-r border-[#1a1a2e] bg-[#08080f]">
+      <SidebarContent className="py-3">
         {!collapsed && (
-          <div className="px-4 pb-4 mb-2 border-b border-slate-800/40">
-            <div className="text-amber-500 font-bold text-xl tracking-tight">QA</div>
-            <div className="text-[10px] text-slate-500 tracking-widest uppercase">Inteligência Jurídica</div>
+          <div className="px-4 pb-3 mb-1 border-b border-[#1a1a2e]">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded bg-[#1a1a2e] flex items-center justify-center">
+                <Shield className="h-3.5 w-3.5 text-slate-400" />
+              </div>
+              <div>
+                <div className="text-[13px] font-semibold text-slate-300 tracking-tight leading-none">Quero Armas</div>
+                <div className="text-[9px] text-slate-600 tracking-[0.15em] uppercase mt-0.5">Inteligência Jurídica</div>
+              </div>
+            </div>
           </div>
         )}
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {visible.map((item) => {
-                const active = location.pathname === item.url || location.pathname.startsWith(item.url + "/");
-                return (
-                  <SidebarMenuItem key={item.url}>
-                    <SidebarMenuButton asChild>
-                      <Link
-                        to={item.url}
-                        className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-sm ${
-                          active
-                            ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
-                            : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/40"
-                        }`}
-                      >
-                        <item.icon className="h-4 w-4 shrink-0" />
-                        {!collapsed && <span>{item.title}</span>}
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <button
-                    onClick={signOut}
-                    className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-red-400/70 hover:text-red-400 hover:bg-red-500/5 w-full transition-all"
-                  >
-                    <LogOut className="h-4 w-4 shrink-0" />
-                    {!collapsed && <span>Sair</span>}
-                  </button>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+
+        {NAV_GROUPS.map(group => {
+          const visibleItems = group.items.filter(i => canAccess(i.url));
+          if (visibleItems.length === 0) return null;
+          return (
+            <SidebarGroup key={group.label} defaultOpen>
+              {!collapsed && (
+                <SidebarGroupLabel className="text-[9px] text-slate-600 uppercase tracking-[0.2em] font-medium px-4 py-1">
+                  {group.label}
+                </SidebarGroupLabel>
+              )}
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {visibleItems.map(item => {
+                    const active = isActive(item.url);
+                    return (
+                      <SidebarMenuItem key={item.url}>
+                        <SidebarMenuButton asChild>
+                          <Link
+                            to={item.url}
+                            className={`flex items-center gap-2.5 px-3 py-1.5 rounded text-[13px] transition-all ${
+                              active
+                                ? "bg-[#14142a] text-slate-200 border-l-2 border-slate-400"
+                                : "text-slate-500 hover:text-slate-300 hover:bg-[#0e0e1a]"
+                            }`}
+                          >
+                            <item.icon className={`h-3.5 w-3.5 shrink-0 ${active ? "text-slate-300" : ""}`} />
+                            {!collapsed && <span>{item.title}</span>}
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          );
+        })}
+
+        <div className="mt-auto pt-2 border-t border-[#1a1a2e] mx-2">
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <button
+                  onClick={signOut}
+                  className="flex items-center gap-2.5 px-3 py-1.5 rounded text-[13px] text-slate-600 hover:text-red-400 hover:bg-red-500/5 w-full transition-all"
+                >
+                  <LogOut className="h-3.5 w-3.5 shrink-0" />
+                  {!collapsed && <span>Sair</span>}
+                </button>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </div>
       </SidebarContent>
     </Sidebar>
   );
