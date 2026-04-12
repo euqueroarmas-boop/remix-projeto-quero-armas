@@ -109,8 +109,8 @@ export default function QADocumentoDetalhePage() {
         case "promover_referencia":
           await updateDoc({ referencia_preferencial: true });
           // Also create/reactivate in qa_referencias_preferenciais if needed
-          const { data: existingRef } = await supabase.from("qa_referencias_preferenciais" as any)
-            .select("id").eq("origem_id", doc.id).maybeSingle();
+          const { data: existingRef } = await (supabase.from("qa_referencias_preferenciais" as any)
+            .select("id").eq("origem_id", doc.id).maybeSingle() as any);
           if (existingRef) {
             await supabase.from("qa_referencias_preferenciais" as any)
               .update({ ativo: true } as any).eq("id", existingRef.id);
