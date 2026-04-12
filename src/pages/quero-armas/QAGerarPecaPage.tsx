@@ -340,6 +340,15 @@ export default function QAGerarPecaPage() {
     await resolverCircunscricao(clienteCidade, clienteUf);
   };
 
+  /* ── File name sanitization ── */
+  const sanitizeFileName = (name: string): string => {
+    let s = name.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    s = s.replace(/[^a-zA-Z0-9._-]/g, "_");
+    s = s.toLowerCase();
+    s = s.replace(/_{2,}/g, "_").replace(/^_+|_+$/g, "");
+    return s || "file";
+  };
+
   /* ── Auxiliary documents ── */
   const handleAddFiles = (files: FileList | null) => {
     if (!files) return;
@@ -365,7 +374,8 @@ export default function QAGerarPecaPage() {
     if (arq.stage === "done" && arq.docId) return arq.docId;
     setDocStage(index, "uploading", { startedAt: Date.now(), error: undefined });
     try {
-      const storagePath = `auxiliares/${Date.now()}_${arq.file.name}`;
+      const safeName = sanitizeFileName(arq.file.name);
+      const storagePath = `auxiliares/${Date.now()}_${crypto.randomUUID().slice(0,8)}_${safeName}`;
       const { error: upErr } = await supabase.storage.from("qa-documentos").upload(storagePath, arq.file);
       if (upErr) throw upErr;
       setDocStage(index, "saved");
@@ -479,6 +489,10 @@ export default function QAGerarPecaPage() {
   };
 
   /* ── Generation ── */
+  const hasDocsPending = arquivosAuxiliares.some(a => !["done", "failed", "pending"].includes(a.stage));
+  const hasDocsFailed = arquivosAuxiliares.some(a => a.stage === "failed");
+  const canGenerate = !loading && !hasDocsPending && !hasDocsFailed;
+
   const gerar = async () => {
     if (!nomeRequerente.trim()) { toast.error("Informe o nome completo do requerente"); return; }
     if (!entradaCaso.trim()) { toast.error("Descreva o caso"); return; }
@@ -508,6 +522,21 @@ export default function QAGerarPecaPage() {
         auxiliarDocIds = await uploadAllAuxiliares();
         setGenStep("extracting_docs");
         await new Promise(r => setTimeout(r, 500));
+
+        // Gate: compare successful IDs vs total docs to detect failures
+        const totalDocs = arquivosAuxiliares.length;
+        const failedCount = totalDocs - auxiliarDocIds.length;
+        if (failedCount > 0) {
+          const msg = `Geração bloqueada: ${failedCount} de ${totalDocs} documento(s) falharam no processamento. Reprocesse ou remova os documentos com erro antes de gerar.`;
+          try {
+            await supabase.from("qa_logs_auditoria" as any).insert({
+              usuario_id: user?.id, entidade: "qa_casos", entidade_id: casoId || "new",
+              acao: "geracao_bloqueada_anexos_incompletos",
+              detalhes_json: { total: totalDocs, concluidos: auxiliarDocIds.length, falhos: failedCount },
+            });
+          } catch { /* non-critical */ }
+          throw new Error(msg);
+        }
       }
 
       // Step 4-7: Generate
@@ -850,7 +879,32 @@ export default function QAGerarPecaPage() {
           )}
         </div>
 
-        <Button onClick={gerar} disabled={loading} className="bg-[#14142a] hover:bg-[#1a1a35] text-slate-300 border border-[#1a1a2e] w-full md:w-auto h-9 text-sm">
+        {/* Doc status indicator */}
+        {docTotal > 0 && (
+          <div className={`flex items-center gap-2 text-xs px-3 py-1.5 rounded border ${
+            docFailed > 0 ? "border-red-500/30 bg-red-500/5 text-red-400" :
+            docActive > 0 ? "border-cyan-500/30 bg-cyan-500/5 text-cyan-400" :
+            docDone === docTotal ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-400" :
+            "border-slate-700 bg-slate-800/50 text-slate-400"
+          }`}>
+            {docDone === docTotal && <CheckCircle className="h-3.5 w-3.5" />}
+            {docFailed > 0 && <XCircle className="h-3.5 w-3.5" />}
+            {docActive > 0 && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+            <span>{docDone}/{docTotal} documentos prontos</span>
+            {docFailed > 0 && <span className="text-red-400 font-medium">· {docFailed} com erro</span>}
+            {docActive > 0 && <span>· {docActive} processando</span>}
+          </div>
+        )}
+
+        {/* Generation blocked warning */}
+        {docTotal > 0 && (hasDocsFailed || hasDocsPending) && (
+          <div className="text-[10px] text-amber-400/80 bg-amber-500/5 border border-amber-500/20 rounded px-3 py-1.5 flex items-start gap-1.5">
+            <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" />
+            <span>Geração bloqueada até todos os documentos serem concluídos ou removidos. {hasDocsFailed ? "Reprocesse ou remova os documentos com erro." : "Aguarde o processamento."}</span>
+          </div>
+        )}
+
+        <Button onClick={gerar} disabled={!canGenerate} className="bg-[#14142a] hover:bg-[#1a1a35] text-slate-300 border border-[#1a1a2e] w-full md:w-auto h-9 text-sm disabled:opacity-40">
           {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
           Gerar Peça
         </Button>
