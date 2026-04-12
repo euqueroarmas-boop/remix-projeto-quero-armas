@@ -437,6 +437,23 @@ IGNORE qualquer menção no contexto a tipos de peça diferentes. O tipo é FIXO
       }), { status: 422, headers: { ...corsH, "Content-Type": "application/json" } });
     }
 
+    // === QUALITY VALIDATION ===
+    const qualityCheck = validateQuality(minutaGerada);
+    if (!qualityCheck.pass) {
+      console.warn(`Quality issues detected: ${qualityCheck.issues.join(", ")}. Logging but allowing output.`);
+      await supabase.from("qa_logs_auditoria").insert({
+        usuario_id: usuario_id || "anonimo",
+        entidade: "qa_geracoes_pecas",
+        entidade_id: null,
+        acao: "qualidade_abaixo_esperada",
+        detalhes_json: {
+          tipo_peca,
+          issues: qualityCheck.issues,
+          texto_length: minutaGerada.length,
+        },
+      });
+    }
+
     const scoreConfianca = fontesParaUsar.length === 0 ? 0 :
       Math.min(1, (fontesParaUsar.length * 0.08) + (fontesParaUsar.filter(f => f.validada).length * 0.12));
 
