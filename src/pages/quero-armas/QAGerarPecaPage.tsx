@@ -594,29 +594,28 @@ export default function QAGerarPecaPage() {
   const genPercent = genStep === "done" ? 100 : genStep === "error" ? 0 : currentStepIdx >= 0 ? Math.round(((currentStepIdx + 1) / GENERATION_STEPS.length) * 100) : 0;
 
   return (
-    <div className="space-y-5 max-w-5xl">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-base font-semibold text-slate-300 flex items-center gap-2">
-            <PenTool className="h-4 w-4 text-slate-500" />
-            {casoId ? "Editar Caso" : "Gerar Peça Jurídica"}
+    <div className="space-y-3 md:space-y-5 max-w-5xl">
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <h1 className="text-sm md:text-base font-semibold text-slate-300 flex items-center gap-1.5">
+            <PenTool className="h-3.5 w-3.5 text-slate-500 shrink-0" />
+            <span className="truncate">{casoId ? "Editar Caso" : "Gerar Peça"}</span>
           </h1>
-          <p className="text-[11px] text-slate-600 mt-0.5">Geração assistida com base viva de conhecimento</p>
         </div>
         {(savedCasoId || casoId) && (
           <Button variant="outline" size="sm" onClick={() => navigate(`/quero-armas/casos`)}
-            className="bg-[#0c0c16] border-[#1a1a2e] text-slate-400 hover:text-slate-300 h-7 text-[11px]">
-            <FolderOpen className="h-3 w-3 mr-1" /> Ver Casos
+            className="bg-[#0c0c16] border-[#1a1a2e] text-slate-400 hover:text-slate-300 h-6 md:h-7 text-[10px] shrink-0">
+            <FolderOpen className="h-3 w-3 mr-1" /> Casos
           </Button>
         )}
       </div>
 
-      <div className="bg-slate-500/5 border border-slate-500/10 rounded p-2.5 text-[11px] text-slate-500 flex items-start gap-2">
-        <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-        <span>A peça será gerada com base exclusiva nas fontes cadastradas. Toda minuta deve ser revisada por profissional habilitado.</span>
+      <div className="bg-slate-500/5 border border-slate-500/10 rounded p-2 text-[10px] text-slate-500 flex items-start gap-1.5">
+        <AlertTriangle className="h-3 w-3 shrink-0 mt-0.5" />
+        <span>Toda minuta deve ser revisada por profissional habilitado.</span>
       </div>
 
-      <div className="space-y-4 bg-[#0c0c16] border border-[#1a1a2e] rounded p-4">
+      <div className="space-y-3 md:space-y-4 bg-[#0c0c16] border border-[#1a1a2e] rounded p-2.5 md:p-4">
         {/* ── Requerente + Serviço ── */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
