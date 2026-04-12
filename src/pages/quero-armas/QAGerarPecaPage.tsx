@@ -907,10 +907,17 @@ export default function QAGerarPecaPage() {
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
                       {arq.stage === "pending" && (
-                        <Select value={arq.tipo} onValueChange={v => handleChangeTipoDoc(i, v)}>
-                          <SelectTrigger className="h-6 text-[10px] bg-[#0c0c16] border-[#1a1a2e] text-slate-500 w-36"><SelectValue /></SelectTrigger>
+                        <Select value={arq.tipo || undefined} onValueChange={v => handleChangeTipoDoc(i, v)}>
+                          <SelectTrigger className="h-6 text-[10px] bg-[#0c0c16] border-[#1a1a2e] text-slate-500 w-44">
+                            <SelectValue placeholder="Selecionar opção" />
+                          </SelectTrigger>
                           <SelectContent>{TIPOS_DOC_AUXILIAR.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
                         </Select>
+                      )}
+                      {arq.stage !== "pending" && arq.tipo && (
+                        <span className="text-[9px] text-slate-600 max-w-[120px] truncate">
+                          {TIPOS_DOC_AUXILIAR.find(t => t.value === arq.tipo)?.label || arq.tipo}
+                        </span>
                       )}
                       {arq.stage === "failed" && (
                         <Button type="button" variant="outline" size="sm" className="h-5 text-[9px] border-red-500/20 text-red-400" onClick={() => handleRetryDoc(i)}>
