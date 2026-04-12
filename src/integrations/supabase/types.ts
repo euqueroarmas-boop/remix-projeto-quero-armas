@@ -1951,6 +1951,504 @@ export type Database = {
           },
         ]
       }
+      qa_chunks_conhecimento: {
+        Row: {
+          created_at: string
+          documento_id: string
+          embedding_status: string
+          id: string
+          metadados_json: Json | null
+          ordem_chunk: number
+          resumo_chunk: string | null
+          texto_chunk: string
+        }
+        Insert: {
+          created_at?: string
+          documento_id: string
+          embedding_status?: string
+          id?: string
+          metadados_json?: Json | null
+          ordem_chunk?: number
+          resumo_chunk?: string | null
+          texto_chunk: string
+        }
+        Update: {
+          created_at?: string
+          documento_id?: string
+          embedding_status?: string
+          id?: string
+          metadados_json?: Json | null
+          ordem_chunk?: number
+          resumo_chunk?: string | null
+          texto_chunk?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_chunks_conhecimento_documento_id_fkey"
+            columns: ["documento_id"]
+            isOneToOne: false
+            referencedRelation: "qa_documentos_conhecimento"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_consultas_ia: {
+        Row: {
+          caso_resumo: string | null
+          caso_titulo: string | null
+          created_at: string
+          entrada_usuario: string
+          filtros_aplicados_json: Json | null
+          fontes_recuperadas_json: Json | null
+          id: string
+          observacoes_ia: string | null
+          resposta_ia: string | null
+          tipo_peca: string | null
+          usuario_id: string
+        }
+        Insert: {
+          caso_resumo?: string | null
+          caso_titulo?: string | null
+          created_at?: string
+          entrada_usuario: string
+          filtros_aplicados_json?: Json | null
+          fontes_recuperadas_json?: Json | null
+          id?: string
+          observacoes_ia?: string | null
+          resposta_ia?: string | null
+          tipo_peca?: string | null
+          usuario_id: string
+        }
+        Update: {
+          caso_resumo?: string | null
+          caso_titulo?: string | null
+          created_at?: string
+          entrada_usuario?: string
+          filtros_aplicados_json?: Json | null
+          fontes_recuperadas_json?: Json | null
+          id?: string
+          observacoes_ia?: string | null
+          resposta_ia?: string | null
+          tipo_peca?: string | null
+          usuario_id?: string
+        }
+        Relationships: []
+      }
+      qa_documentos_conhecimento: {
+        Row: {
+          categoria: string | null
+          created_at: string
+          descricao: string | null
+          enviado_por: string | null
+          hash_arquivo: string | null
+          id: string
+          metadados_json: Json | null
+          mime_type: string | null
+          nome_arquivo: string
+          origem: string | null
+          resumo_extraido: string | null
+          status_processamento: string
+          status_validacao: string
+          storage_path: string
+          tamanho_bytes: number | null
+          texto_extraido: string | null
+          tipo_documento: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          categoria?: string | null
+          created_at?: string
+          descricao?: string | null
+          enviado_por?: string | null
+          hash_arquivo?: string | null
+          id?: string
+          metadados_json?: Json | null
+          mime_type?: string | null
+          nome_arquivo: string
+          origem?: string | null
+          resumo_extraido?: string | null
+          status_processamento?: string
+          status_validacao?: string
+          storage_path: string
+          tamanho_bytes?: number | null
+          texto_extraido?: string | null
+          tipo_documento?: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          categoria?: string | null
+          created_at?: string
+          descricao?: string | null
+          enviado_por?: string | null
+          hash_arquivo?: string | null
+          id?: string
+          metadados_json?: Json | null
+          mime_type?: string | null
+          nome_arquivo?: string
+          origem?: string | null
+          resumo_extraido?: string | null
+          status_processamento?: string
+          status_validacao?: string
+          storage_path?: string
+          tamanho_bytes?: number | null
+          texto_extraido?: string | null
+          tipo_documento?: string
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      qa_embeddings: {
+        Row: {
+          chunk_id: string
+          created_at: string
+          id: string
+          modelo_embedding: string
+          vetor_embedding: string | null
+        }
+        Insert: {
+          chunk_id: string
+          created_at?: string
+          id?: string
+          modelo_embedding?: string
+          vetor_embedding?: string | null
+        }
+        Update: {
+          chunk_id?: string
+          created_at?: string
+          id?: string
+          modelo_embedding?: string
+          vetor_embedding?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_embeddings_chunk_id_fkey"
+            columns: ["chunk_id"]
+            isOneToOne: false
+            referencedRelation: "qa_chunks_conhecimento"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_feedback_geracoes: {
+        Row: {
+          aprovada_como_modelo: boolean
+          correcao_humana: string | null
+          created_at: string
+          geracao_id: string
+          id: string
+          observacoes: string | null
+          status_feedback: string
+          usuario_id: string
+        }
+        Insert: {
+          aprovada_como_modelo?: boolean
+          correcao_humana?: string | null
+          created_at?: string
+          geracao_id: string
+          id?: string
+          observacoes?: string | null
+          status_feedback?: string
+          usuario_id: string
+        }
+        Update: {
+          aprovada_como_modelo?: boolean
+          correcao_humana?: string | null
+          created_at?: string
+          geracao_id?: string
+          id?: string
+          observacoes?: string | null
+          status_feedback?: string
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_feedback_geracoes_geracao_id_fkey"
+            columns: ["geracao_id"]
+            isOneToOne: false
+            referencedRelation: "qa_geracoes_pecas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_fontes_normativas: {
+        Row: {
+          ano_norma: number | null
+          ativa: boolean
+          created_at: string
+          data_publicacao: string | null
+          data_vigencia: string | null
+          ementa: string | null
+          hash_conteudo: string | null
+          id: string
+          numero_norma: string | null
+          orgao_emissor: string | null
+          origem: string | null
+          palavras_chave: string[] | null
+          revisada_humanamente: boolean
+          texto_integral: string | null
+          tipo_norma: string
+          titulo_norma: string
+          updated_at: string
+        }
+        Insert: {
+          ano_norma?: number | null
+          ativa?: boolean
+          created_at?: string
+          data_publicacao?: string | null
+          data_vigencia?: string | null
+          ementa?: string | null
+          hash_conteudo?: string | null
+          id?: string
+          numero_norma?: string | null
+          orgao_emissor?: string | null
+          origem?: string | null
+          palavras_chave?: string[] | null
+          revisada_humanamente?: boolean
+          texto_integral?: string | null
+          tipo_norma?: string
+          titulo_norma: string
+          updated_at?: string
+        }
+        Update: {
+          ano_norma?: number | null
+          ativa?: boolean
+          created_at?: string
+          data_publicacao?: string | null
+          data_vigencia?: string | null
+          ementa?: string | null
+          hash_conteudo?: string | null
+          id?: string
+          numero_norma?: string | null
+          orgao_emissor?: string | null
+          origem?: string | null
+          palavras_chave?: string[] | null
+          revisada_humanamente?: boolean
+          texto_integral?: string | null
+          tipo_norma?: string
+          titulo_norma?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      qa_geracoes_pecas: {
+        Row: {
+          created_at: string
+          documentos_referencia_json: Json | null
+          docx_path: string | null
+          entrada_caso: string | null
+          fundamentos_utilizados_json: Json | null
+          id: string
+          jurisprudencias_utilizadas_json: Json | null
+          minuta_gerada: string | null
+          normas_utilizadas_json: Json | null
+          status: string
+          tipo_peca: string
+          titulo_geracao: string
+          updated_at: string
+          usuario_id: string
+          versao: number
+        }
+        Insert: {
+          created_at?: string
+          documentos_referencia_json?: Json | null
+          docx_path?: string | null
+          entrada_caso?: string | null
+          fundamentos_utilizados_json?: Json | null
+          id?: string
+          jurisprudencias_utilizadas_json?: Json | null
+          minuta_gerada?: string | null
+          normas_utilizadas_json?: Json | null
+          status?: string
+          tipo_peca: string
+          titulo_geracao: string
+          updated_at?: string
+          usuario_id: string
+          versao?: number
+        }
+        Update: {
+          created_at?: string
+          documentos_referencia_json?: Json | null
+          docx_path?: string | null
+          entrada_caso?: string | null
+          fundamentos_utilizados_json?: Json | null
+          id?: string
+          jurisprudencias_utilizadas_json?: Json | null
+          minuta_gerada?: string | null
+          normas_utilizadas_json?: Json | null
+          status?: string
+          tipo_peca?: string
+          titulo_geracao?: string
+          updated_at?: string
+          usuario_id?: string
+          versao?: number
+        }
+        Relationships: []
+      }
+      qa_jurisprudencias: {
+        Row: {
+          created_at: string
+          data_julgamento: string | null
+          data_publicacao: string | null
+          ementa_resumida: string | null
+          id: string
+          numero_processo: string | null
+          orgao_julgador: string | null
+          origem: string | null
+          palavras_chave: string[] | null
+          relator: string | null
+          tema: string | null
+          tese_aplicavel: string | null
+          texto_controlado: string | null
+          tribunal: string
+          updated_at: string
+          validada_humanamente: boolean
+        }
+        Insert: {
+          created_at?: string
+          data_julgamento?: string | null
+          data_publicacao?: string | null
+          ementa_resumida?: string | null
+          id?: string
+          numero_processo?: string | null
+          orgao_julgador?: string | null
+          origem?: string | null
+          palavras_chave?: string[] | null
+          relator?: string | null
+          tema?: string | null
+          tese_aplicavel?: string | null
+          texto_controlado?: string | null
+          tribunal: string
+          updated_at?: string
+          validada_humanamente?: boolean
+        }
+        Update: {
+          created_at?: string
+          data_julgamento?: string | null
+          data_publicacao?: string | null
+          ementa_resumida?: string | null
+          id?: string
+          numero_processo?: string | null
+          orgao_julgador?: string | null
+          origem?: string | null
+          palavras_chave?: string[] | null
+          relator?: string | null
+          tema?: string | null
+          tese_aplicavel?: string | null
+          texto_controlado?: string | null
+          tribunal?: string
+          updated_at?: string
+          validada_humanamente?: boolean
+        }
+        Relationships: []
+      }
+      qa_logs_auditoria: {
+        Row: {
+          acao: string
+          created_at: string
+          detalhes_json: Json | null
+          entidade: string
+          entidade_id: string | null
+          id: string
+          usuario_id: string | null
+        }
+        Insert: {
+          acao: string
+          created_at?: string
+          detalhes_json?: Json | null
+          entidade: string
+          entidade_id?: string | null
+          id?: string
+          usuario_id?: string | null
+        }
+        Update: {
+          acao?: string
+          created_at?: string
+          detalhes_json?: Json | null
+          entidade?: string
+          entidade_id?: string | null
+          id?: string
+          usuario_id?: string | null
+        }
+        Relationships: []
+      }
+      qa_modelos_docx: {
+        Row: {
+          arquivo_template_path: string | null
+          ativo: boolean
+          created_at: string
+          created_by: string | null
+          descricao: string | null
+          id: string
+          nome_modelo: string
+          tipo_peca: string
+          updated_at: string
+          variaveis_suportadas_json: Json | null
+          versao: string
+        }
+        Insert: {
+          arquivo_template_path?: string | null
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          descricao?: string | null
+          id?: string
+          nome_modelo: string
+          tipo_peca: string
+          updated_at?: string
+          variaveis_suportadas_json?: Json | null
+          versao?: string
+        }
+        Update: {
+          arquivo_template_path?: string | null
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          descricao?: string | null
+          id?: string
+          nome_modelo?: string
+          tipo_peca?: string
+          updated_at?: string
+          variaveis_suportadas_json?: Json | null
+          versao?: string
+        }
+        Relationships: []
+      }
+      qa_usuarios_perfis: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          email: string
+          id: string
+          nome: string
+          perfil: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          email: string
+          id?: string
+          nome: string
+          perfil?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          email?: string
+          id?: string
+          nome?: string
+          perfil?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       quotes: {
         Row: {
           computers_qty: number | null
@@ -2663,7 +3161,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      qa_busca_similar: {
+        Args: {
+          match_count?: number
+          match_threshold?: number
+          query_embedding: string
+        }
+        Returns: {
+          chunk_id: string
+          documento_id: string
+          resumo_chunk: string
+          similarity: number
+          texto_chunk: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
