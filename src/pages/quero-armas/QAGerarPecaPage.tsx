@@ -123,6 +123,7 @@ const ESTADOS_BR = [
 
 const STAGE_LABELS: Record<DocUploadStage, string> = {
   pending: "Aguardando classificação",
+  queued: "Na fila",
   uploading: "Enviando arquivo...",
   saved: "Arquivo salvo",
   extracting: "Extraindo texto...",
@@ -132,7 +133,7 @@ const STAGE_LABELS: Record<DocUploadStage, string> = {
 };
 
 function stageProgress(s: DocUploadStage): number {
-  return { pending: 0, uploading: 20, saved: 40, extracting: 60, processing: 80, done: 100, failed: 100 }[s];
+  return { pending: 0, queued: 5, uploading: 20, saved: 40, extracting: 60, processing: 80, done: 100, failed: 100 }[s];
 }
 
 function stageColor(s: DocUploadStage): string {
