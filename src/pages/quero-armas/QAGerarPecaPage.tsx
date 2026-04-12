@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { PenTool, Send, Loader2, AlertTriangle, Download, CheckCircle, Scale, Gavel, BookOpen } from "lucide-react";
+import { PenTool, Send, Loader2, AlertTriangle, Download, CheckCircle, Scale, Gavel, BookOpen, MapPin } from "lucide-react";
 import { useQAAuth } from "@/components/quero-armas/hooks/useQAAuth";
 
 const TIPOS_PECA = [
@@ -37,6 +37,11 @@ const FOCOS = [
   { value: "controle_judicial", label: "Controle Judicial" },
 ];
 
+const ESTADOS_BR = [
+  "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA",
+  "PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO",
+];
+
 export default function QAGerarPecaPage() {
   const { user } = useQAAuth();
   const [casoTitulo, setCasoTitulo] = useState("");
@@ -45,11 +50,26 @@ export default function QAGerarPecaPage() {
   const [profundidade, setProfundidade] = useState("intermediaria");
   const [tom, setTom] = useState("tecnico_padrao");
   const [foco, setFoco] = useState("legalidade");
+  const [cidade, setCidade] = useState("");
+  const [estado, setEstado] = useState("");
+  const [dataNotificacao, setDataNotificacao] = useState("");
+  const [infoTempestividade, setInfoTempestividade] = useState("");
   const [loading, setLoading] = useState(false);
   const [resultado, setResultado] = useState<any>(null);
 
+  const needsTempestividade = tipoPeca === "recurso_administrativo" || tipoPeca === "resposta_a_notificacao";
+
   const gerar = async () => {
     if (!entradaCaso.trim()) { toast.error("Descreva o caso"); return; }
+
+    // Warn about missing optional fields but don't block
+    const warnings: string[] = [];
+    if (!cidade.trim()) warnings.push("Cidade não informada — será marcada como pendente.");
+    if (!estado.trim()) warnings.push("Estado não informado — será marcado como pendente.");
+    if (warnings.length > 0) {
+      warnings.forEach(w => toast.warning(w, { duration: 4000 }));
+    }
+
     setLoading(true);
     setResultado(null);
     try {
@@ -60,9 +80,17 @@ export default function QAGerarPecaPage() {
           entrada_caso: entradaCaso,
           tipo_peca: tipoPeca,
           profundidade, tom, foco,
+          cidade: cidade.trim() || null,
+          estado: estado.trim() || null,
+          data_notificacao: dataNotificacao.trim() || null,
+          info_tempestividade: infoTempestividade.trim() || null,
         },
       });
       if (error) throw error;
+      if (data?.error) {
+        toast.error(data.error);
+        return;
+      }
       setResultado(data);
       toast.success("Peça gerada com sucesso");
     } catch (err: any) {
@@ -86,7 +114,6 @@ export default function QAGerarPecaPage() {
         body: { geracao_id: resultado.geracao_id, variables: { cliente_nome: casoTitulo } },
       });
       if (error) throw error;
-      // Download the blob
       const blob = new Blob([data], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -121,11 +148,12 @@ export default function QAGerarPecaPage() {
       </div>
 
       <div className="space-y-4 bg-[#12121c] border border-slate-800/40 rounded-xl p-5">
+        {/* Row 1: Title + Type */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label className="text-slate-300">Título do Caso</Label>
             <Input value={casoTitulo} onChange={e => setCasoTitulo(e.target.value)}
-              className="bg-[#0c0c14] border-slate-700 text-slate-100" placeholder="Ex: MS contra indeferimento de CR" />
+              className="bg-[#0c0c14] border-slate-700 text-slate-100" placeholder="Ex: Defesa para registro de arma" />
           </div>
           <div className="space-y-2">
             <Label className="text-slate-300">Tipo de Peça</Label>
@@ -138,6 +166,31 @@ export default function QAGerarPecaPage() {
           </div>
         </div>
 
+        {/* Row 2: City + State (for endereçamento) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label className="text-slate-300 flex items-center gap-1.5">
+              <MapPin className="h-3.5 w-3.5 text-amber-500" /> Cidade (endereçamento)
+            </Label>
+            <Input value={cidade} onChange={e => setCidade(e.target.value)}
+              className="bg-[#0c0c14] border-slate-700 text-slate-100" placeholder="Ex: São Paulo" />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-slate-300 flex items-center gap-1.5">
+              <MapPin className="h-3.5 w-3.5 text-amber-500" /> Estado (UF)
+            </Label>
+            <Select value={estado} onValueChange={setEstado}>
+              <SelectTrigger className="bg-[#0c0c14] border-slate-700 text-slate-300">
+                <SelectValue placeholder="Selecione o estado" />
+              </SelectTrigger>
+              <SelectContent>
+                {ESTADOS_BR.map(uf => <SelectItem key={uf} value={uf}>{uf}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Row 3: Profundidade + Tom + Foco */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label className="text-slate-300">Profundidade</Label>
@@ -168,11 +221,31 @@ export default function QAGerarPecaPage() {
           </div>
         </div>
 
+        {/* Row 4: Conditional fields for tempestividade */}
+        {needsTempestividade && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-amber-500/5 border border-amber-500/10 rounded-lg p-4">
+            <div className="space-y-2">
+              <Label className="text-amber-400 text-xs">Data da notificação / decisão</Label>
+              <Input type="date" value={dataNotificacao} onChange={e => setDataNotificacao(e.target.value)}
+                className="bg-[#0c0c14] border-slate-700 text-slate-100" />
+              <p className="text-[10px] text-slate-600">Usada para alegar tempestividade. Deixe em branco se não souber.</p>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-amber-400 text-xs">Informações sobre prazo / tempestividade</Label>
+              <Input value={infoTempestividade} onChange={e => setInfoTempestividade(e.target.value)}
+                className="bg-[#0c0c14] border-slate-700 text-slate-100"
+                placeholder="Ex: notificado em 01/03/2026, prazo de 15 dias" />
+              <p className="text-[10px] text-slate-600">Dados adicionais sobre cumprimento de prazo.</p>
+            </div>
+          </div>
+        )}
+
+        {/* Row 5: Case description */}
         <div className="space-y-2">
           <Label className="text-slate-300">Descrição completa do caso</Label>
           <Textarea value={entradaCaso} onChange={e => setEntradaCaso(e.target.value)}
             className="bg-[#0c0c14] border-slate-700 text-slate-100 min-h-[200px]"
-            placeholder="Descreva detalhadamente os fatos, a situação jurídica, o histórico do caso e o que precisa na peça..." />
+            placeholder="Descreva detalhadamente os fatos, a situação jurídica, o histórico do caso, documentos relevantes e o que precisa na peça..." />
         </div>
 
         <Button onClick={gerar} disabled={loading} className="bg-amber-600 hover:bg-amber-700">
@@ -183,7 +256,6 @@ export default function QAGerarPecaPage() {
 
       {resultado && (
         <div className="space-y-4">
-          {/* Confidence Score */}
           <div className="flex items-center gap-4 bg-[#12121c] border border-slate-800/40 rounded-xl p-4">
             <div className="text-center">
               <div className={`text-2xl font-bold ${scoreColor(resultado.score_confianca)}`}>
@@ -203,7 +275,6 @@ export default function QAGerarPecaPage() {
             </Button>
           </div>
 
-          {/* Sources used */}
           {resultado.fontes_utilizadas?.length > 0 && (
             <div className="bg-[#12121c] border border-slate-800/40 rounded-xl p-5">
               <h3 className="text-sm font-medium text-slate-300 mb-3">Fontes Utilizadas na Geração</h3>
@@ -223,7 +294,6 @@ export default function QAGerarPecaPage() {
             </div>
           )}
 
-          {/* Generated piece */}
           <div className="bg-[#12121c] border border-slate-800/40 rounded-xl p-5">
             <h3 className="text-sm font-medium text-slate-300 mb-3">Minuta Gerada</h3>
             <div className="text-sm text-slate-200 whitespace-pre-wrap leading-relaxed font-serif">
