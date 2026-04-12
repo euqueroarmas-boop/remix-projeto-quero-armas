@@ -997,8 +997,7 @@ IGNORE qualquer menção no contexto a tipos de peça diferentes. O tipo é FIXO
       }), { status: 422, headers: { ...corsH, "Content-Type": "application/json" } });
     }
 
-    const hasBos = boDocuments.length > 0;
-    const qualityCheck = validateQuality(minutaGerada, hasBos, boDocuments.length);
+    const qualityCheck = validateQuality(minutaGerada, evidenceDocs);
     if (!qualityCheck.pass) {
       console.warn(`Quality issues detected: ${qualityCheck.issues.join(", ")}`);
       await supabase.from("qa_logs_auditoria").insert({
@@ -1010,8 +1009,9 @@ IGNORE qualquer menção no contexto a tipos de peça diferentes. O tipo é FIXO
           tipo_peca,
           issues: qualityCheck.issues,
           texto_length: minutaGerada.length,
-          bo_count: boDocuments.length,
-          bo_structured: boDocuments.map(b => b.structured),
+          evidence_count: evidenceDocs.length,
+          evidence_types: evidenceDocs.map(d => d.tipo),
+          evidence_structured: evidenceDocs.map(d => ({ titulo: d.titulo, tipo: d.tipo, campos: Object.keys(d.structured.campos).filter(k => d.structured.campos[k] !== null), riscos: d.structured.indicadores_risco })),
         },
       });
     }
@@ -1044,26 +1044,17 @@ IGNORE qualquer menção no contexto a tipos de peça diferentes. O tipo é FIXO
       entidade_id: geracaoData?.id || null,
       acao: "gerar_peca",
       detalhes_json: {
-        tipo_peca,
-        foco,
-        cliente_cidade,
-        cliente_uf,
+        tipo_peca, foco, cliente_cidade, cliente_uf,
         circunscricao_resolvida: circunscricao ? {
-          unidade_pf: circunscricao.unidade_pf,
-          sigla_unidade: circunscricao.sigla_unidade,
-          tipo_unidade: circunscricao.tipo_unidade,
-          municipio_sede: circunscricao.municipio_sede,
+          unidade_pf: circunscricao.unidade_pf, sigla_unidade: circunscricao.sigla_unidade,
+          tipo_unidade: circunscricao.tipo_unidade, municipio_sede: circunscricao.municipio_sede,
           base_legal: circunscricao.base_legal,
         } : null,
         circunscricao_resolvida_automaticamente: !!circunscricao,
         fontes_count: fontesParaUsar.length,
-        bo_count: boDocuments.length,
-        bo_structured_data: boDocuments.map(b => ({
-          titulo: b.titulo,
-          numero_bo: b.structured.numero_bo,
-          data_fato: b.structured.data_fato,
-          indicadores_risco: b.structured.indicadores_risco,
-        })),
+        evidence_count: evidenceDocs.length,
+        evidence_types: evidenceDocs.map(d => d.tipo),
+        evidence_structured: evidenceDocs.map(d => ({ titulo: d.titulo, tipo: d.tipo, indicadores_risco: d.structured.indicadores_risco })),
         score_confianca: scoreConfianca,
         quality_issues: qualityCheck.issues,
       },
@@ -1076,9 +1067,10 @@ IGNORE qualquer menção no contexto a tipos de peça diferentes. O tipo é FIXO
       score_confianca: scoreConfianca,
       quality_issues: qualityCheck.pass ? [] : qualityCheck.issues,
       circunscricao_utilizada: circunscricao || null,
-      bo_analysis: boDocuments.length > 0 ? {
-        count: boDocuments.length,
-        structured: boDocuments.map(b => b.structured),
+      evidence_analysis: evidenceDocs.length > 0 ? {
+        count: evidenceDocs.length,
+        by_type: Object.fromEntries([...new Set(evidenceDocs.map(d => d.tipo))].map(t => [t, evidenceDocs.filter(d => d.tipo === t).length])),
+        structured: evidenceDocs.map(d => ({ titulo: d.titulo, tipo: d.tipo, structured: d.structured })),
       } : null,
     }), { headers: { ...corsH, "Content-Type": "application/json" } });
 
