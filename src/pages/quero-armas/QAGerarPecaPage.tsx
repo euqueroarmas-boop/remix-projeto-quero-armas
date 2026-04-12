@@ -489,6 +489,10 @@ export default function QAGerarPecaPage() {
   };
 
   /* ── Generation ── */
+  const hasDocsPending = arquivosAuxiliares.some(a => !["done", "failed", "pending"].includes(a.stage));
+  const hasDocsFailed = arquivosAuxiliares.some(a => a.stage === "failed");
+  const canGenerate = !loading && !hasDocsPending && !hasDocsFailed;
+
   const gerar = async () => {
     if (!nomeRequerente.trim()) { toast.error("Informe o nome completo do requerente"); return; }
     if (!entradaCaso.trim()) { toast.error("Descreva o caso"); return; }
