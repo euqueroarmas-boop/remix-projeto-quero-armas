@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { PenTool, Send, Loader2, AlertTriangle, Download, CheckCircle, Scale, Gavel, BookOpen, MapPin } from "lucide-react";
+import { PenTool, Send, Loader2, AlertTriangle, Download, CheckCircle, Scale, Gavel, BookOpen, MapPin, Building2, Info } from "lucide-react";
 import { useQAAuth } from "@/components/quero-armas/hooks/useQAAuth";
 
 const TIPOS_PECA = [
@@ -14,18 +14,6 @@ const TIPOS_PECA = [
   { value: "defesa_porte_arma", label: "Defesa para Porte de Arma" },
   { value: "recurso_administrativo", label: "Recurso Administrativo" },
   { value: "resposta_a_notificacao", label: "Resposta à Notificação" },
-];
-
-const PROFUNDIDADES = [
-  { value: "objetiva", label: "Objetiva" },
-  { value: "intermediaria", label: "Intermediária" },
-  { value: "aprofundada", label: "Aprofundada" },
-];
-
-const TONS = [
-  { value: "tecnico_padrao", label: "Técnico Padrão" },
-  { value: "mais_combativo", label: "Mais Combativo" },
-  { value: "mais_conservador", label: "Mais Conservador" },
 ];
 
 const FOCOS = [
@@ -42,32 +30,88 @@ const ESTADOS_BR = [
   "PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO",
 ];
 
+interface CircunscricaoResolvida {
+  unidade_pf: string;
+  sigla_unidade: string;
+  tipo_unidade: string;
+  municipio_sede: string;
+  uf: string;
+  base_legal: string;
+}
+
 export default function QAGerarPecaPage() {
   const { user } = useQAAuth();
   const [casoTitulo, setCasoTitulo] = useState("");
   const [entradaCaso, setEntradaCaso] = useState("");
   const [tipoPeca, setTipoPeca] = useState("defesa_posse_arma");
-  const [profundidade, setProfundidade] = useState("intermediaria");
-  const [tom, setTom] = useState("tecnico_padrao");
   const [foco, setFoco] = useState("legalidade");
-  const [cidade, setCidade] = useState("");
-  const [estado, setEstado] = useState("");
+  // Client address fields (for circumscription resolution)
+  const [clienteCidade, setClienteCidade] = useState("");
+  const [clienteUf, setClienteUf] = useState("");
+  const [clienteEndereco, setClienteEndereco] = useState("");
+  const [clienteCep, setClienteCep] = useState("");
+  // Tempestividade fields
   const [dataNotificacao, setDataNotificacao] = useState("");
   const [infoTempestividade, setInfoTempestividade] = useState("");
+  // State
   const [loading, setLoading] = useState(false);
   const [resultado, setResultado] = useState<any>(null);
+  const [circunscricaoResolvida, setCircunscricaoResolvida] = useState<CircunscricaoResolvida | null>(null);
+  const [resolvendoCircunscricao, setResolvendoCircunscricao] = useState(false);
 
   const needsTempestividade = tipoPeca === "recurso_administrativo" || tipoPeca === "resposta_a_notificacao";
 
+  const resolverCircunscricao = async (cidade: string, uf: string): Promise<CircunscricaoResolvida | null> => {
+    if (!cidade.trim() || !uf.trim()) return null;
+    setResolvendoCircunscricao(true);
+    try {
+      const { data, error } = await supabase.rpc("qa_resolver_circunscricao_pf", {
+        p_municipio: cidade.trim(),
+        p_uf: uf.trim(),
+      });
+      if (error || !data || data.length === 0) return null;
+      return data[0] as CircunscricaoResolvida;
+    } catch {
+      return null;
+    } finally {
+      setResolvendoCircunscricao(false);
+    }
+  };
+
+  // Auto-resolve when city/state change
+  const handleUfChange = async (uf: string) => {
+    setClienteUf(uf);
+    setCircunscricaoResolvida(null);
+    if (clienteCidade.trim() && uf) {
+      const result = await resolverCircunscricao(clienteCidade, uf);
+      setCircunscricaoResolvida(result);
+    }
+  };
+
+  const handleCidadeBlur = async () => {
+    setCircunscricaoResolvida(null);
+    if (clienteCidade.trim() && clienteUf) {
+      const result = await resolverCircunscricao(clienteCidade, clienteUf);
+      setCircunscricaoResolvida(result);
+    }
+  };
+
   const gerar = async () => {
     if (!entradaCaso.trim()) { toast.error("Descreva o caso"); return; }
+    if (!clienteCidade.trim() || !clienteUf.trim()) {
+      toast.error("Informe a cidade e o estado do cliente para resolução automática da unidade PF competente.");
+      return;
+    }
 
-    // Warn about missing optional fields but don't block
-    const warnings: string[] = [];
-    if (!cidade.trim()) warnings.push("Cidade não informada — será marcada como pendente.");
-    if (!estado.trim()) warnings.push("Estado não informado — será marcado como pendente.");
-    if (warnings.length > 0) {
-      warnings.forEach(w => toast.warning(w, { duration: 4000 }));
+    // Resolve circumscription if not already done
+    let circ = circunscricaoResolvida;
+    if (!circ) {
+      circ = await resolverCircunscricao(clienteCidade, clienteUf);
+      setCircunscricaoResolvida(circ);
+    }
+
+    if (!circ) {
+      toast.warning("Não foi possível resolver automaticamente a unidade da PF para o município informado. A peça será gerada com marcador pendente.", { duration: 5000 });
     }
 
     setLoading(true);
@@ -79,9 +123,22 @@ export default function QAGerarPecaPage() {
           caso_titulo: casoTitulo,
           entrada_caso: entradaCaso,
           tipo_peca: tipoPeca,
-          profundidade, tom, foco,
-          cidade: cidade.trim() || null,
-          estado: estado.trim() || null,
+          foco,
+          // Client address for circumscription
+          cliente_cidade: clienteCidade.trim(),
+          cliente_uf: clienteUf.trim(),
+          cliente_endereco: clienteEndereco.trim() || null,
+          cliente_cep: clienteCep.trim() || null,
+          // Resolved circumscription (pre-resolved on client)
+          circunscricao_resolvida: circ ? {
+            unidade_pf: circ.unidade_pf,
+            sigla_unidade: circ.sigla_unidade,
+            tipo_unidade: circ.tipo_unidade,
+            municipio_sede: circ.municipio_sede,
+            uf: circ.uf,
+            base_legal: circ.base_legal,
+          } : null,
+          // Tempestividade
           data_notificacao: dataNotificacao.trim() || null,
           info_tempestividade: infoTempestividade.trim() || null,
         },
@@ -166,50 +223,82 @@ export default function QAGerarPecaPage() {
           </div>
         </div>
 
-        {/* Row 2: City + State (for endereçamento) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label className="text-slate-300 flex items-center gap-1.5">
-              <MapPin className="h-3.5 w-3.5 text-amber-500" /> Cidade (endereçamento)
-            </Label>
-            <Input value={cidade} onChange={e => setCidade(e.target.value)}
-              className="bg-[#0c0c14] border-slate-700 text-slate-100" placeholder="Ex: São Paulo" />
+        {/* Row 2: Client address (for automatic PF unit resolution) */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Building2 className="h-4 w-4 text-cyan-400" />
+            <Label className="text-slate-300 text-sm font-medium">Endereço do Cliente / Caso</Label>
+            <span className="text-[10px] text-slate-600 ml-1">(para resolução automática da unidade PF competente)</span>
           </div>
-          <div className="space-y-2">
-            <Label className="text-slate-300 flex items-center gap-1.5">
-              <MapPin className="h-3.5 w-3.5 text-amber-500" /> Estado (UF)
-            </Label>
-            <Select value={estado} onValueChange={setEstado}>
-              <SelectTrigger className="bg-[#0c0c14] border-slate-700 text-slate-300">
-                <SelectValue placeholder="Selecione o estado" />
-              </SelectTrigger>
-              <SelectContent>
-                {ESTADOS_BR.map(uf => <SelectItem key={uf} value={uf}>{uf}</SelectItem>)}
-              </SelectContent>
-            </Select>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-slate-400 text-xs">Cidade do cliente *</Label>
+              <Input value={clienteCidade} onChange={e => setClienteCidade(e.target.value)}
+                onBlur={handleCidadeBlur}
+                className="bg-[#0c0c14] border-slate-700 text-slate-100" placeholder="Ex: São Paulo" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-slate-400 text-xs">Estado (UF) *</Label>
+              <Select value={clienteUf} onValueChange={handleUfChange}>
+                <SelectTrigger className="bg-[#0c0c14] border-slate-700 text-slate-300">
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ESTADOS_BR.map(uf => <SelectItem key={uf} value={uf}>{uf}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-slate-400 text-xs">CEP (opcional)</Label>
+              <Input value={clienteCep} onChange={e => setClienteCep(e.target.value)}
+                className="bg-[#0c0c14] border-slate-700 text-slate-100" placeholder="00000-000" />
+            </div>
           </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-slate-400 text-xs">Endereço completo (opcional)</Label>
+            <Input value={clienteEndereco} onChange={e => setClienteEndereco(e.target.value)}
+              className="bg-[#0c0c14] border-slate-700 text-slate-100" placeholder="Rua, número, bairro..." />
+          </div>
+
+          {/* Circumscription resolution feedback */}
+          {resolvendoCircunscricao && (
+            <div className="flex items-center gap-2 text-xs text-cyan-400/70">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              Resolvendo circunscrição da PF...
+            </div>
+          )}
+          {circunscricaoResolvida && (
+            <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-lg p-3 text-xs space-y-1">
+              <div className="flex items-center gap-1.5 text-emerald-400 font-medium">
+                <CheckCircle className="h-3.5 w-3.5" />
+                Unidade PF competente resolvida automaticamente
+              </div>
+              <div className="text-slate-300">
+                <span className="font-medium">{circunscricaoResolvida.unidade_pf}</span>
+                {circunscricaoResolvida.sigla_unidade && (
+                  <span className="text-slate-500 ml-1.5">({circunscricaoResolvida.sigla_unidade})</span>
+                )}
+              </div>
+              <div className="text-slate-500">
+                {circunscricaoResolvida.tipo_unidade === "superintendencia" ? "Superintendência Regional" : "Delegacia"} — Sede: {circunscricaoResolvida.municipio_sede}/{circunscricaoResolvida.uf}
+              </div>
+              <div className="text-slate-600 text-[10px]">
+                Base legal: {circunscricaoResolvida.base_legal}
+              </div>
+            </div>
+          )}
+          {!resolvendoCircunscricao && !circunscricaoResolvida && clienteCidade && clienteUf && (
+            <div className="bg-amber-500/5 border border-amber-500/20 rounded-lg p-2.5 text-[11px] text-amber-400/80 flex items-start gap-1.5">
+              <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+              <span>Município não encontrado na tabela de circunscrições da PF. O endereçamento será marcado como pendente para revisão manual.</span>
+            </div>
+          )}
         </div>
 
-        {/* Row 3: Profundidade + Tom + Foco */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <Label className="text-slate-300">Profundidade</Label>
-            <Select value={profundidade} onValueChange={setProfundidade}>
-              <SelectTrigger className="bg-[#0c0c14] border-slate-700 text-slate-300"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {PROFUNDIDADES.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label className="text-slate-300">Tom</Label>
-            <Select value={tom} onValueChange={setTom}>
-              <SelectTrigger className="bg-[#0c0c14] border-slate-700 text-slate-300"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {TONS.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
+        {/* Row 3: Foco argumentativo */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label className="text-slate-300">Foco Argumentativo</Label>
             <Select value={foco} onValueChange={setFoco}>
@@ -218,6 +307,12 @@ export default function QAGerarPecaPage() {
                 {FOCOS.map(f => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}
               </SelectContent>
             </Select>
+          </div>
+          <div className="flex items-end pb-1">
+            <div className="text-[10px] text-slate-600 flex items-center gap-1">
+              <Info className="h-3 w-3" />
+              Profundidade e tom fixados: técnico, preciso e conciso.
+            </div>
           </div>
         </div>
 
@@ -266,6 +361,11 @@ export default function QAGerarPecaPage() {
             <div className="flex-1 text-xs text-slate-400">
               {resultado.fontes_utilizadas?.length || 0} fontes recuperadas •
               {resultado.fontes_utilizadas?.filter((f: any) => f.validada).length || 0} validadas
+              {resultado.circunscricao_utilizada && (
+                <div className="text-emerald-400/70 mt-0.5">
+                  ✓ Unidade PF: {resultado.circunscricao_utilizada.unidade_pf}
+                </div>
+              )}
             </div>
             <Button variant="outline" size="sm" onClick={copiarMinuta} className="border-slate-700 text-slate-300">
               <Download className="h-3.5 w-3.5 mr-1" /> Copiar
