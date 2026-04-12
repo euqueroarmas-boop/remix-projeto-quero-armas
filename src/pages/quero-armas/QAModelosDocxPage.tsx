@@ -15,12 +15,13 @@ const TIPOS_PECA = [
   { value: "defesa_porte_arma", label: "Defesa para Porte de Arma" },
   { value: "recurso_administrativo", label: "Recurso Administrativo" },
   { value: "resposta_a_notificacao", label: "Resposta à Notificação" },
-  { value: "generico", label: "Genérico" },
 ];
 
 const VARIAVEIS = [
-  "{{titulo}}", "{{cliente_nome}}", "{{resumo_fatico}}", "{{fundamentacao}}",
-  "{{jurisprudencia}}", "{{pedidos}}", "{{fechamento}}", "{{data_atual}}", "{{assinatura}}",
+  "{{titulo}}", "{{cliente_nome}}", "{{cidade}}", "{{estado}}", "{{enderecamento}}",
+  "{{preambulo}}", "{{resumo_fatico}}", "{{fundamentacao}}",
+  "{{jurisprudencia}}", "{{alegacoes_finais}}", "{{pedidos}}", "{{fechamento}}",
+  "{{data_atual}}", "{{assinatura}}",
 ];
 
 export default function QAModelosDocxPage() {
