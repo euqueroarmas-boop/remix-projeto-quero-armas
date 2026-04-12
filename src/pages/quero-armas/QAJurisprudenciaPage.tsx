@@ -143,7 +143,7 @@ export default function QAJurisprudenciaPage() {
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 text-sm">
-                    <span className="font-medium text-amber-400">{j.tribunal}</span>
+                    <span className="font-medium text-white">{j.tribunal}</span>
                     {j.numero_processo && <span className="text-slate-400">• {j.numero_processo}</span>}
                   </div>
                   {j.tema && <div className="text-xs text-slate-500 mt-0.5">{j.tema}</div>}
