@@ -319,8 +319,10 @@ export default function QADocumentoDetalhePage() {
       {/* ─── Governance Actions ─── */}
       <div className="bg-[#12121c] border border-slate-800/40 rounded-xl p-5">
         <h2 className="text-sm font-medium text-slate-300 mb-3">Ações de Governança</h2>
+        {isAuxiliar ? (
+          <p className="text-xs text-slate-500">Documentos auxiliares do caso não possuem ações de governança de aprendizado. São utilizados apenas como suporte factual.</p>
+        ) : (
         <div className="flex flex-wrap gap-2">
-          {/* Validar / Rejeitar */}
           {!isValidado && isConcluido && (
             <Button size="sm" disabled={acting} onClick={() => handleAction("validar")}
               className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5">
@@ -333,8 +335,6 @@ export default function QADocumentoDetalhePage() {
               <ShieldX className="h-3.5 w-3.5" /> Rejeitar documento
             </Button>
           )}
-
-          {/* Ativar / Desativar IA */}
           {isAtivoIA ? (
             <Button size="sm" variant="outline" disabled={acting} onClick={() => handleAction("desativar_ia")}
               className="border-amber-600/40 text-amber-400 hover:bg-amber-500/10 gap-1.5">
@@ -346,8 +346,6 @@ export default function QADocumentoDetalhePage() {
               <Zap className="h-3.5 w-3.5" /> Ativar na IA
             </Button>
           )}
-
-          {/* Referência */}
           {isValidado && !isRef && (
             <Button size="sm" variant="outline" disabled={acting} onClick={() => handleAction("promover_referencia")}
               className="border-amber-500/40 text-amber-300 hover:bg-amber-500/10 gap-1.5">
@@ -360,9 +358,9 @@ export default function QADocumentoDetalhePage() {
               <StarOff className="h-3.5 w-3.5" /> Remover da referência
             </Button>
           )}
-
           {acting && <Loader2 className="h-4 w-4 animate-spin text-amber-400 ml-2 self-center" />}
         </div>
+        )}
       </div>
 
       {doc.hash_arquivo && (
