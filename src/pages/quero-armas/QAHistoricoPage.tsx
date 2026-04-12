@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import {
   Loader2, PenTool, Eye, ThumbsUp, ThumbsDown, Star,
-  Scale, Gavel, BookOpen, CheckCircle, MessageSquare, Bot,
+  Scale, Gavel, BookOpen, CheckCircle, MessageSquare,
 } from "lucide-react";
 import { useQAAuth } from "@/components/quero-armas/hooks/useQAAuth";
 
@@ -98,81 +98,69 @@ export default function QAHistoricoPage() {
 
   const statusBadge = (s: string) => {
     const map: Record<string, string> = {
-      rascunho: "text-slate-500",
-      em_revisao: "text-amber-400",
-      corrigido: "text-blue-400",
-      aprovado: "text-emerald-400",
-      aprovado_como_referencia: "text-purple-400",
-      rejeitado: "text-red-400",
+      rascunho: "text-slate-500", em_revisao: "text-amber-400", corrigido: "text-blue-400",
+      aprovado: "text-emerald-400", aprovado_como_referencia: "text-purple-400", rejeitado: "text-red-400",
     };
     return map[s] || "text-slate-500";
   };
 
-  const scoreColor = (s: number) => {
-    if (s >= 0.7) return "text-emerald-400";
-    if (s >= 0.4) return "text-amber-400";
-    return "text-red-400";
-  };
-
   return (
-    <div className="space-y-4 max-w-5xl">
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <h1 className="text-base font-semibold text-slate-300">Histórico</h1>
-        <div className="flex gap-1">
+    <div className="space-y-3 md:space-y-4 max-w-5xl">
+      <div className="flex items-center justify-between gap-2">
+        <h1 className="text-sm md:text-base font-semibold text-slate-300">Histórico</h1>
+        <div className="flex gap-0.5">
           <button onClick={() => setTab("geracoes")}
-            className={`px-3 py-1.5 rounded text-[11px] uppercase tracking-wider font-medium transition-colors ${
+            className={`px-2.5 py-1 rounded text-[10px] md:text-[11px] uppercase tracking-wider font-medium transition-colors ${
               tab === "geracoes" ? "bg-[#14142a] text-slate-300" : "text-slate-600 hover:text-slate-400"
-            }`}>
-            Peças
-          </button>
+            }`}>Peças</button>
           <button onClick={() => setTab("consultas")}
-            className={`px-3 py-1.5 rounded text-[11px] uppercase tracking-wider font-medium transition-colors ${
+            className={`px-2.5 py-1 rounded text-[10px] md:text-[11px] uppercase tracking-wider font-medium transition-colors ${
               tab === "consultas" ? "bg-[#14142a] text-slate-300" : "text-slate-600 hover:text-slate-400"
-            }`}>
-            Consultas
-          </button>
+            }`}>Consultas</button>
         </div>
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-12">
-          <div className="w-5 h-5 border-2 border-slate-700 border-t-slate-400 rounded-full animate-spin" />
-        </div>
+        <div className="flex justify-center py-10"><div className="w-4 h-4 border-2 border-slate-700 border-t-slate-400 rounded-full animate-spin" /></div>
       ) : items.length === 0 ? (
-        <div className="text-center py-12 text-slate-600 text-[12px]">Nenhum registro encontrado</div>
+        <div className="text-center py-10 text-slate-600 text-[11px]">Nenhum registro</div>
       ) : (
         <div className="bg-[#0c0c16] border border-[#1a1a2e] rounded overflow-hidden">
-          {/* Table header */}
-          <div className="grid grid-cols-[1fr_120px_80px_80px_60px] gap-2 px-3 py-2 border-b border-[#1a1a2e] text-[9px] text-slate-600 uppercase tracking-[0.15em]">
-            <span>Título</span>
-            <span>Tipo</span>
-            <span>Status</span>
-            <span>Data</span>
-            <span className="text-right">Ações</span>
+          {/* Desktop header */}
+          <div className="hidden md:grid grid-cols-[1fr_120px_80px_80px_60px] gap-2 px-3 py-1.5 border-b border-[#1a1a2e] text-[9px] text-slate-600 uppercase tracking-[0.12em]">
+            <span>Título</span><span>Tipo</span><span>Status</span><span>Data</span><span className="text-right">Ações</span>
           </div>
           {items.map((item: any) => (
-            <div key={item.id} className="grid grid-cols-[1fr_120px_80px_80px_60px] gap-2 px-3 py-2 border-b border-[#1a1a2e]/50 hover:bg-[#14142a]/50 transition-colors items-center">
-              <span className="text-[12px] text-slate-400 truncate">
-                {item.titulo_geracao || item.caso_titulo || "Sem título"}
-              </span>
-              <span className="text-[10px] text-slate-600 font-mono truncate">
-                {(item.tipo_peca || item.tipo_peca || "—").replace(/_/g, " ")}
-              </span>
-              <span className={`text-[10px] font-mono ${statusBadge(item.status_revisao || "")}`}>
-                {(item.status_revisao || "—").replace(/_/g, " ")}
-              </span>
-              <span className="text-[10px] text-slate-700 font-mono tabular-nums">
-                {new Date(item.created_at).toLocaleDateString("pt-BR")}
-              </span>
-              <div className="flex justify-end gap-0.5">
-                <button onClick={() => setDetailItem(item)} className="p-1 text-slate-600 hover:text-slate-400 transition-colors">
-                  <Eye className="h-3.5 w-3.5" />
-                </button>
-                {tab === "geracoes" && canReview && (
-                  <button onClick={() => openReview(item)} className="p-1 text-slate-600 hover:text-slate-400 transition-colors">
-                    <MessageSquare className="h-3.5 w-3.5" />
-                  </button>
-                )}
+            <div key={item.id} className="border-b border-[#1a1a2e]/40 hover:bg-[#14142a]/50 transition-colors">
+              {/* Mobile */}
+              <div className="md:hidden px-2.5 py-1.5">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[11px] text-slate-400 truncate flex-1 min-w-0">{item.titulo_geracao || item.caso_titulo || "Sem título"}</span>
+                  <span className={`text-[8px] font-mono shrink-0 ${statusBadge(item.status_revisao || "")}`}>
+                    {(item.status_revisao || "—").replace(/_/g, " ")}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-[9px] text-slate-600 font-mono truncate">{(item.tipo_peca || "—").replace(/_/g, " ")}</span>
+                  <span className="text-[8px] text-slate-700 font-mono tabular-nums ml-auto">{new Date(item.created_at).toLocaleDateString("pt-BR")}</span>
+                  <button onClick={() => setDetailItem(item)} className="p-0.5 text-slate-600 hover:text-slate-400"><Eye className="h-3 w-3" /></button>
+                  {tab === "geracoes" && canReview && (
+                    <button onClick={() => openReview(item)} className="p-0.5 text-slate-600 hover:text-slate-400"><MessageSquare className="h-3 w-3" /></button>
+                  )}
+                </div>
+              </div>
+              {/* Desktop */}
+              <div className="hidden md:grid grid-cols-[1fr_120px_80px_80px_60px] gap-2 px-3 py-2 items-center">
+                <span className="text-[12px] text-slate-400 truncate">{item.titulo_geracao || item.caso_titulo || "Sem título"}</span>
+                <span className="text-[10px] text-slate-600 font-mono truncate">{(item.tipo_peca || "—").replace(/_/g, " ")}</span>
+                <span className={`text-[10px] font-mono ${statusBadge(item.status_revisao || "")}`}>{(item.status_revisao || "—").replace(/_/g, " ")}</span>
+                <span className="text-[10px] text-slate-700 font-mono tabular-nums">{new Date(item.created_at).toLocaleDateString("pt-BR")}</span>
+                <div className="flex justify-end gap-0.5">
+                  <button onClick={() => setDetailItem(item)} className="p-1 text-slate-600 hover:text-slate-400"><Eye className="h-3.5 w-3.5" /></button>
+                  {tab === "geracoes" && canReview && (
+                    <button onClick={() => openReview(item)} className="p-1 text-slate-600 hover:text-slate-400"><MessageSquare className="h-3.5 w-3.5" /></button>
+                  )}
+                </div>
               </div>
             </div>
           ))}
@@ -181,31 +169,27 @@ export default function QAHistoricoPage() {
 
       {/* Detail Dialog */}
       <Dialog open={!!detailItem} onOpenChange={() => setDetailItem(null)}>
-        <DialogContent className="bg-[#0a0a12] border-[#1a1a2e] text-slate-300 max-w-3xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="bg-[#0a0a12] border-[#1a1a2e] text-slate-300 max-w-3xl max-h-[90vh] overflow-y-auto p-3 md:p-6">
           <DialogHeader>
-            <DialogTitle className="text-slate-300 text-sm">
-              {detailItem?.titulo_geracao || detailItem?.caso_titulo || "Detalhes"}
-            </DialogTitle>
+            <DialogTitle className="text-slate-300 text-sm">{detailItem?.titulo_geracao || detailItem?.caso_titulo || "Detalhes"}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 mt-2">
+          <div className="space-y-3 mt-1">
             {(detailItem?.fontes_recuperadas_json || detailItem?.fundamentos_utilizados_json)?.length > 0 && (
               <div>
-                <span className="text-[9px] text-slate-600 uppercase tracking-[0.15em]">Fontes Utilizadas</span>
-                <div className="space-y-0.5 mt-1.5">
+                <span className="text-[9px] text-slate-600 uppercase tracking-[0.12em]">Fontes</span>
+                <div className="space-y-0.5 mt-1">
                   {(detailItem?.fontes_recuperadas_json || detailItem?.fundamentos_utilizados_json)?.map((f: any, i: number) => (
-                    <div key={i} className="flex items-center gap-2 text-[11px] text-slate-500">
+                    <div key={i} className="flex items-center gap-1.5 text-[10px] text-slate-500">
                       <span className="w-1 h-1 rounded-full bg-slate-700 shrink-0" />
-                      <span>{f.titulo}</span>
+                      <span className="truncate">{f.titulo}</span>
                     </div>
                   ))}
                 </div>
               </div>
             )}
             <div>
-              <span className="text-[9px] text-slate-600 uppercase tracking-[0.15em]">
-                {tab === "geracoes" ? "Minuta" : "Resposta"}
-              </span>
-              <div className="text-[12px] text-slate-400 whitespace-pre-wrap leading-relaxed bg-[#08080f] rounded p-3 max-h-[400px] overflow-y-auto mt-1.5 font-serif">
+              <span className="text-[9px] text-slate-600 uppercase tracking-[0.12em]">{tab === "geracoes" ? "Minuta" : "Resposta"}</span>
+              <div className="text-[11px] text-slate-400 whitespace-pre-wrap leading-relaxed bg-[#08080f] rounded p-2.5 max-h-[350px] overflow-y-auto mt-1 font-serif">
                 {detailItem?.minuta_gerada || detailItem?.resposta_ia}
               </div>
             </div>
@@ -215,37 +199,34 @@ export default function QAHistoricoPage() {
 
       {/* Review Dialog */}
       <Dialog open={reviewOpen} onOpenChange={setReviewOpen}>
-        <DialogContent className="bg-[#0a0a12] border-[#1a1a2e] text-slate-300 max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-slate-300 text-sm">Revisão da Peça</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 mt-2">
-            <div className="space-y-1.5">
-              <Label className="text-[10px] text-slate-600 uppercase tracking-wider">Minuta (editável)</Label>
+        <DialogContent className="bg-[#0a0a12] border-[#1a1a2e] text-slate-300 max-w-4xl max-h-[90vh] overflow-y-auto p-3 md:p-6">
+          <DialogHeader><DialogTitle className="text-slate-300 text-sm">Revisão</DialogTitle></DialogHeader>
+          <div className="space-y-3 mt-1">
+            <div className="space-y-1">
+              <Label className="text-[9px] text-slate-600 uppercase tracking-wider">Minuta (editável)</Label>
               <Textarea value={reviewText} onChange={e => setReviewText(e.target.value)}
-                className="bg-[#08080f] border-[#1a1a2e] text-slate-400 min-h-[300px] font-serif text-[12px]" />
+                className="bg-[#08080f] border-[#1a1a2e] text-slate-400 min-h-[200px] md:min-h-[300px] font-serif text-[11px]" />
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-[10px] text-slate-600 uppercase tracking-wider">Justificativa</Label>
+            <div className="space-y-1">
+              <Label className="text-[9px] text-slate-600 uppercase tracking-wider">Justificativa</Label>
               <Textarea value={reviewJustificativa} onChange={e => setReviewJustificativa(e.target.value)}
-                className="bg-[#08080f] border-[#1a1a2e] text-slate-400 min-h-[60px] text-[12px]"
-                placeholder="Opcional" />
+                className="bg-[#08080f] border-[#1a1a2e] text-slate-400 min-h-[50px] text-[11px]" placeholder="Opcional" />
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5">
               <Button onClick={() => submitReview("aprovacao")} disabled={saving} size="sm"
-                className="bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 border border-emerald-600/20 h-8 text-[11px]">
+                className="bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 border border-emerald-600/20 h-7 text-[10px]">
                 <ThumbsUp className="h-3 w-3 mr-1" /> Aprovar
               </Button>
               <Button onClick={() => submitReview("referencia", true)} disabled={saving} size="sm"
-                className="bg-purple-600/20 text-purple-400 hover:bg-purple-600/30 border border-purple-600/20 h-8 text-[11px]">
-                <Star className="h-3 w-3 mr-1" /> Referência
+                className="bg-purple-600/20 text-purple-400 hover:bg-purple-600/30 border border-purple-600/20 h-7 text-[10px]">
+                <Star className="h-3 w-3 mr-1" /> Ref
               </Button>
               <Button onClick={() => submitReview("correcao")} disabled={saving} size="sm"
-                className="bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 border border-blue-600/20 h-8 text-[11px]">
-                <PenTool className="h-3 w-3 mr-1" /> Correção
+                className="bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 border border-blue-600/20 h-7 text-[10px]">
+                <PenTool className="h-3 w-3 mr-1" /> Corrigir
               </Button>
               <Button onClick={() => submitReview("rejeicao")} disabled={saving} size="sm"
-                className="bg-red-600/10 text-red-400 hover:bg-red-600/20 border border-red-600/20 h-8 text-[11px]">
+                className="bg-red-600/10 text-red-400 hover:bg-red-600/20 border border-red-600/20 h-7 text-[10px]">
                 <ThumbsDown className="h-3 w-3 mr-1" /> Rejeitar
               </Button>
             </div>
