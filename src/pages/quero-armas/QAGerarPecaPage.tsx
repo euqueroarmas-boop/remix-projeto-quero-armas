@@ -545,7 +545,7 @@ export default function QAGerarPecaPage() {
   const hasDocsPending = arquivosAuxiliares.some(a => !["done", "failed", "pending"].includes(a.stage));
   const hasDocsFailed = arquivosAuxiliares.some(a => a.stage === "failed");
   const hasDocsUnclassified = arquivosAuxiliares.some(a => a.stage === "pending");
-  const canGenerate = !loading && !hasDocsPending && !hasDocsFailed && !hasDocsUnclassified;
+  const canGenerate = !loading && !hasDocsPending && !hasDocsFailed && !hasDocsUnclassified && arquivosAuxiliares.every(a => a.tipo);
 
   const gerar = async () => {
     if (!nomeRequerente.trim()) { toast.error("Informe o nome completo do requerente"); return; }
