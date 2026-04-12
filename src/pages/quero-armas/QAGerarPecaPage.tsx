@@ -20,7 +20,7 @@ import { useQAAuth } from "@/components/quero-armas/hooks/useQAAuth";
 import { logSistema } from "@/lib/logSistema";
 
 /* ── Types ── */
-type DocUploadStage = "pending" | "uploading" | "saved" | "extracting" | "processing" | "done" | "failed";
+type DocUploadStage = "pending" | "queued" | "uploading" | "saved" | "extracting" | "processing" | "done" | "failed";
 
 interface ArquivoAuxiliar {
   file: File;
@@ -28,6 +28,8 @@ interface ArquivoAuxiliar {
   tipo: string;
   stage: DocUploadStage;
   docId?: string;
+  jobId?: string;
+  storagePath?: string;
   error?: string;
   startedAt?: number;
 }
@@ -121,6 +123,7 @@ const ESTADOS_BR = [
 
 const STAGE_LABELS: Record<DocUploadStage, string> = {
   pending: "Aguardando classificação",
+  queued: "Na fila",
   uploading: "Enviando arquivo...",
   saved: "Arquivo salvo",
   extracting: "Extraindo texto...",
@@ -130,7 +133,7 @@ const STAGE_LABELS: Record<DocUploadStage, string> = {
 };
 
 function stageProgress(s: DocUploadStage): number {
-  return { pending: 0, uploading: 20, saved: 40, extracting: 60, processing: 80, done: 100, failed: 100 }[s];
+  return { pending: 0, queued: 5, uploading: 20, saved: 40, extracting: 60, processing: 80, done: 100, failed: 100 }[s];
 }
 
 function stageColor(s: DocUploadStage): string {
@@ -396,11 +399,11 @@ export default function QAGerarPecaPage() {
   const handleChangeTipoDoc = (index: number, tipo: string) => {
     if (!tipo) return;
     setArquivosAuxiliares(prev => prev.map((a, i) => i === index ? { ...a, tipo } : a));
-    // Immediately trigger upload+processing after classification
+    // Immediately trigger job-based upload+processing after classification
     const arq = arquivosAuxiliares[index];
     if (arq && arq.stage === "pending") {
       setTimeout(() => {
-        void uploadSingleDoc({ ...arq, tipo }, index);
+        void startDocJob({ ...arq, tipo }, index);
       }, 50);
     }
   };
@@ -409,66 +412,148 @@ export default function QAGerarPecaPage() {
     setArquivosAuxiliares(prev => prev.map((a, i) => i === index ? { ...a, stage, ...extra } : a));
   };
 
-  const uploadSingleDoc = async (arq: ArquivoAuxiliar, index: number): Promise<string | null> => {
+  /** Upload file to storage, create job in DB, dispatch to background edge function */
+  const startDocJob = async (arq: ArquivoAuxiliar, index: number): Promise<string | null> => {
     if (arq.stage === "done" && arq.docId) return arq.docId;
     if (!arq.tipo) { toast.error("Selecione o tipo documental primeiro"); return null; }
+
     setDocStage(index, "uploading", { startedAt: Date.now(), error: undefined });
+
     try {
+      // Step 1: Upload file to storage (this is the only sync wait)
       const safeName = sanitizeFileName(arq.file.name);
-      const storagePath = `auxiliares/${Date.now()}_${crypto.randomUUID().slice(0,8)}_${safeName}`;
+      const storagePath = `auxiliares/${Date.now()}_${crypto.randomUUID().slice(0, 8)}_${safeName}`;
 
-      // Upload with 90s timeout
-      const uploadPromise = supabase.storage.from("qa-documentos").upload(storagePath, arq.file);
-      const timeoutPromise = new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Upload excedeu o tempo limite (90s). Tente novamente.")), 90000));
-      const { error: upErr } = await Promise.race([uploadPromise, timeoutPromise]);
-      if (upErr) throw upErr;
+      const { error: upErr } = await supabase.storage.from("qa-documentos").upload(storagePath, arq.file);
+      if (upErr) throw new Error(`Upload falhou: ${upErr.message}`);
 
-      setDocStage(index, "saved");
+      setDocStage(index, "saved", { storagePath });
 
-      // DB insert with 15s timeout
-      const dbPromise = supabase.from("qa_documentos_conhecimento").insert({
-        titulo: arq.nome, nome_arquivo: arq.file.name, storage_path: storagePath,
-        tipo_documento: arq.tipo, tipo_origem: "upload", papel_documento: "auxiliar_caso",
-        categoria: arq.tipo, status_processamento: "pendente", status_validacao: "validado",
-        ativo: true, ativo_na_ia: false, caso_id: nomeRequerente || null,
-        enviado_por: user?.id || null, mime_type: arq.file.type || null, tamanho_bytes: arq.file.size,
+      // Step 2: Create persistent job in DB
+      setDocStage(index, "queued");
+      const { data: jobData, error: jobErr } = await supabase.from("qa_document_jobs" as any).insert({
+        caso_id: nomeRequerente || null,
+        tipo_documental: arq.tipo,
+        status: "queued",
+        etapa_atual: "criado",
+        storage_path: storagePath,
+        nome_arquivo: arq.file.name,
+        mime_type: arq.file.type || null,
+        tamanho_bytes: arq.file.size,
+        user_id: user?.id || null,
+        started_at: new Date().toISOString(),
       }).select("id").single();
-      const dbTimeout = new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Registro no banco excedeu tempo limite.")), 15000));
-      const { data: docData, error: dbErr } = await Promise.race([dbPromise, dbTimeout]);
-      if (dbErr) throw dbErr;
 
-      setDocStage(index, "extracting");
-      await supabase.functions.invoke("qa-ingest-document", { body: { storage_path: storagePath, user_id: user?.id } });
-      setDocStage(index, "processing");
-      const docId = docData.id;
+      if (jobErr) throw new Error(`Erro ao criar job: ${jobErr.message}`);
+      const jobId = (jobData as any).id;
 
-      // Poll with 90s timeout
-      const pollStart = Date.now();
-      while (Date.now() - pollStart < 90000) {
-        await new Promise(r => setTimeout(r, 3000));
-        const { data: check } = await supabase.from("qa_documentos_conhecimento").select("status_processamento").eq("id", docId).maybeSingle();
-        if (check?.status_processamento === "concluido") { setDocStage(index, "done", { docId }); return docId; }
-        if (check?.status_processamento === "erro" || check?.status_processamento === "texto_invalido") throw new Error(`Extração falhou: ${check.status_processamento}`);
-      }
-      // Timeout on poll — mark as done anyway (processing continues in background)
-      setDocStage(index, "done", { docId });
-      return docId;
+      setDocStage(index, "extracting", { jobId });
+
+      // Step 3: Dispatch to background edge function (fire-and-forget)
+      supabase.functions.invoke("qa-process-job", { body: { job_id: jobId } }).catch(() => {});
+
+      // Step 4: Start polling the job status
+      void pollJobStatus(jobId, index);
+
+      return jobId;
     } catch (err: any) {
       setDocStage(index, "failed", { error: err.message || "Falha no processamento" });
       return null;
     }
   };
 
+  /** Poll job status from DB — no artificial timeout, polls until terminal state */
+  const pollJobStatus = async (jobId: string, index: number) => {
+    const POLL_INTERVAL = 3000;
+    const MAX_POLLS = 300; // 15 minutes max polling from frontend
+    let polls = 0;
+
+    while (polls < MAX_POLLS) {
+      await new Promise(r => setTimeout(r, POLL_INTERVAL));
+      polls++;
+
+      try {
+        const { data: job } = await supabase
+          .from("qa_document_jobs" as any)
+          .select("status, etapa_atual, documento_id, erro")
+          .eq("id", jobId)
+          .maybeSingle();
+
+        if (!job) continue;
+        const j = job as any;
+
+        // Map job status to UI stage
+        const statusMap: Record<string, DocUploadStage> = {
+          queued: "queued",
+          uploading: "uploading",
+          saved: "saved",
+          extracting: "extracting",
+          processing: "processing",
+          done: "done",
+          failed: "failed",
+        };
+
+        const uiStage = statusMap[j.status] || "processing";
+
+        if (j.status === "done") {
+          setDocStage(index, "done", { docId: j.documento_id, jobId });
+          return;
+        }
+
+        if (j.status === "failed") {
+          setDocStage(index, "failed", { error: j.erro || "Erro no processamento", jobId });
+          return;
+        }
+
+        // Update intermediate stage
+        setDocStage(index, uiStage, { jobId });
+      } catch {
+        // Network error — keep polling, job continues in background
+      }
+    }
+
+    // After max polls, check final state
+    try {
+      const { data: final } = await supabase.from("qa_document_jobs" as any).select("status, documento_id, erro").eq("id", jobId).maybeSingle();
+      const f = final as any;
+      if (f?.status === "done") {
+        setDocStage(index, "done", { docId: f.documento_id, jobId });
+      } else if (f?.status === "failed") {
+        setDocStage(index, "failed", { error: f.erro || "Erro no processamento", jobId });
+      } else {
+        // Still processing — mark as processing, user can check back later
+        setDocStage(index, "processing", { jobId });
+        toast.info(`${arquivosAuxiliares[index]?.nome}: processamento continua em background`);
+      }
+    } catch { /* ignore */ }
+  };
+
   const uploadAllAuxiliares = async (): Promise<string[]> => {
-    const results = await Promise.all(arquivosAuxiliares.map((arq, i) => uploadSingleDoc(arq, i)));
-    return results.filter((id): id is string => id !== null);
+    // All docs should already be processed via jobs — just collect IDs
+    return arquivosAuxiliares.filter(a => a.stage === "done" && a.docId).map(a => a.docId!);
   };
 
   const handleRetryDoc = async (index: number) => {
     const arq = arquivosAuxiliares[index];
     if (!arq) return;
-    const id = await uploadSingleDoc(arq, index);
-    if (id) toast.success(`${arq.nome} processado com sucesso`);
+
+    // If job exists, try to re-dispatch it
+    if (arq.jobId) {
+      // Reset job status in DB
+      await supabase.from("qa_document_jobs" as any).update({
+        status: "queued", etapa_atual: "retry", erro: null,
+        tentativas: 0, finished_at: null, updated_at: new Date().toISOString(),
+      }).eq("id", arq.jobId);
+
+      setDocStage(index, "queued", { error: undefined, startedAt: Date.now() });
+      supabase.functions.invoke("qa-process-job", { body: { job_id: arq.jobId } }).catch(() => {});
+      void pollJobStatus(arq.jobId, index);
+      return;
+    }
+
+    // No job yet — start fresh
+    const id = await startDocJob(arq, index);
+    if (id) toast.success(`${arq.nome} reenviado para processamento`);
   };
 
   /* ── Save case ── */
@@ -925,13 +1010,16 @@ export default function QAGerarPecaPage() {
                         </Button>
                       )}
                       {arq.stage === "done" && <CheckCircle className="h-3.5 w-3.5 text-emerald-400" />}
-                      {!["uploading", "saved", "extracting", "processing"].includes(arq.stage) && (
+                      {!["queued", "uploading", "saved", "extracting", "processing"].includes(arq.stage) && (
                         <button onClick={() => handleRemoveFile(i)} className="text-slate-700 hover:text-red-400"><X className="h-3 w-3" /></button>
                       )}
                     </div>
                   </div>
                   {!["pending", "done"].includes(arq.stage) && <Progress value={stageProgress(arq.stage)} className="h-1" />}
                   {arq.error && <div className="text-[9px] text-red-400/80 bg-red-500/5 rounded px-2 py-0.5">{arq.error}</div>}
+                  {!["pending", "done", "failed"].includes(arq.stage) && (
+                    <div className="text-[9px] text-slate-600 italic">O processamento continua mesmo se você sair da tela.</div>
+                  )}
                 </div>
               ))}
             </div>

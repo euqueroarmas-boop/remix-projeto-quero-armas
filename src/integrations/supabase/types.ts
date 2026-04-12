@@ -2196,6 +2196,66 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_document_jobs: {
+        Row: {
+          caso_id: string | null
+          created_at: string
+          documento_id: string | null
+          erro: string | null
+          etapa_atual: string | null
+          finished_at: string | null
+          id: string
+          mime_type: string | null
+          nome_arquivo: string | null
+          started_at: string | null
+          status: string
+          storage_path: string | null
+          tamanho_bytes: number | null
+          tentativas: number
+          tipo_documental: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          caso_id?: string | null
+          created_at?: string
+          documento_id?: string | null
+          erro?: string | null
+          etapa_atual?: string | null
+          finished_at?: string | null
+          id?: string
+          mime_type?: string | null
+          nome_arquivo?: string | null
+          started_at?: string | null
+          status?: string
+          storage_path?: string | null
+          tamanho_bytes?: number | null
+          tentativas?: number
+          tipo_documental?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          caso_id?: string | null
+          created_at?: string
+          documento_id?: string | null
+          erro?: string | null
+          etapa_atual?: string | null
+          finished_at?: string | null
+          id?: string
+          mime_type?: string | null
+          nome_arquivo?: string | null
+          started_at?: string | null
+          status?: string
+          storage_path?: string | null
+          tamanho_bytes?: number | null
+          tentativas?: number
+          tipo_documental?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       qa_documentos_conhecimento: {
         Row: {
           ativo: boolean
