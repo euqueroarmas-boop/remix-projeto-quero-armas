@@ -91,7 +91,7 @@ function validateQuality(text: string): { pass: boolean; issues: string[] } {
   const hasIN201 = /201\/2021|IN\s*n?º?\s*201/i.test(text);
   const hasLei9784 = /9\.784/i.test(text);
   const normsUsed = [hasLei10826, hasDecreto11615, hasIN201, hasLei9784].filter(Boolean).length;
-  if (normsUsed < 2) issues.push(`base_normativa_insuficiente:${normsUsed}/4`);
+  if (normsUsed < 3) issues.push(`base_normativa_insuficiente:${normsUsed}/4`);
   // Check preamble fluidity
   if (!text.includes("pelos fatos e fundamentos a seguir expostos")) issues.push("preambulo_sem_formula_legal");
   return { pass: issues.length === 0, issues };
