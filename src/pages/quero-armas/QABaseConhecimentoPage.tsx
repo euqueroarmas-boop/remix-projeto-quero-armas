@@ -38,11 +38,33 @@ const TIPOS_DOC = [
   { value: "outro", label: "Outro" },
 ];
 
+const TIPOS_AUXILIAR = [
+  { value: "boletim_ocorrencia", label: "Boletim de Ocorrência" },
+  { value: "laudo_medico", label: "Laudo Médico" },
+  { value: "laudo_psicologico", label: "Laudo Psicológico/Psiquiátrico" },
+  { value: "notificacao_recebida", label: "Notificação Recebida" },
+  { value: "indeferimento", label: "Indeferimento" },
+  { value: "comprovante", label: "Comprovante" },
+  { value: "certidao", label: "Certidão" },
+  { value: "documento_pessoal", label: "Documento Pessoal" },
+  { value: "declaracao", label: "Declaração" },
+  { value: "relatorio", label: "Relatório" },
+  { value: "exame", label: "Exame" },
+  { value: "anexo_cliente", label: "Anexo do Cliente" },
+  { value: "outro_auxiliar", label: "Outro (auxiliar)" },
+];
+
 const TIPOS_ORIGEM_FILTER = [
   { value: "todos", label: "Todas origens" },
   { value: "arquivo_upload", label: "Upload" },
   { value: "link_publico", label: "Link público" },
   { value: "cadastro_manual", label: "Manual" },
+];
+
+const PAPEIS_DOC_FILTER = [
+  { value: "todos", label: "Todos os papéis" },
+  { value: "aprendizado", label: "Aprendizado / Modelo" },
+  { value: "auxiliar_caso", label: "Auxiliar do Caso" },
 ];
 
 /* ─── Import stage definitions ─── */
@@ -157,7 +179,10 @@ export default function QABaseConhecimentoPage() {
   const [linkUrl, setLinkUrl] = useState("");
   const [linkTitulo, setLinkTitulo] = useState("");
   const [linkTipo, setLinkTipo] = useState("outro");
+  const [linkPapel, setLinkPapel] = useState<"aprendizado" | "auxiliar_caso">("aprendizado");
+  const [linkCasoId, setLinkCasoId] = useState("");
   const [importingLink, setImportingLink] = useState(false);
+  const [filtroPapel, setFiltroPapel] = useState("todos");
 
   // Bulk import
   const [showBulkDialog, setShowBulkDialog] = useState(false);
