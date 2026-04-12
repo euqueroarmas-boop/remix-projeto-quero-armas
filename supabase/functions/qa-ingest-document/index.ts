@@ -134,8 +134,7 @@ async function processDocument(storage_path: string, user_id: string | null) {
     // Step 3: Compute file hash
     let hashHex = "";
     try {
-      const arrayBuf = await fileData.arrayBuffer();
-      const hashBuffer = await crypto.subtle.digest("SHA-256", arrayBuf);
+      const hashBuffer = await crypto.subtle.digest("SHA-256", rawArrayBuf);
       hashHex = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, "0")).join("");
     } catch {
       hashHex = "hash_unavailable";
