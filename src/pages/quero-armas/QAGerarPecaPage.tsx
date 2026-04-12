@@ -20,7 +20,7 @@ import { useQAAuth } from "@/components/quero-armas/hooks/useQAAuth";
 import { logSistema } from "@/lib/logSistema";
 
 /* ── Types ── */
-type DocUploadStage = "pending" | "uploading" | "saved" | "extracting" | "processing" | "done" | "failed";
+type DocUploadStage = "pending" | "queued" | "uploading" | "saved" | "extracting" | "processing" | "done" | "failed";
 
 interface ArquivoAuxiliar {
   file: File;
@@ -28,6 +28,8 @@ interface ArquivoAuxiliar {
   tipo: string;
   stage: DocUploadStage;
   docId?: string;
+  jobId?: string;
+  storagePath?: string;
   error?: string;
   startedAt?: number;
 }
