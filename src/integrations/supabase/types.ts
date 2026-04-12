@@ -1999,11 +1999,15 @@ export type Database = {
           created_at: string
           entrada_usuario: string
           filtros_aplicados_json: Json | null
+          foco: string | null
           fontes_recuperadas_json: Json | null
           id: string
           observacoes_ia: string | null
+          profundidade: string | null
           resposta_ia: string | null
+          score_confianca: number | null
           tipo_peca: string | null
+          tom: string | null
           usuario_id: string
         }
         Insert: {
@@ -2012,11 +2016,15 @@ export type Database = {
           created_at?: string
           entrada_usuario: string
           filtros_aplicados_json?: Json | null
+          foco?: string | null
           fontes_recuperadas_json?: Json | null
           id?: string
           observacoes_ia?: string | null
+          profundidade?: string | null
           resposta_ia?: string | null
+          score_confianca?: number | null
           tipo_peca?: string | null
+          tom?: string | null
           usuario_id: string
         }
         Update: {
@@ -2025,11 +2033,15 @@ export type Database = {
           created_at?: string
           entrada_usuario?: string
           filtros_aplicados_json?: Json | null
+          foco?: string | null
           fontes_recuperadas_json?: Json | null
           id?: string
           observacoes_ia?: string | null
+          profundidade?: string | null
           resposta_ia?: string | null
+          score_confianca?: number | null
           tipo_peca?: string | null
+          tom?: string | null
           usuario_id?: string
         }
         Relationships: []
@@ -2239,14 +2251,19 @@ export type Database = {
           documentos_referencia_json: Json | null
           docx_path: string | null
           entrada_caso: string | null
+          foco: string | null
           fundamentos_utilizados_json: Json | null
           id: string
           jurisprudencias_utilizadas_json: Json | null
           minuta_gerada: string | null
           normas_utilizadas_json: Json | null
+          profundidade: string | null
+          score_confianca: number | null
           status: string
+          status_revisao: string | null
           tipo_peca: string
           titulo_geracao: string
+          tom: string | null
           updated_at: string
           usuario_id: string
           versao: number
@@ -2256,14 +2273,19 @@ export type Database = {
           documentos_referencia_json?: Json | null
           docx_path?: string | null
           entrada_caso?: string | null
+          foco?: string | null
           fundamentos_utilizados_json?: Json | null
           id?: string
           jurisprudencias_utilizadas_json?: Json | null
           minuta_gerada?: string | null
           normas_utilizadas_json?: Json | null
+          profundidade?: string | null
+          score_confianca?: number | null
           status?: string
+          status_revisao?: string | null
           tipo_peca: string
           titulo_geracao: string
+          tom?: string | null
           updated_at?: string
           usuario_id: string
           versao?: number
@@ -2273,14 +2295,19 @@ export type Database = {
           documentos_referencia_json?: Json | null
           docx_path?: string | null
           entrada_caso?: string | null
+          foco?: string | null
           fundamentos_utilizados_json?: Json | null
           id?: string
           jurisprudencias_utilizadas_json?: Json | null
           minuta_gerada?: string | null
           normas_utilizadas_json?: Json | null
+          profundidade?: string | null
+          score_confianca?: number | null
           status?: string
+          status_revisao?: string | null
           tipo_peca?: string
           titulo_geracao?: string
+          tom?: string | null
           updated_at?: string
           usuario_id?: string
           versao?: number
@@ -2374,6 +2401,56 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_metricas_recuperacao: {
+        Row: {
+          consulta_id: string | null
+          created_at: string | null
+          foi_utilizada: boolean | null
+          fonte_id: string | null
+          fonte_tipo: string
+          id: string
+          score_feedback: number | null
+          score_final: number | null
+          score_semantico: number | null
+          score_textual: number | null
+          score_validacao: number | null
+        }
+        Insert: {
+          consulta_id?: string | null
+          created_at?: string | null
+          foi_utilizada?: boolean | null
+          fonte_id?: string | null
+          fonte_tipo: string
+          id?: string
+          score_feedback?: number | null
+          score_final?: number | null
+          score_semantico?: number | null
+          score_textual?: number | null
+          score_validacao?: number | null
+        }
+        Update: {
+          consulta_id?: string | null
+          created_at?: string | null
+          foi_utilizada?: boolean | null
+          fonte_id?: string | null
+          fonte_tipo?: string
+          id?: string
+          score_feedback?: number | null
+          score_final?: number | null
+          score_semantico?: number | null
+          score_textual?: number | null
+          score_validacao?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_metricas_recuperacao_consulta_id_fkey"
+            columns: ["consulta_id"]
+            isOneToOne: false
+            referencedRelation: "qa_consultas_ia"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       qa_modelos_docx: {
         Row: {
           arquivo_template_path: string | null
@@ -2415,6 +2492,86 @@ export type Database = {
           versao?: string
         }
         Relationships: []
+      }
+      qa_referencias_preferenciais: {
+        Row: {
+          ativo: boolean | null
+          created_at: string | null
+          id: string
+          motivo_priorizacao: string | null
+          origem_id: string
+          peso_manual: number | null
+          tipo_referencia: string
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          created_at?: string | null
+          id?: string
+          motivo_priorizacao?: string | null
+          origem_id: string
+          peso_manual?: number | null
+          tipo_referencia: string
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          created_at?: string | null
+          id?: string
+          motivo_priorizacao?: string | null
+          origem_id?: string
+          peso_manual?: number | null
+          tipo_referencia?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      qa_revisoes_pecas: {
+        Row: {
+          aprovada: boolean | null
+          created_at: string | null
+          geracao_id: string | null
+          id: string
+          justificativa: string | null
+          texto_original: string | null
+          texto_revisado: string | null
+          tipo_revisao: string | null
+          usuario_id: string | null
+          virou_referencia: boolean | null
+        }
+        Insert: {
+          aprovada?: boolean | null
+          created_at?: string | null
+          geracao_id?: string | null
+          id?: string
+          justificativa?: string | null
+          texto_original?: string | null
+          texto_revisado?: string | null
+          tipo_revisao?: string | null
+          usuario_id?: string | null
+          virou_referencia?: boolean | null
+        }
+        Update: {
+          aprovada?: boolean | null
+          created_at?: string | null
+          geracao_id?: string | null
+          id?: string
+          justificativa?: string | null
+          texto_original?: string | null
+          texto_revisado?: string | null
+          tipo_revisao?: string | null
+          usuario_id?: string | null
+          virou_referencia?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_revisoes_pecas_geracao_id_fkey"
+            columns: ["geracao_id"]
+            isOneToOne: false
+            referencedRelation: "qa_geracoes_pecas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       qa_usuarios_perfis: {
         Row: {
