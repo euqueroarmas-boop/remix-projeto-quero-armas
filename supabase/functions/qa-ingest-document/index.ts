@@ -55,18 +55,24 @@ async function processDocument(storage_path: string, user_id: string | null) {
     // Step 2: Extract text - handle PDFs properly
     let textoExtraido = "";
     const mime = doc.mime_type || "";
+    
+    // Get raw bytes first (before consuming the blob)
+    const rawArrayBuf = await fileData.arrayBuffer();
+    const rawBytes = new Uint8Array(rawArrayBuf);
 
     if (mime.includes("text") || mime.includes("rtf")) {
-      textoExtraido = sanitizeText(await fileData.text());
+      textoExtraido = sanitizeText(new TextDecoder().decode(rawBytes));
     } else {
-      // For PDFs: attempt raw text extraction
+      // For PDFs: attempt raw text extraction from binary
       try {
-        const rawText = await fileData.text();
+        // Decode as text, limit to first 500KB to avoid huge strings
+        const limitedBytes = rawBytes.slice(0, 500000);
+        const rawText = new TextDecoder("utf-8", { fatal: false }).decode(limitedBytes);
         // Filter out binary garbage - keep only printable chars
         const printable = rawText.replace(/[^\x20-\x7E\xA0-\xFF\u0100-\uFFFF\n\r\t]/g, " ");
         const cleaned = printable.replace(/\s+/g, " ").trim();
         if (cleaned.length > 100) {
-          textoExtraido = sanitizeText(cleaned);
+          textoExtraido = sanitizeText(cleaned.substring(0, 200000));
         }
       } catch {
         // binary file, can't extract as text
@@ -75,16 +81,10 @@ async function processDocument(storage_path: string, user_id: string | null) {
       // If text extraction yielded little, use Vision API
       if (textoExtraido.length < 100) {
         try {
-          // Read file as array buffer for base64
-          const arrayBuf = await fileData.arrayBuffer();
-          // Limit to 500KB for the vision API
-          const limitedBuf = arrayBuf.slice(0, 500000);
-          const bytes = new Uint8Array(limitedBuf);
-          
-          // Convert to base64 manually
+          const limitedBuf = rawBytes.slice(0, 400000);
           let binary = "";
-          for (let i = 0; i < bytes.length; i++) {
-            binary += String.fromCharCode(bytes[i]);
+          for (let i = 0; i < limitedBuf.length; i++) {
+            binary += String.fromCharCode(limitedBuf[i]);
           }
           const base64 = btoa(binary);
 
@@ -98,7 +98,7 @@ async function processDocument(storage_path: string, user_id: string | null) {
               model: "google/gemini-2.5-flash-lite",
               messages: [
                 { role: "user", content: [
-                  { type: "text", text: "Extraia todo o texto deste documento PDF. Retorne apenas o texto extraído, sem comentários." },
+                  { type: "text", text: "Extraia todo o texto deste documento PDF. Retorne apenas o texto extraído." },
                   { type: "image_url", image_url: { url: `data:application/pdf;base64,${base64}` } }
                 ]}
               ],
@@ -122,8 +122,13 @@ async function processDocument(storage_path: string, user_id: string | null) {
 
       // Final fallback
       if (!textoExtraido || textoExtraido.length < 20) {
-        textoExtraido = `[Documento: ${doc.nome_arquivo}. Tipo: ${mime}. Tamanho: ${doc.tamanho_bytes} bytes. Extração de texto não foi possível - documento pode ser imagem escaneada ou protegido.]`;
+        textoExtraido = `[Documento: ${doc.nome_arquivo}. Tipo: ${mime}. Tamanho: ${doc.tamanho_bytes} bytes. Extração de texto não foi possível.]`;
       }
+    }
+    
+    // Hard cap at 200K chars to avoid DB/memory issues
+    if (textoExtraido.length > 200000) {
+      textoExtraido = textoExtraido.substring(0, 200000);
     }
 
     // Step 3: Compute file hash
