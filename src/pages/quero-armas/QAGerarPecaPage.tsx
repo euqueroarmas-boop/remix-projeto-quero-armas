@@ -57,8 +57,7 @@ type GenerationStep =
 
 const GENERATION_STEPS: { key: GenerationStep; label: string }[] = [
   { key: "resolving_circumscription", label: "Resolvendo circunscrição da PF" },
-  { key: "uploading_docs", label: "Enviando documentos auxiliares" },
-  { key: "extracting_docs", label: "Extraindo documentos auxiliares" },
+  { key: "uploading_docs", label: "Verificando documentos auxiliares" },
   { key: "building_context", label: "Montando contexto do caso" },
   { key: "recovering_sources", label: "Recuperando fontes jurídicas" },
   { key: "generating_draft", label: "Gerando minuta" },
@@ -115,7 +114,7 @@ const ESTADOS_BR = [
 ];
 
 const STAGE_LABELS: Record<DocUploadStage, string> = {
-  pending: "Aguardando",
+  pending: "Aguardando classificação",
   uploading: "Enviando arquivo...",
   saved: "Arquivo salvo",
   extracting: "Extraindo texto...",
@@ -355,6 +354,14 @@ export default function QAGerarPecaPage() {
 
   const handleChangeTipoDoc = (index: number, tipo: string) => {
     setArquivosAuxiliares(prev => prev.map((a, i) => i === index ? { ...a, tipo } : a));
+    // Immediately trigger upload+processing after classification
+    const arq = arquivosAuxiliares[index];
+    if (arq && arq.stage === "pending") {
+      // Use a microtask so state updates first
+      setTimeout(() => {
+        void uploadSingleDoc({ ...arq, tipo }, index);
+      }, 50);
+    }
   };
 
   const setDocStage = (index: number, stage: DocUploadStage, extra?: Partial<ArquivoAuxiliar>) => {
@@ -482,7 +489,8 @@ export default function QAGerarPecaPage() {
   /* ── Generation ── */
   const hasDocsPending = arquivosAuxiliares.some(a => !["done", "failed", "pending"].includes(a.stage));
   const hasDocsFailed = arquivosAuxiliares.some(a => a.stage === "failed");
-  const canGenerate = !loading && !hasDocsPending && !hasDocsFailed;
+  const hasDocsUnclassified = arquivosAuxiliares.some(a => a.stage === "pending");
+  const canGenerate = !loading && !hasDocsPending && !hasDocsFailed && !hasDocsUnclassified;
 
   const gerar = async () => {
     if (!nomeRequerente.trim()) { toast.error("Informe o nome completo do requerente"); return; }
@@ -506,24 +514,21 @@ export default function QAGerarPecaPage() {
         toast.warning("Circunscrição não resolvida. A peça seguirá com marcador pendente.", { duration: 5000 });
       }
 
-      // Step 2-3: Upload docs
+      // Step 2: Collect already-processed doc IDs (upload happened on classification)
       let auxiliarDocIds: string[] = [];
       if (arquivosAuxiliares.length > 0) {
         setGenStep("uploading_docs");
-        auxiliarDocIds = await uploadAllAuxiliares();
-        setGenStep("extracting_docs");
-        await new Promise(r => setTimeout(r, 500));
+        auxiliarDocIds = arquivosAuxiliares.filter(a => a.stage === "done" && a.docId).map(a => a.docId!);
+        await new Promise(r => setTimeout(r, 300));
 
-        // Gate: compare successful IDs vs total docs to detect failures
-        const totalDocs = arquivosAuxiliares.length;
-        const failedCount = totalDocs - auxiliarDocIds.length;
-        if (failedCount > 0) {
-          const msg = `Geração bloqueada: ${failedCount} de ${totalDocs} documento(s) falharam no processamento. Reprocesse ou remova os documentos com erro antes de gerar.`;
+        const unfinished = arquivosAuxiliares.filter(a => a.stage !== "done");
+        if (unfinished.length > 0) {
+          const msg = `Geração bloqueada: ${unfinished.length} documento(s) não foram processados. Classifique, reprocesse ou remova antes de gerar.`;
           try {
             await supabase.from("qa_logs_auditoria" as any).insert({
               usuario_id: user?.id, entidade: "qa_casos", entidade_id: casoId || "new",
               acao: "geracao_bloqueada_anexos_incompletos",
-              detalhes_json: { total: totalDocs, concluidos: auxiliarDocIds.length, falhos: failedCount },
+              detalhes_json: { total: arquivosAuxiliares.length, concluidos: auxiliarDocIds.length, pendentes: unfinished.length },
             });
           } catch { /* non-critical */ }
           throw new Error(msg);
@@ -845,26 +850,34 @@ export default function QAGerarPecaPage() {
 
         {/* Doc status indicator */}
         {docTotal > 0 && (
-          <div className={`flex items-center gap-2 text-xs px-3 py-1.5 rounded border ${
+          <div className={`flex items-center flex-wrap gap-2 text-xs px-3 py-1.5 rounded border ${
             docFailed > 0 ? "border-red-500/30 bg-red-500/5 text-red-400" :
             docActive > 0 ? "border-cyan-500/30 bg-cyan-500/5 text-cyan-400" :
+            hasDocsUnclassified ? "border-amber-500/30 bg-amber-500/5 text-amber-400" :
             docDone === docTotal ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-400" :
             "border-slate-700 bg-slate-800/50 text-slate-400"
           }`}>
-            {docDone === docTotal && <CheckCircle className="h-3.5 w-3.5" />}
+            {docDone === docTotal && docTotal > 0 && <CheckCircle className="h-3.5 w-3.5" />}
             {docFailed > 0 && <XCircle className="h-3.5 w-3.5" />}
             {docActive > 0 && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+            {hasDocsUnclassified && !docActive && !docFailed && <AlertTriangle className="h-3.5 w-3.5" />}
             <span>{docDone}/{docTotal} documentos prontos</span>
+            {hasDocsUnclassified && <span className="text-amber-400 font-medium">· {arquivosAuxiliares.filter(a => a.stage === "pending").length} aguardando classificação</span>}
             {docFailed > 0 && <span className="text-red-400 font-medium">· {docFailed} com erro</span>}
             {docActive > 0 && <span>· {docActive} processando</span>}
           </div>
         )}
 
         {/* Generation blocked warning */}
-        {docTotal > 0 && (hasDocsFailed || hasDocsPending) && (
+        {docTotal > 0 && (hasDocsFailed || hasDocsPending || hasDocsUnclassified) && (
           <div className="text-[10px] text-amber-400/80 bg-amber-500/5 border border-amber-500/20 rounded px-3 py-1.5 flex items-start gap-1.5">
             <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" />
-            <span>Geração bloqueada até todos os documentos serem concluídos ou removidos. {hasDocsFailed ? "Reprocesse ou remova os documentos com erro." : "Aguarde o processamento."}</span>
+            <span>
+              {hasDocsUnclassified ? "Classifique o tipo de cada documento para iniciar o processamento. " : ""}
+              {hasDocsFailed ? "Reprocesse ou remova os documentos com erro. " : ""}
+              {hasDocsPending ? "Aguarde o processamento dos documentos. " : ""}
+              Geração bloqueada até todos os documentos estarem concluídos.
+            </span>
           </div>
         )}
 
