@@ -57,8 +57,7 @@ type GenerationStep =
 
 const GENERATION_STEPS: { key: GenerationStep; label: string }[] = [
   { key: "resolving_circumscription", label: "Resolvendo circunscrição da PF" },
-  { key: "uploading_docs", label: "Enviando documentos auxiliares" },
-  { key: "extracting_docs", label: "Extraindo documentos auxiliares" },
+  { key: "uploading_docs", label: "Verificando documentos auxiliares" },
   { key: "building_context", label: "Montando contexto do caso" },
   { key: "recovering_sources", label: "Recuperando fontes jurídicas" },
   { key: "generating_draft", label: "Gerando minuta" },
