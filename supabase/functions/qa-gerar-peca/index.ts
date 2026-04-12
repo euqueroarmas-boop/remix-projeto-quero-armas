@@ -5,7 +5,22 @@ const corsH = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const TIPOS_PECA_PERMITIDOS = ["defesa_posse_arma", "defesa_porte_arma", "recurso_administrativo", "resposta_a_notificacao"];
+
+const TIPO_PECA_INSTRUCOES: Record<string, string> = {
+  defesa_posse_arma: "Redija uma DEFESA ADMINISTRATIVA para obtenção ou manutenção de POSSE DE ARMA DE FOGO (registro no SINARM). Fundamente com base no Estatuto do Desarmamento (Lei 10.826/2003) e regulamentações aplicáveis. ATENÇÃO: posse ≠ porte. Não misture os institutos.",
+  defesa_porte_arma: "Redija uma DEFESA ADMINISTRATIVA para obtenção ou manutenção de PORTE DE ARMA DE FOGO (autorização no SIGMA/SINARM conforme o caso). Fundamente com base no Estatuto do Desarmamento (Lei 10.826/2003) e regulamentações aplicáveis. ATENÇÃO: porte ≠ posse. Não misture os institutos.",
+  recurso_administrativo: "Redija um RECURSO ADMINISTRATIVO contra decisão administrativa desfavorável em matéria de armas de fogo. Estruture com: I. DOS FATOS, II. DA TEMPESTIVIDADE, III. DO DIREITO, IV. DOS PEDIDOS.",
+  resposta_a_notificacao: "Redija uma RESPOSTA À NOTIFICAÇÃO administrativa recebida em procedimento de armas de fogo. Atenda pontualmente cada item da notificação, com fundamentação técnica e normativa.",
+};
+
 const SYSTEM_PROMPT = `Você atua como redator jurídico sênior da Quero Armas. Sua função é redigir peças jurídicas completas, técnicas, sóbrias e profissionais, baseadas EXCLUSIVAMENTE nas fontes recuperadas e validadas fornecidas.
+
+TIPOS DE PEÇA PERMITIDOS (SOMENTE ESTES 4):
+- defesa_posse_arma: Defesa para Posse de Arma
+- defesa_porte_arma: Defesa para Porte de Arma  
+- recurso_administrativo: Recurso Administrativo
+- resposta_a_notificacao: Resposta à Notificação
 
 REGRAS INVIOLÁVEIS:
 1. PROIBIDO inventar fatos, artigos, leis, jurisprudência, tribunais, processos, datas ou trechos normativos.
@@ -14,6 +29,8 @@ REGRAS INVIOLÁVEIS:
 4. Nunca misture institutos distintos (posse ≠ porte; SINARM ≠ SIGMA).
 5. Nunca trate hipótese como fato.
 6. Sempre liste as fontes efetivamente utilizadas ao final.
+7. NÃO classifique a peça como tipo diferente dos 4 permitidos acima.
+8. NÃO use rótulos genéricos como "defesa — posse de arma" ou "petição inicial". Use APENAS os tipos definidos.
 
 FORMATAÇÃO:
 - Use marcadores de seção claros: I. DOS FATOS, II. DO DIREITO, III. DA JURISPRUDÊNCIA, etc.
@@ -29,6 +46,8 @@ Deno.serve(async (req) => {
       usuario_id, caso_titulo, entrada_caso, tipo_peca,
       profundidade, tom, foco, fontes_selecionadas,
     } = await req.json();
+    // Validate tipo_peca
+    const tipoPecaValido = TIPOS_PECA_PERMITIDOS.includes(tipo_peca) ? tipo_peca : "defesa_posse_arma";
 
     if (!entrada_caso) throw new Error("entrada_caso required");
 
