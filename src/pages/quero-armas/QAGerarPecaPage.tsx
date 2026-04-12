@@ -208,6 +208,13 @@ export default function QAGerarPecaPage() {
     setLoading(true);
     setResultado(null);
     try {
+      // Upload auxiliary documents first
+      let auxiliarDocIds: string[] = [];
+      if (arquivosAuxiliares.length > 0) {
+        toast.info("Enviando documentos auxiliares...");
+        auxiliarDocIds = await uploadAuxiliares();
+      }
+
       const { data, error } = await supabase.functions.invoke("qa-gerar-peca", {
         body: {
           usuario_id: user?.id,
@@ -215,12 +222,10 @@ export default function QAGerarPecaPage() {
           entrada_caso: entradaCaso,
           tipo_peca: tipoPeca,
           foco,
-          // Client address for circumscription
           cliente_cidade: clienteCidade.trim(),
           cliente_uf: clienteUf.trim(),
           cliente_endereco: clienteEndereco.trim() || null,
           cliente_cep: clienteCep.trim() || null,
-          // Resolved circumscription (pre-resolved on client)
           circunscricao_resolvida: circ ? {
             unidade_pf: circ.unidade_pf,
             sigla_unidade: circ.sigla_unidade,
@@ -229,9 +234,9 @@ export default function QAGerarPecaPage() {
             uf: circ.uf,
             base_legal: circ.base_legal,
           } : null,
-          // Tempestividade
           data_notificacao: dataNotificacao.trim() || null,
           info_tempestividade: infoTempestividade.trim() || null,
+          documentos_auxiliares_ids: auxiliarDocIds.length > 0 ? auxiliarDocIds : null,
         },
       });
       if (error) throw error;
