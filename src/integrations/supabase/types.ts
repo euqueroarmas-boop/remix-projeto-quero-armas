@@ -1951,6 +1951,87 @@ export type Database = {
           },
         ]
       }
+      qa_casos: {
+        Row: {
+          bairro: string | null
+          cep: string | null
+          cidade: string | null
+          cpf_cnpj: string | null
+          created_at: string
+          descricao_caso: string | null
+          documentos_auxiliares_json: Json | null
+          docx_path: string | null
+          endereco: string | null
+          erros_documentos_json: Json | null
+          foco_argumentativo: string | null
+          geracao_id: string | null
+          id: string
+          minuta_gerada: string | null
+          nome_requerente: string
+          sigla_unidade_pf: string | null
+          status: string
+          tipo_peca: string | null
+          tipo_servico: string | null
+          titulo: string
+          uf: string | null
+          unidade_pf: string | null
+          updated_at: string
+          usuario_id: string | null
+        }
+        Insert: {
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          cpf_cnpj?: string | null
+          created_at?: string
+          descricao_caso?: string | null
+          documentos_auxiliares_json?: Json | null
+          docx_path?: string | null
+          endereco?: string | null
+          erros_documentos_json?: Json | null
+          foco_argumentativo?: string | null
+          geracao_id?: string | null
+          id?: string
+          minuta_gerada?: string | null
+          nome_requerente?: string
+          sigla_unidade_pf?: string | null
+          status?: string
+          tipo_peca?: string | null
+          tipo_servico?: string | null
+          titulo?: string
+          uf?: string | null
+          unidade_pf?: string | null
+          updated_at?: string
+          usuario_id?: string | null
+        }
+        Update: {
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          cpf_cnpj?: string | null
+          created_at?: string
+          descricao_caso?: string | null
+          documentos_auxiliares_json?: Json | null
+          docx_path?: string | null
+          endereco?: string | null
+          erros_documentos_json?: Json | null
+          foco_argumentativo?: string | null
+          geracao_id?: string | null
+          id?: string
+          minuta_gerada?: string | null
+          nome_requerente?: string
+          sigla_unidade_pf?: string | null
+          status?: string
+          tipo_peca?: string | null
+          tipo_servico?: string | null
+          titulo?: string
+          uf?: string | null
+          unidade_pf?: string | null
+          updated_at?: string
+          usuario_id?: string | null
+        }
+        Relationships: []
+      }
       qa_chunks_conhecimento: {
         Row: {
           created_at: string
