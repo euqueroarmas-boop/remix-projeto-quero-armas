@@ -325,7 +325,7 @@ export default function QABaseConhecimentoPage() {
           <SelectTrigger className="w-[180px] bg-[#12121c] border-slate-700 text-slate-300"><SelectValue placeholder="Tipo" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="todos">Todos os tipos</SelectItem>
-            {TIPOS_DOC.map(t => <SelectItem key={t} value={t}>{t.replace(/_/g, " ")}</SelectItem>)}
+            {TIPOS_DOC.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={filtroOrigem} onValueChange={setFiltroOrigem}>
@@ -444,7 +444,7 @@ export default function QABaseConhecimentoPage() {
               <Select value={linkTipo} onValueChange={setLinkTipo}>
                 <SelectTrigger className="bg-[#0c0c14] border-slate-700 text-slate-300 mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {TIPOS_DOC.map(t => <SelectItem key={t} value={t}>{t.replace(/_/g, " ")}</SelectItem>)}
+                  {TIPOS_DOC.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -477,7 +477,7 @@ export default function QABaseConhecimentoPage() {
               <Select value={bulkTipo} onValueChange={setBulkTipo}>
                 <SelectTrigger className="bg-[#0c0c14] border-slate-700 text-slate-300 mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {TIPOS_DOC.map(t => <SelectItem key={t} value={t}>{t.replace(/_/g, " ")}</SelectItem>)}
+                  {TIPOS_DOC.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
