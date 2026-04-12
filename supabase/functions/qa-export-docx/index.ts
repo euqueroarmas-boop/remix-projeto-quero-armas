@@ -21,11 +21,28 @@ function generateDocx(content: string, variables: Record<string, string>): Uint8
     const trimmed = line.trim();
     if (!trimmed) return `<w:p><w:pPr><w:spacing w:after="0"/></w:pPr></w:p>`;
 
-    // Detect headings (lines in ALL CAPS or starting with roman numerals)
-    const isHeading = /^[IVXLCDM]+\.\s/.test(trimmed) || /^[A-ZÁÀÂÃÉÈÊÍÏÓÔÕÖÚÇÑ\s\-–]{5,}$/.test(trimmed);
+    // Detect endereçamento (A DOUTA DELEGACIA...)
+    const isEnderecamento = /^A\s+DOUTA\s+DELEGACIA/i.test(trimmed);
+    if (isEnderecamento) {
+      return `<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="360" w:after="360"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman"/><w:b/><w:sz w:val="26"/><w:caps/></w:rPr><w:t xml:space="preserve">${escXml(trimmed)}</w:t></w:r></w:p>`;
+    }
 
+    // Detect main section headings (I — DOS FATOS, II — DO DIREITO, etc.)
+    const isSectionHeading = /^[IVXLCDM]+\s*[—–\-\.]\s*/i.test(trimmed);
+    if (isSectionHeading) {
+      return `<w:p><w:pPr><w:pStyle w:val="Heading2"/><w:spacing w:before="360" w:after="180"/><w:jc w:val="left"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman"/><w:b/><w:sz w:val="28"/></w:rPr><w:t xml:space="preserve">${escXml(trimmed)}</w:t></w:r></w:p>`;
+    }
+
+    // Detect other all-caps headings (ALEGAÇÕES FINAIS, FECHAMENTO, etc.)
+    const isHeading = /^[A-ZÁÀÂÃÉÈÊÍÏÓÔÕÖÚÇÑ\s\-–—]{5,}$/.test(trimmed);
     if (isHeading) {
-      return `<w:p><w:pPr><w:pStyle w:val="Heading2"/><w:spacing w:before="240" w:after="120"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="26"/></w:rPr><w:t xml:space="preserve">${escXml(trimmed)}</w:t></w:r></w:p>`;
+      return `<w:p><w:pPr><w:pStyle w:val="Heading2"/><w:spacing w:before="240" w:after="120"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman"/><w:b/><w:sz w:val="26"/></w:rPr><w:t xml:space="preserve">${escXml(trimmed)}</w:t></w:r></w:p>`;
+    }
+
+    // Detect closing line (Nestes termos, pede deferimento)
+    const isFechamento = /^nestes\s+termos/i.test(trimmed);
+    if (isFechamento) {
+      return `<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="360" w:after="240"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman"/><w:i/><w:sz w:val="24"/></w:rPr><w:t xml:space="preserve">${escXml(trimmed)}</w:t></w:r></w:p>`;
     }
 
     return `<w:p><w:pPr><w:jc w:val="both"/><w:spacing w:after="120" w:line="276" w:lineRule="auto"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman"/><w:sz w:val="24"/></w:rPr><w:t xml:space="preserve">${escXml(trimmed)}</w:t></w:r></w:p>`;
