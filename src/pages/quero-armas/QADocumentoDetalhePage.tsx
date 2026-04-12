@@ -3,12 +3,32 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { ArrowLeft, FileText, CheckCircle, Clock, AlertCircle, Loader2, RefreshCw, Database, Hash, Star, Trash2, Power } from "lucide-react";
+import {
+  ArrowLeft, FileText, CheckCircle, Clock, AlertCircle, Loader2, RefreshCw,
+  Database, Hash, Star, Trash2, Power, ShieldCheck, ShieldX, Zap, ZapOff,
+  StarOff,
+} from "lucide-react";
 import { useQAAuth } from "@/components/quero-armas/hooks/useQAAuth";
 import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
   AlertDialogDescription, AlertDialogFooter, AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
+
+/* ─── Governance Status Badge ─── */
+function GovBadge({ label, value, variant }: { label: string; value: string; variant: "ok" | "warn" | "off" | "neutral" }) {
+  const colors = {
+    ok: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+    warn: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+    off: "bg-red-500/10 text-red-400 border-red-500/20",
+    neutral: "bg-slate-800 text-slate-400 border-slate-700/40",
+  };
+  return (
+    <div className={`rounded-lg p-3 text-center border ${colors[variant]}`}>
+      <div className="text-xs font-medium">{value}</div>
+      <div className="text-[10px] text-slate-600 mt-0.5">{label}</div>
+    </div>
+  );
+}
 
 export default function QADocumentoDetalhePage() {
   const { id } = useParams();
@@ -22,6 +42,7 @@ export default function QADocumentoDetalhePage() {
   const [reprocessing, setReprocessing] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [acting, setActing] = useState(false);
 
   const load = async () => {
     if (!id) return;
@@ -45,6 +66,79 @@ export default function QADocumentoDetalhePage() {
 
   useEffect(() => { load(); }, [id]);
 
+  /* ─── Governance Actions ─── */
+  const auditLog = async (acao: string, detalhes: Record<string, any>) => {
+    if (!user || !doc) return;
+    await supabase.from("qa_logs_auditoria" as any).insert({
+      usuario_id: user.id, acao, entidade_tipo: "documento", entidade_id: doc.id,
+      detalhes: { titulo: doc.titulo, tipo: doc.tipo_documento, ...detalhes },
+    });
+  };
+
+  const updateDoc = async (fields: Record<string, any>) => {
+    await supabase.from("qa_documentos_conhecimento" as any)
+      .update({ ...fields, updated_at: new Date().toISOString() } as any)
+      .eq("id", id);
+  };
+
+  const handleAction = async (action: string) => {
+    if (!doc || !user) return;
+    setActing(true);
+    try {
+      switch (action) {
+        case "validar":
+          await updateDoc({ status_validacao: "validado" });
+          await auditLog("documento_validado", {});
+          toast.success("Documento validado. Agora será utilizado pela IA.");
+          break;
+        case "rejeitar":
+          await updateDoc({ status_validacao: "rejeitado", ativo_na_ia: false });
+          await auditLog("documento_rejeitado", {});
+          toast.success("Documento rejeitado. Não será utilizado pela IA.");
+          break;
+        case "desativar_ia":
+          await updateDoc({ ativo_na_ia: false });
+          await auditLog("documento_desativado_ia", {});
+          toast.success("Documento desativado da IA.");
+          break;
+        case "ativar_ia":
+          await updateDoc({ ativo_na_ia: true });
+          await auditLog("documento_ativado_ia", {});
+          toast.success("Documento reativado na IA.");
+          break;
+        case "promover_referencia":
+          await updateDoc({ referencia_preferencial: true });
+          // Also create/reactivate in qa_referencias_preferenciais if needed
+          const { data: existingRef } = await (supabase.from("qa_referencias_preferenciais" as any)
+            .select("id").eq("origem_id", doc.id).maybeSingle() as any);
+          if (existingRef) {
+            await supabase.from("qa_referencias_preferenciais" as any)
+              .update({ ativo: true } as any).eq("id", existingRef.id);
+          } else {
+            await supabase.from("qa_referencias_preferenciais" as any).insert({
+              origem_tipo: "documento", origem_id: doc.id,
+              criado_por: user.id, peso: 1.0, ativo: true,
+            });
+          }
+          await auditLog("documento_promovido_referencia", {});
+          toast.success("Documento promovido como referência preferencial.");
+          break;
+        case "remover_referencia":
+          await updateDoc({ referencia_preferencial: false });
+          await supabase.from("qa_referencias_preferenciais" as any)
+            .update({ ativo: false } as any).eq("origem_id", doc.id);
+          await auditLog("documento_removido_referencia", {});
+          toast.success("Documento removido das referências.");
+          break;
+      }
+      await load();
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao executar ação");
+    } finally {
+      setActing(false);
+    }
+  };
+
   const reprocess = async () => {
     if (!doc) return;
     setReprocessing(true);
@@ -66,14 +160,8 @@ export default function QADocumentoDetalhePage() {
     if (!doc || !user) return;
     setDeleting(true);
     try {
-      await supabase.from("qa_documentos_conhecimento" as any)
-        .update({ ativo: false, updated_at: new Date().toISOString() } as any)
-        .eq("id", doc.id);
-      await supabase.from("qa_logs_auditoria" as any).insert({
-        usuario_id: user.id, acao: "documento_desativado",
-        entidade_tipo: "documento", entidade_id: doc.id,
-        detalhes: { titulo: doc.titulo, tipo: doc.tipo_documento },
-      });
+      await updateDoc({ ativo: false, ativo_na_ia: false });
+      await auditLog("documento_desativado", {});
       toast.success("Documento desativado da IA.");
       navigate("/quero-armas/base-conhecimento");
     } catch (err: any) {
@@ -94,11 +182,7 @@ export default function QADocumentoDetalhePage() {
       await supabase.from("qa_chunks_conhecimento" as any).delete().eq("documento_id", doc.id);
       await supabase.from("qa_referencias_preferenciais" as any).delete().eq("origem_id", doc.id);
       if (doc.storage_path) await supabase.storage.from("qa-documentos").remove([doc.storage_path]);
-      await supabase.from("qa_logs_auditoria" as any).insert({
-        usuario_id: user.id, acao: "documento_excluido_permanente",
-        entidade_tipo: "documento", entidade_id: doc.id,
-        detalhes: { titulo: doc.titulo, tipo: doc.tipo_documento, storage_path: doc.storage_path },
-      });
+      await auditLog("documento_excluido_permanente", { storage_path: doc.storage_path });
       await supabase.from("qa_documentos_conhecimento" as any).delete().eq("id", doc.id);
       toast.success("Documento excluído permanentemente.");
       navigate("/quero-armas/base-conhecimento");
@@ -119,6 +203,12 @@ export default function QADocumentoDetalhePage() {
     return <Clock className="h-4 w-4 text-slate-500" />;
   };
 
+  const isValidado = doc.status_validacao === "validado";
+  const isRejeitado = doc.status_validacao === "rejeitado";
+  const isAtivoIA = doc.ativo_na_ia === true;
+  const isRef = doc.referencia_preferencial === true;
+  const isConcluido = doc.status_processamento === "concluido";
+
   return (
     <div className="space-y-6 max-w-5xl">
       <div className="flex items-center gap-3">
@@ -129,7 +219,7 @@ export default function QADocumentoDetalhePage() {
 
       {/* Header */}
       <div className="bg-[#12121c] border border-slate-800/40 rounded-xl p-5">
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
             <h1 className="text-xl font-bold text-slate-100 flex items-center gap-2">
               <FileText className="h-5 w-5 text-amber-500" /> {doc.titulo}
@@ -142,7 +232,7 @@ export default function QADocumentoDetalhePage() {
               <span>{doc.mime_type}</span>
             </div>
           </div>
-          <div className="flex gap-2 shrink-0">
+          <div className="flex gap-2 shrink-0 flex-wrap">
             <Button variant="outline" size="sm" onClick={reprocess} disabled={reprocessing} className="border-slate-700 text-slate-300">
               {reprocessing ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <RefreshCw className="h-3.5 w-3.5 mr-1" />}
               Reprocessar
@@ -153,16 +243,32 @@ export default function QADocumentoDetalhePage() {
           </div>
         </div>
 
-        {/* Status badges */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mt-4">
-          <div className="bg-[#0c0c14] rounded-lg p-3 text-center">
-            <div className="flex items-center justify-center gap-1.5">{statusIcon(doc.status_processamento)}<span className="text-xs text-slate-300 capitalize">{doc.status_processamento}</span></div>
-            <div className="text-[10px] text-slate-600 mt-0.5">Processamento</div>
-          </div>
-          <div className="bg-[#0c0c14] rounded-lg p-3 text-center">
-            <div className={`text-xs font-medium ${doc.status_validacao === "validado" ? "text-emerald-400" : "text-slate-500"}`}>{doc.status_validacao?.replace(/_/g, " ") || "—"}</div>
-            <div className="text-[10px] text-slate-600 mt-0.5">Validação</div>
-          </div>
+        {/* Governance Status Badges */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
+          <GovBadge
+            label="Processamento"
+            value={doc.status_processamento === "concluido" ? "Concluído" : doc.status_processamento === "processando" ? "Processando" : doc.status_processamento === "erro" || doc.status_processamento === "texto_invalido" ? "Falhou" : "Pendente"}
+            variant={isConcluido ? "ok" : doc.status_processamento === "erro" || doc.status_processamento === "texto_invalido" ? "off" : "neutral"}
+          />
+          <GovBadge
+            label="Validação"
+            value={isValidado ? "Validado" : isRejeitado ? "Rejeitado" : "Pendente"}
+            variant={isValidado ? "ok" : isRejeitado ? "off" : "warn"}
+          />
+          <GovBadge
+            label="Uso na IA"
+            value={isAtivoIA ? "Ativo" : "Desativado"}
+            variant={isAtivoIA ? "ok" : "off"}
+          />
+          <GovBadge
+            label="Referência"
+            value={isRef ? "Sim" : "Não"}
+            variant={isRef ? "ok" : "neutral"}
+          />
+        </div>
+
+        {/* Stats row */}
+        <div className="grid grid-cols-3 gap-3 mt-3">
           <div className="bg-[#0c0c14] rounded-lg p-3 text-center">
             <div className="text-xs font-medium text-slate-300">{chunks.length}</div>
             <div className="text-[10px] text-slate-600 mt-0.5">Chunks</div>
@@ -175,6 +281,55 @@ export default function QADocumentoDetalhePage() {
             <div className="flex items-center justify-center gap-1"><Star className="h-3 w-3 text-amber-400" /><span className="text-xs font-medium text-slate-300">{refCount}</span></div>
             <div className="text-[10px] text-slate-600 mt-0.5">Referências</div>
           </div>
+        </div>
+      </div>
+
+      {/* ─── Governance Actions ─── */}
+      <div className="bg-[#12121c] border border-slate-800/40 rounded-xl p-5">
+        <h2 className="text-sm font-medium text-slate-300 mb-3">Ações de Governança</h2>
+        <div className="flex flex-wrap gap-2">
+          {/* Validar / Rejeitar */}
+          {!isValidado && isConcluido && (
+            <Button size="sm" disabled={acting} onClick={() => handleAction("validar")}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5">
+              <ShieldCheck className="h-3.5 w-3.5" /> Validar documento
+            </Button>
+          )}
+          {!isRejeitado && isConcluido && (
+            <Button size="sm" variant="outline" disabled={acting} onClick={() => handleAction("rejeitar")}
+              className="border-red-600/40 text-red-400 hover:bg-red-500/10 gap-1.5">
+              <ShieldX className="h-3.5 w-3.5" /> Rejeitar documento
+            </Button>
+          )}
+
+          {/* Ativar / Desativar IA */}
+          {isAtivoIA ? (
+            <Button size="sm" variant="outline" disabled={acting} onClick={() => handleAction("desativar_ia")}
+              className="border-amber-600/40 text-amber-400 hover:bg-amber-500/10 gap-1.5">
+              <ZapOff className="h-3.5 w-3.5" /> Desativar da IA
+            </Button>
+          ) : (
+            <Button size="sm" variant="outline" disabled={acting} onClick={() => handleAction("ativar_ia")}
+              className="border-emerald-600/40 text-emerald-400 hover:bg-emerald-500/10 gap-1.5">
+              <Zap className="h-3.5 w-3.5" /> Ativar na IA
+            </Button>
+          )}
+
+          {/* Referência */}
+          {isValidado && !isRef && (
+            <Button size="sm" variant="outline" disabled={acting} onClick={() => handleAction("promover_referencia")}
+              className="border-amber-500/40 text-amber-300 hover:bg-amber-500/10 gap-1.5">
+              <Star className="h-3.5 w-3.5" /> Promover como referência
+            </Button>
+          )}
+          {isRef && (
+            <Button size="sm" variant="outline" disabled={acting} onClick={() => handleAction("remover_referencia")}
+              className="border-slate-600 text-slate-400 hover:bg-slate-700/40 gap-1.5">
+              <StarOff className="h-3.5 w-3.5" /> Remover da referência
+            </Button>
+          )}
+
+          {acting && <Loader2 className="h-4 w-4 animate-spin text-amber-400 ml-2 self-center" />}
         </div>
       </div>
 

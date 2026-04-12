@@ -4,7 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Upload, Search, FileText, CheckCircle, Clock, AlertCircle, Loader2, ExternalLink, RefreshCw, Trash2, Power } from "lucide-react";
+import {
+  Upload, Search, FileText, CheckCircle, Clock, AlertCircle, Loader2,
+  ExternalLink, RefreshCw, Trash2, Power, Star, Zap, ShieldCheck,
+} from "lucide-react";
 import { useQAAuth } from "@/components/quero-armas/hooks/useQAAuth";
 import { Link } from "react-router-dom";
 import {
@@ -18,6 +21,19 @@ const TIPOS_DOC = [
   "instrucao_normativa", "portaria", "nota_tecnica", "modelo_interno",
   "estrategia_interna", "outro",
 ];
+
+/* ─── Dashboard stat card ─── */
+function StatCard({ icon: Icon, label, value, color }: { icon: any; label: string; value: number; color: string }) {
+  return (
+    <div className="bg-[#12121c] border border-slate-800/40 rounded-xl p-4 flex items-center gap-3">
+      <div className={`p-2 rounded-lg ${color}`}><Icon className="h-4 w-4" /></div>
+      <div>
+        <div className="text-lg font-bold text-slate-100">{value}</div>
+        <div className="text-[11px] text-slate-500">{label}</div>
+      </div>
+    </div>
+  );
+}
 
 export default function QABaseConhecimentoPage() {
   const { user } = useQAAuth();
@@ -104,13 +120,11 @@ export default function QABaseConhecimentoPage() {
     setDeleting(true);
     try {
       await supabase.from("qa_documentos_conhecimento" as any)
-        .update({ ativo: false, updated_at: new Date().toISOString() } as any)
+        .update({ ativo: false, ativo_na_ia: false, updated_at: new Date().toISOString() } as any)
         .eq("id", doc.id);
       await supabase.from("qa_logs_auditoria" as any).insert({
-        usuario_id: user.id,
-        acao: "documento_desativado",
-        entidade_tipo: "documento",
-        entidade_id: doc.id,
+        usuario_id: user.id, acao: "documento_desativado",
+        entidade_tipo: "documento", entidade_id: doc.id,
         detalhes: { titulo: doc.titulo, tipo: doc.tipo_documento },
       });
       toast.success("Documento desativado da IA.");
@@ -127,29 +141,18 @@ export default function QABaseConhecimentoPage() {
     if (!user) return;
     setDeleting(true);
     try {
-      // 1. Delete embeddings via chunks
       const { data: chunks } = await supabase.from("qa_chunks_conhecimento" as any).select("id").eq("documento_id", doc.id);
       if (chunks?.length) {
-        const chunkIds = chunks.map((c: any) => c.id);
-        await supabase.from("qa_embeddings" as any).delete().in("chunk_id", chunkIds);
+        await supabase.from("qa_embeddings" as any).delete().in("chunk_id", chunks.map((c: any) => c.id));
       }
-      // 2. Delete chunks
       await supabase.from("qa_chunks_conhecimento" as any).delete().eq("documento_id", doc.id);
-      // 3. Delete preferential references
       await supabase.from("qa_referencias_preferenciais" as any).delete().eq("origem_id", doc.id);
-      // 4. Delete storage file
-      if (doc.storage_path) {
-        await supabase.storage.from("qa-documentos").remove([doc.storage_path]);
-      }
-      // 5. Audit log before deleting the document
+      if (doc.storage_path) await supabase.storage.from("qa-documentos").remove([doc.storage_path]);
       await supabase.from("qa_logs_auditoria" as any).insert({
-        usuario_id: user.id,
-        acao: "documento_excluido_permanente",
-        entidade_tipo: "documento",
-        entidade_id: doc.id,
+        usuario_id: user.id, acao: "documento_excluido_permanente",
+        entidade_tipo: "documento", entidade_id: doc.id,
         detalhes: { titulo: doc.titulo, tipo: doc.tipo_documento, storage_path: doc.storage_path },
       });
-      // 6. Delete the document record
       await supabase.from("qa_documentos_conhecimento" as any).delete().eq("id", doc.id);
       toast.success("Documento excluído permanentemente.");
       setDeleteTarget(null);
@@ -176,6 +179,13 @@ export default function QABaseConhecimentoPage() {
     return { text: "Pendente", cls: "bg-slate-800 text-slate-400" };
   };
 
+  // Dashboard stats
+  const totalDocs = docs.length;
+  const validados = docs.filter(d => d.status_validacao === "validado").length;
+  const pendentes = docs.filter(d => d.status_validacao === "nao_validado" || d.status_validacao === "pendente_validacao").length;
+  const ativosIA = docs.filter(d => d.ativo_na_ia === true && d.status_validacao === "validado" && d.status_processamento === "concluido").length;
+  const referencias = docs.filter(d => d.referencia_preferencial === true).length;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -189,6 +199,15 @@ export default function QABaseConhecimentoPage() {
             <span>{uploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />} Enviar Documento</span>
           </Button>
         </label>
+      </div>
+
+      {/* Dashboard Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <StatCard icon={FileText} label="Total" value={totalDocs} color="bg-slate-800 text-slate-400" />
+        <StatCard icon={ShieldCheck} label="Validados" value={validados} color="bg-emerald-500/10 text-emerald-400" />
+        <StatCard icon={Clock} label="Pendentes" value={pendentes} color="bg-amber-500/10 text-amber-400" />
+        <StatCard icon={Zap} label="Ativos na IA" value={ativosIA} color="bg-purple-500/10 text-purple-400" />
+        <StatCard icon={Star} label="Referências" value={referencias} color="bg-amber-500/10 text-amber-300" />
       </div>
 
       <div className="flex flex-wrap gap-3">
@@ -231,11 +250,18 @@ export default function QABaseConhecimentoPage() {
             const status = statusLabel(d.status_processamento);
             const isError = d.status_processamento === "erro" || d.status_processamento === "texto_invalido";
             const isReprocessing = reprocessingId === d.id;
+            const isValidado = d.status_validacao === "validado";
+            const isRejeitado = d.status_validacao === "rejeitado";
+            const isRef = d.referencia_preferencial === true;
+            const isAtivoIA = d.ativo_na_ia === true;
             return (
-              <div key={d.id} className="flex items-center gap-4 bg-[#12121c] border border-slate-800/40 rounded-lg p-4 hover:border-amber-500/30 transition-all group">
+              <div key={d.id} className="flex items-center gap-3 bg-[#12121c] border border-slate-800/40 rounded-lg p-4 hover:border-amber-500/30 transition-all group">
                 {statusIcon(d.status_processamento)}
                 <Link to={`/quero-armas/base-conhecimento/${d.id}`} className="flex-1 min-w-0 cursor-pointer">
-                  <div className="text-sm font-medium text-slate-200 truncate group-hover:text-amber-400 transition-colors">{d.titulo}</div>
+                  <div className="text-sm font-medium text-slate-200 truncate group-hover:text-amber-400 transition-colors flex items-center gap-1.5">
+                    {d.titulo}
+                    {isRef && <Star className="h-3 w-3 text-amber-400 shrink-0" />}
+                  </div>
                   <div className="text-xs text-slate-500 flex items-center gap-2 mt-0.5 flex-wrap">
                     <span className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">{d.tipo_documento?.replace(/_/g, " ")}</span>
                     <span>{new Date(d.created_at).toLocaleDateString("pt-BR")}</span>
@@ -245,27 +271,34 @@ export default function QABaseConhecimentoPage() {
                     <div className="text-xs text-red-400/80 mt-1 truncate">{d.resumo_extraido}</div>
                   )}
                 </Link>
-                <span className={`text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-medium whitespace-nowrap ${status.cls}`}>
-                  {status.text}
-                </span>
+                {/* Governance badges */}
+                <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-medium whitespace-nowrap ${status.cls}`}>
+                    {status.text}
+                  </span>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-medium whitespace-nowrap ${
+                    isValidado ? "bg-emerald-500/10 text-emerald-400" :
+                    isRejeitado ? "bg-red-500/10 text-red-400" :
+                    "bg-slate-800 text-slate-500"
+                  }`}>
+                    {isValidado ? "validado" : isRejeitado ? "rejeitado" : "pendente"}
+                  </span>
+                  {isAtivoIA && isValidado && (
+                    <span className="text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-medium bg-purple-500/10 text-purple-400 whitespace-nowrap">
+                      IA
+                    </span>
+                  )}
+                </div>
                 {isError && (
                   <Button size="sm" variant="ghost" disabled={isReprocessing} onClick={() => handleReprocess(d)}
                     className="text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 shrink-0">
                     {isReprocessing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
-                    <span className="ml-1 text-xs">Reprocessar</span>
                   </Button>
                 )}
                 <Button size="sm" variant="ghost" onClick={(e) => { e.preventDefault(); setDeleteTarget(d); }}
                   className="text-red-400/60 hover:text-red-400 hover:bg-red-500/10 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
-                <span className={`text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-medium ${
-                  d.status_validacao === "validado" ? "bg-emerald-500/10 text-emerald-400" :
-                  d.status_validacao === "rejeitado" ? "bg-red-500/10 text-red-400" :
-                  "bg-slate-800 text-slate-500"
-                }`}>
-                  {d.status_validacao?.replace(/_/g, " ")}
-                </span>
                 <Link to={`/quero-armas/base-conhecimento/${d.id}`}>
                   <ExternalLink className="h-3.5 w-3.5 text-slate-600 group-hover:text-amber-400 shrink-0" />
                 </Link>
@@ -303,5 +336,3 @@ export default function QABaseConhecimentoPage() {
     </div>
   );
 }
-
-
