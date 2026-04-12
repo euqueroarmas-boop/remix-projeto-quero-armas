@@ -742,7 +742,7 @@ export default function QAGerarPecaPage() {
                   <Button type="button" variant="outline" role="combobox" aria-expanded={cidadePopoverOpen}
                     disabled={!clienteUf || municipiosLoading}
                     className="w-full justify-between bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm font-normal hover:bg-[#0c0c18] hover:text-slate-200">
-                    {clienteCidade || (municipiosLoading ? "Carregando..." : !clienteUf ? "Selecione UF primeiro" : "Selecione a cidade...")}
+                    {clienteCidade ? toTitleCase(clienteCidade) : (municipiosLoading ? "Carregando..." : !clienteUf ? "Selecione UF primeiro" : "Selecione a cidade...")}
                     {municipiosLoading ? <Loader2 className="ml-2 h-3.5 w-3.5 shrink-0 animate-spin opacity-50" /> : <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />}
                   </Button>
                 </PopoverTrigger>
