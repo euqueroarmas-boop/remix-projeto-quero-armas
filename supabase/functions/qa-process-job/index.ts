@@ -141,8 +141,8 @@ async function processJob(jobId: string) {
       }
     }
 
-    // Stage 5: Trigger specialized processing (qa-processar-documento)
-    await updateJob({ etapa_atual: "processamento_tipado" });
+    // Stage 5: Specialized processing (qa-processar-documento)
+    await updateJob({ etapa_atual: "estruturando_campos" });
 
     try {
       const procResp = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/qa-processar-documento`, {
@@ -155,6 +155,7 @@ async function processJob(jobId: string) {
       });
       if (procResp.ok) {
         await procResp.text();
+        await updateJob({ etapa_atual: "salvando_metadados" });
       } else {
         console.warn("qa-processar-documento returned", procResp.status);
         await procResp.text();
