@@ -59,17 +59,17 @@ export function QASidebar({ perfil }: Props) {
   };
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-[#1a1a2e] bg-[#08080f]">
+    <Sidebar collapsible="icon" className="border-r border-[#1c1c1c] bg-[#0a0a0a]">
       <SidebarContent className="py-3">
         {!collapsed && (
-          <div className="px-4 pb-3 mb-1 border-b border-[#1a1a2e]">
+          <div className="px-4 pb-3 mb-1 border-b border-[#1c1c1c]">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded bg-[#1a1a2e] flex items-center justify-center">
-                <Shield className="h-3.5 w-3.5 text-slate-400" />
+              <div className="w-7 h-7 rounded bg-[#7a1528]/20 flex items-center justify-center">
+                <Shield className="h-3.5 w-3.5 text-[#c43b52]" />
               </div>
               <div>
-                <div className="text-[13px] font-semibold text-slate-300 tracking-tight leading-none">Quero Armas</div>
-                <div className="text-[9px] text-slate-600 tracking-[0.15em] uppercase mt-0.5">Inteligência Jurídica</div>
+                <div className="text-[13px] font-semibold text-neutral-200 tracking-tight leading-none">Quero Armas</div>
+                <div className="text-[9px] text-neutral-600 tracking-[0.15em] uppercase mt-0.5">Inteligência Jurídica</div>
               </div>
             </div>
           </div>
@@ -81,7 +81,7 @@ export function QASidebar({ perfil }: Props) {
           return (
             <SidebarGroup key={group.label}>
               {!collapsed && (
-                <SidebarGroupLabel className="text-[9px] text-slate-600 uppercase tracking-[0.2em] font-medium px-4 py-1">
+                <SidebarGroupLabel className="text-[9px] text-neutral-600 uppercase tracking-[0.2em] font-medium px-4 py-1">
                   {group.label}
                 </SidebarGroupLabel>
               )}
@@ -96,11 +96,11 @@ export function QASidebar({ perfil }: Props) {
                             to={item.url}
                             className={`flex items-center gap-2.5 px-3 py-1.5 rounded text-[13px] transition-all ${
                               active
-                                ? "bg-[#14142a] text-slate-200 border-l-2 border-slate-400"
-                                : "text-slate-500 hover:text-slate-300 hover:bg-[#0e0e1a]"
+                                ? "bg-[#7a1528]/15 text-[#e8a0ad] border-l-2 border-[#a52338]"
+                                : "text-neutral-500 hover:text-neutral-300 hover:bg-[#141414]"
                             }`}
                           >
-                            <item.icon className={`h-3.5 w-3.5 shrink-0 ${active ? "text-slate-300" : ""}`} />
+                            <item.icon className={`h-3.5 w-3.5 shrink-0 ${active ? "text-[#c43b52]" : ""}`} />
                             {!collapsed && <span>{item.title}</span>}
                           </Link>
                         </SidebarMenuButton>
@@ -113,13 +113,13 @@ export function QASidebar({ perfil }: Props) {
           );
         })}
 
-        <div className="mt-auto pt-2 border-t border-[#1a1a2e] mx-2">
+        <div className="mt-auto pt-2 border-t border-[#1c1c1c] mx-2">
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
                 <button
                   onClick={signOut}
-                  className="flex items-center gap-2.5 px-3 py-1.5 rounded text-[13px] text-slate-600 hover:text-red-400 hover:bg-red-500/5 w-full transition-all"
+                  className="flex items-center gap-2.5 px-3 py-1.5 rounded text-[13px] text-neutral-600 hover:text-red-400 hover:bg-red-500/5 w-full transition-all"
                 >
                   <LogOut className="h-3.5 w-3.5 shrink-0" />
                   {!collapsed && <span>Sair</span>}
