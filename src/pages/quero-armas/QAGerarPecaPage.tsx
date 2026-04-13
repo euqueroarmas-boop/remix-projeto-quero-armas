@@ -1444,10 +1444,12 @@ export default function QAGerarPecaPage() {
         startedAt={genStartedAt}
         result={resultado}
         savedCasoId={savedCasoId}
-        onRetry={() => { setGenStep("idle"); setGenError(""); setShowDraftingView(false); setStreamedText(""); gerar(); }}
+        onRetry={() => { setGenStep("idle"); setGenError(""); setShowDraftingView(false); setStreamedText(""); setValidationErrors([]); gerar(); }}
         onCopy={copiarMinuta}
         onExportDocx={exportarDocx}
         onOpenCase={() => savedCasoId && navigate(`/quero-armas/gerar-peca?caso=${savedCasoId}`)}
+        validationErrors={validationErrors}
+        isExporting={isExporting}
       />
     </div>
   );
