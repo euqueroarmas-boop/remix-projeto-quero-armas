@@ -36,8 +36,8 @@ async function processJob(jobId: string) {
   };
 
   try {
-    // Stage 1: Upload to storage
-    await updateJob({ status: "uploading", etapa_atual: "upload_storage", started_at: job.started_at || new Date().toISOString() });
+    // Stage 1: Verify file in storage (already uploaded by frontend)
+    await updateJob({ status: "saved", etapa_atual: "verificando_arquivo", started_at: job.started_at || new Date().toISOString() });
 
     // File is already uploaded by frontend before job creation — verify it exists
     const storagePath = job.storage_path;

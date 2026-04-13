@@ -526,10 +526,10 @@ export default function QAGerarPecaPage() {
         if (!job) continue;
         const j = job as any;
 
-        // Map job status to UI stage
+        // Map job status to UI stage — never regress back to "uploading"
         const statusMap: Record<string, DocUploadStage> = {
           queued: "queued",
-          uploading: "uploading",
+          uploading: "saved",  // file already uploaded by frontend, never show "uploading" again
           saved: "saved",
           extracting: "extracting",
           processing: "processing",
