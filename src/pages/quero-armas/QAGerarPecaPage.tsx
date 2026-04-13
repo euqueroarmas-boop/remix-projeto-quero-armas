@@ -829,8 +829,9 @@ export default function QAGerarPecaPage() {
   };
 
   const copiarMinuta = () => {
-    if (resultado?.minuta_gerada) {
-      navigator.clipboard.writeText(resultado.minuta_gerada);
+    const text = resultado?.minuta_gerada || streamedText;
+    if (text) {
+      navigator.clipboard.writeText(text);
       toast.success("Minuta copiada");
     }
   };
