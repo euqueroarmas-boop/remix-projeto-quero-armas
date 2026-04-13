@@ -192,6 +192,7 @@ export default function QAGerarPecaPage() {
   const [municipiosList, setMunicipiosList] = useState<string[]>([]);
   const [municipiosLoading, setMunicipiosLoading] = useState(false);
   const [cidadePopoverOpen, setCidadePopoverOpen] = useState(false);
+  const municipiosLoadedUfRef = useRef("");
 
   // Auxiliary documents
   const [arquivosAuxiliares, setArquivosAuxiliares] = useState<ArquivoAuxiliar[]>([]);
