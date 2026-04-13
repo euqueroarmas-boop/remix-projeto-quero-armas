@@ -4,8 +4,9 @@ import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import CaseDetailPanel from "@/components/quero-armas/CaseDetailPanel";
 import {
   Search, FolderOpen, PenTool, CheckCircle, XCircle, Clock, Eye,
   Shield, BookOpen, ChevronRight,
