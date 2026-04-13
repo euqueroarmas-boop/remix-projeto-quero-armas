@@ -934,6 +934,7 @@ Deno.serve(async (req) => {
     if (info_tempestividade) dadosAdicionais += `\nINFORMAÇÕES DE TEMPESTIVIDADE: ${info_tempestividade}`;
     if (cliente_endereco) dadosAdicionais += `\nENDEREÇO DO CLIENTE: ${cliente_endereco}`;
     if (cliente_cep) dadosAdicionais += `\nCEP DO CLIENTE: ${cliente_cep}`;
+    if (numero_requerimento) dadosAdicionais += `\nNÚMERO DO REQUERIMENTO: ${numero_requerimento}`;
 
     // Evidence-specific instructions for the user prompt
     const bos = evidenceDocs.filter(d => d.tipo === "boletim_ocorrencia");
@@ -953,7 +954,7 @@ Deno.serve(async (req) => {
 - TIPO OBRIGATÓRIO: ${tipo_peca}
 - TÍTULO OBRIGATÓRIO DA PEÇA: ${tituloObrigatorio}
 - TIPO DE SERVIÇO PARA PREÂMBULO: "${tipoServico}"
-- ENDEREÇAMENTO OBRIGATÓRIO: "${enderecamento}"
+- ENDEREÇAMENTO OBRIGATÓRIO: "${enderecamento}"${numero_requerimento ? `\n- NÚMERO DO REQUERIMENTO: "${numero_requerimento}" — inserir LOGO APÓS o endereçamento, na linha seguinte, no formato: "Requerimento: ${numero_requerimento}". Depois, iniciar o preâmbulo.` : ""}
 - ${instrucaoTipo}
 - Redija de forma TÉCNICA, PRECISA e CONCISA. Sem prolixidade, sem enchimento.
 - Use tom TÉCNICO-JURÍDICO PROFISSIONAL, formal e sóbrio.
