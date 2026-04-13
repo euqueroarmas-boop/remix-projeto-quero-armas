@@ -665,6 +665,7 @@ Deno.serve(async (req) => {
       cliente_cidade, cliente_uf, cliente_endereco, cliente_cep,
       circunscricao_resolvida,
       data_notificacao, info_tempestividade,
+      numero_requerimento,
     } = reqBody;
     const wantStream = !!reqBody.stream;
 
