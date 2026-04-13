@@ -1142,9 +1142,12 @@ export default function QAGerarPecaPage() {
                     <FileText className={`h-3.5 w-3.5 shrink-0 ${stageColor(arq.stage)}`} />
                     <div className="flex-1 min-w-0 space-y-0.5">
                       <div className="text-[12px] text-slate-400 truncate">{arq.nome}</div>
-                      <div className="flex items-center gap-2">
-                        <span className={`text-[10px] ${stageColor(arq.stage)}`}>{STAGE_LABELS[arq.stage]}</span>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`text-[10px] ${stageColor(arq.stage)}`}>{getDisplayLabel(arq.stage, arq.etapaAtual)}</span>
                         {!["pending", "done", "failed"].includes(arq.stage) && <ElapsedTime startedAt={arq.startedAt} />}
+                        {arq.tipo && arq.stage !== "done" && arq.stage !== "failed" && arq.stage !== "pending" && DOC_COMPLEXITY[arq.tipo] && (
+                          <span className="text-[9px] text-slate-600">{COMPLEXITY_LABEL[DOC_COMPLEXITY[arq.tipo]]}</span>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
