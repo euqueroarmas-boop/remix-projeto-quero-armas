@@ -61,7 +61,7 @@ type GenerationStep =
   | "done"
   | "error";
 
-type DraftingPipelineStep = "context" | "sources" | "writing" | "reviewing" | "validating" | "saving" | "done" | "error";
+type DraftingPipelineStep = "context" | "sources" | "writing" | "expanding" | "reviewing" | "validating" | "saving" | "done" | "error";
 
 const GENERATION_STEPS: { key: GenerationStep; label: string }[] = [
   { key: "resolving_circumscription", label: "Resolvendo circunscrição da PF" },
@@ -1074,7 +1074,7 @@ export default function QAGerarPecaPage() {
     setIsExporting(true);
 
     const dataExtenso = formatDataExtenso();
-    const cidadeFormatada = clienteCidade.trim() ? toTitleCase(clienteCidade.trim()) : "";
+    const cidadeFormatada = clienteCidade.trim() ? clienteCidade.trim().toUpperCase() : "";
     const nomeFormatado = nomeRequerente.trim();
     const dataHoje = new Date();
     const dataFile = `${dataHoje.getFullYear()}-${String(dataHoje.getMonth() + 1).padStart(2, "0")}-${String(dataHoje.getDate()).padStart(2, "0")}`;

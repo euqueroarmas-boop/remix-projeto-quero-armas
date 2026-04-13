@@ -382,7 +382,8 @@ function validateQuality(text: string, evidenceDocs: EvidenceDoc[]): { pass: boo
   if (genericCount > QUALITY_MARKERS.maxGenericHits) issues.push(`excesso_cliches:${genericCount}`);
   const paragraphs = text.split(/\n\s*\n/).filter(p => p.trim().length > 40);
   if (paragraphs.length < QUALITY_MARKERS.minParagraphs) issues.push(`paragrafos_insuficientes:${paragraphs.length}`);
-  if (text.length < 1500) issues.push(`texto_muito_curto:${text.length}`);
+  const wordCount = text.split(/\s+/).filter(Boolean).length;
+  if (wordCount < 2000) issues.push(`texto_muito_curto:${wordCount}_palavras_minimo_2000`);
   const hasLei10826 = /10\.826/i.test(text);
   const hasDecreto11615 = /11\.615/i.test(text);
   const hasIN201 = /201\/2021|IN\s*n?º?\s*201/i.test(text);
@@ -559,7 +560,10 @@ Em recurso_administrativo e resposta_a_notificacao, integrar menção à tempest
 - Pedido final claro e específico ao caso.
 - "Nestes termos, pede deferimento."
 - Espaço para local, data e assinatura:
-  "[CIDADE], [DATA].\\n\\n[NOME DO REQUERENTE/ADVOGADO]\\n[OAB/REGISTRO]"
+  "[CIDADE EM MAIÚSCULO], [DATA POR EXTENSO]."
+  Seguido de duas linhas em branco e o nome COMPLETO do requerente.
+- PROIBIDO: qualquer menção a advogado, OAB, procurador ou representante legal.
+- A assinatura é SEMPRE e SOMENTE o nome do requerente.
 
 ═══════════════════════════════════════════
 REGRAS INVIOLÁVEIS
@@ -578,6 +582,9 @@ REGRAS INVIOLÁVEIS
 11. Se o contexto mencionar tipos não permitidos, NÃO assuma esse tipo.
 12. É PROIBIDO omitir a estrutura obrigatória.
 13. O endereçamento deve seguir EXATAMENTE o texto fornecido. NUNCA inventar comarca, cidade ou unidade PF.
+14. NUNCA mencionar advogado, OAB, procurador ou representante legal. A peça é feita em nome do REQUERENTE diretamente, sem intermediários.
+15. A CIDADE no fechamento DEVE estar em LETRAS MAIÚSCULAS.
+16. O texto deve ter no MÍNIMO 2000 palavras. Se necessário, aprofunde a argumentação jurídica para atingir esse volume.
 
 ═══════════════════════════════════════════
 DOCUMENTOS AUXILIARES DO CASO — REGRA DE USO
@@ -960,8 +967,12 @@ Deno.serve(async (req) => {
 - Use tom TÉCNICO-JURÍDICO PROFISSIONAL, formal e sóbrio.
 - ${focoMap[foco] || focoMap.legalidade}${dadosAdicionais}${evidenceInstrucoes}`;
 
-    const cidadeParaFechamento = circunscricao ? circunscricao.municipio_sede : (cliente_cidade || "[CIDADE]");
-    const ufParaFechamento = circunscricao ? circunscricao.uf : (cliente_uf || "[UF]");
+    const cidadeParaFechamento = (circunscricao ? circunscricao.municipio_sede : (cliente_cidade || "[CIDADE]")).toUpperCase();
+    const ufParaFechamento = (circunscricao ? circunscricao.uf : (cliente_uf || "[UF]")).toUpperCase();
+    const nomeRequerenteCompleto = reqBody.nome_requerente || caso_titulo || "[NOME DO REQUERENTE]";
+    const mesesExtenso = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+    const agora = new Date();
+    const dataExtensoFechamento = `${agora.getDate()} de ${mesesExtenso[agora.getMonth()]} de ${agora.getFullYear()}`;
 
     const evidenceSummaryForPrompt = evidenceDocs.length > 0
       ? `\nDOCUMENTOS PROBATÓRIOS: ${evidenceDocs.length} (${bos.length} BOs, ${laudos.length} laudos, ${notifs.length} notif/indef) — TRATAMENTO PRIORITÁRIO`
@@ -1000,7 +1011,8 @@ Redija a peça jurídica do tipo "${tipo_peca}" seguindo RIGOROSAMENTE a estrutu
 3. I — DOS FATOS (cronológico, objetivo, sem floreio)${dosFactosInstr}
 4. II — DO DIREITO (usar base normativa prioritária: Lei 10.826/2003 + Decreto 11.615/2023 + IN 201/2021-DG/PF + Lei 9.784/1999)${doDireitoInstr}
 5. III — ALEGAÇÕES FINAIS (consolidar sem repetir)${evidenceDocs.length > 0 ? " — reforçar materialidade probatória" : ""}
-6. IV — FECHAMENTO (pedido claro + "Nestes termos, pede deferimento." + "${cidadeParaFechamento}, [DATA].\\n\\n[NOME DO REQUERENTE/ADVOGADO]\\n[OAB/REGISTRO]")
+6. IV — FECHAMENTO (pedido claro + "Nestes termos, pede deferimento." + "${cidadeParaFechamento}, ${dataExtensoFechamento}.\\n\\n${nomeRequerenteCompleto}")
+ATENÇÃO FECHAMENTO: NÃO use placeholders. A data é "${dataExtensoFechamento}". A cidade é "${cidadeParaFechamento}". O nome é "${nomeRequerenteCompleto}". SEM advogado, SEM OAB, SEM procurador.
 
 REGRAS DE QUALIDADE PARA ESTA GERAÇÃO:
 - Escreva como advogado experiente, NÃO como assistente de IA.
@@ -1029,7 +1041,7 @@ IGNORE qualquer menção no contexto a tipos de peça diferentes. O tipo é FIXO
         body: JSON.stringify({
           model: "google/gemini-2.5-pro",
           messages: aiMessages,
-          max_tokens: 8000,
+          max_tokens: 12000,
           stream: true,
         }),
       });
@@ -1192,7 +1204,7 @@ IGNORE qualquer menção no contexto a tipos de peça diferentes. O tipo é FIXO
       body: JSON.stringify({
         model: "google/gemini-2.5-pro",
         messages: aiMessages,
-        max_tokens: 8000,
+        max_tokens: 12000,
       }),
     });
 
