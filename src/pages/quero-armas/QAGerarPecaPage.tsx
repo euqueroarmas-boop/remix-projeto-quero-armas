@@ -560,14 +560,17 @@ export default function QAGerarPecaPage() {
 
   const handleChangeTipoDoc = (index: number, tipo: string) => {
     if (!tipo) return;
-    setArquivosAuxiliares(prev => prev.map((a, i) => i === index ? { ...a, tipo } : a));
-    // Immediately trigger job-based upload+processing after classification
-    const arq = arquivosAuxiliares[index];
-    if (arq && arq.stage === "pending") {
-      setTimeout(() => {
-        void startDocJob({ ...arq, tipo }, index);
-      }, 50);
-    }
+    // Update tipo inline — we need the latest state for startDocJob
+    setArquivosAuxiliares(prev => {
+      const updated = prev.map((a, i) => i === index ? { ...a, tipo } : a);
+      // Trigger upload immediately using the updated item
+      const arq = updated[index];
+      if (arq && arq.stage === "pending") {
+        // Use microtask to let React commit the state first
+        queueMicrotask(() => void startDocJob({ ...arq, tipo }, index));
+      }
+      return updated;
+    });
   };
 
   const setDocStage = (index: number, stage: DocUploadStage, extra?: Partial<ArquivoAuxiliar>) => {
@@ -585,12 +588,13 @@ export default function QAGerarPecaPage() {
   };
 
   const pollDocumentStatus = async (docId: string, index: number, fileName: string) => {
-    const POLL_INTERVAL = 2000;
     const MAX_POLLS = 300;
     let polls = 0;
 
     while (polls < MAX_POLLS) {
-      await new Promise(r => setTimeout(r, POLL_INTERVAL));
+      // Adaptive polling: fast at first (1s), slower after 30s (3s), even slower after 2min (5s)
+      const interval = polls < 15 ? 1000 : polls < 40 ? 3000 : 5000;
+      await new Promise(r => setTimeout(r, interval));
       polls++;
 
       try {
@@ -634,7 +638,6 @@ export default function QAGerarPecaPage() {
 
   const dispatchDocumentIngestion = async (index: number, storagePath: string, docId: string, fileName: string) => {
     try {
-      await new Promise(r => setTimeout(r, 250));
       setDocStage(index, "queued", { docId, storagePath, etapaAtual: "pendente" });
 
       const { error } = await supabase.functions.invoke("qa-ingest-document", {
