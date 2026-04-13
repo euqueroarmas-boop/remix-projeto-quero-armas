@@ -61,7 +61,7 @@ type GenerationStep =
   | "done"
   | "error";
 
-type DraftingPipelineStep = "context" | "sources" | "writing" | "reviewing" | "validating" | "saving" | "done" | "error";
+type DraftingPipelineStep = "context" | "sources" | "writing" | "expanding" | "reviewing" | "validating" | "saving" | "done" | "error";
 
 const GENERATION_STEPS: { key: GenerationStep; label: string }[] = [
   { key: "resolving_circumscription", label: "Resolvendo circunscrição da PF" },
