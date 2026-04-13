@@ -1090,6 +1090,7 @@ export default function QAGerarPecaPage() {
             cliente_nome: nomeFormatado,
             cidade: cidadeFormatada,
             estado: clienteUf.trim(),
+            numero_requerimento: numeroRequerimento.trim() || "",
             data_atual: cidadeFormatada
               ? `${cidadeFormatada}, ${dataExtenso}.`
               : `${dataExtenso}.`,
