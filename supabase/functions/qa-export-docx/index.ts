@@ -248,6 +248,12 @@ Deno.serve(async (req) => {
     content = content.replace(/\[ASSINATURA[^\]]*\]/gi, vars.assinatura);
     content = content.replace(/\[ADVOGAD[OA][^\]]*\]/gi, "");
     content = content.replace(/\[OAB[^\]]*\]/gi, "");
+    content = content.replace(/\[NUMERO[_\s]*REQUERIMENTO[^\]]*\]/gi, vars.numero_requerimento || "");
+    content = content.replace(/\[PREAMBULO[^\]]*\]/gi, "");
+    // Remove orphan "Requerimento:" line if number was not provided
+    if (!vars.numero_requerimento) {
+      content = content.replace(/\n\s*Requerimento:\s*\n/gi, "\n");
+    }
 
     // Ensure closing block has real date and requester name
     if (!content.includes(vars.data_atual) && vars.data_atual) {
