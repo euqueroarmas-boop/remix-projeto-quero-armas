@@ -593,17 +593,17 @@ export default function QAGerarPecaPage() {
         const uiStage = statusMap[j.status] || "processing";
 
         if (j.status === "done") {
-          setDocStage(index, "done", { docId: j.documento_id, jobId });
+          setDocStage(index, "done", { docId: j.documento_id, jobId, etapaAtual: "concluido" });
           return;
         }
 
         if (j.status === "failed") {
-          setDocStage(index, "failed", { error: j.erro || "Erro no processamento", jobId });
+          setDocStage(index, "failed", { error: j.erro || "Erro no processamento", jobId, etapaAtual: "erro" });
           return;
         }
 
-        // Update intermediate stage
-        setDocStage(index, uiStage, { jobId });
+        // Update intermediate stage with granular etapa_atual
+        setDocStage(index, uiStage, { jobId, etapaAtual: j.etapa_atual || undefined });
       } catch {
         // Network error — keep polling, job continues in background
       }
@@ -618,7 +618,6 @@ export default function QAGerarPecaPage() {
       } else if (f?.status === "failed") {
         setDocStage(index, "failed", { error: f.erro || "Erro no processamento", jobId });
       } else {
-        // Still processing — mark as processing, user can check back later
         setDocStage(index, "processing", { jobId });
         toast.info(`${arquivosAuxiliares[index]?.nome}: processamento continua em background`);
       }
