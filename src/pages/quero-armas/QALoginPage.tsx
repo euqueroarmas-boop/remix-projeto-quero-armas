@@ -55,47 +55,47 @@ export default function QALoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#08080f] px-4">
+    <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a] px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded bg-[#14142a] border border-[#1a1a2e] mb-4">
-            <Shield className="h-5 w-5 text-slate-500" />
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-[#7a1528]/20 border border-[#7a1528]/30 mb-4">
+            <Shield className="h-6 w-6 text-[#c43b52]" />
           </div>
-          <h1 className="text-lg font-semibold text-slate-300 tracking-tight">Quero Armas</h1>
-          <p className="text-[11px] text-slate-600 mt-1 tracking-wider uppercase">Acesso Restrito</p>
+          <h1 className="text-xl font-bold text-neutral-100 tracking-tight">Quero Armas</h1>
+          <p className="text-[11px] text-neutral-600 mt-1 tracking-wider uppercase">Acesso Restrito</p>
         </div>
 
-        <form onSubmit={handleLogin} className="space-y-4 bg-[#0a0a12] border border-[#1a1a2e] rounded-lg p-5">
+        <form onSubmit={handleLogin} className="space-y-4 bg-[#111111] border border-[#1c1c1c] rounded-xl p-6">
           <div className="space-y-1.5">
-            <Label htmlFor="email" className="text-slate-500 text-[11px] uppercase tracking-wider">E-mail</Label>
+            <Label htmlFor="email" className="text-neutral-500 text-[11px] uppercase tracking-wider">E-mail</Label>
             <Input
               id="email" type="email" required value={email}
               onChange={e => setEmail(e.target.value)}
-              className="bg-[#08080f] border-[#1a1a2e] text-slate-300 focus:border-slate-600 h-9 text-sm"
+              className="bg-[#0a0a0a] border-[#1c1c1c] text-neutral-200 focus:border-[#7a1528] focus:ring-[#7a1528]/30 h-10 text-sm"
               placeholder="seu@email.com"
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="password" className="text-slate-500 text-[11px] uppercase tracking-wider">Senha</Label>
+            <Label htmlFor="password" className="text-neutral-500 text-[11px] uppercase tracking-wider">Senha</Label>
             <Input
               id="password" type="password" required value={password}
               onChange={e => setPassword(e.target.value)}
-              className="bg-[#08080f] border-[#1a1a2e] text-slate-300 focus:border-slate-600 h-9 text-sm"
+              className="bg-[#0a0a0a] border-[#1c1c1c] text-neutral-200 focus:border-[#7a1528] focus:ring-[#7a1528]/30 h-10 text-sm"
               placeholder="••••••••"
             />
           </div>
-          <Button type="submit" disabled={loading} className="w-full bg-[#14142a] hover:bg-[#1a1a35] text-slate-300 border border-[#1a1a2e] h-9 text-sm">
+          <Button type="submit" disabled={loading} className="w-full bg-[#7a1528] hover:bg-[#a52338] text-white border-0 h-10 text-sm font-medium transition-all active:scale-[0.98]">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Entrar"}
           </Button>
           <div className="text-center pt-1">
             <button type="button" onClick={handleForgotPassword}
-              className="text-[10px] text-slate-600 hover:text-slate-400 transition-colors">
+              className="text-[10px] text-neutral-600 hover:text-[#c43b52] transition-colors">
               Esqueci minha senha
             </button>
           </div>
         </form>
 
-        <p className="text-center text-[10px] text-slate-700 mt-6 tracking-wider">
+        <p className="text-center text-[10px] text-neutral-700 mt-6 tracking-wider">
           Ambiente seguro · Acesso auditado
         </p>
       </div>

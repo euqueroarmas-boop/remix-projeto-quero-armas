@@ -74,7 +74,7 @@ export default function QADashboardPage() {
   if (loading) {
     return (
       <div className="flex justify-center py-12">
-        <div className="w-5 h-5 border-2 border-slate-700 border-t-slate-400 rounded-full animate-spin" />
+        <div className="w-5 h-5 border-2 border-neutral-800 border-t-neutral-500 rounded-full animate-spin" />
       </div>
     );
   }
@@ -82,47 +82,47 @@ export default function QADashboardPage() {
   const alerts = [
     stats.erros > 0 && { label: `${stats.erros} com erro`, icon: XCircle, color: "text-red-400", bg: "bg-red-500/5 border-red-500/10", link: "/quero-armas/base-conhecimento" },
     stats.pendentes > 0 && { label: `${stats.pendentes} pendente(s)`, icon: AlertTriangle, color: "text-amber-400", bg: "bg-amber-500/5 border-amber-500/10", link: "/quero-armas/base-conhecimento" },
-    stats.rascunhos > 0 && { label: `${stats.rascunhos} rascunho(s)`, icon: Clock, color: "text-slate-400", bg: "bg-slate-500/5 border-slate-500/10", link: "/quero-armas/historico" },
+    stats.rascunhos > 0 && { label: `${stats.rascunhos} rascunho(s)`, icon: Clock, color: "text-neutral-400", bg: "bg-neutral-500/5 border-neutral-500/10", link: "/quero-armas/historico" },
   ].filter(Boolean) as any[];
 
   const statusColor = (s: string) => {
     if (s === "concluido" || s === "aprovado" || s === "aprovado_como_referencia") return "text-emerald-400";
     if (s === "erro" || s === "texto_invalido" || s === "rejeitado") return "text-red-400";
-    return "text-slate-600";
+    return "text-neutral-600";
   };
 
   return (
     <div className="space-y-3 md:space-y-5 max-w-6xl">
-      {/* Alerts — always first */}
+      {/* Alerts */}
       {alerts.length > 0 && (
         <div className="space-y-1">
           {alerts.map((a, i) => (
-            <Link key={i} to={a.link} className={`flex items-center gap-2 px-2.5 py-1.5 md:py-2 rounded border ${a.bg} hover:opacity-80 transition-opacity`}>
+            <Link key={i} to={a.link} className={`flex items-center gap-2 px-2.5 py-1.5 md:py-2 rounded-lg border ${a.bg} hover:opacity-80 transition-opacity`}>
               <a.icon className={`h-3 w-3 ${a.color} shrink-0`} />
               <span className={`text-[11px] md:text-[12px] ${a.color} flex-1`}>{a.label}</span>
-              <ArrowRight className="h-2.5 w-2.5 text-slate-700" />
+              <ArrowRight className="h-2.5 w-2.5 text-neutral-700" />
             </Link>
           ))}
         </div>
       )}
 
-      {/* Quick actions — compact on mobile */}
+      {/* Quick actions */}
       <div className="flex gap-1.5 md:gap-2">
         <Link to="/quero-armas/gerar-peca"
-          className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#0c0c16] border border-[#1a1a2e] rounded hover:border-slate-700 transition-colors text-[11px] text-slate-400 hover:text-slate-300">
+          className="flex items-center gap-1.5 px-3 py-2 bg-[#7a1528] hover:bg-[#a52338] rounded-lg transition-colors text-[11px] text-white font-medium active:scale-[0.98]">
           <PenTool className="h-3 w-3" /> <span className="hidden xs:inline">Nova</span> Peça
         </Link>
         <Link to="/quero-armas/base-conhecimento"
-          className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#0c0c16] border border-[#1a1a2e] rounded hover:border-slate-700 transition-colors text-[11px] text-slate-400 hover:text-slate-300">
+          className="flex items-center gap-1.5 px-3 py-2 bg-[#141414] border border-[#1c1c1c] rounded-lg hover:border-neutral-600 transition-colors text-[11px] text-neutral-400 hover:text-neutral-300">
           <BookOpen className="h-3 w-3" /> Base
         </Link>
         <Link to="/quero-armas/ia"
-          className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#0c0c16] border border-[#1a1a2e] rounded hover:border-slate-700 transition-colors text-[11px] text-slate-400 hover:text-slate-300">
+          className="flex items-center gap-1.5 px-3 py-2 bg-[#141414] border border-[#1c1c1c] rounded-lg hover:border-neutral-600 transition-colors text-[11px] text-neutral-400 hover:text-neutral-300">
           <Shield className="h-3 w-3" /> IA
         </Link>
       </div>
 
-      {/* Metrics — 2-col on mobile, 6-col on desktop */}
+      {/* Metrics */}
       <div className="grid grid-cols-3 gap-1.5 md:grid-cols-6 md:gap-2">
         {[
           { label: "Docs", value: stats.documentos },
@@ -132,33 +132,32 @@ export default function QADashboardPage() {
           { label: "Aprovadas", value: stats.aprovadas },
           { label: "Refs", value: stats.referencias },
         ].map(m => (
-          <div key={m.label} className="bg-[#0c0c16] border border-[#1a1a2e] rounded px-2 py-1.5 md:px-3 md:py-2.5 text-center">
-            <div className="text-sm md:text-lg font-semibold text-slate-300 font-mono tabular-nums leading-tight">{m.value}</div>
-            <div className="text-[8px] md:text-[9px] text-slate-600 uppercase tracking-[0.1em] mt-0.5">{m.label}</div>
+          <div key={m.label} className="bg-[#111111] border border-[#1c1c1c] rounded-lg px-2 py-2 md:px-3 md:py-3 text-center hover:border-[#2a2a2a] transition-colors">
+            <div className="text-sm md:text-lg font-semibold text-neutral-200 font-mono tabular-nums leading-tight">{m.value}</div>
+            <div className="text-[8px] md:text-[9px] text-neutral-600 uppercase tracking-[0.1em] mt-0.5">{m.label}</div>
           </div>
         ))}
       </div>
 
-      {/* Recent: stacked on mobile, side-by-side on desktop */}
+      {/* Recent */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
-        {/* Recent Pieces */}
-        <div className="bg-[#0c0c16] border border-[#1a1a2e] rounded p-2 md:p-3">
+        <div className="bg-[#111111] border border-[#1c1c1c] rounded-lg p-2.5 md:p-3">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[9px] text-slate-600 uppercase tracking-[0.12em] font-medium">Últimas Peças</span>
-            <Link to="/quero-armas/historico" className="text-[9px] text-slate-700 hover:text-slate-400">→</Link>
+            <span className="text-[9px] text-neutral-600 uppercase tracking-[0.12em] font-medium">Últimas Peças</span>
+            <Link to="/quero-armas/historico" className="text-[9px] text-neutral-700 hover:text-[#c43b52] transition-colors">→</Link>
           </div>
           {recentPecas.length === 0 ? (
-            <div className="text-[10px] text-slate-700 py-3 text-center">Nenhuma peça</div>
+            <div className="text-[10px] text-neutral-700 py-3 text-center">Nenhuma peça</div>
           ) : (
             <div className="space-y-px">
               {recentPecas.map(p => (
-                <div key={p.id} className="flex items-center gap-1.5 py-1 px-1.5 rounded hover:bg-[#14142a]/50 transition-colors">
-                  <PenTool className="h-2.5 w-2.5 text-slate-700 shrink-0" />
-                  <span className="text-[11px] text-slate-400 truncate flex-1 min-w-0">{p.titulo}</span>
+                <div key={p.id} className="flex items-center gap-1.5 py-1.5 px-1.5 rounded-md hover:bg-[#1a1a1a] transition-colors">
+                  <PenTool className="h-2.5 w-2.5 text-neutral-700 shrink-0" />
+                  <span className="text-[11px] text-neutral-400 truncate flex-1 min-w-0">{p.titulo}</span>
                   <span className={`text-[8px] font-mono shrink-0 ${statusColor(p.status || "")}`}>
                     {(p.status || "—").replace(/_/g, " ")}
                   </span>
-                  <span className="text-[8px] text-slate-700 font-mono tabular-nums shrink-0 hidden sm:block">
+                  <span className="text-[8px] text-neutral-700 font-mono tabular-nums shrink-0 hidden sm:block">
                     {new Date(p.created_at).toLocaleDateString("pt-BR")}
                   </span>
                 </div>
@@ -167,25 +166,24 @@ export default function QADashboardPage() {
           )}
         </div>
 
-        {/* Recent Docs */}
-        <div className="bg-[#0c0c16] border border-[#1a1a2e] rounded p-2 md:p-3">
+        <div className="bg-[#111111] border border-[#1c1c1c] rounded-lg p-2.5 md:p-3">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[9px] text-slate-600 uppercase tracking-[0.12em] font-medium">Últimos Documentos</span>
-            <Link to="/quero-armas/base-conhecimento" className="text-[9px] text-slate-700 hover:text-slate-400">→</Link>
+            <span className="text-[9px] text-neutral-600 uppercase tracking-[0.12em] font-medium">Últimos Documentos</span>
+            <Link to="/quero-armas/base-conhecimento" className="text-[9px] text-neutral-700 hover:text-[#c43b52] transition-colors">→</Link>
           </div>
           {recentDocs.length === 0 ? (
-            <div className="text-[10px] text-slate-700 py-3 text-center">Nenhum documento</div>
+            <div className="text-[10px] text-neutral-700 py-3 text-center">Nenhum documento</div>
           ) : (
             <div className="space-y-px">
               {recentDocs.map(d => (
                 <Link key={d.id} to={`/quero-armas/base-conhecimento/${d.id}`}
-                  className="flex items-center gap-1.5 py-1 px-1.5 rounded hover:bg-[#14142a]/50 transition-colors">
-                  <FileText className="h-2.5 w-2.5 text-slate-700 shrink-0" />
-                  <span className="text-[11px] text-slate-400 truncate flex-1 min-w-0">{d.titulo}</span>
+                  className="flex items-center gap-1.5 py-1.5 px-1.5 rounded-md hover:bg-[#1a1a1a] transition-colors">
+                  <FileText className="h-2.5 w-2.5 text-neutral-700 shrink-0" />
+                  <span className="text-[11px] text-neutral-400 truncate flex-1 min-w-0">{d.titulo}</span>
                   <span className={`text-[8px] font-mono shrink-0 ${statusColor(d.status || "")}`}>
                     {(d.status || "—").replace(/_/g, " ")}
                   </span>
-                  <span className="text-[8px] text-slate-700 font-mono tabular-nums shrink-0 hidden sm:block">
+                  <span className="text-[8px] text-neutral-700 font-mono tabular-nums shrink-0 hidden sm:block">
                     {new Date(d.created_at).toLocaleDateString("pt-BR")}
                   </span>
                 </Link>

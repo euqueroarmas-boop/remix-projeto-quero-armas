@@ -254,7 +254,7 @@ function stageProgress(s: DocUploadStage): number {
 function stageColor(s: DocUploadStage): string {
   if (s === "done") return "text-emerald-400";
   if (s === "failed") return "text-red-400";
-  return "text-cyan-400";
+  return "text-[#c43b52]";
 }
 
 function ElapsedTime({ startedAt }: { startedAt?: number }) {
@@ -268,7 +268,7 @@ function ElapsedTime({ startedAt }: { startedAt?: number }) {
   const m = Math.floor(elapsed / 60);
   const s = elapsed % 60;
   return (
-    <span className="text-[10px] text-slate-600 tabular-nums">
+    <span className="text-[10px] text-neutral-600 tabular-nums">
       {m > 0 ? `${m}m${s.toString().padStart(2, "0")}s` : `${s}s`}
     </span>
   );
@@ -1131,46 +1131,46 @@ export default function QAGerarPecaPage() {
     <div className="space-y-3 md:space-y-5 max-w-5xl">
       <div className="flex items-center justify-between gap-2">
         <div className="min-w-0">
-          <h1 className="text-sm md:text-base font-semibold text-slate-300 flex items-center gap-1.5">
-            <PenTool className="h-3.5 w-3.5 text-slate-500 shrink-0" />
+          <h1 className="text-sm md:text-base font-semibold text-neutral-300 flex items-center gap-1.5">
+            <PenTool className="h-3.5 w-3.5 text-neutral-500 shrink-0" />
             <span className="truncate">{casoId ? "Editar Caso" : "Gerar Peça"}</span>
           </h1>
         </div>
         {(savedCasoId || casoId) && (
           <Button variant="outline" size="sm" onClick={() => navigate(`/quero-armas/casos`)}
-            className="bg-[#0c0c16] border-[#1a1a2e] text-slate-400 hover:text-slate-300 h-6 md:h-7 text-[10px] shrink-0">
+            className="bg-[#111111] border-[#1c1c1c] text-neutral-400 hover:text-neutral-300 h-6 md:h-7 text-[10px] shrink-0">
             <FolderOpen className="h-3 w-3 mr-1" /> Casos
           </Button>
         )}
       </div>
 
-      <div className="bg-slate-500/5 border border-slate-500/10 rounded p-2 text-[10px] text-slate-500 flex items-start gap-1.5">
+      <div className="bg-neutral-500/5 border border-neutral-500/10 rounded p-2 text-[10px] text-neutral-500 flex items-start gap-1.5">
         <AlertTriangle className="h-3 w-3 shrink-0 mt-0.5" />
         <span>Toda minuta deve ser revisada por profissional habilitado.</span>
       </div>
 
-      <div className="space-y-3 md:space-y-4 bg-[#0c0c16] border border-[#1a1a2e] rounded p-2.5 md:p-4">
+      <div className="space-y-3 md:space-y-4 bg-[#111111] border border-[#1c1c1c] rounded p-2.5 md:p-4">
         {/* ── Requerente + Serviço ── */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <User className="h-3.5 w-3.5 text-slate-500" />
-            <span className="text-[10px] text-slate-600 uppercase tracking-[0.15em] font-medium">Dados do Requerente</span>
+            <User className="h-3.5 w-3.5 text-neutral-500" />
+            <span className="text-[10px] text-neutral-600 uppercase tracking-[0.15em] font-medium">Dados do Requerente</span>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-slate-500 text-[11px]">Nome completo do requerente *</Label>
+              <Label className="text-neutral-500 text-[11px]">Nome completo do requerente *</Label>
               <Input value={nomeRequerente} onChange={e => setNomeRequerente(e.target.value)}
-                className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm" placeholder="Nome completo" />
+                className="bg-[#0a0a0a] border-[#1c1c1c] text-neutral-300 h-9 text-sm" placeholder="Nome completo" />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-slate-500 text-[11px]">CPF / CNPJ</Label>
+              <Label className="text-neutral-500 text-[11px]">CPF / CNPJ</Label>
               <Input value={cpfCnpj} onChange={e => setCpfCnpj(e.target.value)}
-                className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm" placeholder="Opcional" />
+                className="bg-[#0a0a0a] border-[#1c1c1c] text-neutral-300 h-9 text-sm" placeholder="Opcional" />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-slate-500 text-[11px]">Tipo de Peça *</Label>
+              <Label className="text-neutral-500 text-[11px]">Tipo de Peça *</Label>
               <Select value={tipoPeca} onValueChange={setTipoPeca}>
-                <SelectTrigger className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="bg-[#0a0a0a] border-[#1c1c1c] text-neutral-300 h-9 text-sm"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {TIPOS_PECA.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
                 </SelectContent>
@@ -1182,49 +1182,49 @@ export default function QAGerarPecaPage() {
         {/* ── Client address ── */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <Building2 className="h-3.5 w-3.5 text-slate-500" />
-            <span className="text-[10px] text-slate-600 uppercase tracking-[0.15em] font-medium">Endereço / Localidade</span>
+            <Building2 className="h-3.5 w-3.5 text-neutral-500" />
+            <span className="text-[10px] text-neutral-600 uppercase tracking-[0.15em] font-medium">Endereço / Localidade</span>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-slate-500 text-[11px]">CEP</Label>
+              <Label className="text-neutral-500 text-[11px]">CEP</Label>
               <div className="relative">
                 <Input value={clienteCep} onChange={e => handleCepChange(e.target.value)} maxLength={9}
-                  className="bg-[#08080f] border-[#1a1a2e] text-slate-300 pr-8 h-9 text-sm" placeholder="00000-000" />
+                  className="bg-[#0a0a0a] border-[#1c1c1c] text-neutral-300 pr-8 h-9 text-sm" placeholder="00000-000" />
                 <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                  {cepStatus === "loading" && <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-500" />}
+                  {cepStatus === "loading" && <Loader2 className="h-3.5 w-3.5 animate-spin text-neutral-500" />}
                   {cepStatus === "found" && <CheckCircle className="h-3.5 w-3.5 text-emerald-400" />}
                   {cepStatus === "not_found" && <XCircle className="h-3.5 w-3.5 text-amber-400" />}
                   {cepStatus === "error" && <AlertTriangle className="h-3.5 w-3.5 text-red-400" />}
                 </div>
               </div>
-              {cepStatus === "loading" && <span className="text-[10px] text-slate-600">Buscando CEP...</span>}
+              {cepStatus === "loading" && <span className="text-[10px] text-neutral-600">Buscando CEP...</span>}
               {cepStatus === "found" && <span className="text-[10px] text-emerald-400/70">CEP encontrado</span>}
               {cepStatus === "not_found" && <span className="text-[10px] text-amber-400/70">CEP não encontrado</span>}
               {cepStatus === "error" && <span className="text-[10px] text-red-400/70">Erro ao consultar CEP</span>}
             </div>
             <div className="space-y-1.5">
-              <Label className="text-slate-500 text-[11px]">Cidade *</Label>
+              <Label className="text-neutral-500 text-[11px]">Cidade *</Label>
               <Popover open={cidadePopoverOpen} onOpenChange={setCidadePopoverOpen}>
                 <PopoverTrigger asChild>
                   <Button type="button" variant="outline" role="combobox" aria-expanded={cidadePopoverOpen}
                     disabled={!clienteUf || municipiosLoading}
-                    className="w-full justify-between bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm font-normal hover:bg-[#0c0c18] hover:text-slate-200">
+                    className="w-full justify-between bg-[#0a0a0a] border-[#1c1c1c] text-neutral-300 h-9 text-sm font-normal hover:bg-[#111111] hover:text-neutral-200">
                     {clienteCidade ? toTitleCase(clienteCidade) : (municipiosLoading ? "Carregando..." : !clienteUf ? "Selecione UF primeiro" : "Selecione a cidade...")}
                     {municipiosLoading ? <Loader2 className="ml-2 h-3.5 w-3.5 shrink-0 animate-spin opacity-50" /> : <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-[--radix-popover-trigger-width] p-0 bg-[#0c0c18] border-[#1a1a2e]" align="start">
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0 bg-[#111111] border-[#1c1c1c]" align="start">
                   <Command className="bg-transparent">
-                    <CommandInput placeholder="Digite para buscar..." className="h-9 text-sm text-slate-300" />
+                    <CommandInput placeholder="Digite para buscar..." className="h-9 text-sm text-neutral-300" />
                     <CommandList className="max-h-[240px]">
-                      <CommandEmpty className="py-4 text-center text-[11px] text-slate-500">
+                      <CommandEmpty className="py-4 text-center text-[11px] text-neutral-500">
                         Nenhum município encontrado. Verifique a grafia ou selecione outra UF.
                       </CommandEmpty>
                       <CommandGroup>
                         {municipiosList.map(m => (
                           <CommandItem key={m} value={m} onSelect={() => handleCidadeSelect(m)}
-                            className="text-sm text-slate-300 cursor-pointer data-[selected=true]:bg-cyan-500/10 data-[selected=true]:text-cyan-300">
+                            className="text-sm text-neutral-300 cursor-pointer data-[selected=true]:bg-[#7a1528]/10 data-[selected=true]:text-[#e8a0ad]">
                             <CheckCircle className={`mr-2 h-3.5 w-3.5 ${clienteCidade === m ? "opacity-100 text-emerald-400" : "opacity-0"}`} />
                             {toTitleCase(m)}
                           </CommandItem>
@@ -1234,38 +1234,38 @@ export default function QAGerarPecaPage() {
                   </Command>
                 </PopoverContent>
               </Popover>
-              {!clienteUf && <span className="text-[10px] text-slate-600">Selecione o estado primeiro</span>}
+              {!clienteUf && <span className="text-[10px] text-neutral-600">Selecione o estado primeiro</span>}
             </div>
             <div className="space-y-1.5">
-              <Label className="text-slate-500 text-[11px]">UF *</Label>
+              <Label className="text-neutral-500 text-[11px]">UF *</Label>
               <Select value={clienteUf} onValueChange={handleUfChange}>
-                <SelectTrigger className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm"><SelectValue placeholder="UF" /></SelectTrigger>
+                <SelectTrigger className="bg-[#0a0a0a] border-[#1c1c1c] text-neutral-300 h-9 text-sm"><SelectValue placeholder="UF" /></SelectTrigger>
                 <SelectContent>{ESTADOS_BR.map(uf => <SelectItem key={uf} value={uf}>{uf}</SelectItem>)}</SelectContent>
               </Select>
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-slate-500 text-[11px]">Endereço</Label>
+              <Label className="text-neutral-500 text-[11px]">Endereço</Label>
               <Input value={clienteEndereco} onChange={e => setClienteEndereco(e.target.value)}
-                className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm" placeholder="Rua, número..." />
+                className="bg-[#0a0a0a] border-[#1c1c1c] text-neutral-300 h-9 text-sm" placeholder="Rua, número..." />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-slate-500 text-[11px]">Bairro</Label>
+              <Label className="text-neutral-500 text-[11px]">Bairro</Label>
               <Input value={clienteBairro} onChange={e => setClienteBairro(e.target.value)}
-                className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm" placeholder="Bairro" />
+                className="bg-[#0a0a0a] border-[#1c1c1c] text-neutral-300 h-9 text-sm" placeholder="Bairro" />
             </div>
           </div>
 
           {/* Circumscription feedback */}
           {circunscricaoStatus === "resolving" && (
-            <div className="flex items-center gap-2 text-[11px] text-slate-500"><Loader2 className="h-3 w-3 animate-spin" /> Resolvendo circunscrição da PF...</div>
+            <div className="flex items-center gap-2 text-[11px] text-neutral-500"><Loader2 className="h-3 w-3 animate-spin" /> Resolvendo circunscrição da PF...</div>
           )}
           {circunscricaoStatus === "resolved" && circunscricaoResolvida && (
             <div className="bg-emerald-500/5 border border-emerald-500/10 rounded p-2.5 text-[11px] space-y-1">
               <div className="flex items-center gap-1.5 text-emerald-400 font-medium"><CheckCircle className="h-3 w-3" /> Unidade PF resolvida</div>
-              <div className="text-slate-400"><span className="font-medium">{circunscricaoResolvida.unidade_pf}</span>{circunscricaoResolvida.sigla_unidade && <span className="text-slate-600 ml-1.5">({circunscricaoResolvida.sigla_unidade})</span>}</div>
-              <div className="text-slate-600 text-[10px]">{circunscricaoResolvida.municipio_sede}/{circunscricaoResolvida.uf}</div>
+              <div className="text-neutral-400"><span className="font-medium">{circunscricaoResolvida.unidade_pf}</span>{circunscricaoResolvida.sigla_unidade && <span className="text-neutral-600 ml-1.5">({circunscricaoResolvida.sigla_unidade})</span>}</div>
+              <div className="text-neutral-600 text-[10px]">{circunscricaoResolvida.municipio_sede}/{circunscricaoResolvida.uf}</div>
             </div>
           )}
           {(circunscricaoStatus === "not_found" || circunscricaoStatus === "error") && (
@@ -1287,18 +1287,18 @@ export default function QAGerarPecaPage() {
         {/* ── Foco + Nº Requerimento ── */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div className="space-y-1.5">
-            <Label className="text-slate-500 text-[11px]">Foco Argumentativo</Label>
+            <Label className="text-neutral-500 text-[11px]">Foco Argumentativo</Label>
             <Select value={foco} onValueChange={setFoco}>
-              <SelectTrigger className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="bg-[#0a0a0a] border-[#1c1c1c] text-neutral-300 h-9 text-sm"><SelectValue /></SelectTrigger>
               <SelectContent>{FOCOS.map(f => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}</SelectContent>
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label className="text-slate-500 text-[11px]">Nº do Requerimento <span className="text-slate-600">(opcional)</span></Label>
+            <Label className="text-neutral-500 text-[11px]">Nº do Requerimento <span className="text-neutral-600">(opcional)</span></Label>
             <Input
               value={numeroRequerimento}
               onChange={e => setNumeroRequerimento(e.target.value.replace(/[^0-9a-zA-Z.\/\-]/g, ""))}
-              className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm"
+              className="bg-[#0a0a0a] border-[#1c1c1c] text-neutral-300 h-9 text-sm"
               placeholder="Ex: 2026/001234-5"
             />
           </div>
@@ -1309,20 +1309,20 @@ export default function QAGerarPecaPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-amber-500/5 border border-amber-500/10 rounded p-3">
             <div className="space-y-1.5">
               <Label className="text-amber-400/70 text-[11px]">Data da notificação / decisão</Label>
-              <Input type="date" value={dataNotificacao} onChange={e => setDataNotificacao(e.target.value)} className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm" />
+              <Input type="date" value={dataNotificacao} onChange={e => setDataNotificacao(e.target.value)} className="bg-[#0a0a0a] border-[#1c1c1c] text-neutral-300 h-9 text-sm" />
             </div>
             <div className="space-y-1.5">
               <Label className="text-amber-400/70 text-[11px]">Informações sobre prazo</Label>
-              <Input value={infoTempestividade} onChange={e => setInfoTempestividade(e.target.value)} className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm" placeholder="Ex: prazo de 15 dias" />
+              <Input value={infoTempestividade} onChange={e => setInfoTempestividade(e.target.value)} className="bg-[#0a0a0a] border-[#1c1c1c] text-neutral-300 h-9 text-sm" placeholder="Ex: prazo de 15 dias" />
             </div>
           </div>
         )}
 
         {/* ── Case description ── */}
         <div className="space-y-1.5">
-          <Label className="text-slate-500 text-[11px]">Descrição completa do caso *</Label>
+          <Label className="text-neutral-500 text-[11px]">Descrição completa do caso *</Label>
           <Textarea value={entradaCaso} onChange={e => setEntradaCaso(e.target.value)}
-            className="bg-[#08080f] border-[#1a1a2e] text-slate-300 min-h-[180px] text-sm"
+            className="bg-[#0a0a0a] border-[#1c1c1c] text-neutral-300 min-h-[180px] text-sm"
             placeholder="Descreva detalhadamente os fatos, a situação jurídica, o histórico do caso..." />
         </div>
 
@@ -1330,17 +1330,17 @@ export default function QAGerarPecaPage() {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Paperclip className="h-3.5 w-3.5 text-slate-500" />
-              <span className="text-[10px] text-slate-600 uppercase tracking-[0.15em] font-medium">Documentos Auxiliares</span>
+              <Paperclip className="h-3.5 w-3.5 text-neutral-500" />
+              <span className="text-[10px] text-neutral-600 uppercase tracking-[0.15em] font-medium">Documentos Auxiliares</span>
               {docTotal > 0 && (
-                <span className="text-[9px] bg-[#14142a] text-slate-500 px-2 py-0.5 rounded">
+                <span className="text-[9px] bg-[#7a1528] text-neutral-500 px-2 py-0.5 rounded">
                   {docDone}/{docTotal}
                   {docFailed > 0 && <span className="text-red-400 ml-1">• {docFailed} falha(s)</span>}
                 </span>
               )}
             </div>
             {docTotal > 0 && (
-              <button onClick={() => setShowDocList(!showDocList)} className="text-slate-600 hover:text-slate-400">
+              <button onClick={() => setShowDocList(!showDocList)} className="text-neutral-600 hover:text-neutral-400">
                 {showDocList ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
               </button>
             )}
@@ -1348,7 +1348,7 @@ export default function QAGerarPecaPage() {
 
           <input ref={fileInputRef} type="file" multiple accept=".pdf,.doc,.docx,.txt,.rtf,.png,.jpg,.jpeg,.webp" className="hidden"
             onChange={e => { handleAddFiles(e.target.files); e.target.value = ""; }} />
-          <Button type="button" variant="outline" size="sm" className="bg-[#08080f] border-[#1a1a2e] text-slate-500 hover:text-slate-300 h-7 text-[11px]"
+          <Button type="button" variant="outline" size="sm" className="bg-[#0a0a0a] border-[#1c1c1c] text-neutral-500 hover:text-neutral-300 h-7 text-[11px]"
             onClick={() => fileInputRef.current?.click()}>
             <Upload className="h-3 w-3 mr-1.5" /> Anexar documentos
           </Button>
@@ -1356,32 +1356,32 @@ export default function QAGerarPecaPage() {
           {docTotal > 0 && showDocList && (
             <div className="space-y-1.5">
               {arquivosAuxiliares.map((arq, i) => (
-                <div key={i} className={`bg-[#08080f] border rounded p-2.5 space-y-1.5 ${
-                  arq.stage === "done" ? "border-emerald-500/10" : arq.stage === "failed" ? "border-red-500/10" : "border-[#1a1a2e]"
+                <div key={i} className={`bg-[#0a0a0a] border rounded p-2.5 space-y-1.5 ${
+                  arq.stage === "done" ? "border-emerald-500/10" : arq.stage === "failed" ? "border-red-500/10" : "border-[#1c1c1c]"
                 }`}>
                   <div className="flex items-center gap-2">
                     <FileText className={`h-3.5 w-3.5 shrink-0 ${stageColor(arq.stage)}`} />
                     <div className="flex-1 min-w-0 space-y-0.5">
-                      <div className="text-[12px] text-slate-400 truncate">{arq.nome}</div>
+                      <div className="text-[12px] text-neutral-400 truncate">{arq.nome}</div>
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className={`text-[10px] ${stageColor(arq.stage)}`}>{getDisplayLabel(arq.stage, arq.etapaAtual)}</span>
                         {!["pending", "done", "failed"].includes(arq.stage) && <ElapsedTime startedAt={arq.startedAt} />}
                         {arq.tipo && arq.stage !== "done" && arq.stage !== "failed" && arq.stage !== "pending" && DOC_COMPLEXITY[arq.tipo] && (
-                          <span className="text-[9px] text-slate-600">{COMPLEXITY_LABEL[DOC_COMPLEXITY[arq.tipo]]}</span>
+                          <span className="text-[9px] text-neutral-600">{COMPLEXITY_LABEL[DOC_COMPLEXITY[arq.tipo]]}</span>
                         )}
                       </div>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
                       {arq.stage === "pending" && (
                         <Select value={arq.tipo || undefined} onValueChange={v => handleChangeTipoDoc(i, v)}>
-                          <SelectTrigger className="h-6 text-[10px] bg-[#0c0c16] border-[#1a1a2e] text-slate-500 w-44">
+                          <SelectTrigger className="h-6 text-[10px] bg-[#111111] border-[#1c1c1c] text-neutral-500 w-44">
                             <SelectValue placeholder="Selecionar opção" />
                           </SelectTrigger>
                           <SelectContent>{TIPOS_DOC_AUXILIAR.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
                         </Select>
                       )}
                       {arq.stage !== "pending" && arq.tipo && (
-                        <span className="text-[9px] text-slate-600 max-w-[120px] truncate">
+                        <span className="text-[9px] text-neutral-600 max-w-[120px] truncate">
                           {TIPOS_DOC_AUXILIAR.find(t => t.value === arq.tipo)?.label || arq.tipo}
                         </span>
                       )}
@@ -1392,14 +1392,14 @@ export default function QAGerarPecaPage() {
                       )}
                       {arq.stage === "done" && <CheckCircle className="h-3.5 w-3.5 text-emerald-400" />}
                       {!["queued", "uploading", "saved", "extracting", "processing"].includes(arq.stage) && (
-                        <button onClick={() => handleRemoveFile(i)} className="text-slate-700 hover:text-red-400"><X className="h-3 w-3" /></button>
+                        <button onClick={() => handleRemoveFile(i)} className="text-neutral-700 hover:text-red-400"><X className="h-3 w-3" /></button>
                       )}
                     </div>
                   </div>
                   {!["pending", "done"].includes(arq.stage) && <Progress value={stageProgress(arq.stage)} className="h-1" />}
                   {arq.error && <div className="text-[9px] text-red-400/80 bg-red-500/5 rounded px-2 py-0.5">{arq.error}</div>}
                   {!["pending", "done", "failed"].includes(arq.stage) && (
-                    <div className="text-[9px] text-slate-600 italic">O processamento continua mesmo se você sair da tela.</div>
+                    <div className="text-[9px] text-neutral-600 italic">O processamento continua mesmo se você sair da tela.</div>
                   )}
                 </div>
               ))}
@@ -1411,10 +1411,10 @@ export default function QAGerarPecaPage() {
         {docTotal > 0 && (
           <div className={`flex items-center flex-wrap gap-2 text-xs px-3 py-1.5 rounded border ${
             docFailed > 0 ? "border-red-500/30 bg-red-500/5 text-red-400" :
-            docActive > 0 ? "border-cyan-500/30 bg-cyan-500/5 text-cyan-400" :
+            docActive > 0 ? "border-[#a52338]/30 bg-[#7a1528]/5 text-[#c43b52]" :
             hasDocsUnclassified ? "border-amber-500/30 bg-amber-500/5 text-amber-400" :
             docDone === docTotal ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-400" :
-            "border-slate-700 bg-slate-800/50 text-slate-400"
+            "border-neutral-700 bg-neutral-800/50 text-neutral-400"
           }`}>
             {docDone === docTotal && docTotal > 0 && <CheckCircle className="h-3.5 w-3.5" />}
             {docFailed > 0 && <XCircle className="h-3.5 w-3.5" />}
@@ -1440,7 +1440,7 @@ export default function QAGerarPecaPage() {
           </div>
         )}
 
-        <Button onClick={gerar} disabled={!canGenerate} className="bg-[#14142a] hover:bg-[#1a1a35] text-slate-300 border border-[#1a1a2e] w-full md:w-auto h-9 text-sm disabled:opacity-40">
+        <Button onClick={gerar} disabled={!canGenerate} className="bg-[#7a1528] hover:bg-[#a52338] text-neutral-300 border border-[#1c1c1c] w-full md:w-auto h-9 text-sm disabled:opacity-40">
           {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
           Gerar Peça
         </Button>
