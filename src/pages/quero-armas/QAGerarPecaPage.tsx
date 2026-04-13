@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useQAAuth } from "@/components/quero-armas/hooks/useQAAuth";
 import { logSistema } from "@/lib/logSistema";
+import DraftingView, { type DraftingResult } from "@/components/quero-armas/DraftingView";
 
 /* ── Types ── */
 type DocUploadStage = "pending" | "queued" | "uploading" | "saved" | "extracting" | "processing" | "done" | "failed";
@@ -58,6 +59,8 @@ type GenerationStep =
   | "saving_case"
   | "done"
   | "error";
+
+type DraftingPipelineStep = "context" | "sources" | "writing" | "reviewing" | "validating" | "saving" | "done" | "error";
 
 const GENERATION_STEPS: { key: GenerationStep; label: string }[] = [
   { key: "resolving_circumscription", label: "Resolvendo circunscrição da PF" },
@@ -207,11 +210,17 @@ export default function QAGerarPecaPage() {
 
   // Generation
   const [loading, setLoading] = useState(false);
-  const [resultado, setResultado] = useState<any>(null);
+  const [resultado, setResultado] = useState<DraftingResult | null>(null);
   const [genStep, setGenStep] = useState<GenerationStep>("idle");
   const [genError, setGenError] = useState("");
   const [genStartedAt, setGenStartedAt] = useState<number | undefined>();
   const [savedCasoId, setSavedCasoId] = useState<string | null>(null);
+
+  // Streaming state
+  const [streamedText, setStreamedText] = useState("");
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [draftingStep, setDraftingStep] = useState<DraftingPipelineStep | "done" | "error">("context");
+  const [showDraftingView, setShowDraftingView] = useState(false);
 
   const needsTempestividade = tipoPeca === "recurso_administrativo" || tipoPeca === "resposta_a_notificacao";
 
@@ -677,6 +686,10 @@ export default function QAGerarPecaPage() {
     setGenError("");
     setGenStartedAt(Date.now());
     setSavedCasoId(null);
+    setStreamedText("");
+    setIsStreaming(false);
+    setShowDraftingView(true);
+    setDraftingStep("context");
 
     try {
       // Step 1: Circumscription
@@ -689,7 +702,7 @@ export default function QAGerarPecaPage() {
         toast.warning("Circunscrição não resolvida. A peça seguirá com marcador pendente.", { duration: 5000 });
       }
 
-      // Step 2: Collect already-processed doc IDs (upload happened on classification)
+      // Step 2: Collect already-processed doc IDs
       let auxiliarDocIds: string[] = [];
       if (arquivosAuxiliares.length > 0) {
         setGenStep("uploading_docs");
@@ -698,27 +711,36 @@ export default function QAGerarPecaPage() {
 
         const unfinished = arquivosAuxiliares.filter(a => a.stage !== "done");
         if (unfinished.length > 0) {
-          const msg = `Geração bloqueada: ${unfinished.length} documento(s) não foram processados. Classifique, reprocesse ou remova antes de gerar.`;
-          try {
-            await supabase.from("qa_logs_auditoria" as any).insert({
-              usuario_id: user?.id, entidade: "qa_casos", entidade_id: casoId || "new",
-              acao: "geracao_bloqueada_anexos_incompletos",
-              detalhes_json: { total: arquivosAuxiliares.length, concluidos: auxiliarDocIds.length, pendentes: unfinished.length },
-            });
-          } catch { /* non-critical */ }
+          const msg = `Geração bloqueada: ${unfinished.length} documento(s) não foram processados.`;
           throw new Error(msg);
         }
       }
 
-      // Step 4-7: Generate
+      // Step 3-4: Build context
       setGenStep("building_context");
+      setDraftingStep("context");
       await new Promise(r => setTimeout(r, 300));
       setGenStep("recovering_sources");
+      setDraftingStep("sources");
       await new Promise(r => setTimeout(r, 300));
-      setGenStep("generating_draft");
 
-      const { data, error } = await supabase.functions.invoke("qa-gerar-peca", {
-        body: {
+      // Step 5: Stream generation
+      setGenStep("generating_draft");
+      setDraftingStep("writing");
+      setIsStreaming(true);
+
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+      const response = await fetch(`${supabaseUrl}/functions/v1/qa-gerar-peca`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${supabaseKey}`,
+          "apikey": supabaseKey,
+        },
+        body: JSON.stringify({
+          stream: true,
           usuario_id: user?.id, caso_titulo: nomeRequerente, entrada_caso: entradaCaso,
           tipo_peca: tipoPeca, foco,
           cliente_cidade: clienteCidade.trim(), cliente_uf: clienteUf.trim(),
@@ -733,26 +755,73 @@ export default function QAGerarPecaPage() {
           data_notificacao: dataNotificacao.trim() || null,
           info_tempestividade: infoTempestividade.trim() || null,
           documentos_auxiliares_ids: auxiliarDocIds.length > 0 ? auxiliarDocIds : null,
-        },
+        }),
       });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
 
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({ error: "Erro na geração" }));
+        throw new Error(errData.error || "Erro na geração");
+      }
+
+      // Read SSE stream
+      const reader = response.body!.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let finalResult: DraftingResult | null = null;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          const payload = line.slice(6).trim();
+          if (!payload) continue;
+
+          try {
+            const evt = JSON.parse(payload);
+            if (evt.type === "chunk" && evt.text) {
+              setStreamedText(prev => prev + evt.text);
+            } else if (evt.type === "done") {
+              finalResult = evt as DraftingResult;
+            } else if (evt.type === "error") {
+              throw new Error(evt.error || "Erro na geração");
+            }
+          } catch (parseErr: any) {
+            if (parseErr.message && !parseErr.message.includes("JSON")) throw parseErr;
+          }
+        }
+      }
+
+      setIsStreaming(false);
+
+      if (!finalResult) throw new Error("Geração não retornou resultado final");
+
+      // Step 6: Validate
       setGenStep("validating");
+      setDraftingStep("validating");
       await new Promise(r => setTimeout(r, 400));
 
-      setResultado(data);
+      setResultado(finalResult);
 
-      // Step 8: Save case
+      // Step 7: Save case
       setGenStep("saving_case");
-      const sId = await saveCaso(data, auxiliarDocIds, circ);
+      setDraftingStep("saving");
+      const sId = await saveCaso(finalResult, auxiliarDocIds, circ);
       setSavedCasoId(sId);
 
       setGenStep("done");
+      setDraftingStep("done");
       toast.success("Peça gerada e caso salvo com sucesso");
     } catch (err: any) {
       setGenStep("error");
+      setDraftingStep("error");
       setGenError(err.message || "Erro na geração");
+      setIsStreaming(false);
       toast.error(err.message || "Erro na geração");
     } finally {
       setLoading(false);
@@ -760,8 +829,9 @@ export default function QAGerarPecaPage() {
   };
 
   const copiarMinuta = () => {
-    if (resultado?.minuta_gerada) {
-      navigator.clipboard.writeText(resultado.minuta_gerada);
+    const text = resultado?.minuta_gerada || streamedText;
+    if (text) {
+      navigator.clipboard.writeText(text);
       toast.success("Minuta copiada");
     }
   };
@@ -1100,124 +1170,21 @@ export default function QAGerarPecaPage() {
         </Button>
       </div>
 
-      {/* ── Generation Progress Panel ── */}
-      {genStep !== "idle" && (
-        <div className="bg-[#0c0c16] border border-[#1a1a2e] rounded p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] text-slate-600 uppercase tracking-[0.15em] font-medium">Progresso</span>
-            <div className="flex items-center gap-2">
-              <ElapsedTime startedAt={genStartedAt} />
-              {genStep === "done" && <CheckCircle className="h-3.5 w-3.5 text-emerald-400" />}
-              {genStep === "error" && <XCircle className="h-3.5 w-3.5 text-red-400" />}
-            </div>
-          </div>
-          <Progress value={genPercent} className="h-1.5" />
-          <div className="space-y-1">
-            {GENERATION_STEPS.map((step, idx) => {
-              const isActive = step.key === genStep;
-              const isDone = currentStepIdx > idx || genStep === "done";
-              return (
-                <div key={step.key} className={`flex items-center gap-2 text-[11px] py-0.5 px-2 rounded ${
-                  isActive ? "text-slate-300" : isDone ? "text-emerald-400/60" : "text-slate-700"
-                }`}>
-                  {isDone && !isActive ? <CheckCircle className="h-3 w-3 shrink-0" /> : isActive ? <Loader2 className="h-3 w-3 animate-spin shrink-0" /> : <div className="h-3 w-3 rounded-full border border-slate-800 shrink-0" />}
-                  <span>{step.label}</span>
-                  {isActive && step.key === "uploading_docs" && docTotal > 0 && <span className="text-[9px] text-slate-600 ml-auto">{docDone}/{docTotal}</span>}
-                </div>
-              );
-            })}
-          </div>
-          {docTotal > 0 && (
-            <div className="text-[9px] text-slate-600 border-t border-[#1a1a2e] pt-2">
-              Docs: {docTotal} anexados • {docDone} ok{docFailed > 0 && <span className="text-red-400"> • {docFailed} falha(s)</span>}
-            </div>
-          )}
-          {genError && (
-            <div className="bg-red-500/5 border border-red-500/10 rounded p-2.5 text-[11px] text-red-400 space-y-2">
-              <div className="flex items-center gap-1.5"><AlertTriangle className="h-3 w-3" /> Erro</div>
-              <p className="text-[10px]">{genError}</p>
-              <Button type="button" variant="outline" size="sm" className="h-6 text-[10px]" onClick={() => { setGenStep("idle"); setGenError(""); gerar(); }}>
-                <RefreshCw className="h-3 w-3 mr-1" /> Tentar novamente
-              </Button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ── Case Saved Confirmation ── */}
-      {genStep === "done" && savedCasoId && (
-        <div className="bg-emerald-500/5 border border-emerald-500/10 rounded p-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <CheckCircle className="h-4 w-4 text-emerald-400" />
-            <div>
-              <div className="text-[12px] text-emerald-400 font-medium">Caso salvo com sucesso</div>
-              <div className="text-[9px] text-slate-600 font-mono">ID: {savedCasoId.slice(0, 8)}...</div>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => navigate(`/quero-armas/gerar-peca?caso=${savedCasoId}`)}
-              className="h-7 text-[10px] border-emerald-500/20 text-emerald-400">
-              <FolderOpen className="h-3 w-3 mr-1" /> Abrir Caso
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => navigate("/quero-armas/casos")}
-              className="h-7 text-[10px] border-[#1a1a2e] text-slate-400">
-              Ver Todos
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* ── Result ── */}
-      {resultado && (
-        <div className="space-y-3">
-          <div className="flex items-center gap-3 bg-[#0c0c16] border border-[#1a1a2e] rounded p-3">
-            <div className="text-center">
-              <div className={`text-lg font-semibold font-mono ${scoreColor(resultado.score_confianca)}`}>
-                {(resultado.score_confianca * 100).toFixed(0)}%
-              </div>
-              <div className="text-[9px] text-slate-600 uppercase tracking-wider">Confiança</div>
-            </div>
-            <div className="flex-1 text-[11px] text-slate-500">
-              {resultado.fontes_utilizadas?.length || 0} fontes • {resultado.fontes_utilizadas?.filter((f: any) => f.validada).length || 0} validadas
-              {resultado.circunscricao_utilizada && (
-                <div className="text-emerald-400/60 mt-0.5 text-[10px]">✓ {resultado.circunscricao_utilizada.unidade_pf}</div>
-              )}
-            </div>
-            <Button variant="outline" size="sm" onClick={copiarMinuta} className="bg-[#08080f] border-[#1a1a2e] text-slate-400 h-7 text-[10px]">
-              Copiar
-            </Button>
-            <Button size="sm" onClick={exportarDocx} className="bg-[#14142a] hover:bg-[#1a1a35] text-slate-300 border border-[#1a1a2e] h-7 text-[10px]">
-              <Download className="h-3 w-3 mr-1" /> DOCX
-            </Button>
-          </div>
-
-          {resultado.fontes_utilizadas?.length > 0 && (
-            <div className="bg-[#0c0c16] border border-[#1a1a2e] rounded p-3">
-              <span className="text-[9px] text-slate-600 uppercase tracking-[0.15em]">Fontes</span>
-              <div className="space-y-0.5 mt-2">
-                {resultado.fontes_utilizadas.map((f: any, i: number) => (
-                  <div key={i} className="flex items-center gap-2 text-[11px]">
-                    {f.tipo === "norma" && <Scale className="h-3 w-3 text-emerald-400" />}
-                    {f.tipo === "jurisprudencia" && <Gavel className="h-3 w-3 text-purple-400" />}
-                    {f.tipo === "documento" && <BookOpen className="h-3 w-3 text-blue-400" />}
-                    {f.tipo === "referencia_aprovada" && <CheckCircle className="h-3 w-3 text-slate-400" />}
-                    <span className="text-slate-400">{f.titulo}</span>
-                    <span className="text-slate-700">• {f.referencia}</span>
-                    {f.validada && <CheckCircle className="h-2.5 w-2.5 text-emerald-500" />}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="bg-[#0c0c16] border border-[#1a1a2e] rounded p-4">
-            <span className="text-[9px] text-slate-600 uppercase tracking-[0.15em]">Minuta</span>
-            <div className="text-[12px] text-slate-300 whitespace-pre-wrap leading-relaxed font-serif mt-2">
-              {resultado.minuta_gerada}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ── Drafting View (replaces old progress + result panels) ── */}
+      <DraftingView
+        visible={showDraftingView}
+        pipelineStep={draftingStep}
+        streamedText={streamedText}
+        isStreaming={isStreaming}
+        error={genError}
+        startedAt={genStartedAt}
+        result={resultado}
+        savedCasoId={savedCasoId}
+        onRetry={() => { setGenStep("idle"); setGenError(""); setShowDraftingView(false); setStreamedText(""); gerar(); }}
+        onCopy={copiarMinuta}
+        onExportDocx={exportarDocx}
+        onOpenCase={() => savedCasoId && navigate(`/quero-armas/gerar-peca?caso=${savedCasoId}`)}
+      />
     </div>
   );
 }
