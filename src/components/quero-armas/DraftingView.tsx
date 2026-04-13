@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
   Loader2, CheckCircle, XCircle, AlertTriangle, Clock, RefreshCw,
-  Copy, Download, FolderOpen, Sparkles,
+  Copy, Download, FolderOpen, Sparkles, Check,
 } from "lucide-react";
 
 /* ── Section detection ── */
@@ -22,9 +22,10 @@ const PIPELINE_STEPS = [
   { key: "context", label: "Montando contexto final" },
   { key: "sources", label: "Organizando fundamentos" },
   { key: "writing", label: "Redigindo peça" },
-  { key: "reviewing", label: "Revisando coerência" },
-  { key: "validating", label: "Validando qualidade" },
-  { key: "saving", label: "Salvando caso" },
+  { key: "expanding", label: "Expandindo texto final" },
+  { key: "reviewing", label: "Aplicando data e assinatura" },
+  { key: "validating", label: "Validando versão final" },
+  { key: "saving", label: "Gerando Word" },
 ] as const;
 
 type PipelineStep = typeof PIPELINE_STEPS[number]["key"];
@@ -39,7 +40,7 @@ export interface DraftingResult {
   evidence_analysis?: any;
 }
 
-interface DraftingViewProps {
+export interface DraftingViewProps {
   visible: boolean;
   pipelineStep: PipelineStep | "done" | "error";
   streamedText: string;
@@ -52,6 +53,8 @@ interface DraftingViewProps {
   onExportDocx?: () => void;
   onOpenCase?: () => void;
   savedCasoId?: string | null;
+  validationErrors?: string[];
+  isExporting?: boolean;
 }
 
 function ElapsedTimer({ startedAt }: { startedAt?: number }) {
@@ -78,10 +81,8 @@ const SECTION_HEADER_PATTERN = /^(I{1,3}V?\s*[—–-]\s*.+|A\s+DOUTA\s.+)$/;
 function DraftLines({ text, isStreaming }: { text: string; isStreaming: boolean }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const prevLineCountRef = useRef(0);
-
   const lines = useMemo(() => text.split("\n"), [text]);
 
-  // Auto-scroll on new lines
   useEffect(() => {
     if (containerRef.current && lines.length > prevLineCountRef.current) {
       prevLineCountRef.current = lines.length;
@@ -89,7 +90,6 @@ function DraftLines({ text, isStreaming }: { text: string; isStreaming: boolean 
     }
   }, [lines.length]);
 
-  // Determine which line is "new" (last non-empty line while streaming)
   const lastNonEmptyIdx = useMemo(() => {
     for (let i = lines.length - 1; i >= 0; i--) {
       if (lines[i].trim().length > 0) return i;
@@ -108,9 +108,7 @@ function DraftLines({ text, isStreaming }: { text: string; isStreaming: boolean 
           const isEmpty = line.trim().length === 0;
           const isHeader = SECTION_HEADER_PATTERN.test(line.trim());
 
-          if (isEmpty) {
-            return <div key={i} className="h-3" />;
-          }
+          if (isEmpty) return <div key={i} className="h-3" />;
 
           return (
             <div
@@ -119,9 +117,7 @@ function DraftLines({ text, isStreaming }: { text: string; isStreaming: boolean 
                 transition-all duration-300 ease-out
                 ${isHeader
                   ? "text-cyan-300 font-semibold text-[13px] mt-4 mb-1 tracking-wide"
-                  : isLast
-                    ? "text-slate-200"
-                    : "text-slate-400"
+                  : isLast ? "text-slate-200" : "text-slate-400"
                 }
                 ${isLast ? "border-l-2 border-cyan-500/50 pl-3 -ml-3 bg-cyan-500/[0.03] rounded-r" : ""}
               `}
@@ -142,22 +138,24 @@ function DraftLines({ text, isStreaming }: { text: string; isStreaming: boolean 
 function WordCount({ text }: { text: string }) {
   const count = useMemo(() => text.split(/\s+/).filter(Boolean).length, [text]);
   if (count < 10) return null;
+  const isLow = count < 2000;
   return (
-    <span className="text-[9px] text-slate-600 tabular-nums font-mono">
-      {count} palavras
+    <span className={`text-[9px] tabular-nums font-mono ${isLow ? "text-amber-500" : "text-slate-600"}`}>
+      {count} palavras{isLow ? " (mín. 2000)" : ""}
     </span>
   );
 }
 
 export default function DraftingView({
   visible, pipelineStep, streamedText, isStreaming, error,
-  startedAt, result, onRetry, onCopy, onExportDocx, onOpenCase, savedCasoId,
+  startedAt, result, onRetry, onCopy, onExportDocx, onOpenCase,
+  savedCasoId, validationErrors, isExporting,
 }: DraftingViewProps) {
   const [stalled, setStalled] = useState(false);
+  const [copied, setCopied] = useState(false);
   const lastTextLenRef = useRef(0);
   const stallTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Stall detection: if text hasn't grown in 30s during streaming
   useEffect(() => {
     if (!isStreaming) { setStalled(false); return; }
     if (streamedText.length !== lastTextLenRef.current) {
@@ -169,13 +167,10 @@ export default function DraftingView({
     return () => { if (stallTimerRef.current) clearTimeout(stallTimerRef.current); };
   }, [streamedText, isStreaming]);
 
-  // Detect which sections are present in the streamed text
   const detectedSections = useMemo(() => {
     const found: { key: DraftSection; label: string }[] = [];
     for (const sec of DRAFT_SECTIONS) {
-      if (sec.pattern.test(streamedText)) {
-        found.push({ key: sec.key, label: sec.label });
-      }
+      if (sec.pattern.test(streamedText)) found.push({ key: sec.key, label: sec.label });
     }
     return found;
   }, [streamedText]);
@@ -184,21 +179,22 @@ export default function DraftingView({
     ? detectedSections[detectedSections.length - 1].label
     : streamedText.length > 0 ? "Endereçamento" : null;
 
-  // Pipeline progress
   const pipelineIdx = PIPELINE_STEPS.findIndex(s => s.key === pipelineStep);
-  const pipelinePercent = pipelineStep === "done" ? 100
-    : pipelineStep === "error" ? 0
-    : pipelineIdx >= 0 ? Math.round(((pipelineIdx + 0.5) / PIPELINE_STEPS.length) * 100) : 0;
-
   const sectionPercent = Math.round((detectedSections.length / DRAFT_SECTIONS.length) * 100);
-
   const overallPercent = pipelineStep === "done" ? 100
     : pipelineStep === "error" ? 0
     : pipelineStep === "writing" ? Math.round(20 + (sectionPercent * 0.6))
-    : pipelinePercent;
+    : pipelineIdx >= 0 ? Math.round(((pipelineIdx + 0.5) / PIPELINE_STEPS.length) * 100) : 0;
 
   const isDone = pipelineStep === "done";
   const isError = pipelineStep === "error";
+  const hasValidationErrors = validationErrors && validationErrors.length > 0;
+
+  const handleCopyClick = useCallback(() => {
+    onCopy?.();
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  }, [onCopy]);
 
   if (!visible) return null;
 
@@ -215,24 +211,12 @@ export default function DraftingView({
             <Sparkles className="h-4 w-4 text-cyan-400 animate-pulse" />
           )}
           <span className="text-sm font-medium text-slate-300">
-            {isDone ? "Minuta concluída" : isError ? "Erro na geração" : "Redigindo minuta..."}
+            {isDone ? "Pronto para copiar e baixar" : isError ? "Erro na geração" : "Redigindo minuta..."}
           </span>
         </div>
         <div className="flex items-center gap-3">
           <WordCount text={streamedText} />
           <ElapsedTimer startedAt={startedAt} />
-          {isDone && (
-            <div className="flex gap-1.5">
-              <Button variant="outline" size="sm" onClick={onCopy}
-                className="h-7 text-[10px] bg-[#0c0c16] border-[#1a1a2e] text-slate-400">
-                <Copy className="h-3 w-3 mr-1" /> Copiar
-              </Button>
-              <Button variant="outline" size="sm" onClick={onExportDocx}
-                className="h-7 text-[10px] bg-[#0c0c16] border-[#1a1a2e] text-slate-400">
-                <Download className="h-3 w-3 mr-1" /> DOCX
-              </Button>
-            </div>
-          )}
         </div>
       </div>
 
@@ -243,7 +227,6 @@ export default function DraftingView({
 
       {/* Pipeline + Section steps */}
       <div className="px-4 py-2 flex gap-6">
-        {/* Pipeline steps */}
         <div className="space-y-0.5 flex-1">
           <span className="text-[9px] text-slate-600 uppercase tracking-[0.15em]">Etapas</span>
           {PIPELINE_STEPS.map((step, idx) => {
@@ -266,7 +249,6 @@ export default function DraftingView({
           })}
         </div>
 
-        {/* Section detection — only when writing */}
         {(pipelineStep === "writing" || isDone) && streamedText.length > 0 && (
           <div className="space-y-0.5 flex-1">
             <span className="text-[9px] text-slate-600 uppercase tracking-[0.15em]">Seções da peça</span>
@@ -310,14 +292,14 @@ export default function DraftingView({
         </div>
       )}
 
-      {/* Text area — line-by-line view */}
+      {/* Text area */}
       {streamedText.length > 0 && (
         <div className="px-4 pb-3">
           <DraftLines text={streamedText} isStreaming={isStreaming} />
         </div>
       )}
 
-      {/* Empty state while waiting to start writing */}
+      {/* Empty state */}
       {streamedText.length === 0 && !isError && (
         <div className="px-4 pb-4">
           <div className="bg-[#08080f] border border-[#1a1a2e] rounded-lg p-8 flex flex-col items-center gap-3">
@@ -346,7 +328,7 @@ export default function DraftingView({
                 <RefreshCw className="h-3 w-3 mr-1" /> Tentar novamente
               </Button>
               {streamedText.length > 0 && (
-                <Button variant="outline" size="sm" onClick={onCopy}
+                <Button variant="outline" size="sm" onClick={handleCopyClick}
                   className="h-7 text-[10px] border-[#1a1a2e] text-slate-400">
                   <Copy className="h-3 w-3 mr-1" /> Copiar rascunho parcial
                 </Button>
@@ -356,48 +338,95 @@ export default function DraftingView({
         </div>
       )}
 
-      {/* Done — case saved */}
-      {isDone && savedCasoId && (
+      {/* Validation errors */}
+      {isDone && hasValidationErrors && (
         <div className="px-4 pb-3">
-          <div className="bg-emerald-500/5 border border-emerald-500/10 rounded p-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-emerald-400" />
-              <div>
-                <div className="text-[12px] text-emerald-400 font-medium">Caso salvo com sucesso</div>
-                <div className="text-[9px] text-slate-600 font-mono">ID: {savedCasoId.slice(0, 8)}...</div>
-              </div>
+          <div className="bg-amber-500/5 border border-amber-500/10 rounded p-3 space-y-1.5">
+            <div className="flex items-center gap-2 text-amber-400 text-[12px] font-medium">
+              <AlertTriangle className="h-4 w-4" /> Avisos na validação final
             </div>
-            <Button variant="outline" size="sm" onClick={onOpenCase}
-              className="h-7 text-[10px] border-emerald-500/20 text-emerald-400">
-              <FolderOpen className="h-3 w-3 mr-1" /> Abrir Caso
-            </Button>
+            <ul className="space-y-0.5">
+              {validationErrors!.map((err, i) => (
+                <li key={i} className="text-[11px] text-amber-400/80 flex items-start gap-1.5">
+                  <span className="shrink-0 mt-0.5">•</span> {err}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       )}
 
-      {/* Done — score + sources */}
-      {isDone && result && (
-        <div className="px-4 pb-4 space-y-2">
-          <div className="flex items-center gap-3 bg-[#0c0c16] border border-[#1a1a2e] rounded p-3">
-            <div className="text-center">
-              <div className={`text-lg font-semibold font-mono ${
-                (result.score_confianca || 0) >= 0.7 ? "text-emerald-400" :
-                (result.score_confianca || 0) >= 0.4 ? "text-amber-400" : "text-red-400"
-              }`}>
-                {((result.score_confianca || 0) * 100).toFixed(0)}%
-              </div>
-              <div className="text-[9px] text-slate-600 uppercase tracking-wider">Confiança</div>
-            </div>
-            <div className="flex-1 text-[11px] text-slate-500">
-              {result.fontes_utilizadas?.length || 0} fontes • {result.fontes_utilizadas?.filter((f: any) => f.validada).length || 0} validadas
-              {result.circunscricao_utilizada && (
-                <div className="text-emerald-400/60 mt-0.5 text-[10px]">✓ {result.circunscricao_utilizada.unidade_pf}</div>
+      {/* ── DONE: Large action buttons (mobile-friendly) ── */}
+      {isDone && (
+        <div className="px-4 pb-4 space-y-3">
+          {/* Big copy & download buttons */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Button
+              onClick={handleCopyClick}
+              disabled={!streamedText}
+              className="h-14 text-base font-medium bg-emerald-600 hover:bg-emerald-500 text-white active:scale-[0.98] transition-transform"
+            >
+              {copied ? (
+                <><Check className="h-5 w-5 mr-2" /> Texto copiado com sucesso</>
+              ) : (
+                <><Copy className="h-5 w-5 mr-2" /> Copiar texto</>
               )}
-            </div>
+            </Button>
+            <Button
+              onClick={onExportDocx}
+              disabled={isExporting || !streamedText}
+              className="h-14 text-base font-medium bg-blue-600 hover:bg-blue-500 text-white active:scale-[0.98] transition-transform"
+            >
+              {isExporting ? (
+                <><Loader2 className="h-5 w-5 mr-2 animate-spin" /> Gerando Word...</>
+              ) : (
+                <><Download className="h-5 w-5 mr-2" /> Baixar em Word</>
+              )}
+            </Button>
           </div>
-          {(result.quality_issues?.length || 0) > 0 && (
-            <div className="text-[10px] text-amber-400/70 bg-amber-500/5 border border-amber-500/10 rounded p-2">
-              <span className="font-medium">Avisos de qualidade:</span> {result.quality_issues?.join(", ")}
+
+          {/* Case saved */}
+          {savedCasoId && (
+            <div className="bg-emerald-500/5 border border-emerald-500/10 rounded p-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-emerald-400" />
+                <div>
+                  <div className="text-[12px] text-emerald-400 font-medium">Caso salvo com sucesso</div>
+                  <div className="text-[9px] text-slate-600 font-mono">ID: {savedCasoId.slice(0, 8)}...</div>
+                </div>
+              </div>
+              <Button variant="outline" size="sm" onClick={onOpenCase}
+                className="h-7 text-[10px] border-emerald-500/20 text-emerald-400">
+                <FolderOpen className="h-3 w-3 mr-1" /> Abrir Caso
+              </Button>
+            </div>
+          )}
+
+          {/* Score + sources */}
+          {result && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-3 bg-[#0c0c16] border border-[#1a1a2e] rounded p-3">
+                <div className="text-center">
+                  <div className={`text-lg font-semibold font-mono ${
+                    (result.score_confianca || 0) >= 0.7 ? "text-emerald-400" :
+                    (result.score_confianca || 0) >= 0.4 ? "text-amber-400" : "text-red-400"
+                  }`}>
+                    {((result.score_confianca || 0) * 100).toFixed(0)}%
+                  </div>
+                  <div className="text-[9px] text-slate-600 uppercase tracking-wider">Confiança</div>
+                </div>
+                <div className="flex-1 text-[11px] text-slate-500">
+                  {result.fontes_utilizadas?.length || 0} fontes • {result.fontes_utilizadas?.filter((f: any) => f.validada).length || 0} validadas
+                  {result.circunscricao_utilizada && (
+                    <div className="text-emerald-400/60 mt-0.5 text-[10px]">✓ {result.circunscricao_utilizada.unidade_pf}</div>
+                  )}
+                </div>
+              </div>
+              {(result.quality_issues?.length || 0) > 0 && (
+                <div className="text-[10px] text-amber-400/70 bg-amber-500/5 border border-amber-500/10 rounded p-2">
+                  <span className="font-medium">Avisos de qualidade:</span> {result.quality_issues?.join(", ")}
+                </div>
+              )}
             </div>
           )}
         </div>

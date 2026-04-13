@@ -214,21 +214,45 @@ Deno.serve(async (req) => {
 
     if (gErr || !geracao) throw new Error("Geração não encontrada");
 
-    // Build variables map
+    // Build variables map with real data
+    const meses = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+    const now = new Date();
+    const dataExtenso = `${now.getDate()} de ${meses[now.getMonth()]} de ${now.getFullYear()}`;
+    const cidadeVar = variables?.cidade || "";
+    const dataAtualDefault = cidadeVar ? `${cidadeVar}, ${dataExtenso}.` : `${dataExtenso}.`;
+
     const vars: Record<string, string> = {
-      titulo: geracao.titulo_geracao || "Sem título",
-      cliente_nome: variables?.cliente_nome || "[NOME DO CLIENTE]",
+      titulo: geracao.titulo_geracao || variables?.titulo || "Sem título",
+      cliente_nome: variables?.cliente_nome || "[NOME DO REQUERENTE]",
+      cidade: cidadeVar,
+      estado: variables?.estado || "",
       resumo_fatico: variables?.resumo_fatico || "",
       fundamentacao: "",
       jurisprudencia: "",
       pedidos: variables?.pedidos || "",
       fechamento: variables?.fechamento || "",
-      data_atual: new Date().toLocaleDateString("pt-BR"),
-      assinatura: variables?.assinatura || "[ASSINATURA]",
+      data_atual: variables?.data_atual || dataAtualDefault,
+      assinatura: variables?.assinatura || variables?.cliente_nome || "[NOME DO REQUERENTE]",
       ...variables,
     };
 
-    const content = geracao.minuta_gerada || "";
+    let content = geracao.minuta_gerada || "";
+
+    // Post-process: remove advogado/OAB references from closing
+    content = content.replace(/\n[^\n]*advogad[oa][^\n]*OAB[^\n]*/gi, "");
+    content = content.replace(/\n[^\n]*OAB[\s\/]*[A-Z]{2}[\s]*[\d.]+[^\n]*/gi, "");
+    // Remove leftover placeholders
+    content = content.replace(/\[DATA\]/gi, vars.data_atual);
+    content = content.replace(/\[CIDADE\]/gi, vars.cidade);
+    content = content.replace(/\[NOME[^\]]*\]/gi, vars.cliente_nome);
+    content = content.replace(/\[ASSINATURA[^\]]*\]/gi, vars.assinatura);
+    content = content.replace(/\[ADVOGAD[OA][^\]]*\]/gi, "");
+    content = content.replace(/\[OAB[^\]]*\]/gi, "");
+
+    // Ensure closing block has real date and requester name
+    if (!content.includes(vars.data_atual) && vars.data_atual) {
+      content = content.trimEnd() + "\n\n" + vars.data_atual + "\n\n" + vars.assinatura;
+    }
 
     // Generate DOCX
     const docxBytes = generateDocx(content, vars);

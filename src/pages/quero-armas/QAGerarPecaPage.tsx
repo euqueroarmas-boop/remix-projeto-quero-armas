@@ -974,9 +974,18 @@ export default function QAGerarPecaPage() {
       const sId = await saveCaso(finalResult, auxiliarDocIds, circ);
       setSavedCasoId(sId);
 
+      // Validate final text
+      const finalText = finalResult.minuta_gerada || streamedText;
+      const vErrors = validateFinalText(finalText);
+      setValidationErrors(vErrors);
+
       setGenStep("done");
       setDraftingStep("done");
-      toast.success("Peça gerada e caso salvo com sucesso");
+      if (vErrors.length > 0) {
+        toast.warning(`Peça gerada com ${vErrors.length} aviso(s) de validação`);
+      } else {
+        toast.success("Peça gerada e caso salvo com sucesso");
+      }
     } catch (err: any) {
       setGenStep("error");
       setDraftingStep("error");
@@ -988,33 +997,125 @@ export default function QAGerarPecaPage() {
     }
   };
 
-  const copiarMinuta = () => {
+  /* ── Validation ── */
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [isExporting, setIsExporting] = useState(false);
+
+  const validateFinalText = useCallback((text: string): string[] => {
+    const errors: string[] = [];
+    const wordCount = text.split(/\s+/).filter(Boolean).length;
+    if (wordCount < 2000) errors.push(`Texto com ${wordCount} palavras (mínimo 2000).`);
+    if (!clienteCidade.trim()) errors.push("Cidade não preenchida.");
+    if (!nomeRequerente.trim()) errors.push("Nome do requerente não preenchido.");
+    // Check for placeholders
+    const placeholders = text.match(/\[(DATA|CIDADE|NOME|ASSINATURA|OAB|ADVOGADO)[^\]]*\]/gi);
+    if (placeholders) errors.push(`Placeholders encontrados: ${placeholders.slice(0, 3).join(", ")}`);
+    // Check for advogado/OAB in closing
+    const closingMatch = text.match(/nestes\s+termos[\s\S]{0,500}$/i);
+    if (closingMatch) {
+      const closing = closingMatch[0].toLowerCase();
+      if (/\badvogad[oa]\b/.test(closing)) errors.push("Referência a advogado no fechamento.");
+      if (/\boab\b/.test(closing)) errors.push("Referência a OAB no fechamento.");
+    }
+    return errors;
+  }, [clienteCidade, nomeRequerente]);
+
+  const formatDataExtenso = (): string => {
+    const meses = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+    const now = new Date();
+    return `${now.getDate()} de ${meses[now.getMonth()]} de ${now.getFullYear()}`;
+  };
+
+  const copiarMinuta = async () => {
     const text = resultado?.minuta_gerada || streamedText;
-    if (text) {
-      navigator.clipboard.writeText(text);
-      toast.success("Minuta copiada");
+    if (!text) { toast.error("Nenhum texto para copiar"); return; }
+
+    // Clean the text: just the legal document content
+    let cleanText = text.trim();
+
+    try {
+      // Try modern clipboard API first
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(cleanText);
+        toast.success("Texto copiado com sucesso");
+        return;
+      }
+    } catch {
+      // Fallback below
+    }
+
+    // Fallback for mobile/older browsers
+    try {
+      const textarea = document.createElement("textarea");
+      textarea.value = cleanText;
+      textarea.style.position = "fixed";
+      textarea.style.left = "-9999px";
+      textarea.style.top = "-9999px";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(textarea);
+      if (ok) {
+        toast.success("Texto copiado com sucesso");
+      } else {
+        toast.error("Não foi possível copiar. Selecione o texto manualmente.");
+      }
+    } catch {
+      toast.error("Não foi possível copiar. Selecione o texto manualmente.");
     }
   };
 
   const exportarDocx = async () => {
-    if (!resultado?.geracao_id) return;
+    if (!resultado?.geracao_id) { toast.error("Geração não encontrada"); return; }
+    setIsExporting(true);
+
+    const dataExtenso = formatDataExtenso();
+    const cidadeFormatada = clienteCidade.trim() ? toTitleCase(clienteCidade.trim()) : "";
+    const nomeFormatado = nomeRequerente.trim();
+    const dataHoje = new Date();
+    const dataFile = `${dataHoje.getFullYear()}-${String(dataHoje.getMonth() + 1).padStart(2, "0")}-${String(dataHoje.getDate()).padStart(2, "0")}`;
+    const tipoSlug = tipoPeca.replace(/_/g, "-");
+    const nomeSlug = nomeFormatado.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9]/g, "-").replace(/-+/g, "-").toLowerCase();
+    const fileName = `peca-${tipoSlug}-${nomeSlug}-${dataFile}.docx`;
+
     try {
       const { data, error } = await supabase.functions.invoke("qa-export-docx", {
-        body: { geracao_id: resultado.geracao_id, variables: { cliente_nome: nomeRequerente } },
+        body: {
+          geracao_id: resultado.geracao_id,
+          variables: {
+            cliente_nome: nomeFormatado,
+            cidade: cidadeFormatada,
+            estado: clienteUf.trim(),
+            data_atual: cidadeFormatada
+              ? `${cidadeFormatada}, ${dataExtenso}.`
+              : `${dataExtenso}.`,
+            assinatura: nomeFormatado,
+            titulo: tipoPecaLabel,
+          },
+        },
       });
       if (error) throw error;
       const blob = new Blob([data], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = url; a.download = `${nomeRequerente || "peca"}.docx`; a.click();
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      // Update case with docx path
       if (savedCasoId || casoId) {
-        await supabase.from("qa_casos" as any).update({ docx_path: `exported_${resultado.geracao_id}.docx`, updated_at: new Date().toISOString() }).eq("id", savedCasoId || casoId);
+        await supabase.from("qa_casos" as any).update({ docx_path: fileName, updated_at: new Date().toISOString() }).eq("id", savedCasoId || casoId);
       }
-      toast.success("DOCX exportado");
-    } catch (err: any) { toast.error(err.message || "Erro ao exportar DOCX"); }
+      toast.success("Word baixado com sucesso");
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao exportar DOCX");
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const scoreColor = (s: number) => s >= 0.7 ? "text-emerald-400" : s >= 0.4 ? "text-amber-400" : "text-red-400";
@@ -1343,10 +1444,12 @@ export default function QAGerarPecaPage() {
         startedAt={genStartedAt}
         result={resultado}
         savedCasoId={savedCasoId}
-        onRetry={() => { setGenStep("idle"); setGenError(""); setShowDraftingView(false); setStreamedText(""); gerar(); }}
+        onRetry={() => { setGenStep("idle"); setGenError(""); setShowDraftingView(false); setStreamedText(""); setValidationErrors([]); gerar(); }}
         onCopy={copiarMinuta}
         onExportDocx={exportarDocx}
         onOpenCase={() => savedCasoId && navigate(`/quero-armas/gerar-peca?caso=${savedCasoId}`)}
+        validationErrors={validationErrors}
+        isExporting={isExporting}
       />
     </div>
   );
