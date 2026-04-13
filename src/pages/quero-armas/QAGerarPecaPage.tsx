@@ -59,6 +59,8 @@ type GenerationStep =
   | "done"
   | "error";
 
+type DraftingPipelineStep = "context" | "sources" | "writing" | "reviewing" | "validating" | "saving" | "done" | "error";
+
 const GENERATION_STEPS: { key: GenerationStep; label: string }[] = [
   { key: "resolving_circumscription", label: "Resolvendo circunscrição da PF" },
   { key: "uploading_docs", label: "Verificando documentos auxiliares" },
