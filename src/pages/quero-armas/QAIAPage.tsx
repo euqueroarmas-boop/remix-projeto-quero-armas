@@ -78,10 +78,10 @@ export default function QAIAPage() {
   return (
     <div className="space-y-6 max-w-4xl">
       <div>
-        <h1 className="text-2xl font-bold text-slate-100 flex items-center gap-2">
+        <h1 className="text-2xl font-bold text-neutral-100 flex items-center gap-2">
           <Bot className="h-6 w-6 text-amber-500" /> IA Jurídica
         </h1>
-        <p className="text-sm text-slate-500 mt-1">Consulta assistida com base viva de conhecimento</p>
+        <p className="text-sm text-neutral-500 mt-1">Consulta assistida com base viva de conhecimento</p>
       </div>
 
       <div className="bg-amber-500/5 border border-amber-500/20 rounded-lg p-3 text-xs text-amber-400/80 flex items-start gap-2">
@@ -89,17 +89,17 @@ export default function QAIAPage() {
         <span>A IA consulta exclusivamente as fontes cadastradas e validadas. Nunca inventa fatos, leis, artigos, jurisprudência ou precedentes. Fontes são ranqueadas por confiança.</span>
       </div>
 
-      <div className="space-y-4 bg-[#12121c] border border-slate-800/40 rounded-xl p-5">
+      <div className="space-y-4 bg-[#111111] border border-neutral-800/40 rounded-xl p-5">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label className="text-slate-300">Título do Caso</Label>
+            <Label className="text-neutral-300">Título do Caso</Label>
             <Input value={casoTitulo} onChange={e => setCasoTitulo(e.target.value)}
-              className="bg-[#0c0c14] border-slate-700 text-slate-100" placeholder="Ex: Mandado de Segurança - CAC" />
+              className="bg-[#0a0a0a] border-neutral-700 text-neutral-100" placeholder="Ex: Mandado de Segurança - CAC" />
           </div>
           <div className="space-y-2">
-            <Label className="text-slate-300">Tipo de Peça</Label>
+            <Label className="text-neutral-300">Tipo de Peça</Label>
             <Select value={tipoPeca} onValueChange={setTipoPeca}>
-              <SelectTrigger className="bg-[#0c0c14] border-slate-700 text-slate-300"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="bg-[#0a0a0a] border-neutral-700 text-neutral-300"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {TIPOS_PECA.map(t => <SelectItem key={t} value={t}>{t.replace(/_/g, " ")}</SelectItem>)}
               </SelectContent>
@@ -109,27 +109,27 @@ export default function QAIAPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
-            <Label className="text-slate-300">Profundidade</Label>
+            <Label className="text-neutral-300">Profundidade</Label>
             <Select value={profundidade} onValueChange={setProfundidade}>
-              <SelectTrigger className="bg-[#0c0c14] border-slate-700 text-slate-300"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="bg-[#0a0a0a] border-neutral-700 text-neutral-300"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {PROFUNDIDADES.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-2">
-            <Label className="text-slate-300">Tom</Label>
+            <Label className="text-neutral-300">Tom</Label>
             <Select value={tom} onValueChange={setTom}>
-              <SelectTrigger className="bg-[#0c0c14] border-slate-700 text-slate-300"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="bg-[#0a0a0a] border-neutral-700 text-neutral-300"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {TONS.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-2">
-            <Label className="text-slate-300">Foco</Label>
+            <Label className="text-neutral-300">Foco</Label>
             <Select value={foco} onValueChange={setFoco}>
-              <SelectTrigger className="bg-[#0c0c14] border-slate-700 text-slate-300"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="bg-[#0a0a0a] border-neutral-700 text-neutral-300"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {FOCOS.map(f => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}
               </SelectContent>
@@ -138,9 +138,9 @@ export default function QAIAPage() {
         </div>
 
         <div className="space-y-2">
-          <Label className="text-slate-300">Descreva o caso e o que precisa</Label>
+          <Label className="text-neutral-300">Descreva o caso e o que precisa</Label>
           <Textarea value={entrada} onChange={e => setEntrada(e.target.value)}
-            className="bg-[#0c0c14] border-slate-700 text-slate-100 min-h-[150px]"
+            className="bg-[#0a0a0a] border-neutral-700 text-neutral-100 min-h-[150px]"
             placeholder="Descreva os fatos, a situação jurídica e o que espera da IA..." />
         </div>
         <Button onClick={consultar} disabled={loading} className="bg-amber-600 hover:bg-amber-700">
@@ -152,22 +152,22 @@ export default function QAIAPage() {
       {resposta && (
         <div className="space-y-4">
           {/* Confidence Score */}
-          <div className="flex items-center gap-4 bg-[#12121c] border border-slate-800/40 rounded-xl p-4">
+          <div className="flex items-center gap-4 bg-[#111111] border border-neutral-800/40 rounded-xl p-4">
             <div className="text-center">
               <div className={`text-2xl font-bold ${scoreColor(resposta.score_confianca)}`}>
                 {((resposta.score_confianca || 0) * 100).toFixed(0)}%
               </div>
-              <div className="text-[10px] text-slate-500 uppercase tracking-wider">Confiança</div>
+              <div className="text-[10px] text-neutral-500 uppercase tracking-wider">Confiança</div>
             </div>
-            <div className="flex-1 text-xs text-slate-400">
+            <div className="flex-1 text-xs text-neutral-400">
               <BarChart3 className="inline h-3 w-3 mr-1" />
               {resposta.fontes_recuperadas?.length || 0} fontes recuperadas
             </div>
           </div>
 
           {resposta.fontes_recuperadas?.length > 0 && (
-            <div className="bg-[#12121c] border border-slate-800/40 rounded-xl p-5">
-              <h3 className="text-sm font-medium text-slate-300 mb-3">Fontes Utilizadas (por relevância)</h3>
+            <div className="bg-[#111111] border border-neutral-800/40 rounded-xl p-5">
+              <h3 className="text-sm font-medium text-neutral-300 mb-3">Fontes Utilizadas (por relevância)</h3>
               <div className="space-y-2">
                 {resposta.fontes_recuperadas.map((f: any, i: number) => (
                   <div key={i} className="flex items-center gap-2 text-xs">
@@ -175,8 +175,8 @@ export default function QAIAPage() {
                     {f.tipo === "jurisprudencia" && <Gavel className="h-3.5 w-3.5 text-purple-400" />}
                     {f.tipo === "documento" && <BookOpen className="h-3.5 w-3.5 text-blue-400" />}
                     {f.tipo === "referencia_aprovada" && <CheckCircle className="h-3.5 w-3.5 text-amber-400" />}
-                    <span className="text-slate-300 flex-1">{f.titulo || f.referencia}</span>
-                    <span className="text-slate-600 tabular-nums">
+                    <span className="text-neutral-300 flex-1">{f.titulo || f.referencia}</span>
+                    <span className="text-neutral-600 tabular-nums">
                       {(f.score_final || 0).toFixed(2)}
                     </span>
                     {f.score_validacao > 0 && <CheckCircle className="h-3 w-3 text-emerald-500" />}
@@ -186,9 +186,9 @@ export default function QAIAPage() {
             </div>
           )}
 
-          <div className="bg-[#12121c] border border-slate-800/40 rounded-xl p-5">
-            <h3 className="text-sm font-medium text-slate-300 mb-3">Resposta da IA</h3>
-            <div className="text-sm text-slate-200 whitespace-pre-wrap leading-relaxed">
+          <div className="bg-[#111111] border border-neutral-800/40 rounded-xl p-5">
+            <h3 className="text-sm font-medium text-neutral-300 mb-3">Resposta da IA</h3>
+            <div className="text-sm text-neutral-200 whitespace-pre-wrap leading-relaxed">
               {resposta.resposta_ia}
             </div>
             {resposta.observacoes_ia && (
