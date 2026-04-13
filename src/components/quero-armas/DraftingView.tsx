@@ -9,6 +9,7 @@ import {
 /* ── Section detection ── */
 const DRAFT_SECTIONS = [
   { key: "enderecamento", label: "Endereçamento", pattern: /^A\s+DOUTA/m },
+  { key: "requerimento", label: "Requerimento", pattern: /^Requerimento:\s/m },
   { key: "preambulo", label: "Preâmbulo", pattern: /vem,?\s+respeitosamente/i },
   { key: "dos_fatos", label: "I — DOS FATOS", pattern: /I\s*[—–-]\s*DOS\s+FATOS/i },
   { key: "do_direito", label: "II — DO DIREITO", pattern: /II\s*[—–-]\s*DO\s+DIREITO/i },
