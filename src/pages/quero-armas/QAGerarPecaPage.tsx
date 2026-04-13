@@ -28,6 +28,7 @@ interface ArquivoAuxiliar {
   nome: string;
   tipo: string;
   stage: DocUploadStage;
+  etapaAtual?: string;
   docId?: string;
   jobId?: string;
   storagePath?: string;
