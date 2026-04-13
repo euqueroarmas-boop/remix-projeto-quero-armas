@@ -4,8 +4,9 @@ import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import CaseDetailPanel from "@/components/quero-armas/CaseDetailPanel";
 import {
   Search, FolderOpen, PenTool, CheckCircle, XCircle, Clock, Eye,
   Shield, BookOpen, ChevronRight,
@@ -235,69 +236,15 @@ export default function QACasosPage() {
       {/* Detail dialog */}
       <Dialog open={!!detailCase} onOpenChange={() => setDetailCase(null)}>
         <DialogContent className="bg-[#111111] border-[#1c1c1c] text-neutral-300 max-w-3xl max-h-[90vh] overflow-y-auto p-3 md:p-6">
-          <DialogHeader><DialogTitle className="text-neutral-200 text-sm">{detailCase?.titulo || "Detalhes"}</DialogTitle></DialogHeader>
           {detailCase && (
-            <div className="space-y-3 mt-1">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
-                <div><span className="text-neutral-600">Requerente:</span> <span className="text-neutral-300 ml-1">{detailCase.nome_requerente || "—"}</span></div>
-                <div><span className="text-neutral-600">CPF/CNPJ:</span> <span className="text-neutral-300 ml-1">{detailCase.cpf_cnpj || "—"}</span></div>
-                <div><span className="text-neutral-600">Serviço:</span> <span className="text-neutral-300 ml-1">{detailCase.tipo_servico || "—"}</span></div>
-                <div><span className="text-neutral-600">Tipo:</span> <span className="text-neutral-300 ml-1">{(detailCase.tipo_peca || "—").replace(/_/g, " ")}</span></div>
-                <div><span className="text-neutral-600">Local:</span> <span className="text-neutral-300 ml-1">{detailCase.cidade || "—"}/{detailCase.uf || "—"}</span></div>
-                <div><span className="text-neutral-600">PF:</span> <span className="text-neutral-300 ml-1">{detailCase.unidade_pf || "—"}</span></div>
-                <div><span className="text-neutral-600">Status:</span> <span className={`ml-1 ${statusColor(detailCase.status)}`}>{(detailCase.status || "—").replace(/_/g, " ")}</span></div>
-                <div><span className="text-neutral-600">Data:</span> <span className="text-neutral-300 ml-1">{new Date(detailCase.created_at).toLocaleString("pt-BR")}</span></div>
-              </div>
-
-              {detailCase.descricao_caso && (
-                <div>
-                  <span className="text-[9px] text-neutral-600 uppercase tracking-[0.12em]">Descrição</span>
-                  <div className="text-[10px] text-neutral-400 bg-[#0a0a0a] rounded-lg p-2 mt-1 whitespace-pre-wrap max-h-[100px] overflow-y-auto">{detailCase.descricao_caso}</div>
-                </div>
-              )}
-
-              {detailCase.documentos_auxiliares_json?.length > 0 && (
-                <div>
-                  <span className="text-[9px] text-neutral-600 uppercase tracking-[0.12em]">Docs ({detailCase.documentos_auxiliares_json.length})</span>
-                  <div className="space-y-0.5 mt-1">
-                    {detailCase.documentos_auxiliares_json.map((d: any, i: number) => (
-                      <div key={i} className="flex items-center gap-1.5 text-[10px]">
-                        {d.stage === "done" ? <CheckCircle className="h-2.5 w-2.5 text-emerald-400" /> : d.stage === "failed" ? <XCircle className="h-2.5 w-2.5 text-red-400" /> : <Clock className="h-2.5 w-2.5 text-neutral-600" />}
-                        <span className="text-neutral-400 truncate">{d.nome}</span>
-                        {d.error && <span className="text-red-400 text-[8px]">— {d.error}</span>}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {detailCase.minuta_gerada && (
-                <div>
-                  <span className="text-[9px] text-neutral-600 uppercase tracking-[0.12em]">Minuta</span>
-                  <div className="text-[11px] text-neutral-400 whitespace-pre-wrap leading-relaxed bg-[#0a0a0a] rounded-lg p-2.5 max-h-[200px] overflow-y-auto mt-1 font-serif">{detailCase.minuta_gerada}</div>
-                </div>
-              )}
-
-              <div className="flex flex-wrap gap-1.5 pt-2 border-t border-[#1c1c1c]">
-                <Button size="sm" onClick={() => { setDetailCase(null); navigate(`/quero-armas/gerar-peca?caso=${detailCase.id}`); }}
-                  className="bg-[#7a1528] hover:bg-[#a52338] text-white border-0 h-7 text-[10px]">
-                  <PenTool className="h-3 w-3 mr-1" /> Editar
-                </Button>
-
-                {detailCase.status === "gerado" || detailCase.status === "revisado" ? (
-                  <>
-                    <Button size="sm" variant="outline" onClick={() => handleSetDeferido(detailCase.id)}
-                      className="border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/10 h-7 text-[10px]">
-                      <CheckCircle className="h-3 w-3 mr-1" /> Deferido
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => handleSetIndeferido(detailCase.id)}
-                      className="border-red-500/20 text-red-400 hover:bg-red-500/10 h-7 text-[10px]">
-                      <XCircle className="h-3 w-3 mr-1" /> Indeferido
-                    </Button>
-                  </>
-                ) : null}
-              </div>
-            </div>
+            <CaseDetailPanel
+              caso={detailCase}
+              onClose={() => setDetailCase(null)}
+              onDeferido={handleSetDeferido}
+              onIndeferido={handleSetIndeferido}
+              onEdit={(id) => { setDetailCase(null); navigate(`/quero-armas/gerar-peca?caso=${id}`); }}
+              statusColor={statusColor}
+            />
           )}
         </DialogContent>
       </Dialog>
