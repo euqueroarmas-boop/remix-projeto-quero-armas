@@ -236,7 +236,23 @@ Deno.serve(async (req) => {
       ...variables,
     };
 
-    const content = geracao.minuta_gerada || "";
+    let content = geracao.minuta_gerada || "";
+
+    // Post-process: remove advogado/OAB references from closing
+    content = content.replace(/\n[^\n]*advogad[oa][^\n]*OAB[^\n]*/gi, "");
+    content = content.replace(/\n[^\n]*OAB[\s\/]*[A-Z]{2}[\s]*[\d.]+[^\n]*/gi, "");
+    // Remove leftover placeholders
+    content = content.replace(/\[DATA\]/gi, vars.data_atual);
+    content = content.replace(/\[CIDADE\]/gi, vars.cidade);
+    content = content.replace(/\[NOME[^\]]*\]/gi, vars.cliente_nome);
+    content = content.replace(/\[ASSINATURA[^\]]*\]/gi, vars.assinatura);
+    content = content.replace(/\[ADVOGAD[OA][^\]]*\]/gi, "");
+    content = content.replace(/\[OAB[^\]]*\]/gi, "");
+
+    // Ensure closing block has real date and requester name
+    if (!content.includes(vars.data_atual) && vars.data_atual) {
+      content = content.trimEnd() + "\n\n" + vars.data_atual + "\n\n" + vars.assinatura;
+    }
 
     // Generate DOCX
     const docxBytes = generateDocx(content, vars);
