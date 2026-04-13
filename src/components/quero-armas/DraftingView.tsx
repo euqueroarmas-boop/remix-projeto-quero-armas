@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
   Loader2, CheckCircle, XCircle, AlertTriangle, Clock, RefreshCw,
-  Copy, Download, FolderOpen, FileText, Sparkles,
+  Copy, Download, FolderOpen, Sparkles,
 } from "lucide-react";
 
 /* ── Section detection ── */
@@ -72,21 +72,90 @@ function ElapsedTimer({ startedAt }: { startedAt?: number }) {
   );
 }
 
+/* ── Line-by-line renderer ── */
+const SECTION_HEADER_PATTERN = /^(I{1,3}V?\s*[—–-]\s*.+|A\s+DOUTA\s.+)$/;
+
+function DraftLines({ text, isStreaming }: { text: string; isStreaming: boolean }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const prevLineCountRef = useRef(0);
+
+  const lines = useMemo(() => text.split("\n"), [text]);
+
+  // Auto-scroll on new lines
+  useEffect(() => {
+    if (containerRef.current && lines.length > prevLineCountRef.current) {
+      prevLineCountRef.current = lines.length;
+      containerRef.current.scrollTop = containerRef.current.scrollHeight;
+    }
+  }, [lines.length]);
+
+  // Determine which line is "new" (last non-empty line while streaming)
+  const lastNonEmptyIdx = useMemo(() => {
+    for (let i = lines.length - 1; i >= 0; i--) {
+      if (lines[i].trim().length > 0) return i;
+    }
+    return -1;
+  }, [lines]);
+
+  return (
+    <div
+      ref={containerRef}
+      className="bg-[#08080f] border border-[#1a1a2e] rounded-lg p-4 max-h-[60vh] overflow-y-auto scroll-smooth"
+    >
+      <div className="font-serif text-[12.5px] leading-[1.8]">
+        {lines.map((line, i) => {
+          const isLast = i === lastNonEmptyIdx && isStreaming;
+          const isEmpty = line.trim().length === 0;
+          const isHeader = SECTION_HEADER_PATTERN.test(line.trim());
+
+          if (isEmpty) {
+            return <div key={i} className="h-3" />;
+          }
+
+          return (
+            <div
+              key={i}
+              className={`
+                transition-all duration-300 ease-out
+                ${isHeader
+                  ? "text-cyan-300 font-semibold text-[13px] mt-4 mb-1 tracking-wide"
+                  : isLast
+                    ? "text-slate-200"
+                    : "text-slate-400"
+                }
+                ${isLast ? "border-l-2 border-cyan-500/50 pl-3 -ml-3 bg-cyan-500/[0.03] rounded-r" : ""}
+              `}
+            >
+              {line}
+              {isLast && isStreaming && (
+                <span className="inline-block w-[2px] h-[14px] bg-cyan-400 animate-pulse ml-0.5 align-text-bottom" />
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ── Word counter ── */
+function WordCount({ text }: { text: string }) {
+  const count = useMemo(() => text.split(/\s+/).filter(Boolean).length, [text]);
+  if (count < 10) return null;
+  return (
+    <span className="text-[9px] text-slate-600 tabular-nums font-mono">
+      {count} palavras
+    </span>
+  );
+}
+
 export default function DraftingView({
   visible, pipelineStep, streamedText, isStreaming, error,
   startedAt, result, onRetry, onCopy, onExportDocx, onOpenCase, savedCasoId,
 }: DraftingViewProps) {
-  const textAreaRef = useRef<HTMLDivElement>(null);
   const [stalled, setStalled] = useState(false);
   const lastTextLenRef = useRef(0);
   const stallTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Auto-scroll
-  useEffect(() => {
-    if (textAreaRef.current && isStreaming) {
-      textAreaRef.current.scrollTop = textAreaRef.current.scrollHeight;
-    }
-  }, [streamedText, isStreaming]);
 
   // Stall detection: if text hasn't grown in 30s during streaming
   useEffect(() => {
@@ -102,16 +171,15 @@ export default function DraftingView({
 
   // Detect which sections are present in the streamed text
   const detectedSections = useMemo(() => {
-    const found: { key: DraftSection; label: string; done: boolean }[] = [];
+    const found: { key: DraftSection; label: string }[] = [];
     for (const sec of DRAFT_SECTIONS) {
       if (sec.pattern.test(streamedText)) {
-        found.push({ key: sec.key, label: sec.label, done: true });
+        found.push({ key: sec.key, label: sec.label });
       }
     }
     return found;
   }, [streamedText]);
 
-  // Current writing section — the last detected section
   const currentWritingSection = detectedSections.length > 0
     ? detectedSections[detectedSections.length - 1].label
     : streamedText.length > 0 ? "Endereçamento" : null;
@@ -122,10 +190,8 @@ export default function DraftingView({
     : pipelineStep === "error" ? 0
     : pipelineIdx >= 0 ? Math.round(((pipelineIdx + 0.5) / PIPELINE_STEPS.length) * 100) : 0;
 
-  // Section progress (0-6)
   const sectionPercent = Math.round((detectedSections.length / DRAFT_SECTIONS.length) * 100);
 
-  // Overall progress blends pipeline + section
   const overallPercent = pipelineStep === "done" ? 100
     : pipelineStep === "error" ? 0
     : pipelineStep === "writing" ? Math.round(20 + (sectionPercent * 0.6))
@@ -153,6 +219,7 @@ export default function DraftingView({
           </span>
         </div>
         <div className="flex items-center gap-3">
+          <WordCount text={streamedText} />
           <ElapsedTimer startedAt={startedAt} />
           {isDone && (
             <div className="flex gap-1.5">
@@ -243,20 +310,10 @@ export default function DraftingView({
         </div>
       )}
 
-      {/* Text area — the draft being written */}
+      {/* Text area — line-by-line view */}
       {streamedText.length > 0 && (
         <div className="px-4 pb-3">
-          <div
-            ref={textAreaRef}
-            className="bg-[#08080f] border border-[#1a1a2e] rounded-lg p-4 max-h-[60vh] overflow-y-auto scroll-smooth"
-          >
-            <div className="text-[12px] text-slate-300 whitespace-pre-wrap leading-relaxed font-serif">
-              {streamedText}
-              {isStreaming && (
-                <span className="inline-block w-0.5 h-4 bg-cyan-400 animate-pulse ml-0.5 align-text-bottom" />
-              )}
-            </div>
-          </div>
+          <DraftLines text={streamedText} isStreaming={isStreaming} />
         </div>
       )}
 
