@@ -665,6 +665,7 @@ Deno.serve(async (req) => {
       cliente_cidade, cliente_uf, cliente_endereco, cliente_cep,
       circunscricao_resolvida,
       data_notificacao, info_tempestividade,
+      numero_requerimento,
     } = reqBody;
     const wantStream = !!reqBody.stream;
 
@@ -933,6 +934,7 @@ Deno.serve(async (req) => {
     if (info_tempestividade) dadosAdicionais += `\nINFORMAÇÕES DE TEMPESTIVIDADE: ${info_tempestividade}`;
     if (cliente_endereco) dadosAdicionais += `\nENDEREÇO DO CLIENTE: ${cliente_endereco}`;
     if (cliente_cep) dadosAdicionais += `\nCEP DO CLIENTE: ${cliente_cep}`;
+    if (numero_requerimento) dadosAdicionais += `\nNÚMERO DO REQUERIMENTO: ${numero_requerimento}`;
 
     // Evidence-specific instructions for the user prompt
     const bos = evidenceDocs.filter(d => d.tipo === "boletim_ocorrencia");
@@ -952,7 +954,7 @@ Deno.serve(async (req) => {
 - TIPO OBRIGATÓRIO: ${tipo_peca}
 - TÍTULO OBRIGATÓRIO DA PEÇA: ${tituloObrigatorio}
 - TIPO DE SERVIÇO PARA PREÂMBULO: "${tipoServico}"
-- ENDEREÇAMENTO OBRIGATÓRIO: "${enderecamento}"
+- ENDEREÇAMENTO OBRIGATÓRIO: "${enderecamento}"${numero_requerimento ? `\n- NÚMERO DO REQUERIMENTO: "${numero_requerimento}" — inserir LOGO APÓS o endereçamento, na linha seguinte, no formato: "Requerimento: ${numero_requerimento}". Depois, iniciar o preâmbulo.` : ""}
 - ${instrucaoTipo}
 - Redija de forma TÉCNICA, PRECISA e CONCISA. Sem prolixidade, sem enchimento.
 - Use tom TÉCNICO-JURÍDICO PROFISSIONAL, formal e sóbrio.
@@ -984,7 +986,7 @@ ENDEREÇAMENTO: ${enderecamento}
 TIPO DE SERVIÇO PARA PREÂMBULO: ${tipoServico}
 MUNICÍPIO DO CLIENTE: ${cliente_cidade || "não informado"}
 UF DO CLIENTE: ${cliente_uf || "não informado"}
-UNIDADE PF COMPETENTE: ${circunscricao ? `${circunscricao.unidade_pf} (${circunscricao.sigla_unidade}) — Base: ${circunscricao.base_legal}` : "NÃO RESOLVIDA — usar endereçamento com marcador pendente"}
+UNIDADE PF COMPETENTE: ${circunscricao ? `${circunscricao.unidade_pf} (${circunscricao.sigla_unidade}) — Base: ${circunscricao.base_legal}` : "NÃO RESOLVIDA — usar endereçamento com marcador pendente"}${numero_requerimento ? `\nNÚMERO DO REQUERIMENTO: ${numero_requerimento}` : ""}
 ${evidenceSummaryForPrompt}
 ${parametros}
 
@@ -993,8 +995,8 @@ ${entrada_caso}
 ${contextoFontes}
 
 Redija a peça jurídica do tipo "${tipo_peca}" seguindo RIGOROSAMENTE a estrutura obrigatória:
-1. Endereçamento: "${enderecamento}"
-2. Preâmbulo fluido e jurídico com fórmula integrada: "vem, respeitosamente, ${tipoServico}, conforme a Lei nº 10.826/2003 e demais normas aplicáveis, pelos fatos e fundamentos a seguir expostos."
+1. Endereçamento: "${enderecamento}"${numero_requerimento ? `\n1b. Logo após o endereçamento, na linha seguinte: "Requerimento: ${numero_requerimento}"` : ""}
+2. Preâmbulo fluido e jurídico${numero_requerimento ? " — referir que a parte interessada já se encontra devidamente qualificada no requerimento em epígrafe, sem repetir qualificação completa" : ""} com fórmula integrada: "vem, respeitosamente, ${tipoServico}, conforme a Lei nº 10.826/2003 e demais normas aplicáveis, pelos fatos e fundamentos a seguir expostos."
 3. I — DOS FATOS (cronológico, objetivo, sem floreio)${dosFactosInstr}
 4. II — DO DIREITO (usar base normativa prioritária: Lei 10.826/2003 + Decreto 11.615/2023 + IN 201/2021-DG/PF + Lei 9.784/1999)${doDireitoInstr}
 5. III — ALEGAÇÕES FINAIS (consolidar sem repetir)${evidenceDocs.length > 0 ? " — reforçar materialidade probatória" : ""}

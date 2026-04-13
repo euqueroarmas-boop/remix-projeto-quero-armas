@@ -294,6 +294,7 @@ export default function QAGerarPecaPage() {
   const [clienteCep, setClienteCep] = useState("");
   const [dataNotificacao, setDataNotificacao] = useState("");
   const [infoTempestividade, setInfoTempestividade] = useState("");
+  const [numeroRequerimento, setNumeroRequerimento] = useState("");
 
   // Editing existing case
   const [casoId, setCasoId] = useState<string | null>(null);
@@ -914,6 +915,7 @@ export default function QAGerarPecaPage() {
           } : null,
           data_notificacao: dataNotificacao.trim() || null,
           info_tempestividade: infoTempestividade.trim() || null,
+          numero_requerimento: numeroRequerimento.trim() || null,
           documentos_auxiliares_ids: auxiliarDocIds.length > 0 ? auxiliarDocIds : null,
         }),
       });
@@ -1088,6 +1090,7 @@ export default function QAGerarPecaPage() {
             cliente_nome: nomeFormatado,
             cidade: cidadeFormatada,
             estado: clienteUf.trim(),
+            numero_requerimento: numeroRequerimento.trim() || "",
             data_atual: cidadeFormatada
               ? `${cidadeFormatada}, ${dataExtenso}.`
               : `${dataExtenso}.`,
@@ -1281,7 +1284,7 @@ export default function QAGerarPecaPage() {
           )}
         </div>
 
-        {/* ── Foco ── */}
+        {/* ── Foco + Nº Requerimento ── */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <Label className="text-slate-500 text-[11px]">Foco Argumentativo</Label>
@@ -1289,6 +1292,15 @@ export default function QAGerarPecaPage() {
               <SelectTrigger className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm"><SelectValue /></SelectTrigger>
               <SelectContent>{FOCOS.map(f => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}</SelectContent>
             </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-slate-500 text-[11px]">Nº do Requerimento <span className="text-slate-600">(opcional)</span></Label>
+            <Input
+              value={numeroRequerimento}
+              onChange={e => setNumeroRequerimento(e.target.value.replace(/[^0-9a-zA-Z.\/\-]/g, ""))}
+              className="bg-[#08080f] border-[#1a1a2e] text-slate-300 h-9 text-sm"
+              placeholder="Ex: 2026/001234-5"
+            />
           </div>
         </div>
 

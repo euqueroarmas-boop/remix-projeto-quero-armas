@@ -27,6 +27,12 @@ function generateDocx(content: string, variables: Record<string, string>): Uint8
       return `<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="360" w:after="360"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman"/><w:b/><w:sz w:val="26"/><w:caps/></w:rPr><w:t xml:space="preserve">${escXml(trimmed)}</w:t></w:r></w:p>`;
     }
 
+    // Detect "Requerimento: ..." line
+    const isRequerimento = /^Requerimento:\s/i.test(trimmed);
+    if (isRequerimento) {
+      return `<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="240" w:after="240"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman"/><w:b/><w:sz w:val="24"/></w:rPr><w:t xml:space="preserve">${escXml(trimmed)}</w:t></w:r></w:p>`;
+    }
+
     // Detect main section headings (I — DOS FATOS, II — DO DIREITO, etc.)
     const isSectionHeading = /^[IVXLCDM]+\s*[—–\-\.]\s*/i.test(trimmed);
     if (isSectionHeading) {
@@ -248,6 +254,12 @@ Deno.serve(async (req) => {
     content = content.replace(/\[ASSINATURA[^\]]*\]/gi, vars.assinatura);
     content = content.replace(/\[ADVOGAD[OA][^\]]*\]/gi, "");
     content = content.replace(/\[OAB[^\]]*\]/gi, "");
+    content = content.replace(/\[NUMERO[_\s]*REQUERIMENTO[^\]]*\]/gi, vars.numero_requerimento || "");
+    content = content.replace(/\[PREAMBULO[^\]]*\]/gi, "");
+    // Remove orphan "Requerimento:" line if number was not provided
+    if (!vars.numero_requerimento) {
+      content = content.replace(/\n\s*Requerimento:\s*\n/gi, "\n");
+    }
 
     // Ensure closing block has real date and requester name
     if (!content.includes(vars.data_atual) && vars.data_atual) {
