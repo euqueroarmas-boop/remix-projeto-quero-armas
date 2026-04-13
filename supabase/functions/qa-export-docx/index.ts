@@ -230,8 +230,8 @@ Deno.serve(async (req) => {
     const vars: Record<string, string> = {
       titulo: geracao.titulo_geracao || variables?.titulo || "Sem título",
       cliente_nome: variables?.cliente_nome || "[NOME DO REQUERENTE]",
-      cidade: cidadeVar,
-      estado: variables?.estado || "",
+      cidade: (cidadeVar || "").toUpperCase(),
+      estado: (variables?.estado || "").toUpperCase(),
       resumo_fatico: variables?.resumo_fatico || "",
       fundamentacao: "",
       jurisprudencia: "",
