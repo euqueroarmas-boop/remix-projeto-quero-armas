@@ -136,6 +136,58 @@ const STAGE_LABELS: Record<DocUploadStage, string> = {
   failed: "Falhou",
 };
 
+const ETAPA_LABELS: Record<string, string> = {
+  criado: "Na fila",
+  verificando_arquivo: "Verificando arquivo...",
+  arquivo_confirmado: "Arquivo confirmado",
+  registrando_documento: "Registrando documento...",
+  extracao_texto: "Extraindo texto...",
+  aguardando_extracao: "Aguardando extração...",
+  extracao_em_andamento: "Extração em andamento...",
+  rodando_ocr: "Executando OCR...",
+  estruturando_campos: "Estruturando campos...",
+  processamento_tipado: "Classificando conteúdo...",
+  salvando_metadados: "Salvando metadados...",
+  concluido: "Concluído",
+  erro: "Falhou",
+};
+
+function getDisplayLabel(stage: DocUploadStage, etapaAtual?: string): string {
+  if (stage === "done" || stage === "failed" || stage === "pending" || stage === "uploading") return STAGE_LABELS[stage];
+  if (etapaAtual) {
+    // Handle composite etapa like "extracao_em_andamento (pendente)"
+    const base = etapaAtual.split(" (")[0];
+    return ETAPA_LABELS[base] || etapaAtual.replace(/_/g, " ");
+  }
+  return STAGE_LABELS[stage];
+}
+
+/** Classify doc complexity for expected time estimation */
+type DocComplexity = "light" | "medium" | "heavy";
+
+const DOC_COMPLEXITY: Record<string, DocComplexity> = {
+  documento_pessoal: "light",
+  comprovante_residencia: "light",
+  declaracao: "light",
+  certidao: "light",
+  atestado_medico: "medium",
+  notificacao_administrativa: "medium",
+  indeferimento_administrativo: "medium",
+  decisao_administrativa: "medium",
+  relatorio_clinico: "medium",
+  boletim_ocorrencia: "heavy",
+  laudo_medico: "heavy",
+  laudo_psiquiatrico: "heavy",
+  laudo_psicologico: "heavy",
+  outro: "medium",
+};
+
+const COMPLEXITY_LABEL: Record<DocComplexity, string> = {
+  light: "⚡ rápido",
+  medium: "📄 médio",
+  heavy: "📑 detalhado",
+};
+
 function stageProgress(s: DocUploadStage): number {
   return { pending: 0, queued: 5, uploading: 20, saved: 40, extracting: 60, processing: 80, done: 100, failed: 100 }[s];
 }
