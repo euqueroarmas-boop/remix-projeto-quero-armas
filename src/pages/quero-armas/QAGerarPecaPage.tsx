@@ -264,25 +264,32 @@ export default function QAGerarPecaPage() {
     setCepStatus("idle");
     if (cepTimeoutRef.current) clearTimeout(cepTimeoutRef.current);
     if (digits.length === 8) {
-      cepTimeoutRef.current = setTimeout(() => void doCepLookup(digits), 400);
+      cepTimeoutRef.current = setTimeout(() => void doCepLookup(digits), 600);
     }
   };
 
   const doCepLookup = async (digits: string) => {
+    const reqId = ++cepLookupRef.current;
     setCepStatus("loading");
     try {
-      const data = await lookupCep(digits);
-      if (!data) { setCepStatus("not_found"); return; }
+      const result = await Promise.race([
+        lookupCep(digits),
+        new Promise<null>((_, reject) => setTimeout(() => reject(new Error("cep_timeout")), 10000)),
+      ]);
+      if (reqId !== cepLookupRef.current) return; // stale
+      if (!result) { setCepStatus("not_found"); return; }
       setCepStatus("found");
-      if (data.state) setClienteUf(data.state);
-      if (data.street) setClienteEndereco(data.street);
-      if (data.neighborhood) setClienteBairro(data.neighborhood);
-      // City from CEP: set it and resolve circumscription directly
-      if (data.city && data.state) {
-        setClienteCidade(data.city);
-        void resolverCircunscricao(data.city, data.state);
+      if (result.state) setClienteUf(result.state);
+      if (result.street) setClienteEndereco(result.street);
+      if (result.neighborhood) setClienteBairro(result.neighborhood);
+      if (result.city && result.state) {
+        setClienteCidade(result.city);
+        void resolverCircunscricao(result.city, result.state);
       }
-    } catch { setCepStatus("error"); }
+    } catch {
+      if (reqId !== cepLookupRef.current) return;
+      setCepStatus("error");
+    }
   };
 
   /* ── Circumscription ── */
