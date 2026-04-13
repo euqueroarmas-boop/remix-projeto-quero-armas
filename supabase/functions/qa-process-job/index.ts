@@ -95,10 +95,10 @@ async function processJob(jobId: string) {
       await ingestResp.text(); // consume body
     }
 
-    // Stage 4: Poll extraction status — no artificial timeout, poll until done/failed
+    // Stage 4: Poll extraction status
     await updateJob({ status: "processing", etapa_atual: "aguardando_extracao" });
 
-    const MAX_POLL_SECONDS = 600; // 10 minutes max
+    const MAX_POLL_SECONDS = 600;
     const POLL_INTERVAL = 4000;
     const pollStart = Date.now();
     let extractionDone = false;
@@ -121,12 +121,18 @@ async function processJob(jobId: string) {
         throw new Error(`Extração falhou: ${st}`);
       }
 
-      // Update job with current extraction status
-      await updateJob({ etapa_atual: `extracao_em_andamento (${st || "pendente"})`, tentativas: (job.tentativas || 0) });
+      // Map extraction sub-status to granular etapa
+      const etapaMap: Record<string, string> = {
+        pendente: "aguardando_extracao",
+        extraindo: "extracao_texto",
+        ocr: "rodando_ocr",
+        processando: "estruturando_campos",
+      };
+      const etapa = etapaMap[st || "pendente"] || `extracao_em_andamento (${st || "pendente"})`;
+      await updateJob({ etapa_atual: etapa, tentativas: (job.tentativas || 0) });
     }
 
     if (!extractionDone) {
-      // After 10 min, check one last time
       const { data: final } = await supabase.from("qa_documentos_conhecimento").select("status_processamento").eq("id", docId).maybeSingle();
       if (final?.status_processamento === "concluido") {
         extractionDone = true;
