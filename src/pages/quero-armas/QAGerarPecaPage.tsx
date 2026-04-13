@@ -138,17 +138,24 @@ const STAGE_LABELS: Record<DocUploadStage, string> = {
 
 const ETAPA_LABELS: Record<string, string> = {
   criado: "Na fila",
+  pendente: "Na fila",
   verificando_arquivo: "Verificando arquivo...",
   arquivo_confirmado: "Arquivo confirmado",
   registrando_documento: "Registrando documento...",
   extracao_texto: "Extraindo texto...",
+  extraindo_texto: "Extraindo texto...",
   aguardando_extracao: "Aguardando extração...",
   extracao_em_andamento: "Extração em andamento...",
   rodando_ocr: "Executando OCR...",
   estruturando_campos: "Estruturando campos...",
   processamento_tipado: "Classificando conteúdo...",
+  gerando_resumo: "Gerando resumo...",
+  criando_chunks: "Preparando trechos...",
+  gerando_embeddings: "Finalizando processamento...",
+  processando: "Processando documento...",
   salvando_metadados: "Salvando metadados...",
   concluido: "Concluído",
+  texto_invalido: "Texto insuficiente",
   erro: "Falhou",
 };
 
@@ -187,6 +194,58 @@ const COMPLEXITY_LABEL: Record<DocComplexity, string> = {
   medium: "📄 médio",
   heavy: "📑 detalhado",
 };
+
+const SUPPORTED_AUXILIARY_EXTENSIONS = [".pdf", ".doc", ".docx", ".txt", ".rtf", ".png", ".jpg", ".jpeg", ".webp"];
+const MAX_AUXILIARY_FILE_SIZE = 20 * 1024 * 1024;
+
+function getFileExtension(name: string): string {
+  const lastDot = name.lastIndexOf(".");
+  return lastDot === -1 ? "" : name.slice(lastDot).toLowerCase();
+}
+
+function validateAuxiliaryFile(file: File): string | null {
+  const ext = getFileExtension(file.name);
+
+  if (file.size > MAX_AUXILIARY_FILE_SIZE) {
+    return "Arquivo acima de 20MB. Reduza o tamanho e tente novamente.";
+  }
+
+  if (!SUPPORTED_AUXILIARY_EXTENSIONS.includes(ext)) {
+    return "Formato não suportado. Use PDF, DOCX, TXT, PNG, JPG ou WEBP.";
+  }
+
+  if (ext === ".doc") {
+    return "Arquivos .doc antigos não são suportados aqui. Exporte para PDF ou DOCX e envie novamente.";
+  }
+
+  return null;
+}
+
+function mapKnowledgeStatusToStage(status?: string | null): DocUploadStage {
+  switch (status) {
+    case "pendente":
+      return "queued";
+    case "verificando_arquivo":
+    case "arquivo_confirmado":
+    case "registrando_documento":
+      return "saved";
+    case "extraindo_texto":
+      return "extracting";
+    case "rodando_ocr":
+    case "gerando_resumo":
+    case "criando_chunks":
+    case "gerando_embeddings":
+    case "processando":
+      return "processing";
+    case "concluido":
+      return "done";
+    case "erro":
+    case "texto_invalido":
+      return "failed";
+    default:
+      return "processing";
+  }
+}
 
 function stageProgress(s: DocUploadStage): number {
   return { pending: 0, queued: 5, uploading: 20, saved: 40, extracting: 60, processing: 80, done: 100, failed: 100 }[s];
@@ -466,10 +525,33 @@ export default function QAGerarPecaPage() {
   /* ── Auxiliary documents ── */
   const handleAddFiles = (files: FileList | null) => {
     if (!files) return;
-    const newFiles: ArquivoAuxiliar[] = Array.from(files).map(f => ({
-      file: f, nome: f.name, tipo: "", stage: "pending" as DocUploadStage,
-    }));
-    setArquivosAuxiliares(prev => [...prev, ...newFiles]);
+
+    const acceptedFiles: ArquivoAuxiliar[] = [];
+    const rejectedMessages: string[] = [];
+
+    for (const file of Array.from(files)) {
+      const validationError = validateAuxiliaryFile(file);
+
+      if (validationError) {
+        rejectedMessages.push(`${file.name}: ${validationError}`);
+        continue;
+      }
+
+      acceptedFiles.push({
+        file,
+        nome: file.name,
+        tipo: "",
+        stage: "pending" as DocUploadStage,
+      });
+    }
+
+    if (acceptedFiles.length > 0) {
+      setArquivosAuxiliares(prev => [...prev, ...acceptedFiles]);
+    }
+
+    if (rejectedMessages.length > 0) {
+      toast.error(`${rejectedMessages.length} arquivo(s) não puderam ser adicionados. ${rejectedMessages[0]}`);
+    }
   };
 
   const handleRemoveFile = (index: number) => {
@@ -492,77 +574,19 @@ export default function QAGerarPecaPage() {
     setArquivosAuxiliares(prev => prev.map((a, i) => i === index ? { ...a, stage, ...extra } : a));
   };
 
-  /** Upload file to storage, then dispatch background job separately */
-  const startDocJob = async (arq: ArquivoAuxiliar, index: number): Promise<string | null> => {
-    if (arq.stage === "done" && arq.docId) return arq.docId;
-    if (!arq.tipo) { toast.error("Selecione o tipo documental primeiro"); return null; }
-
-    setDocStage(index, "uploading", { startedAt: Date.now(), error: undefined });
-
+  const triggerTypedProcessing = async (docId: string) => {
     try {
-      // Step 1: Upload file to storage — the ONLY blocking wait
-      const safeName = sanitizeFileName(arq.file.name);
-      const storagePath = `auxiliares/${Date.now()}_${crypto.randomUUID().slice(0, 8)}_${safeName}`;
-
-      const { error: upErr } = await supabase.storage.from("qa-documentos").upload(storagePath, arq.file);
-      if (upErr) throw new Error(`Upload falhou: ${upErr.message}`);
-
-      // Immediately confirm to user: file is saved
-      setDocStage(index, "saved", { storagePath });
-
-      // Step 2: Dispatch job creation + processing in background (non-blocking)
-      void dispatchBackgroundJob(arq, index, storagePath);
-
-      return storagePath;
-    } catch (err: any) {
-      setDocStage(index, "failed", { error: err.message || "Falha no upload" });
-      return null;
+      await supabase.functions.invoke("qa-processar-documento", {
+        body: { documento_id: docId, user_id: user?.id || null },
+      });
+    } catch {
+      // Não bloqueia a geração da peça.
     }
   };
 
-  /** Create job record and dispatch to edge function — runs after UI already shows "saved" */
-  const dispatchBackgroundJob = async (arq: ArquivoAuxiliar, index: number, storagePath: string) => {
-    try {
-      // Small delay so user sees "arquivo salvo" before transitioning
-      await new Promise(r => setTimeout(r, 800));
-
-      setDocStage(index, "queued");
-
-      const { data: jobData, error: jobErr } = await supabase.from("qa_document_jobs" as any).insert({
-        caso_id: nomeRequerente || null,
-        tipo_documental: arq.tipo,
-        status: "queued",
-        etapa_atual: "criado",
-        storage_path: storagePath,
-        nome_arquivo: arq.file.name,
-        mime_type: arq.file.type || null,
-        tamanho_bytes: arq.file.size,
-        user_id: user?.id || null,
-        started_at: new Date().toISOString(),
-      }).select("id").single();
-
-      if (jobErr) {
-        setDocStage(index, "failed", { error: `Erro ao criar job: ${jobErr.message}` });
-        return;
-      }
-
-      const jobId = (jobData as any).id;
-      setDocStage(index, "extracting", { jobId });
-
-      // Fire-and-forget to edge function
-      supabase.functions.invoke("qa-process-job", { body: { job_id: jobId } }).catch(() => {});
-
-      // Poll job status
-      void pollJobStatus(jobId, index);
-    } catch (err: any) {
-      setDocStage(index, "failed", { error: err.message || "Falha ao iniciar processamento" });
-    }
-  };
-
-  /** Poll job status from DB — no artificial timeout, polls until terminal state */
-  const pollJobStatus = async (jobId: string, index: number) => {
-    const POLL_INTERVAL = 3000;
-    const MAX_POLLS = 300; // 15 minutes max polling from frontend
+  const pollDocumentStatus = async (docId: string, index: number, fileName: string) => {
+    const POLL_INTERVAL = 2000;
+    const MAX_POLLS = 300;
     let polls = 0;
 
     while (polls < MAX_POLLS) {
@@ -570,58 +594,112 @@ export default function QAGerarPecaPage() {
       polls++;
 
       try {
-        const { data: job } = await supabase
-          .from("qa_document_jobs" as any)
-          .select("status, etapa_atual, documento_id, erro")
-          .eq("id", jobId)
+        const { data: doc } = await supabase
+          .from("qa_documentos_conhecimento" as any)
+          .select("status_processamento, resumo_extraido")
+          .eq("id", docId)
           .maybeSingle();
 
-        if (!job) continue;
-        const j = job as any;
+        if (!doc) continue;
+        const d = doc as any;
+        const uiStage = mapKnowledgeStatusToStage(d.status_processamento);
 
-        // Map job status to UI stage — never regress back to "uploading"
-        const statusMap: Record<string, DocUploadStage> = {
-          queued: "queued",
-          uploading: "saved",  // file already uploaded by frontend, never show "uploading" again
-          saved: "saved",
-          extracting: "extracting",
-          processing: "processing",
-          done: "done",
-          failed: "failed",
-        };
-
-        const uiStage = statusMap[j.status] || "processing";
-
-        if (j.status === "done") {
-          setDocStage(index, "done", { docId: j.documento_id, jobId, etapaAtual: "concluido" });
+        if (d.status_processamento === "concluido") {
+          setDocStage(index, "done", { docId, etapaAtual: "concluido" });
+          void triggerTypedProcessing(docId);
           return;
         }
 
-        if (j.status === "failed") {
-          setDocStage(index, "failed", { error: j.erro || "Erro no processamento", jobId, etapaAtual: "erro" });
+        if (d.status_processamento === "erro" || d.status_processamento === "texto_invalido") {
+          setDocStage(index, "failed", {
+            docId,
+            etapaAtual: d.status_processamento,
+            error: d.resumo_extraido || "Não foi possível concluir o processamento do documento.",
+          });
           return;
         }
 
-        // Update intermediate stage with granular etapa_atual
-        setDocStage(index, uiStage, { jobId, etapaAtual: j.etapa_atual || undefined });
+        setDocStage(index, uiStage, {
+          docId,
+          etapaAtual: d.status_processamento || undefined,
+        });
       } catch {
-        // Network error — keep polling, job continues in background
+        // O processamento continua em background.
       }
     }
 
-    // After max polls, check final state
+    setDocStage(index, "processing", { docId, etapaAtual: "processando" });
+    toast.info(`${fileName}: processamento continua em background.`);
+  };
+
+  const dispatchDocumentIngestion = async (index: number, storagePath: string, docId: string, fileName: string) => {
     try {
-      const { data: final } = await supabase.from("qa_document_jobs" as any).select("status, documento_id, erro").eq("id", jobId).maybeSingle();
-      const f = final as any;
-      if (f?.status === "done") {
-        setDocStage(index, "done", { docId: f.documento_id, jobId });
-      } else if (f?.status === "failed") {
-        setDocStage(index, "failed", { error: f.erro || "Erro no processamento", jobId });
-      } else {
-        setDocStage(index, "processing", { jobId });
-        toast.info(`${arquivosAuxiliares[index]?.nome}: processamento continua em background`);
+      await new Promise(r => setTimeout(r, 250));
+      setDocStage(index, "queued", { docId, storagePath, etapaAtual: "pendente" });
+
+      const { error } = await supabase.functions.invoke("qa-ingest-document", {
+        body: { storage_path: storagePath, user_id: user?.id || null },
+      });
+
+      if (error) throw error;
+
+      setDocStage(index, "extracting", { docId, storagePath, etapaAtual: "extraindo_texto" });
+      void pollDocumentStatus(docId, index, fileName);
+    } catch (err: any) {
+      setDocStage(index, "failed", {
+        docId,
+        storagePath,
+        error: err.message || "Falha ao iniciar o processamento do documento.",
+      });
+    }
+  };
+
+  /** Upload file to storage, register document and start ingestion */
+  const startDocJob = async (arq: ArquivoAuxiliar, index: number): Promise<string | null> => {
+    if (arq.stage === "done" && arq.docId) return arq.docId;
+    if (!arq.tipo) { toast.error("Selecione o tipo documental primeiro"); return null; }
+
+    setDocStage(index, "uploading", { startedAt: Date.now(), error: undefined, etapaAtual: undefined });
+
+    try {
+      const safeName = sanitizeFileName(arq.file.name);
+      const storagePath = `auxiliares/${Date.now()}_${crypto.randomUUID().slice(0, 8)}_${safeName}`;
+
+      const { error: upErr } = await supabase.storage.from("qa-documentos").upload(storagePath, arq.file);
+      if (upErr) throw new Error(`Upload falhou: ${upErr.message}`);
+
+      const { data: docData, error: insertErr } = await supabase.from("qa_documentos_conhecimento" as any).insert({
+        titulo: arq.file.name.replace(/\.[^.]+$/, ""),
+        nome_arquivo: arq.file.name,
+        storage_path: storagePath,
+        mime_type: arq.file.type || null,
+        tamanho_bytes: arq.file.size,
+        enviado_por: user?.id || null,
+        tipo_documento: arq.tipo,
+        categoria: arq.tipo,
+        status_processamento: "pendente",
+        status_validacao: "validado",
+        tipo_origem: "arquivo_upload",
+        papel_documento: "auxiliar_caso",
+        ativo: true,
+        ativo_na_ia: false,
+        caso_id: casoId ?? null,
+      }).select("id").single();
+
+      if (insertErr) {
+        await supabase.storage.from("qa-documentos").remove([storagePath]).catch(() => undefined);
+        throw new Error(`Erro ao registrar documento: ${insertErr.message}`);
       }
-    } catch { /* ignore */ }
+
+      const docId = (docData as any).id;
+      setDocStage(index, "saved", { storagePath, docId, etapaAtual: "arquivo_confirmado" });
+
+      void dispatchDocumentIngestion(index, storagePath, docId, arq.file.name);
+      return docId;
+    } catch (err: any) {
+      setDocStage(index, "failed", { error: err.message || "Falha no upload" });
+      return null;
+    }
   };
 
   const uploadAllAuxiliares = async (): Promise<string[]> => {
@@ -633,21 +711,38 @@ export default function QAGerarPecaPage() {
     const arq = arquivosAuxiliares[index];
     if (!arq) return;
 
-    // If job exists, try to re-dispatch it
-    if (arq.jobId) {
-      // Reset job status in DB
-      await supabase.from("qa_document_jobs" as any).update({
-        status: "queued", etapa_atual: "retry", erro: null,
-        tentativas: 0, finished_at: null, updated_at: new Date().toISOString(),
-      }).eq("id", arq.jobId);
+    if (arq.docId && arq.storagePath) {
+      try {
+        await supabase.from("qa_documentos_conhecimento" as any).update({
+          status_processamento: "pendente",
+          resumo_extraido: null,
+          texto_extraido: null,
+          metodo_extracao: null,
+          updated_at: new Date().toISOString(),
+        }).eq("id", arq.docId);
 
-      setDocStage(index, "queued", { error: undefined, startedAt: Date.now() });
-      supabase.functions.invoke("qa-process-job", { body: { job_id: arq.jobId } }).catch(() => {});
-      void pollJobStatus(arq.jobId, index);
-      return;
+        await supabase.from("qa_chunks_conhecimento" as any).delete().eq("documento_id", arq.docId);
+
+        setDocStage(index, "queued", {
+          error: undefined,
+          startedAt: Date.now(),
+          etapaAtual: "pendente",
+        });
+
+        const { error } = await supabase.functions.invoke("qa-ingest-document", {
+          body: { storage_path: arq.storagePath, user_id: user?.id || null },
+        });
+
+        if (error) throw error;
+
+        void pollDocumentStatus(arq.docId, index, arq.nome);
+        return;
+      } catch (err: any) {
+        setDocStage(index, "failed", { error: err.message || "Falha ao reiniciar o processamento" });
+        return;
+      }
     }
 
-    // No job yet — start fresh
     const id = await startDocJob(arq, index);
     if (id) toast.success(`${arq.nome} reenviado para processamento`);
   };
@@ -696,6 +791,16 @@ export default function QAGerarPecaPage() {
         if (error) throw error;
         savedId = (data as any).id;
         setCasoId(savedId);
+      }
+
+      if (auxiliarDocIds.length > 0) {
+        const { error: linkDocsError } = await supabase.from("qa_documentos_conhecimento" as any)
+          .update({ caso_id: savedId, updated_at: new Date().toISOString() })
+          .in("id", auxiliarDocIds);
+
+        if (linkDocsError) {
+          console.error("Erro ao vincular documentos auxiliares ao caso:", linkDocsError);
+        }
       }
 
       // Audit log
@@ -1125,7 +1230,7 @@ export default function QAGerarPecaPage() {
             )}
           </div>
 
-          <input ref={fileInputRef} type="file" multiple accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg" className="hidden"
+          <input ref={fileInputRef} type="file" multiple accept=".pdf,.doc,.docx,.txt,.rtf,.png,.jpg,.jpeg,.webp" className="hidden"
             onChange={e => { handleAddFiles(e.target.files); e.target.value = ""; }} />
           <Button type="button" variant="outline" size="sm" className="bg-[#08080f] border-[#1a1a2e] text-slate-500 hover:text-slate-300 h-7 text-[11px]"
             onClick={() => fileInputRef.current?.click()}>
