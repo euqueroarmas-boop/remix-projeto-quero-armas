@@ -658,13 +658,15 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsH });
 
   try {
+    const reqBody = await req.json();
     const {
       usuario_id, caso_titulo, entrada_caso, tipo_peca,
       foco, fontes_selecionadas,
       cliente_cidade, cliente_uf, cliente_endereco, cliente_cep,
       circunscricao_resolvida,
       data_notificacao, info_tempestividade,
-    } = await req.json();
+    } = reqBody;
+    const wantStream = !!reqBody.stream;
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
