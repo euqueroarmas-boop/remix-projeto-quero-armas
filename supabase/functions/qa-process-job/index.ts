@@ -39,7 +39,6 @@ async function processJob(jobId: string) {
     // Stage 1: Verify file in storage (already uploaded by frontend)
     await updateJob({ status: "saved", etapa_atual: "verificando_arquivo", started_at: job.started_at || new Date().toISOString() });
 
-    // File is already uploaded by frontend before job creation — verify it exists
     const storagePath = job.storage_path;
     if (!storagePath) throw new Error("storage_path ausente no job");
 
@@ -48,9 +47,11 @@ async function processJob(jobId: string) {
 
     await updateJob({ status: "saved", etapa_atual: "arquivo_confirmado" });
 
-    // Stage 2: Register in qa_documentos_conhecimento if not yet registered
+    // Stage 2: Register in qa_documentos_conhecimento
     let docId = job.documento_id;
     if (!docId) {
+      await updateJob({ status: "extracting", etapa_atual: "registrando_documento" });
+
       const { data: docData, error: dbErr } = await supabase.from("qa_documentos_conhecimento").insert({
         titulo: job.nome_arquivo,
         nome_arquivo: job.nome_arquivo,
@@ -94,10 +95,10 @@ async function processJob(jobId: string) {
       await ingestResp.text(); // consume body
     }
 
-    // Stage 4: Poll extraction status — no artificial timeout, poll until done/failed
+    // Stage 4: Poll extraction status
     await updateJob({ status: "processing", etapa_atual: "aguardando_extracao" });
 
-    const MAX_POLL_SECONDS = 600; // 10 minutes max
+    const MAX_POLL_SECONDS = 600;
     const POLL_INTERVAL = 4000;
     const pollStart = Date.now();
     let extractionDone = false;
@@ -120,12 +121,18 @@ async function processJob(jobId: string) {
         throw new Error(`Extração falhou: ${st}`);
       }
 
-      // Update job with current extraction status
-      await updateJob({ etapa_atual: `extracao_em_andamento (${st || "pendente"})`, tentativas: (job.tentativas || 0) });
+      // Map extraction sub-status to granular etapa
+      const etapaMap: Record<string, string> = {
+        pendente: "aguardando_extracao",
+        extraindo: "extracao_texto",
+        ocr: "rodando_ocr",
+        processando: "estruturando_campos",
+      };
+      const etapa = etapaMap[st || "pendente"] || `extracao_em_andamento (${st || "pendente"})`;
+      await updateJob({ etapa_atual: etapa, tentativas: (job.tentativas || 0) });
     }
 
     if (!extractionDone) {
-      // After 10 min, check one last time
       const { data: final } = await supabase.from("qa_documentos_conhecimento").select("status_processamento").eq("id", docId).maybeSingle();
       if (final?.status_processamento === "concluido") {
         extractionDone = true;
@@ -134,8 +141,8 @@ async function processJob(jobId: string) {
       }
     }
 
-    // Stage 5: Trigger specialized processing (qa-processar-documento)
-    await updateJob({ etapa_atual: "processamento_tipado" });
+    // Stage 5: Specialized processing (qa-processar-documento)
+    await updateJob({ etapa_atual: "estruturando_campos" });
 
     try {
       const procResp = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/qa-processar-documento`, {
@@ -148,6 +155,7 @@ async function processJob(jobId: string) {
       });
       if (procResp.ok) {
         await procResp.text();
+        await updateJob({ etapa_atual: "salvando_metadados" });
       } else {
         console.warn("qa-processar-documento returned", procResp.status);
         await procResp.text();

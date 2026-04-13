@@ -28,6 +28,7 @@ interface ArquivoAuxiliar {
   nome: string;
   tipo: string;
   stage: DocUploadStage;
+  etapaAtual?: string;
   docId?: string;
   jobId?: string;
   storagePath?: string;
@@ -133,6 +134,58 @@ const STAGE_LABELS: Record<DocUploadStage, string> = {
   processing: "Processando documento...",
   done: "Concluído",
   failed: "Falhou",
+};
+
+const ETAPA_LABELS: Record<string, string> = {
+  criado: "Na fila",
+  verificando_arquivo: "Verificando arquivo...",
+  arquivo_confirmado: "Arquivo confirmado",
+  registrando_documento: "Registrando documento...",
+  extracao_texto: "Extraindo texto...",
+  aguardando_extracao: "Aguardando extração...",
+  extracao_em_andamento: "Extração em andamento...",
+  rodando_ocr: "Executando OCR...",
+  estruturando_campos: "Estruturando campos...",
+  processamento_tipado: "Classificando conteúdo...",
+  salvando_metadados: "Salvando metadados...",
+  concluido: "Concluído",
+  erro: "Falhou",
+};
+
+function getDisplayLabel(stage: DocUploadStage, etapaAtual?: string): string {
+  if (stage === "done" || stage === "failed" || stage === "pending" || stage === "uploading") return STAGE_LABELS[stage];
+  if (etapaAtual) {
+    // Handle composite etapa like "extracao_em_andamento (pendente)"
+    const base = etapaAtual.split(" (")[0];
+    return ETAPA_LABELS[base] || etapaAtual.replace(/_/g, " ");
+  }
+  return STAGE_LABELS[stage];
+}
+
+/** Classify doc complexity for expected time estimation */
+type DocComplexity = "light" | "medium" | "heavy";
+
+const DOC_COMPLEXITY: Record<string, DocComplexity> = {
+  documento_pessoal: "light",
+  comprovante_residencia: "light",
+  declaracao: "light",
+  certidao: "light",
+  atestado_medico: "medium",
+  notificacao_administrativa: "medium",
+  indeferimento_administrativo: "medium",
+  decisao_administrativa: "medium",
+  relatorio_clinico: "medium",
+  boletim_ocorrencia: "heavy",
+  laudo_medico: "heavy",
+  laudo_psiquiatrico: "heavy",
+  laudo_psicologico: "heavy",
+  outro: "medium",
+};
+
+const COMPLEXITY_LABEL: Record<DocComplexity, string> = {
+  light: "⚡ rápido",
+  medium: "📄 médio",
+  heavy: "📑 detalhado",
 };
 
 function stageProgress(s: DocUploadStage): number {
@@ -540,17 +593,17 @@ export default function QAGerarPecaPage() {
         const uiStage = statusMap[j.status] || "processing";
 
         if (j.status === "done") {
-          setDocStage(index, "done", { docId: j.documento_id, jobId });
+          setDocStage(index, "done", { docId: j.documento_id, jobId, etapaAtual: "concluido" });
           return;
         }
 
         if (j.status === "failed") {
-          setDocStage(index, "failed", { error: j.erro || "Erro no processamento", jobId });
+          setDocStage(index, "failed", { error: j.erro || "Erro no processamento", jobId, etapaAtual: "erro" });
           return;
         }
 
-        // Update intermediate stage
-        setDocStage(index, uiStage, { jobId });
+        // Update intermediate stage with granular etapa_atual
+        setDocStage(index, uiStage, { jobId, etapaAtual: j.etapa_atual || undefined });
       } catch {
         // Network error — keep polling, job continues in background
       }
@@ -565,7 +618,6 @@ export default function QAGerarPecaPage() {
       } else if (f?.status === "failed") {
         setDocStage(index, "failed", { error: f.erro || "Erro no processamento", jobId });
       } else {
-        // Still processing — mark as processing, user can check back later
         setDocStage(index, "processing", { jobId });
         toast.info(`${arquivosAuxiliares[index]?.nome}: processamento continua em background`);
       }
@@ -1090,9 +1142,12 @@ export default function QAGerarPecaPage() {
                     <FileText className={`h-3.5 w-3.5 shrink-0 ${stageColor(arq.stage)}`} />
                     <div className="flex-1 min-w-0 space-y-0.5">
                       <div className="text-[12px] text-slate-400 truncate">{arq.nome}</div>
-                      <div className="flex items-center gap-2">
-                        <span className={`text-[10px] ${stageColor(arq.stage)}`}>{STAGE_LABELS[arq.stage]}</span>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`text-[10px] ${stageColor(arq.stage)}`}>{getDisplayLabel(arq.stage, arq.etapaAtual)}</span>
                         {!["pending", "done", "failed"].includes(arq.stage) && <ElapsedTime startedAt={arq.startedAt} />}
+                        {arq.tipo && arq.stage !== "done" && arq.stage !== "failed" && arq.stage !== "pending" && DOC_COMPLEXITY[arq.tipo] && (
+                          <span className="text-[9px] text-slate-600">{COMPLEXITY_LABEL[DOC_COMPLEXITY[arq.tipo]]}</span>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
