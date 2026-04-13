@@ -62,14 +62,33 @@ export default function CaseDetailPanel({
 
   const loadGeracao = async () => {
     setLoadingGeracao(true);
-    const { data } = await supabase
-      .from("qa_geracoes_pecas" as any)
-      .select("*")
-      .eq("titulo_geracao", caso.titulo)
-      .order("created_at", { ascending: false })
-      .limit(1);
-    if (data && (data as any[]).length > 0) {
-      setGeracao((data as any[])[0]);
+    // Try by geracao_id first, then fall back to name match
+    let found = false;
+    if (caso.geracao_id) {
+      const { data } = await supabase
+        .from("qa_geracoes_pecas" as any)
+        .select("*")
+        .eq("id", caso.geracao_id)
+        .limit(1);
+      if (data && (data as any[]).length > 0) {
+        setGeracao((data as any[])[0]);
+        found = true;
+      }
+    }
+    if (!found) {
+      // Fall back: match by nome_requerente in titulo_geracao
+      const name = caso.nome_requerente || caso.titulo?.replace(/^Caso\s+/i, "") || "";
+      if (name) {
+        const { data } = await supabase
+          .from("qa_geracoes_pecas" as any)
+          .select("*")
+          .ilike("titulo_geracao", `%${name}%`)
+          .order("created_at", { ascending: false })
+          .limit(1);
+        if (data && (data as any[]).length > 0) {
+          setGeracao((data as any[])[0]);
+        }
+      }
     }
     setLoadingGeracao(false);
   };
