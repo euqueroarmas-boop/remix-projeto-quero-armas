@@ -186,6 +186,7 @@ export default function QAGerarPecaPage() {
   // CEP
   const [cepStatus, setCepStatus] = useState<CepStatus>("idle");
   const cepTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cepLookupRef = useRef(0);
 
   // Municipality autocomplete
   const [municipiosList, setMunicipiosList] = useState<string[]>([]);
