@@ -39,7 +39,6 @@ async function processJob(jobId: string) {
     // Stage 1: Verify file in storage (already uploaded by frontend)
     await updateJob({ status: "saved", etapa_atual: "verificando_arquivo", started_at: job.started_at || new Date().toISOString() });
 
-    // File is already uploaded by frontend before job creation — verify it exists
     const storagePath = job.storage_path;
     if (!storagePath) throw new Error("storage_path ausente no job");
 
@@ -48,9 +47,11 @@ async function processJob(jobId: string) {
 
     await updateJob({ status: "saved", etapa_atual: "arquivo_confirmado" });
 
-    // Stage 2: Register in qa_documentos_conhecimento if not yet registered
+    // Stage 2: Register in qa_documentos_conhecimento
     let docId = job.documento_id;
     if (!docId) {
+      await updateJob({ status: "extracting", etapa_atual: "registrando_documento" });
+
       const { data: docData, error: dbErr } = await supabase.from("qa_documentos_conhecimento").insert({
         titulo: job.nome_arquivo,
         nome_arquivo: job.nome_arquivo,
