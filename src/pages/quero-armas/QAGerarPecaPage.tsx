@@ -588,12 +588,13 @@ export default function QAGerarPecaPage() {
   };
 
   const pollDocumentStatus = async (docId: string, index: number, fileName: string) => {
-    const POLL_INTERVAL = 2000;
     const MAX_POLLS = 300;
     let polls = 0;
 
     while (polls < MAX_POLLS) {
-      await new Promise(r => setTimeout(r, POLL_INTERVAL));
+      // Adaptive polling: fast at first (1s), slower after 30s (3s), even slower after 2min (5s)
+      const interval = polls < 15 ? 1000 : polls < 40 ? 3000 : 5000;
+      await new Promise(r => setTimeout(r, interval));
       polls++;
 
       try {
@@ -637,7 +638,6 @@ export default function QAGerarPecaPage() {
 
   const dispatchDocumentIngestion = async (index: number, storagePath: string, docId: string, fileName: string) => {
     try {
-      await new Promise(r => setTimeout(r, 250));
       setDocStage(index, "queued", { docId, storagePath, etapaAtual: "pendente" });
 
       const { error } = await supabase.functions.invoke("qa-ingest-document", {
