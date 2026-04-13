@@ -560,14 +560,17 @@ export default function QAGerarPecaPage() {
 
   const handleChangeTipoDoc = (index: number, tipo: string) => {
     if (!tipo) return;
-    setArquivosAuxiliares(prev => prev.map((a, i) => i === index ? { ...a, tipo } : a));
-    // Immediately trigger job-based upload+processing after classification
-    const arq = arquivosAuxiliares[index];
-    if (arq && arq.stage === "pending") {
-      setTimeout(() => {
-        void startDocJob({ ...arq, tipo }, index);
-      }, 50);
-    }
+    // Update tipo inline — we need the latest state for startDocJob
+    setArquivosAuxiliares(prev => {
+      const updated = prev.map((a, i) => i === index ? { ...a, tipo } : a);
+      // Trigger upload immediately using the updated item
+      const arq = updated[index];
+      if (arq && arq.stage === "pending") {
+        // Use microtask to let React commit the state first
+        queueMicrotask(() => void startDocJob({ ...arq, tipo }, index));
+      }
+      return updated;
+    });
   };
 
   const setDocStage = (index: number, stage: DocUploadStage, extra?: Partial<ArquivoAuxiliar>) => {
