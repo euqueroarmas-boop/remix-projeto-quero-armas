@@ -1,13 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Search, FolderOpen, PenTool, MapPin, CheckCircle, XCircle, Clock, Eye,
+  Search, FolderOpen, PenTool, CheckCircle, XCircle, Clock, Eye,
+  Shield, BookOpen, ChevronRight,
 } from "lucide-react";
+import { toast } from "sonner";
 
 const STATUS_OPTIONS = [
   { value: "todos", label: "Todos" },
@@ -15,6 +18,8 @@ const STATUS_OPTIONS = [
   { value: "em_geracao", label: "Em geração" },
   { value: "gerado", label: "Gerado" },
   { value: "revisado", label: "Revisado" },
+  { value: "deferido", label: "Deferido" },
+  { value: "indeferido", label: "Indeferido" },
   { value: "arquivado", label: "Arquivado" },
 ];
 
@@ -25,6 +30,7 @@ export default function QACasosPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
   const [detailCase, setDetailCase] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState("casos");
 
   const load = async () => {
     setLoading(true);
@@ -47,12 +53,128 @@ export default function QACasosPage() {
       (c.cidade || "").toLowerCase().includes(s);
   });
 
+  // Separate cases from services (deferido cases go to learning)
+  const casosAtivos = filtered.filter(c => c.status !== "deferido");
+  const servicosConcluidos = filtered.filter(c => c.status === "deferido");
+
   const statusColor = (s: string) => {
     if (s === "gerado" || s === "revisado") return "text-emerald-400";
+    if (s === "deferido") return "text-green-400";
+    if (s === "indeferido") return "text-red-400";
     if (s === "em_geracao") return "text-neutral-400";
     if (s === "arquivado") return "text-neutral-600";
     if (s === "rascunho") return "text-amber-400";
     return "text-neutral-500";
+  };
+
+  const handleSetDeferido = useCallback(async (casoId: string) => {
+    try {
+      // Update status to deferido
+      await supabase.from("qa_casos" as any).update({
+        status: "deferido",
+        updated_at: new Date().toISOString(),
+      }).eq("id", casoId);
+
+      // Promote auxiliary docs to learning
+      const { data: auxDocs } = await supabase.from("qa_documentos_conhecimento" as any)
+        .select("id")
+        .eq("caso_id", casoId)
+        .eq("papel_documento", "auxiliar_caso");
+
+      if (auxDocs && auxDocs.length > 0) {
+        const docIds = (auxDocs as any[]).map(d => d.id);
+        await supabase.from("qa_documentos_conhecimento" as any)
+          .update({
+            papel_documento: "aprendizado",
+            ativo_na_ia: true,
+            updated_at: new Date().toISOString(),
+          })
+          .in("id", docIds);
+      }
+
+      // Audit log
+      await supabase.from("qa_logs_auditoria" as any).insert({
+        entidade: "qa_casos",
+        entidade_id: casoId,
+        acao: "marcar_deferido",
+        detalhes_json: { docs_promovidos: auxDocs?.length || 0 },
+      });
+
+      toast.success("Caso marcado como deferido. Documentos promovidos para aprendizado da IA.");
+      setDetailCase(null);
+      load();
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao atualizar status");
+    }
+  }, []);
+
+  const handleSetIndeferido = useCallback(async (casoId: string) => {
+    try {
+      await supabase.from("qa_casos" as any).update({
+        status: "indeferido",
+        updated_at: new Date().toISOString(),
+      }).eq("id", casoId);
+
+      toast.success("Caso marcado como indeferido.");
+      setDetailCase(null);
+      load();
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao atualizar status");
+    }
+  }, []);
+
+  const renderCaseList = (items: any[]) => {
+    if (loading) {
+      return <div className="flex justify-center py-10"><div className="w-4 h-4 border-2 border-neutral-800 border-t-neutral-500 rounded-full animate-spin" /></div>;
+    }
+    if (items.length === 0) {
+      return <div className="text-center py-10 text-neutral-600 text-[11px]">Nenhum caso encontrado</div>;
+    }
+
+    return (
+      <div className="bg-[#111111] border border-[#1c1c1c] rounded-lg overflow-hidden">
+        <div className="hidden md:grid grid-cols-[1fr_140px_120px_100px_80px_80px_50px] gap-2 px-3 py-1.5 border-b border-[#1c1c1c] text-[9px] text-neutral-600 uppercase tracking-[0.12em]">
+          <span>Requerente / Título</span><span>Serviço</span><span>Tipo Peça</span><span>Unidade PF</span><span>Status</span><span>Data</span><span></span>
+        </div>
+        {items.map((c: any) => (
+          <div key={c.id} className="border-b border-[#1c1c1c]/40 hover:bg-[#1a1a1a] transition-colors">
+            <div className="md:hidden px-2.5 py-2 space-y-1">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <div className="text-[11px] text-neutral-200 truncate font-medium">{c.nome_requerente || "—"}</div>
+                  <div className="text-[9px] text-neutral-600 truncate">{c.titulo || "Sem título"}</div>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <span className={`text-[9px] font-mono ${statusColor(c.status)}`}>{(c.status || "—").replace(/_/g, " ")}</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 text-[9px] text-neutral-600">
+                <span className="truncate">{c.tipo_servico || "—"}</span>
+                <span className="font-mono">{c.sigla_unidade_pf || "—"}</span>
+                <span className="font-mono tabular-nums ml-auto">{new Date(c.created_at).toLocaleDateString("pt-BR")}</span>
+                <button onClick={() => setDetailCase(c)} className="p-0.5 text-neutral-600 hover:text-[#c43b52]"><Eye className="h-3 w-3" /></button>
+                <button onClick={() => navigate(`/quero-armas/gerar-peca?caso=${c.id}`)} className="p-0.5 text-neutral-600 hover:text-[#c43b52]"><PenTool className="h-3 w-3" /></button>
+              </div>
+            </div>
+            <div className="hidden md:grid grid-cols-[1fr_140px_120px_100px_80px_80px_50px] gap-2 px-3 py-2 items-center">
+              <div className="min-w-0">
+                <div className="text-[12px] text-neutral-200 truncate font-medium">{c.nome_requerente || "—"}</div>
+                <div className="text-[10px] text-neutral-600 truncate">{c.titulo || "Sem título"}</div>
+              </div>
+              <div className="text-[10px] text-neutral-500 truncate">{c.tipo_servico || "—"}</div>
+              <div className="text-[10px] text-neutral-500 truncate">{(c.tipo_peca || "—").replace(/_/g, " ")}</div>
+              <div className="text-[10px] text-neutral-600 font-mono truncate">{c.sigla_unidade_pf || "—"}</div>
+              <div className={`text-[10px] font-mono ${statusColor(c.status)}`}>{(c.status || "—").replace(/_/g, " ")}</div>
+              <div className="text-[10px] text-neutral-700 font-mono tabular-nums">{new Date(c.created_at).toLocaleDateString("pt-BR")}</div>
+              <div className="flex gap-0.5 justify-end">
+                <button onClick={() => setDetailCase(c)} className="p-1 text-neutral-600 hover:text-[#c43b52]"><Eye className="h-3.5 w-3.5" /></button>
+                <button onClick={() => navigate(`/quero-armas/gerar-peca?caso=${c.id}`)} className="p-1 text-neutral-600 hover:text-[#c43b52]"><PenTool className="h-3.5 w-3.5" /></button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
   };
 
   return (
@@ -77,55 +199,40 @@ export default function QACasosPage() {
         </Select>
       </div>
 
-      {loading ? (
-        <div className="flex justify-center py-10"><div className="w-4 h-4 border-2 border-neutral-800 border-t-neutral-500 rounded-full animate-spin" /></div>
-      ) : filtered.length === 0 ? (
-        <div className="text-center py-10 text-neutral-600 text-[11px]">Nenhum caso encontrado</div>
-      ) : (
-        <div className="bg-[#111111] border border-[#1c1c1c] rounded-lg overflow-hidden">
-          <div className="hidden md:grid grid-cols-[1fr_140px_120px_100px_80px_80px_50px] gap-2 px-3 py-1.5 border-b border-[#1c1c1c] text-[9px] text-neutral-600 uppercase tracking-[0.12em]">
-            <span>Requerente / Título</span><span>Serviço</span><span>Tipo Peça</span><span>Unidade PF</span><span>Status</span><span>Data</span><span></span>
-          </div>
-          {filtered.map((c: any) => (
-            <div key={c.id} className="border-b border-[#1c1c1c]/40 hover:bg-[#1a1a1a] transition-colors">
-              <div className="md:hidden px-2.5 py-2 space-y-1">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <div className="text-[11px] text-neutral-200 truncate font-medium">{c.nome_requerente || "—"}</div>
-                    <div className="text-[9px] text-neutral-600 truncate">{c.titulo || "Sem título"}</div>
-                  </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <span className={`text-[9px] font-mono ${statusColor(c.status)}`}>{(c.status || "—").replace(/_/g, " ")}</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 text-[9px] text-neutral-600">
-                  <span className="truncate">{c.tipo_servico || "—"}</span>
-                  <span className="font-mono">{c.sigla_unidade_pf || "—"}</span>
-                  <span className="font-mono tabular-nums ml-auto">{new Date(c.created_at).toLocaleDateString("pt-BR")}</span>
-                  <button onClick={() => setDetailCase(c)} className="p-0.5 text-neutral-600 hover:text-[#c43b52]"><Eye className="h-3 w-3" /></button>
-                  <button onClick={() => navigate(`/quero-armas/gerar-peca?caso=${c.id}`)} className="p-0.5 text-neutral-600 hover:text-[#c43b52]"><PenTool className="h-3 w-3" /></button>
-                </div>
-              </div>
-              <div className="hidden md:grid grid-cols-[1fr_140px_120px_100px_80px_80px_50px] gap-2 px-3 py-2 items-center">
-                <div className="min-w-0">
-                  <div className="text-[12px] text-neutral-200 truncate font-medium">{c.nome_requerente || "—"}</div>
-                  <div className="text-[10px] text-neutral-600 truncate">{c.titulo || "Sem título"}</div>
-                </div>
-                <div className="text-[10px] text-neutral-500 truncate">{c.tipo_servico || "—"}</div>
-                <div className="text-[10px] text-neutral-500 truncate">{(c.tipo_peca || "—").replace(/_/g, " ")}</div>
-                <div className="text-[10px] text-neutral-600 font-mono truncate">{c.sigla_unidade_pf || "—"}</div>
-                <div className={`text-[10px] font-mono ${statusColor(c.status)}`}>{(c.status || "—").replace(/_/g, " ")}</div>
-                <div className="text-[10px] text-neutral-700 font-mono tabular-nums">{new Date(c.created_at).toLocaleDateString("pt-BR")}</div>
-                <div className="flex gap-0.5 justify-end">
-                  <button onClick={() => setDetailCase(c)} className="p-1 text-neutral-600 hover:text-[#c43b52]"><Eye className="h-3.5 w-3.5" /></button>
-                  <button onClick={() => navigate(`/quero-armas/gerar-peca?caso=${c.id}`)} className="p-1 text-neutral-600 hover:text-[#c43b52]"><PenTool className="h-3.5 w-3.5" /></button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="bg-[#0e0e0e] border border-[#1c1c1c] h-8">
+          <TabsTrigger value="casos" className="text-[10px] data-[state=active]:bg-[#1c1c1c] data-[state=active]:text-neutral-200">
+            <FolderOpen className="h-3 w-3 mr-1" /> Casos ({casosAtivos.length})
+          </TabsTrigger>
+          <TabsTrigger value="servicos" className="text-[10px] data-[state=active]:bg-[#1c1c1c] data-[state=active]:text-neutral-200">
+            <Shield className="h-3 w-3 mr-1" /> Serviços Deferidos ({servicosConcluidos.length})
+          </TabsTrigger>
+        </TabsList>
 
+        <TabsContent value="casos" className="mt-3">
+          {renderCaseList(casosAtivos)}
+        </TabsContent>
+
+        <TabsContent value="servicos" className="mt-3">
+          {servicosConcluidos.length === 0 ? (
+            <div className="text-center py-10 space-y-2">
+              <BookOpen className="h-6 w-6 text-neutral-700 mx-auto" />
+              <div className="text-neutral-600 text-[11px]">Nenhum serviço deferido ainda</div>
+              <div className="text-neutral-700 text-[10px]">Marque um caso como "Deferido" para promovê-lo ao aprendizado da IA.</div>
+            </div>
+          ) : (
+            <>
+              <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-lg p-2.5 mb-3 text-[10px] text-emerald-400/80 flex items-start gap-2">
+                <BookOpen className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                <span>Casos deferidos têm seus documentos promovidos para aprendizado da IA. As defesas bem-sucedidas servem como modelo para futuros casos semelhantes.</span>
+              </div>
+              {renderCaseList(servicosConcluidos)}
+            </>
+          )}
+        </TabsContent>
+      </Tabs>
+
+      {/* Detail dialog */}
       <Dialog open={!!detailCase} onOpenChange={() => setDetailCase(null)}>
         <DialogContent className="bg-[#111111] border-[#1c1c1c] text-neutral-300 max-w-3xl max-h-[90vh] overflow-y-auto p-3 md:p-6">
           <DialogHeader><DialogTitle className="text-neutral-200 text-sm">{detailCase?.titulo || "Detalhes"}</DialogTitle></DialogHeader>
@@ -171,11 +278,24 @@ export default function QACasosPage() {
                 </div>
               )}
 
-              <div className="flex gap-1.5 pt-2 border-t border-[#1c1c1c]">
+              <div className="flex flex-wrap gap-1.5 pt-2 border-t border-[#1c1c1c]">
                 <Button size="sm" onClick={() => { setDetailCase(null); navigate(`/quero-armas/gerar-peca?caso=${detailCase.id}`); }}
                   className="bg-[#7a1528] hover:bg-[#a52338] text-white border-0 h-7 text-[10px]">
                   <PenTool className="h-3 w-3 mr-1" /> Editar
                 </Button>
+
+                {detailCase.status === "gerado" || detailCase.status === "revisado" ? (
+                  <>
+                    <Button size="sm" variant="outline" onClick={() => handleSetDeferido(detailCase.id)}
+                      className="border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/10 h-7 text-[10px]">
+                      <CheckCircle className="h-3 w-3 mr-1" /> Deferido
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => handleSetIndeferido(detailCase.id)}
+                      className="border-red-500/20 text-red-400 hover:bg-red-500/10 h-7 text-[10px]">
+                      <XCircle className="h-3 w-3 mr-1" /> Indeferido
+                    </Button>
+                  </>
+                ) : null}
               </div>
             </div>
           )}
