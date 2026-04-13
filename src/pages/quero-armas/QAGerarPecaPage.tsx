@@ -974,9 +974,18 @@ export default function QAGerarPecaPage() {
       const sId = await saveCaso(finalResult, auxiliarDocIds, circ);
       setSavedCasoId(sId);
 
+      // Validate final text
+      const finalText = finalResult.minuta_gerada || streamedText;
+      const vErrors = validateFinalText(finalText);
+      setValidationErrors(vErrors);
+
       setGenStep("done");
       setDraftingStep("done");
-      toast.success("Peça gerada e caso salvo com sucesso");
+      if (vErrors.length > 0) {
+        toast.warning(`Peça gerada com ${vErrors.length} aviso(s) de validação`);
+      } else {
+        toast.success("Peça gerada e caso salvo com sucesso");
+      }
     } catch (err: any) {
       setGenStep("error");
       setDraftingStep("error");
