@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useQAAuth } from "@/components/quero-armas/hooks/useQAAuth";
 import { logSistema } from "@/lib/logSistema";
+import DraftingView, { type DraftingResult } from "@/components/quero-armas/DraftingView";
 
 /* ── Types ── */
 type DocUploadStage = "pending" | "queued" | "uploading" | "saved" | "extracting" | "processing" | "done" | "failed";
