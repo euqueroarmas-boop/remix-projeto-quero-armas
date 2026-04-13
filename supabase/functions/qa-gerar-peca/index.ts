@@ -973,19 +973,11 @@ Deno.serve(async (req) => {
       ? ` — usar documentos probatórios como PROVA MATERIAL${bos.length > 0 ? " do risco concreto" : ""}${laudos.length > 0 ? " e do impacto clínico" : ""}`
       : "";
 
-    const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${Deno.env.get("LOVABLE_API_KEY")}`,
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-pro",
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          {
-            role: "user",
-            content: `TIPO DE PEÇA (OBRIGATÓRIO — NÃO ALTERE): ${tipo_peca}
+    const aiMessages = [
+      { role: "system", content: SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: `TIPO DE PEÇA (OBRIGATÓRIO — NÃO ALTERE): ${tipo_peca}
 TÍTULO OBRIGATÓRIO: ${tituloObrigatorio}
 TÍTULO DO CASO: ${caso_titulo || "Sem título"}
 ENDEREÇAMENTO: ${enderecamento}
@@ -1021,8 +1013,183 @@ ${evidenceDocs.length > 0 ? `\nREGRA CRÍTICA — DOCUMENTOS PROBATÓRIOS:
 - PROIBIDO menção genérica a "documentos anexos" sem explorar conteúdo factual.
 ${bos.length > 0 ? `- ${bos.length} BO(s): narrar cronologia, progressão e fatos específicos de cada um.\n` : ""}${laudos.length > 0 ? `- ${laudos.length} Laudo(s): citar profissional, diagnóstico, sintomas e impacto concreto.\n` : ""}${notifs.length > 0 ? `- ${notifs.length} Notificação(ões)/Indeferimento(s): apontar vícios e responder ponto a ponto.\n` : ""}` : ""}
 IGNORE qualquer menção no contexto a tipos de peça diferentes. O tipo é FIXO: ${tipo_peca}.`,
-          },
-        ],
+      },
+    ];
+
+    // ═══ STREAMING MODE ═══
+    if (wantStream) {
+      const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${Deno.env.get("LOVABLE_API_KEY")}`,
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-pro",
+          messages: aiMessages,
+          max_tokens: 8000,
+          stream: true,
+        }),
+      });
+
+      if (!aiResp.ok) {
+        const t = await aiResp.text();
+        console.error("AI stream error:", aiResp.status, t);
+        const code = aiResp.status === 429 ? "RATE_LIMIT" : aiResp.status === 402 ? "CREDITS" : "AI_ERROR";
+        return new Response(JSON.stringify({ error: code === "RATE_LIMIT" ? "Limite de requisições excedido." : code === "CREDITS" ? "Créditos de IA esgotados." : "Erro no gateway de IA" }), {
+          status: aiResp.status, headers: { ...corsH, "Content-Type": "application/json" },
+        });
+      }
+
+      // Collect full text while streaming
+      let fullText = "";
+      const encoder = new TextEncoder();
+      const decoder = new TextDecoder();
+
+      const stream = new ReadableStream({
+        async start(controller) {
+          // Send initial event
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "start" })}\n\n`));
+
+          try {
+            const reader = aiResp.body!.getReader();
+            let buffer = "";
+
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+
+              buffer += decoder.decode(value, { stream: true });
+              const lines = buffer.split("\n");
+              buffer = lines.pop() || "";
+
+              for (const line of lines) {
+                if (!line.startsWith("data: ")) continue;
+                const payload = line.slice(6).trim();
+                if (payload === "[DONE]") continue;
+
+                try {
+                  const parsed = JSON.parse(payload);
+                  const delta = parsed.choices?.[0]?.delta?.content;
+                  if (delta) {
+                    fullText += delta;
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "chunk", text: delta })}\n\n`));
+                  }
+                } catch { /* skip malformed */ }
+              }
+            }
+
+            // Process remaining buffer
+            if (buffer.trim()) {
+              const remaining = buffer.split("\n");
+              for (const line of remaining) {
+                if (!line.startsWith("data: ")) continue;
+                const payload = line.slice(6).trim();
+                if (payload === "[DONE]") continue;
+                try {
+                  const parsed = JSON.parse(payload);
+                  const delta = parsed.choices?.[0]?.delta?.content;
+                  if (delta) {
+                    fullText += delta;
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "chunk", text: delta })}\n\n`));
+                  }
+                } catch { /* skip */ }
+              }
+            }
+
+            // === POST-STREAM: validation, save, etc ===
+            const outputValidation = validateOutputType(fullText, tipo_peca);
+            const qualityCheck = validateQuality(fullText, evidenceDocs);
+
+            if (!outputValidation.valid) {
+              await supabase.from("qa_logs_auditoria").insert({
+                usuario_id: usuario_id || "anonimo", entidade: "qa_geracoes_pecas", entidade_id: null,
+                acao: "saida_divergente_bloqueada",
+                detalhes_json: { tipo_peca_solicitado: tipo_peca, razao_bloqueio: outputValidation.reason, header_gerado: fullText.substring(0, 300) },
+              });
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "error", error: "A IA gerou uma peça com tipo divergente do solicitado. A saída foi bloqueada." })}\n\n`));
+              controller.close();
+              return;
+            }
+
+            if (!qualityCheck.pass) {
+              await supabase.from("qa_logs_auditoria").insert({
+                usuario_id: usuario_id || "anonimo", entidade: "qa_geracoes_pecas", entidade_id: null,
+                acao: "qualidade_abaixo_esperada",
+                detalhes_json: { tipo_peca, issues: qualityCheck.issues, texto_length: fullText.length, evidence_count: evidenceDocs.length },
+              });
+            }
+
+            const scoreConfianca = fontesParaUsar.length === 0 ? 0 :
+              Math.min(1, (fontesParaUsar.length * 0.08) + (fontesParaUsar.filter(f => f.validada).length * 0.12));
+
+            const { data: geracaoData } = await supabase.from("qa_geracoes_pecas").insert({
+              usuario_id, titulo_geracao: caso_titulo || "Peça sem título", tipo_peca, entrada_caso,
+              minuta_gerada: fullText,
+              normas_utilizadas_json: fontesParaUsar.filter(f => f.tipo === "norma"),
+              jurisprudencias_utilizadas_json: fontesParaUsar.filter(f => f.tipo === "jurisprudencia"),
+              documentos_referencia_json: fontesParaUsar.filter(f => f.tipo === "documento" || f.tipo === "referencia_aprovada"),
+              fundamentos_utilizados_json: fontesParaUsar,
+              status: "gerado", status_revisao: "rascunho",
+              profundidade: "tecnica_concisa", tom: "tecnico_padrao", foco: foco || "legalidade",
+              score_confianca: scoreConfianca, versao: 1,
+            }).select("id").single();
+
+            await supabase.from("qa_logs_auditoria").insert({
+              usuario_id, entidade: "qa_geracoes_pecas", entidade_id: geracaoData?.id || null,
+              acao: "gerar_peca",
+              detalhes_json: {
+                tipo_peca, foco, cliente_cidade, cliente_uf, streamed: true,
+                circunscricao_resolvida: circunscricao ? { unidade_pf: circunscricao.unidade_pf, sigla_unidade: circunscricao.sigla_unidade } : null,
+                fontes_count: fontesParaUsar.length, evidence_count: evidenceDocs.length,
+                score_confianca: scoreConfianca, quality_issues: qualityCheck.issues,
+              },
+            });
+
+            // Send final metadata event
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+              type: "done",
+              geracao_id: geracaoData?.id,
+              minuta_gerada: fullText,
+              fontes_utilizadas: fontesParaUsar,
+              score_confianca: scoreConfianca,
+              quality_issues: qualityCheck.pass ? [] : qualityCheck.issues,
+              circunscricao_utilizada: circunscricao || null,
+              evidence_analysis: evidenceDocs.length > 0 ? {
+                count: evidenceDocs.length,
+                by_type: Object.fromEntries([...new Set(evidenceDocs.map(d => d.tipo))].map(t => [t, evidenceDocs.filter(d => d.tipo === t).length])),
+              } : null,
+            })}\n\n`));
+
+            controller.close();
+          } catch (streamErr) {
+            console.error("Stream processing error:", streamErr);
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "error", error: streamErr.message || "Erro durante streaming" })}\n\n`));
+            controller.close();
+          }
+        },
+      });
+
+      return new Response(stream, {
+        headers: {
+          ...corsH,
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache",
+          "Connection": "keep-alive",
+        },
+      });
+    }
+
+    // ═══ NON-STREAMING MODE (original) ═══
+    const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${Deno.env.get("LOVABLE_API_KEY")}`,
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-pro",
+        messages: aiMessages,
         max_tokens: 8000,
       }),
     });
