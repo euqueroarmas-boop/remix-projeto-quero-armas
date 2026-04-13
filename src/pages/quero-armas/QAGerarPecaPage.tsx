@@ -686,6 +686,10 @@ export default function QAGerarPecaPage() {
     setGenError("");
     setGenStartedAt(Date.now());
     setSavedCasoId(null);
+    setStreamedText("");
+    setIsStreaming(false);
+    setShowDraftingView(true);
+    setDraftingStep("context");
 
     try {
       // Step 1: Circumscription
@@ -698,7 +702,7 @@ export default function QAGerarPecaPage() {
         toast.warning("Circunscrição não resolvida. A peça seguirá com marcador pendente.", { duration: 5000 });
       }
 
-      // Step 2: Collect already-processed doc IDs (upload happened on classification)
+      // Step 2: Collect already-processed doc IDs
       let auxiliarDocIds: string[] = [];
       if (arquivosAuxiliares.length > 0) {
         setGenStep("uploading_docs");
@@ -707,27 +711,36 @@ export default function QAGerarPecaPage() {
 
         const unfinished = arquivosAuxiliares.filter(a => a.stage !== "done");
         if (unfinished.length > 0) {
-          const msg = `Geração bloqueada: ${unfinished.length} documento(s) não foram processados. Classifique, reprocesse ou remova antes de gerar.`;
-          try {
-            await supabase.from("qa_logs_auditoria" as any).insert({
-              usuario_id: user?.id, entidade: "qa_casos", entidade_id: casoId || "new",
-              acao: "geracao_bloqueada_anexos_incompletos",
-              detalhes_json: { total: arquivosAuxiliares.length, concluidos: auxiliarDocIds.length, pendentes: unfinished.length },
-            });
-          } catch { /* non-critical */ }
+          const msg = `Geração bloqueada: ${unfinished.length} documento(s) não foram processados.`;
           throw new Error(msg);
         }
       }
 
-      // Step 4-7: Generate
+      // Step 3-4: Build context
       setGenStep("building_context");
+      setDraftingStep("context");
       await new Promise(r => setTimeout(r, 300));
       setGenStep("recovering_sources");
+      setDraftingStep("sources");
       await new Promise(r => setTimeout(r, 300));
-      setGenStep("generating_draft");
 
-      const { data, error } = await supabase.functions.invoke("qa-gerar-peca", {
-        body: {
+      // Step 5: Stream generation
+      setGenStep("generating_draft");
+      setDraftingStep("writing");
+      setIsStreaming(true);
+
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+      const response = await fetch(`${supabaseUrl}/functions/v1/qa-gerar-peca`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${supabaseKey}`,
+          "apikey": supabaseKey,
+        },
+        body: JSON.stringify({
+          stream: true,
           usuario_id: user?.id, caso_titulo: nomeRequerente, entrada_caso: entradaCaso,
           tipo_peca: tipoPeca, foco,
           cliente_cidade: clienteCidade.trim(), cliente_uf: clienteUf.trim(),
@@ -742,26 +755,73 @@ export default function QAGerarPecaPage() {
           data_notificacao: dataNotificacao.trim() || null,
           info_tempestividade: infoTempestividade.trim() || null,
           documentos_auxiliares_ids: auxiliarDocIds.length > 0 ? auxiliarDocIds : null,
-        },
+        }),
       });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
 
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({ error: "Erro na geração" }));
+        throw new Error(errData.error || "Erro na geração");
+      }
+
+      // Read SSE stream
+      const reader = response.body!.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let finalResult: DraftingResult | null = null;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          const payload = line.slice(6).trim();
+          if (!payload) continue;
+
+          try {
+            const evt = JSON.parse(payload);
+            if (evt.type === "chunk" && evt.text) {
+              setStreamedText(prev => prev + evt.text);
+            } else if (evt.type === "done") {
+              finalResult = evt as DraftingResult;
+            } else if (evt.type === "error") {
+              throw new Error(evt.error || "Erro na geração");
+            }
+          } catch (parseErr: any) {
+            if (parseErr.message && !parseErr.message.includes("JSON")) throw parseErr;
+          }
+        }
+      }
+
+      setIsStreaming(false);
+
+      if (!finalResult) throw new Error("Geração não retornou resultado final");
+
+      // Step 6: Validate
       setGenStep("validating");
+      setDraftingStep("validating");
       await new Promise(r => setTimeout(r, 400));
 
-      setResultado(data);
+      setResultado(finalResult);
 
-      // Step 8: Save case
+      // Step 7: Save case
       setGenStep("saving_case");
-      const sId = await saveCaso(data, auxiliarDocIds, circ);
+      setDraftingStep("saving");
+      const sId = await saveCaso(finalResult, auxiliarDocIds, circ);
       setSavedCasoId(sId);
 
       setGenStep("done");
+      setDraftingStep("done");
       toast.success("Peça gerada e caso salvo com sucesso");
     } catch (err: any) {
       setGenStep("error");
+      setDraftingStep("error");
       setGenError(err.message || "Erro na geração");
+      setIsStreaming(false);
       toast.error(err.message || "Erro na geração");
     } finally {
       setLoading(false);
