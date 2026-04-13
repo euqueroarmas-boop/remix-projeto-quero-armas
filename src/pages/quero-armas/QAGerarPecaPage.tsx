@@ -210,11 +210,17 @@ export default function QAGerarPecaPage() {
 
   // Generation
   const [loading, setLoading] = useState(false);
-  const [resultado, setResultado] = useState<any>(null);
+  const [resultado, setResultado] = useState<DraftingResult | null>(null);
   const [genStep, setGenStep] = useState<GenerationStep>("idle");
   const [genError, setGenError] = useState("");
   const [genStartedAt, setGenStartedAt] = useState<number | undefined>();
   const [savedCasoId, setSavedCasoId] = useState<string | null>(null);
+
+  // Streaming state
+  const [streamedText, setStreamedText] = useState("");
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [draftingStep, setDraftingStep] = useState<DraftingPipelineStep | "done" | "error">("context");
+  const [showDraftingView, setShowDraftingView] = useState(false);
 
   const needsTempestividade = tipoPeca === "recurso_administrativo" || tipoPeca === "resposta_a_notificacao";
 
