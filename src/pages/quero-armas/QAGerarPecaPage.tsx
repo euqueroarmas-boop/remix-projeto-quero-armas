@@ -340,15 +340,19 @@ export default function QAGerarPecaPage() {
   /* ── Load municipalities when UF changes ── */
   const loadMunicipios = useCallback(async (uf: string) => {
     if (!uf) { setMunicipiosList([]); return; }
+    if (municipiosLoadedUfRef.current === uf) return; // already loaded
+    municipiosLoadedUfRef.current = uf;
     setMunicipiosLoading(true);
     try {
       const { data, error } = await supabase.rpc("qa_listar_municipios_por_uf" as any, { p_uf: uf });
+      if (municipiosLoadedUfRef.current !== uf) return; // stale
       if (!error && data) {
         setMunicipiosList((data as any[]).map((r: any) => r.municipio));
       } else {
         setMunicipiosList([]);
       }
     } catch {
+      if (municipiosLoadedUfRef.current !== uf) return;
       setMunicipiosList([]);
     } finally {
       setMunicipiosLoading(false);
@@ -356,8 +360,13 @@ export default function QAGerarPecaPage() {
   }, []);
 
   useEffect(() => {
-    if (clienteUf) loadMunicipios(clienteUf);
-    else setMunicipiosList([]);
+    if (clienteUf) {
+      municipiosLoadedUfRef.current = ""; // reset to allow reload
+      loadMunicipios(clienteUf);
+    } else {
+      municipiosLoadedUfRef.current = "";
+      setMunicipiosList([]);
+    }
   }, [clienteUf, loadMunicipios]);
 
   const handleUfChange = async (uf: string) => {
