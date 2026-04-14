@@ -207,11 +207,11 @@ export default function QADashboardPage() {
 
       {/* KPI Cards - Row 1 */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
-        <KPICard icon={Users} label="Novos Cadastros" value={stats.novosCadastros} trend="novo" positive />
-        <KPICard icon={FileText} label="Base de Dados" value={totalAcervo} trend="+12%" positive />
-        <KPICard icon={PenTool} label="Peças Geradas" value={stats.pecas} trend="+8%" positive />
-        <KPICard icon={CheckCircle} label="Aprovadas" value={stats.aprovadas} trend="+15%" positive />
-        <KPICard icon={Shield} label="Consultas IA" value={stats.consultas} trend="+22%" positive />
+        <KPICard icon={Users} label="Novos Cadastros" value={stats.novosCadastros} trend={stats.novosCadastros > 0 ? "novo" : "—"} positive={stats.novosCadastros > 0} />
+        <KPICard icon={FileText} label="Base de Dados" value={totalAcervo} trend={totalAcervo > 0 ? `${totalAcervo}` : "—"} positive={totalAcervo > 0} />
+        <KPICard icon={PenTool} label="Peças Geradas" value={stats.pecas} trend={stats.pecas > 0 ? `${stats.pecas}` : "—"} positive={stats.pecas > 0} />
+        <KPICard icon={CheckCircle} label="Aprovadas" value={stats.aprovadas} trend={stats.aprovadas > 0 ? `${stats.aprovadas}` : "—"} positive={stats.aprovadas > 0} />
+        <KPICard icon={Shield} label="Consultas IA" value={stats.consultas} trend={stats.consultas > 0 ? `${stats.consultas}` : "—"} positive={stats.consultas > 0} />
       </div>
 
       {/* Novos Cadastros Públicos */}
