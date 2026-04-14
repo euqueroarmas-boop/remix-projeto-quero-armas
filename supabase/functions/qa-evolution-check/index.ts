@@ -1,4 +1,4 @@
-import { corsHeaders } from '@supabase/supabase-js/cors'
+const corsHeaders = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type" };
 
 const EVOLUTION_API_URL = Deno.env.get("EVOLUTION_API_URL") || "";
 const EVOLUTION_API_TOKEN = Deno.env.get("EVOLUTION_API_TOKEN") || "";
