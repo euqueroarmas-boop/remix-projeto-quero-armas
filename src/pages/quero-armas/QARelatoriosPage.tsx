@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   AlertTriangle, Clock, CheckCircle, TrendingUp, Users, FileText,
-  BarChart3, PieChart as PieChartIcon, Bell, RefreshCw, ChevronDown, ChevronUp, Save, X, Mail,
+  BarChart3, PieChart as PieChartIcon, Bell, RefreshCw, ChevronDown, ChevronUp, Save, X, Mail, Search,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
