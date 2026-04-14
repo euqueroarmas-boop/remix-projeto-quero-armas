@@ -528,7 +528,7 @@ function Step1({ form, set, errors, onCpfLookup, cpfLooking, cpfFound }: { form:
               className={`${inputClass} ${inputFocusRing} h-20 py-2 resize-none uppercase`}
               style={inputStyle}
               value={form.observacoes}
-              onChange={e => set("observacoes", e.target.value)}
+              onChange={e => set("observacoes", e.target.value.toUpperCase())}
               placeholder="Informações adicionais (opcional)"
             />
           </Field>
