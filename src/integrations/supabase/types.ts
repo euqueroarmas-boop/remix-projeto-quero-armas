@@ -2011,6 +2011,7 @@ export type Database = {
           created_at: string
           data_nascimento: string | null
           email: string
+          emissor_rg: string | null
           emp_cargo_funcao: string | null
           emp_cnae_principal: string | null
           emp_cnpj: string | null
@@ -2053,6 +2054,7 @@ export type Database = {
           processado_em: string | null
           processado_por: string | null
           profissao: string | null
+          rg: string | null
           servico_interesse: string | null
           status: string
           telefone_principal: string
@@ -2085,6 +2087,7 @@ export type Database = {
           created_at?: string
           data_nascimento?: string | null
           email: string
+          emissor_rg?: string | null
           emp_cargo_funcao?: string | null
           emp_cnae_principal?: string | null
           emp_cnpj?: string | null
@@ -2127,6 +2130,7 @@ export type Database = {
           processado_em?: string | null
           processado_por?: string | null
           profissao?: string | null
+          rg?: string | null
           servico_interesse?: string | null
           status?: string
           telefone_principal: string
@@ -2159,6 +2163,7 @@ export type Database = {
           created_at?: string
           data_nascimento?: string | null
           email?: string
+          emissor_rg?: string | null
           emp_cargo_funcao?: string | null
           emp_cnae_principal?: string | null
           emp_cnpj?: string | null
@@ -2201,6 +2206,7 @@ export type Database = {
           processado_em?: string | null
           processado_por?: string | null
           profissao?: string | null
+          rg?: string | null
           servico_interesse?: string | null
           status?: string
           telefone_principal?: string
