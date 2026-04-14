@@ -646,12 +646,14 @@ export default function QABaseConhecimentoPage() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-slate-600" /></div>
+        <div className="flex justify-center py-20">
+          <div className="w-8 h-8 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" />
+        </div>
       ) : docs.length === 0 ? (
-        <div className="text-center py-12 text-slate-500">
-          <FileText className="h-12 w-12 mx-auto mb-3 opacity-30" />
-          <p>Nenhum documento encontrado</p>
-          <p className="text-xs mt-1">Envie documentos ou importe por link para alimentar a base</p>
+        <div className="qa-card text-center py-16">
+          <FileText className="h-12 w-12 mx-auto mb-3" style={{ color: "hsl(220 10% 80%)" }} />
+          <p className="text-sm font-medium" style={{ color: "hsl(220 20% 25%)" }}>Nenhum documento encontrado</p>
+          <p className="text-xs mt-1" style={{ color: "hsl(220 10% 62%)" }}>Envie leis, decretos ou petições aprovadas para alimentar a base</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -665,64 +667,62 @@ export default function QABaseConhecimentoPage() {
             const isAtivoIA = d.ativo_na_ia === true;
             const isProcessing = !TERMINAL.includes(d.status_processamento) && d.status_processamento !== "pendente";
             return (
-              <div key={d.id} className="flex items-center gap-3 bg-white border border-slate-200 rounded-lg p-4 hover:border-neutral-600 transition-all group">
+              <div key={d.id} className="qa-card flex items-center gap-3 p-4 group">
                 {statusIcon(d.status_processamento)}
                 <Link to={`/quero-armas/base-conhecimento/${d.id}`} className="flex-1 min-w-0 cursor-pointer">
-                  <div className="text-sm font-medium text-slate-700 truncate group-hover:text-[#c43b52] transition-colors flex items-center gap-1.5">
+                  <div className="text-[13px] font-medium truncate flex items-center gap-1.5 transition-colors group-hover:text-blue-600"
+                    style={{ color: "hsl(220 20% 18%)" }}>
                     {d.titulo}
                     {isRef && <Star className="h-3 w-3 text-amber-400 shrink-0" />}
                   </div>
-                  <div className="text-xs text-slate-500 flex items-center gap-2 mt-0.5 flex-wrap">
-                    <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">{d.tipo_documento?.replace(/_/g, " ")}</span>
-                    <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-indigo-500/10 text-indigo-400">Aprendizado IA</span>
-                    <span className="flex items-center gap-1">{origemIcon(d.tipo_origem)}{d.tipo_origem === "link_publico" ? "Link" : "Upload"}</span>
-                    <span>{new Date(d.created_at).toLocaleDateString("pt-BR")}</span>
-                    {d.tamanho_bytes && <span>{(d.tamanho_bytes / 1024).toFixed(0)} KB</span>}
-                    {d.caso_id && <span className="text-[10px] text-[#c43b52]/60">caso: {d.caso_id}</span>}
+                  <div className="flex items-center gap-2 mt-0.5 flex-wrap" style={{ color: "hsl(220 10% 55%)" }}>
+                    <span className="qa-badge bg-slate-100 text-slate-600 capitalize">{d.tipo_documento?.replace(/_/g, " ")}</span>
+                    <span className="qa-badge bg-indigo-50 text-indigo-600">Aprendizado IA</span>
+                    <span className="flex items-center gap-1 text-[11px]">{origemIcon(d.tipo_origem)}{d.tipo_origem === "link_publico" ? "Link" : "Upload"}</span>
+                    <span className="text-[11px] font-mono">{new Date(d.created_at).toLocaleDateString("pt-BR")}</span>
+                    {d.tamanho_bytes && <span className="text-[11px]">{(d.tamanho_bytes / 1024).toFixed(0)} KB</span>}
                   </div>
                   {d.url_origem && (
-                    <div className="text-[10px] text-blue-400/60 truncate mt-0.5">{d.url_origem}</div>
+                    <div className="text-[10px] truncate mt-0.5" style={{ color: "hsl(220 10% 72%)" }}>{d.url_origem}</div>
                   )}
                   {isError && d.resumo_extraido && (
-                    <div className="text-xs text-red-400/80 mt-1 truncate">{d.resumo_extraido}</div>
+                    <div className="text-xs text-red-500/80 mt-1 truncate">{d.resumo_extraido}</div>
                   )}
                   {isProcessing && (
                     <div className="mt-1.5 flex items-center gap-2">
                       <Progress value={getStageInfo(d.status_processamento).pct} className="h-1 bg-slate-100 flex-1 max-w-[200px]" />
-                      <span className="text-[10px] text-blue-400">{getStageInfo(d.status_processamento).label}</span>
+                      <span className="text-[10px]" style={{ color: "hsl(230 80% 56%)" }}>{getStageInfo(d.status_processamento).label}</span>
                     </div>
                   )}
                 </Link>
                 {/* Governance badges */}
                 <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-medium whitespace-nowrap ${status.cls}`}>
+                  <span className={`qa-badge capitalize whitespace-nowrap ${status.cls}`}>
                     {status.text}
                   </span>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-medium whitespace-nowrap ${
-                    isValidado ? "bg-emerald-500/10 text-emerald-400" :
-                    isRejeitado ? "bg-red-500/10 text-red-400" :
+                  <span className={`qa-badge capitalize whitespace-nowrap ${
+                    isValidado ? "bg-emerald-50 text-emerald-700" :
+                    isRejeitado ? "bg-red-50 text-red-600" :
                     "bg-slate-100 text-slate-500"
                   }`}>
                     {isValidado ? "validado" : isRejeitado ? "rejeitado" : "pendente"}
                   </span>
                   {isAtivoIA && isValidado && (
-                    <span className="text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-medium bg-purple-500/10 text-purple-400 whitespace-nowrap">
-                      IA
-                    </span>
+                    <span className="qa-badge bg-purple-50 text-purple-600 whitespace-nowrap">IA</span>
                   )}
                 </div>
                 {isError && (
                   <Button size="sm" variant="ghost" disabled={isReprocessing} onClick={() => handleReprocess(d)}
-                    className="text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 shrink-0">
+                    className="text-amber-500 hover:text-amber-600 hover:bg-amber-50 shrink-0">
                     {isReprocessing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
                   </Button>
                 )}
                 <Button size="sm" variant="ghost" onClick={(e) => { e.preventDefault(); setDeleteTarget(d); }}
-                  className="text-red-400/60 hover:text-red-400 hover:bg-red-500/10 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                  className="text-red-300 hover:text-red-500 hover:bg-red-50 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
                 <Link to={`/quero-armas/base-conhecimento/${d.id}`}>
-                  <ExternalLink className="h-3.5 w-3.5 text-slate-400 group-hover:text-[#c43b52] shrink-0" />
+                  <ExternalLink className="h-3.5 w-3.5 shrink-0 transition-colors group-hover:text-blue-500" style={{ color: "hsl(220 10% 72%)" }} />
                 </Link>
               </div>
             );
