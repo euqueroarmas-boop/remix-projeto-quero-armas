@@ -185,12 +185,24 @@ export default function QAClientesPage() {
 
   const filtered = clientes.filter(c => {
     const s = search.toLowerCase();
-    return !s || c.nome_completo?.toLowerCase().includes(s) || c.cpf?.includes(s) || c.email?.toLowerCase().includes(s) || c.celular?.includes(s);
+    const sDigits = s.replace(/\D/g, "");
+    if (!s) return true;
+    if (c.nome_completo?.toLowerCase().includes(s)) return true;
+    if (c.email?.toLowerCase().includes(s)) return true;
+    if (sDigits && c.cpf?.replace(/\D/g, "").includes(sDigits)) return true;
+    if (sDigits && c.celular?.replace(/\D/g, "").includes(sDigits)) return true;
+    return false;
   });
 
   const filteredCadastros = cadastrosPublicos.filter(c => {
     const s = search.toLowerCase();
-    return !s || c.nome_completo?.toLowerCase().includes(s) || c.cpf?.includes(s) || c.email?.toLowerCase().includes(s) || c.telefone_principal?.includes(s);
+    const sDigits = s.replace(/\D/g, "");
+    if (!s) return true;
+    if (c.nome_completo?.toLowerCase().includes(s)) return true;
+    if (c.email?.toLowerCase().includes(s)) return true;
+    if (sDigits && c.cpf?.replace(/\D/g, "").includes(sDigits)) return true;
+    if (sDigits && c.telefone_principal?.replace(/\D/g, "").includes(sDigits)) return true;
+    return false;
   });
 
   const statusColor = (s: string) => s === "ATIVO" ? "text-emerald-600" : s === "DESISTENTE" ? "text-red-600" : "text-amber-600";
