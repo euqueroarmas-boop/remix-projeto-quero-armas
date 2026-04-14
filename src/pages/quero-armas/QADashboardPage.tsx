@@ -23,6 +23,7 @@ interface Stats {
   aprovadas: number;
   referencias: number;
   rascunhos: number;
+  novosCadastros: number;
 }
 
 interface RecentItem {
@@ -31,6 +32,19 @@ interface RecentItem {
   tipo: string;
   created_at: string;
   status?: string;
+}
+
+interface NovoCadastro {
+  id: string;
+  nome_completo: string;
+  cpf: string;
+  telefone_principal: string;
+  email: string;
+  end1_cidade: string;
+  end1_estado: string;
+  servico_interesse: string;
+  status: string;
+  created_at: string;
 }
 
 // Premium chart colors
@@ -64,8 +78,9 @@ function CustomTooltip({ active, payload, label }: any) {
 export default function QADashboardPage() {
   const [stats, setStats] = useState<Stats>({
     documentos: 0, normas: 0, jurisprudencias: 0, pecas: 0,
-    pendentes: 0, erros: 0, consultas: 0, aprovadas: 0, referencias: 0, rascunhos: 0,
+    pendentes: 0, erros: 0, consultas: 0, aprovadas: 0, referencias: 0, rascunhos: 0, novosCadastros: 0,
   });
+  const [novosCadastros, setNovosCadastros] = useState<NovoCadastro[]>([]);
   const [recentPecas, setRecentPecas] = useState<RecentItem[]>([]);
   const [recentDocs, setRecentDocs] = useState<RecentItem[]>([]);
   const [loading, setLoading] = useState(true);
