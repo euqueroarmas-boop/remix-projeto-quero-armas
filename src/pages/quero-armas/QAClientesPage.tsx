@@ -609,9 +609,14 @@ export default function QAClientesPage() {
               {c.cliente_lions && <span className="text-amber-500">🦁 Lions</span>}
             </div>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => { setEditingCliente(c); setClienteModal(true); }} className="h-8 px-2 text-slate-500 hover:text-slate-700">
-            <Edit className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="sm" onClick={() => { setEditingCliente(c); setClienteModal(true); }} className="h-8 px-2 text-slate-500 hover:text-slate-700">
+              <Edit className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setDeleteModal({ open: true, table: "qa_clientes", id: c.id, title: "Excluir Cliente", desc: `Excluir "${c.nome_completo}" e todos os dados vinculados?` })} className="h-8 px-2 text-slate-400 hover:text-red-500">
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         <Tabs value={tab} onValueChange={setTab}>
