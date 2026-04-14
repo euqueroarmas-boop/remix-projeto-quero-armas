@@ -36,7 +36,7 @@ interface FormData {
 }
 
 const initialForm: FormData = {
-  nome_completo: "", cpf: "", data_nascimento: "",
+  nome_completo: "", cpf: "", rg: "", emissor_rg: "", data_nascimento: "",
   telefone_principal: "", telefone_secundario: "", email: "",
   nome_mae: "", nome_pai: "", estado_civil: "", nacionalidade: "Brasileiro(a)",
   profissao: "", observacoes: "",
