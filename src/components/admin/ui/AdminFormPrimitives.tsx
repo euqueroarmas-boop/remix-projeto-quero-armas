@@ -42,7 +42,7 @@ export function FormGrid({ children, cols = 2, className }: { children: React.Re
     : cols === 3 ? "grid grid-cols-1 sm:grid-cols-3 gap-x-5 gap-y-4"
     : cols === 4 ? "grid grid-cols-2 sm:grid-cols-4 gap-x-5 gap-y-4"
     : "grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-4";
-  return <div className={cn(gridCls, className)}>{children}</div>;
+  return <div className={cn(gridCls, "items-end", className)}>{children}</div>;
 }
 
 /* ── FieldWrapper ── */
@@ -51,19 +51,22 @@ export function FieldWrapper({ label, children, span, className }: {
 }) {
   return (
     <div className={cn(
+      "flex flex-col",
       span === "full" && "sm:col-span-full",
       className
     )}>
-      <label className="block text-[10px] sm:text-[11px] font-medium uppercase tracking-wider text-neutral-500 mb-1.5">
+      <label className="block text-[10px] sm:text-[11px] font-medium uppercase tracking-wider text-neutral-500 mb-1.5 leading-tight min-h-[14px]">
         {label}
       </label>
-      {children}
+      <div className="[&>*]:h-9 [&>*]:w-full">
+        {children}
+      </div>
     </div>
   );
 }
 
 /* ── Styled Input ── */
-const inputBase = "h-9 text-xs sm:text-sm bg-[#0a0a0a] border-[#1c1c1c] text-neutral-200 rounded-lg placeholder:text-neutral-600 focus:border-[#7a1528]/60 focus:ring-1 focus:ring-[#7a1528]/20 transition-colors";
+const inputBase = "h-9 w-full text-xs sm:text-sm bg-[#0a0a0a] border-[#1c1c1c] text-neutral-200 rounded-lg placeholder:text-neutral-600 focus:border-[#7a1528]/60 focus:ring-1 focus:ring-[#7a1528]/20 transition-colors";
 
 export function FormInput({ label, value, onChange, type = "text", span, placeholder }: {
   label: string; value: string; onChange: (v: string) => void; type?: string; span?: "full" | "half"; placeholder?: string;
