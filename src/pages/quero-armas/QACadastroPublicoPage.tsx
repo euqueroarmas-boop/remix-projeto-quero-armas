@@ -138,6 +138,13 @@ export default function QACadastroPublicoPage() {
   const [cpfLooking, setCpfLooking] = useState(false);
   const [cpfFound, setCpfFound] = useState<boolean | null>(null);
   const [showComplementoConfirm, setShowComplementoConfirm] = useState(false);
+  const [servicos, setServicos] = useState<{ id: number; nome_servico: string }[]>([]);
+
+  useEffect(() => {
+    supabase.from("qa_servicos" as any).select("id, nome_servico").order("id").then(({ data }) => {
+      if (data) setServicos(data as any[]);
+    });
+  }, []);
 
   const set = useCallback((field: keyof FormData, value: any) => {
     setForm(prev => ({ ...prev, [field]: value }));
