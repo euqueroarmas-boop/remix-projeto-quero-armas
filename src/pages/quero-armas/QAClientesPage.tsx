@@ -8,11 +8,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   Search, User, Phone, Mail, MapPin, FileText, Shield, ChevronLeft,
   Loader2, Eye, Plus, Crosshair, Edit, Trash2, Download, FileDown,
-  ChevronDown, ChevronUp, Save, X, CheckCircle,
+  ChevronDown, ChevronUp, Save, X, CheckCircle, TrendingUp,
 } from "lucide-react";
 import { supabase as supabaseClient } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ClienteFormModal from "@/components/quero-armas/clientes/ClienteFormModal";
+import ClienteOverview from "@/components/quero-armas/clientes/ClienteOverview";
 import { CrafModal, GteModal, CrModal, VendaModal, FiliacaoModal, DeleteConfirm } from "@/components/quero-armas/clientes/SubEntityModals";
 import { exportClientes, exportCrafs, exportGtes, exportCr, exportVendas } from "@/components/quero-armas/clientes/ClienteExport";
 
@@ -176,7 +177,7 @@ export default function QAClientesPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Cliente | null>(null);
-  const [tab, setTab] = useState("dados");
+  const [tab, setTab] = useState("resumo");
 
   const [vendas, setVendas] = useState<any[]>([]);
   const [itens, setItens] = useState<any[]>([]);
@@ -475,7 +476,7 @@ export default function QAClientesPage() {
     loadingClientRef.current = c.id;
     setSelectedCadastroPublico(null);
     setSelected(c);
-    setTab("dados");
+    setTab("resumo");
     await loadSubData(c);
     loadingClientRef.current = null;
   };
@@ -621,6 +622,9 @@ export default function QAClientesPage() {
 
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="bg-white border border-slate-200 h-9 w-full flex-wrap rounded-xl shadow-sm">
+            <TabsTrigger value="resumo" className="text-xs flex-1 data-[state=active]:bg-slate-800 data-[state=active]:text-white rounded-lg">
+              <TrendingUp className="h-3.5 w-3.5 mr-1" /> Resumo
+            </TabsTrigger>
             <TabsTrigger value="dados" className="text-xs flex-1 data-[state=active]:bg-slate-800 data-[state=active]:text-white rounded-lg">
               <User className="h-3.5 w-3.5 mr-1" /> Dados
             </TabsTrigger>
@@ -642,6 +646,20 @@ export default function QAClientesPage() {
             <div className="flex justify-center py-12"><Loader2 className="h-5 w-5 animate-spin text-slate-400" /></div>
           ) : (
             <>
+              {/* RESUMO */}
+              <TabsContent value="resumo" className="mt-3">
+                <ClienteOverview
+                  cliente={c}
+                  vendas={vendas}
+                  itens={itens}
+                  crafs={crafs}
+                  gtes={gtes}
+                  filiacoes={filiacoes}
+                  cadastro={cadastro}
+                  onNavigate={setTab}
+                />
+              </TabsContent>
+
               {/* DADOS */}
               <TabsContent value="dados" className="mt-3 space-y-4">
                 <Section title="Identificação">
