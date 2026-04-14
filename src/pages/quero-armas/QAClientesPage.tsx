@@ -766,7 +766,11 @@ export default function QAClientesPage() {
                                           <input
                                             type="text"
                                             value={itemEditForm[field.key] || ""}
-                                            onChange={e => setItemEditForm(prev => ({ ...prev, [field.key]: e.target.value.toUpperCase() }))}
+                                            onChange={e => {
+                                              const raw = e.target.value;
+                                              const val = field.type === "date" ? applyDateMask(raw) : raw.toUpperCase();
+                                              setItemEditForm(prev => ({ ...prev, [field.key]: val }));
+                                            }}
                                             placeholder={field.type === "date" ? "DD/MM/AAAA" : "—"}
                                             className="w-full h-7 px-2 text-[10px] rounded bg-white border border-slate-200 text-slate-700 placeholder:text-slate-300 focus:border-blue-500 focus:outline-none transition-colors"
                                           />
