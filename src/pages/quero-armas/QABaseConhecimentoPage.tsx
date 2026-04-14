@@ -732,7 +732,7 @@ export default function QABaseConhecimentoPage() {
 
       {/* Import by Link Dialog */}
       <Dialog open={showLinkDialog} onOpenChange={setShowLinkDialog}>
-        <DialogContent className="border-slate-200 max-w-lg rounded-xl" style={{ background: "hsl(0 0% 100%)", color: "hsl(220 20% 18%)" }}>
+        <DialogContent className="border-slate-200 max-w-lg rounded-xl overflow-y-auto max-h-[85vh]" style={{ background: "hsl(0 0% 100%)", color: "hsl(220 20% 18%)" }}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2" style={{ color: "hsl(220 20% 18%)" }}><Link2 className="h-5 w-5" style={{ color: "hsl(230 80% 56%)" }} /> Importar por Link Público</DialogTitle>
           </DialogHeader>
