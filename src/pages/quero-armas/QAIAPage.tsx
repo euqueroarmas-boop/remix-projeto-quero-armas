@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -70,66 +69,69 @@ export default function QAIAPage() {
   };
 
   const scoreColor = (s: number) => {
-    if (s >= 0.7) return "text-emerald-400";
-    if (s >= 0.4) return "text-amber-400";
-    return "text-red-400";
+    if (s >= 0.7) return "text-emerald-600";
+    if (s >= 0.4) return "text-amber-600";
+    return "text-red-500";
   };
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-5 md:space-y-6 max-w-4xl mx-auto">
+      {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-          <Bot className="h-6 w-6 text-amber-500" /> IA Jurídica
+        <h1 className="text-xl md:text-2xl font-bold tracking-tight flex items-center gap-2" style={{ color: "hsl(220 20% 18%)" }}>
+          <Bot className="h-6 w-6" style={{ color: "hsl(230 80% 56%)" }} /> IA Jurídica
         </h1>
-        <p className="text-sm text-slate-500 mt-1">Consulta assistida com base viva de conhecimento</p>
+        <p className="text-sm mt-0.5" style={{ color: "hsl(220 10% 62%)" }}>Consulta assistida com base viva de conhecimento</p>
       </div>
 
-      <div className="bg-amber-500/5 border border-amber-500/20 rounded-lg p-3 text-xs text-amber-400/80 flex items-start gap-2">
-        <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
-        <span>A IA consulta exclusivamente as fontes cadastradas e validadas. Nunca inventa fatos, leis, artigos, jurisprudência ou precedentes. Fontes são ranqueadas por confiança.</span>
+      {/* Warning */}
+      <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl border bg-amber-50 border-amber-200">
+        <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+        <span className="text-xs text-amber-700">A IA consulta exclusivamente as fontes cadastradas e validadas. Nunca inventa fatos, leis, artigos, jurisprudência ou precedentes. Fontes são ranqueadas por confiança.</span>
       </div>
 
-      <div className="space-y-4 bg-white border border-slate-200 rounded-xl p-5">
+      {/* Form */}
+      <div className="qa-card p-5 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label className="text-slate-700">Título do Caso</Label>
+          <div className="space-y-1.5">
+            <Label className="text-[11px] font-medium" style={{ color: "hsl(220 10% 45%)" }}>Título do Caso</Label>
             <Input value={casoTitulo} onChange={e => setCasoTitulo(e.target.value)}
-              className="bg-white border-slate-200 text-slate-800" placeholder="Ex: Mandado de Segurança - CAC" />
+              className="h-9 bg-white border-slate-200 text-slate-800 uppercase" placeholder="Ex: Mandado de Segurança - CAC" />
           </div>
-          <div className="space-y-2">
-            <Label className="text-slate-700">Tipo de Peça</Label>
+          <div className="space-y-1.5">
+            <Label className="text-[11px] font-medium" style={{ color: "hsl(220 10% 45%)" }}>Tipo de Peça</Label>
             <Select value={tipoPeca} onValueChange={setTipoPeca}>
-              <SelectTrigger className="bg-white border-slate-200 text-slate-700"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-9 bg-white border-slate-200 text-slate-700 uppercase"><SelectValue /></SelectTrigger>
               <SelectContent>
-                {TIPOS_PECA.map(t => <SelectItem key={t} value={t}>{t.replace(/_/g, " ")}</SelectItem>)}
+                {TIPOS_PECA.map(t => <SelectItem key={t} value={t} className="uppercase">{t.replace(/_/g, " ")}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <Label className="text-slate-700">Profundidade</Label>
+          <div className="space-y-1.5">
+            <Label className="text-[11px] font-medium" style={{ color: "hsl(220 10% 45%)" }}>Profundidade</Label>
             <Select value={profundidade} onValueChange={setProfundidade}>
-              <SelectTrigger className="bg-white border-slate-200 text-slate-700"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-9 bg-white border-slate-200 text-slate-700 uppercase"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {PROFUNDIDADES.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
-            <Label className="text-slate-700">Tom</Label>
+          <div className="space-y-1.5">
+            <Label className="text-[11px] font-medium" style={{ color: "hsl(220 10% 45%)" }}>Tom</Label>
             <Select value={tom} onValueChange={setTom}>
-              <SelectTrigger className="bg-white border-slate-200 text-slate-700"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-9 bg-white border-slate-200 text-slate-700 uppercase"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {TONS.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
-            <Label className="text-slate-700">Foco</Label>
+          <div className="space-y-1.5">
+            <Label className="text-[11px] font-medium" style={{ color: "hsl(220 10% 45%)" }}>Foco</Label>
             <Select value={foco} onValueChange={setFoco}>
-              <SelectTrigger className="bg-white border-slate-200 text-slate-700"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-9 bg-white border-slate-200 text-slate-700 uppercase"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {FOCOS.map(f => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}
               </SelectContent>
@@ -137,46 +139,47 @@ export default function QAIAPage() {
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Label className="text-slate-700">Descreva o caso e o que precisa</Label>
+        <div className="space-y-1.5">
+          <Label className="text-[11px] font-medium" style={{ color: "hsl(220 10% 45%)" }}>Descreva o caso e o que precisa</Label>
           <Textarea value={entrada} onChange={e => setEntrada(e.target.value)}
-            className="bg-white border-slate-200 text-slate-800 min-h-[150px]"
+            className="bg-white border-slate-200 text-slate-800 min-h-[150px] uppercase"
             placeholder="Descreva os fatos, a situação jurídica e o que espera da IA..." />
         </div>
-        <Button onClick={consultar} disabled={loading} className="bg-amber-600 hover:bg-amber-700">
-          {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
+        <button onClick={consultar} disabled={loading} className="qa-btn-primary flex items-center gap-1.5 no-glow">
+          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           Consultar IA
-        </Button>
+        </button>
       </div>
 
+      {/* Response */}
       {resposta && (
         <div className="space-y-4">
           {/* Confidence Score */}
-          <div className="flex items-center gap-4 bg-white border border-slate-200 rounded-xl p-4">
+          <div className="qa-card p-4 flex items-center gap-4">
             <div className="text-center">
               <div className={`text-2xl font-bold ${scoreColor(resposta.score_confianca)}`}>
                 {((resposta.score_confianca || 0) * 100).toFixed(0)}%
               </div>
-              <div className="text-[10px] text-slate-500 uppercase tracking-wider">Confiança</div>
+              <div className="text-[10px] uppercase tracking-wider" style={{ color: "hsl(220 10% 55%)" }}>Confiança</div>
             </div>
-            <div className="flex-1 text-xs text-slate-600">
+            <div className="flex-1 text-xs" style={{ color: "hsl(220 10% 45%)" }}>
               <BarChart3 className="inline h-3 w-3 mr-1" />
               {resposta.fontes_recuperadas?.length || 0} fontes recuperadas
             </div>
           </div>
 
           {resposta.fontes_recuperadas?.length > 0 && (
-            <div className="bg-white border border-slate-200 rounded-xl p-5">
-              <h3 className="text-sm font-medium text-slate-700 mb-3">Fontes Utilizadas (por relevância)</h3>
+            <div className="qa-card p-5">
+              <h3 className="text-sm font-semibold mb-3" style={{ color: "hsl(220 20% 18%)" }}>Fontes Utilizadas (por relevância)</h3>
               <div className="space-y-2">
                 {resposta.fontes_recuperadas.map((f: any, i: number) => (
                   <div key={i} className="flex items-center gap-2 text-xs">
-                    {f.tipo === "norma" && <Scale className="h-3.5 w-3.5 text-emerald-400" />}
-                    {f.tipo === "jurisprudencia" && <Gavel className="h-3.5 w-3.5 text-purple-400" />}
-                    {f.tipo === "documento" && <BookOpen className="h-3.5 w-3.5 text-blue-400" />}
-                    {f.tipo === "referencia_aprovada" && <CheckCircle className="h-3.5 w-3.5 text-amber-400" />}
-                    <span className="text-slate-700 flex-1">{f.titulo || f.referencia}</span>
-                    <span className="text-slate-400 tabular-nums">
+                    {f.tipo === "norma" && <Scale className="h-3.5 w-3.5 text-emerald-500" />}
+                    {f.tipo === "jurisprudencia" && <Gavel className="h-3.5 w-3.5 text-purple-500" />}
+                    {f.tipo === "documento" && <BookOpen className="h-3.5 w-3.5 text-blue-500" />}
+                    {f.tipo === "referencia_aprovada" && <CheckCircle className="h-3.5 w-3.5 text-amber-500" />}
+                    <span className="flex-1 uppercase" style={{ color: "hsl(220 20% 18%)" }}>{f.titulo || f.referencia}</span>
+                    <span className="tabular-nums" style={{ color: "hsl(220 10% 55%)" }}>
                       {(f.score_final || 0).toFixed(2)}
                     </span>
                     {f.score_validacao > 0 && <CheckCircle className="h-3 w-3 text-emerald-500" />}
@@ -186,13 +189,13 @@ export default function QAIAPage() {
             </div>
           )}
 
-          <div className="bg-white border border-slate-200 rounded-xl p-5">
-            <h3 className="text-sm font-medium text-slate-700 mb-3">Resposta da IA</h3>
-            <div className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">
+          <div className="qa-card p-5">
+            <h3 className="text-sm font-semibold mb-3" style={{ color: "hsl(220 20% 18%)" }}>Resposta da IA</h3>
+            <div className="text-sm whitespace-pre-wrap leading-relaxed" style={{ color: "hsl(220 20% 25%)" }}>
               {resposta.resposta_ia}
             </div>
             {resposta.observacoes_ia && (
-              <div className="mt-4 p-3 bg-amber-500/5 border border-amber-500/20 rounded-lg text-xs text-amber-400/80">
+              <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-700">
                 <strong>Observações:</strong> {resposta.observacoes_ia}
               </div>
             )}

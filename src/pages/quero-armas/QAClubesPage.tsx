@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -46,48 +45,64 @@ export default function QAClubesPage() {
   const formatDate = (d: string | null) => { if (!d) return "—"; try { return new Date(d).toLocaleDateString("pt-BR"); } catch { return d; } };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5 md:space-y-6 max-w-5xl mx-auto">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-sm font-bold text-slate-800">Clubes de Tiro</h1>
-          <p className="text-[10px] text-slate-400">{clubes.length} cadastrados</p>
+          <h1 className="text-xl md:text-2xl font-bold tracking-tight" style={{ color: "hsl(220 20% 18%)" }}>Clubes de Tiro</h1>
+          <p className="text-sm mt-0.5" style={{ color: "hsl(220 10% 62%)" }}>{clubes.length} cadastrados</p>
         </div>
-        <Button size="sm" onClick={() => setModal({ open: true })} className="h-7 px-2 text-[10px] bg-[#7a1528] hover:bg-[#9a1b32]">
-          <Plus className="h-3 w-3 mr-1" /> Novo Clube
-        </Button>
+        <button onClick={() => setModal({ open: true })} className="qa-btn-primary flex items-center gap-1.5 no-glow">
+          <Plus className="h-3.5 w-3.5" /> Novo Clube
+        </button>
       </div>
 
+      {/* Search */}
       <div className="relative">
-        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
-        <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar clube..." className="pl-8 h-8 text-[11px] bg-white border-slate-200 text-slate-700" />
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "hsl(220 10% 55%)" }} />
+        <input
+          value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar clube..."
+          className="w-full h-10 pl-10 pr-4 rounded-xl border bg-white text-sm uppercase outline-none transition-all"
+          style={{ borderColor: "hsl(220 13% 91%)", color: "hsl(220 20% 18%)" }}
+          onFocus={e => e.currentTarget.style.borderColor = "hsl(230 80% 56%)"}
+          onBlur={e => e.currentTarget.style.borderColor = "hsl(220 13% 91%)"}
+        />
       </div>
 
+      {/* Content */}
       {loading ? (
-        <div className="flex justify-center py-12"><Loader2 className="h-5 w-5 animate-spin text-slate-400" /></div>
+        <div className="flex justify-center py-16">
+          <div className="w-8 h-8 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" />
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-16">
+          <Building2 className="h-12 w-12 mx-auto mb-3" style={{ color: "hsl(220 13% 85%)" }} />
+          <p className="text-sm" style={{ color: "hsl(220 10% 55%)" }}>Nenhum clube encontrado</p>
+        </div>
       ) : (
-        <ScrollArea className="h-[calc(100vh-220px)]">
-          <div className="space-y-1.5">
+        <ScrollArea className="h-[calc(100vh-280px)]">
+          <div className="space-y-2">
             {filtered.map(c => (
-              <div key={c.id} className="flex items-start gap-3 bg-white border border-slate-200 rounded-lg px-3 py-2.5">
-                <div className="w-8 h-8 rounded-full bg-[#7a1528]/15 flex items-center justify-center shrink-0 mt-0.5">
-                  <Building2 className="h-3.5 w-3.5 text-[#c43b52]" />
+              <div key={c.id} className="qa-card qa-hover-lift p-4 flex items-start gap-3">
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: "hsl(230 80% 96%)" }}>
+                  <Building2 className="h-4 w-4" style={{ color: "hsl(230 80% 56%)" }} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-[11px] text-slate-700 font-medium">{c.nome_clube}</div>
-                  <div className="text-[9px] text-slate-500 mt-0.5 space-x-3">
+                  <div className="text-[13px] font-semibold uppercase" style={{ color: "hsl(220 20% 18%)" }}>{c.nome_clube}</div>
+                  <div className="flex items-center gap-3 text-[11px] mt-0.5 flex-wrap uppercase" style={{ color: "hsl(220 10% 55%)" }}>
                     {c.cnpj && <span>CNPJ: {c.cnpj}</span>}
                     {c.numero_cr && <span>CR: {c.numero_cr}</span>}
                     <span>Val: {formatDate(c.data_validade)}</span>
                   </div>
-                  {c.endereco && <div className="text-[9px] text-slate-400 mt-0.5 truncate">{c.endereco}</div>}
+                  {c.endereco && <div className="text-[11px] mt-0.5 truncate uppercase" style={{ color: "hsl(220 10% 62%)" }}>{c.endereco}</div>}
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
-                  <Button variant="ghost" size="sm" onClick={() => setModal({ open: true, item: c })} className="h-6 w-6 p-0 text-slate-400 hover:text-slate-700">
-                    <Edit className="h-3 w-3" />
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={() => handleDelete(c.id)} disabled={deleting === c.id} className="h-6 w-6 p-0 text-slate-400 hover:text-red-400">
-                    {deleting === c.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
-                  </Button>
+                  <button onClick={() => setModal({ open: true, item: c })} className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-slate-100 transition-colors" style={{ color: "hsl(220 10% 55%)" }}>
+                    <Edit className="h-3.5 w-3.5" />
+                  </button>
+                  <button onClick={() => handleDelete(c.id)} disabled={deleting === c.id} className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-red-50 transition-colors text-slate-400 hover:text-red-500">
+                    {deleting === c.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                  </button>
                 </div>
               </div>
             ))}
@@ -100,7 +115,6 @@ export default function QAClubesPage() {
   );
 }
 
-// ─── Clube Form Modal ───
 function ClubeFormModal({ open, onClose, onSaved, clube }: { open: boolean; onClose: () => void; onSaved: () => void; clube?: Clube }) {
   const isEdit = !!clube;
   const [saving, setSaving] = useState(false);
@@ -129,21 +143,26 @@ function ClubeFormModal({ open, onClose, onSaved, clube }: { open: boolean; onCl
 
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="max-w-md bg-white border-slate-200 text-slate-700">
-        <DialogHeader><DialogTitle className="text-sm">{isEdit ? "Editar Clube" : "Novo Clube de Tiro"}</DialogTitle></DialogHeader>
-        <div className="space-y-3">
-          <Inp label="Nome do Clube *" value={f.nome_clube} onChange={v => setF(p => ({ ...p, nome_clube: v }))} />
-          <div className="flex gap-2">
-            <Inp label="CNPJ" value={f.cnpj} onChange={v => setF(p => ({ ...p, cnpj: v }))} />
-            <Inp label="Nº CR" value={f.numero_cr} onChange={v => setF(p => ({ ...p, numero_cr: v }))} />
+      <DialogContent className="max-w-md bg-white border-slate-200 rounded-xl">
+        <DialogHeader>
+          <DialogTitle className="text-sm font-semibold" style={{ color: "hsl(220 20% 18%)" }}>
+            {isEdit ? "Editar Clube" : "Novo Clube de Tiro"}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3 mt-2 uppercase">
+          <FormInput label="Nome do Clube *" value={f.nome_clube} onChange={v => setF(p => ({ ...p, nome_clube: v }))} />
+          <div className="flex gap-3">
+            <FormInput label="CNPJ" value={f.cnpj} onChange={v => setF(p => ({ ...p, cnpj: v }))} />
+            <FormInput label="Nº CR" value={f.numero_cr} onChange={v => setF(p => ({ ...p, numero_cr: v }))} />
           </div>
-          <Inp label="Validade CR" value={f.data_validade} onChange={v => setF(p => ({ ...p, data_validade: v }))} type="date" />
-          <Inp label="Endereço Completo" value={f.endereco} onChange={v => setF(p => ({ ...p, endereco: v }))} />
+          <FormInput label="Validade CR" value={f.data_validade} onChange={v => setF(p => ({ ...p, data_validade: v }))} placeholder="DD/MM/AAAA" />
+          <FormInput label="Endereço Completo" value={f.endereco} onChange={v => setF(p => ({ ...p, endereco: v }))} />
           <div className="flex justify-end gap-2 pt-2">
-            <Button variant="ghost" size="sm" onClick={onClose} className="text-[11px] h-7">Cancelar</Button>
-            <Button size="sm" onClick={save} disabled={saving} className="bg-[#7a1528] hover:bg-[#9a1b32] text-[11px] h-7">
-              {saving ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Save className="h-3 w-3 mr-1" />} Salvar
-            </Button>
+            <button onClick={onClose} className="qa-btn-outline h-9 px-4 text-xs">Cancelar</button>
+            <button onClick={save} disabled={saving} className="qa-btn-primary h-9 px-4 text-xs flex items-center gap-1.5 no-glow">
+              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+              Salvar
+            </button>
           </div>
         </div>
       </DialogContent>
@@ -151,11 +170,12 @@ function ClubeFormModal({ open, onClose, onSaved, clube }: { open: boolean; onCl
   );
 }
 
-function Inp({ label, value, onChange, type = "text" }: { label: string; value: string; onChange: (v: string) => void; type?: string }) {
+function FormInput({ label, value, onChange, type = "text", placeholder }: { label: string; value: string; onChange: (v: string) => void; type?: string; placeholder?: string }) {
   return (
-    <div className="flex-1">
-      <label className="text-[9px] text-slate-500 uppercase tracking-wider mb-1 block">{label}</label>
-      <Input type={type} value={value} onChange={e => onChange(e.target.value)} className="h-7 text-[11px] bg-white border-slate-200 text-slate-700" />
+    <div className="flex-1 space-y-1.5">
+      <label className="text-[11px] font-medium uppercase" style={{ color: "hsl(220 10% 45%)" }}>{label}</label>
+      <Input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
+        className="h-9 bg-white border-slate-200 text-slate-800 uppercase" />
     </div>
   );
 }
