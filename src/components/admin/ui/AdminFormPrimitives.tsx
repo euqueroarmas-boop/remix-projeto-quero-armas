@@ -57,8 +57,26 @@ export function FieldWrapper({ label, children, span, className }: {
 }
 
 /* ── FormInput ── */
-export function FormInput({ label, value, onChange, type = "text", span, placeholder }: {
-  label: string; value: string; onChange: (v: string) => void; type?: string; span?: "full"; placeholder?: string;
+export function FormInput({
+  label,
+  value,
+  onChange,
+  type = "text",
+  span,
+  placeholder,
+  inputMode,
+  maxLength,
+  autoComplete,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  type?: string;
+  span?: "full";
+  placeholder?: string;
+  inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
+  maxLength?: number;
+  autoComplete?: string;
 }) {
   return (
     <FieldWrapper label={label} span={span}>
@@ -67,6 +85,9 @@ export function FormInput({ label, value, onChange, type = "text", span, placeho
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
+        inputMode={inputMode}
+        maxLength={maxLength}
+        autoComplete={autoComplete}
         className={cn(fieldH, "text-xs")}
       />
     </FieldWrapper>
