@@ -580,7 +580,13 @@ function AddressBlock({ prefix, form, set, errors, onCepLookup, cepLoading, onGe
           <div className="flex gap-2">
             <TextInput
               value={form[f("cep")] as string}
-              onChange={v => set(f("cep"), maskCep(v))}
+              onChange={v => {
+                const masked = maskCep(v);
+                set(f("cep"), masked);
+                if (masked.replace(/\D/g, "").length === 8) {
+                  setTimeout(() => onCepLookup(), 50);
+                }
+              }}
               placeholder="00000-000"
               maxLength={9}
               onBlur={onCepLookup}
