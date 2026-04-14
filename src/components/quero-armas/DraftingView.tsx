@@ -125,7 +125,7 @@ function DraftLines({ text, isStreaming }: { text: string; isStreaming: boolean 
             >
               {line}
               {isLast && isStreaming && (
-                <span className="inline-block w-[2px] h-[14px] bg-[#c43b52] animate-pulse ml-0.5 align-text-bottom" />
+                <span className="inline-block w-[2px] h-[14px] bg-blue-500 animate-pulse ml-0.5 align-text-bottom" />
               )}
             </div>
           );
@@ -279,7 +279,7 @@ export default function DraftingView({
       {isStreaming && currentWritingSection && (
         <div className="px-4 pb-2">
           <div className="text-[11px] text-blue-600/70 flex items-center gap-1.5">
-            <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#c43b52] animate-pulse" />
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
             Redigindo: {currentWritingSection}
           </div>
         </div>
