@@ -131,13 +131,13 @@ export default function CaseDetailPanel({
       {/* Tabs */}
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="bg-white border border-slate-200 h-8 w-full">
-          <TabsTrigger value="resumo" className="text-[10px] flex-1 data-[state=active]:bg-[#7a1528]/30 data-[state=active]:text-slate-800">
+          <TabsTrigger value="resumo" className="text-[10px] flex-1 data-[state=active]:bg-slate-800/30 data-[state=active]:text-slate-800">
             <User className="h-3 w-3 mr-1" /> Resumo
           </TabsTrigger>
-          <TabsTrigger value="documentos" className="text-[10px] flex-1 data-[state=active]:bg-[#7a1528]/30 data-[state=active]:text-slate-800">
+          <TabsTrigger value="documentos" className="text-[10px] flex-1 data-[state=active]:bg-slate-800/30 data-[state=active]:text-slate-800">
             <FileText className="h-3 w-3 mr-1" /> Docs ({docs.length})
           </TabsTrigger>
-          <TabsTrigger value="peticao" className="text-[10px] flex-1 data-[state=active]:bg-[#7a1528]/30 data-[state=active]:text-slate-800">
+          <TabsTrigger value="peticao" className="text-[10px] flex-1 data-[state=active]:bg-slate-800/30 data-[state=active]:text-slate-800">
             <BookOpen className="h-3 w-3 mr-1" /> Petição
           </TabsTrigger>
         </TabsList>
@@ -212,7 +212,7 @@ export default function CaseDetailPanel({
                         {/* Extracted fields */}
                         {hasCampos && (
                           <div>
-                            <div className="text-[9px] text-[#c43b52] uppercase tracking-[0.12em] mb-1.5 font-semibold">Dados Extraídos</div>
+                            <div className="text-[9px] text-blue-600 uppercase tracking-[0.12em] mb-1.5 font-semibold">Dados Extraídos</div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                               {Object.entries(campos).map(([key, val]) => (
                                 <div key={key} className="flex items-start gap-1.5 text-[10px] bg-white rounded px-2 py-1 border border-[#1a1a1a]">
@@ -241,7 +241,7 @@ export default function CaseDetailPanel({
                               <span className="text-[9px] text-slate-400 uppercase tracking-[0.12em]">Texto Extraído</span>
                               <button
                                 onClick={() => copyText(doc.texto_extraido!)}
-                                className="text-[9px] text-slate-400 hover:text-[#c43b52] flex items-center gap-0.5"
+                                className="text-[9px] text-slate-400 hover:text-blue-600 flex items-center gap-0.5"
                               >
                                 <Copy className="h-2.5 w-2.5" /> Copiar
                               </button>
@@ -310,7 +310,7 @@ export default function CaseDetailPanel({
                   </span>
                   <button
                     onClick={() => copyText(minutaText)}
-                    className="flex items-center gap-1 text-[9px] text-slate-500 hover:text-[#c43b52] transition-colors"
+                    className="flex items-center gap-1 text-[9px] text-slate-500 hover:text-blue-600 transition-colors"
                   >
                     {copied ? <Check className="h-2.5 w-2.5" /> : <Copy className="h-2.5 w-2.5" />}
                     {copied ? "Copiado" : "Copiar tudo"}
@@ -331,7 +331,7 @@ export default function CaseDetailPanel({
       <div className="flex flex-wrap gap-1.5 pt-2 border-t border-slate-200">
         {onEdit && (
           <Button size="sm" onClick={() => onEdit(caso.id)}
-            className="bg-[#7a1528] hover:bg-[#a52338] text-white border-0 h-7 text-[10px]">
+            className="bg-slate-800 hover:bg-slate-900 text-white border-0 h-7 text-[10px]">
             Editar / Gerar
           </Button>
         )}

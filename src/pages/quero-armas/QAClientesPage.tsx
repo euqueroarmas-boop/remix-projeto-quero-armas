@@ -710,7 +710,7 @@ export default function QAClientesPage() {
               {/* SERVIÇOS / VENDAS */}
               <TabsContent value="servicos" className="mt-3">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-[9px] text-[#c43b52] uppercase tracking-[0.12em] font-semibold">Vendas</span>
+                  <span className="text-[9px] text-blue-600 uppercase tracking-[0.12em] font-semibold">Vendas</span>
                   <div className="flex gap-1">
                     <Button variant="ghost" size="sm" onClick={() => exportVendas(clienteIdForSub, c.nome_completo)} className="h-6 px-2 text-[9px] text-slate-500">
                       <Download className="h-3 w-3 mr-1" /> CSV
@@ -831,7 +831,7 @@ export default function QAClientesPage() {
                 {/* CRAFs */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-[9px] text-[#c43b52] uppercase tracking-[0.12em] font-semibold">CRAFs ({crafs.length})</span>
+                    <span className="text-[9px] text-blue-600 uppercase tracking-[0.12em] font-semibold">CRAFs ({crafs.length})</span>
                     <div className="flex gap-1">
                       <Button variant="ghost" size="sm" onClick={() => exportCrafs(clienteIdForSub, c.nome_completo)} className="h-6 px-2 text-[9px] text-slate-500">
                         <Download className="h-3 w-3 mr-1" /> CSV
@@ -862,7 +862,7 @@ export default function QAClientesPage() {
                 {/* GTEs */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-[9px] text-[#c43b52] uppercase tracking-[0.12em] font-semibold">GTEs ({gtes.length})</span>
+                    <span className="text-[9px] text-blue-600 uppercase tracking-[0.12em] font-semibold">GTEs ({gtes.length})</span>
                     <div className="flex gap-1">
                       <Button variant="ghost" size="sm" onClick={() => exportGtes(clienteIdForSub, c.nome_completo)} className="h-6 px-2 text-[9px] text-slate-500">
                         <Download className="h-3 w-3 mr-1" /> CSV
@@ -894,7 +894,7 @@ export default function QAClientesPage() {
               {/* CR */}
               <TabsContent value="cr" className="mt-3">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-[9px] text-[#c43b52] uppercase tracking-[0.12em] font-semibold">Certificado de Registro</span>
+                  <span className="text-[9px] text-blue-600 uppercase tracking-[0.12em] font-semibold">Certificado de Registro</span>
                   <div className="flex gap-1">
                     {cadastro && (
                       <Button variant="ghost" size="sm" onClick={() => exportCr(clienteIdForSub, c.nome_completo)} className="h-6 px-2 text-[9px] text-slate-500">

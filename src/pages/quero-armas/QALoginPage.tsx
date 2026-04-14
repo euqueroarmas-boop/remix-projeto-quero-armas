@@ -58,8 +58,8 @@ export default function QALoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-[#7a1528]/20 border border-[#7a1528]/30 mb-4">
-            <Shield className="h-6 w-6 text-[#c43b52]" />
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-slate-800/20 border border-slate-300/30 mb-4">
+            <Shield className="h-6 w-6 text-blue-600" />
           </div>
           <h1 className="text-xl font-bold text-slate-800 tracking-tight">Quero Armas</h1>
           <p className="text-[11px] text-slate-400 mt-1 tracking-wider uppercase">Acesso Restrito</p>
@@ -84,12 +84,12 @@ export default function QALoginPage() {
               placeholder="••••••••"
             />
           </div>
-          <Button type="submit" disabled={loading} className="w-full bg-[#7a1528] hover:bg-[#a52338] text-white border-0 h-10 text-sm font-medium transition-all active:scale-[0.98]">
+          <Button type="submit" disabled={loading} className="w-full bg-slate-800 hover:bg-slate-900 text-white border-0 h-10 text-sm font-medium transition-all active:scale-[0.98]">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Entrar"}
           </Button>
           <div className="text-center pt-1">
             <button type="button" onClick={handleForgotPassword}
-              className="text-[10px] text-slate-400 hover:text-[#c43b52] transition-colors">
+              className="text-[10px] text-slate-400 hover:text-blue-600 transition-colors">
               Esqueci minha senha
             </button>
           </div>
