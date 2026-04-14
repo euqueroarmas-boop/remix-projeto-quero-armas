@@ -26,6 +26,10 @@ interface Stats {
   novosCadastros: number;
 }
 
+interface DayCount { day: string; total: number }
+interface MonthCount { month: string; total: number }
+interface ServicoCount { name: string; value: number }
+
 interface RecentItem {
   id: string;
   titulo: string;
@@ -83,6 +87,9 @@ export default function QADashboardPage() {
   const [novosCadastros, setNovosCadastros] = useState<NovoCadastro[]>([]);
   const [recentPecas, setRecentPecas] = useState<RecentItem[]>([]);
   const [recentDocs, setRecentDocs] = useState<RecentItem[]>([]);
+  const [cadastrosPorDia, setCadastrosPorDia] = useState<DayCount[]>([]);
+  const [cadastrosPorMes, setCadastrosPorMes] = useState<MonthCount[]>([]);
+  const [servicosDistrib, setServicosDistrib] = useState<ServicoCount[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -118,6 +125,47 @@ export default function QADashboardPage() {
         id: r.id, titulo: r.titulo || "Sem título",
         tipo: r.tipo_documento, created_at: r.created_at, status: r.status_processamento,
       })));
+
+      // Fetch cadastros por dia e mês + serviços
+      const { data: allCadastros } = await supabase
+        .from("qa_cadastro_publico" as any)
+        .select("created_at, servico_interesse")
+        .order("created_at", { ascending: true });
+
+      if (allCadastros && allCadastros.length > 0) {
+        // Por dia (últimos 14 dias)
+        const dayMap: Record<string, number> = {};
+        const monthMap: Record<string, number> = {};
+        const servicoMap: Record<string, number> = {};
+        const now = new Date();
+        const fourteenDaysAgo = new Date(now);
+        fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 13);
+
+        (allCadastros as any[]).forEach((c: any) => {
+          const d = new Date(c.created_at);
+          const dayKey = d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+          const monthKey = d.toLocaleDateString("pt-BR", { month: "short", year: "2-digit" });
+          if (d >= fourteenDaysAgo) {
+            dayMap[dayKey] = (dayMap[dayKey] || 0) + 1;
+          }
+          monthMap[monthKey] = (monthMap[monthKey] || 0) + 1;
+          const serv = (c as any).servico_interesse || "Não informado";
+          servicoMap[serv] = (servicoMap[serv] || 0) + 1;
+        });
+
+        // Fill missing days
+        const dayData: DayCount[] = [];
+        for (let i = 0; i < 14; i++) {
+          const dt = new Date(fourteenDaysAgo);
+          dt.setDate(dt.getDate() + i);
+          const key = dt.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+          dayData.push({ day: key, total: dayMap[key] || 0 });
+        }
+        setCadastrosPorDia(dayData);
+        setCadastrosPorMes(Object.entries(monthMap).map(([month, total]) => ({ month, total })));
+        setServicosDistrib(Object.entries(servicoMap).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value));
+      }
+
       setLoading(false);
     };
     load();
@@ -256,7 +304,93 @@ export default function QADashboardPage() {
         </div>
       )}
 
-      {/* Charts Row */}
+      {/* ── Clientes Novos por Dia ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="qa-card p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-sm font-semibold" style={{ color: "hsl(220 20% 18%)" }}>Clientes Novos por Dia</h3>
+              <p className="text-xs mt-0.5" style={{ color: "hsl(220 10% 62%)" }}>Últimos 14 dias</p>
+            </div>
+          </div>
+          <div className="h-52">
+            {cadastrosPorDia.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={cadastrosPorDia} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(220 13% 93%)" />
+                  <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "hsl(220 10% 62%)" }} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "hsl(220 10% 62%)" }} allowDecimals={false} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Bar dataKey="total" name="Cadastros" fill={COLORS.blue} radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full text-xs text-slate-400">Sem dados</div>
+            )}
+          </div>
+        </div>
+
+        <div className="qa-card p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-sm font-semibold" style={{ color: "hsl(220 20% 18%)" }}>Clientes Novos por Mês</h3>
+              <p className="text-xs mt-0.5" style={{ color: "hsl(220 10% 62%)" }}>Evolução mensal</p>
+            </div>
+          </div>
+          <div className="h-52">
+            {cadastrosPorMes.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={cadastrosPorMes} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="gradCadastrosMes" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={COLORS.green} stopOpacity={0.2} />
+                      <stop offset="95%" stopColor={COLORS.green} stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(220 13% 93%)" />
+                  <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "hsl(220 10% 62%)" }} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "hsl(220 10% 62%)" }} allowDecimals={false} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Area type="monotone" dataKey="total" name="Cadastros" stroke={COLORS.green} fill="url(#gradCadastrosMes)" strokeWidth={2} />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full text-xs text-slate-400">Sem dados</div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Ticket Médio (Distribuição por Serviço) ── */}
+      <div className="qa-card p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-sm font-semibold" style={{ color: "hsl(220 20% 18%)" }}>Comparativo por Serviço de Interesse</h3>
+            <p className="text-xs mt-0.5" style={{ color: "hsl(220 10% 62%)" }}>Distribuição dos cadastros por tipo de serviço</p>
+          </div>
+        </div>
+        <div className="h-56">
+          {servicosDistrib.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={servicosDistrib} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(220 13% 93%)" />
+                <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "hsl(220 10% 62%)" }} allowDecimals={false} />
+                <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "hsl(220 10% 50%)" }} width={140} />
+                <Tooltip content={<CustomTooltip />} />
+                <Bar dataKey="value" name="Cadastros" radius={[0, 4, 4, 0]}>
+                  {servicosDistrib.map((_, i) => (
+                    <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-full text-xs text-slate-400">Sem dados</div>
+          )}
+        </div>
+      </div>
+
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Area Chart - Activity */}
         <div className="lg:col-span-2 qa-card p-5">
