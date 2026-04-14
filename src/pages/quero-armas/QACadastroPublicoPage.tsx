@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useBrasilApiLookup } from "@/hooks/useBrasilApiLookup";
 import {
@@ -524,6 +524,12 @@ function Step1({ form, set, errors, onCpfLookup, cpfLooking, cpfFound }: { form:
               CPF não encontrado no cadastro — preencha manualmente
             </p>
           )}
+        </Field>
+        <Field label="RG">
+          <TextInput value={form.rg} onChange={v => set("rg", v.replace(/[^0-9Xx.\-]/g, "").toUpperCase())} placeholder="00.000.000-X" />
+        </Field>
+        <Field label="Órgão emissor">
+          <TextInput value={form.emissor_rg} onChange={v => set("emissor_rg", v)} placeholder="SSP/SP" />
         </Field>
         <Field label="Data de nascimento">
           <TextInput value={form.data_nascimento} onChange={v => set("data_nascimento", maskDate(v))} placeholder="DD/MM/AAAA" maxLength={10} />
