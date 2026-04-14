@@ -129,13 +129,16 @@ serve(async (req) => {
   try {
     let body: any = {};
     try { body = await req.json(); } catch { /* empty body from cron */ }
+    console.log("[qa-whatsapp-alerts] body received:", JSON.stringify(body));
 
     let items: PendingItem[] = body.items || [];
     const isCron = !body.items || body.source === "cron-daily";
 
     // Se chamada pelo cron ou sem items, buscar do banco
     if (items.length === 0) {
+      console.log("[qa-whatsapp-alerts] No items provided, fetching from DB...");
       items = await fetchPendingItemsFromDB();
+      console.log(`[qa-whatsapp-alerts] Fetched ${items.length} pending items from DB`);
     }
 
     // Default: cron envia ambos; manual respeita o channel
