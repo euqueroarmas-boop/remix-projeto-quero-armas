@@ -165,3 +165,70 @@ export function buildPasswordChangedHtml(opts: { email: string }) {
 export function buildPasswordChangedText(opts: { email: string }) {
   return `WMTi Tecnologia da Informação\n\nA senha da sua conta ${opts.email} no Portal do Cliente WMTi foi alterada com sucesso.\n\nSe você não realizou esta alteração, entre em contato imediatamente com a equipe WMTi pelo telefone (12) 3955-3978.`;
 }
+
+// ── 5. Alerta de serviços pendentes (Quero Armas) ──
+export function buildPendingServicesAlertHtml(opts: {
+  items: Array<{
+    clienteNome: string;
+    servico: string;
+    dias: number;
+    status: string;
+  }>;
+}) {
+  const rows = opts.items.map((item) => {
+    const urgency = item.dias >= 30
+      ? { label: "Vencido", bg: "#FEF2F2", color: "#991B1B" }
+      : item.dias >= 25
+        ? { label: "Urgente", bg: "#FFF7ED", color: "#9A3412" }
+        : item.dias >= 10
+          ? { label: "Atenção", bg: "#FFFBEB", color: "#92400E" }
+          : { label: "No prazo", bg: "#F0FDF4", color: "#166534" };
+
+    return `<tr>
+      <td style="padding:10px 12px;border-bottom:1px solid #E5E7EB;font-size:13px;color:#111827;">${item.clienteNome}</td>
+      <td style="padding:10px 12px;border-bottom:1px solid #E5E7EB;font-size:13px;color:#111827;">${item.servico}</td>
+      <td style="padding:10px 12px;border-bottom:1px solid #E5E7EB;font-size:13px;color:#4B5563;">${item.status}</td>
+      <td style="padding:10px 12px;border-bottom:1px solid #E5E7EB;font-size:13px;color:#111827;text-align:center;font-weight:bold;">${item.dias} dias</td>
+      <td style="padding:10px 12px;border-bottom:1px solid #E5E7EB;text-align:center;">
+        <span style="display:inline-block;background:${urgency.bg};color:${urgency.color};padding:4px 8px;border-radius:999px;font-size:11px;font-weight:bold;">${urgency.label}</span>
+      </td>
+    </tr>`;
+  }).join("");
+
+  return wrapTemplate("Alerta de serviços pendentes", `
+<p style="font-size:16px;color:#1a1a1a;margin:0 0 8px;">Olá!</p>
+<p style="font-size:14px;color:#555;line-height:1.6;margin:0 0 20px;">
+  Identificamos <strong>${opts.items.length} serviço(s)</strong> que requerem acompanhamento no módulo Quero Armas.
+</p>
+<table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #E5E7EB;border-radius:8px;margin:0 0 24px;overflow:hidden;">
+  <thead>
+    <tr style="background:#F9FAFB;">
+      <th style="padding:10px 12px;text-align:left;font-size:11px;color:#6B7280;border-bottom:1px solid #E5E7EB;">CLIENTE</th>
+      <th style="padding:10px 12px;text-align:left;font-size:11px;color:#6B7280;border-bottom:1px solid #E5E7EB;">SERVIÇO</th>
+      <th style="padding:10px 12px;text-align:left;font-size:11px;color:#6B7280;border-bottom:1px solid #E5E7EB;">STATUS</th>
+      <th style="padding:10px 12px;text-align:center;font-size:11px;color:#6B7280;border-bottom:1px solid #E5E7EB;">DIAS</th>
+      <th style="padding:10px 12px;text-align:center;font-size:11px;color:#6B7280;border-bottom:1px solid #E5E7EB;">URGÊNCIA</th>
+    </tr>
+  </thead>
+  <tbody>${rows}</tbody>
+</table>
+<p style="font-size:12px;color:#6B7280;line-height:1.6;margin:0;">
+  Relatório gerado automaticamente pelo módulo Quero Armas.
+</p>`);
+}
+
+export function buildPendingServicesAlertText(opts: {
+  items: Array<{
+    clienteNome: string;
+    servico: string;
+    dias: number;
+    status: string;
+  }>;
+}) {
+  const lines = opts.items.map((item, index) => {
+    const urgency = item.dias >= 30 ? "Vencido" : item.dias >= 25 ? "Urgente" : item.dias >= 10 ? "Atenção" : "No prazo";
+    return `${index + 1}. ${item.clienteNome} | ${item.servico} | ${item.status} | ${item.dias} dias | ${urgency}`;
+  }).join("\n");
+
+  return `WMTi Tecnologia da Informação\n\nAlerta de serviços pendentes\n\nIdentificamos ${opts.items.length} serviço(s) que requerem acompanhamento no módulo Quero Armas.\n\n${lines}\n\nRelatório gerado automaticamente pelo módulo Quero Armas.`;
+}
