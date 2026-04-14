@@ -30,6 +30,7 @@ interface FormData {
   trab_endereco_empresa: string;
   trab_telefone_empresa: string;
   comprovante_endereco_proprio: string;
+  servico_interesse: string;
   consentimento_dados_verdadeiros: boolean;
   consentimento_tratamento_dados: boolean;
 }
@@ -55,6 +56,7 @@ const initialForm: FormData = {
   trab_endereco_empresa: "",
   trab_telefone_empresa: "",
   comprovante_endereco_proprio: "",
+  servico_interesse: "",
   consentimento_dados_verdadeiros: false,
   consentimento_tratamento_dados: false,
 };
