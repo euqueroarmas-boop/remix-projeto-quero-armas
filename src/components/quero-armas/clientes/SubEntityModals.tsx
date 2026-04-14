@@ -279,7 +279,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
 
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="w-[96vw] max-w-lg max-h-[90vh] overflow-hidden bg-[#0e0e0e] border-[#1c1c1c] text-neutral-200 p-0 flex flex-col">
+      <DialogContent className="max-w-md max-h-[85vh] overflow-hidden bg-[#0e0e0e] border-[#1c1c1c] text-neutral-200 p-0 flex flex-col">
         <DialogHeader className="px-4 pt-4 pb-2 border-b border-[#1c1c1c] shrink-0">
           <DialogTitle className="text-sm font-bold">{isEdit ? "Editar Venda" : "Nova Venda"}</DialogTitle>
         </DialogHeader>
