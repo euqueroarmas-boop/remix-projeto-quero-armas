@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   Search, User, Phone, Mail, MapPin, FileText, Shield, ChevronLeft,
   Loader2, Eye, Plus, Crosshair, Edit, Trash2, Download, FileDown,
-  ChevronDown, ChevronUp, Save, X,
+  ChevronDown, ChevronUp, Save, X, CheckCircle,
 } from "lucide-react";
 import { supabase as supabaseClient } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -191,7 +191,7 @@ export default function QAClientesPage() {
     const { data } = await supabase.from("qa_cadastro_publico" as any)
       .select("id, nome_completo, cpf, telefone_principal, email, end1_cidade, end1_estado, servico_interesse, vinculo_tipo, status, created_at")
       .order("created_at", { ascending: false });
-    setCadastrosPublicos((data as CadastroPublico[]) ?? []);
+    setCadastrosPublicos((data as unknown as CadastroPublico[]) ?? []);
   };
 
   const openCadastroPublico = async (cadastroId: string) => {
@@ -210,7 +210,7 @@ export default function QAClientesPage() {
       }
 
       setSelected(null);
-      setSelectedCadastroPublico(data as CadastroPublico);
+      setSelectedCadastroPublico(data as unknown as CadastroPublico);
     } catch (e: any) {
       toast.error(e.message || "Erro ao abrir cadastro público");
     } finally {
@@ -236,7 +236,7 @@ export default function QAClientesPage() {
         return;
       }
 
-      const updated = data as CadastroPublico;
+      const updated = data as unknown as CadastroPublico;
       setSelectedCadastroPublico(updated);
       setCadastrosPublicos(prev => prev.map(item => item.id === updated.id ? { ...item, ...updated } : item));
       toast.success(`Cadastro marcado como ${status}`);
