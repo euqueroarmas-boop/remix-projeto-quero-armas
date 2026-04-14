@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useBrasilApiLookup } from "@/hooks/useBrasilApiLookup";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Loader2, Save } from "lucide-react";
@@ -61,6 +62,20 @@ const formatDateForDatabase = (value: string) => {
 export default function ClienteFormModal({ open, onClose, onSaved, cliente }: ClienteFormModalProps) {
   const isEdit = !!cliente;
   const [saving, setSaving] = useState(false);
+  const { lookupCep, cepLoading } = useBrasilApiLookup();
+
+  const handleCepBlur = useCallback(async (cepValue: string, prefix: "" | "2") => {
+    const result = await lookupCep(cepValue);
+    if (result) {
+      setF(prev => ({
+        ...prev,
+        [`endereco${prefix}`]: result.street || prev[`endereco${prefix}` as keyof typeof prev] || "",
+        [`bairro${prefix}`]: result.neighborhood || prev[`bairro${prefix}` as keyof typeof prev] || "",
+        [`cidade${prefix}`]: result.city || prev[`cidade${prefix}` as keyof typeof prev] || "",
+        [`estado${prefix}`]: result.state || prev[`estado${prefix}` as keyof typeof prev] || "",
+      }));
+    }
+  }, [lookupCep]);
   const [f, setF] = useState({
     nome_completo: "", cpf: "", rg: "", emissor_rg: "", expedicao_rg: "",
     data_nascimento: "", naturalidade: "", nacionalidade: "Brasileira",
@@ -175,7 +190,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
             <FormInput label="Número" value={f.numero} onChange={v => set("numero", v)} />
             <FormInput label="Complemento" value={f.complemento} onChange={v => set("complemento", v)} />
             <FormInput label="Bairro" value={f.bairro} onChange={v => set("bairro", v)} />
-            <FormInput label="CEP" value={f.cep} onChange={v => set("cep", v)} />
+            <FormInput label={cepLoading ? "CEP ⏳" : "CEP"} value={f.cep} onChange={v => set("cep", v)} onBlur={() => handleCepBlur(f.cep, "")} />
           </FormGrid>
           <FormGrid cols={3} className="mt-2">
             <FormInput label="Cidade" value={f.cidade} onChange={v => set("cidade", v)} />
@@ -190,7 +205,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
             <FormInput label="Número" value={f.numero2} onChange={v => set("numero2", v)} />
             <FormInput label="Complemento" value={f.complemento2} onChange={v => set("complemento2", v)} />
             <FormInput label="Bairro" value={f.bairro2} onChange={v => set("bairro2", v)} />
-            <FormInput label="CEP" value={f.cep2} onChange={v => set("cep2", v)} />
+            <FormInput label={cepLoading ? "CEP ⏳" : "CEP"} value={f.cep2} onChange={v => set("cep2", v)} onBlur={() => handleCepBlur(f.cep2, "2")} />
           </FormGrid>
           <FormGrid cols={3} className="mt-2">
             <FormInput label="Cidade" value={f.cidade2} onChange={v => set("cidade2", v)} />

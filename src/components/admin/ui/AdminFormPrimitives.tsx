@@ -61,22 +61,26 @@ export function FormInput({
   label,
   value,
   onChange,
+  onBlur,
   type = "text",
   span,
   placeholder,
   inputMode,
   maxLength,
   autoComplete,
+  disabled,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
+  onBlur?: () => void;
   type?: string;
   span?: "full";
   placeholder?: string;
   inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
   maxLength?: number;
   autoComplete?: string;
+  disabled?: boolean;
 }) {
   return (
     <FieldWrapper label={label} span={span}>
@@ -84,10 +88,12 @@ export function FormInput({
         type={type}
         value={value}
         onChange={e => onChange(e.target.value)}
+        onBlur={onBlur}
         placeholder={placeholder}
         inputMode={inputMode}
         maxLength={maxLength}
         autoComplete={autoComplete}
+        disabled={disabled}
         className={cn(fieldH, "text-xs")}
       />
     </FieldWrapper>

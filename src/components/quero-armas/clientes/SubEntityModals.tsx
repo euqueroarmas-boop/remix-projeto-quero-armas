@@ -369,6 +369,81 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
     </Dialog>
   );
 }
+// ─── Filiação Modal ───
+interface FiliacaoModalProps {
+  open: boolean; onClose: () => void; onSaved: () => void;
+  clienteId: number; filiacao?: any;
+}
+export function FiliacaoModal({ open, onClose, onSaved, clienteId, filiacao }: FiliacaoModalProps) {
+  const isEdit = !!filiacao;
+  const [saving, setSaving] = useState(false);
+  const [clubes, setClubes] = useState<{ id: number; nome_clube: string }[]>([]);
+  const [f, setF] = useState({ clube_id: "", numero_filiacao: "", validade_filiacao: "", nome_filiacao: "FILIACAO" });
+
+  useEffect(() => {
+    supabase.from("qa_clubes" as any).select("id, nome_clube").order("nome_clube").then(({ data }) => {
+      setClubes((data as any[]) ?? []);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (filiacao) setF({
+      clube_id: String(filiacao.clube_id || ""),
+      numero_filiacao: filiacao.numero_filiacao || "",
+      validade_filiacao: filiacao.validade_filiacao || "",
+      nome_filiacao: filiacao.nome_filiacao || "FILIACAO",
+    });
+    else setF({ clube_id: "", numero_filiacao: "", validade_filiacao: "", nome_filiacao: "FILIACAO" });
+  }, [filiacao, open]);
+
+  const save = async () => {
+    if (!f.clube_id) { toast.error("Selecione um clube"); return; }
+    setSaving(true);
+    try {
+      const payload = { ...f, clube_id: Number(f.clube_id), cliente_id: clienteId };
+      if (isEdit) {
+        const { error } = await supabase.from("qa_filiacoes" as any).update(payload).eq("id", filiacao.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("qa_filiacoes" as any).insert(payload);
+        if (error) throw error;
+      }
+      toast.success(isEdit ? "Filiação atualizada" : "Filiação cadastrada");
+      onSaved(); onClose();
+    } catch (e: any) { toast.error(e.message); } finally { setSaving(false); }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={v => !v && onClose()}>
+      <DialogContent className="max-w-md bg-[#0e0e0e] border-[#1c1c1c] text-neutral-200">
+        <DialogHeader><DialogTitle className="text-sm">{isEdit ? "Editar Filiação" : "Nova Filiação"}</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <label className="text-[9px] text-neutral-500 uppercase tracking-wider mb-1 block">Clube de Tiro *</label>
+            <Select value={f.clube_id} onValueChange={v => setF(p => ({ ...p, clube_id: v }))}>
+              <SelectTrigger className="h-7 text-[11px] bg-[#0a0a0a] border-[#1c1c1c] text-neutral-200"><SelectValue placeholder="Selecionar clube" /></SelectTrigger>
+              <SelectContent>
+                {clubes.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.nome_clube}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex gap-2">
+            <Inp label="Nº Filiação" value={f.numero_filiacao} onChange={v => setF(p => ({ ...p, numero_filiacao: v }))} />
+            <Inp label="Validade" value={f.validade_filiacao} onChange={v => setF(p => ({ ...p, validade_filiacao: v }))} type="date" />
+          </div>
+          <Inp label="Tipo" value={f.nome_filiacao} onChange={v => setF(p => ({ ...p, nome_filiacao: v }))} />
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="ghost" size="sm" onClick={onClose} className="text-[11px] h-7">Cancelar</Button>
+            <Button size="sm" onClick={save} disabled={saving} className="bg-[#7a1528] hover:bg-[#9a1b32] text-[11px] h-7">
+              {saving ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Save className="h-3 w-3 mr-1" />} Salvar
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ─── Delete confirmation ───
 interface DeleteConfirmProps {
   open: boolean; onClose: () => void; onConfirm: () => void;
