@@ -178,12 +178,12 @@ export default function QAClientesPage() {
     return !s || c.nome_completo?.toLowerCase().includes(s) || c.cpf?.includes(s) || c.email?.toLowerCase().includes(s);
   });
 
-  const statusColor = (s: string) => s === "ATIVO" ? "text-emerald-400" : s === "DESISTENTE" ? "text-red-400" : "text-amber-400";
+  const statusColor = (s: string) => s === "ATIVO" ? "text-emerald-600" : s === "DESISTENTE" ? "text-red-600" : "text-amber-600";
   const svcStatusColor = (s: string) => {
-    if (s === "DEFERIDO" || s === "CONCLUÍDO") return "text-emerald-400 bg-emerald-500/10";
-    if (s === "INDEFERIDO") return "text-red-400 bg-red-500/10";
-    if (s === "EM ANÁLISE" || s === "PRONTO PARA ANÁLISE") return "text-amber-400 bg-amber-500/10";
-    return "text-neutral-400 bg-neutral-500/10";
+    if (s === "DEFERIDO" || s === "CONCLUÍDO") return "text-emerald-700 bg-emerald-50";
+    if (s === "INDEFERIDO") return "text-red-700 bg-red-50";
+    if (s === "EM ANÁLISE" || s === "PRONTO PARA ANÁLISE") return "text-amber-700 bg-amber-50";
+    return "text-slate-600 bg-slate-100";
   };
   const formatDate = (d: string | null) => { if (!d) return "—"; try { return new Date(d).toLocaleDateString("pt-BR"); } catch { return d; } };
   const getServicoNome = (id: number) => {
@@ -200,44 +200,44 @@ export default function QAClientesPage() {
       <div className="space-y-4">
         {/* Header */}
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={() => setSelected(null)} className="text-neutral-500 hover:text-neutral-200 h-7 px-2">
+          <Button variant="ghost" size="sm" onClick={() => setSelected(null)} className="text-slate-500 hover:text-slate-700 h-8 px-2">
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <div className="flex-1 min-w-0">
-            <h1 className="text-sm font-bold text-neutral-100 truncate">{c.nome_completo}</h1>
-            <div className="flex items-center gap-2 text-[10px]">
+            <h1 className="text-base font-semibold text-slate-800 truncate">{c.nome_completo}</h1>
+            <div className="flex items-center gap-2 text-xs">
               <span className={statusColor(c.status)}>{c.status}</span>
-              <span className="text-neutral-600">•</span>
-              <span className="text-neutral-500">CPF: {c.cpf || "—"}</span>
-              {c.cliente_lions && <span className="text-amber-400">🦁 Lions</span>}
+              <span className="text-slate-300">•</span>
+              <span className="text-slate-500">CPF: {c.cpf || "—"}</span>
+              {c.cliente_lions && <span className="text-amber-500">🦁 Lions</span>}
             </div>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => { setEditingCliente(c); setClienteModal(true); }} className="h-7 px-2 text-neutral-500 hover:text-neutral-200">
-            <Edit className="h-3.5 w-3.5" />
+          <Button variant="ghost" size="sm" onClick={() => { setEditingCliente(c); setClienteModal(true); }} className="h-8 px-2 text-slate-500 hover:text-slate-700">
+            <Edit className="h-4 w-4" />
           </Button>
         </div>
 
         <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="bg-[#0e0e0e] border border-[#1c1c1c] h-8 w-full flex-wrap">
-            <TabsTrigger value="dados" className="text-[10px] flex-1 data-[state=active]:bg-[#7a1528]/30 data-[state=active]:text-neutral-100">
-              <User className="h-3 w-3 mr-1" /> Dados
+          <TabsList className="bg-white border border-slate-200 h-9 w-full flex-wrap rounded-xl shadow-sm">
+            <TabsTrigger value="dados" className="text-xs flex-1 data-[state=active]:bg-slate-800 data-[state=active]:text-white rounded-lg">
+              <User className="h-3.5 w-3.5 mr-1" /> Dados
             </TabsTrigger>
-            <TabsTrigger value="servicos" className="text-[10px] flex-1 data-[state=active]:bg-[#7a1528]/30 data-[state=active]:text-neutral-100">
-              <FileText className="h-3 w-3 mr-1" /> Serviços ({itens.length})
+            <TabsTrigger value="servicos" className="text-xs flex-1 data-[state=active]:bg-slate-800 data-[state=active]:text-white rounded-lg">
+              <FileText className="h-3.5 w-3.5 mr-1" /> Serviços ({itens.length})
             </TabsTrigger>
-            <TabsTrigger value="armas" className="text-[10px] flex-1 data-[state=active]:bg-[#7a1528]/30 data-[state=active]:text-neutral-100">
-              <Crosshair className="h-3 w-3 mr-1" /> Armas ({crafs.length + gtes.length})
+            <TabsTrigger value="armas" className="text-xs flex-1 data-[state=active]:bg-slate-800 data-[state=active]:text-white rounded-lg">
+              <Crosshair className="h-3.5 w-3.5 mr-1" /> Armas ({crafs.length + gtes.length})
             </TabsTrigger>
-            <TabsTrigger value="cr" className="text-[10px] flex-1 data-[state=active]:bg-[#7a1528]/30 data-[state=active]:text-neutral-100">
-              <Shield className="h-3 w-3 mr-1" /> CR
+            <TabsTrigger value="cr" className="text-xs flex-1 data-[state=active]:bg-slate-800 data-[state=active]:text-white rounded-lg">
+              <Shield className="h-3.5 w-3.5 mr-1" /> CR
             </TabsTrigger>
-            <TabsTrigger value="docs" className="text-[10px] flex-1 data-[state=active]:bg-[#7a1528]/30 data-[state=active]:text-neutral-100">
-              <FileDown className="h-3 w-3 mr-1" /> Docs
+            <TabsTrigger value="docs" className="text-xs flex-1 data-[state=active]:bg-slate-800 data-[state=active]:text-white rounded-lg">
+              <FileDown className="h-3.5 w-3.5 mr-1" /> Docs
             </TabsTrigger>
           </TabsList>
 
           {loadingSub ? (
-            <div className="flex justify-center py-12"><Loader2 className="h-5 w-5 animate-spin text-neutral-600" /></div>
+            <div className="flex justify-center py-12"><Loader2 className="h-5 w-5 animate-spin text-slate-400" /></div>
           ) : (
             <>
               {/* DADOS */}
@@ -534,44 +534,44 @@ export default function QAClientesPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-sm font-bold text-neutral-100">Clientes</h1>
-          <p className="text-[10px] text-neutral-600">{clientes.length} cadastrados</p>
+          <h1 className="text-lg font-semibold text-slate-800">Clientes</h1>
+          <p className="text-xs text-slate-500">{clientes.length} cadastrados</p>
         </div>
-        <div className="flex gap-1">
-          <Button variant="ghost" size="sm" onClick={exportClientes} className="h-7 px-2 text-[10px] text-neutral-500">
-            <Download className="h-3 w-3 mr-1" /> CSV
+        <div className="flex gap-2">
+          <Button variant="ghost" size="sm" onClick={exportClientes} className="h-8 px-3 text-xs text-slate-500 hover:text-slate-700">
+            <Download className="h-3.5 w-3.5 mr-1" /> CSV
           </Button>
-          <Button size="sm" onClick={() => { setEditingCliente(null); setClienteModal(true); }} className="h-7 px-2 text-[10px] bg-[#7a1528] hover:bg-[#9a1b32]">
-            <Plus className="h-3 w-3 mr-1" /> Novo Cliente
+          <Button size="sm" onClick={() => { setEditingCliente(null); setClienteModal(true); }} className="h-8 px-3 text-xs qa-btn-primary">
+            <Plus className="h-3.5 w-3.5 mr-1" /> Novo Cliente
           </Button>
         </div>
       </div>
 
       <div className="relative">
-        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-600" />
-        <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por nome, CPF ou email..." className="pl-8 h-8 text-[11px] bg-[#0a0a0a] border-[#1c1c1c] text-neutral-200" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+        <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por nome, CPF ou email..." className="pl-9 h-10 text-sm bg-white border-slate-200 text-slate-700 placeholder:text-slate-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded-xl shadow-sm" />
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-12"><Loader2 className="h-5 w-5 animate-spin text-neutral-600" /></div>
+        <div className="flex justify-center py-12"><Loader2 className="h-5 w-5 animate-spin text-slate-400" /></div>
       ) : (
         <ScrollArea className="h-[calc(100vh-200px)]">
           <div className="space-y-1">
             {filtered.map(c => (
-              <button key={c.id} onClick={() => openClient(c)} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[#141414] transition-colors text-left group">
-                <div className="w-8 h-8 rounded-full bg-[#7a1528]/15 flex items-center justify-center shrink-0">
-                  <User className="h-3.5 w-3.5 text-[#c43b52]" />
+              <button key={c.id} onClick={() => openClient(c)} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-200/80 transition-all text-left group">
+                <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
+                  <User className="h-4 w-4 text-slate-500" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-[11px] text-neutral-200 font-medium truncate">{c.nome_completo}</div>
-                  <div className="flex items-center gap-2 text-[9px] text-neutral-600">
+                  <div className="text-sm text-slate-800 font-medium truncate">{c.nome_completo}</div>
+                  <div className="flex items-center gap-2 text-xs text-slate-500">
                     <span>{c.cpf || "—"}</span><span>•</span><span>{c.cidade || "—"}/{c.estado || "—"}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  {c.cliente_lions && <span className="text-[9px] text-amber-400">🦁</span>}
-                  <span className={`text-[9px] font-mono ${statusColor(c.status)}`}>{c.status}</span>
-                  <Eye className="h-3 w-3 text-neutral-700 group-hover:text-neutral-400 transition-colors" />
+                  {c.cliente_lions && <span className="text-xs">🦁</span>}
+                  <span className={`text-xs font-medium ${statusColor(c.status)}`}>{c.status}</span>
+                  <Eye className="h-3.5 w-3.5 text-slate-300 group-hover:text-slate-500 transition-colors" />
                 </div>
               </button>
             ))}
@@ -587,8 +587,8 @@ export default function QAClientesPage() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <div className="text-[9px] text-[#c43b52] uppercase tracking-[0.12em] mb-1.5 font-semibold">{title}</div>
-      <div className="space-y-1">{children}</div>
+      <div className="text-[10px] text-blue-600 uppercase tracking-[0.12em] mb-2 font-semibold">{title}</div>
+      <div className="space-y-1.5">{children}</div>
     </div>
   );
 }
@@ -602,17 +602,17 @@ function Field({ label, value, icon: Icon, copyable }: { label: string; value?: 
     }
   };
   return (
-    <div className={`flex items-start gap-2 text-[10px] ${copyable && value ? "cursor-pointer active:opacity-60" : ""}`} onClick={copyable ? handleCopy : undefined}>
-      {Icon && <Icon className="h-3 w-3 text-neutral-600 mt-0.5 shrink-0" />}
-      <span className="text-neutral-600 min-w-[80px] shrink-0">{label}:</span>
-      <span className="text-neutral-200 font-medium">{value || "—"}</span>
-      {copyable && value && <span className="text-neutral-600 text-[8px] ml-auto">📋</span>}
+    <div className={`flex items-start gap-2 text-xs ${copyable && value ? "cursor-pointer active:opacity-60" : ""}`} onClick={copyable ? handleCopy : undefined}>
+      {Icon && <Icon className="h-3.5 w-3.5 text-slate-400 mt-0.5 shrink-0" />}
+      <span className="text-slate-500 min-w-[80px] shrink-0">{label}:</span>
+      <span className="text-slate-800 font-medium">{value || "—"}</span>
+      {copyable && value && <span className="text-slate-400 text-[9px] ml-auto">📋</span>}
     </div>
   );
 }
 
 function Empty({ text }: { text: string }) {
-  return <div className="text-center py-8 text-neutral-600 text-[11px]">{text}</div>;
+  return <div className="text-center py-8 text-slate-400 text-xs">{text}</div>;
 }
 
 const TEMPLATES = [
