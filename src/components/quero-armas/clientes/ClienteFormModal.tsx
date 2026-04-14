@@ -27,6 +27,37 @@ const statusOptions = [
   { value: "DESISTENTE", label: "Desistente" },
 ];
 
+const formatDateForDisplay = (value: string) => {
+  if (!value) return "";
+  const isoDate = value.slice(0, 10);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) {
+    const [year, month, day] = isoDate.split("-");
+    return `${day}/${month}/${year}`;
+  }
+  return value;
+};
+
+const normalizeDateInput = (value: string) => {
+  if (!value) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return formatDateForDisplay(value);
+
+  const digits = value.replace(/\D/g, "").slice(0, 8);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+};
+
+const formatDateForDatabase = (value: string) => {
+  if (!value) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+
+  const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!match) return value;
+
+  const [, day, month, year] = match;
+  return `${year}-${month}-${day}`;
+};
+
 export default function ClienteFormModal({ open, onClose, onSaved, cliente }: ClienteFormModalProps) {
   const isEdit = !!cliente;
   const [saving, setSaving] = useState(false);
@@ -45,8 +76,8 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
       setF({
         nome_completo: cliente.nome_completo || "",
         cpf: cliente.cpf || "", rg: cliente.rg || "", emissor_rg: cliente.emissor_rg || "",
-        expedicao_rg: cliente.expedicao_rg || "",
-        data_nascimento: cliente.data_nascimento || "", naturalidade: cliente.naturalidade || "",
+        expedicao_rg: formatDateForDisplay(cliente.expedicao_rg || ""),
+        data_nascimento: formatDateForDisplay(cliente.data_nascimento || ""), naturalidade: cliente.naturalidade || "",
         nacionalidade: cliente.nacionalidade || "Brasileira",
         nome_mae: cliente.nome_mae || "", nome_pai: cliente.nome_pai || "",
         estado_civil: cliente.estado_civil || "", profissao: cliente.profissao || "",
@@ -74,7 +105,11 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     if (!f.nome_completo.trim()) { toast.error("Nome completo é obrigatório"); return; }
     setSaving(true);
     try {
-      const payload: any = { ...f };
+      const payload: any = {
+        ...f,
+        expedicao_rg: formatDateForDatabase(f.expedicao_rg),
+        data_nascimento: formatDateForDatabase(f.data_nascimento),
+      };
       if (isEdit) {
         const { error } = await supabase.from("qa_clientes" as any).update(payload).eq("id", cliente.id);
         if (error) throw error;
@@ -109,8 +144,8 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
             <FormInput label="CPF" value={f.cpf} onChange={v => set("cpf", v)} />
             <FormInput label="RG" value={f.rg} onChange={v => set("rg", v)} />
             <FormInput label="Emissor RG" value={f.emissor_rg} onChange={v => set("emissor_rg", v)} />
-            <FormInput label="Expedição RG" value={f.expedicao_rg} onChange={v => set("expedicao_rg", v)} type="date" />
-            <FormInput label="Nascimento" value={f.data_nascimento} onChange={v => set("data_nascimento", v)} type="date" />
+            <FormInput label="Expedição RG" value={f.expedicao_rg} onChange={v => set("expedicao_rg", normalizeDateInput(v))} placeholder="DD/MM/AAAA" inputMode="numeric" maxLength={10} autoComplete="off" />
+            <FormInput label="Nascimento" value={f.data_nascimento} onChange={v => set("data_nascimento", normalizeDateInput(v))} placeholder="DD/MM/AAAA" inputMode="numeric" maxLength={10} autoComplete="bday" />
             <FormInput label="Naturalidade" value={f.naturalidade} onChange={v => set("naturalidade", v)} />
             <FormInput label="Nacionalidade" value={f.nacionalidade} onChange={v => set("nacionalidade", v)} />
             <FormSelect label="Estado Civil" value={f.estado_civil} onValueChange={v => set("estado_civil", v)} options={estadoCivilOptions} />
