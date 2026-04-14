@@ -157,6 +157,17 @@ export default function QARelatoriosPage() {
   const [editForm, setEditForm] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
+  const [sortCol, setSortCol] = useState<"cliente" | "servico" | "status" | "dias">("dias");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+
+  const toggleSort = (col: typeof sortCol) => {
+    if (sortCol === col) {
+      setSortDir(d => d === "asc" ? "desc" : "asc");
+    } else {
+      setSortCol(col);
+      setSortDir(col === "dias" ? "desc" : "asc");
+    }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -202,22 +213,30 @@ export default function QARelatoriosPage() {
           urgency: getUrgency(dias),
         } as PendingItem;
       })
-      .filter(Boolean)
-      .sort((a, b) => b!.diasPendente - a!.diasPendente) as PendingItem[];
+      .filter(Boolean) as PendingItem[];
   }, [itens, vendaMap, clienteMap, servicoMap]);
 
   const filteredPendingItems = useMemo(() => {
-    if (!search.trim()) return pendingItems;
-    const s = search.toLowerCase().replace(/[.\-\/]/g, "");
-    return pendingItems.filter(item => {
-      const nome = (item.clienteNome || "").toLowerCase();
-      const email = (item.clienteEmail || "").toLowerCase();
-      const celular = (item.clienteCelular || "").replace(/\D/g, "");
-      const cpf = (item.clienteCpf || "").replace(/\D/g, "");
-      const servico = (item.servicoNome || "").toLowerCase();
-      return nome.includes(s) || email.includes(s) || celular.includes(s) || cpf.includes(s) || servico.includes(s);
+    let list = pendingItems;
+    if (search.trim()) {
+      const s = search.toLowerCase().replace(/[.\-\/]/g, "");
+      list = list.filter(item => {
+        const nome = (item.clienteNome || "").toLowerCase();
+        const email = (item.clienteEmail || "").toLowerCase();
+        const celular = (item.clienteCelular || "").replace(/\D/g, "");
+        const cpf = (item.clienteCpf || "").replace(/\D/g, "");
+        const servico = (item.servicoNome || "").toLowerCase();
+        return nome.includes(s) || email.includes(s) || celular.includes(s) || cpf.includes(s) || servico.includes(s);
+      });
+    }
+    const dir = sortDir === "asc" ? 1 : -1;
+    return [...list].sort((a, b) => {
+      if (sortCol === "cliente") return dir * a.clienteNome.localeCompare(b.clienteNome, "pt-BR");
+      if (sortCol === "servico") return dir * a.servicoNome.localeCompare(b.servicoNome, "pt-BR");
+      if (sortCol === "status") return dir * a.status.localeCompare(b.status, "pt-BR");
+      return dir * (a.diasPendente - b.diasPendente);
     });
-  }, [pendingItems, search]);
+  }, [pendingItems, search, sortCol, sortDir]);
 
   const handleExpand = useCallback((itemId: number) => {
     if (expandedId === itemId) {
@@ -494,10 +513,25 @@ export default function QARelatoriosPage() {
           {/* Table */}
           <div className="bg-white border border-slate-200/80 rounded-xl overflow-hidden shadow-sm">
             <div className="grid grid-cols-[1fr_1fr_160px_50px_60px] gap-3 px-4 py-3 border-b border-slate-100 text-[11px] text-slate-500 uppercase tracking-wider font-medium bg-slate-50/80">
-              <span>Cliente</span>
-              <span>Serviço</span>
-              <span className="text-right">Status</span>
-              <span className="text-right">Dias</span>
+              {([
+                { col: "cliente" as const, label: "Cliente", align: "" },
+                { col: "servico" as const, label: "Serviço", align: "" },
+                { col: "status" as const, label: "Status", align: "text-right" },
+                { col: "dias" as const, label: "Dias", align: "text-right" },
+              ] as const).map(h => (
+                <button
+                  key={h.col}
+                  onClick={() => toggleSort(h.col)}
+                  className={`flex items-center gap-1 ${h.align} hover:text-slate-700 transition-colors cursor-pointer select-none ${h.align === "text-right" ? "justify-end" : ""}`}
+                >
+                  {h.label}
+                  {sortCol === h.col ? (
+                    sortDir === "asc" ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />
+                  ) : (
+                    <ChevronDown className="h-3 w-3 opacity-30" />
+                  )}
+                </button>
+              ))}
               <span className="text-right">Urgência</span>
             </div>
             <div className="max-h-[600px] overflow-y-auto">
