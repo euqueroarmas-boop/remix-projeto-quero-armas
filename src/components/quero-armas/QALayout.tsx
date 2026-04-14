@@ -1,7 +1,27 @@
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { QASidebar } from "./QASidebar";
 import { Outlet, Navigate } from "react-router-dom";
 import { useQAAuth } from "./hooks/useQAAuth";
+import { PanelLeft } from "lucide-react";
+
+function DesktopToggle() {
+  const { toggleSidebar, state } = useSidebar();
+  return (
+    <button
+      onClick={toggleSidebar}
+      className="hidden md:flex h-8 w-8 items-center justify-center rounded-lg transition-colors"
+      style={{
+        color: "hsl(220 10% 55%)",
+        background: "transparent",
+      }}
+      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "hsl(220 14% 93%)"; }}
+      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+      title={state === "collapsed" ? "Expandir menu" : "Recolher menu"}
+    >
+      <PanelLeft className="h-4 w-4" />
+    </button>
+  );
+}
 
 export default function QALayout() {
   const { user, profile, loading } = useQAAuth();
@@ -22,14 +42,14 @@ export default function QALayout() {
   }
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={false}>
       <div className="min-h-screen flex w-full qa-premium">
         <QASidebar perfil={profile.perfil} nome={profile.nome} />
         <div className="flex-1 flex flex-col min-w-0">
-          {/* Minimal header - only sidebar trigger on mobile */}
-          <header className="h-10 flex items-center px-3 shrink-0 md:hidden"
+          <header className="h-10 flex items-center gap-1 px-3 shrink-0"
             style={{ background: "hsl(220 20% 97%)" }}>
             <SidebarTrigger className="h-8 w-8 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors" />
+            <DesktopToggle />
           </header>
 
           <main className="flex-1 overflow-auto p-3 md:p-6 lg:p-8"
