@@ -2,11 +2,11 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Loader2, Save, X } from "lucide-react";
+import { Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
 import {
   FormCard, FormHeader, SectionHeader, FormGrid,
-  FormInput, FormSelect, FormTextarea, FormActions, FieldWrapper,
+  FormInput, FormSelect, FormTextarea, FormActions, FormCheckbox,
 } from "@/components/admin/ui/AdminFormPrimitives";
 
 interface ClienteFormModalProps {
@@ -95,7 +95,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
 
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="w-[96vw] max-w-5xl max-h-[92vh] overflow-y-auto bg-[#080808] border-[#1a1a1a] p-4 sm:p-6 md:p-8 rounded-xl">
+      <DialogContent className="w-[96vw] max-w-4xl max-h-[92vh] overflow-y-auto bg-[#080808] border-[#1a1a1a] p-3 sm:p-5 md:p-6 rounded-xl">
         <FormCard>
           <FormHeader
             title={isEdit ? "Editar Cliente" : "Novo Cliente"}
@@ -104,31 +104,19 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
 
           {/* ── Identificação ── */}
           <SectionHeader title="Identificação" className="pt-0" />
-          <FormGrid cols={1}>
+          <FormGrid>
             <FormInput label="Nome Completo *" value={f.nome_completo} onChange={v => set("nome_completo", v)} span="full" />
-          </FormGrid>
-          <FormGrid className="mt-4">
             <FormInput label="CPF" value={f.cpf} onChange={v => set("cpf", v)} />
             <FormInput label="RG" value={f.rg} onChange={v => set("rg", v)} />
-          </FormGrid>
-          <FormGrid className="mt-4">
             <FormInput label="Emissor RG" value={f.emissor_rg} onChange={v => set("emissor_rg", v)} />
             <FormInput label="Expedição RG" value={f.expedicao_rg} onChange={v => set("expedicao_rg", v)} type="date" />
-          </FormGrid>
-          <FormGrid className="mt-4">
             <FormInput label="Nascimento" value={f.data_nascimento} onChange={v => set("data_nascimento", v)} type="date" />
             <FormInput label="Naturalidade" value={f.naturalidade} onChange={v => set("naturalidade", v)} />
-          </FormGrid>
-          <FormGrid className="mt-4">
             <FormInput label="Nacionalidade" value={f.nacionalidade} onChange={v => set("nacionalidade", v)} />
             <FormSelect label="Estado Civil" value={f.estado_civil} onValueChange={v => set("estado_civil", v)} options={estadoCivilOptions} />
-          </FormGrid>
-          <FormGrid className="mt-4">
             <FormInput label="Profissão" value={f.profissao} onChange={v => set("profissao", v)} />
             <FormInput label="Escolaridade" value={f.escolaridade} onChange={v => set("escolaridade", v)} />
-          </FormGrid>
-          <FormGrid cols={1} className="mt-4">
-            <FormInput label="Título de Eleitor" value={f.titulo_eleitor} onChange={v => set("titulo_eleitor", v)} />
+            <FormInput label="Título de Eleitor" value={f.titulo_eleitor} onChange={v => set("titulo_eleitor", v)} span="full" />
           </FormGrid>
 
           {/* ── Filiação ── */}
@@ -149,16 +137,12 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
           <SectionHeader title="Endereço Principal" />
           <FormGrid>
             <FormInput label="Logradouro" value={f.endereco} onChange={v => set("endereco", v)} span="full" />
-          </FormGrid>
-          <FormGrid className="mt-4">
             <FormInput label="Número" value={f.numero} onChange={v => set("numero", v)} />
             <FormInput label="Complemento" value={f.complemento} onChange={v => set("complemento", v)} />
-          </FormGrid>
-          <FormGrid className="mt-4">
             <FormInput label="Bairro" value={f.bairro} onChange={v => set("bairro", v)} />
             <FormInput label="CEP" value={f.cep} onChange={v => set("cep", v)} />
           </FormGrid>
-          <FormGrid cols={3} className="mt-4">
+          <FormGrid cols={3} className="mt-3">
             <FormInput label="Cidade" value={f.cidade} onChange={v => set("cidade", v)} />
             <FormSelect label="UF" value={f.estado} onValueChange={v => set("estado", v)} options={ufOptions} placeholder="UF" />
             <FormInput label="País" value={f.pais} onChange={v => set("pais", v)} />
@@ -168,16 +152,12 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
           <SectionHeader title="Endereço Secundário (opcional)" />
           <FormGrid>
             <FormInput label="Logradouro" value={f.endereco2} onChange={v => set("endereco2", v)} span="full" />
-          </FormGrid>
-          <FormGrid className="mt-4">
             <FormInput label="Número" value={f.numero2} onChange={v => set("numero2", v)} />
             <FormInput label="Complemento" value={f.complemento2} onChange={v => set("complemento2", v)} />
-          </FormGrid>
-          <FormGrid className="mt-4">
             <FormInput label="Bairro" value={f.bairro2} onChange={v => set("bairro2", v)} />
             <FormInput label="CEP" value={f.cep2} onChange={v => set("cep2", v)} />
           </FormGrid>
-          <FormGrid cols={3} className="mt-4">
+          <FormGrid cols={3} className="mt-3">
             <FormInput label="Cidade" value={f.cidade2} onChange={v => set("cidade2", v)} />
             <FormSelect label="UF" value={f.estado2} onValueChange={v => set("estado2", v)} options={ufOptions} placeholder="UF" />
             <FormInput label="País" value={f.pais2} onChange={v => set("pais2", v)} />
@@ -187,19 +167,9 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
           <SectionHeader title="Configurações" />
           <FormGrid>
             <FormSelect label="Status" value={f.status} onValueChange={v => set("status", v)} options={statusOptions} />
-            <FieldWrapper label=" ">
-              <label className="flex items-center gap-2.5 h-9 text-xs sm:text-sm text-neutral-300 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={f.cliente_lions}
-                  onChange={e => set("cliente_lions", e.target.checked)}
-                  className="accent-amber-500 w-4 h-4 rounded"
-                />
-                🦁 Cliente Lions
-              </label>
-            </FieldWrapper>
+            <FormCheckbox label="🦁 Cliente Lions" checked={f.cliente_lions} onChange={v => set("cliente_lions", v)} />
           </FormGrid>
-          <FormGrid cols={1} className="mt-4">
+          <FormGrid cols={1} className="mt-3">
             <FormTextarea label="Observações" value={f.observacao} onChange={v => set("observacao", v)} span="full" />
           </FormGrid>
 
@@ -208,16 +178,16 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
             <Button
               variant="ghost"
               onClick={onClose}
-              className="h-10 px-6 text-xs sm:text-sm text-neutral-400 hover:text-neutral-200 hover:bg-[#1a1a1a] rounded-lg"
+              className="h-9 px-5 text-xs text-neutral-400 hover:text-neutral-200 hover:bg-[#1a1a1a] rounded-md"
             >
               Cancelar
             </Button>
             <Button
               onClick={save}
               disabled={saving}
-              className="h-10 px-8 text-xs sm:text-sm bg-[#7a1528] hover:bg-[#9a1b32] text-white rounded-lg font-medium transition-colors"
+              className="h-9 px-6 text-xs bg-[#7a1528] hover:bg-[#9a1b32] text-white rounded-md font-medium transition-colors"
             >
-              {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <Save className="h-3.5 w-3.5 mr-1.5" />}
               {isEdit ? "Salvar Alterações" : "Cadastrar Cliente"}
             </Button>
           </FormActions>
