@@ -115,6 +115,27 @@ function getUrgency(days: number): PendingItem["urgency"] {
   return "green";
 }
 
+function applyDateMask(raw: string): string {
+  const digits = raw.replace(/\D/g, "").slice(0, 8);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+}
+
+function dateBrToIso(v: string): string | null {
+  if (!v) return null;
+  const m = v.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!m) return null;
+  return `${m[3]}-${m[2]}-${m[1]}`;
+}
+
+function isoToBr(v: string | null): string {
+  if (!v) return "";
+  const m = v.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return v;
+  return `${m[3]}/${m[2]}/${m[1]}`;
+}
+
 const tooltipStyle = {
   background: "white",
   border: "1px solid hsl(220, 13%, 91%)",
