@@ -39,8 +39,11 @@ const maskRg = (v: string | null | undefined): string => {
   return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}-${d.slice(8)}`;
 };
 
+const UF_LIST = ["AC","AL","AM","AP","BA","CE","DF","ES","GO","MA","MG","MS","MT","PA","PB","PE","PI","PR","RJ","RN","RO","RR","RS","SC","SE","SP","TO"];
+
 interface Cliente {
   id: number; id_legado: number; nome_completo: string; cpf: string; rg: string; emissor_rg: string;
+  uf_emissor_rg?: string;
   data_nascimento: string; naturalidade: string; nacionalidade: string; nome_mae: string; nome_pai: string;
   estado_civil: string; profissao: string; email: string; celular: string; endereco: string; numero: string;
   bairro: string; cep: string; cidade: string; estado: string; observacao: string; complemento: string;
@@ -299,6 +302,7 @@ export default function QAClientesPage() {
       cpf: c.cpf || "",
       rg: c.rg || "",
       emissor_rg: c.emissor_rg || "",
+      uf_emissor_rg: (c as any).uf_emissor_rg || "",
       data_nascimento: c.data_nascimento || "",
       estado_civil: c.estado_civil || "",
       nacionalidade: c.nacionalidade || "",
@@ -496,7 +500,7 @@ export default function QAClientesPage() {
                   <Field label="Nome" value={c.nome_completo} />
                   <Field label="CPF" value={formatCpf(c.cpf)} copyable />
                   {cadastro?.senha_gov && <Field label="Senha Gov" value={cadastro.senha_gov} copyable />}
-                  <Field label="RG" value={c.rg ? `${maskRg(c.rg)}${c.emissor_rg ? ` — ${c.emissor_rg}` : ""}` : "—"} />
+                  <Field label="RG" value={c.rg ? `${maskRg(c.rg)}${c.emissor_rg ? ` — ${c.emissor_rg}` : ""}${(c as any).uf_emissor_rg ? `/${(c as any).uf_emissor_rg}` : ""}` : "—"} />
                   <Field label="Nascimento" value={formatDate(c.data_nascimento)} />
                   <Field label="Naturalidade" value={c.naturalidade} />
                   <Field label="Nacionalidade" value={c.nacionalidade} />
@@ -958,9 +962,21 @@ export default function QAClientesPage() {
                     <span className="text-xs shrink-0" style={{ color: "hsl(220 10% 50%)", minWidth: "140px" }}>Órgão Emissor:</span>
                     {editInput("emissor_rg")}
                   </div>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-xs shrink-0" style={{ color: "hsl(220 10% 50%)", minWidth: "140px" }}>UF Emissor:</span>
+                    <select
+                      value={ef.uf_emissor_rg || ""}
+                      onChange={e => setEf("uf_emissor_rg", e.target.value)}
+                      className="flex-1 text-sm font-medium border-b border-slate-300 bg-transparent outline-none focus:border-blue-500 py-0.5 uppercase"
+                      style={{ color: "hsl(220 20% 18%)" }}
+                    >
+                      <option value="">Selecione</option>
+                      {UF_LIST.map(uf => <option key={uf} value={uf}>{uf}</option>)}
+                    </select>
+                  </div>
                 </>
               ) : (
-                <DetailField label="RG" value={c.rg ? `${maskRg(c.rg)}${c.emissor_rg ? ` — ${c.emissor_rg}` : ""}` : null} />
+                <DetailField label="RG" value={c.rg ? `${maskRg(c.rg)}${c.emissor_rg ? ` — ${c.emissor_rg}` : ""}${(c as any).uf_emissor_rg ? `/${(c as any).uf_emissor_rg}` : ""}` : null} />
               )}
               {renderField("Nascimento", "data_nascimento", c.data_nascimento)}
               {renderField("Estado Civil", "estado_civil", c.estado_civil)}
