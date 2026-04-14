@@ -129,7 +129,7 @@ export default function QARelatoriosPage() {
     const [iRes, vRes, cRes, sRes] = await Promise.all([
       supabase.from("qa_itens_venda" as any).select("*"),
       supabase.from("qa_vendas" as any).select("*"),
-      supabase.from("qa_clientes" as any).select("id, nome_completo, celular"),
+      supabase.from("qa_clientes" as any).select("id, nome_completo, celular, email, cpf"),
       supabase.from("qa_servicos" as any).select("id, nome_servico"),
     ]);
     setItens((iRes.data as any[]) || []);
