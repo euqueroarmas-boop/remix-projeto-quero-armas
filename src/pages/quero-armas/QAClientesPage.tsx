@@ -748,6 +748,10 @@ export default function QAClientesPage() {
                                         </div>
                                       ))}
                                     </div>
+                                    {/* Declarações filtradas pelo serviço */}
+                                    <div className="pt-3 border-t border-slate-100">
+                                      <DocumentGenerator cliente={c} nomeServico={getServicoNome(it.servico_id)} />
+                                    </div>
                                   </div>
                                 )}
                               </div>
