@@ -2047,6 +2047,7 @@ export type Database = {
           nacionalidade: string | null
           nome_completo: string
           nome_mae: string | null
+          nome_pai: string | null
           notas_processamento: string | null
           observacoes: string | null
           processado_em: string | null
@@ -2119,6 +2120,7 @@ export type Database = {
           nacionalidade?: string | null
           nome_completo: string
           nome_mae?: string | null
+          nome_pai?: string | null
           notas_processamento?: string | null
           observacoes?: string | null
           processado_em?: string | null
@@ -2191,6 +2193,7 @@ export type Database = {
           nacionalidade?: string | null
           nome_completo?: string
           nome_mae?: string | null
+          nome_pai?: string | null
           notas_processamento?: string | null
           observacoes?: string | null
           processado_em?: string | null
