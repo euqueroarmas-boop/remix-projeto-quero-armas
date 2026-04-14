@@ -205,7 +205,7 @@ export default function QAClientesPage() {
     { key: "data_deferimento", label: "Data Deferimento", type: "date" },
     { key: "data_vencimento", label: "Data Vencimento", type: "date" },
     { key: "numero_processo", label: "Nº Processo", type: "text" },
-    { key: "numero_craf", label: "Nº CRAF", type: "text" },
+    { key: "numero_craf", label: "Nº SIGMA", type: "text" },
     { key: "numero_gte", label: "Nº GTE", type: "text" },
     { key: "numero_cr", label: "Nº CR", type: "text" },
     { key: "numero_posse", label: "Nº Posse", type: "text" },

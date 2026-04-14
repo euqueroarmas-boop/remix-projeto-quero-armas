@@ -230,7 +230,8 @@ export default function QARelatoriosPage() {
     setExpandedId(itemId);
     const form: Record<string, string> = {};
     EDIT_FIELDS.forEach(f => {
-      form[f.key] = (item as any)[f.key] || "";
+      const raw = (item as any)[f.key] || "";
+      form[f.key] = f.type === "date" ? isoToBr(raw) : raw;
     });
     setEditForm(form);
   }, [expandedId, itens]);
@@ -242,7 +243,11 @@ export default function QARelatoriosPage() {
       const updates: Record<string, any> = {};
       EDIT_FIELDS.forEach(f => {
         const val = editForm[f.key]?.trim() || null;
-        updates[f.key] = val;
+        if (f.type === "date") {
+          updates[f.key] = val ? dateBrToIso(val) : null;
+        } else {
+          updates[f.key] = val;
+        }
       });
       updates.data_ultima_atualizacao = new Date().toISOString().slice(0, 10);
       const { error } = await supabase
@@ -560,7 +565,11 @@ export default function QARelatoriosPage() {
                                   <input
                                     type="text"
                                     value={editForm[field.key] || ""}
-                                    onChange={e => setEditForm(prev => ({ ...prev, [field.key]: e.target.value }))}
+                                    onChange={e => {
+                                      const raw = e.target.value;
+                                      const val = field.type === "date" ? applyDateMask(raw) : raw.toUpperCase();
+                                      setEditForm(prev => ({ ...prev, [field.key]: val }));
+                                    }}
                                     placeholder={field.type === "date" ? "DD/MM/AAAA" : "—"}
                                     className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all"
                                   />
