@@ -174,6 +174,19 @@ export default function QARelatoriosPage() {
       .sort((a, b) => b!.diasPendente - a!.diasPendente) as PendingItem[];
   }, [itens, vendaMap, clienteMap, servicoMap]);
 
+  const filteredPendingItems = useMemo(() => {
+    if (!search.trim()) return pendingItems;
+    const s = search.toLowerCase().replace(/[.\-\/]/g, "");
+    return pendingItems.filter(item => {
+      const nome = (item.clienteNome || "").toLowerCase();
+      const email = (item.clienteEmail || "").toLowerCase();
+      const celular = (item.clienteCelular || "").replace(/\D/g, "");
+      const cpf = (item.clienteCpf || "").replace(/\D/g, "");
+      const servico = (item.servicoNome || "").toLowerCase();
+      return nome.includes(s) || email.includes(s) || celular.includes(s) || cpf.includes(s) || servico.includes(s);
+    });
+  }, [pendingItems, search]);
+
   const handleExpand = useCallback((itemId: number) => {
     if (expandedId === itemId) {
       setExpandedId(null);
