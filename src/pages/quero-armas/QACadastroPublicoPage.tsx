@@ -442,10 +442,10 @@ const inputFocusRing = "focus:ring-blue-200 focus:border-blue-400";
 function TextInput({ value, onChange, placeholder, ...rest }: React.InputHTMLAttributes<HTMLInputElement> & { value: string; onChange: (v: string) => void }) {
   return (
     <input
-      className={`${inputClass} ${inputFocusRing}`}
+      className={`${inputClass} ${inputFocusRing} uppercase`}
       style={inputStyle}
       value={value}
-      onChange={e => onChange(e.target.value)}
+      onChange={e => onChange(e.target.value.toUpperCase())}
       placeholder={placeholder}
       {...rest}
     />
