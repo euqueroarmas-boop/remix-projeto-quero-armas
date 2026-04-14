@@ -279,53 +279,39 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
 
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="max-w-md max-h-[85vh] overflow-hidden bg-[#0e0e0e] border-[#1c1c1c] text-neutral-200 p-0 flex flex-col">
-        <DialogHeader className="px-4 pt-4 pb-2 border-b border-[#1c1c1c] shrink-0">
-          <DialogTitle className="text-sm font-bold">{isEdit ? "Editar Venda" : "Nova Venda"}</DialogTitle>
-        </DialogHeader>
-
-        <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4">
-          {/* Data, Pagamento, Status, Processo */}
-          <div className="grid grid-cols-2 gap-2">
+      <DialogContent className="max-w-md bg-[#0e0e0e] border-[#1c1c1c] text-neutral-200">
+        <DialogHeader><DialogTitle className="text-sm">{isEdit ? "Editar Venda" : "Nova Venda"}</DialogTitle></DialogHeader>
+        <div className="space-y-3 max-h-[65vh] overflow-y-auto pr-1">
+          <div className="flex gap-2">
             <Inp label="Data" value={f.data_cadastro} onChange={v => setF(p => ({ ...p, data_cadastro: v }))} type="date" />
+            <Inp label="Nº Processo" value={f.numero_processo} onChange={v => setF(p => ({ ...p, numero_processo: v }))} />
+          </div>
+          <div className="flex gap-2">
             <Inp label="Forma Pagamento" value={f.forma_pagamento} onChange={v => setF(p => ({ ...p, forma_pagamento: v }))} />
-            <div>
+            <div className="flex-1">
               <label className="text-[9px] text-neutral-500 uppercase tracking-wider mb-1 block">Status</label>
               <Select value={f.status} onValueChange={v => setF(p => ({ ...p, status: v }))}>
-                <SelectTrigger className="h-7 text-[11px] bg-[#0a0a0a] border-[#1c1c1c] text-neutral-200"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="h-8 text-[11px] bg-[#0a0a0a] border-[#1c1c1c] text-neutral-200"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {["EM ANÁLISE", "PRONTO PARA ANÁLISE", "À INICIAR", "DEFERIDO", "INDEFERIDO", "CONCLUÍDO", "PAGO"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
-            <Inp label="Nº Processo" value={f.numero_processo} onChange={v => setF(p => ({ ...p, numero_processo: v }))} />
           </div>
 
           {/* Serviços */}
           <div>
             <label className="text-[9px] text-[#c43b52] uppercase tracking-[0.12em] font-bold block mb-1.5">Serviços Contratados</label>
-            <div className="space-y-1 max-h-[200px] overflow-y-auto">
+            <div className="space-y-1 max-h-[180px] overflow-y-auto">
               {servicos.map(svc => {
                 const isChecked = selectedServicos.has(svc.id);
                 const svcData = selectedServicos.get(svc.id);
                 return (
                   <label key={svc.id} className={`flex items-center gap-2 rounded px-2 py-1.5 cursor-pointer transition-colors ${isChecked ? 'bg-[#7a1528]/10 border border-[#7a1528]/30' : 'bg-[#0a0a0a] border border-[#1c1c1c]'}`}>
-                    <input
-                      type="checkbox"
-                      checked={isChecked}
-                      onChange={() => toggleServico(svc)}
-                      className="accent-[#c43b52] h-3 w-3 shrink-0"
-                    />
-                    <span className={`text-[10px] flex-1 min-w-0 ${isChecked ? 'text-neutral-200 font-medium' : 'text-neutral-500'}`}>
-                      {svc.nome_servico}
-                    </span>
+                    <input type="checkbox" checked={isChecked} onChange={() => toggleServico(svc)} className="accent-[#c43b52] h-3 w-3 shrink-0" />
+                    <span className={`text-[10px] flex-1 min-w-0 truncate ${isChecked ? 'text-neutral-200 font-medium' : 'text-neutral-500'}`}>{svc.nome_servico}</span>
                     {isChecked ? (
-                      <Input
-                        type="number"
-                        value={String(svcData?.valor ?? svc.valor_servico)}
-                        onChange={e => updateServicoValor(svc.id, Number(e.target.value) || 0)}
-                        className="h-5 w-16 text-[10px] text-right bg-[#111] border-[#1c1c1c] text-neutral-200 px-1 shrink-0"
-                      />
+                      <Input type="number" value={String(svcData?.valor ?? svc.valor_servico)} onChange={e => updateServicoValor(svc.id, Number(e.target.value) || 0)} className="h-5 w-16 text-[10px] text-right bg-[#111] border-[#1c1c1c] text-neutral-200 px-1 shrink-0" />
                     ) : (
                       <span className="text-[10px] text-neutral-600 font-mono shrink-0">R$ {svc.valor_servico}</span>
                     )}
@@ -343,12 +329,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
             </div>
             <div className="flex justify-between items-center text-[10px]">
               <span className="text-neutral-500">Desconto</span>
-              <Input
-                type="number"
-                value={f.desconto}
-                onChange={e => setF(p => ({ ...p, desconto: e.target.value }))}
-                className="h-5 w-16 text-[10px] text-right bg-[#111] border-[#1c1c1c] text-neutral-200 px-1"
-              />
+              <Input type="number" value={f.desconto} onChange={e => setF(p => ({ ...p, desconto: e.target.value }))} className="h-5 w-16 text-[10px] text-right bg-[#111] border-[#1c1c1c] text-neutral-200 px-1" />
             </div>
             <div className="flex justify-between text-[11px] pt-1 border-t border-[#1c1c1c]">
               <span className="text-neutral-200 font-semibold">Total</span>
@@ -356,10 +337,8 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
             </div>
           </div>
         </div>
-
-        {/* Footer fixo */}
-        <div className="flex justify-end gap-2 px-4 py-3 border-t border-[#1c1c1c] shrink-0">
-          <Button variant="ghost" size="sm" onClick={onClose} className="text-[11px] h-7 text-neutral-500">Cancelar</Button>
+        <div className="flex justify-end gap-2 pt-2">
+          <Button variant="ghost" size="sm" onClick={onClose} className="text-[11px] h-7">Cancelar</Button>
           <Button size="sm" onClick={save} disabled={saving} className="bg-[#7a1528] hover:bg-[#9a1b32] text-[11px] h-7">
             {saving ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Save className="h-3 w-3 mr-1" />}
             {isEdit ? "Salvar" : "Cadastrar Venda"}
