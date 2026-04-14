@@ -94,7 +94,12 @@ function maskPhone(v: string) {
   if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
   return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
 }
-
+function maskDate(v: string) {
+  const d = v.replace(/\D/g, "").slice(0, 8);
+  if (d.length <= 2) return d;
+  if (d.length <= 4) return d.slice(0, 2) + "/" + d.slice(2);
+  return d.slice(0, 2) + "/" + d.slice(2, 4) + "/" + d.slice(4);
+}
 function maskCep(v: string) {
   const d = v.replace(/\D/g, "").slice(0, 8);
   if (d.length <= 5) return d;
@@ -494,7 +499,7 @@ function Step1({ form, set, errors, onCpfLookup, cpfLooking, cpfFound }: { form:
           )}
         </Field>
         <Field label="Data de nascimento">
-          <TextInput value={form.data_nascimento} onChange={v => set("data_nascimento", v)} placeholder="DD/MM/AAAA" />
+          <TextInput value={form.data_nascimento} onChange={v => set("data_nascimento", maskDate(v))} placeholder="DD/MM/AAAA" maxLength={10} />
         </Field>
         <Field label="Telefone principal" required error={errors.telefone_principal}>
           <TextInput value={form.telefone_principal} onChange={v => set("telefone_principal", maskPhone(v))} placeholder="(00) 00000-0000" />
