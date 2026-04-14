@@ -6,8 +6,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Search, User, Phone, Mail, MapPin, FileText, Shield, ChevronLeft,
-  Loader2, Eye, Plus, Crosshair, Edit, Trash2, Download,
+  Loader2, Eye, Plus, Crosshair, Edit, Trash2, Download, FileDown,
 } from "lucide-react";
+import { supabase as supabaseClient } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ClienteFormModal from "@/components/quero-armas/clientes/ClienteFormModal";
 import { CrafModal, GteModal, CrModal, VendaModal, FiliacaoModal, DeleteConfirm } from "@/components/quero-armas/clientes/SubEntityModals";
