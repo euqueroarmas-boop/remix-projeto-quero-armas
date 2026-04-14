@@ -29,6 +29,7 @@ interface FormData {
   trab_cargo_funcao: string;
   trab_endereco_empresa: string;
   trab_telefone_empresa: string;
+  comprovante_endereco_proprio: string;
   consentimento_dados_verdadeiros: boolean;
   consentimento_tratamento_dados: boolean;
 }
@@ -53,6 +54,7 @@ const initialForm: FormData = {
   trab_cargo_funcao: "",
   trab_endereco_empresa: "",
   trab_telefone_empresa: "",
+  comprovante_endereco_proprio: "",
   consentimento_dados_verdadeiros: false,
   consentimento_tratamento_dados: false,
 };
@@ -264,6 +266,7 @@ export default function QACadastroPublicoPage() {
     if (s === 2) {
       if (!form.end1_numero.trim()) errs.end1_numero = "Número é obrigatório";
       if (!form.end1_complemento.trim()) errs.end1_complemento = "Complemento é obrigatório (ex: Casa, Apto, Bloco)";
+      if (!form.comprovante_endereco_proprio) errs.comprovante_endereco_proprio = "Informe se possui comprovante no seu nome";
     }
     if (s === 5) {
       if (!form.consentimento_dados_verdadeiros) errs.consentimento_dados_verdadeiros = "Obrigatório";
@@ -671,6 +674,56 @@ function Step2({ form, set, errors, onCepLookup, cepLoading, showComplementoConf
           </div>
         </div>
       )}
+
+      {/* Comprovante de endereço */}
+      <div className="mt-6 pt-5 border-t" style={{ borderColor: "hsl(220 13% 93%)" }}>
+        <Field label="Possui comprovante de endereço no seu nome?" required error={errors.comprovante_endereco_proprio}>
+          <p className="text-[11px] mb-3" style={{ color: "hsl(220 10% 55%)" }}>
+            Contas de consumo como água, energia, gás, telefone fixo, internet fixa, TV por assinatura ou IPTU.
+          </p>
+          <div className="flex gap-3">
+            {[
+              { value: "sim", label: "Sim, possuo no meu nome" },
+              { value: "nao", label: "Não possuo no meu nome" },
+            ].map(opt => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => set("comprovante_endereco_proprio", opt.value)}
+                className="flex-1 px-4 py-3 rounded-lg border text-sm font-medium transition-all"
+                style={{
+                  background: form.comprovante_endereco_proprio === opt.value
+                    ? opt.value === "sim" ? "hsl(152 60% 96%)" : "hsl(40 90% 96%)"
+                    : "hsl(0 0% 100%)",
+                  borderColor: form.comprovante_endereco_proprio === opt.value
+                    ? opt.value === "sim" ? "hsl(152 40% 65%)" : "hsl(40 70% 70%)"
+                    : "hsl(220 13% 88%)",
+                  color: form.comprovante_endereco_proprio === opt.value
+                    ? opt.value === "sim" ? "hsl(152 40% 25%)" : "hsl(40 50% 25%)"
+                    : "hsl(220 10% 46%)",
+                }}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </Field>
+
+        {form.comprovante_endereco_proprio === "nao" && (
+          <div className="mt-4 p-4 rounded-xl border flex items-start gap-3" style={{ background: "hsl(40 90% 96%)", borderColor: "hsl(40 70% 80%)" }}>
+            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" style={{ color: "hsl(40 80% 45%)" }} />
+            <div className="flex-1">
+              <p className="text-sm font-medium" style={{ color: "hsl(40 50% 25%)" }}>
+                Atenção: documentos adicionais serão necessários
+              </p>
+              <p className="text-xs mt-1 leading-relaxed" style={{ color: "hsl(40 30% 40%)" }}>
+                Após a conclusão deste cadastro, iremos solicitar os documentos da pessoa responsável pelo imóvel (titular das contas de consumo). 
+                Essa pessoa deverá assinar um <strong>termo declarando ser a responsável direta pelo imóvel</strong>.
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
 
       <div className="mt-6 pt-5 border-t" style={{ borderColor: "hsl(220 13% 93%)" }}>
         <label className="flex items-center gap-3 cursor-pointer group">
