@@ -29,8 +29,6 @@ interface FormData {
   trab_cargo_funcao: string;
   trab_endereco_empresa: string;
   trab_telefone_empresa: string;
-  aut_atividade: string; aut_nome_profissional: string;
-  aut_cnpj: string; aut_telefone: string; aut_endereco: string;
   consentimento_dados_verdadeiros: boolean;
   consentimento_tratamento_dados: boolean;
 }
@@ -55,8 +53,6 @@ const initialForm: FormData = {
   trab_cargo_funcao: "",
   trab_endereco_empresa: "",
   trab_telefone_empresa: "",
-  aut_atividade: "", aut_nome_profissional: "",
-  aut_cnpj: "", aut_telefone: "", aut_endereco: "",
   consentimento_dados_verdadeiros: false,
   consentimento_tratamento_dados: false,
 };
@@ -716,7 +712,7 @@ function Step4({ form, set, errors, onCnpjLookup, cnpjLoading }: any) {
   const vinculos = [
     { value: "proprietario", label: "Sou proprietário / sócio de empresa" },
     { value: "registrado", label: "Trabalho registrado / carteira assinada" },
-    { value: "autonomo", label: "Sou autônomo" },
+    
     { value: "nenhum", label: "Não possuo vínculo profissional no momento" },
   ];
 
@@ -830,31 +826,6 @@ function Step4({ form, set, errors, onCnpjLookup, cnpjLoading }: any) {
         </div>
       )}
 
-      {/* Autônomo */}
-      {form.vinculo_tipo === "autonomo" && (
-        <div className="space-y-4 p-4 rounded-xl" style={{ background: "hsl(220 20% 97%)", border: "1px solid hsl(220 13% 91%)" }}>
-          <h3 className="text-sm font-semibold" style={{ color: "hsl(220 20% 18%)" }}>Dados da Atividade Autônoma</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="md:col-span-2">
-              <Field label="Atividade exercida">
-                <TextInput value={form.aut_atividade} onChange={v => set("aut_atividade", v)} placeholder="Descreva sua atividade profissional" />
-              </Field>
-            </div>
-            <Field label="Nome profissional / comercial">
-              <TextInput value={form.aut_nome_profissional} onChange={v => set("aut_nome_profissional", v)} placeholder="Se houver" />
-            </Field>
-            <Field label="CNPJ (se houver)">
-              <TextInput value={form.aut_cnpj} onChange={v => set("aut_cnpj", maskCnpj(v))} placeholder="00.000.000/0000-00" maxLength={18} />
-            </Field>
-            <Field label="Telefone profissional">
-              <TextInput value={form.aut_telefone} onChange={v => set("aut_telefone", v)} placeholder="Telefone" />
-            </Field>
-            <Field label="Endereço profissional">
-              <TextInput value={form.aut_endereco} onChange={v => set("aut_endereco", v)} placeholder="Endereço de trabalho" />
-            </Field>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
