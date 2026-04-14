@@ -1479,13 +1479,25 @@ function DocumentGenerator({ cliente }: { cliente: any }) {
         extra["[DATA SAÍDA]"] = dataSaida;
       }
 
-      const res = await supabaseClient.functions.invoke("qa-fill-template", {
-        body: { template_key: templateKey, cliente_id: cliente.id, extra_fields: extra },
-      });
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-fill-template`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({ template_key: templateKey, cliente_id: cliente.id, extra_fields: extra }),
+        }
+      );
 
-      if (res.error) throw new Error(res.error.message || "Erro ao gerar documento");
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({ error: "Erro desconhecido" }));
+        throw new Error(errBody.error || "Erro ao gerar documento");
+      }
 
-      const blob = res.data instanceof Blob ? res.data : new Blob([res.data]);
+      const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -1535,7 +1547,7 @@ function DocumentGenerator({ cliente }: { cliente: any }) {
 
       <div className="space-y-1.5">
         {TEMPLATES.map(tpl => (
-          <div key={tpl.key} className="qa-card qa-hover-lift p-3 flex items-center justify-between">
+          <div key={tpl.key} className="qa-card qa-hover-lift p-3 flex items-center justify-between group">
             <div className="min-w-0 flex-1">
               <div className="text-[12px] font-semibold uppercase" style={{ color: "hsl(220 20% 18%)" }}>{tpl.label}</div>
               <div className="text-[10px] mt-0.5" style={{ color: "hsl(220 10% 55%)" }}>{tpl.desc}</div>
@@ -1549,7 +1561,8 @@ function DocumentGenerator({ cliente }: { cliente: any }) {
                   handleGenerate(tpl.key);
                 }
               }}
-              className="qa-btn-primary h-8 w-8 p-0 flex items-center justify-center no-glow shrink-0 ml-3"
+              className="h-8 w-8 p-0 flex items-center justify-center shrink-0 ml-3 rounded-md border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 transition-colors disabled:opacity-40"
+              style={{ color: "hsl(220 10% 45%)" }}
             >
               {generating === tpl.key ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileDown className="h-3.5 w-3.5" />}
             </button>
