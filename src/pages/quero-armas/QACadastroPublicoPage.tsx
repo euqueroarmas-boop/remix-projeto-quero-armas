@@ -442,10 +442,10 @@ const inputFocusRing = "focus:ring-blue-200 focus:border-blue-400";
 function TextInput({ value, onChange, placeholder, ...rest }: React.InputHTMLAttributes<HTMLInputElement> & { value: string; onChange: (v: string) => void }) {
   return (
     <input
-      className={`${inputClass} ${inputFocusRing}`}
+      className={`${inputClass} ${inputFocusRing} uppercase`}
       style={inputStyle}
       value={value}
-      onChange={e => onChange(e.target.value)}
+      onChange={e => onChange(e.target.value.toUpperCase())}
       placeholder={placeholder}
       {...rest}
     />
@@ -454,7 +454,7 @@ function TextInput({ value, onChange, placeholder, ...rest }: React.InputHTMLAtt
 
 function SelectInput({ value, onChange, options, placeholder }: { value: string; onChange: (v: string) => void; options: string[]; placeholder?: string }) {
   return (
-    <select className={`${inputClass} ${inputFocusRing}`} style={inputStyle} value={value} onChange={e => onChange(e.target.value)}>
+    <select className={`${inputClass} ${inputFocusRing} uppercase`} style={inputStyle} value={value} onChange={e => onChange(e.target.value)}>
       <option value="">{placeholder || "Selecione..."}</option>
       {options.map(o => <option key={o} value={o}>{o}</option>)}
     </select>
@@ -525,10 +525,10 @@ function Step1({ form, set, errors, onCpfLookup, cpfLooking, cpfFound }: { form:
         <div className="md:col-span-2">
           <Field label="Observações">
             <textarea
-              className={`${inputClass} ${inputFocusRing} h-20 py-2 resize-none`}
+              className={`${inputClass} ${inputFocusRing} h-20 py-2 resize-none uppercase`}
               style={inputStyle}
               value={form.observacoes}
-              onChange={e => set("observacoes", e.target.value)}
+              onChange={e => set("observacoes", e.target.value.toUpperCase())}
               placeholder="Informações adicionais (opcional)"
             />
           </Field>
