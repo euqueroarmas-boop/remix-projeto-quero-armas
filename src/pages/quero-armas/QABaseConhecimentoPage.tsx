@@ -100,14 +100,18 @@ type TrackedImport = {
   tipo_origem?: string;
 };
 
-/* ─── Dashboard stat card ─── */
+/* ─── Dashboard stat card (Premium Light) ─── */
 function StatCard({ icon: Icon, label, value, color }: { icon: any; label: string; value: number; color: string }) {
   return (
-    <div className="bg-white border border-slate-200 rounded p-4 flex items-center gap-3">
-      <div className={`p-2 rounded-lg ${color}`}><Icon className="h-4 w-4" /></div>
-      <div>
-        <div className="text-lg font-bold text-slate-700">{value}</div>
-        <div className="text-[11px] text-slate-500">{label}</div>
+    <div className="qa-card qa-hover-lift p-4">
+      <div className="flex items-center gap-3">
+        <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: color + "14" }}>
+          <Icon className="h-4 w-4" style={{ color }} />
+        </div>
+        <div>
+          <div className="qa-kpi text-xl" style={{ color: "hsl(220 20% 14%)" }}>{value}</div>
+          <div className="text-[11px]" style={{ color: "hsl(220 10% 55%)" }}>{label}</div>
+        </div>
       </div>
     </div>
   );
@@ -504,16 +508,16 @@ export default function QABaseConhecimentoPage() {
 
   const statusLabel = (s: string) => {
     const stage = getStageInfo(s);
-    if (s === "concluido") return { text: "Concluído", cls: "bg-emerald-500/10 text-emerald-400" };
-    if (s === "texto_invalido") return { text: "Texto Inválido", cls: "bg-orange-500/10 text-orange-400" };
-    if (s === "erro") return { text: "Falhou", cls: "bg-red-500/10 text-red-400" };
-    if (s !== "pendente" && !TERMINAL.includes(s)) return { text: stage.label, cls: "bg-blue-500/10 text-blue-400" };
-    return { text: "Pendente", cls: "bg-slate-100 text-slate-600" };
+    if (s === "concluido") return { text: "Concluído", cls: "bg-emerald-50 text-emerald-700" };
+    if (s === "texto_invalido") return { text: "Texto Inválido", cls: "bg-orange-50 text-orange-600" };
+    if (s === "erro") return { text: "Falhou", cls: "bg-red-50 text-red-600" };
+    if (s !== "pendente" && !TERMINAL.includes(s)) return { text: stage.label, cls: "bg-blue-50 text-blue-600" };
+    return { text: "Pendente", cls: "bg-slate-100 text-slate-500" };
   };
 
   const origemIcon = (t: string) => {
-    if (t === "link_publico") return <Globe className="h-3 w-3 text-blue-400" />;
-    return <Upload className="h-3 w-3 text-slate-500" />;
+    if (t === "link_publico") return <Globe className="h-3 w-3" style={{ color: "hsl(230 80% 56%)" }} />;
+    return <Upload className="h-3 w-3" style={{ color: "hsl(220 10% 62%)" }} />;
   };
 
   // Dashboard stats
@@ -531,19 +535,25 @@ export default function QABaseConhecimentoPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-base font-semibold text-slate-700">Base de Conhecimento</h1>
-          <p className="text-sm text-slate-500 mt-1">Leis, decretos e petições aprovadas que alimentam a IA jurídica</p>
+          <h1 className="text-xl md:text-2xl font-bold tracking-tight" style={{ color: "hsl(220 20% 18%)" }}>
+            Base de Conhecimento
+          </h1>
+          <p className="text-sm mt-0.5" style={{ color: "hsl(220 10% 62%)" }}>
+            Leis, decretos e petições aprovadas que alimentam a IA jurídica
+          </p>
         </div>
         <div className="flex gap-2 flex-wrap">
-          <Button variant="outline" onClick={() => setShowLinkDialog(true)} className="border-blue-600/40 text-blue-400 hover:bg-blue-500/10 gap-1.5">
+          <Button variant="outline" onClick={() => setShowLinkDialog(true)}
+            className="border-blue-200 text-blue-600 hover:bg-blue-50 gap-1.5 rounded-lg">
             <Link2 className="h-4 w-4" /> Importar por Link
           </Button>
-          <Button variant="outline" onClick={() => setShowBulkDialog(true)} className="border-purple-600/40 text-purple-400 hover:bg-purple-500/10 gap-1.5">
+          <Button variant="outline" onClick={() => setShowBulkDialog(true)}
+            className="border-purple-200 text-purple-600 hover:bg-purple-50 gap-1.5 rounded-lg">
             <Plus className="h-4 w-4" /> Carga em Lote
           </Button>
           <label className="cursor-pointer">
             <input type="file" className="hidden" onChange={handleUpload} accept=".pdf,.doc,.docx,.txt,.rtf" multiple />
-            <Button asChild disabled={uploading} className="bg-[#7a1528] hover:bg-[#a52338] text-slate-700 border border-slate-200">
+            <Button asChild disabled={uploading} className="qa-btn-primary no-glow">
               <span>{uploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />} Enviar Documento</span>
             </Button>
           </label>
@@ -552,32 +562,32 @@ export default function QABaseConhecimentoPage() {
 
       {/* ─── Activity Queue ─── */}
       {trackedImports.length > 0 && (
-        <div className="bg-white border border-slate-200 rounded p-4 space-y-2">
+        <div className="qa-card p-4 space-y-2">
           <div className="flex items-center justify-between mb-1">
-            <button onClick={() => setQueueCollapsed(c => !c)} className="flex items-center gap-2 text-xs font-semibold text-slate-600 uppercase tracking-wider hover:text-slate-700 transition-colors">
-              {activeTracked.length > 0 && <Loader2 className="h-3 w-3 animate-spin text-blue-400" />}
+            <button onClick={() => setQueueCollapsed(c => !c)} className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider hover:opacity-70 transition-opacity"
+              style={{ color: "hsl(220 20% 18%)" }}>
+              {activeTracked.length > 0 && <Loader2 className="h-3 w-3 animate-spin" style={{ color: "hsl(230 80% 56%)" }} />}
               Fila de Processamento
               {queueCollapsed ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />}
             </button>
             <div className="flex items-center gap-2">
-              {/* Counters */}
               {activeTracked.length > 0 && (
-                <span className="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded-full font-medium">
+                <span className="qa-badge bg-blue-50 text-blue-600">
                   {activeTracked.length} ativa{activeTracked.length > 1 ? "s" : ""}
                 </span>
               )}
               {doneTracked.length > 0 && (
-                <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full font-medium">
+                <span className="qa-badge bg-emerald-50 text-emerald-600">
                   {doneTracked.length} concluída{doneTracked.length > 1 ? "s" : ""}
                 </span>
               )}
               {errorTracked.length > 0 && (
-                <span className="text-[10px] bg-red-500/10 text-red-400 px-2 py-0.5 rounded-full font-medium">
+                <span className="qa-badge bg-red-50 text-red-600">
                   {errorTracked.length} erro{errorTracked.length > 1 ? "s" : ""}
                 </span>
               )}
               {trackedImports.every(t => TERMINAL.includes(t.status)) && (
-                <button onClick={() => setTrackedImports([])} className="text-[10px] text-slate-400 hover:text-slate-600 transition-colors">
+                <button onClick={() => setTrackedImports([])} className="text-[10px] hover:underline" style={{ color: "hsl(220 10% 62%)" }}>
                   Limpar tudo
                 </button>
               )}
@@ -595,35 +605,35 @@ export default function QABaseConhecimentoPage() {
       )}
 
       {/* Dashboard Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <StatCard icon={FileText} label="Total" value={totalDocs} color="bg-slate-100 text-slate-600" />
-        <StatCard icon={ShieldCheck} label="Validados" value={validados} color="bg-emerald-500/10 text-emerald-400" />
-        <StatCard icon={Clock} label="Pendentes" value={pendentes} color="bg-amber-500/10 text-amber-400" />
-        <StatCard icon={Zap} label="Ativos na IA" value={ativosIA} color="bg-purple-500/10 text-purple-400" />
-        <StatCard icon={Star} label="Referências" value={referencias} color="bg-amber-500/10 text-amber-300" />
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
+        <StatCard icon={FileText} label="Total" value={totalDocs} color="hsl(230 80% 56%)" />
+        <StatCard icon={ShieldCheck} label="Validados" value={validados} color="hsl(152 60% 42%)" />
+        <StatCard icon={Clock} label="Pendentes" value={pendentes} color="hsl(38 92% 50%)" />
+        <StatCard icon={Zap} label="Ativos na IA" value={ativosIA} color="hsl(262 60% 55%)" />
+        <StatCard icon={Star} label="Referências" value={referencias} color="hsl(38 92% 50%)" />
       </div>
 
-      <div className="flex flex-wrap gap-3">
+      <div className="qa-card p-3 flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "hsl(220 10% 62%)" }} />
           <Input placeholder="Buscar por título..." value={busca} onChange={e => setBusca(e.target.value)}
-            className="pl-10 bg-white border-slate-200 text-slate-700" />
+            className="pl-10 bg-transparent border-slate-200 rounded-lg" style={{ color: "hsl(220 20% 18%)" }} />
         </div>
         <Select value={filtroTipo} onValueChange={setFiltroTipo}>
-          <SelectTrigger className="w-[180px] bg-white border-slate-200 text-slate-700"><SelectValue placeholder="Tipo" /></SelectTrigger>
+          <SelectTrigger className="w-[180px] bg-transparent border-slate-200 rounded-lg" style={{ color: "hsl(220 20% 25%)" }}><SelectValue placeholder="Tipo" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="todos">Todos os tipos</SelectItem>
             {TIPOS_DOC.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={filtroOrigem} onValueChange={setFiltroOrigem}>
-          <SelectTrigger className="w-[160px] bg-white border-slate-200 text-slate-700"><SelectValue placeholder="Origem" /></SelectTrigger>
+          <SelectTrigger className="w-[160px] bg-transparent border-slate-200 rounded-lg" style={{ color: "hsl(220 20% 25%)" }}><SelectValue placeholder="Origem" /></SelectTrigger>
           <SelectContent>
           {TIPOS_ORIGEM_FILTER.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={filtroStatus} onValueChange={setFiltroStatus}>
-          <SelectTrigger className="w-[160px] bg-white border-slate-200 text-slate-700"><SelectValue placeholder="Status" /></SelectTrigger>
+          <SelectTrigger className="w-[160px] bg-transparent border-slate-200 rounded-lg" style={{ color: "hsl(220 20% 25%)" }}><SelectValue placeholder="Status" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="todos">Todos</SelectItem>
             <SelectItem value="pendente">Pendente</SelectItem>
@@ -636,12 +646,14 @@ export default function QABaseConhecimentoPage() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-slate-600" /></div>
+        <div className="flex justify-center py-20">
+          <div className="w-8 h-8 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" />
+        </div>
       ) : docs.length === 0 ? (
-        <div className="text-center py-12 text-slate-500">
-          <FileText className="h-12 w-12 mx-auto mb-3 opacity-30" />
-          <p>Nenhum documento encontrado</p>
-          <p className="text-xs mt-1">Envie documentos ou importe por link para alimentar a base</p>
+        <div className="qa-card text-center py-16">
+          <FileText className="h-12 w-12 mx-auto mb-3" style={{ color: "hsl(220 10% 80%)" }} />
+          <p className="text-sm font-medium" style={{ color: "hsl(220 20% 25%)" }}>Nenhum documento encontrado</p>
+          <p className="text-xs mt-1" style={{ color: "hsl(220 10% 62%)" }}>Envie leis, decretos ou petições aprovadas para alimentar a base</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -655,64 +667,62 @@ export default function QABaseConhecimentoPage() {
             const isAtivoIA = d.ativo_na_ia === true;
             const isProcessing = !TERMINAL.includes(d.status_processamento) && d.status_processamento !== "pendente";
             return (
-              <div key={d.id} className="flex items-center gap-3 bg-white border border-slate-200 rounded-lg p-4 hover:border-neutral-600 transition-all group">
+              <div key={d.id} className="qa-card flex items-center gap-3 p-4 group">
                 {statusIcon(d.status_processamento)}
                 <Link to={`/quero-armas/base-conhecimento/${d.id}`} className="flex-1 min-w-0 cursor-pointer">
-                  <div className="text-sm font-medium text-slate-700 truncate group-hover:text-[#c43b52] transition-colors flex items-center gap-1.5">
+                  <div className="text-[13px] font-medium truncate flex items-center gap-1.5 transition-colors group-hover:text-blue-600"
+                    style={{ color: "hsl(220 20% 18%)" }}>
                     {d.titulo}
                     {isRef && <Star className="h-3 w-3 text-amber-400 shrink-0" />}
                   </div>
-                  <div className="text-xs text-slate-500 flex items-center gap-2 mt-0.5 flex-wrap">
-                    <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">{d.tipo_documento?.replace(/_/g, " ")}</span>
-                    <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-indigo-500/10 text-indigo-400">Aprendizado IA</span>
-                    <span className="flex items-center gap-1">{origemIcon(d.tipo_origem)}{d.tipo_origem === "link_publico" ? "Link" : "Upload"}</span>
-                    <span>{new Date(d.created_at).toLocaleDateString("pt-BR")}</span>
-                    {d.tamanho_bytes && <span>{(d.tamanho_bytes / 1024).toFixed(0)} KB</span>}
-                    {d.caso_id && <span className="text-[10px] text-[#c43b52]/60">caso: {d.caso_id}</span>}
+                  <div className="flex items-center gap-2 mt-0.5 flex-wrap" style={{ color: "hsl(220 10% 55%)" }}>
+                    <span className="qa-badge bg-slate-100 text-slate-600 capitalize">{d.tipo_documento?.replace(/_/g, " ")}</span>
+                    <span className="qa-badge bg-indigo-50 text-indigo-600">Aprendizado IA</span>
+                    <span className="flex items-center gap-1 text-[11px]">{origemIcon(d.tipo_origem)}{d.tipo_origem === "link_publico" ? "Link" : "Upload"}</span>
+                    <span className="text-[11px] font-mono">{new Date(d.created_at).toLocaleDateString("pt-BR")}</span>
+                    {d.tamanho_bytes && <span className="text-[11px]">{(d.tamanho_bytes / 1024).toFixed(0)} KB</span>}
                   </div>
                   {d.url_origem && (
-                    <div className="text-[10px] text-blue-400/60 truncate mt-0.5">{d.url_origem}</div>
+                    <div className="text-[10px] truncate mt-0.5" style={{ color: "hsl(220 10% 72%)" }}>{d.url_origem}</div>
                   )}
                   {isError && d.resumo_extraido && (
-                    <div className="text-xs text-red-400/80 mt-1 truncate">{d.resumo_extraido}</div>
+                    <div className="text-xs text-red-500/80 mt-1 truncate">{d.resumo_extraido}</div>
                   )}
                   {isProcessing && (
                     <div className="mt-1.5 flex items-center gap-2">
                       <Progress value={getStageInfo(d.status_processamento).pct} className="h-1 bg-slate-100 flex-1 max-w-[200px]" />
-                      <span className="text-[10px] text-blue-400">{getStageInfo(d.status_processamento).label}</span>
+                      <span className="text-[10px]" style={{ color: "hsl(230 80% 56%)" }}>{getStageInfo(d.status_processamento).label}</span>
                     </div>
                   )}
                 </Link>
                 {/* Governance badges */}
                 <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-medium whitespace-nowrap ${status.cls}`}>
+                  <span className={`qa-badge capitalize whitespace-nowrap ${status.cls}`}>
                     {status.text}
                   </span>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-medium whitespace-nowrap ${
-                    isValidado ? "bg-emerald-500/10 text-emerald-400" :
-                    isRejeitado ? "bg-red-500/10 text-red-400" :
+                  <span className={`qa-badge capitalize whitespace-nowrap ${
+                    isValidado ? "bg-emerald-50 text-emerald-700" :
+                    isRejeitado ? "bg-red-50 text-red-600" :
                     "bg-slate-100 text-slate-500"
                   }`}>
                     {isValidado ? "validado" : isRejeitado ? "rejeitado" : "pendente"}
                   </span>
                   {isAtivoIA && isValidado && (
-                    <span className="text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-medium bg-purple-500/10 text-purple-400 whitespace-nowrap">
-                      IA
-                    </span>
+                    <span className="qa-badge bg-purple-50 text-purple-600 whitespace-nowrap">IA</span>
                   )}
                 </div>
                 {isError && (
                   <Button size="sm" variant="ghost" disabled={isReprocessing} onClick={() => handleReprocess(d)}
-                    className="text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 shrink-0">
+                    className="text-amber-500 hover:text-amber-600 hover:bg-amber-50 shrink-0">
                     {isReprocessing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
                   </Button>
                 )}
                 <Button size="sm" variant="ghost" onClick={(e) => { e.preventDefault(); setDeleteTarget(d); }}
-                  className="text-red-400/60 hover:text-red-400 hover:bg-red-500/10 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                  className="text-red-300 hover:text-red-500 hover:bg-red-50 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
                 <Link to={`/quero-armas/base-conhecimento/${d.id}`}>
-                  <ExternalLink className="h-3.5 w-3.5 text-slate-400 group-hover:text-[#c43b52] shrink-0" />
+                  <ExternalLink className="h-3.5 w-3.5 shrink-0 transition-colors group-hover:text-blue-500" style={{ color: "hsl(220 10% 72%)" }} />
                 </Link>
               </div>
             );
@@ -722,9 +732,9 @@ export default function QABaseConhecimentoPage() {
 
       {/* Import by Link Dialog */}
       <Dialog open={showLinkDialog} onOpenChange={setShowLinkDialog}>
-        <DialogContent className="bg-white border-slate-200 text-slate-700 max-w-lg">
+        <DialogContent className="border-slate-200 max-w-lg rounded-xl" style={{ background: "hsl(0 0% 100%)", color: "hsl(220 20% 18%)" }}>
           <DialogHeader>
-            <DialogTitle className="text-slate-700 flex items-center gap-2"><Link2 className="h-5 w-5 text-blue-400" /> Importar por Link Público</DialogTitle>
+            <DialogTitle className="flex items-center gap-2" style={{ color: "hsl(220 20% 18%)" }}><Link2 className="h-5 w-5" style={{ color: "hsl(230 80% 56%)" }} /> Importar por Link Público</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-[10px] text-emerald-600 bg-emerald-50 rounded px-2 py-1.5 border border-emerald-200">
@@ -750,8 +760,8 @@ export default function QABaseConhecimentoPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowLinkDialog(false)} className="border-slate-200 text-slate-600">Cancelar</Button>
-            <Button onClick={handleImportLink} disabled={!linkUrl.trim() || importingLink} className="bg-blue-600 hover:bg-blue-700">
+            <Button variant="outline" onClick={() => setShowLinkDialog(false)} className="border-slate-200 rounded-lg" style={{ color: "hsl(220 10% 45%)" }}>Cancelar</Button>
+            <Button onClick={handleImportLink} disabled={!linkUrl.trim() || importingLink} className="qa-btn-primary no-glow rounded-lg">
               {importingLink ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Enviando...</> : <><Globe className="h-4 w-4 mr-2" /> Importar</>}
             </Button>
           </DialogFooter>
@@ -760,9 +770,9 @@ export default function QABaseConhecimentoPage() {
 
       {/* Bulk Import Dialog */}
       <Dialog open={showBulkDialog} onOpenChange={setShowBulkDialog}>
-        <DialogContent className="bg-white border-slate-200 text-slate-700 max-w-lg">
+        <DialogContent className="border-slate-200 max-w-lg rounded-xl" style={{ background: "hsl(0 0% 100%)", color: "hsl(220 20% 18%)" }}>
           <DialogHeader>
-            <DialogTitle className="text-slate-700 flex items-center gap-2"><Plus className="h-5 w-5 text-purple-400" /> Carga em Lote</DialogTitle>
+            <DialogTitle className="flex items-center gap-2" style={{ color: "hsl(220 20% 18%)" }}><Plus className="h-5 w-5" style={{ color: "hsl(262 60% 55%)" }} /> Carga em Lote</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -798,8 +808,8 @@ export default function QABaseConhecimentoPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowBulkDialog(false)} className="border-slate-200 text-slate-600">Cancelar</Button>
-            <Button onClick={handleBulkImport} disabled={!bulkLinks.trim() || bulkImporting} className="bg-purple-600 hover:bg-purple-700">
+            <Button variant="outline" onClick={() => setShowBulkDialog(false)} className="border-slate-200 rounded-lg" style={{ color: "hsl(220 10% 45%)" }}>Cancelar</Button>
+            <Button onClick={handleBulkImport} disabled={!bulkLinks.trim() || bulkImporting} className="rounded-lg" style={{ background: "hsl(262 60% 55%)", color: "white" }}>
               {bulkImporting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />} Importar Links
             </Button>
           </DialogFooter>
@@ -808,26 +818,26 @@ export default function QABaseConhecimentoPage() {
 
       {/* Delete confirmation dialog */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) setDeleteTarget(null); }}>
-        <AlertDialogContent className="bg-white border-slate-200 text-slate-700 max-w-md">
+        <AlertDialogContent className="border-slate-200 max-w-md rounded-xl" style={{ background: "hsl(0 0% 100%)", color: "hsl(220 20% 18%)" }}>
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-slate-700">Excluir documento</AlertDialogTitle>
-            <AlertDialogDescription className="text-slate-600">
-              <strong className="text-slate-700 block mb-1">{deleteTarget?.titulo}</strong>
+            <AlertDialogTitle style={{ color: "hsl(220 20% 18%)" }}>Excluir documento</AlertDialogTitle>
+            <AlertDialogDescription style={{ color: "hsl(220 10% 45%)" }}>
+              <strong className="block mb-1" style={{ color: "hsl(220 20% 18%)" }}>{deleteTarget?.titulo}</strong>
               Tem certeza que deseja remover este documento da base de conhecimento? A IA não utilizará mais esse conteúdo em consultas futuras.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col gap-2 sm:flex-col">
             <Button variant="outline" disabled={deleting} onClick={() => handleDeactivate(deleteTarget)}
-              className="w-full border-amber-600/40 text-amber-400 hover:bg-amber-500/10 justify-start gap-2">
+              className="w-full border-amber-200 text-amber-600 hover:bg-amber-50 justify-start gap-2 rounded-lg">
               <Power className="h-4 w-4" /> Desativar da IA
-              <span className="text-[10px] text-slate-500 ml-auto">reversível</span>
+              <span className="text-[10px] ml-auto" style={{ color: "hsl(220 10% 62%)" }}>reversível</span>
             </Button>
             <Button variant="destructive" disabled={deleting} onClick={() => handlePermanentDelete(deleteTarget)}
-              className="w-full justify-start gap-2">
+              className="w-full justify-start gap-2 rounded-lg">
               {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />} Excluir permanentemente
-              <span className="text-[10px] text-red-300/60 ml-auto">irreversível</span>
+              <span className="text-[10px] text-red-200 ml-auto">irreversível</span>
             </Button>
-            <AlertDialogCancel className="w-full border-slate-200 text-slate-600">Cancelar</AlertDialogCancel>
+            <AlertDialogCancel className="w-full border-slate-200 rounded-lg" style={{ color: "hsl(220 10% 45%)" }}>Cancelar</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
