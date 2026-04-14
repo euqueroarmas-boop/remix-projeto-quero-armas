@@ -1,24 +1,13 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Loader2, Save, Plus, Pencil, Trash2, X, Check } from "lucide-react";
+import { Loader2, Save, Plus, Pencil, Trash2, X, Check, Settings, Database, User } from "lucide-react";
 import { useQAAuth } from "@/components/quero-armas/hooks/useQAAuth";
 
-interface ConfigItem {
-  id: string;
-  chave: string;
-  valor: number;
-  descricao: string | null;
-}
-
-interface Servico {
-  id: number;
-  nome_servico: string;
-  valor_servico: number;
-}
+interface ConfigItem { id: string; chave: string; valor: number; descricao: string | null; }
+interface Servico { id: number; nome_servico: string; valor_servico: number; }
 
 export default function QAConfiguracoesPage() {
   const { profile } = useQAAuth();
@@ -28,7 +17,6 @@ export default function QAConfiguracoesPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // Serviços state
   const [servicos, setServicos] = useState<Servico[]>([]);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState({ nome_servico: "", valor_servico: "" });
@@ -84,9 +72,7 @@ export default function QAConfiguracoesPage() {
       setConfig((data as any[]) ?? []);
     } catch (err: any) {
       toast.error(err.message || "Erro ao salvar");
-    } finally {
-      setSaving(false);
-    }
+    } finally { setSaving(false); }
   };
 
   const handleAddServico = async () => {
@@ -139,20 +125,29 @@ export default function QAConfiguracoesPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-12">
-        <div className="w-4 h-4 border-2 border-slate-200 border-t-slate-400 rounded-full animate-spin" />
+      <div className="flex justify-center py-16">
+        <div className="w-8 h-8 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-3 md:space-y-5 max-w-4xl">
-      <h1 className="text-sm md:text-base font-semibold text-slate-700">Configurações</h1>
+    <div className="space-y-5 md:space-y-6 max-w-4xl mx-auto">
+      {/* Header */}
+      <div>
+        <h1 className="text-xl md:text-2xl font-bold tracking-tight flex items-center gap-2" style={{ color: "hsl(220 20% 18%)" }}>
+          <Settings className="h-5 w-5" style={{ color: "hsl(230 80% 56%)" }} /> Configurações
+        </h1>
+        <p className="text-sm mt-0.5" style={{ color: "hsl(220 10% 62%)" }}>Status do sistema, serviços e pesos de ranking</p>
+      </div>
 
       {/* System Status */}
-      <div className="bg-white border border-slate-200 rounded p-2.5 md:p-4">
-        <span className="text-[9px] text-slate-400 uppercase tracking-[0.12em] font-medium">Status</span>
-        <div className="grid grid-cols-4 md:grid-cols-7 gap-1.5 md:gap-3 mt-2">
+      <div className="qa-card p-5">
+        <div className="flex items-center gap-2 mb-3">
+          <Database className="h-4 w-4" style={{ color: "hsl(230 80% 56%)" }} />
+          <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "hsl(220 10% 45%)" }}>Status</span>
+        </div>
+        <div className="grid grid-cols-4 md:grid-cols-7 gap-3">
           {[
             { label: "Docs", value: stats?.documentos },
             { label: "Normas", value: stats?.normas },
@@ -162,9 +157,9 @@ export default function QAConfiguracoesPage() {
             { label: "Refs", value: stats?.referencias },
             { label: "Revisões", value: stats?.revisoes },
           ].map(s => (
-            <div key={s.label} className="bg-white rounded px-2 py-1.5 text-center">
-              <div className="text-sm md:text-base font-semibold text-slate-700 font-mono tabular-nums leading-tight">{s.value}</div>
-              <div className="text-[7px] md:text-[9px] text-slate-400 uppercase tracking-[0.08em]">{s.label}</div>
+            <div key={s.label} className="text-center p-2 rounded-lg" style={{ background: "hsl(220 20% 97%)" }}>
+              <div className="text-lg font-bold tabular-nums" style={{ color: "hsl(220 20% 18%)" }}>{s.value}</div>
+              <div className="text-[9px] uppercase tracking-wider" style={{ color: "hsl(220 10% 55%)" }}>{s.label}</div>
             </div>
           ))}
         </div>
@@ -172,111 +167,111 @@ export default function QAConfiguracoesPage() {
 
       {/* Serviços CRUD */}
       {isAdmin && (
-        <div className="bg-white border border-slate-200 rounded p-2.5 md:p-4">
-          <div className="flex items-center justify-between mb-2 md:mb-3">
-            <span className="text-[9px] text-slate-400 uppercase tracking-[0.12em] font-medium">Serviços ({servicos.length})</span>
-            <Button onClick={() => { setShowNew(!showNew); setNewForm({ nome_servico: "", valor_servico: "" }); }} size="sm"
-              className="bg-[#7a1528] hover:bg-[#a52338] text-slate-700 border border-slate-200 h-6 md:h-7 text-[9px] md:text-[10px]">
-              <Plus className="h-3 w-3 mr-1" /> Novo Serviço
-            </Button>
+        <div className="qa-card p-5">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "hsl(220 10% 45%)" }}>Serviços ({servicos.length})</span>
+            <button onClick={() => { setShowNew(!showNew); setNewForm({ nome_servico: "", valor_servico: "" }); }}
+              className="qa-btn-primary h-8 px-3 text-[11px] flex items-center gap-1 no-glow">
+              <Plus className="h-3 w-3" /> Novo Serviço
+            </button>
           </div>
 
-          {/* New service form */}
           {showNew && (
-            <div className="flex gap-2 items-end mb-3 bg-white rounded p-2 border border-slate-200">
-              <div className="flex-1">
-                <Label className="text-slate-500 text-[9px]">Nome</Label>
+            <div className="flex gap-2 items-end mb-3 rounded-xl p-3 border" style={{ borderColor: "hsl(220 13% 91%)", background: "hsl(220 20% 97%)" }}>
+              <div className="flex-1 space-y-1">
+                <Label className="text-[10px] uppercase" style={{ color: "hsl(220 10% 45%)" }}>Nome</Label>
                 <Input value={newForm.nome_servico} onChange={e => setNewForm(p => ({ ...p, nome_servico: e.target.value }))}
-                  className="bg-white border-slate-200 text-slate-700 h-7 text-[11px] focus-visible:ring-0 focus-visible:ring-offset-0" placeholder="Nome do serviço" />
+                  className="h-9 bg-white border-slate-200 text-slate-700 uppercase" placeholder="Nome do serviço" />
               </div>
-              <div className="w-24">
-                <Label className="text-slate-500 text-[9px]">Valor (R$)</Label>
+              <div className="w-24 space-y-1">
+                <Label className="text-[10px] uppercase" style={{ color: "hsl(220 10% 45%)" }}>Valor (R$)</Label>
                 <Input type="number" value={newForm.valor_servico} onChange={e => setNewForm(p => ({ ...p, valor_servico: e.target.value }))}
-                  className="bg-white border-slate-200 text-slate-700 h-7 text-[11px] font-mono focus-visible:ring-0 focus-visible:ring-offset-0" placeholder="0" />
+                  className="h-9 bg-white border-slate-200 text-slate-700 font-mono" placeholder="0" />
               </div>
-              <Button size="sm" onClick={handleAddServico} disabled={savingSvc} className="bg-emerald-800 hover:bg-emerald-700 h-7 px-2">
-                {savingSvc ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
-              </Button>
-              <Button size="sm" variant="ghost" onClick={() => setShowNew(false)} className="h-7 px-2 text-slate-500">
-                <X className="h-3 w-3" />
-              </Button>
+              <button onClick={handleAddServico} disabled={savingSvc} className="h-9 w-9 rounded-lg flex items-center justify-center bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100 shrink-0">
+                {savingSvc ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+              </button>
+              <button onClick={() => setShowNew(false)} className="h-9 w-9 rounded-lg flex items-center justify-center hover:bg-slate-100 text-slate-400 shrink-0">
+                <X className="h-3.5 w-3.5" />
+              </button>
             </div>
           )}
 
-          {/* Services list */}
-          <div className="space-y-0.5">
+          <div className="space-y-1">
             {servicos.map(svc => (
-              <div key={svc.id} className="flex items-center gap-2 rounded px-2 py-1.5 text-[11px] hover:bg-white transition-colors group">
+              <div key={svc.id} className="flex items-center gap-2 rounded-lg px-3 py-2 text-[12px] hover:bg-slate-50 transition-colors group">
                 {editingId === svc.id ? (
                   <>
                     <Input value={editForm.nome_servico} onChange={e => setEditForm(p => ({ ...p, nome_servico: e.target.value }))}
-                      className="flex-1 bg-white border-slate-200 text-slate-700 h-6 text-[11px] focus-visible:ring-0 focus-visible:ring-offset-0" />
+                      className="flex-1 bg-white border-slate-200 text-slate-700 h-8 text-xs uppercase" />
                     <Input type="number" value={editForm.valor_servico} onChange={e => setEditForm(p => ({ ...p, valor_servico: e.target.value }))}
-                      className="w-20 bg-white border-slate-200 text-slate-700 h-6 text-[11px] font-mono text-right focus-visible:ring-0 focus-visible:ring-offset-0" />
-                    <Button size="sm" variant="ghost" onClick={() => handleUpdateServico(svc.id)} disabled={savingSvc} className="h-6 px-1.5 text-emerald-500 hover:text-emerald-400">
-                      <Check className="h-3 w-3" />
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={() => setEditingId(null)} className="h-6 px-1.5 text-slate-500">
-                      <X className="h-3 w-3" />
-                    </Button>
+                      className="w-24 bg-white border-slate-200 text-slate-700 h-8 text-xs font-mono text-right" />
+                    <button onClick={() => handleUpdateServico(svc.id)} disabled={savingSvc} className="h-7 w-7 rounded-lg flex items-center justify-center text-emerald-600 hover:bg-emerald-50">
+                      <Check className="h-3.5 w-3.5" />
+                    </button>
+                    <button onClick={() => setEditingId(null)} className="h-7 w-7 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-100">
+                      <X className="h-3.5 w-3.5" />
+                    </button>
                   </>
                 ) : (
                   <>
-                    <span className="flex-1 text-slate-600 truncate">{svc.nome_servico}</span>
-                    <span className="text-slate-400 font-mono shrink-0">R$ {svc.valor_servico}</span>
-                    <Button size="sm" variant="ghost" onClick={() => startEdit(svc)} className="h-6 px-1.5 text-slate-400 hover:text-slate-700 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span className="flex-1 truncate uppercase" style={{ color: "hsl(220 20% 25%)" }}>{svc.nome_servico}</span>
+                    <span className="font-mono shrink-0" style={{ color: "hsl(220 10% 55%)" }}>R$ {svc.valor_servico}</span>
+                    <button onClick={() => startEdit(svc)} className="h-7 w-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Pencil className="h-3 w-3" />
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={() => handleDeleteServico(svc.id)} className="h-6 px-1.5 text-slate-400 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                    </button>
+                    <button onClick={() => handleDeleteServico(svc.id)} className="h-7 w-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Trash2 className="h-3 w-3" />
-                    </Button>
+                    </button>
                   </>
                 )}
               </div>
             ))}
-            {servicos.length === 0 && <p className="text-[10px] text-slate-400 py-2 text-center">Nenhum serviço cadastrado</p>}
+            {servicos.length === 0 && <p className="text-xs text-center py-4" style={{ color: "hsl(220 10% 62%)" }}>Nenhum serviço cadastrado</p>}
           </div>
         </div>
       )}
 
       {/* Ranking Weights */}
-      <div className="bg-white border border-slate-200 rounded p-2.5 md:p-4">
-        <div className="flex items-center justify-between mb-2 md:mb-3">
-          <span className="text-[9px] text-slate-400 uppercase tracking-[0.12em] font-medium">Pesos de Ranking</span>
+      <div className="qa-card p-5">
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "hsl(220 10% 45%)" }}>Pesos de Ranking</span>
           {isAdmin && (
-            <Button onClick={handleSaveWeights} disabled={saving} size="sm"
-              className="bg-[#7a1528] hover:bg-[#a52338] text-slate-600 border border-slate-200 h-6 md:h-7 text-[9px] md:text-[10px]">
-              {saving ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Save className="h-3 w-3 mr-1" />}
+            <button onClick={handleSaveWeights} disabled={saving} className="qa-btn-primary h-8 px-3 text-[11px] flex items-center gap-1 no-glow">
+              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
               Salvar
-            </Button>
+            </button>
           )}
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {config.map(c => (
-            <div key={c.id} className="space-y-0.5 md:space-y-1">
-              <Label className="text-slate-500 text-[9px] md:text-[10px]">{c.descricao || c.chave}</Label>
+            <div key={c.id} className="space-y-1">
+              <Label className="text-[11px] font-medium uppercase" style={{ color: "hsl(220 10% 45%)" }}>{c.descricao || c.chave}</Label>
               <Input
                 value={editedValues[c.id] || ""}
                 onChange={e => setEditedValues(prev => ({ ...prev, [c.id]: e.target.value }))}
                 disabled={!isAdmin}
                 type="number" step="0.01"
-                className="bg-white border-slate-200 text-slate-600 h-7 md:h-8 text-[11px] font-mono"
+                className="h-9 bg-white border-slate-200 text-slate-700 font-mono"
               />
-              <div className="text-[8px] text-slate-300 font-mono">{c.chave}</div>
+              <div className="text-[9px] font-mono" style={{ color: "hsl(220 10% 70%)" }}>{c.chave}</div>
             </div>
           ))}
         </div>
-        {!isAdmin && <p className="text-[9px] text-slate-300 mt-2">Apenas administradores podem editar.</p>}
+        {!isAdmin && <p className="text-xs mt-3" style={{ color: "hsl(220 10% 62%)" }}>Apenas administradores podem editar.</p>}
       </div>
 
       {/* Profile */}
-      <div className="bg-white border border-slate-200 rounded p-2.5 md:p-4">
-        <span className="text-[9px] text-slate-400 uppercase tracking-[0.12em] font-medium">Perfil</span>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 md:gap-3 mt-2 text-[11px]">
-          <div><span className="text-slate-400">Nome:</span> <span className="text-slate-600 ml-1">{profile?.nome || "—"}</span></div>
-          <div><span className="text-slate-400">Perfil:</span> <span className="text-slate-600 ml-1 capitalize">{profile?.perfil?.replace(/_/g, " ") || "—"}</span></div>
-          <div><span className="text-slate-400">Email:</span> <span className="text-slate-600 ml-1 truncate">{profile?.email || "—"}</span></div>
-          <div><span className="text-slate-400">Status:</span> <span className={`ml-1 ${profile?.ativo ? "text-emerald-400" : "text-red-400"}`}>{profile?.ativo ? "Ativo" : "Inativo"}</span></div>
+      <div className="qa-card p-5">
+        <div className="flex items-center gap-2 mb-3">
+          <User className="h-4 w-4" style={{ color: "hsl(230 80% 56%)" }} />
+          <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "hsl(220 10% 45%)" }}>Perfil</span>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[12px]">
+          <div><span style={{ color: "hsl(220 10% 55%)" }}>Nome:</span> <span className="ml-1 uppercase font-medium" style={{ color: "hsl(220 20% 25%)" }}>{profile?.nome || "—"}</span></div>
+          <div><span style={{ color: "hsl(220 10% 55%)" }}>Perfil:</span> <span className="ml-1 uppercase font-medium" style={{ color: "hsl(220 20% 25%)" }}>{profile?.perfil?.replace(/_/g, " ") || "—"}</span></div>
+          <div><span style={{ color: "hsl(220 10% 55%)" }}>Email:</span> <span className="ml-1 truncate uppercase" style={{ color: "hsl(220 20% 25%)" }}>{profile?.email || "—"}</span></div>
+          <div><span style={{ color: "hsl(220 10% 55%)" }}>Status:</span> <span className={`ml-1 font-medium ${profile?.ativo ? "text-emerald-600" : "text-red-500"}`}>{profile?.ativo ? "ATIVO" : "INATIVO"}</span></div>
         </div>
       </div>
     </div>
