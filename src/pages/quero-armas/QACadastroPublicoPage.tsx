@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useBrasilApiLookup } from "@/hooks/useBrasilApiLookup";
 import {
@@ -10,7 +10,7 @@ import {
 type Step = 1 | 2 | 3 | 4 | 5;
 
 interface FormData {
-  nome_completo: string; cpf: string; data_nascimento: string;
+  nome_completo: string; cpf: string; rg: string; emissor_rg: string; data_nascimento: string;
   telefone_principal: string; telefone_secundario: string; email: string;
   nome_mae: string; nome_pai: string; estado_civil: string; nacionalidade: string;
   profissao: string; observacoes: string;
@@ -36,7 +36,7 @@ interface FormData {
 }
 
 const initialForm: FormData = {
-  nome_completo: "", cpf: "", data_nascimento: "",
+  nome_completo: "", cpf: "", rg: "", emissor_rg: "", data_nascimento: "",
   telefone_principal: "", telefone_secundario: "", email: "",
   nome_mae: "", nome_pai: "", estado_civil: "", nacionalidade: "Brasileiro(a)",
   profissao: "", observacoes: "",
@@ -138,6 +138,13 @@ export default function QACadastroPublicoPage() {
   const [cpfLooking, setCpfLooking] = useState(false);
   const [cpfFound, setCpfFound] = useState<boolean | null>(null);
   const [showComplementoConfirm, setShowComplementoConfirm] = useState(false);
+  const [servicos, setServicos] = useState<{ id: number; nome_servico: string }[]>([]);
+
+  useEffect(() => {
+    supabase.from("qa_servicos" as any).select("id, nome_servico").order("id").then(({ data }) => {
+      if (data) setServicos(data as any[]);
+    });
+  }, []);
 
   const set = useCallback((field: keyof FormData, value: any) => {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -400,7 +407,7 @@ export default function QACadastroPublicoPage() {
           {step === 1 && <Step1 form={form} set={set} errors={errors} onCpfLookup={handleCpfLookup} cpfLooking={cpfLooking} cpfFound={cpfFound} />}
           {step === 2 && <Step2 form={form} set={set} errors={errors} onCepLookup={() => handleCepLookup("end1")} cepLoading={cepLoading} showComplementoConfirm={showComplementoConfirm} onComplementoConfirmDismiss={() => { setShowComplementoConfirm(false); proceedFromStep2(); }} onGeocodeLookup={() => handleGeocodeLookup("end1")} geocodeLoading={geocodeLoading} />}
           {step === 3 && <Step3 form={form} set={set} errors={errors} onCepLookup={() => handleCepLookup("end2")} cepLoading={cepLoading} onGeocodeLookup={() => handleGeocodeLookup("end2")} geocodeLoading={geocodeLoading} />}
-          {step === 4 && <Step4 form={form} set={set} errors={errors} onCnpjLookup={handleCnpjLookup} cnpjLoading={cnpjLoading} />}
+          {step === 4 && <Step4 form={form} set={set} errors={errors} onCnpjLookup={handleCnpjLookup} cnpjLoading={cnpjLoading} servicos={servicos} />}
           {step === 5 && <Step5 form={form} set={set} errors={errors} />}
 
           {/* Navigation */}
@@ -524,6 +531,12 @@ function Step1({ form, set, errors, onCpfLookup, cpfLooking, cpfFound }: { form:
               CPF não encontrado no cadastro — preencha manualmente
             </p>
           )}
+        </Field>
+        <Field label="RG">
+          <TextInput value={form.rg} onChange={v => set("rg", v.replace(/[^0-9Xx.\-]/g, "").toUpperCase())} placeholder="00.000.000-X" />
+        </Field>
+        <Field label="Órgão emissor">
+          <TextInput value={form.emissor_rg} onChange={v => set("emissor_rg", v)} placeholder="SSP/SP" />
         </Field>
         <Field label="Data de nascimento">
           <TextInput value={form.data_nascimento} onChange={v => set("data_nascimento", maskDate(v))} placeholder="DD/MM/AAAA" maxLength={10} />
@@ -773,13 +786,15 @@ function Step3({ form, set, errors, onCepLookup, cepLoading, onGeocodeLookup, ge
 }
 
 /* ── Step 4: Vínculo Profissional ── */
-function Step4({ form, set, errors, onCnpjLookup, cnpjLoading }: any) {
+function Step4({ form, set, errors, onCnpjLookup, cnpjLoading, servicos }: any) {
   const vinculos = [
     { value: "proprietario", label: "Sou proprietário / sócio de empresa" },
     { value: "registrado", label: "Trabalho registrado / carteira assinada" },
     { value: "aposentado", label: "Sou aposentado / pensionista" },
     { value: "nenhum", label: "Não possuo vínculo profissional no momento" },
   ];
+
+  const servicoOptions = (servicos || []).map((s: any) => s.nome_servico);
 
   return (
     <div>
@@ -789,18 +804,7 @@ function Step4({ form, set, errors, onCnpjLookup, cnpjLoading }: any) {
       {/* Serviço de Interesse */}
       <div className="mb-6">
         <Field label="Serviço de interesse *" error={errors.servico_interesse}>
-          <SelectInput value={form.servico_interesse} onChange={v => set("servico_interesse", v)} options={[
-            "Posse de Arma de Fogo (PF)",
-            "Porte de Arma de Fogo (PF)",
-            "Registro de Arma",
-            "Autorização de Compra",
-            "Renovação de CR",
-            "CRAF",
-            "GTE",
-            "Apostilamento / Atualização",
-            "Combo de Serviços",
-            "Outro",
-          ]} placeholder="Selecione o serviço" />
+          <SelectInput value={form.servico_interesse} onChange={v => set("servico_interesse", v)} options={servicoOptions} placeholder="Selecione o serviço" />
         </Field>
       </div>
 

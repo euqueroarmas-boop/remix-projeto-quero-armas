@@ -18,6 +18,8 @@ const CadastroSchema = z.object({
   // Dados pessoais
   nome_completo: z.string().min(3).max(200),
   cpf: z.string().min(11).max(18),
+  rg: z.string().max(30).optional().nullable(),
+  emissor_rg: z.string().max(30).optional().nullable(),
   data_nascimento: z.string().optional().nullable(),
   telefone_principal: z.string().min(8).max(20),
   telefone_secundario: z.string().max(20).optional().nullable(),

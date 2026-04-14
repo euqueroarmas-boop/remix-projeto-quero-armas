@@ -30,6 +30,8 @@ interface CadastroPublico {
   id: string;
   nome_completo: string;
   cpf: string;
+  rg?: string | null;
+  emissor_rg?: string | null;
   data_nascimento?: string | null;
   telefone_principal?: string | null;
   telefone_secundario?: string | null;
@@ -266,6 +268,8 @@ export default function QAClientesPage() {
     setCadastroEditForm({
       nome_completo: c.nome_completo || "",
       cpf: c.cpf || "",
+      rg: c.rg || "",
+      emissor_rg: c.emissor_rg || "",
       data_nascimento: c.data_nascimento || "",
       estado_civil: c.estado_civil || "",
       nacionalidade: c.nacionalidade || "",
@@ -887,6 +891,7 @@ export default function QAClientesPage() {
             <DetailGrid>
               <EditableField label="Nome" fieldKey="nome_completo" value={c.nome_completo} />
               <EditableField label="CPF" fieldKey="cpf" value={c.cpf} copyable />
+              <EditableField label="RG" fieldKey="rg" value={c.rg ? `${c.rg}${c.emissor_rg ? ` — ${c.emissor_rg}` : ""}` : null} />
               <EditableField label="Nascimento" fieldKey="data_nascimento" value={c.data_nascimento} />
               <EditableField label="Estado Civil" fieldKey="estado_civil" value={c.estado_civil} />
               <EditableField label="Nacionalidade" fieldKey="nacionalidade" value={c.nacionalidade} />
