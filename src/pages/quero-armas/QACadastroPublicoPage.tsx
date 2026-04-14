@@ -10,7 +10,7 @@ import {
 type Step = 1 | 2 | 3 | 4 | 5;
 
 interface FormData {
-  nome_completo: string; cpf: string; rg: string; emissor_rg: string; data_nascimento: string;
+  nome_completo: string; cpf: string; rg: string; emissor_rg: string; uf_emissor_rg: string; data_nascimento: string;
   telefone_principal: string; telefone_secundario: string; email: string;
   nome_mae: string; nome_pai: string; estado_civil: string; nacionalidade: string;
   profissao: string; observacoes: string;
@@ -36,7 +36,7 @@ interface FormData {
 }
 
 const initialForm: FormData = {
-  nome_completo: "", cpf: "", rg: "", emissor_rg: "", data_nascimento: "",
+  nome_completo: "", cpf: "", rg: "", emissor_rg: "", uf_emissor_rg: "", data_nascimento: "",
   telefone_principal: "", telefone_secundario: "", email: "",
   nome_mae: "", nome_pai: "", estado_civil: "", nacionalidade: "Brasileiro(a)",
   profissao: "", observacoes: "",
@@ -547,7 +547,18 @@ function Step1({ form, set, errors, onCpfLookup, cpfLooking, cpfFound }: { form:
           <TextInput value={form.rg} onChange={v => set("rg", maskRgInput(v))} placeholder="00.000.000-X" maxLength={14} />
         </Field>
         <Field label="Órgão emissor">
-          <TextInput value={form.emissor_rg} onChange={v => set("emissor_rg", v)} placeholder="SSP/SP" />
+          <TextInput value={form.emissor_rg} onChange={v => set("emissor_rg", v)} placeholder="SSP" />
+        </Field>
+        <Field label="UF emissor">
+          <select
+            value={form.uf_emissor_rg}
+            onChange={e => set("uf_emissor_rg", e.target.value)}
+            className="w-full h-10 px-3 rounded-lg border text-sm uppercase"
+            style={{ borderColor: "hsl(220 15% 85%)", color: "hsl(220 20% 18%)", backgroundColor: "white" }}
+          >
+            <option value="">Selecione</option>
+            {UF_LIST.map(uf => <option key={uf} value={uf}>{uf}</option>)}
+          </select>
         </Field>
         <Field label="Data de nascimento">
           <TextInput value={form.data_nascimento} onChange={v => set("data_nascimento", maskDate(v))} placeholder="DD/MM/AAAA" maxLength={10} />
