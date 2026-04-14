@@ -461,7 +461,7 @@ function SelectInput({ value, onChange, options, placeholder }: { value: string;
 }
 
 /* ── Step 1: Dados Pessoais ── */
-function Step1({ form, set, errors }: { form: FormData; set: any; errors: any }) {
+function Step1({ form, set, errors, onCpfLookup, cpfLooking, cpfFound }: { form: FormData; set: any; errors: any; onCpfLookup?: () => void; cpfLooking?: boolean; cpfFound?: boolean | null }) {
   return (
     <div>
       <SectionTitle>Dados Pessoais</SectionTitle>
@@ -473,7 +473,24 @@ function Step1({ form, set, errors }: { form: FormData; set: any; errors: any })
           </Field>
         </div>
         <Field label="CPF" required error={errors.cpf}>
-          <TextInput value={form.cpf} onChange={v => set("cpf", maskCpf(v))} placeholder="000.000.000-00" maxLength={14} />
+          <div className="relative">
+            <TextInput value={form.cpf} onChange={v => set("cpf", maskCpf(v))} placeholder="000.000.000-00" maxLength={14} onBlur={onCpfLookup} />
+            {cpfLooking && (
+              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                <Loader2 className="w-4 h-4 animate-spin" style={{ color: "hsl(230 80% 56%)" }} />
+              </div>
+            )}
+          </div>
+          {cpfFound === true && (
+            <p className="flex items-center gap-1 mt-1 text-[11px] font-medium" style={{ color: "hsl(152 60% 42%)" }}>
+              <CheckCircle className="w-3 h-3" /> Dados encontrados e preenchidos automaticamente
+            </p>
+          )}
+          {cpfFound === false && (
+            <p className="flex items-center gap-1 mt-1 text-[11px]" style={{ color: "hsl(220 10% 55%)" }}>
+              CPF não encontrado no cadastro — preencha manualmente
+            </p>
+          )}
         </Field>
         <Field label="Data de nascimento">
           <TextInput value={form.data_nascimento} onChange={v => set("data_nascimento", v)} placeholder="DD/MM/AAAA" />
