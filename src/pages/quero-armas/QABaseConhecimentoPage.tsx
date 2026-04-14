@@ -631,12 +631,6 @@ export default function QABaseConhecimentoPage() {
           {TIPOS_ORIGEM_FILTER.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Select value={filtroPapel} onValueChange={setFiltroPapel}>
-          <SelectTrigger className="w-[170px] bg-white border-slate-200 text-slate-700"><SelectValue placeholder="Papel" /></SelectTrigger>
-          <SelectContent>
-            {PAPEIS_DOC_FILTER.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
-          </SelectContent>
-        </Select>
         <Select value={filtroStatus} onValueChange={setFiltroStatus}>
           <SelectTrigger className="w-[160px] bg-white border-slate-200 text-slate-700"><SelectValue placeholder="Status" /></SelectTrigger>
           <SelectContent>
@@ -679,9 +673,7 @@ export default function QABaseConhecimentoPage() {
                   </div>
                   <div className="text-xs text-slate-500 flex items-center gap-2 mt-0.5 flex-wrap">
                     <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">{d.tipo_documento?.replace(/_/g, " ")}</span>
-                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${d.papel_documento === "auxiliar_caso" ? "bg-[#7a1528]/10 text-[#c43b52]" : "bg-indigo-500/10 text-indigo-400"}`}>
-                      {d.papel_documento === "auxiliar_caso" ? "Auxiliar" : "Aprendizado"}
-                    </span>
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-indigo-500/10 text-indigo-400">Aprendizado IA</span>
                     <span className="flex items-center gap-1">{origemIcon(d.tipo_origem)}{d.tipo_origem === "link_publico" ? "Link" : "Upload"}</span>
                     <span>{new Date(d.created_at).toLocaleDateString("pt-BR")}</span>
                     {d.tamanho_bytes && <span>{(d.tamanho_bytes / 1024).toFixed(0)} KB</span>}
