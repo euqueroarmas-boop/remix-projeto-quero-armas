@@ -16,6 +16,13 @@ import ClienteFormModal from "@/components/quero-armas/clientes/ClienteFormModal
 import { CrafModal, GteModal, CrModal, VendaModal, FiliacaoModal, DeleteConfirm } from "@/components/quero-armas/clientes/SubEntityModals";
 import { exportClientes, exportCrafs, exportGtes, exportCr, exportVendas } from "@/components/quero-armas/clientes/ClienteExport";
 
+const formatCpf = (v: string | null | undefined): string => {
+  if (!v) return "—";
+  const d = v.replace(/\D/g, "");
+  if (d.length !== 11) return v;
+  return d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+};
+
 interface Cliente {
   id: number; id_legado: number; nome_completo: string; cpf: string; rg: string; emissor_rg: string;
   data_nascimento: string; naturalidade: string; nacionalidade: string; nome_mae: string; nome_pai: string;
