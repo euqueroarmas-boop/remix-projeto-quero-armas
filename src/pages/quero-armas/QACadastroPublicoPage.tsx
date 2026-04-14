@@ -591,7 +591,7 @@ function AddressBlock({ prefix, form, set, errors, onCepLookup, cepLoading }: {
           <TextInput value={form[f("logradouro")] as string} onChange={v => set(f("logradouro"), v)} placeholder="Rua, Avenida, Travessa..." />
         </Field>
       </div>
-      <Field label="Número">
+      <Field label="Número" required error={errors[f("numero")]}>
         <TextInput value={form[f("numero")] as string} onChange={v => set(f("numero"), v)} placeholder="Nº" />
       </Field>
       <Field label="Complemento">
@@ -611,12 +611,42 @@ function AddressBlock({ prefix, form, set, errors, onCepLookup, cepLoading }: {
 }
 
 /* ── Step 2: Endereço Residencial ── */
-function Step2({ form, set, errors, onCepLookup, cepLoading }: any) {
+function Step2({ form, set, errors, onCepLookup, cepLoading, showComplementoConfirm, onComplementoConfirmDismiss }: any) {
   return (
     <div>
       <SectionTitle>Endereço Residencial</SectionTitle>
       <SectionDesc>Informe seu endereço residencial. Digite o CEP para preenchimento automático.</SectionDesc>
       <AddressBlock prefix="end1" form={form} set={set} errors={errors} onCepLookup={onCepLookup} cepLoading={cepLoading} />
+
+      {showComplementoConfirm && (
+        <div className="mt-4 p-4 rounded-xl border flex items-start gap-3" style={{ background: "hsl(40 90% 96%)", borderColor: "hsl(40 70% 80%)" }}>
+          <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" style={{ color: "hsl(40 80% 45%)" }} />
+          <div className="flex-1">
+            <p className="text-sm font-medium" style={{ color: "hsl(40 50% 25%)" }}>
+              Você não informou um complemento (Apto, Bloco, Sala...).
+            </p>
+            <p className="text-xs mt-0.5" style={{ color: "hsl(40 30% 40%)" }}>
+              Deseja continuar sem complemento?
+            </p>
+            <div className="flex gap-2 mt-3">
+              <button onClick={onComplementoConfirmDismiss}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                style={{ background: "hsl(40 70% 85%)", color: "hsl(40 50% 25%)" }}>
+                Sim, continuar sem complemento
+              </button>
+              <button onClick={() => {
+                const el = document.querySelector<HTMLInputElement>('[placeholder="APTO, SALA, BLOCO..."]');
+                el?.focus();
+              }}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                style={{ background: "hsl(230 80% 56%)", color: "white" }}>
+                Adicionar complemento
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="mt-6 pt-5 border-t" style={{ borderColor: "hsl(220 13% 93%)" }}>
         <label className="flex items-center gap-3 cursor-pointer group">
           <div className="relative">
