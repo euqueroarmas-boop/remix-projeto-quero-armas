@@ -420,13 +420,35 @@ export default function QARelatoriosPage() {
 
       {tab === "pendentes" && (
         <div className="space-y-2">
-          <div className="flex flex-wrap gap-3 text-[10px]">
-            {Object.entries(URGENCY_CONFIG).map(([key, cfg]) => (
-              <div key={key} className="flex items-center gap-1.5">
-                <div className={`w-2 h-2 rounded-full ${cfg.dot}`} />
-                <span className={cfg.text}>{cfg.label}</span>
-              </div>
-            ))}
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-600" />
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Buscar por nome, CPF, e-mail, telefone ou serviço..."
+              className="w-full bg-[#0d0d0d] border border-[#1c1c1c] rounded-lg pl-9 pr-3 py-2 text-xs text-neutral-200 placeholder:text-neutral-600 focus:outline-none focus:border-[#7a1528] transition-colors"
+            />
+            {search && (
+              <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-600 hover:text-neutral-300">
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap gap-3 text-[10px]">
+              {Object.entries(URGENCY_CONFIG).map(([key, cfg]) => (
+                <div key={key} className="flex items-center gap-1.5">
+                  <div className={`w-2 h-2 rounded-full ${cfg.dot}`} />
+                  <span className={cfg.text}>{cfg.label}</span>
+                </div>
+              ))}
+            </div>
+            {search && (
+              <span className="text-[10px] text-neutral-500">{filteredPendingItems.length} resultado(s)</span>
+            )}
           </div>
 
           <div className="bg-[#0d0d0d] border border-[#1c1c1c] rounded-lg overflow-hidden">
