@@ -121,13 +121,23 @@ export default function QAClientesPage() {
     }
   };
 
-  useEffect(() => { loadClientes(); }, []);
+  const [cadastrosPublicos, setCadastrosPublicos] = useState<any[]>([]);
+  const [tabView, setTabView] = useState<"clientes" | "cadastros">("clientes");
+
+  useEffect(() => { loadClientes(); loadCadastrosPublicos(); }, []);
 
   const loadClientes = async () => {
     setLoading(true);
     const { data } = await supabase.from("qa_clientes" as any).select("*").order("nome_completo", { ascending: true });
     setClientes((data as any[]) ?? []);
     setLoading(false);
+  };
+
+  const loadCadastrosPublicos = async () => {
+    const { data } = await supabase.from("qa_cadastro_publico" as any)
+      .select("id, nome_completo, cpf, telefone_principal, email, end1_cidade, end1_estado, servico_interesse, vinculo_tipo, status, created_at")
+      .order("created_at", { ascending: false });
+    setCadastrosPublicos((data as any[]) ?? []);
   };
 
   const openClient = async (c: Cliente) => {
@@ -175,7 +185,12 @@ export default function QAClientesPage() {
 
   const filtered = clientes.filter(c => {
     const s = search.toLowerCase();
-    return !s || c.nome_completo?.toLowerCase().includes(s) || c.cpf?.includes(s) || c.email?.toLowerCase().includes(s);
+    return !s || c.nome_completo?.toLowerCase().includes(s) || c.cpf?.includes(s) || c.email?.toLowerCase().includes(s) || c.celular?.includes(s);
+  });
+
+  const filteredCadastros = cadastrosPublicos.filter(c => {
+    const s = search.toLowerCase();
+    return !s || c.nome_completo?.toLowerCase().includes(s) || c.cpf?.includes(s) || c.email?.toLowerCase().includes(s) || c.telefone_principal?.includes(s);
   });
 
   const statusColor = (s: string) => s === "ATIVO" ? "text-emerald-600" : s === "DESISTENTE" ? "text-red-600" : "text-amber-600";
@@ -529,54 +544,137 @@ export default function QAClientesPage() {
     );
   }
 
+  const cadastroStatusColor = (s: string) => {
+    if (s === "aprovado") return "text-emerald-600 bg-emerald-50";
+    if (s === "pendente") return "text-amber-600 bg-amber-50";
+    if (s === "rejeitado") return "text-red-600 bg-red-50";
+    return "text-slate-500 bg-slate-100";
+  };
+
   // ── List View ──
   return (
-    <div className="space-y-4">
+    <div className="space-y-5 max-w-7xl mx-auto">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-semibold text-slate-800">Clientes</h1>
-          <p className="text-xs text-slate-500">{clientes.length} cadastrados</p>
+          <h1 className="text-xl md:text-2xl font-bold tracking-tight" style={{ color: "hsl(220 20% 18%)" }}>
+            Clientes
+          </h1>
+          <p className="text-sm mt-0.5" style={{ color: "hsl(220 10% 62%)" }}>
+            {clientes.length} cadastrados • {cadastrosPublicos.length} formulários recebidos
+          </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="ghost" size="sm" onClick={exportClientes} className="h-8 px-3 text-xs text-slate-500 hover:text-slate-700">
-            <Download className="h-3.5 w-3.5 mr-1" /> CSV
+          <Button variant="ghost" size="sm" onClick={exportClientes} className="h-9 px-3 text-xs" style={{ color: "hsl(220 10% 46%)" }}>
+            <Download className="h-3.5 w-3.5 mr-1.5" /> CSV
           </Button>
-          <Button size="sm" onClick={() => { setEditingCliente(null); setClienteModal(true); }} className="h-8 px-3 text-xs qa-btn-primary">
-            <Plus className="h-3.5 w-3.5 mr-1" /> Novo Cliente
-          </Button>
+          <button onClick={() => { setEditingCliente(null); setClienteModal(true); }}
+            className="qa-btn-primary flex items-center gap-1.5 no-glow h-9 px-4 text-xs">
+            <Plus className="h-3.5 w-3.5" /> Novo Cliente
+          </button>
         </div>
       </div>
 
+      {/* Search */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-        <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por nome, CPF ou email..." className="pl-9 h-10 text-sm bg-white border-slate-200 text-slate-700 placeholder:text-slate-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded-xl shadow-sm" />
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "hsl(220 10% 62%)" }} />
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Buscar por nome, CPF, telefone ou e-mail..."
+          className="w-full h-11 pl-10 pr-4 rounded-xl border text-sm outline-none transition-all focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
+          style={{ background: "hsl(0 0% 100%)", borderColor: "hsl(220 13% 88%)", color: "hsl(220 20% 18%)" }}
+        />
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-1 p-1 rounded-xl" style={{ background: "hsl(220 20% 96%)" }}>
+        <button
+          onClick={() => setTabView("clientes")}
+          className="flex-1 py-2 px-4 rounded-lg text-xs font-medium transition-all"
+          style={{
+            background: tabView === "clientes" ? "hsl(0 0% 100%)" : "transparent",
+            color: tabView === "clientes" ? "hsl(220 20% 18%)" : "hsl(220 10% 55%)",
+            boxShadow: tabView === "clientes" ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+          }}>
+          <User className="h-3.5 w-3.5 inline mr-1.5" /> Clientes ({filtered.length})
+        </button>
+        <button
+          onClick={() => setTabView("cadastros")}
+          className="flex-1 py-2 px-4 rounded-lg text-xs font-medium transition-all"
+          style={{
+            background: tabView === "cadastros" ? "hsl(0 0% 100%)" : "transparent",
+            color: tabView === "cadastros" ? "hsl(220 20% 18%)" : "hsl(220 10% 55%)",
+            boxShadow: tabView === "cadastros" ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+          }}>
+          <FileText className="h-3.5 w-3.5 inline mr-1.5" /> Cadastros Públicos ({filteredCadastros.length})
+        </button>
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-12"><Loader2 className="h-5 w-5 animate-spin text-slate-400" /></div>
+        <div className="flex justify-center py-16">
+          <div className="w-8 h-8 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" />
+        </div>
+      ) : tabView === "clientes" ? (
+        <div className="space-y-1.5">
+          {filtered.length === 0 && <div className="text-center py-12 text-sm" style={{ color: "hsl(220 10% 62%)" }}>Nenhum cliente encontrado.</div>}
+          {filtered.map(c => (
+            <button key={c.id} onClick={() => openClient(c)}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-all hover:shadow-sm text-left group qa-card"
+              style={{ borderColor: "hsl(220 13% 93%)" }}>
+              <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: "hsl(230 80% 96%)" }}>
+                <User className="h-4 w-4" style={{ color: "hsl(230 80% 56%)" }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-[13px] font-medium truncate" style={{ color: "hsl(220 20% 18%)" }}>{c.nome_completo}</div>
+                <div className="flex items-center gap-2 text-[11px]" style={{ color: "hsl(220 10% 55%)" }}>
+                  <span>{c.cpf || "—"}</span>
+                  <span>•</span>
+                  <span>{c.celular || "—"}</span>
+                  <span>•</span>
+                  <span>{c.cidade || "—"}/{c.estado || "—"}</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                {c.cliente_lions && <span className="text-xs">🦁</span>}
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${statusColor(c.status)}`}>{c.status}</span>
+                <Eye className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: "hsl(220 10% 62%)" }} />
+              </div>
+            </button>
+          ))}
+        </div>
       ) : (
-        <ScrollArea className="h-[calc(100vh-200px)]">
-          <div className="space-y-1">
-            {filtered.map(c => (
-              <button key={c.id} onClick={() => openClient(c)} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-200/80 transition-all text-left group">
-                <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
-                  <User className="h-4 w-4 text-slate-500" />
+        <div className="space-y-1.5">
+          {filteredCadastros.length === 0 && <div className="text-center py-12 text-sm" style={{ color: "hsl(220 10% 62%)" }}>Nenhum cadastro público encontrado.</div>}
+          {filteredCadastros.map(c => (
+            <div key={c.id}
+              className="flex items-center gap-3 px-4 py-3 rounded-xl border transition-all hover:shadow-sm qa-card"
+              style={{ borderColor: "hsl(220 13% 93%)" }}>
+              <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: "hsl(152 60% 95%)" }}>
+                <FileText className="h-4 w-4" style={{ color: "hsl(152 60% 42%)" }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-[13px] font-medium truncate" style={{ color: "hsl(220 20% 18%)" }}>{c.nome_completo}</div>
+                <div className="flex items-center gap-2 text-[11px] flex-wrap" style={{ color: "hsl(220 10% 55%)" }}>
+                  <span>{c.cpf || "—"}</span>
+                  <span>•</span>
+                  <span>{c.telefone_principal || "—"}</span>
+                  <span>•</span>
+                  <span>{c.email || "—"}</span>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm text-slate-800 font-medium truncate">{c.nome_completo}</div>
-                  <div className="flex items-center gap-2 text-xs text-slate-500">
-                    <span>{c.cpf || "—"}</span><span>•</span><span>{c.cidade || "—"}/{c.estado || "—"}</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  {c.cliente_lions && <span className="text-xs">🦁</span>}
-                  <span className={`text-xs font-medium ${statusColor(c.status)}`}>{c.status}</span>
-                  <Eye className="h-3.5 w-3.5 text-slate-300 group-hover:text-slate-500 transition-colors" />
-                </div>
-              </button>
-            ))}
-          </div>
-        </ScrollArea>
+                {c.servico_interesse && (
+                  <div className="text-[10px] mt-0.5" style={{ color: "hsl(230 80% 56%)" }}>🎯 {c.servico_interesse}</div>
+                )}
+              </div>
+              <div className="flex flex-col items-end gap-1 shrink-0">
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${cadastroStatusColor(c.status)}`}>{c.status}</span>
+                <span className="text-[10px]" style={{ color: "hsl(220 10% 62%)" }}>
+                  {new Date(c.created_at).toLocaleDateString("pt-BR")}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
       )}
 
       <ClienteFormModal open={clienteModal} onClose={() => { setClienteModal(false); setEditingCliente(null); }} onSaved={loadClientes} cliente={editingCliente} />
@@ -587,7 +685,7 @@ export default function QAClientesPage() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <div className="text-[10px] text-blue-600 uppercase tracking-[0.12em] mb-2 font-semibold">{title}</div>
+      <div className="text-[10px] uppercase tracking-[0.12em] mb-2 font-semibold" style={{ color: "hsl(230 80% 56%)" }}>{title}</div>
       <div className="space-y-1.5">{children}</div>
     </div>
   );

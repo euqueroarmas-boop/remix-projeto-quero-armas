@@ -90,6 +90,7 @@ const CadastroSchema = z.object({
   consentimento_dados_verdadeiros: z.literal(true),
   consentimento_tratamento_dados: z.literal(true),
   consentimento_texto: z.string().max(2000).optional().nullable(),
+  servico_interesse: z.string().max(200).optional().nullable(),
 });
 
 Deno.serve(async (req) => {

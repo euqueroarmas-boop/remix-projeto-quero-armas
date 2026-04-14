@@ -23,6 +23,7 @@ interface Stats {
   aprovadas: number;
   referencias: number;
   rascunhos: number;
+  novosCadastros: number;
 }
 
 interface RecentItem {
@@ -31,6 +32,19 @@ interface RecentItem {
   tipo: string;
   created_at: string;
   status?: string;
+}
+
+interface NovoCadastro {
+  id: string;
+  nome_completo: string;
+  cpf: string;
+  telefone_principal: string;
+  email: string;
+  end1_cidade: string;
+  end1_estado: string;
+  servico_interesse: string;
+  status: string;
+  created_at: string;
 }
 
 // Premium chart colors
@@ -64,15 +78,16 @@ function CustomTooltip({ active, payload, label }: any) {
 export default function QADashboardPage() {
   const [stats, setStats] = useState<Stats>({
     documentos: 0, normas: 0, jurisprudencias: 0, pecas: 0,
-    pendentes: 0, erros: 0, consultas: 0, aprovadas: 0, referencias: 0, rascunhos: 0,
+    pendentes: 0, erros: 0, consultas: 0, aprovadas: 0, referencias: 0, rascunhos: 0, novosCadastros: 0,
   });
+  const [novosCadastros, setNovosCadastros] = useState<NovoCadastro[]>([]);
   const [recentPecas, setRecentPecas] = useState<RecentItem[]>([]);
   const [recentDocs, setRecentDocs] = useState<RecentItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const load = async () => {
-      const [d, n, j, p, pend, erros, c, apr, ref, rasc, rPecas, rDocs] = await Promise.all([
+      const [d, n, j, p, pend, erros, c, apr, ref, rasc, rPecas, rDocs, cadastrosCount, cadastrosRecent] = await Promise.all([
         supabase.from("qa_documentos_conhecimento" as any).select("id", { count: "exact", head: true }).eq("ativo", true),
         supabase.from("qa_fontes_normativas" as any).select("id", { count: "exact", head: true }),
         supabase.from("qa_jurisprudencias" as any).select("id", { count: "exact", head: true }),
@@ -85,13 +100,16 @@ export default function QADashboardPage() {
         supabase.from("qa_geracoes_pecas" as any).select("id", { count: "exact", head: true }).eq("status_revisao", "rascunho"),
         supabase.from("qa_geracoes_pecas" as any).select("id, titulo_geracao, tipo_peca, created_at, status_revisao").order("created_at", { ascending: false }).limit(6),
         supabase.from("qa_documentos_conhecimento" as any).select("id, titulo, tipo_documento, created_at, status_processamento").eq("ativo", true).order("created_at", { ascending: false }).limit(6),
+        supabase.from("qa_cadastro_publico" as any).select("id", { count: "exact", head: true }),
+        supabase.from("qa_cadastro_publico" as any).select("id, nome_completo, cpf, telefone_principal, email, end1_cidade, end1_estado, servico_interesse, status, created_at").order("created_at", { ascending: false }).limit(8),
       ]);
       setStats({
         documentos: d.count ?? 0, normas: n.count ?? 0, jurisprudencias: j.count ?? 0,
         pecas: p.count ?? 0, pendentes: pend.count ?? 0, erros: erros.count ?? 0,
         consultas: c.count ?? 0, aprovadas: apr.count ?? 0, referencias: ref.count ?? 0,
-        rascunhos: rasc.count ?? 0,
+        rascunhos: rasc.count ?? 0, novosCadastros: cadastrosCount.count ?? 0,
       });
+      setNovosCadastros((cadastrosRecent.data as any[]) ?? []);
       setRecentPecas((rPecas.data as any[] ?? []).map((r: any) => ({
         id: r.id, titulo: r.titulo_geracao || "Sem título",
         tipo: r.tipo_peca, created_at: r.created_at, status: r.status_revisao,
@@ -188,12 +206,55 @@ export default function QADashboardPage() {
       )}
 
       {/* KPI Cards - Row 1 */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
+        <KPICard icon={Users} label="Novos Cadastros" value={stats.novosCadastros} trend="novo" positive />
         <KPICard icon={FileText} label="Base de Dados" value={totalAcervo} trend="+12%" positive />
         <KPICard icon={PenTool} label="Peças Geradas" value={stats.pecas} trend="+8%" positive />
         <KPICard icon={CheckCircle} label="Aprovadas" value={stats.aprovadas} trend="+15%" positive />
         <KPICard icon={Shield} label="Consultas IA" value={stats.consultas} trend="+22%" positive />
       </div>
+
+      {/* Novos Cadastros Públicos */}
+      {novosCadastros.length > 0 && (
+        <div className="qa-card p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-sm font-semibold" style={{ color: "hsl(220 20% 18%)" }}>Cadastros Recentes</h3>
+              <p className="text-xs mt-0.5" style={{ color: "hsl(220 10% 62%)" }}>Clientes que preencheram o formulário público</p>
+            </div>
+            <Link to="/quero-armas/clientes" className="flex items-center gap-1 text-xs font-medium hover:underline" style={{ color: "hsl(230 80% 56%)" }}>
+              Ver todos <ArrowRight className="h-3 w-3" />
+            </Link>
+          </div>
+          <div className="space-y-2">
+            {novosCadastros.map((c) => (
+              <div key={c.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all hover:shadow-sm"
+                style={{ borderColor: "hsl(220 13% 91%)", background: "hsl(0 0% 100%)" }}>
+                <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: "hsl(230 80% 96%)" }}>
+                  <Users className="h-3.5 w-3.5" style={{ color: "hsl(230 80% 56%)" }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[13px] font-medium truncate" style={{ color: "hsl(220 20% 18%)" }}>{c.nome_completo}</div>
+                  <div className="flex items-center gap-2 text-[11px]" style={{ color: "hsl(220 10% 55%)" }}>
+                    <span>{c.end1_cidade}/{c.end1_estado}</span>
+                    {c.servico_interesse && <><span>•</span><span>{c.servico_interesse}</span></>}
+                  </div>
+                </div>
+                <div className="flex flex-col items-end gap-0.5 shrink-0">
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                    c.status === "pendente" ? "bg-amber-50 text-amber-600" :
+                    c.status === "aprovado" ? "bg-emerald-50 text-emerald-600" :
+                    "bg-slate-100 text-slate-500"
+                  }`}>{c.status}</span>
+                  <span className="text-[10px]" style={{ color: "hsl(220 10% 62%)" }}>
+                    {new Date(c.created_at).toLocaleDateString("pt-BR")}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

@@ -30,6 +30,7 @@ interface FormData {
   trab_endereco_empresa: string;
   trab_telefone_empresa: string;
   comprovante_endereco_proprio: string;
+  servico_interesse: string;
   consentimento_dados_verdadeiros: boolean;
   consentimento_tratamento_dados: boolean;
 }
@@ -55,6 +56,7 @@ const initialForm: FormData = {
   trab_endereco_empresa: "",
   trab_telefone_empresa: "",
   comprovante_endereco_proprio: "",
+  servico_interesse: "",
   consentimento_dados_verdadeiros: false,
   consentimento_tratamento_dados: false,
 };
@@ -267,6 +269,10 @@ export default function QACadastroPublicoPage() {
       if (!form.end1_numero.trim()) errs.end1_numero = "Número é obrigatório";
       if (!form.end1_complemento.trim()) errs.end1_complemento = "Complemento é obrigatório (ex: Casa, Apto, Bloco)";
       if (!form.comprovante_endereco_proprio) errs.comprovante_endereco_proprio = "Informe se possui comprovante no seu nome";
+    }
+    if (s === 4) {
+      if (!form.vinculo_tipo) errs.vinculo_tipo = "Selecione o vínculo profissional";
+      if (!form.servico_interesse) errs.servico_interesse = "Selecione o serviço de interesse";
     }
     if (s === 5) {
       if (!form.consentimento_dados_verdadeiros) errs.consentimento_dados_verdadeiros = "Obrigatório";
@@ -778,8 +784,30 @@ function Step4({ form, set, errors, onCnpjLookup, cnpjLoading }: any) {
   return (
     <div>
       <SectionTitle>Vínculo Profissional</SectionTitle>
-      <SectionDesc>Selecione sua situação profissional atual.</SectionDesc>
+      <SectionDesc>Selecione o serviço desejado e sua situação profissional atual.</SectionDesc>
 
+      {/* Serviço de Interesse */}
+      <div className="mb-6">
+        <Field label="Serviço de interesse *" error={errors.servico_interesse}>
+          <SelectInput value={form.servico_interesse} onChange={v => set("servico_interesse", v)} options={[
+            "Posse de Arma de Fogo (PF)",
+            "Porte de Arma de Fogo (PF)",
+            "Registro de Arma",
+            "Autorização de Compra",
+            "Renovação de CR",
+            "CRAF",
+            "GTE",
+            "Apostilamento / Atualização",
+            "Combo de Serviços",
+            "Outro",
+          ]} placeholder="Selecione o serviço" />
+        </Field>
+      </div>
+
+      <div className="mb-3">
+        <span className="text-xs font-medium" style={{ color: "hsl(220 10% 50%)" }}>Situação profissional</span>
+        {errors.vinculo_tipo && <span className="text-[11px] ml-2" style={{ color: "hsl(0 72% 51%)" }}>{errors.vinculo_tipo}</span>}
+      </div>
       <div className="space-y-2 mb-6">
         {vinculos.map(v => (
           <label key={v.value}
@@ -915,6 +943,7 @@ function Step5({ form, set, errors }: any) {
           <SummaryItem label="E-mail" value={form.email} />
           <SummaryItem label="Telefone" value={form.telefone_principal} />
           {form.end1_cidade && <SummaryItem label="Cidade" value={`${form.end1_cidade}/${form.end1_estado}`} />}
+          {form.servico_interesse && <SummaryItem label="Serviço" value={form.servico_interesse} />}
           {form.vinculo_tipo && <SummaryItem label="Vínculo" value={form.vinculo_tipo.replace(/_/g, " ")} />}
         </div>
       </div>
