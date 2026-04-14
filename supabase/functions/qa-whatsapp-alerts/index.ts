@@ -24,7 +24,8 @@ async function sendWhatsApp(phone: string, message: string): Promise<{ ok: boole
     return { ok: false, error: "Evolution API não configurada" };
   }
   try {
-    const res = await fetch(`${EVOLUTION_API_URL}/message/sendText/wmti`, {
+    const baseUrl = EVOLUTION_API_URL.replace(/\/+$/, "");
+    const res = await fetch(`${baseUrl}/message/sendText/wmti`, {
       method: "POST",
       headers: { "Content-Type": "application/json", apikey: EVOLUTION_API_TOKEN },
       body: JSON.stringify({ number: phone.replace(/\D/g, ""), text: message }),
