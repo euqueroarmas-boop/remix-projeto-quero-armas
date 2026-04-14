@@ -543,19 +543,19 @@ export default function QABaseConhecimentoPage() {
           </p>
         </div>
         <div className="flex gap-2 flex-wrap">
-          <Button variant="outline" onClick={() => setShowLinkDialog(true)}
-            className="border-blue-200 text-blue-600 hover:bg-blue-50 gap-1.5 rounded-lg">
-            <Link2 className="h-4 w-4" /> Importar por Link
-          </Button>
-          <Button variant="outline" onClick={() => setShowBulkDialog(true)}
-            className="border-purple-200 text-purple-600 hover:bg-purple-50 gap-1.5 rounded-lg">
-            <Plus className="h-4 w-4" /> Carga em Lote
-          </Button>
+          <button onClick={() => setShowLinkDialog(true)}
+            className="qa-btn-outline flex items-center gap-1.5 no-glow h-9 px-4 text-xs">
+            <Link2 className="h-3.5 w-3.5" /> Importar por Link
+          </button>
+          <button onClick={() => setShowBulkDialog(true)}
+            className="qa-btn-outline flex items-center gap-1.5 no-glow h-9 px-4 text-xs">
+            <Plus className="h-3.5 w-3.5" /> Carga em Lote
+          </button>
           <label className="cursor-pointer">
             <input type="file" className="hidden" onChange={handleUpload} accept=".pdf,.doc,.docx,.txt,.rtf" multiple />
-            <Button asChild disabled={uploading} className="qa-btn-primary no-glow">
-              <span>{uploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />} Enviar Documento</span>
-            </Button>
+            <span className={`qa-btn-primary flex items-center gap-1.5 no-glow h-9 px-4 text-xs ${uploading ? "opacity-50 pointer-events-none" : ""}`}>
+              {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />} Enviar Documento
+            </span>
           </label>
         </div>
       </div>
@@ -760,10 +760,10 @@ export default function QABaseConhecimentoPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowLinkDialog(false)} className="border-slate-200 rounded-lg" style={{ color: "hsl(220 10% 45%)" }}>Cancelar</Button>
-            <Button onClick={handleImportLink} disabled={!linkUrl.trim() || importingLink} className="qa-btn-primary no-glow rounded-lg">
-              {importingLink ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Enviando...</> : <><Globe className="h-4 w-4 mr-2" /> Importar</>}
-            </Button>
+            <button onClick={() => setShowLinkDialog(false)} className="qa-btn-outline h-9 px-4 text-xs">Cancelar</button>
+            <button onClick={handleImportLink} disabled={!linkUrl.trim() || importingLink} className="qa-btn-primary flex items-center gap-1.5 no-glow h-9 px-4 text-xs disabled:opacity-50">
+              {importingLink ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Enviando...</> : <><Globe className="h-3.5 w-3.5" /> Importar</>}
+            </button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -801,17 +801,17 @@ export default function QABaseConhecimentoPage() {
               <Label className="text-slate-700 text-xs">Ou envie múltiplos arquivos</Label>
               <label className="cursor-pointer block mt-1">
                 <input type="file" className="hidden" onChange={handleUpload} accept=".pdf,.doc,.docx,.txt,.rtf" multiple />
-                <Button asChild variant="outline" disabled={uploading} className="border-slate-200 text-slate-600 w-full">
-                  <span>{uploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />} Selecionar arquivos</span>
-                </Button>
+                <span className={`qa-btn-outline flex items-center gap-1.5 h-9 px-4 text-xs w-full justify-center ${uploading ? "opacity-50 pointer-events-none" : ""}`}>
+                  {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />} Selecionar arquivos
+                </span>
               </label>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowBulkDialog(false)} className="border-slate-200 rounded-lg" style={{ color: "hsl(220 10% 45%)" }}>Cancelar</Button>
-            <Button onClick={handleBulkImport} disabled={!bulkLinks.trim() || bulkImporting} className="rounded-lg" style={{ background: "hsl(262 60% 55%)", color: "white" }}>
-              {bulkImporting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />} Importar Links
-            </Button>
+            <button onClick={() => setShowBulkDialog(false)} className="qa-btn-outline h-9 px-4 text-xs">Cancelar</button>
+            <button onClick={handleBulkImport} disabled={!bulkLinks.trim() || bulkImporting} className="qa-btn-primary flex items-center gap-1.5 no-glow h-9 px-4 text-xs disabled:opacity-50">
+              {bulkImporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />} Importar Links
+            </button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -827,17 +827,17 @@ export default function QABaseConhecimentoPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col gap-2 sm:flex-col">
-            <Button variant="outline" disabled={deleting} onClick={() => handleDeactivate(deleteTarget)}
-              className="w-full border-amber-200 text-amber-600 hover:bg-amber-50 justify-start gap-2 rounded-lg">
-              <Power className="h-4 w-4" /> Desativar da IA
+            <button disabled={deleting} onClick={() => handleDeactivate(deleteTarget)}
+              className="qa-btn-outline w-full flex items-center gap-2 h-9 px-4 text-xs disabled:opacity-50" style={{ borderColor: "hsl(40 80% 70%)", color: "hsl(30 80% 40%)" }}>
+              <Power className="h-3.5 w-3.5" /> Desativar da IA
               <span className="text-[10px] ml-auto" style={{ color: "hsl(220 10% 62%)" }}>reversível</span>
-            </Button>
-            <Button variant="destructive" disabled={deleting} onClick={() => handlePermanentDelete(deleteTarget)}
-              className="w-full justify-start gap-2 rounded-lg">
-              {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />} Excluir permanentemente
+            </button>
+            <button disabled={deleting} onClick={() => handlePermanentDelete(deleteTarget)}
+              className="w-full flex items-center gap-2 h-9 px-4 text-xs font-semibold rounded-lg text-white disabled:opacity-50" style={{ background: "hsl(0 72% 51%)" }}>
+              {deleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />} Excluir permanentemente
               <span className="text-[10px] text-red-200 ml-auto">irreversível</span>
-            </Button>
-            <AlertDialogCancel className="w-full border-slate-200 rounded-lg" style={{ color: "hsl(220 10% 45%)" }}>Cancelar</AlertDialogCancel>
+            </button>
+            <AlertDialogCancel className="w-full border-slate-200 rounded-lg text-xs" style={{ color: "hsl(220 10% 45%)" }}>Cancelar</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
