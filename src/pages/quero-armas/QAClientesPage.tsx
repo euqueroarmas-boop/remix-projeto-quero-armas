@@ -761,12 +761,33 @@ export default function QAClientesPage() {
         ? "Não"
         : c.comprovante_endereco_proprio || "—";
 
+    const ef = cadastroEditForm;
+    const setEf = (key: string, val: string) => setCadastroEditForm(prev => ({ ...prev, [key]: val }));
+    const isEditing = editingCadastroPublico;
+
+    const EditableField = ({ label, fieldKey, value, copyable }: { label: string; fieldKey?: string; value?: string | null; copyable?: boolean }) => {
+      if (isEditing && fieldKey) {
+        return (
+          <div className="flex items-baseline gap-2">
+            <span className="text-xs shrink-0" style={{ color: "hsl(220 10% 50%)", minWidth: "140px" }}>{label}:</span>
+            <input
+              value={ef[fieldKey] || ""}
+              onChange={e => setEf(fieldKey, e.target.value)}
+              className="flex-1 text-sm font-medium border-b border-slate-300 bg-transparent outline-none focus:border-blue-500 py-0.5"
+              style={{ color: "hsl(220 20% 18%)" }}
+            />
+          </div>
+        );
+      }
+      return <DetailField label={label} value={value} copyable={copyable} />;
+    };
+
     return (
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-start gap-4">
           <button
-            onClick={() => setSelectedCadastroPublico(null)}
+            onClick={() => { setSelectedCadastroPublico(null); setEditingCadastroPublico(false); }}
             className="mt-1 w-9 h-9 rounded-xl flex items-center justify-center transition-colors hover:bg-slate-100"
             style={{ border: "1px solid hsl(220 13% 90%)" }}
           >
@@ -783,38 +804,68 @@ export default function QAClientesPage() {
               <span className="text-xs" style={{ color: "hsl(220 10% 55%)" }}>CPF: {c.cpf || "—"}</span>
             </div>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              disabled={!!savingCadastroPublicoStatus || c.status === "rejeitado"}
-              onClick={() => updateCadastroPublicoStatus("rejeitado")}
-              className="h-9 px-4 rounded-lg text-xs font-medium border transition-all disabled:opacity-40 hover:bg-slate-50"
-              style={{ borderColor: "hsl(220 13% 88%)", color: "hsl(220 20% 30%)" }}
-            >
-              {savingCadastroPublicoStatus === "rejeitado" && <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin inline" />}
-              Rejeitar
-            </button>
-            <button
-              disabled={!!savingCadastroPublicoStatus || c.status === "pendente"}
-              onClick={() => updateCadastroPublicoStatus("pendente")}
-              className="h-9 px-4 rounded-lg text-xs font-medium border transition-all disabled:opacity-40 hover:bg-slate-50"
-              style={{ borderColor: "hsl(220 13% 88%)", color: "hsl(220 20% 30%)" }}
-            >
-              {savingCadastroPublicoStatus === "pendente" && <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin inline" />}
-              Pendente
-            </button>
-            <button
-              disabled={!!savingCadastroPublicoStatus || c.status === "aprovado"}
-              onClick={() => updateCadastroPublicoStatus("aprovado")}
-              className="h-9 px-4 rounded-lg text-xs font-semibold text-white transition-all disabled:opacity-40 flex items-center gap-1.5"
-              style={{ background: "hsl(230 80% 56%)" }}
-            >
-              {savingCadastroPublicoStatus === "aprovado" ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <CheckCircle className="h-3.5 w-3.5" />
-              )}
-              Validar
-            </button>
+          <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            {isEditing ? (
+              <>
+                <button
+                  onClick={() => setEditingCadastroPublico(false)}
+                  className="h-9 px-4 rounded-lg text-xs font-medium border transition-all hover:bg-slate-50"
+                  style={{ borderColor: "hsl(220 13% 88%)", color: "hsl(220 20% 30%)" }}
+                >
+                  <X className="h-3.5 w-3.5 mr-1 inline" /> Cancelar
+                </button>
+                <button
+                  onClick={saveCadastroEdit}
+                  disabled={savingCadastroEdit}
+                  className="h-9 px-4 rounded-lg text-xs font-semibold text-white transition-all disabled:opacity-40 flex items-center gap-1.5"
+                  style={{ background: "hsl(152 60% 40%)" }}
+                >
+                  {savingCadastroEdit ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                  Salvar
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={startEditCadastro}
+                  className="h-9 px-4 rounded-lg text-xs font-medium border transition-all hover:bg-slate-50 flex items-center gap-1.5"
+                  style={{ borderColor: "hsl(220 13% 88%)", color: "hsl(220 20% 30%)" }}
+                >
+                  <Edit className="h-3.5 w-3.5" /> Editar
+                </button>
+                <button
+                  disabled={!!savingCadastroPublicoStatus || c.status === "rejeitado"}
+                  onClick={() => updateCadastroPublicoStatus("rejeitado")}
+                  className="h-9 px-4 rounded-lg text-xs font-medium border transition-all disabled:opacity-40 hover:bg-slate-50"
+                  style={{ borderColor: "hsl(220 13% 88%)", color: "hsl(220 20% 30%)" }}
+                >
+                  {savingCadastroPublicoStatus === "rejeitado" && <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin inline" />}
+                  Rejeitar
+                </button>
+                <button
+                  disabled={!!savingCadastroPublicoStatus || c.status === "pendente"}
+                  onClick={() => updateCadastroPublicoStatus("pendente")}
+                  className="h-9 px-4 rounded-lg text-xs font-medium border transition-all disabled:opacity-40 hover:bg-slate-50"
+                  style={{ borderColor: "hsl(220 13% 88%)", color: "hsl(220 20% 30%)" }}
+                >
+                  {savingCadastroPublicoStatus === "pendente" && <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin inline" />}
+                  Pendente
+                </button>
+                <button
+                  disabled={!!savingCadastroPublicoStatus || c.status === "aprovado"}
+                  onClick={() => updateCadastroPublicoStatus("aprovado")}
+                  className="h-9 px-4 rounded-lg text-xs font-semibold text-white transition-all disabled:opacity-40 flex items-center gap-1.5"
+                  style={{ background: "hsl(230 80% 56%)" }}
+                >
+                  {savingCadastroPublicoStatus === "aprovado" ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <CheckCircle className="h-3.5 w-3.5" />
+                  )}
+                  Validar
+                </button>
+              </>
+            )}
           </div>
         </div>
 
@@ -823,55 +874,83 @@ export default function QAClientesPage() {
           <DetailCard title="Resumo do Cadastro">
             <DetailGrid>
               <DetailField label="Recebido em" value={formatDate(c.created_at)} />
-              <DetailField label="Serviço" value={c.servico_interesse} />
-              <DetailField label="Tipo de vínculo" value={c.vinculo_tipo} />
+              <EditableField label="Serviço" fieldKey="servico_interesse" value={c.servico_interesse} />
+              <EditableField label="Tipo de vínculo" fieldKey="vinculo_tipo" value={c.vinculo_tipo} />
               <DetailField label="Comprovante em nome próprio" value={comprovanteEndereco} />
-              <DetailField label="Consentimento de veracidade" value={c.consentimento_dados_verdadeiros ? "Sim" : "Não"} highlight={c.consentimento_dados_verdadeiros} />
-              <DetailField label="Consentimento LGPD" value={c.consentimento_tratamento_dados ? "Sim" : "Não"} highlight={c.consentimento_tratamento_dados} />
+              <DetailField label="Consentimento de veracidade" value={c.consentimento_dados_verdadeiros ? "Sim" : "Não"} />
+              <DetailField label="Consentimento LGPD" value={c.consentimento_tratamento_dados ? "Sim" : "Não"} />
               <DetailField label="Aceite em" value={formatDate(c.consentimento_timestamp ?? c.created_at)} />
             </DetailGrid>
           </DetailCard>
 
           <DetailCard title="Identificação">
             <DetailGrid>
-              <DetailField label="Nome" value={c.nome_completo} />
-              <DetailField label="CPF" value={c.cpf} copyable />
-              <DetailField label="Nascimento" value={formatDate(c.data_nascimento ?? null)} />
-              <DetailField label="Estado Civil" value={c.estado_civil} />
-              <DetailField label="Nacionalidade" value={c.nacionalidade} />
-              <DetailField label="Profissão" value={c.profissao} />
-              <DetailField label="Mãe" value={c.nome_mae} />
-              <DetailField label="Pai" value={c.nome_pai} />
+              <EditableField label="Nome" fieldKey="nome_completo" value={c.nome_completo} />
+              <EditableField label="CPF" fieldKey="cpf" value={c.cpf} copyable />
+              <EditableField label="Nascimento" fieldKey="data_nascimento" value={c.data_nascimento} />
+              <EditableField label="Estado Civil" fieldKey="estado_civil" value={c.estado_civil} />
+              <EditableField label="Nacionalidade" fieldKey="nacionalidade" value={c.nacionalidade} />
+              <EditableField label="Profissão" fieldKey="profissao" value={c.profissao} />
+              <EditableField label="Mãe" fieldKey="nome_mae" value={c.nome_mae} />
+              <EditableField label="Pai" fieldKey="nome_pai" value={c.nome_pai} />
             </DetailGrid>
           </DetailCard>
 
           <DetailCard title="Contato">
             <DetailGrid>
-              <DetailField label="Telefone principal" value={c.telefone_principal} icon={Phone} copyable />
-              <DetailField label="Telefone secundário" value={c.telefone_secundario} icon={Phone} copyable />
-              <DetailField label="Email" value={c.email} icon={Mail} copyable />
+              <EditableField label="Telefone principal" fieldKey="telefone_principal" value={c.telefone_principal} copyable />
+              <EditableField label="Telefone secundário" fieldKey="telefone_secundario" value={c.telefone_secundario} copyable />
+              <EditableField label="Email" fieldKey="email" value={c.email} copyable />
             </DetailGrid>
           </DetailCard>
 
           <DetailCard title="Endereço Principal">
             <DetailGrid>
-              <DetailField label="Logradouro" value={[c.end1_logradouro, c.end1_numero].filter(Boolean).join(", ")} icon={MapPin} />
-              <DetailField label="Complemento" value={c.end1_complemento} />
-              <DetailField label="Bairro" value={c.end1_bairro} />
-              <DetailField label="CEP" value={c.end1_cep} />
-              <DetailField label="Cidade/UF" value={[c.end1_cidade, c.end1_estado].filter(Boolean).join(" / ")} />
+              {isEditing ? (
+                <>
+                  <EditableField label="Logradouro" fieldKey="end1_logradouro" value={c.end1_logradouro} />
+                  <EditableField label="Número" fieldKey="end1_numero" value={c.end1_numero} />
+                </>
+              ) : (
+                <DetailField label="Logradouro" value={[c.end1_logradouro, c.end1_numero].filter(Boolean).join(", ")} />
+              )}
+              <EditableField label="Complemento" fieldKey="end1_complemento" value={c.end1_complemento} />
+              <EditableField label="Bairro" fieldKey="end1_bairro" value={c.end1_bairro} />
+              <EditableField label="CEP" fieldKey="end1_cep" value={c.end1_cep} />
+              {isEditing ? (
+                <>
+                  <EditableField label="Cidade" fieldKey="end1_cidade" value={c.end1_cidade} />
+                  <EditableField label="UF" fieldKey="end1_estado" value={c.end1_estado} />
+                </>
+              ) : (
+                <DetailField label="Cidade/UF" value={[c.end1_cidade, c.end1_estado].filter(Boolean).join(" / ")} />
+              )}
             </DetailGrid>
           </DetailCard>
 
-          {c.tem_segundo_endereco && (
+          {(c.tem_segundo_endereco || isEditing) && (
             <DetailCard title="Endereço Secundário">
               <DetailGrid>
-                <DetailField label="Tipo" value={c.end2_tipo} />
-                <DetailField label="Logradouro" value={[c.end2_logradouro, c.end2_numero].filter(Boolean).join(", ")} icon={MapPin} />
-                <DetailField label="Complemento" value={c.end2_complemento} />
-                <DetailField label="Bairro" value={c.end2_bairro} />
-                <DetailField label="CEP" value={c.end2_cep} />
-                <DetailField label="Cidade/UF" value={[c.end2_cidade, c.end2_estado].filter(Boolean).join(" / ")} />
+                <EditableField label="Tipo" fieldKey="end2_tipo" value={c.end2_tipo} />
+                {isEditing ? (
+                  <>
+                    <EditableField label="Logradouro" fieldKey="end2_logradouro" value={c.end2_logradouro} />
+                    <EditableField label="Número" fieldKey="end2_numero" value={c.end2_numero} />
+                  </>
+                ) : (
+                  <DetailField label="Logradouro" value={[c.end2_logradouro, c.end2_numero].filter(Boolean).join(", ")} />
+                )}
+                <EditableField label="Complemento" fieldKey="end2_complemento" value={c.end2_complemento} />
+                <EditableField label="Bairro" fieldKey="end2_bairro" value={c.end2_bairro} />
+                <EditableField label="CEP" fieldKey="end2_cep" value={c.end2_cep} />
+                {isEditing ? (
+                  <>
+                    <EditableField label="Cidade" fieldKey="end2_cidade" value={c.end2_cidade} />
+                    <EditableField label="UF" fieldKey="end2_estado" value={c.end2_estado} />
+                  </>
+                ) : (
+                  <DetailField label="Cidade/UF" value={[c.end2_cidade, c.end2_estado].filter(Boolean).join(" / ")} />
+                )}
               </DetailGrid>
             </DetailCard>
           )}
@@ -918,12 +997,22 @@ export default function QAClientesPage() {
             </DetailCard>
           )}
 
-          {c.observacoes && (
+          {(c.observacoes || isEditing) && (
             <DetailCard title="Observações">
-              <div className="text-sm leading-relaxed whitespace-pre-wrap rounded-xl p-4"
-                style={{ color: "hsl(220 20% 25%)", background: "hsl(220 20% 97%)" }}>
-                {c.observacoes}
-              </div>
+              {isEditing ? (
+                <textarea
+                  value={ef.observacoes || ""}
+                  onChange={e => setEf("observacoes", e.target.value)}
+                  rows={3}
+                  className="w-full text-sm border rounded-lg p-3 outline-none focus:border-blue-500"
+                  style={{ color: "hsl(220 20% 25%)", borderColor: "hsl(220 13% 88%)" }}
+                />
+              ) : (
+                <div className="text-sm leading-relaxed whitespace-pre-wrap rounded-xl p-4"
+                  style={{ color: "hsl(220 20% 25%)", background: "hsl(220 20% 97%)" }}>
+                  {c.observacoes}
+                </div>
+              )}
             </DetailCard>
           )}
         </div>
