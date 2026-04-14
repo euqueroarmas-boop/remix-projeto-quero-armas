@@ -94,8 +94,13 @@ function maskPhone(v: string) {
   if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
   return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
 }
+function maskDate(v: string) {
+  const d = v.replace(/\D/g, "").slice(0, 8);
+  if (d.length <= 2) return d;
+  if (d.length <= 4) return d.slice(0, 2) + "/" + d.slice(2);
+  return d.slice(0, 2) + "/" + d.slice(2, 4) + "/" + d.slice(4);
+}
 
-function maskCep(v: string) {
   const d = v.replace(/\D/g, "").slice(0, 8);
   if (d.length <= 5) return d;
   return d.slice(0, 5) + "-" + d.slice(5);
