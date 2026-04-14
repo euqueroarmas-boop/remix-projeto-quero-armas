@@ -451,7 +451,7 @@ function Inp({ label, value, onChange, type = "text", placeholder }: { label: st
   return (
     <div className="flex-1">
       <label className="text-[9px] text-neutral-500 uppercase tracking-wider mb-1 block">{label}</label>
-      <Input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} className="h-8 text-[11px] bg-[#0a0a0a] border-[#1c1c1c] text-neutral-200" />
+      <Input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} className="h-8 text-[11px] bg-[#0a0a0a] border-[#1c1c1c] text-neutral-200 focus-visible:ring-0 focus-visible:ring-offset-0" />
     </div>
   );
 }
