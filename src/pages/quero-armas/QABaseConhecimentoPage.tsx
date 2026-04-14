@@ -100,14 +100,18 @@ type TrackedImport = {
   tipo_origem?: string;
 };
 
-/* ─── Dashboard stat card ─── */
+/* ─── Dashboard stat card (Premium Light) ─── */
 function StatCard({ icon: Icon, label, value, color }: { icon: any; label: string; value: number; color: string }) {
   return (
-    <div className="bg-white border border-slate-200 rounded p-4 flex items-center gap-3">
-      <div className={`p-2 rounded-lg ${color}`}><Icon className="h-4 w-4" /></div>
-      <div>
-        <div className="text-lg font-bold text-slate-700">{value}</div>
-        <div className="text-[11px] text-slate-500">{label}</div>
+    <div className="qa-card qa-hover-lift p-4">
+      <div className="flex items-center gap-3">
+        <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: color + "14" }}>
+          <Icon className="h-4 w-4" style={{ color }} />
+        </div>
+        <div>
+          <div className="qa-kpi text-xl" style={{ color: "hsl(220 20% 14%)" }}>{value}</div>
+          <div className="text-[11px]" style={{ color: "hsl(220 10% 55%)" }}>{label}</div>
+        </div>
       </div>
     </div>
   );
