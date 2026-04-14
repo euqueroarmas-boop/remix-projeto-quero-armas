@@ -62,6 +62,21 @@ const formatDateForDatabase = (value: string) => {
 export default function ClienteFormModal({ open, onClose, onSaved, cliente }: ClienteFormModalProps) {
   const isEdit = !!cliente;
   const [saving, setSaving] = useState(false);
+  const { lookupCep, cepLoading } = useBrasilApiLookup();
+
+  const handleCepBlur = useCallback(async (cepValue: string, prefix: "" | "2") => {
+    const result = await lookupCep(cepValue);
+    if (result) {
+      setF(prev => ({
+        ...prev,
+        [`endereco${prefix}`]: result.street || prev[`endereco${prefix}` as keyof typeof prev] || "",
+        [`bairro${prefix}`]: result.neighborhood || prev[`bairro${prefix}` as keyof typeof prev] || "",
+        [`cidade${prefix}`]: result.city || prev[`cidade${prefix}` as keyof typeof prev] || "",
+        [`estado${prefix}`]: result.state || prev[`estado${prefix}` as keyof typeof prev] || "",
+      }));
+    }
+  }, [lookupCep]);
+  const [saving, setSaving] = useState(false);
   const [f, setF] = useState({
     nome_completo: "", cpf: "", rg: "", emissor_rg: "", expedicao_rg: "",
     data_nascimento: "", naturalidade: "", nacionalidade: "Brasileira",
