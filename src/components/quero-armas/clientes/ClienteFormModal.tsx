@@ -145,7 +145,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
 
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="w-[96vw] max-w-3xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+      <DialogContent className="w-[96vw] max-w-3xl max-h-[90vh] overflow-y-auto p-4 sm:p-6 bg-white border-slate-200 text-slate-700 qa-premium">
         <DialogHeader className="pb-0">
           <DialogTitle className="text-base">{isEdit ? "Editar Cliente" : "Novo Cliente"}</DialogTitle>
           <DialogDescription className="text-xs">Preencha os dados cadastrais do cliente</DialogDescription>
