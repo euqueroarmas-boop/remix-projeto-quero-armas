@@ -87,6 +87,9 @@ export default function QADashboardPage() {
   const [novosCadastros, setNovosCadastros] = useState<NovoCadastro[]>([]);
   const [recentPecas, setRecentPecas] = useState<RecentItem[]>([]);
   const [recentDocs, setRecentDocs] = useState<RecentItem[]>([]);
+  const [cadastrosPorDia, setCadastrosPorDia] = useState<DayCount[]>([]);
+  const [cadastrosPorMes, setCadastrosPorMes] = useState<MonthCount[]>([]);
+  const [servicosDistrib, setServicosDistrib] = useState<ServicoCount[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
