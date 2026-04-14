@@ -177,7 +177,7 @@ export default function QAClientesPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Cliente | null>(null);
-  const [tab, setTab] = useState("dados");
+  const [tab, setTab] = useState("resumo");
 
   const [vendas, setVendas] = useState<any[]>([]);
   const [itens, setItens] = useState<any[]>([]);
@@ -476,7 +476,7 @@ export default function QAClientesPage() {
     loadingClientRef.current = c.id;
     setSelectedCadastroPublico(null);
     setSelected(c);
-    setTab("dados");
+    setTab("resumo");
     await loadSubData(c);
     loadingClientRef.current = null;
   };
