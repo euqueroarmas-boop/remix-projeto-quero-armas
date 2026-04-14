@@ -467,12 +467,12 @@ export default function QARelatoriosPage() {
 
           {/* Table */}
           <div className="bg-white border border-slate-200/80 rounded-xl overflow-hidden shadow-sm">
-            <div className="grid grid-cols-[1fr_1fr_auto_auto_auto] gap-3 px-4 py-3 border-b border-slate-100 text-[11px] text-slate-500 uppercase tracking-wider font-medium bg-slate-50/80">
+            <div className="grid grid-cols-[1fr_1fr_160px_50px_60px] gap-3 px-4 py-3 border-b border-slate-100 text-[11px] text-slate-500 uppercase tracking-wider font-medium bg-slate-50/80">
               <span>Cliente</span>
               <span>Serviço</span>
-              <span className="text-center">Status</span>
-              <span className="text-center">Dias</span>
-              <span className="text-center">Urgência</span>
+              <span className="text-right">Status</span>
+              <span className="text-right">Dias</span>
+              <span className="text-right">Urgência</span>
             </div>
             <div className="max-h-[600px] overflow-y-auto">
               {filteredPendingItems.length === 0 ? (
@@ -485,16 +485,16 @@ export default function QARelatoriosPage() {
                     <div key={item.itemId}>
                       <div
                         onClick={() => handleExpand(item.itemId)}
-                        className={`grid grid-cols-[1fr_1fr_auto_auto_auto] gap-3 px-4 py-3 border-b border-slate-100 text-sm cursor-pointer select-none ${cfg.bg} hover:brightness-[0.97] transition-all`}
+                        className={`grid grid-cols-[1fr_1fr_160px_50px_60px] gap-3 px-4 py-3 border-b border-slate-100 text-sm cursor-pointer select-none ${cfg.bg} hover:brightness-[0.97] transition-all`}
                       >
                         <span className="text-slate-700 truncate flex items-center gap-1.5 font-medium">
                           {isExpanded ? <ChevronUp className="h-3.5 w-3.5 shrink-0 text-slate-400" /> : <ChevronDown className="h-3.5 w-3.5 shrink-0 text-slate-400" />}
                           {item.clienteNome}
                         </span>
                         <span className="text-slate-500 truncate text-xs">{item.servicoNome}</span>
-                        <span className={`text-center text-[10px] font-medium px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.text} ${cfg.border} border`}>{item.status}</span>
-                        <span className={`font-mono font-bold text-center text-xs ${cfg.text}`}>{item.diasPendente}d</span>
-                        <div className="flex justify-center">
+                        <span className={`text-right text-[10px] font-medium ${cfg.text}`}>{item.status}</span>
+                        <span className={`font-mono font-bold text-right text-xs ${cfg.text}`}>{item.diasPendente}d</span>
+                        <div className="flex justify-end items-center">
                           <div className={`w-3 h-3 rounded-full ${cfg.dot} ${item.urgency === "critical" ? "animate-pulse" : ""} ring-2 ${cfg.ring}`} />
                         </div>
                       </div>
