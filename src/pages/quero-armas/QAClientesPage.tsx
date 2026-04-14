@@ -912,8 +912,25 @@ export default function QAClientesPage() {
           <DetailCard title="Resumo do Cadastro">
             <DetailGrid>
               <DetailField label="Recebido em" value={formatDate(c.created_at)} />
-              <EditableField label="Serviço" fieldKey="servico_interesse" value={c.servico_interesse} />
-              <EditableField label="Tipo de vínculo" fieldKey="vinculo_tipo" value={c.vinculo_tipo} />
+              {isEditing ? (
+                <div className="flex items-baseline gap-2">
+                  <span className="text-xs shrink-0" style={{ color: "hsl(220 10% 50%)", minWidth: "140px" }}>Serviço:</span>
+                  <select
+                    value={ef.servico_interesse || ""}
+                    onChange={e => setEf("servico_interesse", e.target.value)}
+                    className="flex-1 text-sm font-medium border-b border-slate-300 bg-transparent outline-none focus:border-blue-500 py-0.5 uppercase"
+                    style={{ color: "hsl(220 20% 18%)" }}
+                  >
+                    <option value="">Selecione...</option>
+                    {servicos.map(s => (
+                      <option key={s.id} value={s.nome_servico}>{s.nome_servico}</option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <DetailField label="Serviço" value={c.servico_interesse} />
+              )}
+              {renderField("Tipo de vínculo", "vinculo_tipo", c.vinculo_tipo)}
               <DetailField label="Comprovante em nome próprio" value={comprovanteEndereco} />
               <DetailField label="Consentimento de veracidade" value={c.consentimento_dados_verdadeiros ? "Sim" : "Não"} />
               <DetailField label="Consentimento LGPD" value={c.consentimento_tratamento_dados ? "Sim" : "Não"} />
@@ -923,23 +940,42 @@ export default function QAClientesPage() {
 
           <DetailCard title="Identificação">
             <DetailGrid>
-              <EditableField label="Nome" fieldKey="nome_completo" value={c.nome_completo} />
-              <EditableField label="CPF" fieldKey="cpf" value={formatCpf(c.cpf)} copyable />
-              <EditableField label="RG" fieldKey="rg" value={c.rg ? `${c.rg}${c.emissor_rg ? ` — ${c.emissor_rg}` : ""}` : null} />
-              <EditableField label="Nascimento" fieldKey="data_nascimento" value={c.data_nascimento} />
-              <EditableField label="Estado Civil" fieldKey="estado_civil" value={c.estado_civil} />
-              <EditableField label="Nacionalidade" fieldKey="nacionalidade" value={c.nacionalidade} />
-              <EditableField label="Profissão" fieldKey="profissao" value={c.profissao} />
-              <EditableField label="Mãe" fieldKey="nome_mae" value={c.nome_mae} />
-              <EditableField label="Pai" fieldKey="nome_pai" value={c.nome_pai} />
+              {renderField("Nome", "nome_completo", c.nome_completo)}
+              {renderField("CPF", "cpf", formatCpf(c.cpf), { copyable: true })}
+              {isEditing ? (
+                <>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-xs shrink-0" style={{ color: "hsl(220 10% 50%)", minWidth: "140px" }}>RG:</span>
+                    <input
+                      value={ef.rg || ""}
+                      onChange={e => setEf("rg", maskRg(e.target.value))}
+                      placeholder="00.000.000-X"
+                      className="flex-1 text-sm font-medium border-b border-slate-300 bg-transparent outline-none focus:border-blue-500 py-0.5"
+                      style={{ color: "hsl(220 20% 18%)" }}
+                    />
+                  </div>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-xs shrink-0" style={{ color: "hsl(220 10% 50%)", minWidth: "140px" }}>Órgão Emissor:</span>
+                    {editInput("emissor_rg")}
+                  </div>
+                </>
+              ) : (
+                <DetailField label="RG" value={c.rg ? `${maskRg(c.rg)}${c.emissor_rg ? ` — ${c.emissor_rg}` : ""}` : null} />
+              )}
+              {renderField("Nascimento", "data_nascimento", c.data_nascimento)}
+              {renderField("Estado Civil", "estado_civil", c.estado_civil)}
+              {renderField("Nacionalidade", "nacionalidade", c.nacionalidade)}
+              {renderField("Profissão", "profissao", c.profissao)}
+              {renderField("Mãe", "nome_mae", c.nome_mae)}
+              {renderField("Pai", "nome_pai", c.nome_pai)}
             </DetailGrid>
           </DetailCard>
 
           <DetailCard title="Contato">
             <DetailGrid>
-              <EditableField label="Telefone principal" fieldKey="telefone_principal" value={c.telefone_principal} copyable />
-              <EditableField label="Telefone secundário" fieldKey="telefone_secundario" value={c.telefone_secundario} copyable />
-              <EditableField label="Email" fieldKey="email" value={c.email} copyable />
+              {renderField("Telefone principal", "telefone_principal", c.telefone_principal, { copyable: true })}
+              {renderField("Telefone secundário", "telefone_secundario", c.telefone_secundario, { copyable: true })}
+              {renderField("Email", "email", c.email, { copyable: true })}
             </DetailGrid>
           </DetailCard>
 
@@ -947,19 +983,19 @@ export default function QAClientesPage() {
             <DetailGrid>
               {isEditing ? (
                 <>
-                  <EditableField label="Logradouro" fieldKey="end1_logradouro" value={c.end1_logradouro} />
-                  <EditableField label="Número" fieldKey="end1_numero" value={c.end1_numero} />
+                  {renderField("Logradouro", "end1_logradouro", c.end1_logradouro)}
+                  {renderField("Número", "end1_numero", c.end1_numero)}
                 </>
               ) : (
                 <DetailField label="Logradouro" value={[c.end1_logradouro, c.end1_numero].filter(Boolean).join(", ")} />
               )}
-              <EditableField label="Complemento" fieldKey="end1_complemento" value={c.end1_complemento} />
-              <EditableField label="Bairro" fieldKey="end1_bairro" value={c.end1_bairro} />
-              <EditableField label="CEP" fieldKey="end1_cep" value={c.end1_cep} />
+              {renderField("Complemento", "end1_complemento", c.end1_complemento)}
+              {renderField("Bairro", "end1_bairro", c.end1_bairro)}
+              {renderField("CEP", "end1_cep", c.end1_cep)}
               {isEditing ? (
                 <>
-                  <EditableField label="Cidade" fieldKey="end1_cidade" value={c.end1_cidade} />
-                  <EditableField label="UF" fieldKey="end1_estado" value={c.end1_estado} />
+                  {renderField("Cidade", "end1_cidade", c.end1_cidade)}
+                  {renderField("UF", "end1_estado", c.end1_estado)}
                 </>
               ) : (
                 <DetailField label="Cidade/UF" value={[c.end1_cidade, c.end1_estado].filter(Boolean).join(" / ")} />
@@ -970,22 +1006,22 @@ export default function QAClientesPage() {
           {(c.tem_segundo_endereco || isEditing) && (
             <DetailCard title="Endereço Secundário">
               <DetailGrid>
-                <EditableField label="Tipo" fieldKey="end2_tipo" value={c.end2_tipo} />
+                {renderField("Tipo", "end2_tipo", c.end2_tipo)}
                 {isEditing ? (
                   <>
-                    <EditableField label="Logradouro" fieldKey="end2_logradouro" value={c.end2_logradouro} />
-                    <EditableField label="Número" fieldKey="end2_numero" value={c.end2_numero} />
+                    {renderField("Logradouro", "end2_logradouro", c.end2_logradouro)}
+                    {renderField("Número", "end2_numero", c.end2_numero)}
                   </>
                 ) : (
                   <DetailField label="Logradouro" value={[c.end2_logradouro, c.end2_numero].filter(Boolean).join(", ")} />
                 )}
-                <EditableField label="Complemento" fieldKey="end2_complemento" value={c.end2_complemento} />
-                <EditableField label="Bairro" fieldKey="end2_bairro" value={c.end2_bairro} />
-                <EditableField label="CEP" fieldKey="end2_cep" value={c.end2_cep} />
+                {renderField("Complemento", "end2_complemento", c.end2_complemento)}
+                {renderField("Bairro", "end2_bairro", c.end2_bairro)}
+                {renderField("CEP", "end2_cep", c.end2_cep)}
                 {isEditing ? (
                   <>
-                    <EditableField label="Cidade" fieldKey="end2_cidade" value={c.end2_cidade} />
-                    <EditableField label="UF" fieldKey="end2_estado" value={c.end2_estado} />
+                    {renderField("Cidade", "end2_cidade", c.end2_cidade)}
+                    {renderField("UF", "end2_estado", c.end2_estado)}
                   </>
                 ) : (
                   <DetailField label="Cidade/UF" value={[c.end2_cidade, c.end2_estado].filter(Boolean).join(" / ")} />
