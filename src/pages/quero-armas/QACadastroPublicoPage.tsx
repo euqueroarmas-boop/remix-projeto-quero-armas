@@ -291,12 +291,6 @@ export default function QACadastroPublicoPage() {
 
   const nextStep = () => {
     if (!validateStep(step)) return;
-    // On step 2, check if complemento is empty and ask confirmation
-    if (step === 2 && !form.end1_complemento.trim() && !showComplementoConfirm) {
-      setShowComplementoConfirm(true);
-      return;
-    }
-    setShowComplementoConfirm(false);
     if (step === 2) {
       proceedFromStep2();
     } else {
