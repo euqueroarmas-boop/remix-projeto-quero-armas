@@ -712,7 +712,7 @@ function Step4({ form, set, errors, onCnpjLookup, cnpjLoading }: any) {
   const vinculos = [
     { value: "proprietario", label: "Sou proprietário / sócio de empresa" },
     { value: "registrado", label: "Trabalho registrado / carteira assinada" },
-    
+    { value: "aposentado", label: "Sou aposentado / pensionista" },
     { value: "nenhum", label: "Não possuo vínculo profissional no momento" },
   ];
 
