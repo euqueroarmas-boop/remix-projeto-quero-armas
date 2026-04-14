@@ -25,7 +25,7 @@ async function sendWhatsApp(phone: string, message: string): Promise<{ ok: boole
   }
   try {
     const baseUrl = EVOLUTION_API_URL.replace(/\/+$/, "");
-    const res = await fetch(`${baseUrl}/message/sendText/wmti`, {
+    const res = await fetch(`${baseUrl}/message/sendText/queroarmas`, {
       method: "POST",
       headers: { "Content-Type": "application/json", apikey: EVOLUTION_API_TOKEN },
       body: JSON.stringify({ number: phone.replace(/\D/g, ""), text: message }),
