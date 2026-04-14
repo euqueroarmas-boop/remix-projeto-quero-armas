@@ -1461,7 +1461,7 @@ function getTemplatesParaServico(nomeServico: string) {
   return TEMPLATES;
 }
 
-function DocumentGenerator({ cliente }: { cliente: any }) {
+function DocumentGenerator({ cliente, nomeServico }: { cliente: any; nomeServico?: string }) {
   const [generating, setGenerating] = useState<string | null>(null);
   const [showExtra, setShowExtra] = useState<string | null>(null);
   // Third party fields
