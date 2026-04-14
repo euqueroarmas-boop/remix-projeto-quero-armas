@@ -543,19 +543,19 @@ export default function QABaseConhecimentoPage() {
           </p>
         </div>
         <div className="flex gap-2 flex-wrap">
-          <Button variant="outline" onClick={() => setShowLinkDialog(true)}
-            className="border-blue-200 text-blue-600 hover:bg-blue-50 gap-1.5 rounded-lg">
-            <Link2 className="h-4 w-4" /> Importar por Link
-          </Button>
-          <Button variant="outline" onClick={() => setShowBulkDialog(true)}
-            className="border-purple-200 text-purple-600 hover:bg-purple-50 gap-1.5 rounded-lg">
-            <Plus className="h-4 w-4" /> Carga em Lote
-          </Button>
+          <button onClick={() => setShowLinkDialog(true)}
+            className="qa-btn-outline flex items-center gap-1.5 no-glow h-9 px-4 text-xs">
+            <Link2 className="h-3.5 w-3.5" /> Importar por Link
+          </button>
+          <button onClick={() => setShowBulkDialog(true)}
+            className="qa-btn-outline flex items-center gap-1.5 no-glow h-9 px-4 text-xs">
+            <Plus className="h-3.5 w-3.5" /> Carga em Lote
+          </button>
           <label className="cursor-pointer">
             <input type="file" className="hidden" onChange={handleUpload} accept=".pdf,.doc,.docx,.txt,.rtf" multiple />
-            <Button asChild disabled={uploading} className="qa-btn-primary no-glow">
-              <span>{uploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />} Enviar Documento</span>
-            </Button>
+            <span className={`qa-btn-primary flex items-center gap-1.5 no-glow h-9 px-4 text-xs ${uploading ? "opacity-50 pointer-events-none" : ""}`}>
+              {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />} Enviar Documento
+            </span>
           </label>
         </div>
       </div>
