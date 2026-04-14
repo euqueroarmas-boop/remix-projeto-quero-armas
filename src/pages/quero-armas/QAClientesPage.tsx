@@ -279,7 +279,7 @@ export default function QAClientesPage() {
                 )}
                 {c.observacao && (
                   <Section title="Observações">
-                    <div className="text-[10px] text-neutral-400 whitespace-pre-wrap bg-[#0a0a0a] rounded-lg p-2.5 border border-[#1c1c1c]">{c.observacao}</div>
+                    <div className="text-[10px] text-slate-600 whitespace-pre-wrap bg-white rounded-lg p-2.5 border border-slate-200">{c.observacao}</div>
                   </Section>
                 )}
                 <Section title="Filiações a Clubes">
@@ -289,15 +289,15 @@ export default function QAClientesPage() {
                     </Button>
                   </div>
                   {filiacoes.length === 0 ? <Empty text="Nenhuma filiação." /> : filiacoes.map((f: any) => (
-                    <div key={f.id} className="flex items-center justify-between text-[10px] bg-[#0a0a0a] rounded px-2.5 py-1.5 border border-[#1c1c1c] mb-1">
+                    <div key={f.id} className="flex items-center justify-between text-[10px] bg-white rounded px-2.5 py-1.5 border border-slate-200 mb-1">
                       <div>
-                        <span className="text-neutral-300">Filiação #{f.numero_filiacao || "—"}</span>
-                        <span className="text-neutral-600 ml-2">Clube #{f.clube_id}</span>
+                        <span className="text-slate-700">Filiação #{f.numero_filiacao || "—"}</span>
+                        <span className="text-slate-400 ml-2">Clube #{f.clube_id}</span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <span className="text-neutral-500 text-[9px]">Val: {formatDate(f.validade_filiacao)}</span>
-                        <Button variant="ghost" size="sm" onClick={() => setFiliacaoModal({ open: true, item: f })} className="h-5 w-5 p-0 text-neutral-600 hover:text-neutral-300"><Edit className="h-3 w-3" /></Button>
-                        <Button variant="ghost" size="sm" onClick={() => setDeleteModal({ open: true, table: "qa_filiacoes", id: f.id, title: "Excluir Filiação", desc: `Excluir filiação #${f.numero_filiacao}?` })} className="h-5 w-5 p-0 text-neutral-600 hover:text-red-400"><Trash2 className="h-3 w-3" /></Button>
+                        <span className="text-slate-500 text-[9px]">Val: {formatDate(f.validade_filiacao)}</span>
+                        <Button variant="ghost" size="sm" onClick={() => setFiliacaoModal({ open: true, item: f })} className="h-5 w-5 p-0 text-slate-400 hover:text-slate-700"><Edit className="h-3 w-3" /></Button>
+                        <Button variant="ghost" size="sm" onClick={() => setDeleteModal({ open: true, table: "qa_filiacoes", id: f.id, title: "Excluir Filiação", desc: `Excluir filiação #${f.numero_filiacao}?` })} className="h-5 w-5 p-0 text-slate-400 hover:text-red-400"><Trash2 className="h-3 w-3" /></Button>
                       </div>
                     </div>
                   ))}
@@ -309,7 +309,7 @@ export default function QAClientesPage() {
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-[9px] text-[#c43b52] uppercase tracking-[0.12em] font-semibold">Vendas</span>
                   <div className="flex gap-1">
-                    <Button variant="ghost" size="sm" onClick={() => exportVendas(clienteIdForSub, c.nome_completo)} className="h-6 px-2 text-[9px] text-neutral-500">
+                    <Button variant="ghost" size="sm" onClick={() => exportVendas(clienteIdForSub, c.nome_completo)} className="h-6 px-2 text-[9px] text-slate-500">
                       <Download className="h-3 w-3 mr-1" /> CSV
                     </Button>
                     <Button variant="ghost" size="sm" onClick={() => setVendaModal({ open: true })} className="h-6 px-2 text-[9px] text-emerald-400">
@@ -322,18 +322,18 @@ export default function QAClientesPage() {
                     {vendas.map((v: any) => {
                       const vItens = itens.filter((i: any) => i.venda_id === (v.id_legado ?? v.id));
                       return (
-                        <div key={v.id} className="bg-[#0a0a0a] border border-[#1c1c1c] rounded-lg overflow-hidden">
-                          <div className="flex items-center justify-between px-3 py-2 border-b border-[#1c1c1c]">
+                        <div key={v.id} className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+                          <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200">
                             <div className="text-[11px]">
-                              <span className="text-neutral-200 font-medium">Venda #{v.id_legado ?? v.id}</span>
-                              <span className="text-neutral-600 ml-2">{formatDate(v.data_cadastro)}</span>
+                              <span className="text-slate-700 font-medium">Venda #{v.id_legado ?? v.id}</span>
+                              <span className="text-slate-400 ml-2">{formatDate(v.data_cadastro)}</span>
                             </div>
                             <div className="flex items-center gap-1">
                               <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded ${svcStatusColor(v.status)}`}>{v.status}</span>
-                              <Button variant="ghost" size="sm" onClick={() => setVendaModal({ open: true, item: v })} className="h-5 w-5 p-0 text-neutral-600 hover:text-neutral-300">
+                              <Button variant="ghost" size="sm" onClick={() => setVendaModal({ open: true, item: v })} className="h-5 w-5 p-0 text-slate-400 hover:text-slate-700">
                                 <Edit className="h-3 w-3" />
                               </Button>
-                              <Button variant="ghost" size="sm" onClick={() => setDeleteModal({ open: true, table: "qa_vendas", id: v.id, title: "Excluir Venda", desc: `Excluir venda #${v.id_legado ?? v.id}?` })} className="h-5 w-5 p-0 text-neutral-600 hover:text-red-400">
+                              <Button variant="ghost" size="sm" onClick={() => setDeleteModal({ open: true, table: "qa_vendas", id: v.id, title: "Excluir Venda", desc: `Excluir venda #${v.id_legado ?? v.id}?` })} className="h-5 w-5 p-0 text-slate-400 hover:text-red-400">
                                 <Trash2 className="h-3 w-3" />
                               </Button>
                             </div>
@@ -341,9 +341,9 @@ export default function QAClientesPage() {
                           <div className="px-3 py-2 space-y-1.5">
                             {vItens.map((it: any) => (
                               <div key={it.id}>
-                                <div className="flex items-center justify-between text-[10px] gap-1 cursor-pointer hover:bg-[#111] rounded px-1 -mx-1 py-0.5" onClick={() => handleExpandItem(it)}>
+                                <div className="flex items-center justify-between text-[10px] gap-1 cursor-pointer hover:bg-white rounded px-1 -mx-1 py-0.5" onClick={() => handleExpandItem(it)}>
                                   <div className="flex items-center gap-2 flex-1 min-w-0">
-                                    {expandedItemId === it.id ? <ChevronUp className="h-3 w-3 shrink-0 text-neutral-500" /> : <ChevronDown className="h-3 w-3 shrink-0 text-neutral-500" />}
+                                    {expandedItemId === it.id ? <ChevronUp className="h-3 w-3 shrink-0 text-slate-500" /> : <ChevronDown className="h-3 w-3 shrink-0 text-slate-500" />}
                                     <Select
                                       value={it.status || "EM ANÁLISE"}
                                       onValueChange={async (newStatus) => {
@@ -362,19 +362,19 @@ export default function QAClientesPage() {
                                         ))}
                                       </SelectContent>
                                     </Select>
-                                    <span className="text-neutral-300 truncate">{getServicoNome(it.servico_id)}</span>
+                                    <span className="text-slate-700 truncate">{getServicoNome(it.servico_id)}</span>
                                   </div>
                                   <div className="flex items-center gap-3 shrink-0">
-                                    {it.numero_processo && <span className="text-neutral-600 font-mono text-[9px]">{it.numero_processo}</span>}
-                                    <span className="text-neutral-400 font-mono">R$ {Number(it.valor || 0).toFixed(0)}</span>
+                                    {it.numero_processo && <span className="text-slate-400 font-mono text-[9px]">{it.numero_processo}</span>}
+                                    <span className="text-slate-600 font-mono">R$ {Number(it.valor || 0).toFixed(0)}</span>
                                   </div>
                                 </div>
                                 {expandedItemId === it.id && (
-                                  <div className="bg-[#080808] border border-[#1c1c1c] rounded-lg mt-1 mb-2 p-3 space-y-3">
+                                  <div className="bg-slate-50 border border-slate-200 rounded-lg mt-1 mb-2 p-3 space-y-3">
                                     <div className="flex items-center justify-between">
-                                      <span className="text-[10px] font-medium text-neutral-300">Detalhes — {getServicoNome(it.servico_id)}</span>
+                                      <span className="text-[10px] font-medium text-slate-700">Detalhes — {getServicoNome(it.servico_id)}</span>
                                       <div className="flex gap-2">
-                                        <Button variant="ghost" size="sm" onClick={() => { setExpandedItemId(null); setItemEditForm({}); }} className="h-6 px-2 text-[9px] text-neutral-500 hover:text-neutral-300">
+                                        <Button variant="ghost" size="sm" onClick={() => { setExpandedItemId(null); setItemEditForm({}); }} className="h-6 px-2 text-[9px] text-slate-500 hover:text-slate-700">
                                           <X className="h-3 w-3 mr-1" /> Cancelar
                                         </Button>
                                         <Button variant="ghost" size="sm" onClick={handleSaveItem} disabled={savingItem} className="h-6 px-2 text-[9px] text-emerald-400 bg-emerald-900/20 border border-emerald-800/30 hover:bg-emerald-900/40">
@@ -385,13 +385,13 @@ export default function QAClientesPage() {
                                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                                       {ITEM_EDIT_FIELDS.map(field => (
                                         <div key={field.key}>
-                                          <label className="block text-[9px] text-neutral-500 uppercase tracking-wider mb-0.5">{field.label}</label>
+                                          <label className="block text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">{field.label}</label>
                                           <input
                                             type="text"
                                             value={itemEditForm[field.key] || ""}
                                             onChange={e => setItemEditForm(prev => ({ ...prev, [field.key]: e.target.value }))}
                                             placeholder={field.type === "date" ? "DD/MM/AAAA" : "—"}
-                                            className="w-full h-7 px-2 text-[10px] rounded bg-[#0a0a0a] border border-[#1c1c1c] text-neutral-200 placeholder:text-neutral-700 focus:border-[#7a1528] focus:outline-none transition-colors"
+                                            className="w-full h-7 px-2 text-[10px] rounded bg-white border border-slate-200 text-slate-700 placeholder:text-slate-300 focus:border-blue-500 focus:outline-none transition-colors"
                                           />
                                         </div>
                                       ))}
@@ -400,11 +400,11 @@ export default function QAClientesPage() {
                                 )}
                               </div>
                             ))}
-                            <div className="flex justify-between pt-1 border-t border-[#1c1c1c] text-[10px]">
-                              <span className="text-neutral-600">Total</span>
+                            <div className="flex justify-between pt-1 border-t border-slate-200 text-[10px]">
+                              <span className="text-slate-400">Total</span>
                               <div className="flex gap-3">
                                 {Number(v.desconto) > 0 && <span className="text-amber-400">Desc: R$ {Number(v.desconto).toFixed(0)}</span>}
-                                <span className="text-neutral-200 font-medium">R$ {Number(v.valor_a_pagar).toFixed(0)}</span>
+                                <span className="text-slate-700 font-medium">R$ {Number(v.valor_a_pagar).toFixed(0)}</span>
                               </div>
                             </div>
                           </div>
@@ -422,7 +422,7 @@ export default function QAClientesPage() {
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-[9px] text-[#c43b52] uppercase tracking-[0.12em] font-semibold">CRAFs ({crafs.length})</span>
                     <div className="flex gap-1">
-                      <Button variant="ghost" size="sm" onClick={() => exportCrafs(clienteIdForSub, c.nome_completo)} className="h-6 px-2 text-[9px] text-neutral-500">
+                      <Button variant="ghost" size="sm" onClick={() => exportCrafs(clienteIdForSub, c.nome_completo)} className="h-6 px-2 text-[9px] text-slate-500">
                         <Download className="h-3 w-3 mr-1" /> CSV
                       </Button>
                       <Button variant="ghost" size="sm" onClick={() => setCrafModal({ open: true })} className="h-6 px-2 text-[9px] text-emerald-400">
@@ -431,16 +431,16 @@ export default function QAClientesPage() {
                     </div>
                   </div>
                   {crafs.length === 0 ? <Empty text="Nenhum CRAF." /> : crafs.map((cr: any) => (
-                    <div key={cr.id} className="bg-[#0a0a0a] border border-[#1c1c1c] rounded-lg px-3 py-2 mb-1.5">
+                    <div key={cr.id} className="bg-white border border-slate-200 rounded-lg px-3 py-2 mb-1.5">
                       <div className="flex items-center justify-between">
-                        <span className="text-[11px] text-neutral-200 font-medium">{cr.nome_arma}</span>
+                        <span className="text-[11px] text-slate-700 font-medium">{cr.nome_arma}</span>
                         <div className="flex items-center gap-1">
-                          <span className="text-[9px] text-neutral-500">Val: {formatDate(cr.data_validade)}</span>
-                          <Button variant="ghost" size="sm" onClick={() => setCrafModal({ open: true, item: cr })} className="h-5 w-5 p-0 text-neutral-600 hover:text-neutral-300"><Edit className="h-3 w-3" /></Button>
-                          <Button variant="ghost" size="sm" onClick={() => setDeleteModal({ open: true, table: "qa_crafs", id: cr.id, title: "Excluir CRAF", desc: `Excluir CRAF "${cr.nome_arma}"?` })} className="h-5 w-5 p-0 text-neutral-600 hover:text-red-400"><Trash2 className="h-3 w-3" /></Button>
+                          <span className="text-[9px] text-slate-500">Val: {formatDate(cr.data_validade)}</span>
+                          <Button variant="ghost" size="sm" onClick={() => setCrafModal({ open: true, item: cr })} className="h-5 w-5 p-0 text-slate-400 hover:text-slate-700"><Edit className="h-3 w-3" /></Button>
+                          <Button variant="ghost" size="sm" onClick={() => setDeleteModal({ open: true, table: "qa_crafs", id: cr.id, title: "Excluir CRAF", desc: `Excluir CRAF "${cr.nome_arma}"?` })} className="h-5 w-5 p-0 text-slate-400 hover:text-red-400"><Trash2 className="h-3 w-3" /></Button>
                         </div>
                       </div>
-                      <div className="flex gap-4 mt-1 text-[9px] text-neutral-500">
+                      <div className="flex gap-4 mt-1 text-[9px] text-slate-500">
                         {cr.numero_sigma && <span>SIGMA: {cr.numero_sigma}</span>}
                         {cr.numero_arma && <span>Nº: {cr.numero_arma}</span>}
                       </div>
@@ -453,7 +453,7 @@ export default function QAClientesPage() {
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-[9px] text-[#c43b52] uppercase tracking-[0.12em] font-semibold">GTEs ({gtes.length})</span>
                     <div className="flex gap-1">
-                      <Button variant="ghost" size="sm" onClick={() => exportGtes(clienteIdForSub, c.nome_completo)} className="h-6 px-2 text-[9px] text-neutral-500">
+                      <Button variant="ghost" size="sm" onClick={() => exportGtes(clienteIdForSub, c.nome_completo)} className="h-6 px-2 text-[9px] text-slate-500">
                         <Download className="h-3 w-3 mr-1" /> CSV
                       </Button>
                       <Button variant="ghost" size="sm" onClick={() => setGteModal({ open: true })} className="h-6 px-2 text-[9px] text-emerald-400">
@@ -462,16 +462,16 @@ export default function QAClientesPage() {
                     </div>
                   </div>
                   {gtes.length === 0 ? <Empty text="Nenhum GTE." /> : gtes.map((g: any) => (
-                    <div key={g.id} className="bg-[#0a0a0a] border border-[#1c1c1c] rounded-lg px-3 py-2 mb-1.5">
+                    <div key={g.id} className="bg-white border border-slate-200 rounded-lg px-3 py-2 mb-1.5">
                       <div className="flex items-center justify-between">
-                        <span className="text-[11px] text-neutral-200 font-medium">{g.nome_arma}</span>
+                        <span className="text-[11px] text-slate-700 font-medium">{g.nome_arma}</span>
                         <div className="flex items-center gap-1">
-                          <span className="text-[9px] text-neutral-500">Val: {formatDate(g.data_validade)}</span>
-                          <Button variant="ghost" size="sm" onClick={() => setGteModal({ open: true, item: g })} className="h-5 w-5 p-0 text-neutral-600 hover:text-neutral-300"><Edit className="h-3 w-3" /></Button>
-                          <Button variant="ghost" size="sm" onClick={() => setDeleteModal({ open: true, table: "qa_gtes", id: g.id, title: "Excluir GTE", desc: `Excluir GTE "${g.nome_arma}"?` })} className="h-5 w-5 p-0 text-neutral-600 hover:text-red-400"><Trash2 className="h-3 w-3" /></Button>
+                          <span className="text-[9px] text-slate-500">Val: {formatDate(g.data_validade)}</span>
+                          <Button variant="ghost" size="sm" onClick={() => setGteModal({ open: true, item: g })} className="h-5 w-5 p-0 text-slate-400 hover:text-slate-700"><Edit className="h-3 w-3" /></Button>
+                          <Button variant="ghost" size="sm" onClick={() => setDeleteModal({ open: true, table: "qa_gtes", id: g.id, title: "Excluir GTE", desc: `Excluir GTE "${g.nome_arma}"?` })} className="h-5 w-5 p-0 text-slate-400 hover:text-red-400"><Trash2 className="h-3 w-3" /></Button>
                         </div>
                       </div>
-                      <div className="flex gap-4 mt-1 text-[9px] text-neutral-500">
+                      <div className="flex gap-4 mt-1 text-[9px] text-slate-500">
                         {g.numero_sigma && <span>SIGMA: {g.numero_sigma}</span>}
                         {g.numero_arma && <span>Nº: {g.numero_arma}</span>}
                       </div>
@@ -486,7 +486,7 @@ export default function QAClientesPage() {
                   <span className="text-[9px] text-[#c43b52] uppercase tracking-[0.12em] font-semibold">Certificado de Registro</span>
                   <div className="flex gap-1">
                     {cadastro && (
-                      <Button variant="ghost" size="sm" onClick={() => exportCr(clienteIdForSub, c.nome_completo)} className="h-6 px-2 text-[9px] text-neutral-500">
+                      <Button variant="ghost" size="sm" onClick={() => exportCr(clienteIdForSub, c.nome_completo)} className="h-6 px-2 text-[9px] text-slate-500">
                         <Download className="h-3 w-3 mr-1" /> CSV
                       </Button>
                     )}
@@ -690,37 +690,37 @@ function DocumentGenerator({ cliente }: { cliente: any }) {
 
       {/* Third party fields - show when needed */}
       {showExtra && TEMPLATES.find(t => t.key === showExtra)?.needsThirdParty && (
-        <div className="bg-[#0a0a0a] border border-amber-500/20 rounded-lg p-3 space-y-2">
+        <div className="bg-white border border-amber-500/20 rounded-lg p-3 space-y-2">
           <div className="text-[10px] text-amber-400 font-medium mb-1">Dados do Responsável pelo Imóvel</div>
           <div className="grid grid-cols-2 gap-2">
-            <Input value={tp.nome} onChange={e => setTp(p => ({ ...p, nome: e.target.value }))} placeholder="Nome Completo" className="h-7 text-[10px] bg-[#111] border-[#1c1c1c] text-neutral-200" />
-            <Input value={tp.cpf} onChange={e => setTp(p => ({ ...p, cpf: e.target.value }))} placeholder="CPF" className="h-7 text-[10px] bg-[#111] border-[#1c1c1c] text-neutral-200" />
-            <Input value={tp.naturalidade} onChange={e => setTp(p => ({ ...p, naturalidade: e.target.value }))} placeholder="Naturalidade" className="h-7 text-[10px] bg-[#111] border-[#1c1c1c] text-neutral-200" />
-            <Input value={tp.nascimento} onChange={e => setTp(p => ({ ...p, nascimento: e.target.value }))} placeholder="Data Nascimento" className="h-7 text-[10px] bg-[#111] border-[#1c1c1c] text-neutral-200" />
-            <Input value={tp.profissao} onChange={e => setTp(p => ({ ...p, profissao: e.target.value }))} placeholder="Profissão" className="h-7 text-[10px] bg-[#111] border-[#1c1c1c] text-neutral-200" />
-            <Input value={tp.estadoCivil} onChange={e => setTp(p => ({ ...p, estadoCivil: e.target.value }))} placeholder="Estado Civil" className="h-7 text-[10px] bg-[#111] border-[#1c1c1c] text-neutral-200" />
+            <Input value={tp.nome} onChange={e => setTp(p => ({ ...p, nome: e.target.value }))} placeholder="Nome Completo" className="h-7 text-[10px] bg-white border-slate-200 text-slate-700" />
+            <Input value={tp.cpf} onChange={e => setTp(p => ({ ...p, cpf: e.target.value }))} placeholder="CPF" className="h-7 text-[10px] bg-white border-slate-200 text-slate-700" />
+            <Input value={tp.naturalidade} onChange={e => setTp(p => ({ ...p, naturalidade: e.target.value }))} placeholder="Naturalidade" className="h-7 text-[10px] bg-white border-slate-200 text-slate-700" />
+            <Input value={tp.nascimento} onChange={e => setTp(p => ({ ...p, nascimento: e.target.value }))} placeholder="Data Nascimento" className="h-7 text-[10px] bg-white border-slate-200 text-slate-700" />
+            <Input value={tp.profissao} onChange={e => setTp(p => ({ ...p, profissao: e.target.value }))} placeholder="Profissão" className="h-7 text-[10px] bg-white border-slate-200 text-slate-700" />
+            <Input value={tp.estadoCivil} onChange={e => setTp(p => ({ ...p, estadoCivil: e.target.value }))} placeholder="Estado Civil" className="h-7 text-[10px] bg-white border-slate-200 text-slate-700" />
           </div>
           {TEMPLATES.find(t => t.key === showExtra)?.needsDates && (
-            <div className="grid grid-cols-2 gap-2 pt-1 border-t border-[#1c1c1c]">
-              <Input value={dataEntrada} onChange={e => setDataEntrada(e.target.value)} placeholder="Data Entrada (ex: 01/01/2020)" className="h-7 text-[10px] bg-[#111] border-[#1c1c1c] text-neutral-200" />
-              <Input value={dataSaida} onChange={e => setDataSaida(e.target.value)} placeholder="Data Saída (ex: 31/12/2023)" className="h-7 text-[10px] bg-[#111] border-[#1c1c1c] text-neutral-200" />
+            <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-200">
+              <Input value={dataEntrada} onChange={e => setDataEntrada(e.target.value)} placeholder="Data Entrada (ex: 01/01/2020)" className="h-7 text-[10px] bg-white border-slate-200 text-slate-700" />
+              <Input value={dataSaida} onChange={e => setDataSaida(e.target.value)} placeholder="Data Saída (ex: 31/12/2023)" className="h-7 text-[10px] bg-white border-slate-200 text-slate-700" />
             </div>
           )}
           <div className="flex gap-2 pt-1">
             <Button size="sm" onClick={() => handleGenerate(showExtra)} disabled={generating === showExtra} className="h-7 text-[10px] bg-[#7a1528] hover:bg-[#9a1b32]">
               {generating === showExtra ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <FileDown className="h-3 w-3 mr-1" />} Gerar DOCX
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => setShowExtra(null)} className="h-7 text-[10px] text-neutral-500">Cancelar</Button>
+            <Button variant="ghost" size="sm" onClick={() => setShowExtra(null)} className="h-7 text-[10px] text-slate-500">Cancelar</Button>
           </div>
         </div>
       )}
 
       <div className="space-y-1.5">
         {TEMPLATES.map(tpl => (
-          <div key={tpl.key} className="flex items-center justify-between bg-[#0a0a0a] border border-[#1c1c1c] rounded-lg px-3 py-2 hover:border-neutral-700 transition-all">
+          <div key={tpl.key} className="flex items-center justify-between bg-white border border-slate-200 rounded-lg px-3 py-2 hover:border-neutral-700 transition-all">
             <div className="min-w-0 flex-1">
-              <div className="text-[11px] text-neutral-200 font-medium">{tpl.label}</div>
-              <div className="text-[9px] text-neutral-600">{tpl.desc}</div>
+              <div className="text-[11px] text-slate-700 font-medium">{tpl.label}</div>
+              <div className="text-[9px] text-slate-400">{tpl.desc}</div>
             </div>
             <Button
               variant="ghost"
