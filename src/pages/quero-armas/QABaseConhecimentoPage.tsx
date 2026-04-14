@@ -535,19 +535,25 @@ export default function QABaseConhecimentoPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-base font-semibold text-slate-700">Base de Conhecimento</h1>
-          <p className="text-sm text-slate-500 mt-1">Leis, decretos e petições aprovadas que alimentam a IA jurídica</p>
+          <h1 className="text-xl md:text-2xl font-bold tracking-tight" style={{ color: "hsl(220 20% 18%)" }}>
+            Base de Conhecimento
+          </h1>
+          <p className="text-sm mt-0.5" style={{ color: "hsl(220 10% 62%)" }}>
+            Leis, decretos e petições aprovadas que alimentam a IA jurídica
+          </p>
         </div>
         <div className="flex gap-2 flex-wrap">
-          <Button variant="outline" onClick={() => setShowLinkDialog(true)} className="border-blue-600/40 text-blue-400 hover:bg-blue-500/10 gap-1.5">
+          <Button variant="outline" onClick={() => setShowLinkDialog(true)}
+            className="border-blue-200 text-blue-600 hover:bg-blue-50 gap-1.5 rounded-lg">
             <Link2 className="h-4 w-4" /> Importar por Link
           </Button>
-          <Button variant="outline" onClick={() => setShowBulkDialog(true)} className="border-purple-600/40 text-purple-400 hover:bg-purple-500/10 gap-1.5">
+          <Button variant="outline" onClick={() => setShowBulkDialog(true)}
+            className="border-purple-200 text-purple-600 hover:bg-purple-50 gap-1.5 rounded-lg">
             <Plus className="h-4 w-4" /> Carga em Lote
           </Button>
           <label className="cursor-pointer">
             <input type="file" className="hidden" onChange={handleUpload} accept=".pdf,.doc,.docx,.txt,.rtf" multiple />
-            <Button asChild disabled={uploading} className="bg-[#7a1528] hover:bg-[#a52338] text-slate-700 border border-slate-200">
+            <Button asChild disabled={uploading} className="qa-btn-primary no-glow">
               <span>{uploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />} Enviar Documento</span>
             </Button>
           </label>
@@ -556,32 +562,32 @@ export default function QABaseConhecimentoPage() {
 
       {/* ─── Activity Queue ─── */}
       {trackedImports.length > 0 && (
-        <div className="bg-white border border-slate-200 rounded p-4 space-y-2">
+        <div className="qa-card p-4 space-y-2">
           <div className="flex items-center justify-between mb-1">
-            <button onClick={() => setQueueCollapsed(c => !c)} className="flex items-center gap-2 text-xs font-semibold text-slate-600 uppercase tracking-wider hover:text-slate-700 transition-colors">
-              {activeTracked.length > 0 && <Loader2 className="h-3 w-3 animate-spin text-blue-400" />}
+            <button onClick={() => setQueueCollapsed(c => !c)} className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider hover:opacity-70 transition-opacity"
+              style={{ color: "hsl(220 20% 18%)" }}>
+              {activeTracked.length > 0 && <Loader2 className="h-3 w-3 animate-spin" style={{ color: "hsl(230 80% 56%)" }} />}
               Fila de Processamento
               {queueCollapsed ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />}
             </button>
             <div className="flex items-center gap-2">
-              {/* Counters */}
               {activeTracked.length > 0 && (
-                <span className="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded-full font-medium">
+                <span className="qa-badge bg-blue-50 text-blue-600">
                   {activeTracked.length} ativa{activeTracked.length > 1 ? "s" : ""}
                 </span>
               )}
               {doneTracked.length > 0 && (
-                <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full font-medium">
+                <span className="qa-badge bg-emerald-50 text-emerald-600">
                   {doneTracked.length} concluída{doneTracked.length > 1 ? "s" : ""}
                 </span>
               )}
               {errorTracked.length > 0 && (
-                <span className="text-[10px] bg-red-500/10 text-red-400 px-2 py-0.5 rounded-full font-medium">
+                <span className="qa-badge bg-red-50 text-red-600">
                   {errorTracked.length} erro{errorTracked.length > 1 ? "s" : ""}
                 </span>
               )}
               {trackedImports.every(t => TERMINAL.includes(t.status)) && (
-                <button onClick={() => setTrackedImports([])} className="text-[10px] text-slate-400 hover:text-slate-600 transition-colors">
+                <button onClick={() => setTrackedImports([])} className="text-[10px] hover:underline" style={{ color: "hsl(220 10% 62%)" }}>
                   Limpar tudo
                 </button>
               )}
@@ -599,35 +605,35 @@ export default function QABaseConhecimentoPage() {
       )}
 
       {/* Dashboard Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <StatCard icon={FileText} label="Total" value={totalDocs} color="bg-slate-100 text-slate-600" />
-        <StatCard icon={ShieldCheck} label="Validados" value={validados} color="bg-emerald-500/10 text-emerald-400" />
-        <StatCard icon={Clock} label="Pendentes" value={pendentes} color="bg-amber-500/10 text-amber-400" />
-        <StatCard icon={Zap} label="Ativos na IA" value={ativosIA} color="bg-purple-500/10 text-purple-400" />
-        <StatCard icon={Star} label="Referências" value={referencias} color="bg-amber-500/10 text-amber-300" />
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
+        <StatCard icon={FileText} label="Total" value={totalDocs} color="hsl(230 80% 56%)" />
+        <StatCard icon={ShieldCheck} label="Validados" value={validados} color="hsl(152 60% 42%)" />
+        <StatCard icon={Clock} label="Pendentes" value={pendentes} color="hsl(38 92% 50%)" />
+        <StatCard icon={Zap} label="Ativos na IA" value={ativosIA} color="hsl(262 60% 55%)" />
+        <StatCard icon={Star} label="Referências" value={referencias} color="hsl(38 92% 50%)" />
       </div>
 
-      <div className="flex flex-wrap gap-3">
+      <div className="qa-card p-3 flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "hsl(220 10% 62%)" }} />
           <Input placeholder="Buscar por título..." value={busca} onChange={e => setBusca(e.target.value)}
-            className="pl-10 bg-white border-slate-200 text-slate-700" />
+            className="pl-10 bg-transparent border-slate-200 rounded-lg" style={{ color: "hsl(220 20% 18%)" }} />
         </div>
         <Select value={filtroTipo} onValueChange={setFiltroTipo}>
-          <SelectTrigger className="w-[180px] bg-white border-slate-200 text-slate-700"><SelectValue placeholder="Tipo" /></SelectTrigger>
+          <SelectTrigger className="w-[180px] bg-transparent border-slate-200 rounded-lg" style={{ color: "hsl(220 20% 25%)" }}><SelectValue placeholder="Tipo" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="todos">Todos os tipos</SelectItem>
             {TIPOS_DOC.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={filtroOrigem} onValueChange={setFiltroOrigem}>
-          <SelectTrigger className="w-[160px] bg-white border-slate-200 text-slate-700"><SelectValue placeholder="Origem" /></SelectTrigger>
+          <SelectTrigger className="w-[160px] bg-transparent border-slate-200 rounded-lg" style={{ color: "hsl(220 20% 25%)" }}><SelectValue placeholder="Origem" /></SelectTrigger>
           <SelectContent>
           {TIPOS_ORIGEM_FILTER.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={filtroStatus} onValueChange={setFiltroStatus}>
-          <SelectTrigger className="w-[160px] bg-white border-slate-200 text-slate-700"><SelectValue placeholder="Status" /></SelectTrigger>
+          <SelectTrigger className="w-[160px] bg-transparent border-slate-200 rounded-lg" style={{ color: "hsl(220 20% 25%)" }}><SelectValue placeholder="Status" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="todos">Todos</SelectItem>
             <SelectItem value="pendente">Pendente</SelectItem>
