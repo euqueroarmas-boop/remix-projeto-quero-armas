@@ -342,10 +342,12 @@ export default function QAClientesPage() {
           throw new Error("CPF inválido para vincular o cadastro ao cliente");
         }
 
+        const cpfVariants = Array.from(new Set([cpfDigits, formatCpf(cpfDigits)]));
+
         const { data: clientesCpf, error: clienteLookupError } = await supabase
           .from("qa_clientes" as any)
           .select("*")
-          .eq("cpf", cpfDigits)
+          .in("cpf", cpfVariants)
           .order("updated_at", { ascending: false })
           .limit(10);
 
