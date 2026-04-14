@@ -141,6 +141,7 @@ export default function QACadastroPublicoPage() {
 
   const [cpfLooking, setCpfLooking] = useState(false);
   const [cpfFound, setCpfFound] = useState<boolean | null>(null);
+  const [showComplementoConfirm, setShowComplementoConfirm] = useState(false);
 
   const set = useCallback((field: keyof FormData, value: any) => {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -254,6 +255,9 @@ export default function QACadastroPublicoPage() {
       if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
         errs.email = "E-mail inválido";
     }
+    if (s === 2) {
+      if (!form.end1_numero.trim()) errs.end1_numero = "Número é obrigatório";
+    }
     if (s === 5) {
       if (!form.consentimento_dados_verdadeiros) errs.consentimento_dados_verdadeiros = "Obrigatório";
       if (!form.consentimento_tratamento_dados) errs.consentimento_tratamento_dados = "Obrigatório";
@@ -262,11 +266,24 @@ export default function QACadastroPublicoPage() {
     return Object.keys(errs).length === 0;
   };
 
+  const proceedFromStep2 = () => {
+    if (form.tem_segundo_endereco) {
+      setStep(3);
+    } else {
+      setStep(4);
+    }
+  };
+
   const nextStep = () => {
     if (!validateStep(step)) return;
-    // Skip step 3 if no second address
-    if (step === 2 && !form.tem_segundo_endereco) {
-      setStep(4);
+    // On step 2, check if complemento is empty and ask confirmation
+    if (step === 2 && !form.end1_complemento.trim() && !showComplementoConfirm) {
+      setShowComplementoConfirm(true);
+      return;
+    }
+    setShowComplementoConfirm(false);
+    if (step === 2) {
+      proceedFromStep2();
     } else {
       setStep(Math.min(step + 1, 5) as Step);
     }
@@ -653,11 +670,20 @@ function Step4({ form, set, errors, onCnpjLookup, cnpjLoading }: any) {
       <div className="space-y-2 mb-6">
         {vinculos.map(v => (
           <label key={v.value}
+            onClick={() => set("vinculo_tipo", v.value)}
             className="flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all"
             style={{
               borderColor: form.vinculo_tipo === v.value ? "hsl(230 80% 56%)" : "hsl(220 13% 91%)",
               background: form.vinculo_tipo === v.value ? "hsl(230 80% 97%)" : "transparent",
             }}>
+            <input
+              type="radio"
+              name="vinculo_tipo"
+              value={v.value}
+              checked={form.vinculo_tipo === v.value}
+              onChange={() => set("vinculo_tipo", v.value)}
+              className="sr-only"
+            />
             <div className="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0"
               style={{ borderColor: form.vinculo_tipo === v.value ? "hsl(230 80% 56%)" : "hsl(220 13% 82%)" }}>
               {form.vinculo_tipo === v.value && (
