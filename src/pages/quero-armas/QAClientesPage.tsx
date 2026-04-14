@@ -1358,9 +1358,9 @@ export default function QAClientesPage() {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div>
-      <div className="text-[10px] uppercase tracking-[0.12em] mb-2 font-semibold" style={{ color: "hsl(230 80% 56%)" }}>{title}</div>
-      <div className="space-y-1.5">{children}</div>
+    <div className="bg-white border border-slate-200 rounded-xl p-4 md:p-5">
+      <div className="text-[11px] uppercase tracking-[0.14em] mb-3 font-bold" style={{ color: "hsl(220 65% 48%)" }}>{title}</div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2.5">{children}</div>
     </div>
   );
 }
@@ -1424,11 +1424,13 @@ function Field({ label, value, icon: Icon, copyable }: { label: string; value?: 
     }
   };
   return (
-    <div className={`flex items-start gap-2 text-xs ${copyable && value ? "cursor-pointer active:opacity-60" : ""}`} onClick={copyable ? handleCopy : undefined}>
-      {Icon && <Icon className="h-3.5 w-3.5 text-slate-400 mt-0.5 shrink-0" />}
-      <span className="text-slate-500 min-w-[80px] shrink-0">{label}:</span>
-      <span className="text-slate-800 font-medium uppercase">{value || "—"}</span>
-      {copyable && value && <span className="text-slate-400 text-[9px] ml-auto">📋</span>}
+    <div className={`flex flex-col gap-0.5 py-1 ${copyable && value ? "cursor-pointer active:opacity-60 group" : ""}`} onClick={copyable ? handleCopy : undefined}>
+      <div className="flex items-center gap-1.5">
+        {Icon && <Icon className="h-3.5 w-3.5 shrink-0" style={{ color: "hsl(220 10% 55%)" }} />}
+        <span className="text-[11px] text-slate-400 uppercase tracking-wide font-medium">{label}</span>
+        {copyable && value && <span className="text-slate-300 text-[10px] opacity-0 group-hover:opacity-100 transition-opacity ml-auto">📋</span>}
+      </div>
+      <span className="text-[13px] text-slate-800 font-semibold uppercase pl-0.5">{value || "—"}</span>
     </div>
   );
 }
