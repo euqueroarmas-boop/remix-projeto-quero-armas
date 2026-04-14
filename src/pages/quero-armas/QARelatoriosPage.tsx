@@ -349,7 +349,15 @@ export default function QARelatoriosPage() {
             className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs bg-emerald-900/30 border border-emerald-800/40 text-emerald-400 hover:bg-emerald-900/50 transition-colors disabled:opacity-40"
           >
             <Bell className="h-3 w-3" />
-            {alertSending ? "Enviando..." : `Alertar WhatsApp (${totalCriticos})`}
+            {alertSending ? "Enviando..." : `WhatsApp (${totalCriticos})`}
+          </button>
+          <button
+            onClick={sendEmailAlerts}
+            disabled={emailSending || totalCriticos === 0}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs bg-blue-900/30 border border-blue-800/40 text-blue-400 hover:bg-blue-900/50 transition-colors disabled:opacity-40"
+          >
+            <Mail className="h-3 w-3" />
+            {emailSending ? "Enviando..." : `E-mail (${totalCriticos})`}
           </button>
         </div>
       </div>
