@@ -95,18 +95,18 @@ export default function QADashboardPage() {
   useEffect(() => {
     const load = async () => {
       const [d, n, j, p, pend, erros, c, apr, ref, rasc, rPecas, rDocs, cadastrosCount, cadastrosRecent] = await Promise.all([
-        supabase.from("qa_documentos_conhecimento" as any).select("id", { count: "exact", head: true }).eq("ativo", true),
+        supabase.from("qa_documentos_conhecimento" as any).select("id", { count: "exact", head: true }).eq("ativo", true).eq("papel_documento", "aprendizado"),
         supabase.from("qa_fontes_normativas" as any).select("id", { count: "exact", head: true }),
         supabase.from("qa_jurisprudencias" as any).select("id", { count: "exact", head: true }),
         supabase.from("qa_geracoes_pecas" as any).select("id", { count: "exact", head: true }),
-        supabase.from("qa_documentos_conhecimento" as any).select("id", { count: "exact", head: true }).eq("status_validacao", "nao_validado").eq("ativo", true),
-        supabase.from("qa_documentos_conhecimento" as any).select("id", { count: "exact", head: true }).in("status_processamento", ["erro", "texto_invalido"]).eq("ativo", true),
+        supabase.from("qa_documentos_conhecimento" as any).select("id", { count: "exact", head: true }).eq("status_validacao", "nao_validado").eq("ativo", true).eq("papel_documento", "aprendizado"),
+        supabase.from("qa_documentos_conhecimento" as any).select("id", { count: "exact", head: true }).in("status_processamento", ["erro", "texto_invalido"]).eq("ativo", true).eq("papel_documento", "aprendizado"),
         supabase.from("qa_consultas_ia" as any).select("id", { count: "exact", head: true }),
         supabase.from("qa_geracoes_pecas" as any).select("id", { count: "exact", head: true }).eq("status_revisao", "aprovado"),
         supabase.from("qa_referencias_preferenciais" as any).select("id", { count: "exact", head: true }).eq("ativo", true),
         supabase.from("qa_geracoes_pecas" as any).select("id", { count: "exact", head: true }).eq("status_revisao", "rascunho"),
         supabase.from("qa_geracoes_pecas" as any).select("id, titulo_geracao, tipo_peca, created_at, status_revisao").order("created_at", { ascending: false }).limit(6),
-        supabase.from("qa_documentos_conhecimento" as any).select("id, titulo, tipo_documento, created_at, status_processamento").eq("ativo", true).order("created_at", { ascending: false }).limit(6),
+        supabase.from("qa_documentos_conhecimento" as any).select("id, titulo, tipo_documento, created_at, status_processamento").eq("ativo", true).eq("papel_documento", "aprendizado").order("created_at", { ascending: false }).limit(6),
         supabase.from("qa_cadastro_publico" as any).select("id", { count: "exact", head: true }),
         supabase.from("qa_cadastro_publico" as any).select("id, nome_completo, cpf, telefone_principal, email, end1_cidade, end1_estado, servico_interesse, status, created_at").order("created_at", { ascending: false }).limit(8),
       ]);
@@ -256,7 +256,7 @@ export default function QADashboardPage() {
       {/* KPI Cards - Row 1 */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
         <KPICard icon={Users} label="Novos Cadastros" value={stats.novosCadastros} trend={stats.novosCadastros > 0 ? "novo" : "—"} positive={stats.novosCadastros > 0} />
-        <KPICard icon={FileText} label="Base de Dados" value={totalAcervo} trend={totalAcervo > 0 ? `${totalAcervo}` : "—"} positive={totalAcervo > 0} />
+        <KPICard icon={FileText} label="Acervo Jurídico" value={totalAcervo} trend={totalAcervo > 0 ? `${totalAcervo}` : "—"} positive={totalAcervo > 0} />
         <KPICard icon={PenTool} label="Peças Geradas" value={stats.pecas} trend={stats.pecas > 0 ? `${stats.pecas}` : "—"} positive={stats.pecas > 0} />
         <KPICard icon={CheckCircle} label="Aprovadas" value={stats.aprovadas} trend={stats.aprovadas > 0 ? `${stats.aprovadas}` : "—"} positive={stats.aprovadas > 0} />
         <KPICard icon={Shield} label="Consultas IA" value={stats.consultas} trend={stats.consultas > 0 ? `${stats.consultas}` : "—"} positive={stats.consultas > 0} />
