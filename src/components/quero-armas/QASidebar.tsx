@@ -5,7 +5,7 @@ import {
 } from "@/components/ui/sidebar";
 import {
   LayoutDashboard, PenTool, FolderOpen, FileText, Scale, Gavel,
-  BookOpen, FileBox, History, ClipboardList, Settings, LogOut, Shield, Users, Building2, BarChart3,
+  BookOpen, FileBox, History, Settings, LogOut, Shield, Users, Building2, BarChart3,
 } from "lucide-react";
 import { useQAAuth } from "./hooks/useQAAuth";
 
@@ -19,7 +19,7 @@ const NAV_GROUPS = [
       { title: "Clientes", url: "/quero-armas/clientes", icon: Users },
       { title: "Clubes de Tiro", url: "/quero-armas/clubes", icon: Building2 },
       { title: "Relatórios", url: "/quero-armas/relatorios", icon: BarChart3 },
-      { title: "Assistente Jurídico", url: "/quero-armas/ia", icon: Shield },
+      { title: "Assistente IA", url: "/quero-armas/ia", icon: Shield },
     ],
   },
   {
@@ -32,7 +32,7 @@ const NAV_GROUPS = [
     ],
   },
   {
-    label: "Registro",
+    label: "Sistema",
     items: [
       { title: "Histórico", url: "/quero-armas/historico", icon: History },
       { title: "Configurações", url: "/quero-armas/configuracoes", icon: Settings },
@@ -62,17 +62,27 @@ export function QASidebar({ perfil }: Props) {
   };
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-[#1c1c1c] bg-[#0a0a0a]">
-      <SidebarContent className="py-3">
+    <Sidebar collapsible="icon" className="border-r"
+      style={{
+        background: "hsl(0 0% 100%)",
+        borderColor: "hsl(220 13% 91%)",
+      } as React.CSSProperties}>
+      <SidebarContent className="py-4" style={{ background: "hsl(0 0% 100%)" }}>
+        {/* Logo */}
         {!collapsed && (
-          <div className="px-4 pb-3 mb-1 border-b border-[#1c1c1c]">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded bg-[#7a1528]/20 flex items-center justify-center">
-                <Shield className="h-3.5 w-3.5 text-[#c43b52]" />
+          <div className="px-5 pb-4 mb-2 border-b" style={{ borderColor: "hsl(220 13% 93%)" }}>
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+                style={{ background: "hsl(230 80% 96%)" }}>
+                <Shield className="h-4 w-4" style={{ color: "hsl(230 80% 56%)" }} />
               </div>
               <div>
-                <div className="text-[13px] font-semibold text-neutral-200 tracking-tight leading-none">Quero Armas</div>
-                <div className="text-[9px] text-neutral-600 tracking-[0.15em] uppercase mt-0.5">Inteligência Jurídica</div>
+                <div className="text-sm font-bold tracking-tight" style={{ color: "hsl(220 20% 18%)" }}>
+                  Quero Armas
+                </div>
+                <div className="text-[10px] tracking-widest uppercase" style={{ color: "hsl(220 10% 62%)" }}>
+                  Inteligência Jurídica
+                </div>
               </div>
             </div>
           </div>
@@ -84,7 +94,8 @@ export function QASidebar({ perfil }: Props) {
           return (
             <SidebarGroup key={group.label}>
               {!collapsed && (
-                <SidebarGroupLabel className="text-[9px] text-neutral-600 uppercase tracking-[0.2em] font-medium px-4 py-1">
+                <SidebarGroupLabel className="text-[10px] uppercase tracking-[0.15em] font-semibold px-5 py-1.5"
+                  style={{ color: "hsl(220 10% 62%)" }}>
                   {group.label}
                 </SidebarGroupLabel>
               )}
@@ -97,13 +108,27 @@ export function QASidebar({ perfil }: Props) {
                         <SidebarMenuButton asChild>
                           <Link
                             to={item.url}
-                            className={`flex items-center gap-2.5 px-3 py-1.5 rounded text-[13px] transition-all ${
-                              active
-                                ? "bg-[#7a1528]/15 text-[#e8a0ad] border-l-2 border-[#a52338]"
-                                : "text-neutral-500 hover:text-neutral-300 hover:bg-[#141414]"
-                            }`}
+                            className="flex items-center gap-2.5 px-4 py-2 mx-2 rounded-lg text-[13px] font-medium transition-all"
+                            style={{
+                              background: active ? "hsl(230 80% 96%)" : "transparent",
+                              color: active ? "hsl(230 80% 46%)" : "hsl(220 10% 46%)",
+                            }}
+                            onMouseEnter={e => {
+                              if (!active) {
+                                (e.currentTarget as HTMLElement).style.background = "hsl(220 14% 96%)";
+                                (e.currentTarget as HTMLElement).style.color = "hsl(220 20% 25%)";
+                              }
+                            }}
+                            onMouseLeave={e => {
+                              if (!active) {
+                                (e.currentTarget as HTMLElement).style.background = "transparent";
+                                (e.currentTarget as HTMLElement).style.color = "hsl(220 10% 46%)";
+                              }
+                            }}
                           >
-                            <item.icon className={`h-3.5 w-3.5 shrink-0 ${active ? "text-[#c43b52]" : ""}`} />
+                            <item.icon className="h-4 w-4 shrink-0" style={{
+                              color: active ? "hsl(230 80% 56%)" : "hsl(220 10% 62%)",
+                            }} />
                             {!collapsed && <span>{item.title}</span>}
                           </Link>
                         </SidebarMenuButton>
@@ -116,15 +141,25 @@ export function QASidebar({ perfil }: Props) {
           );
         })}
 
-        <div className="mt-auto pt-2 border-t border-[#1c1c1c] mx-2">
+        {/* Logout */}
+        <div className="mt-auto pt-3 border-t mx-3" style={{ borderColor: "hsl(220 13% 93%)" }}>
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
                 <button
                   onClick={signOut}
-                  className="flex items-center gap-2.5 px-3 py-1.5 rounded text-[13px] text-neutral-600 hover:text-red-400 hover:bg-red-500/5 w-full transition-all"
+                  className="flex items-center gap-2.5 px-4 py-2 rounded-lg text-[13px] font-medium w-full transition-all"
+                  style={{ color: "hsl(220 10% 62%)" }}
+                  onMouseEnter={e => {
+                    (e.currentTarget as HTMLElement).style.color = "hsl(0 72% 51%)";
+                    (e.currentTarget as HTMLElement).style.background = "hsl(0 72% 96%)";
+                  }}
+                  onMouseLeave={e => {
+                    (e.currentTarget as HTMLElement).style.color = "hsl(220 10% 62%)";
+                    (e.currentTarget as HTMLElement).style.background = "transparent";
+                  }}
                 >
-                  <LogOut className="h-3.5 w-3.5 shrink-0" />
+                  <LogOut className="h-4 w-4 shrink-0" />
                   {!collapsed && <span>Sair</span>}
                 </button>
               </SidebarMenuButton>
