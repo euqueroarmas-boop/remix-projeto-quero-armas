@@ -330,7 +330,16 @@ export default function QAClientesPage() {
     if (s === "EM ANÁLISE" || s === "PRONTO PARA ANÁLISE") return "text-amber-700 bg-amber-50";
     return "text-slate-600 bg-slate-100";
   };
-  const formatDate = (d: string | null) => { if (!d) return "—"; try { return new Date(d).toLocaleDateString("pt-BR"); } catch { return d; } };
+  const formatDate = (d: string | null) => {
+    if (!d) return "—";
+    // Already DD/MM/YYYY format
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(d)) return d;
+    try {
+      const parsed = new Date(d);
+      if (isNaN(parsed.getTime())) return d;
+      return parsed.toLocaleDateString("pt-BR");
+    } catch { return d; }
+  };
   const getServicoNome = (id: number) => {
     const map: Record<number, string> = { 2:"Posse PF",3:"Porte PF",4:"Lions Gun",5:"COMBO Autoriz.",6:"COMBO CRAF",7:"COMBO GTE",8:"Apost. Atual.",9:"Apost. Mudança",10:"Apost. 2º End.",11:"Curso Pistola",12:"Curso Cal.12",13:"Mudança Serv.",14:"Reg. Recarga",15:"Autoriz. Compra",16:"Reg. Arma",17:"GTE Avulso",18:"GTE",20:"CR EB",21:"VIP Pistola" };
     return map[id] || `Serviço #${id}`;
