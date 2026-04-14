@@ -215,8 +215,14 @@ export default function QAClientesPage() {
   const [editingCadastroPublico, setEditingCadastroPublico] = useState(false);
   const [cadastroEditForm, setCadastroEditForm] = useState<Record<string, any>>({});
   const [savingCadastroEdit, setSavingCadastroEdit] = useState(false);
+  const [servicos, setServicos] = useState<{ id: number; nome_servico: string }[]>([]);
 
-  useEffect(() => { loadClientes(); loadCadastrosPublicos(); }, []);
+  useEffect(() => { loadClientes(); loadCadastrosPublicos(); loadServicos(); }, []);
+
+  const loadServicos = async () => {
+    const { data } = await supabase.from("qa_servicos" as any).select("id, nome_servico").order("id");
+    if (data) setServicos(data as any[]);
+  };
 
   const loadClientes = async () => {
     setLoading(true);
