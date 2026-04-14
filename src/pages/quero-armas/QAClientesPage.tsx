@@ -388,6 +388,10 @@ export default function QAClientesPage() {
                   </div>
                 )}
               </TabsContent>
+              {/* DOCUMENTOS */}
+              <TabsContent value="docs" className="mt-3">
+                <DocumentGenerator cliente={c} />
+              </TabsContent>
             </>
           )}
         </Tabs>
