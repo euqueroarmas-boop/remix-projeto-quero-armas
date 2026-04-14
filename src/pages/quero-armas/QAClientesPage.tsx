@@ -51,6 +51,75 @@ export default function QAClientesPage() {
   const [filiacaoModal, setFiliacaoModal] = useState<{ open: boolean; item?: any }>({ open: false });
   const [deleteModal, setDeleteModal] = useState<{ open: boolean; table: string; id: number; title: string; desc: string }>({ open: false, table: "", id: 0, title: "", desc: "" });
   const [deleting, setDeleting] = useState(false);
+  const [expandedItemId, setExpandedItemId] = useState<number | null>(null);
+  const [itemEditForm, setItemEditForm] = useState<Record<string, string>>({});
+  const [savingItem, setSavingItem] = useState(false);
+
+  const ITEM_EDIT_FIELDS: { key: string; label: string; type: "date" | "text" }[] = [
+    { key: "data_protocolo", label: "Data Protocolo", type: "date" },
+    { key: "data_deferimento", label: "Data Deferimento", type: "date" },
+    { key: "data_vencimento", label: "Data Vencimento", type: "date" },
+    { key: "numero_processo", label: "Nº Processo", type: "text" },
+    { key: "numero_craf", label: "Nº CRAF", type: "text" },
+    { key: "numero_gte", label: "Nº GTE", type: "text" },
+    { key: "numero_cr", label: "Nº CR", type: "text" },
+    { key: "numero_posse", label: "Nº Posse", type: "text" },
+    { key: "numero_porte", label: "Nº Porte", type: "text" },
+    { key: "numero_sigma", label: "Nº SIGMA", type: "text" },
+    { key: "numero_sinarm", label: "Nº SINARM", type: "text" },
+    { key: "registro_cad", label: "Registro CAD", type: "text" },
+  ];
+
+  const handleExpandItem = (item: any) => {
+    if (expandedItemId === item.id) {
+      setExpandedItemId(null);
+      setItemEditForm({});
+      return;
+    }
+    setExpandedItemId(item.id);
+    const form: Record<string, string> = {};
+    ITEM_EDIT_FIELDS.forEach(f => {
+      const val = item[f.key];
+      if (f.type === "date" && val) {
+        try { form[f.key] = new Date(val).toLocaleDateString("pt-BR"); } catch { form[f.key] = val || ""; }
+      } else {
+        form[f.key] = val || "";
+      }
+    });
+    setItemEditForm(form);
+  };
+
+  const handleSaveItem = async () => {
+    if (!expandedItemId) return;
+    setSavingItem(true);
+    try {
+      const payload: Record<string, any> = {};
+      ITEM_EDIT_FIELDS.forEach(f => {
+        const v = itemEditForm[f.key]?.trim() || null;
+        if (f.type === "date" && v) {
+          const parts = v.split("/");
+          if (parts.length === 3) {
+            payload[f.key] = `${parts[2]}-${parts[1]}-${parts[0]}`;
+          } else {
+            payload[f.key] = v;
+          }
+        } else {
+          payload[f.key] = v;
+        }
+      });
+      payload.data_ultima_atualizacao = new Date().toISOString();
+      const { error } = await supabase.from("qa_itens_venda" as any).update(payload).eq("id", expandedItemId);
+      if (error) throw error;
+      setItens(prev => prev.map((i: any) => i.id === expandedItemId ? { ...i, ...payload } : i));
+      toast.success("Dados do serviço atualizados");
+      setExpandedItemId(null);
+      setItemEditForm({});
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setSavingItem(false);
+    }
+  };
 
   useEffect(() => { loadClientes(); }, []);
 
