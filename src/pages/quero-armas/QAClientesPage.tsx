@@ -26,6 +26,57 @@ interface Cliente {
   complemento2?: string; pais?: string; pais2?: string; expedicao_rg?: string;
 }
 
+interface CadastroPublico {
+  id: string;
+  nome_completo: string;
+  cpf: string;
+  data_nascimento?: string | null;
+  telefone_principal?: string | null;
+  telefone_secundario?: string | null;
+  email?: string | null;
+  nome_mae?: string | null;
+  nome_pai?: string | null;
+  estado_civil?: string | null;
+  nacionalidade?: string | null;
+  profissao?: string | null;
+  observacoes?: string | null;
+  end1_cep?: string | null;
+  end1_logradouro?: string | null;
+  end1_numero?: string | null;
+  end1_complemento?: string | null;
+  end1_bairro?: string | null;
+  end1_cidade?: string | null;
+  end1_estado?: string | null;
+  tem_segundo_endereco?: boolean | null;
+  end2_tipo?: string | null;
+  end2_cep?: string | null;
+  end2_logradouro?: string | null;
+  end2_numero?: string | null;
+  end2_complemento?: string | null;
+  end2_bairro?: string | null;
+  end2_cidade?: string | null;
+  end2_estado?: string | null;
+  vinculo_tipo?: string | null;
+  emp_cnpj?: string | null;
+  emp_razao_social?: string | null;
+  emp_nome_fantasia?: string | null;
+  emp_endereco?: string | null;
+  emp_telefone?: string | null;
+  emp_email?: string | null;
+  trab_nome_empresa?: string | null;
+  trab_cnpj_empresa?: string | null;
+  trab_cargo_funcao?: string | null;
+  trab_endereco_empresa?: string | null;
+  trab_telefone_empresa?: string | null;
+  comprovante_endereco_proprio?: string | null;
+  servico_interesse?: string | null;
+  consentimento_dados_verdadeiros?: boolean | null;
+  consentimento_tratamento_dados?: boolean | null;
+  consentimento_timestamp?: string | null;
+  status: string;
+  created_at: string;
+}
+
 export default function QAClientesPage() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [loading, setLoading] = useState(true);
@@ -121,8 +172,11 @@ export default function QAClientesPage() {
     }
   };
 
-  const [cadastrosPublicos, setCadastrosPublicos] = useState<any[]>([]);
+  const [cadastrosPublicos, setCadastrosPublicos] = useState<CadastroPublico[]>([]);
   const [tabView, setTabView] = useState<"clientes" | "cadastros">("clientes");
+  const [selectedCadastroPublico, setSelectedCadastroPublico] = useState<CadastroPublico | null>(null);
+  const [loadingCadastroPublico, setLoadingCadastroPublico] = useState(false);
+  const [savingCadastroPublicoStatus, setSavingCadastroPublicoStatus] = useState<string | null>(null);
 
   useEffect(() => { loadClientes(); loadCadastrosPublicos(); }, []);
 
@@ -137,10 +191,64 @@ export default function QAClientesPage() {
     const { data } = await supabase.from("qa_cadastro_publico" as any)
       .select("id, nome_completo, cpf, telefone_principal, email, end1_cidade, end1_estado, servico_interesse, vinculo_tipo, status, created_at")
       .order("created_at", { ascending: false });
-    setCadastrosPublicos((data as any[]) ?? []);
+    setCadastrosPublicos((data as CadastroPublico[]) ?? []);
+  };
+
+  const openCadastroPublico = async (cadastroId: string) => {
+    setLoadingCadastroPublico(true);
+    try {
+      const { data, error } = await supabase.from("qa_cadastro_publico" as any)
+        .select("*")
+        .eq("id", cadastroId)
+        .limit(1)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (!data) {
+        toast.error("Cadastro público não encontrado");
+        return;
+      }
+
+      setSelected(null);
+      setSelectedCadastroPublico(data as CadastroPublico);
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao abrir cadastro público");
+    } finally {
+      setLoadingCadastroPublico(false);
+    }
+  };
+
+  const updateCadastroPublicoStatus = async (status: string) => {
+    if (!selectedCadastroPublico) return;
+
+    setSavingCadastroPublicoStatus(status);
+    try {
+      const { data, error } = await supabase.from("qa_cadastro_publico" as any)
+        .update({ status })
+        .eq("id", selectedCadastroPublico.id)
+        .select("*")
+        .limit(1)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (!data) {
+        toast.error("Cadastro público não encontrado");
+        return;
+      }
+
+      const updated = data as CadastroPublico;
+      setSelectedCadastroPublico(updated);
+      setCadastrosPublicos(prev => prev.map(item => item.id === updated.id ? { ...item, ...updated } : item));
+      toast.success(`Cadastro marcado como ${status}`);
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao atualizar cadastro público");
+    } finally {
+      setSavingCadastroPublicoStatus(null);
+    }
   };
 
   const openClient = async (c: Cliente) => {
+    setSelectedCadastroPublico(null);
     setSelected(c);
     setTab("dados");
     await loadSubData(c);
@@ -563,6 +671,147 @@ export default function QAClientesPage() {
     return "text-slate-500 bg-slate-100";
   };
 
+  if (selectedCadastroPublico) {
+    const c = selectedCadastroPublico;
+    const comprovanteEndereco = c.comprovante_endereco_proprio === "sim"
+      ? "Sim"
+      : c.comprovante_endereco_proprio === "nao"
+        ? "Não"
+        : c.comprovante_endereco_proprio || "—";
+
+    return (
+      <div className="space-y-4">
+        <div className="flex items-start gap-3">
+          <Button variant="ghost" size="sm" onClick={() => setSelectedCadastroPublico(null)} className="text-slate-500 hover:text-slate-700 h-8 px-2">
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-base font-semibold text-slate-800 truncate">{c.nome_completo}</h1>
+            <div className="flex items-center gap-2 text-xs flex-wrap">
+              <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${cadastroStatusColor(c.status)}`}>{c.status}</span>
+              <span className="text-slate-300">•</span>
+              <span className="text-slate-500">CPF: {c.cpf || "—"}</span>
+              {c.servico_interesse && (
+                <>
+                  <span className="text-slate-300">•</span>
+                  <span className="text-slate-500">{c.servico_interesse}</span>
+                </>
+              )}
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={!!savingCadastroPublicoStatus || c.status === "rejeitado"}
+              onClick={() => updateCadastroPublicoStatus("rejeitado")}
+              className="h-8 px-3 text-xs"
+            >
+              {savingCadastroPublicoStatus === "rejeitado" && <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />}
+              Rejeitar
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={!!savingCadastroPublicoStatus || c.status === "pendente"}
+              onClick={() => updateCadastroPublicoStatus("pendente")}
+              className="h-8 px-3 text-xs"
+            >
+              {savingCadastroPublicoStatus === "pendente" && <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />}
+              Pendente
+            </Button>
+            <Button
+              size="sm"
+              disabled={!!savingCadastroPublicoStatus || c.status === "aprovado"}
+              onClick={() => updateCadastroPublicoStatus("aprovado")}
+              className="h-8 px-3 text-xs"
+            >
+              {savingCadastroPublicoStatus === "aprovado" ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <CheckCircle className="h-3.5 w-3.5 mr-1" />}
+              Validar
+            </Button>
+          </div>
+        </div>
+
+        <div className="grid gap-4">
+          <Section title="Resumo do Cadastro">
+            <Field label="Recebido em" value={formatDate(c.created_at)} />
+            <Field label="Serviço" value={c.servico_interesse} />
+            <Field label="Tipo de vínculo" value={c.vinculo_tipo} />
+            <Field label="Comprovante em nome próprio" value={comprovanteEndereco} />
+            <Field label="Consentimento de veracidade" value={c.consentimento_dados_verdadeiros ? "Sim" : "Não"} />
+            <Field label="Consentimento LGPD" value={c.consentimento_tratamento_dados ? "Sim" : "Não"} />
+            <Field label="Aceite em" value={formatDate(c.consentimento_timestamp ?? c.created_at)} />
+          </Section>
+
+          <Section title="Identificação">
+            <Field label="Nome" value={c.nome_completo} />
+            <Field label="CPF" value={c.cpf} copyable />
+            <Field label="Nascimento" value={formatDate(c.data_nascimento ?? null)} />
+            <Field label="Estado Civil" value={c.estado_civil} />
+            <Field label="Nacionalidade" value={c.nacionalidade} />
+            <Field label="Profissão" value={c.profissao} />
+            <Field label="Mãe" value={c.nome_mae} />
+            <Field label="Pai" value={c.nome_pai} />
+          </Section>
+
+          <Section title="Contato">
+            <Field label="Telefone principal" value={c.telefone_principal} icon={Phone} copyable />
+            <Field label="Telefone secundário" value={c.telefone_secundario} icon={Phone} copyable />
+            <Field label="Email" value={c.email} icon={Mail} copyable />
+          </Section>
+
+          <Section title="Endereço Principal">
+            <Field label="Logradouro" value={[c.end1_logradouro, c.end1_numero].filter(Boolean).join(", ")} icon={MapPin} />
+            <Field label="Complemento" value={c.end1_complemento} />
+            <Field label="Bairro" value={c.end1_bairro} />
+            <Field label="CEP" value={c.end1_cep} />
+            <Field label="Cidade/UF" value={[c.end1_cidade, c.end1_estado].filter(Boolean).join(" / ")} />
+          </Section>
+
+          {c.tem_segundo_endereco && (
+            <Section title="Endereço Secundário">
+              <Field label="Tipo" value={c.end2_tipo} />
+              <Field label="Logradouro" value={[c.end2_logradouro, c.end2_numero].filter(Boolean).join(", ")} icon={MapPin} />
+              <Field label="Complemento" value={c.end2_complemento} />
+              <Field label="Bairro" value={c.end2_bairro} />
+              <Field label="CEP" value={c.end2_cep} />
+              <Field label="Cidade/UF" value={[c.end2_cidade, c.end2_estado].filter(Boolean).join(" / ")} />
+            </Section>
+          )}
+
+          {(c.emp_cnpj || c.emp_razao_social || c.emp_nome_fantasia || c.emp_endereco || c.emp_telefone || c.emp_email) && (
+            <Section title="Empresa / Sociedade">
+              <Field label="CNPJ" value={c.emp_cnpj} />
+              <Field label="Razão social" value={c.emp_razao_social} />
+              <Field label="Nome fantasia" value={c.emp_nome_fantasia} />
+              <Field label="Endereço" value={c.emp_endereco} />
+              <Field label="Telefone" value={c.emp_telefone} copyable />
+              <Field label="Email" value={c.emp_email} copyable />
+            </Section>
+          )}
+
+          {(c.trab_cnpj_empresa || c.trab_nome_empresa || c.trab_cargo_funcao || c.trab_endereco_empresa || c.trab_telefone_empresa) && (
+            <Section title="Trabalho Registrado">
+              <Field label="CNPJ" value={c.trab_cnpj_empresa} />
+              <Field label="Empresa" value={c.trab_nome_empresa} />
+              <Field label="Cargo/Função" value={c.trab_cargo_funcao} />
+              <Field label="Endereço" value={c.trab_endereco_empresa} />
+              <Field label="Telefone" value={c.trab_telefone_empresa} copyable />
+            </Section>
+          )}
+
+          {c.observacoes && (
+            <Section title="Observações">
+              <div className="text-[10px] text-slate-600 whitespace-pre-wrap bg-white rounded-lg p-2.5 border border-slate-200">
+                {c.observacoes}
+              </div>
+            </Section>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   // ── List View ──
   return (
     <div className="space-y-5 max-w-7xl mx-auto">
@@ -659,9 +908,14 @@ export default function QAClientesPage() {
         <div className="space-y-1.5">
           {filteredCadastros.length === 0 && <div className="text-center py-12 text-sm" style={{ color: "hsl(220 10% 62%)" }}>Nenhum cadastro público encontrado.</div>}
           {filteredCadastros.map(c => (
-            <div key={c.id}
-              className="flex items-center gap-3 px-4 py-3 rounded-xl border transition-all hover:shadow-sm qa-card"
-              style={{ borderColor: "hsl(220 13% 93%)" }}>
+            <button
+              key={c.id}
+              type="button"
+              onClick={() => openCadastroPublico(c.id)}
+              disabled={loadingCadastroPublico}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-all hover:shadow-sm text-left group qa-card disabled:opacity-70"
+              style={{ borderColor: "hsl(220 13% 93%)" }}
+            >
               <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: "hsl(152 60% 95%)" }}>
                 <FileText className="h-4 w-4" style={{ color: "hsl(152 60% 42%)" }} />
               </div>
@@ -678,13 +932,20 @@ export default function QAClientesPage() {
                   <div className="text-[10px] mt-0.5" style={{ color: "hsl(230 80% 56%)" }}>🎯 {c.servico_interesse}</div>
                 )}
               </div>
-              <div className="flex flex-col items-end gap-1 shrink-0">
-                <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${cadastroStatusColor(c.status)}`}>{c.status}</span>
-                <span className="text-[10px]" style={{ color: "hsl(220 10% 62%)" }}>
-                  {new Date(c.created_at).toLocaleDateString("pt-BR")}
-                </span>
+              <div className="flex items-center gap-2 shrink-0">
+                <div className="flex flex-col items-end gap-1">
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${cadastroStatusColor(c.status)}`}>{c.status}</span>
+                  <span className="text-[10px]" style={{ color: "hsl(220 10% 62%)" }}>
+                    {new Date(c.created_at).toLocaleDateString("pt-BR")}
+                  </span>
+                </div>
+                {loadingCadastroPublico ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" style={{ color: "hsl(220 10% 62%)" }} />
+                ) : (
+                  <Eye className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: "hsl(220 10% 62%)" }} />
+                )}
               </div>
-            </div>
+            </button>
           ))}
         </div>
       )}
