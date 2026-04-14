@@ -125,6 +125,47 @@ export default function QADashboardPage() {
         id: r.id, titulo: r.titulo || "Sem título",
         tipo: r.tipo_documento, created_at: r.created_at, status: r.status_processamento,
       })));
+
+      // Fetch cadastros por dia e mês + serviços
+      const { data: allCadastros } = await supabase
+        .from("qa_cadastro_publico" as any)
+        .select("created_at, servico_interesse")
+        .order("created_at", { ascending: true });
+
+      if (allCadastros && allCadastros.length > 0) {
+        // Por dia (últimos 14 dias)
+        const dayMap: Record<string, number> = {};
+        const monthMap: Record<string, number> = {};
+        const servicoMap: Record<string, number> = {};
+        const now = new Date();
+        const fourteenDaysAgo = new Date(now);
+        fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 13);
+
+        (allCadastros as any[]).forEach((c: any) => {
+          const d = new Date(c.created_at);
+          const dayKey = d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+          const monthKey = d.toLocaleDateString("pt-BR", { month: "short", year: "2-digit" });
+          if (d >= fourteenDaysAgo) {
+            dayMap[dayKey] = (dayMap[dayKey] || 0) + 1;
+          }
+          monthMap[monthKey] = (monthMap[monthKey] || 0) + 1;
+          const serv = (c as any).servico_interesse || "Não informado";
+          servicoMap[serv] = (servicoMap[serv] || 0) + 1;
+        });
+
+        // Fill missing days
+        const dayData: DayCount[] = [];
+        for (let i = 0; i < 14; i++) {
+          const dt = new Date(fourteenDaysAgo);
+          dt.setDate(dt.getDate() + i);
+          const key = dt.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+          dayData.push({ day: key, total: dayMap[key] || 0 });
+        }
+        setCadastrosPorDia(dayData);
+        setCadastrosPorMes(Object.entries(monthMap).map(([month, total]) => ({ month, total })));
+        setServicosDistrib(Object.entries(servicoMap).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value));
+      }
+
       setLoading(false);
     };
     load();
