@@ -134,6 +134,9 @@ export default function QACadastroPublicoPage() {
   const [submitted, setSubmitted] = useState(false);
   const { lookupCep, lookupCnpj, cepLoading, cnpjLoading } = useBrasilApiLookup();
 
+  const [cpfLooking, setCpfLooking] = useState(false);
+  const [cpfFound, setCpfFound] = useState<boolean | null>(null);
+
   const set = useCallback((field: keyof FormData, value: any) => {
     setForm(prev => ({ ...prev, [field]: value }));
     setErrors(prev => {
@@ -142,6 +145,60 @@ export default function QACadastroPublicoPage() {
       return n;
     });
   }, []);
+
+  /* ── CPF Lookup from qa_clientes ── */
+  const handleCpfLookup = useCallback(async () => {
+    const cpfDigits = form.cpf.replace(/\D/g, "");
+    if (cpfDigits.length !== 11 || !validateCpf(form.cpf)) return;
+    setCpfLooking(true);
+    setCpfFound(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-cadastro-publico", {
+        body: { action: "lookup-cpf", cpf: cpfDigits },
+      });
+      if (error || !data?.found) {
+        setCpfFound(false);
+        return;
+      }
+      setCpfFound(true);
+      const c = data.cliente;
+      setForm(prev => ({
+        ...prev,
+        nome_completo: c.nome_completo || prev.nome_completo,
+        data_nascimento: c.data_nascimento || prev.data_nascimento,
+        telefone_principal: c.celular ? maskPhone(c.celular) : prev.telefone_principal,
+        email: c.email || prev.email,
+        nome_mae: c.nome_mae || prev.nome_mae,
+        estado_civil: c.estado_civil || prev.estado_civil,
+        nacionalidade: c.nacionalidade || prev.nacionalidade,
+        profissao: c.profissao || prev.profissao,
+        observacoes: c.observacao || prev.observacoes,
+        end1_cep: c.cep ? maskCep(c.cep) : prev.end1_cep,
+        end1_logradouro: c.endereco || prev.end1_logradouro,
+        end1_numero: c.numero || prev.end1_numero,
+        end1_complemento: c.complemento || prev.end1_complemento,
+        end1_bairro: c.bairro || prev.end1_bairro,
+        end1_cidade: c.cidade || prev.end1_cidade,
+        end1_estado: c.estado || prev.end1_estado,
+        end1_latitude: c.geolocalizacao?.split(",")[0]?.trim() || prev.end1_latitude,
+        end1_longitude: c.geolocalizacao?.split(",")[1]?.trim() || prev.end1_longitude,
+        ...(c.endereco2 ? {
+          tem_segundo_endereco: true,
+          end2_logradouro: c.endereco2 || "",
+          end2_numero: c.numero2 || "",
+          end2_complemento: c.complemento2 || "",
+          end2_bairro: c.bairro2 || "",
+          end2_cep: c.cep2 ? maskCep(c.cep2) : "",
+          end2_cidade: c.cidade2 || "",
+          end2_estado: c.estado2 || "",
+        } : {}),
+      }));
+    } catch {
+      setCpfFound(false);
+    } finally {
+      setCpfLooking(false);
+    }
+  }, [form.cpf]);
 
   /* ── Address CEP lookup ── */
   const handleCepLookup = useCallback(async (prefix: "end1" | "end2") => {

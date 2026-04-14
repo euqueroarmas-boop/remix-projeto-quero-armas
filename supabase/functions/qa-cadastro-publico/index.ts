@@ -103,6 +103,27 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json();
+
+    // ── CPF Lookup action ──
+    if (body.action === "lookup-cpf") {
+      const cpfDigits = (body.cpf || "").replace(/\D/g, "");
+      if (cpfDigits.length !== 11) {
+        return json({ error: "CPF inválido" }, 400);
+      }
+      const { data: cliente } = await supabase
+        .from("qa_clientes")
+        .select("nome_completo, cpf, data_nascimento, celular, email, nome_mae, estado_civil, nacionalidade, profissao, observacao, endereco, numero, complemento, bairro, cep, cidade, estado, geolocalizacao, endereco2, numero2, complemento2, bairro2, cep2, cidade2, estado2, geolocalizacao2")
+        .eq("cpf", cpfDigits)
+        .eq("excluido", false)
+        .maybeSingle();
+
+      if (!cliente) {
+        return json({ found: false });
+      }
+
+      return json({ found: true, cliente });
+    }
+
     const parsed = CadastroSchema.safeParse(body);
 
     if (!parsed.success) {
