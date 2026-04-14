@@ -121,13 +121,23 @@ export default function QAClientesPage() {
     }
   };
 
-  useEffect(() => { loadClientes(); }, []);
+  const [cadastrosPublicos, setCadastrosPublicos] = useState<any[]>([]);
+  const [tabView, setTabView] = useState<"clientes" | "cadastros">("clientes");
+
+  useEffect(() => { loadClientes(); loadCadastrosPublicos(); }, []);
 
   const loadClientes = async () => {
     setLoading(true);
     const { data } = await supabase.from("qa_clientes" as any).select("*").order("nome_completo", { ascending: true });
     setClientes((data as any[]) ?? []);
     setLoading(false);
+  };
+
+  const loadCadastrosPublicos = async () => {
+    const { data } = await supabase.from("qa_cadastro_publico" as any)
+      .select("id, nome_completo, cpf, telefone_principal, email, end1_cidade, end1_estado, servico_interesse, vinculo_tipo, status, created_at")
+      .order("created_at", { ascending: false });
+    setCadastrosPublicos((data as any[]) ?? []);
   };
 
   const openClient = async (c: Cliente) => {
