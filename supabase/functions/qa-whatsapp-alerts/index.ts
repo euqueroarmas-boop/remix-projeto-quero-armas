@@ -8,7 +8,7 @@ const corsHeaders = {
 
 const EVOLUTION_API_URL = Deno.env.get("EVOLUTION_API_URL") || "";
 const EVOLUTION_API_TOKEN = Deno.env.get("EVOLUTION_API_TOKEN") || "";
-const ADMIN_PHONE = "5511999999999"; // fallback — alerts go to admin
+const ADMIN_PHONE = "5511978481919";
 
 interface PendingItem {
   clienteNome: string;
