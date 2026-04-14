@@ -122,6 +122,7 @@ export default function QARelatoriosPage() {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState("");
 
   const load = async () => {
     setLoading(true);
