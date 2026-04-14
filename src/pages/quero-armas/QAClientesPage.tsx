@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   Search, User, Phone, Mail, MapPin, FileText, Shield, ChevronLeft,
   Loader2, Eye, Plus, Crosshair, Edit, Trash2, Download, FileDown,
-  ChevronDown, ChevronUp, Save, X, CheckCircle,
+  ChevronDown, ChevronUp, Save, X, CheckCircle, TrendingUp,
 } from "lucide-react";
 import { supabase as supabaseClient } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -646,6 +646,20 @@ export default function QAClientesPage() {
             <div className="flex justify-center py-12"><Loader2 className="h-5 w-5 animate-spin text-slate-400" /></div>
           ) : (
             <>
+              {/* RESUMO */}
+              <TabsContent value="resumo" className="mt-3">
+                <ClienteOverview
+                  cliente={c}
+                  vendas={vendas}
+                  itens={itens}
+                  crafs={crafs}
+                  gtes={gtes}
+                  filiacoes={filiacoes}
+                  cadastro={cadastro}
+                  onNavigate={setTab}
+                />
+              </TabsContent>
+
               {/* DADOS */}
               <TabsContent value="dados" className="mt-3 space-y-4">
                 <Section title="Identificação">
