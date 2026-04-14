@@ -175,3 +175,126 @@
     animation: led-blink 3s ease-in-out infinite 1.5s;
   }
 }
+
+/* ══════════════════════════════════════════════
+   QA Module — Premium Light Analytics Theme
+   Scoped to .qa-premium wrapper
+   ══════════════════════════════════════════════ */
+
+.qa-premium {
+  --qa-bg: 220 20% 97%;
+  --qa-surface: 0 0% 100%;
+  --qa-surface-hover: 220 14% 96%;
+  --qa-border: 220 13% 91%;
+  --qa-border-subtle: 220 13% 94%;
+  --qa-text: 220 20% 18%;
+  --qa-text-secondary: 220 10% 46%;
+  --qa-text-muted: 220 10% 62%;
+  --qa-text-faint: 220 8% 76%;
+  --qa-accent: 230 80% 56%;
+  --qa-accent-light: 230 80% 96%;
+  --qa-accent-hover: 230 80% 50%;
+  --qa-success: 152 60% 42%;
+  --qa-success-light: 152 60% 95%;
+  --qa-warning: 38 92% 50%;
+  --qa-warning-light: 38 92% 95%;
+  --qa-danger: 0 72% 51%;
+  --qa-danger-light: 0 72% 96%;
+  --qa-purple: 262 60% 55%;
+  --qa-purple-light: 262 60% 96%;
+  --qa-cyan: 190 80% 42%;
+  --qa-cyan-light: 190 80% 95%;
+  --qa-sidebar-bg: 0 0% 100%;
+  --qa-sidebar-active: 230 80% 56%;
+  --qa-shadow-sm: 0 1px 2px 0 rgba(0,0,0,0.04);
+  --qa-shadow: 0 1px 3px 0 rgba(0,0,0,0.06), 0 1px 2px -1px rgba(0,0,0,0.06);
+  --qa-shadow-md: 0 4px 6px -1px rgba(0,0,0,0.06), 0 2px 4px -2px rgba(0,0,0,0.04);
+  --qa-radius: 12px;
+  --qa-radius-sm: 8px;
+  --qa-radius-lg: 16px;
+
+  font-family: 'DM Sans', 'Plus Jakarta Sans', system-ui, sans-serif;
+  background: hsl(var(--qa-bg));
+  color: hsl(var(--qa-text));
+}
+
+/* QA Card primitive */
+.qa-card {
+  background: hsl(var(--qa-surface));
+  border: 1px solid hsl(var(--qa-border-subtle));
+  border-radius: var(--qa-radius);
+  box-shadow: var(--qa-shadow-sm);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.qa-card:hover {
+  box-shadow: var(--qa-shadow);
+  border-color: hsl(var(--qa-border));
+}
+
+/* QA KPI number */
+.qa-kpi {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+/* QA Sidebar overrides */
+.qa-premium [data-sidebar] {
+  background: hsl(var(--qa-sidebar-bg)) !important;
+  border-color: hsl(var(--qa-border)) !important;
+}
+
+/* QA Scrollbar light */
+.qa-premium ::-webkit-scrollbar-thumb {
+  background: hsl(220 10% 84%);
+}
+.qa-premium ::-webkit-scrollbar-thumb:hover {
+  background: hsl(220 10% 72%);
+}
+
+/* QA Chart tooltip */
+.qa-tooltip {
+  background: hsl(var(--qa-surface));
+  border: 1px solid hsl(var(--qa-border));
+  border-radius: var(--qa-radius-sm);
+  box-shadow: var(--qa-shadow-md);
+  padding: 8px 12px;
+  font-size: 12px;
+  color: hsl(var(--qa-text));
+}
+
+/* QA Badge */
+.qa-badge {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.01em;
+}
+
+/* QA Button primary */
+.qa-btn-primary {
+  background: hsl(var(--qa-accent));
+  color: white;
+  border-radius: var(--qa-radius-sm);
+  font-weight: 600;
+  font-size: 13px;
+  padding: 8px 16px;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+}
+.qa-btn-primary:hover {
+  background: hsl(var(--qa-accent-hover));
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  transform: translateY(-0.5px);
+}
+
+/* QA Micro animation */
+.qa-hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.qa-hover-lift:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--qa-shadow-md);
+}
