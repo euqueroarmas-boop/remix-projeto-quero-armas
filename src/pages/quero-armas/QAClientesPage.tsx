@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import ClienteFormModal from "@/components/quero-armas/clientes/ClienteFormModal";
-import { CrafModal, GteModal, CrModal, VendaModal, DeleteConfirm } from "@/components/quero-armas/clientes/SubEntityModals";
+import { CrafModal, GteModal, CrModal, VendaModal, FiliacaoModal, DeleteConfirm } from "@/components/quero-armas/clientes/SubEntityModals";
 import { exportClientes, exportCrafs, exportGtes, exportCr, exportVendas } from "@/components/quero-armas/clientes/ClienteExport";
 
 interface Cliente {
@@ -45,6 +45,7 @@ export default function QAClientesPage() {
   const [gteModal, setGteModal] = useState<{ open: boolean; item?: any }>({ open: false });
   const [crModal, setCrModal] = useState<{ open: boolean; item?: any }>({ open: false });
   const [vendaModal, setVendaModal] = useState<{ open: boolean; item?: any }>({ open: false });
+  const [filiacaoModal, setFiliacaoModal] = useState<{ open: boolean; item?: any }>({ open: false });
   const [deleteModal, setDeleteModal] = useState<{ open: boolean; table: string; id: number; title: string; desc: string }>({ open: false, table: "", id: 0, title: "", desc: "" });
   const [deleting, setDeleting] = useState(false);
 
