@@ -115,6 +115,7 @@ export default function QARelatoriosPage() {
   const [servicos, setServicos] = useState<Servico[]>([]);
   const [loading, setLoading] = useState(true);
   const [alertSending, setAlertSending] = useState(false);
+  const [emailSending, setEmailSending] = useState(false);
   const [tab, setTab] = useState<"pendentes" | "graficos">("pendentes");
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState<Record<string, string>>({});
