@@ -284,7 +284,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
         <div className="space-y-3 max-h-[65vh] overflow-y-auto pr-1">
           <div className="flex gap-2">
             <div className="w-[110px] shrink-0"><Inp label="Data" value={f.data_cadastro} onChange={v => setF(p => ({ ...p, data_cadastro: v }))} type="date" /></div>
-            <div className="flex-1"><Inp label="Nº Processo" value={f.numero_processo} onChange={v => setF(p => ({ ...p, numero_processo: v }))} /></div>
+            <div className="w-[110px] shrink-0"><Inp label="Nº Processo" value={f.numero_processo} onChange={v => setF(p => ({ ...p, numero_processo: v }))} /></div>
           </div>
           <div className="flex gap-2">
             <Inp label="Forma Pagamento" value={f.forma_pagamento} onChange={v => setF(p => ({ ...p, forma_pagamento: v }))} />
