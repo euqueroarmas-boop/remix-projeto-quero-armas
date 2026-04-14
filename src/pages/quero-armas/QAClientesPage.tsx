@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -455,38 +455,49 @@ export default function QAClientesPage() {
     }
   };
 
+  const loadingClientRef = useRef<number | null>(null);
+
   const openClient = async (c: Cliente) => {
+    if (loadingClientRef.current === c.id) return; // prevent double-click
+    loadingClientRef.current = c.id;
     setSelectedCadastroPublico(null);
     setSelected(c);
     setTab("dados");
     await loadSubData(c);
+    loadingClientRef.current = null;
   };
 
-  const loadSubData = async (c: Cliente) => {
+  const loadSubData = useCallback(async (c: Cliente) => {
     setLoadingSub(true);
-    const lid = c.id_legado ?? c.id;
-    const [vRes, cRes, gRes, fRes, cadRes] = await Promise.all([
-      supabase.from("qa_vendas" as any).select("*").eq("cliente_id", lid).order("data_cadastro", { ascending: false }),
-      supabase.from("qa_crafs" as any).select("*").eq("cliente_id", lid),
-      supabase.from("qa_gtes" as any).select("*").eq("cliente_id", lid),
-      supabase.from("qa_filiacoes" as any).select("*").eq("cliente_id", lid),
-      supabase.from("qa_cadastro_cr" as any).select("*").eq("cliente_id", lid).limit(1),
-    ]);
-    const vendasData = (vRes.data as any[]) ?? [];
-    setVendas(vendasData);
-    setCrafs((cRes.data as any[]) ?? []);
-    setGtes((gRes.data as any[]) ?? []);
-    setFiliacoes((fRes.data as any[]) ?? []);
-    setCadastro((cadRes.data as any[])?.[0] ?? null);
-    if (vendasData.length > 0) {
-      const vendaIds = vendasData.map((v: any) => v.id_legado ?? v.id);
-      const { data: itensData } = await supabase.from("qa_itens_venda" as any).select("*").in("venda_id", vendaIds);
-      setItens((itensData as any[]) ?? []);
-    } else {
-      setItens([]);
+    try {
+      const lid = c.id_legado ?? c.id;
+      const [vRes, cRes, gRes, fRes, cadRes] = await Promise.all([
+        supabase.from("qa_vendas" as any).select("*").eq("cliente_id", lid).order("data_cadastro", { ascending: false }),
+        supabase.from("qa_crafs" as any).select("*").eq("cliente_id", lid),
+        supabase.from("qa_gtes" as any).select("*").eq("cliente_id", lid),
+        supabase.from("qa_filiacoes" as any).select("*").eq("cliente_id", lid),
+        supabase.from("qa_cadastro_cr" as any).select("*").eq("cliente_id", lid).limit(1),
+      ]);
+      const vendasData = (vRes.data as any[]) ?? [];
+      setVendas(vendasData);
+      setCrafs((cRes.data as any[]) ?? []);
+      setGtes((gRes.data as any[]) ?? []);
+      setFiliacoes((fRes.data as any[]) ?? []);
+      setCadastro((cadRes.data as any[])?.[0] ?? null);
+      if (vendasData.length > 0) {
+        const vendaIds = vendasData.map((v: any) => v.id_legado ?? v.id);
+        const { data: itensData } = await supabase.from("qa_itens_venda" as any).select("*").in("venda_id", vendaIds);
+        setItens((itensData as any[]) ?? []);
+      } else {
+        setItens([]);
+      }
+    } catch (e: any) {
+      console.error("[loadSubData] erro:", e.message);
+      toast.error("Erro ao carregar dados do cliente");
+    } finally {
+      setLoadingSub(false);
     }
-    setLoadingSub(false);
-  };
+  }, []);
 
   const handleDelete = async () => {
     setDeleting(true);
