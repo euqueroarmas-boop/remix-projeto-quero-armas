@@ -268,6 +268,8 @@ export default function QAClientesPage() {
     setCadastroEditForm({
       nome_completo: c.nome_completo || "",
       cpf: c.cpf || "",
+      rg: c.rg || "",
+      emissor_rg: c.emissor_rg || "",
       data_nascimento: c.data_nascimento || "",
       estado_civil: c.estado_civil || "",
       nacionalidade: c.nacionalidade || "",
