@@ -134,6 +134,9 @@ export default function QACadastroPublicoPage() {
   const [submitted, setSubmitted] = useState(false);
   const { lookupCep, lookupCnpj, cepLoading, cnpjLoading } = useBrasilApiLookup();
 
+  const [cpfLooking, setCpfLooking] = useState(false);
+  const [cpfFound, setCpfFound] = useState<boolean | null>(null);
+
   const set = useCallback((field: keyof FormData, value: any) => {
     setForm(prev => ({ ...prev, [field]: value }));
     setErrors(prev => {
@@ -142,6 +145,60 @@ export default function QACadastroPublicoPage() {
       return n;
     });
   }, []);
+
+  /* ── CPF Lookup from qa_clientes ── */
+  const handleCpfLookup = useCallback(async () => {
+    const cpfDigits = form.cpf.replace(/\D/g, "");
+    if (cpfDigits.length !== 11 || !validateCpf(form.cpf)) return;
+    setCpfLooking(true);
+    setCpfFound(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-cadastro-publico", {
+        body: { action: "lookup-cpf", cpf: cpfDigits },
+      });
+      if (error || !data?.found) {
+        setCpfFound(false);
+        return;
+      }
+      setCpfFound(true);
+      const c = data.cliente;
+      setForm(prev => ({
+        ...prev,
+        nome_completo: c.nome_completo || prev.nome_completo,
+        data_nascimento: c.data_nascimento || prev.data_nascimento,
+        telefone_principal: c.celular ? maskPhone(c.celular) : prev.telefone_principal,
+        email: c.email || prev.email,
+        nome_mae: c.nome_mae || prev.nome_mae,
+        estado_civil: c.estado_civil || prev.estado_civil,
+        nacionalidade: c.nacionalidade || prev.nacionalidade,
+        profissao: c.profissao || prev.profissao,
+        observacoes: c.observacao || prev.observacoes,
+        end1_cep: c.cep ? maskCep(c.cep) : prev.end1_cep,
+        end1_logradouro: c.endereco || prev.end1_logradouro,
+        end1_numero: c.numero || prev.end1_numero,
+        end1_complemento: c.complemento || prev.end1_complemento,
+        end1_bairro: c.bairro || prev.end1_bairro,
+        end1_cidade: c.cidade || prev.end1_cidade,
+        end1_estado: c.estado || prev.end1_estado,
+        end1_latitude: c.geolocalizacao?.split(",")[0]?.trim() || prev.end1_latitude,
+        end1_longitude: c.geolocalizacao?.split(",")[1]?.trim() || prev.end1_longitude,
+        ...(c.endereco2 ? {
+          tem_segundo_endereco: true,
+          end2_logradouro: c.endereco2 || "",
+          end2_numero: c.numero2 || "",
+          end2_complemento: c.complemento2 || "",
+          end2_bairro: c.bairro2 || "",
+          end2_cep: c.cep2 ? maskCep(c.cep2) : "",
+          end2_cidade: c.cidade2 || "",
+          end2_estado: c.estado2 || "",
+        } : {}),
+      }));
+    } catch {
+      setCpfFound(false);
+    } finally {
+      setCpfLooking(false);
+    }
+  }, [form.cpf]);
 
   /* ── Address CEP lookup ── */
   const handleCepLookup = useCallback(async (prefix: "end1" | "end2") => {
@@ -307,7 +364,7 @@ export default function QACadastroPublicoPage() {
 
         {/* Form card */}
         <div className="qa-card rounded-2xl p-5 md:p-8" style={{ boxShadow: "0 4px 20px rgba(0,0,0,0.04)" }}>
-          {step === 1 && <Step1 form={form} set={set} errors={errors} />}
+          {step === 1 && <Step1 form={form} set={set} errors={errors} onCpfLookup={handleCpfLookup} cpfLooking={cpfLooking} cpfFound={cpfFound} />}
           {step === 2 && <Step2 form={form} set={set} errors={errors} onCepLookup={() => handleCepLookup("end1")} cepLoading={cepLoading} />}
           {step === 3 && <Step3 form={form} set={set} errors={errors} onCepLookup={() => handleCepLookup("end2")} cepLoading={cepLoading} />}
           {step === 4 && <Step4 form={form} set={set} errors={errors} onCnpjLookup={handleCnpjLookup} cnpjLoading={cnpjLoading} />}
@@ -404,7 +461,7 @@ function SelectInput({ value, onChange, options, placeholder }: { value: string;
 }
 
 /* ── Step 1: Dados Pessoais ── */
-function Step1({ form, set, errors }: { form: FormData; set: any; errors: any }) {
+function Step1({ form, set, errors, onCpfLookup, cpfLooking, cpfFound }: { form: FormData; set: any; errors: any; onCpfLookup?: () => void; cpfLooking?: boolean; cpfFound?: boolean | null }) {
   return (
     <div>
       <SectionTitle>Dados Pessoais</SectionTitle>
@@ -416,7 +473,24 @@ function Step1({ form, set, errors }: { form: FormData; set: any; errors: any })
           </Field>
         </div>
         <Field label="CPF" required error={errors.cpf}>
-          <TextInput value={form.cpf} onChange={v => set("cpf", maskCpf(v))} placeholder="000.000.000-00" maxLength={14} />
+          <div className="relative">
+            <TextInput value={form.cpf} onChange={v => set("cpf", maskCpf(v))} placeholder="000.000.000-00" maxLength={14} onBlur={onCpfLookup} />
+            {cpfLooking && (
+              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                <Loader2 className="w-4 h-4 animate-spin" style={{ color: "hsl(230 80% 56%)" }} />
+              </div>
+            )}
+          </div>
+          {cpfFound === true && (
+            <p className="flex items-center gap-1 mt-1 text-[11px] font-medium" style={{ color: "hsl(152 60% 42%)" }}>
+              <CheckCircle className="w-3 h-3" /> Dados encontrados e preenchidos automaticamente
+            </p>
+          )}
+          {cpfFound === false && (
+            <p className="flex items-center gap-1 mt-1 text-[11px]" style={{ color: "hsl(220 10% 55%)" }}>
+              CPF não encontrado no cadastro — preencha manualmente
+            </p>
+          )}
         </Field>
         <Field label="Data de nascimento">
           <TextInput value={form.data_nascimento} onChange={v => set("data_nascimento", v)} placeholder="DD/MM/AAAA" />
