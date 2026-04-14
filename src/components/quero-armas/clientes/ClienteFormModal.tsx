@@ -95,15 +95,15 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
 
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="w-[96vw] max-w-4xl max-h-[92vh] overflow-y-auto p-5 sm:p-8">
-        <DialogHeader>
-          <DialogTitle>{isEdit ? "Editar Cliente" : "Novo Cliente"}</DialogTitle>
-          <DialogDescription>Preencha os dados cadastrais do cliente</DialogDescription>
+      <DialogContent className="w-[96vw] max-w-3xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+        <DialogHeader className="pb-0">
+          <DialogTitle className="text-base">{isEdit ? "Editar Cliente" : "Novo Cliente"}</DialogTitle>
+          <DialogDescription className="text-xs">Preencha os dados cadastrais do cliente</DialogDescription>
         </DialogHeader>
 
         <FormCard>
           {/* ── Identificação ── */}
-          <SectionHeader title="Identificação" className="pt-2" />
+          <SectionHeader title="Identificação" className="pt-1" />
           <FormGrid>
             <FormInput label="Nome Completo *" value={f.nome_completo} onChange={v => set("nome_completo", v)} span="full" />
             <FormInput label="CPF" value={f.cpf} onChange={v => set("cpf", v)} />
@@ -116,7 +116,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
             <FormSelect label="Estado Civil" value={f.estado_civil} onValueChange={v => set("estado_civil", v)} options={estadoCivilOptions} />
             <FormInput label="Profissão" value={f.profissao} onChange={v => set("profissao", v)} />
             <FormInput label="Escolaridade" value={f.escolaridade} onChange={v => set("escolaridade", v)} />
-            <FormInput label="Título de Eleitor" value={f.titulo_eleitor} onChange={v => set("titulo_eleitor", v)} span="full" />
+            <FormInput label="Título de Eleitor" value={f.titulo_eleitor} onChange={v => set("titulo_eleitor", v)} />
           </FormGrid>
 
           {/* ── Filiação ── */}
@@ -142,7 +142,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
             <FormInput label="Bairro" value={f.bairro} onChange={v => set("bairro", v)} />
             <FormInput label="CEP" value={f.cep} onChange={v => set("cep", v)} />
           </FormGrid>
-          <FormGrid cols={3} className="mt-3">
+          <FormGrid cols={3} className="mt-2">
             <FormInput label="Cidade" value={f.cidade} onChange={v => set("cidade", v)} />
             <FormSelect label="UF" value={f.estado} onValueChange={v => set("estado", v)} options={ufOptions} placeholder="UF" />
             <FormInput label="País" value={f.pais} onChange={v => set("pais", v)} />
@@ -157,7 +157,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
             <FormInput label="Bairro" value={f.bairro2} onChange={v => set("bairro2", v)} />
             <FormInput label="CEP" value={f.cep2} onChange={v => set("cep2", v)} />
           </FormGrid>
-          <FormGrid cols={3} className="mt-3">
+          <FormGrid cols={3} className="mt-2">
             <FormInput label="Cidade" value={f.cidade2} onChange={v => set("cidade2", v)} />
             <FormSelect label="UF" value={f.estado2} onValueChange={v => set("estado2", v)} options={ufOptions} placeholder="UF" />
             <FormInput label="País" value={f.pais2} onChange={v => set("pais2", v)} />
@@ -169,17 +169,15 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
             <FormSelect label="Status" value={f.status} onValueChange={v => set("status", v)} options={statusOptions} />
             <FormCheckbox label="🦁 Cliente Lions" checked={f.cliente_lions} onChange={v => set("cliente_lions", v)} />
           </FormGrid>
-          <FormGrid cols={1} className="mt-3">
+          <FormGrid cols={1} className="mt-2">
             <FormTextarea label="Observações" value={f.observacao} onChange={v => set("observacao", v)} span="full" />
           </FormGrid>
 
           {/* ── Actions ── */}
           <FormActions>
-            <Button variant="outline" onClick={onClose}>
-              Cancelar
-            </Button>
-            <Button onClick={save} disabled={saving}>
-              {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+            <Button variant="outline" size="sm" onClick={onClose}>Cancelar</Button>
+            <Button size="sm" onClick={save} disabled={saving}>
+              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <Save className="h-3.5 w-3.5 mr-1.5" />}
               {isEdit ? "Salvar Alterações" : "Cadastrar Cliente"}
             </Button>
           </FormActions>

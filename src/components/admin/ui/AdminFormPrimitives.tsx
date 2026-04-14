@@ -1,25 +1,25 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+
+/* ─────────── shared field height ─────────── */
+const fieldH = "h-9";
 
 /* ── FormCard ── */
 export function FormCard({ children, className }: { children: React.ReactNode; className?: string }) {
-  return (
-    <div className={cn("w-full max-w-5xl mx-auto space-y-0", className)}>
-      {children}
-    </div>
-  );
+  return <div className={cn("w-full space-y-4", className)}>{children}</div>;
 }
 
 /* ── FormHeader ── */
 export function FormHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
-    <div className="pb-4 mb-4 border-b border-border">
-      <h2 className="text-lg font-semibold text-foreground tracking-tight">{title}</h2>
-      {subtitle && <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>}
+    <div className="pb-3 border-b border-border">
+      <h2 className="text-base font-semibold text-foreground">{title}</h2>
+      {subtitle && <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>}
     </div>
   );
 }
@@ -27,33 +27,30 @@ export function FormHeader({ title, subtitle }: { title: string; subtitle?: stri
 /* ── SectionHeader ── */
 export function SectionHeader({ title, className }: { title: string; className?: string }) {
   return (
-    <div className={cn("pt-5 pb-2 border-b border-border mb-3", className)}>
-      <h3 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#c43b52]">{title}</h3>
+    <div className={cn("pt-4 pb-1.5 border-b border-border", className)}>
+      <h3 className="text-[10px] font-bold uppercase tracking-widest text-destructive">{title}</h3>
     </div>
   );
 }
 
 /* ── FormGrid ── */
-export function FormGrid({ children, cols = 2, className }: { children: React.ReactNode; cols?: 1 | 2 | 3 | 4; className?: string }) {
-  const gridCls =
-    cols === 1 ? "grid grid-cols-1 gap-x-4 gap-y-3"
-    : cols === 3 ? "grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-3"
-    : cols === 4 ? "grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-3"
-    : "grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3";
-  return <div className={cn(gridCls, "items-end", className)}>{children}</div>;
+export function FormGrid({ children, cols = 2, className }: {
+  children: React.ReactNode; cols?: 1 | 2 | 3; className?: string;
+}) {
+  const g =
+    cols === 1 ? "grid grid-cols-1 gap-x-3 gap-y-2.5"
+    : cols === 3 ? "grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-2.5"
+    : "grid grid-cols-2 gap-x-3 gap-y-2.5";
+  return <div className={cn(g, className)}>{children}</div>;
 }
 
 /* ── FieldWrapper ── */
 export function FieldWrapper({ label, children, span, className }: {
-  label: string; children: React.ReactNode; span?: "full" | "half"; className?: string;
+  label: string; children: React.ReactNode; span?: "full"; className?: string;
 }) {
   return (
-    <div className={cn(
-      "flex flex-col gap-1.5",
-      span === "full" && "sm:col-span-full",
-      className
-    )}>
-      <Label className="text-xs font-medium text-muted-foreground">{label}</Label>
+    <div className={cn("space-y-1", span === "full" && "col-span-full", className)}>
+      <Label className="text-[10px] font-medium text-muted-foreground leading-none">{label}</Label>
       {children}
     </div>
   );
@@ -61,27 +58,36 @@ export function FieldWrapper({ label, children, span, className }: {
 
 /* ── FormInput ── */
 export function FormInput({ label, value, onChange, type = "text", span, placeholder }: {
-  label: string; value: string; onChange: (v: string) => void; type?: string; span?: "full" | "half"; placeholder?: string;
+  label: string; value: string; onChange: (v: string) => void; type?: string; span?: "full"; placeholder?: string;
 }) {
   return (
     <FieldWrapper label={label} span={span}>
-      <Input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} />
+      <Input
+        type={type}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder={placeholder}
+        className={cn(fieldH, "text-xs")}
+      />
     </FieldWrapper>
   );
 }
 
 /* ── FormSelect ── */
 export function FormSelect({ label, value, onValueChange, options, placeholder = "Selecionar", span }: {
-  label: string; value: string; onValueChange: (v: string) => void; options: { value: string; label: string }[]; placeholder?: string; span?: "full" | "half";
+  label: string; value: string; onValueChange: (v: string) => void;
+  options: { value: string; label: string }[]; placeholder?: string; span?: "full";
 }) {
   return (
     <FieldWrapper label={label} span={span}>
       <Select value={value} onValueChange={onValueChange}>
-        <SelectTrigger>
+        <SelectTrigger className={cn(fieldH, "text-xs")}>
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>
-          {options.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+          {options.map(o => (
+            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+          ))}
         </SelectContent>
       </Select>
     </FieldWrapper>
@@ -90,11 +96,16 @@ export function FormSelect({ label, value, onValueChange, options, placeholder =
 
 /* ── FormTextarea ── */
 export function FormTextarea({ label, value, onChange, span, rows = 3 }: {
-  label: string; value: string; onChange: (v: string) => void; span?: "full" | "half"; rows?: number;
+  label: string; value: string; onChange: (v: string) => void; span?: "full"; rows?: number;
 }) {
   return (
     <FieldWrapper label={label} span={span}>
-      <Textarea value={value} onChange={e => onChange(e.target.value)} rows={rows} />
+      <Textarea
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        rows={rows}
+        className="text-xs min-h-[60px]"
+      />
     </FieldWrapper>
   );
 }
@@ -104,16 +115,9 @@ export function FormCheckbox({ label, checked, onChange }: {
   label: string; checked: boolean; onChange: (v: boolean) => void;
 }) {
   return (
-    <div className="flex items-center h-10">
-      <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer select-none">
-        <input
-          type="checkbox"
-          checked={checked}
-          onChange={e => onChange(e.target.checked)}
-          className="accent-[#c43b52] w-4 h-4 rounded"
-        />
-        {label}
-      </label>
+    <div className={cn("flex items-center gap-2", fieldH)}>
+      <Checkbox checked={checked} onCheckedChange={v => onChange(!!v)} />
+      <Label className="text-xs text-foreground cursor-pointer select-none">{label}</Label>
     </div>
   );
 }
@@ -121,7 +125,7 @@ export function FormCheckbox({ label, checked, onChange }: {
 /* ── FormActions ── */
 export function FormActions({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn("flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-5 mt-5 border-t border-border", className)}>
+    <div className={cn("flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-4 border-t border-border", className)}>
       {children}
     </div>
   );
