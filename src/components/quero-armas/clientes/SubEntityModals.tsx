@@ -313,7 +313,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
                     <input type="checkbox" checked={isChecked} onChange={() => toggleServico(svc)} className="accent-[#c43b52] h-3 w-3 shrink-0" />
                     <span className="flex-1 min-w-0 truncate">{svc.nome_servico}</span>
                     {isChecked ? (
-                      <Input type="number" value={String(svcData?.valor ?? svc.valor_servico)} onChange={e => updateServicoValor(svc.id, Number(e.target.value) || 0)} className="h-5 w-16 text-[10px] text-right bg-[#0a0a0a] border-[#1c1c1c] text-neutral-200 px-1 shrink-0" />
+                      <Input type="number" value={String(svcData?.valor ?? svc.valor_servico)} onChange={e => updateServicoValor(svc.id, Number(e.target.value) || 0)} className="h-5 w-16 text-[10px] text-right bg-[#0a0a0a] border-[#1c1c1c] text-neutral-200 px-1 shrink-0 focus-visible:ring-0 focus-visible:ring-offset-0" />
                     ) : (
                       <span className="text-[10px] text-neutral-600 font-mono shrink-0">R$ {svc.valor_servico}</span>
                     )}
