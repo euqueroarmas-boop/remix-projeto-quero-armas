@@ -271,6 +271,7 @@ export default function QACadastroPublicoPage() {
     }
     if (s === 2) {
       if (!form.end1_numero.trim()) errs.end1_numero = "Número é obrigatório";
+      if (!form.end1_complemento.trim()) errs.end1_complemento = "Complemento é obrigatório (ex: Casa, Apto, Bloco)";
     }
     if (s === 5) {
       if (!form.consentimento_dados_verdadeiros) errs.consentimento_dados_verdadeiros = "Obrigatório";
@@ -290,12 +291,6 @@ export default function QACadastroPublicoPage() {
 
   const nextStep = () => {
     if (!validateStep(step)) return;
-    // On step 2, check if complemento is empty and ask confirmation
-    if (step === 2 && !form.end1_complemento.trim() && !showComplementoConfirm) {
-      setShowComplementoConfirm(true);
-      return;
-    }
-    setShowComplementoConfirm(false);
     if (step === 2) {
       proceedFromStep2();
     } else {
@@ -611,8 +606,8 @@ function AddressBlock({ prefix, form, set, errors, onCepLookup, cepLoading, onGe
       <Field label="Número" required error={errors[f("numero")]}>
         <TextInput value={form[f("numero")] as string} onChange={v => set(f("numero"), v)} placeholder="Nº" onBlur={onGeocodeLookup} />
       </Field>
-      <Field label="Complemento">
-        <TextInput value={form[f("complemento")] as string} onChange={v => set(f("complemento"), v)} placeholder="Apto, Sala, Bloco..." />
+      <Field label="Complemento" required error={errors[f("complemento")]}>
+        <TextInput value={form[f("complemento")] as string} onChange={v => set(f("complemento"), v)} placeholder="Casa, Apto, Sala, Bloco..." />
       </Field>
       <Field label="Bairro">
         <TextInput value={form[f("bairro")] as string} onChange={v => set(f("bairro"), v)} placeholder="Bairro" />
