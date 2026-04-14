@@ -886,7 +886,7 @@ export default function QAClientesPage() {
         </Tabs>
 
         {/* Modals */}
-        <ClienteFormModal open={clienteModal} onClose={() => { setClienteModal(false); setEditingCliente(null); }} onSaved={async () => { await loadClientes(); if (selected) { const updated = clientes.find(x => x.id === selected.id); if (updated) setSelected(updated); } }} cliente={editingCliente} />
+        <ClienteFormModal open={clienteModal} onClose={() => { setClienteModal(false); setEditingCliente(null); }} onSaved={async () => { await loadClientes(); setSelected(prev => { if (!prev) return prev; return prev; }); }} cliente={editingCliente} />
         <CrafModal open={crafModal.open} onClose={() => setCrafModal({ open: false })} onSaved={() => loadSubData(selected!)} clienteId={clienteIdForSub} craf={crafModal.item} />
         <GteModal open={gteModal.open} onClose={() => setGteModal({ open: false })} onSaved={() => loadSubData(selected!)} clienteId={clienteIdForSub} gte={gteModal.item} />
         <CrModal open={crModal.open} onClose={() => setCrModal({ open: false })} onSaved={() => loadSubData(selected!)} clienteId={clienteIdForSub} cadastro={crModal.item} />
