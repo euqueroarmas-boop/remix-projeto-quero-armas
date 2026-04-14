@@ -157,6 +157,17 @@ export default function QARelatoriosPage() {
   const [editForm, setEditForm] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
+  const [sortCol, setSortCol] = useState<"cliente" | "servico" | "status" | "dias">("dias");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+
+  const toggleSort = (col: typeof sortCol) => {
+    if (sortCol === col) {
+      setSortDir(d => d === "asc" ? "desc" : "asc");
+    } else {
+      setSortCol(col);
+      setSortDir(col === "dias" ? "desc" : "asc");
+    }
+  };
 
   const load = async () => {
     setLoading(true);
