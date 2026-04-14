@@ -1,8 +1,8 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   AlertTriangle, Clock, CheckCircle, TrendingUp, Users, FileText,
-  BarChart3, PieChart as PieChartIcon, Bell, RefreshCw,
+  BarChart3, PieChart as PieChartIcon, Bell, RefreshCw, ChevronDown, ChevronUp, Save, X,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -15,10 +15,19 @@ interface ItemVenda {
   data_protocolo: string | null;
   data_deferimento: string | null;
   data_ultima_atualizacao: string | null;
+  data_vencimento: string | null;
   servico_id: number | null;
   venda_id: number;
   numero_processo: string | null;
   valor: number | null;
+  numero_craf: string | null;
+  numero_gte: string | null;
+  numero_cr: string | null;
+  numero_posse: string | null;
+  numero_porte: string | null;
+  numero_sigma: string | null;
+  numero_sinarm: string | null;
+  registro_cad: string | null;
 }
 
 interface Venda {
@@ -60,8 +69,29 @@ const URGENCY_CONFIG = {
 };
 
 const PIE_COLORS = ["#22c55e", "#eab308", "#ef4444", "#991b1b"];
-
 const FINISHED_STATUSES = ["DEFERIDO", "CONCLUÍDO", "DESISTIU", "RESTITUÍDO", "INDEFERIDO"];
+
+const STATUS_OPTIONS = [
+  "À INICIAR", "À FAZER", "PRONTO PARA ANÁLISE", "EM ANÁLISE",
+  "AGUARDANDO DOCUMENTAÇÃO", "PASTA FÍSICA - AGUARDANDO LIBERAÇÃO",
+  "DEFERIDO", "INDEFERIDO", "CONCLUÍDO", "DESISTIU", "RESTITUÍDO",
+];
+
+const EDIT_FIELDS: { key: string; label: string; type: "date" | "text" }[] = [
+  { key: "status", label: "Status", type: "text" },
+  { key: "data_protocolo", label: "Data Protocolo", type: "date" },
+  { key: "data_deferimento", label: "Data Deferimento", type: "date" },
+  { key: "data_vencimento", label: "Data Vencimento", type: "date" },
+  { key: "numero_processo", label: "Nº Processo", type: "text" },
+  { key: "numero_craf", label: "Nº CRAF", type: "text" },
+  { key: "numero_gte", label: "Nº GTE", type: "text" },
+  { key: "numero_cr", label: "Nº CR", type: "text" },
+  { key: "numero_posse", label: "Nº Posse", type: "text" },
+  { key: "numero_porte", label: "Nº Porte", type: "text" },
+  { key: "numero_sigma", label: "Nº SIGMA", type: "text" },
+  { key: "numero_sinarm", label: "Nº SINARM", type: "text" },
+  { key: "registro_cad", label: "Registro CAD", type: "text" },
+];
 
 function getDaysSince(dateStr: string): number {
   const d = new Date(dateStr);
@@ -76,6 +106,8 @@ function getUrgency(days: number): PendingItem["urgency"] {
   return "green";
 }
 
+const inputClass = "w-full bg-[#111] border border-[#222] rounded px-2 py-1.5 text-xs text-neutral-200 placeholder:text-neutral-600 focus:outline-none focus:border-[#333]";
+
 export default function QARelatoriosPage() {
   const [itens, setItens] = useState<ItemVenda[]>([]);
   const [vendas, setVendas] = useState<Venda[]>([]);
@@ -84,6 +116,9 @@ export default function QARelatoriosPage() {
   const [loading, setLoading] = useState(true);
   const [alertSending, setAlertSending] = useState(false);
   const [tab, setTab] = useState<"pendentes" | "graficos">("pendentes");
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [editForm, setEditForm] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -130,6 +165,51 @@ export default function QARelatoriosPage() {
       .filter(Boolean)
       .sort((a, b) => b!.diasPendente - a!.diasPendente) as PendingItem[];
   }, [itens, vendaMap, clienteMap, servicoMap]);
+
+  const handleExpand = useCallback((itemId: number) => {
+    if (expandedId === itemId) {
+      setExpandedId(null);
+      setEditForm({});
+      return;
+    }
+    const item = itens.find(i => i.id === itemId);
+    if (!item) return;
+    setExpandedId(itemId);
+    const form: Record<string, string> = {};
+    EDIT_FIELDS.forEach(f => {
+      form[f.key] = (item as any)[f.key] || "";
+    });
+    setEditForm(form);
+  }, [expandedId, itens]);
+
+  const handleSave = async () => {
+    if (!expandedId) return;
+    setSaving(true);
+    try {
+      const updates: Record<string, any> = {};
+      EDIT_FIELDS.forEach(f => {
+        const val = editForm[f.key]?.trim() || null;
+        updates[f.key] = val;
+      });
+      updates.data_ultima_atualizacao = new Date().toISOString().slice(0, 10);
+
+      const { error } = await supabase
+        .from("qa_itens_venda" as any)
+        .update(updates)
+        .eq("id", expandedId);
+
+      if (error) throw error;
+
+      // Update local state
+      setItens(prev => prev.map(i => i.id === expandedId ? { ...i, ...updates } : i));
+      setExpandedId(null);
+      setEditForm({});
+    } catch (e: any) {
+      alert("Erro ao salvar: " + (e.message || e));
+    } finally {
+      setSaving(false);
+    }
+  };
 
   // --- Charts data ---
   const urgencyDistribution = useMemo(() => {
@@ -238,10 +318,7 @@ export default function QARelatoriosPage() {
           <p className="text-xs text-neutral-500 mt-0.5">Visão completa de serviços, pendências e performance</p>
         </div>
         <div className="flex gap-2">
-          <button
-            onClick={load}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs bg-[#141414] border border-[#1c1c1c] text-neutral-400 hover:text-neutral-200 transition-colors"
-          >
+          <button onClick={load} className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs bg-[#141414] border border-[#1c1c1c] text-neutral-400 hover:text-neutral-200 transition-colors">
             <RefreshCw className="h-3 w-3" /> Atualizar
           </button>
           <button
@@ -283,9 +360,7 @@ export default function QARelatoriosPage() {
             key={t.key}
             onClick={() => setTab(t.key)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs transition-all ${
-              tab === t.key
-                ? "bg-[#7a1528]/20 text-[#e8a0ad]"
-                : "text-neutral-500 hover:text-neutral-300"
+              tab === t.key ? "bg-[#7a1528]/20 text-[#e8a0ad]" : "text-neutral-500 hover:text-neutral-300"
             }`}
           >
             <t.icon className="h-3 w-3" /> {t.label}
@@ -295,7 +370,6 @@ export default function QARelatoriosPage() {
 
       {tab === "pendentes" && (
         <div className="space-y-2">
-          {/* Urgency Legend */}
           <div className="flex flex-wrap gap-3 text-[10px]">
             {Object.entries(URGENCY_CONFIG).map(([key, cfg]) => (
               <div key={key} className="flex items-center gap-1.5">
@@ -305,7 +379,6 @@ export default function QARelatoriosPage() {
             ))}
           </div>
 
-          {/* Pending Items Table */}
           <div className="bg-[#0d0d0d] border border-[#1c1c1c] rounded-lg overflow-hidden">
             <div className="grid grid-cols-[1fr_1fr_auto_auto_auto] gap-2 px-3 py-2 border-b border-[#1c1c1c] text-[10px] text-neutral-500 uppercase tracking-wider">
               <span>Cliente</span>
@@ -314,24 +387,81 @@ export default function QARelatoriosPage() {
               <span className="text-center">Dias</span>
               <span className="text-center">Urgência</span>
             </div>
-            <div className="max-h-[500px] overflow-y-auto">
+            <div className="max-h-[600px] overflow-y-auto">
               {pendingItems.length === 0 ? (
                 <div className="p-8 text-center text-neutral-600 text-sm">Nenhum serviço pendente 🎉</div>
               ) : (
                 pendingItems.map(item => {
                   const cfg = URGENCY_CONFIG[item.urgency];
+                  const isExpanded = expandedId === item.itemId;
                   return (
-                    <div
-                      key={item.itemId}
-                      className={`grid grid-cols-[1fr_1fr_auto_auto_auto] gap-2 px-3 py-2 border-b border-[#111] text-xs ${cfg.bg} hover:brightness-125 transition-all`}
-                    >
-                      <span className="text-neutral-300 truncate">{item.clienteNome}</span>
-                      <span className="text-neutral-400 truncate">{item.servicoNome}</span>
-                      <span className="text-neutral-500 text-center text-[10px]">{item.status}</span>
-                      <span className={`font-mono font-bold text-center ${cfg.text}`}>{item.diasPendente}d</span>
-                      <div className="flex justify-center">
-                        <div className={`w-2.5 h-2.5 rounded-full ${cfg.dot} ${item.urgency === "critical" ? "animate-pulse" : ""}`} />
+                    <div key={item.itemId}>
+                      <div
+                        onClick={() => handleExpand(item.itemId)}
+                        className={`grid grid-cols-[1fr_1fr_auto_auto_auto] gap-2 px-3 py-2 border-b border-[#111] text-xs cursor-pointer select-none ${cfg.bg} hover:brightness-125 transition-all`}
+                      >
+                        <span className="text-neutral-300 truncate flex items-center gap-1">
+                          {isExpanded ? <ChevronUp className="h-3 w-3 shrink-0 text-neutral-500" /> : <ChevronDown className="h-3 w-3 shrink-0 text-neutral-500" />}
+                          {item.clienteNome}
+                        </span>
+                        <span className="text-neutral-400 truncate">{item.servicoNome}</span>
+                        <span className="text-neutral-500 text-center text-[10px]">{item.status}</span>
+                        <span className={`font-mono font-bold text-center ${cfg.text}`}>{item.diasPendente}d</span>
+                        <div className="flex justify-center">
+                          <div className={`w-2.5 h-2.5 rounded-full ${cfg.dot} ${item.urgency === "critical" ? "animate-pulse" : ""}`} />
+                        </div>
                       </div>
+
+                      {isExpanded && (
+                        <div className="bg-[#0a0a0a] border-b border-[#1c1c1c] px-3 py-4 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-medium text-neutral-300">Editar — {item.servicoNome}</span>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setExpandedId(null); setEditForm({}); }}
+                                className="flex items-center gap-1 px-2 py-1 rounded text-[10px] text-neutral-500 hover:text-neutral-300 bg-[#141414] border border-[#1c1c1c] transition-colors"
+                              >
+                                <X className="h-3 w-3" /> Cancelar
+                              </button>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleSave(); }}
+                                disabled={saving}
+                                className="flex items-center gap-1 px-2 py-1 rounded text-[10px] text-emerald-400 bg-emerald-900/20 border border-emerald-800/30 hover:bg-emerald-900/40 transition-colors disabled:opacity-40"
+                              >
+                                <Save className="h-3 w-3" /> {saving ? "Salvando..." : "Salvar"}
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                            {EDIT_FIELDS.map(field => (
+                              <div key={field.key}>
+                                <label className="block text-[10px] text-neutral-500 uppercase tracking-wider mb-1">{field.label}</label>
+                                {field.key === "status" ? (
+                                  <select
+                                    value={editForm[field.key] || ""}
+                                    onChange={e => setEditForm(prev => ({ ...prev, [field.key]: e.target.value }))}
+                                    className={inputClass}
+                                  >
+                                    <option value="">Selecionar...</option>
+                                    {STATUS_OPTIONS.map(s => (
+                                      <option key={s} value={s}>{s}</option>
+                                    ))}
+                                  </select>
+                                ) : (
+                                  <input
+                                    type={field.type}
+                                    value={editForm[field.key] || ""}
+                                    onChange={e => setEditForm(prev => ({ ...prev, [field.key]: e.target.value }))}
+                                    placeholder={field.type === "date" ? "AAAA-MM-DD" : "—"}
+                                    className={inputClass}
+                                  />
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })
@@ -343,14 +473,11 @@ export default function QARelatoriosPage() {
 
       {tab === "graficos" && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Urgency Distribution Pie */}
           <ChartCard title="Distribuição por Urgência" icon={PieChartIcon}>
             <ResponsiveContainer width="100%" height={220}>
               <PieChart>
                 <Pie data={urgencyDistribution} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="value" paddingAngle={2}>
-                  {urgencyDistribution.map((_, i) => (
-                    <Cell key={i} fill={PIE_COLORS[i]} />
-                  ))}
+                  {urgencyDistribution.map((_, i) => <Cell key={i} fill={PIE_COLORS[i]} />)}
                 </Pie>
                 <Tooltip contentStyle={{ background: "#111", border: "1px solid #222", borderRadius: 8, fontSize: 12 }} />
                 <Legend iconSize={8} wrapperStyle={{ fontSize: 10 }} />
@@ -358,7 +485,6 @@ export default function QARelatoriosPage() {
             </ResponsiveContainer>
           </ChartCard>
 
-          {/* Status Bar Chart */}
           <ChartCard title="Serviços por Status" icon={BarChart3}>
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={statusDistribution} layout="vertical" margin={{ left: 0 }}>
@@ -371,7 +497,6 @@ export default function QARelatoriosPage() {
             </ResponsiveContainer>
           </ChartCard>
 
-          {/* Monthly Trend */}
           <ChartCard title="Tendência Mensal" icon={TrendingUp}>
             <ResponsiveContainer width="100%" height={220}>
               <LineChart data={monthlyTrend}>
@@ -386,7 +511,6 @@ export default function QARelatoriosPage() {
             </ResponsiveContainer>
           </ChartCard>
 
-          {/* Top Services */}
           <ChartCard title="Serviços Mais Vendidos" icon={FileText}>
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={serviceRanking} layout="vertical" margin={{ left: 0 }}>
@@ -399,7 +523,6 @@ export default function QARelatoriosPage() {
             </ResponsiveContainer>
           </ChartCard>
 
-          {/* Revenue by Status */}
           <ChartCard title="Faturamento por Status" icon={TrendingUp}>
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={revenueByStatus}>
@@ -412,7 +535,6 @@ export default function QARelatoriosPage() {
             </ResponsiveContainer>
           </ChartCard>
 
-          {/* Top Clients */}
           <ChartCard title="Clientes com Mais Vendas" icon={Users}>
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={topClients} layout="vertical" margin={{ left: 0 }}>
