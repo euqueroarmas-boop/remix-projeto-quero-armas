@@ -12,7 +12,7 @@ type Step = 1 | 2 | 3 | 4 | 5;
 interface FormData {
   nome_completo: string; cpf: string; data_nascimento: string;
   telefone_principal: string; telefone_secundario: string; email: string;
-  nome_mae: string; estado_civil: string; nacionalidade: string;
+  nome_mae: string; nome_pai: string; estado_civil: string; nacionalidade: string;
   profissao: string; observacoes: string;
   end1_cep: string; end1_logradouro: string; end1_numero: string;
   end1_complemento: string; end1_bairro: string; end1_cidade: string;
@@ -40,7 +40,7 @@ interface FormData {
 const initialForm: FormData = {
   nome_completo: "", cpf: "", data_nascimento: "",
   telefone_principal: "", telefone_secundario: "", email: "",
-  nome_mae: "", estado_civil: "", nacionalidade: "Brasileiro(a)",
+  nome_mae: "", nome_pai: "", estado_civil: "", nacionalidade: "Brasileiro(a)",
   profissao: "", observacoes: "",
   end1_cep: "", end1_logradouro: "", end1_numero: "",
   end1_complemento: "", end1_bairro: "", end1_cidade: "",
@@ -169,6 +169,7 @@ export default function QACadastroPublicoPage() {
         telefone_principal: c.celular ? maskPhone(c.celular) : prev.telefone_principal,
         email: c.email || prev.email,
         nome_mae: c.nome_mae || prev.nome_mae,
+        nome_pai: c.nome_pai || prev.nome_pai,
         estado_civil: c.estado_civil || prev.estado_civil,
         nacionalidade: c.nacionalidade || prev.nacionalidade,
         profissao: c.profissao || prev.profissao,
@@ -509,6 +510,10 @@ function Step1({ form, set, errors, onCpfLookup, cpfLooking, cpfFound }: { form:
         <Field label="Nome da mãe">
           <TextInput value={form.nome_mae} onChange={v => set("nome_mae", v)} placeholder="Nome completo da mãe" />
         </Field>
+        <Field label="Nome do pai">
+          <TextInput value={form.nome_pai} onChange={v => set("nome_pai", v)} placeholder="Nome completo do pai" />
+        </Field>
+        <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
         <Field label="Estado civil">
           <SelectInput value={form.estado_civil} onChange={v => set("estado_civil", v)} options={ESTADOS_CIVIS} />
         </Field>
