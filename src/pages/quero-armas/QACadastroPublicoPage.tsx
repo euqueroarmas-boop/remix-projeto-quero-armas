@@ -23,10 +23,8 @@ interface FormData {
   end2_estado: string; end2_latitude: string; end2_longitude: string;
   vinculo_tipo: string;
   emp_cnpj: string; emp_razao_social: string; emp_nome_fantasia: string;
-  emp_situacao_cadastral: string; emp_data_abertura: string;
-  emp_cnae_principal: string; emp_natureza_juridica: string;
+  emp_natureza_juridica: string;
   emp_endereco: string; emp_telefone: string; emp_email: string;
-  emp_cargo_funcao: string; emp_participacao_societaria: string;
   trab_nome_empresa: string; trab_cnpj_empresa: string;
   trab_cargo_funcao: string; trab_data_admissao: string;
   trab_faixa_salarial: string; trab_endereco_empresa: string;
@@ -51,10 +49,8 @@ const initialForm: FormData = {
   end2_estado: "", end2_latitude: "", end2_longitude: "",
   vinculo_tipo: "",
   emp_cnpj: "", emp_razao_social: "", emp_nome_fantasia: "",
-  emp_situacao_cadastral: "", emp_data_abertura: "",
-  emp_cnae_principal: "", emp_natureza_juridica: "",
+  emp_natureza_juridica: "",
   emp_endereco: "", emp_telefone: "", emp_email: "",
-  emp_cargo_funcao: "", emp_participacao_societaria: "",
   trab_nome_empresa: "", trab_cnpj_empresa: "",
   trab_cargo_funcao: "", trab_data_admissao: "",
   trab_faixa_salarial: "", trab_endereco_empresa: "",
@@ -245,7 +241,7 @@ export default function QACadastroPublicoPage() {
       if (target === "emp") {
         set("emp_razao_social", data.razao_social || "");
         set("emp_nome_fantasia", data.nome_fantasia || "");
-        set("emp_cnae_principal", data.cnae_fiscal_descricao || "");
+        
         const addr = [data.logradouro, data.numero, data.complemento, data.bairro, data.municipio, data.uf].filter(Boolean).join(", ");
         set("emp_endereco", addr);
         set("emp_telefone", data.ddd_telefone_1 || "");
@@ -785,15 +781,6 @@ function Step4({ form, set, errors, onCnpjLookup, cnpjLoading }: any) {
             <Field label="Nome fantasia">
               <TextInput value={form.emp_nome_fantasia} onChange={v => set("emp_nome_fantasia", v)} placeholder="Nome fantasia" />
             </Field>
-            <Field label="Situação cadastral">
-              <TextInput value={form.emp_situacao_cadastral} onChange={v => set("emp_situacao_cadastral", v)} placeholder="Ativa, Baixada..." />
-            </Field>
-            <Field label="Data de abertura">
-              <TextInput value={form.emp_data_abertura} onChange={v => set("emp_data_abertura", v)} placeholder="DD/MM/AAAA" />
-            </Field>
-            <Field label="CNAE principal">
-              <TextInput value={form.emp_cnae_principal} onChange={v => set("emp_cnae_principal", v)} placeholder="Atividade econômica" />
-            </Field>
             <Field label="Natureza jurídica">
               <TextInput value={form.emp_natureza_juridica} onChange={v => set("emp_natureza_juridica", v)} placeholder="Ex: Empresário Individual" />
             </Field>
@@ -807,12 +794,6 @@ function Step4({ form, set, errors, onCnpjLookup, cnpjLoading }: any) {
             </Field>
             <Field label="E-mail da empresa">
               <TextInput value={form.emp_email} onChange={v => set("emp_email", v)} placeholder="email@empresa.com" type="email" />
-            </Field>
-            <Field label="Cargo / Função">
-              <TextInput value={form.emp_cargo_funcao} onChange={v => set("emp_cargo_funcao", v)} placeholder="Ex: Diretor, Sócio-gerente..." />
-            </Field>
-            <Field label="Participação societária">
-              <TextInput value={form.emp_participacao_societaria} onChange={v => set("emp_participacao_societaria", v)} placeholder="Ex: 50%, 100%..." />
             </Field>
           </div>
         </div>
