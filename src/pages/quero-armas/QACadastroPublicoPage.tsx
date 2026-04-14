@@ -499,7 +499,7 @@ function Step1({ form, set, errors, onCpfLookup, cpfLooking, cpfFound }: { form:
           )}
         </Field>
         <Field label="Data de nascimento">
-          <TextInput value={form.data_nascimento} onChange={v => set("data_nascimento", v)} placeholder="DD/MM/AAAA" />
+          <TextInput value={form.data_nascimento} onChange={v => set("data_nascimento", maskDate(v))} placeholder="DD/MM/AAAA" maxLength={10} />
         </Field>
         <Field label="Telefone principal" required error={errors.telefone_principal}>
           <TextInput value={form.telefone_principal} onChange={v => set("telefone_principal", maskPhone(v))} placeholder="(00) 00000-0000" />
