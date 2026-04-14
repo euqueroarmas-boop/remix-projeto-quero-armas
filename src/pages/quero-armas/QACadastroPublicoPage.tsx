@@ -826,8 +826,6 @@ function Step4({ form, set, errors, onCnpjLookup, cnpjLoading }: any) {
         </div>
       )}
 
-        </div>
-      )}
     </div>
   );
 }
