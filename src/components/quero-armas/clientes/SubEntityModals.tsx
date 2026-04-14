@@ -350,6 +350,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
     </Dialog>
   );
 }
+interface FiliacaoModalProps {
   open: boolean; onClose: () => void; onSaved: () => void;
   clienteId: number; filiacao?: any;
 }
