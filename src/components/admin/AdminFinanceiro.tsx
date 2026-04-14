@@ -8,13 +8,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DataPanel } from "@/components/admin/ui/AdminPrimitives";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+  BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell,
 } from "recharts";
 import {
   RefreshCw, Loader2, ChevronLeft, ChevronRight, Copy, ExternalLink,
   AlertTriangle, CheckCircle2, Clock, DollarSign, Users,
   FileText, CreditCard, Webhook, Eye, Search, ArrowLeft,
   TrendingUp, TrendingDown, BarChart3, Target, Crown, Percent,
+  ChevronDown, ChevronUp, Heart, ShieldAlert, Banknote,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -51,12 +52,12 @@ function StatusBadge({ status, map }: { status: string; map: Record<string, { la
 const fmt = (v: number) => `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
 
 // ─── Metric Card ───
-function FinMetricCard({ title, value, icon: Icon, color, subtitle, trend }: {
+function FinMetricCard({ title, value, icon: Icon, color, subtitle, trend, onClick }: {
   title: string; value: string | number; icon: any; color: string;
-  subtitle?: string; trend?: { value: number; label: string };
+  subtitle?: string; trend?: { value: number; label: string }; onClick?: () => void;
 }) {
   return (
-    <div className="rounded-lg border border-border/60 bg-card p-4">
+    <div className={cn("rounded-lg border border-border/60 bg-card p-4", onClick && "cursor-pointer hover:border-primary/40 transition-colors")} onClick={onClick}>
       <div className="flex items-center justify-between gap-2">
         <div className="min-w-0 flex-1">
           <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground truncate">{title}</p>
@@ -91,7 +92,6 @@ function RevenueChart({ allPayments, contracts }: { allPayments: any[]; contract
     const recQuoteIds = new Set(contracts.filter((c: any) => c.contract_type === "recorrente").map((c: any) => c.quote_id));
 
     const buckets: Record<string, { date: string; total: number; recorrente: number; avulso: number }> = {};
-
     const groupBy = days <= 30 ? "day" : days <= 90 ? "week" : "month";
 
     confirmed.forEach((p) => {
@@ -189,38 +189,291 @@ function FinanceFunnel({ contracts, payments }: { contracts: any[]; payments: an
   );
 }
 
-// ─── Top Clients ───
-function TopClients({ allPayments, customers, contracts }: { allPayments: any[]; customers: any[]; contracts: any[] }) {
-  const ranked = useMemo(() => {
-    const map: Record<string, { id: string; name: string; total: number; overdue: number }> = {};
-    allPayments.forEach((p) => {
+// ─── Aging Report ───
+function AgingReport({ allPayments, contracts, customers }: { allPayments: any[]; contracts: any[]; customers: any[] }) {
+  const aging = useMemo(() => {
+    const now = Date.now();
+    const overdue = allPayments.filter((p) => p.payment_status === "OVERDUE" && p.due_date);
+    const buckets = { current: 0, d30: 0, d60: 0, d90: 0, d90plus: 0 };
+    const pending = allPayments.filter((p) => ["pending", "PENDING"].includes(p.payment_status));
+    buckets.current = pending.reduce((s, p) => s + (Number(p.amount) || 0), 0);
+
+    overdue.forEach((p) => {
+      const days = Math.floor((now - new Date(p.due_date).getTime()) / 86400000);
+      const amt = Number(p.amount) || 0;
+      if (days <= 30) buckets.d30 += amt;
+      else if (days <= 60) buckets.d60 += amt;
+      else if (days <= 90) buckets.d90 += amt;
+      else buckets.d90plus += amt;
+    });
+
+    const chartData = [
+      { name: "A vencer", value: buckets.current, fill: "hsl(217 91% 60%)" },
+      { name: "1-30d", value: buckets.d30, fill: "hsl(38 92% 50%)" },
+      { name: "31-60d", value: buckets.d60, fill: "hsl(25 95% 53%)" },
+      { name: "61-90d", value: buckets.d90, fill: "hsl(0 84% 60%)" },
+      { name: ">90d", value: buckets.d90plus, fill: "hsl(0 72% 51%)" },
+    ].filter(d => d.value > 0);
+
+    // Top debtors
+    const debtorMap: Record<string, { name: string; total: number; oldest: number }> = {};
+    overdue.forEach((p) => {
       const contract = contracts.find((c: any) => c.quote_id === p.quote_id);
       const customer = contract ? customers.find((cu: any) => cu.id === contract.customer_id) : null;
       if (!customer) return;
-      if (!map[customer.id]) map[customer.id] = { id: customer.id, name: customer.nome_fantasia || customer.razao_social, total: 0, overdue: 0 };
-      const amt = Number(p.amount) || 0;
-      if (["RECEIVED", "CONFIRMED"].includes(p.payment_status)) map[customer.id].total += amt;
-      if (p.payment_status === "OVERDUE") map[customer.id].overdue += amt;
+      const days = Math.floor((now - new Date(p.due_date).getTime()) / 86400000);
+      if (!debtorMap[customer.id]) debtorMap[customer.id] = { name: customer.nome_fantasia || customer.razao_social, total: 0, oldest: 0 };
+      debtorMap[customer.id].total += Number(p.amount) || 0;
+      debtorMap[customer.id].oldest = Math.max(debtorMap[customer.id].oldest, days);
     });
-    return Object.values(map).sort((a, b) => b.total - a.total).slice(0, 10);
-  }, [allPayments, customers, contracts]);
+    const topDebtors = Object.values(debtorMap).sort((a, b) => b.total - a.total).slice(0, 5);
+
+    return { buckets, chartData, topDebtors, totalOverdue: overdue.reduce((s, p) => s + (Number(p.amount) || 0), 0) };
+  }, [allPayments, contracts, customers]);
 
   return (
-    <div className="rounded-lg border border-border/60 bg-card p-4 space-y-3">
-      <p className="text-xs font-bold text-foreground flex items-center gap-1.5"><Crown className="h-3.5 w-3.5 text-amber-400" /> Top Clientes</p>
-      {ranked.length === 0 ? <p className="text-xs text-muted-foreground">Sem dados</p> : (
-        <div className="space-y-1.5">
-          {ranked.map((r, i) => (
-            <div key={r.id} className="flex items-center gap-2 text-[11px]">
-              <span className="w-5 text-center font-mono text-muted-foreground">{i + 1}</span>
-              <span className="flex-1 truncate text-foreground">{r.name}</span>
-              <span className="font-mono text-emerald-400">{fmt(r.total)}</span>
-              {r.overdue > 0 && <span className="font-mono text-red-400 text-[10px]">({fmt(r.overdue)} em atraso)</span>}
-            </div>
-          ))}
+    <div className="rounded-lg border border-border/60 bg-card p-4 space-y-4">
+      <div className="flex items-center gap-2">
+        <ShieldAlert className="h-4 w-4 text-red-400" />
+        <p className="text-xs font-bold text-foreground">Aging — Contas a Receber</p>
+      </div>
+
+      <div className="grid grid-cols-5 gap-2 text-center">
+        {[
+          { label: "A vencer", value: aging.buckets.current, color: "text-blue-400" },
+          { label: "1-30d", value: aging.buckets.d30, color: "text-amber-400" },
+          { label: "31-60d", value: aging.buckets.d60, color: "text-orange-400" },
+          { label: "61-90d", value: aging.buckets.d90, color: "text-red-400" },
+          { label: ">90d", value: aging.buckets.d90plus, color: "text-red-500" },
+        ].map((b) => (
+          <div key={b.label} className="rounded-md border border-border/40 p-2">
+            <p className="text-[9px] text-muted-foreground uppercase">{b.label}</p>
+            <p className={`text-xs font-mono font-bold ${b.color}`}>{fmt(b.value)}</p>
+          </div>
+        ))}
+      </div>
+
+      {aging.chartData.length > 0 && (
+        <ResponsiveContainer width="100%" height={140}>
+          <PieChart>
+            <Pie data={aging.chartData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={35} outerRadius={55} paddingAngle={3}>
+              {aging.chartData.map((d, i) => <Cell key={i} fill={d.fill} />)}
+            </Pie>
+            <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 11 }}
+              formatter={(v: number) => fmt(v)} />
+            <Legend wrapperStyle={{ fontSize: 10 }} />
+          </PieChart>
+        </ResponsiveContainer>
+      )}
+
+      {aging.topDebtors.length > 0 && (
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-red-400 mb-2">Maiores Devedores</p>
+          <div className="space-y-1.5">
+            {aging.topDebtors.map((d, i) => (
+              <div key={i} className="flex items-center justify-between text-[11px] py-1 border-b border-border/20">
+                <span className="text-foreground truncate flex-1">{d.name}</span>
+                <div className="flex items-center gap-3 shrink-0">
+                  <span className="text-[10px] text-muted-foreground">{d.oldest}d atraso</span>
+                  <span className="font-mono font-bold text-red-400">{fmt(d.total)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>
+  );
+}
+
+// ─── Cash Flow Projection ───
+function CashFlowChart({ allPayments, contracts }: { allPayments: any[]; contracts: any[] }) {
+  const chartData = useMemo(() => {
+    const now = new Date();
+    const months: { label: string; recebido: number; previsto: number; inadimplente: number }[] = [];
+
+    for (let i = -3; i <= 3; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+      const end = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+      const label = d.toLocaleDateString("pt-BR", { month: "short", year: "2-digit" });
+
+      const monthPayments = allPayments.filter((p) => {
+        const pd = new Date(p.created_at);
+        return pd >= d && pd <= end;
+      });
+
+      const recebido = monthPayments
+        .filter((p) => ["RECEIVED", "CONFIRMED"].includes(p.payment_status))
+        .reduce((s, p) => s + (Number(p.amount) || 0), 0);
+
+      const inadimplente = monthPayments
+        .filter((p) => p.payment_status === "OVERDUE")
+        .reduce((s, p) => s + (Number(p.amount) || 0), 0);
+
+      // Future projection: MRR from active recurring contracts
+      let previsto = 0;
+      if (i > 0) {
+        previsto = contracts
+          .filter((c: any) => ["active", "paid"].includes(c.service_status) && c.contract_type === "recorrente")
+          .reduce((s, c: any) => s + (Number(c.monthly_value) || 0), 0);
+      }
+
+      months.push({ label, recebido, previsto, inadimplente });
+    }
+
+    return months;
+  }, [allPayments, contracts]);
+
+  return (
+    <div className="rounded-lg border border-border/60 bg-card p-4 space-y-3">
+      <div className="flex items-center gap-2">
+        <Banknote className="h-4 w-4 text-emerald-400" />
+        <p className="text-xs font-bold text-foreground">Fluxo de Caixa (Projeção)</p>
+      </div>
+      <ResponsiveContainer width="100%" height={200}>
+        <BarChart data={chartData} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.3)" />
+          <XAxis dataKey="label" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+          <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
+          <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 11 }}
+            formatter={(v: number) => fmt(v)} />
+          <Legend wrapperStyle={{ fontSize: 10 }} />
+          <Bar dataKey="recebido" name="Recebido" fill="hsl(142 76% 36%)" radius={[3, 3, 0, 0]} />
+          <Bar dataKey="previsto" name="Previsto (MRR)" fill="hsl(217 91% 60%)" radius={[3, 3, 0, 0]} />
+          <Bar dataKey="inadimplente" name="Inadimplente" fill="hsl(0 84% 60%)" radius={[3, 3, 0, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+// ─── Client Health Score ───
+function clientHealthScore(customer: any, customerContracts: any[], customerPayments: any[]): { score: number; label: string; color: string } {
+  let score = 100;
+
+  // Overdue deducts
+  const overdue = customerPayments.filter((p) => p.payment_status === "OVERDUE");
+  score -= overdue.length * 20;
+
+  // Cancelled/suspended contracts deduct
+  const bad = customerContracts.filter((c: any) => ["suspended", "cancelled"].includes(c.service_status));
+  score -= bad.length * 15;
+
+  // No active contracts deduct
+  const active = customerContracts.filter((c: any) => ["active", "paid"].includes(c.service_status));
+  if (active.length === 0 && customerContracts.length > 0) score -= 10;
+
+  // Payment history bonus
+  const confirmed = customerPayments.filter((p) => ["RECEIVED", "CONFIRMED"].includes(p.payment_status));
+  if (confirmed.length >= 6 && overdue.length === 0) score = Math.min(score + 5, 100);
+
+  score = Math.max(0, Math.min(100, score));
+
+  if (score >= 80) return { score, label: "Saudável", color: "text-emerald-400" };
+  if (score >= 60) return { score, label: "Atenção", color: "text-amber-400" };
+  if (score >= 40) return { score, label: "Risco", color: "text-orange-400" };
+  return { score, label: "Crítico", color: "text-red-400" };
+}
+
+// ─── Client Financial Detail ───
+function ClientFinancialRow({ customer, contracts, payments, expanded, onToggle }: {
+  customer: any; contracts: any[]; payments: any[]; expanded: boolean; onToggle: () => void;
+}) {
+  const cuContracts = contracts.filter((c: any) => c.customer_id === customer.id);
+  const cuQuoteIds = new Set(cuContracts.map((c: any) => c.quote_id).filter(Boolean));
+  const cuPayments = payments.filter((p) => cuQuoteIds.has(p.quote_id));
+
+  const totalPago = cuPayments.filter((p) => ["RECEIVED", "CONFIRMED"].includes(p.payment_status)).reduce((s, p) => s + (Number(p.amount) || 0), 0);
+  const totalDevendo = cuPayments.filter((p) => p.payment_status === "OVERDUE").reduce((s, p) => s + (Number(p.amount) || 0), 0);
+  const totalPendente = cuPayments.filter((p) => ["pending", "PENDING"].includes(p.payment_status)).reduce((s, p) => s + (Number(p.amount) || 0), 0);
+  const mrr = cuContracts
+    .filter((c: any) => ["active", "paid"].includes(c.service_status) && c.contract_type === "recorrente")
+    .reduce((s, c: any) => s + (Number(c.monthly_value) || 0), 0);
+
+  const health = clientHealthScore(customer, cuContracts, cuPayments);
+  const activeContracts = cuContracts.filter((c: any) => ["active", "paid"].includes(c.service_status));
+
+  return (
+    <>
+      <TableRow className={cn("border-border/30 cursor-pointer transition-colors", expanded ? "bg-muted/30" : "hover:bg-muted/20")} onClick={onToggle}>
+        <TableCell className="text-xs text-foreground font-medium">
+          <div className="flex items-center gap-2">
+            {expanded ? <ChevronUp className="h-3 w-3 text-muted-foreground" /> : <ChevronDown className="h-3 w-3 text-muted-foreground" />}
+            {customer.responsavel || customer.razao_social}
+          </div>
+        </TableCell>
+        <TableCell className="text-[11px] text-muted-foreground truncate max-w-[120px]">{customer.nome_fantasia || "—"}</TableCell>
+        <TableCell>
+          <div className="flex items-center gap-1.5">
+            <div className={`w-2 h-2 rounded-full ${health.score >= 80 ? "bg-emerald-400" : health.score >= 60 ? "bg-amber-400" : health.score >= 40 ? "bg-orange-400" : "bg-red-400"}`} />
+            <span className={`text-[10px] font-bold ${health.color}`}>{health.score}</span>
+            <span className={`text-[9px] ${health.color}`}>{health.label}</span>
+          </div>
+        </TableCell>
+        <TableCell className="text-xs font-mono text-emerald-400">{fmt(totalPago)}</TableCell>
+        <TableCell className="text-xs font-mono text-red-400">{totalDevendo > 0 ? fmt(totalDevendo) : "—"}</TableCell>
+        <TableCell className="text-xs font-mono text-amber-400">{totalPendente > 0 ? fmt(totalPendente) : "—"}</TableCell>
+        <TableCell className="text-xs font-mono text-blue-400">{mrr > 0 ? fmt(mrr) : "—"}</TableCell>
+        <TableCell className="text-[11px] text-muted-foreground">{activeContracts.length}/{cuContracts.length}</TableCell>
+      </TableRow>
+
+      {expanded && (
+        <TableRow className="bg-muted/10 border-border/20">
+          <TableCell colSpan={8} className="p-0">
+            <div className="p-4 space-y-3">
+              {/* Contracts */}
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Contratos</p>
+                {cuContracts.length === 0 ? <p className="text-xs text-muted-foreground">Nenhum contrato</p> : (
+                  <div className="space-y-1.5">
+                    {cuContracts.map((c: any) => (
+                      <div key={c.id} className="flex items-center gap-3 text-[11px] py-1.5 px-3 rounded-md border border-border/30 bg-card">
+                        <StatusBadge status={c.service_status || "contract_generated"} map={SERVICE_STATUS_MAP} />
+                        <span className="text-muted-foreground capitalize">{c.contract_type || "avulso"}</span>
+                        <span className="font-mono text-foreground">{c.monthly_value ? fmt(Number(c.monthly_value)) : "—"}/mês</span>
+                        {c.activated_at && <span className="text-muted-foreground">Ativo desde {new Date(c.activated_at).toLocaleDateString("pt-BR")}</span>}
+                        <span className="text-muted-foreground ml-auto font-mono text-[10px]">Criado: {new Date(c.created_at).toLocaleDateString("pt-BR")}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Payments */}
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Histórico de Pagamentos ({cuPayments.length})</p>
+                {cuPayments.length === 0 ? <p className="text-xs text-muted-foreground">Nenhum pagamento</p> : (
+                  <div className="space-y-1">
+                    {cuPayments.slice(0, 10).map((p) => (
+                      <div key={p.id} className="flex items-center gap-3 text-[11px] py-1 px-2 rounded border border-border/20">
+                        <StatusBadge status={p.payment_status || "pending"} map={PAYMENT_STATUS_MAP} />
+                        <span className="font-mono text-foreground">{fmt(Number(p.amount) || 0)}</span>
+                        <span className="text-muted-foreground">{p.billing_type || p.payment_method || "—"}</span>
+                        <span className="text-muted-foreground font-mono ml-auto">{p.due_date ? new Date(p.due_date).toLocaleDateString("pt-BR") : "—"}</span>
+                        {p.asaas_invoice_url && (
+                          <a href={p.asaas_invoice_url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
+                            <ExternalLink className="h-3 w-3 text-primary" />
+                          </a>
+                        )}
+                      </div>
+                    ))}
+                    {cuPayments.length > 10 && <p className="text-[10px] text-muted-foreground text-center pt-1">+ {cuPayments.length - 10} pagamentos adicionais</p>}
+                  </div>
+                )}
+              </div>
+
+              {/* Summary bar */}
+              <div className="flex items-center gap-4 pt-2 border-t border-border/30 text-[10px]">
+                <span className="text-muted-foreground">Total pago: <strong className="text-emerald-400 font-mono">{fmt(totalPago)}</strong></span>
+                <span className="text-muted-foreground">Devendo: <strong className="text-red-400 font-mono">{fmt(totalDevendo)}</strong></span>
+                <span className="text-muted-foreground">Pendente: <strong className="text-amber-400 font-mono">{fmt(totalPendente)}</strong></span>
+                <span className="text-muted-foreground">MRR: <strong className="text-blue-400 font-mono">{fmt(mrr)}</strong></span>
+              </div>
+            </div>
+          </TableCell>
+        </TableRow>
+      )}
+    </>
   );
 }
 
@@ -264,7 +517,6 @@ function BillingDetail({ payment, customers, contracts, webhooks, onClose }: {
     return p?.payment?.id === payment.asaas_payment_id;
   });
   const copyText = (text: string) => navigator.clipboard.writeText(text);
-
   const isLgpd = customer?.status_cliente === "excluido_lgpd";
 
   return (
@@ -278,7 +530,7 @@ function BillingDetail({ payment, customers, contracts, webhooks, onClose }: {
           <AlertTriangle className="h-4 w-4 text-red-400 shrink-0" />
           <div>
             <p className="text-xs font-bold text-red-400">Registro histórico restrito (LGPD)</p>
-            <p className="text-[10px] text-red-400/80">Titular anonimizado. Operação bloqueada por LGPD. Sem ações de cobrança, reenvio ou reativação.</p>
+            <p className="text-[10px] text-red-400/80">Titular anonimizado. Operação bloqueada por LGPD.</p>
           </div>
         </div>
       )}
@@ -362,6 +614,9 @@ export default function AdminFinanceiro() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterSearch, setFilterSearch] = useState("");
   const [selectedPayment, setSelectedPayment] = useState<any | null>(null);
+  const [expandedClient, setExpandedClient] = useState<string | null>(null);
+  const [clientSearch, setClientSearch] = useState("");
+  const [clientSort, setClientSort] = useState<"name" | "health" | "revenue" | "debt">("name");
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -376,40 +631,25 @@ export default function AdminFinanceiro() {
 
     try {
       const results = await adminQuery([
-        // 0: paginated payments
         { table: "payments", select: "*", count: true, filters: paymentFilters, order: { column: "created_at", ascending: false }, range: { from: page * PER_PAGE, to: (page + 1) * PER_PAGE - 1 } },
-        // 1: customers
         { table: "customers", select: "id, razao_social, nome_fantasia, cnpj_ou_cpf, email, user_id, responsavel, status_cliente" },
-        // 2: contracts
         { table: "contracts", select: "id, customer_id, quote_id, contract_type, monthly_value, service_status, signed, activated_at, status, created_at" },
-        // 3: webhooks
         { table: "asaas_webhooks", select: "id, event, payload, processed, created_at", order: { column: "created_at", ascending: false }, limit: 100 },
-        // 4: ALL payments for analytics
-        { table: "payments", select: "id, amount, payment_status, billing_type, payment_method, created_at, due_date, quote_id, asaas_payment_id" },
-        // 5: this month confirmed
+        { table: "payments", select: "id, amount, payment_status, billing_type, payment_method, created_at, due_date, quote_id, asaas_payment_id, asaas_invoice_url" },
         { table: "payments", select: "amount, quote_id", filters: [{ column: "payment_status", op: "in", value: ["RECEIVED", "CONFIRMED"] }, { column: "created_at", op: "gte", value: monthStart }] },
-        // 6: prev month confirmed
         { table: "payments", select: "amount, quote_id", filters: [{ column: "payment_status", op: "in", value: ["RECEIVED", "CONFIRMED"] }, { column: "created_at", op: "gte", value: prevMonthStart }, { column: "created_at", op: "lte", value: prevMonthEnd }] },
-        // 7: pending payments (fetch data for LGPD filtering)
         { table: "payments", select: "id, amount, quote_id", filters: [{ column: "payment_status", op: "in", value: ["pending", "PENDING"] }] },
-        // 8: overdue payments (fetch data for LGPD filtering)
         { table: "payments", select: "id, quote_id", filters: [{ column: "payment_status", op: "eq", value: "OVERDUE" }] },
-        // 9: active contracts (fetch data for LGPD filtering)
         { table: "contracts", select: "id, customer_id", filters: [{ column: "service_status", op: "in", value: ["active", "paid"] }] },
-        // 10: open amounts (fetch data for LGPD filtering)
         { table: "payments", select: "amount, quote_id", filters: [{ column: "payment_status", op: "in", value: ["pending", "PENDING", "OVERDUE"] }] },
-        // 11: due today (fetch data for LGPD filtering)
         { table: "payments", select: "id, quote_id", filters: [{ column: "due_date", op: "eq", value: today }, { column: "payment_status", op: "in", value: ["pending", "PENDING"] }] },
-        // 12: pending contracts (fetch data for LGPD filtering)
         { table: "contracts", select: "id, customer_id", filters: [{ column: "service_status", op: "eq", value: "payment_pending" }] },
-        // 13: unprocessed webhooks
         { table: "asaas_webhooks", select: "id", count: true, limit: 0, filters: [{ column: "processed", op: "eq", value: false }] },
       ]);
 
       const allCustomers = (results[1].data as any[]) || [];
       const allContracts = (results[2].data as any[]) || [];
 
-      // Single source of truth for the operational financial layer
       const isOperationalCustomer = (customer: any) =>
         Boolean(customer) && String(customer.status_cliente || "").toLowerCase() !== "excluido_lgpd";
 
@@ -475,7 +715,6 @@ export default function AdminFinanceiro() {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  // Realtime
   useEffect(() => {
     const ch = supabase.channel("fin-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "payments" }, () => fetchAll())
@@ -490,22 +729,18 @@ export default function AdminFinanceiro() {
     const totalRevenue = confirmed.reduce((s, p) => s + (Number(p.amount) || 0), 0);
     const ticketMedio = confirmed.length > 0 ? totalRevenue / confirmed.length : 0;
 
-    // MRR from active recurring contracts
     const mrr = contracts
       .filter((c: any) => ["active", "paid"].includes(c.service_status) && c.contract_type === "recorrente")
       .reduce((s, c: any) => s + (Number(c.monthly_value) || 0), 0);
 
-    // Churn
     const cancelled = contracts.filter((c: any) => ["suspended", "cancelled"].includes(c.service_status)).length;
     const totalContracts = contracts.length || 1;
     const churnPct = (cancelled / totalContracts) * 100;
 
-    // Inadimplência
     const overdue = allPayments.filter((p) => p.payment_status === "OVERDUE");
     const overdueTotal = overdue.reduce((s, p) => s + (Number(p.amount) || 0), 0);
     const overduePct = allPayments.length > 0 ? (overdue.length / allPayments.length) * 100 : 0;
 
-    // LTV
     const customerPayments: Record<string, number> = {};
     confirmed.forEach((p) => {
       const contract = contracts.find((c: any) => c.quote_id === p.quote_id);
@@ -516,12 +751,10 @@ export default function AdminFinanceiro() {
     const customerIds = Object.keys(customerPayments);
     const ltv = customerIds.length > 0 ? customerIds.reduce((s, id) => s + customerPayments[id], 0) / customerIds.length : 0;
 
-    // Month trend
     const mrrTrend = dashData.prevMonthRevenue > 0
       ? ((dashData.monthRevenue - dashData.prevMonthRevenue) / dashData.prevMonthRevenue) * 100
       : 0;
 
-    // Service breakdown
     const byService: Record<string, { revenue: number; contracts: number; payments: number }> = {};
     confirmed.forEach((p) => {
       const contract = contracts.find((c: any) => c.quote_id === p.quote_id);
@@ -538,6 +771,47 @@ export default function AdminFinanceiro() {
 
     return { ticketMedio, mrr, churnPct, cancelled, overdueTotal, overduePct, overdue: overdue.length, ltv, mrrTrend, byService };
   }, [allPayments, contracts, dashData]);
+
+  // Client sorting/filtering for Saúde tab
+  const sortedClients = useMemo(() => {
+    let filtered = customers.filter((cu: any) => cu.status_cliente !== "excluido_lgpd");
+
+    if (clientSearch) {
+      const s = clientSearch.toLowerCase();
+      filtered = filtered.filter((cu: any) =>
+        (cu.razao_social?.toLowerCase().includes(s)) ||
+        (cu.nome_fantasia?.toLowerCase().includes(s)) ||
+        (cu.email?.toLowerCase().includes(s)) ||
+        (cu.responsavel?.toLowerCase().includes(s))
+      );
+    }
+
+    return filtered.sort((a, b) => {
+      if (clientSort === "name") return (a.razao_social || "").localeCompare(b.razao_social || "");
+
+      const aContracts = contracts.filter((c: any) => c.customer_id === a.id);
+      const bContracts = contracts.filter((c: any) => c.customer_id === b.id);
+      const aQIds = new Set(aContracts.map((c: any) => c.quote_id).filter(Boolean));
+      const bQIds = new Set(bContracts.map((c: any) => c.quote_id).filter(Boolean));
+      const aPays = allPayments.filter((p) => aQIds.has(p.quote_id));
+      const bPays = allPayments.filter((p) => bQIds.has(p.quote_id));
+
+      if (clientSort === "health") {
+        return clientHealthScore(a, aContracts, aPays).score - clientHealthScore(b, bContracts, bPays).score;
+      }
+      if (clientSort === "revenue") {
+        const aRev = aPays.filter((p) => ["RECEIVED", "CONFIRMED"].includes(p.payment_status)).reduce((s, p) => s + (Number(p.amount) || 0), 0);
+        const bRev = bPays.filter((p) => ["RECEIVED", "CONFIRMED"].includes(p.payment_status)).reduce((s, p) => s + (Number(p.amount) || 0), 0);
+        return bRev - aRev;
+      }
+      if (clientSort === "debt") {
+        const aDebt = aPays.filter((p) => p.payment_status === "OVERDUE").reduce((s, p) => s + (Number(p.amount) || 0), 0);
+        const bDebt = bPays.filter((p) => p.payment_status === "OVERDUE").reduce((s, p) => s + (Number(p.amount) || 0), 0);
+        return bDebt - aDebt;
+      }
+      return 0;
+    });
+  }, [customers, contracts, allPayments, clientSearch, clientSort]);
 
   // Helpers
   const getCustomerForPayment = (p: any) => {
@@ -566,7 +840,7 @@ export default function AdminFinanceiro() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-bold text-foreground">Central Financeira</h2>
-          <p className="text-xs text-muted-foreground">Inteligência financeira · Receita · Inadimplência</p>
+          <p className="text-xs text-muted-foreground">Inteligência financeira · Receita · Inadimplência · Saúde do Cliente</p>
         </div>
         <Button variant="ghost" size="sm" onClick={fetchAll} className="text-[11px] h-8 gap-1">
           <RefreshCw className={`h-3 w-3 ${loading ? "animate-spin" : ""}`} /> Atualizar
@@ -590,7 +864,7 @@ export default function AdminFinanceiro() {
               subtitle={`${metrics.cancelled} contratos cancelados/suspensos`} />
           </div>
 
-          {/* Row 2 - Cards */}
+          {/* Row 2 */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <FinMetricCard title="Contratos Ativos" value={dashData.activeContracts} icon={FileText} color="text-blue-400" />
             <FinMetricCard title="Pgto Pendentes" value={dashData.pendingPayments} icon={Clock} color="text-amber-400" />
@@ -598,15 +872,15 @@ export default function AdminFinanceiro() {
             <FinMetricCard title="Valor em Aberto" value={fmt(dashData.openAmount)} icon={CreditCard} color="text-orange-400" />
           </div>
 
-          {/* Alerts */}
           <AlertsBlock alerts={alerts} />
 
           {/* Tabs */}
           <Tabs value={tab} onValueChange={setTab}>
             <TabsList className="bg-muted/30 border border-border/40 flex-wrap h-auto gap-0.5 p-1">
               <TabsTrigger value="inteligencia" className="text-xs gap-1"><BarChart3 className="h-3 w-3" /> Inteligência</TabsTrigger>
+              <TabsTrigger value="saude" className="text-xs gap-1"><Heart className="h-3 w-3" /> Saúde do Cliente</TabsTrigger>
+              <TabsTrigger value="aging" className="text-xs gap-1"><ShieldAlert className="h-3 w-3" /> Aging & Caixa</TabsTrigger>
               <TabsTrigger value="cobrancas" className="text-xs gap-1"><CreditCard className="h-3 w-3" /> Cobranças</TabsTrigger>
-              <TabsTrigger value="clientes" className="text-xs gap-1"><Users className="h-3 w-3" /> Clientes</TabsTrigger>
               <TabsTrigger value="webhooks" className="text-xs gap-1"><Webhook className="h-3 w-3" /> Webhooks</TabsTrigger>
             </TabsList>
 
@@ -617,7 +891,36 @@ export default function AdminFinanceiro() {
                 <FinanceFunnel contracts={contracts} payments={allPayments} />
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <TopClients allPayments={allPayments} customers={customers} contracts={contracts} />
+                {/* Top Clients */}
+                <div className="rounded-lg border border-border/60 bg-card p-4 space-y-3">
+                  <p className="text-xs font-bold text-foreground flex items-center gap-1.5"><Crown className="h-3.5 w-3.5 text-amber-400" /> Top Clientes por Receita</p>
+                  {(() => {
+                    const ranked: { id: string; name: string; total: number; overdue: number }[] = [];
+                    const map: Record<string, { id: string; name: string; total: number; overdue: number }> = {};
+                    allPayments.forEach((p) => {
+                      const contract = contracts.find((c: any) => c.quote_id === p.quote_id);
+                      const customer = contract ? customers.find((cu: any) => cu.id === contract.customer_id) : null;
+                      if (!customer) return;
+                      if (!map[customer.id]) map[customer.id] = { id: customer.id, name: customer.nome_fantasia || customer.razao_social, total: 0, overdue: 0 };
+                      const amt = Number(p.amount) || 0;
+                      if (["RECEIVED", "CONFIRMED"].includes(p.payment_status)) map[customer.id].total += amt;
+                      if (p.payment_status === "OVERDUE") map[customer.id].overdue += amt;
+                    });
+                    const items = Object.values(map).sort((a, b) => b.total - a.total).slice(0, 10);
+                    return items.length === 0 ? <p className="text-xs text-muted-foreground">Sem dados</p> : (
+                      <div className="space-y-1.5">
+                        {items.map((r, i) => (
+                          <div key={r.id} className="flex items-center gap-2 text-[11px]">
+                            <span className="w-5 text-center font-mono text-muted-foreground">{i + 1}</span>
+                            <span className="flex-1 truncate text-foreground">{r.name}</span>
+                            <span className="font-mono text-emerald-400">{fmt(r.total)}</span>
+                            {r.overdue > 0 && <span className="font-mono text-red-400 text-[10px]">({fmt(r.overdue)} atraso)</span>}
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
+                </div>
                 {/* Service Performance */}
                 <div className="rounded-lg border border-border/60 bg-card p-4 space-y-3">
                   <p className="text-xs font-bold text-foreground">Performance por Tipo</p>
@@ -637,6 +940,63 @@ export default function AdminFinanceiro() {
                     </div>
                   )}
                 </div>
+              </div>
+            </TabsContent>
+
+            {/* ─── Saúde do Cliente Tab ─── */}
+            <TabsContent value="saude" className="space-y-4 mt-4">
+              <div className="flex flex-wrap gap-2 items-center rounded-lg border border-border/40 bg-card/50 p-3">
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                  <Input placeholder="Buscar cliente..." value={clientSearch} onChange={(e) => setClientSearch(e.target.value)} className="pl-8 h-8 text-xs w-48 bg-muted/30 border-border/50" />
+                </div>
+                <Select value={clientSort} onValueChange={(v: any) => setClientSort(v)}>
+                  <SelectTrigger className="w-40 text-[11px] h-8 bg-muted/30 border-border/50"><SelectValue placeholder="Ordenar" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="name">Nome A-Z</SelectItem>
+                    <SelectItem value="health">Saúde (críticos primeiro)</SelectItem>
+                    <SelectItem value="revenue">Maior receita</SelectItem>
+                    <SelectItem value="debt">Maior dívida</SelectItem>
+                  </SelectContent>
+                </Select>
+                <span className="text-[10px] text-muted-foreground ml-auto font-mono">{sortedClients.length} clientes</span>
+              </div>
+
+              <DataPanel>
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-border/40 hover:bg-transparent">
+                      <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Cliente</TableHead>
+                      <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Empresa</TableHead>
+                      <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Saúde</TableHead>
+                      <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Total Pago</TableHead>
+                      <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Devendo</TableHead>
+                      <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Pendente</TableHead>
+                      <TableHead className="text-[10px] uppercase tracking-wider font-semibold">MRR</TableHead>
+                      <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Contratos</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {sortedClients.map((cu) => (
+                      <ClientFinancialRow
+                        key={cu.id}
+                        customer={cu}
+                        contracts={contracts}
+                        payments={allPayments}
+                        expanded={expandedClient === cu.id}
+                        onToggle={() => setExpandedClient(expandedClient === cu.id ? null : cu.id)}
+                      />
+                    ))}
+                  </TableBody>
+                </Table>
+              </DataPanel>
+            </TabsContent>
+
+            {/* ─── Aging & Caixa Tab ─── */}
+            <TabsContent value="aging" className="space-y-4 mt-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <AgingReport allPayments={allPayments} contracts={contracts} customers={customers} />
+                <CashFlowChart allPayments={allPayments} contracts={contracts} />
               </div>
             </TabsContent>
 
@@ -734,39 +1094,6 @@ export default function AdminFinanceiro() {
                   <Button variant="outline" size="sm" className="h-8 w-8 p-0" disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)}><ChevronRight className="h-4 w-4" /></Button>
                 </div>
               )}
-            </TabsContent>
-
-            {/* ─── Clientes Tab ─── */}
-            <TabsContent value="clientes" className="space-y-4 mt-4">
-              <DataPanel>
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-border/40 hover:bg-transparent">
-                      <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Nome</TableHead>
-                      <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Empresa</TableHead>
-                      <TableHead className="text-[10px] uppercase tracking-wider font-semibold">E-mail</TableHead>
-                      <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Status Contrato</TableHead>
-                      <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Valor Contratado</TableHead>
-                      <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Acesso</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {customers.filter((cu: any) => cu.status_cliente !== "excluido_lgpd").map((cu) => {
-                      const contract = contracts.find((c: any) => c.customer_id === cu.id);
-                      return (
-                        <TableRow key={cu.id} className="border-border/30 hover:bg-muted/20">
-                          <TableCell className="text-xs text-foreground font-medium">{cu.responsavel || cu.razao_social}</TableCell>
-                          <TableCell className="text-[11px] text-muted-foreground">{cu.nome_fantasia || "—"}</TableCell>
-                          <TableCell className="text-[11px] text-muted-foreground">{cu.email}</TableCell>
-                          <TableCell>{contract ? <StatusBadge status={contract.service_status || "contract_generated"} map={SERVICE_STATUS_MAP} /> : <span className="text-[10px] text-muted-foreground">Sem contrato</span>}</TableCell>
-                          <TableCell className="text-xs font-mono text-foreground">{contract?.monthly_value ? fmt(Number(contract.monthly_value)) : "—"}</TableCell>
-                          <TableCell>{cu.user_id ? <span className="inline-flex items-center px-1.5 py-0 rounded text-[9px] font-medium border border-emerald-500/25 bg-emerald-500/10 text-emerald-400">✓ Portal</span> : <span className="inline-flex items-center px-1.5 py-0 rounded text-[9px] font-medium border border-border/60 bg-muted/30 text-muted-foreground">Sem acesso</span>}</TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </DataPanel>
             </TabsContent>
 
             {/* ─── Webhooks Tab ─── */}
