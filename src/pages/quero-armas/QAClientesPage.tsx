@@ -491,10 +491,10 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 function Field({ label, value, icon: Icon, copyable }: { label: string; value?: string | null; icon?: any; copyable?: boolean }) {
-  const handleCopy = () => {
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (value) {
       navigator.clipboard.writeText(value);
-      const { toast } = require("sonner");
       toast.success(`${label} copiado!`);
     }
   };
