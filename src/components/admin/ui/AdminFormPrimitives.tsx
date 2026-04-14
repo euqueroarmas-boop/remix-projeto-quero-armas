@@ -63,7 +63,7 @@ export function FieldWrapper({ label, children, span, className }: {
 }
 
 /* ── Styled Input ── */
-const inputBase = "h-9 text-xs sm:text-sm bg-[#0a0a0a] border-[#1c1c1c] text-neutral-200 rounded-lg placeholder:text-neutral-600 focus:border-[#7a1528]/60 focus:ring-1 focus:ring-[#7a1528]/20 transition-colors";
+const inputBase = "h-9 w-full text-xs sm:text-sm bg-[#0a0a0a] border-[#1c1c1c] text-neutral-200 rounded-lg placeholder:text-neutral-600 focus:border-[#7a1528]/60 focus:ring-1 focus:ring-[#7a1528]/20 transition-colors";
 
 export function FormInput({ label, value, onChange, type = "text", span, placeholder }: {
   label: string; value: string; onChange: (v: string) => void; type?: string; span?: "full" | "half"; placeholder?: string;
