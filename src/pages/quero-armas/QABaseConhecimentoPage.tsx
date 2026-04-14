@@ -808,8 +808,8 @@ export default function QABaseConhecimentoPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowBulkDialog(false)} className="border-slate-200 text-slate-600">Cancelar</Button>
-            <Button onClick={handleBulkImport} disabled={!bulkLinks.trim() || bulkImporting} className="bg-purple-600 hover:bg-purple-700">
+            <Button variant="outline" onClick={() => setShowBulkDialog(false)} className="border-slate-200 rounded-lg" style={{ color: "hsl(220 10% 45%)" }}>Cancelar</Button>
+            <Button onClick={handleBulkImport} disabled={!bulkLinks.trim() || bulkImporting} className="rounded-lg" style={{ background: "hsl(262 60% 55%)", color: "white" }}>
               {bulkImporting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />} Importar Links
             </Button>
           </DialogFooter>
@@ -818,26 +818,26 @@ export default function QABaseConhecimentoPage() {
 
       {/* Delete confirmation dialog */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) setDeleteTarget(null); }}>
-        <AlertDialogContent className="bg-white border-slate-200 text-slate-700 max-w-md">
+        <AlertDialogContent className="border-slate-200 max-w-md rounded-xl" style={{ background: "hsl(0 0% 100%)", color: "hsl(220 20% 18%)" }}>
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-slate-700">Excluir documento</AlertDialogTitle>
-            <AlertDialogDescription className="text-slate-600">
-              <strong className="text-slate-700 block mb-1">{deleteTarget?.titulo}</strong>
+            <AlertDialogTitle style={{ color: "hsl(220 20% 18%)" }}>Excluir documento</AlertDialogTitle>
+            <AlertDialogDescription style={{ color: "hsl(220 10% 45%)" }}>
+              <strong className="block mb-1" style={{ color: "hsl(220 20% 18%)" }}>{deleteTarget?.titulo}</strong>
               Tem certeza que deseja remover este documento da base de conhecimento? A IA não utilizará mais esse conteúdo em consultas futuras.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col gap-2 sm:flex-col">
             <Button variant="outline" disabled={deleting} onClick={() => handleDeactivate(deleteTarget)}
-              className="w-full border-amber-600/40 text-amber-400 hover:bg-amber-500/10 justify-start gap-2">
+              className="w-full border-amber-200 text-amber-600 hover:bg-amber-50 justify-start gap-2 rounded-lg">
               <Power className="h-4 w-4" /> Desativar da IA
-              <span className="text-[10px] text-slate-500 ml-auto">reversível</span>
+              <span className="text-[10px] ml-auto" style={{ color: "hsl(220 10% 62%)" }}>reversível</span>
             </Button>
             <Button variant="destructive" disabled={deleting} onClick={() => handlePermanentDelete(deleteTarget)}
-              className="w-full justify-start gap-2">
+              className="w-full justify-start gap-2 rounded-lg">
               {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />} Excluir permanentemente
-              <span className="text-[10px] text-red-300/60 ml-auto">irreversível</span>
+              <span className="text-[10px] text-red-200 ml-auto">irreversível</span>
             </Button>
-            <AlertDialogCancel className="w-full border-slate-200 text-slate-600">Cancelar</AlertDialogCancel>
+            <AlertDialogCancel className="w-full border-slate-200 rounded-lg" style={{ color: "hsl(220 10% 45%)" }}>Cancelar</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
