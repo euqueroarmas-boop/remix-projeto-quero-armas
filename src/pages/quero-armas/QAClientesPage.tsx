@@ -518,9 +518,34 @@ export default function QAClientesPage() {
       const { error } = await supabase.from(deleteModal.table as any).delete().eq("id", deleteModal.id);
       if (error) throw error;
       toast.success("Excluído com sucesso");
-      if (selected) await loadSubData(selected);
+      if (deleteModal.table === "qa_clientes") {
+        setClientes(prev => prev.filter(c => c.id !== deleteModal.id));
+        setSelected(null);
+      } else if (selected) {
+        await loadSubData(selected);
+      }
       setDeleteModal({ open: false, table: "", id: 0, title: "", desc: "" });
     } catch (e: any) { toast.error(e.message); } finally { setDeleting(false); }
+  };
+
+  const handleDeleteCliente = async (c: Cliente, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const clienteId = c.id_legado ?? c.id;
+    // Check if client has vendas
+    const { data: vendasCliente } = await supabase.from("qa_vendas" as any).select("id").eq("cliente_id", clienteId);
+    if (vendasCliente && vendasCliente.length > 0) {
+      // Delete itens_venda for each venda first
+      const vendaIds = (vendasCliente as any[]).map(v => v.id);
+      await supabase.from("qa_itens_venda" as any).delete().in("venda_id", vendaIds);
+      await supabase.from("qa_vendas" as any).delete().eq("cliente_id", clienteId);
+    }
+    // Delete related sub-entities
+    await Promise.all([
+      supabase.from("qa_crafs" as any).delete().eq("cliente_id", clienteId),
+      supabase.from("qa_gtes" as any).delete().eq("cliente_id", clienteId),
+      supabase.from("qa_filiacoes" as any).delete().eq("cliente_id", clienteId),
+    ]);
+    setDeleteModal({ open: true, table: "qa_clientes", id: c.id, title: "Excluir Cliente", desc: `Excluir "${c.nome_completo}" e todos os dados vinculados?` });
   };
 
   const filtered = clientes.filter(c => {
