@@ -786,13 +786,15 @@ function Step3({ form, set, errors, onCepLookup, cepLoading, onGeocodeLookup, ge
 }
 
 /* ── Step 4: Vínculo Profissional ── */
-function Step4({ form, set, errors, onCnpjLookup, cnpjLoading }: any) {
+function Step4({ form, set, errors, onCnpjLookup, cnpjLoading, servicos }: any) {
   const vinculos = [
     { value: "proprietario", label: "Sou proprietário / sócio de empresa" },
     { value: "registrado", label: "Trabalho registrado / carteira assinada" },
     { value: "aposentado", label: "Sou aposentado / pensionista" },
     { value: "nenhum", label: "Não possuo vínculo profissional no momento" },
   ];
+
+  const servicoOptions = (servicos || []).map((s: any) => s.nome_servico);
 
   return (
     <div>
@@ -802,18 +804,7 @@ function Step4({ form, set, errors, onCnpjLookup, cnpjLoading }: any) {
       {/* Serviço de Interesse */}
       <div className="mb-6">
         <Field label="Serviço de interesse *" error={errors.servico_interesse}>
-          <SelectInput value={form.servico_interesse} onChange={v => set("servico_interesse", v)} options={[
-            "Posse de Arma de Fogo (PF)",
-            "Porte de Arma de Fogo (PF)",
-            "Registro de Arma",
-            "Autorização de Compra",
-            "Renovação de CR",
-            "CRAF",
-            "GTE",
-            "Apostilamento / Atualização",
-            "Combo de Serviços",
-            "Outro",
-          ]} placeholder="Selecione o serviço" />
+          <SelectInput value={form.servico_interesse} onChange={v => set("servico_interesse", v)} options={servicoOptions} placeholder="Selecione o serviço" />
         </Field>
       </div>
 
