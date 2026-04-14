@@ -639,7 +639,7 @@ export default function QAClientesPage() {
                                           <input
                                             type="text"
                                             value={itemEditForm[field.key] || ""}
-                                            onChange={e => setItemEditForm(prev => ({ ...prev, [field.key]: e.target.value }))}
+                                            onChange={e => setItemEditForm(prev => ({ ...prev, [field.key]: e.target.value.toUpperCase() }))}
                                             placeholder={field.type === "date" ? "DD/MM/AAAA" : "—"}
                                             className="w-full h-7 px-2 text-[10px] rounded bg-white border border-slate-200 text-slate-700 placeholder:text-slate-300 focus:border-blue-500 focus:outline-none transition-colors"
                                           />
@@ -1077,7 +1077,7 @@ export default function QAClientesPage() {
               {isEditing ? (
                 <textarea
                   value={ef.observacoes || ""}
-                  onChange={e => setEf("observacoes", e.target.value)}
+                  onChange={e => setEf("observacoes", e.target.value.toUpperCase())}
                   rows={3}
                   className="w-full text-sm border rounded-lg p-3 outline-none focus:border-blue-500"
                   style={{ color: "hsl(220 20% 25%)", borderColor: "hsl(220 13% 88%)" }}
@@ -1397,12 +1397,12 @@ function DocumentGenerator({ cliente }: { cliente: any }) {
         <div className="bg-white border border-amber-500/20 rounded-lg p-3 space-y-2">
           <div className="text-[10px] text-amber-400 font-medium mb-1">Dados do Responsável pelo Imóvel</div>
           <div className="grid grid-cols-2 gap-2">
-            <Input value={tp.nome} onChange={e => setTp(p => ({ ...p, nome: e.target.value }))} placeholder="Nome Completo" className="h-7 text-[10px] bg-white border-slate-200 text-slate-700" />
-            <Input value={tp.cpf} onChange={e => setTp(p => ({ ...p, cpf: e.target.value }))} placeholder="CPF" className="h-7 text-[10px] bg-white border-slate-200 text-slate-700" />
-            <Input value={tp.naturalidade} onChange={e => setTp(p => ({ ...p, naturalidade: e.target.value }))} placeholder="Naturalidade" className="h-7 text-[10px] bg-white border-slate-200 text-slate-700" />
-            <Input value={tp.nascimento} onChange={e => setTp(p => ({ ...p, nascimento: e.target.value }))} placeholder="Data Nascimento" className="h-7 text-[10px] bg-white border-slate-200 text-slate-700" />
-            <Input value={tp.profissao} onChange={e => setTp(p => ({ ...p, profissao: e.target.value }))} placeholder="Profissão" className="h-7 text-[10px] bg-white border-slate-200 text-slate-700" />
-            <Input value={tp.estadoCivil} onChange={e => setTp(p => ({ ...p, estadoCivil: e.target.value }))} placeholder="Estado Civil" className="h-7 text-[10px] bg-white border-slate-200 text-slate-700" />
+            <Input value={tp.nome} onChange={e => setTp(p => ({ ...p, nome: e.target.value.toUpperCase() }))} placeholder="Nome Completo" className="h-7 text-[10px] bg-white border-slate-200 text-slate-700 uppercase" />
+            <Input value={tp.cpf} onChange={e => setTp(p => ({ ...p, cpf: e.target.value.toUpperCase() }))} placeholder="CPF" className="h-7 text-[10px] bg-white border-slate-200 text-slate-700 uppercase" />
+            <Input value={tp.naturalidade} onChange={e => setTp(p => ({ ...p, naturalidade: e.target.value.toUpperCase() }))} placeholder="Naturalidade" className="h-7 text-[10px] bg-white border-slate-200 text-slate-700 uppercase" />
+            <Input value={tp.nascimento} onChange={e => setTp(p => ({ ...p, nascimento: e.target.value.toUpperCase() }))} placeholder="Data Nascimento" className="h-7 text-[10px] bg-white border-slate-200 text-slate-700 uppercase" />
+            <Input value={tp.profissao} onChange={e => setTp(p => ({ ...p, profissao: e.target.value.toUpperCase() }))} placeholder="Profissão" className="h-7 text-[10px] bg-white border-slate-200 text-slate-700 uppercase" />
+            <Input value={tp.estadoCivil} onChange={e => setTp(p => ({ ...p, estadoCivil: e.target.value.toUpperCase() }))} placeholder="Estado Civil" className="h-7 text-[10px] bg-white border-slate-200 text-slate-700 uppercase" />
           </div>
           {TEMPLATES.find(t => t.key === showExtra)?.needsDates && (
             <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-200">
