@@ -92,7 +92,7 @@ const EDIT_FIELDS: { key: string; label: string; type: "date" | "text" }[] = [
   { key: "data_deferimento", label: "Data Deferimento", type: "date" },
   { key: "data_vencimento", label: "Data Vencimento", type: "date" },
   { key: "numero_processo", label: "Nº Processo", type: "text" },
-  { key: "numero_craf", label: "Nº CRAF", type: "text" },
+  { key: "numero_craf", label: "Nº SIGMA", type: "text" },
   { key: "numero_gte", label: "Nº GTE", type: "text" },
   { key: "numero_cr", label: "Nº CR", type: "text" },
   { key: "numero_posse", label: "Nº Posse", type: "text" },
@@ -113,6 +113,27 @@ function getUrgency(days: number): PendingItem["urgency"] {
   if (days >= 25) return "red";
   if (days >= 10) return "yellow";
   return "green";
+}
+
+function applyDateMask(raw: string): string {
+  const digits = raw.replace(/\D/g, "").slice(0, 8);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+}
+
+function dateBrToIso(v: string): string | null {
+  if (!v) return null;
+  const m = v.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!m) return null;
+  return `${m[3]}-${m[2]}-${m[1]}`;
+}
+
+function isoToBr(v: string | null): string {
+  if (!v) return "";
+  const m = v.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return v;
+  return `${m[3]}/${m[2]}/${m[1]}`;
 }
 
 const tooltipStyle = {
@@ -209,7 +230,8 @@ export default function QARelatoriosPage() {
     setExpandedId(itemId);
     const form: Record<string, string> = {};
     EDIT_FIELDS.forEach(f => {
-      form[f.key] = (item as any)[f.key] || "";
+      const raw = (item as any)[f.key] || "";
+      form[f.key] = f.type === "date" ? isoToBr(raw) : raw;
     });
     setEditForm(form);
   }, [expandedId, itens]);
@@ -221,7 +243,11 @@ export default function QARelatoriosPage() {
       const updates: Record<string, any> = {};
       EDIT_FIELDS.forEach(f => {
         const val = editForm[f.key]?.trim() || null;
-        updates[f.key] = val;
+        if (f.type === "date") {
+          updates[f.key] = val ? dateBrToIso(val) : null;
+        } else {
+          updates[f.key] = val;
+        }
       });
       updates.data_ultima_atualizacao = new Date().toISOString().slice(0, 10);
       const { error } = await supabase
@@ -539,7 +565,11 @@ export default function QARelatoriosPage() {
                                   <input
                                     type="text"
                                     value={editForm[field.key] || ""}
-                                    onChange={e => setEditForm(prev => ({ ...prev, [field.key]: e.target.value }))}
+                                    onChange={e => {
+                                      const raw = e.target.value;
+                                      const val = field.type === "date" ? applyDateMask(raw) : raw.toUpperCase();
+                                      setEditForm(prev => ({ ...prev, [field.key]: val }));
+                                    }}
                                     placeholder={field.type === "date" ? "DD/MM/AAAA" : "—"}
                                     className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all"
                                   />
