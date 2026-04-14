@@ -1567,7 +1567,7 @@ function DocumentGenerator({ cliente, nomeServico }: { cliente: any; nomeServico
       )}
 
       <div className="space-y-1.5">
-        {TEMPLATES.map(tpl => (
+        {filteredTemplates.map(tpl => (
           <div key={tpl.key} className="qa-card qa-hover-lift p-3 flex items-center justify-between group">
             <div className="min-w-0 flex-1">
               <div className="text-[12px] font-semibold uppercase" style={{ color: "hsl(220 20% 18%)" }}>{tpl.label}</div>
