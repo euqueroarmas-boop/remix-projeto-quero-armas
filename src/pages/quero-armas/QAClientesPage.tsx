@@ -340,32 +340,64 @@ export default function QAClientesPage() {
                           </div>
                           <div className="px-3 py-2 space-y-1.5">
                             {vItens.map((it: any) => (
-                              <div key={it.id} className="flex items-center justify-between text-[10px] gap-1">
-                                <div className="flex items-center gap-2 flex-1 min-w-0">
-                                  <Select
-                                    value={it.status || "EM ANÁLISE"}
-                                    onValueChange={async (newStatus) => {
-                                      const { error } = await supabase.from("qa_itens_venda" as any).update({ status: newStatus }).eq("id", it.id);
-                                      if (error) { toast.error(error.message); return; }
-                                      setItens(prev => prev.map((i: any) => i.id === it.id ? { ...i, status: newStatus } : i));
-                                      toast.success(`Status → ${newStatus}`);
-                                    }}
-                                  >
-                                    <SelectTrigger className={`h-5 w-auto min-w-0 px-1.5 text-[9px] font-mono border-0 bg-transparent gap-0.5 ${svcStatusColor(it.status)}`}>
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {["EM ANÁLISE", "PRONTO PARA ANÁLISE", "À INICIAR", "DEFERIDO", "INDEFERIDO", "CONCLUÍDO"].map(s => (
-                                        <SelectItem key={s} value={s} className="text-[10px]">{s}</SelectItem>
+                              <div key={it.id}>
+                                <div className="flex items-center justify-between text-[10px] gap-1 cursor-pointer hover:bg-[#111] rounded px-1 -mx-1 py-0.5" onClick={() => handleExpandItem(it)}>
+                                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                                    {expandedItemId === it.id ? <ChevronUp className="h-3 w-3 shrink-0 text-neutral-500" /> : <ChevronDown className="h-3 w-3 shrink-0 text-neutral-500" />}
+                                    <Select
+                                      value={it.status || "EM ANÁLISE"}
+                                      onValueChange={async (newStatus) => {
+                                        const { error } = await supabase.from("qa_itens_venda" as any).update({ status: newStatus }).eq("id", it.id);
+                                        if (error) { toast.error(error.message); return; }
+                                        setItens(prev => prev.map((i: any) => i.id === it.id ? { ...i, status: newStatus } : i));
+                                        toast.success(`Status → ${newStatus}`);
+                                      }}
+                                    >
+                                      <SelectTrigger className={`h-5 w-auto min-w-0 px-1.5 text-[9px] font-mono border-0 bg-transparent gap-0.5 ${svcStatusColor(it.status)}`} onClick={(e) => e.stopPropagation()}>
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {["EM ANÁLISE", "PRONTO PARA ANÁLISE", "À INICIAR", "À FAZER", "AGUARDANDO DOCUMENTAÇÃO", "PASTA FÍSICA - AGUARDANDO LIBERAÇÃO", "DEFERIDO", "INDEFERIDO", "CONCLUÍDO", "DESISTIU", "RESTITUÍDO"].map(s => (
+                                          <SelectItem key={s} value={s} className="text-[10px]">{s}</SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                    <span className="text-neutral-300 truncate">{getServicoNome(it.servico_id)}</span>
+                                  </div>
+                                  <div className="flex items-center gap-3 shrink-0">
+                                    {it.numero_processo && <span className="text-neutral-600 font-mono text-[9px]">{it.numero_processo}</span>}
+                                    <span className="text-neutral-400 font-mono">R$ {Number(it.valor || 0).toFixed(0)}</span>
+                                  </div>
+                                </div>
+                                {expandedItemId === it.id && (
+                                  <div className="bg-[#080808] border border-[#1c1c1c] rounded-lg mt-1 mb-2 p-3 space-y-3">
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-[10px] font-medium text-neutral-300">Detalhes — {getServicoNome(it.servico_id)}</span>
+                                      <div className="flex gap-2">
+                                        <Button variant="ghost" size="sm" onClick={() => { setExpandedItemId(null); setItemEditForm({}); }} className="h-6 px-2 text-[9px] text-neutral-500 hover:text-neutral-300">
+                                          <X className="h-3 w-3 mr-1" /> Cancelar
+                                        </Button>
+                                        <Button variant="ghost" size="sm" onClick={handleSaveItem} disabled={savingItem} className="h-6 px-2 text-[9px] text-emerald-400 bg-emerald-900/20 border border-emerald-800/30 hover:bg-emerald-900/40">
+                                          <Save className="h-3 w-3 mr-1" /> {savingItem ? "Salvando..." : "Salvar"}
+                                        </Button>
+                                      </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                      {ITEM_EDIT_FIELDS.map(field => (
+                                        <div key={field.key}>
+                                          <label className="block text-[9px] text-neutral-500 uppercase tracking-wider mb-0.5">{field.label}</label>
+                                          <input
+                                            type="text"
+                                            value={itemEditForm[field.key] || ""}
+                                            onChange={e => setItemEditForm(prev => ({ ...prev, [field.key]: e.target.value }))}
+                                            placeholder={field.type === "date" ? "DD/MM/AAAA" : "—"}
+                                            className="w-full h-7 px-2 text-[10px] rounded bg-[#0a0a0a] border border-[#1c1c1c] text-neutral-200 placeholder:text-neutral-700 focus:border-[#7a1528] focus:outline-none transition-colors"
+                                          />
+                                        </div>
                                       ))}
-                                    </SelectContent>
-                                  </Select>
-                                  <span className="text-neutral-300 truncate">{getServicoNome(it.servico_id)}</span>
-                                </div>
-                                <div className="flex items-center gap-3 shrink-0">
-                                  {it.numero_processo && <span className="text-neutral-600 font-mono text-[9px]">{it.numero_processo}</span>}
-                                  <span className="text-neutral-400 font-mono">R$ {Number(it.valor || 0).toFixed(0)}</span>
-                                </div>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             ))}
                             <div className="flex justify-between pt-1 border-t border-[#1c1c1c] text-[10px]">
