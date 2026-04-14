@@ -270,6 +270,10 @@ export default function QACadastroPublicoPage() {
       if (!form.end1_complemento.trim()) errs.end1_complemento = "Complemento é obrigatório (ex: Casa, Apto, Bloco)";
       if (!form.comprovante_endereco_proprio) errs.comprovante_endereco_proprio = "Informe se possui comprovante no seu nome";
     }
+    if (s === 4) {
+      if (!form.vinculo_tipo) errs.vinculo_tipo = "Selecione o vínculo profissional";
+      if (!form.servico_interesse) errs.servico_interesse = "Selecione o serviço de interesse";
+    }
     if (s === 5) {
       if (!form.consentimento_dados_verdadeiros) errs.consentimento_dados_verdadeiros = "Obrigatório";
       if (!form.consentimento_tratamento_dados) errs.consentimento_tratamento_dados = "Obrigatório";
