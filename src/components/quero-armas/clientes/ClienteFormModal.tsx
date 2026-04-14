@@ -190,7 +190,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
             <FormInput label="Número" value={f.numero} onChange={v => set("numero", v)} />
             <FormInput label="Complemento" value={f.complemento} onChange={v => set("complemento", v)} />
             <FormInput label="Bairro" value={f.bairro} onChange={v => set("bairro", v)} />
-            <FormInput label="CEP" value={f.cep} onChange={v => set("cep", v)} />
+            <FormInput label={cepLoading ? "CEP ⏳" : "CEP"} value={f.cep} onChange={v => set("cep", v)} onBlur={() => handleCepBlur(f.cep, "")} />
           </FormGrid>
           <FormGrid cols={3} className="mt-2">
             <FormInput label="Cidade" value={f.cidade} onChange={v => set("cidade", v)} />
@@ -205,7 +205,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
             <FormInput label="Número" value={f.numero2} onChange={v => set("numero2", v)} />
             <FormInput label="Complemento" value={f.complemento2} onChange={v => set("complemento2", v)} />
             <FormInput label="Bairro" value={f.bairro2} onChange={v => set("bairro2", v)} />
-            <FormInput label="CEP" value={f.cep2} onChange={v => set("cep2", v)} />
+            <FormInput label={cepLoading ? "CEP ⏳" : "CEP"} value={f.cep2} onChange={v => set("cep2", v)} onBlur={() => handleCepBlur(f.cep2, "2")} />
           </FormGrid>
           <FormGrid cols={3} className="mt-2">
             <FormInput label="Cidade" value={f.cidade2} onChange={v => set("cidade2", v)} />
