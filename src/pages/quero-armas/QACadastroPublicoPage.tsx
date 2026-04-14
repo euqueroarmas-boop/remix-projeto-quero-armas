@@ -820,7 +820,11 @@ function Step4({ form, set, errors, onCnpjLookup, cnpjLoading }: any) {
             <div className="md:col-span-2">
               <Field label="CNPJ">
                 <div className="flex gap-2">
-                  <TextInput value={form.emp_cnpj} onChange={v => set("emp_cnpj", maskCnpj(v))} placeholder="00.000.000/0000-00" maxLength={18} />
+                  <TextInput value={form.emp_cnpj} onChange={v => {
+                    const masked = maskCnpj(v);
+                    set("emp_cnpj", masked);
+                    if (masked.replace(/\D/g, "").length === 14) setTimeout(() => onCnpjLookup("emp"), 50);
+                  }} placeholder="00.000.000/0000-00" maxLength={18} onBlur={() => onCnpjLookup("emp")} />
                   <button onClick={() => onCnpjLookup("emp")} disabled={cnpjLoading}
                     className="shrink-0 h-10 px-3 rounded-lg flex items-center gap-1.5 text-xs font-medium transition-colors"
                     style={{ background: "hsl(230 80% 96%)", color: "hsl(230 80% 56%)" }}>
@@ -835,9 +839,6 @@ function Step4({ form, set, errors, onCnpjLookup, cnpjLoading }: any) {
             </Field>
             <Field label="Nome fantasia">
               <TextInput value={form.emp_nome_fantasia} onChange={v => set("emp_nome_fantasia", v)} placeholder="Nome fantasia" />
-            </Field>
-            <Field label="Natureza jurídica">
-              <TextInput value={form.emp_natureza_juridica} onChange={v => set("emp_natureza_juridica", v)} placeholder="Ex: Empresário Individual" />
             </Field>
             <div className="md:col-span-2">
               <Field label="Endereço da empresa">
@@ -859,25 +860,34 @@ function Step4({ form, set, errors, onCnpjLookup, cnpjLoading }: any) {
         <div className="space-y-4 p-4 rounded-xl" style={{ background: "hsl(220 20% 97%)", border: "1px solid hsl(220 13% 91%)" }}>
           <h3 className="text-sm font-semibold" style={{ color: "hsl(220 20% 18%)" }}>Dados do Emprego</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="md:col-span-2">
+              <Field label="CNPJ da empresa">
+                <div className="flex gap-2">
+                  <TextInput value={form.trab_cnpj_empresa} onChange={v => {
+                    const masked = maskCnpj(v);
+                    set("trab_cnpj_empresa", masked);
+                    if (masked.replace(/\D/g, "").length === 14) setTimeout(() => onCnpjLookup("trab"), 50);
+                  }} placeholder="00.000.000/0000-00" maxLength={18} onBlur={() => onCnpjLookup("trab")} />
+                  <button onClick={() => onCnpjLookup("trab")} disabled={cnpjLoading}
+                    className="shrink-0 h-10 px-3 rounded-lg flex items-center gap-1.5 text-xs font-medium transition-colors"
+                    style={{ background: "hsl(230 80% 96%)", color: "hsl(230 80% 56%)" }}>
+                    {cnpjLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
+                    <span className="hidden sm:inline">Consultar</span>
+                  </button>
+                </div>
+              </Field>
+            </div>
             <Field label="Nome da empresa">
               <TextInput value={form.trab_nome_empresa} onChange={v => set("trab_nome_empresa", v)} placeholder="Nome da empresa" />
-            </Field>
-            <Field label="CNPJ da empresa">
-              <div className="flex gap-2">
-                <TextInput value={form.trab_cnpj_empresa} onChange={v => set("trab_cnpj_empresa", maskCnpj(v))} placeholder="00.000.000/0000-00" maxLength={18} />
-                <button onClick={() => onCnpjLookup("trab")} disabled={cnpjLoading}
-                  className="shrink-0 h-10 w-10 rounded-lg flex items-center justify-center transition-colors"
-                  style={{ background: "hsl(230 80% 96%)", color: "hsl(230 80% 56%)" }}>
-                  {cnpjLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-                </button>
-              </div>
             </Field>
             <Field label="Cargo / Função">
               <TextInput value={form.trab_cargo_funcao} onChange={v => set("trab_cargo_funcao", v)} placeholder="Cargo ou função" />
             </Field>
-            <Field label="Endereço da empresa">
-              <TextInput value={form.trab_endereco_empresa} onChange={v => set("trab_endereco_empresa", v)} placeholder="Endereço completo" />
-            </Field>
+            <div className="md:col-span-2">
+              <Field label="Endereço da empresa">
+                <TextInput value={form.trab_endereco_empresa} onChange={v => set("trab_endereco_empresa", v)} placeholder="Endereço completo" />
+              </Field>
+            </div>
             <Field label="Telefone da empresa">
               <TextInput value={form.trab_telefone_empresa} onChange={v => set("trab_telefone_empresa", maskPhone(v))} placeholder="(00) 00000-0000" />
             </Field>
