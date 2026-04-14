@@ -131,7 +131,7 @@ export default function QAHistoricoPage() {
             <span>Título</span><span>Tipo</span><span>Status</span><span>Data</span><span className="text-right">Ações</span>
           </div>
           {items.map((item: any) => (
-            <div key={item.id} className="border-b border-slate-200/40 hover:bg-[#7a1528]/50 transition-colors">
+            <div key={item.id} className="border-b border-slate-200/40 hover:bg-slate-50 transition-colors">
               {/* Mobile */}
               <div className="md:hidden px-2.5 py-1.5">
                 <div className="flex items-center justify-between gap-2">
