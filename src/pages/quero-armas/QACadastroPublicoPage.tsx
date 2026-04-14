@@ -137,7 +137,7 @@ export default function QACadastroPublicoPage() {
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const { lookupCep, lookupCnpj, cepLoading, cnpjLoading } = useBrasilApiLookup();
+  const { lookupCep, lookupCnpj, lookupGeocode, cepLoading, cnpjLoading, geocodeLoading } = useBrasilApiLookup();
 
   const [cpfLooking, setCpfLooking] = useState(false);
   const [cpfFound, setCpfFound] = useState<boolean | null>(null);
@@ -220,6 +220,20 @@ export default function QACadastroPublicoPage() {
       set(`${prefix}_estado` as keyof FormData, data.state || "");
     }
   }, [form, lookupCep, set]);
+
+  /* ── Geocode lookup (after number is filled) ── */
+  const handleGeocodeLookup = useCallback(async (prefix: "end1" | "end2") => {
+    const street = form[`${prefix}_logradouro` as keyof FormData] as string;
+    const number = form[`${prefix}_numero` as keyof FormData] as string;
+    const city = form[`${prefix}_cidade` as keyof FormData] as string;
+    const state = form[`${prefix}_estado` as keyof FormData] as string;
+    if (!city || !number.trim()) return;
+    const geo = await lookupGeocode({ street, number, city, state });
+    if (geo) {
+      set(`${prefix}_latitude` as keyof FormData, geo.latitude);
+      set(`${prefix}_longitude` as keyof FormData, geo.longitude);
+    }
+  }, [form, lookupGeocode, set]);
 
   /* ── CNPJ lookup ── */
   const handleCnpjLookup = useCallback(async (target: "emp" | "trab") => {
@@ -388,8 +402,8 @@ export default function QACadastroPublicoPage() {
         {/* Form card */}
         <div className="qa-card rounded-2xl p-5 md:p-8" style={{ boxShadow: "0 4px 20px rgba(0,0,0,0.04)" }}>
           {step === 1 && <Step1 form={form} set={set} errors={errors} onCpfLookup={handleCpfLookup} cpfLooking={cpfLooking} cpfFound={cpfFound} />}
-          {step === 2 && <Step2 form={form} set={set} errors={errors} onCepLookup={() => handleCepLookup("end1")} cepLoading={cepLoading} showComplementoConfirm={showComplementoConfirm} onComplementoConfirmDismiss={() => { setShowComplementoConfirm(false); proceedFromStep2(); }} />}
-          {step === 3 && <Step3 form={form} set={set} errors={errors} onCepLookup={() => handleCepLookup("end2")} cepLoading={cepLoading} />}
+          {step === 2 && <Step2 form={form} set={set} errors={errors} onCepLookup={() => handleCepLookup("end1")} cepLoading={cepLoading} showComplementoConfirm={showComplementoConfirm} onComplementoConfirmDismiss={() => { setShowComplementoConfirm(false); proceedFromStep2(); }} onGeocodeLookup={() => handleGeocodeLookup("end1")} geocodeLoading={geocodeLoading} />}
+          {step === 3 && <Step3 form={form} set={set} errors={errors} onCepLookup={() => handleCepLookup("end2")} cepLoading={cepLoading} onGeocodeLookup={() => handleGeocodeLookup("end2")} geocodeLoading={geocodeLoading} />}
           {step === 4 && <Step4 form={form} set={set} errors={errors} onCnpjLookup={handleCnpjLookup} cnpjLoading={cnpjLoading} />}
           {step === 5 && <Step5 form={form} set={set} errors={errors} />}
 
@@ -561,11 +575,14 @@ function Step1({ form, set, errors, onCpfLookup, cpfLooking, cpfFound }: { form:
 }
 
 /* ── Address Block (shared between Step 2 & 3) ── */
-function AddressBlock({ prefix, form, set, errors, onCepLookup, cepLoading }: {
+function AddressBlock({ prefix, form, set, errors, onCepLookup, cepLoading, onGeocodeLookup, geocodeLoading }: {
   prefix: "end1" | "end2"; form: FormData; set: any; errors: any;
   onCepLookup: () => void; cepLoading: boolean;
+  onGeocodeLookup?: () => void; geocodeLoading?: boolean;
 }) {
   const f = (field: string) => `${prefix}_${field}` as keyof FormData;
+  const lat = form[f("latitude")] as string;
+  const lng = form[f("longitude")] as string;
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div className="md:col-span-2">
@@ -592,7 +609,7 @@ function AddressBlock({ prefix, form, set, errors, onCepLookup, cepLoading }: {
         </Field>
       </div>
       <Field label="Número" required error={errors[f("numero")]}>
-        <TextInput value={form[f("numero")] as string} onChange={v => set(f("numero"), v)} placeholder="Nº" />
+        <TextInput value={form[f("numero")] as string} onChange={v => set(f("numero"), v)} placeholder="Nº" onBlur={onGeocodeLookup} />
       </Field>
       <Field label="Complemento">
         <TextInput value={form[f("complemento")] as string} onChange={v => set(f("complemento"), v)} placeholder="Apto, Sala, Bloco..." />
@@ -606,17 +623,38 @@ function AddressBlock({ prefix, form, set, errors, onCepLookup, cepLoading }: {
       <Field label="Estado">
         <SelectInput value={form[f("estado")] as string} onChange={v => set(f("estado"), v)} options={UF_LIST} placeholder="UF" />
       </Field>
+
+      {/* Geolocalização */}
+      {(lat || lng || geocodeLoading) && (
+        <div className="md:col-span-2">
+          <div className="flex items-center gap-2 p-3 rounded-lg" style={{ background: "hsl(152 60% 96%)", border: "1px solid hsl(152 40% 85%)" }}>
+            {geocodeLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" style={{ color: "hsl(152 60% 42%)" }} />
+                <span className="text-xs font-medium" style={{ color: "hsl(152 40% 35%)" }}>Buscando geolocalização...</span>
+              </>
+            ) : (
+              <>
+                <MapPin className="w-4 h-4" style={{ color: "hsl(152 60% 42%)" }} />
+                <span className="text-xs font-medium" style={{ color: "hsl(152 40% 25%)" }}>
+                  Lat: {lat} &nbsp;|&nbsp; Lng: {lng}
+                </span>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 /* ── Step 2: Endereço Residencial ── */
-function Step2({ form, set, errors, onCepLookup, cepLoading, showComplementoConfirm, onComplementoConfirmDismiss }: any) {
+function Step2({ form, set, errors, onCepLookup, cepLoading, showComplementoConfirm, onComplementoConfirmDismiss, onGeocodeLookup, geocodeLoading }: any) {
   return (
     <div>
       <SectionTitle>Endereço Residencial</SectionTitle>
       <SectionDesc>Informe seu endereço residencial. Digite o CEP para preenchimento automático.</SectionDesc>
-      <AddressBlock prefix="end1" form={form} set={set} errors={errors} onCepLookup={onCepLookup} cepLoading={cepLoading} />
+      <AddressBlock prefix="end1" form={form} set={set} errors={errors} onCepLookup={onCepLookup} cepLoading={cepLoading} onGeocodeLookup={onGeocodeLookup} geocodeLoading={geocodeLoading} />
 
       {showComplementoConfirm && (
         <div className="mt-4 p-4 rounded-xl border flex items-start gap-3" style={{ background: "hsl(40 90% 96%)", borderColor: "hsl(40 70% 80%)" }}>
@@ -667,7 +705,7 @@ function Step2({ form, set, errors, onCepLookup, cepLoading, showComplementoConf
 }
 
 /* ── Step 3: Segundo Endereço ── */
-function Step3({ form, set, errors, onCepLookup, cepLoading }: any) {
+function Step3({ form, set, errors, onCepLookup, cepLoading, onGeocodeLookup, geocodeLoading }: any) {
   return (
     <div>
       <SectionTitle>Segundo Endereço</SectionTitle>
@@ -677,7 +715,7 @@ function Step3({ form, set, errors, onCepLookup, cepLoading }: any) {
           <SelectInput value={form.end2_tipo} onChange={v => set("end2_tipo", v)} options={["Comercial", "Correspondência", "Outro"]} />
         </Field>
       </div>
-      <AddressBlock prefix="end2" form={form} set={set} errors={errors} onCepLookup={onCepLookup} cepLoading={cepLoading} />
+      <AddressBlock prefix="end2" form={form} set={set} errors={errors} onCepLookup={onCepLookup} cepLoading={cepLoading} onGeocodeLookup={onGeocodeLookup} geocodeLoading={geocodeLoading} />
     </div>
   );
 }

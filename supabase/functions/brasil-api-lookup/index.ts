@@ -26,11 +26,11 @@ Deno.serve(async (req) => {
   try {
     const { type, value } = await req.json();
 
-    if (!type || !value) {
+    if (!type || value === undefined || value === null) {
       return json({ error: "type and value are required" }, 400);
     }
 
-    const digits = value.replace(/\D/g, "");
+    const digits = typeof value === "string" ? value.replace(/\D/g, "") : "";
 
     // ── CNPJ lookup ──
     if (type === "cnpj") {
@@ -100,7 +100,44 @@ Deno.serve(async (req) => {
       return json({ source: "api", data: apiData });
     }
 
-    return json({ error: "type must be 'cnpj' or 'cep'" }, 400);
+    // ── Geocode lookup (Nominatim / OpenStreetMap) ──
+    if (type === "geocode") {
+      const { street, number, city, state } = value as unknown as { street?: string; number?: string; city?: string; state?: string };
+      if (!city) {
+        return json({ error: "city is required for geocoding" }, 400);
+      }
+
+      const parts: string[] = [];
+      if (number && street) parts.push(`${number} ${street}`);
+      else if (street) parts.push(street);
+      parts.push(city);
+      if (state) parts.push(state);
+      parts.push("Brazil");
+
+      const q = encodeURIComponent(parts.join(", "));
+      const nominatimUrl = `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&countrycodes=br`;
+
+      const res = await fetch(nominatimUrl, {
+        headers: { "User-Agent": "WMTi-QueroArmas/1.0" },
+      });
+
+      if (!res.ok) {
+        await logLookup(supabase, "geocode", parts.join(", "), "api_error", `Status: ${res.status}`);
+        return json({ error: "Erro ao buscar geolocalização", data: null }, 200);
+      }
+
+      const results = await res.json();
+      if (!results || results.length === 0) {
+        await logLookup(supabase, "geocode", parts.join(", "), "not_found");
+        return json({ data: null, found: false });
+      }
+
+      const { lat, lon, display_name } = results[0];
+      await logLookup(supabase, "geocode", parts.join(", ").slice(0, 30) + "...", "api_success");
+      return json({ data: { latitude: lat, longitude: lon, display_name }, found: true });
+    }
+
+    return json({ error: "type must be 'cnpj', 'cep', or 'geocode'" }, 400);
   } catch (err) {
     console.error("[brasil-api-lookup] Error:", err);
     return json({ error: "Erro interno ao consultar dados" }, 500);
