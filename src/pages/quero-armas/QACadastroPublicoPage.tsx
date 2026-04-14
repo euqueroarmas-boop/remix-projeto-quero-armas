@@ -100,7 +100,7 @@ function maskDate(v: string) {
   if (d.length <= 4) return d.slice(0, 2) + "/" + d.slice(2);
   return d.slice(0, 2) + "/" + d.slice(2, 4) + "/" + d.slice(4);
 }
-
+function maskCep(v: string) {
   const d = v.replace(/\D/g, "").slice(0, 8);
   if (d.length <= 5) return d;
   return d.slice(0, 5) + "-" + d.slice(5);
