@@ -533,7 +533,7 @@ function Step1({ form, set, errors, onCpfLookup, cpfLooking, cpfFound }: { form:
           )}
         </Field>
         <Field label="RG">
-          <TextInput value={form.rg} onChange={v => set("rg", v.replace(/[^0-9Xx.\-]/g, "").toUpperCase())} placeholder="00.000.000-X" />
+          <TextInput value={form.rg} onChange={v => set("rg", maskRgInput(v))} placeholder="00.000.000-X" maxLength={14} />
         </Field>
         <Field label="Órgão emissor">
           <TextInput value={form.emissor_rg} onChange={v => set("emissor_rg", v)} placeholder="SSP/SP" />

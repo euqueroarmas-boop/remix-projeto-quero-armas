@@ -496,7 +496,7 @@ export default function QAClientesPage() {
                   <Field label="Nome" value={c.nome_completo} />
                   <Field label="CPF" value={formatCpf(c.cpf)} copyable />
                   {cadastro?.senha_gov && <Field label="Senha Gov" value={cadastro.senha_gov} copyable />}
-                  <Field label="RG" value={`${c.rg || "—"} ${c.emissor_rg || ""}`} />
+                  <Field label="RG" value={c.rg ? `${maskRg(c.rg)}${c.emissor_rg ? ` — ${c.emissor_rg}` : ""}` : "—"} />
                   <Field label="Nascimento" value={formatDate(c.data_nascimento)} />
                   <Field label="Naturalidade" value={c.naturalidade} />
                   <Field label="Nacionalidade" value={c.nacionalidade} />
