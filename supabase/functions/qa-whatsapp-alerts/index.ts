@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { buildPendingServicesAlertHtml, buildPendingServicesAlertText } from "../_shared/emailTemplates.ts";
+import { buildPendingServicesAlertText } from "../_shared/emailTemplates.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -41,8 +41,8 @@ async function sendEmail(items: PendingItem[]): Promise<{ ok: boolean; error?: s
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const html = buildPendingServicesAlertHtml({ items });
     const text = buildPendingServicesAlertText({ items });
+    const subject = `Pendências de serviços - Quero Armas (${items.length})`;
 
     const res = await fetch(`${supabaseUrl}/functions/v1/send-smtp-email`, {
       method: "POST",
@@ -52,8 +52,7 @@ async function sendEmail(items: PendingItem[]): Promise<{ ok: boolean; error?: s
       },
       body: JSON.stringify({
         to: ADMIN_EMAIL,
-        subject: `Alerta de serviços pendentes — Quero Armas (${items.length})`,
-        html,
+        subject,
         text,
         trace_id: `qa-alert-${crypto.randomUUID()}`,
       }),
