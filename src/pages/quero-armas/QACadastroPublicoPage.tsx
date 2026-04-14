@@ -111,6 +111,17 @@ function maskCnpj(v: string) {
   return d.slice(0, 2) + "." + d.slice(2, 5) + "." + d.slice(5, 8) + "/" + d.slice(8, 12) + "-" + d.slice(12);
 }
 
+function maskRgInput(v: string): string {
+  const raw = v.toUpperCase().replace(/[^0-9X]/g, "");
+  const hasX = raw.endsWith("X");
+  const digits = raw.replace(/X/g, "");
+  const clean = hasX ? `${digits.slice(0, 8)}X` : digits.slice(0, 9);
+  if (!clean) return "";
+  if (clean.length <= 2) return clean;
+  if (clean.length <= 5) return `${clean.slice(0, 2)}.${clean.slice(2)}`;
+  if (clean.length <= 8) return `${clean.slice(0, 2)}.${clean.slice(2, 5)}.${clean.slice(5)}`;
+  return `${clean.slice(0, 2)}.${clean.slice(2, 5)}.${clean.slice(5, 8)}-${clean.slice(8)}`;
+}
 function validateCpf(cpf: string): boolean {
   const d = cpf.replace(/\D/g, "");
   if (d.length !== 11 || /^(\d)\1{10}$/.test(d)) return false;
@@ -533,7 +544,7 @@ function Step1({ form, set, errors, onCpfLookup, cpfLooking, cpfFound }: { form:
           )}
         </Field>
         <Field label="RG">
-          <TextInput value={form.rg} onChange={v => set("rg", v.replace(/[^0-9Xx.\-]/g, "").toUpperCase())} placeholder="00.000.000-X" />
+          <TextInput value={form.rg} onChange={v => set("rg", maskRgInput(v))} placeholder="00.000.000-X" maxLength={14} />
         </Field>
         <Field label="Órgão emissor">
           <TextInput value={form.emissor_rg} onChange={v => set("emissor_rg", v)} placeholder="SSP/SP" />
