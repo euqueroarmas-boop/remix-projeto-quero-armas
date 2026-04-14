@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   AlertTriangle, Clock, CheckCircle, TrendingUp, Users, FileText,
-  BarChart3, PieChart as PieChartIcon, Bell, RefreshCw, ChevronDown, ChevronUp, Save, X, Mail,
+  BarChart3, PieChart as PieChartIcon, Bell, RefreshCw, ChevronDown, ChevronUp, Save, X, Mail, Search,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -43,6 +43,8 @@ interface Cliente {
   id: number;
   nome_completo: string;
   celular: string | null;
+  email: string | null;
+  cpf: string | null;
 }
 
 interface Servico {
@@ -54,6 +56,8 @@ interface PendingItem {
   itemId: number;
   clienteNome: string;
   clienteCelular: string | null;
+  clienteEmail: string | null;
+  clienteCpf: string | null;
   servicoNome: string;
   status: string;
   dataCadastro: string;
@@ -120,13 +124,14 @@ export default function QARelatoriosPage() {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState("");
 
   const load = async () => {
     setLoading(true);
     const [iRes, vRes, cRes, sRes] = await Promise.all([
       supabase.from("qa_itens_venda" as any).select("*"),
       supabase.from("qa_vendas" as any).select("*"),
-      supabase.from("qa_clientes" as any).select("id, nome_completo, celular"),
+      supabase.from("qa_clientes" as any).select("id, nome_completo, celular, email, cpf"),
       supabase.from("qa_servicos" as any).select("id, nome_servico"),
     ]);
     setItens((iRes.data as any[]) || []);
@@ -156,6 +161,8 @@ export default function QARelatoriosPage() {
           itemId: item.id,
           clienteNome: cliente?.nome_completo || "—",
           clienteCelular: cliente?.celular || null,
+          clienteEmail: cliente?.email || null,
+          clienteCpf: cliente?.cpf || null,
           servicoNome: servico?.nome_servico || `Serviço #${item.servico_id || "?"}`,
           status: item.status || "Sem status",
           dataCadastro,
@@ -166,6 +173,19 @@ export default function QARelatoriosPage() {
       .filter(Boolean)
       .sort((a, b) => b!.diasPendente - a!.diasPendente) as PendingItem[];
   }, [itens, vendaMap, clienteMap, servicoMap]);
+
+  const filteredPendingItems = useMemo(() => {
+    if (!search.trim()) return pendingItems;
+    const s = search.toLowerCase().replace(/[.\-\/]/g, "");
+    return pendingItems.filter(item => {
+      const nome = (item.clienteNome || "").toLowerCase();
+      const email = (item.clienteEmail || "").toLowerCase();
+      const celular = (item.clienteCelular || "").replace(/\D/g, "");
+      const cpf = (item.clienteCpf || "").replace(/\D/g, "");
+      const servico = (item.servicoNome || "").toLowerCase();
+      return nome.includes(s) || email.includes(s) || celular.includes(s) || cpf.includes(s) || servico.includes(s);
+    });
+  }, [pendingItems, search]);
 
   const handleExpand = useCallback((itemId: number) => {
     if (expandedId === itemId) {
@@ -400,13 +420,35 @@ export default function QARelatoriosPage() {
 
       {tab === "pendentes" && (
         <div className="space-y-2">
-          <div className="flex flex-wrap gap-3 text-[10px]">
-            {Object.entries(URGENCY_CONFIG).map(([key, cfg]) => (
-              <div key={key} className="flex items-center gap-1.5">
-                <div className={`w-2 h-2 rounded-full ${cfg.dot}`} />
-                <span className={cfg.text}>{cfg.label}</span>
-              </div>
-            ))}
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-600" />
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Buscar por nome, CPF, e-mail, telefone ou serviço..."
+              className="w-full bg-[#0d0d0d] border border-[#1c1c1c] rounded-lg pl-9 pr-3 py-2 text-xs text-neutral-200 placeholder:text-neutral-600 focus:outline-none focus:border-[#7a1528] transition-colors"
+            />
+            {search && (
+              <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-600 hover:text-neutral-300">
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap gap-3 text-[10px]">
+              {Object.entries(URGENCY_CONFIG).map(([key, cfg]) => (
+                <div key={key} className="flex items-center gap-1.5">
+                  <div className={`w-2 h-2 rounded-full ${cfg.dot}`} />
+                  <span className={cfg.text}>{cfg.label}</span>
+                </div>
+              ))}
+            </div>
+            {search && (
+              <span className="text-[10px] text-neutral-500">{filteredPendingItems.length} resultado(s)</span>
+            )}
           </div>
 
           <div className="bg-[#0d0d0d] border border-[#1c1c1c] rounded-lg overflow-hidden">
@@ -418,10 +460,10 @@ export default function QARelatoriosPage() {
               <span className="text-center">Urgência</span>
             </div>
             <div className="max-h-[600px] overflow-y-auto">
-              {pendingItems.length === 0 ? (
-                <div className="p-8 text-center text-neutral-600 text-sm">Nenhum serviço pendente 🎉</div>
+              {filteredPendingItems.length === 0 ? (
+                <div className="p-8 text-center text-neutral-600 text-sm">{search ? "Nenhum resultado encontrado" : "Nenhum serviço pendente 🎉"}</div>
               ) : (
-                pendingItems.map(item => {
+                filteredPendingItems.map(item => {
                   const cfg = URGENCY_CONFIG[item.urgency];
                   const isExpanded = expandedId === item.itemId;
                   return (
