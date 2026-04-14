@@ -244,7 +244,7 @@ export default function QACadastroPublicoPage() {
         
         const addr = [data.logradouro, data.numero, data.complemento, data.bairro, data.municipio, data.uf].filter(Boolean).join(", ");
         set("emp_endereco", addr);
-        set("emp_telefone", data.ddd_telefone_1 || "");
+        set("emp_telefone", data.ddd_telefone_1 ? maskPhone(data.ddd_telefone_1) : "");
       } else {
         set("trab_nome_empresa", data.razao_social || "");
         const addr = [data.logradouro, data.numero, data.bairro, data.municipio, data.uf].filter(Boolean).join(", ");
@@ -790,7 +790,7 @@ function Step4({ form, set, errors, onCnpjLookup, cnpjLoading }: any) {
               </Field>
             </div>
             <Field label="Telefone da empresa">
-              <TextInput value={form.emp_telefone} onChange={v => set("emp_telefone", v)} placeholder="Telefone" />
+              <TextInput value={form.emp_telefone} onChange={v => set("emp_telefone", maskPhone(v))} placeholder="(00) 00000-0000" />
             </Field>
             <Field label="E-mail da empresa">
               <TextInput value={form.emp_email} onChange={v => set("emp_email", v)} placeholder="email@empresa.com" type="email" />
