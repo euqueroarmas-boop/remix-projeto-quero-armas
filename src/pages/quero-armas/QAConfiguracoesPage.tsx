@@ -204,7 +204,7 @@ export default function QAConfiguracoesPage() {
           )}
 
           {/* Services list */}
-          <div className="space-y-0.5 max-h-[300px] overflow-y-auto">
+          <div className="space-y-0.5">
             {servicos.map(svc => (
               <div key={svc.id} className="flex items-center gap-2 rounded px-2 py-1.5 text-[11px] hover:bg-[#0a0a0a] transition-colors group">
                 {editingId === svc.id ? (
