@@ -532,7 +532,7 @@ export default function QABaseConhecimentoPage() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-base font-semibold text-slate-700">Base de Conhecimento</h1>
-          <p className="text-sm text-slate-500 mt-1">Documentos que alimentam a IA jurídica</p>
+          <p className="text-sm text-slate-500 mt-1">Leis, decretos e petições aprovadas que alimentam a IA jurídica</p>
         </div>
         <div className="flex gap-2 flex-wrap">
           <Button variant="outline" onClick={() => setShowLinkDialog(true)} className="border-blue-600/40 text-blue-400 hover:bg-blue-500/10 gap-1.5">
