@@ -630,9 +630,10 @@ export default function QAClientesPage() {
                   </Section>
                 )}
                 {c.observacao && (
-                  <Section title="Observações">
-                    <div className="text-[10px] text-slate-600 whitespace-pre-wrap bg-white rounded-lg p-2.5 border border-slate-200">{c.observacao}</div>
-                  </Section>
+                  <div className="bg-white border border-slate-200 rounded-xl p-4 md:p-5">
+                    <div className="text-[11px] uppercase tracking-[0.14em] mb-3 font-bold" style={{ color: "hsl(220 65% 48%)" }}>Observações</div>
+                    <div className="text-[12px] text-slate-600 whitespace-pre-wrap leading-relaxed">{c.observacao}</div>
+                  </div>
                 )}
                 <Section title="Filiações a Clubes">
                   <div className="flex items-center justify-end mb-1">
