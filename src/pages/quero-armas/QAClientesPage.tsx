@@ -16,6 +16,13 @@ import ClienteFormModal from "@/components/quero-armas/clientes/ClienteFormModal
 import { CrafModal, GteModal, CrModal, VendaModal, FiliacaoModal, DeleteConfirm } from "@/components/quero-armas/clientes/SubEntityModals";
 import { exportClientes, exportCrafs, exportGtes, exportCr, exportVendas } from "@/components/quero-armas/clientes/ClienteExport";
 
+const formatCpf = (v: string | null | undefined): string => {
+  if (!v) return "—";
+  const d = v.replace(/\D/g, "");
+  if (d.length !== 11) return v;
+  return d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+};
+
 interface Cliente {
   id: number; id_legado: number; nome_completo: string; cpf: string; rg: string; emissor_rg: string;
   data_nascimento: string; naturalidade: string; nacionalidade: string; nome_mae: string; nome_pai: string;
@@ -429,7 +436,7 @@ export default function QAClientesPage() {
             <div className="flex items-center gap-2 text-xs">
               <span className={statusColor(c.status)}>{c.status}</span>
               <span className="text-slate-300">•</span>
-              <span className="text-slate-500">CPF: {c.cpf || "—"}</span>
+              <span className="text-slate-500">CPF: {formatCpf(c.cpf)}</span>
               {c.cliente_lions && <span className="text-amber-500">🦁 Lions</span>}
             </div>
           </div>
@@ -465,7 +472,7 @@ export default function QAClientesPage() {
               <TabsContent value="dados" className="mt-3 space-y-4">
                 <Section title="Identificação">
                   <Field label="Nome" value={c.nome_completo} />
-                  <Field label="CPF" value={c.cpf} copyable />
+                  <Field label="CPF" value={formatCpf(c.cpf)} copyable />
                   {cadastro?.senha_gov && <Field label="Senha Gov" value={cadastro.senha_gov} copyable />}
                   <Field label="RG" value={`${c.rg || "—"} ${c.emissor_rg || ""}`} />
                   <Field label="Nascimento" value={formatDate(c.data_nascimento)} />
@@ -805,7 +812,7 @@ export default function QAClientesPage() {
               <span className={`text-[11px] px-2.5 py-0.5 rounded-full font-semibold ${cadastroStatusColor(c.status)}`}>
                 {c.status}
               </span>
-              <span className="text-xs" style={{ color: "hsl(220 10% 55%)" }}>CPF: {c.cpf || "—"}</span>
+              <span className="text-xs" style={{ color: "hsl(220 10% 55%)" }}>CPF: {formatCpf(c.cpf)}</span>
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0 flex-wrap">
@@ -890,7 +897,7 @@ export default function QAClientesPage() {
           <DetailCard title="Identificação">
             <DetailGrid>
               <EditableField label="Nome" fieldKey="nome_completo" value={c.nome_completo} />
-              <EditableField label="CPF" fieldKey="cpf" value={c.cpf} copyable />
+              <EditableField label="CPF" fieldKey="cpf" value={formatCpf(c.cpf)} copyable />
               <EditableField label="RG" fieldKey="rg" value={c.rg ? `${c.rg}${c.emissor_rg ? ` — ${c.emissor_rg}` : ""}` : null} />
               <EditableField label="Nascimento" fieldKey="data_nascimento" value={c.data_nascimento} />
               <EditableField label="Estado Civil" fieldKey="estado_civil" value={c.estado_civil} />
@@ -1102,7 +1109,7 @@ export default function QAClientesPage() {
               <div className="flex-1 min-w-0">
                 <div className="text-[13px] font-medium truncate" style={{ color: "hsl(220 20% 18%)" }}>{c.nome_completo}</div>
                 <div className="flex items-center gap-2 text-[11px]" style={{ color: "hsl(220 10% 55%)" }}>
-                  <span>{c.cpf || "—"}</span>
+                   <span>{formatCpf(c.cpf)}</span>
                   <span>•</span>
                   <span>{c.celular || "—"}</span>
                   <span>•</span>
@@ -1135,7 +1142,7 @@ export default function QAClientesPage() {
               <div className="flex-1 min-w-0">
                 <div className="text-[13px] font-medium truncate" style={{ color: "hsl(220 20% 18%)" }}>{c.nome_completo}</div>
                 <div className="flex items-center gap-2 text-[11px] flex-wrap" style={{ color: "hsl(220 10% 55%)" }}>
-                  <span>{c.cpf || "—"}</span>
+                  <span>{formatCpf(c.cpf)}</span>
                   <span>•</span>
                   <span>{c.telefone_principal || "—"}</span>
                   <span>•</span>
