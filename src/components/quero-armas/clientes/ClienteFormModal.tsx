@@ -86,7 +86,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
 
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-[#0e0e0e] border-[#1c1c1c] text-neutral-200">
+      <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto bg-[#0e0e0e] border-[#1c1c1c] text-neutral-200">
         <DialogHeader>
           <DialogTitle className="text-sm text-neutral-100">{isEdit ? "Editar Cliente" : "Novo Cliente"}</DialogTitle>
         </DialogHeader>
@@ -147,16 +147,16 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
           <Sec title="Endereço Principal">
             <Row>
               <F label="Logradouro" value={f.endereco} onChange={v => set("endereco", v)} />
-              <F label="Número" value={f.numero} onChange={v => set("numero", v)} className="max-w-[80px]" />
+              <F label="Número" value={f.numero} onChange={v => set("numero", v)} className="sm:max-w-[80px]" />
             </Row>
             <Row>
               <F label="Complemento" value={f.complemento} onChange={v => set("complemento", v)} />
               <F label="Bairro" value={f.bairro} onChange={v => set("bairro", v)} />
             </Row>
             <Row>
-              <F label="CEP" value={f.cep} onChange={v => set("cep", v)} className="max-w-[120px]" />
+              <F label="CEP" value={f.cep} onChange={v => set("cep", v)} className="sm:max-w-[120px]" />
               <F label="Cidade" value={f.cidade} onChange={v => set("cidade", v)} />
-              <div className="flex-1 max-w-[80px]">
+              <div className="flex-1 sm:max-w-[80px]">
                 <label className="text-[9px] text-neutral-500 uppercase tracking-wider mb-1 block">UF</label>
                 <Select value={f.estado} onValueChange={v => set("estado", v)}>
                   <SelectTrigger className="h-7 text-[11px] bg-[#0a0a0a] border-[#1c1c1c]"><SelectValue placeholder="UF" /></SelectTrigger>
@@ -170,12 +170,12 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
           <Sec title="Endereço Secundário (opcional)">
             <Row>
               <F label="Logradouro" value={f.endereco2} onChange={v => set("endereco2", v)} />
-              <F label="Número" value={f.numero2} onChange={v => set("numero2", v)} className="max-w-[80px]" />
+              <F label="Número" value={f.numero2} onChange={v => set("numero2", v)} className="sm:max-w-[80px]" />
             </Row>
             <Row>
               <F label="Bairro" value={f.bairro2} onChange={v => set("bairro2", v)} />
               <F label="Cidade" value={f.cidade2} onChange={v => set("cidade2", v)} />
-              <div className="flex-1 max-w-[80px]">
+              <div className="flex-1 sm:max-w-[80px]">
                 <label className="text-[9px] text-neutral-500 uppercase tracking-wider mb-1 block">UF</label>
                 <Select value={f.estado2} onValueChange={v => set("estado2", v)}>
                   <SelectTrigger className="h-7 text-[11px] bg-[#0a0a0a] border-[#1c1c1c]"><SelectValue placeholder="UF" /></SelectTrigger>
@@ -235,7 +235,7 @@ function Sec({ title, children }: { title: string; children: React.ReactNode }) 
 }
 
 function Row({ children }: { children: React.ReactNode }) {
-  return <div className="flex gap-2">{children}</div>;
+  return <div className="flex flex-col sm:flex-row gap-2">{children}</div>;
 }
 
 function F({ label, value, onChange, type = "text", className = "" }: { label: string; value: string; onChange: (v: string) => void; type?: string; className?: string }) {
