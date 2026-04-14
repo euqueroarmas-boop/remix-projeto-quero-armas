@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
 import {
-  FormCard, FormHeader, SectionHeader, FormGrid,
+  FormCard, SectionHeader, FormGrid,
   FormInput, FormSelect, FormTextarea, FormActions, FormCheckbox,
 } from "@/components/admin/ui/AdminFormPrimitives";
 
@@ -95,15 +95,15 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
 
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="w-[96vw] max-w-4xl max-h-[92vh] overflow-y-auto bg-[#080808] border-[#1a1a1a] p-3 sm:p-5 md:p-6 rounded-xl">
-        <FormCard>
-          <FormHeader
-            title={isEdit ? "Editar Cliente" : "Novo Cliente"}
-            subtitle="Preencha os dados cadastrais do cliente"
-          />
+      <DialogContent className="w-[96vw] max-w-4xl max-h-[92vh] overflow-y-auto p-5 sm:p-8">
+        <DialogHeader>
+          <DialogTitle>{isEdit ? "Editar Cliente" : "Novo Cliente"}</DialogTitle>
+          <DialogDescription>Preencha os dados cadastrais do cliente</DialogDescription>
+        </DialogHeader>
 
+        <FormCard>
           {/* ── Identificação ── */}
-          <SectionHeader title="Identificação" className="pt-0" />
+          <SectionHeader title="Identificação" className="pt-2" />
           <FormGrid>
             <FormInput label="Nome Completo *" value={f.nome_completo} onChange={v => set("nome_completo", v)} span="full" />
             <FormInput label="CPF" value={f.cpf} onChange={v => set("cpf", v)} />
@@ -175,19 +175,11 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
 
           {/* ── Actions ── */}
           <FormActions>
-            <Button
-              variant="ghost"
-              onClick={onClose}
-              className="h-9 px-5 text-xs text-neutral-400 hover:text-neutral-200 hover:bg-[#1a1a1a] rounded-md"
-            >
+            <Button variant="outline" onClick={onClose}>
               Cancelar
             </Button>
-            <Button
-              onClick={save}
-              disabled={saving}
-              className="h-9 px-6 text-xs bg-[#7a1528] hover:bg-[#9a1b32] text-white rounded-md font-medium transition-colors"
-            >
-              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <Save className="h-3.5 w-3.5 mr-1.5" />}
+            <Button onClick={save} disabled={saving}>
+              {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
               {isEdit ? "Salvar Alterações" : "Cadastrar Cliente"}
             </Button>
           </FormActions>
