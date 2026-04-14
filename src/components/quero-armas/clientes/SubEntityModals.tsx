@@ -489,9 +489,9 @@ export function DeleteConfirm({ open, onClose, onConfirm, title, description, lo
 // ─── Shared ───
 function Inp({ label, value, onChange, type = "text" }: { label: string; value: string; onChange: (v: string) => void; type?: string }) {
   return (
-    <div className="flex-1">
+    <div>
       <label className="text-[9px] text-neutral-500 uppercase tracking-wider mb-1 block">{label}</label>
-      <Input type={type} value={value} onChange={e => onChange(e.target.value)} className="h-7 text-[11px] bg-[#0a0a0a] border-[#1c1c1c] text-neutral-200" />
+      <Input type={type} value={value} onChange={e => onChange(e.target.value)} className="h-8 text-[11px] bg-[#111] border-[#1a1a1a] text-neutral-200 rounded-md" />
     </div>
   );
 }
