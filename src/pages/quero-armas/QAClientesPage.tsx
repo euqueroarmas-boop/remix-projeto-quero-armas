@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Search, User, Phone, Mail, MapPin, FileText, Shield, ChevronLeft,
   Loader2, Eye, Plus, Crosshair, Edit, Trash2, Download, FileDown,
@@ -268,9 +269,26 @@ export default function QAClientesPage() {
                           </div>
                           <div className="px-3 py-2 space-y-1.5">
                             {vItens.map((it: any) => (
-                              <div key={it.id} className="flex items-center justify-between text-[10px]">
+                              <div key={it.id} className="flex items-center justify-between text-[10px] gap-1">
                                 <div className="flex items-center gap-2 flex-1 min-w-0">
-                                  <span className={`px-1.5 py-0.5 rounded text-[9px] font-mono ${svcStatusColor(it.status)}`}>{it.status}</span>
+                                  <Select
+                                    value={it.status || "EM ANÁLISE"}
+                                    onValueChange={async (newStatus) => {
+                                      const { error } = await supabase.from("qa_itens_venda" as any).update({ status: newStatus }).eq("id", it.id);
+                                      if (error) { toast.error(error.message); return; }
+                                      setItens(prev => prev.map((i: any) => i.id === it.id ? { ...i, status: newStatus } : i));
+                                      toast.success(`Status → ${newStatus}`);
+                                    }}
+                                  >
+                                    <SelectTrigger className={`h-5 w-auto min-w-0 px-1.5 text-[9px] font-mono border-0 bg-transparent gap-0.5 ${svcStatusColor(it.status)}`}>
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {["EM ANÁLISE", "PRONTO PARA ANÁLISE", "À INICIAR", "DEFERIDO", "INDEFERIDO", "CONCLUÍDO"].map(s => (
+                                        <SelectItem key={s} value={s} className="text-[10px]">{s}</SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
                                   <span className="text-neutral-300 truncate">{getServicoNome(it.servico_id)}</span>
                                 </div>
                                 <div className="flex items-center gap-3 shrink-0">
