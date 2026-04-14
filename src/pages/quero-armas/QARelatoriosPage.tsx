@@ -161,6 +161,8 @@ export default function QARelatoriosPage() {
           itemId: item.id,
           clienteNome: cliente?.nome_completo || "—",
           clienteCelular: cliente?.celular || null,
+          clienteEmail: cliente?.email || null,
+          clienteCpf: cliente?.cpf || null,
           servicoNome: servico?.nome_servico || `Serviço #${item.servico_id || "?"}`,
           status: item.status || "Sem status",
           dataCadastro,
