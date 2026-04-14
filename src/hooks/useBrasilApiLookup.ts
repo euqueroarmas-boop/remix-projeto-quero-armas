@@ -26,6 +26,7 @@ interface CepData {
 export function useBrasilApiLookup() {
   const [cnpjLoading, setCnpjLoading] = useState(false);
   const [cepLoading, setCepLoading] = useState(false);
+  const [geocodeLoading, setGeocodeLoading] = useState(false);
 
   const lookupCnpj = useCallback(async (cnpj: string): Promise<CnpjData | null> => {
     const digits = cnpj.replace(/\D/g, "");
@@ -65,5 +66,23 @@ export function useBrasilApiLookup() {
     }
   }, []);
 
-  return { lookupCnpj, lookupCep, cnpjLoading, cepLoading };
+  const lookupGeocode = useCallback(async (params: { street?: string; number?: string; city?: string; state?: string }): Promise<{ latitude: string; longitude: string } | null> => {
+    if (!params.city) return null;
+
+    setGeocodeLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("brasil-api-lookup", {
+        body: { type: "geocode", value: params },
+      });
+
+      if (error || !data?.data || !data?.found) return null;
+      return { latitude: data.data.latitude, longitude: data.data.longitude };
+    } catch {
+      return null;
+    } finally {
+      setGeocodeLoading(false);
+    }
+  }, []);
+
+  return { lookupCnpj, lookupCep, lookupGeocode, cnpjLoading, cepLoading, geocodeLoading };
 }
