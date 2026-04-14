@@ -330,7 +330,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
             </div>
             <div className="flex justify-between items-center">
               <span className="text-neutral-500">Desconto</span>
-              <Input type="number" value={f.desconto} onChange={e => setF(p => ({ ...p, desconto: e.target.value }))} className="h-5 w-16 text-[10px] text-right bg-[#0a0a0a] border-[#1c1c1c] text-neutral-200 px-1" />
+              <Input type="number" value={f.desconto} onChange={e => setF(p => ({ ...p, desconto: e.target.value }))} className="h-5 w-16 text-[10px] text-right bg-[#0a0a0a] border-[#1c1c1c] text-neutral-200 px-1 focus-visible:ring-0 focus-visible:ring-offset-0" />
             </div>
             <div className="flex justify-between pt-1 border-t border-[#1c1c1c]">
               <span className="text-neutral-200 font-semibold">Total</span>
