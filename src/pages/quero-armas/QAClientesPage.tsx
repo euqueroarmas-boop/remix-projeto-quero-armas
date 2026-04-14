@@ -889,6 +889,7 @@ export default function QAClientesPage() {
             <DetailGrid>
               <EditableField label="Nome" fieldKey="nome_completo" value={c.nome_completo} />
               <EditableField label="CPF" fieldKey="cpf" value={c.cpf} copyable />
+              <EditableField label="RG" fieldKey="rg" value={c.rg ? `${c.rg}${c.emissor_rg ? ` — ${c.emissor_rg}` : ""}` : null} />
               <EditableField label="Nascimento" fieldKey="data_nascimento" value={c.data_nascimento} />
               <EditableField label="Estado Civil" fieldKey="estado_civil" value={c.estado_civil} />
               <EditableField label="Nacionalidade" fieldKey="nacionalidade" value={c.nacionalidade} />
