@@ -23,6 +23,7 @@ const CadastroSchema = z.object({
   telefone_secundario: z.string().max(20).optional().nullable(),
   email: z.string().email().max(255),
   nome_mae: z.string().max(200).optional().nullable(),
+  nome_pai: z.string().max(200).optional().nullable(),
   estado_civil: z.string().max(30).optional().nullable(),
   nacionalidade: z.string().max(60).optional().nullable(),
   profissao: z.string().max(100).optional().nullable(),
@@ -112,7 +113,7 @@ Deno.serve(async (req) => {
       }
       const { data: cliente } = await supabase
         .from("qa_clientes")
-        .select("nome_completo, cpf, data_nascimento, celular, email, nome_mae, estado_civil, nacionalidade, profissao, observacao, endereco, numero, complemento, bairro, cep, cidade, estado, geolocalizacao, endereco2, numero2, complemento2, bairro2, cep2, cidade2, estado2, geolocalizacao2")
+        .select("nome_completo, cpf, data_nascimento, celular, email, nome_mae, nome_pai, estado_civil, nacionalidade, profissao, observacao, endereco, numero, complemento, bairro, cep, cidade, estado, geolocalizacao, endereco2, numero2, complemento2, bairro2, cep2, cidade2, estado2, geolocalizacao2")
         .eq("cpf", cpfDigits)
         .eq("excluido", false)
         .maybeSingle();
