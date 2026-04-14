@@ -87,7 +87,7 @@ export default function QADashboardPage() {
 
   useEffect(() => {
     const load = async () => {
-      const [d, n, j, p, pend, erros, c, apr, ref, rasc, rPecas, rDocs] = await Promise.all([
+      const [d, n, j, p, pend, erros, c, apr, ref, rasc, rPecas, rDocs, cadastrosCount, cadastrosRecent] = await Promise.all([
         supabase.from("qa_documentos_conhecimento" as any).select("id", { count: "exact", head: true }).eq("ativo", true),
         supabase.from("qa_fontes_normativas" as any).select("id", { count: "exact", head: true }),
         supabase.from("qa_jurisprudencias" as any).select("id", { count: "exact", head: true }),
@@ -100,13 +100,16 @@ export default function QADashboardPage() {
         supabase.from("qa_geracoes_pecas" as any).select("id", { count: "exact", head: true }).eq("status_revisao", "rascunho"),
         supabase.from("qa_geracoes_pecas" as any).select("id, titulo_geracao, tipo_peca, created_at, status_revisao").order("created_at", { ascending: false }).limit(6),
         supabase.from("qa_documentos_conhecimento" as any).select("id, titulo, tipo_documento, created_at, status_processamento").eq("ativo", true).order("created_at", { ascending: false }).limit(6),
+        supabase.from("qa_cadastro_publico" as any).select("id", { count: "exact", head: true }),
+        supabase.from("qa_cadastro_publico" as any).select("id, nome_completo, cpf, telefone_principal, email, end1_cidade, end1_estado, servico_interesse, status, created_at").order("created_at", { ascending: false }).limit(8),
       ]);
       setStats({
         documentos: d.count ?? 0, normas: n.count ?? 0, jurisprudencias: j.count ?? 0,
         pecas: p.count ?? 0, pendentes: pend.count ?? 0, erros: erros.count ?? 0,
         consultas: c.count ?? 0, aprovadas: apr.count ?? 0, referencias: ref.count ?? 0,
-        rascunhos: rasc.count ?? 0,
+        rascunhos: rasc.count ?? 0, novosCadastros: cadastrosCount.count ?? 0,
       });
+      setNovosCadastros((cadastrosRecent.data as any[]) ?? []);
       setRecentPecas((rPecas.data as any[] ?? []).map((r: any) => ({
         id: r.id, titulo: r.titulo_geracao || "Sem título",
         tipo: r.tipo_peca, created_at: r.created_at, status: r.status_revisao,
