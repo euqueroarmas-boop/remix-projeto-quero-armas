@@ -508,16 +508,16 @@ export default function QABaseConhecimentoPage() {
 
   const statusLabel = (s: string) => {
     const stage = getStageInfo(s);
-    if (s === "concluido") return { text: "Concluído", cls: "bg-emerald-500/10 text-emerald-400" };
-    if (s === "texto_invalido") return { text: "Texto Inválido", cls: "bg-orange-500/10 text-orange-400" };
-    if (s === "erro") return { text: "Falhou", cls: "bg-red-500/10 text-red-400" };
-    if (s !== "pendente" && !TERMINAL.includes(s)) return { text: stage.label, cls: "bg-blue-500/10 text-blue-400" };
-    return { text: "Pendente", cls: "bg-slate-100 text-slate-600" };
+    if (s === "concluido") return { text: "Concluído", cls: "bg-emerald-50 text-emerald-700" };
+    if (s === "texto_invalido") return { text: "Texto Inválido", cls: "bg-orange-50 text-orange-600" };
+    if (s === "erro") return { text: "Falhou", cls: "bg-red-50 text-red-600" };
+    if (s !== "pendente" && !TERMINAL.includes(s)) return { text: stage.label, cls: "bg-blue-50 text-blue-600" };
+    return { text: "Pendente", cls: "bg-slate-100 text-slate-500" };
   };
 
   const origemIcon = (t: string) => {
-    if (t === "link_publico") return <Globe className="h-3 w-3 text-blue-400" />;
-    return <Upload className="h-3 w-3 text-slate-500" />;
+    if (t === "link_publico") return <Globe className="h-3 w-3" style={{ color: "hsl(230 80% 56%)" }} />;
+    return <Upload className="h-3 w-3" style={{ color: "hsl(220 10% 62%)" }} />;
   };
 
   // Dashboard stats
