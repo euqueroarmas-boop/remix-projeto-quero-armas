@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 
 /* ─────────── shared field height ─────────── */
-const fieldH = "h-9";
+const fieldH = "h-9 min-h-9 max-h-9 py-0";
 
 /* ── FormCard ── */
 export function FormCard({ children, className }: { children: React.ReactNode; className?: string }) {
