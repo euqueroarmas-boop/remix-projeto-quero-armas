@@ -2053,6 +2053,7 @@ export type Database = {
           processado_em: string | null
           processado_por: string | null
           profissao: string | null
+          servico_interesse: string | null
           status: string
           telefone_principal: string
           telefone_secundario: string | null
@@ -2126,6 +2127,7 @@ export type Database = {
           processado_em?: string | null
           processado_por?: string | null
           profissao?: string | null
+          servico_interesse?: string | null
           status?: string
           telefone_principal: string
           telefone_secundario?: string | null
@@ -2199,6 +2201,7 @@ export type Database = {
           processado_em?: string | null
           processado_por?: string | null
           profissao?: string | null
+          servico_interesse?: string | null
           status?: string
           telefone_principal?: string
           telefone_secundario?: string | null
