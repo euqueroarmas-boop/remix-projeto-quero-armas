@@ -685,11 +685,10 @@ function Step3({ form, set, errors, onCepLookup, cepLoading }: any) {
 /* ── Step 4: Vínculo Profissional ── */
 function Step4({ form, set, errors, onCnpjLookup, cnpjLoading }: any) {
   const vinculos = [
-    { value: "proprietario", label: "Sou proprietário de empresa" },
-    { value: "socio", label: "Sou sócio de empresa" },
+    { value: "proprietario", label: "Sou proprietário / sócio de empresa" },
     { value: "registrado", label: "Trabalho registrado / carteira assinada" },
     { value: "autonomo", label: "Sou autônomo" },
-    { value: "nenhum", label: "Não possuo vínculo empresarial no momento" },
+    { value: "nenhum", label: "Não possuo vínculo profissional no momento" },
   ];
 
   return (
