@@ -450,10 +450,10 @@ export default function QARelatoriosPage() {
                                   </select>
                                 ) : (
                                   <input
-                                    type={field.type}
+                                    type="text"
                                     value={editForm[field.key] || ""}
                                     onChange={e => setEditForm(prev => ({ ...prev, [field.key]: e.target.value }))}
-                                    placeholder={field.type === "date" ? "AAAA-MM-DD" : "—"}
+                                    placeholder={field.type === "date" ? "DD/MM/AAAA" : "—"}
                                     className={inputClass}
                                   />
                                 )}
