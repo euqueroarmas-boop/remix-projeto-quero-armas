@@ -736,28 +736,9 @@ export default function QABaseConhecimentoPage() {
             <DialogTitle className="text-slate-700 flex items-center gap-2"><Link2 className="h-5 w-5 text-blue-400" /> Importar por Link Público</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            {/* Papel do documento — choice first */}
-            <div>
-              <Label className="text-slate-700 text-xs">Este documento será usado como: *</Label>
-              <Select value={linkPapel} onValueChange={(v: "aprendizado" | "auxiliar_caso") => setLinkPapel(v)}>
-                <SelectTrigger className="bg-white border-slate-200 text-slate-700 mt-1"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="aprendizado">Base de aprendizado / modelo</SelectItem>
-                  <SelectItem value="auxiliar_caso">Documento auxiliar do caso concreto</SelectItem>
-                </SelectContent>
-              </Select>
-              {linkPapel === "auxiliar_caso" && (
-                <p className="text-[10px] text-[#c43b52]/80 mt-1 bg-[#7a1528]/5 rounded px-2 py-1 border border-[#a52338]/10">
-                  Este documento será usado apenas como suporte factual do caso e não alimentará o aprendizado global da IA.
-                </p>
-              )}
-            </div>
-            {linkPapel === "auxiliar_caso" && (
-              <div>
-                <Label className="text-slate-700 text-xs">Identificador do caso *</Label>
-                <Input value={linkCasoId} onChange={e => setLinkCasoId(e.target.value)} placeholder="Ex: caso-joao-silva-2026" className="bg-white border-slate-200 text-slate-700 mt-1" />
-              </div>
-            )}
+            <p className="text-[10px] text-emerald-600 bg-emerald-50 rounded px-2 py-1.5 border border-emerald-200">
+              ⚠️ Esta base é exclusiva para conhecimento jurídico (leis, decretos, petições aprovadas). Documentos de clientes devem ser anexados diretamente no caso.
+            </p>
             <div>
               <Label className="text-slate-700 text-xs">URL pública *</Label>
               <Input value={linkUrl} onChange={e => setLinkUrl(e.target.value)} placeholder="https://www.planalto.gov.br/ccivil_03/leis/..." className="bg-white border-slate-200 text-slate-700 mt-1" />
@@ -772,7 +753,7 @@ export default function QABaseConhecimentoPage() {
               <Select value={linkTipo} onValueChange={setLinkTipo}>
                 <SelectTrigger className="bg-white border-slate-200 text-slate-700 mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {(linkPapel === "auxiliar_caso" ? TIPOS_AUXILIAR : TIPOS_DOC).map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                  {TIPOS_DOC.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
