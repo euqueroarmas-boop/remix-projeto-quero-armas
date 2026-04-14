@@ -23,6 +23,22 @@ const formatCpf = (v: string | null | undefined): string => {
   return d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
 };
 
+const normalizeRgInput = (v: string | null | undefined): string => {
+  const raw = (v ?? "").toUpperCase().replace(/[^0-9X]/g, "");
+  const hasVerifierX = raw.endsWith("X");
+  const digits = raw.replace(/X/g, "");
+  return hasVerifierX ? `${digits.slice(0, 8)}X` : digits.slice(0, 9);
+};
+
+const maskRg = (v: string | null | undefined): string => {
+  const d = normalizeRgInput(v);
+  if (!d) return "";
+  if (d.length <= 2) return d;
+  if (d.length <= 5) return `${d.slice(0, 2)}.${d.slice(2)}`;
+  if (d.length <= 8) return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5)}`;
+  return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}-${d.slice(8)}`;
+};
+
 interface Cliente {
   id: number; id_legado: number; nome_completo: string; cpf: string; rg: string; emissor_rg: string;
   data_nascimento: string; naturalidade: string; nacionalidade: string; nome_mae: string; nome_pai: string;
