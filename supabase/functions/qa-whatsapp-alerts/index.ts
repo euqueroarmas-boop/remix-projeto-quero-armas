@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { buildPendingServicesAlertHtml, buildPendingServicesAlertText } from "../_shared/emailTemplates.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -41,41 +41,8 @@ async function sendEmail(items: PendingItem[]): Promise<{ ok: boolean; error?: s
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
-    const rows = items.map(i => {
-      const cor = i.dias >= 30 ? "#991b1b" : i.dias >= 25 ? "#dc2626" : i.dias >= 10 ? "#ca8a04" : "#16a34a";
-      const badge = i.dias >= 30 ? "VENCIDO" : i.dias >= 25 ? "URGENTE" : i.dias >= 10 ? "ATENÇÃO" : "NO PRAZO";
-      return `<tr>
-        <td style="padding:8px 12px;border-bottom:1px solid #222">${i.clienteNome}</td>
-        <td style="padding:8px 12px;border-bottom:1px solid #222">${i.servico}</td>
-        <td style="padding:8px 12px;border-bottom:1px solid #222">${i.status}</td>
-        <td style="padding:8px 12px;border-bottom:1px solid #222;text-align:center;font-weight:bold">${i.dias}d</td>
-        <td style="padding:8px 12px;border-bottom:1px solid #222;text-align:center">
-          <span style="background:${cor};color:#fff;padding:2px 8px;border-radius:4px;font-size:11px">${badge}</span>
-        </td>
-      </tr>`;
-    }).join("");
-
-    const html = `
-      <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto">
-        <div style="background:#111;padding:20px;border-radius:8px">
-          <h2 style="color:#e8a0ad;margin:0 0 4px">⚠️ Alerta — Serviços Pendentes</h2>
-          <p style="color:#999;font-size:13px;margin:0 0 16px">${items.length} serviço(s) requerem atenção</p>
-          <table style="width:100%;border-collapse:collapse;font-size:13px;color:#ccc">
-            <thead>
-              <tr style="background:#1a1a1a">
-                <th style="padding:8px 12px;text-align:left;color:#888;font-size:11px">CLIENTE</th>
-                <th style="padding:8px 12px;text-align:left;color:#888;font-size:11px">SERVIÇO</th>
-                <th style="padding:8px 12px;text-align:left;color:#888;font-size:11px">STATUS</th>
-                <th style="padding:8px 12px;text-align:center;color:#888;font-size:11px">DIAS</th>
-                <th style="padding:8px 12px;text-align:center;color:#888;font-size:11px">URGÊNCIA</th>
-              </tr>
-            </thead>
-            <tbody>${rows}</tbody>
-          </table>
-          <p style="color:#666;font-size:11px;margin:16px 0 0;text-align:center">Relatório gerado automaticamente — Quero Armas</p>
-        </div>
-      </div>`;
+    const html = buildPendingServicesAlertHtml({ items });
+    const text = buildPendingServicesAlertText({ items });
 
     const res = await fetch(`${supabaseUrl}/functions/v1/send-smtp-email`, {
       method: "POST",
@@ -85,8 +52,10 @@ async function sendEmail(items: PendingItem[]): Promise<{ ok: boolean; error?: s
       },
       body: JSON.stringify({
         to: ADMIN_EMAIL,
-        subject: `⚠️ ${items.length} Serviço(s) Pendente(s) — Quero Armas`,
+        subject: `Alerta de serviços pendentes — Quero Armas (${items.length})`,
         html,
+        text,
+        trace_id: `qa-alert-${crypto.randomUUID()}`,
       }),
     });
 
