@@ -798,21 +798,26 @@ export default function QAClientesPage() {
     const setEf = (key: string, val: string) => setCadastroEditForm(prev => ({ ...prev, [key]: val }));
     const isEditing = editingCadastroPublico;
 
-    const EditableField = ({ label, fieldKey, value, copyable }: { label: string; fieldKey?: string; value?: string | null; copyable?: boolean }) => {
+    const editInput = (fieldKey: string) => (
+      <input
+        key={`edit-${fieldKey}`}
+        value={ef[fieldKey] || ""}
+        onChange={e => setEf(fieldKey, e.target.value.toUpperCase())}
+        className="flex-1 text-sm font-medium border-b border-slate-300 bg-transparent outline-none focus:border-blue-500 py-0.5"
+        style={{ color: "hsl(220 20% 18%)" }}
+      />
+    );
+
+    const renderField = (label: string, fieldKey: string | undefined, value: string | null | undefined, opts?: { copyable?: boolean }) => {
       if (isEditing && fieldKey) {
         return (
           <div className="flex items-baseline gap-2">
             <span className="text-xs shrink-0" style={{ color: "hsl(220 10% 50%)", minWidth: "140px" }}>{label}:</span>
-            <input
-              value={ef[fieldKey] || ""}
-              onChange={e => setEf(fieldKey, e.target.value)}
-              className="flex-1 text-sm font-medium border-b border-slate-300 bg-transparent outline-none focus:border-blue-500 py-0.5"
-              style={{ color: "hsl(220 20% 18%)" }}
-            />
+            {editInput(fieldKey)}
           </div>
         );
       }
-      return <DetailField label={label} value={value} copyable={copyable} />;
+      return <DetailField label={label} value={value} copyable={opts?.copyable} />;
     };
 
     return (
