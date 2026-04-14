@@ -182,7 +182,7 @@ export function CrModal({ open, onClose, onSaved, clienteId, cadastro }: CrModal
   );
 }
 
-// ─── Venda Modal ───
+// ─── Venda Modal (com seleção de serviços) ───
 interface VendaModalProps {
   open: boolean; onClose: () => void; onSaved: () => void;
   clienteId: number; venda?: any;
@@ -190,27 +190,87 @@ interface VendaModalProps {
 export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaModalProps) {
   const isEdit = !!venda;
   const [saving, setSaving] = useState(false);
-  const [f, setF] = useState({ forma_pagamento: "", desconto: "0", valor_a_pagar: "0", status: "EM ANÁLISE", numero_processo: "", data_cadastro: new Date().toISOString().slice(0, 10) });
+  const [servicos, setServicos] = useState<{ id: number; nome_servico: string; valor_servico: number }[]>([]);
+  const [selectedServicos, setSelectedServicos] = useState<Map<number, { valor: number; checked: boolean }>>(new Map());
+  const [f, setF] = useState({ forma_pagamento: "", desconto: "0", status: "EM ANÁLISE", numero_processo: "", data_cadastro: new Date().toISOString().slice(0, 10) });
 
   useEffect(() => {
-    if (venda) setF({
-      forma_pagamento: venda.forma_pagamento || "", desconto: String(venda.desconto || 0),
-      valor_a_pagar: String(venda.valor_a_pagar || 0), status: venda.status || "EM ANÁLISE",
-      numero_processo: venda.numero_processo || "", data_cadastro: venda.data_cadastro || new Date().toISOString().slice(0, 10),
+    supabase.from("qa_servicos" as any).select("*").order("nome_servico").then(({ data }) => {
+      setServicos((data as any[]) ?? []);
     });
-    else setF({ forma_pagamento: "", desconto: "0", valor_a_pagar: "0", status: "EM ANÁLISE", numero_processo: "", data_cadastro: new Date().toISOString().slice(0, 10) });
+  }, []);
+
+  useEffect(() => {
+    if (venda) {
+      setF({
+        forma_pagamento: venda.forma_pagamento || "", desconto: String(venda.desconto || 0),
+        status: venda.status || "EM ANÁLISE", numero_processo: venda.numero_processo || "",
+        data_cadastro: venda.data_cadastro || new Date().toISOString().slice(0, 10),
+      });
+      // Load existing items for this venda
+      const vendaLegacyId = venda.id_legado ?? venda.id;
+      supabase.from("qa_itens_venda" as any).select("*").eq("venda_id", vendaLegacyId).then(({ data }) => {
+        const map = new Map<number, { valor: number; checked: boolean }>();
+        ((data as any[]) ?? []).forEach((it: any) => {
+          map.set(it.servico_id, { valor: Number(it.valor || 0), checked: true });
+        });
+        setSelectedServicos(map);
+      });
+    } else {
+      setF({ forma_pagamento: "", desconto: "0", status: "EM ANÁLISE", numero_processo: "", data_cadastro: new Date().toISOString().slice(0, 10) });
+      setSelectedServicos(new Map());
+    }
   }, [venda, open]);
 
+  const toggleServico = (svc: { id: number; valor_servico: number }) => {
+    setSelectedServicos(prev => {
+      const next = new Map(prev);
+      if (next.has(svc.id)) next.delete(svc.id);
+      else next.set(svc.id, { valor: svc.valor_servico, checked: true });
+      return next;
+    });
+  };
+
+  const updateServicoValor = (id: number, valor: number) => {
+    setSelectedServicos(prev => {
+      const next = new Map(prev);
+      const existing = next.get(id);
+      if (existing) next.set(id, { ...existing, valor });
+      return next;
+    });
+  };
+
+  const subtotal = Array.from(selectedServicos.values()).reduce((sum, s) => sum + s.valor, 0);
+  const desconto = Number(f.desconto) || 0;
+  const total = Math.max(0, subtotal - desconto);
+
   const save = async () => {
+    if (selectedServicos.size === 0) { toast.error("Selecione ao menos um serviço"); return; }
     setSaving(true);
     try {
-      const payload: any = { ...f, desconto: Number(f.desconto), valor_a_pagar: Number(f.valor_a_pagar) };
+      const payload: any = { ...f, desconto: desconto, valor_a_pagar: total };
+      let vendaId: number;
       if (isEdit) {
         const { error } = await supabase.from("qa_vendas" as any).update(payload).eq("id", venda.id);
         if (error) throw error;
+        vendaId = venda.id_legado ?? venda.id;
+        // Delete old items and re-insert
+        await supabase.from("qa_itens_venda" as any).delete().eq("venda_id", vendaId);
       } else {
-        const { error } = await supabase.from("qa_vendas" as any).insert({ ...payload, cliente_id: clienteId });
+        const { data, error } = await supabase.from("qa_vendas" as any).insert({ ...payload, cliente_id: clienteId }).select("id, id_legado").single();
         if (error) throw error;
+        vendaId = (data as any).id_legado ?? (data as any).id;
+      }
+      // Insert service items
+      const items = Array.from(selectedServicos.entries()).map(([servicoId, { valor }]) => ({
+        venda_id: vendaId,
+        servico_id: servicoId,
+        valor,
+        status: f.status,
+      }));
+      if (items.length > 0) {
+        const { error: itemErr } = await supabase.from("qa_itens_venda" as any).insert(items);
+        if (itemErr) throw itemErr;
       }
       toast.success(isEdit ? "Venda atualizada" : "Venda cadastrada");
       onSaved(); onClose();
@@ -219,29 +279,89 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
 
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="max-w-md bg-[#0e0e0e] border-[#1c1c1c] text-neutral-200">
+      <DialogContent className="w-[96vw] max-w-lg max-h-[90vh] overflow-y-auto bg-background border-border text-foreground p-4 sm:p-6">
         <DialogHeader><DialogTitle className="text-sm">{isEdit ? "Editar Venda" : "Nova Venda"}</DialogTitle></DialogHeader>
-        <div className="space-y-3">
-          <Inp label="Data" value={f.data_cadastro} onChange={v => setF(p => ({ ...p, data_cadastro: v }))} type="date" />
-          <div className="flex gap-2">
-            <Inp label="Valor a Pagar" value={f.valor_a_pagar} onChange={v => setF(p => ({ ...p, valor_a_pagar: v }))} type="number" />
-            <Inp label="Desconto" value={f.desconto} onChange={v => setF(p => ({ ...p, desconto: v }))} type="number" />
+        <div className="space-y-4">
+          {/* Date & Payment */}
+          <div className="grid grid-cols-2 gap-3">
+            <Inp label="Data" value={f.data_cadastro} onChange={v => setF(p => ({ ...p, data_cadastro: v }))} type="date" />
+            <Inp label="Forma Pagamento" value={f.forma_pagamento} onChange={v => setF(p => ({ ...p, forma_pagamento: v }))} />
           </div>
-          <Inp label="Forma de Pagamento" value={f.forma_pagamento} onChange={v => setF(p => ({ ...p, forma_pagamento: v }))} />
-          <Inp label="Nº Processo" value={f.numero_processo} onChange={v => setF(p => ({ ...p, numero_processo: v }))} />
+
+          {/* Service picker */}
           <div>
-            <label className="text-[9px] text-neutral-500 uppercase tracking-wider mb-1 block">Status</label>
-            <Select value={f.status} onValueChange={v => setF(p => ({ ...p, status: v }))}>
-              <SelectTrigger className="h-7 text-[11px] bg-[#0a0a0a] border-[#1c1c1c]"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {["EM ANÁLISE", "PRONTO PARA ANÁLISE", "DEFERIDO", "INDEFERIDO", "CONCLUÍDO"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <label className="text-[9px] text-destructive uppercase tracking-[0.12em] font-bold block mb-2 pb-1 border-b border-border">Serviços Contratados</label>
+            <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+              {servicos.map(svc => {
+                const isChecked = selectedServicos.has(svc.id);
+                const svcData = selectedServicos.get(svc.id);
+                return (
+                  <div key={svc.id} className={`flex items-center gap-2 rounded-md px-2 py-1.5 border transition-colors ${isChecked ? 'border-destructive/40 bg-destructive/5' : 'border-border bg-muted/30'}`}>
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => toggleServico(svc)}
+                      className="accent-[#c43b52] h-3.5 w-3.5 shrink-0"
+                    />
+                    <span className={`text-[11px] flex-1 min-w-0 truncate ${isChecked ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
+                      {svc.nome_servico}
+                    </span>
+                    {isChecked ? (
+                      <Input
+                        type="number"
+                        value={String(svcData?.valor ?? svc.valor_servico)}
+                        onChange={e => updateServicoValor(svc.id, Number(e.target.value) || 0)}
+                        className="h-6 w-20 text-[10px] text-right shrink-0"
+                      />
+                    ) : (
+                      <span className="text-[10px] text-muted-foreground font-mono shrink-0">R$ {svc.valor_servico}</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="ghost" size="sm" onClick={onClose} className="text-[11px] h-7">Cancelar</Button>
-            <Button size="sm" onClick={save} disabled={saving} className="bg-[#7a1528] hover:bg-[#9a1b32] text-[11px] h-7">
-              {saving ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Save className="h-3 w-3 mr-1" />} Salvar
+
+          {/* Totals */}
+          <div className="bg-muted/30 rounded-lg p-3 border border-border space-y-1.5">
+            <div className="flex justify-between text-[11px]">
+              <span className="text-muted-foreground">Subtotal ({selectedServicos.size} serviço{selectedServicos.size !== 1 ? 's' : ''})</span>
+              <span className="text-foreground font-mono">R$ {subtotal.toLocaleString('pt-BR')}</span>
+            </div>
+            <div className="flex justify-between items-center text-[11px]">
+              <span className="text-muted-foreground">Desconto</span>
+              <Input
+                type="number"
+                value={f.desconto}
+                onChange={e => setF(p => ({ ...p, desconto: e.target.value }))}
+                className="h-6 w-24 text-[10px] text-right"
+              />
+            </div>
+            <div className="flex justify-between text-[11px] pt-1.5 border-t border-border">
+              <span className="text-foreground font-semibold">Total a Pagar</span>
+              <span className="text-foreground font-bold font-mono">R$ {total.toLocaleString('pt-BR')}</span>
+            </div>
+          </div>
+
+          {/* Status & Process */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-[9px] text-muted-foreground uppercase tracking-wider mb-1 block">Status</label>
+              <Select value={f.status} onValueChange={v => setF(p => ({ ...p, status: v }))}>
+                <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {["EM ANÁLISE", "PRONTO PARA ANÁLISE", "DEFERIDO", "INDEFERIDO", "CONCLUÍDO"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <Inp label="Nº Processo" value={f.numero_processo} onChange={v => setF(p => ({ ...p, numero_processo: v }))} />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2 border-t border-border">
+            <Button variant="outline" size="sm" onClick={onClose}>Cancelar</Button>
+            <Button size="sm" onClick={save} disabled={saving}>
+              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <Save className="h-3.5 w-3.5 mr-1.5" />}
+              {isEdit ? "Salvar" : "Cadastrar Venda"}
             </Button>
           </div>
         </div>
@@ -249,7 +369,6 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
     </Dialog>
   );
 }
-
 // ─── Delete confirmation ───
 interface DeleteConfirmProps {
   open: boolean; onClose: () => void; onConfirm: () => void;
