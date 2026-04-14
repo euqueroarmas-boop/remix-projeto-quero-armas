@@ -513,7 +513,6 @@ function Step1({ form, set, errors, onCpfLookup, cpfLooking, cpfFound }: { form:
         <Field label="Nome do pai">
           <TextInput value={form.nome_pai} onChange={v => set("nome_pai", v)} placeholder="Nome completo do pai" />
         </Field>
-        <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
         <Field label="Estado civil">
           <SelectInput value={form.estado_civil} onChange={v => set("estado_civil", v)} options={ESTADOS_CIVIS} />
         </Field>
