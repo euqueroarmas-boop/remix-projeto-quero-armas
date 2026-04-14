@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 export function FormCard({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
     <div className={cn(
-      "w-full max-w-5xl mx-auto bg-[#0d0d0d] border border-[#1a1a1a] rounded-xl p-6 sm:p-8 md:p-10",
+      "w-full max-w-5xl mx-auto bg-[#0d0d0d] border border-[#1a1a1a] rounded-xl p-5 sm:p-8 md:p-10 space-y-0",
       className
     )}>
       {children}
@@ -19,9 +19,9 @@ export function FormCard({ children, className }: { children: React.ReactNode; c
 /* ── FormHeader ── */
 export function FormHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
-    <div className="pb-6 mb-6 border-b border-[#1a1a1a]">
-      <h2 className="text-lg sm:text-xl font-semibold text-neutral-100 tracking-tight">{title}</h2>
-      {subtitle && <p className="text-xs sm:text-sm text-neutral-500 mt-1">{subtitle}</p>}
+    <div className="pb-5 mb-2 border-b border-[#1a1a1a]">
+      <h2 className="text-base sm:text-lg font-semibold text-neutral-100 tracking-tight">{title}</h2>
+      {subtitle && <p className="text-[11px] sm:text-xs text-neutral-500 mt-0.5">{subtitle}</p>}
     </div>
   );
 }
@@ -29,8 +29,8 @@ export function FormHeader({ title, subtitle }: { title: string; subtitle?: stri
 /* ── SectionHeader ── */
 export function SectionHeader({ title, className }: { title: string; className?: string }) {
   return (
-    <div className={cn("pt-6 pb-3 border-b border-[#1a1a1a] mb-4", className)}>
-      <h3 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-[#c43b52]">{title}</h3>
+    <div className={cn("pt-5 pb-2 border-b border-[#1a1a1a] mb-3", className)}>
+      <h3 className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.15em] text-[#c43b52]">{title}</h3>
     </div>
   );
 }
@@ -38,10 +38,10 @@ export function SectionHeader({ title, className }: { title: string; className?:
 /* ── FormGrid ── */
 export function FormGrid({ children, cols = 2, className }: { children: React.ReactNode; cols?: 1 | 2 | 3 | 4; className?: string }) {
   const gridCls =
-    cols === 1 ? "grid grid-cols-1 gap-x-5 gap-y-4"
-    : cols === 3 ? "grid grid-cols-1 sm:grid-cols-3 gap-x-5 gap-y-4"
-    : cols === 4 ? "grid grid-cols-2 sm:grid-cols-4 gap-x-5 gap-y-4"
-    : "grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-4";
+    cols === 1 ? "grid grid-cols-1 gap-x-4 gap-y-3"
+    : cols === 3 ? "grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-3"
+    : cols === 4 ? "grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-3"
+    : "grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3";
   return <div className={cn(gridCls, "items-end", className)}>{children}</div>;
 }
 
@@ -55,19 +55,18 @@ export function FieldWrapper({ label, children, span, className }: {
       span === "full" && "sm:col-span-full",
       className
     )}>
-      <label className="block text-[10px] sm:text-[11px] font-medium uppercase tracking-wider text-neutral-500 mb-1.5 leading-tight min-h-[14px]">
+      <label className="block text-[10px] font-medium uppercase tracking-wider text-neutral-500 mb-1 leading-none h-3">
         {label}
       </label>
-      <div className="[&>*]:h-9 [&>*]:w-full">
-        {children}
-      </div>
+      {children}
     </div>
   );
 }
 
-/* ── Styled Input ── */
-const inputBase = "h-9 w-full text-xs sm:text-sm bg-[#0a0a0a] border-[#1c1c1c] text-neutral-200 rounded-lg placeholder:text-neutral-600 focus:border-[#7a1528]/60 focus:ring-1 focus:ring-[#7a1528]/20 transition-colors";
+/* ── Shared style tokens ── */
+const inputBase = "h-8 w-full text-xs bg-[#0a0a0a] border-[#1c1c1c] text-neutral-200 rounded-md placeholder:text-neutral-600 focus:border-[#7a1528]/60 focus:ring-1 focus:ring-[#7a1528]/20 transition-colors px-2.5";
 
+/* ── Styled Input ── */
 export function FormInput({ label, value, onChange, type = "text", span, placeholder }: {
   label: string; value: string; onChange: (v: string) => void; type?: string; span?: "full" | "half"; placeholder?: string;
 }) {
@@ -88,7 +87,7 @@ export function FormSelect({ label, value, onValueChange, options, placeholder =
         <SelectTrigger className={cn(inputBase, "w-full")}>
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="bg-[#111] border-[#1c1c1c]">
           {options.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
         </SelectContent>
       </Select>
@@ -106,16 +105,35 @@ export function FormTextarea({ label, value, onChange, span, rows = 3 }: {
         value={value}
         onChange={e => onChange(e.target.value)}
         rows={rows}
-        className="text-xs sm:text-sm bg-[#0a0a0a] border-[#1c1c1c] text-neutral-200 rounded-lg min-h-[72px] placeholder:text-neutral-600 focus:border-[#7a1528]/60 focus:ring-1 focus:ring-[#7a1528]/20 transition-colors"
+        className="text-xs bg-[#0a0a0a] border-[#1c1c1c] text-neutral-200 rounded-md min-h-[64px] placeholder:text-neutral-600 focus:border-[#7a1528]/60 focus:ring-1 focus:ring-[#7a1528]/20 transition-colors px-2.5"
       />
     </FieldWrapper>
+  );
+}
+
+/* ── Styled Checkbox Field ── */
+export function FormCheckbox({ label, checked, onChange }: {
+  label: string; checked: boolean; onChange: (v: boolean) => void;
+}) {
+  return (
+    <div className="flex items-center h-8">
+      <label className="flex items-center gap-2 text-xs text-neutral-300 cursor-pointer select-none">
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={e => onChange(e.target.checked)}
+          className="accent-amber-500 w-3.5 h-3.5 rounded"
+        />
+        {label}
+      </label>
+    </div>
   );
 }
 
 /* ── Action Footer ── */
 export function FormActions({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn("flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-6 mt-6 border-t border-[#1a1a1a]", className)}>
+    <div className={cn("flex flex-col-reverse sm:flex-row sm:justify-end gap-2.5 pt-5 mt-5 border-t border-[#1a1a1a]", className)}>
       {children}
     </div>
   );
