@@ -760,8 +760,8 @@ export default function QABaseConhecimentoPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowLinkDialog(false)} className="border-slate-200 text-slate-600">Cancelar</Button>
-            <Button onClick={handleImportLink} disabled={!linkUrl.trim() || importingLink} className="bg-blue-600 hover:bg-blue-700">
+            <Button variant="outline" onClick={() => setShowLinkDialog(false)} className="border-slate-200 rounded-lg" style={{ color: "hsl(220 10% 45%)" }}>Cancelar</Button>
+            <Button onClick={handleImportLink} disabled={!linkUrl.trim() || importingLink} className="qa-btn-primary no-glow rounded-lg">
               {importingLink ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Enviando...</> : <><Globe className="h-4 w-4 mr-2" /> Importar</>}
             </Button>
           </DialogFooter>
@@ -770,9 +770,9 @@ export default function QABaseConhecimentoPage() {
 
       {/* Bulk Import Dialog */}
       <Dialog open={showBulkDialog} onOpenChange={setShowBulkDialog}>
-        <DialogContent className="bg-white border-slate-200 text-slate-700 max-w-lg">
+        <DialogContent className="border-slate-200 max-w-lg rounded-xl" style={{ background: "hsl(0 0% 100%)", color: "hsl(220 20% 18%)" }}>
           <DialogHeader>
-            <DialogTitle className="text-slate-700 flex items-center gap-2"><Plus className="h-5 w-5 text-purple-400" /> Carga em Lote</DialogTitle>
+            <DialogTitle className="flex items-center gap-2" style={{ color: "hsl(220 20% 18%)" }}><Plus className="h-5 w-5" style={{ color: "hsl(262 60% 55%)" }} /> Carga em Lote</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
