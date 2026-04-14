@@ -460,10 +460,10 @@ export default function QARelatoriosPage() {
               <span className="text-center">Urgência</span>
             </div>
             <div className="max-h-[600px] overflow-y-auto">
-              {pendingItems.length === 0 ? (
-                <div className="p-8 text-center text-neutral-600 text-sm">Nenhum serviço pendente 🎉</div>
+              {filteredPendingItems.length === 0 ? (
+                <div className="p-8 text-center text-neutral-600 text-sm">{search ? "Nenhum resultado encontrado" : "Nenhum serviço pendente 🎉"}</div>
               ) : (
-                pendingItems.map(item => {
+                filteredPendingItems.map(item => {
                   const cfg = URGENCY_CONFIG[item.urgency];
                   const isExpanded = expandedId === item.itemId;
                   return (
