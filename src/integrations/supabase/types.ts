@@ -1993,6 +1993,225 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_cadastro_publico: {
+        Row: {
+          aut_atividade: string | null
+          aut_cnpj: string | null
+          aut_endereco: string | null
+          aut_nome_profissional: string | null
+          aut_telefone: string | null
+          cliente_id_vinculado: number | null
+          consentimento_dados_verdadeiros: boolean
+          consentimento_ip: string | null
+          consentimento_texto: string | null
+          consentimento_timestamp: string | null
+          consentimento_tratamento_dados: boolean
+          consentimento_user_agent: string | null
+          cpf: string
+          created_at: string
+          data_nascimento: string | null
+          email: string
+          emp_cargo_funcao: string | null
+          emp_cnae_principal: string | null
+          emp_cnpj: string | null
+          emp_data_abertura: string | null
+          emp_email: string | null
+          emp_endereco: string | null
+          emp_natureza_juridica: string | null
+          emp_nome_fantasia: string | null
+          emp_participacao_societaria: string | null
+          emp_razao_social: string | null
+          emp_situacao_cadastral: string | null
+          emp_telefone: string | null
+          end1_bairro: string | null
+          end1_cep: string | null
+          end1_cidade: string | null
+          end1_complemento: string | null
+          end1_estado: string | null
+          end1_latitude: string | null
+          end1_logradouro: string | null
+          end1_longitude: string | null
+          end1_numero: string | null
+          end2_bairro: string | null
+          end2_cep: string | null
+          end2_cidade: string | null
+          end2_complemento: string | null
+          end2_estado: string | null
+          end2_latitude: string | null
+          end2_logradouro: string | null
+          end2_longitude: string | null
+          end2_numero: string | null
+          end2_tipo: string | null
+          estado_civil: string | null
+          id: string
+          nacionalidade: string | null
+          nome_completo: string
+          nome_mae: string | null
+          notas_processamento: string | null
+          observacoes: string | null
+          processado_em: string | null
+          processado_por: string | null
+          profissao: string | null
+          status: string
+          telefone_principal: string
+          telefone_secundario: string | null
+          tem_segundo_endereco: boolean | null
+          trab_cargo_funcao: string | null
+          trab_cnpj_empresa: string | null
+          trab_data_admissao: string | null
+          trab_endereco_empresa: string | null
+          trab_faixa_salarial: string | null
+          trab_nome_empresa: string | null
+          trab_telefone_empresa: string | null
+          updated_at: string
+          vinculo_tipo: string | null
+        }
+        Insert: {
+          aut_atividade?: string | null
+          aut_cnpj?: string | null
+          aut_endereco?: string | null
+          aut_nome_profissional?: string | null
+          aut_telefone?: string | null
+          cliente_id_vinculado?: number | null
+          consentimento_dados_verdadeiros?: boolean
+          consentimento_ip?: string | null
+          consentimento_texto?: string | null
+          consentimento_timestamp?: string | null
+          consentimento_tratamento_dados?: boolean
+          consentimento_user_agent?: string | null
+          cpf: string
+          created_at?: string
+          data_nascimento?: string | null
+          email: string
+          emp_cargo_funcao?: string | null
+          emp_cnae_principal?: string | null
+          emp_cnpj?: string | null
+          emp_data_abertura?: string | null
+          emp_email?: string | null
+          emp_endereco?: string | null
+          emp_natureza_juridica?: string | null
+          emp_nome_fantasia?: string | null
+          emp_participacao_societaria?: string | null
+          emp_razao_social?: string | null
+          emp_situacao_cadastral?: string | null
+          emp_telefone?: string | null
+          end1_bairro?: string | null
+          end1_cep?: string | null
+          end1_cidade?: string | null
+          end1_complemento?: string | null
+          end1_estado?: string | null
+          end1_latitude?: string | null
+          end1_logradouro?: string | null
+          end1_longitude?: string | null
+          end1_numero?: string | null
+          end2_bairro?: string | null
+          end2_cep?: string | null
+          end2_cidade?: string | null
+          end2_complemento?: string | null
+          end2_estado?: string | null
+          end2_latitude?: string | null
+          end2_logradouro?: string | null
+          end2_longitude?: string | null
+          end2_numero?: string | null
+          end2_tipo?: string | null
+          estado_civil?: string | null
+          id?: string
+          nacionalidade?: string | null
+          nome_completo: string
+          nome_mae?: string | null
+          notas_processamento?: string | null
+          observacoes?: string | null
+          processado_em?: string | null
+          processado_por?: string | null
+          profissao?: string | null
+          status?: string
+          telefone_principal: string
+          telefone_secundario?: string | null
+          tem_segundo_endereco?: boolean | null
+          trab_cargo_funcao?: string | null
+          trab_cnpj_empresa?: string | null
+          trab_data_admissao?: string | null
+          trab_endereco_empresa?: string | null
+          trab_faixa_salarial?: string | null
+          trab_nome_empresa?: string | null
+          trab_telefone_empresa?: string | null
+          updated_at?: string
+          vinculo_tipo?: string | null
+        }
+        Update: {
+          aut_atividade?: string | null
+          aut_cnpj?: string | null
+          aut_endereco?: string | null
+          aut_nome_profissional?: string | null
+          aut_telefone?: string | null
+          cliente_id_vinculado?: number | null
+          consentimento_dados_verdadeiros?: boolean
+          consentimento_ip?: string | null
+          consentimento_texto?: string | null
+          consentimento_timestamp?: string | null
+          consentimento_tratamento_dados?: boolean
+          consentimento_user_agent?: string | null
+          cpf?: string
+          created_at?: string
+          data_nascimento?: string | null
+          email?: string
+          emp_cargo_funcao?: string | null
+          emp_cnae_principal?: string | null
+          emp_cnpj?: string | null
+          emp_data_abertura?: string | null
+          emp_email?: string | null
+          emp_endereco?: string | null
+          emp_natureza_juridica?: string | null
+          emp_nome_fantasia?: string | null
+          emp_participacao_societaria?: string | null
+          emp_razao_social?: string | null
+          emp_situacao_cadastral?: string | null
+          emp_telefone?: string | null
+          end1_bairro?: string | null
+          end1_cep?: string | null
+          end1_cidade?: string | null
+          end1_complemento?: string | null
+          end1_estado?: string | null
+          end1_latitude?: string | null
+          end1_logradouro?: string | null
+          end1_longitude?: string | null
+          end1_numero?: string | null
+          end2_bairro?: string | null
+          end2_cep?: string | null
+          end2_cidade?: string | null
+          end2_complemento?: string | null
+          end2_estado?: string | null
+          end2_latitude?: string | null
+          end2_logradouro?: string | null
+          end2_longitude?: string | null
+          end2_numero?: string | null
+          end2_tipo?: string | null
+          estado_civil?: string | null
+          id?: string
+          nacionalidade?: string | null
+          nome_completo?: string
+          nome_mae?: string | null
+          notas_processamento?: string | null
+          observacoes?: string | null
+          processado_em?: string | null
+          processado_por?: string | null
+          profissao?: string | null
+          status?: string
+          telefone_principal?: string
+          telefone_secundario?: string | null
+          tem_segundo_endereco?: boolean | null
+          trab_cargo_funcao?: string | null
+          trab_cnpj_empresa?: string | null
+          trab_data_admissao?: string | null
+          trab_endereco_empresa?: string | null
+          trab_faixa_salarial?: string | null
+          trab_nome_empresa?: string | null
+          trab_telefone_empresa?: string | null
+          updated_at?: string
+          vinculo_tipo?: string | null
+        }
+        Relationships: []
+      }
       qa_casos: {
         Row: {
           bairro: string | null
