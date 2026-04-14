@@ -351,7 +351,7 @@ export default function QAClientesPage() {
 
         if (clienteLookupError) throw clienteLookupError;
 
-        const clienteExistente = ((clientesCpf as Cliente[] | null) ?? [])[0] ?? null;
+        const clienteExistente = (((clientesCpf as unknown) as Cliente[] | null) ?? [])[0] ?? null;
         const clientePayload = buildClientePayloadFromCadastro(selectedCadastroPublico, clienteExistente);
 
         if (clienteExistente) {
@@ -370,7 +370,7 @@ export default function QAClientesPage() {
             .single();
 
           if (insertClienteError) throw insertClienteError;
-          clienteVinculadoId = insertedCliente?.id ?? null;
+          clienteVinculadoId = ((insertedCliente as unknown) as { id?: number } | null)?.id ?? null;
         }
       }
 
