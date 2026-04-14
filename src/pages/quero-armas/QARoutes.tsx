@@ -16,6 +16,7 @@ const QACasosPage = lazyRetry(() => import("./QACasosPage"), "QACasosPage");
 const QAModelosDocxPage = lazyRetry(() => import("./QAModelosDocxPage"), "QAModelosDocxPage");
 const QAHistoricoPage = lazyRetry(() => import("./QAHistoricoPage"), "QAHistoricoPage");
 const QAConfiguracoesPage = lazyRetry(() => import("./QAConfiguracoesPage"), "QAConfiguracoesPage");
+const QAClientesPage = lazyRetry(() => import("./QAClientesPage"), "QAClientesPage");
 
 const Loader = () => (
   <div className="min-h-screen flex items-center justify-center bg-[#08080f]">
@@ -41,6 +42,7 @@ export default function QARoutes() {
           <Route path="casos" element={<QACasosPage />} />
           <Route path="historico" element={<QAHistoricoPage />} />
           <Route path="configuracoes" element={<QAConfiguracoesPage />} />
+          <Route path="clientes" element={<QAClientesPage />} />
         </Route>
       </Routes>
     </Suspense>

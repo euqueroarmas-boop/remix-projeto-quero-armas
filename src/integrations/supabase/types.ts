@@ -1951,6 +1951,48 @@ export type Database = {
           },
         ]
       }
+      qa_cadastro_cr: {
+        Row: {
+          check_exame_tiro: boolean | null
+          check_laudo_psi: boolean | null
+          cliente_id: number | null
+          id: number
+          id_legado: number | null
+          num_item_servico_cr: number | null
+          numero_cr: string | null
+          senha_gov: string | null
+          validade_cr: string | null
+          validade_exame_tiro: string | null
+          validade_laudo_psicologico: string | null
+        }
+        Insert: {
+          check_exame_tiro?: boolean | null
+          check_laudo_psi?: boolean | null
+          cliente_id?: number | null
+          id?: number
+          id_legado?: number | null
+          num_item_servico_cr?: number | null
+          numero_cr?: string | null
+          senha_gov?: string | null
+          validade_cr?: string | null
+          validade_exame_tiro?: string | null
+          validade_laudo_psicologico?: string | null
+        }
+        Update: {
+          check_exame_tiro?: boolean | null
+          check_laudo_psi?: boolean | null
+          cliente_id?: number | null
+          id?: number
+          id_legado?: number | null
+          num_item_servico_cr?: number | null
+          numero_cr?: string | null
+          senha_gov?: string | null
+          validade_cr?: string | null
+          validade_exame_tiro?: string | null
+          validade_laudo_psicologico?: string | null
+        }
+        Relationships: []
+      }
       qa_casos: {
         Row: {
           bairro: string | null
@@ -2115,6 +2157,174 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_clientes: {
+        Row: {
+          bairro: string | null
+          bairro2: string | null
+          celular: string | null
+          cep: string | null
+          cep2: string | null
+          cidade: string | null
+          cidade2: string | null
+          cliente_lions: boolean | null
+          complemento: string | null
+          complemento2: string | null
+          cpf: string | null
+          created_at: string
+          data_nascimento: string | null
+          email: string | null
+          emissor_rg: string | null
+          endereco: string | null
+          endereco2: string | null
+          escolaridade: string | null
+          estado: string | null
+          estado_civil: string | null
+          estado2: string | null
+          excluido: boolean | null
+          expedicao_rg: string | null
+          geolocalizacao: string | null
+          geolocalizacao2: string | null
+          id: number
+          id_legado: number | null
+          imagem: string | null
+          nacionalidade: string | null
+          naturalidade: string | null
+          nome_completo: string
+          nome_mae: string | null
+          nome_pai: string | null
+          numero: string | null
+          numero2: string | null
+          observacao: string | null
+          pais: string | null
+          pais2: string | null
+          profissao: string | null
+          rg: string | null
+          status: string | null
+          titulo_eleitor: string | null
+          updated_at: string
+        }
+        Insert: {
+          bairro?: string | null
+          bairro2?: string | null
+          celular?: string | null
+          cep?: string | null
+          cep2?: string | null
+          cidade?: string | null
+          cidade2?: string | null
+          cliente_lions?: boolean | null
+          complemento?: string | null
+          complemento2?: string | null
+          cpf?: string | null
+          created_at?: string
+          data_nascimento?: string | null
+          email?: string | null
+          emissor_rg?: string | null
+          endereco?: string | null
+          endereco2?: string | null
+          escolaridade?: string | null
+          estado?: string | null
+          estado_civil?: string | null
+          estado2?: string | null
+          excluido?: boolean | null
+          expedicao_rg?: string | null
+          geolocalizacao?: string | null
+          geolocalizacao2?: string | null
+          id?: number
+          id_legado?: number | null
+          imagem?: string | null
+          nacionalidade?: string | null
+          naturalidade?: string | null
+          nome_completo: string
+          nome_mae?: string | null
+          nome_pai?: string | null
+          numero?: string | null
+          numero2?: string | null
+          observacao?: string | null
+          pais?: string | null
+          pais2?: string | null
+          profissao?: string | null
+          rg?: string | null
+          status?: string | null
+          titulo_eleitor?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bairro?: string | null
+          bairro2?: string | null
+          celular?: string | null
+          cep?: string | null
+          cep2?: string | null
+          cidade?: string | null
+          cidade2?: string | null
+          cliente_lions?: boolean | null
+          complemento?: string | null
+          complemento2?: string | null
+          cpf?: string | null
+          created_at?: string
+          data_nascimento?: string | null
+          email?: string | null
+          emissor_rg?: string | null
+          endereco?: string | null
+          endereco2?: string | null
+          escolaridade?: string | null
+          estado?: string | null
+          estado_civil?: string | null
+          estado2?: string | null
+          excluido?: boolean | null
+          expedicao_rg?: string | null
+          geolocalizacao?: string | null
+          geolocalizacao2?: string | null
+          id?: number
+          id_legado?: number | null
+          imagem?: string | null
+          nacionalidade?: string | null
+          naturalidade?: string | null
+          nome_completo?: string
+          nome_mae?: string | null
+          nome_pai?: string | null
+          numero?: string | null
+          numero2?: string | null
+          observacao?: string | null
+          pais?: string | null
+          pais2?: string | null
+          profissao?: string | null
+          rg?: string | null
+          status?: string | null
+          titulo_eleitor?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      qa_clubes: {
+        Row: {
+          cnpj: string | null
+          data_validade: string | null
+          endereco: string | null
+          id: number
+          id_legado: number | null
+          nome_clube: string
+          numero_cr: string | null
+        }
+        Insert: {
+          cnpj?: string | null
+          data_validade?: string | null
+          endereco?: string | null
+          id?: number
+          id_legado?: number | null
+          nome_clube: string
+          numero_cr?: string | null
+        }
+        Update: {
+          cnpj?: string | null
+          data_validade?: string | null
+          endereco?: string | null
+          id?: number
+          id_legado?: number | null
+          nome_clube?: string
+          numero_cr?: string | null
+        }
+        Relationships: []
+      }
       qa_config: {
         Row: {
           chave: string
@@ -2193,6 +2403,39 @@ export type Database = {
           tipo_peca?: string | null
           tom?: string | null
           usuario_id?: string
+        }
+        Relationships: []
+      }
+      qa_crafs: {
+        Row: {
+          cliente_id: number | null
+          data_validade: string | null
+          id: number
+          id_legado: number | null
+          nome_arma: string | null
+          nome_craf: string | null
+          numero_arma: string | null
+          numero_sigma: string | null
+        }
+        Insert: {
+          cliente_id?: number | null
+          data_validade?: string | null
+          id?: number
+          id_legado?: number | null
+          nome_arma?: string | null
+          nome_craf?: string | null
+          numero_arma?: string | null
+          numero_sigma?: string | null
+        }
+        Update: {
+          cliente_id?: number | null
+          data_validade?: string | null
+          id?: number
+          id_legado?: number | null
+          nome_arma?: string | null
+          nome_craf?: string | null
+          numero_arma?: string | null
+          numero_sigma?: string | null
         }
         Relationships: []
       }
@@ -2419,6 +2662,36 @@ export type Database = {
           },
         ]
       }
+      qa_filiacoes: {
+        Row: {
+          cliente_id: number | null
+          clube_id: number | null
+          id: number
+          id_legado: number | null
+          nome_filiacao: string | null
+          numero_filiacao: string | null
+          validade_filiacao: string | null
+        }
+        Insert: {
+          cliente_id?: number | null
+          clube_id?: number | null
+          id?: number
+          id_legado?: number | null
+          nome_filiacao?: string | null
+          numero_filiacao?: string | null
+          validade_filiacao?: string | null
+        }
+        Update: {
+          cliente_id?: number | null
+          clube_id?: number | null
+          id?: number
+          id_legado?: number | null
+          nome_filiacao?: string | null
+          numero_filiacao?: string | null
+          validade_filiacao?: string | null
+        }
+        Relationships: []
+      }
       qa_fontes_normativas: {
         Row: {
           ano_norma: number | null
@@ -2545,6 +2818,78 @@ export type Database = {
           updated_at?: string
           usuario_id?: string
           versao?: number
+        }
+        Relationships: []
+      }
+      qa_gtes: {
+        Row: {
+          cliente_id: number | null
+          data_validade: string | null
+          id: number
+          id_legado: number | null
+          nome_arma: string | null
+          nome_gte: string | null
+          numero_arma: string | null
+          numero_sigma: string | null
+        }
+        Insert: {
+          cliente_id?: number | null
+          data_validade?: string | null
+          id?: number
+          id_legado?: number | null
+          nome_arma?: string | null
+          nome_gte?: string | null
+          numero_arma?: string | null
+          numero_sigma?: string | null
+        }
+        Update: {
+          cliente_id?: number | null
+          data_validade?: string | null
+          id?: number
+          id_legado?: number | null
+          nome_arma?: string | null
+          nome_gte?: string | null
+          numero_arma?: string | null
+          numero_sigma?: string | null
+        }
+        Relationships: []
+      }
+      qa_itens_venda: {
+        Row: {
+          data_deferimento: string | null
+          data_protocolo: string | null
+          data_ultima_atualizacao: string | null
+          id: number
+          id_legado: number | null
+          numero_processo: string | null
+          servico_id: number | null
+          status: string | null
+          valor: number | null
+          venda_id: number | null
+        }
+        Insert: {
+          data_deferimento?: string | null
+          data_protocolo?: string | null
+          data_ultima_atualizacao?: string | null
+          id?: number
+          id_legado?: number | null
+          numero_processo?: string | null
+          servico_id?: number | null
+          status?: string | null
+          valor?: number | null
+          venda_id?: number | null
+        }
+        Update: {
+          data_deferimento?: string | null
+          data_protocolo?: string | null
+          data_ultima_atualizacao?: string | null
+          id?: number
+          id_legado?: number | null
+          numero_processo?: string | null
+          servico_id?: number | null
+          status?: string | null
+          valor?: number | null
+          venda_id?: number | null
         }
         Relationships: []
       }
@@ -2807,6 +3152,141 @@ export type Database = {
           },
         ]
       }
+      qa_servicos: {
+        Row: {
+          id: number
+          nome_servico: string
+          valor_servico: number
+        }
+        Insert: {
+          id?: number
+          nome_servico: string
+          valor_servico?: number
+        }
+        Update: {
+          id?: number
+          nome_servico?: string
+          valor_servico?: number
+        }
+        Relationships: []
+      }
+      qa_status_tipos: {
+        Row: {
+          id: number
+          nome_status: string
+          tipo_status: string
+        }
+        Insert: {
+          id?: number
+          nome_status: string
+          tipo_status?: string
+        }
+        Update: {
+          id?: number
+          nome_status?: string
+          tipo_status?: string
+        }
+        Relationships: []
+      }
+      qa_tempo_validade: {
+        Row: {
+          id: number
+          id_legado: number | null
+          nome_configuracao: string
+          primeiro_aviso_dias: number | null
+          segundo_aviso_dias: number | null
+          tempo_dias: number | null
+        }
+        Insert: {
+          id?: number
+          id_legado?: number | null
+          nome_configuracao: string
+          primeiro_aviso_dias?: number | null
+          segundo_aviso_dias?: number | null
+          tempo_dias?: number | null
+        }
+        Update: {
+          id?: number
+          id_legado?: number | null
+          nome_configuracao?: string
+          primeiro_aviso_dias?: number | null
+          segundo_aviso_dias?: number | null
+          tempo_dias?: number | null
+        }
+        Relationships: []
+      }
+      qa_terceiros: {
+        Row: {
+          bairro: string | null
+          cep: string | null
+          cidade: string | null
+          cliente_id: number | null
+          complemento: string | null
+          cpf: string | null
+          data_nascimento: string | null
+          endereco: string | null
+          estado: string | null
+          estado_civil: string | null
+          geolocalizacao: string | null
+          id: number
+          id_legado: number | null
+          nacionalidade: string | null
+          naturalidade: string | null
+          nome_completo: string | null
+          numero: string | null
+          pais: string | null
+          profissao: string | null
+          reside_ate: string | null
+          reside_desde: string | null
+        }
+        Insert: {
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          cliente_id?: number | null
+          complemento?: string | null
+          cpf?: string | null
+          data_nascimento?: string | null
+          endereco?: string | null
+          estado?: string | null
+          estado_civil?: string | null
+          geolocalizacao?: string | null
+          id?: number
+          id_legado?: number | null
+          nacionalidade?: string | null
+          naturalidade?: string | null
+          nome_completo?: string | null
+          numero?: string | null
+          pais?: string | null
+          profissao?: string | null
+          reside_ate?: string | null
+          reside_desde?: string | null
+        }
+        Update: {
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          cliente_id?: number | null
+          complemento?: string | null
+          cpf?: string | null
+          data_nascimento?: string | null
+          endereco?: string | null
+          estado?: string | null
+          estado_civil?: string | null
+          geolocalizacao?: string | null
+          id?: number
+          id_legado?: number | null
+          nacionalidade?: string | null
+          naturalidade?: string | null
+          nome_completo?: string | null
+          numero?: string | null
+          pais?: string | null
+          profissao?: string | null
+          reside_ate?: string | null
+          reside_desde?: string | null
+        }
+        Relationships: []
+      }
       qa_usuarios_perfis: {
         Row: {
           ativo: boolean
@@ -2839,6 +3319,62 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      qa_vendas: {
+        Row: {
+          cliente_id: number | null
+          created_at: string
+          data_cadastro: string | null
+          data_deferimento: string | null
+          data_protocolo: string | null
+          data_ultima_atualizacao: string | null
+          desconto: number | null
+          forma_pagamento: string | null
+          id: number
+          id_legado: number | null
+          numero_processo: string | null
+          status: string | null
+          valor_a_pagar: number | null
+        }
+        Insert: {
+          cliente_id?: number | null
+          created_at?: string
+          data_cadastro?: string | null
+          data_deferimento?: string | null
+          data_protocolo?: string | null
+          data_ultima_atualizacao?: string | null
+          desconto?: number | null
+          forma_pagamento?: string | null
+          id?: number
+          id_legado?: number | null
+          numero_processo?: string | null
+          status?: string | null
+          valor_a_pagar?: number | null
+        }
+        Update: {
+          cliente_id?: number | null
+          created_at?: string
+          data_cadastro?: string | null
+          data_deferimento?: string | null
+          data_protocolo?: string | null
+          data_ultima_atualizacao?: string | null
+          desconto?: number | null
+          forma_pagamento?: string | null
+          id?: number
+          id_legado?: number | null
+          numero_processo?: string | null
+          status?: string | null
+          valor_a_pagar?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_vendas_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id_legado"]
+          },
+        ]
       }
       quotes: {
         Row: {
