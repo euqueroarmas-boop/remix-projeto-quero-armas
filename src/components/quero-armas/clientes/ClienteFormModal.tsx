@@ -76,7 +76,6 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
       }));
     }
   }, [lookupCep]);
-  const [saving, setSaving] = useState(false);
   const [f, setF] = useState({
     nome_completo: "", cpf: "", rg: "", emissor_rg: "", expedicao_rg: "",
     data_nascimento: "", naturalidade: "", nacionalidade: "Brasileira",
