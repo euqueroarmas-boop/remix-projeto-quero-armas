@@ -26,6 +26,10 @@ interface Stats {
   novosCadastros: number;
 }
 
+interface DayCount { day: string; total: number }
+interface MonthCount { month: string; total: number }
+interface ServicoCount { name: string; value: number }
+
 interface RecentItem {
   id: string;
   titulo: string;
