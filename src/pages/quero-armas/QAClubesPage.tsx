@@ -49,8 +49,8 @@ export default function QAClubesPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-sm font-bold text-neutral-100">Clubes de Tiro</h1>
-          <p className="text-[10px] text-neutral-600">{clubes.length} cadastrados</p>
+          <h1 className="text-sm font-bold text-slate-800">Clubes de Tiro</h1>
+          <p className="text-[10px] text-slate-400">{clubes.length} cadastrados</p>
         </div>
         <Button size="sm" onClick={() => setModal({ open: true })} className="h-7 px-2 text-[10px] bg-[#7a1528] hover:bg-[#9a1b32]">
           <Plus className="h-3 w-3 mr-1" /> Novo Clube
@@ -58,34 +58,34 @@ export default function QAClubesPage() {
       </div>
 
       <div className="relative">
-        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-600" />
-        <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar clube..." className="pl-8 h-8 text-[11px] bg-[#0a0a0a] border-[#1c1c1c] text-neutral-200" />
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+        <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar clube..." className="pl-8 h-8 text-[11px] bg-white border-slate-200 text-slate-700" />
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-12"><Loader2 className="h-5 w-5 animate-spin text-neutral-600" /></div>
+        <div className="flex justify-center py-12"><Loader2 className="h-5 w-5 animate-spin text-slate-400" /></div>
       ) : (
         <ScrollArea className="h-[calc(100vh-220px)]">
           <div className="space-y-1.5">
             {filtered.map(c => (
-              <div key={c.id} className="flex items-start gap-3 bg-[#0a0a0a] border border-[#1c1c1c] rounded-lg px-3 py-2.5">
+              <div key={c.id} className="flex items-start gap-3 bg-white border border-slate-200 rounded-lg px-3 py-2.5">
                 <div className="w-8 h-8 rounded-full bg-[#7a1528]/15 flex items-center justify-center shrink-0 mt-0.5">
                   <Building2 className="h-3.5 w-3.5 text-[#c43b52]" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-[11px] text-neutral-200 font-medium">{c.nome_clube}</div>
-                  <div className="text-[9px] text-neutral-500 mt-0.5 space-x-3">
+                  <div className="text-[11px] text-slate-700 font-medium">{c.nome_clube}</div>
+                  <div className="text-[9px] text-slate-500 mt-0.5 space-x-3">
                     {c.cnpj && <span>CNPJ: {c.cnpj}</span>}
                     {c.numero_cr && <span>CR: {c.numero_cr}</span>}
                     <span>Val: {formatDate(c.data_validade)}</span>
                   </div>
-                  {c.endereco && <div className="text-[9px] text-neutral-600 mt-0.5 truncate">{c.endereco}</div>}
+                  {c.endereco && <div className="text-[9px] text-slate-400 mt-0.5 truncate">{c.endereco}</div>}
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
-                  <Button variant="ghost" size="sm" onClick={() => setModal({ open: true, item: c })} className="h-6 w-6 p-0 text-neutral-600 hover:text-neutral-300">
+                  <Button variant="ghost" size="sm" onClick={() => setModal({ open: true, item: c })} className="h-6 w-6 p-0 text-slate-400 hover:text-slate-700">
                     <Edit className="h-3 w-3" />
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={() => handleDelete(c.id)} disabled={deleting === c.id} className="h-6 w-6 p-0 text-neutral-600 hover:text-red-400">
+                  <Button variant="ghost" size="sm" onClick={() => handleDelete(c.id)} disabled={deleting === c.id} className="h-6 w-6 p-0 text-slate-400 hover:text-red-400">
                     {deleting === c.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
                   </Button>
                 </div>
@@ -129,7 +129,7 @@ function ClubeFormModal({ open, onClose, onSaved, clube }: { open: boolean; onCl
 
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="max-w-md bg-[#0e0e0e] border-[#1c1c1c] text-neutral-200">
+      <DialogContent className="max-w-md bg-white border-slate-200 text-slate-700">
         <DialogHeader><DialogTitle className="text-sm">{isEdit ? "Editar Clube" : "Novo Clube de Tiro"}</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <Inp label="Nome do Clube *" value={f.nome_clube} onChange={v => setF(p => ({ ...p, nome_clube: v }))} />
@@ -154,8 +154,8 @@ function ClubeFormModal({ open, onClose, onSaved, clube }: { open: boolean; onCl
 function Inp({ label, value, onChange, type = "text" }: { label: string; value: string; onChange: (v: string) => void; type?: string }) {
   return (
     <div className="flex-1">
-      <label className="text-[9px] text-neutral-500 uppercase tracking-wider mb-1 block">{label}</label>
-      <Input type={type} value={value} onChange={e => onChange(e.target.value)} className="h-7 text-[11px] bg-[#0a0a0a] border-[#1c1c1c] text-neutral-200" />
+      <label className="text-[9px] text-slate-500 uppercase tracking-wider mb-1 block">{label}</label>
+      <Input type={type} value={value} onChange={e => onChange(e.target.value)} className="h-7 text-[11px] bg-white border-slate-200 text-slate-700" />
     </div>
   );
 }

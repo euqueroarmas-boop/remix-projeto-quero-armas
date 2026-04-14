@@ -55,32 +55,32 @@ export default function QALoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a] px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-[#7a1528]/20 border border-[#7a1528]/30 mb-4">
             <Shield className="h-6 w-6 text-[#c43b52]" />
           </div>
-          <h1 className="text-xl font-bold text-neutral-100 tracking-tight">Quero Armas</h1>
-          <p className="text-[11px] text-neutral-600 mt-1 tracking-wider uppercase">Acesso Restrito</p>
+          <h1 className="text-xl font-bold text-slate-800 tracking-tight">Quero Armas</h1>
+          <p className="text-[11px] text-slate-400 mt-1 tracking-wider uppercase">Acesso Restrito</p>
         </div>
 
-        <form onSubmit={handleLogin} className="space-y-4 bg-[#111111] border border-[#1c1c1c] rounded-xl p-6">
+        <form onSubmit={handleLogin} className="space-y-4 bg-white border border-slate-200 rounded-xl p-6">
           <div className="space-y-1.5">
-            <Label htmlFor="email" className="text-neutral-500 text-[11px] uppercase tracking-wider">E-mail</Label>
+            <Label htmlFor="email" className="text-slate-500 text-[11px] uppercase tracking-wider">E-mail</Label>
             <Input
               id="email" type="email" required value={email}
               onChange={e => setEmail(e.target.value)}
-              className="bg-[#0a0a0a] border-[#1c1c1c] text-neutral-200 focus:border-[#7a1528] focus:ring-[#7a1528]/30 h-10 text-sm"
+              className="bg-white border-slate-200 text-slate-700 focus:border-blue-500 focus:ring-blue-500/20 h-10 text-sm"
               placeholder="seu@email.com"
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="password" className="text-neutral-500 text-[11px] uppercase tracking-wider">Senha</Label>
+            <Label htmlFor="password" className="text-slate-500 text-[11px] uppercase tracking-wider">Senha</Label>
             <Input
               id="password" type="password" required value={password}
               onChange={e => setPassword(e.target.value)}
-              className="bg-[#0a0a0a] border-[#1c1c1c] text-neutral-200 focus:border-[#7a1528] focus:ring-[#7a1528]/30 h-10 text-sm"
+              className="bg-white border-slate-200 text-slate-700 focus:border-blue-500 focus:ring-blue-500/20 h-10 text-sm"
               placeholder="••••••••"
             />
           </div>
@@ -89,13 +89,13 @@ export default function QALoginPage() {
           </Button>
           <div className="text-center pt-1">
             <button type="button" onClick={handleForgotPassword}
-              className="text-[10px] text-neutral-600 hover:text-[#c43b52] transition-colors">
+              className="text-[10px] text-slate-400 hover:text-[#c43b52] transition-colors">
               Esqueci minha senha
             </button>
           </div>
         </form>
 
-        <p className="text-center text-[10px] text-neutral-700 mt-6 tracking-wider">
+        <p className="text-center text-[10px] text-slate-300 mt-6 tracking-wider">
           Ambiente seguro · Acesso auditado
         </p>
       </div>

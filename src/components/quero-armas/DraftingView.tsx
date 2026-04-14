@@ -69,7 +69,7 @@ function ElapsedTimer({ startedAt }: { startedAt?: number }) {
   const m = Math.floor(elapsed / 60);
   const s = elapsed % 60;
   return (
-    <span className="text-[11px] text-neutral-500 tabular-nums font-mono flex items-center gap-1">
+    <span className="text-[11px] text-slate-500 tabular-nums font-mono flex items-center gap-1">
       <Clock className="h-3 w-3" />
       {m > 0 ? `${m}m${s.toString().padStart(2, "0")}s` : `${s}s`}
     </span>
@@ -101,7 +101,7 @@ function DraftLines({ text, isStreaming }: { text: string; isStreaming: boolean 
   return (
     <div
       ref={containerRef}
-      className="bg-[#0a0a0a] border border-[#1c1c1c] rounded-lg p-4 max-h-[60vh] overflow-y-auto scroll-smooth"
+      className="bg-white border border-slate-200 rounded-lg p-4 max-h-[60vh] overflow-y-auto scroll-smooth"
     >
       <div className="font-serif text-[12.5px] leading-[1.8]">
         {lines.map((line, i) => {
@@ -118,7 +118,7 @@ function DraftLines({ text, isStreaming }: { text: string; isStreaming: boolean 
                 transition-all duration-300 ease-out
                 ${isHeader
                   ? "text-[#e8a0ad] font-semibold text-[13px] mt-4 mb-1 tracking-wide"
-                  : isLast ? "text-neutral-200" : "text-neutral-400"
+                  : isLast ? "text-slate-700" : "text-slate-600"
                 }
                 ${isLast ? "border-l-2 border-[#a52338]/50 pl-3 -ml-3 bg-[#7a1528]/[0.04] rounded-r" : ""}
               `}
@@ -141,7 +141,7 @@ function WordCount({ text }: { text: string }) {
   if (count < 10) return null;
   const isLow = count < 2000;
   return (
-    <span className={`text-[9px] tabular-nums font-mono ${isLow ? "text-amber-500" : "text-neutral-600"}`}>
+    <span className={`text-[9px] tabular-nums font-mono ${isLow ? "text-amber-500" : "text-slate-400"}`}>
       {count} palavras{isLow ? " (mín. 2000)" : ""}
     </span>
   );
@@ -200,9 +200,9 @@ export default function DraftingView({
   if (!visible) return null;
 
   return (
-    <div className="bg-[#111111] border border-[#1c1c1c] rounded-xl overflow-hidden">
+    <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
       {/* Header */}
-      <div className="bg-[#0e0e0e] border-b border-[#1c1c1c] px-4 py-3 flex items-center justify-between">
+      <div className="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           {isDone ? (
             <CheckCircle className="h-4 w-4 text-emerald-400" />
@@ -211,7 +211,7 @@ export default function DraftingView({
           ) : (
             <Sparkles className="h-4 w-4 text-[#c43b52] animate-pulse" />
           )}
-          <span className="text-sm font-medium text-neutral-200">
+          <span className="text-sm font-medium text-slate-700">
             {isDone ? "Pronto para copiar e baixar" : isError ? "Erro na geração" : "Redigindo minuta..."}
           </span>
         </div>
@@ -229,7 +229,7 @@ export default function DraftingView({
       {/* Pipeline + Section steps */}
       <div className="px-4 py-2 flex gap-6">
         <div className="space-y-0.5 flex-1">
-          <span className="text-[9px] text-neutral-600 uppercase tracking-[0.15em]">Etapas</span>
+          <span className="text-[9px] text-slate-400 uppercase tracking-[0.15em]">Etapas</span>
           {PIPELINE_STEPS.map((step, idx) => {
             const isActive = step.key === pipelineStep;
             const stepDone = pipelineIdx > idx || isDone;
@@ -242,7 +242,7 @@ export default function DraftingView({
                 ) : isActive ? (
                   <Loader2 className="h-3 w-3 animate-spin shrink-0" />
                 ) : (
-                  <div className="h-3 w-3 rounded-full border border-neutral-800 shrink-0" />
+                  <div className="h-3 w-3 rounded-full border border-slate-200 shrink-0" />
                 )}
                 <span>{step.label}</span>
               </div>
@@ -252,7 +252,7 @@ export default function DraftingView({
 
         {(pipelineStep === "writing" || isDone) && streamedText.length > 0 && (
           <div className="space-y-0.5 flex-1">
-            <span className="text-[9px] text-neutral-600 uppercase tracking-[0.15em]">Seções da peça</span>
+            <span className="text-[9px] text-slate-400 uppercase tracking-[0.15em]">Seções da peça</span>
             {DRAFT_SECTIONS.map((sec) => {
               const found = detectedSections.some(d => d.key === sec.key);
               const isCurrent = currentWritingSection === sec.label && isStreaming;
@@ -265,7 +265,7 @@ export default function DraftingView({
                   ) : isCurrent ? (
                     <Loader2 className="h-3 w-3 animate-spin shrink-0" />
                   ) : (
-                    <div className="h-3 w-3 rounded-full border border-neutral-800 shrink-0" />
+                    <div className="h-3 w-3 rounded-full border border-slate-200 shrink-0" />
                   )}
                   <span>{sec.label}</span>
                 </div>
@@ -303,9 +303,9 @@ export default function DraftingView({
       {/* Empty state */}
       {streamedText.length === 0 && !isError && (
         <div className="px-4 pb-4">
-          <div className="bg-[#0a0a0a] border border-[#1c1c1c] rounded-lg p-8 flex flex-col items-center gap-3">
+          <div className="bg-white border border-slate-200 rounded-lg p-8 flex flex-col items-center gap-3">
             <Loader2 className="h-6 w-6 text-[#c43b52]/40 animate-spin" />
-            <span className="text-[11px] text-neutral-600">Preparando geração...</span>
+            <span className="text-[11px] text-slate-400">Preparando geração...</span>
           </div>
         </div>
       )}
@@ -319,7 +319,7 @@ export default function DraftingView({
             </div>
             <p className="text-[11px] text-red-400/80">{error}</p>
             {streamedText.length > 0 && (
-              <p className="text-[10px] text-neutral-500">
+              <p className="text-[10px] text-slate-500">
                 O rascunho parcial acima foi preservado. Você pode copiá-lo ou tentar novamente.
               </p>
             )}
@@ -330,7 +330,7 @@ export default function DraftingView({
               </Button>
               {streamedText.length > 0 && (
                 <Button variant="outline" size="sm" onClick={handleCopyClick}
-                  className="h-7 text-[10px] border-[#1c1c1c] text-neutral-400">
+                  className="h-7 text-[10px] border-slate-200 text-slate-600">
                   <Copy className="h-3 w-3 mr-1" /> Copiar rascunho parcial
                 </Button>
               )}
@@ -375,7 +375,7 @@ export default function DraftingView({
             <Button
               onClick={onExportDocx}
               disabled={isExporting || !streamedText}
-              className="h-14 text-base font-medium bg-[#141414] hover:bg-[#1c1c1c] text-neutral-200 border border-[#2a2a2a] active:scale-[0.98] transition-transform"
+              className="h-14 text-base font-medium bg-slate-50 hover:bg-slate-100 text-slate-700 border border-[#2a2a2a] active:scale-[0.98] transition-transform"
             >
               {isExporting ? (
                 <><Loader2 className="h-5 w-5 mr-2 animate-spin" /> Gerando Word...</>
@@ -391,7 +391,7 @@ export default function DraftingView({
                 <CheckCircle className="h-4 w-4 text-emerald-400" />
                 <div>
                   <div className="text-[12px] text-emerald-400 font-medium">Caso salvo com sucesso</div>
-                  <div className="text-[9px] text-neutral-600 font-mono">ID: {savedCasoId.slice(0, 8)}...</div>
+                  <div className="text-[9px] text-slate-400 font-mono">ID: {savedCasoId.slice(0, 8)}...</div>
                 </div>
               </div>
               <Button variant="outline" size="sm" onClick={onOpenCase}
@@ -403,7 +403,7 @@ export default function DraftingView({
 
           {result && (
             <div className="space-y-2">
-              <div className="flex items-center gap-3 bg-[#0e0e0e] border border-[#1c1c1c] rounded-lg p-3">
+              <div className="flex items-center gap-3 bg-white border border-slate-200 rounded-lg p-3">
                 <div className="text-center">
                   <div className={`text-lg font-semibold font-mono ${
                     (result.score_confianca || 0) >= 0.7 ? "text-emerald-400" :
@@ -411,9 +411,9 @@ export default function DraftingView({
                   }`}>
                     {((result.score_confianca || 0) * 100).toFixed(0)}%
                   </div>
-                  <div className="text-[9px] text-neutral-600 uppercase tracking-wider">Confiança</div>
+                  <div className="text-[9px] text-slate-400 uppercase tracking-wider">Confiança</div>
                 </div>
-                <div className="flex-1 text-[11px] text-neutral-500">
+                <div className="flex-1 text-[11px] text-slate-500">
                   {result.fontes_utilizadas?.length || 0} fontes • {result.fontes_utilizadas?.filter((f: any) => f.validada).length || 0} validadas
                   {result.circunscricao_utilizada && (
                     <div className="text-emerald-400/60 mt-0.5 text-[10px]">✓ {result.circunscricao_utilizada.unidade_pf}</div>

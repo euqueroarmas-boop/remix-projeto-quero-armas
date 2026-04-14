@@ -103,11 +103,11 @@ type TrackedImport = {
 /* ─── Dashboard stat card ─── */
 function StatCard({ icon: Icon, label, value, color }: { icon: any; label: string; value: number; color: string }) {
   return (
-    <div className="bg-[#111111] border border-[#1c1c1c] rounded p-4 flex items-center gap-3">
+    <div className="bg-white border border-slate-200 rounded p-4 flex items-center gap-3">
       <div className={`p-2 rounded-lg ${color}`}><Icon className="h-4 w-4" /></div>
       <div>
-        <div className="text-lg font-bold text-neutral-300">{value}</div>
-        <div className="text-[11px] text-neutral-500">{label}</div>
+        <div className="text-lg font-bold text-slate-700">{value}</div>
+        <div className="text-[11px] text-slate-500">{label}</div>
       </div>
     </div>
   );
@@ -146,26 +146,26 @@ function ActivityItem({ item, onDismiss, onReprocess }: { item: TrackedImport; o
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs font-medium text-neutral-200 truncate">{item.titulo || item.url}</span>
+          <span className="text-xs font-medium text-slate-700 truncate">{item.titulo || item.url}</span>
           <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium whitespace-nowrap ${
             isFailed ? "bg-red-500/10 text-red-400" :
             isDone ? "bg-emerald-500/10 text-emerald-400" :
             "bg-blue-500/10 text-blue-400"
           }`}>{stage.label}</span>
           {duration > 0 && (
-            <span className="text-[10px] text-neutral-500 tabular-nums">{formatDuration(duration)}</span>
+            <span className="text-[10px] text-slate-500 tabular-nums">{formatDuration(duration)}</span>
           )}
         </div>
         {/* Meta info on success */}
         {isDone && (tipoLabel || origemLabel) && (
           <div className="flex items-center gap-2 mt-0.5">
-            {tipoLabel && <span className="text-[10px] text-neutral-500 bg-neutral-800/60 px-1.5 py-0.5 rounded">{tipoLabel}</span>}
-            <span className="text-[10px] text-neutral-600">{origemLabel}</span>
+            {tipoLabel && <span className="text-[10px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">{tipoLabel}</span>}
+            <span className="text-[10px] text-slate-400">{origemLabel}</span>
           </div>
         )}
         {isActive && (
           <div className="mt-1.5">
-            <Progress value={stage.pct} className="h-1.5 bg-neutral-800" />
+            <Progress value={stage.pct} className="h-1.5 bg-slate-100" />
           </div>
         )}
         {isFailed && item.resumo && (
@@ -185,7 +185,7 @@ function ActivityItem({ item, onDismiss, onReprocess }: { item: TrackedImport; o
         </Button>
       )}
       {TERMINAL.includes(item.status) && (
-        <button onClick={onDismiss} className="shrink-0 text-neutral-600 hover:text-neutral-400 transition-colors">
+        <button onClick={onDismiss} className="shrink-0 text-slate-400 hover:text-slate-600 transition-colors">
           <X className="h-3.5 w-3.5" />
         </button>
       )}
@@ -506,10 +506,10 @@ export default function QABaseConhecimentoPage() {
   const statusIcon = (s: string) => {
     if (s === "concluido") return <CheckCircle className="h-4 w-4 text-emerald-400" />;
     if (s === "erro" || s === "texto_invalido") return <AlertCircle className="h-4 w-4 text-red-400" />;
-    if (TERMINAL.includes(s)) return <Clock className="h-4 w-4 text-neutral-500" />;
+    if (TERMINAL.includes(s)) return <Clock className="h-4 w-4 text-slate-500" />;
     // Any processing stage
     if (s !== "pendente") return <Loader2 className="h-4 w-4 text-blue-400 animate-spin" />;
-    return <Clock className="h-4 w-4 text-neutral-500" />;
+    return <Clock className="h-4 w-4 text-slate-500" />;
   };
 
   const statusLabel = (s: string) => {
@@ -518,12 +518,12 @@ export default function QABaseConhecimentoPage() {
     if (s === "texto_invalido") return { text: "Texto Inválido", cls: "bg-orange-500/10 text-orange-400" };
     if (s === "erro") return { text: "Falhou", cls: "bg-red-500/10 text-red-400" };
     if (s !== "pendente" && !TERMINAL.includes(s)) return { text: stage.label, cls: "bg-blue-500/10 text-blue-400" };
-    return { text: "Pendente", cls: "bg-neutral-800 text-neutral-400" };
+    return { text: "Pendente", cls: "bg-slate-100 text-slate-600" };
   };
 
   const origemIcon = (t: string) => {
     if (t === "link_publico") return <Globe className="h-3 w-3 text-blue-400" />;
-    return <Upload className="h-3 w-3 text-neutral-500" />;
+    return <Upload className="h-3 w-3 text-slate-500" />;
   };
 
   // Dashboard stats
@@ -541,8 +541,8 @@ export default function QABaseConhecimentoPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-base font-semibold text-neutral-300">Base de Conhecimento</h1>
-          <p className="text-sm text-neutral-500 mt-1">Documentos que alimentam a IA jurídica</p>
+          <h1 className="text-base font-semibold text-slate-700">Base de Conhecimento</h1>
+          <p className="text-sm text-slate-500 mt-1">Documentos que alimentam a IA jurídica</p>
         </div>
         <div className="flex gap-2 flex-wrap">
           <Button variant="outline" onClick={() => setShowLinkDialog(true)} className="border-blue-600/40 text-blue-400 hover:bg-blue-500/10 gap-1.5">
@@ -553,7 +553,7 @@ export default function QABaseConhecimentoPage() {
           </Button>
           <label className="cursor-pointer">
             <input type="file" className="hidden" onChange={handleUpload} accept=".pdf,.doc,.docx,.txt,.rtf" multiple />
-            <Button asChild disabled={uploading} className="bg-[#7a1528] hover:bg-[#a52338] text-neutral-300 border border-[#1c1c1c]">
+            <Button asChild disabled={uploading} className="bg-[#7a1528] hover:bg-[#a52338] text-slate-700 border border-slate-200">
               <span>{uploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />} Enviar Documento</span>
             </Button>
           </label>
@@ -562,9 +562,9 @@ export default function QABaseConhecimentoPage() {
 
       {/* ─── Activity Queue ─── */}
       {trackedImports.length > 0 && (
-        <div className="bg-[#0a0a0a] border border-[#1c1c1c] rounded p-4 space-y-2">
+        <div className="bg-white border border-slate-200 rounded p-4 space-y-2">
           <div className="flex items-center justify-between mb-1">
-            <button onClick={() => setQueueCollapsed(c => !c)} className="flex items-center gap-2 text-xs font-semibold text-neutral-400 uppercase tracking-wider hover:text-neutral-300 transition-colors">
+            <button onClick={() => setQueueCollapsed(c => !c)} className="flex items-center gap-2 text-xs font-semibold text-slate-600 uppercase tracking-wider hover:text-slate-700 transition-colors">
               {activeTracked.length > 0 && <Loader2 className="h-3 w-3 animate-spin text-blue-400" />}
               Fila de Processamento
               {queueCollapsed ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />}
@@ -587,7 +587,7 @@ export default function QABaseConhecimentoPage() {
                 </span>
               )}
               {trackedImports.every(t => TERMINAL.includes(t.status)) && (
-                <button onClick={() => setTrackedImports([])} className="text-[10px] text-neutral-600 hover:text-neutral-400 transition-colors">
+                <button onClick={() => setTrackedImports([])} className="text-[10px] text-slate-400 hover:text-slate-600 transition-colors">
                   Limpar tudo
                 </button>
               )}
@@ -606,7 +606,7 @@ export default function QABaseConhecimentoPage() {
 
       {/* Dashboard Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <StatCard icon={FileText} label="Total" value={totalDocs} color="bg-neutral-800 text-neutral-400" />
+        <StatCard icon={FileText} label="Total" value={totalDocs} color="bg-slate-100 text-slate-600" />
         <StatCard icon={ShieldCheck} label="Validados" value={validados} color="bg-emerald-500/10 text-emerald-400" />
         <StatCard icon={Clock} label="Pendentes" value={pendentes} color="bg-amber-500/10 text-amber-400" />
         <StatCard icon={Zap} label="Ativos na IA" value={ativosIA} color="bg-purple-500/10 text-purple-400" />
@@ -615,31 +615,31 @@ export default function QABaseConhecimentoPage() {
 
       <div className="flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-500" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
           <Input placeholder="Buscar por título..." value={busca} onChange={e => setBusca(e.target.value)}
-            className="pl-10 bg-[#111111] border-[#1c1c1c] text-neutral-300" />
+            className="pl-10 bg-white border-slate-200 text-slate-700" />
         </div>
         <Select value={filtroTipo} onValueChange={setFiltroTipo}>
-          <SelectTrigger className="w-[180px] bg-[#111111] border-[#1c1c1c] text-neutral-300"><SelectValue placeholder="Tipo" /></SelectTrigger>
+          <SelectTrigger className="w-[180px] bg-white border-slate-200 text-slate-700"><SelectValue placeholder="Tipo" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="todos">Todos os tipos</SelectItem>
             {TIPOS_DOC.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={filtroOrigem} onValueChange={setFiltroOrigem}>
-          <SelectTrigger className="w-[160px] bg-[#111111] border-[#1c1c1c] text-neutral-300"><SelectValue placeholder="Origem" /></SelectTrigger>
+          <SelectTrigger className="w-[160px] bg-white border-slate-200 text-slate-700"><SelectValue placeholder="Origem" /></SelectTrigger>
           <SelectContent>
           {TIPOS_ORIGEM_FILTER.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={filtroPapel} onValueChange={setFiltroPapel}>
-          <SelectTrigger className="w-[170px] bg-[#111111] border-[#1c1c1c] text-neutral-300"><SelectValue placeholder="Papel" /></SelectTrigger>
+          <SelectTrigger className="w-[170px] bg-white border-slate-200 text-slate-700"><SelectValue placeholder="Papel" /></SelectTrigger>
           <SelectContent>
             {PAPEIS_DOC_FILTER.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={filtroStatus} onValueChange={setFiltroStatus}>
-          <SelectTrigger className="w-[160px] bg-[#111111] border-[#1c1c1c] text-neutral-300"><SelectValue placeholder="Status" /></SelectTrigger>
+          <SelectTrigger className="w-[160px] bg-white border-slate-200 text-slate-700"><SelectValue placeholder="Status" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="todos">Todos</SelectItem>
             <SelectItem value="pendente">Pendente</SelectItem>
@@ -652,9 +652,9 @@ export default function QABaseConhecimentoPage() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-neutral-400" /></div>
+        <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-slate-600" /></div>
       ) : docs.length === 0 ? (
-        <div className="text-center py-12 text-neutral-500">
+        <div className="text-center py-12 text-slate-500">
           <FileText className="h-12 w-12 mx-auto mb-3 opacity-30" />
           <p>Nenhum documento encontrado</p>
           <p className="text-xs mt-1">Envie documentos ou importe por link para alimentar a base</p>
@@ -671,15 +671,15 @@ export default function QABaseConhecimentoPage() {
             const isAtivoIA = d.ativo_na_ia === true;
             const isProcessing = !TERMINAL.includes(d.status_processamento) && d.status_processamento !== "pendente";
             return (
-              <div key={d.id} className="flex items-center gap-3 bg-[#111111] border border-[#1c1c1c] rounded-lg p-4 hover:border-neutral-600 transition-all group">
+              <div key={d.id} className="flex items-center gap-3 bg-white border border-slate-200 rounded-lg p-4 hover:border-neutral-600 transition-all group">
                 {statusIcon(d.status_processamento)}
                 <Link to={`/quero-armas/base-conhecimento/${d.id}`} className="flex-1 min-w-0 cursor-pointer">
-                  <div className="text-sm font-medium text-neutral-200 truncate group-hover:text-[#c43b52] transition-colors flex items-center gap-1.5">
+                  <div className="text-sm font-medium text-slate-700 truncate group-hover:text-[#c43b52] transition-colors flex items-center gap-1.5">
                     {d.titulo}
                     {isRef && <Star className="h-3 w-3 text-amber-400 shrink-0" />}
                   </div>
-                  <div className="text-xs text-neutral-500 flex items-center gap-2 mt-0.5 flex-wrap">
-                    <span className="px-1.5 py-0.5 rounded bg-neutral-800 text-neutral-400">{d.tipo_documento?.replace(/_/g, " ")}</span>
+                  <div className="text-xs text-slate-500 flex items-center gap-2 mt-0.5 flex-wrap">
+                    <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">{d.tipo_documento?.replace(/_/g, " ")}</span>
                     <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${d.papel_documento === "auxiliar_caso" ? "bg-[#7a1528]/10 text-[#c43b52]" : "bg-indigo-500/10 text-indigo-400"}`}>
                       {d.papel_documento === "auxiliar_caso" ? "Auxiliar" : "Aprendizado"}
                     </span>
@@ -696,7 +696,7 @@ export default function QABaseConhecimentoPage() {
                   )}
                   {isProcessing && (
                     <div className="mt-1.5 flex items-center gap-2">
-                      <Progress value={getStageInfo(d.status_processamento).pct} className="h-1 bg-neutral-800 flex-1 max-w-[200px]" />
+                      <Progress value={getStageInfo(d.status_processamento).pct} className="h-1 bg-slate-100 flex-1 max-w-[200px]" />
                       <span className="text-[10px] text-blue-400">{getStageInfo(d.status_processamento).label}</span>
                     </div>
                   )}
@@ -709,7 +709,7 @@ export default function QABaseConhecimentoPage() {
                   <span className={`text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-medium whitespace-nowrap ${
                     isValidado ? "bg-emerald-500/10 text-emerald-400" :
                     isRejeitado ? "bg-red-500/10 text-red-400" :
-                    "bg-neutral-800 text-neutral-500"
+                    "bg-slate-100 text-slate-500"
                   }`}>
                     {isValidado ? "validado" : isRejeitado ? "rejeitado" : "pendente"}
                   </span>
@@ -730,7 +730,7 @@ export default function QABaseConhecimentoPage() {
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
                 <Link to={`/quero-armas/base-conhecimento/${d.id}`}>
-                  <ExternalLink className="h-3.5 w-3.5 text-neutral-600 group-hover:text-[#c43b52] shrink-0" />
+                  <ExternalLink className="h-3.5 w-3.5 text-slate-400 group-hover:text-[#c43b52] shrink-0" />
                 </Link>
               </div>
             );
@@ -740,16 +740,16 @@ export default function QABaseConhecimentoPage() {
 
       {/* Import by Link Dialog */}
       <Dialog open={showLinkDialog} onOpenChange={setShowLinkDialog}>
-        <DialogContent className="bg-[#111111] border-[#1c1c1c] text-neutral-300 max-w-lg">
+        <DialogContent className="bg-white border-slate-200 text-slate-700 max-w-lg">
           <DialogHeader>
-            <DialogTitle className="text-neutral-300 flex items-center gap-2"><Link2 className="h-5 w-5 text-blue-400" /> Importar por Link Público</DialogTitle>
+            <DialogTitle className="text-slate-700 flex items-center gap-2"><Link2 className="h-5 w-5 text-blue-400" /> Importar por Link Público</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             {/* Papel do documento — choice first */}
             <div>
-              <Label className="text-neutral-300 text-xs">Este documento será usado como: *</Label>
+              <Label className="text-slate-700 text-xs">Este documento será usado como: *</Label>
               <Select value={linkPapel} onValueChange={(v: "aprendizado" | "auxiliar_caso") => setLinkPapel(v)}>
-                <SelectTrigger className="bg-[#0a0a0a] border-[#1c1c1c] text-neutral-300 mt-1"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="bg-white border-slate-200 text-slate-700 mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="aprendizado">Base de aprendizado / modelo</SelectItem>
                   <SelectItem value="auxiliar_caso">Documento auxiliar do caso concreto</SelectItem>
@@ -763,23 +763,23 @@ export default function QABaseConhecimentoPage() {
             </div>
             {linkPapel === "auxiliar_caso" && (
               <div>
-                <Label className="text-neutral-300 text-xs">Identificador do caso *</Label>
-                <Input value={linkCasoId} onChange={e => setLinkCasoId(e.target.value)} placeholder="Ex: caso-joao-silva-2026" className="bg-[#0a0a0a] border-[#1c1c1c] text-neutral-300 mt-1" />
+                <Label className="text-slate-700 text-xs">Identificador do caso *</Label>
+                <Input value={linkCasoId} onChange={e => setLinkCasoId(e.target.value)} placeholder="Ex: caso-joao-silva-2026" className="bg-white border-slate-200 text-slate-700 mt-1" />
               </div>
             )}
             <div>
-              <Label className="text-neutral-300 text-xs">URL pública *</Label>
-              <Input value={linkUrl} onChange={e => setLinkUrl(e.target.value)} placeholder="https://www.planalto.gov.br/ccivil_03/leis/..." className="bg-[#0a0a0a] border-[#1c1c1c] text-neutral-300 mt-1" />
-              <p className="text-[10px] text-neutral-600 mt-1">Páginas HTML, PDFs públicos, documentos governamentais</p>
+              <Label className="text-slate-700 text-xs">URL pública *</Label>
+              <Input value={linkUrl} onChange={e => setLinkUrl(e.target.value)} placeholder="https://www.planalto.gov.br/ccivil_03/leis/..." className="bg-white border-slate-200 text-slate-700 mt-1" />
+              <p className="text-[10px] text-slate-400 mt-1">Páginas HTML, PDFs públicos, documentos governamentais</p>
             </div>
             <div>
-              <Label className="text-neutral-300 text-xs">Título (opcional)</Label>
-              <Input value={linkTitulo} onChange={e => setLinkTitulo(e.target.value)} placeholder="Ex: Lei 10.826/2003 - Estatuto do Desarmamento" className="bg-[#0a0a0a] border-[#1c1c1c] text-neutral-300 mt-1" />
+              <Label className="text-slate-700 text-xs">Título (opcional)</Label>
+              <Input value={linkTitulo} onChange={e => setLinkTitulo(e.target.value)} placeholder="Ex: Lei 10.826/2003 - Estatuto do Desarmamento" className="bg-white border-slate-200 text-slate-700 mt-1" />
             </div>
             <div>
-              <Label className="text-neutral-300 text-xs">Classificação</Label>
+              <Label className="text-slate-700 text-xs">Classificação</Label>
               <Select value={linkTipo} onValueChange={setLinkTipo}>
-                <SelectTrigger className="bg-[#0a0a0a] border-[#1c1c1c] text-neutral-300 mt-1"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="bg-white border-slate-200 text-slate-700 mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {(linkPapel === "auxiliar_caso" ? TIPOS_AUXILIAR : TIPOS_DOC).map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
                 </SelectContent>
@@ -787,7 +787,7 @@ export default function QABaseConhecimentoPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowLinkDialog(false)} className="border-[#1c1c1c] text-neutral-400">Cancelar</Button>
+            <Button variant="outline" onClick={() => setShowLinkDialog(false)} className="border-slate-200 text-slate-600">Cancelar</Button>
             <Button onClick={handleImportLink} disabled={!linkUrl.trim() || importingLink} className="bg-blue-600 hover:bg-blue-700">
               {importingLink ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Enviando...</> : <><Globe className="h-4 w-4 mr-2" /> Importar</>}
             </Button>
@@ -797,22 +797,22 @@ export default function QABaseConhecimentoPage() {
 
       {/* Bulk Import Dialog */}
       <Dialog open={showBulkDialog} onOpenChange={setShowBulkDialog}>
-        <DialogContent className="bg-[#111111] border-[#1c1c1c] text-neutral-300 max-w-lg">
+        <DialogContent className="bg-white border-slate-200 text-slate-700 max-w-lg">
           <DialogHeader>
-            <DialogTitle className="text-neutral-300 flex items-center gap-2"><Plus className="h-5 w-5 text-purple-400" /> Carga em Lote</DialogTitle>
+            <DialogTitle className="text-slate-700 flex items-center gap-2"><Plus className="h-5 w-5 text-purple-400" /> Carga em Lote</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label className="text-neutral-300 text-xs">Links (um por linha)</Label>
+              <Label className="text-slate-700 text-xs">Links (um por linha)</Label>
               <Textarea value={bulkLinks} onChange={e => setBulkLinks(e.target.value)} rows={8}
                 placeholder={"https://www.planalto.gov.br/ccivil_03/leis/2003/l10.826.htm\nhttps://www.planalto.gov.br/ccivil_03/_ato2004-2006/2004/decreto/d5.123.htm"}
-                className="bg-[#0a0a0a] border-[#1c1c1c] text-neutral-300 mt-1 font-mono text-xs" />
-              <p className="text-[10px] text-neutral-600 mt-1">{bulkLinks.split("\n").filter(l => l.trim().length > 5).length} links detectados</p>
+                className="bg-white border-slate-200 text-slate-700 mt-1 font-mono text-xs" />
+              <p className="text-[10px] text-slate-400 mt-1">{bulkLinks.split("\n").filter(l => l.trim().length > 5).length} links detectados</p>
             </div>
             <div>
-              <Label className="text-neutral-300 text-xs">Classificação padrão</Label>
+              <Label className="text-slate-700 text-xs">Classificação padrão</Label>
               <Select value={bulkTipo} onValueChange={setBulkTipo}>
-                <SelectTrigger className="bg-[#0a0a0a] border-[#1c1c1c] text-neutral-300 mt-1"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="bg-white border-slate-200 text-slate-700 mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {TIPOS_DOC.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
                 </SelectContent>
@@ -821,21 +821,21 @@ export default function QABaseConhecimentoPage() {
             {bulkImporting && (
               <div className="space-y-1.5">
                 <div className="text-xs text-amber-400">{bulkProgress.done}/{bulkProgress.total} importados...</div>
-                <Progress value={(bulkProgress.done / Math.max(bulkProgress.total, 1)) * 100} className="h-1.5 bg-neutral-800" />
+                <Progress value={(bulkProgress.done / Math.max(bulkProgress.total, 1)) * 100} className="h-1.5 bg-slate-100" />
               </div>
             )}
             <div>
-              <Label className="text-neutral-300 text-xs">Ou envie múltiplos arquivos</Label>
+              <Label className="text-slate-700 text-xs">Ou envie múltiplos arquivos</Label>
               <label className="cursor-pointer block mt-1">
                 <input type="file" className="hidden" onChange={handleUpload} accept=".pdf,.doc,.docx,.txt,.rtf" multiple />
-                <Button asChild variant="outline" disabled={uploading} className="border-[#1c1c1c] text-neutral-400 w-full">
+                <Button asChild variant="outline" disabled={uploading} className="border-slate-200 text-slate-600 w-full">
                   <span>{uploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />} Selecionar arquivos</span>
                 </Button>
               </label>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowBulkDialog(false)} className="border-[#1c1c1c] text-neutral-400">Cancelar</Button>
+            <Button variant="outline" onClick={() => setShowBulkDialog(false)} className="border-slate-200 text-slate-600">Cancelar</Button>
             <Button onClick={handleBulkImport} disabled={!bulkLinks.trim() || bulkImporting} className="bg-purple-600 hover:bg-purple-700">
               {bulkImporting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />} Importar Links
             </Button>
@@ -845,11 +845,11 @@ export default function QABaseConhecimentoPage() {
 
       {/* Delete confirmation dialog */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) setDeleteTarget(null); }}>
-        <AlertDialogContent className="bg-[#111111] border-[#1c1c1c] text-neutral-300 max-w-md">
+        <AlertDialogContent className="bg-white border-slate-200 text-slate-700 max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-neutral-300">Excluir documento</AlertDialogTitle>
-            <AlertDialogDescription className="text-neutral-400">
-              <strong className="text-neutral-200 block mb-1">{deleteTarget?.titulo}</strong>
+            <AlertDialogTitle className="text-slate-700">Excluir documento</AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-600">
+              <strong className="text-slate-700 block mb-1">{deleteTarget?.titulo}</strong>
               Tem certeza que deseja remover este documento da base de conhecimento? A IA não utilizará mais esse conteúdo em consultas futuras.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -857,14 +857,14 @@ export default function QABaseConhecimentoPage() {
             <Button variant="outline" disabled={deleting} onClick={() => handleDeactivate(deleteTarget)}
               className="w-full border-amber-600/40 text-amber-400 hover:bg-amber-500/10 justify-start gap-2">
               <Power className="h-4 w-4" /> Desativar da IA
-              <span className="text-[10px] text-neutral-500 ml-auto">reversível</span>
+              <span className="text-[10px] text-slate-500 ml-auto">reversível</span>
             </Button>
             <Button variant="destructive" disabled={deleting} onClick={() => handlePermanentDelete(deleteTarget)}
               className="w-full justify-start gap-2">
               {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />} Excluir permanentemente
               <span className="text-[10px] text-red-300/60 ml-auto">irreversível</span>
             </Button>
-            <AlertDialogCancel className="w-full border-[#1c1c1c] text-neutral-400">Cancelar</AlertDialogCancel>
+            <AlertDialogCancel className="w-full border-slate-200 text-slate-600">Cancelar</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
