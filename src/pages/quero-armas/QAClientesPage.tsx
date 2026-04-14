@@ -6,8 +6,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Search, User, Phone, Mail, MapPin, FileText, Shield, ChevronLeft,
-  Loader2, Eye, Plus, Crosshair, Edit, Trash2, Download,
+  Loader2, Eye, Plus, Crosshair, Edit, Trash2, Download, FileDown,
 } from "lucide-react";
+import { supabase as supabaseClient } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ClienteFormModal from "@/components/quero-armas/clientes/ClienteFormModal";
 import { CrafModal, GteModal, CrModal, VendaModal, FiliacaoModal, DeleteConfirm } from "@/components/quero-armas/clientes/SubEntityModals";
@@ -158,6 +159,9 @@ export default function QAClientesPage() {
             </TabsTrigger>
             <TabsTrigger value="cr" className="text-[10px] flex-1 data-[state=active]:bg-[#7a1528]/30 data-[state=active]:text-neutral-100">
               <Shield className="h-3 w-3 mr-1" /> CR
+            </TabsTrigger>
+            <TabsTrigger value="docs" className="text-[10px] flex-1 data-[state=active]:bg-[#7a1528]/30 data-[state=active]:text-neutral-100">
+              <FileDown className="h-3 w-3 mr-1" /> Docs
             </TabsTrigger>
           </TabsList>
 
@@ -384,6 +388,10 @@ export default function QAClientesPage() {
                   </div>
                 )}
               </TabsContent>
+              {/* DOCUMENTOS */}
+              <TabsContent value="docs" className="mt-3">
+                <DocumentGenerator cliente={c} />
+              </TabsContent>
             </>
           )}
         </Tabs>
@@ -476,4 +484,133 @@ function Field({ label, value, icon: Icon }: { label: string; value?: string | n
 
 function Empty({ text }: { text: string }) {
   return <div className="text-center py-8 text-neutral-600 text-[11px]">{text}</div>;
+}
+
+const TEMPLATES = [
+  { key: "dsa_1endereco", label: "DSA – 1 Endereço", desc: "Declaração de Segurança do Acervo (endereço único)" },
+  { key: "dsa_2enderecos", label: "DSA – 2 Endereços", desc: "Declaração de Segurança do Acervo (principal + secundário)", needs2addr: true },
+  { key: "declaracao_guarda_acervo_1endereco", label: "Guarda de Acervo – 1 End.", desc: "Declaração de endereço de guarda de acervo" },
+  { key: "declaracao_guarda_acervo_2enderecos", label: "Guarda de Acervo – 2 End.", desc: "Declaração com endereço principal e secundário", needs2addr: true },
+  { key: "declaracao_nao_segundo_endereco", label: "Não Possui 2º Endereço", desc: "Declaração de não possuir segundo endereço" },
+  { key: "declaracao_nao_inquerito_criminal", label: "Não Resp. Inquérito/Proc. Criminal", desc: "Declaração de não responder inquérito policial ou processo criminal" },
+  { key: "declaracao_responsavel_imovel_reside", label: "Resp. Imóvel – Reside", desc: "Declaração do responsável pelo imóvel (reside atualmente)", needsThirdParty: true },
+  { key: "declaracao_responsavel_imovel_residiu", label: "Resp. Imóvel – Residiu", desc: "Declaração do responsável pelo imóvel (residiu de/até)", needsThirdParty: true, needsDates: true },
+];
+
+function DocumentGenerator({ cliente }: { cliente: any }) {
+  const [generating, setGenerating] = useState<string | null>(null);
+  const [showExtra, setShowExtra] = useState<string | null>(null);
+  // Third party fields
+  const [tp, setTp] = useState({ nome: "", naturalidade: "", nascimento: "", profissao: "", estadoCivil: "", cpf: "" });
+  const [dataEntrada, setDataEntrada] = useState("");
+  const [dataSaida, setDataSaida] = useState("");
+
+  const handleGenerate = async (templateKey: string) => {
+    const tpl = TEMPLATES.find(t => t.key === templateKey);
+    if (tpl?.needsThirdParty && !tp.nome.trim()) {
+      toast.error("Preencha os dados do responsável pelo imóvel");
+      return;
+    }
+    if (tpl?.needs2addr && !cliente.endereco2) {
+      toast.error("Cliente não possui endereço secundário cadastrado");
+      return;
+    }
+
+    setGenerating(templateKey);
+    try {
+      const extra: Record<string, string> = {};
+      if (tpl?.needsThirdParty) {
+        extra["[NOME COMPLETO 3]"] = tp.nome;
+        extra["[NATURALIDADE 3]"] = tp.naturalidade;
+        extra["[DATA NASCIMENTO 3]"] = tp.nascimento;
+        extra["[PROFISSÃO 3]"] = tp.profissao;
+        extra["[ESTADO CIVIL 3]"] = tp.estadoCivil;
+        extra["[CPF 3]"] = tp.cpf;
+      }
+      if (tpl?.needsDates) {
+        extra["[DATA ENTRADA]"] = dataEntrada;
+        extra["[DATA SAÍDA]"] = dataSaida;
+      }
+
+      const res = await supabaseClient.functions.invoke("qa-fill-template", {
+        body: { template_key: templateKey, cliente_id: cliente.id, extra_fields: extra },
+      });
+
+      if (res.error) throw new Error(res.error.message || "Erro ao gerar documento");
+
+      const blob = res.data instanceof Blob ? res.data : new Blob([res.data]);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${templateKey}_${(cliente.nome_completo || "cliente").replace(/\s+/g, "_")}.docx`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Documento gerado com sucesso!");
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao gerar documento");
+    } finally {
+      setGenerating(null);
+    }
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-[9px] text-[#c43b52] uppercase tracking-[0.12em] font-semibold">Gerar Declarações</span>
+      </div>
+
+      {/* Third party fields - show when needed */}
+      {showExtra && TEMPLATES.find(t => t.key === showExtra)?.needsThirdParty && (
+        <div className="bg-[#0a0a0a] border border-amber-500/20 rounded-lg p-3 space-y-2">
+          <div className="text-[10px] text-amber-400 font-medium mb-1">Dados do Responsável pelo Imóvel</div>
+          <div className="grid grid-cols-2 gap-2">
+            <Input value={tp.nome} onChange={e => setTp(p => ({ ...p, nome: e.target.value }))} placeholder="Nome Completo" className="h-7 text-[10px] bg-[#111] border-[#1c1c1c] text-neutral-200" />
+            <Input value={tp.cpf} onChange={e => setTp(p => ({ ...p, cpf: e.target.value }))} placeholder="CPF" className="h-7 text-[10px] bg-[#111] border-[#1c1c1c] text-neutral-200" />
+            <Input value={tp.naturalidade} onChange={e => setTp(p => ({ ...p, naturalidade: e.target.value }))} placeholder="Naturalidade" className="h-7 text-[10px] bg-[#111] border-[#1c1c1c] text-neutral-200" />
+            <Input value={tp.nascimento} onChange={e => setTp(p => ({ ...p, nascimento: e.target.value }))} placeholder="Data Nascimento" className="h-7 text-[10px] bg-[#111] border-[#1c1c1c] text-neutral-200" />
+            <Input value={tp.profissao} onChange={e => setTp(p => ({ ...p, profissao: e.target.value }))} placeholder="Profissão" className="h-7 text-[10px] bg-[#111] border-[#1c1c1c] text-neutral-200" />
+            <Input value={tp.estadoCivil} onChange={e => setTp(p => ({ ...p, estadoCivil: e.target.value }))} placeholder="Estado Civil" className="h-7 text-[10px] bg-[#111] border-[#1c1c1c] text-neutral-200" />
+          </div>
+          {TEMPLATES.find(t => t.key === showExtra)?.needsDates && (
+            <div className="grid grid-cols-2 gap-2 pt-1 border-t border-[#1c1c1c]">
+              <Input value={dataEntrada} onChange={e => setDataEntrada(e.target.value)} placeholder="Data Entrada (ex: 01/01/2020)" className="h-7 text-[10px] bg-[#111] border-[#1c1c1c] text-neutral-200" />
+              <Input value={dataSaida} onChange={e => setDataSaida(e.target.value)} placeholder="Data Saída (ex: 31/12/2023)" className="h-7 text-[10px] bg-[#111] border-[#1c1c1c] text-neutral-200" />
+            </div>
+          )}
+          <div className="flex gap-2 pt-1">
+            <Button size="sm" onClick={() => handleGenerate(showExtra)} disabled={generating === showExtra} className="h-7 text-[10px] bg-[#7a1528] hover:bg-[#9a1b32]">
+              {generating === showExtra ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <FileDown className="h-3 w-3 mr-1" />} Gerar DOCX
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setShowExtra(null)} className="h-7 text-[10px] text-neutral-500">Cancelar</Button>
+          </div>
+        </div>
+      )}
+
+      <div className="space-y-1.5">
+        {TEMPLATES.map(tpl => (
+          <div key={tpl.key} className="flex items-center justify-between bg-[#0a0a0a] border border-[#1c1c1c] rounded-lg px-3 py-2 hover:border-neutral-700 transition-all">
+            <div className="min-w-0 flex-1">
+              <div className="text-[11px] text-neutral-200 font-medium">{tpl.label}</div>
+              <div className="text-[9px] text-neutral-600">{tpl.desc}</div>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={!!generating}
+              onClick={() => {
+                if (tpl.needsThirdParty) {
+                  setShowExtra(tpl.key);
+                } else {
+                  handleGenerate(tpl.key);
+                }
+              }}
+              className="h-7 px-2 text-[10px] text-amber-400 hover:text-amber-300 shrink-0"
+            >
+              {generating === tpl.key ? <Loader2 className="h-3 w-3 animate-spin" /> : <FileDown className="h-3.5 w-3.5" />}
+            </Button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
