@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   AlertTriangle, Clock, CheckCircle, TrendingUp, Users, FileText,
-  BarChart3, PieChart as PieChartIcon, Bell, RefreshCw, ChevronDown, ChevronUp, Save, X,
+  BarChart3, PieChart as PieChartIcon, Bell, RefreshCw, ChevronDown, ChevronUp, Save, X, Mail,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -115,6 +115,7 @@ export default function QARelatoriosPage() {
   const [servicos, setServicos] = useState<Servico[]>([]);
   const [loading, setLoading] = useState(true);
   const [alertSending, setAlertSending] = useState(false);
+  const [emailSending, setEmailSending] = useState(false);
   const [tab, setTab] = useState<"pendentes" | "graficos">("pendentes");
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState<Record<string, string>>({});
@@ -280,19 +281,40 @@ export default function QARelatoriosPage() {
       .slice(0, 8);
   }, [vendas, clienteMap]);
 
+  const getCriticalItems = () => {
+    const critical = pendingItems.filter(i => i.urgency === "red" || i.urgency === "critical");
+    return critical.map(i => ({ clienteNome: i.clienteNome, celular: i.clienteCelular, servico: i.servicoNome, dias: i.diasPendente, status: i.status }));
+  };
+
   const sendWhatsAppAlerts = async () => {
     setAlertSending(true);
     try {
-      const critical = pendingItems.filter(i => i.urgency === "red" || i.urgency === "critical");
+      const items = getCriticalItems();
       const res = await supabase.functions.invoke("qa-whatsapp-alerts", {
-        body: { items: critical.map(i => ({ clienteNome: i.clienteNome, celular: i.clienteCelular, servico: i.servicoNome, dias: i.diasPendente, status: i.status })) },
+        body: { items, channel: "whatsapp" },
       });
       if (res.error) throw res.error;
-      alert(`${critical.length} alerta(s) enviado(s) com sucesso!`);
+      alert(`WhatsApp: ${items.length} alerta(s) enviado(s)!`);
     } catch (e: any) {
-      alert("Erro ao enviar alertas: " + (e.message || e));
+      alert("Erro WhatsApp: " + (e.message || e));
     } finally {
       setAlertSending(false);
+    }
+  };
+
+  const sendEmailAlerts = async () => {
+    setEmailSending(true);
+    try {
+      const items = getCriticalItems();
+      const res = await supabase.functions.invoke("qa-whatsapp-alerts", {
+        body: { items, channel: "email" },
+      });
+      if (res.error) throw res.error;
+      alert(`E-mail enviado para eu@queroarmas.com.br!`);
+    } catch (e: any) {
+      alert("Erro e-mail: " + (e.message || e));
+    } finally {
+      setEmailSending(false);
     }
   };
 
@@ -327,7 +349,15 @@ export default function QARelatoriosPage() {
             className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs bg-emerald-900/30 border border-emerald-800/40 text-emerald-400 hover:bg-emerald-900/50 transition-colors disabled:opacity-40"
           >
             <Bell className="h-3 w-3" />
-            {alertSending ? "Enviando..." : `Alertar WhatsApp (${totalCriticos})`}
+            {alertSending ? "Enviando..." : `WhatsApp (${totalCriticos})`}
+          </button>
+          <button
+            onClick={sendEmailAlerts}
+            disabled={emailSending || totalCriticos === 0}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs bg-blue-900/30 border border-blue-800/40 text-blue-400 hover:bg-blue-900/50 transition-colors disabled:opacity-40"
+          >
+            <Mail className="h-3 w-3" />
+            {emailSending ? "Enviando..." : `E-mail (${totalCriticos})`}
           </button>
         </div>
       </div>
