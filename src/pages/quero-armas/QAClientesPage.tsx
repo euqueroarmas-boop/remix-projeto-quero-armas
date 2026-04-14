@@ -218,26 +218,26 @@ export default function QAClientesPage() {
         </div>
 
         <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="bg-[#0e0e0e] border border-[#1c1c1c] h-8 w-full flex-wrap">
-            <TabsTrigger value="dados" className="text-[10px] flex-1 data-[state=active]:bg-[#7a1528]/30 data-[state=active]:text-neutral-100">
-              <User className="h-3 w-3 mr-1" /> Dados
+          <TabsList className="bg-white border border-slate-200 h-9 w-full flex-wrap rounded-xl shadow-sm">
+            <TabsTrigger value="dados" className="text-xs flex-1 data-[state=active]:bg-slate-800 data-[state=active]:text-white rounded-lg">
+              <User className="h-3.5 w-3.5 mr-1" /> Dados
             </TabsTrigger>
-            <TabsTrigger value="servicos" className="text-[10px] flex-1 data-[state=active]:bg-[#7a1528]/30 data-[state=active]:text-neutral-100">
-              <FileText className="h-3 w-3 mr-1" /> Serviços ({itens.length})
+            <TabsTrigger value="servicos" className="text-xs flex-1 data-[state=active]:bg-slate-800 data-[state=active]:text-white rounded-lg">
+              <FileText className="h-3.5 w-3.5 mr-1" /> Serviços ({itens.length})
             </TabsTrigger>
-            <TabsTrigger value="armas" className="text-[10px] flex-1 data-[state=active]:bg-[#7a1528]/30 data-[state=active]:text-neutral-100">
-              <Crosshair className="h-3 w-3 mr-1" /> Armas ({crafs.length + gtes.length})
+            <TabsTrigger value="armas" className="text-xs flex-1 data-[state=active]:bg-slate-800 data-[state=active]:text-white rounded-lg">
+              <Crosshair className="h-3.5 w-3.5 mr-1" /> Armas ({crafs.length + gtes.length})
             </TabsTrigger>
-            <TabsTrigger value="cr" className="text-[10px] flex-1 data-[state=active]:bg-[#7a1528]/30 data-[state=active]:text-neutral-100">
-              <Shield className="h-3 w-3 mr-1" /> CR
+            <TabsTrigger value="cr" className="text-xs flex-1 data-[state=active]:bg-slate-800 data-[state=active]:text-white rounded-lg">
+              <Shield className="h-3.5 w-3.5 mr-1" /> CR
             </TabsTrigger>
-            <TabsTrigger value="docs" className="text-[10px] flex-1 data-[state=active]:bg-[#7a1528]/30 data-[state=active]:text-neutral-100">
-              <FileDown className="h-3 w-3 mr-1" /> Docs
+            <TabsTrigger value="docs" className="text-xs flex-1 data-[state=active]:bg-slate-800 data-[state=active]:text-white rounded-lg">
+              <FileDown className="h-3.5 w-3.5 mr-1" /> Docs
             </TabsTrigger>
           </TabsList>
 
           {loadingSub ? (
-            <div className="flex justify-center py-12"><Loader2 className="h-5 w-5 animate-spin text-neutral-600" /></div>
+            <div className="flex justify-center py-12"><Loader2 className="h-5 w-5 animate-spin text-slate-400" /></div>
           ) : (
             <>
               {/* DADOS */}
