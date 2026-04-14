@@ -174,8 +174,8 @@ export default function QAClientesPage() {
               <TabsContent value="dados" className="mt-3 space-y-4">
                 <Section title="Identificação">
                   <Field label="Nome" value={c.nome_completo} />
-                  <Field label="CPF" value={c.cpf} />
-                  <Field label="RG" value={`${c.rg || "—"} ${c.emissor_rg || ""}`} />
+                  <Field label="CPF" value={c.cpf} copyable />
+                  {cadastro?.senha_gov && <Field label="Senha Gov" value={cadastro.senha_gov} copyable />}
                   <Field label="Nascimento" value={formatDate(c.data_nascimento)} />
                   <Field label="Naturalidade" value={c.naturalidade} />
                   <Field label="Nacionalidade" value={c.nacionalidade} />
