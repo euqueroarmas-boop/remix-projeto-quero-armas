@@ -260,6 +260,66 @@ export default function QAClientesPage() {
     }
   };
 
+  const startEditCadastro = () => {
+    if (!selectedCadastroPublico) return;
+    const c = selectedCadastroPublico;
+    setCadastroEditForm({
+      nome_completo: c.nome_completo || "",
+      cpf: c.cpf || "",
+      data_nascimento: c.data_nascimento || "",
+      estado_civil: c.estado_civil || "",
+      nacionalidade: c.nacionalidade || "",
+      profissao: c.profissao || "",
+      nome_mae: c.nome_mae || "",
+      nome_pai: c.nome_pai || "",
+      telefone_principal: c.telefone_principal || "",
+      telefone_secundario: c.telefone_secundario || "",
+      email: c.email || "",
+      end1_logradouro: c.end1_logradouro || "",
+      end1_numero: c.end1_numero || "",
+      end1_complemento: c.end1_complemento || "",
+      end1_bairro: c.end1_bairro || "",
+      end1_cep: c.end1_cep || "",
+      end1_cidade: c.end1_cidade || "",
+      end1_estado: c.end1_estado || "",
+      end2_tipo: c.end2_tipo || "",
+      end2_logradouro: c.end2_logradouro || "",
+      end2_numero: c.end2_numero || "",
+      end2_complemento: c.end2_complemento || "",
+      end2_bairro: c.end2_bairro || "",
+      end2_cep: c.end2_cep || "",
+      end2_cidade: c.end2_cidade || "",
+      end2_estado: c.end2_estado || "",
+      observacoes: c.observacoes || "",
+      vinculo_tipo: c.vinculo_tipo || "",
+      servico_interesse: c.servico_interesse || "",
+    });
+    setEditingCadastroPublico(true);
+  };
+
+  const saveCadastroEdit = async () => {
+    if (!selectedCadastroPublico) return;
+    setSavingCadastroEdit(true);
+    try {
+      const { data, error } = await supabase.from("qa_cadastro_publico" as any)
+        .update(cadastroEditForm)
+        .eq("id", selectedCadastroPublico.id)
+        .select("*")
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      const updated = data as unknown as CadastroPublico;
+      setSelectedCadastroPublico(updated);
+      setCadastrosPublicos(prev => prev.map(item => item.id === updated.id ? { ...item, ...updated } : item));
+      setEditingCadastroPublico(false);
+      toast.success("Cadastro atualizado com sucesso");
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao salvar");
+    } finally {
+      setSavingCadastroEdit(false);
+    }
+  };
+
   const openClient = async (c: Cliente) => {
     setSelectedCadastroPublico(null);
     setSelected(c);
