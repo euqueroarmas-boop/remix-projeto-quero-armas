@@ -187,6 +187,9 @@ export default function QAClientesPage() {
   const [selectedCadastroPublico, setSelectedCadastroPublico] = useState<CadastroPublico | null>(null);
   const [loadingCadastroPublico, setLoadingCadastroPublico] = useState(false);
   const [savingCadastroPublicoStatus, setSavingCadastroPublicoStatus] = useState<string | null>(null);
+  const [editingCadastroPublico, setEditingCadastroPublico] = useState(false);
+  const [cadastroEditForm, setCadastroEditForm] = useState<Record<string, any>>({});
+  const [savingCadastroEdit, setSavingCadastroEdit] = useState(false);
 
   useEffect(() => { loadClientes(); loadCadastrosPublicos(); }, []);
 
