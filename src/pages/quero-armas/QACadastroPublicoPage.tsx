@@ -10,7 +10,7 @@ import {
 type Step = 1 | 2 | 3 | 4 | 5;
 
 interface FormData {
-  nome_completo: string; cpf: string; data_nascimento: string;
+  nome_completo: string; cpf: string; rg: string; emissor_rg: string; data_nascimento: string;
   telefone_principal: string; telefone_secundario: string; email: string;
   nome_mae: string; nome_pai: string; estado_civil: string; nacionalidade: string;
   profissao: string; observacoes: string;
