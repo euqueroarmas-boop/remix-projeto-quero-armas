@@ -234,6 +234,23 @@ export default function QAClientesPage() {
     setItemEditForm(form);
   };
 
+  /** Máscara automática DD/MM/AAAA */
+  const applyDateMask = (raw: string): string => {
+    const digits = raw.replace(/\D/g, "").slice(0, 8);
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+    return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+  };
+
+  /** Converte DD/MM/AAAA → YYYY-MM-DD para gravar no banco (tipo date) */
+  const dateBrToIso = (v: string): string | null => {
+    if (!v) return null;
+    const m = v.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (!m) return null;
+    const [, dd, mm, yyyy] = m;
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
   const handleSaveItem = async () => {
     if (!expandedItemId) return;
     setSavingItem(true);
@@ -241,18 +258,14 @@ export default function QAClientesPage() {
       const payload: Record<string, any> = {};
       ITEM_EDIT_FIELDS.forEach(f => {
         const v = itemEditForm[f.key]?.trim() || null;
-        if (f.type === "date" && v) {
-          const parts = v.split("/");
-          if (parts.length === 3) {
-            payload[f.key] = `${parts[2]}-${parts[1]}-${parts[0]}`;
-          } else {
-            payload[f.key] = v;
-          }
+        if (f.type === "date") {
+          payload[f.key] = v ? dateBrToIso(v) : null;
         } else {
           payload[f.key] = v;
         }
       });
-      payload.data_ultima_atualizacao = new Date().toISOString();
+      const today = new Date();
+      payload.data_ultima_atualizacao = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
       const { error } = await supabase.from("qa_itens_venda" as any).update(payload).eq("id", expandedItemId);
       if (error) throw error;
       setItens(prev => prev.map((i: any) => i.id === expandedItemId ? { ...i, ...payload } : i));
@@ -260,7 +273,7 @@ export default function QAClientesPage() {
       setExpandedItemId(null);
       setItemEditForm({});
     } catch (e: any) {
-      toast.error(e.message);
+      toast.error(e.message || "Erro ao salvar");
     } finally {
       setSavingItem(false);
     }
@@ -753,7 +766,11 @@ export default function QAClientesPage() {
                                           <input
                                             type="text"
                                             value={itemEditForm[field.key] || ""}
-                                            onChange={e => setItemEditForm(prev => ({ ...prev, [field.key]: e.target.value.toUpperCase() }))}
+                                            onChange={e => {
+                                              const raw = e.target.value;
+                                              const val = field.type === "date" ? applyDateMask(raw) : raw.toUpperCase();
+                                              setItemEditForm(prev => ({ ...prev, [field.key]: val }));
+                                            }}
                                             placeholder={field.type === "date" ? "DD/MM/AAAA" : "—"}
                                             className="w-full h-7 px-2 text-[10px] rounded bg-white border border-slate-200 text-slate-700 placeholder:text-slate-300 focus:border-blue-500 focus:outline-none transition-colors"
                                           />
