@@ -40,13 +40,15 @@ const NAV_GROUPS = [
   },
 ];
 
-interface Props { perfil: string }
+interface Props { perfil: string; nome: string }
 
-export function QASidebar({ perfil }: Props) {
+export function QASidebar({ perfil, nome }: Props) {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
   const { signOut } = useQAAuth();
+
+  const initials = (nome || "U").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
 
   const isActive = (url: string) =>
     location.pathname === url || location.pathname.startsWith(url + "/");
@@ -141,8 +143,20 @@ export function QASidebar({ perfil }: Props) {
           );
         })}
 
-        {/* Logout */}
+        {/* Admin profile + Logout */}
         <div className="mt-auto pt-3 border-t mx-3" style={{ borderColor: "hsl(220 13% 93%)" }}>
+          {!collapsed && (
+            <div className="flex items-center gap-2.5 px-4 py-2.5 mb-2">
+              <div className="h-8 w-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0"
+                style={{ background: "hsl(230 80% 56%)" }}>
+                {initials}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-xs font-medium truncate" style={{ color: "hsl(220 20% 18%)" }}>{nome}</div>
+                <div className="text-[10px] capitalize" style={{ color: "hsl(220 10% 62%)" }}>{perfil.replace(/_/g, " ")}</div>
+              </div>
+            </div>
+          )}
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
