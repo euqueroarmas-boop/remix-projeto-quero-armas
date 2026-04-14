@@ -373,7 +373,7 @@ export default function QACadastroPublicoPage() {
                       color: active || done ? "white" : "hsl(220 10% 55%)",
                     }}
                   >
-                    {done && !active ? <CheckCircle className="w-4 h-4" /> : s.num}
+                    {done && !active ? <CheckCircle className="w-4 h-4" /> : i + 1}
                   </div>
                   <span className="text-[10px] font-medium hidden md:block" style={{
                     color: active ? "hsl(230 80% 46%)" : "hsl(220 10% 55%)",
