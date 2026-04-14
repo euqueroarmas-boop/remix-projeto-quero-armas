@@ -19,6 +19,7 @@ const QAConfiguracoesPage = lazyRetry(() => import("./QAConfiguracoesPage"), "QA
 const QAClientesPage = lazyRetry(() => import("./QAClientesPage"), "QAClientesPage");
 const QAClubesPage = lazyRetry(() => import("./QAClubesPage"), "QAClubesPage");
 const QARelatoriosPage = lazyRetry(() => import("./QARelatoriosPage"), "QARelatoriosPage");
+const QACadastroPublicoPage = lazyRetry(() => import("./QACadastroPublicoPage"), "QACadastroPublicoPage");
 
 const Loader = () => (
   <div className="min-h-screen flex items-center justify-center bg-[#08080f]">
@@ -30,7 +31,11 @@ export default function QARoutes() {
   return (
     <Suspense fallback={<Loader />}>
       <Routes>
+        {/* Public routes (no auth required) */}
         <Route path="login" element={<QALoginPage />} />
+        <Route path="cadastro" element={<QACadastroPublicoPage />} />
+        
+        {/* Protected routes */}
         <Route element={<QALayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<QADashboardPage />} />
