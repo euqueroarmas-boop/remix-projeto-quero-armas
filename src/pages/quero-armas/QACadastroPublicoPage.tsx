@@ -778,11 +778,9 @@ function Step4({ form, set, errors, onCnpjLookup, cnpjLoading }: any) {
             <Field label="Cargo / Função">
               <TextInput value={form.emp_cargo_funcao} onChange={v => set("emp_cargo_funcao", v)} placeholder="Ex: Diretor, Sócio-gerente..." />
             </Field>
-            {form.vinculo_tipo === "socio" && (
-              <Field label="Participação societária">
-                <TextInput value={form.emp_participacao_societaria} onChange={v => set("emp_participacao_societaria", v)} placeholder="Ex: 50%" />
-              </Field>
-            )}
+            <Field label="Participação societária">
+              <TextInput value={form.emp_participacao_societaria} onChange={v => set("emp_participacao_societaria", v)} placeholder="Ex: 50%, 100%..." />
+            </Field>
           </div>
         </div>
       )}
