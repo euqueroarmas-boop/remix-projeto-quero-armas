@@ -206,16 +206,26 @@ export default function QAClientesPage() {
                     <div className="text-[10px] text-neutral-400 whitespace-pre-wrap bg-[#0a0a0a] rounded-lg p-2.5 border border-[#1c1c1c]">{c.observacao}</div>
                   </Section>
                 )}
-                {filiacoes.length > 0 && (
-                  <Section title="Filiações a Clubes">
-                    {filiacoes.map((f: any) => (
-                      <div key={f.id} className="flex items-center justify-between text-[10px] bg-[#0a0a0a] rounded px-2.5 py-1.5 border border-[#1c1c1c]">
-                        <span className="text-neutral-300">Filiação #{f.numero_filiacao}</span>
-                        <span className="text-neutral-500">Val: {formatDate(f.validade_filiacao)}</span>
+                <Section title="Filiações a Clubes">
+                  <div className="flex items-center justify-end mb-1">
+                    <Button variant="ghost" size="sm" onClick={() => setFiliacaoModal({ open: true })} className="h-6 px-2 text-[9px] text-emerald-400">
+                      <Plus className="h-3 w-3 mr-1" /> Nova Filiação
+                    </Button>
+                  </div>
+                  {filiacoes.length === 0 ? <Empty text="Nenhuma filiação." /> : filiacoes.map((f: any) => (
+                    <div key={f.id} className="flex items-center justify-between text-[10px] bg-[#0a0a0a] rounded px-2.5 py-1.5 border border-[#1c1c1c] mb-1">
+                      <div>
+                        <span className="text-neutral-300">Filiação #{f.numero_filiacao || "—"}</span>
+                        <span className="text-neutral-600 ml-2">Clube #{f.clube_id}</span>
                       </div>
-                    ))}
-                  </Section>
-                )}
+                      <div className="flex items-center gap-1">
+                        <span className="text-neutral-500 text-[9px]">Val: {formatDate(f.validade_filiacao)}</span>
+                        <Button variant="ghost" size="sm" onClick={() => setFiliacaoModal({ open: true, item: f })} className="h-5 w-5 p-0 text-neutral-600 hover:text-neutral-300"><Edit className="h-3 w-3" /></Button>
+                        <Button variant="ghost" size="sm" onClick={() => setDeleteModal({ open: true, table: "qa_filiacoes", id: f.id, title: "Excluir Filiação", desc: `Excluir filiação #${f.numero_filiacao}?` })} className="h-5 w-5 p-0 text-neutral-600 hover:text-red-400"><Trash2 className="h-3 w-3" /></Button>
+                      </div>
+                    </div>
+                  ))}
+                </Section>
               </TabsContent>
 
               {/* SERVIÇOS / VENDAS */}
