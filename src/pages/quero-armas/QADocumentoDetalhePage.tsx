@@ -20,12 +20,12 @@ function GovBadge({ label, value, variant }: { label: string; value: string; var
     ok: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
     warn: "bg-amber-500/10 text-amber-400 border-amber-500/20",
     off: "bg-red-500/10 text-red-400 border-red-500/20",
-    neutral: "bg-neutral-800 text-neutral-400 border-neutral-700/40",
+    neutral: "bg-slate-100 text-slate-600 border-slate-200",
   };
   return (
     <div className={`rounded-lg p-3 text-center border ${colors[variant]}`}>
       <div className="text-xs font-medium">{value}</div>
-      <div className="text-[10px] text-neutral-600 mt-0.5">{label}</div>
+      <div className="text-[10px] text-slate-400 mt-0.5">{label}</div>
     </div>
   );
 }
@@ -200,13 +200,13 @@ export default function QADocumentoDetalhePage() {
   };
 
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-amber-500" /></div>;
-  if (!doc) return <div className="text-center py-12 text-neutral-500">Documento não encontrado</div>;
+  if (!doc) return <div className="text-center py-12 text-slate-500">Documento não encontrado</div>;
 
   const statusIcon = (s: string) => {
     if (s === "concluido") return <CheckCircle className="h-4 w-4 text-emerald-400" />;
     if (s === "processando") return <Loader2 className="h-4 w-4 text-amber-400 animate-spin" />;
     if (s === "erro") return <AlertCircle className="h-4 w-4 text-red-400" />;
-    return <Clock className="h-4 w-4 text-neutral-500" />;
+    return <Clock className="h-4 w-4 text-slate-500" />;
   };
 
   const isValidado = doc.status_validacao === "validado";
@@ -220,34 +220,34 @@ export default function QADocumentoDetalhePage() {
     <div className="space-y-6 max-w-5xl">
       <div className="flex items-center gap-3">
         <Link to="/quero-armas/base-conhecimento">
-          <Button variant="ghost" size="sm" className="text-neutral-400 hover:text-neutral-200"><ArrowLeft className="h-4 w-4 mr-1" /> Voltar</Button>
+          <Button variant="ghost" size="sm" className="text-slate-600 hover:text-slate-700"><ArrowLeft className="h-4 w-4 mr-1" /> Voltar</Button>
         </Link>
       </div>
 
       {/* Header */}
-      <div className="bg-[#111111] border border-neutral-800/40 rounded-xl p-5">
+      <div className="bg-white border border-slate-200 rounded-xl p-5">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
-            <h1 className="text-xl font-bold text-neutral-100 flex items-center gap-2">
+            <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
               <FileText className="h-5 w-5 text-amber-500" /> {doc.titulo}
             </h1>
-            <div className="flex items-center gap-3 mt-2 text-xs text-neutral-500 flex-wrap">
-              <span className="px-2 py-0.5 rounded bg-neutral-800 text-neutral-400">{doc.tipo_documento?.replace(/_/g, " ")}</span>
+            <div className="flex items-center gap-3 mt-2 text-xs text-slate-500 flex-wrap">
+              <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-600">{doc.tipo_documento?.replace(/_/g, " ")}</span>
               <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${isAuxiliar ? "bg-[#7a1528]/10 text-[#c43b52] border border-[#a52338]/20" : "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20"}`}>
                 {isAuxiliar ? "Auxiliar do Caso" : "Aprendizado"}
               </span>
               {isAuxiliar && doc.caso_id && (
                 <span className="px-2 py-0.5 rounded bg-[#7a1528]/5 text-[#c43b52]/70 text-[10px]">caso: {doc.caso_id}</span>
               )}
-              {doc.categoria && <span className="px-2 py-0.5 rounded bg-neutral-800 text-neutral-400">{doc.categoria}</span>}
+              {doc.categoria && <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-600">{doc.categoria}</span>}
               <span className="flex items-center gap-1">
-                {doc.tipo_origem === "link_publico" ? <Globe className="h-3 w-3 text-blue-400" /> : <Upload className="h-3 w-3 text-neutral-500" />}
+                {doc.tipo_origem === "link_publico" ? <Globe className="h-3 w-3 text-blue-400" /> : <Upload className="h-3 w-3 text-slate-500" />}
                 {doc.tipo_origem === "link_publico" ? "Link público" : doc.tipo_origem === "cadastro_manual" ? "Manual" : "Upload"}
               </span>
               <span>{new Date(doc.created_at).toLocaleDateString("pt-BR")}</span>
               {doc.tamanho_bytes && <span>{(doc.tamanho_bytes / 1024).toFixed(0)} KB</span>}
               <span>{doc.mime_type}</span>
-              {doc.metodo_extracao && <span className="px-2 py-0.5 rounded bg-neutral-800 text-neutral-400">parser: {doc.metodo_extracao}</span>}
+              {doc.metodo_extracao && <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-600">parser: {doc.metodo_extracao}</span>}
             </div>
             {doc.url_origem && (
               <div className="flex items-center gap-1.5 mt-1.5">
@@ -259,7 +259,7 @@ export default function QADocumentoDetalhePage() {
             )}
           </div>
           <div className="flex gap-2 shrink-0 flex-wrap">
-            <Button variant="outline" size="sm" onClick={reprocess} disabled={reprocessing} className="border-neutral-700 text-neutral-300">
+            <Button variant="outline" size="sm" onClick={reprocess} disabled={reprocessing} className="border-slate-200 text-slate-700">
               {reprocessing ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <RefreshCw className="h-3.5 w-3.5 mr-1" />}
               Reprocessar
             </Button>
@@ -307,26 +307,26 @@ export default function QADocumentoDetalhePage() {
 
         {/* Stats row */}
         <div className="grid grid-cols-3 gap-3 mt-3">
-          <div className="bg-[#0a0a0a] rounded-lg p-3 text-center">
-            <div className="text-xs font-medium text-neutral-300">{chunks.length}</div>
-            <div className="text-[10px] text-neutral-600 mt-0.5">Chunks</div>
+          <div className="bg-white rounded-lg p-3 text-center">
+            <div className="text-xs font-medium text-slate-700">{chunks.length}</div>
+            <div className="text-[10px] text-slate-400 mt-0.5">Chunks</div>
           </div>
-          <div className="bg-[#0a0a0a] rounded-lg p-3 text-center">
-            <div className="flex items-center justify-center gap-1"><Database className="h-3 w-3 text-purple-400" /><span className="text-xs font-medium text-neutral-300">{embedCount}</span></div>
-            <div className="text-[10px] text-neutral-600 mt-0.5">Embeddings</div>
+          <div className="bg-white rounded-lg p-3 text-center">
+            <div className="flex items-center justify-center gap-1"><Database className="h-3 w-3 text-purple-400" /><span className="text-xs font-medium text-slate-700">{embedCount}</span></div>
+            <div className="text-[10px] text-slate-400 mt-0.5">Embeddings</div>
           </div>
-          <div className="bg-[#0a0a0a] rounded-lg p-3 text-center">
-            <div className="flex items-center justify-center gap-1"><Star className="h-3 w-3 text-amber-400" /><span className="text-xs font-medium text-neutral-300">{refCount}</span></div>
-            <div className="text-[10px] text-neutral-600 mt-0.5">Referências</div>
+          <div className="bg-white rounded-lg p-3 text-center">
+            <div className="flex items-center justify-center gap-1"><Star className="h-3 w-3 text-amber-400" /><span className="text-xs font-medium text-slate-700">{refCount}</span></div>
+            <div className="text-[10px] text-slate-400 mt-0.5">Referências</div>
           </div>
         </div>
       </div>
 
       {/* ─── Governance Actions ─── */}
-      <div className="bg-[#111111] border border-neutral-800/40 rounded-xl p-5">
-        <h2 className="text-sm font-medium text-neutral-300 mb-3">Ações de Governança</h2>
+      <div className="bg-white border border-slate-200 rounded-xl p-5">
+        <h2 className="text-sm font-medium text-slate-700 mb-3">Ações de Governança</h2>
         {isAuxiliar ? (
-          <p className="text-xs text-neutral-500">Documentos auxiliares do caso não possuem ações de governança de aprendizado. São utilizados apenas como suporte factual.</p>
+          <p className="text-xs text-slate-500">Documentos auxiliares do caso não possuem ações de governança de aprendizado. São utilizados apenas como suporte factual.</p>
         ) : (
         <div className="flex flex-wrap gap-2">
           {!isValidado && isConcluido && (
@@ -360,7 +360,7 @@ export default function QADocumentoDetalhePage() {
           )}
           {isRef && (
             <Button size="sm" variant="outline" disabled={acting} onClick={() => handleAction("remover_referencia")}
-              className="border-neutral-600 text-neutral-400 hover:bg-neutral-700/40 gap-1.5">
+              className="border-neutral-600 text-slate-600 hover:bg-neutral-700/40 gap-1.5">
               <StarOff className="h-3.5 w-3.5" /> Remover da referência
             </Button>
           )}
@@ -370,40 +370,40 @@ export default function QADocumentoDetalhePage() {
       </div>
 
       {doc.hash_arquivo && (
-        <div className="flex items-center gap-2 text-xs text-neutral-600 bg-[#111111] border border-neutral-800/40 rounded-lg px-4 py-2">
-          <Hash className="h-3.5 w-3.5" /> SHA-256: <code className="text-neutral-500 font-mono">{doc.hash_arquivo}</code>
+        <div className="flex items-center gap-2 text-xs text-slate-400 bg-white border border-slate-200 rounded-lg px-4 py-2">
+          <Hash className="h-3.5 w-3.5" /> SHA-256: <code className="text-slate-500 font-mono">{doc.hash_arquivo}</code>
         </div>
       )}
 
       {doc.resumo_extraido && (
-        <div className="bg-[#111111] border border-neutral-800/40 rounded-xl p-5">
-          <h2 className="text-sm font-medium text-neutral-300 mb-2">Resumo Extraído</h2>
-          <p className="text-sm text-neutral-400 leading-relaxed whitespace-pre-wrap">{doc.resumo_extraido}</p>
+        <div className="bg-white border border-slate-200 rounded-xl p-5">
+          <h2 className="text-sm font-medium text-slate-700 mb-2">Resumo Extraído</h2>
+          <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">{doc.resumo_extraido}</p>
         </div>
       )}
 
       {doc.texto_extraido && (
-        <div className="bg-[#111111] border border-neutral-800/40 rounded-xl p-5">
-          <h2 className="text-sm font-medium text-neutral-300 mb-2">Texto Extraído</h2>
-          <div className="text-xs text-neutral-500 leading-relaxed whitespace-pre-wrap max-h-[400px] overflow-y-auto font-mono bg-[#0a0a0a] rounded-lg p-4">
+        <div className="bg-white border border-slate-200 rounded-xl p-5">
+          <h2 className="text-sm font-medium text-slate-700 mb-2">Texto Extraído</h2>
+          <div className="text-xs text-slate-500 leading-relaxed whitespace-pre-wrap max-h-[400px] overflow-y-auto font-mono bg-white rounded-lg p-4">
             {doc.texto_extraido}
           </div>
         </div>
       )}
 
       {chunks.length > 0 && (
-        <div className="bg-[#111111] border border-neutral-800/40 rounded-xl p-5">
-          <h2 className="text-sm font-medium text-neutral-300 mb-3">Chunks ({chunks.length})</h2>
+        <div className="bg-white border border-slate-200 rounded-xl p-5">
+          <h2 className="text-sm font-medium text-slate-700 mb-3">Chunks ({chunks.length})</h2>
           <div className="space-y-2 max-h-[500px] overflow-y-auto">
             {chunks.map((c: any) => (
-              <div key={c.id} className="bg-[#0a0a0a] rounded-lg p-3 border border-neutral-800/20">
+              <div key={c.id} className="bg-white rounded-lg p-3 border border-slate-200/20">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[10px] text-neutral-600 uppercase tracking-wider">Chunk {c.ordem_chunk + 1}</span>
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded ${c.embedding_status === "concluido" ? "bg-emerald-500/10 text-emerald-400" : c.embedding_status === "erro" ? "bg-red-500/10 text-red-400" : "bg-neutral-800 text-neutral-500"}`}>
+                  <span className="text-[10px] text-slate-400 uppercase tracking-wider">Chunk {c.ordem_chunk + 1}</span>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded ${c.embedding_status === "concluido" ? "bg-emerald-500/10 text-emerald-400" : c.embedding_status === "erro" ? "bg-red-500/10 text-red-400" : "bg-slate-100 text-slate-500"}`}>
                     {c.embedding_status}
                   </span>
                 </div>
-                <p className="text-xs text-neutral-500 line-clamp-3 font-mono">{c.texto_chunk}</p>
+                <p className="text-xs text-slate-500 line-clamp-3 font-mono">{c.texto_chunk}</p>
               </div>
             ))}
           </div>
@@ -411,9 +411,9 @@ export default function QADocumentoDetalhePage() {
       )}
 
       {doc.metadados_json && Object.keys(doc.metadados_json).length > 0 && (
-        <div className="bg-[#111111] border border-neutral-800/40 rounded-xl p-5">
-          <h2 className="text-sm font-medium text-neutral-300 mb-2">Metadados</h2>
-          <pre className="text-xs text-neutral-500 font-mono bg-[#0a0a0a] rounded-lg p-3 overflow-x-auto">
+        <div className="bg-white border border-slate-200 rounded-xl p-5">
+          <h2 className="text-sm font-medium text-slate-700 mb-2">Metadados</h2>
+          <pre className="text-xs text-slate-500 font-mono bg-white rounded-lg p-3 overflow-x-auto">
             {JSON.stringify(doc.metadados_json, null, 2)}
           </pre>
         </div>
@@ -421,11 +421,11 @@ export default function QADocumentoDetalhePage() {
 
       {/* Delete confirmation dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent className="bg-[#111111] border-neutral-700 text-neutral-100 max-w-md">
+        <AlertDialogContent className="bg-white border-slate-200 text-slate-800 max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-neutral-100">Excluir documento</AlertDialogTitle>
-            <AlertDialogDescription className="text-neutral-400">
-              <strong className="text-neutral-200 block mb-1">{doc.titulo}</strong>
+            <AlertDialogTitle className="text-slate-800">Excluir documento</AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-600">
+              <strong className="text-slate-700 block mb-1">{doc.titulo}</strong>
               Tem certeza que deseja remover este documento da base de conhecimento? A IA não utilizará mais esse conteúdo em consultas futuras.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -433,14 +433,14 @@ export default function QADocumentoDetalhePage() {
             <Button variant="outline" disabled={deleting} onClick={handleDeactivate}
               className="w-full border-amber-600/40 text-amber-400 hover:bg-amber-500/10 justify-start gap-2">
               <Power className="h-4 w-4" /> Desativar da IA
-              <span className="text-[10px] text-neutral-500 ml-auto">reversível</span>
+              <span className="text-[10px] text-slate-500 ml-auto">reversível</span>
             </Button>
             <Button variant="destructive" disabled={deleting} onClick={handlePermanentDelete}
               className="w-full justify-start gap-2">
               {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />} Excluir permanentemente
               <span className="text-[10px] text-red-300/60 ml-auto">irreversível</span>
             </Button>
-            <AlertDialogCancel className="w-full border-neutral-700 text-neutral-400">Cancelar</AlertDialogCancel>
+            <AlertDialogCancel className="w-full border-slate-200 text-slate-600">Cancelar</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

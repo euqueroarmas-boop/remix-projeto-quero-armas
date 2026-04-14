@@ -140,18 +140,18 @@ export default function QAConfiguracoesPage() {
   if (loading) {
     return (
       <div className="flex justify-center py-12">
-        <div className="w-4 h-4 border-2 border-neutral-700 border-t-slate-400 rounded-full animate-spin" />
+        <div className="w-4 h-4 border-2 border-slate-200 border-t-slate-400 rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
     <div className="space-y-3 md:space-y-5 max-w-4xl">
-      <h1 className="text-sm md:text-base font-semibold text-neutral-300">Configurações</h1>
+      <h1 className="text-sm md:text-base font-semibold text-slate-700">Configurações</h1>
 
       {/* System Status */}
-      <div className="bg-[#111111] border border-[#1c1c1c] rounded p-2.5 md:p-4">
-        <span className="text-[9px] text-neutral-600 uppercase tracking-[0.12em] font-medium">Status</span>
+      <div className="bg-white border border-slate-200 rounded p-2.5 md:p-4">
+        <span className="text-[9px] text-slate-400 uppercase tracking-[0.12em] font-medium">Status</span>
         <div className="grid grid-cols-4 md:grid-cols-7 gap-1.5 md:gap-3 mt-2">
           {[
             { label: "Docs", value: stats?.documentos },
@@ -162,9 +162,9 @@ export default function QAConfiguracoesPage() {
             { label: "Refs", value: stats?.referencias },
             { label: "Revisões", value: stats?.revisoes },
           ].map(s => (
-            <div key={s.label} className="bg-[#0a0a0a] rounded px-2 py-1.5 text-center">
-              <div className="text-sm md:text-base font-semibold text-neutral-300 font-mono tabular-nums leading-tight">{s.value}</div>
-              <div className="text-[7px] md:text-[9px] text-neutral-600 uppercase tracking-[0.08em]">{s.label}</div>
+            <div key={s.label} className="bg-white rounded px-2 py-1.5 text-center">
+              <div className="text-sm md:text-base font-semibold text-slate-700 font-mono tabular-nums leading-tight">{s.value}</div>
+              <div className="text-[7px] md:text-[9px] text-slate-400 uppercase tracking-[0.08em]">{s.label}</div>
             </div>
           ))}
         </div>
@@ -172,32 +172,32 @@ export default function QAConfiguracoesPage() {
 
       {/* Serviços CRUD */}
       {isAdmin && (
-        <div className="bg-[#111111] border border-[#1c1c1c] rounded p-2.5 md:p-4">
+        <div className="bg-white border border-slate-200 rounded p-2.5 md:p-4">
           <div className="flex items-center justify-between mb-2 md:mb-3">
-            <span className="text-[9px] text-neutral-600 uppercase tracking-[0.12em] font-medium">Serviços ({servicos.length})</span>
+            <span className="text-[9px] text-slate-400 uppercase tracking-[0.12em] font-medium">Serviços ({servicos.length})</span>
             <Button onClick={() => { setShowNew(!showNew); setNewForm({ nome_servico: "", valor_servico: "" }); }} size="sm"
-              className="bg-[#7a1528] hover:bg-[#a52338] text-neutral-300 border border-[#1c1c1c] h-6 md:h-7 text-[9px] md:text-[10px]">
+              className="bg-[#7a1528] hover:bg-[#a52338] text-slate-700 border border-slate-200 h-6 md:h-7 text-[9px] md:text-[10px]">
               <Plus className="h-3 w-3 mr-1" /> Novo Serviço
             </Button>
           </div>
 
           {/* New service form */}
           {showNew && (
-            <div className="flex gap-2 items-end mb-3 bg-[#0a0a0a] rounded p-2 border border-[#1c1c1c]">
+            <div className="flex gap-2 items-end mb-3 bg-white rounded p-2 border border-slate-200">
               <div className="flex-1">
-                <Label className="text-neutral-500 text-[9px]">Nome</Label>
+                <Label className="text-slate-500 text-[9px]">Nome</Label>
                 <Input value={newForm.nome_servico} onChange={e => setNewForm(p => ({ ...p, nome_servico: e.target.value }))}
-                  className="bg-[#0e0e0e] border-[#1c1c1c] text-neutral-200 h-7 text-[11px] focus-visible:ring-0 focus-visible:ring-offset-0" placeholder="Nome do serviço" />
+                  className="bg-white border-slate-200 text-slate-700 h-7 text-[11px] focus-visible:ring-0 focus-visible:ring-offset-0" placeholder="Nome do serviço" />
               </div>
               <div className="w-24">
-                <Label className="text-neutral-500 text-[9px]">Valor (R$)</Label>
+                <Label className="text-slate-500 text-[9px]">Valor (R$)</Label>
                 <Input type="number" value={newForm.valor_servico} onChange={e => setNewForm(p => ({ ...p, valor_servico: e.target.value }))}
-                  className="bg-[#0e0e0e] border-[#1c1c1c] text-neutral-200 h-7 text-[11px] font-mono focus-visible:ring-0 focus-visible:ring-offset-0" placeholder="0" />
+                  className="bg-white border-slate-200 text-slate-700 h-7 text-[11px] font-mono focus-visible:ring-0 focus-visible:ring-offset-0" placeholder="0" />
               </div>
               <Button size="sm" onClick={handleAddServico} disabled={savingSvc} className="bg-emerald-800 hover:bg-emerald-700 h-7 px-2">
                 {savingSvc ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
               </Button>
-              <Button size="sm" variant="ghost" onClick={() => setShowNew(false)} className="h-7 px-2 text-neutral-500">
+              <Button size="sm" variant="ghost" onClick={() => setShowNew(false)} className="h-7 px-2 text-slate-500">
                 <X className="h-3 w-3" />
               </Button>
             </div>
@@ -206,46 +206,46 @@ export default function QAConfiguracoesPage() {
           {/* Services list */}
           <div className="space-y-0.5">
             {servicos.map(svc => (
-              <div key={svc.id} className="flex items-center gap-2 rounded px-2 py-1.5 text-[11px] hover:bg-[#0a0a0a] transition-colors group">
+              <div key={svc.id} className="flex items-center gap-2 rounded px-2 py-1.5 text-[11px] hover:bg-white transition-colors group">
                 {editingId === svc.id ? (
                   <>
                     <Input value={editForm.nome_servico} onChange={e => setEditForm(p => ({ ...p, nome_servico: e.target.value }))}
-                      className="flex-1 bg-[#0e0e0e] border-[#1c1c1c] text-neutral-200 h-6 text-[11px] focus-visible:ring-0 focus-visible:ring-offset-0" />
+                      className="flex-1 bg-white border-slate-200 text-slate-700 h-6 text-[11px] focus-visible:ring-0 focus-visible:ring-offset-0" />
                     <Input type="number" value={editForm.valor_servico} onChange={e => setEditForm(p => ({ ...p, valor_servico: e.target.value }))}
-                      className="w-20 bg-[#0e0e0e] border-[#1c1c1c] text-neutral-200 h-6 text-[11px] font-mono text-right focus-visible:ring-0 focus-visible:ring-offset-0" />
+                      className="w-20 bg-white border-slate-200 text-slate-700 h-6 text-[11px] font-mono text-right focus-visible:ring-0 focus-visible:ring-offset-0" />
                     <Button size="sm" variant="ghost" onClick={() => handleUpdateServico(svc.id)} disabled={savingSvc} className="h-6 px-1.5 text-emerald-500 hover:text-emerald-400">
                       <Check className="h-3 w-3" />
                     </Button>
-                    <Button size="sm" variant="ghost" onClick={() => setEditingId(null)} className="h-6 px-1.5 text-neutral-500">
+                    <Button size="sm" variant="ghost" onClick={() => setEditingId(null)} className="h-6 px-1.5 text-slate-500">
                       <X className="h-3 w-3" />
                     </Button>
                   </>
                 ) : (
                   <>
-                    <span className="flex-1 text-neutral-400 truncate">{svc.nome_servico}</span>
-                    <span className="text-neutral-600 font-mono shrink-0">R$ {svc.valor_servico}</span>
-                    <Button size="sm" variant="ghost" onClick={() => startEdit(svc)} className="h-6 px-1.5 text-neutral-600 hover:text-neutral-300 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span className="flex-1 text-slate-600 truncate">{svc.nome_servico}</span>
+                    <span className="text-slate-400 font-mono shrink-0">R$ {svc.valor_servico}</span>
+                    <Button size="sm" variant="ghost" onClick={() => startEdit(svc)} className="h-6 px-1.5 text-slate-400 hover:text-slate-700 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Pencil className="h-3 w-3" />
                     </Button>
-                    <Button size="sm" variant="ghost" onClick={() => handleDeleteServico(svc.id)} className="h-6 px-1.5 text-neutral-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button size="sm" variant="ghost" onClick={() => handleDeleteServico(svc.id)} className="h-6 px-1.5 text-slate-400 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Trash2 className="h-3 w-3" />
                     </Button>
                   </>
                 )}
               </div>
             ))}
-            {servicos.length === 0 && <p className="text-[10px] text-neutral-600 py-2 text-center">Nenhum serviço cadastrado</p>}
+            {servicos.length === 0 && <p className="text-[10px] text-slate-400 py-2 text-center">Nenhum serviço cadastrado</p>}
           </div>
         </div>
       )}
 
       {/* Ranking Weights */}
-      <div className="bg-[#111111] border border-[#1c1c1c] rounded p-2.5 md:p-4">
+      <div className="bg-white border border-slate-200 rounded p-2.5 md:p-4">
         <div className="flex items-center justify-between mb-2 md:mb-3">
-          <span className="text-[9px] text-neutral-600 uppercase tracking-[0.12em] font-medium">Pesos de Ranking</span>
+          <span className="text-[9px] text-slate-400 uppercase tracking-[0.12em] font-medium">Pesos de Ranking</span>
           {isAdmin && (
             <Button onClick={handleSaveWeights} disabled={saving} size="sm"
-              className="bg-[#7a1528] hover:bg-[#a52338] text-neutral-400 border border-[#1c1c1c] h-6 md:h-7 text-[9px] md:text-[10px]">
+              className="bg-[#7a1528] hover:bg-[#a52338] text-slate-600 border border-slate-200 h-6 md:h-7 text-[9px] md:text-[10px]">
               {saving ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Save className="h-3 w-3 mr-1" />}
               Salvar
             </Button>
@@ -254,29 +254,29 @@ export default function QAConfiguracoesPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
           {config.map(c => (
             <div key={c.id} className="space-y-0.5 md:space-y-1">
-              <Label className="text-neutral-500 text-[9px] md:text-[10px]">{c.descricao || c.chave}</Label>
+              <Label className="text-slate-500 text-[9px] md:text-[10px]">{c.descricao || c.chave}</Label>
               <Input
                 value={editedValues[c.id] || ""}
                 onChange={e => setEditedValues(prev => ({ ...prev, [c.id]: e.target.value }))}
                 disabled={!isAdmin}
                 type="number" step="0.01"
-                className="bg-[#0a0a0a] border-[#1c1c1c] text-neutral-400 h-7 md:h-8 text-[11px] font-mono"
+                className="bg-white border-slate-200 text-slate-600 h-7 md:h-8 text-[11px] font-mono"
               />
-              <div className="text-[8px] text-neutral-700 font-mono">{c.chave}</div>
+              <div className="text-[8px] text-slate-300 font-mono">{c.chave}</div>
             </div>
           ))}
         </div>
-        {!isAdmin && <p className="text-[9px] text-neutral-700 mt-2">Apenas administradores podem editar.</p>}
+        {!isAdmin && <p className="text-[9px] text-slate-300 mt-2">Apenas administradores podem editar.</p>}
       </div>
 
       {/* Profile */}
-      <div className="bg-[#111111] border border-[#1c1c1c] rounded p-2.5 md:p-4">
-        <span className="text-[9px] text-neutral-600 uppercase tracking-[0.12em] font-medium">Perfil</span>
+      <div className="bg-white border border-slate-200 rounded p-2.5 md:p-4">
+        <span className="text-[9px] text-slate-400 uppercase tracking-[0.12em] font-medium">Perfil</span>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 md:gap-3 mt-2 text-[11px]">
-          <div><span className="text-neutral-600">Nome:</span> <span className="text-neutral-400 ml-1">{profile?.nome || "—"}</span></div>
-          <div><span className="text-neutral-600">Perfil:</span> <span className="text-neutral-400 ml-1 capitalize">{profile?.perfil?.replace(/_/g, " ") || "—"}</span></div>
-          <div><span className="text-neutral-600">Email:</span> <span className="text-neutral-400 ml-1 truncate">{profile?.email || "—"}</span></div>
-          <div><span className="text-neutral-600">Status:</span> <span className={`ml-1 ${profile?.ativo ? "text-emerald-400" : "text-red-400"}`}>{profile?.ativo ? "Ativo" : "Inativo"}</span></div>
+          <div><span className="text-slate-400">Nome:</span> <span className="text-slate-600 ml-1">{profile?.nome || "—"}</span></div>
+          <div><span className="text-slate-400">Perfil:</span> <span className="text-slate-600 ml-1 capitalize">{profile?.perfil?.replace(/_/g, " ") || "—"}</span></div>
+          <div><span className="text-slate-400">Email:</span> <span className="text-slate-600 ml-1 truncate">{profile?.email || "—"}</span></div>
+          <div><span className="text-slate-400">Status:</span> <span className={`ml-1 ${profile?.ativo ? "text-emerald-400" : "text-red-400"}`}>{profile?.ativo ? "Ativo" : "Inativo"}</span></div>
         </div>
       </div>
     </div>
