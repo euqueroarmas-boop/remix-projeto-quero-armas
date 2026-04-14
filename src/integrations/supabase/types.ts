@@ -2067,6 +2067,7 @@ export type Database = {
           trab_faixa_salarial: string | null
           trab_nome_empresa: string | null
           trab_telefone_empresa: string | null
+          uf_emissor_rg: string | null
           updated_at: string
           vinculo_tipo: string | null
         }
@@ -2143,6 +2144,7 @@ export type Database = {
           trab_faixa_salarial?: string | null
           trab_nome_empresa?: string | null
           trab_telefone_empresa?: string | null
+          uf_emissor_rg?: string | null
           updated_at?: string
           vinculo_tipo?: string | null
         }
@@ -2219,6 +2221,7 @@ export type Database = {
           trab_faixa_salarial?: string | null
           trab_nome_empresa?: string | null
           trab_telefone_empresa?: string | null
+          uf_emissor_rg?: string | null
           updated_at?: string
           vinculo_tipo?: string | null
         }

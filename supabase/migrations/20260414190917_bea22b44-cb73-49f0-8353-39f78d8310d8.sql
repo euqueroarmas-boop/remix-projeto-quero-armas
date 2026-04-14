@@ -1,0 +1,1 @@
+ALTER TABLE public.qa_cadastro_publico ADD COLUMN uf_emissor_rg text DEFAULT NULL;
