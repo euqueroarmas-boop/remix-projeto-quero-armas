@@ -2432,6 +2432,7 @@ export type Database = {
           rg: string | null
           status: string | null
           titulo_eleitor: string | null
+          uf_emissor_rg: string | null
           updated_at: string
         }
         Insert: {
@@ -2477,6 +2478,7 @@ export type Database = {
           rg?: string | null
           status?: string | null
           titulo_eleitor?: string | null
+          uf_emissor_rg?: string | null
           updated_at?: string
         }
         Update: {
@@ -2522,6 +2524,7 @@ export type Database = {
           rg?: string | null
           status?: string | null
           titulo_eleitor?: string | null
+          uf_emissor_rg?: string | null
           updated_at?: string
         }
         Relationships: []

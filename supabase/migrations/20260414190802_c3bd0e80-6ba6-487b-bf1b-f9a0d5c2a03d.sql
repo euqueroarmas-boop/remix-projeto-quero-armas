@@ -1,0 +1,1 @@
+ALTER TABLE public.qa_clientes ADD COLUMN uf_emissor_rg text DEFAULT NULL;
