@@ -281,19 +281,40 @@ export default function QARelatoriosPage() {
       .slice(0, 8);
   }, [vendas, clienteMap]);
 
+  const getCriticalItems = () => {
+    const critical = pendingItems.filter(i => i.urgency === "red" || i.urgency === "critical");
+    return critical.map(i => ({ clienteNome: i.clienteNome, celular: i.clienteCelular, servico: i.servicoNome, dias: i.diasPendente, status: i.status }));
+  };
+
   const sendWhatsAppAlerts = async () => {
     setAlertSending(true);
     try {
-      const critical = pendingItems.filter(i => i.urgency === "red" || i.urgency === "critical");
+      const items = getCriticalItems();
       const res = await supabase.functions.invoke("qa-whatsapp-alerts", {
-        body: { items: critical.map(i => ({ clienteNome: i.clienteNome, celular: i.clienteCelular, servico: i.servicoNome, dias: i.diasPendente, status: i.status })) },
+        body: { items, channel: "whatsapp" },
       });
       if (res.error) throw res.error;
-      alert(`${critical.length} alerta(s) enviado(s) com sucesso!`);
+      alert(`WhatsApp: ${items.length} alerta(s) enviado(s)!`);
     } catch (e: any) {
-      alert("Erro ao enviar alertas: " + (e.message || e));
+      alert("Erro WhatsApp: " + (e.message || e));
     } finally {
       setAlertSending(false);
+    }
+  };
+
+  const sendEmailAlerts = async () => {
+    setEmailSending(true);
+    try {
+      const items = getCriticalItems();
+      const res = await supabase.functions.invoke("qa-whatsapp-alerts", {
+        body: { items, channel: "email" },
+      });
+      if (res.error) throw res.error;
+      alert(`E-mail enviado para eu@queroarmas.com.br!`);
+    } catch (e: any) {
+      alert("Erro e-mail: " + (e.message || e));
+    } finally {
+      setEmailSending(false);
     }
   };
 
