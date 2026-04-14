@@ -407,10 +407,14 @@ function KPICard({ icon: Icon, label, value, trend, positive }: {
         <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: "hsl(230 80% 96%)" }}>
           <Icon className="h-4.5 w-4.5" style={{ color: "hsl(230 80% 56%)" }} />
         </div>
-        <div className={`flex items-center gap-0.5 text-[11px] font-medium ${positive ? "text-emerald-600" : "text-red-500"}`}>
-          {positive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-          {trend}
-        </div>
+        {trend !== "—" ? (
+          <div className={`flex items-center gap-0.5 text-[11px] font-medium ${positive ? "text-emerald-600" : "text-red-500"}`}>
+            {positive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+            {trend}
+          </div>
+        ) : (
+          <span className="text-[11px] text-slate-400">—</span>
+        )}
       </div>
       <div className="qa-kpi text-2xl md:text-3xl mb-1" style={{ color: "hsl(220 20% 14%)" }}>
         {value.toLocaleString("pt-BR")}
