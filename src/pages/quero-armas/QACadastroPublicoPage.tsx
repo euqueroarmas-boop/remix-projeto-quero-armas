@@ -137,7 +137,7 @@ export default function QACadastroPublicoPage() {
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const { lookupCep, lookupCnpj, cepLoading, cnpjLoading } = useBrasilApiLookup();
+  const { lookupCep, lookupCnpj, lookupGeocode, cepLoading, cnpjLoading, geocodeLoading } = useBrasilApiLookup();
 
   const [cpfLooking, setCpfLooking] = useState(false);
   const [cpfFound, setCpfFound] = useState<boolean | null>(null);
@@ -220,6 +220,20 @@ export default function QACadastroPublicoPage() {
       set(`${prefix}_estado` as keyof FormData, data.state || "");
     }
   }, [form, lookupCep, set]);
+
+  /* ── Geocode lookup (after number is filled) ── */
+  const handleGeocodeLookup = useCallback(async (prefix: "end1" | "end2") => {
+    const street = form[`${prefix}_logradouro` as keyof FormData] as string;
+    const number = form[`${prefix}_numero` as keyof FormData] as string;
+    const city = form[`${prefix}_cidade` as keyof FormData] as string;
+    const state = form[`${prefix}_estado` as keyof FormData] as string;
+    if (!city || !number.trim()) return;
+    const geo = await lookupGeocode({ street, number, city, state });
+    if (geo) {
+      set(`${prefix}_latitude` as keyof FormData, geo.latitude);
+      set(`${prefix}_longitude` as keyof FormData, geo.longitude);
+    }
+  }, [form, lookupGeocode, set]);
 
   /* ── CNPJ lookup ── */
   const handleCnpjLookup = useCallback(async (target: "emp" | "trab") => {
