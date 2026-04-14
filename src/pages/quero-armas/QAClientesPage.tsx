@@ -1405,46 +1405,44 @@ function DocumentGenerator({ cliente }: { cliente: any }) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-[9px] text-[#c43b52] uppercase tracking-[0.12em] font-semibold">Gerar Declarações</span>
+        <span className="text-[11px] uppercase tracking-wider font-semibold" style={{ color: "hsl(220 10% 45%)" }}>Gerar Declarações</span>
       </div>
 
       {/* Third party fields - show when needed */}
       {showExtra && TEMPLATES.find(t => t.key === showExtra)?.needsThirdParty && (
-        <div className="bg-white border border-amber-500/20 rounded-lg p-3 space-y-2">
-          <div className="text-[10px] text-amber-400 font-medium mb-1">Dados do Responsável pelo Imóvel</div>
+        <div className="qa-card p-4 space-y-3" style={{ borderColor: "hsl(40 70% 80%)" }}>
+          <div className="text-[11px] font-semibold uppercase" style={{ color: "hsl(220 20% 18%)" }}>Dados do Responsável pelo Imóvel</div>
           <div className="grid grid-cols-2 gap-2">
-            <Input value={tp.nome} onChange={e => setTp(p => ({ ...p, nome: e.target.value.toUpperCase() }))} placeholder="Nome Completo" className="h-7 text-[10px] bg-white border-slate-200 text-slate-700 uppercase" />
-            <Input value={tp.cpf} onChange={e => setTp(p => ({ ...p, cpf: e.target.value.toUpperCase() }))} placeholder="CPF" className="h-7 text-[10px] bg-white border-slate-200 text-slate-700 uppercase" />
-            <Input value={tp.naturalidade} onChange={e => setTp(p => ({ ...p, naturalidade: e.target.value.toUpperCase() }))} placeholder="Naturalidade" className="h-7 text-[10px] bg-white border-slate-200 text-slate-700 uppercase" />
-            <Input value={tp.nascimento} onChange={e => setTp(p => ({ ...p, nascimento: e.target.value.toUpperCase() }))} placeholder="Data Nascimento" className="h-7 text-[10px] bg-white border-slate-200 text-slate-700 uppercase" />
-            <Input value={tp.profissao} onChange={e => setTp(p => ({ ...p, profissao: e.target.value.toUpperCase() }))} placeholder="Profissão" className="h-7 text-[10px] bg-white border-slate-200 text-slate-700 uppercase" />
-            <Input value={tp.estadoCivil} onChange={e => setTp(p => ({ ...p, estadoCivil: e.target.value.toUpperCase() }))} placeholder="Estado Civil" className="h-7 text-[10px] bg-white border-slate-200 text-slate-700 uppercase" />
+            <Input value={tp.nome} onChange={e => setTp(p => ({ ...p, nome: e.target.value.toUpperCase() }))} placeholder="Nome Completo" className="h-8 text-[11px] bg-white border-slate-200 text-slate-800 uppercase" />
+            <Input value={tp.cpf} onChange={e => setTp(p => ({ ...p, cpf: e.target.value.toUpperCase() }))} placeholder="CPF" className="h-8 text-[11px] bg-white border-slate-200 text-slate-800 uppercase" />
+            <Input value={tp.naturalidade} onChange={e => setTp(p => ({ ...p, naturalidade: e.target.value.toUpperCase() }))} placeholder="Naturalidade" className="h-8 text-[11px] bg-white border-slate-200 text-slate-800 uppercase" />
+            <Input value={tp.nascimento} onChange={e => setTp(p => ({ ...p, nascimento: e.target.value.toUpperCase() }))} placeholder="Data Nascimento" className="h-8 text-[11px] bg-white border-slate-200 text-slate-800 uppercase" />
+            <Input value={tp.profissao} onChange={e => setTp(p => ({ ...p, profissao: e.target.value.toUpperCase() }))} placeholder="Profissão" className="h-8 text-[11px] bg-white border-slate-200 text-slate-800 uppercase" />
+            <Input value={tp.estadoCivil} onChange={e => setTp(p => ({ ...p, estadoCivil: e.target.value.toUpperCase() }))} placeholder="Estado Civil" className="h-8 text-[11px] bg-white border-slate-200 text-slate-800 uppercase" />
           </div>
           {TEMPLATES.find(t => t.key === showExtra)?.needsDates && (
-            <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-200">
-              <Input value={dataEntrada} onChange={e => setDataEntrada(e.target.value)} placeholder="Data Entrada (ex: 01/01/2020)" className="h-7 text-[10px] bg-white border-slate-200 text-slate-700" />
-              <Input value={dataSaida} onChange={e => setDataSaida(e.target.value)} placeholder="Data Saída (ex: 31/12/2023)" className="h-7 text-[10px] bg-white border-slate-200 text-slate-700" />
+            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
+              <Input value={dataEntrada} onChange={e => setDataEntrada(e.target.value)} placeholder="Data Entrada (ex: 01/01/2020)" className="h-8 text-[11px] bg-white border-slate-200 text-slate-800" />
+              <Input value={dataSaida} onChange={e => setDataSaida(e.target.value)} placeholder="Data Saída (ex: 31/12/2023)" className="h-8 text-[11px] bg-white border-slate-200 text-slate-800" />
             </div>
           )}
           <div className="flex gap-2 pt-1">
-            <Button size="sm" onClick={() => handleGenerate(showExtra)} disabled={generating === showExtra} className="h-7 text-[10px] bg-[#7a1528] hover:bg-[#9a1b32]">
-              {generating === showExtra ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <FileDown className="h-3 w-3 mr-1" />} Gerar DOCX
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => setShowExtra(null)} className="h-7 text-[10px] text-slate-500">Cancelar</Button>
+            <button onClick={() => handleGenerate(showExtra)} disabled={generating === showExtra} className="qa-btn-primary h-8 px-4 text-xs flex items-center gap-1.5 no-glow">
+              {generating === showExtra ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileDown className="h-3.5 w-3.5" />} Gerar DOCX
+            </button>
+            <button onClick={() => setShowExtra(null)} className="qa-btn-outline h-8 px-4 text-xs">Cancelar</button>
           </div>
         </div>
       )}
 
       <div className="space-y-1.5">
         {TEMPLATES.map(tpl => (
-          <div key={tpl.key} className="flex items-center justify-between bg-white border border-slate-200 rounded-lg px-3 py-2 hover:border-neutral-700 transition-all">
+          <div key={tpl.key} className="qa-card qa-hover-lift p-3 flex items-center justify-between">
             <div className="min-w-0 flex-1">
-              <div className="text-[11px] text-slate-700 font-medium">{tpl.label}</div>
-              <div className="text-[9px] text-slate-400">{tpl.desc}</div>
+              <div className="text-[12px] font-semibold uppercase" style={{ color: "hsl(220 20% 18%)" }}>{tpl.label}</div>
+              <div className="text-[10px] mt-0.5" style={{ color: "hsl(220 10% 55%)" }}>{tpl.desc}</div>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
+            <button
               disabled={!!generating}
               onClick={() => {
                 if (tpl.needsThirdParty) {
@@ -1453,10 +1451,10 @@ function DocumentGenerator({ cliente }: { cliente: any }) {
                   handleGenerate(tpl.key);
                 }
               }}
-              className="h-7 px-2 text-[10px] text-amber-400 hover:text-amber-300 shrink-0"
+              className="qa-btn-primary h-8 w-8 p-0 flex items-center justify-center no-glow shrink-0 ml-3"
             >
-              {generating === tpl.key ? <Loader2 className="h-3 w-3 animate-spin" /> : <FileDown className="h-3.5 w-3.5" />}
-            </Button>
+              {generating === tpl.key ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileDown className="h-3.5 w-3.5" />}
+            </button>
           </div>
         ))}
       </div>
