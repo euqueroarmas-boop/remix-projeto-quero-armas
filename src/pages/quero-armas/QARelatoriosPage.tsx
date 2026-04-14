@@ -213,8 +213,7 @@ export default function QARelatoriosPage() {
           urgency: getUrgency(dias),
         } as PendingItem;
       })
-      .filter(Boolean)
-      .sort((a, b) => b!.diasPendente - a!.diasPendente) as PendingItem[];
+      .filter(Boolean) as PendingItem[];
   }, [itens, vendaMap, clienteMap, servicoMap]);
 
   const filteredPendingItems = useMemo(() => {
