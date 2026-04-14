@@ -748,6 +748,10 @@ export default function QAClientesPage() {
                                         </div>
                                       ))}
                                     </div>
+                                    {/* Declarações filtradas pelo serviço */}
+                                    <div className="pt-3 border-t border-slate-100">
+                                      <DocumentGenerator cliente={c} nomeServico={getServicoNome(it.servico_id)} />
+                                    </div>
                                   </div>
                                 )}
                               </div>
@@ -1434,17 +1438,34 @@ function Empty({ text }: { text: string }) {
 }
 
 const TEMPLATES = [
-  { key: "dsa_1endereco", label: "DSA – 1 Endereço", desc: "Declaração de Segurança do Acervo (endereço único)" },
-  { key: "dsa_2enderecos", label: "DSA – 2 Endereços", desc: "Declaração de Segurança do Acervo (principal + secundário)", needs2addr: true },
-  { key: "declaracao_guarda_acervo_1endereco", label: "Guarda de Acervo – 1 End.", desc: "Declaração de endereço de guarda de acervo" },
-  { key: "declaracao_guarda_acervo_2enderecos", label: "Guarda de Acervo – 2 End.", desc: "Declaração com endereço principal e secundário", needs2addr: true },
-  { key: "declaracao_nao_segundo_endereco", label: "Não Possui 2º Endereço", desc: "Declaração de não possuir segundo endereço" },
-  { key: "declaracao_nao_inquerito_criminal", label: "Não Resp. Inquérito/Proc. Criminal", desc: "Declaração de não responder inquérito policial ou processo criminal" },
-  { key: "declaracao_responsavel_imovel_reside", label: "Resp. Imóvel – Reside", desc: "Declaração do responsável pelo imóvel (reside atualmente)", needsThirdParty: true },
-  { key: "declaracao_responsavel_imovel_residiu", label: "Resp. Imóvel – Residiu", desc: "Declaração do responsável pelo imóvel (residiu de/até)", needsThirdParty: true, needsDates: true },
+  { key: "dsa_1endereco", label: "DSA – 1 Endereço", desc: "Declaração de Segurança do Acervo (endereço único)", grupo: "cac_cr" },
+  { key: "dsa_2enderecos", label: "DSA – 2 Endereços", desc: "Declaração de Segurança do Acervo (principal + secundário)", needs2addr: true, grupo: "cac_cr" },
+  { key: "declaracao_guarda_acervo_1endereco", label: "Guarda de Acervo – 1 End.", desc: "Declaração de endereço de guarda de acervo", grupo: "cac_cr" },
+  { key: "declaracao_guarda_acervo_2enderecos", label: "Guarda de Acervo – 2 End.", desc: "Declaração com endereço principal e secundário", needs2addr: true, grupo: "cac_cr" },
+  { key: "declaracao_nao_segundo_endereco", label: "Não Possui 2º Endereço", desc: "Declaração de não possuir segundo endereço", grupo: "cac_cr" },
+  { key: "declaracao_nao_inquerito_criminal", label: "Não Resp. Inquérito/Proc. Criminal", desc: "Declaração de não responder inquérito policial ou processo criminal", grupo: "cac_cr" },
+  { key: "declaracao_responsavel_imovel_reside", label: "Resp. Imóvel – Reside", desc: "Declaração do responsável pelo imóvel (reside atualmente)", needsThirdParty: true, grupo: "universal" },
+  { key: "declaracao_responsavel_imovel_residiu", label: "Resp. Imóvel – Residiu", desc: "Declaração do responsável pelo imóvel (residiu de/até)", needsThirdParty: true, needsDates: true, grupo: "universal" },
 ];
 
-function DocumentGenerator({ cliente }: { cliente: any }) {
+/** Determina o grupo de declarações baseado no nome do serviço */
+function getServicoGrupo(nomeServico: string): "posse_porte" | "cac_cr" {
+  const upper = (nomeServico || "").toUpperCase();
+  if (upper.includes("POSSE") || upper.includes("PORTE")) return "posse_porte";
+  return "cac_cr";
+}
+
+/** Filtra templates aplicáveis ao grupo do serviço */
+function getTemplatesParaServico(nomeServico: string) {
+  const grupo = getServicoGrupo(nomeServico);
+  if (grupo === "posse_porte") {
+    return TEMPLATES.filter(t => t.grupo === "universal");
+  }
+  // CAC/CR/Autorização/Registro → todas as declarações
+  return TEMPLATES;
+}
+
+function DocumentGenerator({ cliente, nomeServico }: { cliente: any; nomeServico?: string }) {
   const [generating, setGenerating] = useState<string | null>(null);
   const [showExtra, setShowExtra] = useState<string | null>(null);
   // Third party fields
@@ -1512,10 +1533,14 @@ function DocumentGenerator({ cliente }: { cliente: any }) {
     }
   };
 
+  const filteredTemplates = nomeServico ? getTemplatesParaServico(nomeServico) : TEMPLATES;
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-[11px] uppercase tracking-wider font-semibold" style={{ color: "hsl(220 10% 45%)" }}>Gerar Declarações</span>
+        <span className="text-[11px] uppercase tracking-wider font-semibold" style={{ color: "hsl(220 10% 45%)" }}>
+          {nomeServico ? `Declarações — ${nomeServico}` : "Gerar Declarações"}
+        </span>
       </div>
 
       {/* Third party fields - show when needed */}
@@ -1546,7 +1571,7 @@ function DocumentGenerator({ cliente }: { cliente: any }) {
       )}
 
       <div className="space-y-1.5">
-        {TEMPLATES.map(tpl => (
+        {filteredTemplates.map(tpl => (
           <div key={tpl.key} className="qa-card qa-hover-lift p-3 flex items-center justify-between group">
             <div className="min-w-0 flex-1">
               <div className="text-[12px] font-semibold uppercase" style={{ color: "hsl(220 20% 18%)" }}>{tpl.label}</div>
