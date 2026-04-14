@@ -26,8 +26,8 @@ interface FormData {
   emp_natureza_juridica: string;
   emp_endereco: string; emp_telefone: string; emp_email: string;
   trab_nome_empresa: string; trab_cnpj_empresa: string;
-  trab_cargo_funcao: string; trab_data_admissao: string;
-  trab_faixa_salarial: string; trab_endereco_empresa: string;
+  trab_cargo_funcao: string;
+  trab_endereco_empresa: string;
   trab_telefone_empresa: string;
   aut_atividade: string; aut_nome_profissional: string;
   aut_cnpj: string; aut_telefone: string; aut_endereco: string;
@@ -52,8 +52,8 @@ const initialForm: FormData = {
   emp_natureza_juridica: "",
   emp_endereco: "", emp_telefone: "", emp_email: "",
   trab_nome_empresa: "", trab_cnpj_empresa: "",
-  trab_cargo_funcao: "", trab_data_admissao: "",
-  trab_faixa_salarial: "", trab_endereco_empresa: "",
+  trab_cargo_funcao: "",
+  trab_endereco_empresa: "",
   trab_telefone_empresa: "",
   aut_atividade: "", aut_nome_profissional: "",
   aut_cnpj: "", aut_telefone: "", aut_endereco: "",
@@ -249,7 +249,7 @@ export default function QACadastroPublicoPage() {
         set("trab_nome_empresa", data.razao_social || "");
         const addr = [data.logradouro, data.numero, data.bairro, data.municipio, data.uf].filter(Boolean).join(", ");
         set("trab_endereco_empresa", addr);
-        set("trab_telefone_empresa", data.ddd_telefone_1 || "");
+        set("trab_telefone_empresa", data.ddd_telefone_1 ? maskPhone(data.ddd_telefone_1) : "");
       }
     }
   }, [form, lookupCnpj, set]);
@@ -820,17 +820,11 @@ function Step4({ form, set, errors, onCnpjLookup, cnpjLoading }: any) {
             <Field label="Cargo / Função">
               <TextInput value={form.trab_cargo_funcao} onChange={v => set("trab_cargo_funcao", v)} placeholder="Cargo ou função" />
             </Field>
-            <Field label="Data de admissão">
-              <TextInput value={form.trab_data_admissao} onChange={v => set("trab_data_admissao", v)} placeholder="DD/MM/AAAA" />
-            </Field>
-            <Field label="Faixa salarial">
-              <SelectInput value={form.trab_faixa_salarial} onChange={v => set("trab_faixa_salarial", v)} options={FAIXAS_SALARIAIS} placeholder="Selecione..." />
-            </Field>
             <Field label="Endereço da empresa">
               <TextInput value={form.trab_endereco_empresa} onChange={v => set("trab_endereco_empresa", v)} placeholder="Endereço completo" />
             </Field>
             <Field label="Telefone da empresa">
-              <TextInput value={form.trab_telefone_empresa} onChange={v => set("trab_telefone_empresa", v)} placeholder="Telefone" />
+              <TextInput value={form.trab_telefone_empresa} onChange={v => set("trab_telefone_empresa", maskPhone(v))} placeholder="(00) 00000-0000" />
             </Field>
           </div>
         </div>
