@@ -622,6 +622,9 @@ export default function QAClientesPage() {
 
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="bg-white border border-slate-200 h-9 w-full flex-wrap rounded-xl shadow-sm">
+            <TabsTrigger value="resumo" className="text-xs flex-1 data-[state=active]:bg-slate-800 data-[state=active]:text-white rounded-lg">
+              <TrendingUp className="h-3.5 w-3.5 mr-1" /> Resumo
+            </TabsTrigger>
             <TabsTrigger value="dados" className="text-xs flex-1 data-[state=active]:bg-slate-800 data-[state=active]:text-white rounded-lg">
               <User className="h-3.5 w-3.5 mr-1" /> Dados
             </TabsTrigger>
