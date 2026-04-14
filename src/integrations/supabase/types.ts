@@ -2859,9 +2859,18 @@ export type Database = {
           data_deferimento: string | null
           data_protocolo: string | null
           data_ultima_atualizacao: string | null
+          data_vencimento: string | null
           id: number
           id_legado: number | null
+          numero_cr: string | null
+          numero_craf: string | null
+          numero_gte: string | null
+          numero_porte: string | null
+          numero_posse: string | null
           numero_processo: string | null
+          numero_sigma: string | null
+          numero_sinarm: string | null
+          registro_cad: string | null
           servico_id: number | null
           status: string | null
           valor: number | null
@@ -2871,9 +2880,18 @@ export type Database = {
           data_deferimento?: string | null
           data_protocolo?: string | null
           data_ultima_atualizacao?: string | null
+          data_vencimento?: string | null
           id?: number
           id_legado?: number | null
+          numero_cr?: string | null
+          numero_craf?: string | null
+          numero_gte?: string | null
+          numero_porte?: string | null
+          numero_posse?: string | null
           numero_processo?: string | null
+          numero_sigma?: string | null
+          numero_sinarm?: string | null
+          registro_cad?: string | null
           servico_id?: number | null
           status?: string | null
           valor?: number | null
@@ -2883,9 +2901,18 @@ export type Database = {
           data_deferimento?: string | null
           data_protocolo?: string | null
           data_ultima_atualizacao?: string | null
+          data_vencimento?: string | null
           id?: number
           id_legado?: number | null
+          numero_cr?: string | null
+          numero_craf?: string | null
+          numero_gte?: string | null
+          numero_porte?: string | null
+          numero_posse?: string | null
           numero_processo?: string | null
+          numero_sigma?: string | null
+          numero_sinarm?: string | null
+          registro_cad?: string | null
           servico_id?: number | null
           status?: string | null
           valor?: number | null
