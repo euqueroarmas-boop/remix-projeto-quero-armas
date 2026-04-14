@@ -1011,6 +1011,56 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
+function DetailCard({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="qa-card p-5 md:p-6">
+      <h3 className="text-[11px] uppercase tracking-[0.12em] font-semibold mb-4"
+        style={{ color: "hsl(0 65% 42%)" }}>{title}</h3>
+      {children}
+    </div>
+  );
+}
+
+function DetailGrid({ children }: { children: React.ReactNode }) {
+  return <div className="space-y-2.5">{children}</div>;
+}
+
+function DetailField({ label, value, icon: Icon, copyable, highlight }: {
+  label: string; value?: string | null; icon?: any; copyable?: boolean; highlight?: boolean;
+}) {
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (value) {
+      navigator.clipboard.writeText(value);
+      toast.success(`${label} copiado!`);
+    }
+  };
+  const displayValue = value || "—";
+  const isInvalid = displayValue === "Invalid Date";
+
+  return (
+    <div className="flex items-start gap-3 group">
+      {Icon && <Icon className="h-4 w-4 mt-0.5 shrink-0" style={{ color: "hsl(220 10% 62%)" }} />}
+      <div className="flex items-baseline gap-2 flex-1 min-w-0">
+        <span className="text-xs shrink-0" style={{ color: "hsl(220 10% 50%)", minWidth: "140px" }}>
+          {label}:
+        </span>
+        <span className={`text-sm font-medium ${isInvalid ? "text-red-500" : ""} ${highlight ? "text-emerald-600" : ""}`}
+          style={!isInvalid && !highlight ? { color: "hsl(220 20% 18%)" } : undefined}>
+          {displayValue}
+        </span>
+      </div>
+      {copyable && value && value !== "—" && (
+        <button onClick={handleCopy}
+          className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0 w-7 h-7 rounded-lg flex items-center justify-center hover:bg-slate-100"
+          title="Copiar">
+          <span className="text-xs">📋</span>
+        </button>
+      )}
+    </div>
+  );
+}
+
 function Field({ label, value, icon: Icon, copyable }: { label: string; value?: string | null; icon?: any; copyable?: boolean }) {
   const handleCopy = (e: React.MouseEvent) => {
     e.stopPropagation();
