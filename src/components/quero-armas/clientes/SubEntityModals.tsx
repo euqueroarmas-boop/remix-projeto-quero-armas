@@ -52,7 +52,7 @@ export function CrafModal({ open, onClose, onSaved, clienteId, craf }: CrafModal
           <Inp label="Validade" value={f.data_validade} onChange={v => setF(p => ({ ...p, data_validade: v }))} type="date" />
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="ghost" size="sm" onClick={onClose} className="text-[11px] h-7">Cancelar</Button>
-            <Button size="sm" onClick={save} disabled={saving} className="bg-[#7a1528] hover:bg-[#9a1b32] text-[11px] h-7">
+            <Button size="sm" onClick={save} disabled={saving} className="bg-slate-800 hover:bg-slate-900 text-white text-[11px] h-7">
               {saving ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Save className="h-3 w-3 mr-1" />} Salvar
             </Button>
           </div>
@@ -107,7 +107,7 @@ export function GteModal({ open, onClose, onSaved, clienteId, gte }: GteModalPro
           <Inp label="Validade" value={f.data_validade} onChange={v => setF(p => ({ ...p, data_validade: v }))} type="date" />
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="ghost" size="sm" onClick={onClose} className="text-[11px] h-7">Cancelar</Button>
-            <Button size="sm" onClick={save} disabled={saving} className="bg-[#7a1528] hover:bg-[#9a1b32] text-[11px] h-7">
+             <Button size="sm" onClick={save} disabled={saving} className="bg-slate-800 hover:bg-slate-900 text-white text-[11px] h-7">
               {saving ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Save className="h-3 w-3 mr-1" />} Salvar
             </Button>
           </div>
@@ -172,7 +172,7 @@ export function CrModal({ open, onClose, onSaved, clienteId, cadastro }: CrModal
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="ghost" size="sm" onClick={onClose} className="text-[11px] h-7">Cancelar</Button>
-            <Button size="sm" onClick={save} disabled={saving} className="bg-[#7a1528] hover:bg-[#9a1b32] text-[11px] h-7">
+             <Button size="sm" onClick={save} disabled={saving} className="bg-slate-800 hover:bg-slate-900 text-white text-[11px] h-7">
               {saving ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Save className="h-3 w-3 mr-1" />} Salvar
             </Button>
           </div>
@@ -301,7 +301,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
 
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="text-[9px] text-[#c43b52] uppercase tracking-[0.12em] font-bold">Serviços Contratados</label>
+              <label className="text-[9px] text-slate-500 uppercase tracking-[0.12em] font-bold">Serviços Contratados</label>
               <span className="text-[9px] text-slate-400 font-mono">{selectedServicos.size} sel.</span>
             </div>
             <div className="max-h-[160px] overflow-y-auto space-y-0.5">
@@ -309,8 +309,8 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
                 const isChecked = selectedServicos.has(svc.id);
                 const svcData = selectedServicos.get(svc.id);
                 return (
-                  <label key={svc.id} className={`flex items-center gap-2 rounded px-2 py-1.5 cursor-pointer text-[11px] transition-colors ${isChecked ? 'bg-[#7a1528]/10 text-slate-700' : 'text-slate-500 hover:bg-[#111]'}`}>
-                    <input type="checkbox" checked={isChecked} onChange={() => toggleServico(svc)} className="accent-[#c43b52] h-3 w-3 shrink-0" />
+                   <label key={svc.id} className={`flex items-center gap-2 rounded px-2 py-1.5 cursor-pointer text-[11px] transition-colors ${isChecked ? 'bg-blue-50 text-slate-700' : 'text-slate-500 hover:bg-slate-50'}`}>
+                    <input type="checkbox" checked={isChecked} onChange={() => toggleServico(svc)} className="accent-blue-600 h-3 w-3 shrink-0" />
                     <span className="flex-1 min-w-0 truncate">{svc.nome_servico}</span>
                     {isChecked ? (
                       <Input type="number" value={String(svcData?.valor ?? svc.valor_servico)} onChange={e => updateServicoValor(svc.id, Number(e.target.value) || 0)} className="h-5 w-16 text-[10px] text-right bg-white border-slate-200 text-slate-700 px-1 shrink-0 focus-visible:ring-0 focus-visible:ring-offset-0" />
@@ -334,13 +334,13 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
             </div>
             <div className="flex justify-between pt-1 border-t border-slate-200">
               <span className="text-slate-700 font-semibold">Total</span>
-              <span className="text-white font-bold font-mono text-[13px]">R$ {total.toLocaleString('pt-BR')}</span>
+              <span className="text-slate-800 font-bold font-mono text-[13px]">R$ {total.toLocaleString('pt-BR')}</span>
             </div>
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="ghost" size="sm" onClick={onClose} className="text-[11px] h-7">Cancelar</Button>
-            <Button size="sm" onClick={save} disabled={saving} className="bg-[#7a1528] hover:bg-[#9a1b32] text-[11px] h-7">
+             <Button size="sm" onClick={save} disabled={saving} className="bg-slate-800 hover:bg-slate-900 text-white text-[11px] h-7">
               {saving ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Save className="h-3 w-3 mr-1" />}
               {isEdit ? "Salvar" : "Cadastrar Venda"}
             </Button>
@@ -414,7 +414,7 @@ export function FiliacaoModal({ open, onClose, onSaved, clienteId, filiacao }: F
           <Inp label="Tipo" value={f.nome_filiacao} onChange={v => setF(p => ({ ...p, nome_filiacao: v }))} />
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="ghost" size="sm" onClick={onClose} className="text-[11px] h-7">Cancelar</Button>
-            <Button size="sm" onClick={save} disabled={saving} className="bg-[#7a1528] hover:bg-[#9a1b32] text-[11px] h-7">
+            <Button size="sm" onClick={save} disabled={saving} className="bg-slate-800 hover:bg-slate-900 text-white text-[11px] h-7">
               {saving ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Save className="h-3 w-3 mr-1" />} Salvar
             </Button>
           </div>

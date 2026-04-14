@@ -213,6 +213,35 @@
   --qa-radius-sm: 8px;
   --qa-radius-lg: 16px;
 
+  /* Override shadcn semantic tokens for light theme */
+  --background: 220 20% 97%;
+  --foreground: 220 20% 18%;
+  --card: 0 0% 100%;
+  --card-foreground: 220 20% 18%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 220 20% 18%;
+  --primary: 230 80% 56%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 220 14% 96%;
+  --secondary-foreground: 220 20% 18%;
+  --muted: 220 14% 96%;
+  --muted-foreground: 220 10% 46%;
+  --accent: 220 14% 96%;
+  --accent-foreground: 220 20% 18%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 220 13% 91%;
+  --input: 220 13% 91%;
+  --ring: 230 80% 56%;
+  --sidebar-background: 0 0% 100%;
+  --sidebar-foreground: 220 20% 18%;
+  --sidebar-primary: 230 80% 56%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 220 14% 96%;
+  --sidebar-accent-foreground: 220 20% 18%;
+  --sidebar-border: 220 13% 91%;
+  --sidebar-ring: 230 80% 56%;
+
   font-family: 'DM Sans', 'Plus Jakarta Sans', system-ui, sans-serif;
   background: hsl(var(--qa-bg));
   color: hsl(var(--qa-text));
