@@ -115,6 +115,62 @@ interface CadastroPublico {
   created_at: string;
 }
 
+const normalizeDigits = (value: string | null | undefined) => (value ?? "").replace(/\D/g, "");
+
+const emptyToNull = (value: string | null | undefined) => {
+  const trimmed = (value ?? "").trim();
+  return trimmed ? trimmed : null;
+};
+
+const pickNew = (incoming: string | null | undefined, current: string | null | undefined) => {
+  const next = emptyToNull(incoming);
+  return next ?? current ?? null;
+};
+
+/** Build update payload from cadastro público → qa_clientes. NEVER touches observacao when current has content. */
+const buildClientePayload = (cadastro: CadastroPublico, cur?: Partial<Cliente> | null) => {
+  const estado1 = emptyToNull(cadastro.end1_estado)?.toUpperCase() ?? null;
+  const estado2 = emptyToNull(cadastro.end2_estado)?.toUpperCase() ?? null;
+  // Protect observacao: if current already has process numbers, keep it
+  const currentObs = emptyToNull(cur?.observacao);
+  const incomingObs = emptyToNull(cadastro.observacoes);
+  const observacao = currentObs
+    ? (incomingObs && incomingObs !== currentObs ? `${currentObs}\n\n--- Cadastro público ---\n${incomingObs}` : currentObs)
+    : incomingObs;
+  return {
+    nome_completo: pickNew(cadastro.nome_completo, cur?.nome_completo) ?? "",
+    cpf: normalizeDigits(cadastro.cpf) || cur?.cpf || null,
+    rg: pickNew(cadastro.rg, cur?.rg),
+    emissor_rg: pickNew(cadastro.emissor_rg, cur?.emissor_rg),
+    uf_emissor_rg: emptyToNull((cadastro as any).uf_emissor_rg)?.toUpperCase() ?? cur?.uf_emissor_rg ?? null,
+    data_nascimento: pickNew(cadastro.data_nascimento, cur?.data_nascimento),
+    nacionalidade: pickNew(cadastro.nacionalidade, cur?.nacionalidade),
+    estado_civil: pickNew(cadastro.estado_civil, cur?.estado_civil),
+    profissao: pickNew(cadastro.profissao, cur?.profissao),
+    nome_mae: pickNew(cadastro.nome_mae, cur?.nome_mae),
+    nome_pai: pickNew(cadastro.nome_pai, cur?.nome_pai),
+    email: pickNew(cadastro.email, cur?.email),
+    celular: pickNew(cadastro.telefone_principal, cur?.celular),
+    endereco: pickNew(cadastro.end1_logradouro, cur?.endereco),
+    numero: pickNew(cadastro.end1_numero, cur?.numero),
+    complemento: pickNew(cadastro.end1_complemento, cur?.complemento),
+    bairro: pickNew(cadastro.end1_bairro, cur?.bairro),
+    cep: pickNew(normalizeDigits(cadastro.end1_cep) || emptyToNull(cadastro.end1_cep), cur?.cep),
+    cidade: pickNew(cadastro.end1_cidade, cur?.cidade),
+    estado: pickNew(estado1, cur?.estado),
+    endereco2: pickNew(cadastro.end2_logradouro, cur?.endereco2),
+    numero2: pickNew(cadastro.end2_numero, cur?.numero2),
+    complemento2: pickNew(cadastro.end2_complemento, cur?.complemento2),
+    bairro2: pickNew(cadastro.end2_bairro, cur?.bairro2),
+    cep2: pickNew(normalizeDigits(cadastro.end2_cep) || emptyToNull(cadastro.end2_cep), cur?.cep2),
+    cidade2: pickNew(cadastro.end2_cidade, cur?.cidade2),
+    estado2: pickNew(estado2, cur?.estado2),
+    observacao,
+    status: cur?.status ?? "ATIVO",
+    cliente_lions: cur?.cliente_lions ?? false,
+  };
+};
+
 export default function QAClientesPage() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [loading, setLoading] = useState(true);
@@ -270,8 +326,43 @@ export default function QAClientesPage() {
 
     setSavingCadastroPublicoStatus(status);
     try {
+      const cpfDigits = normalizeDigits(selectedCadastroPublico.cpf);
+      let clienteVinculadoId: number | null = null;
+
+      if (status === "aprovado") {
+        if (!cpfDigits || cpfDigits.length !== 11) {
+          throw new Error("CPF inválido para vincular o cadastro ao cliente");
+        }
+        const cpfVariants = Array.from(new Set([cpfDigits, formatCpf(cpfDigits)]));
+        const { data: clientesCpf, error: lookErr } = await supabase
+          .from("qa_clientes" as any).select("*").in("cpf", cpfVariants)
+          .order("updated_at", { ascending: false }).limit(10);
+        if (lookErr) throw lookErr;
+        const existing = (((clientesCpf as unknown) as Cliente[] | null) ?? [])[0] ?? null;
+        const payload = buildClientePayload(selectedCadastroPublico, existing);
+
+        if (existing) {
+          const { error: ue } = await supabase.from("qa_clientes" as any).update(payload).eq("id", existing.id);
+          if (ue) throw ue;
+          clienteVinculadoId = existing.id;
+        } else {
+          const { data: ins, error: ie } = await supabase.from("qa_clientes" as any).insert(payload).select("id").single();
+          if (ie) throw ie;
+          clienteVinculadoId = ((ins as unknown) as { id?: number } | null)?.id ?? null;
+        }
+      }
+
+      const updatePayload: Record<string, any> = { status };
+      if (status === "aprovado") {
+        updatePayload.cliente_id_vinculado = clienteVinculadoId;
+        updatePayload.processado_em = new Date().toISOString();
+        updatePayload.notas_processamento = clienteVinculadoId
+          ? `Vinculado ao cliente #${clienteVinculadoId} por CPF.`
+          : "Aprovado sem vínculo automático.";
+      }
+
       const { data, error } = await supabase.from("qa_cadastro_publico" as any)
-        .update({ status })
+        .update(updatePayload)
         .eq("id", selectedCadastroPublico.id)
         .select("*")
         .limit(1)
@@ -286,7 +377,14 @@ export default function QAClientesPage() {
       const updated = data as unknown as CadastroPublico;
       setSelectedCadastroPublico(updated);
       setCadastrosPublicos(prev => prev.map(item => item.id === updated.id ? { ...item, ...updated } : item));
-      toast.success(`Cadastro marcado como ${status}`);
+      if (status === "aprovado") {
+        await loadClientes();
+        toast.success(clienteVinculadoId
+          ? `Cadastro aprovado e sincronizado com o cliente #${clienteVinculadoId}`
+          : "Cadastro aprovado com sucesso");
+      } else {
+        toast.success(`Cadastro marcado como ${status}`);
+      }
     } catch (e: any) {
       toast.error(e.message || "Erro ao atualizar cadastro público");
     } finally {
