@@ -266,6 +266,7 @@ export default function QACadastroPublicoPage() {
     if (s === 2) {
       if (!form.end1_numero.trim()) errs.end1_numero = "Número é obrigatório";
       if (!form.end1_complemento.trim()) errs.end1_complemento = "Complemento é obrigatório (ex: Casa, Apto, Bloco)";
+      if (!form.comprovante_endereco_proprio) errs.comprovante_endereco_proprio = "Informe se possui comprovante no seu nome";
     }
     if (s === 5) {
       if (!form.consentimento_dados_verdadeiros) errs.consentimento_dados_verdadeiros = "Obrigatório";
