@@ -60,14 +60,24 @@ interface CadastroPublico {
   emp_cnpj?: string | null;
   emp_razao_social?: string | null;
   emp_nome_fantasia?: string | null;
+  emp_situacao_cadastral?: string | null;
+  emp_cargo_funcao?: string | null;
+  emp_participacao_societaria?: string | null;
   emp_endereco?: string | null;
   emp_telefone?: string | null;
   emp_email?: string | null;
   trab_nome_empresa?: string | null;
   trab_cnpj_empresa?: string | null;
   trab_cargo_funcao?: string | null;
+  trab_data_admissao?: string | null;
+  trab_faixa_salarial?: string | null;
   trab_endereco_empresa?: string | null;
   trab_telefone_empresa?: string | null;
+  aut_atividade?: string | null;
+  aut_nome_profissional?: string | null;
+  aut_cnpj?: string | null;
+  aut_telefone?: string | null;
+  aut_endereco?: string | null;
   comprovante_endereco_proprio?: string | null;
   servico_interesse?: string | null;
   consentimento_dados_verdadeiros?: boolean | null;
@@ -680,132 +690,169 @@ export default function QAClientesPage() {
         : c.comprovante_endereco_proprio || "—";
 
     return (
-      <div className="space-y-4">
-        <div className="flex items-start gap-3">
-          <Button variant="ghost" size="sm" onClick={() => setSelectedCadastroPublico(null)} className="text-slate-500 hover:text-slate-700 h-8 px-2">
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
+      <div className="max-w-4xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex items-start gap-4">
+          <button
+            onClick={() => setSelectedCadastroPublico(null)}
+            className="mt-1 w-9 h-9 rounded-xl flex items-center justify-center transition-colors hover:bg-slate-100"
+            style={{ border: "1px solid hsl(220 13% 90%)" }}
+          >
+            <ChevronLeft className="h-4 w-4" style={{ color: "hsl(220 10% 46%)" }} />
+          </button>
           <div className="flex-1 min-w-0">
-            <h1 className="text-base font-semibold text-slate-800 truncate">{c.nome_completo}</h1>
-            <div className="flex items-center gap-2 text-xs flex-wrap">
-              <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${cadastroStatusColor(c.status)}`}>{c.status}</span>
-              <span className="text-slate-300">•</span>
-              <span className="text-slate-500">CPF: {c.cpf || "—"}</span>
-              {c.servico_interesse && (
-                <>
-                  <span className="text-slate-300">•</span>
-                  <span className="text-slate-500">{c.servico_interesse}</span>
-                </>
-              )}
+            <h1 className="text-lg md:text-xl font-bold tracking-tight" style={{ color: "hsl(220 20% 14%)" }}>
+              {c.nome_completo}
+            </h1>
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              <span className={`text-[11px] px-2.5 py-0.5 rounded-full font-semibold ${cadastroStatusColor(c.status)}`}>
+                {c.status}
+              </span>
+              <span className="text-xs" style={{ color: "hsl(220 10% 55%)" }}>CPF: {c.cpf || "—"}</span>
             </div>
           </div>
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            <Button
-              variant="outline"
-              size="sm"
+          <div className="flex items-center gap-2 shrink-0">
+            <button
               disabled={!!savingCadastroPublicoStatus || c.status === "rejeitado"}
               onClick={() => updateCadastroPublicoStatus("rejeitado")}
-              className="h-8 px-3 text-xs"
+              className="h-9 px-4 rounded-lg text-xs font-medium border transition-all disabled:opacity-40 hover:bg-slate-50"
+              style={{ borderColor: "hsl(220 13% 88%)", color: "hsl(220 20% 30%)" }}
             >
-              {savingCadastroPublicoStatus === "rejeitado" && <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />}
+              {savingCadastroPublicoStatus === "rejeitado" && <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin inline" />}
               Rejeitar
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
+            </button>
+            <button
               disabled={!!savingCadastroPublicoStatus || c.status === "pendente"}
               onClick={() => updateCadastroPublicoStatus("pendente")}
-              className="h-8 px-3 text-xs"
+              className="h-9 px-4 rounded-lg text-xs font-medium border transition-all disabled:opacity-40 hover:bg-slate-50"
+              style={{ borderColor: "hsl(220 13% 88%)", color: "hsl(220 20% 30%)" }}
             >
-              {savingCadastroPublicoStatus === "pendente" && <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />}
+              {savingCadastroPublicoStatus === "pendente" && <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin inline" />}
               Pendente
-            </Button>
-            <Button
-              size="sm"
+            </button>
+            <button
               disabled={!!savingCadastroPublicoStatus || c.status === "aprovado"}
               onClick={() => updateCadastroPublicoStatus("aprovado")}
-              className="h-8 px-3 text-xs"
+              className="h-9 px-4 rounded-lg text-xs font-semibold text-white transition-all disabled:opacity-40 flex items-center gap-1.5"
+              style={{ background: "hsl(230 80% 56%)" }}
             >
-              {savingCadastroPublicoStatus === "aprovado" ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <CheckCircle className="h-3.5 w-3.5 mr-1" />}
+              {savingCadastroPublicoStatus === "aprovado" ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <CheckCircle className="h-3.5 w-3.5" />
+              )}
               Validar
-            </Button>
+            </button>
           </div>
         </div>
 
-        <div className="grid gap-4">
-          <Section title="Resumo do Cadastro">
-            <Field label="Recebido em" value={formatDate(c.created_at)} />
-            <Field label="Serviço" value={c.servico_interesse} />
-            <Field label="Tipo de vínculo" value={c.vinculo_tipo} />
-            <Field label="Comprovante em nome próprio" value={comprovanteEndereco} />
-            <Field label="Consentimento de veracidade" value={c.consentimento_dados_verdadeiros ? "Sim" : "Não"} />
-            <Field label="Consentimento LGPD" value={c.consentimento_tratamento_dados ? "Sim" : "Não"} />
-            <Field label="Aceite em" value={formatDate(c.consentimento_timestamp ?? c.created_at)} />
-          </Section>
+        {/* Content cards */}
+        <div className="space-y-4">
+          <DetailCard title="Resumo do Cadastro">
+            <DetailGrid>
+              <DetailField label="Recebido em" value={formatDate(c.created_at)} />
+              <DetailField label="Serviço" value={c.servico_interesse} />
+              <DetailField label="Tipo de vínculo" value={c.vinculo_tipo} />
+              <DetailField label="Comprovante em nome próprio" value={comprovanteEndereco} />
+              <DetailField label="Consentimento de veracidade" value={c.consentimento_dados_verdadeiros ? "Sim" : "Não"} highlight={c.consentimento_dados_verdadeiros} />
+              <DetailField label="Consentimento LGPD" value={c.consentimento_tratamento_dados ? "Sim" : "Não"} highlight={c.consentimento_tratamento_dados} />
+              <DetailField label="Aceite em" value={formatDate(c.consentimento_timestamp ?? c.created_at)} />
+            </DetailGrid>
+          </DetailCard>
 
-          <Section title="Identificação">
-            <Field label="Nome" value={c.nome_completo} />
-            <Field label="CPF" value={c.cpf} copyable />
-            <Field label="Nascimento" value={formatDate(c.data_nascimento ?? null)} />
-            <Field label="Estado Civil" value={c.estado_civil} />
-            <Field label="Nacionalidade" value={c.nacionalidade} />
-            <Field label="Profissão" value={c.profissao} />
-            <Field label="Mãe" value={c.nome_mae} />
-            <Field label="Pai" value={c.nome_pai} />
-          </Section>
+          <DetailCard title="Identificação">
+            <DetailGrid>
+              <DetailField label="Nome" value={c.nome_completo} />
+              <DetailField label="CPF" value={c.cpf} copyable />
+              <DetailField label="Nascimento" value={formatDate(c.data_nascimento ?? null)} />
+              <DetailField label="Estado Civil" value={c.estado_civil} />
+              <DetailField label="Nacionalidade" value={c.nacionalidade} />
+              <DetailField label="Profissão" value={c.profissao} />
+              <DetailField label="Mãe" value={c.nome_mae} />
+              <DetailField label="Pai" value={c.nome_pai} />
+            </DetailGrid>
+          </DetailCard>
 
-          <Section title="Contato">
-            <Field label="Telefone principal" value={c.telefone_principal} icon={Phone} copyable />
-            <Field label="Telefone secundário" value={c.telefone_secundario} icon={Phone} copyable />
-            <Field label="Email" value={c.email} icon={Mail} copyable />
-          </Section>
+          <DetailCard title="Contato">
+            <DetailGrid>
+              <DetailField label="Telefone principal" value={c.telefone_principal} icon={Phone} copyable />
+              <DetailField label="Telefone secundário" value={c.telefone_secundario} icon={Phone} copyable />
+              <DetailField label="Email" value={c.email} icon={Mail} copyable />
+            </DetailGrid>
+          </DetailCard>
 
-          <Section title="Endereço Principal">
-            <Field label="Logradouro" value={[c.end1_logradouro, c.end1_numero].filter(Boolean).join(", ")} icon={MapPin} />
-            <Field label="Complemento" value={c.end1_complemento} />
-            <Field label="Bairro" value={c.end1_bairro} />
-            <Field label="CEP" value={c.end1_cep} />
-            <Field label="Cidade/UF" value={[c.end1_cidade, c.end1_estado].filter(Boolean).join(" / ")} />
-          </Section>
+          <DetailCard title="Endereço Principal">
+            <DetailGrid>
+              <DetailField label="Logradouro" value={[c.end1_logradouro, c.end1_numero].filter(Boolean).join(", ")} icon={MapPin} />
+              <DetailField label="Complemento" value={c.end1_complemento} />
+              <DetailField label="Bairro" value={c.end1_bairro} />
+              <DetailField label="CEP" value={c.end1_cep} />
+              <DetailField label="Cidade/UF" value={[c.end1_cidade, c.end1_estado].filter(Boolean).join(" / ")} />
+            </DetailGrid>
+          </DetailCard>
 
           {c.tem_segundo_endereco && (
-            <Section title="Endereço Secundário">
-              <Field label="Tipo" value={c.end2_tipo} />
-              <Field label="Logradouro" value={[c.end2_logradouro, c.end2_numero].filter(Boolean).join(", ")} icon={MapPin} />
-              <Field label="Complemento" value={c.end2_complemento} />
-              <Field label="Bairro" value={c.end2_bairro} />
-              <Field label="CEP" value={c.end2_cep} />
-              <Field label="Cidade/UF" value={[c.end2_cidade, c.end2_estado].filter(Boolean).join(" / ")} />
-            </Section>
+            <DetailCard title="Endereço Secundário">
+              <DetailGrid>
+                <DetailField label="Tipo" value={c.end2_tipo} />
+                <DetailField label="Logradouro" value={[c.end2_logradouro, c.end2_numero].filter(Boolean).join(", ")} icon={MapPin} />
+                <DetailField label="Complemento" value={c.end2_complemento} />
+                <DetailField label="Bairro" value={c.end2_bairro} />
+                <DetailField label="CEP" value={c.end2_cep} />
+                <DetailField label="Cidade/UF" value={[c.end2_cidade, c.end2_estado].filter(Boolean).join(" / ")} />
+              </DetailGrid>
+            </DetailCard>
           )}
 
-          {(c.emp_cnpj || c.emp_razao_social || c.emp_nome_fantasia || c.emp_endereco || c.emp_telefone || c.emp_email) && (
-            <Section title="Empresa / Sociedade">
-              <Field label="CNPJ" value={c.emp_cnpj} />
-              <Field label="Razão social" value={c.emp_razao_social} />
-              <Field label="Nome fantasia" value={c.emp_nome_fantasia} />
-              <Field label="Endereço" value={c.emp_endereco} />
-              <Field label="Telefone" value={c.emp_telefone} copyable />
-              <Field label="Email" value={c.emp_email} copyable />
-            </Section>
+          {(c.emp_cnpj || c.emp_razao_social || c.emp_nome_fantasia) && (
+            <DetailCard title="Empresa / Sociedade">
+              <DetailGrid>
+                <DetailField label="CNPJ" value={c.emp_cnpj} copyable />
+                <DetailField label="Razão social" value={c.emp_razao_social} />
+                <DetailField label="Nome fantasia" value={c.emp_nome_fantasia} />
+                <DetailField label="Situação Cadastral" value={c.emp_situacao_cadastral} />
+                <DetailField label="Cargo/Função" value={c.emp_cargo_funcao} />
+                <DetailField label="Participação" value={c.emp_participacao_societaria} />
+                <DetailField label="Endereço" value={c.emp_endereco} />
+                <DetailField label="Telefone" value={c.emp_telefone} copyable />
+                <DetailField label="Email" value={c.emp_email} copyable />
+              </DetailGrid>
+            </DetailCard>
           )}
 
-          {(c.trab_cnpj_empresa || c.trab_nome_empresa || c.trab_cargo_funcao || c.trab_endereco_empresa || c.trab_telefone_empresa) && (
-            <Section title="Trabalho Registrado">
-              <Field label="CNPJ" value={c.trab_cnpj_empresa} />
-              <Field label="Empresa" value={c.trab_nome_empresa} />
-              <Field label="Cargo/Função" value={c.trab_cargo_funcao} />
-              <Field label="Endereço" value={c.trab_endereco_empresa} />
-              <Field label="Telefone" value={c.trab_telefone_empresa} copyable />
-            </Section>
+          {(c.trab_cnpj_empresa || c.trab_nome_empresa) && (
+            <DetailCard title="Trabalho Registrado">
+              <DetailGrid>
+                <DetailField label="Empresa" value={c.trab_nome_empresa} />
+                <DetailField label="CNPJ" value={c.trab_cnpj_empresa} copyable />
+                <DetailField label="Cargo/Função" value={c.trab_cargo_funcao} />
+                <DetailField label="Admissão" value={c.trab_data_admissao} />
+                <DetailField label="Faixa Salarial" value={c.trab_faixa_salarial} />
+                <DetailField label="Endereço" value={c.trab_endereco_empresa} />
+                <DetailField label="Telefone" value={c.trab_telefone_empresa} copyable />
+              </DetailGrid>
+            </DetailCard>
+          )}
+
+          {(c.aut_atividade || c.aut_nome_profissional) && (
+            <DetailCard title="Autônomo">
+              <DetailGrid>
+                <DetailField label="Atividade" value={c.aut_atividade} />
+                <DetailField label="Nome Profissional" value={c.aut_nome_profissional} />
+                <DetailField label="CNPJ" value={c.aut_cnpj} copyable />
+                <DetailField label="Telefone" value={c.aut_telefone} copyable />
+                <DetailField label="Endereço" value={c.aut_endereco} />
+              </DetailGrid>
+            </DetailCard>
           )}
 
           {c.observacoes && (
-            <Section title="Observações">
-              <div className="text-[10px] text-slate-600 whitespace-pre-wrap bg-white rounded-lg p-2.5 border border-slate-200">
+            <DetailCard title="Observações">
+              <div className="text-sm leading-relaxed whitespace-pre-wrap rounded-xl p-4"
+                style={{ color: "hsl(220 20% 25%)", background: "hsl(220 20% 97%)" }}>
                 {c.observacoes}
               </div>
-            </Section>
+            </DetailCard>
           )}
         </div>
       </div>
@@ -960,6 +1007,56 @@ function Section({ title, children }: { title: string; children: React.ReactNode
     <div>
       <div className="text-[10px] uppercase tracking-[0.12em] mb-2 font-semibold" style={{ color: "hsl(230 80% 56%)" }}>{title}</div>
       <div className="space-y-1.5">{children}</div>
+    </div>
+  );
+}
+
+function DetailCard({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="qa-card p-5 md:p-6">
+      <h3 className="text-[11px] uppercase tracking-[0.12em] font-semibold mb-4"
+        style={{ color: "hsl(0 65% 42%)" }}>{title}</h3>
+      {children}
+    </div>
+  );
+}
+
+function DetailGrid({ children }: { children: React.ReactNode }) {
+  return <div className="space-y-2.5">{children}</div>;
+}
+
+function DetailField({ label, value, icon: Icon, copyable, highlight }: {
+  label: string; value?: string | null; icon?: any; copyable?: boolean; highlight?: boolean;
+}) {
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (value) {
+      navigator.clipboard.writeText(value);
+      toast.success(`${label} copiado!`);
+    }
+  };
+  const displayValue = value || "—";
+  const isInvalid = displayValue === "Invalid Date";
+
+  return (
+    <div className="flex items-start gap-3 group">
+      {Icon && <Icon className="h-4 w-4 mt-0.5 shrink-0" style={{ color: "hsl(220 10% 62%)" }} />}
+      <div className="flex items-baseline gap-2 flex-1 min-w-0">
+        <span className="text-xs shrink-0" style={{ color: "hsl(220 10% 50%)", minWidth: "140px" }}>
+          {label}:
+        </span>
+        <span className={`text-sm font-medium ${isInvalid ? "text-red-500" : ""} ${highlight ? "text-emerald-600" : ""}`}
+          style={!isInvalid && !highlight ? { color: "hsl(220 20% 18%)" } : undefined}>
+          {displayValue}
+        </span>
+      </div>
+      {copyable && value && value !== "—" && (
+        <button onClick={handleCopy}
+          className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0 w-7 h-7 rounded-lg flex items-center justify-center hover:bg-slate-100"
+          title="Copiar">
+          <span className="text-xs">📋</span>
+        </button>
+      )}
     </div>
   );
 }
