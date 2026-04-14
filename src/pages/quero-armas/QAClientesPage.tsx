@@ -1356,6 +1356,15 @@ export default function QAClientesPage() {
               <div className="flex items-center gap-2 shrink-0">
                 {c.cliente_lions && <span className="text-xs">🦁</span>}
                 <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${statusColor(c.status)}`}>{c.status}</span>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDeleteModal({ open: true, table: "qa_clientes", id: c.id, title: "Excluir Cliente", desc: `Excluir "${c.nome_completo}" e todos os dados vinculados (vendas, armas, filiações)?` });
+                  }}
+                  className="h-7 w-7 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
                 <Eye className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: "hsl(220 10% 62%)" }} />
               </div>
             </button>
