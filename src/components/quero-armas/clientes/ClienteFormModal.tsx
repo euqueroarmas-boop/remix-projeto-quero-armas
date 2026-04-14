@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Save } from "lucide-react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Loader2, Save, X } from "lucide-react";
 import { toast } from "sonner";
+import {
+  FormCard, FormHeader, SectionHeader, FormGrid,
+  FormInput, FormSelect, FormTextarea, FormActions, FieldWrapper,
+} from "@/components/admin/ui/AdminFormPrimitives";
 
 interface ClienteFormModalProps {
   open: boolean;
@@ -17,6 +18,14 @@ interface ClienteFormModalProps {
 
 const ESTADOS_CIVIS = ["Solteiro(a)", "Casado(a)", "Divorciado(a)", "Viúvo(a)", "Separado(a)", "União Estável"];
 const UFS = ["AC","AL","AM","AP","BA","CE","DF","ES","GO","MA","MG","MS","MT","PA","PB","PE","PI","PR","RJ","RN","RO","RR","RS","SC","SE","SP","TO"];
+
+const estadoCivilOptions = ESTADOS_CIVIS.map(e => ({ value: e, label: e }));
+const ufOptions = UFS.map(u => ({ value: u, label: u }));
+const statusOptions = [
+  { value: "ATIVO", label: "Ativo" },
+  { value: "INATIVO", label: "Inativo" },
+  { value: "DESISTENTE", label: "Desistente" },
+];
 
 export default function ClienteFormModal({ open, onClose, onSaved, cliente }: ClienteFormModalProps) {
   const isEdit = !!cliente;
@@ -84,196 +93,136 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     }
   };
 
-  const inputCls = "h-9 text-xs bg-[#0a0a0a] border-[#1c1c1c] text-neutral-200 rounded-md focus:border-[#7a1528] focus:ring-1 focus:ring-[#7a1528]/30 transition-colors";
-  const labelCls = "text-[10px] text-neutral-500 uppercase tracking-wider mb-1.5 block font-medium";
-  const selectTriggerCls = "h-9 text-xs bg-[#0a0a0a] border-[#1c1c1c] rounded-md";
-
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto bg-[#0e0e0e] border-[#1c1c1c] text-neutral-200 p-0">
-        <DialogHeader className="px-5 pt-5 pb-0">
-          <DialogTitle className="text-sm font-semibold text-neutral-100">{isEdit ? "Editar Cliente" : "Novo Cliente"}</DialogTitle>
-        </DialogHeader>
+      <DialogContent className="w-[96vw] max-w-5xl max-h-[92vh] overflow-y-auto bg-[#080808] border-[#1a1a1a] p-4 sm:p-6 md:p-8 rounded-xl">
+        <FormCard>
+          <FormHeader
+            title={isEdit ? "Editar Cliente" : "Novo Cliente"}
+            subtitle="Preencha os dados cadastrais do cliente"
+          />
 
-        <div className="px-5 pb-5 space-y-5">
-          {/* Identificação */}
-          <Sec title="Identificação">
-            <Grid cols={1}>
-              <Field label="Nome Completo *" value={f.nome_completo} onChange={v => set("nome_completo", v)} inputCls={inputCls} labelCls={labelCls} />
-            </Grid>
-            <Grid>
-              <Field label="CPF" value={f.cpf} onChange={v => set("cpf", v)} inputCls={inputCls} labelCls={labelCls} />
-              <Field label="RG" value={f.rg} onChange={v => set("rg", v)} inputCls={inputCls} labelCls={labelCls} />
-            </Grid>
-            <Grid>
-              <Field label="Emissor RG" value={f.emissor_rg} onChange={v => set("emissor_rg", v)} inputCls={inputCls} labelCls={labelCls} />
-              <Field label="Expedição RG" value={f.expedicao_rg} onChange={v => set("expedicao_rg", v)} type="date" inputCls={inputCls} labelCls={labelCls} />
-            </Grid>
-            <Grid>
-              <Field label="Nascimento" value={f.data_nascimento} onChange={v => set("data_nascimento", v)} type="date" inputCls={inputCls} labelCls={labelCls} />
-              <Field label="Naturalidade" value={f.naturalidade} onChange={v => set("naturalidade", v)} inputCls={inputCls} labelCls={labelCls} />
-            </Grid>
-            <Grid>
-              <Field label="Nacionalidade" value={f.nacionalidade} onChange={v => set("nacionalidade", v)} inputCls={inputCls} labelCls={labelCls} />
-              <div>
-                <label className={labelCls}>Estado Civil</label>
-                <Select value={f.estado_civil} onValueChange={v => set("estado_civil", v)}>
-                  <SelectTrigger className={selectTriggerCls}><SelectValue placeholder="Selecionar" /></SelectTrigger>
-                  <SelectContent>{ESTADOS_CIVIS.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-            </Grid>
-            <Grid>
-              <Field label="Profissão" value={f.profissao} onChange={v => set("profissao", v)} inputCls={inputCls} labelCls={labelCls} />
-              <Field label="Escolaridade" value={f.escolaridade} onChange={v => set("escolaridade", v)} inputCls={inputCls} labelCls={labelCls} />
-            </Grid>
-            <Grid cols={1}>
-              <Field label="Título de Eleitor" value={f.titulo_eleitor} onChange={v => set("titulo_eleitor", v)} inputCls={inputCls} labelCls={labelCls} />
-            </Grid>
-          </Sec>
+          {/* ── Identificação ── */}
+          <SectionHeader title="Identificação" className="pt-0" />
+          <FormGrid cols={1}>
+            <FormInput label="Nome Completo *" value={f.nome_completo} onChange={v => set("nome_completo", v)} span="full" />
+          </FormGrid>
+          <FormGrid className="mt-4">
+            <FormInput label="CPF" value={f.cpf} onChange={v => set("cpf", v)} />
+            <FormInput label="RG" value={f.rg} onChange={v => set("rg", v)} />
+          </FormGrid>
+          <FormGrid className="mt-4">
+            <FormInput label="Emissor RG" value={f.emissor_rg} onChange={v => set("emissor_rg", v)} />
+            <FormInput label="Expedição RG" value={f.expedicao_rg} onChange={v => set("expedicao_rg", v)} type="date" />
+          </FormGrid>
+          <FormGrid className="mt-4">
+            <FormInput label="Nascimento" value={f.data_nascimento} onChange={v => set("data_nascimento", v)} type="date" />
+            <FormInput label="Naturalidade" value={f.naturalidade} onChange={v => set("naturalidade", v)} />
+          </FormGrid>
+          <FormGrid className="mt-4">
+            <FormInput label="Nacionalidade" value={f.nacionalidade} onChange={v => set("nacionalidade", v)} />
+            <FormSelect label="Estado Civil" value={f.estado_civil} onValueChange={v => set("estado_civil", v)} options={estadoCivilOptions} />
+          </FormGrid>
+          <FormGrid className="mt-4">
+            <FormInput label="Profissão" value={f.profissao} onChange={v => set("profissao", v)} />
+            <FormInput label="Escolaridade" value={f.escolaridade} onChange={v => set("escolaridade", v)} />
+          </FormGrid>
+          <FormGrid cols={1} className="mt-4">
+            <FormInput label="Título de Eleitor" value={f.titulo_eleitor} onChange={v => set("titulo_eleitor", v)} />
+          </FormGrid>
 
-          {/* Filiação */}
-          <Sec title="Filiação">
-            <Grid>
-              <Field label="Nome da Mãe" value={f.nome_mae} onChange={v => set("nome_mae", v)} inputCls={inputCls} labelCls={labelCls} />
-              <Field label="Nome do Pai" value={f.nome_pai} onChange={v => set("nome_pai", v)} inputCls={inputCls} labelCls={labelCls} />
-            </Grid>
-          </Sec>
+          {/* ── Filiação ── */}
+          <SectionHeader title="Filiação" />
+          <FormGrid>
+            <FormInput label="Nome da Mãe" value={f.nome_mae} onChange={v => set("nome_mae", v)} />
+            <FormInput label="Nome do Pai" value={f.nome_pai} onChange={v => set("nome_pai", v)} />
+          </FormGrid>
 
-          {/* Contato */}
-          <Sec title="Contato">
-            <Grid>
-              <Field label="Celular" value={f.celular} onChange={v => set("celular", v)} inputCls={inputCls} labelCls={labelCls} />
-              <Field label="Email" value={f.email} onChange={v => set("email", v)} inputCls={inputCls} labelCls={labelCls} />
-            </Grid>
-          </Sec>
+          {/* ── Contato ── */}
+          <SectionHeader title="Contato" />
+          <FormGrid>
+            <FormInput label="Celular" value={f.celular} onChange={v => set("celular", v)} />
+            <FormInput label="Email" value={f.email} onChange={v => set("email", v)} />
+          </FormGrid>
 
-          {/* Endereço Principal */}
-          <Sec title="Endereço Principal">
-            <Grid cols={4}>
-              <div className="col-span-4 sm:col-span-3">
-                <Field label="Logradouro" value={f.endereco} onChange={v => set("endereco", v)} inputCls={inputCls} labelCls={labelCls} />
-              </div>
-              <div className="col-span-4 sm:col-span-1">
-                <Field label="Número" value={f.numero} onChange={v => set("numero", v)} inputCls={inputCls} labelCls={labelCls} />
-              </div>
-            </Grid>
-            <Grid>
-              <Field label="Complemento" value={f.complemento} onChange={v => set("complemento", v)} inputCls={inputCls} labelCls={labelCls} />
-              <Field label="Bairro" value={f.bairro} onChange={v => set("bairro", v)} inputCls={inputCls} labelCls={labelCls} />
-            </Grid>
-            <Grid cols={4}>
-              <div className="col-span-4 sm:col-span-1">
-                <Field label="CEP" value={f.cep} onChange={v => set("cep", v)} inputCls={inputCls} labelCls={labelCls} />
-              </div>
-              <div className="col-span-4 sm:col-span-2">
-                <Field label="Cidade" value={f.cidade} onChange={v => set("cidade", v)} inputCls={inputCls} labelCls={labelCls} />
-              </div>
-              <div className="col-span-4 sm:col-span-1">
-                <label className={labelCls}>UF</label>
-                <Select value={f.estado} onValueChange={v => set("estado", v)}>
-                  <SelectTrigger className={selectTriggerCls}><SelectValue placeholder="UF" /></SelectTrigger>
-                  <SelectContent>{UFS.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-            </Grid>
-          </Sec>
+          {/* ── Endereço Principal ── */}
+          <SectionHeader title="Endereço Principal" />
+          <FormGrid>
+            <FormInput label="Logradouro" value={f.endereco} onChange={v => set("endereco", v)} span="full" />
+          </FormGrid>
+          <FormGrid className="mt-4">
+            <FormInput label="Número" value={f.numero} onChange={v => set("numero", v)} />
+            <FormInput label="Complemento" value={f.complemento} onChange={v => set("complemento", v)} />
+          </FormGrid>
+          <FormGrid className="mt-4">
+            <FormInput label="Bairro" value={f.bairro} onChange={v => set("bairro", v)} />
+            <FormInput label="CEP" value={f.cep} onChange={v => set("cep", v)} />
+          </FormGrid>
+          <FormGrid cols={3} className="mt-4">
+            <FormInput label="Cidade" value={f.cidade} onChange={v => set("cidade", v)} />
+            <FormSelect label="UF" value={f.estado} onValueChange={v => set("estado", v)} options={ufOptions} placeholder="UF" />
+            <FormInput label="País" value={f.pais} onChange={v => set("pais", v)} />
+          </FormGrid>
 
-          {/* Endereço Secundário */}
-          <Sec title="Endereço Secundário (opcional)">
-            <Grid cols={4}>
-              <div className="col-span-4 sm:col-span-3">
-                <Field label="Logradouro" value={f.endereco2} onChange={v => set("endereco2", v)} inputCls={inputCls} labelCls={labelCls} />
-              </div>
-              <div className="col-span-4 sm:col-span-1">
-                <Field label="Número" value={f.numero2} onChange={v => set("numero2", v)} inputCls={inputCls} labelCls={labelCls} />
-              </div>
-            </Grid>
-            <Grid cols={4}>
-              <div className="col-span-4 sm:col-span-1">
-                <Field label="Bairro" value={f.bairro2} onChange={v => set("bairro2", v)} inputCls={inputCls} labelCls={labelCls} />
-              </div>
-              <div className="col-span-4 sm:col-span-2">
-                <Field label="Cidade" value={f.cidade2} onChange={v => set("cidade2", v)} inputCls={inputCls} labelCls={labelCls} />
-              </div>
-              <div className="col-span-4 sm:col-span-1">
-                <label className={labelCls}>UF</label>
-                <Select value={f.estado2} onValueChange={v => set("estado2", v)}>
-                  <SelectTrigger className={selectTriggerCls}><SelectValue placeholder="UF" /></SelectTrigger>
-                  <SelectContent>{UFS.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-            </Grid>
-          </Sec>
+          {/* ── Endereço Secundário ── */}
+          <SectionHeader title="Endereço Secundário (opcional)" />
+          <FormGrid>
+            <FormInput label="Logradouro" value={f.endereco2} onChange={v => set("endereco2", v)} span="full" />
+          </FormGrid>
+          <FormGrid className="mt-4">
+            <FormInput label="Número" value={f.numero2} onChange={v => set("numero2", v)} />
+            <FormInput label="Complemento" value={f.complemento2} onChange={v => set("complemento2", v)} />
+          </FormGrid>
+          <FormGrid className="mt-4">
+            <FormInput label="Bairro" value={f.bairro2} onChange={v => set("bairro2", v)} />
+            <FormInput label="CEP" value={f.cep2} onChange={v => set("cep2", v)} />
+          </FormGrid>
+          <FormGrid cols={3} className="mt-4">
+            <FormInput label="Cidade" value={f.cidade2} onChange={v => set("cidade2", v)} />
+            <FormSelect label="UF" value={f.estado2} onValueChange={v => set("estado2", v)} options={ufOptions} placeholder="UF" />
+            <FormInput label="País" value={f.pais2} onChange={v => set("pais2", v)} />
+          </FormGrid>
 
-          {/* Configurações */}
-          <Sec title="Configurações">
-            <Grid>
-              <div>
-                <label className={labelCls}>Status</label>
-                <Select value={f.status} onValueChange={v => set("status", v)}>
-                  <SelectTrigger className={selectTriggerCls}><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ATIVO">Ativo</SelectItem>
-                    <SelectItem value="INATIVO">Inativo</SelectItem>
-                    <SelectItem value="DESISTENTE">Desistente</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex items-end pb-1">
-                <label className="flex items-center gap-2 text-xs text-neutral-300 cursor-pointer">
-                  <input type="checkbox" checked={f.cliente_lions} onChange={e => set("cliente_lions", e.target.checked)} className="accent-amber-500 w-4 h-4" />
-                  🦁 Cliente Lions
-                </label>
-              </div>
-            </Grid>
-            <div>
-              <label className={labelCls}>Observações</label>
-              <Textarea value={f.observacao} onChange={e => set("observacao", e.target.value)} className="text-xs bg-[#0a0a0a] border-[#1c1c1c] min-h-[60px] rounded-md focus:border-[#7a1528] focus:ring-1 focus:ring-[#7a1528]/30" />
-            </div>
-          </Sec>
+          {/* ── Configurações ── */}
+          <SectionHeader title="Configurações" />
+          <FormGrid>
+            <FormSelect label="Status" value={f.status} onValueChange={v => set("status", v)} options={statusOptions} />
+            <FieldWrapper label=" ">
+              <label className="flex items-center gap-2.5 h-9 text-xs sm:text-sm text-neutral-300 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={f.cliente_lions}
+                  onChange={e => set("cliente_lions", e.target.checked)}
+                  className="accent-amber-500 w-4 h-4 rounded"
+                />
+                🦁 Cliente Lions
+              </label>
+            </FieldWrapper>
+          </FormGrid>
+          <FormGrid cols={1} className="mt-4">
+            <FormTextarea label="Observações" value={f.observacao} onChange={v => set("observacao", v)} span="full" />
+          </FormGrid>
 
-          {/* Actions */}
-          <div className="flex justify-end gap-2 pt-3 border-t border-[#1c1c1c]">
-            <Button variant="ghost" size="sm" onClick={onClose} className="text-neutral-500 text-xs h-8 px-4">Cancelar</Button>
-            <Button size="sm" onClick={save} disabled={saving} className="bg-[#7a1528] hover:bg-[#9a1b32] text-xs h-8 px-5">
-              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <Save className="h-3.5 w-3.5 mr-1.5" />}
-              {isEdit ? "Salvar" : "Cadastrar"}
+          {/* ── Actions ── */}
+          <FormActions>
+            <Button
+              variant="ghost"
+              onClick={onClose}
+              className="h-10 px-6 text-xs sm:text-sm text-neutral-400 hover:text-neutral-200 hover:bg-[#1a1a1a] rounded-lg"
+            >
+              Cancelar
             </Button>
-          </div>
-        </div>
+            <Button
+              onClick={save}
+              disabled={saving}
+              className="h-10 px-8 text-xs sm:text-sm bg-[#7a1528] hover:bg-[#9a1b32] text-white rounded-lg font-medium transition-colors"
+            >
+              {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+              {isEdit ? "Salvar Alterações" : "Cadastrar Cliente"}
+            </Button>
+          </FormActions>
+        </FormCard>
       </DialogContent>
     </Dialog>
-  );
-}
-
-/* ── Primitives ── */
-
-function Sec({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="space-y-3">
-      <div className="text-[10px] text-[#c43b52] uppercase tracking-[0.14em] font-semibold border-b border-[#1a1a1a] pb-1.5">{title}</div>
-      <div className="space-y-3">{children}</div>
-    </div>
-  );
-}
-
-function Grid({ children, cols = 2 }: { children: React.ReactNode; cols?: number }) {
-  const colClass = cols === 1
-    ? "grid grid-cols-1 gap-3"
-    : cols === 4
-      ? "grid grid-cols-4 gap-3"
-      : "grid grid-cols-1 sm:grid-cols-2 gap-3";
-  return <div className={colClass}>{children}</div>;
-}
-
-function Field({ label, value, onChange, type = "text", inputCls, labelCls }: {
-  label: string; value: string; onChange: (v: string) => void; type?: string; inputCls: string; labelCls: string;
-}) {
-  return (
-    <div>
-      <label className={labelCls}>{label}</label>
-      <Input type={type} value={value} onChange={e => onChange(e.target.value)} className={inputCls} />
-    </div>
   );
 }
