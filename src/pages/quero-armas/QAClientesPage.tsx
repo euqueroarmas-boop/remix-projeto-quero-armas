@@ -1297,7 +1297,7 @@ function DetailField({ label, value, icon: Icon, copyable, highlight }: {
         <span className="text-xs shrink-0" style={{ color: "hsl(220 10% 50%)", minWidth: "140px" }}>
           {label}:
         </span>
-        <span className={`text-sm font-medium ${isInvalid ? "text-red-500" : ""} ${highlight ? "text-emerald-600" : ""}`}
+        <span className={`text-sm font-medium uppercase ${isInvalid ? "text-red-500" : ""} ${highlight ? "text-emerald-600" : ""}`}
           style={!isInvalid && !highlight ? { color: "hsl(220 20% 18%)" } : undefined}>
           {displayValue}
         </span>
@@ -1325,7 +1325,7 @@ function Field({ label, value, icon: Icon, copyable }: { label: string; value?: 
     <div className={`flex items-start gap-2 text-xs ${copyable && value ? "cursor-pointer active:opacity-60" : ""}`} onClick={copyable ? handleCopy : undefined}>
       {Icon && <Icon className="h-3.5 w-3.5 text-slate-400 mt-0.5 shrink-0" />}
       <span className="text-slate-500 min-w-[80px] shrink-0">{label}:</span>
-      <span className="text-slate-800 font-medium">{value || "—"}</span>
+      <span className="text-slate-800 font-medium uppercase">{value || "—"}</span>
       {copyable && value && <span className="text-slate-400 text-[9px] ml-auto">📋</span>}
     </div>
   );
