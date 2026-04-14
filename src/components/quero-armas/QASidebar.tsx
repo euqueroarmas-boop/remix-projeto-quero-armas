@@ -5,7 +5,7 @@ import {
 } from "@/components/ui/sidebar";
 import {
   LayoutDashboard, PenTool, FolderOpen, FileText, Scale, Gavel,
-  BookOpen, FileBox, History, ClipboardList, Settings, LogOut, Shield,
+  BookOpen, FileBox, History, ClipboardList, Settings, LogOut, Shield, Users,
 } from "lucide-react";
 import { useQAAuth } from "./hooks/useQAAuth";
 
@@ -16,6 +16,7 @@ const NAV_GROUPS = [
       { title: "Dashboard", url: "/quero-armas/dashboard", icon: LayoutDashboard },
       { title: "Gerar Peça", url: "/quero-armas/gerar-peca", icon: PenTool },
       { title: "Casos", url: "/quero-armas/casos", icon: FolderOpen },
+      { title: "Clientes", url: "/quero-armas/clientes", icon: Users },
       { title: "Assistente Jurídico", url: "/quero-armas/ia", icon: Shield },
     ],
   },
