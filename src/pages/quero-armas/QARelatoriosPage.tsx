@@ -43,6 +43,8 @@ interface Cliente {
   id: number;
   nome_completo: string;
   celular: string | null;
+  email: string | null;
+  cpf: string | null;
 }
 
 interface Servico {
