@@ -35,8 +35,6 @@ interface FormData {
   consentimento_tratamento_dados: boolean;
 }
 
-const UF_LIST = ["AC","AL","AM","AP","BA","CE","DF","ES","GO","MA","MG","MS","MT","PA","PB","PE","PI","PR","RJ","RN","RO","RR","RS","SC","SE","SP","TO"];
-
 const initialForm: FormData = {
   nome_completo: "", cpf: "", rg: "", emissor_rg: "", uf_emissor_rg: "", data_nascimento: "",
   telefone_principal: "", telefone_secundario: "", email: "",
