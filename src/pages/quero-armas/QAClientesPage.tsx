@@ -160,6 +160,9 @@ export default function QAClientesPage() {
             <TabsTrigger value="cr" className="text-[10px] flex-1 data-[state=active]:bg-[#7a1528]/30 data-[state=active]:text-neutral-100">
               <Shield className="h-3 w-3 mr-1" /> CR
             </TabsTrigger>
+            <TabsTrigger value="docs" className="text-[10px] flex-1 data-[state=active]:bg-[#7a1528]/30 data-[state=active]:text-neutral-100">
+              <FileDown className="h-3 w-3 mr-1" /> Docs
+            </TabsTrigger>
           </TabsList>
 
           {loadingSub ? (
