@@ -808,6 +808,7 @@ function Step4({ form, set, errors, onCnpjLookup, cnpjLoading }: any) {
         <span className="text-xs font-medium" style={{ color: "hsl(220 10% 50%)" }}>Situação profissional</span>
         {errors.vinculo_tipo && <span className="text-[11px] ml-2" style={{ color: "hsl(0 72% 51%)" }}>{errors.vinculo_tipo}</span>}
       </div>
+      <div className="space-y-2 mb-6">
         {vinculos.map(v => (
           <label key={v.value}
             onClick={() => set("vinculo_tipo", v.value)}
