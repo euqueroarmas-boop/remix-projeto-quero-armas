@@ -200,20 +200,20 @@ export default function QAClientesPage() {
       <div className="space-y-4">
         {/* Header */}
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={() => setSelected(null)} className="text-neutral-500 hover:text-neutral-200 h-7 px-2">
+          <Button variant="ghost" size="sm" onClick={() => setSelected(null)} className="text-slate-500 hover:text-slate-700 h-8 px-2">
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <div className="flex-1 min-w-0">
-            <h1 className="text-sm font-bold text-neutral-100 truncate">{c.nome_completo}</h1>
-            <div className="flex items-center gap-2 text-[10px]">
+            <h1 className="text-base font-semibold text-slate-800 truncate">{c.nome_completo}</h1>
+            <div className="flex items-center gap-2 text-xs">
               <span className={statusColor(c.status)}>{c.status}</span>
-              <span className="text-neutral-600">•</span>
-              <span className="text-neutral-500">CPF: {c.cpf || "—"}</span>
-              {c.cliente_lions && <span className="text-amber-400">🦁 Lions</span>}
+              <span className="text-slate-300">•</span>
+              <span className="text-slate-500">CPF: {c.cpf || "—"}</span>
+              {c.cliente_lions && <span className="text-amber-500">🦁 Lions</span>}
             </div>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => { setEditingCliente(c); setClienteModal(true); }} className="h-7 px-2 text-neutral-500 hover:text-neutral-200">
-            <Edit className="h-3.5 w-3.5" />
+          <Button variant="ghost" size="sm" onClick={() => { setEditingCliente(c); setClienteModal(true); }} className="h-8 px-2 text-slate-500 hover:text-slate-700">
+            <Edit className="h-4 w-4" />
           </Button>
         </div>
 
@@ -587,8 +587,8 @@ export default function QAClientesPage() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <div className="text-[9px] text-[#c43b52] uppercase tracking-[0.12em] mb-1.5 font-semibold">{title}</div>
-      <div className="space-y-1">{children}</div>
+      <div className="text-[10px] text-blue-600 uppercase tracking-[0.12em] mb-2 font-semibold">{title}</div>
+      <div className="space-y-1.5">{children}</div>
     </div>
   );
 }
@@ -602,17 +602,17 @@ function Field({ label, value, icon: Icon, copyable }: { label: string; value?: 
     }
   };
   return (
-    <div className={`flex items-start gap-2 text-[10px] ${copyable && value ? "cursor-pointer active:opacity-60" : ""}`} onClick={copyable ? handleCopy : undefined}>
-      {Icon && <Icon className="h-3 w-3 text-neutral-600 mt-0.5 shrink-0" />}
-      <span className="text-neutral-600 min-w-[80px] shrink-0">{label}:</span>
-      <span className="text-neutral-200 font-medium">{value || "—"}</span>
-      {copyable && value && <span className="text-neutral-600 text-[8px] ml-auto">📋</span>}
+    <div className={`flex items-start gap-2 text-xs ${copyable && value ? "cursor-pointer active:opacity-60" : ""}`} onClick={copyable ? handleCopy : undefined}>
+      {Icon && <Icon className="h-3.5 w-3.5 text-slate-400 mt-0.5 shrink-0" />}
+      <span className="text-slate-500 min-w-[80px] shrink-0">{label}:</span>
+      <span className="text-slate-800 font-medium">{value || "—"}</span>
+      {copyable && value && <span className="text-slate-400 text-[9px] ml-auto">📋</span>}
     </div>
   );
 }
 
 function Empty({ text }: { text: string }) {
-  return <div className="text-center py-8 text-neutral-600 text-[11px]">{text}</div>;
+  return <div className="text-center py-8 text-slate-400 text-xs">{text}</div>;
 }
 
 const TEMPLATES = [
