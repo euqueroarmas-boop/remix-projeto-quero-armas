@@ -649,12 +649,12 @@ function AddressBlock({ prefix, form, set, errors, onCepLookup, cepLoading, onGe
 }
 
 /* ── Step 2: Endereço Residencial ── */
-function Step2({ form, set, errors, onCepLookup, cepLoading, showComplementoConfirm, onComplementoConfirmDismiss }: any) {
+function Step2({ form, set, errors, onCepLookup, cepLoading, showComplementoConfirm, onComplementoConfirmDismiss, onGeocodeLookup, geocodeLoading }: any) {
   return (
     <div>
       <SectionTitle>Endereço Residencial</SectionTitle>
       <SectionDesc>Informe seu endereço residencial. Digite o CEP para preenchimento automático.</SectionDesc>
-      <AddressBlock prefix="end1" form={form} set={set} errors={errors} onCepLookup={onCepLookup} cepLoading={cepLoading} />
+      <AddressBlock prefix="end1" form={form} set={set} errors={errors} onCepLookup={onCepLookup} cepLoading={cepLoading} onGeocodeLookup={onGeocodeLookup} geocodeLoading={geocodeLoading} />
 
       {showComplementoConfirm && (
         <div className="mt-4 p-4 rounded-xl border flex items-start gap-3" style={{ background: "hsl(40 90% 96%)", borderColor: "hsl(40 70% 80%)" }}>
@@ -705,7 +705,7 @@ function Step2({ form, set, errors, onCepLookup, cepLoading, showComplementoConf
 }
 
 /* ── Step 3: Segundo Endereço ── */
-function Step3({ form, set, errors, onCepLookup, cepLoading }: any) {
+function Step3({ form, set, errors, onCepLookup, cepLoading, onGeocodeLookup, geocodeLoading }: any) {
   return (
     <div>
       <SectionTitle>Segundo Endereço</SectionTitle>
