@@ -56,6 +56,8 @@ interface PendingItem {
   itemId: number;
   clienteNome: string;
   clienteCelular: string | null;
+  clienteEmail: string | null;
+  clienteCpf: string | null;
   servicoNome: string;
   status: string;
   dataCadastro: string;
