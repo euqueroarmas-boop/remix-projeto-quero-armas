@@ -1529,10 +1529,14 @@ function DocumentGenerator({ cliente, nomeServico }: { cliente: any; nomeServico
     }
   };
 
+  const filteredTemplates = nomeServico ? getTemplatesParaServico(nomeServico) : TEMPLATES;
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-[11px] uppercase tracking-wider font-semibold" style={{ color: "hsl(220 10% 45%)" }}>Gerar Declarações</span>
+        <span className="text-[11px] uppercase tracking-wider font-semibold" style={{ color: "hsl(220 10% 45%)" }}>
+          {nomeServico ? `Declarações — ${nomeServico}` : "Gerar Declarações"}
+        </span>
       </div>
 
       {/* Third party fields - show when needed */}
