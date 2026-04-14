@@ -185,7 +185,12 @@ export default function QAClientesPage() {
 
   const filtered = clientes.filter(c => {
     const s = search.toLowerCase();
-    return !s || c.nome_completo?.toLowerCase().includes(s) || c.cpf?.includes(s) || c.email?.toLowerCase().includes(s);
+    return !s || c.nome_completo?.toLowerCase().includes(s) || c.cpf?.includes(s) || c.email?.toLowerCase().includes(s) || c.celular?.includes(s);
+  });
+
+  const filteredCadastros = cadastrosPublicos.filter(c => {
+    const s = search.toLowerCase();
+    return !s || c.nome_completo?.toLowerCase().includes(s) || c.cpf?.includes(s) || c.email?.toLowerCase().includes(s) || c.telefone_principal?.includes(s);
   });
 
   const statusColor = (s: string) => s === "ATIVO" ? "text-emerald-600" : s === "DESISTENTE" ? "text-red-600" : "text-amber-600";
