@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, CartesianGrid, Legend, LineChart, Line,
+  PieChart, Pie, Cell, CartesianGrid, Legend, LineChart, Line, AreaChart, Area,
 } from "recharts";
 
 interface ItemVenda {
@@ -66,13 +66,18 @@ interface PendingItem {
 }
 
 const URGENCY_CONFIG = {
-  critical: { label: "VENCIDO (+30d)", bg: "bg-red-900/40", text: "text-red-300", border: "border-red-700", dot: "bg-red-500" },
-  red: { label: "URGENTE (25-30d)", bg: "bg-red-900/20", text: "text-red-400", border: "border-red-800", dot: "bg-red-500" },
-  yellow: { label: "ATENÇÃO (10-24d)", bg: "bg-yellow-900/20", text: "text-yellow-400", border: "border-yellow-800", dot: "bg-yellow-500" },
-  green: { label: "NO PRAZO (<10d)", bg: "bg-emerald-900/20", text: "text-emerald-400", border: "border-emerald-800", dot: "bg-emerald-500" },
+  critical: { label: "VENCIDO (+30d)", bg: "bg-red-50", text: "text-red-700", border: "border-red-200", dot: "bg-red-500", ring: "ring-red-100" },
+  red: { label: "URGENTE (25-30d)", bg: "bg-orange-50", text: "text-orange-700", border: "border-orange-200", dot: "bg-orange-500", ring: "ring-orange-100" },
+  yellow: { label: "ATENÇÃO (10-24d)", bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200", dot: "bg-amber-500", ring: "ring-amber-100" },
+  green: { label: "NO PRAZO (<10d)", bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200", dot: "bg-emerald-500", ring: "ring-emerald-100" },
 };
 
-const PIE_COLORS = ["#22c55e", "#eab308", "#ef4444", "#991b1b"];
+const PIE_COLORS = ["#10b981", "#f59e0b", "#f97316", "#ef4444"];
+const CHART_BLUE = "hsl(230, 80%, 56%)";
+const CHART_INDIGO = "hsl(245, 58%, 51%)";
+const CHART_EMERALD = "#10b981";
+const CHART_AMBER = "#f59e0b";
+
 const FINISHED_STATUSES = ["DEFERIDO", "CONCLUÍDO", "DESISTIU", "RESTITUÍDO", "INDEFERIDO"];
 
 const STATUS_OPTIONS = [
@@ -110,7 +115,13 @@ function getUrgency(days: number): PendingItem["urgency"] {
   return "green";
 }
 
-const inputClass = "w-full bg-[#111] border border-[#222] rounded px-2 py-1.5 text-xs text-neutral-200 placeholder:text-neutral-600 focus:outline-none focus:border-[#333]";
+const tooltipStyle = {
+  background: "white",
+  border: "1px solid hsl(220, 13%, 91%)",
+  borderRadius: 10,
+  fontSize: 12,
+  boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+};
 
 export default function QARelatoriosPage() {
   const [itens, setItens] = useState<ItemVenda[]>([]);
@@ -213,15 +224,11 @@ export default function QARelatoriosPage() {
         updates[f.key] = val;
       });
       updates.data_ultima_atualizacao = new Date().toISOString().slice(0, 10);
-
       const { error } = await supabase
         .from("qa_itens_venda" as any)
         .update(updates)
         .eq("id", expandedId);
-
       if (error) throw error;
-
-      // Update local state
       setItens(prev => prev.map(i => i.id === expandedId ? { ...i, ...updates } : i));
       setExpandedId(null);
       setEditForm({});
@@ -232,7 +239,6 @@ export default function QARelatoriosPage() {
     }
   };
 
-  // --- Charts data ---
   const urgencyDistribution = useMemo(() => {
     const counts = { green: 0, yellow: 0, red: 0, critical: 0 };
     pendingItems.forEach(i => counts[i.urgency]++);
@@ -345,63 +351,68 @@ export default function QARelatoriosPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#08080f]">
-        <RefreshCw className="h-5 w-5 animate-spin text-neutral-500" />
+      <div className="min-h-[400px] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" />
+          <span className="text-xs text-slate-400 tracking-wider">Carregando relatórios...</span>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-5 p-4 md:p-6 max-w-[1400px] mx-auto">
+    <div className="space-y-6 max-w-[1400px] mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-lg font-semibold text-neutral-200 tracking-tight">Relatórios</h1>
-          <p className="text-xs text-neutral-500 mt-0.5">Visão completa de serviços, pendências e performance</p>
+          <h1 className="text-xl font-semibold text-slate-800 tracking-tight">Relatórios</h1>
+          <p className="text-sm text-slate-500 mt-0.5">Visão completa de serviços, pendências e performance</p>
         </div>
-        <div className="flex gap-2">
-          <button onClick={load} className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs bg-[#141414] border border-[#1c1c1c] text-neutral-400 hover:text-neutral-200 transition-colors">
-            <RefreshCw className="h-3 w-3" /> Atualizar
+        <div className="flex gap-2 flex-wrap">
+          <button onClick={load} className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm">
+            <RefreshCw className="h-3.5 w-3.5" /> Atualizar
           </button>
           <button
             onClick={sendWhatsAppAlerts}
             disabled={alertSending || totalCriticos === 0}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs bg-emerald-900/30 border border-emerald-800/40 text-emerald-400 hover:bg-emerald-900/50 transition-colors disabled:opacity-40"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 transition-all shadow-sm disabled:opacity-40"
           >
-            <Bell className="h-3 w-3" />
+            <Bell className="h-3.5 w-3.5" />
             {alertSending ? "Enviando..." : `WhatsApp (${totalCriticos})`}
           </button>
           <button
             onClick={sendEmailAlerts}
             disabled={emailSending || totalCriticos === 0}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs bg-blue-900/30 border border-blue-800/40 text-blue-400 hover:bg-blue-900/50 transition-colors disabled:opacity-40"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 transition-all shadow-sm disabled:opacity-40"
           >
-            <Mail className="h-3 w-3" />
+            <Mail className="h-3.5 w-3.5" />
             {emailSending ? "Enviando..." : `E-mail (${totalCriticos})`}
           </button>
         </div>
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: "Total de Serviços", value: totalItens, icon: FileText, color: "text-blue-400" },
-          { label: "Pendentes", value: totalPendentes, icon: Clock, color: "text-yellow-400" },
-          { label: "Críticos (25d+)", value: totalCriticos, icon: AlertTriangle, color: "text-red-400" },
-          { label: "Deferidos", value: totalDeferidos, icon: CheckCircle, color: "text-emerald-400" },
+          { label: "Total de Serviços", value: totalItens, icon: FileText, color: "text-blue-600", bgIcon: "bg-blue-50" },
+          { label: "Pendentes", value: totalPendentes, icon: Clock, color: "text-amber-600", bgIcon: "bg-amber-50" },
+          { label: "Críticos (25d+)", value: totalCriticos, icon: AlertTriangle, color: "text-red-600", bgIcon: "bg-red-50" },
+          { label: "Deferidos", value: totalDeferidos, icon: CheckCircle, color: "text-emerald-600", bgIcon: "bg-emerald-50" },
         ].map(kpi => (
-          <div key={kpi.label} className="bg-[#0d0d0d] border border-[#1c1c1c] rounded-lg p-3">
-            <div className="flex items-center gap-2 mb-1">
-              <kpi.icon className={`h-3.5 w-3.5 ${kpi.color}`} />
-              <span className="text-[10px] text-neutral-500 uppercase tracking-wider">{kpi.label}</span>
+          <div key={kpi.label} className="bg-white rounded-xl border border-slate-200/80 p-4 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-2.5 mb-3">
+              <div className={`w-8 h-8 rounded-lg ${kpi.bgIcon} flex items-center justify-center`}>
+                <kpi.icon className={`h-4 w-4 ${kpi.color}`} />
+              </div>
+              <span className="text-[11px] text-slate-500 uppercase tracking-wider font-medium">{kpi.label}</span>
             </div>
-            <div className={`text-xl font-bold font-mono ${kpi.color}`}>{kpi.value}</div>
+            <div className={`text-2xl font-bold font-mono ${kpi.color}`}>{kpi.value}</div>
           </div>
         ))}
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-[#0d0d0d] border border-[#1c1c1c] rounded-lg p-1 w-fit">
+      <div className="flex gap-1 bg-white border border-slate-200/80 rounded-xl p-1 w-fit shadow-sm">
         {[
           { key: "pendentes" as const, label: "Serviços Pendentes", icon: Clock },
           { key: "graficos" as const, label: "Gráficos", icon: BarChart3 },
@@ -409,50 +420,54 @@ export default function QARelatoriosPage() {
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs transition-all ${
-              tab === t.key ? "bg-[#7a1528]/20 text-[#e8a0ad]" : "text-neutral-500 hover:text-neutral-300"
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium transition-all ${
+              tab === t.key
+                ? "bg-slate-800 text-white shadow-sm"
+                : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
             }`}
           >
-            <t.icon className="h-3 w-3" /> {t.label}
+            <t.icon className="h-3.5 w-3.5" /> {t.label}
           </button>
         ))}
       </div>
 
       {tab === "pendentes" && (
-        <div className="space-y-2">
+        <div className="space-y-4">
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-600" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <input
               type="text"
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Buscar por nome, CPF, e-mail, telefone ou serviço..."
-              className="w-full bg-[#0d0d0d] border border-[#1c1c1c] rounded-lg pl-9 pr-3 py-2 text-xs text-neutral-200 placeholder:text-neutral-600 focus:outline-none focus:border-[#7a1528] transition-colors"
+              className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-10 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all shadow-sm"
             />
             {search && (
-              <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-600 hover:text-neutral-300">
-                <X className="h-3.5 w-3.5" />
+              <button onClick={() => setSearch("")} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
+                <X className="h-4 w-4" />
               </button>
             )}
           </div>
 
+          {/* Legend */}
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap gap-3 text-[10px]">
+            <div className="flex flex-wrap gap-4 text-[11px]">
               {Object.entries(URGENCY_CONFIG).map(([key, cfg]) => (
                 <div key={key} className="flex items-center gap-1.5">
-                  <div className={`w-2 h-2 rounded-full ${cfg.dot}`} />
-                  <span className={cfg.text}>{cfg.label}</span>
+                  <div className={`w-2.5 h-2.5 rounded-full ${cfg.dot}`} />
+                  <span className={`font-medium ${cfg.text}`}>{cfg.label}</span>
                 </div>
               ))}
             </div>
             {search && (
-              <span className="text-[10px] text-neutral-500">{filteredPendingItems.length} resultado(s)</span>
+              <span className="text-xs text-slate-500">{filteredPendingItems.length} resultado(s)</span>
             )}
           </div>
 
-          <div className="bg-[#0d0d0d] border border-[#1c1c1c] rounded-lg overflow-hidden">
-            <div className="grid grid-cols-[1fr_1fr_auto_auto_auto] gap-2 px-3 py-2 border-b border-[#1c1c1c] text-[10px] text-neutral-500 uppercase tracking-wider">
+          {/* Table */}
+          <div className="bg-white border border-slate-200/80 rounded-xl overflow-hidden shadow-sm">
+            <div className="grid grid-cols-[1fr_1fr_auto_auto_auto] gap-3 px-4 py-3 border-b border-slate-100 text-[11px] text-slate-500 uppercase tracking-wider font-medium bg-slate-50/80">
               <span>Cliente</span>
               <span>Serviço</span>
               <span className="text-center">Status</span>
@@ -461,7 +476,7 @@ export default function QARelatoriosPage() {
             </div>
             <div className="max-h-[600px] overflow-y-auto">
               {filteredPendingItems.length === 0 ? (
-                <div className="p-8 text-center text-neutral-600 text-sm">{search ? "Nenhum resultado encontrado" : "Nenhum serviço pendente 🎉"}</div>
+                <div className="p-10 text-center text-slate-400 text-sm">{search ? "Nenhum resultado encontrado" : "Nenhum serviço pendente 🎉"}</div>
               ) : (
                 filteredPendingItems.map(item => {
                   const cfg = URGENCY_CONFIG[item.urgency];
@@ -470,35 +485,35 @@ export default function QARelatoriosPage() {
                     <div key={item.itemId}>
                       <div
                         onClick={() => handleExpand(item.itemId)}
-                        className={`grid grid-cols-[1fr_1fr_auto_auto_auto] gap-2 px-3 py-2 border-b border-[#111] text-xs cursor-pointer select-none ${cfg.bg} hover:brightness-125 transition-all`}
+                        className={`grid grid-cols-[1fr_1fr_auto_auto_auto] gap-3 px-4 py-3 border-b border-slate-100 text-sm cursor-pointer select-none ${cfg.bg} hover:brightness-[0.97] transition-all`}
                       >
-                        <span className="text-neutral-300 truncate flex items-center gap-1">
-                          {isExpanded ? <ChevronUp className="h-3 w-3 shrink-0 text-neutral-500" /> : <ChevronDown className="h-3 w-3 shrink-0 text-neutral-500" />}
+                        <span className="text-slate-700 truncate flex items-center gap-1.5 font-medium">
+                          {isExpanded ? <ChevronUp className="h-3.5 w-3.5 shrink-0 text-slate-400" /> : <ChevronDown className="h-3.5 w-3.5 shrink-0 text-slate-400" />}
                           {item.clienteNome}
                         </span>
-                        <span className="text-neutral-400 truncate">{item.servicoNome}</span>
-                        <span className="text-neutral-500 text-center text-[10px]">{item.status}</span>
-                        <span className={`font-mono font-bold text-center ${cfg.text}`}>{item.diasPendente}d</span>
+                        <span className="text-slate-500 truncate text-xs">{item.servicoNome}</span>
+                        <span className={`text-center text-[10px] font-medium px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.text} ${cfg.border} border`}>{item.status}</span>
+                        <span className={`font-mono font-bold text-center text-xs ${cfg.text}`}>{item.diasPendente}d</span>
                         <div className="flex justify-center">
-                          <div className={`w-2.5 h-2.5 rounded-full ${cfg.dot} ${item.urgency === "critical" ? "animate-pulse" : ""}`} />
+                          <div className={`w-3 h-3 rounded-full ${cfg.dot} ${item.urgency === "critical" ? "animate-pulse" : ""} ring-2 ${cfg.ring}`} />
                         </div>
                       </div>
 
                       {isExpanded && (
-                        <div className="bg-[#0a0a0a] border-b border-[#1c1c1c] px-3 py-4 space-y-3">
+                        <div className="bg-slate-50 border-b border-slate-200 px-4 py-5 space-y-4">
                           <div className="flex items-center justify-between">
-                            <span className="text-xs font-medium text-neutral-300">Editar — {item.servicoNome}</span>
+                            <span className="text-sm font-semibold text-slate-700">Editar — {item.servicoNome}</span>
                             <div className="flex gap-2">
                               <button
                                 onClick={(e) => { e.stopPropagation(); setExpandedId(null); setEditForm({}); }}
-                                className="flex items-center gap-1 px-2 py-1 rounded text-[10px] text-neutral-500 hover:text-neutral-300 bg-[#141414] border border-[#1c1c1c] transition-colors"
+                                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-500 hover:text-slate-700 bg-white border border-slate-200 transition-colors shadow-sm"
                               >
                                 <X className="h-3 w-3" /> Cancelar
                               </button>
                               <button
                                 onClick={(e) => { e.stopPropagation(); handleSave(); }}
                                 disabled={saving}
-                                className="flex items-center gap-1 px-2 py-1 rounded text-[10px] text-emerald-400 bg-emerald-900/20 border border-emerald-800/30 hover:bg-emerald-900/40 transition-colors disabled:opacity-40"
+                                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 transition-colors shadow-sm disabled:opacity-40"
                               >
                                 <Save className="h-3 w-3" /> {saving ? "Salvando..." : "Salvar"}
                               </button>
@@ -508,12 +523,12 @@ export default function QARelatoriosPage() {
                           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                             {EDIT_FIELDS.map(field => (
                               <div key={field.key}>
-                                <label className="block text-[10px] text-neutral-500 uppercase tracking-wider mb-1">{field.label}</label>
+                                <label className="block text-[11px] text-slate-500 uppercase tracking-wider font-medium mb-1.5">{field.label}</label>
                                 {field.key === "status" ? (
                                   <select
                                     value={editForm[field.key] || ""}
                                     onChange={e => setEditForm(prev => ({ ...prev, [field.key]: e.target.value }))}
-                                    className={inputClass}
+                                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all"
                                   >
                                     <option value="">Selecionar...</option>
                                     {STATUS_OPTIONS.map(s => (
@@ -526,7 +541,7 @@ export default function QARelatoriosPage() {
                                     value={editForm[field.key] || ""}
                                     onChange={e => setEditForm(prev => ({ ...prev, [field.key]: e.target.value }))}
                                     placeholder={field.type === "date" ? "DD/MM/AAAA" : "—"}
-                                    className={inputClass}
+                                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all"
                                   />
                                 )}
                               </div>
@@ -544,77 +559,87 @@ export default function QARelatoriosPage() {
       )}
 
       {tab === "graficos" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <ChartCard title="Distribuição por Urgência" icon={PieChartIcon}>
-            <ResponsiveContainer width="100%" height={220}>
+            <ResponsiveContainer width="100%" height={240}>
               <PieChart>
-                <Pie data={urgencyDistribution} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="value" paddingAngle={2}>
+                <Pie data={urgencyDistribution} cx="50%" cy="50%" innerRadius={55} outerRadius={85} dataKey="value" paddingAngle={3} strokeWidth={2} stroke="white">
                   {urgencyDistribution.map((_, i) => <Cell key={i} fill={PIE_COLORS[i]} />)}
                 </Pie>
-                <Tooltip contentStyle={{ background: "#111", border: "1px solid #222", borderRadius: 8, fontSize: 12 }} />
-                <Legend iconSize={8} wrapperStyle={{ fontSize: 10 }} />
+                <Tooltip contentStyle={tooltipStyle} />
+                <Legend iconSize={8} wrapperStyle={{ fontSize: 11, color: "#64748b" }} />
               </PieChart>
             </ResponsiveContainer>
           </ChartCard>
 
           <ChartCard title="Serviços por Status" icon={BarChart3}>
-            <ResponsiveContainer width="100%" height={220}>
+            <ResponsiveContainer width="100%" height={240}>
               <BarChart data={statusDistribution} layout="vertical" margin={{ left: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" />
-                <XAxis type="number" tick={{ fill: "#555", fontSize: 10 }} />
-                <YAxis dataKey="name" type="category" tick={{ fill: "#888", fontSize: 9 }} width={140} />
-                <Tooltip contentStyle={{ background: "#111", border: "1px solid #222", borderRadius: 8, fontSize: 12 }} />
-                <Bar dataKey="value" fill="#7a1528" radius={[0, 4, 4, 0]} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 13%, 93%)" />
+                <XAxis type="number" tick={{ fill: "#94a3b8", fontSize: 10 }} />
+                <YAxis dataKey="name" type="category" tick={{ fill: "#64748b", fontSize: 9 }} width={140} />
+                <Tooltip contentStyle={tooltipStyle} />
+                <Bar dataKey="value" fill={CHART_BLUE} radius={[0, 6, 6, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </ChartCard>
 
           <ChartCard title="Tendência Mensal" icon={TrendingUp}>
-            <ResponsiveContainer width="100%" height={220}>
-              <LineChart data={monthlyTrend}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" />
-                <XAxis dataKey="month" tick={{ fill: "#555", fontSize: 10 }} />
-                <YAxis tick={{ fill: "#555", fontSize: 10 }} />
-                <Tooltip contentStyle={{ background: "#111", border: "1px solid #222", borderRadius: 8, fontSize: 12 }} />
-                <Line type="monotone" dataKey="total" stroke="#7a1528" name="Vendas" strokeWidth={2} dot={{ r: 3 }} />
-                <Line type="monotone" dataKey="deferidos" stroke="#22c55e" name="Deferidos" strokeWidth={2} dot={{ r: 3 }} />
-                <Legend iconSize={8} wrapperStyle={{ fontSize: 10 }} />
-              </LineChart>
+            <ResponsiveContainer width="100%" height={240}>
+              <AreaChart data={monthlyTrend}>
+                <defs>
+                  <linearGradient id="gradTotal" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={CHART_BLUE} stopOpacity={0.15} />
+                    <stop offset="95%" stopColor={CHART_BLUE} stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="gradDef" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={CHART_EMERALD} stopOpacity={0.15} />
+                    <stop offset="95%" stopColor={CHART_EMERALD} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 13%, 93%)" />
+                <XAxis dataKey="month" tick={{ fill: "#94a3b8", fontSize: 10 }} />
+                <YAxis tick={{ fill: "#94a3b8", fontSize: 10 }} />
+                <Tooltip contentStyle={tooltipStyle} />
+                <Area type="monotone" dataKey="total" stroke={CHART_BLUE} fill="url(#gradTotal)" name="Vendas" strokeWidth={2} />
+                <Area type="monotone" dataKey="deferidos" stroke={CHART_EMERALD} fill="url(#gradDef)" name="Deferidos" strokeWidth={2} />
+                <Legend iconSize={8} wrapperStyle={{ fontSize: 11, color: "#64748b" }} />
+              </AreaChart>
             </ResponsiveContainer>
           </ChartCard>
 
           <ChartCard title="Serviços Mais Vendidos" icon={FileText}>
-            <ResponsiveContainer width="100%" height={220}>
+            <ResponsiveContainer width="100%" height={240}>
               <BarChart data={serviceRanking} layout="vertical" margin={{ left: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" />
-                <XAxis type="number" tick={{ fill: "#555", fontSize: 10 }} />
-                <YAxis dataKey="name" type="category" tick={{ fill: "#888", fontSize: 8 }} width={160} />
-                <Tooltip contentStyle={{ background: "#111", border: "1px solid #222", borderRadius: 8, fontSize: 12 }} />
-                <Bar dataKey="value" fill="#a52338" radius={[0, 4, 4, 0]} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 13%, 93%)" />
+                <XAxis type="number" tick={{ fill: "#94a3b8", fontSize: 10 }} />
+                <YAxis dataKey="name" type="category" tick={{ fill: "#64748b", fontSize: 8 }} width={160} />
+                <Tooltip contentStyle={tooltipStyle} />
+                <Bar dataKey="value" fill={CHART_INDIGO} radius={[0, 6, 6, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </ChartCard>
 
           <ChartCard title="Faturamento por Status" icon={TrendingUp}>
-            <ResponsiveContainer width="100%" height={220}>
+            <ResponsiveContainer width="100%" height={240}>
               <BarChart data={revenueByStatus}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" />
-                <XAxis dataKey="name" tick={{ fill: "#555", fontSize: 9 }} />
-                <YAxis tick={{ fill: "#555", fontSize: 10 }} tickFormatter={v => `R$${(v / 1000).toFixed(0)}k`} />
-                <Tooltip contentStyle={{ background: "#111", border: "1px solid #222", borderRadius: 8, fontSize: 12 }} formatter={(v: number) => [`R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`, "Valor"]} />
-                <Bar dataKey="value" fill="#eab308" radius={[4, 4, 0, 0]} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 13%, 93%)" />
+                <XAxis dataKey="name" tick={{ fill: "#94a3b8", fontSize: 9 }} />
+                <YAxis tick={{ fill: "#94a3b8", fontSize: 10 }} tickFormatter={v => `R$${(v / 1000).toFixed(0)}k`} />
+                <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [`R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`, "Valor"]} />
+                <Bar dataKey="value" fill={CHART_AMBER} radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </ChartCard>
 
           <ChartCard title="Clientes com Mais Vendas" icon={Users}>
-            <ResponsiveContainer width="100%" height={220}>
+            <ResponsiveContainer width="100%" height={240}>
               <BarChart data={topClients} layout="vertical" margin={{ left: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" />
-                <XAxis type="number" tick={{ fill: "#555", fontSize: 10 }} />
-                <YAxis dataKey="name" type="category" tick={{ fill: "#888", fontSize: 9 }} width={160} />
-                <Tooltip contentStyle={{ background: "#111", border: "1px solid #222", borderRadius: 8, fontSize: 12 }} />
-                <Bar dataKey="count" fill="#3b82f6" radius={[0, 4, 4, 0]} name="Vendas" />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 13%, 93%)" />
+                <XAxis type="number" tick={{ fill: "#94a3b8", fontSize: 10 }} />
+                <YAxis dataKey="name" type="category" tick={{ fill: "#64748b", fontSize: 9 }} width={160} />
+                <Tooltip contentStyle={tooltipStyle} />
+                <Bar dataKey="count" fill={CHART_BLUE} radius={[0, 6, 6, 0]} name="Vendas" />
               </BarChart>
             </ResponsiveContainer>
           </ChartCard>
@@ -626,10 +651,12 @@ export default function QARelatoriosPage() {
 
 function ChartCard({ title, icon: Icon, children }: { title: string; icon: any; children: React.ReactNode }) {
   return (
-    <div className="bg-[#0d0d0d] border border-[#1c1c1c] rounded-lg p-4">
-      <div className="flex items-center gap-2 mb-3">
-        <Icon className="h-3.5 w-3.5 text-neutral-500" />
-        <span className="text-xs font-medium text-neutral-300">{title}</span>
+    <div className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
+      <div className="flex items-center gap-2 mb-4">
+        <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center">
+          <Icon className="h-3.5 w-3.5 text-slate-500" />
+        </div>
+        <span className="text-sm font-semibold text-slate-700">{title}</span>
       </div>
       {children}
     </div>
