@@ -277,7 +277,7 @@ export default function CaseDetailPanel({
               {geracao?.score_confianca && (
                 <div className="flex items-center gap-2 text-[10px]">
                   <span className="text-slate-400">Confiança:</span>
-                  <div className="flex-1 max-w-[120px] h-1.5 bg-[#1c1c1c] rounded-full overflow-hidden">
+                  <div className="flex-1 max-w-[120px] h-1.5 bg-slate-200 rounded-full overflow-hidden">
                     <div
                       className="h-full rounded-full"
                       style={{
@@ -296,7 +296,7 @@ export default function CaseDetailPanel({
                   <div className="text-[9px] text-slate-400 uppercase tracking-[0.12em] mb-1">Fundamentos ({geracao.fundamentos_utilizados_json.length})</div>
                   <div className="flex flex-wrap gap-1">
                     {geracao.fundamentos_utilizados_json.map((f: any, i: number) => (
-                      <span key={i} className="text-[9px] bg-[#1c1c1c] text-slate-600 px-1.5 py-0.5 rounded font-mono">{f.titulo || f}</span>
+                      <span key={i} className="text-[9px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded font-mono">{f.titulo || f}</span>
                     ))}
                   </div>
                 </div>

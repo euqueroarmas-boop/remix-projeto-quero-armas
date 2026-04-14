@@ -22,7 +22,7 @@ const QARelatoriosPage = lazyRetry(() => import("./QARelatoriosPage"), "QARelato
 const QACadastroPublicoPage = lazyRetry(() => import("./QACadastroPublicoPage"), "QACadastroPublicoPage");
 
 const Loader = () => (
-  <div className="min-h-screen flex items-center justify-center bg-[#08080f]">
+  <div className="min-h-screen flex items-center justify-center bg-slate-50">
     <div className="w-6 h-6 border-2 border-slate-700 border-t-slate-400 rounded-full animate-spin" />
   </div>
 );
