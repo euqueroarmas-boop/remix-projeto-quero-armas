@@ -218,17 +218,26 @@ export default function QARelatoriosPage() {
   }, [itens, vendaMap, clienteMap, servicoMap]);
 
   const filteredPendingItems = useMemo(() => {
-    if (!search.trim()) return pendingItems;
-    const s = search.toLowerCase().replace(/[.\-\/]/g, "");
-    return pendingItems.filter(item => {
-      const nome = (item.clienteNome || "").toLowerCase();
-      const email = (item.clienteEmail || "").toLowerCase();
-      const celular = (item.clienteCelular || "").replace(/\D/g, "");
-      const cpf = (item.clienteCpf || "").replace(/\D/g, "");
-      const servico = (item.servicoNome || "").toLowerCase();
-      return nome.includes(s) || email.includes(s) || celular.includes(s) || cpf.includes(s) || servico.includes(s);
+    let list = pendingItems;
+    if (search.trim()) {
+      const s = search.toLowerCase().replace(/[.\-\/]/g, "");
+      list = list.filter(item => {
+        const nome = (item.clienteNome || "").toLowerCase();
+        const email = (item.clienteEmail || "").toLowerCase();
+        const celular = (item.clienteCelular || "").replace(/\D/g, "");
+        const cpf = (item.clienteCpf || "").replace(/\D/g, "");
+        const servico = (item.servicoNome || "").toLowerCase();
+        return nome.includes(s) || email.includes(s) || celular.includes(s) || cpf.includes(s) || servico.includes(s);
+      });
+    }
+    const dir = sortDir === "asc" ? 1 : -1;
+    return [...list].sort((a, b) => {
+      if (sortCol === "cliente") return dir * a.clienteNome.localeCompare(b.clienteNome, "pt-BR");
+      if (sortCol === "servico") return dir * a.servicoNome.localeCompare(b.servicoNome, "pt-BR");
+      if (sortCol === "status") return dir * a.status.localeCompare(b.status, "pt-BR");
+      return dir * (a.diasPendente - b.diasPendente);
     });
-  }, [pendingItems, search]);
+  }, [pendingItems, search, sortCol, sortDir]);
 
   const handleExpand = useCallback((itemId: number) => {
     if (expandedId === itemId) {
