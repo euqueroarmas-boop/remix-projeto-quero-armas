@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   Search, User, Phone, Mail, MapPin, FileText, Shield, ChevronLeft,
   Loader2, Eye, Plus, Crosshair, Edit, Trash2, Download, FileDown,
+  ChevronDown, ChevronUp, Save, X,
 } from "lucide-react";
 import { supabase as supabaseClient } from "@/integrations/supabase/client";
 import { toast } from "sonner";
