@@ -490,12 +490,20 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function Field({ label, value, icon: Icon }: { label: string; value?: string | null; icon?: any }) {
+function Field({ label, value, icon: Icon, copyable }: { label: string; value?: string | null; icon?: any; copyable?: boolean }) {
+  const handleCopy = () => {
+    if (value) {
+      navigator.clipboard.writeText(value);
+      const { toast } = require("sonner");
+      toast.success(`${label} copiado!`);
+    }
+  };
   return (
-    <div className="flex items-start gap-2 text-[10px]">
+    <div className={`flex items-start gap-2 text-[10px] ${copyable && value ? "cursor-pointer active:opacity-60" : ""}`} onClick={copyable ? handleCopy : undefined}>
       {Icon && <Icon className="h-3 w-3 text-neutral-600 mt-0.5 shrink-0" />}
       <span className="text-neutral-600 min-w-[80px] shrink-0">{label}:</span>
       <span className="text-neutral-200 font-medium">{value || "—"}</span>
+      {copyable && value && <span className="text-neutral-600 text-[8px] ml-auto">📋</span>}
     </div>
   );
 }
