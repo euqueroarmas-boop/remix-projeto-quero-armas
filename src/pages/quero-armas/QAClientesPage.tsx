@@ -56,7 +56,6 @@ interface CadastroPublico {
   id: string;
   nome_completo: string;
   cpf: string;
-  cliente_id_vinculado?: number | null;
   rg?: string | null;
   emissor_rg?: string | null;
   data_nascimento?: string | null;
@@ -123,59 +122,52 @@ const emptyToNull = (value: string | null | undefined) => {
   return trimmed ? trimmed : null;
 };
 
-const pickCadastroValue = (incoming: string | null | undefined, current: string | null | undefined) => {
+const pickNew = (incoming: string | null | undefined, current: string | null | undefined) => {
   const next = emptyToNull(incoming);
   return next ?? current ?? null;
 };
 
-const buildClientePayloadFromCadastro = (cadastro: CadastroPublico, current?: Partial<Cliente> | null) => {
-  const endereco1 = emptyToNull(cadastro.end1_logradouro);
-  const numero1 = emptyToNull(cadastro.end1_numero);
-  const complemento1 = emptyToNull(cadastro.end1_complemento);
-  const bairro1 = emptyToNull(cadastro.end1_bairro);
-  const cep1 = normalizeDigits(cadastro.end1_cep) || emptyToNull(cadastro.end1_cep);
-  const cidade1 = emptyToNull(cadastro.end1_cidade);
+/** Build update payload from cadastro público → qa_clientes. NEVER touches observacao when current has content. */
+const buildClientePayload = (cadastro: CadastroPublico, cur?: Partial<Cliente> | null) => {
   const estado1 = emptyToNull(cadastro.end1_estado)?.toUpperCase() ?? null;
-
-  const endereco2 = emptyToNull(cadastro.end2_logradouro);
-  const numero2 = emptyToNull(cadastro.end2_numero);
-  const complemento2 = emptyToNull(cadastro.end2_complemento);
-  const bairro2 = emptyToNull(cadastro.end2_bairro);
-  const cep2 = normalizeDigits(cadastro.end2_cep) || emptyToNull(cadastro.end2_cep);
-  const cidade2 = emptyToNull(cadastro.end2_cidade);
   const estado2 = emptyToNull(cadastro.end2_estado)?.toUpperCase() ?? null;
-
+  // Protect observacao: if current already has process numbers, keep it
+  const currentObs = emptyToNull(cur?.observacao);
+  const incomingObs = emptyToNull(cadastro.observacoes);
+  const observacao = currentObs
+    ? (incomingObs && incomingObs !== currentObs ? `${currentObs}\n\n--- Cadastro público ---\n${incomingObs}` : currentObs)
+    : incomingObs;
   return {
-    nome_completo: pickCadastroValue(cadastro.nome_completo, current?.nome_completo) ?? "",
-    cpf: normalizeDigits(cadastro.cpf) || current?.cpf || null,
-    rg: pickCadastroValue(cadastro.rg, current?.rg),
-    emissor_rg: pickCadastroValue(cadastro.emissor_rg, current?.emissor_rg),
-    uf_emissor_rg: emptyToNull((cadastro as any).uf_emissor_rg)?.toUpperCase() ?? current?.uf_emissor_rg ?? null,
-    data_nascimento: pickCadastroValue(cadastro.data_nascimento, current?.data_nascimento),
-    nacionalidade: pickCadastroValue(cadastro.nacionalidade, current?.nacionalidade),
-    estado_civil: pickCadastroValue(cadastro.estado_civil, current?.estado_civil),
-    profissao: pickCadastroValue(cadastro.profissao, current?.profissao),
-    nome_mae: pickCadastroValue(cadastro.nome_mae, current?.nome_mae),
-    nome_pai: pickCadastroValue(cadastro.nome_pai, current?.nome_pai),
-    email: pickCadastroValue(cadastro.email, current?.email),
-    celular: pickCadastroValue(cadastro.telefone_principal, current?.celular),
-    endereco: pickCadastroValue(endereco1, current?.endereco),
-    numero: pickCadastroValue(numero1, current?.numero),
-    complemento: pickCadastroValue(complemento1, current?.complemento),
-    bairro: pickCadastroValue(bairro1, current?.bairro),
-    cep: pickCadastroValue(cep1, current?.cep),
-    cidade: pickCadastroValue(cidade1, current?.cidade),
-    estado: pickCadastroValue(estado1, current?.estado),
-    endereco2: pickCadastroValue(endereco2, current?.endereco2),
-    numero2: pickCadastroValue(numero2, current?.numero2),
-    complemento2: pickCadastroValue(complemento2, current?.complemento2),
-    bairro2: pickCadastroValue(bairro2, current?.bairro2),
-    cep2: pickCadastroValue(cep2, current?.cep2),
-    cidade2: pickCadastroValue(cidade2, current?.cidade2),
-    estado2: pickCadastroValue(estado2, current?.estado2),
-    observacao: pickCadastroValue(cadastro.observacoes, current?.observacao),
-    status: current?.status ?? "ATIVO",
-    cliente_lions: current?.cliente_lions ?? false,
+    nome_completo: pickNew(cadastro.nome_completo, cur?.nome_completo) ?? "",
+    cpf: normalizeDigits(cadastro.cpf) || cur?.cpf || null,
+    rg: pickNew(cadastro.rg, cur?.rg),
+    emissor_rg: pickNew(cadastro.emissor_rg, cur?.emissor_rg),
+    uf_emissor_rg: emptyToNull((cadastro as any).uf_emissor_rg)?.toUpperCase() ?? cur?.uf_emissor_rg ?? null,
+    data_nascimento: pickNew(cadastro.data_nascimento, cur?.data_nascimento),
+    nacionalidade: pickNew(cadastro.nacionalidade, cur?.nacionalidade),
+    estado_civil: pickNew(cadastro.estado_civil, cur?.estado_civil),
+    profissao: pickNew(cadastro.profissao, cur?.profissao),
+    nome_mae: pickNew(cadastro.nome_mae, cur?.nome_mae),
+    nome_pai: pickNew(cadastro.nome_pai, cur?.nome_pai),
+    email: pickNew(cadastro.email, cur?.email),
+    celular: pickNew(cadastro.telefone_principal, cur?.celular),
+    endereco: pickNew(cadastro.end1_logradouro, cur?.endereco),
+    numero: pickNew(cadastro.end1_numero, cur?.numero),
+    complemento: pickNew(cadastro.end1_complemento, cur?.complemento),
+    bairro: pickNew(cadastro.end1_bairro, cur?.bairro),
+    cep: pickNew(normalizeDigits(cadastro.end1_cep) || emptyToNull(cadastro.end1_cep), cur?.cep),
+    cidade: pickNew(cadastro.end1_cidade, cur?.cidade),
+    estado: pickNew(estado1, cur?.estado),
+    endereco2: pickNew(cadastro.end2_logradouro, cur?.endereco2),
+    numero2: pickNew(cadastro.end2_numero, cur?.numero2),
+    complemento2: pickNew(cadastro.end2_complemento, cur?.complemento2),
+    bairro2: pickNew(cadastro.end2_bairro, cur?.bairro2),
+    cep2: pickNew(normalizeDigits(cadastro.end2_cep) || emptyToNull(cadastro.end2_cep), cur?.cep2),
+    cidade2: pickNew(cadastro.end2_cidade, cur?.cidade2),
+    estado2: pickNew(estado2, cur?.estado2),
+    observacao,
+    status: cur?.status ?? "ATIVO",
+    cliente_lions: cur?.cliente_lions ?? false,
   };
 };
 
@@ -335,61 +327,42 @@ export default function QAClientesPage() {
     setSavingCadastroPublicoStatus(status);
     try {
       const cpfDigits = normalizeDigits(selectedCadastroPublico.cpf);
-      let clienteVinculadoId = selectedCadastroPublico.cliente_id_vinculado ?? null;
+      let clienteVinculadoId: number | null = null;
 
       if (status === "aprovado") {
         if (!cpfDigits || cpfDigits.length !== 11) {
           throw new Error("CPF inválido para vincular o cadastro ao cliente");
         }
-
         const cpfVariants = Array.from(new Set([cpfDigits, formatCpf(cpfDigits)]));
+        const { data: clientesCpf, error: lookErr } = await supabase
+          .from("qa_clientes" as any).select("*").in("cpf", cpfVariants)
+          .order("updated_at", { ascending: false }).limit(10);
+        if (lookErr) throw lookErr;
+        const existing = (((clientesCpf as unknown) as Cliente[] | null) ?? [])[0] ?? null;
+        const payload = buildClientePayload(selectedCadastroPublico, existing);
 
-        const { data: clientesCpf, error: clienteLookupError } = await supabase
-          .from("qa_clientes" as any)
-          .select("*")
-          .in("cpf", cpfVariants)
-          .order("updated_at", { ascending: false })
-          .limit(10);
-
-        if (clienteLookupError) throw clienteLookupError;
-
-        const clienteExistente = (((clientesCpf as unknown) as Cliente[] | null) ?? [])[0] ?? null;
-        const clientePayload = buildClientePayloadFromCadastro(selectedCadastroPublico, clienteExistente);
-
-        if (clienteExistente) {
-          const { error: updateClienteError } = await supabase
-            .from("qa_clientes" as any)
-            .update(clientePayload)
-            .eq("id", clienteExistente.id);
-
-          if (updateClienteError) throw updateClienteError;
-          clienteVinculadoId = clienteExistente.id;
+        if (existing) {
+          const { error: ue } = await supabase.from("qa_clientes" as any).update(payload).eq("id", existing.id);
+          if (ue) throw ue;
+          clienteVinculadoId = existing.id;
         } else {
-          const { data: insertedCliente, error: insertClienteError } = await supabase
-            .from("qa_clientes" as any)
-            .insert(clientePayload)
-            .select("id")
-            .single();
-
-          if (insertClienteError) throw insertClienteError;
-          clienteVinculadoId = ((insertedCliente as unknown) as { id?: number } | null)?.id ?? null;
+          const { data: ins, error: ie } = await supabase.from("qa_clientes" as any).insert(payload).select("id").single();
+          if (ie) throw ie;
+          clienteVinculadoId = ((ins as unknown) as { id?: number } | null)?.id ?? null;
         }
       }
 
-      const cadastroUpdatePayload: Record<string, any> = {
-        status,
-        cliente_id_vinculado: clienteVinculadoId,
-      };
-
+      const updatePayload: Record<string, any> = { status };
       if (status === "aprovado") {
-        cadastroUpdatePayload.processado_em = new Date().toISOString();
-        cadastroUpdatePayload.notas_processamento = clienteVinculadoId
-          ? `Cadastro vinculado ao cliente #${clienteVinculadoId} por CPF.`
-          : "Cadastro aprovado sem vínculo automático.";
+        updatePayload.cliente_id_vinculado = clienteVinculadoId;
+        updatePayload.processado_em = new Date().toISOString();
+        updatePayload.notas_processamento = clienteVinculadoId
+          ? `Vinculado ao cliente #${clienteVinculadoId} por CPF.`
+          : "Aprovado sem vínculo automático.";
       }
 
       const { data, error } = await supabase.from("qa_cadastro_publico" as any)
-        .update(cadastroUpdatePayload)
+        .update(updatePayload)
         .eq("id", selectedCadastroPublico.id)
         .select("*")
         .limit(1)
