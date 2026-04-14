@@ -575,11 +575,14 @@ function Step1({ form, set, errors, onCpfLookup, cpfLooking, cpfFound }: { form:
 }
 
 /* ── Address Block (shared between Step 2 & 3) ── */
-function AddressBlock({ prefix, form, set, errors, onCepLookup, cepLoading }: {
+function AddressBlock({ prefix, form, set, errors, onCepLookup, cepLoading, onGeocodeLookup, geocodeLoading }: {
   prefix: "end1" | "end2"; form: FormData; set: any; errors: any;
   onCepLookup: () => void; cepLoading: boolean;
+  onGeocodeLookup?: () => void; geocodeLoading?: boolean;
 }) {
   const f = (field: string) => `${prefix}_${field}` as keyof FormData;
+  const lat = form[f("latitude")] as string;
+  const lng = form[f("longitude")] as string;
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div className="md:col-span-2">
@@ -606,7 +609,7 @@ function AddressBlock({ prefix, form, set, errors, onCepLookup, cepLoading }: {
         </Field>
       </div>
       <Field label="Número" required error={errors[f("numero")]}>
-        <TextInput value={form[f("numero")] as string} onChange={v => set(f("numero"), v)} placeholder="Nº" />
+        <TextInput value={form[f("numero")] as string} onChange={v => set(f("numero"), v)} placeholder="Nº" onBlur={onGeocodeLookup} />
       </Field>
       <Field label="Complemento">
         <TextInput value={form[f("complemento")] as string} onChange={v => set(f("complemento"), v)} placeholder="Apto, Sala, Bloco..." />
@@ -620,6 +623,27 @@ function AddressBlock({ prefix, form, set, errors, onCepLookup, cepLoading }: {
       <Field label="Estado">
         <SelectInput value={form[f("estado")] as string} onChange={v => set(f("estado"), v)} options={UF_LIST} placeholder="UF" />
       </Field>
+
+      {/* Geolocalização */}
+      {(lat || lng || geocodeLoading) && (
+        <div className="md:col-span-2">
+          <div className="flex items-center gap-2 p-3 rounded-lg" style={{ background: "hsl(152 60% 96%)", border: "1px solid hsl(152 40% 85%)" }}>
+            {geocodeLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" style={{ color: "hsl(152 60% 42%)" }} />
+                <span className="text-xs font-medium" style={{ color: "hsl(152 40% 35%)" }}>Buscando geolocalização...</span>
+              </>
+            ) : (
+              <>
+                <MapPin className="w-4 h-4" style={{ color: "hsl(152 60% 42%)" }} />
+                <span className="text-xs font-medium" style={{ color: "hsl(152 40% 25%)" }}>
+                  Lat: {lat} &nbsp;|&nbsp; Lng: {lng}
+                </span>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
