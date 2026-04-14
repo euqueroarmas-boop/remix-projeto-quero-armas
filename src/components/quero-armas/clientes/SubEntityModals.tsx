@@ -282,9 +282,8 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
       <DialogContent className="max-w-md bg-[#0e0e0e] border-[#1c1c1c] text-neutral-200">
         <DialogHeader><DialogTitle className="text-sm">{isEdit ? "Editar Venda" : "Nova Venda"}</DialogTitle></DialogHeader>
         <div className="space-y-3 max-h-[70vh] overflow-y-auto">
-          {/* Campos */}
           <div className="flex gap-2">
-            <Inp label="Data" value={f.data_cadastro} onChange={v => setF(p => ({ ...p, data_cadastro: v }))} type="date" />
+            <Inp label="Data (dd/mm/aaaa)" value={f.data_cadastro} onChange={v => setF(p => ({ ...p, data_cadastro: v }))} placeholder="14/04/2026" />
             <Inp label="Nº Processo" value={f.numero_processo} onChange={v => setF(p => ({ ...p, numero_processo: v }))} />
           </div>
           <div className="flex gap-2">
@@ -300,7 +299,6 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
             </div>
           </div>
 
-          {/* Serviços */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-[9px] text-[#c43b52] uppercase tracking-[0.12em] font-bold">Serviços Contratados</label>
@@ -311,12 +309,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
                 const isChecked = selectedServicos.has(svc.id);
                 const svcData = selectedServicos.get(svc.id);
                 return (
-                  <label
-                    key={svc.id}
-                    className={`flex items-center gap-2 rounded px-2 py-1.5 cursor-pointer text-[11px] transition-colors ${
-                      isChecked ? 'bg-[#7a1528]/10 text-neutral-200' : 'text-neutral-500 hover:bg-[#111]'
-                    }`}
-                  >
+                  <label key={svc.id} className={`flex items-center gap-2 rounded px-2 py-1.5 cursor-pointer text-[11px] transition-colors ${isChecked ? 'bg-[#7a1528]/10 text-neutral-200' : 'text-neutral-500 hover:bg-[#111]'}`}>
                     <input type="checkbox" checked={isChecked} onChange={() => toggleServico(svc)} className="accent-[#c43b52] h-3 w-3 shrink-0" />
                     <span className="flex-1 min-w-0 truncate">{svc.nome_servico}</span>
                     {isChecked ? (
@@ -330,7 +323,6 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
             </div>
           </div>
 
-          {/* Totais */}
           <div className="border-t border-[#1c1c1c] pt-2 space-y-1 text-[11px]">
             <div className="flex justify-between">
               <span className="text-neutral-500">Subtotal ({selectedServicos.size})</span>
@@ -346,7 +338,6 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
             </div>
           </div>
 
-          {/* Ações */}
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="ghost" size="sm" onClick={onClose} className="text-[11px] h-7">Cancelar</Button>
             <Button size="sm" onClick={save} disabled={saving} className="bg-[#7a1528] hover:bg-[#9a1b32] text-[11px] h-7">
@@ -456,11 +447,11 @@ export function DeleteConfirm({ open, onClose, onConfirm, title, description, lo
 }
 
 // ─── Shared ───
-function Inp({ label, value, onChange, type = "text" }: { label: string; value: string; onChange: (v: string) => void; type?: string }) {
+function Inp({ label, value, onChange, type = "text", placeholder }: { label: string; value: string; onChange: (v: string) => void; type?: string; placeholder?: string }) {
   return (
-    <div>
+    <div className="flex-1">
       <label className="text-[9px] text-neutral-500 uppercase tracking-wider mb-1 block">{label}</label>
-      <Input type={type} value={value} onChange={e => onChange(e.target.value)} className="h-8 text-[11px] bg-[#111] border-[#1a1a1a] text-neutral-200 rounded-md" />
+      <Input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} className="h-8 text-[11px] bg-[#0a0a0a] border-[#1c1c1c] text-neutral-200" />
     </div>
   );
 }
