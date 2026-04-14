@@ -30,6 +30,8 @@ interface CadastroPublico {
   id: string;
   nome_completo: string;
   cpf: string;
+  rg?: string | null;
+  emissor_rg?: string | null;
   data_nascimento?: string | null;
   telefone_principal?: string | null;
   telefone_secundario?: string | null;
