@@ -514,10 +514,25 @@ export default function QARelatoriosPage() {
           {/* Table */}
           <div className="bg-white border border-slate-200/80 rounded-xl overflow-hidden shadow-sm">
             <div className="grid grid-cols-[1fr_1fr_160px_50px_60px] gap-3 px-4 py-3 border-b border-slate-100 text-[11px] text-slate-500 uppercase tracking-wider font-medium bg-slate-50/80">
-              <span>Cliente</span>
-              <span>Serviço</span>
-              <span className="text-right">Status</span>
-              <span className="text-right">Dias</span>
+              {([
+                { col: "cliente" as const, label: "Cliente", align: "" },
+                { col: "servico" as const, label: "Serviço", align: "" },
+                { col: "status" as const, label: "Status", align: "text-right" },
+                { col: "dias" as const, label: "Dias", align: "text-right" },
+              ] as const).map(h => (
+                <button
+                  key={h.col}
+                  onClick={() => toggleSort(h.col)}
+                  className={`flex items-center gap-1 ${h.align} hover:text-slate-700 transition-colors cursor-pointer select-none ${h.align === "text-right" ? "justify-end" : ""}`}
+                >
+                  {h.label}
+                  {sortCol === h.col ? (
+                    sortDir === "asc" ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />
+                  ) : (
+                    <ChevronDown className="h-3 w-3 opacity-30" />
+                  )}
+                </button>
+              ))}
               <span className="text-right">Urgência</span>
             </div>
             <div className="max-h-[600px] overflow-y-auto">
