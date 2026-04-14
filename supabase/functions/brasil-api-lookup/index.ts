@@ -26,11 +26,11 @@ Deno.serve(async (req) => {
   try {
     const { type, value } = await req.json();
 
-    if (!type || !value) {
+    if (!type || value === undefined || value === null) {
       return json({ error: "type and value are required" }, 400);
     }
 
-    const digits = value.replace(/\D/g, "");
+    const digits = typeof value === "string" ? value.replace(/\D/g, "") : "";
 
     // ── CNPJ lookup ──
     if (type === "cnpj") {
