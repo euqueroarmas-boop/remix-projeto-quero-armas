@@ -114,8 +114,8 @@ export default function NovoCasoModal({ open, onOpenChange, onCreated, preselect
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="bg-white border-slate-200 rounded-xl !p-0 overflow-y-auto"
-        style={{ width: "calc(100vw - 2rem)", maxWidth: "32rem", maxHeight: "calc(100vh - 2rem)" }}
+        className="bg-white border-slate-200 rounded-xl !p-0 !top-auto !bottom-auto !translate-y-0 !max-h-[calc(100vh-2rem)] overflow-y-auto"
+        style={{ width: "calc(100vw - 2rem)", maxWidth: "32rem", top: "1rem", transform: "translateX(-50%)" }}
       >
         {/* Header */}
         <div className="px-5 pt-5 pb-3 border-b" style={{ borderColor: "hsl(220 13% 91%)" }}>
