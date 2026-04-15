@@ -30,6 +30,7 @@ export default function QACasosPage() {
   const [statusFilter, setStatusFilter] = useState("todos");
   const [detailCase, setDetailCase] = useState<any>(null);
   const [activeTab, setActiveTab] = useState("casos");
+  const [showNovoCaso, setShowNovoCaso] = useState(false);
 
   const load = async () => {
     setLoading(true);
