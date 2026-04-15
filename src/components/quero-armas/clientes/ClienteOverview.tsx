@@ -337,28 +337,28 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
       </div>
 
       {/* ═══ DOCUMENTS & EXPIRATIONS ═══ */}
-      <div className="qa-card p-5">
+      <div className="qa-card p-4 md:p-5">
         <SectionHeader icon={Calendar} title="Documentos e Validades" color="hsl(262 60% 55%)" action="Gerenciar" onAction={() => onNavigate("cr")} />
         {analysis.expDocs.length === 0 ? (
           <div className="text-center py-8 text-sm" style={{ color: "hsl(220 10% 62%)" }}>Nenhum documento com validade cadastrado.</div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             {analysis.expDocs.map((doc, i) => {
               const Icon = urgencyIcon(doc.days);
               return (
-                <div key={i} className={`flex items-center gap-3 py-2.5 px-3 rounded-xl border ${urgencyBg(doc.days)} transition-all`}>
-                  <Icon className={`h-4 w-4 shrink-0 ${urgencyColor(doc.days)}`} />
+                <div key={i} className={`flex items-start gap-2.5 py-2 px-3 rounded-xl border ${urgencyBg(doc.days)} transition-all`}>
+                  <Icon className={`h-3.5 w-3.5 shrink-0 mt-0.5 ${urgencyColor(doc.days)}`} />
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-white/70 shrink-0" style={{ color: "hsl(220 10% 46%)" }}>{doc.category}</span>
-                      <span className="text-[11px] font-semibold truncate" style={{ color: "hsl(220 20% 18%)" }}>{doc.label}</span>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-white/70 shrink-0 uppercase" style={{ color: "hsl(220 10% 46%)" }}>{doc.category}</span>
+                      <span className="text-[10px] md:text-[11px] font-semibold truncate" style={{ color: "hsl(220 20% 18%)" }}>{doc.label}</span>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    <span className="text-[10px] font-mono" style={{ color: "hsl(220 10% 50%)" }}>{formatDate(doc.date)}</span>
-                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${urgencyColor(doc.days)} bg-white/60`}>
-                      {urgencyLabel(doc.days)}
-                    </span>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-[9px] font-mono" style={{ color: "hsl(220 10% 50%)" }}>{formatDate(doc.date)}</span>
+                      <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${urgencyColor(doc.days)} bg-white/60`}>
+                        {urgencyLabel(doc.days)}
+                      </span>
+                    </div>
                   </div>
                 </div>
               );
