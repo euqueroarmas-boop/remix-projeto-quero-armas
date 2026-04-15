@@ -149,10 +149,24 @@ export default function QADocumentoDetalhePage() {
     if (!doc) return;
     setReprocessing(true);
     try {
-      const { error } = await supabase.functions.invoke("qa-ingest-document", {
-        body: { storage_path: doc.storage_path, user_id: doc.enviado_por },
-      });
-      if (error) throw error;
+      if (doc.tipo_origem === "link_publico" && doc.url_origem) {
+        // For URL-based docs, reuse existing doc_id to avoid duplicates
+        const { error } = await supabase.functions.invoke("qa-ingest-url", {
+          body: {
+            url: doc.url_origem,
+            titulo: doc.titulo,
+            tipo_documento: doc.tipo_documento,
+            user_id: doc.enviado_por,
+            doc_id: doc.id,
+          },
+        });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.functions.invoke("qa-ingest-document", {
+          body: { storage_path: doc.storage_path, user_id: doc.enviado_por, doc_id: doc.id },
+        });
+        if (error) throw error;
+      }
       toast.success("Reprocessamento iniciado");
       setTimeout(load, 3000);
     } catch (err: any) {
