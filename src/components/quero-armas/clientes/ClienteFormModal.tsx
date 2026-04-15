@@ -117,6 +117,47 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
   const [step, setStep] = useState(0);
   const { lookupCep, cepLoading } = useBrasilApiLookup();
 
+  // Photo upload state
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { toast.error("Selecione um arquivo de imagem"); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("Imagem deve ter no máximo 5MB"); return; }
+    setPhotoFile(file);
+    const reader = new FileReader();
+    reader.onload = () => setPhotoPreview(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const removePhoto = () => {
+    setPhotoFile(null);
+    setPhotoPreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const uploadPhoto = async (clienteId: number): Promise<string | null> => {
+    if (!photoFile) return null;
+    setUploadingPhoto(true);
+    try {
+      const ext = photoFile.name.split(".").pop() || "jpg";
+      const path = `clientes/fotos/${clienteId}-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from("qa-documentos").upload(path, photoFile, { upsert: true });
+      if (error) throw error;
+      return path;
+    } catch (e: any) {
+      console.error("Photo upload error:", e);
+      toast.error("Erro ao enviar foto");
+      return null;
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
   const handleCepBlur = useCallback(async (cepValue: string, prefix: "" | "2") => {
     const result = await lookupCep(cepValue);
     if (result) {
@@ -141,7 +182,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
   });
 
   useEffect(() => {
-    if (!open) { setStep(0); return; }
+    if (!open) { setStep(0); setPhotoFile(null); setPhotoPreview(null); return; }
     if (cliente) {
       setF({
         nome_completo: cliente.nome_completo || "", cpf: cliente.cpf || "",
@@ -165,8 +206,16 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         observacao: cliente.observacao || "", status: cliente.status || "ATIVO",
         cliente_lions: cliente.cliente_lions || false,
       });
+      // Load existing photo preview
+      if (cliente.imagem) {
+        const { data: urlData } = supabase.storage.from("qa-documentos").getPublicUrl(cliente.imagem);
+        setPhotoPreview(urlData?.publicUrl || null);
+      } else {
+        setPhotoPreview(null);
+      }
     } else {
       setF(prev => ({ ...prev, nome_completo: "", cpf: "", rg: "", email: "", celular: "" }));
+      setPhotoPreview(null);
     }
   }, [cliente, open]);
 
