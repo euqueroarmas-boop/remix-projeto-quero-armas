@@ -308,7 +308,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
   const [saving, setSaving] = useState(false);
   const [servicos, setServicos] = useState<{ id: number; nome_servico: string; valor_servico: number }[]>([]);
   const [selectedServicos, setSelectedServicos] = useState<Map<number, { valor: number; checked: boolean }>>(new Map());
-  const [f, setF] = useState({ forma_pagamento: "", desconto: "0", status: "EM ANÁLISE", numero_processo: "", data_cadastro: new Date().toISOString().slice(0, 10) });
+  const [f, setF] = useState({ forma_pagamento: "", desconto: "0", status: "EM ANÁLISE", numero_processo: "", data_cadastro: "" });
 
   useEffect(() => {
     supabase.from("qa_servicos" as any).select("*").order("nome_servico").then(({ data }) => {
@@ -321,7 +321,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
       setF({
         forma_pagamento: venda.forma_pagamento || "", desconto: String(venda.desconto || 0),
         status: venda.status || "EM ANÁLISE", numero_processo: venda.numero_processo || "",
-        data_cadastro: venda.data_cadastro || new Date().toISOString().slice(0, 10),
+        data_cadastro: isoToBr(venda.data_cadastro) || isoToBr(new Date().toISOString().slice(0, 10)),
       });
       const vendaLegacyId = venda.id_legado ?? venda.id;
       supabase.from("qa_itens_venda" as any).select("*").eq("venda_id", vendaLegacyId).then(({ data }) => {
@@ -332,7 +332,9 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
         setSelectedServicos(map);
       });
     } else {
-      setF({ forma_pagamento: "", desconto: "0", status: "EM ANÁLISE", numero_processo: "", data_cadastro: new Date().toISOString().slice(0, 10) });
+      const today = new Date();
+      const todayBr = `${String(today.getDate()).padStart(2,'0')}/${String(today.getMonth()+1).padStart(2,'0')}/${today.getFullYear()}`;
+      setF({ forma_pagamento: "", desconto: "0", status: "EM ANÁLISE", numero_processo: "", data_cadastro: todayBr });
       setSelectedServicos(new Map());
     }
   }, [venda, open]);

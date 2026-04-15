@@ -1390,9 +1390,17 @@ export default function QAClientesPage() {
               className="w-full flex items-start gap-3 px-3 py-3 md:px-4 rounded-xl border transition-all hover:shadow-sm active:scale-[0.99] text-left group qa-card"
               style={{ borderColor: "hsl(220 13% 93%)" }}>
               {/* Avatar */}
-              <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5" style={{ background: "hsl(230 80% 96%)" }}>
-                <User className="h-4 w-4" style={{ color: "hsl(230 80% 56%)" }} />
-              </div>
+              {(c as any).imagem ? (
+                <img
+                  src={supabase.storage.from("qa-documentos").getPublicUrl((c as any).imagem).data?.publicUrl || ""}
+                  alt={c.nome_completo}
+                  className="w-9 h-9 md:w-10 md:h-10 rounded-xl shrink-0 mt-0.5 object-cover"
+                />
+              ) : (
+                <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5" style={{ background: "hsl(230 80% 96%)" }}>
+                  <User className="h-4 w-4" style={{ color: "hsl(230 80% 56%)" }} />
+                </div>
+              )}
               {/* Content */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
