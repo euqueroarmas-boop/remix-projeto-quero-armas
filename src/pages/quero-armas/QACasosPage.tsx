@@ -174,8 +174,8 @@ export default function QACasosPage() {
           <h1 className="text-xl md:text-2xl font-bold tracking-tight" style={{ color: "hsl(220 20% 18%)" }}>Casos</h1>
           <p className="text-sm mt-0.5" style={{ color: "hsl(220 10% 62%)" }}>Gestão de processos e peças</p>
         </div>
-        <button onClick={() => navigate("/quero-armas/gerar-peca")} className="qa-btn-primary flex items-center gap-1.5 no-glow">
-          <PenTool className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Novo</span>
+        <button onClick={() => setShowNovoCaso(true)} className="qa-btn-primary flex items-center gap-1.5 no-glow">
+          <Plus className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Novo Caso</span>
         </button>
       </div>
 
@@ -251,6 +251,13 @@ export default function QACasosPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* New Case Modal */}
+      <NovoCasoModal
+        open={showNovoCaso}
+        onOpenChange={setShowNovoCaso}
+        onCreated={load}
+      />
     </div>
   );
 }
