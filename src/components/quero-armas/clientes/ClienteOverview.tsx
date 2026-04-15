@@ -255,26 +255,26 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
       )}
 
       {/* ═══ KPI CARDS ═══ */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 gap-2.5 md:gap-3 lg:grid-cols-4">
         {[
-          { icon: ShoppingBag, label: "SERVIÇOS CONTRATADOS", value: analysis.totalServicos, sub: `${analysis.concluidos} concluídos`, color: "hsl(230 80% 56%)", tab: "servicos" },
-          { icon: Activity, label: "EM ANDAMENTO", value: analysis.emAndamento, sub: analysis.cancelados > 0 ? `${analysis.cancelados} cancelados` : "nenhum cancelado", color: "hsl(38 92% 50%)", tab: "servicos" },
-          { icon: Crosshair, label: "ARMAS REGISTRADAS", value: analysis.totalArmas, sub: `${crafs.length} CRAFs · ${gtes.length} GTEs`, color: "hsl(262 60% 55%)", tab: "armas" },
-          { icon: DollarSign, label: "TOTAL INVESTIDO", value: formatCurrency(analysis.totalVendas), sub: analysis.totalDescontos > 0 ? `${formatCurrency(analysis.totalDescontos)} em descontos` : "sem descontos", color: "hsl(152 60% 42%)", tab: "servicos" },
+          { icon: ShoppingBag, label: "SERVIÇOS", value: analysis.totalServicos, sub: `${analysis.concluidos} concluídos`, color: "hsl(230 80% 56%)", tab: "servicos" },
+          { icon: Activity, label: "ANDAMENTO", value: analysis.emAndamento, sub: analysis.cancelados > 0 ? `${analysis.cancelados} cancel.` : "nenhum cancel.", color: "hsl(38 92% 50%)", tab: "servicos" },
+          { icon: Crosshair, label: "ARMAS", value: analysis.totalArmas, sub: `${crafs.length} CRAFs · ${gtes.length} GTEs`, color: "hsl(262 60% 55%)", tab: "armas" },
+          { icon: DollarSign, label: "INVESTIDO", value: formatCurrency(analysis.totalVendas), sub: analysis.totalDescontos > 0 ? `${formatCurrency(analysis.totalDescontos)} desc.` : "sem descontos", color: "hsl(152 60% 42%)", tab: "servicos" },
         ].map((c) => {
           const Icon = c.icon;
           return (
             <button key={c.label} onClick={() => onNavigate(c.tab)}
-              className="qa-card p-4 text-left hover:shadow-md transition-all duration-200 group relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-16 h-16 rounded-full opacity-[0.04]" style={{ background: c.color, transform: "translate(30%, -30%)" }} />
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-3" style={{ background: `${c.color}12` }}>
-                <Icon className="h-4 w-4" style={{ color: c.color }} />
+              className="qa-card p-3 md:p-4 text-left hover:shadow-md active:scale-[0.98] transition-all group relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-12 h-12 rounded-full opacity-[0.04]" style={{ background: c.color, transform: "translate(30%, -30%)" }} />
+              <div className="w-7 h-7 md:w-9 md:h-9 rounded-lg md:rounded-xl flex items-center justify-center mb-2 md:mb-3" style={{ background: `${c.color}12` }}>
+                <Icon className="h-3.5 w-3.5 md:h-4 md:w-4" style={{ color: c.color }} />
               </div>
-              <div className="text-xl font-bold tracking-tight" style={{ color: "hsl(220 20% 18%)" }}>
+              <div className="text-lg md:text-xl font-bold tracking-tight" style={{ color: "hsl(220 20% 18%)" }}>
                 {c.value}
               </div>
-              <div className="text-[10px] font-bold tracking-[0.1em] mt-0.5" style={{ color: c.color }}>{c.label}</div>
-              <div className="text-[10px] mt-1" style={{ color: "hsl(220 10% 58%)" }}>{c.sub}</div>
+              <div className="text-[9px] md:text-[10px] font-bold tracking-[0.1em] mt-0.5" style={{ color: c.color }}>{c.label}</div>
+              <div className="text-[9px] md:text-[10px] mt-0.5" style={{ color: "hsl(220 10% 58%)" }}>{c.sub}</div>
             </button>
           );
         })}
