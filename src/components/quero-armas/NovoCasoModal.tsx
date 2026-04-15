@@ -115,7 +115,7 @@ export default function NovoCasoModal({ open, onOpenChange, onCreated, preselect
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className="bg-white border-slate-200 rounded-xl !p-0 overflow-y-auto"
-        style={{ width: "calc(100vw - 2rem)", maxWidth: "32rem", maxHeight: "calc(100vh - 3rem)", gap: 0, top: "1.5rem", transform: "translateX(-50%)" }}
+        style={{ width: "calc(100vw - 2rem)", maxWidth: "32rem", maxHeight: "calc(100vh - 2rem)", gap: 0 }}
       >
         <div className="px-5 pt-5 pb-3 border-b" style={{ borderColor: "hsl(220 13% 91%)" }}>
           <h2 className="text-base font-bold uppercase" style={{ color: "hsl(220 20% 18%)" }}>Novo Caso</h2>
@@ -263,25 +263,25 @@ export default function NovoCasoModal({ open, onOpenChange, onCreated, preselect
               style={{ borderColor: "hsl(220 13% 91%)", color: "hsl(220 10% 18%)" }}
             />
           </div>
+        </div>
 
-          {/* Footer inside scroll */}
-          <div className="flex items-center justify-end gap-2 pt-3 border-t" style={{ borderColor: "hsl(220 13% 91%)" }}>
-            <button
-              onClick={() => { resetForm(); onOpenChange(false); }}
-              className="h-9 px-4 rounded-lg text-xs font-medium uppercase hover:bg-slate-100 transition-colors"
-              style={{ color: "hsl(220 10% 45%)" }}
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="qa-btn-primary h-9 px-5 text-xs font-semibold uppercase flex items-center gap-1.5 no-glow"
-            >
-              {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-              Criar Caso
-            </button>
-          </div>
+        {/* Footer - sticky at bottom */}
+        <div className="sticky bottom-0 bg-white flex items-center justify-end gap-2 px-5 py-3 border-t" style={{ borderColor: "hsl(220 13% 91%)" }}>
+          <button
+            onClick={() => { resetForm(); onOpenChange(false); }}
+            className="h-9 px-4 rounded-lg text-xs font-medium uppercase hover:bg-slate-100 transition-colors"
+            style={{ color: "hsl(220 10% 45%)" }}
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="qa-btn-primary h-9 px-5 text-xs font-semibold uppercase flex items-center gap-1.5 no-glow"
+          >
+            {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+            Criar Caso
+          </button>
         </div>
       </DialogContent>
     </Dialog>
