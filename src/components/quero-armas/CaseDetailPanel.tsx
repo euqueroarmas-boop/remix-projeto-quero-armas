@@ -64,8 +64,9 @@ export default function CaseDetailPanel({
 
   const loadGeracao = async () => {
     setLoadingGeracao(true);
-    // Try by geracao_id first, then fall back to name match
     let found = false;
+
+    // Strategy 1: by geracao_id FK
     if (caso.geracao_id) {
       const { data } = await supabase
         .from("qa_geracoes_pecas" as any)
@@ -77,8 +78,23 @@ export default function CaseDetailPanel({
         found = true;
       }
     }
+
+    // Strategy 2: match by exact titulo
+    if (!found && caso.titulo) {
+      const { data } = await supabase
+        .from("qa_geracoes_pecas" as any)
+        .select("*")
+        .eq("titulo_geracao", caso.titulo)
+        .order("created_at", { ascending: false })
+        .limit(1);
+      if (data && (data as any[]).length > 0) {
+        setGeracao((data as any[])[0]);
+        found = true;
+      }
+    }
+
+    // Strategy 3: match by nome_requerente in titulo_geracao
     if (!found) {
-      // Fall back: match by nome_requerente in titulo_geracao
       const name = caso.nome_requerente || caso.titulo?.replace(/^Caso\s+/i, "") || "";
       if (name) {
         const { data } = await supabase
@@ -89,9 +105,27 @@ export default function CaseDetailPanel({
           .limit(1);
         if (data && (data as any[]).length > 0) {
           setGeracao((data as any[])[0]);
+          found = true;
         }
       }
     }
+
+    // Strategy 4: match by caso.descricao_caso snippet in entrada_caso
+    if (!found && caso.descricao_caso) {
+      const snippet = caso.descricao_caso.slice(0, 80).trim();
+      if (snippet.length > 20) {
+        const { data } = await supabase
+          .from("qa_geracoes_pecas" as any)
+          .select("*")
+          .ilike("entrada_caso", `%${snippet}%`)
+          .order("created_at", { ascending: false })
+          .limit(1);
+        if (data && (data as any[]).length > 0) {
+          setGeracao((data as any[])[0]);
+        }
+      }
+    }
+
     setLoadingGeracao(false);
   };
 
