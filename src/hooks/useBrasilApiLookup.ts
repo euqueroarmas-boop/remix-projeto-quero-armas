@@ -1,5 +1,4 @@
-import { useState, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState, useCallback, useRef } from "react";
 
 interface CnpjData {
   razao_social?: string;
@@ -23,10 +22,42 @@ interface CepData {
   cep?: string;
 }
 
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+/** Direct fetch to Edge Function with proper AbortController support */
+async function invokeEdgeFunction(
+  body: Record<string, unknown>,
+  timeoutMs: number,
+): Promise<{ data: any; error: any }> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/brasil-api-lookup`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": SUPABASE_KEY,
+        "Authorization": `Bearer ${SUPABASE_KEY}`,
+      },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+    clearTimeout(timer);
+    if (!res.ok) return { data: null, error: { message: `HTTP ${res.status}` } };
+    const json = await res.json();
+    return { data: json, error: null };
+  } catch (e: any) {
+    clearTimeout(timer);
+    return { data: null, error: { message: e?.name === "AbortError" ? "timeout" : (e?.message || "fetch failed") } };
+  }
+}
+
 export function useBrasilApiLookup() {
   const [cnpjLoading, setCnpjLoading] = useState(false);
   const [cepLoading, setCepLoading] = useState(false);
   const [geocodeLoading, setGeocodeLoading] = useState(false);
+  const cepAbortRef = useRef<AbortController | null>(null);
 
   const lookupCnpj = useCallback(async (cnpj: string): Promise<CnpjData | null> => {
     const digits = cnpj.replace(/\D/g, "");
@@ -34,10 +65,7 @@ export function useBrasilApiLookup() {
 
     setCnpjLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("brasil-api-lookup", {
-        body: { type: "cnpj", value: digits },
-      });
-
+      const { data, error } = await invokeEdgeFunction({ type: "cnpj", value: digits }, 10000);
       if (error || !data?.data) return null;
       return data.data as CnpjData;
     } catch {
@@ -51,27 +79,24 @@ export function useBrasilApiLookup() {
     const digits = cep.replace(/\D/g, "");
     if (digits.length !== 8) return null;
 
+    // Cancel any in-flight CEP lookup
+    cepAbortRef.current?.abort();
+
     setCepLoading(true);
     try {
-      // Try Supabase function invoke with timeout
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 8000);
-
+      // Try Edge Function with 6s timeout
       try {
-        const { data, error } = await supabase.functions.invoke("brasil-api-lookup", {
-          body: { type: "cep", value: digits },
-        });
-        clearTimeout(timeout);
+        const { data, error } = await invokeEdgeFunction({ type: "cep", value: digits }, 6000);
         if (!error && data?.data) return data.data as CepData;
       } catch {
-        clearTimeout(timeout);
+        // Edge Function failed, try fallback
       }
 
-      // Fallback: direct BrasilAPI call
-      console.warn("[lookupCep] Supabase invoke failed, trying direct BrasilAPI");
+      // Fallback: direct BrasilAPI call with 5s timeout
+      console.warn("[lookupCep] Edge Function failed, trying direct BrasilAPI");
       try {
         const res = await fetch(`https://brasilapi.com.br/api/cep/v1/${digits}`, {
-          signal: AbortSignal.timeout(6000),
+          signal: AbortSignal.timeout(5000),
         });
         if (res.ok) {
           const apiData = await res.json();
@@ -100,10 +125,7 @@ export function useBrasilApiLookup() {
 
     setGeocodeLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("brasil-api-lookup", {
-        body: { type: "geocode", value: params },
-      });
-
+      const { data, error } = await invokeEdgeFunction({ type: "geocode", value: params }, 10000);
       if (error || !data?.data || !data?.found) return null;
       return { latitude: data.data.latitude, longitude: data.data.longitude };
     } catch {
