@@ -590,16 +590,29 @@ export default function QAGerarPecaPage() {
     setArquivosAuxiliares(prev => prev.filter((_, i) => i !== index));
   };
 
+  // Upload queue to serialize uploads and prevent overwhelming the connection
+  const uploadQueueRef = useRef<Array<{ arq: ArquivoAuxiliar; index: number }>>([]);
+  const uploadRunningRef = useRef(false);
+
+  const processUploadQueue = async () => {
+    if (uploadRunningRef.current) return;
+    uploadRunningRef.current = true;
+    while (uploadQueueRef.current.length > 0) {
+      const item = uploadQueueRef.current.shift()!;
+      await startDocJob(item.arq, item.index);
+    }
+    uploadRunningRef.current = false;
+  };
+
   const handleChangeTipoDoc = (index: number, tipo: string) => {
     if (!tipo) return;
-    // Update tipo inline — we need the latest state for startDocJob
     setArquivosAuxiliares(prev => {
       const updated = prev.map((a, i) => i === index ? { ...a, tipo } : a);
-      // Trigger upload immediately using the updated item
       const arq = updated[index];
       if (arq && arq.stage === "pending") {
-        // Use microtask to let React commit the state first
-        queueMicrotask(() => void startDocJob({ ...arq, tipo }, index));
+        // Enqueue instead of firing all in parallel
+        uploadQueueRef.current.push({ arq: { ...arq, tipo }, index });
+        queueMicrotask(() => void processUploadQueue());
       }
       return updated;
     });
@@ -624,7 +637,6 @@ export default function QAGerarPecaPage() {
     let polls = 0;
 
     while (polls < MAX_POLLS) {
-      // Adaptive polling: fast at first (1s), slower after 30s (3s), even slower after 2min (5s)
       const interval = polls < 15 ? 1000 : polls < 40 ? 3000 : 5000;
       await new Promise(r => setTimeout(r, interval));
       polls++;
@@ -681,6 +693,7 @@ export default function QAGerarPecaPage() {
       setDocStage(index, "extracting", { docId, storagePath, etapaAtual: "extraindo_texto" });
       void pollDocumentStatus(docId, index, fileName);
     } catch (err: any) {
+      console.error(`[dispatchIngestion] ${fileName}:`, err);
       setDocStage(index, "failed", {
         docId,
         storagePath,
@@ -689,49 +702,74 @@ export default function QAGerarPecaPage() {
     }
   };
 
+  /** Helper: wrap a promise with a timeout */
+  const withTimeout = <T,>(promise: Promise<T>, ms: number, label: string): Promise<T> => {
+    return Promise.race([
+      promise,
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error(`Timeout: ${label} excedeu ${Math.round(ms/1000)}s`)), ms)),
+    ]);
+  };
+
   /** Upload file to storage, register document and start ingestion */
   const startDocJob = async (arq: ArquivoAuxiliar, index: number): Promise<string | null> => {
     if (arq.stage === "done" && arq.docId) return arq.docId;
     if (!arq.tipo) { toast.error("Selecione o tipo documental primeiro"); return null; }
 
     setDocStage(index, "uploading", { startedAt: Date.now(), error: undefined, etapaAtual: undefined });
+    console.log(`[startDocJob] Uploading ${arq.file.name} (${(arq.file.size / 1024).toFixed(0)}KB)...`);
 
     try {
       const safeName = sanitizeFileName(arq.file.name);
       const storagePath = `auxiliares/${Date.now()}_${crypto.randomUUID().slice(0, 8)}_${safeName}`;
 
-      const { error: upErr } = await supabase.storage.from("qa-documentos").upload(storagePath, arq.file);
-      if (upErr) throw new Error(`Upload falhou: ${upErr.message}`);
+      // Upload with 60s timeout
+      const uploadResult = await withTimeout(
+        supabase.storage.from("qa-documentos").upload(storagePath, arq.file) as Promise<{ data: any; error: any }>,
+        60000,
+        `upload ${arq.file.name}`
+      );
+      if (uploadResult.error) throw new Error(`Upload falhou: ${uploadResult.error.message}`);
+      console.log(`[startDocJob] Upload OK: ${storagePath}`);
 
-      const { data: docData, error: insertErr } = await supabase.from("qa_documentos_conhecimento" as any).insert({
-        titulo: arq.file.name.replace(/\.[^.]+$/, ""),
-        nome_arquivo: arq.file.name,
-        storage_path: storagePath,
-        mime_type: arq.file.type || null,
-        tamanho_bytes: arq.file.size,
-        enviado_por: user?.id || null,
-        tipo_documento: arq.tipo,
-        categoria: arq.tipo,
-        status_processamento: "pendente",
-        status_validacao: "validado",
-        tipo_origem: "arquivo_upload",
-        papel_documento: "auxiliar_caso",
-        ativo: true,
-        ativo_na_ia: false,
-        caso_id: casoId ?? null,
-      }).select("id").single();
+      // Insert document record with 15s timeout
+      const insertResult = await withTimeout(
+        supabase.from("qa_documentos_conhecimento" as any).insert({
+          titulo: arq.file.name.replace(/\.[^.]+$/, ""),
+          nome_arquivo: arq.file.name,
+          storage_path: storagePath,
+          mime_type: arq.file.type || null,
+          tamanho_bytes: arq.file.size,
+          enviado_por: user?.id || null,
+          tipo_documento: arq.tipo,
+          categoria: arq.tipo,
+          status_processamento: "pendente",
+          status_validacao: "validado",
+          tipo_origem: "arquivo_upload",
+          papel_documento: "auxiliar_caso",
+          ativo: true,
+          ativo_na_ia: false,
+          caso_id: casoId ?? null,
+        }).select("id").single() as unknown as Promise<{ data: any; error: any }>,
+        15000,
+        "registrar documento"
+      );
+      const { data: docData, error: insertErr } = insertResult;
 
       if (insertErr) {
+        console.error(`[startDocJob] Insert failed:`, insertErr);
         await supabase.storage.from("qa-documentos").remove([storagePath]).catch(() => undefined);
         throw new Error(`Erro ao registrar documento: ${insertErr.message}`);
       }
 
       const docId = (docData as any).id;
+      console.log(`[startDocJob] Doc registered: ${docId}`);
       setDocStage(index, "saved", { storagePath, docId, etapaAtual: "arquivo_confirmado" });
 
       void dispatchDocumentIngestion(index, storagePath, docId, arq.file.name);
       return docId;
     } catch (err: any) {
+      console.error(`[startDocJob] FAILED ${arq.file.name}:`, err);
+      toast.error(`${arq.file.name}: ${err.message || "Falha no upload"}`);
       setDocStage(index, "failed", { error: err.message || "Falha no upload" });
       return null;
     }
