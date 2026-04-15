@@ -458,10 +458,11 @@ export default function QABaseConhecimentoPage() {
   const handleReprocessFromQueue = async (item: TrackedImport) => {
     if (!user) return;
     try {
-      const { data: currentDoc } = await supabase.from("qa_documentos_conhecimento" as any)
+      const { data: rawDoc } = await supabase.from("qa_documentos_conhecimento" as any)
         .select("id, titulo, nome_arquivo, storage_path, mime_type, tamanho_bytes, tipo_documento, tipo_origem")
         .eq("id", item.doc_id)
         .maybeSingle();
+      const currentDoc = rawDoc as any;
 
       await supabase.from("qa_documentos_conhecimento" as any)
         .update({
