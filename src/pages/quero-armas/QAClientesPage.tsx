@@ -1307,21 +1307,35 @@ export default function QAClientesPage() {
   return (
     <div className="space-y-4 md:space-y-5 max-w-7xl mx-auto px-1">
       {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-lg md:text-2xl font-bold tracking-tight" style={{ color: "hsl(220 20% 18%)" }}>
-            CLIENTES
-          </h1>
-          <p className="text-xs md:text-sm mt-0.5" style={{ color: "hsl(220 10% 62%)" }}>
-            {clientes.length} cadastrados • {cadastrosPublicos.length} formulários
-          </p>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center justify-between w-full sm:w-auto">
+          <div>
+            <h1 className="text-lg md:text-2xl font-bold tracking-tight" style={{ color: "hsl(220 20% 18%)" }}>
+              CLIENTES
+            </h1>
+            <p className="text-xs md:text-sm mt-0.5" style={{ color: "hsl(220 10% 62%)" }}>
+              {clientes.length} cadastrados • {cadastrosPublicos.length} formulários
+            </p>
+          </div>
+          <div className="flex items-center gap-2 sm:hidden">
+            <Button variant="ghost" size="sm" onClick={exportClientes} className="h-8 px-2 text-[11px]" style={{ color: "hsl(220 10% 46%)" }}>
+              <Download className="h-3.5 w-3.5 mr-1" /> CSV
+            </Button>
+          </div>
         </div>
-        <div className="flex gap-2">
+        {/* Mobile: full-width primary CTA */}
+        <button onClick={() => { setEditingCliente(null); setClienteModal(true); }}
+          className="flex sm:hidden items-center justify-center gap-1.5 w-full h-10 rounded-xl text-xs font-bold tracking-wide"
+          style={{ background: "hsl(230 80% 56%)", color: "#fff" }}>
+          <Plus className="h-4 w-4" /> NOVO CLIENTE
+        </button>
+        {/* Desktop: inline actions */}
+        <div className="hidden sm:flex gap-2">
           <Button variant="ghost" size="sm" onClick={exportClientes} className="h-8 px-2.5 text-[11px]" style={{ color: "hsl(220 10% 46%)" }}>
             <Download className="h-3.5 w-3.5 mr-1" /> CSV
           </Button>
           <button onClick={() => { setEditingCliente(null); setClienteModal(true); }}
-            className="qa-btn-primary flex items-center gap-1.5 no-glow h-8 px-3 text-[11px] font-semibold">
+            className="qa-btn-primary flex items-center gap-1.5 h-8 px-3 text-[11px] font-semibold">
             <Plus className="h-3.5 w-3.5" /> NOVO CLIENTE
           </button>
         </div>
