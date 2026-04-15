@@ -723,16 +723,16 @@ export default function QAGerarPecaPage() {
       const storagePath = `auxiliares/${Date.now()}_${crypto.randomUUID().slice(0, 8)}_${safeName}`;
 
       // Upload with 60s timeout
-      const { error: upErr } = await withTimeout(
-        supabase.storage.from("qa-documentos").upload(storagePath, arq.file),
+      const uploadResult = await withTimeout(
+        supabase.storage.from("qa-documentos").upload(storagePath, arq.file) as Promise<{ data: any; error: any }>,
         60000,
         `upload ${arq.file.name}`
       );
-      if (upErr) throw new Error(`Upload falhou: ${upErr.message}`);
+      if (uploadResult.error) throw new Error(`Upload falhou: ${uploadResult.error.message}`);
       console.log(`[startDocJob] Upload OK: ${storagePath}`);
 
       // Insert document record with 15s timeout
-      const { data: docData, error: insertErr } = await withTimeout(
+      const insertResult = await withTimeout(
         supabase.from("qa_documentos_conhecimento" as any).insert({
           titulo: arq.file.name.replace(/\.[^.]+$/, ""),
           nome_arquivo: arq.file.name,
@@ -749,10 +749,11 @@ export default function QAGerarPecaPage() {
           ativo: true,
           ativo_na_ia: false,
           caso_id: casoId ?? null,
-        }).select("id").single(),
+        }).select("id").single() as unknown as Promise<{ data: any; error: any }>,
         15000,
         "registrar documento"
       );
+      const { data: docData, error: insertErr } = insertResult;
 
       if (insertErr) {
         console.error(`[startDocJob] Insert failed:`, insertErr);
