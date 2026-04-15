@@ -109,9 +109,9 @@ function SectionHeader({ icon: Icon, title, color, action, onAction }: {
 /* ─── Stat Pill ─── */
 function StatPill({ label, value, color }: { label: string; value: string | number; color: string }) {
   return (
-    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border" style={{ borderColor: `${color}30`, background: `${color}08` }}>
-      <span className="text-[10px] font-medium" style={{ color: "hsl(220 10% 50%)" }}>{label}</span>
-      <span className="text-[11px] font-bold" style={{ color }}>{value}</span>
+    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border" style={{ borderColor: `${color}30`, background: `${color}08` }}>
+      <span className="text-[9px] md:text-[10px] font-medium" style={{ color: "hsl(220 10% 50%)" }}>{label}</span>
+      <span className="text-[10px] md:text-[11px] font-bold" style={{ color }}>{value}</span>
     </div>
   );
 }
@@ -169,51 +169,49 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
   const statusColor = cliente.status === "ATIVO" ? "hsl(152 60% 42%)" : "hsl(38 92% 50%)";
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 md:space-y-5">
       {/* ═══ STRATEGIC HEADER ═══ */}
       <div className="qa-card overflow-hidden">
         <div className="h-1 w-full" style={{ background: "linear-gradient(90deg, hsl(230 80% 56%), hsl(262 60% 55%), hsl(190 80% 42%))" }} />
-        <div className="p-5">
-          <div className="flex flex-col md:flex-row md:items-start gap-4">
+        <div className="p-4 md:p-5">
+          <div className="flex items-start gap-3 md:gap-4">
             {/* Avatar & Name */}
-            <div className="flex items-center gap-4 flex-1 min-w-0">
-              <div className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0" style={{ background: "hsl(230 80% 96%)" }}>
-                <User className="h-6 w-6" style={{ color: "hsl(230 80% 56%)" }} />
-              </div>
-              <div className="min-w-0">
-                <h2 className="text-lg font-bold truncate" style={{ color: "hsl(220 20% 18%)" }}>{cliente.nome_completo}</h2>
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: `${statusColor}14`, color: statusColor }}>
-                    {statusText}
-                  </span>
-                  {cliente.cpf && <span className="text-[11px] font-mono" style={{ color: "hsl(220 10% 55%)" }}>CPF: {cliente.cpf}</span>}
-                  {cadastro?.numero_cr && <span className="text-[11px] font-mono" style={{ color: "hsl(262 60% 55%)" }}>CR: {cadastro.numero_cr}</span>}
-                </div>
-              </div>
+            <div className="w-11 h-11 md:w-14 md:h-14 rounded-xl md:rounded-2xl flex items-center justify-center shrink-0" style={{ background: "hsl(230 80% 96%)" }}>
+              <User className="h-5 w-5 md:h-6 md:w-6" style={{ color: "hsl(230 80% 56%)" }} />
             </div>
-            {/* Contact pills */}
-            <div className="flex flex-wrap gap-2 shrink-0">
-              {cliente.celular && (
-                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-medium" style={{ background: "hsl(220 15% 96%)", color: "hsl(220 10% 46%)" }}>
-                  <Phone className="h-3 w-3" /> {cliente.celular}
-                </div>
-              )}
-              {cliente.email && (
-                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-medium truncate max-w-[200px]" style={{ background: "hsl(220 15% 96%)", color: "hsl(220 10% 46%)" }}>
-                  <Mail className="h-3 w-3" /> {cliente.email}
-                </div>
-              )}
-              {cliente.cidade && (
-                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-medium" style={{ background: "hsl(220 15% 96%)", color: "hsl(220 10% 46%)" }}>
-                  <MapPin className="h-3 w-3" /> {cliente.cidade}/{cliente.estado}
-                </div>
-              )}
+            <div className="flex-1 min-w-0">
+              <h2 className="text-[15px] md:text-lg font-bold truncate" style={{ color: "hsl(220 20% 18%)" }}>{cliente.nome_completo}</h2>
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
+                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{ background: `${statusColor}14`, color: statusColor }}>
+                  {statusText}
+                </span>
+                {cliente.cpf && <span className="text-[10px] font-mono" style={{ color: "hsl(220 10% 55%)" }}>CPF: {cliente.cpf}</span>}
+                {cadastro?.numero_cr && <span className="text-[10px] font-mono" style={{ color: "hsl(262 60% 55%)" }}>CR: {cadastro.numero_cr}</span>}
+              </div>
             </div>
           </div>
+          {/* Contact pills — stacked on mobile */}
+          <div className="flex flex-wrap gap-1.5 mt-3">
+            {cliente.celular && (
+              <div className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium" style={{ background: "hsl(220 15% 96%)", color: "hsl(220 10% 46%)" }}>
+                <Phone className="h-2.5 w-2.5" /> {cliente.celular}
+              </div>
+            )}
+            {cliente.email && (
+              <div className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium truncate max-w-[180px] md:max-w-[200px]" style={{ background: "hsl(220 15% 96%)", color: "hsl(220 10% 46%)" }}>
+                <Mail className="h-2.5 w-2.5 shrink-0" /> {cliente.email}
+              </div>
+            )}
+            {cliente.cidade && (
+              <div className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium" style={{ background: "hsl(220 15% 96%)", color: "hsl(220 10% 46%)" }}>
+                <MapPin className="h-2.5 w-2.5" /> {cliente.cidade}/{cliente.estado}
+              </div>
+            )}
+          </div>
           {/* Quick stats row */}
-          <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t" style={{ borderColor: "hsl(220 13% 94%)" }}>
+          <div className="flex flex-wrap gap-1.5 md:gap-2 mt-3 pt-3 border-t" style={{ borderColor: "hsl(220 13% 94%)" }}>
             <StatPill label="Serviços" value={analysis.totalServicos} color="hsl(230 80% 56%)" />
-            <StatPill label="Em Andamento" value={analysis.emAndamento} color="hsl(38 92% 50%)" />
+            <StatPill label="Andamento" value={analysis.emAndamento} color="hsl(38 92% 50%)" />
             <StatPill label="Concluídos" value={analysis.concluidos} color="hsl(152 60% 42%)" />
             <StatPill label="Armas" value={analysis.totalArmas} color="hsl(262 60% 55%)" />
             <StatPill label="Investido" value={formatCurrency(analysis.totalVendas)} color="hsl(220 20% 25%)" />
@@ -237,16 +235,16 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
               {analysis.alerts.slice(0, 6).map((a, i) => {
                 const Icon = urgencyIcon(a.days);
                 return (
-                  <div key={i} className={`flex items-center gap-3 px-3 py-2 rounded-lg border ${urgencyBg(a.days)}`}>
-                    <Icon className={`h-3.5 w-3.5 shrink-0 ${urgencyColor(a.days)}`} />
+                  <div key={i} className={`flex items-start gap-2.5 px-3 py-2 rounded-lg border ${urgencyBg(a.days)}`}>
+                    <Icon className={`h-3.5 w-3.5 shrink-0 mt-0.5 ${urgencyColor(a.days)}`} />
                     <div className="flex-1 min-w-0">
-                      <span className="text-[11px] font-medium" style={{ color: "hsl(220 20% 18%)" }}>{a.label}</span>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-[10px]" style={{ color: "hsl(220 10% 50%)" }}>{formatDate(a.date)}</span>
-                      <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${urgencyColor(a.days)}`}>
-                        {urgencyLabel(a.days)}
-                      </span>
+                      <span className="text-[11px] font-medium block truncate" style={{ color: "hsl(220 20% 18%)" }}>{a.label}</span>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-[10px]" style={{ color: "hsl(220 10% 50%)" }}>{formatDate(a.date)}</span>
+                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${urgencyColor(a.days)}`}>
+                          {urgencyLabel(a.days)}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 );
@@ -257,33 +255,33 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
       )}
 
       {/* ═══ KPI CARDS ═══ */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 gap-2.5 md:gap-3 lg:grid-cols-4">
         {[
-          { icon: ShoppingBag, label: "SERVIÇOS CONTRATADOS", value: analysis.totalServicos, sub: `${analysis.concluidos} concluídos`, color: "hsl(230 80% 56%)", tab: "servicos" },
-          { icon: Activity, label: "EM ANDAMENTO", value: analysis.emAndamento, sub: analysis.cancelados > 0 ? `${analysis.cancelados} cancelados` : "nenhum cancelado", color: "hsl(38 92% 50%)", tab: "servicos" },
-          { icon: Crosshair, label: "ARMAS REGISTRADAS", value: analysis.totalArmas, sub: `${crafs.length} CRAFs · ${gtes.length} GTEs`, color: "hsl(262 60% 55%)", tab: "armas" },
-          { icon: DollarSign, label: "TOTAL INVESTIDO", value: formatCurrency(analysis.totalVendas), sub: analysis.totalDescontos > 0 ? `${formatCurrency(analysis.totalDescontos)} em descontos` : "sem descontos", color: "hsl(152 60% 42%)", tab: "servicos" },
+          { icon: ShoppingBag, label: "SERVIÇOS", value: analysis.totalServicos, sub: `${analysis.concluidos} concluídos`, color: "hsl(230 80% 56%)", tab: "servicos" },
+          { icon: Activity, label: "ANDAMENTO", value: analysis.emAndamento, sub: analysis.cancelados > 0 ? `${analysis.cancelados} cancel.` : "nenhum cancel.", color: "hsl(38 92% 50%)", tab: "servicos" },
+          { icon: Crosshair, label: "ARMAS", value: analysis.totalArmas, sub: `${crafs.length} CRAFs · ${gtes.length} GTEs`, color: "hsl(262 60% 55%)", tab: "armas" },
+          { icon: DollarSign, label: "INVESTIDO", value: formatCurrency(analysis.totalVendas), sub: analysis.totalDescontos > 0 ? `${formatCurrency(analysis.totalDescontos)} desc.` : "sem descontos", color: "hsl(152 60% 42%)", tab: "servicos" },
         ].map((c) => {
           const Icon = c.icon;
           return (
             <button key={c.label} onClick={() => onNavigate(c.tab)}
-              className="qa-card p-4 text-left hover:shadow-md transition-all duration-200 group relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-16 h-16 rounded-full opacity-[0.04]" style={{ background: c.color, transform: "translate(30%, -30%)" }} />
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-3" style={{ background: `${c.color}12` }}>
-                <Icon className="h-4 w-4" style={{ color: c.color }} />
+              className="qa-card p-3 md:p-4 text-left hover:shadow-md active:scale-[0.98] transition-all group relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-12 h-12 rounded-full opacity-[0.04]" style={{ background: c.color, transform: "translate(30%, -30%)" }} />
+              <div className="w-7 h-7 md:w-9 md:h-9 rounded-lg md:rounded-xl flex items-center justify-center mb-2 md:mb-3" style={{ background: `${c.color}12` }}>
+                <Icon className="h-3.5 w-3.5 md:h-4 md:w-4" style={{ color: c.color }} />
               </div>
-              <div className="text-xl font-bold tracking-tight" style={{ color: "hsl(220 20% 18%)" }}>
+              <div className="text-lg md:text-xl font-bold tracking-tight" style={{ color: "hsl(220 20% 18%)" }}>
                 {c.value}
               </div>
-              <div className="text-[10px] font-bold tracking-[0.1em] mt-0.5" style={{ color: c.color }}>{c.label}</div>
-              <div className="text-[10px] mt-1" style={{ color: "hsl(220 10% 58%)" }}>{c.sub}</div>
+              <div className="text-[9px] md:text-[10px] font-bold tracking-[0.1em] mt-0.5" style={{ color: c.color }}>{c.label}</div>
+              <div className="text-[9px] md:text-[10px] mt-0.5" style={{ color: "hsl(220 10% 58%)" }}>{c.sub}</div>
             </button>
           );
         })}
       </div>
 
       {/* ═══ STEP FLOW / SERVICES ═══ */}
-      <div className="qa-card p-5">
+      <div className="qa-card p-4 md:p-5">
         <SectionHeader icon={Target} title="Serviços e Andamento" color="hsl(230 80% 56%)" action="Ver Todos" onAction={() => onNavigate("servicos")} />
         {itens.length === 0 ? (
           <div className="text-center py-10 text-sm" style={{ color: "hsl(220 10% 62%)" }}>Nenhum serviço contratado ainda.</div>
@@ -339,28 +337,28 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
       </div>
 
       {/* ═══ DOCUMENTS & EXPIRATIONS ═══ */}
-      <div className="qa-card p-5">
+      <div className="qa-card p-4 md:p-5">
         <SectionHeader icon={Calendar} title="Documentos e Validades" color="hsl(262 60% 55%)" action="Gerenciar" onAction={() => onNavigate("cr")} />
         {analysis.expDocs.length === 0 ? (
           <div className="text-center py-8 text-sm" style={{ color: "hsl(220 10% 62%)" }}>Nenhum documento com validade cadastrado.</div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             {analysis.expDocs.map((doc, i) => {
               const Icon = urgencyIcon(doc.days);
               return (
-                <div key={i} className={`flex items-center gap-3 py-2.5 px-3 rounded-xl border ${urgencyBg(doc.days)} transition-all`}>
-                  <Icon className={`h-4 w-4 shrink-0 ${urgencyColor(doc.days)}`} />
+                <div key={i} className={`flex items-start gap-2.5 py-2 px-3 rounded-xl border ${urgencyBg(doc.days)} transition-all`}>
+                  <Icon className={`h-3.5 w-3.5 shrink-0 mt-0.5 ${urgencyColor(doc.days)}`} />
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-white/70 shrink-0" style={{ color: "hsl(220 10% 46%)" }}>{doc.category}</span>
-                      <span className="text-[11px] font-semibold truncate" style={{ color: "hsl(220 20% 18%)" }}>{doc.label}</span>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-white/70 shrink-0 uppercase" style={{ color: "hsl(220 10% 46%)" }}>{doc.category}</span>
+                      <span className="text-[10px] md:text-[11px] font-semibold truncate" style={{ color: "hsl(220 20% 18%)" }}>{doc.label}</span>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    <span className="text-[10px] font-mono" style={{ color: "hsl(220 10% 50%)" }}>{formatDate(doc.date)}</span>
-                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${urgencyColor(doc.days)} bg-white/60`}>
-                      {urgencyLabel(doc.days)}
-                    </span>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-[9px] font-mono" style={{ color: "hsl(220 10% 50%)" }}>{formatDate(doc.date)}</span>
+                      <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${urgencyColor(doc.days)} bg-white/60`}>
+                        {urgencyLabel(doc.days)}
+                      </span>
+                    </div>
                   </div>
                 </div>
               );
@@ -439,42 +437,42 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
       )}
 
       {/* ═══ QUICK ACCESS ═══ */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-        <button onClick={() => onNavigate("cr")} className="qa-card p-4 text-left hover:shadow-md transition-all group">
-          <div className="flex items-center gap-2 mb-2">
-            <Shield className="h-4 w-4" style={{ color: "hsl(262 60% 55%)" }} />
-            <span className="text-[10px] uppercase tracking-wider font-bold" style={{ color: "hsl(262 60% 55%)" }}>CR</span>
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 md:gap-3">
+        <button onClick={() => onNavigate("cr")} className="qa-card p-3 md:p-4 text-left hover:shadow-md active:scale-[0.98] transition-all group">
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <Shield className="h-3.5 w-3.5" style={{ color: "hsl(262 60% 55%)" }} />
+            <span className="text-[9px] uppercase tracking-wider font-bold" style={{ color: "hsl(262 60% 55%)" }}>CR</span>
           </div>
           {cadastro ? (
             <>
-              <div className="text-[12px] font-medium" style={{ color: "hsl(220 20% 18%)" }}>
-                CR: {cadastro.numero_cr || "Sem número"}
+              <div className="text-[11px] font-medium" style={{ color: "hsl(220 20% 18%)" }}>
+                CR: {cadastro.numero_cr || "Sem nº"}
               </div>
-              <div className={`text-[10px] font-bold mt-1 ${urgencyColor(daysUntil(cadastro.validade_cr))}`}>
-                {cadastro.validade_cr ? `Validade: ${formatDate(cadastro.validade_cr)}` : "Sem validade"}
+              <div className={`text-[9px] font-bold mt-0.5 ${urgencyColor(daysUntil(cadastro.validade_cr))}`}>
+                {cadastro.validade_cr ? `Val: ${formatDate(cadastro.validade_cr)}` : "Sem validade"}
               </div>
             </>
           ) : (
-            <div className="text-[11px]" style={{ color: "hsl(220 10% 62%)" }}>Não cadastrado</div>
+            <div className="text-[10px]" style={{ color: "hsl(220 10% 62%)" }}>Não cadastrado</div>
           )}
         </button>
 
-        <button onClick={() => onNavigate("armas")} className="qa-card p-4 text-left hover:shadow-md transition-all group">
-          <div className="flex items-center gap-2 mb-2">
-            <Crosshair className="h-4 w-4" style={{ color: "hsl(190 80% 42%)" }} />
-            <span className="text-[10px] uppercase tracking-wider font-bold" style={{ color: "hsl(190 80% 42%)" }}>ARMAS</span>
+        <button onClick={() => onNavigate("armas")} className="qa-card p-3 md:p-4 text-left hover:shadow-md active:scale-[0.98] transition-all group">
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <Crosshair className="h-3.5 w-3.5" style={{ color: "hsl(190 80% 42%)" }} />
+            <span className="text-[9px] uppercase tracking-wider font-bold" style={{ color: "hsl(190 80% 42%)" }}>ARMAS</span>
           </div>
-          <div className="text-[12px] font-medium" style={{ color: "hsl(220 20% 18%)" }}>
+          <div className="text-[11px] font-medium" style={{ color: "hsl(220 20% 18%)" }}>
             {crafs.length} CRAFs · {gtes.length} GTEs
           </div>
         </button>
 
-        <button onClick={() => onNavigate("dados")} className="qa-card p-4 text-left hover:shadow-md transition-all group">
-          <div className="flex items-center gap-2 mb-2">
-            <Eye className="h-4 w-4" style={{ color: "hsl(38 92% 50%)" }} />
-            <span className="text-[10px] uppercase tracking-wider font-bold" style={{ color: "hsl(38 92% 50%)" }}>FILIAÇÕES</span>
+        <button onClick={() => onNavigate("dados")} className="qa-card p-3 md:p-4 text-left hover:shadow-md active:scale-[0.98] transition-all group">
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <Eye className="h-3.5 w-3.5" style={{ color: "hsl(38 92% 50%)" }} />
+            <span className="text-[9px] uppercase tracking-wider font-bold" style={{ color: "hsl(38 92% 50%)" }}>FILIAÇÕES</span>
           </div>
-          <div className="text-[12px] font-medium" style={{ color: "hsl(220 20% 18%)" }}>
+          <div className="text-[11px] font-medium" style={{ color: "hsl(220 20% 18%)" }}>
             {filiacoes.length} {filiacoes.length === 1 ? "filiação" : "filiações"}
           </div>
         </button>

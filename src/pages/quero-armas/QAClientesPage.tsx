@@ -600,55 +600,56 @@ export default function QAClientesPage() {
   if (selected) {
     const c = selected;
     return (
-      <div className="space-y-4">
-        {/* Header */}
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={() => setSelected(null)} className="text-slate-500 hover:text-slate-700 h-8 px-2">
+      <div className="space-y-3 md:space-y-4 px-0.5">
+        {/* Header — mobile-optimized */}
+        <div className="flex items-start gap-2.5">
+          <Button variant="ghost" size="sm" onClick={() => setSelected(null)} className="text-slate-500 hover:text-slate-700 h-8 w-8 p-0 shrink-0 mt-0.5 rounded-xl border" style={{ borderColor: "hsl(220 13% 90%)" }}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <div className="flex-1 min-w-0">
-            <h1 className="text-base font-semibold text-slate-800 truncate">{c.nome_completo}</h1>
-            <div className="flex items-center gap-2 text-xs">
-              <span className={statusColor(c.status)}>{c.status}</span>
-              <span className="text-slate-300">•</span>
-              <span className="text-slate-500">CPF: {formatCpf(c.cpf)}</span>
-              {c.cliente_lions && <span className="text-amber-500">🦁 Lions</span>}
+            <h1 className="text-[15px] md:text-base font-bold truncate" style={{ color: "hsl(220 20% 18%)" }}>{c.nome_completo}</h1>
+            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+              <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase ${statusColor(c.status)}`} style={{ background: c.status === "ATIVO" ? "hsl(152 60% 95%)" : c.status === "DESISTENTE" ? "hsl(0 60% 95%)" : "hsl(38 80% 95%)" }}>
+                {c.status}
+              </span>
+              <span className="text-[10px] font-mono" style={{ color: "hsl(220 10% 55%)" }}>CPF: {formatCpf(c.cpf)}</span>
+              {c.cliente_lions && <span className="text-[10px]">🦁</span>}
             </div>
           </div>
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="sm" onClick={() => { setEditingCliente(c); setClienteModal(true); }} className="h-8 px-2 text-slate-500 hover:text-slate-700">
-              <Edit className="h-4 w-4" />
+          <div className="flex items-center gap-0.5 shrink-0">
+            <Button variant="ghost" size="sm" onClick={() => { setEditingCliente(c); setClienteModal(true); }} className="h-8 w-8 p-0 text-slate-500 hover:text-slate-700 rounded-xl">
+              <Edit className="h-3.5 w-3.5" />
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => setDeleteModal({ open: true, table: "qa_clientes", id: c.id, title: "Excluir Cliente", desc: `Excluir "${c.nome_completo}" e todos os dados vinculados?` })} className="h-8 px-2 text-slate-400 hover:text-red-500">
-              <Trash2 className="h-4 w-4" />
+            <Button variant="ghost" size="sm" onClick={() => setDeleteModal({ open: true, table: "qa_clientes", id: c.id, title: "Excluir Cliente", desc: `Excluir "${c.nome_completo}" e todos os dados vinculados?` })} className="h-8 w-8 p-0 text-slate-300 hover:text-red-500 rounded-xl">
+              <Trash2 className="h-3.5 w-3.5" />
             </Button>
           </div>
         </div>
 
         <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="bg-white border border-slate-200 h-9 w-full flex-wrap rounded-xl shadow-sm">
-            <TabsTrigger value="resumo" className="text-xs flex-1 data-[state=active]:bg-slate-800 data-[state=active]:text-white rounded-lg">
-              <TrendingUp className="h-3.5 w-3.5 mr-1" /> Resumo
-            </TabsTrigger>
-            <TabsTrigger value="dados" className="text-xs flex-1 data-[state=active]:bg-slate-800 data-[state=active]:text-white rounded-lg">
-              <User className="h-3.5 w-3.5 mr-1" /> Dados
-            </TabsTrigger>
-            <TabsTrigger value="servicos" className="text-xs flex-1 data-[state=active]:bg-slate-800 data-[state=active]:text-white rounded-lg">
-              <FileText className="h-3.5 w-3.5 mr-1" /> Serviços ({itens.length})
-            </TabsTrigger>
-            <TabsTrigger value="armas" className="text-xs flex-1 data-[state=active]:bg-slate-800 data-[state=active]:text-white rounded-lg">
-              <Crosshair className="h-3.5 w-3.5 mr-1" /> Armas ({crafs.length + gtes.length})
-            </TabsTrigger>
-            <TabsTrigger value="cr" className="text-xs flex-1 data-[state=active]:bg-slate-800 data-[state=active]:text-white rounded-lg">
-              <Shield className="h-3.5 w-3.5 mr-1" /> CR
-            </TabsTrigger>
-            <TabsTrigger value="docs" className="text-xs flex-1 data-[state=active]:bg-slate-800 data-[state=active]:text-white rounded-lg">
-              <FileDown className="h-3.5 w-3.5 mr-1" /> Docs
-            </TabsTrigger>
-          </TabsList>
+          {/* Scrollable tabs for mobile */}
+          <div className="overflow-x-auto -mx-0.5 px-0.5 scrollbar-none">
+            <TabsList className="bg-white border border-slate-200 h-9 inline-flex w-auto min-w-full rounded-xl shadow-sm p-0.5 gap-0.5">
+              {[
+                { value: "resumo", icon: TrendingUp, label: "Resumo" },
+                { value: "dados", icon: User, label: "Dados" },
+                { value: "servicos", icon: FileText, label: `Serviços (${itens.length})` },
+                { value: "armas", icon: Crosshair, label: `Armas (${crafs.length + gtes.length})` },
+                { value: "cr", icon: Shield, label: "CR" },
+                { value: "docs", icon: FileDown, label: "Docs" },
+              ].map(t => (
+                <TabsTrigger key={t.value} value={t.value} className="text-[10px] whitespace-nowrap px-2.5 data-[state=active]:bg-slate-800 data-[state=active]:text-white rounded-lg font-semibold">
+                  <t.icon className="h-3 w-3 mr-1" /> {t.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
 
           {loadingSub ? (
-            <div className="flex justify-center py-12"><Loader2 className="h-5 w-5 animate-spin text-slate-400" /></div>
+            <div className="flex flex-col items-center justify-center py-12 gap-2">
+              <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
+              <span className="text-[10px] uppercase tracking-wider" style={{ color: "hsl(220 10% 62%)" }}>Carregando...</span>
+            </div>
           ) : (
             <>
               {/* RESUMO */}
@@ -1299,36 +1300,36 @@ export default function QAClientesPage() {
 
   // ── List View ──
   return (
-    <div className="space-y-5 max-w-7xl mx-auto">
+    <div className="space-y-4 md:space-y-5 max-w-7xl mx-auto px-1">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold tracking-tight" style={{ color: "hsl(220 20% 18%)" }}>
-            Clientes
+          <h1 className="text-lg md:text-2xl font-bold tracking-tight" style={{ color: "hsl(220 20% 18%)" }}>
+            CLIENTES
           </h1>
-          <p className="text-sm mt-0.5" style={{ color: "hsl(220 10% 62%)" }}>
-            {clientes.length} cadastrados • {cadastrosPublicos.length} formulários recebidos
+          <p className="text-xs md:text-sm mt-0.5" style={{ color: "hsl(220 10% 62%)" }}>
+            {clientes.length} cadastrados • {cadastrosPublicos.length} formulários
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="ghost" size="sm" onClick={exportClientes} className="h-9 px-3 text-xs" style={{ color: "hsl(220 10% 46%)" }}>
-            <Download className="h-3.5 w-3.5 mr-1.5" /> CSV
+          <Button variant="ghost" size="sm" onClick={exportClientes} className="h-8 px-2.5 text-[11px]" style={{ color: "hsl(220 10% 46%)" }}>
+            <Download className="h-3.5 w-3.5 mr-1" /> CSV
           </Button>
           <button onClick={() => { setEditingCliente(null); setClienteModal(true); }}
-            className="qa-btn-primary flex items-center gap-1.5 no-glow h-9 px-4 text-xs">
-            <Plus className="h-3.5 w-3.5" /> Novo Cliente
+            className="qa-btn-primary flex items-center gap-1.5 no-glow h-8 px-3 text-[11px] font-semibold">
+            <Plus className="h-3.5 w-3.5" /> NOVO CLIENTE
           </button>
         </div>
       </div>
 
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "hsl(220 10% 62%)" }} />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "hsl(220 10% 62%)" }} />
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Buscar por nome, CPF, telefone ou e-mail..."
-          className="w-full h-11 pl-10 pr-4 rounded-xl border text-sm outline-none transition-all focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
+          className="w-full h-10 pl-9 pr-4 rounded-xl border text-[13px] outline-none transition-all focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
           style={{ background: "hsl(0 0% 100%)", borderColor: "hsl(220 13% 88%)", color: "hsl(220 20% 18%)" }}
         />
       </div>
@@ -1337,63 +1338,78 @@ export default function QAClientesPage() {
       <div className="flex gap-1 p-1 rounded-xl" style={{ background: "hsl(220 20% 96%)" }}>
         <button
           onClick={() => setTabView("clientes")}
-          className="flex-1 py-2 px-4 rounded-lg text-xs font-medium transition-all"
+          className="flex-1 py-2 px-3 rounded-lg text-[11px] font-semibold transition-all"
           style={{
             background: tabView === "clientes" ? "hsl(0 0% 100%)" : "transparent",
             color: tabView === "clientes" ? "hsl(220 20% 18%)" : "hsl(220 10% 55%)",
             boxShadow: tabView === "clientes" ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
           }}>
-          <User className="h-3.5 w-3.5 inline mr-1.5" /> Clientes ({filtered.length})
+          <User className="h-3.5 w-3.5 inline mr-1" /> CLIENTES ({filtered.length})
         </button>
         <button
           onClick={() => setTabView("cadastros")}
-          className="flex-1 py-2 px-4 rounded-lg text-xs font-medium transition-all"
+          className="flex-1 py-2 px-3 rounded-lg text-[11px] font-semibold transition-all"
           style={{
             background: tabView === "cadastros" ? "hsl(0 0% 100%)" : "transparent",
             color: tabView === "cadastros" ? "hsl(220 20% 18%)" : "hsl(220 10% 55%)",
             boxShadow: tabView === "cadastros" ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
           }}>
-          <FileText className="h-3.5 w-3.5 inline mr-1.5" /> Cadastros Públicos ({filteredCadastros.length})
+          <FileText className="h-3.5 w-3.5 inline mr-1" /> CADASTROS ({filteredCadastros.length})
         </button>
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-16">
+        <div className="flex flex-col items-center justify-center py-16 gap-3">
           <div className="w-8 h-8 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" />
+          <span className="text-[11px] uppercase tracking-wider" style={{ color: "hsl(220 10% 62%)" }}>Carregando...</span>
         </div>
       ) : tabView === "clientes" ? (
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           {filtered.length === 0 && <div className="text-center py-12 text-sm" style={{ color: "hsl(220 10% 62%)" }}>Nenhum cliente encontrado.</div>}
           {filtered.map(c => (
             <button key={c.id} onClick={() => openClient(c)}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-all hover:shadow-sm text-left group qa-card"
+              className="w-full flex items-start gap-3 px-3 py-3 md:px-4 rounded-xl border transition-all hover:shadow-sm active:scale-[0.99] text-left group qa-card"
               style={{ borderColor: "hsl(220 13% 93%)" }}>
-              <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: "hsl(230 80% 96%)" }}>
+              {/* Avatar */}
+              <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5" style={{ background: "hsl(230 80% 96%)" }}>
                 <User className="h-4 w-4" style={{ color: "hsl(230 80% 56%)" }} />
               </div>
+              {/* Content */}
               <div className="flex-1 min-w-0">
-                <div className="text-[13px] font-medium truncate" style={{ color: "hsl(220 20% 18%)" }}>{c.nome_completo}</div>
-                <div className="flex items-center gap-2 text-[11px]" style={{ color: "hsl(220 10% 55%)" }}>
-                   <span>{formatCpf(c.cpf)}</span>
-                  <span>•</span>
-                  <span>{c.celular || "—"}</span>
-                  <span>•</span>
-                  <span>{c.cidade || "—"}/{c.estado || "—"}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[13px] font-semibold truncate" style={{ color: "hsl(220 20% 18%)" }}>{c.nome_completo}</span>
+                  {c.cliente_lions && <span className="text-[10px] shrink-0">🦁</span>}
+                </div>
+                <div className="text-[11px] mt-0.5 font-mono" style={{ color: "hsl(220 10% 55%)" }}>
+                  {formatCpf(c.cpf)}
+                </div>
+                <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                  {c.celular && (
+                    <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-md" style={{ background: "hsl(220 15% 96%)", color: "hsl(220 10% 50%)" }}>
+                      <Phone className="h-2.5 w-2.5" /> {c.celular}
+                    </span>
+                  )}
+                  {c.cidade && (
+                    <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-md" style={{ background: "hsl(220 15% 96%)", color: "hsl(220 10% 50%)" }}>
+                      <MapPin className="h-2.5 w-2.5" /> {c.cidade}/{c.estado}
+                    </span>
+                  )}
                 </div>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
-                {c.cliente_lions && <span className="text-xs">🦁</span>}
-                <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${statusColor(c.status)}`}>{c.status}</span>
+              {/* Status & actions */}
+              <div className="flex flex-col items-end gap-1.5 shrink-0">
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${statusColor(c.status)}`} style={{ background: c.status === "ATIVO" ? "hsl(152 60% 95%)" : c.status === "DESISTENTE" ? "hsl(0 60% 95%)" : "hsl(38 80% 95%)" }}>
+                  {c.status}
+                </span>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     setDeleteModal({ open: true, table: "qa_clientes", id: c.id, title: "Excluir Cliente", desc: `Excluir "${c.nome_completo}" e todos os dados vinculados (vendas, armas, filiações)?` });
                   }}
-                  className="h-7 w-7 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all"
+                  className="h-6 w-6 rounded-lg flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all md:opacity-0 md:group-hover:opacity-100"
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
+                  <Trash2 className="h-3 w-3" />
                 </button>
-                <Eye className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: "hsl(220 10% 62%)" }} />
               </div>
             </button>
           ))}
