@@ -20,6 +20,7 @@ export default function QAJurisprudenciaPage() {
   const [tabMode, setTabMode] = useState<TabMode>("manual");
   const [file, setFile] = useState<File | null>(null);
   const [linkUrl, setLinkUrl] = useState("");
+  const [progressMsg, setProgressMsg] = useState("");
   const [form, setForm] = useState({
     tribunal: "", numero_processo: "", relator: "", orgao_julgador: "",
     data_julgamento: "", tema: "", ementa_resumida: "", tese_aplicavel: "",
@@ -44,6 +45,7 @@ export default function QAJurisprudenciaPage() {
     setFile(null);
     setLinkUrl("");
     setTabMode("manual");
+    setProgressMsg("");
   };
 
   const handleSaveManual = async () => {
@@ -71,20 +73,52 @@ export default function QAJurisprudenciaPage() {
       const ts = Date.now();
       const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
       const path = `jurisprudencias/${ts}_${safeName}`;
+
+      setProgressMsg("Enviando arquivo...");
       const { error: upErr } = await supabase.storage.from("qa-documentos").upload(path, file);
       if (upErr) throw upErr;
 
-      const { error } = await supabase.from("qa_jurisprudencias" as any).insert({
-        tribunal: form.tribunal || "A classificar",
-        ementa_resumida: `Documento enviado: ${file.name}`,
-        origem: "upload_arquivo",
-        arquivo_url: path,
-        validada_humanamente: false,
-        tema: form.tema || null,
-        palavras_chave: form.palavras_chave ? form.palavras_chave.split(",").map(s => s.trim()) : [],
-      });
-      if (error) throw error;
-      toast.success("Arquivo enviado com sucesso");
+      const isDocx = file.name.toLowerCase().endsWith(".docx") || file.name.toLowerCase().endsWith(".doc");
+
+      if (isDocx) {
+        // Process DOCX with AI extraction
+        setProgressMsg("Extraindo jurisprudências com IA... (pode levar até 60s)");
+
+        const palavrasArr = form.palavras_chave ? form.palavras_chave.split(",").map(s => s.trim()) : [];
+
+        const { data: fnData, error: fnErr } = await supabase.functions.invoke(
+          "qa-processar-jurisprudencias-docx",
+          {
+            body: {
+              storage_path: path,
+              tribunal: form.tribunal || null,
+              tema: form.tema || null,
+              categoria_tematica: null,
+              palavras_chave: palavrasArr,
+            },
+          }
+        );
+
+        if (fnErr) throw new Error(fnErr.message || "Erro ao processar documento");
+
+        if (fnData?.error) throw new Error(fnData.error);
+
+        toast.success(`${fnData.salvas} jurisprudência(s) extraída(s) e salva(s)!`);
+      } else {
+        // Non-DOCX: save as single entry
+        const { error } = await supabase.from("qa_jurisprudencias" as any).insert({
+          tribunal: form.tribunal || "A classificar",
+          ementa_resumida: `Documento enviado: ${file.name}`,
+          origem: "upload_arquivo",
+          arquivo_url: path,
+          validada_humanamente: false,
+          tema: form.tema || null,
+          palavras_chave: form.palavras_chave ? form.palavras_chave.split(",").map(s => s.trim()) : [],
+        });
+        if (error) throw error;
+        toast.success("Arquivo enviado com sucesso");
+      }
+
       setOpen(false);
       resetForm();
       load();
@@ -92,6 +126,7 @@ export default function QAJurisprudenciaPage() {
       toast.error(e.message || "Erro ao enviar arquivo");
     }
     setSaving(false);
+    setProgressMsg("");
   };
 
   const handleSaveLink = async () => {
@@ -143,7 +178,7 @@ export default function QAJurisprudenciaPage() {
           <p className="text-sm mt-0.5 text-[#94a3b8]">Precedentes e decisões validadas</p>
         </div>
         {canEdit && (
-          <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm(); }}>
+          <Dialog open={open} onOpenChange={(v) => { if (!saving) { setOpen(v); if (!v) resetForm(); } }}>
             <DialogTrigger asChild>
               <button
                 className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-all shadow-md hover:shadow-lg active:scale-[0.97]"
@@ -159,13 +194,13 @@ export default function QAJurisprudenciaPage() {
 
               {/* Tabs */}
               <div className="flex gap-1.5 mt-3 p-1 bg-[#f8fafc] rounded-xl">
-                <button className={tabClass("manual")} onClick={() => setTabMode("manual")}>
+                <button className={tabClass("manual")} onClick={() => setTabMode("manual")} disabled={saving}>
                   <FileText className="h-3 w-3 inline mr-1" />Digitação
                 </button>
-                <button className={tabClass("arquivo")} onClick={() => setTabMode("arquivo")}>
+                <button className={tabClass("arquivo")} onClick={() => setTabMode("arquivo")} disabled={saving}>
                   <Upload className="h-3 w-3 inline mr-1" />Arquivo
                 </button>
-                <button className={tabClass("link")} onClick={() => setTabMode("link")}>
+                <button className={tabClass("link")} onClick={() => setTabMode("link")} disabled={saving}>
                   <LinkIcon className="h-3 w-3 inline mr-1" />Link
                 </button>
               </div>
@@ -175,11 +210,11 @@ export default function QAJurisprudenciaPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <Label className="text-[11px] font-medium text-[#64748b]">Tribunal</Label>
-                    <Input value={form.tribunal} onChange={e => f("tribunal", e.target.value)} className="h-9 bg-white border-slate-200 text-slate-800 uppercase" placeholder="STF, STJ, TRF1..." />
+                    <Input value={form.tribunal} onChange={e => f("tribunal", e.target.value)} className="h-9 bg-white border-slate-200 text-slate-800 uppercase" placeholder="STF, STJ, TRF1..." disabled={saving} />
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-[11px] font-medium text-[#64748b]">Tema</Label>
-                    <Input value={form.tema} onChange={e => f("tema", e.target.value)} className="h-9 bg-white border-slate-200 text-slate-800 uppercase" placeholder="Posse de arma..." />
+                    <Input value={form.tema} onChange={e => f("tema", e.target.value)} className="h-9 bg-white border-slate-200 text-slate-800 uppercase" placeholder="Posse de arma..." disabled={saving} />
                   </div>
                 </div>
 
@@ -226,7 +261,10 @@ export default function QAJurisprudenciaPage() {
                   <div className="space-y-3">
                     <div className="border-2 border-dashed border-[#cbd5e1] rounded-xl p-6 text-center hover:border-[#2563eb] transition-colors">
                       <Upload className="h-8 w-8 mx-auto mb-2 text-[#94a3b8]" />
-                      <p className="text-xs text-[#64748b] mb-2">PDF, DOCX ou imagem (até 20MB)</p>
+                      <p className="text-xs text-[#64748b] mb-1">PDF, DOCX ou imagem (até 20MB)</p>
+                      <p className="text-[10px] text-[#2563eb] font-medium mb-3">
+                        📄 Arquivos DOCX com múltiplas decisões serão extraídos automaticamente pela IA
+                      </p>
                       <label className="inline-block cursor-pointer px-4 py-2 rounded-lg text-xs font-semibold bg-[#2563eb] text-white hover:bg-[#1d4ed8] transition-colors">
                         Selecionar Arquivo
                         <input
@@ -234,6 +272,7 @@ export default function QAJurisprudenciaPage() {
                           accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp"
                           className="hidden"
                           onChange={e => setFile(e.target.files?.[0] || null)}
+                          disabled={saving}
                         />
                       </label>
                       {file && (
@@ -242,6 +281,12 @@ export default function QAJurisprudenciaPage() {
                         </p>
                       )}
                     </div>
+                    {progressMsg && (
+                      <div className="flex items-center gap-2 p-3 bg-[#eff6ff] rounded-lg">
+                        <Loader2 className="h-4 w-4 animate-spin text-[#2563eb]" />
+                        <span className="text-xs text-[#1e293b] font-medium">{progressMsg}</span>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -255,6 +300,7 @@ export default function QAJurisprudenciaPage() {
                         onChange={e => setLinkUrl(e.target.value)}
                         className="h-10 bg-white border-slate-200 text-slate-800"
                         placeholder="https://www.stf.jus.br/..."
+                        disabled={saving}
                       />
                     </div>
                     <p className="text-[10px] text-[#94a3b8]">Cole o link direto do tribunal ou repositório de jurisprudência.</p>
@@ -264,18 +310,18 @@ export default function QAJurisprudenciaPage() {
                 {/* Palavras-chave (all tabs) */}
                 <div className="space-y-1.5">
                   <Label className="text-[11px] font-medium text-[#64748b]">Palavras-chave (vírgula)</Label>
-                  <Input value={form.palavras_chave} onChange={e => f("palavras_chave", e.target.value)} className="h-9 bg-white border-slate-200 text-slate-800 uppercase" placeholder="arma, posse, defesa..." />
+                  <Input value={form.palavras_chave} onChange={e => f("palavras_chave", e.target.value)} className="h-9 bg-white border-slate-200 text-slate-800 uppercase" placeholder="arma, posse, defesa..." disabled={saving} />
                 </div>
 
                 {/* Actions */}
                 <div className="flex justify-end gap-2 pt-2">
-                  <button onClick={() => setOpen(false)} className="h-9 px-4 text-xs font-medium rounded-lg border border-[#e2e8f0] text-[#64748b] bg-white hover:bg-[#f8fafc] transition-colors">
+                  <button onClick={() => { if (!saving) setOpen(false); }} className="h-9 px-4 text-xs font-medium rounded-lg border border-[#e2e8f0] text-[#64748b] bg-white hover:bg-[#f8fafc] transition-colors" disabled={saving}>
                     Cancelar
                   </button>
                   <button
                     onClick={handleSave}
                     disabled={saving}
-                    className="h-9 px-5 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-all shadow hover:shadow-md active:scale-[0.97]"
+                    className="h-9 px-5 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-all shadow hover:shadow-md active:scale-[0.97] disabled:opacity-60"
                     style={{ background: "#2563eb", color: "#ffffff" }}
                   >
                     {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
@@ -316,9 +362,10 @@ export default function QAJurisprudenciaPage() {
             <div key={j.id} className="qa-card qa-hover-lift p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 text-[13px]">
+                  <div className="flex items-center gap-2 text-[13px] flex-wrap">
                     <span className="font-semibold uppercase text-[#2563eb]">{j.tribunal}</span>
                     {j.numero_processo && <span className="uppercase text-[#64748b]">• {j.numero_processo}</span>}
+                    {j.origem === "upload_docx_ia" && <span className="text-[10px] px-1.5 py-0.5 bg-[#f0fdf4] text-[#15803d] rounded font-medium">🤖 IA</span>}
                     {j.origem === "upload_arquivo" && <span className="text-[10px] px-1.5 py-0.5 bg-[#eff6ff] text-[#2563eb] rounded font-medium">📎 Arquivo</span>}
                     {j.origem === "importacao_link" && <span className="text-[10px] px-1.5 py-0.5 bg-[#fef3c7] text-[#92400e] rounded font-medium">🔗 Link</span>}
                   </div>

@@ -3159,11 +3159,14 @@ export type Database = {
       }
       qa_jurisprudencias: {
         Row: {
+          arquivo_url: string | null
+          categoria_tematica: string | null
           created_at: string
           data_julgamento: string | null
           data_publicacao: string | null
           ementa_resumida: string | null
           id: string
+          link_fonte: string | null
           numero_processo: string | null
           orgao_julgador: string | null
           origem: string | null
@@ -3177,11 +3180,14 @@ export type Database = {
           validada_humanamente: boolean
         }
         Insert: {
+          arquivo_url?: string | null
+          categoria_tematica?: string | null
           created_at?: string
           data_julgamento?: string | null
           data_publicacao?: string | null
           ementa_resumida?: string | null
           id?: string
+          link_fonte?: string | null
           numero_processo?: string | null
           orgao_julgador?: string | null
           origem?: string | null
@@ -3195,11 +3201,14 @@ export type Database = {
           validada_humanamente?: boolean
         }
         Update: {
+          arquivo_url?: string | null
+          categoria_tematica?: string | null
           created_at?: string
           data_julgamento?: string | null
           data_publicacao?: string | null
           ementa_resumida?: string | null
           id?: string
+          link_fonte?: string | null
           numero_processo?: string | null
           orgao_julgador?: string | null
           origem?: string | null
