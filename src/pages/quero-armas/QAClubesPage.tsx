@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -18,7 +18,8 @@ export default function QAClubesPage() {
   const [modal, setModal] = useState<{ open: boolean; item?: Clube }>({ open: false });
   const [deleting, setDeleting] = useState<number | null>(null);
 
-  useEffect(() => { load(); }, []);
+  const _loadedRef = useRef(false);
+  useEffect(() => { if (_loadedRef.current) return; _loadedRef.current = true; load(); }, []);
 
   const load = async () => {
     setLoading(true);
