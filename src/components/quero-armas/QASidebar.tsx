@@ -8,7 +8,7 @@ import {
   BookOpen, FileBox, History, Settings, LogOut, Shield, Users, Building2, BarChart3, DollarSign,
   PanelLeftOpen,
 } from "lucide-react";
-import { useQAAuth } from "./hooks/useQAAuth";
+
 
 const NAV_GROUPS = [
   {
@@ -42,13 +42,12 @@ const NAV_GROUPS = [
   },
 ];
 
-interface Props { perfil: string; nome: string }
+interface Props { perfil: string; nome: string; signOut: () => Promise<void> }
 
-export function QASidebar({ perfil, nome }: Props) {
+export function QASidebar({ perfil, nome, signOut }: Props) {
   const { state, toggleSidebar, isMobile, setOpenMobile } = useSidebar();
   const collapsed = isMobile ? false : state === "collapsed";
   const location = useLocation();
-  const { signOut } = useQAAuth();
 
   const initials = (nome || "U").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
 

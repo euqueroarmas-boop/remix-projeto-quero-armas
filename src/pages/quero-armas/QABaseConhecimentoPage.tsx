@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useQAAuth } from "@/components/quero-armas/hooks/useQAAuth";
 import { Link } from "react-router-dom";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { formatDuration } from "@/lib/formatDuration";
 import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
@@ -268,13 +269,16 @@ export default function QABaseConhecimentoPage() {
   const [queueCollapsed, setQueueCollapsed] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const loadDocs = useCallback(async () => {
+  const debouncedBusca = useDebouncedValue(busca, 400);
+
+  const loadDocs = useCallback(async (showSpinner = false) => {
+    if (showSpinner) setLoading(true);
     try {
       let q = supabase.from("qa_documentos_conhecimento" as any).select("*").eq("ativo", true).eq("papel_documento", "aprendizado").order("created_at", { ascending: false });
       if (filtroTipo !== "todos") q = q.eq("tipo_documento", filtroTipo);
       if (filtroStatus !== "todos") q = q.eq("status_processamento", filtroStatus);
       if (filtroOrigem !== "todos") q = q.eq("tipo_origem", filtroOrigem);
-      if (busca) q = q.ilike("titulo", `%${busca}%`);
+      if (debouncedBusca) q = q.ilike("titulo", `%${debouncedBusca}%`);
       const { data } = await q;
       setDocs((data as any[]) ?? []);
     } catch (err) {
@@ -282,9 +286,9 @@ export default function QABaseConhecimentoPage() {
     } finally {
       setLoading(false);
     }
-  }, [filtroTipo, filtroStatus, filtroOrigem, busca]);
+  }, [filtroTipo, filtroStatus, filtroOrigem, debouncedBusca]);
 
-  useEffect(() => { setLoading(true); loadDocs(); }, [loadDocs]);
+  useEffect(() => { loadDocs(true); }, [loadDocs]);
 
   const createProcessingJob = async ({
     docId,
@@ -417,18 +421,23 @@ export default function QABaseConhecimentoPage() {
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, [trackedImports, loadDocs]);
 
+  // Background polling for docs being processed — does NOT show spinner
+  const docsProcessingRef = useRef(false);
   useEffect(() => {
-    const hasProcessing = docs.some(d => d.status_processamento === "pendente" || d.status_processamento === "processando"
-      || d.status_processamento === "verificando_arquivo" || d.status_processamento === "arquivo_confirmado"
-      || d.status_processamento === "registrando_documento" || d.status_processamento === "acessando_url"
-      || d.status_processamento === "extraindo_texto" || d.status_processamento === "rodando_ocr"
-      || d.status_processamento === "gerando_resumo" || d.status_processamento === "criando_chunks"
-      || d.status_processamento === "gerando_embeddings" || d.status_processamento === "estruturando_campos"
-      || d.status_processamento === "salvando_metadados");
-    if (!hasProcessing) return;
-    const interval = setInterval(() => { loadDocs(); }, 5000);
+    const hasProcessing = docs.some(d => ["pendente","processando","verificando_arquivo","arquivo_confirmado",
+      "registrando_documento","acessando_url","extraindo_texto","rodando_ocr",
+      "gerando_resumo","criando_chunks","gerando_embeddings","estruturando_campos","salvando_metadados"]
+      .includes(d.status_processamento));
+    docsProcessingRef.current = hasProcessing;
+  }, [docs]);
+
+  useEffect(() => {
+    if (!docsProcessingRef.current) return;
+    const interval = setInterval(() => {
+      if (docsProcessingRef.current) loadDocs(false);
+    }, 5000);
     return () => clearInterval(interval);
-  }, [docs, loadDocs]);
+  }, [loadDocs]);
 
   const addTrackedImport = (
     doc_id: string,
