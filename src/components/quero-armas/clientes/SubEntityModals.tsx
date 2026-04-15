@@ -69,10 +69,13 @@ function PremiumModalShell({ open, onClose, title, icon: Icon, accentColor, chil
 }) {
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="border-0 shadow-2xl shadow-slate-200/60 rounded-2xl overflow-hidden p-0 bg-white [&]:max-w-[95vw] sm:[&]:max-w-md">
+      <DialogContent
+        className="border-0 shadow-2xl shadow-slate-200/60 rounded-2xl overflow-hidden p-0 bg-white"
+        style={{ width: "calc(100vw - 2rem)", maxWidth: "28rem" }}
+      >
         {/* Header gradient strip */}
         <div className={`h-1 w-full ${accentColor}`} />
-        <div className="px-6 pt-5 pb-0">
+        <div className="px-4 sm:px-6 pt-5 pb-0">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2.5 text-base font-bold text-slate-800 tracking-tight">
               <div className={`h-8 w-8 rounded-lg ${accentColor} bg-opacity-10 flex items-center justify-center`}>
@@ -82,7 +85,7 @@ function PremiumModalShell({ open, onClose, title, icon: Icon, accentColor, chil
             </DialogTitle>
           </DialogHeader>
         </div>
-        <div className="px-6 pb-6 pt-4">
+        <div className="px-4 sm:px-6 pb-6 pt-4">
           {children}
         </div>
       </DialogContent>
