@@ -927,10 +927,40 @@ Deno.serve(async (req) => {
 
     let contextoFontes = "";
     if (fontesParaUsar.length > 0) {
-      contextoFontes = "\n\n--- FONTES DE APRENDIZADO (base normativa, estrutural e argumentativa) ---\n";
-      fontesParaUsar.forEach((f, i) => {
-        contextoFontes += `\n[Fonte ${i + 1} - ${f.tipo.toUpperCase()}] ${f.titulo}\nReferência: ${f.referencia}\nConteúdo completo: ${f.conteudo}\n`;
-      });
+      // Organize by layer with hierarchy labels
+      const legislacao = fontesParaUsar.filter(f => f.camada === "legislacao");
+      const jurisprudencia = fontesParaUsar.filter(f => f.camada === "jurisprudencia");
+      const baseJuridica = fontesParaUsar.filter(f => f.camada === "base_juridica");
+      const pecasValidadas = fontesParaUsar.filter(f => f.camada === "aprendizado_pratico");
+
+      if (legislacao.length > 0) {
+        contextoFontes += "\n\n═══ CAMADA 1: LEGISLAÇÃO (base normativa obrigatória — peso máximo) ═══\n";
+        legislacao.forEach((f: any, i: number) => {
+          contextoFontes += `\n[Legislação ${i + 1}] ${f.titulo}\nReferência: ${f.referencia}\nConteúdo: ${f.conteudo}\n`;
+        });
+      }
+
+      if (jurisprudencia.length > 0) {
+        contextoFontes += "\n\n═══ CAMADA 2: JURISPRUDÊNCIA (reforço interpretativo) ═══\n";
+        jurisprudencia.forEach((f: any, i: number) => {
+          contextoFontes += `\n[Jurisprudência ${i + 1}] ${f.titulo}\nReferência: ${f.referencia}\nConteúdo: ${f.conteudo}\n`;
+        });
+      }
+
+      if (baseJuridica.length > 0) {
+        contextoFontes += "\n\n═══ CAMADA 3: BASE JURÍDICA (apoio argumentativo e teses) ═══\n";
+        baseJuridica.forEach((f: any, i: number) => {
+          contextoFontes += `\n[Base Jurídica ${i + 1}] ${f.titulo}\nReferência: ${f.referencia}\nConteúdo: ${f.conteudo}\n`;
+        });
+      }
+
+      if (pecasValidadas.length > 0) {
+        contextoFontes += "\n\n═══ CAMADA 4: PEÇAS VALIDADAS COM SUCESSO (aprendizado prático — referência de qualidade) ═══\n";
+        contextoFontes += "INSTRUÇÃO: As peças abaixo foram DEFERIDAS ou classificadas como MODELO. Use a estrutura argumentativa, o encadeamento lógico e os fundamentos como REFERÊNCIA DE QUALIDADE. NÃO copie literalmente — adapte ao caso concreto.\n";
+        pecasValidadas.forEach((f: any, i: number) => {
+          contextoFontes += `\n[Peça Validada ${i + 1}] ${f.titulo}\nResultado: ${f.referencia}\nConteúdo de referência:\n${f.conteudo}\n`;
+        });
+      }
     } else {
       contextoFontes = "\n\n--- ATENÇÃO: Nenhuma fonte de aprendizado encontrada. NÃO invente. Declare insuficiência. ---\n";
     }
