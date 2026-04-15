@@ -179,6 +179,19 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     }
   }, [cliente, open]);
 
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error("Imagem deve ter no máximo 5MB"); return; }
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
+  };
+
+  const removePhoto = () => {
+    setPhotoFile(null);
+    setPhotoPreview(null);
+  };
+
   const set = (key: string, val: any) => setF(prev => ({ ...prev, [key]: val }));
 
   const save = async () => {
