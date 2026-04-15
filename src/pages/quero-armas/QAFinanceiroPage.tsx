@@ -126,33 +126,80 @@ function ExpandableChartCard({ children, title, subtitle, icon, detailContent, d
 function MonthSelector({ months, selected, onSelect }: {
   months: string[]; selected: string | null; onSelect: (m: string | null) => void;
 }) {
+  const [open, setOpen] = useState(false);
   if (months.length === 0) return null;
+
+  const selectedLabel = selected
+    ? `${MONTH_NAMES[+selected.split("-")[1] - 1]} ${selected.split("-")[0]}`
+    : "Todos os meses";
+
+  // Navigate prev/next
+  const currentIdx = selected ? months.indexOf(selected) : -1;
+  const canPrev = currentIdx > 0;
+  const canNext = selected ? currentIdx < months.length - 1 : months.length > 0;
+
+  const goPrev = () => { if (canPrev) onSelect(months[currentIdx - 1]); };
+  const goNext = () => {
+    if (!selected && months.length > 0) { onSelect(months[0]); return; }
+    if (canNext) onSelect(months[currentIdx + 1]);
+  };
+
   return (
-    <div className="flex items-center gap-2 flex-wrap">
-      <CalendarDays className="h-4 w-4 text-slate-400" />
-      <button
-        onClick={() => onSelect(null)}
-        className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all ${
-          !selected ? "bg-indigo-600 text-white shadow-sm" : "bg-white border border-slate-200 text-slate-500 hover:border-indigo-300 hover:text-indigo-600"
-        }`}
-      >
-        Todos os meses
-      </button>
-      {months.map(m => {
-        const [y, mo] = m.split("-");
-        const label = `${MONTH_NAMES[+mo - 1]}/${y.slice(2)}`;
-        return (
-          <button
-            key={m}
-            onClick={() => onSelect(m === selected ? null : m)}
-            className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all ${
-              m === selected ? "bg-indigo-600 text-white shadow-sm" : "bg-white border border-slate-200 text-slate-500 hover:border-indigo-300 hover:text-indigo-600"
-            }`}
-          >
-            {label}
-          </button>
-        );
-      })}
+    <div className="relative">
+      <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-xl p-1 shadow-sm">
+        <button
+          onClick={goPrev}
+          disabled={!canPrev}
+          className="h-9 w-9 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-50 hover:text-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+
+        <button
+          onClick={() => setOpen(!open)}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-slate-50 transition-colors min-w-[140px] justify-center"
+        >
+          <CalendarDays className="h-4 w-4 text-indigo-500" />
+          <span className="text-sm font-semibold text-slate-700">{selectedLabel}</span>
+          <ChevronDown className={`h-3.5 w-3.5 text-slate-400 transition-transform ${open ? "rotate-180" : ""}`} />
+        </button>
+
+        <button
+          onClick={goNext}
+          disabled={!canNext}
+          className="h-9 w-9 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-50 hover:text-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      </div>
+
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-lg z-50 py-1 max-h-64 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-150">
+            <button
+              onClick={() => { onSelect(null); setOpen(false); }}
+              className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${!selected ? "bg-indigo-50 text-indigo-700 font-semibold" : "text-slate-600 hover:bg-slate-50"}`}
+            >
+              Todos os meses
+            </button>
+            {[...months].reverse().map(m => {
+              const [y, mo] = m.split("-");
+              const label = `${MONTH_NAMES[+mo - 1]} ${y}`;
+              const isActive = m === selected;
+              return (
+                <button
+                  key={m}
+                  onClick={() => { onSelect(m); setOpen(false); }}
+                  className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${isActive ? "bg-indigo-50 text-indigo-700 font-semibold" : "text-slate-600 hover:bg-slate-50"}`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
     </div>
   );
 }
