@@ -117,7 +117,7 @@ export default function NovoCasoModal({ open, onOpenChange, onCreated, preselect
         className="bg-white border-slate-200 rounded-xl !p-0 overflow-hidden"
         style={{ width: "calc(100vw - 2rem)", maxWidth: "32rem", maxHeight: "calc(100vh - 2rem)" }}
       >
-        <div className="flex flex-col" style={{ maxHeight: "calc(100vh - 2rem)" }}>
+        <div className="flex flex-col h-full overflow-hidden" style={{ maxHeight: "calc(100vh - 2rem)", height: "calc(100vh - 2rem)" }}>
         {/* Header - fixed */}
         <div className="px-5 pt-5 pb-3 border-b shrink-0" style={{ borderColor: "hsl(220 13% 91%)" }}>
           <h2 className="text-base font-bold uppercase" style={{ color: "hsl(220 20% 18%)" }}>Novo Caso</h2>
