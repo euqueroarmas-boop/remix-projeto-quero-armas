@@ -53,12 +53,41 @@ export function useBrasilApiLookup() {
 
     setCepLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("brasil-api-lookup", {
-        body: { type: "cep", value: digits },
-      });
+      // Try Supabase function invoke with timeout
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
 
-      if (error || !data?.data) return null;
-      return data.data as CepData;
+      try {
+        const { data, error } = await supabase.functions.invoke("brasil-api-lookup", {
+          body: { type: "cep", value: digits },
+        });
+        clearTimeout(timeout);
+        if (!error && data?.data) return data.data as CepData;
+      } catch {
+        clearTimeout(timeout);
+      }
+
+      // Fallback: direct BrasilAPI call
+      console.warn("[lookupCep] Supabase invoke failed, trying direct BrasilAPI");
+      try {
+        const res = await fetch(`https://brasilapi.com.br/api/cep/v1/${digits}`, {
+          signal: AbortSignal.timeout(6000),
+        });
+        if (res.ok) {
+          const apiData = await res.json();
+          return {
+            street: apiData.street,
+            neighborhood: apiData.neighborhood,
+            city: apiData.city,
+            state: apiData.state,
+            cep: apiData.cep,
+          } as CepData;
+        }
+      } catch {
+        // fallback also failed
+      }
+
+      return null;
     } catch {
       return null;
     } finally {

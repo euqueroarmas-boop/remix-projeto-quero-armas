@@ -462,18 +462,48 @@ export default function QAGerarPecaPage() {
   /* ── Load municipalities when UF changes ── */
   const loadMunicipios = useCallback(async (uf: string) => {
     if (!uf) { setMunicipiosList([]); return; }
-    if (municipiosLoadedUfRef.current === uf) return; // already loaded
+    if (municipiosLoadedUfRef.current === uf && municipiosList.length > 0) return;
     municipiosLoadedUfRef.current = uf;
     setMunicipiosLoading(true);
     try {
-      const { data, error } = await supabase.rpc("qa_listar_municipios_por_uf" as any, { p_uf: uf });
-      if (municipiosLoadedUfRef.current !== uf) return; // stale
-      if (!error && data) {
-        setMunicipiosList((data as any[]).map((r: any) => r.municipio));
+      const rpcPromise = supabase.rpc("qa_listar_municipios_por_uf" as any, { p_uf: uf });
+      const timeoutPromise = new Promise<{ data: null; error: { message: string } }>((resolve) =>
+        setTimeout(() => resolve({ data: null, error: { message: "timeout" } }), 8000)
+      );
+      const { data, error } = await Promise.race([rpcPromise, timeoutPromise]);
+      if (municipiosLoadedUfRef.current !== uf) return;
+      if (!error && data && Array.isArray(data) && data.length > 0) {
+        setMunicipiosList(data.map((r: any) => r.municipio));
       } else {
-        setMunicipiosList([]);
+        console.warn("[loadMunicipios] RPC failed or empty, trying direct fetch", error);
+        // Fallback: direct REST call
+        try {
+          const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/rpc/qa_listar_municipios_por_uf`;
+          const res = await fetch(url, {
+            method: "POST",
+            headers: {
+              "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ p_uf: uf }),
+          });
+          if (res.ok) {
+            const fallbackData = await res.json();
+            if (municipiosLoadedUfRef.current !== uf) return;
+            if (Array.isArray(fallbackData) && fallbackData.length > 0) {
+              setMunicipiosList(fallbackData.map((r: any) => r.municipio));
+            } else {
+              setMunicipiosList([]);
+            }
+          } else {
+            setMunicipiosList([]);
+          }
+        } catch {
+          setMunicipiosList([]);
+        }
       }
-    } catch {
+    } catch (err) {
+      console.error("[loadMunicipios] error:", err);
       if (municipiosLoadedUfRef.current !== uf) return;
       setMunicipiosList([]);
     } finally {
@@ -483,11 +513,12 @@ export default function QAGerarPecaPage() {
 
   useEffect(() => {
     if (clienteUf) {
-      municipiosLoadedUfRef.current = ""; // reset to allow reload
-      loadMunicipios(clienteUf);
+      municipiosLoadedUfRef.current = "";
+      void loadMunicipios(clienteUf);
     } else {
       municipiosLoadedUfRef.current = "";
       setMunicipiosList([]);
+      setMunicipiosLoading(false);
     }
   }, [clienteUf, loadMunicipios]);
 
