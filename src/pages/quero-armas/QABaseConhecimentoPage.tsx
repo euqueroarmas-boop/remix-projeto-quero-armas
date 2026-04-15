@@ -434,7 +434,7 @@ export default function QABaseConhecimentoPage() {
       addTrackedImport(doc.id, doc.url_origem || doc.nome_arquivo, doc.titulo);
       if (doc.tipo_origem === "link_publico" && doc.url_origem) {
         await supabase.functions.invoke("qa-ingest-url", {
-          body: { url: doc.url_origem, titulo: doc.titulo, tipo_documento: doc.tipo_documento, user_id: user.id },
+          body: { doc_id: doc.id, url: doc.url_origem, titulo: doc.titulo, tipo_documento: doc.tipo_documento, user_id: user.id },
         });
       } else {
         await supabase.functions.invoke("qa-ingest-document", { body: { storage_path: doc.storage_path, user_id: user.id } });
@@ -474,19 +474,11 @@ export default function QABaseConhecimentoPage() {
     if (!user) return;
     setDeleting(true);
     try {
-      const { data: chunks } = await supabase.from("qa_chunks_conhecimento" as any).select("id").eq("documento_id", doc.id);
-      if (chunks?.length) {
-        await supabase.from("qa_embeddings" as any).delete().in("chunk_id", chunks.map((c: any) => c.id));
-      }
-      await supabase.from("qa_chunks_conhecimento" as any).delete().eq("documento_id", doc.id);
-      await supabase.from("qa_referencias_preferenciais" as any).delete().eq("origem_id", doc.id);
-      if (doc.storage_path) await supabase.storage.from("qa-documentos").remove([doc.storage_path]);
-      await supabase.from("qa_logs_auditoria" as any).insert({
-        usuario_id: user.id, acao: "documento_excluido_permanente",
-        entidade_tipo: "documento", entidade_id: doc.id,
-        detalhes: { titulo: doc.titulo, tipo: doc.tipo_documento, storage_path: doc.storage_path },
+      const { error } = await supabase.functions.invoke("qa-delete-document", {
+        body: { doc_id: doc.id },
       });
-      await supabase.from("qa_documentos_conhecimento" as any).delete().eq("id", doc.id);
+      if (error) throw error;
+      setTrackedImports(prev => prev.filter(item => item.doc_id !== doc.id));
       toast.success("Documento excluído permanentemente.");
       setDeleteTarget(null);
       loadDocs();
@@ -717,8 +709,8 @@ export default function QABaseConhecimentoPage() {
                     {isReprocessing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
                   </Button>
                 )}
-                <Button size="sm" variant="ghost" onClick={(e) => { e.preventDefault(); setDeleteTarget(d); }}
-                  className="text-red-300 hover:text-red-500 hover:bg-red-50 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Button size="sm" variant="ghost" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setDeleteTarget(d); }}
+                  className="text-slate-400 hover:text-red-500 hover:bg-red-50 shrink-0">
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
                 <Link to={`/quero-armas/base-conhecimento/${d.id}`}>

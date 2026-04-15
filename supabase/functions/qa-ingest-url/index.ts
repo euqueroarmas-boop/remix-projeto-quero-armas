@@ -282,7 +282,7 @@ async function processUrl(url: string, titulo: string, tipo_documento: string, u
       detalhes_json: { url, chunks_criados: chunks.length, tamanho_texto: textoExtraido.length, metodoExtracao },
     }).catch(() => {});
 
-    await updateStatus(supabase, doc_id, "gerando_embeddings");
+    // Fire embeddings generation without changing status back from concluido
     try {
       await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/qa-generate-embeddings`, {
         method: "POST",
@@ -320,7 +320,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsH });
 
   try {
-    const { url, titulo, tipo_documento, user_id } = await req.json();
+    const { url, titulo, tipo_documento, user_id, doc_id } = await req.json();
     if (!url) {
       return new Response(JSON.stringify({ error: "url required" }), {
         status: 400, headers: { ...corsH, "Content-Type": "application/json" },
@@ -336,32 +336,50 @@ Deno.serve(async (req) => {
 
     const supabase = getSupabase();
 
-    // Create document record
     const docTitle = titulo || new URL(url).pathname.split("/").pop() || "Documento importado por link";
-    const { data: newDoc, error: insertErr } = await supabase.from("qa_documentos_conhecimento")
-      .insert({
-        titulo: docTitle,
-        nome_arquivo: url,
-        storage_path: `link/${Date.now()}_${encodeURIComponent(new URL(url).hostname)}`,
-        mime_type: "text/html",
-        tamanho_bytes: null,
-        enviado_por: user_id || null,
-        tipo_documento: tipo_documento || "outro",
-        status_processamento: "pendente",
-        status_validacao: "nao_validado",
-        url_origem: url,
-        tipo_origem: "link_publico",
-      })
-      .select("id")
-      .single();
+    let resolvedDocId = doc_id as string | undefined;
 
-    if (insertErr) throw new Error(insertErr.message);
+    if (resolvedDocId) {
+      // Reprocessing existing document
+      await supabase.from("qa_documentos_conhecimento")
+        .update({
+          status_processamento: "pendente",
+          resumo_extraido: null,
+          texto_extraido: null,
+          hash_arquivo: null,
+          metodo_extracao: null,
+          url_origem: url,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", resolvedDocId);
+      await supabase.from("qa_chunks_conhecimento").delete().eq("documento_id", resolvedDocId);
+    } else {
+      // New import
+      const { data: newDoc, error: insertErr } = await supabase.from("qa_documentos_conhecimento")
+        .insert({
+          titulo: docTitle,
+          nome_arquivo: url,
+          storage_path: `link/${Date.now()}_${encodeURIComponent(new URL(url).hostname)}`,
+          mime_type: "text/html",
+          tamanho_bytes: null,
+          enviado_por: user_id || null,
+          tipo_documento: tipo_documento || "outro",
+          status_processamento: "pendente",
+          status_validacao: "nao_validado",
+          url_origem: url,
+          tipo_origem: "link_publico",
+        })
+        .select("id")
+        .single();
+      if (insertErr) throw new Error(insertErr.message);
+      resolvedDocId = newDoc.id;
+    }
 
-    EdgeRuntime.waitUntil(processUrl(url, docTitle, tipo_documento || "outro", user_id || "", newDoc.id));
+    EdgeRuntime.waitUntil(processUrl(url, docTitle, tipo_documento || "outro", user_id || "", resolvedDocId!));
 
     return new Response(JSON.stringify({
       success: true,
-      doc_id: newDoc.id,
+      doc_id: resolvedDocId,
       message: "Importação iniciada em background",
     }), {
       headers: { ...corsH, "Content-Type": "application/json" },

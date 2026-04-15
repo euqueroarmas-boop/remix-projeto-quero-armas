@@ -181,15 +181,10 @@ export default function QADocumentoDetalhePage() {
     if (!doc || !user) return;
     setDeleting(true);
     try {
-      const { data: chunkRows } = await supabase.from("qa_chunks_conhecimento" as any).select("id").eq("documento_id", doc.id);
-      if (chunkRows?.length) {
-        await supabase.from("qa_embeddings" as any).delete().in("chunk_id", chunkRows.map((c: any) => c.id));
-      }
-      await supabase.from("qa_chunks_conhecimento" as any).delete().eq("documento_id", doc.id);
-      await supabase.from("qa_referencias_preferenciais" as any).delete().eq("origem_id", doc.id);
-      if (doc.storage_path) await supabase.storage.from("qa-documentos").remove([doc.storage_path]);
-      await auditLog("documento_excluido_permanente", { storage_path: doc.storage_path });
-      await supabase.from("qa_documentos_conhecimento" as any).delete().eq("id", doc.id);
+      const { error } = await supabase.functions.invoke("qa-delete-document", {
+        body: { doc_id: doc.id },
+      });
+      if (error) throw error;
       toast.success("Documento excluído permanentemente.");
       navigate("/quero-armas/base-conhecimento");
     } catch (err: any) {
