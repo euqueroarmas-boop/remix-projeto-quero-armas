@@ -290,6 +290,7 @@ export default function QABaseConhecimentoPage() {
   }, [docs, loadDocs]);
 
   const addTrackedImport = (doc_id: string, url: string, titulo: string, tipo_documento?: string, tipo_origem?: string) => {
+    setQueueCollapsed(false);
     setTrackedImports(prev => [{ doc_id, url, titulo, status: "pendente", started_at: Date.now(), tipo_documento, tipo_origem }, ...prev]);
   };
 
@@ -761,7 +762,13 @@ export default function QABaseConhecimentoPage() {
           </div>
           <DialogFooter>
             <button onClick={() => setShowLinkDialog(false)} className="qa-btn-outline h-9 px-4 text-xs">Cancelar</button>
-            <button onClick={handleImportLink} disabled={!linkUrl.trim() || importingLink} className="qa-btn-primary flex items-center gap-1.5 no-glow h-9 px-4 text-xs disabled:opacity-50">
+            <button
+              type="button"
+              onClick={handleImportLink}
+              disabled={!linkUrl.trim() || importingLink}
+              className="flex items-center gap-1.5 h-9 px-4 text-xs font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ background: "hsl(230 80% 56%)", color: "hsl(0 0% 100%)" }}
+            >
               {importingLink ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Enviando...</> : <><Globe className="h-3.5 w-3.5" /> Importar</>}
             </button>
           </DialogFooter>
@@ -809,7 +816,13 @@ export default function QABaseConhecimentoPage() {
           </div>
           <DialogFooter>
             <button onClick={() => setShowBulkDialog(false)} className="qa-btn-outline h-9 px-4 text-xs">Cancelar</button>
-            <button onClick={handleBulkImport} disabled={!bulkLinks.trim() || bulkImporting} className="qa-btn-primary flex items-center gap-1.5 no-glow h-9 px-4 text-xs disabled:opacity-50">
+            <button
+              type="button"
+              onClick={handleBulkImport}
+              disabled={!bulkLinks.trim() || bulkImporting}
+              className="flex items-center gap-1.5 h-9 px-4 text-xs font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ background: "hsl(230 80% 56%)", color: "hsl(0 0% 100%)" }}
+            >
               {bulkImporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />} Importar Links
             </button>
           </DialogFooter>
