@@ -58,7 +58,7 @@ export default function NovoCasoModal({ open, onOpenChange, onCreated, preselect
     setLoadingClientes(true);
     try {
       const { data } = await supabase.from("qa_clientes" as any)
-        .select("id, nome_completo, cpf, cidade, uf")
+        .select("id, nome_completo, cpf, cidade, estado")
         .order("nome_completo", { ascending: true }).limit(200);
       setClientes((data as any[]) ?? []);
     } catch { /* ignore */ }
