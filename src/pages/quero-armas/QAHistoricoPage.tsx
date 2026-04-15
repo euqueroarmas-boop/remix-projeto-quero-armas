@@ -332,6 +332,16 @@ export default function QAHistoricoPage() {
                 <ThumbsDown className="h-3.5 w-3.5" /> Rejeitar
               </button>
             </div>
+
+            {/* Feedback de Aprendizado */}
+            {reviewItem && (
+              <FeedbackAprendizadoPanel
+                geracaoId={reviewItem.id}
+                userId={user?.id}
+                existingFeedback={feedbackData}
+                onSaved={() => { load(); }}
+              />
+            )}
           </div>
         </DialogContent>
       </Dialog>
