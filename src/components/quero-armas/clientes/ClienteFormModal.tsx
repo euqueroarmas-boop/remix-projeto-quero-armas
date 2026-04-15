@@ -338,6 +338,35 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
           {/* Step 0: Identificação */}
           {step === 0 && (
             <div className="space-y-5">
+              {/* Photo upload */}
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-20 h-20 rounded-xl border-2 border-dashed border-slate-200 hover:border-blue-400 flex items-center justify-center cursor-pointer overflow-hidden transition-colors bg-slate-50"
+                  >
+                    {photoPreview ? (
+                      <img src={photoPreview} alt="Foto" className="w-full h-full object-cover" />
+                    ) : (
+                      <Camera className="h-6 w-6 text-slate-300" />
+                    )}
+                  </div>
+                  {photoPreview && (
+                    <button
+                      onClick={removePhoto}
+                      className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
+                  <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoSelect} className="hidden" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Foto do Cliente</p>
+                  <p className="text-[10px] text-slate-400 mt-0.5">Clique para adicionar ou trocar a foto</p>
+                  {uploadingPhoto && <p className="text-[10px] text-blue-500 mt-0.5 flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> Enviando...</p>}
+                </div>
+              </div>
               <div className="grid grid-cols-1 gap-4">
                 <FInput label="Nome Completo *" value={f.nome_completo} onChange={v => set("nome_completo", v)} span />
               </div>
