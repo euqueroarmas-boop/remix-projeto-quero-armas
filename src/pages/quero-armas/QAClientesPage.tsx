@@ -51,6 +51,7 @@ interface Cliente {
   status: string; cliente_lions: boolean; created_at: string; escolaridade?: string; titulo_eleitor?: string;
   endereco2?: string; numero2?: string; bairro2?: string; cep2?: string; cidade2?: string; estado2?: string;
   complemento2?: string; pais?: string; pais2?: string; expedicao_rg?: string;
+  imagem?: string | null;
 }
 
 interface CadastroPublico {
