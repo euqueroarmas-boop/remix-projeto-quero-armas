@@ -365,7 +365,8 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
     if (selectedServicos.size === 0) { toast.error("Selecione ao menos um serviço"); return; }
     setSaving(true);
     try {
-      const payload: any = { ...f, desconto: desconto, valor_a_pagar: total };
+      const dataCadIso = brToIso(f.data_cadastro) || new Date().toISOString().slice(0, 10);
+      const payload: any = { ...f, data_cadastro: dataCadIso, desconto: desconto, valor_a_pagar: total };
       let vendaId: number;
       if (isEdit) {
         const { error } = await supabase.from("qa_vendas" as any).update(payload).eq("id", venda.id);
@@ -393,7 +394,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
     <PremiumModalShell open={open} onClose={onClose} title={isEdit ? "Editar Venda" : "Nova Venda"} icon={ShoppingCart} accentColor="bg-blue-600">
       <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
         <div className="grid grid-cols-2 gap-3">
-          <PremiumField label="Data" value={f.data_cadastro} onChange={v => setF(p => ({ ...p, data_cadastro: v }))} placeholder="14/04/2026" icon={CalendarDays} />
+          <PremiumField label="Data da Venda" value={f.data_cadastro} onChange={v => setF(p => ({ ...p, data_cadastro: applyDateMask(v) }))} type="date" icon={CalendarDays} />
           <PremiumField label="Nº Processo" value={f.numero_processo} onChange={v => setF(p => ({ ...p, numero_processo: v }))} icon={Hash} />
         </div>
         <div className="grid grid-cols-2 gap-3">
