@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { FileText, Upload, Plus, Loader2, CheckCircle, XCircle } from "lucide-react";
-import { useQAAuth } from "@/components/quero-armas/hooks/useQAAuth";
+import { useQAAuthContext } from "@/components/quero-armas/QAAuthContext";
 
 const TIPOS_PECA = [
   { value: "defesa_posse_arma", label: "Defesa para Posse de Arma" },
@@ -24,7 +24,7 @@ const VARIAVEIS = [
 ];
 
 export default function QAModelosDocxPage() {
-  const { user, profile } = useQAAuth();
+  const { user, profile } = useQAAuthContext();
   const [modelos, setModelos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);

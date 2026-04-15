@@ -16,7 +16,7 @@ import {
   BookOpen, MapPin, Building2, Info, Paperclip, FileText, X, Upload, RefreshCw,
   Search, ChevronDown, ChevronUp, XCircle, Clock, FolderOpen, User, ChevronsUpDown,
 } from "lucide-react";
-import { useQAAuth } from "@/components/quero-armas/hooks/useQAAuth";
+import { useQAAuthContext } from "@/components/quero-armas/QAAuthContext";
 import { logSistema } from "@/lib/logSistema";
 import DraftingView, { type DraftingResult } from "@/components/quero-armas/DraftingView";
 
@@ -276,7 +276,7 @@ function ElapsedTime({ startedAt }: { startedAt?: number }) {
 
 /* ── Component ── */
 export default function QAGerarPecaPage() {
-  const { user } = useQAAuth();
+  const { user } = useQAAuthContext();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { lookupCep, cepLoading } = useBrasilApiLookup();

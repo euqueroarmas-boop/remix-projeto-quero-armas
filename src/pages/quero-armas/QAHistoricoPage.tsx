@@ -10,14 +10,14 @@ import {
   Scale, Gavel, BookOpen, CheckCircle, MessageSquare,
   Download, Copy, Check, Award,
 } from "lucide-react";
-import { useQAAuth } from "@/components/quero-armas/hooks/useQAAuth";
+import { useQAAuthContext } from "@/components/quero-armas/QAAuthContext";
 import { downloadGeracaoDocx } from "@/lib/qaDocxDownload";
 import FeedbackAprendizadoPanel from "@/components/quero-armas/FeedbackAprendizadoPanel";
 
 type TabType = "consultas" | "geracoes";
 
 export default function QAHistoricoPage() {
-  const { user, profile } = useQAAuth();
+  const { user, profile } = useQAAuthContext();
   const [tab, setTab] = useState<TabType>("geracoes");
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);

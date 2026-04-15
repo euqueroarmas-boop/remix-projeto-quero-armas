@@ -8,7 +8,7 @@ import {
   Database, Hash, Star, Trash2, Power, ShieldCheck, ShieldX, Zap, ZapOff,
   StarOff, Globe, Upload, Link2,
 } from "lucide-react";
-import { useQAAuth } from "@/components/quero-armas/hooks/useQAAuth";
+import { useQAAuthContext } from "@/components/quero-armas/QAAuthContext";
 import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
   AlertDialogDescription, AlertDialogFooter, AlertDialogCancel,
@@ -33,7 +33,7 @@ function GovBadge({ label, value, variant }: { label: string; value: string; var
 export default function QADocumentoDetalhePage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useQAAuth();
+  const { user } = useQAAuthContext();
   const [doc, setDoc] = useState<any>(null);
   const [chunks, setChunks] = useState<any[]>([]);
   const [embedCount, setEmbedCount] = useState(0);
