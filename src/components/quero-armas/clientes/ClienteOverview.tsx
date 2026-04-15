@@ -281,7 +281,7 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
       </div>
 
       {/* ═══ STEP FLOW / SERVICES ═══ */}
-      <div className="qa-card p-5">
+      <div className="qa-card p-4 md:p-5">
         <SectionHeader icon={Target} title="Serviços e Andamento" color="hsl(230 80% 56%)" action="Ver Todos" onAction={() => onNavigate("servicos")} />
         {itens.length === 0 ? (
           <div className="text-center py-10 text-sm" style={{ color: "hsl(220 10% 62%)" }}>Nenhum serviço contratado ainda.</div>
@@ -437,42 +437,42 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
       )}
 
       {/* ═══ QUICK ACCESS ═══ */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-        <button onClick={() => onNavigate("cr")} className="qa-card p-4 text-left hover:shadow-md transition-all group">
-          <div className="flex items-center gap-2 mb-2">
-            <Shield className="h-4 w-4" style={{ color: "hsl(262 60% 55%)" }} />
-            <span className="text-[10px] uppercase tracking-wider font-bold" style={{ color: "hsl(262 60% 55%)" }}>CR</span>
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 md:gap-3">
+        <button onClick={() => onNavigate("cr")} className="qa-card p-3 md:p-4 text-left hover:shadow-md active:scale-[0.98] transition-all group">
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <Shield className="h-3.5 w-3.5" style={{ color: "hsl(262 60% 55%)" }} />
+            <span className="text-[9px] uppercase tracking-wider font-bold" style={{ color: "hsl(262 60% 55%)" }}>CR</span>
           </div>
           {cadastro ? (
             <>
-              <div className="text-[12px] font-medium" style={{ color: "hsl(220 20% 18%)" }}>
-                CR: {cadastro.numero_cr || "Sem número"}
+              <div className="text-[11px] font-medium" style={{ color: "hsl(220 20% 18%)" }}>
+                CR: {cadastro.numero_cr || "Sem nº"}
               </div>
-              <div className={`text-[10px] font-bold mt-1 ${urgencyColor(daysUntil(cadastro.validade_cr))}`}>
-                {cadastro.validade_cr ? `Validade: ${formatDate(cadastro.validade_cr)}` : "Sem validade"}
+              <div className={`text-[9px] font-bold mt-0.5 ${urgencyColor(daysUntil(cadastro.validade_cr))}`}>
+                {cadastro.validade_cr ? `Val: ${formatDate(cadastro.validade_cr)}` : "Sem validade"}
               </div>
             </>
           ) : (
-            <div className="text-[11px]" style={{ color: "hsl(220 10% 62%)" }}>Não cadastrado</div>
+            <div className="text-[10px]" style={{ color: "hsl(220 10% 62%)" }}>Não cadastrado</div>
           )}
         </button>
 
-        <button onClick={() => onNavigate("armas")} className="qa-card p-4 text-left hover:shadow-md transition-all group">
-          <div className="flex items-center gap-2 mb-2">
-            <Crosshair className="h-4 w-4" style={{ color: "hsl(190 80% 42%)" }} />
-            <span className="text-[10px] uppercase tracking-wider font-bold" style={{ color: "hsl(190 80% 42%)" }}>ARMAS</span>
+        <button onClick={() => onNavigate("armas")} className="qa-card p-3 md:p-4 text-left hover:shadow-md active:scale-[0.98] transition-all group">
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <Crosshair className="h-3.5 w-3.5" style={{ color: "hsl(190 80% 42%)" }} />
+            <span className="text-[9px] uppercase tracking-wider font-bold" style={{ color: "hsl(190 80% 42%)" }}>ARMAS</span>
           </div>
-          <div className="text-[12px] font-medium" style={{ color: "hsl(220 20% 18%)" }}>
+          <div className="text-[11px] font-medium" style={{ color: "hsl(220 20% 18%)" }}>
             {crafs.length} CRAFs · {gtes.length} GTEs
           </div>
         </button>
 
-        <button onClick={() => onNavigate("dados")} className="qa-card p-4 text-left hover:shadow-md transition-all group">
-          <div className="flex items-center gap-2 mb-2">
-            <Eye className="h-4 w-4" style={{ color: "hsl(38 92% 50%)" }} />
-            <span className="text-[10px] uppercase tracking-wider font-bold" style={{ color: "hsl(38 92% 50%)" }}>FILIAÇÕES</span>
+        <button onClick={() => onNavigate("dados")} className="qa-card p-3 md:p-4 text-left hover:shadow-md active:scale-[0.98] transition-all group">
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <Eye className="h-3.5 w-3.5" style={{ color: "hsl(38 92% 50%)" }} />
+            <span className="text-[9px] uppercase tracking-wider font-bold" style={{ color: "hsl(38 92% 50%)" }}>FILIAÇÕES</span>
           </div>
-          <div className="text-[12px] font-medium" style={{ color: "hsl(220 20% 18%)" }}>
+          <div className="text-[11px] font-medium" style={{ color: "hsl(220 20% 18%)" }}>
             {filiacoes.length} {filiacoes.length === 1 ? "filiação" : "filiações"}
           </div>
         </button>
