@@ -70,8 +70,8 @@ export default function QADocumentoDetalhePage() {
   const auditLog = async (acao: string, detalhes: Record<string, any>) => {
     if (!user || !doc) return;
     await supabase.from("qa_logs_auditoria" as any).insert({
-      usuario_id: user.id, acao, entidade_tipo: "documento", entidade_id: doc.id,
-      detalhes: { titulo: doc.titulo, tipo: doc.tipo_documento, ...detalhes },
+      usuario_id: user.id, acao, entidade: "qa_documentos_conhecimento", entidade_id: doc.id,
+      detalhes_json: { titulo: doc.titulo, tipo: doc.tipo_documento, ...detalhes },
     });
   };
 

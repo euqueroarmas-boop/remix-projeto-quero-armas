@@ -555,8 +555,8 @@ export default function QABaseConhecimentoPage() {
           <label className="cursor-pointer w-full sm:w-auto">
             <input type="file" className="hidden" onChange={handleUpload} accept=".pdf,.doc,.docx,.txt,.rtf" multiple />
             <span
-              className={`qa-btn-primary flex w-full sm:w-auto items-center justify-center gap-2 h-10 px-4 text-xs font-semibold rounded-xl border border-transparent ${uploading ? "opacity-70 pointer-events-none" : ""}`}
-              style={{ background: "hsl(var(--qa-accent))", color: "hsl(0 0% 100%)" }}
+              className={`flex w-full sm:w-auto items-center justify-center gap-2 h-10 px-4 text-xs font-semibold rounded-xl border-0 shadow-md ${uploading ? "opacity-70 pointer-events-none" : "hover:opacity-90"}`}
+              style={{ background: "#2563eb", color: "#ffffff" }}
             >
               {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />} {uploading ? "Enviando..." : "Enviar Documento"}
             </span>
