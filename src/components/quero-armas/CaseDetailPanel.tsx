@@ -43,6 +43,7 @@ export default function CaseDetailPanel({
   const [copied, setCopied] = useState(false);
   const [geracao, setGeracao] = useState<any>(null);
   const [loadingGeracao, setLoadingGeracao] = useState(false);
+  const [downloadingDocx, setDownloadingDocx] = useState(false);
 
   useEffect(() => {
     if (!caso?.id) return;
