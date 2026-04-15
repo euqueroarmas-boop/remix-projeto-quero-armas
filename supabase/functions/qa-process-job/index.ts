@@ -31,13 +31,26 @@ async function processJob(jobId: string) {
     return;
   }
 
+  let docId = job.documento_id as string | null;
+
   const updateJob = async (fields: Record<string, unknown>) => {
-    await supabase.from("qa_document_jobs").update({ ...fields, updated_at: new Date().toISOString() }).eq("id", jobId);
+    await supabase
+      .from("qa_document_jobs")
+      .update({ ...fields, updated_at: new Date().toISOString() })
+      .eq("id", jobId);
+  };
+
+  const updateDocumentStatus = async (status: string, extra: Record<string, unknown> = {}) => {
+    if (!docId) return;
+    await supabase
+      .from("qa_documentos_conhecimento")
+      .update({ status_processamento: status, updated_at: new Date().toISOString(), ...extra })
+      .eq("id", docId);
   };
 
   try {
-    // Stage 1: Verify file in storage (already uploaded by frontend)
     await updateJob({ status: "saved", etapa_atual: "verificando_arquivo", started_at: job.started_at || new Date().toISOString() });
+    await updateDocumentStatus("verificando_arquivo");
 
     const storagePath = job.storage_path;
     if (!storagePath) throw new Error("storage_path ausente no job");
@@ -46,24 +59,26 @@ async function processJob(jobId: string) {
     if (!fileCheck?.signedUrl) throw new Error("Arquivo não encontrado no storage");
 
     await updateJob({ status: "saved", etapa_atual: "arquivo_confirmado" });
+    await updateDocumentStatus("verificando_arquivo");
 
-    // Stage 2: Register in qa_documentos_conhecimento
-    let docId = job.documento_id;
     if (!docId) {
       await updateJob({ status: "extracting", etapa_atual: "registrando_documento" });
+
+      const papelDocumento = job.caso_id ? "auxiliar_caso" : "aprendizado";
+      const ativoNaIa = papelDocumento === "aprendizado";
 
       const { data: docData, error: dbErr } = await supabase.from("qa_documentos_conhecimento").insert({
         titulo: job.nome_arquivo,
         nome_arquivo: job.nome_arquivo,
         storage_path: storagePath,
         tipo_documento: job.tipo_documental,
-        tipo_origem: "upload",
-        papel_documento: "auxiliar_caso",
+        tipo_origem: "arquivo_upload",
+        papel_documento: papelDocumento,
         categoria: job.tipo_documental,
         status_processamento: "pendente",
         status_validacao: "validado",
         ativo: true,
-        ativo_na_ia: false,
+        ativo_na_ia: ativoNaIa,
         caso_id: job.caso_id || null,
         enviado_por: job.user_id || null,
         mime_type: job.mime_type || null,
@@ -75,8 +90,8 @@ async function processJob(jobId: string) {
       await updateJob({ documento_id: docId });
     }
 
-    // Stage 3: Trigger text extraction (qa-ingest-document)
     await updateJob({ status: "extracting", etapa_atual: "extracao_texto" });
+    await updateDocumentStatus("extraindo_texto", { resumo_extraido: null });
 
     const ingestResp = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/qa-ingest-document`, {
       method: "POST",
@@ -89,13 +104,10 @@ async function processJob(jobId: string) {
 
     if (!ingestResp.ok) {
       const errBody = await ingestResp.text();
-      console.error("Ingest call failed:", ingestResp.status, errBody);
-      // Don't throw — ingest uses waitUntil, so the 200/202 just means "accepted"
-    } else {
-      await ingestResp.text(); // consume body
+      throw new Error(`Falha ao iniciar ingestão (${ingestResp.status}): ${errBody || "sem detalhes"}`);
     }
 
-    // Stage 4: Poll extraction status
+    await ingestResp.text();
     await updateJob({ status: "processing", etapa_atual: "aguardando_extracao" });
 
     const MAX_POLL_SECONDS = 600;
@@ -121,27 +133,33 @@ async function processJob(jobId: string) {
         throw new Error(`Extração falhou: ${st}`);
       }
 
-      // Map extraction sub-status to granular etapa
       const etapaMap: Record<string, string> = {
         pendente: "aguardando_extracao",
-        extraindo: "extracao_texto",
-        ocr: "rodando_ocr",
-        processando: "estruturando_campos",
+        verificando_arquivo: "verificando_arquivo",
+        extraindo_texto: "extraindo_texto",
+        rodando_ocr: "rodando_ocr",
+        gerando_resumo: "gerando_resumo",
+        criando_chunks: "criando_chunks",
+        gerando_embeddings: "gerando_embeddings",
       };
       const etapa = etapaMap[st || "pendente"] || `extracao_em_andamento (${st || "pendente"})`;
       await updateJob({ etapa_atual: etapa, tentativas: (job.tentativas || 0) });
     }
 
     if (!extractionDone) {
-      const { data: final } = await supabase.from("qa_documentos_conhecimento").select("status_processamento").eq("id", docId).maybeSingle();
-      if (final?.status_processamento === "concluido") {
+      const { data: final } = await supabase
+        .from("qa_documentos_conhecimento")
+        .select("status_processamento")
+        .eq("id", docId)
+        .maybeSingle();
+
+      if (final?.status_processamento === "concluido" || final?.status_processamento === "gerando_embeddings") {
         extractionDone = true;
       } else {
         throw new Error("Extração não concluída após tempo máximo (10 min)");
       }
     }
 
-    // Stage 5: Specialized processing (qa-processar-documento)
     await updateJob({ etapa_atual: "estruturando_campos" });
 
     try {
@@ -153,6 +171,7 @@ async function processJob(jobId: string) {
         },
         body: JSON.stringify({ documento_id: docId, user_id: job.user_id }),
       });
+
       if (procResp.ok) {
         await procResp.text();
         await updateJob({ etapa_atual: "salvando_metadados" });
@@ -164,7 +183,6 @@ async function processJob(jobId: string) {
       console.warn("Specialized processing error (non-fatal):", e);
     }
 
-    // Done!
     await updateJob({
       status: "done",
       etapa_atual: "concluido",
@@ -174,7 +192,6 @@ async function processJob(jobId: string) {
 
     console.log(`Job ${jobId} completed. documento_id=${docId}`);
 
-    // Audit log
     try {
       await supabase.from("qa_logs_auditoria").insert({
         usuario_id: job.user_id || null,
@@ -183,17 +200,22 @@ async function processJob(jobId: string) {
         acao: "job_concluido",
         detalhes_json: { documento_id: docId, tipo_documental: job.tipo_documental },
       });
-    } catch { /* non-critical */ }
-
+    } catch {
+      /* non-critical */
+    }
   } catch (err: any) {
-    console.error(`Job ${jobId} failed:`, err.message);
+    const message = err?.message || "Erro desconhecido";
+    console.error(`Job ${jobId} failed:`, message);
+
     await updateJob({
       status: "failed",
       etapa_atual: "erro",
-      erro: err.message || "Erro desconhecido",
+      erro: message,
       finished_at: new Date().toISOString(),
       tentativas: (job.tentativas || 0) + 1,
     });
+
+    await updateDocumentStatus("erro", { resumo_extraido: `Erro: ${message}` });
 
     try {
       await supabase.from("qa_logs_auditoria").insert({
@@ -201,9 +223,11 @@ async function processJob(jobId: string) {
         entidade: "qa_document_jobs",
         entidade_id: jobId,
         acao: "job_erro",
-        detalhes_json: { erro: err.message, documento_id: job.documento_id },
+        detalhes_json: { erro: message, documento_id: docId || job.documento_id },
       });
-    } catch { /* non-critical */ }
+    } catch {
+      /* non-critical */
+    }
   }
 }
 
@@ -214,11 +238,11 @@ Deno.serve(async (req) => {
     const { job_id } = await req.json();
     if (!job_id) {
       return new Response(JSON.stringify({ error: "job_id required" }), {
-        status: 400, headers: { ...corsH, "Content-Type": "application/json" },
+        status: 400,
+        headers: { ...corsH, "Content-Type": "application/json" },
       });
     }
 
-    // Process in background — return immediately
     EdgeRuntime.waitUntil(processJob(job_id));
 
     return new Response(JSON.stringify({
@@ -228,10 +252,10 @@ Deno.serve(async (req) => {
       status: 202,
       headers: { ...corsH, "Content-Type": "application/json" },
     });
-
   } catch (err: any) {
     return new Response(JSON.stringify({ error: err.message }), {
-      status: 500, headers: { ...corsH, "Content-Type": "application/json" },
+      status: 500,
+      headers: { ...corsH, "Content-Type": "application/json" },
     });
   }
 });
