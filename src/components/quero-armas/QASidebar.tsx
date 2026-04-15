@@ -45,8 +45,8 @@ const NAV_GROUPS = [
 interface Props { perfil: string; nome: string }
 
 export function QASidebar({ perfil, nome }: Props) {
-  const { state, toggleSidebar } = useSidebar();
-  const collapsed = state === "collapsed";
+  const { state, toggleSidebar, isMobile, setOpenMobile } = useSidebar();
+  const collapsed = isMobile ? false : state === "collapsed";
   const location = useLocation();
   const { signOut } = useQAAuth();
 
