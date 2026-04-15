@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Bot, Send, Loader2, BookOpen, Scale, Gavel, AlertTriangle, CheckCircle, BarChart3 } from "lucide-react";
-import { useQAAuth } from "@/components/quero-armas/hooks/useQAAuth";
+import { useQAAuthContext } from "@/components/quero-armas/QAAuthContext";
 
 const TIPOS_PECA = [
   "peticao_inicial", "recurso", "mandado_seguranca", "parecer",
@@ -35,7 +35,7 @@ const FOCOS = [
 ];
 
 export default function QAIAPage() {
-  const { user } = useQAAuth();
+  const { user } = useQAAuthContext();
   const [casoTitulo, setCasoTitulo] = useState("");
   const [entrada, setEntrada] = useState("");
   const [tipoPeca, setTipoPeca] = useState("peticao_inicial");

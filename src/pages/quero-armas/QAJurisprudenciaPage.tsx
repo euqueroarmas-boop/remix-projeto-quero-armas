@@ -6,13 +6,13 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Plus, Search, Gavel, CheckCircle, Loader2, Upload, FileText, Link as LinkIcon } from "lucide-react";
-import { useQAAuth } from "@/components/quero-armas/hooks/useQAAuth";
+import { useQAAuthContext } from "@/components/quero-armas/QAAuthContext";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
 type TabMode = "manual" | "arquivo" | "link";
 
 export default function QAJurisprudenciaPage() {
-  const { profile } = useQAAuth();
+  const { profile } = useQAAuthContext();
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState("");
