@@ -840,11 +840,22 @@ export default function QAGerarPecaPage() {
           etapaAtual: "pendente",
         });
 
-        const { error } = await supabase.functions.invoke("qa-ingest-document", {
-          body: { storage_path: arq.storagePath, user_id: user?.id || null },
+        // Direct fetch for retry (same as dispatchDocumentIngestion)
+        const retryController = new AbortController();
+        const retryTimer = setTimeout(() => retryController.abort(), 15000);
+        const retryRes = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-ingest-document`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ storage_path: arq.storagePath, user_id: user?.id || null }),
+          signal: retryController.signal,
         });
+        clearTimeout(retryTimer);
 
-        if (error) throw error;
+        if (!retryRes.ok) throw new Error(`Reprocessamento falhou (${retryRes.status})`);
 
         void pollDocumentStatus(arq.docId, index, arq.nome);
         return;
