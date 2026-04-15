@@ -115,7 +115,7 @@ export default function NovoCasoModal({ open, onOpenChange, onCreated, preselect
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className="bg-white border-slate-200 rounded-xl !p-0 overflow-y-auto"
-        style={{ width: "calc(100vw - 2rem)", maxWidth: "32rem", maxHeight: "calc(100vh - 3rem)", gap: 0, top: "1.5rem", transform: "translateX(-50%)", translateY: "0" }}
+        style={{ width: "calc(100vw - 2rem)", maxWidth: "32rem", maxHeight: "calc(100vh - 3rem)", gap: 0, top: "1.5rem", transform: "translateX(-50%)" }}
       >
         <div className="px-5 pt-5 pb-3 border-b" style={{ borderColor: "hsl(220 13% 91%)" }}>
           <h2 className="text-base font-bold uppercase" style={{ color: "hsl(220 20% 18%)" }}>Novo Caso</h2>
