@@ -675,8 +675,8 @@ export default function QABaseConhecimentoPage() {
         .eq("id", doc.id);
       await supabase.from("qa_logs_auditoria" as any).insert({
         usuario_id: user.id, acao: "documento_desativado",
-        entidade_tipo: "documento", entidade_id: doc.id,
-        detalhes: { titulo: doc.titulo, tipo: doc.tipo_documento },
+        entidade: "qa_documentos_conhecimento", entidade_id: doc.id,
+        detalhes_json: { titulo: doc.titulo, tipo: doc.tipo_documento },
       });
       toast.success("Documento desativado da IA.");
       setDeleteTarget(null);
