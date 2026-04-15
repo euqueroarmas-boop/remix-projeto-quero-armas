@@ -203,6 +203,17 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         expedicao_rg: formatDateForDatabase(f.expedicao_rg),
         data_nascimento: formatDateForDatabase(f.data_nascimento),
       };
+
+      // Upload photo if changed
+      if (photoFile) {
+        const ext = photoFile.name.split(".").pop() || "jpg";
+        const cpfClean = (f.cpf || "sem-cpf").replace(/\D/g, "");
+        const path = `clientes/fotos/${cpfClean}-${Date.now()}.${ext}`;
+        const { error: uploadErr } = await supabase.storage.from("qa-documentos").upload(path, photoFile, { upsert: true });
+        if (uploadErr) { console.error("Photo upload error:", uploadErr); toast.error("Erro no upload da foto"); }
+        else { payload.imagem = path; }
+      }
+
       if (isEdit) {
         const { error } = await supabase.from("qa_clientes" as any).update(payload).eq("id", cliente.id);
         if (error) throw error;
