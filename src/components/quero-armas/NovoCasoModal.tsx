@@ -114,15 +114,15 @@ export default function NovoCasoModal({ open, onOpenChange, onCreated, preselect
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="bg-white border-slate-200 rounded-xl !p-0 overflow-hidden"
-        style={{ width: "calc(100vw - 2rem)", maxWidth: "32rem", maxHeight: "calc(100vh - 2rem)", gap: 0, display: "flex", flexDirection: "column" }}
+        className="bg-white border-slate-200 rounded-xl !p-0 overflow-y-auto"
+        style={{ width: "calc(100vw - 2rem)", maxWidth: "32rem", maxHeight: "calc(100vh - 2rem)", gap: 0 }}
       >
-        <div className="px-5 pt-5 pb-3 border-b shrink-0" style={{ borderColor: "hsl(220 13% 91%)" }}>
+        <div className="px-5 pt-5 pb-3 border-b" style={{ borderColor: "hsl(220 13% 91%)" }}>
           <h2 className="text-base font-bold uppercase" style={{ color: "hsl(220 20% 18%)" }}>Novo Caso</h2>
           <p className="text-xs mt-0.5" style={{ color: "hsl(220 10% 62%)" }}>Cadastre um novo processo</p>
         </div>
 
-        <div className="px-5 py-4 space-y-4 overflow-y-auto flex-1 min-h-0">
+        <div className="px-5 py-4 space-y-4">
           {/* Client Picker */}
           <div>
             <label className="text-[11px] font-semibold uppercase mb-1.5 block" style={{ color: "hsl(220 10% 45%)" }}>
@@ -265,8 +265,8 @@ export default function NovoCasoModal({ open, onOpenChange, onCreated, preselect
           </div>
         </div>
 
-        {/* Footer OUTSIDE scroll area — always visible */}
-        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t shrink-0" style={{ borderColor: "hsl(220 13% 91%)" }}>
+        {/* Footer - sticky at bottom */}
+        <div className="sticky bottom-0 bg-white flex items-center justify-end gap-2 px-5 py-3 border-t" style={{ borderColor: "hsl(220 13% 91%)" }}>
           <button
             onClick={() => { resetForm(); onOpenChange(false); }}
             className="h-9 px-4 rounded-lg text-xs font-medium uppercase hover:bg-slate-100 transition-colors"
