@@ -91,7 +91,7 @@ export default function NovoCasoModal({ open, onOpenChange, onCreated, preselect
         tipo_peca: tipoServico,
         tipo_servico: tipoLabel,
         cidade: selectedCliente.cidade || null,
-        uf: selectedCliente.uf || null,
+        uf: selectedCliente.estado || null,
         descricao_caso: descricao.trim() || null,
         foco_argumentativo: observacoes.trim() || null,
         status,
@@ -136,7 +136,7 @@ export default function NovoCasoModal({ open, onOpenChange, onCreated, preselect
                     {selectedCliente.nome_completo}
                   </div>
                   <div className="text-[10px]" style={{ color: "hsl(220 10% 55%)" }}>
-                    {selectedCliente.cpf} {selectedCliente.cidade && `• ${selectedCliente.cidade}/${selectedCliente.uf}`}
+                    {selectedCliente.cpf} {selectedCliente.cidade && `• ${selectedCliente.cidade}/${selectedCliente.estado || ""}`}
                   </div>
                 </div>
                 <button onClick={() => setSelectedCliente(null)} className="p-1 rounded hover:bg-slate-200">
