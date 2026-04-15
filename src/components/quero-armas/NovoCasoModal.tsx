@@ -286,6 +286,7 @@ export default function NovoCasoModal({ open, onOpenChange, onCreated, preselect
             Criar Caso
           </button>
         </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
