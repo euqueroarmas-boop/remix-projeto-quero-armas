@@ -113,7 +113,7 @@ async function processJob(jobId: string) {
         .maybeSingle();
 
       const st = check?.status_processamento;
-      if (st === "concluido") {
+      if (st === "concluido" || st === "gerando_embeddings") {
         extractionDone = true;
         break;
       }
