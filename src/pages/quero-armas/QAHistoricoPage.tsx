@@ -8,10 +8,11 @@ import { toast } from "sonner";
 import {
   Loader2, PenTool, Eye, ThumbsUp, ThumbsDown, Star,
   Scale, Gavel, BookOpen, CheckCircle, MessageSquare,
-  Download, Copy, Check,
+  Download, Copy, Check, Award,
 } from "lucide-react";
 import { useQAAuth } from "@/components/quero-armas/hooks/useQAAuth";
 import { downloadGeracaoDocx } from "@/lib/qaDocxDownload";
+import FeedbackAprendizadoPanel from "@/components/quero-armas/FeedbackAprendizadoPanel";
 
 type TabType = "consultas" | "geracoes";
 
@@ -28,6 +29,7 @@ export default function QAHistoricoPage() {
   const [saving, setSaving] = useState(false);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [feedbackData, setFeedbackData] = useState<any>(null);
 
   const canReview = profile?.perfil && ["administrador", "advogado"].includes(profile.perfil);
 
@@ -52,10 +54,16 @@ export default function QAHistoricoPage() {
 
   useEffect(() => { load(); }, [tab]);
 
-  const openReview = (item: any) => {
+  const openReview = async (item: any) => {
     setReviewItem(item);
     setReviewText(item.minuta_gerada || "");
     setReviewJustificativa("");
+    // Load existing feedback
+    try {
+      const { data } = await supabase.from("qa_feedback_geracoes" as any)
+        .select("*").eq("geracao_id", item.id).maybeSingle();
+      setFeedbackData(data || null);
+    } catch { setFeedbackData(null); }
     setReviewOpen(true);
   };
 
@@ -324,6 +332,16 @@ export default function QAHistoricoPage() {
                 <ThumbsDown className="h-3.5 w-3.5" /> Rejeitar
               </button>
             </div>
+
+            {/* Feedback de Aprendizado */}
+            {reviewItem && (
+              <FeedbackAprendizadoPanel
+                geracaoId={reviewItem.id}
+                userId={user?.id}
+                existingFeedback={feedbackData}
+                onSaved={() => { load(); }}
+              />
+            )}
           </div>
         </DialogContent>
       </Dialog>

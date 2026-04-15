@@ -2861,32 +2861,50 @@ export type Database = {
       qa_feedback_geracoes: {
         Row: {
           aprovada_como_modelo: boolean
+          classificacao_aprendizado: string | null
           correcao_humana: string | null
           created_at: string
           geracao_id: string
           id: string
+          incorporada_aprendizado: boolean | null
+          incorporada_em: string | null
           observacoes: string | null
+          peso_aprendizado: number | null
+          resultado_pratico: string | null
           status_feedback: string
+          updated_at: string | null
           usuario_id: string
         }
         Insert: {
           aprovada_como_modelo?: boolean
+          classificacao_aprendizado?: string | null
           correcao_humana?: string | null
           created_at?: string
           geracao_id: string
           id?: string
+          incorporada_aprendizado?: boolean | null
+          incorporada_em?: string | null
           observacoes?: string | null
+          peso_aprendizado?: number | null
+          resultado_pratico?: string | null
           status_feedback?: string
+          updated_at?: string | null
           usuario_id: string
         }
         Update: {
           aprovada_como_modelo?: boolean
+          classificacao_aprendizado?: string | null
           correcao_humana?: string | null
           created_at?: string
           geracao_id?: string
           id?: string
+          incorporada_aprendizado?: boolean | null
+          incorporada_em?: string | null
           observacoes?: string | null
+          peso_aprendizado?: number | null
+          resultado_pratico?: string | null
           status_feedback?: string
+          updated_at?: string | null
           usuario_id?: string
         }
         Relationships: [
