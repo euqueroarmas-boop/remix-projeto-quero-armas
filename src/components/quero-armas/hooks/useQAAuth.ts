@@ -30,17 +30,20 @@ export function useQAAuth() {
   const [loading, setLoading] = useState(true);
   const initializedRef = useRef(false);
   const mountedRef = useRef(true);
+  const loadingRef = useRef(true);
 
   useEffect(() => {
     mountedRef.current = true;
+    loadingRef.current = true;
 
-    // Safety timeout — never let loading stay true for more than 12s
+    // Safety timeout — uses ref to avoid stale closure
     const safetyTimer = setTimeout(() => {
-      if (mountedRef.current && loading) {
-        console.warn("[useQAAuth] Safety timeout: forcing loading=false after 12s");
+      if (mountedRef.current && loadingRef.current) {
+        console.warn("[useQAAuth] Safety timeout: forcing loading=false after 6s");
+        loadingRef.current = false;
         setLoading(false);
       }
-    }, 12000);
+    }, 6000);
 
     const fetchProfile = async (userId: string): Promise<QAProfile | null> => {
       try {
@@ -91,11 +94,15 @@ export function useQAAuth() {
       // Mark as initialized so onAuthStateChange can process future events
       initializedRef.current = true;
 
-      if (mountedRef.current) setLoading(false);
+      if (mountedRef.current) {
+        loadingRef.current = false;
+        setLoading(false);
+      }
     }).catch((err) => {
       console.error("[useQAAuth] getSession error:", err);
       if (mountedRef.current) {
         initializedRef.current = true;
+        loadingRef.current = false;
         setLoading(false);
       }
     });

@@ -10,7 +10,7 @@ import {
   Loader2, Eye, Plus, Crosshair, Edit, Trash2, Download, FileDown,
   ChevronDown, ChevronUp, Save, X, CheckCircle, TrendingUp,
 } from "lucide-react";
-import { supabase as supabaseClient } from "@/integrations/supabase/client";
+
 import { toast } from "sonner";
 import ClienteFormModal from "@/components/quero-armas/clientes/ClienteFormModal";
 import ClienteOverview from "@/components/quero-armas/clientes/ClienteOverview";
@@ -290,7 +290,12 @@ export default function QAClientesPage() {
   const [savingCadastroEdit, setSavingCadastroEdit] = useState(false);
   const [servicos, setServicos] = useState<{ id: number; nome_servico: string }[]>([]);
 
-  useEffect(() => { loadClientes(); loadCadastrosPublicos(); loadServicos(); }, []);
+  const dataLoadedRef = useRef(false);
+  useEffect(() => {
+    if (dataLoadedRef.current) return;
+    dataLoadedRef.current = true;
+    loadClientes(); loadCadastrosPublicos(); loadServicos();
+  }, []);
 
   const loadServicos = async () => {
     const { data } = await supabase.from("qa_servicos" as any).select("id, nome_servico").order("id");
