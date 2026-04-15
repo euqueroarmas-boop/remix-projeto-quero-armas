@@ -8,8 +8,10 @@ import { toast } from "sonner";
 import {
   Loader2, PenTool, Eye, ThumbsUp, ThumbsDown, Star,
   Scale, Gavel, BookOpen, CheckCircle, MessageSquare,
+  Download, Copy, Check,
 } from "lucide-react";
 import { useQAAuth } from "@/components/quero-armas/hooks/useQAAuth";
+import { downloadGeracaoDocx } from "@/lib/qaDocxDownload";
 
 type TabType = "consultas" | "geracoes";
 
@@ -24,6 +26,8 @@ export default function QAHistoricoPage() {
   const [reviewText, setReviewText] = useState("");
   const [reviewJustificativa, setReviewJustificativa] = useState("");
   const [saving, setSaving] = useState(false);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const canReview = profile?.perfil && ["administrador", "advogado"].includes(profile.perfil);
 
@@ -100,6 +104,26 @@ export default function QAHistoricoPage() {
     }
   };
 
+  const handleDownload = async (item: any) => {
+    setDownloadingId(item.id);
+    await downloadGeracaoDocx(item.id, {
+      titulo: item.titulo_geracao,
+      tipoPeca: item.tipo_peca,
+    });
+    setDownloadingId(null);
+  };
+
+  const handleCopyMinuta = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      toast.success("Texto copiado");
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("Não foi possível copiar");
+    }
+  };
+
   const statusBadge = (s: string) => {
     const map: Record<string, { bg: string; text: string }> = {
       rascunho: { bg: "bg-slate-100", text: "text-slate-600" },
@@ -145,6 +169,7 @@ export default function QAHistoricoPage() {
         <div className="space-y-2">
           {items.map((item: any) => {
             const badge = statusBadge(item.status_revisao || "");
+            const isDownloading = downloadingId === item.id;
             return (
               <div key={item.id} className="qa-card qa-hover-lift p-4">
                 <div className="flex items-center gap-3">
@@ -163,6 +188,18 @@ export default function QAHistoricoPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
+                    {/* Download DOCX button - only for geracoes with content */}
+                    {tab === "geracoes" && item.minuta_gerada && (
+                      <button
+                        onClick={() => handleDownload(item)}
+                        disabled={isDownloading}
+                        className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-blue-50 transition-colors"
+                        style={{ color: "hsl(220 60% 50%)" }}
+                        title="Baixar DOCX"
+                      >
+                        {isDownloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                      </button>
+                    )}
                     <button onClick={() => setDetailItem(item)} className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-slate-100 transition-colors" style={{ color: "hsl(220 10% 55%)" }}>
                       <Eye className="h-4 w-4" />
                     </button>
@@ -188,6 +225,24 @@ export default function QAHistoricoPage() {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-3 mt-1">
+            {/* Meta info for geracoes */}
+            {tab === "geracoes" && detailItem && (
+              <div className="flex flex-wrap items-center gap-2 text-[11px]">
+                <span className="qa-badge uppercase">{(detailItem.tipo_peca || "—").replace(/_/g, " ")}</span>
+                <span style={{ color: "hsl(220 10% 62%)" }}>
+                  {new Date(detailItem.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                </span>
+                {detailItem.score_confianca && (
+                  <span className={`font-mono font-medium ${
+                    detailItem.score_confianca >= 0.7 ? "text-emerald-600" :
+                    detailItem.score_confianca >= 0.4 ? "text-amber-600" : "text-red-600"
+                  }`}>
+                    {Math.round(detailItem.score_confianca * 100)}% confiança
+                  </span>
+                )}
+              </div>
+            )}
+
             {(detailItem?.fontes_recuperadas_json || detailItem?.fundamentos_utilizados_json)?.length > 0 && (
               <div>
                 <span className="text-[10px] font-medium uppercase tracking-wider" style={{ color: "hsl(220 10% 55%)" }}>Fontes</span>
@@ -207,6 +262,29 @@ export default function QAHistoricoPage() {
                 {detailItem?.minuta_gerada || detailItem?.resposta_ia}
               </div>
             </div>
+
+            {/* Action buttons in detail dialog */}
+            {tab === "geracoes" && detailItem?.minuta_gerada && (
+              <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-200">
+                <button
+                  onClick={() => handleDownload(detailItem)}
+                  disabled={downloadingId === detailItem?.id}
+                  className="h-9 px-4 rounded-lg text-xs font-semibold flex items-center gap-1.5 bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-all"
+                >
+                  {downloadingId === detailItem?.id ? (
+                    <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Gerando...</>
+                  ) : (
+                    <><Download className="h-3.5 w-3.5" /> Baixar DOCX</>
+                  )}
+                </button>
+                <button
+                  onClick={() => handleCopyMinuta(detailItem.minuta_gerada)}
+                  className="h-9 px-4 rounded-lg text-xs font-semibold flex items-center gap-1.5 bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-100 transition-all"
+                >
+                  {copied ? <><Check className="h-3.5 w-3.5" /> Copiado</> : <><Copy className="h-3.5 w-3.5" /> Copiar texto</>}
+                </button>
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
