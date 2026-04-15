@@ -11,7 +11,7 @@ import {
   ExternalLink, RefreshCw, Trash2, Power, Star, Zap, ShieldCheck,
   Link2, Globe, Plus, X, ArrowRight, ChevronDown, ChevronUp,
 } from "lucide-react";
-import { useQAAuth } from "@/components/quero-armas/hooks/useQAAuth";
+import { useQAAuthContext } from "@/components/quero-armas/QAAuthContext";
 import { Link } from "react-router-dom";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { formatDuration } from "@/lib/formatDuration";
@@ -238,7 +238,7 @@ function ActivityItem({ item, onDismiss, onReprocess }: { item: TrackedImport; o
 }
 
 export default function QABaseConhecimentoPage() {
-  const { user } = useQAAuth();
+  const { user } = useQAAuthContext();
   const [docs, setDocs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);

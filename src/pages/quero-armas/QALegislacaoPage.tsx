@@ -7,13 +7,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Plus, Search, Scale, CheckCircle, Loader2 } from "lucide-react";
-import { useQAAuth } from "@/components/quero-armas/hooks/useQAAuth";
+import { useQAAuthContext } from "@/components/quero-armas/QAAuthContext";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
 const TIPOS_NORMA = ["lei", "decreto", "instrucao_normativa", "portaria", "resolucao", "nota_tecnica", "outro"];
 
 export default function QALegislacaoPage() {
-  const { profile } = useQAAuth();
+  const { profile } = useQAAuthContext();
   const [normas, setNormas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState("");

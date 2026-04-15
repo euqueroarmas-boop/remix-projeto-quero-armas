@@ -1,11 +1,11 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { QASidebar } from "./QASidebar";
 import { Outlet, Navigate } from "react-router-dom";
-import { useQAAuth } from "./hooks/useQAAuth";
+import { QAAuthProvider, useQAAuthContext } from "./QAAuthContext";
 import { PanelLeftOpen } from "lucide-react";
 
-export default function QALayout() {
-  const { user, profile, loading, signOut } = useQAAuth();
+function QALayoutInner() {
+  const { user, profile, loading, signOut } = useQAAuthContext();
 
   if (loading) {
     return (
@@ -39,5 +39,13 @@ export default function QALayout() {
         </div>
       </div>
     </SidebarProvider>
+  );
+}
+
+export default function QALayout() {
+  return (
+    <QAAuthProvider>
+      <QALayoutInner />
+    </QAAuthProvider>
   );
 }
