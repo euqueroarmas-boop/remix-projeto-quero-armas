@@ -484,8 +484,8 @@ export default function QABaseConhecimentoPage() {
       if (doc.storage_path) await supabase.storage.from("qa-documentos").remove([doc.storage_path]);
       await supabase.from("qa_logs_auditoria" as any).insert({
         usuario_id: user.id, acao: "documento_excluido_permanente",
-        entidade_tipo: "documento", entidade_id: doc.id,
-        detalhes: { titulo: doc.titulo, tipo: doc.tipo_documento, storage_path: doc.storage_path },
+        entidade: "qa_documentos_conhecimento", entidade_id: doc.id,
+        detalhes_json: { titulo: doc.titulo, tipo: doc.tipo_documento, storage_path: doc.storage_path },
       });
       await supabase.from("qa_documentos_conhecimento" as any).delete().eq("id", doc.id);
       toast.success("Documento excluído permanentemente.");
