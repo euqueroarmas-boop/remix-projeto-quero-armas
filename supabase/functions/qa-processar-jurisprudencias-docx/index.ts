@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import mammoth from "npm:mammoth@1.12.0";
+import { Buffer } from "node:buffer";
 
 const corsH = {
   "Access-Control-Allow-Origin": "*",
@@ -32,9 +33,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Extract text with mammoth
-    const buffer = await fileData.arrayBuffer();
-    const result = await mammoth.extractRawText({ arrayBuffer: buffer });
+    // Extract text with mammoth - use Buffer for Deno compatibility
+    const arrayBuf = await fileData.arrayBuffer();
+    const nodeBuffer = Buffer.from(arrayBuf);
+    const result = await mammoth.extractRawText({ buffer: nodeBuffer });
     const fullText = result.value;
 
     if (!fullText || fullText.trim().length < 50) {
