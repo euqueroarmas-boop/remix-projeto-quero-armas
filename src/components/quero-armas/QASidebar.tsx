@@ -42,9 +42,9 @@ const NAV_GROUPS = [
   },
 ];
 
-interface Props { perfil: string; nome: string }
+interface Props { perfil: string; nome: string; signOut: () => Promise<void> }
 
-export function QASidebar({ perfil, nome }: Props) {
+export function QASidebar({ perfil, nome, signOut }: Props) {
   const { state, toggleSidebar, isMobile, setOpenMobile } = useSidebar();
   const collapsed = isMobile ? false : state === "collapsed";
   const location = useLocation();
