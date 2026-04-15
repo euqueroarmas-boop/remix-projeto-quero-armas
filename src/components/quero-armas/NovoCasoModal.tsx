@@ -122,7 +122,7 @@ export default function NovoCasoModal({ open, onOpenChange, onCreated, preselect
           <p className="text-xs mt-0.5" style={{ color: "hsl(220 10% 62%)" }}>Cadastre um novo processo</p>
         </div>
 
-        <div className="px-5 py-4 space-y-4">
+        <div className="px-5 py-4 space-y-4 overflow-y-auto flex-1 min-h-0">
           {/* Client Picker */}
           <div>
             <label className="text-[11px] font-semibold uppercase mb-1.5 block" style={{ color: "hsl(220 10% 45%)" }}>
