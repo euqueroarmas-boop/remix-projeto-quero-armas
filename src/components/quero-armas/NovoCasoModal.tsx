@@ -58,7 +58,7 @@ export default function NovoCasoModal({ open, onOpenChange, onCreated, preselect
     setLoadingClientes(true);
     try {
       const { data } = await supabase.from("qa_clientes" as any)
-        .select("id, nome_completo, cpf, cidade, uf")
+        .select("id, nome_completo, cpf, cidade, estado")
         .order("nome_completo", { ascending: true }).limit(200);
       setClientes((data as any[]) ?? []);
     } catch { /* ignore */ }
@@ -91,7 +91,7 @@ export default function NovoCasoModal({ open, onOpenChange, onCreated, preselect
         tipo_peca: tipoServico,
         tipo_servico: tipoLabel,
         cidade: selectedCliente.cidade || null,
-        uf: selectedCliente.uf || null,
+        uf: selectedCliente.estado || null,
         descricao_caso: descricao.trim() || null,
         foco_argumentativo: observacoes.trim() || null,
         status,
@@ -114,15 +114,15 @@ export default function NovoCasoModal({ open, onOpenChange, onCreated, preselect
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="bg-white border-slate-200 rounded-xl p-0 overflow-hidden"
-        style={{ width: "calc(100vw - 2rem)", maxWidth: "32rem" }}
+        className="bg-white border-slate-200 rounded-xl !p-0 overflow-y-auto"
+        style={{ width: "calc(100vw - 2rem)", maxWidth: "32rem", maxHeight: "calc(100vh - 3rem)", gap: 0, top: "1.5rem", transform: "translateX(-50%)" }}
       >
         <div className="px-5 pt-5 pb-3 border-b" style={{ borderColor: "hsl(220 13% 91%)" }}>
           <h2 className="text-base font-bold uppercase" style={{ color: "hsl(220 20% 18%)" }}>Novo Caso</h2>
           <p className="text-xs mt-0.5" style={{ color: "hsl(220 10% 62%)" }}>Cadastre um novo processo</p>
         </div>
 
-        <div className="px-5 py-4 space-y-4 max-h-[65vh] overflow-y-auto">
+        <div className="px-5 py-4 space-y-4">
           {/* Client Picker */}
           <div>
             <label className="text-[11px] font-semibold uppercase mb-1.5 block" style={{ color: "hsl(220 10% 45%)" }}>
@@ -136,7 +136,7 @@ export default function NovoCasoModal({ open, onOpenChange, onCreated, preselect
                     {selectedCliente.nome_completo}
                   </div>
                   <div className="text-[10px]" style={{ color: "hsl(220 10% 55%)" }}>
-                    {selectedCliente.cpf} {selectedCliente.cidade && `• ${selectedCliente.cidade}/${selectedCliente.uf}`}
+                    {selectedCliente.cpf} {selectedCliente.cidade && `• ${selectedCliente.cidade}/${selectedCliente.estado || ""}`}
                   </div>
                 </div>
                 <button onClick={() => setSelectedCliente(null)} className="p-1 rounded hover:bg-slate-200">
@@ -243,7 +243,7 @@ export default function NovoCasoModal({ open, onOpenChange, onCreated, preselect
               value={descricao}
               onChange={e => setDescricao(e.target.value)}
               placeholder="Descreva brevemente o caso..."
-              rows={3}
+              rows={2}
               className="w-full px-3 py-2 rounded-lg border text-xs outline-none resize-none"
               style={{ borderColor: "hsl(220 13% 91%)", color: "hsl(220 20% 18%)" }}
             />
@@ -263,25 +263,25 @@ export default function NovoCasoModal({ open, onOpenChange, onCreated, preselect
               style={{ borderColor: "hsl(220 13% 91%)", color: "hsl(220 10% 18%)" }}
             />
           </div>
-        </div>
 
-        {/* Footer */}
-        <div className="px-5 py-3 border-t flex items-center justify-end gap-2" style={{ borderColor: "hsl(220 13% 91%)" }}>
-          <button
-            onClick={() => { resetForm(); onOpenChange(false); }}
-            className="h-9 px-4 rounded-lg text-xs font-medium uppercase hover:bg-slate-100 transition-colors"
-            style={{ color: "hsl(220 10% 45%)" }}
-          >
-            Cancelar
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="qa-btn-primary h-9 px-5 text-xs font-semibold uppercase flex items-center gap-1.5 no-glow"
-          >
-            {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-            Criar Caso
-          </button>
+          {/* Footer inside scroll */}
+          <div className="flex items-center justify-end gap-2 pt-3 border-t" style={{ borderColor: "hsl(220 13% 91%)" }}>
+            <button
+              onClick={() => { resetForm(); onOpenChange(false); }}
+              className="h-9 px-4 rounded-lg text-xs font-medium uppercase hover:bg-slate-100 transition-colors"
+              style={{ color: "hsl(220 10% 45%)" }}
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="qa-btn-primary h-9 px-5 text-xs font-semibold uppercase flex items-center gap-1.5 no-glow"
+            >
+              {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              Criar Caso
+            </button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
