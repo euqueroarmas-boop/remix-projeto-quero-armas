@@ -139,6 +139,7 @@ export function QASidebar({ perfil, nome }: Props) {
                           <SidebarMenuButton asChild tooltip={collapsed ? item.title : undefined}>
                             <Link
                               to={item.url}
+                              onClick={() => { if (isMobile) setOpenMobile(false); }}
                               className={`flex items-center gap-2.5 rounded-lg text-[13px] font-medium transition-all ${
                                 collapsed ? "justify-center px-0 py-2.5 mx-1" : "px-4 py-2 mx-2"
                               }`}
