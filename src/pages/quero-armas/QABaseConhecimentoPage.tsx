@@ -71,11 +71,17 @@ const PAPEIS_DOC_FILTER = [
 /* ─── Import stage definitions ─── */
 const IMPORT_STAGES = [
   { key: "pendente", label: "Iniciando importação", pct: 5 },
+  { key: "verificando_arquivo", label: "Verificando arquivo", pct: 12 },
+  { key: "arquivo_confirmado", label: "Arquivo confirmado", pct: 18 },
+  { key: "registrando_documento", label: "Registrando documento", pct: 24 },
   { key: "acessando_url", label: "Acessando URL", pct: 15 },
   { key: "extraindo_texto", label: "Extraindo texto", pct: 35 },
-  { key: "gerando_resumo", label: "Gerando resumo com IA", pct: 55 },
-  { key: "criando_chunks", label: "Criando chunks", pct: 70 },
+  { key: "rodando_ocr", label: "Executando OCR", pct: 46 },
+  { key: "gerando_resumo", label: "Gerando resumo com IA", pct: 58 },
+  { key: "criando_chunks", label: "Criando chunks", pct: 72 },
   { key: "gerando_embeddings", label: "Gerando embeddings", pct: 85 },
+  { key: "estruturando_campos", label: "Estruturando campos", pct: 92 },
+  { key: "salvando_metadados", label: "Salvando metadados", pct: 96 },
   { key: "concluido", label: "Concluído", pct: 100 },
   { key: "erro", label: "Falhou", pct: 0 },
   { key: "texto_invalido", label: "Texto inválido", pct: 0 },
@@ -85,11 +91,41 @@ function getStageInfo(status: string) {
   return IMPORT_STAGES.find(s => s.key === status) || IMPORT_STAGES[0];
 }
 
+function normalizeJobStage(jobStatus?: string | null, etapaAtual?: string | null) {
+  if (jobStatus === "failed") return "erro";
+  if (jobStatus === "done") return "concluido";
+
+  if (!etapaAtual) return "pendente";
+  if (etapaAtual.startsWith("extracao_em_andamento")) return "extraindo_texto";
+
+  const stageMap: Record<string, string> = {
+    pendente: "pendente",
+    verificando_arquivo: "verificando_arquivo",
+    arquivo_confirmado: "arquivo_confirmado",
+    registrando_documento: "registrando_documento",
+    extracao_texto: "extraindo_texto",
+    aguardando_extracao: "extraindo_texto",
+    rodando_ocr: "rodando_ocr",
+    extraindo_texto: "extraindo_texto",
+    gerando_resumo: "gerando_resumo",
+    criando_chunks: "criando_chunks",
+    gerando_embeddings: "gerando_embeddings",
+    estruturando_campos: "estruturando_campos",
+    salvando_metadados: "salvando_metadados",
+    concluido: "concluido",
+    erro: "erro",
+    texto_invalido: "texto_invalido",
+  };
+
+  return stageMap[etapaAtual] || "pendente";
+}
+
 const TERMINAL = ["concluido", "erro", "texto_invalido"];
 
 /* ─── Tracked import type ─── */
 type TrackedImport = {
   doc_id: string;
+  job_id?: string;
   url: string;
   titulo: string;
   status: string;
@@ -135,7 +171,11 @@ function ActivityItem({ item, onDismiss, onReprocess }: { item: TrackedImport; o
   const tipoLabel = TIPOS_DOC.find(t => t.value === item.tipo_documento)?.label
     || TIPOS_AUXILIAR.find(t => t.value === item.tipo_documento)?.label
     || item.tipo_documento;
-  const origemLabel = item.tipo_origem === "link_publico" ? "Link público" : item.tipo_origem === "arquivo_upload" ? "Upload" : "Manual";
+  const origemLabel = item.tipo_origem === "link_publico"
+    ? "Link público"
+    : item.tipo_origem === "arquivo_upload" || item.tipo_origem === "upload"
+      ? "Upload"
+      : "Manual";
 
   return (
     <div className={`flex items-center gap-3 px-4 py-2.5 rounded-lg border transition-all ${
@@ -160,7 +200,6 @@ function ActivityItem({ item, onDismiss, onReprocess }: { item: TrackedImport; o
             <span className="text-[10px] text-slate-500 tabular-nums">{formatDuration(duration)}</span>
           )}
         </div>
-        {/* Meta info on success */}
         {isDone && (tipoLabel || origemLabel) && (
           <div className="flex items-center gap-2 mt-0.5">
             {tipoLabel && <span className="text-[10px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">{tipoLabel}</span>}
@@ -210,7 +249,6 @@ export default function QABaseConhecimentoPage() {
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
   const [deleting, setDeleting] = useState(false);
 
-  // Link import
   const [showLinkDialog, setShowLinkDialog] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
   const [linkTitulo, setLinkTitulo] = useState("");
@@ -220,14 +258,12 @@ export default function QABaseConhecimentoPage() {
   const [importingLink, setImportingLink] = useState(false);
   const [filtroPapel, setFiltroPapel] = useState("todos");
 
-  // Bulk import
   const [showBulkDialog, setShowBulkDialog] = useState(false);
   const [bulkLinks, setBulkLinks] = useState("");
   const [bulkTipo, setBulkTipo] = useState("outro");
   const [bulkImporting, setBulkImporting] = useState(false);
   const [bulkProgress, setBulkProgress] = useState({ done: 0, total: 0 });
 
-  // Tracked imports (activity queue)
   const [trackedImports, setTrackedImports] = useState<TrackedImport[]>([]);
   const [queueCollapsed, setQueueCollapsed] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -245,60 +281,170 @@ export default function QABaseConhecimentoPage() {
 
   useEffect(() => { setLoading(true); loadDocs(); }, [loadDocs]);
 
-  // Poll tracked imports for status updates
+  const createProcessingJob = async ({
+    docId,
+    storagePath,
+    fileName,
+    mimeType,
+    size,
+    tipoDocumento,
+    userId,
+  }: {
+    docId: string;
+    storagePath: string;
+    fileName: string;
+    mimeType?: string | null;
+    size?: number | null;
+    tipoDocumento: string;
+    userId: string;
+  }) => {
+    const now = new Date().toISOString();
+
+    const { data, error } = await supabase.from("qa_document_jobs" as any).insert({
+      documento_id: docId,
+      storage_path: storagePath,
+      nome_arquivo: fileName,
+      mime_type: mimeType || null,
+      tamanho_bytes: size ?? null,
+      user_id: userId,
+      tipo_documental: tipoDocumento,
+      status: "pending",
+      etapa_atual: "pendente",
+      tentativas: 0,
+      started_at: now,
+    }).select("id").single();
+
+    if (error) {
+      await supabase.from("qa_documentos_conhecimento" as any).update({
+        status_processamento: "erro",
+        resumo_extraido: `Erro ao criar a fila de processamento: ${error.message}`,
+        updated_at: now,
+      }).eq("id", docId);
+      throw error;
+    }
+
+    const jobId = (data as any).id as string;
+    const { error: invokeErr } = await supabase.functions.invoke("qa-process-job", { body: { job_id: jobId } });
+
+    if (invokeErr) {
+      await Promise.all([
+        supabase.from("qa_document_jobs" as any).update({
+          status: "failed",
+          etapa_atual: "erro",
+          erro: invokeErr.message || "Falha ao iniciar o worker de processamento.",
+          finished_at: now,
+          updated_at: now,
+        }).eq("id", jobId),
+        supabase.from("qa_documentos_conhecimento" as any).update({
+          status_processamento: "erro",
+          resumo_extraido: invokeErr.message || "Falha ao iniciar o processamento do documento.",
+          updated_at: now,
+        }).eq("id", docId),
+      ]);
+      throw invokeErr;
+    }
+
+    return jobId;
+  };
+
   useEffect(() => {
     const activeImports = trackedImports.filter(t => !TERMINAL.includes(t.status));
     if (activeImports.length === 0) {
       if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
       return;
     }
+
     if (pollRef.current) clearInterval(pollRef.current);
     pollRef.current = setInterval(async () => {
       const ids = activeImports.map(t => t.doc_id);
-      const { data } = await supabase.from("qa_documentos_conhecimento" as any)
-        .select("id, status_processamento, resumo_extraido, tipo_documento, tipo_origem").in("id", ids);
-      if (!data) return;
-      let anyCompleted = false;
+      const jobIds = activeImports.map(t => t.job_id).filter(Boolean) as string[];
+
+      const [docRes, jobRes] = await Promise.all([
+        supabase.from("qa_documentos_conhecimento" as any)
+          .select("id, status_processamento, resumo_extraido, tipo_documento, tipo_origem")
+          .in("id", ids),
+        jobIds.length
+          ? supabase.from("qa_document_jobs" as any)
+              .select("id, documento_id, status, etapa_atual, erro")
+              .in("id", jobIds)
+          : Promise.resolve({ data: [] as any[] }),
+      ]);
+
+      const docsData = (docRes.data as any[]) ?? [];
+      const jobsData = ((jobRes as any)?.data ?? []) as any[];
+      if (!docsData.length && !jobsData.length) return;
+
+      let shouldReload = false;
+      let anyTerminal = false;
+
       setTrackedImports(prev => prev.map(t => {
-        const updated = (data as any[]).find((d: any) => d.id === t.doc_id);
-        if (!updated) return t;
-        const nowTerminal = TERMINAL.includes(updated.status_processamento) && !TERMINAL.includes(t.status);
-        if (nowTerminal) anyCompleted = true;
+        const updatedDoc = docsData.find((d: any) => d.id === t.doc_id);
+        const updatedJob = jobsData.find((j: any) => j.id === t.job_id || j.documento_id === t.doc_id);
+
+        let nextStatus = updatedDoc?.status_processamento || t.status;
+        let nextResumo = updatedDoc?.resumo_extraido || t.resumo;
+
+        if (updatedJob?.status === "failed") {
+          nextStatus = "erro";
+          nextResumo = updatedJob.erro || nextResumo;
+        } else if ((!updatedDoc || updatedDoc.status_processamento === "pendente") && updatedJob) {
+          nextStatus = normalizeJobStage(updatedJob.status, updatedJob.etapa_atual);
+        }
+
+        const nowTerminal = TERMINAL.includes(nextStatus) && !TERMINAL.includes(t.status);
+        if (nowTerminal) anyTerminal = true;
+        if (updatedDoc && updatedDoc.status_processamento !== t.status) shouldReload = true;
+
         return {
           ...t,
-          status: updated.status_processamento,
-          resumo: updated.resumo_extraido || t.resumo,
-          tipo_documento: updated.tipo_documento || t.tipo_documento,
-          tipo_origem: updated.tipo_origem || t.tipo_origem,
+          job_id: t.job_id || updatedJob?.id,
+          status: nextStatus,
+          resumo: nextResumo,
+          tipo_documento: updatedDoc?.tipo_documento || t.tipo_documento,
+          tipo_origem: updatedDoc?.tipo_origem || t.tipo_origem,
           finished_at: nowTerminal ? Date.now() : t.finished_at,
         };
       }));
-      if (anyCompleted) loadDocs();
+
+      if (shouldReload || anyTerminal) loadDocs();
     }, 2000);
+
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, [trackedImports, loadDocs]);
 
-  // Also auto-poll docs that are processing (legacy behavior)
   useEffect(() => {
     const hasProcessing = docs.some(d => d.status_processamento === "pendente" || d.status_processamento === "processando"
-      || d.status_processamento === "acessando_url" || d.status_processamento === "extraindo_texto"
+      || d.status_processamento === "verificando_arquivo" || d.status_processamento === "arquivo_confirmado"
+      || d.status_processamento === "registrando_documento" || d.status_processamento === "acessando_url"
+      || d.status_processamento === "extraindo_texto" || d.status_processamento === "rodando_ocr"
       || d.status_processamento === "gerando_resumo" || d.status_processamento === "criando_chunks"
-      || d.status_processamento === "gerando_embeddings");
+      || d.status_processamento === "gerando_embeddings" || d.status_processamento === "estruturando_campos"
+      || d.status_processamento === "salvando_metadados");
     if (!hasProcessing) return;
     const interval = setInterval(() => { loadDocs(); }, 5000);
     return () => clearInterval(interval);
   }, [docs, loadDocs]);
 
-  const addTrackedImport = (doc_id: string, url: string, titulo: string, tipo_documento?: string, tipo_origem?: string) => {
+  const addTrackedImport = (
+    doc_id: string,
+    url: string,
+    titulo: string,
+    tipo_documento?: string,
+    tipo_origem?: string,
+    job_id?: string,
+    initialStatus = "pendente",
+  ) => {
     setQueueCollapsed(false);
-    setTrackedImports(prev => [{ doc_id, url, titulo, status: "pendente", started_at: Date.now(), tipo_documento, tipo_origem }, ...prev]);
+    setTrackedImports(prev => [
+      { doc_id, job_id, url, titulo, status: initialStatus, started_at: Date.now(), tipo_documento, tipo_origem },
+      ...prev.filter(t => t.doc_id !== doc_id),
+    ]);
   };
 
   const dismissTracked = (doc_id: string) => {
     setTrackedImports(prev => prev.filter(t => t.doc_id !== doc_id));
   };
 
-  // Auto-dismiss completed items after 2 minutes
   useEffect(() => {
     const completed = trackedImports.filter(t => t.status === "concluido" && t.finished_at);
     if (!completed.length) return;
@@ -312,18 +458,53 @@ export default function QABaseConhecimentoPage() {
   const handleReprocessFromQueue = async (item: TrackedImport) => {
     if (!user) return;
     try {
+      const { data: currentDoc } = await supabase.from("qa_documentos_conhecimento" as any)
+        .select("id, titulo, nome_arquivo, storage_path, mime_type, tamanho_bytes, tipo_documento, tipo_origem")
+        .eq("id", item.doc_id)
+        .maybeSingle();
+
       await supabase.from("qa_documentos_conhecimento" as any)
-        .update({ status_processamento: "pendente", resumo_extraido: null, updated_at: new Date().toISOString() })
+        .update({
+          status_processamento: "pendente",
+          resumo_extraido: null,
+          texto_extraido: null,
+          metodo_extracao: null,
+          status_validacao: "validado",
+          ativo_na_ia: true,
+          updated_at: new Date().toISOString(),
+        })
         .eq("id", item.doc_id);
       await supabase.from("qa_chunks_conhecimento" as any).delete().eq("documento_id", item.doc_id);
-      setTrackedImports(prev => prev.map(t => t.doc_id === item.doc_id ? { ...t, status: "pendente", started_at: Date.now(), finished_at: undefined, resumo: undefined } : t));
-      if (item.tipo_origem === "link_publico" || item.url.startsWith("http")) {
+
+      if (currentDoc?.tipo_origem === "link_publico" || item.url.startsWith("http")) {
+        setTrackedImports(prev => prev.map(t => t.doc_id === item.doc_id ? { ...t, status: "pendente", started_at: Date.now(), finished_at: undefined, resumo: undefined } : t));
         await supabase.functions.invoke("qa-ingest-url", {
-          body: { url: item.url, titulo: item.titulo, tipo_documento: item.tipo_documento, user_id: user.id },
+          body: { url: item.url, titulo: currentDoc?.titulo || item.titulo, tipo_documento: currentDoc?.tipo_documento || item.tipo_documento, user_id: user.id },
         });
       } else {
-        await supabase.functions.invoke("qa-ingest-document", { body: { storage_path: item.url, user_id: user.id } });
+        const storagePath = currentDoc?.storage_path || item.url;
+        const jobId = await createProcessingJob({
+          docId: item.doc_id,
+          storagePath,
+          fileName: currentDoc?.nome_arquivo || item.titulo,
+          mimeType: currentDoc?.mime_type || null,
+          size: currentDoc?.tamanho_bytes || null,
+          tipoDocumento: currentDoc?.tipo_documento || item.tipo_documento || "outro",
+          userId: user.id,
+        });
+        setTrackedImports(prev => prev.map(t => t.doc_id === item.doc_id ? {
+          ...t,
+          job_id: jobId,
+          url: storagePath,
+          status: "verificando_arquivo",
+          started_at: Date.now(),
+          finished_at: undefined,
+          resumo: undefined,
+          tipo_documento: currentDoc?.tipo_documento || item.tipo_documento,
+          tipo_origem: currentDoc?.tipo_origem || item.tipo_origem || "arquivo_upload",
+        } : t));
       }
+
       toast.success("Reprocessamento iniciado.");
     } catch (err: any) {
       toast.error("Erro ao reprocessar: " + (err.message || ""));
@@ -336,24 +517,40 @@ export default function QABaseConhecimentoPage() {
     setUploading(true);
     try {
       for (const file of Array.from(files)) {
-        const path = `${user.id}/${Date.now()}_${file.name}`;
+        const path = `${user.id}/${Date.now()}_${crypto.randomUUID().slice(0, 8)}_${file.name}`;
         const { error: uploadErr } = await supabase.storage.from("qa-documentos").upload(path, file);
         if (uploadErr) throw uploadErr;
+
         const { data: insertData, error: insertErr } = await supabase.from("qa_documentos_conhecimento" as any).insert({
           titulo: file.name.replace(/\.[^.]+$/, ""),
           nome_arquivo: file.name,
           storage_path: path,
-          mime_type: file.type,
+          mime_type: file.type || null,
           tamanho_bytes: file.size,
           enviado_por: user.id,
           tipo_documento: "outro",
+          categoria: "outro",
           status_processamento: "pendente",
-          status_validacao: "nao_validado",
+          status_validacao: "validado",
           tipo_origem: "arquivo_upload",
+          papel_documento: "aprendizado",
+          ativo: true,
+          ativo_na_ia: true,
         }).select("id").single();
         if (insertErr) throw insertErr;
-        if (insertData) addTrackedImport((insertData as any).id, file.name, file.name.replace(/\.[^.]+$/, ""), "outro", "arquivo_upload");
-        supabase.functions.invoke("qa-ingest-document", { body: { storage_path: path, user_id: user.id } }).catch(() => {});
+
+        const docId = (insertData as any).id as string;
+        const jobId = await createProcessingJob({
+          docId,
+          storagePath: path,
+          fileName: file.name,
+          mimeType: file.type || null,
+          size: file.size,
+          tipoDocumento: "outro",
+          userId: user.id,
+        });
+
+        addTrackedImport(docId, path, file.name.replace(/\.[^.]+$/, ""), "outro", "arquivo_upload", jobId, "verificando_arquivo");
       }
       toast.success(`${files.length} documento(s) enviado(s). Acompanhe o progresso acima.`);
       loadDocs();
@@ -429,17 +626,36 @@ export default function QABaseConhecimentoPage() {
     setReprocessingId(doc.id);
     try {
       await supabase.from("qa_documentos_conhecimento" as any)
-        .update({ status_processamento: "pendente", resumo_extraido: null, updated_at: new Date().toISOString() })
+        .update({
+          status_processamento: "pendente",
+          resumo_extraido: null,
+          texto_extraido: null,
+          metodo_extracao: null,
+          status_validacao: "validado",
+          ativo_na_ia: true,
+          updated_at: new Date().toISOString(),
+        })
         .eq("id", doc.id);
       await supabase.from("qa_chunks_conhecimento" as any).delete().eq("documento_id", doc.id);
-      addTrackedImport(doc.id, doc.url_origem || doc.nome_arquivo, doc.titulo);
+
       if (doc.tipo_origem === "link_publico" && doc.url_origem) {
+        addTrackedImport(doc.id, doc.url_origem, doc.titulo, doc.tipo_documento, "link_publico");
         await supabase.functions.invoke("qa-ingest-url", {
           body: { url: doc.url_origem, titulo: doc.titulo, tipo_documento: doc.tipo_documento, user_id: user.id },
         });
       } else {
-        await supabase.functions.invoke("qa-ingest-document", { body: { storage_path: doc.storage_path, user_id: user.id } });
+        const jobId = await createProcessingJob({
+          docId: doc.id,
+          storagePath: doc.storage_path,
+          fileName: doc.nome_arquivo || doc.titulo,
+          mimeType: doc.mime_type || null,
+          size: doc.tamanho_bytes || null,
+          tipoDocumento: doc.tipo_documento || "outro",
+          userId: user.id,
+        });
+        addTrackedImport(doc.id, doc.storage_path, doc.titulo, doc.tipo_documento, doc.tipo_origem || "arquivo_upload", jobId, "verificando_arquivo");
       }
+
       toast.success("Reprocessamento iniciado.");
       loadDocs();
     } catch (err: any) {
