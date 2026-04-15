@@ -386,12 +386,16 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
 
   return (
     <PremiumModalShell open={open} onClose={onClose} title={isEdit ? "Editar Venda" : "Nova Venda"} icon={ShoppingCart} accentColor="bg-blue-600">
-      <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
-        <div className="grid grid-cols-2 gap-3">
-          <PremiumField label="Data" value={f.data_cadastro} onChange={v => setF(p => ({ ...p, data_cadastro: v }))} placeholder="14/04/2026" icon={CalendarDays} />
+      <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <PremiumField label="Data da Venda" value={isoToBr(f.data_cadastro)} onChange={v => {
+            const masked = applyDateMask(v);
+            const iso = brToIso(masked);
+            setF(p => ({ ...p, data_cadastro: iso || masked }));
+          }} placeholder="DD/MM/AAAA" icon={CalendarDays} />
           <PremiumField label="Nº Processo" value={f.numero_processo} onChange={v => setF(p => ({ ...p, numero_processo: v }))} icon={Hash} />
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <PremiumField label="Forma Pagamento" value={f.forma_pagamento} onChange={v => setF(p => ({ ...p, forma_pagamento: v }))} />
           <div className="flex-1">
             <label className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-500 uppercase tracking-[0.1em] mb-2">Status</label>
