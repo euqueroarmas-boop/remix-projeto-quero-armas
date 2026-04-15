@@ -8,10 +8,11 @@ import { toast } from "sonner";
 import {
   Loader2, PenTool, Eye, ThumbsUp, ThumbsDown, Star,
   Scale, Gavel, BookOpen, CheckCircle, MessageSquare,
-  Download, Copy, Check,
+  Download, Copy, Check, Award,
 } from "lucide-react";
 import { useQAAuth } from "@/components/quero-armas/hooks/useQAAuth";
 import { downloadGeracaoDocx } from "@/lib/qaDocxDownload";
+import FeedbackAprendizadoPanel from "@/components/quero-armas/FeedbackAprendizadoPanel";
 
 type TabType = "consultas" | "geracoes";
 
