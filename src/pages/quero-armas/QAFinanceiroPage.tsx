@@ -189,17 +189,14 @@ export default function QAFinanceiroPage() {
 
   // ─── Revenue by Payment Method ───
   const revenueByMethod = useMemo(() => {
-    const VALID_METHODS = ["PIX", "CARTÃO DE CRÉDITO", "DÉBITO", "QR CODE", "DINHEIRO"];
     const map: Record<string, { metodo: string; total: number; qty: number }> = {};
     vendas.filter(v => v.status === "PAGO").forEach(v => {
-      let m = (v.forma_pagamento || "").trim().toUpperCase();
-      // Normalize to valid methods
+      let m = (v.forma_pagamento || "Não informado").trim().toUpperCase();
+      // Normalize
       if (m.includes("PIX")) m = "PIX";
-      else if (m.includes("DÉBITO") || m.includes("DEBITO")) m = "DÉBITO";
       else if (m.includes("CARTÃO") || m.includes("CREDITO") || m.includes("CRÉDITO")) m = "CARTÃO DE CRÉDITO";
-      else if (m.includes("QR")) m = "QR CODE";
-      else if (m.includes("DINHEIRO") || m.includes("ESPÉCIE") || m.includes("ESPECIE")) m = "DINHEIRO";
-      else m = "DINHEIRO"; // fallback
+      else if (m.includes("PERMUTA")) m = "PERMUTA";
+      else if (m.includes("CORTESIA") || m.includes("COMISSÃO")) m = "OUTROS";
       if (!map[m]) map[m] = { metodo: m, total: 0, qty: 0 };
       map[m].total += Number(v.valor_a_pagar) || 0;
       map[m].qty++;
