@@ -307,8 +307,27 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
           {/* Step 0: Identificação */}
           {step === 0 && (
             <div className="space-y-5">
-              <div className="grid grid-cols-1 gap-4">
-                <FInput label="Nome Completo *" value={f.nome_completo} onChange={v => set("nome_completo", v)} span />
+              {/* Photo Upload */}
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  {photoPreview ? (
+                    <div className="relative w-16 h-16 rounded-xl overflow-hidden border-2 border-blue-200">
+                      <img src={photoPreview} alt="Foto" className="w-full h-full object-cover" />
+                      <button onClick={removePhoto} className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ) : (
+                    <button onClick={() => fileInputRef.current?.click()} className="w-16 h-16 rounded-xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center hover:border-blue-400 hover:bg-blue-50/50 transition-all cursor-pointer">
+                      <Camera className="h-5 w-5 text-slate-300" />
+                      <span className="text-[8px] text-slate-400 mt-0.5">FOTO</span>
+                    </button>
+                  )}
+                  <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoSelect} />
+                </div>
+                <div className="flex-1">
+                  <FInput label="Nome Completo *" value={f.nome_completo} onChange={v => set("nome_completo", v)} span />
+                </div>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 <FInput label="CPF" value={f.cpf} onChange={v => set("cpf", v)} />
