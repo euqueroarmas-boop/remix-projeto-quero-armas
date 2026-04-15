@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   FileText, BookOpen, User, MapPin, Shield, Clock, Copy, Check,
-  ChevronDown, ChevronUp, CheckCircle, XCircle, AlertTriangle, Loader2,
+  ChevronDown, ChevronUp, CheckCircle, XCircle, AlertTriangle, Loader2, Download,
 } from "lucide-react";
+import { downloadGeracaoDocx } from "@/lib/qaDocxDownload";
 import { toast } from "sonner";
 
 interface CaseDetailPanelProps {
