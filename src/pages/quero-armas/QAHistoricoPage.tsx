@@ -54,10 +54,16 @@ export default function QAHistoricoPage() {
 
   useEffect(() => { load(); }, [tab]);
 
-  const openReview = (item: any) => {
+  const openReview = async (item: any) => {
     setReviewItem(item);
     setReviewText(item.minuta_gerada || "");
     setReviewJustificativa("");
+    // Load existing feedback
+    try {
+      const { data } = await supabase.from("qa_feedback_geracoes" as any)
+        .select("*").eq("geracao_id", item.id).maybeSingle();
+      setFeedbackData(data || null);
+    } catch { setFeedbackData(null); }
     setReviewOpen(true);
   };
 
