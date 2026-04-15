@@ -47,7 +47,8 @@ export default function QAModelosDocxPage() {
     }
   };
 
-  useEffect(() => { loadModelos(); }, []);
+  const _loadedRef = useRef(false);
+  useEffect(() => { if (_loadedRef.current) return; _loadedRef.current = true; loadModelos(); }, []);
 
   const handleSubmit = async () => {
     if (!nomeModelo.trim()) { toast.error("Informe o nome do modelo"); return; }

@@ -257,7 +257,8 @@ export default function QAFinanceiroPage() {
     }
   };
 
-  useEffect(() => { load(); }, []);
+  const _loadedRef = useRef(false);
+  useEffect(() => { if (_loadedRef.current) return; _loadedRef.current = true; load(); }, []);
 
   const servicoMap = useMemo(() => new Map(servicos.map(s => [s.id, s])), [servicos]);
   const clienteMap = useMemo(() => new Map(clientes.map(c => [c.id, c])), [clientes]);
