@@ -230,13 +230,28 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         expedicao_rg: formatDateForDatabase(f.expedicao_rg),
         data_nascimento: formatDateForDatabase(f.data_nascimento),
       };
+      let savedId: number | null = null;
       if (isEdit) {
+        // Upload photo if new file selected
+        if (photoFile) {
+          const path = await uploadPhoto(cliente.id);
+          if (path) payload.imagem = path;
+        }
         const { error } = await supabase.from("qa_clientes" as any).update(payload).eq("id", cliente.id);
         if (error) throw error;
+        savedId = cliente.id;
         toast.success("Cliente atualizado");
       } else {
-        const { error } = await supabase.from("qa_clientes" as any).insert(payload);
+        const { data, error } = await supabase.from("qa_clientes" as any).insert(payload).select("id").single();
         if (error) throw error;
+        savedId = (data as any)?.id;
+        // Upload photo after insert (need the ID)
+        if (photoFile && savedId) {
+          const path = await uploadPhoto(savedId);
+          if (path) {
+            await supabase.from("qa_clientes" as any).update({ imagem: path }).eq("id", savedId);
+          }
+        }
         toast.success("Cliente cadastrado");
       }
       onSaved();
