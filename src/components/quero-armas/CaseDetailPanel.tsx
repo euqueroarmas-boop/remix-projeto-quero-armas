@@ -310,13 +310,33 @@ export default function CaseDetailPanel({
                   <span className="text-[9px] text-slate-400 uppercase tracking-[0.12em]">
                     Petição completa ({minutaText.split(/\s+/).length} palavras)
                   </span>
-                  <button
-                    onClick={() => copyText(minutaText)}
-                    className="flex items-center gap-1 text-[9px] text-slate-500 hover:text-blue-600 transition-colors"
-                  >
-                    {copied ? <Check className="h-2.5 w-2.5" /> : <Copy className="h-2.5 w-2.5" />}
-                    {copied ? "Copiado" : "Copiar tudo"}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {geracao?.id && (
+                      <button
+                        onClick={async () => {
+                          setDownloadingDocx(true);
+                          await downloadGeracaoDocx(geracao.id, {
+                            titulo: geracao.titulo_geracao || caso.titulo,
+                            tipoPeca: geracao.tipo_peca || caso.tipo_peca,
+                            nomeRequerente: caso.nome_requerente,
+                          });
+                          setDownloadingDocx(false);
+                        }}
+                        disabled={downloadingDocx}
+                        className="flex items-center gap-1 text-[9px] text-blue-600 hover:text-blue-800 transition-colors font-medium"
+                      >
+                        {downloadingDocx ? <Loader2 className="h-2.5 w-2.5 animate-spin" /> : <Download className="h-2.5 w-2.5" />}
+                        {downloadingDocx ? "Gerando..." : "Baixar DOCX"}
+                      </button>
+                    )}
+                    <button
+                      onClick={() => copyText(minutaText)}
+                      className="flex items-center gap-1 text-[9px] text-slate-500 hover:text-blue-600 transition-colors"
+                    >
+                      {copied ? <Check className="h-2.5 w-2.5" /> : <Copy className="h-2.5 w-2.5" />}
+                      {copied ? "Copiado" : "Copiar tudo"}
+                    </button>
+                  </div>
                 </div>
                 <ScrollArea className="max-h-[400px]">
                   <div className="text-[11px] text-slate-700 whitespace-pre-wrap leading-relaxed bg-white rounded-lg p-4 font-serif border border-slate-200">
