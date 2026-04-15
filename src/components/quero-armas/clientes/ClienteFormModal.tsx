@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useBrasilApiLookup } from "@/hooks/useBrasilApiLookup";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Loader2, Save, User, Users, Phone, MapPin, Home, Settings, ChevronLeft, ChevronRight, CheckCircle2 } from "lucide-react";
+import { Loader2, Save, User, Users, Phone, MapPin, Home, Settings, ChevronLeft, ChevronRight, CheckCircle2, Camera, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -116,6 +116,10 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
   const [saving, setSaving] = useState(false);
   const [step, setStep] = useState(0);
   const { lookupCep, cepLoading } = useBrasilApiLookup();
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleCepBlur = useCallback(async (cepValue: string, prefix: "" | "2") => {
     const result = await lookupCep(cepValue);
@@ -141,7 +145,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
   });
 
   useEffect(() => {
-    if (!open) { setStep(0); return; }
+    if (!open) { setStep(0); setPhotoPreview(null); setPhotoFile(null); return; }
     if (cliente) {
       setF({
         nome_completo: cliente.nome_completo || "", cpf: cliente.cpf || "",
@@ -165,10 +169,28 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         observacao: cliente.observacao || "", status: cliente.status || "ATIVO",
         cliente_lions: cliente.cliente_lions || false,
       });
+      // Load existing photo
+      if (cliente.imagem) {
+        const { data: urlData } = supabase.storage.from("qa-documentos").getPublicUrl(cliente.imagem);
+        setPhotoPreview(urlData?.publicUrl || null);
+      }
     } else {
       setF(prev => ({ ...prev, nome_completo: "", cpf: "", rg: "", email: "", celular: "" }));
     }
   }, [cliente, open]);
+
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error("Imagem deve ter no máximo 5MB"); return; }
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
+  };
+
+  const removePhoto = () => {
+    setPhotoFile(null);
+    setPhotoPreview(null);
+  };
 
   const set = (key: string, val: any) => setF(prev => ({ ...prev, [key]: val }));
 
@@ -181,6 +203,17 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         expedicao_rg: formatDateForDatabase(f.expedicao_rg),
         data_nascimento: formatDateForDatabase(f.data_nascimento),
       };
+
+      // Upload photo if changed
+      if (photoFile) {
+        const ext = photoFile.name.split(".").pop() || "jpg";
+        const cpfClean = (f.cpf || "sem-cpf").replace(/\D/g, "");
+        const path = `clientes/fotos/${cpfClean}-${Date.now()}.${ext}`;
+        const { error: uploadErr } = await supabase.storage.from("qa-documentos").upload(path, photoFile, { upsert: true });
+        if (uploadErr) { console.error("Photo upload error:", uploadErr); toast.error("Erro no upload da foto"); }
+        else { payload.imagem = path; }
+      }
+
       if (isEdit) {
         const { error } = await supabase.from("qa_clientes" as any).update(payload).eq("id", cliente.id);
         if (error) throw error;
@@ -274,8 +307,27 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
           {/* Step 0: Identificação */}
           {step === 0 && (
             <div className="space-y-5">
-              <div className="grid grid-cols-1 gap-4">
-                <FInput label="Nome Completo *" value={f.nome_completo} onChange={v => set("nome_completo", v)} span />
+              {/* Photo Upload */}
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  {photoPreview ? (
+                    <div className="relative w-16 h-16 rounded-xl overflow-hidden border-2 border-blue-200">
+                      <img src={photoPreview} alt="Foto" className="w-full h-full object-cover" />
+                      <button onClick={removePhoto} className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ) : (
+                    <button onClick={() => fileInputRef.current?.click()} className="w-16 h-16 rounded-xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center hover:border-blue-400 hover:bg-blue-50/50 transition-all cursor-pointer">
+                      <Camera className="h-5 w-5 text-slate-300" />
+                      <span className="text-[8px] text-slate-400 mt-0.5">FOTO</span>
+                    </button>
+                  )}
+                  <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoSelect} />
+                </div>
+                <div className="flex-1">
+                  <FInput label="Nome Completo *" value={f.nome_completo} onChange={v => set("nome_completo", v)} span />
+                </div>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 <FInput label="CPF" value={f.cpf} onChange={v => set("cpf", v)} />
