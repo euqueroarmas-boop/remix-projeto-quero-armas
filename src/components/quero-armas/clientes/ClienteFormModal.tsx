@@ -116,6 +116,10 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
   const [saving, setSaving] = useState(false);
   const [step, setStep] = useState(0);
   const { lookupCep, cepLoading } = useBrasilApiLookup();
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleCepBlur = useCallback(async (cepValue: string, prefix: "" | "2") => {
     const result = await lookupCep(cepValue);
