@@ -27,11 +27,16 @@ export default function QALegislacaoPage() {
 
   const loadNormas = async () => {
     setLoading(true);
-    let q = supabase.from("qa_fontes_normativas" as any).select("*").eq("ativa", true).order("created_at", { ascending: false });
-    if (busca) q = q.or(`titulo_norma.ilike.%${busca}%,numero_norma.ilike.%${busca}%,ementa.ilike.%${busca}%`);
-    const { data } = await q;
-    setNormas((data as any[]) ?? []);
-    setLoading(false);
+    try {
+      let q = supabase.from("qa_fontes_normativas" as any).select("*").eq("ativa", true).order("created_at", { ascending: false });
+      if (busca) q = q.or(`titulo_norma.ilike.%${busca}%,numero_norma.ilike.%${busca}%,ementa.ilike.%${busca}%`);
+      const { data } = await q;
+      setNormas((data as any[]) ?? []);
+    } catch (err) {
+      console.error("[QALegislacao] loadNormas error:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { loadNormas(); }, [busca]);

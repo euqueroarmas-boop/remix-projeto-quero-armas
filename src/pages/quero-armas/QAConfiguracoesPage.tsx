@@ -31,29 +31,34 @@ export default function QAConfiguracoesPage() {
 
   useEffect(() => {
     const load = async () => {
-      const [docs, normas, jurisps, pecas, consultas, refs, revisoes, configRes] = await Promise.all([
-        supabase.from("qa_documentos_conhecimento" as any).select("id", { count: "exact", head: true }),
-        supabase.from("qa_fontes_normativas" as any).select("id", { count: "exact", head: true }),
-        supabase.from("qa_jurisprudencias" as any).select("id", { count: "exact", head: true }),
-        supabase.from("qa_geracoes_pecas" as any).select("id", { count: "exact", head: true }),
-        supabase.from("qa_consultas_ia" as any).select("id", { count: "exact", head: true }),
-        supabase.from("qa_referencias_preferenciais" as any).select("id", { count: "exact", head: true }).eq("ativo", true),
-        supabase.from("qa_revisoes_pecas" as any).select("id", { count: "exact", head: true }),
-        supabase.from("qa_config" as any).select("*").order("chave"),
-      ]);
-      setStats({
-        documentos: docs.count ?? 0, normas: normas.count ?? 0,
-        jurisprudencias: jurisps.count ?? 0, pecas: pecas.count ?? 0,
-        consultas: consultas.count ?? 0, referencias: refs.count ?? 0,
-        revisoes: revisoes.count ?? 0,
-      });
-      const items = (configRes.data as any[]) ?? [];
-      setConfig(items);
-      const initial: Record<string, string> = {};
-      items.forEach((c: any) => { initial[c.id] = String(c.valor); });
-      setEditedValues(initial);
-      await loadServicos();
-      setLoading(false);
+      try {
+        const [docs, normas, jurisps, pecas, consultas, refs, revisoes, configRes] = await Promise.all([
+          supabase.from("qa_documentos_conhecimento" as any).select("id", { count: "exact", head: true }),
+          supabase.from("qa_fontes_normativas" as any).select("id", { count: "exact", head: true }),
+          supabase.from("qa_jurisprudencias" as any).select("id", { count: "exact", head: true }),
+          supabase.from("qa_geracoes_pecas" as any).select("id", { count: "exact", head: true }),
+          supabase.from("qa_consultas_ia" as any).select("id", { count: "exact", head: true }),
+          supabase.from("qa_referencias_preferenciais" as any).select("id", { count: "exact", head: true }).eq("ativo", true),
+          supabase.from("qa_revisoes_pecas" as any).select("id", { count: "exact", head: true }),
+          supabase.from("qa_config" as any).select("*").order("chave"),
+        ]);
+        setStats({
+          documentos: docs.count ?? 0, normas: normas.count ?? 0,
+          jurisprudencias: jurisps.count ?? 0, pecas: pecas.count ?? 0,
+          consultas: consultas.count ?? 0, referencias: refs.count ?? 0,
+          revisoes: revisoes.count ?? 0,
+        });
+        const items = (configRes.data as any[]) ?? [];
+        setConfig(items);
+        const initial: Record<string, string> = {};
+        items.forEach((c: any) => { initial[c.id] = String(c.valor); });
+        setEditedValues(initial);
+        await loadServicos();
+      } catch (err) {
+        console.error("[QAConfiguracoes] load error:", err);
+      } finally {
+        setLoading(false);
+      }
     };
     load();
   }, []);

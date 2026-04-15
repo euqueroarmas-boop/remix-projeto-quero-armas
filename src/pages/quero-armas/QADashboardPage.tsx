@@ -94,6 +94,7 @@ export default function QADashboardPage() {
 
   useEffect(() => {
     const load = async () => {
+      try {
       const [d, n, j, p, pend, erros, c, apr, ref, rasc, rPecas, rDocs, cadastrosCount, cadastrosRecent] = await Promise.all([
         supabase.from("qa_documentos_conhecimento" as any).select("id", { count: "exact", head: true }).eq("ativo", true).eq("papel_documento", "aprendizado"),
         supabase.from("qa_fontes_normativas" as any).select("id", { count: "exact", head: true }),
@@ -166,7 +167,11 @@ export default function QADashboardPage() {
         setServicosDistrib(Object.entries(servicoMap).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value));
       }
 
-      setLoading(false);
+      } catch (err) {
+        console.error("[QADashboard] load error:", err);
+      } finally {
+        setLoading(false);
+      }
     };
     load();
   }, []);

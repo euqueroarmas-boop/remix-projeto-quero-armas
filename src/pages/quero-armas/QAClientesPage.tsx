@@ -299,9 +299,14 @@ export default function QAClientesPage() {
 
   const loadClientes = async () => {
     setLoading(true);
-    const { data } = await supabase.from("qa_clientes" as any).select("*").order("nome_completo", { ascending: true });
-    setClientes((data as any[]) ?? []);
-    setLoading(false);
+    try {
+      const { data } = await supabase.from("qa_clientes" as any).select("*").order("nome_completo", { ascending: true });
+      setClientes((data as any[]) ?? []);
+    } catch (err) {
+      console.error("[QAClientes] loadClientes error:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const loadCadastrosPublicos = async () => {
