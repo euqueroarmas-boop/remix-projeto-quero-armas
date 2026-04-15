@@ -145,7 +145,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
   });
 
   useEffect(() => {
-    if (!open) { setStep(0); return; }
+    if (!open) { setStep(0); setPhotoPreview(null); setPhotoFile(null); return; }
     if (cliente) {
       setF({
         nome_completo: cliente.nome_completo || "", cpf: cliente.cpf || "",
@@ -169,6 +169,11 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         observacao: cliente.observacao || "", status: cliente.status || "ATIVO",
         cliente_lions: cliente.cliente_lions || false,
       });
+      // Load existing photo
+      if (cliente.imagem) {
+        const { data: urlData } = supabase.storage.from("qa-documentos").getPublicUrl(cliente.imagem);
+        setPhotoPreview(urlData?.publicUrl || null);
+      }
     } else {
       setF(prev => ({ ...prev, nome_completo: "", cpf: "", rg: "", email: "", celular: "" }));
     }
