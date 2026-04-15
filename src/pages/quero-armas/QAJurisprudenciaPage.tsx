@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { toast } from "sonner";
 import { Plus, Search, Gavel, CheckCircle, Loader2, Upload, FileText, Link as LinkIcon } from "lucide-react";
 import { useQAAuth } from "@/components/quero-armas/hooks/useQAAuth";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
 type TabMode = "manual" | "arquivo" | "link";
 
@@ -29,21 +30,26 @@ export default function QAJurisprudenciaPage() {
 
   const canEdit = profile?.perfil && ["administrador", "advogado", "assistente_juridico"].includes(profile.perfil);
 
-  const load = async () => {
+  const debouncedBusca = useDebouncedValue(busca, 400);
+  const mountedRef = useRef(true);
+
+  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
+
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       let q = supabase.from("qa_jurisprudencias" as any).select("*").order("created_at", { ascending: false });
-      if (busca) q = q.or(`tribunal.ilike.%${busca}%,numero_processo.ilike.%${busca}%,tema.ilike.%${busca}%,tese_aplicavel.ilike.%${busca}%`);
+      if (debouncedBusca) q = q.or(`tribunal.ilike.%${debouncedBusca}%,numero_processo.ilike.%${debouncedBusca}%,tema.ilike.%${debouncedBusca}%,tese_aplicavel.ilike.%${debouncedBusca}%`);
       const { data } = await q;
-      setItems((data as any[]) ?? []);
+      if (mountedRef.current) setItems((data as any[]) ?? []);
     } catch (err) {
       console.error("[QAJurisprudencia] load error:", err);
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
-  };
+  }, [debouncedBusca]);
 
-  useEffect(() => { load(); }, [busca]);
+  useEffect(() => { load(); }, [load]);
 
   const resetForm = () => {
     setForm({ tribunal: "", numero_processo: "", relator: "", orgao_julgador: "", data_julgamento: "", tema: "", ementa_resumida: "", tese_aplicavel: "", texto_controlado: "", palavras_chave: "" });

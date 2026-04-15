@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { toast } from "sonner";
 import { Plus, Search, Scale, CheckCircle, Loader2 } from "lucide-react";
 import { useQAAuth } from "@/components/quero-armas/hooks/useQAAuth";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
 const TIPOS_NORMA = ["lei", "decreto", "instrucao_normativa", "portaria", "resolucao", "nota_tecnica", "outro"];
 
@@ -25,21 +26,26 @@ export default function QALegislacaoPage() {
 
   const canEdit = profile?.perfil && ["administrador", "advogado", "assistente_juridico"].includes(profile.perfil);
 
-  const loadNormas = async () => {
+  const debouncedBusca = useDebouncedValue(busca, 400);
+  const mountedRef = useRef(true);
+
+  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
+
+  const loadNormas = useCallback(async () => {
     setLoading(true);
     try {
       let q = supabase.from("qa_fontes_normativas" as any).select("*").eq("ativa", true).order("created_at", { ascending: false });
-      if (busca) q = q.or(`titulo_norma.ilike.%${busca}%,numero_norma.ilike.%${busca}%,ementa.ilike.%${busca}%`);
+      if (debouncedBusca) q = q.or(`titulo_norma.ilike.%${debouncedBusca}%,numero_norma.ilike.%${debouncedBusca}%,ementa.ilike.%${debouncedBusca}%`);
       const { data } = await q;
-      setNormas((data as any[]) ?? []);
+      if (mountedRef.current) setNormas((data as any[]) ?? []);
     } catch (err) {
       console.error("[QALegislacao] loadNormas error:", err);
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
-  };
+  }, [debouncedBusca]);
 
-  useEffect(() => { loadNormas(); }, [busca]);
+  useEffect(() => { loadNormas(); }, [loadNormas]);
 
   const handleSave = async () => {
     if (!form.titulo_norma) { toast.error("Título é obrigatório"); return; }

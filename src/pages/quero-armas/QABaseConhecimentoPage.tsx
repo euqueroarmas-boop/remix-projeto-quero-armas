@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useQAAuth } from "@/components/quero-armas/hooks/useQAAuth";
 import { Link } from "react-router-dom";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { formatDuration } from "@/lib/formatDuration";
 import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
@@ -268,13 +269,16 @@ export default function QABaseConhecimentoPage() {
   const [queueCollapsed, setQueueCollapsed] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const loadDocs = useCallback(async () => {
+  const debouncedBusca = useDebouncedValue(busca, 400);
+
+  const loadDocs = useCallback(async (showSpinner = false) => {
+    if (showSpinner) setLoading(true);
     try {
       let q = supabase.from("qa_documentos_conhecimento" as any).select("*").eq("ativo", true).eq("papel_documento", "aprendizado").order("created_at", { ascending: false });
       if (filtroTipo !== "todos") q = q.eq("tipo_documento", filtroTipo);
       if (filtroStatus !== "todos") q = q.eq("status_processamento", filtroStatus);
       if (filtroOrigem !== "todos") q = q.eq("tipo_origem", filtroOrigem);
-      if (busca) q = q.ilike("titulo", `%${busca}%`);
+      if (debouncedBusca) q = q.ilike("titulo", `%${debouncedBusca}%`);
       const { data } = await q;
       setDocs((data as any[]) ?? []);
     } catch (err) {
@@ -282,9 +286,9 @@ export default function QABaseConhecimentoPage() {
     } finally {
       setLoading(false);
     }
-  }, [filtroTipo, filtroStatus, filtroOrigem, busca]);
+  }, [filtroTipo, filtroStatus, filtroOrigem, debouncedBusca]);
 
-  useEffect(() => { setLoading(true); loadDocs(); }, [loadDocs]);
+  useEffect(() => { loadDocs(true); }, [loadDocs]);
 
   const createProcessingJob = async ({
     docId,
