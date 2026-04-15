@@ -109,9 +109,9 @@ function SectionHeader({ icon: Icon, title, color, action, onAction }: {
 /* ─── Stat Pill ─── */
 function StatPill({ label, value, color }: { label: string; value: string | number; color: string }) {
   return (
-    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border" style={{ borderColor: `${color}30`, background: `${color}08` }}>
-      <span className="text-[10px] font-medium" style={{ color: "hsl(220 10% 50%)" }}>{label}</span>
-      <span className="text-[11px] font-bold" style={{ color }}>{value}</span>
+    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border" style={{ borderColor: `${color}30`, background: `${color}08` }}>
+      <span className="text-[9px] md:text-[10px] font-medium" style={{ color: "hsl(220 10% 50%)" }}>{label}</span>
+      <span className="text-[10px] md:text-[11px] font-bold" style={{ color }}>{value}</span>
     </div>
   );
 }
@@ -169,51 +169,49 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
   const statusColor = cliente.status === "ATIVO" ? "hsl(152 60% 42%)" : "hsl(38 92% 50%)";
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 md:space-y-5">
       {/* ═══ STRATEGIC HEADER ═══ */}
       <div className="qa-card overflow-hidden">
         <div className="h-1 w-full" style={{ background: "linear-gradient(90deg, hsl(230 80% 56%), hsl(262 60% 55%), hsl(190 80% 42%))" }} />
-        <div className="p-5">
-          <div className="flex flex-col md:flex-row md:items-start gap-4">
+        <div className="p-4 md:p-5">
+          <div className="flex items-start gap-3 md:gap-4">
             {/* Avatar & Name */}
-            <div className="flex items-center gap-4 flex-1 min-w-0">
-              <div className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0" style={{ background: "hsl(230 80% 96%)" }}>
-                <User className="h-6 w-6" style={{ color: "hsl(230 80% 56%)" }} />
-              </div>
-              <div className="min-w-0">
-                <h2 className="text-lg font-bold truncate" style={{ color: "hsl(220 20% 18%)" }}>{cliente.nome_completo}</h2>
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: `${statusColor}14`, color: statusColor }}>
-                    {statusText}
-                  </span>
-                  {cliente.cpf && <span className="text-[11px] font-mono" style={{ color: "hsl(220 10% 55%)" }}>CPF: {cliente.cpf}</span>}
-                  {cadastro?.numero_cr && <span className="text-[11px] font-mono" style={{ color: "hsl(262 60% 55%)" }}>CR: {cadastro.numero_cr}</span>}
-                </div>
-              </div>
+            <div className="w-11 h-11 md:w-14 md:h-14 rounded-xl md:rounded-2xl flex items-center justify-center shrink-0" style={{ background: "hsl(230 80% 96%)" }}>
+              <User className="h-5 w-5 md:h-6 md:w-6" style={{ color: "hsl(230 80% 56%)" }} />
             </div>
-            {/* Contact pills */}
-            <div className="flex flex-wrap gap-2 shrink-0">
-              {cliente.celular && (
-                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-medium" style={{ background: "hsl(220 15% 96%)", color: "hsl(220 10% 46%)" }}>
-                  <Phone className="h-3 w-3" /> {cliente.celular}
-                </div>
-              )}
-              {cliente.email && (
-                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-medium truncate max-w-[200px]" style={{ background: "hsl(220 15% 96%)", color: "hsl(220 10% 46%)" }}>
-                  <Mail className="h-3 w-3" /> {cliente.email}
-                </div>
-              )}
-              {cliente.cidade && (
-                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-medium" style={{ background: "hsl(220 15% 96%)", color: "hsl(220 10% 46%)" }}>
-                  <MapPin className="h-3 w-3" /> {cliente.cidade}/{cliente.estado}
-                </div>
-              )}
+            <div className="flex-1 min-w-0">
+              <h2 className="text-[15px] md:text-lg font-bold truncate" style={{ color: "hsl(220 20% 18%)" }}>{cliente.nome_completo}</h2>
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
+                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{ background: `${statusColor}14`, color: statusColor }}>
+                  {statusText}
+                </span>
+                {cliente.cpf && <span className="text-[10px] font-mono" style={{ color: "hsl(220 10% 55%)" }}>CPF: {cliente.cpf}</span>}
+                {cadastro?.numero_cr && <span className="text-[10px] font-mono" style={{ color: "hsl(262 60% 55%)" }}>CR: {cadastro.numero_cr}</span>}
+              </div>
             </div>
           </div>
+          {/* Contact pills — stacked on mobile */}
+          <div className="flex flex-wrap gap-1.5 mt-3">
+            {cliente.celular && (
+              <div className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium" style={{ background: "hsl(220 15% 96%)", color: "hsl(220 10% 46%)" }}>
+                <Phone className="h-2.5 w-2.5" /> {cliente.celular}
+              </div>
+            )}
+            {cliente.email && (
+              <div className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium truncate max-w-[180px] md:max-w-[200px]" style={{ background: "hsl(220 15% 96%)", color: "hsl(220 10% 46%)" }}>
+                <Mail className="h-2.5 w-2.5 shrink-0" /> {cliente.email}
+              </div>
+            )}
+            {cliente.cidade && (
+              <div className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium" style={{ background: "hsl(220 15% 96%)", color: "hsl(220 10% 46%)" }}>
+                <MapPin className="h-2.5 w-2.5" /> {cliente.cidade}/{cliente.estado}
+              </div>
+            )}
+          </div>
           {/* Quick stats row */}
-          <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t" style={{ borderColor: "hsl(220 13% 94%)" }}>
+          <div className="flex flex-wrap gap-1.5 md:gap-2 mt-3 pt-3 border-t" style={{ borderColor: "hsl(220 13% 94%)" }}>
             <StatPill label="Serviços" value={analysis.totalServicos} color="hsl(230 80% 56%)" />
-            <StatPill label="Em Andamento" value={analysis.emAndamento} color="hsl(38 92% 50%)" />
+            <StatPill label="Andamento" value={analysis.emAndamento} color="hsl(38 92% 50%)" />
             <StatPill label="Concluídos" value={analysis.concluidos} color="hsl(152 60% 42%)" />
             <StatPill label="Armas" value={analysis.totalArmas} color="hsl(262 60% 55%)" />
             <StatPill label="Investido" value={formatCurrency(analysis.totalVendas)} color="hsl(220 20% 25%)" />
@@ -237,16 +235,16 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
               {analysis.alerts.slice(0, 6).map((a, i) => {
                 const Icon = urgencyIcon(a.days);
                 return (
-                  <div key={i} className={`flex items-center gap-3 px-3 py-2 rounded-lg border ${urgencyBg(a.days)}`}>
-                    <Icon className={`h-3.5 w-3.5 shrink-0 ${urgencyColor(a.days)}`} />
+                  <div key={i} className={`flex items-start gap-2.5 px-3 py-2 rounded-lg border ${urgencyBg(a.days)}`}>
+                    <Icon className={`h-3.5 w-3.5 shrink-0 mt-0.5 ${urgencyColor(a.days)}`} />
                     <div className="flex-1 min-w-0">
-                      <span className="text-[11px] font-medium" style={{ color: "hsl(220 20% 18%)" }}>{a.label}</span>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-[10px]" style={{ color: "hsl(220 10% 50%)" }}>{formatDate(a.date)}</span>
-                      <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${urgencyColor(a.days)}`}>
-                        {urgencyLabel(a.days)}
-                      </span>
+                      <span className="text-[11px] font-medium block truncate" style={{ color: "hsl(220 20% 18%)" }}>{a.label}</span>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-[10px]" style={{ color: "hsl(220 10% 50%)" }}>{formatDate(a.date)}</span>
+                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${urgencyColor(a.days)}`}>
+                          {urgencyLabel(a.days)}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 );
