@@ -421,18 +421,23 @@ export default function QABaseConhecimentoPage() {
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, [trackedImports, loadDocs]);
 
+  // Background polling for docs being processed — does NOT show spinner
+  const docsProcessingRef = useRef(false);
   useEffect(() => {
-    const hasProcessing = docs.some(d => d.status_processamento === "pendente" || d.status_processamento === "processando"
-      || d.status_processamento === "verificando_arquivo" || d.status_processamento === "arquivo_confirmado"
-      || d.status_processamento === "registrando_documento" || d.status_processamento === "acessando_url"
-      || d.status_processamento === "extraindo_texto" || d.status_processamento === "rodando_ocr"
-      || d.status_processamento === "gerando_resumo" || d.status_processamento === "criando_chunks"
-      || d.status_processamento === "gerando_embeddings" || d.status_processamento === "estruturando_campos"
-      || d.status_processamento === "salvando_metadados");
-    if (!hasProcessing) return;
-    const interval = setInterval(() => { loadDocs(); }, 5000);
+    const hasProcessing = docs.some(d => ["pendente","processando","verificando_arquivo","arquivo_confirmado",
+      "registrando_documento","acessando_url","extraindo_texto","rodando_ocr",
+      "gerando_resumo","criando_chunks","gerando_embeddings","estruturando_campos","salvando_metadados"]
+      .includes(d.status_processamento));
+    docsProcessingRef.current = hasProcessing;
+  }, [docs]);
+
+  useEffect(() => {
+    if (!docsProcessingRef.current) return;
+    const interval = setInterval(() => {
+      if (docsProcessingRef.current) loadDocs(false);
+    }, 5000);
     return () => clearInterval(interval);
-  }, [docs, loadDocs]);
+  }, [loadDocs]);
 
   const addTrackedImport = (
     doc_id: string,
