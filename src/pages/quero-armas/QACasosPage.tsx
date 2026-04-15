@@ -32,11 +32,16 @@ export default function QACasosPage() {
 
   const load = async () => {
     setLoading(true);
-    let query = supabase.from("qa_casos" as any).select("*").order("created_at", { ascending: false }).limit(100);
-    if (statusFilter !== "todos") query = query.eq("status", statusFilter);
-    const { data } = await query;
-    setCases((data as any[]) ?? []);
-    setLoading(false);
+    try {
+      let query = supabase.from("qa_casos" as any).select("*").order("created_at", { ascending: false }).limit(100);
+      if (statusFilter !== "todos") query = query.eq("status", statusFilter);
+      const { data } = await query;
+      setCases((data as any[]) ?? []);
+    } catch (err) {
+      console.error("[QACasos] load error:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { load(); }, [statusFilter]);

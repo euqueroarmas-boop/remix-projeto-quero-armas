@@ -22,9 +22,14 @@ export default function QAClubesPage() {
 
   const load = async () => {
     setLoading(true);
-    const { data } = await supabase.from("qa_clubes" as any).select("*").order("nome_clube");
-    setClubes((data as any[]) ?? []);
-    setLoading(false);
+    try {
+      const { data } = await supabase.from("qa_clubes" as any).select("*").order("nome_clube");
+      setClubes((data as any[]) ?? []);
+    } catch (err) {
+      console.error("[QAClubes] load error:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDelete = async (id: number) => {

@@ -269,14 +269,19 @@ export default function QABaseConhecimentoPage() {
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const loadDocs = useCallback(async () => {
-    let q = supabase.from("qa_documentos_conhecimento" as any).select("*").eq("ativo", true).eq("papel_documento", "aprendizado").order("created_at", { ascending: false });
-    if (filtroTipo !== "todos") q = q.eq("tipo_documento", filtroTipo);
-    if (filtroStatus !== "todos") q = q.eq("status_processamento", filtroStatus);
-    if (filtroOrigem !== "todos") q = q.eq("tipo_origem", filtroOrigem);
-    if (busca) q = q.ilike("titulo", `%${busca}%`);
-    const { data } = await q;
-    setDocs((data as any[]) ?? []);
-    setLoading(false);
+    try {
+      let q = supabase.from("qa_documentos_conhecimento" as any).select("*").eq("ativo", true).eq("papel_documento", "aprendizado").order("created_at", { ascending: false });
+      if (filtroTipo !== "todos") q = q.eq("tipo_documento", filtroTipo);
+      if (filtroStatus !== "todos") q = q.eq("status_processamento", filtroStatus);
+      if (filtroOrigem !== "todos") q = q.eq("tipo_origem", filtroOrigem);
+      if (busca) q = q.ilike("titulo", `%${busca}%`);
+      const { data } = await q;
+      setDocs((data as any[]) ?? []);
+    } catch (err) {
+      console.error("[QABaseConhecimento] loadDocs error:", err);
+    } finally {
+      setLoading(false);
+    }
   }, [filtroTipo, filtroStatus, filtroOrigem, busca]);
 
   useEffect(() => { setLoading(true); loadDocs(); }, [loadDocs]);

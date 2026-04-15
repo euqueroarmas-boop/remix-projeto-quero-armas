@@ -171,17 +171,22 @@ export default function QARelatoriosPage() {
 
   const load = async () => {
     setLoading(true);
-    const [iRes, vRes, cRes, sRes] = await Promise.all([
-      supabase.from("qa_itens_venda" as any).select("*"),
-      supabase.from("qa_vendas" as any).select("*"),
-      supabase.from("qa_clientes" as any).select("id, nome_completo, celular, email, cpf"),
-      supabase.from("qa_servicos" as any).select("id, nome_servico"),
-    ]);
-    setItens((iRes.data as any[]) || []);
-    setVendas((vRes.data as any[]) || []);
-    setClientes((cRes.data as any[]) || []);
-    setServicos((sRes.data as any[]) || []);
-    setLoading(false);
+    try {
+      const [iRes, vRes, cRes, sRes] = await Promise.all([
+        supabase.from("qa_itens_venda" as any).select("*"),
+        supabase.from("qa_vendas" as any).select("*"),
+        supabase.from("qa_clientes" as any).select("id, nome_completo, celular, email, cpf"),
+        supabase.from("qa_servicos" as any).select("id, nome_servico"),
+      ]);
+      setItens((iRes.data as any[]) || []);
+      setVendas((vRes.data as any[]) || []);
+      setClientes((cRes.data as any[]) || []);
+      setServicos((sRes.data as any[]) || []);
+    } catch (err) {
+      console.error("[QARelatorios] load error:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { load(); }, []);

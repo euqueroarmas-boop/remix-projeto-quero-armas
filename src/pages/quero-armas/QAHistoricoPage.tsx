@@ -29,16 +29,21 @@ export default function QAHistoricoPage() {
 
   const load = async () => {
     setLoading(true);
-    if (tab === "consultas") {
-      const { data } = await supabase.from("qa_consultas_ia" as any)
-        .select("*").order("created_at", { ascending: false }).limit(50);
-      setItems((data as any[]) ?? []);
-    } else {
-      const { data } = await supabase.from("qa_geracoes_pecas" as any)
-        .select("*").order("created_at", { ascending: false }).limit(50);
-      setItems((data as any[]) ?? []);
+    try {
+      if (tab === "consultas") {
+        const { data } = await supabase.from("qa_consultas_ia" as any)
+          .select("*").order("created_at", { ascending: false }).limit(50);
+        setItems((data as any[]) ?? []);
+      } else {
+        const { data } = await supabase.from("qa_geracoes_pecas" as any)
+          .select("*").order("created_at", { ascending: false }).limit(50);
+        setItems((data as any[]) ?? []);
+      }
+    } catch (err) {
+      console.error("[QAHistorico] load error:", err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => { load(); }, [tab]);

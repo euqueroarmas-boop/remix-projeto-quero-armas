@@ -31,11 +31,16 @@ export default function QAJurisprudenciaPage() {
 
   const load = async () => {
     setLoading(true);
-    let q = supabase.from("qa_jurisprudencias" as any).select("*").order("created_at", { ascending: false });
-    if (busca) q = q.or(`tribunal.ilike.%${busca}%,numero_processo.ilike.%${busca}%,tema.ilike.%${busca}%,tese_aplicavel.ilike.%${busca}%`);
-    const { data } = await q;
-    setItems((data as any[]) ?? []);
-    setLoading(false);
+    try {
+      let q = supabase.from("qa_jurisprudencias" as any).select("*").order("created_at", { ascending: false });
+      if (busca) q = q.or(`tribunal.ilike.%${busca}%,numero_processo.ilike.%${busca}%,tema.ilike.%${busca}%,tese_aplicavel.ilike.%${busca}%`);
+      const { data } = await q;
+      setItems((data as any[]) ?? []);
+    } catch (err) {
+      console.error("[QAJurisprudencia] load error:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { load(); }, [busca]);

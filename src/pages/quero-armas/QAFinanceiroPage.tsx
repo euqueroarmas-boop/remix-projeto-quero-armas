@@ -239,17 +239,22 @@ export default function QAFinanceiroPage() {
 
   const load = async () => {
     setLoading(true);
-    const [vRes, iRes, cRes, sRes] = await Promise.all([
-      supabase.from("qa_vendas" as any).select("*"),
-      supabase.from("qa_itens_venda" as any).select("*"),
-      supabase.from("qa_clientes" as any).select("id, nome_completo, excluido"),
-      supabase.from("qa_servicos" as any).select("id, nome_servico, valor_servico"),
-    ]);
-    setVendas((vRes.data as any[]) || []);
-    setItens((iRes.data as any[]) || []);
-    setClientes(((cRes.data as any[]) || []).filter((c: any) => !c.excluido));
-    setServicos((sRes.data as any[]) || []);
-    setLoading(false);
+    try {
+      const [vRes, iRes, cRes, sRes] = await Promise.all([
+        supabase.from("qa_vendas" as any).select("*"),
+        supabase.from("qa_itens_venda" as any).select("*"),
+        supabase.from("qa_clientes" as any).select("id, nome_completo, excluido"),
+        supabase.from("qa_servicos" as any).select("id, nome_servico, valor_servico"),
+      ]);
+      setVendas((vRes.data as any[]) || []);
+      setItens((iRes.data as any[]) || []);
+      setClientes(((cRes.data as any[]) || []).filter((c: any) => !c.excluido));
+      setServicos((sRes.data as any[]) || []);
+    } catch (err) {
+      console.error("[QAFinanceiro] load error:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { load(); }, []);

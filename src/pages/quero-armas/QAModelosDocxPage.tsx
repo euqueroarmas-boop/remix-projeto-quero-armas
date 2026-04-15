@@ -37,9 +37,14 @@ export default function QAModelosDocxPage() {
 
   const loadModelos = async () => {
     setLoading(true);
-    const { data } = await supabase.from("qa_modelos_docx" as any).select("*").order("created_at", { ascending: false });
-    setModelos((data as any[]) ?? []);
-    setLoading(false);
+    try {
+      const { data } = await supabase.from("qa_modelos_docx" as any).select("*").order("created_at", { ascending: false });
+      setModelos((data as any[]) ?? []);
+    } catch (err) {
+      console.error("[QAModelosDocx] loadModelos error:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { loadModelos(); }, []);
