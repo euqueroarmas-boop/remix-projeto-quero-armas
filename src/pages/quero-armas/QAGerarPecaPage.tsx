@@ -431,10 +431,34 @@ export default function QAGerarPecaPage() {
     setCircunscricaoStatus("resolving");
     setCircunscricaoMensagem("");
     try {
-      const { data, error } = await Promise.race([
-        supabase.rpc("qa_resolver_circunscricao_pf", { p_municipio: c, p_uf: u }),
-        new Promise<never>((_, reject) => setTimeout(() => reject(new Error("circunscricao_timeout")), CIRCUNSCRICAO_TIMEOUT_MS)),
-      ]);
+      // Direct REST call with AbortController for reliable mobile timeout
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), CIRCUNSCRICAO_TIMEOUT_MS);
+      let data: any = null;
+      let error: any = null;
+      try {
+        const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/rpc/qa_resolver_circunscricao_pf`;
+        const res = await fetch(url, {
+          method: "POST",
+          headers: {
+            "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ p_municipio: c, p_uf: u }),
+          signal: controller.signal,
+        });
+        clearTimeout(timer);
+        if (res.ok) {
+          data = await res.json();
+        } else {
+          error = { message: `HTTP ${res.status}` };
+        }
+      } catch (fetchErr: any) {
+        clearTimeout(timer);
+        if (fetchErr?.name === "AbortError") throw new Error("circunscricao_timeout");
+        error = { message: fetchErr?.message || "Erro de rede" };
+      }
       if (requestId !== circunscricaoRequestRef.current) return null;
       if (error) {
         setCircunscricaoResolvida(null); setCircunscricaoStatus("error");
@@ -684,11 +708,25 @@ export default function QAGerarPecaPage() {
     try {
       setDocStage(index, "queued", { docId, storagePath, etapaAtual: "pendente" });
 
-      const { error } = await supabase.functions.invoke("qa-ingest-document", {
-        body: { storage_path: storagePath, user_id: user?.id || null },
+      // Direct fetch with timeout for reliable mobile execution
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 15000);
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-ingest-document`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({ storage_path: storagePath, user_id: user?.id || null }),
+        signal: controller.signal,
       });
+      clearTimeout(timer);
 
-      if (error) throw error;
+      if (!res.ok) {
+        const errBody = await res.text().catch(() => "");
+        throw new Error(`Ingestão falhou (${res.status}): ${errBody || "sem detalhes"}`);
+      }
 
       setDocStage(index, "extracting", { docId, storagePath, etapaAtual: "extraindo_texto" });
       void pollDocumentStatus(docId, index, fileName);
