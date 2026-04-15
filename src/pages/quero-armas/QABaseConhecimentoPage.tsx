@@ -458,10 +458,11 @@ export default function QABaseConhecimentoPage() {
   const handleReprocessFromQueue = async (item: TrackedImport) => {
     if (!user) return;
     try {
-      const { data: currentDoc } = await supabase.from("qa_documentos_conhecimento" as any)
+      const { data: rawDoc } = await supabase.from("qa_documentos_conhecimento" as any)
         .select("id, titulo, nome_arquivo, storage_path, mime_type, tamanho_bytes, tipo_documento, tipo_origem")
         .eq("id", item.doc_id)
         .maybeSingle();
+      const currentDoc = rawDoc as any;
 
       await supabase.from("qa_documentos_conhecimento" as any)
         .update({
@@ -674,8 +675,8 @@ export default function QABaseConhecimentoPage() {
         .eq("id", doc.id);
       await supabase.from("qa_logs_auditoria" as any).insert({
         usuario_id: user.id, acao: "documento_desativado",
-        entidade_tipo: "documento", entidade_id: doc.id,
-        detalhes: { titulo: doc.titulo, tipo: doc.tipo_documento },
+        entidade: "qa_documentos_conhecimento", entidade_id: doc.id,
+        detalhes_json: { titulo: doc.titulo, tipo: doc.tipo_documento },
       });
       toast.success("Documento desativado da IA.");
       setDeleteTarget(null);
