@@ -29,6 +29,7 @@ export default function QAHistoricoPage() {
   const [saving, setSaving] = useState(false);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [feedbackData, setFeedbackData] = useState<any>(null);
 
   const canReview = profile?.perfil && ["administrador", "advogado"].includes(profile.perfil);
 
