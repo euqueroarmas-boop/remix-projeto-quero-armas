@@ -1,9 +1,11 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   DollarSign, TrendingUp, TrendingDown, Users, FileText, CreditCard,
   RefreshCw, AlertTriangle, CheckCircle2, Clock, Percent, Crown,
   ShoppingCart, Banknote, PiggyBank, BarChart3, ArrowUpRight, ArrowDownRight,
+  ChevronDown, ChevronUp, ChevronLeft, ChevronRight, CalendarDays,
+  Eye, EyeOff, X, Maximize2, Minimize2, ListFilter, Table2,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -12,6 +14,12 @@ import {
 
 const fmt = (v: number) => `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
 const fmtK = (v: number) => v >= 1000 ? `R$ ${(v / 1000).toFixed(1)}k` : fmt(v);
+const fmtDate = (d: string) => {
+  if (!d) return "—";
+  const p = d.split("-");
+  if (p.length >= 3) return `${p[2]}/${p[1]}/${p[0]}`;
+  return d;
+};
 
 const COLORS = {
   primary: "hsl(230, 80%, 56%)",
@@ -38,12 +46,17 @@ const tooltipStyle = {
   boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
 };
 
-function MetricCard({ label, value, subtitle, icon: Icon, color, trend, bgColor }: {
+const MONTH_NAMES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+
+function MetricCard({ label, value, subtitle, icon: Icon, color, trend, bgColor, onClick }: {
   label: string; value: string; subtitle?: string; icon: any; color: string;
-  trend?: { value: number; label: string }; bgColor?: string;
+  trend?: { value: number; label: string }; bgColor?: string; onClick?: () => void;
 }) {
   return (
-    <div className="rounded-xl border border-slate-200/80 bg-white p-4 hover:shadow-md hover:border-slate-300/80 transition-all duration-300">
+    <div
+      onClick={onClick}
+      className={`rounded-xl border border-slate-200/80 bg-white p-4 hover:shadow-md hover:border-slate-300/80 transition-all duration-300 ${onClick ? "cursor-pointer" : ""}`}
+    >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">{label}</p>
@@ -78,10 +91,93 @@ function SectionTitle({ icon: Icon, title, subtitle }: { icon: any; title: strin
   );
 }
 
-function ChartCard({ children, className }: { children: React.ReactNode; className?: string }) {
+function ExpandableChartCard({ children, title, subtitle, icon, detailContent, defaultExpanded = false }: {
+  children: React.ReactNode; title: string; subtitle?: string; icon: any;
+  detailContent?: React.ReactNode; defaultExpanded?: boolean;
+}) {
+  const [expanded, setExpanded] = useState(defaultExpanded);
+
   return (
-    <div className={`rounded-xl border border-slate-200/80 bg-white p-5 ${className || ""}`}>
-      {children}
+    <div className="rounded-xl border border-slate-200/80 bg-white transition-all duration-300 hover:shadow-sm">
+      <div
+        className="p-5 cursor-pointer select-none"
+        onClick={() => detailContent && setExpanded(!expanded)}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <SectionTitle icon={icon} title={title} subtitle={subtitle} />
+          {detailContent && (
+            <button className="flex items-center gap-1 text-[10px] font-medium text-indigo-500 hover:text-indigo-700 px-2 py-1 rounded-md hover:bg-indigo-50 transition-colors">
+              {expanded ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+              {expanded ? "Recolher" : "Expandir detalhes"}
+            </button>
+          )}
+        </div>
+        <div onClick={e => e.stopPropagation()}>{children}</div>
+      </div>
+      {expanded && detailContent && (
+        <div className="border-t border-slate-100 p-5 bg-slate-50/50 rounded-b-xl animate-in slide-in-from-top-2 duration-200">
+          {detailContent}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MonthSelector({ months, selected, onSelect }: {
+  months: string[]; selected: string | null; onSelect: (m: string | null) => void;
+}) {
+  if (months.length === 0) return null;
+  return (
+    <div className="flex items-center gap-2 flex-wrap">
+      <CalendarDays className="h-4 w-4 text-slate-400" />
+      <button
+        onClick={() => onSelect(null)}
+        className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all ${
+          !selected ? "bg-indigo-600 text-white shadow-sm" : "bg-white border border-slate-200 text-slate-500 hover:border-indigo-300 hover:text-indigo-600"
+        }`}
+      >
+        Todos os meses
+      </button>
+      {months.map(m => {
+        const [y, mo] = m.split("-");
+        const label = `${MONTH_NAMES[+mo - 1]}/${y.slice(2)}`;
+        return (
+          <button
+            key={m}
+            onClick={() => onSelect(m === selected ? null : m)}
+            className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all ${
+              m === selected ? "bg-indigo-600 text-white shadow-sm" : "bg-white border border-slate-200 text-slate-500 hover:border-indigo-300 hover:text-indigo-600"
+            }`}
+          >
+            {label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function DetailTable({ headers, rows }: { headers: string[]; rows: (string | React.ReactNode)[][] }) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-xs">
+        <thead>
+          <tr className="border-b border-slate-200">
+            {headers.map((h, i) => (
+              <th key={i} className={`py-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-slate-400 ${i === 0 ? "text-left" : "text-right"}`}>{h}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, i) => (
+            <tr key={i} className="border-b border-slate-50 hover:bg-white transition-colors">
+              {row.map((cell, j) => (
+                <td key={j} className={`py-2.5 px-3 ${j === 0 ? "text-left text-slate-700 font-medium" : "text-right font-mono text-slate-600"}`}>{cell}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -92,6 +188,7 @@ export default function QAFinanceiroPage() {
   const [clientes, setClientes] = useState<any[]>([]);
   const [servicos, setServicos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -113,20 +210,41 @@ export default function QAFinanceiroPage() {
   const servicoMap = useMemo(() => new Map(servicos.map(s => [s.id, s])), [servicos]);
   const clienteMap = useMemo(() => new Map(clientes.map(c => [c.id, c])), [clientes]);
 
+  // All months available
+  const allMonths = useMemo(() => {
+    const set = new Set<string>();
+    vendas.forEach(v => {
+      const m = (v.data_cadastro || "").slice(0, 7);
+      if (m) set.add(m);
+    });
+    return Array.from(set).sort();
+  }, [vendas]);
+
+  // Filtered vendas/itens by selected month
+  const filteredVendas = useMemo(() => {
+    if (!selectedMonth) return vendas;
+    return vendas.filter(v => (v.data_cadastro || "").startsWith(selectedMonth));
+  }, [vendas, selectedMonth]);
+
+  const filteredItens = useMemo(() => {
+    if (!selectedMonth) return itens;
+    const vendaIds = new Set(filteredVendas.map(v => v.id));
+    return itens.filter(i => vendaIds.has(i.venda_id));
+  }, [itens, filteredVendas, selectedMonth]);
+
   // ─── Core Metrics ───
   const metrics = useMemo(() => {
-    const pagas = vendas.filter(v => v.status === "PAGO");
-    const naoPagas = vendas.filter(v => ["NÃO PAGOU", "FALT. PARTE PAG.", "DESISTIU"].includes(v.status));
+    const pagas = filteredVendas.filter(v => v.status === "PAGO");
+    const naoPagas = filteredVendas.filter(v => ["NÃO PAGOU", "FALT. PARTE PAG.", "DESISTIU"].includes(v.status));
     const totalReceita = pagas.reduce((s, v) => s + (Number(v.valor_a_pagar) || 0), 0);
-    const totalDescontos = vendas.reduce((s, v) => s + (Number(v.desconto) || 0), 0);
-    const totalPendente = vendas.filter(v => v.status !== "PAGO").reduce((s, v) => s + (Number(v.valor_a_pagar) || 0), 0);
+    const totalDescontos = filteredVendas.reduce((s, v) => s + (Number(v.desconto) || 0), 0);
+    const totalPendente = filteredVendas.filter(v => v.status !== "PAGO").reduce((s, v) => s + (Number(v.valor_a_pagar) || 0), 0);
     const ticketMedio = pagas.length > 0 ? totalReceita / pagas.length : 0;
     const clientesUnicos = new Set(pagas.map(v => v.cliente_id)).size;
     const ltvMedio = clientesUnicos > 0 ? totalReceita / clientesUnicos : 0;
-    const taxaConversao = vendas.length > 0 ? (pagas.length / vendas.length) * 100 : 0;
-    const inadimplencia = vendas.length > 0 ? (naoPagas.length / vendas.length) * 100 : 0;
+    const taxaConversao = filteredVendas.length > 0 ? (pagas.length / filteredVendas.length) * 100 : 0;
+    const inadimplencia = filteredVendas.length > 0 ? (naoPagas.length / filteredVendas.length) * 100 : 0;
 
-    // Monthly comparison
     const now = new Date();
     const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
     const lastMonth = (() => {
@@ -135,104 +253,118 @@ export default function QAFinanceiroPage() {
     })();
 
     const thisMonthRev = pagas.filter(v => (v.data_cadastro || "").startsWith(thisMonth)).reduce((s, v) => s + (Number(v.valor_a_pagar) || 0), 0);
-    const lastMonthRev = pagas.filter(v => (v.data_cadastro || "").startsWith(lastMonth)).reduce((s, v) => s + (Number(v.valor_a_pagar) || 0), 0);
+    const lastMonthRev = vendas.filter(v => v.status === "PAGO" && (v.data_cadastro || "").startsWith(lastMonth)).reduce((s, v) => s + (Number(v.valor_a_pagar) || 0), 0);
     const monthTrend = lastMonthRev > 0 ? ((thisMonthRev - lastMonthRev) / lastMonthRev) * 100 : 0;
+
+    const totalBruto = filteredVendas.reduce((s, v) => s + (Number(v.valor_a_pagar) || 0) + (Number(v.desconto) || 0), 0);
 
     return {
       totalReceita, totalDescontos, totalPendente, ticketMedio,
       clientesUnicos, ltvMedio, taxaConversao, inadimplencia,
-      totalVendas: vendas.length, totalPagas: pagas.length,
+      totalVendas: filteredVendas.length, totalPagas: pagas.length,
       thisMonthRev, lastMonthRev, monthTrend,
-      totalServicosVendidos: itens.length,
+      totalServicosVendidos: filteredItens.length, totalBruto,
+      totalNaoPagas: naoPagas.length,
     };
-  }, [vendas, itens]);
+  }, [filteredVendas, filteredItens, vendas]);
 
   // ─── Revenue by Month ───
   const revenueByMonth = useMemo(() => {
-    const map: Record<string, { mes: string; receita: number; vendas: number; descontos: number }> = {};
-    vendas.filter(v => v.status === "PAGO").forEach(v => {
+    const map: Record<string, { mes: string; receita: number; vendas: number; descontos: number; pendente: number; pagas: number; naoPagas: number }> = {};
+    vendas.forEach(v => {
       const m = (v.data_cadastro || "").slice(0, 7);
       if (!m) return;
-      if (!map[m]) map[m] = { mes: m, receita: 0, vendas: 0, descontos: 0 };
-      map[m].receita += Number(v.valor_a_pagar) || 0;
+      if (!map[m]) map[m] = { mes: m, receita: 0, vendas: 0, descontos: 0, pendente: 0, pagas: 0, naoPagas: 0 };
       map[m].vendas++;
       map[m].descontos += Number(v.desconto) || 0;
+      if (v.status === "PAGO") {
+        map[m].receita += Number(v.valor_a_pagar) || 0;
+        map[m].pagas++;
+      } else {
+        map[m].pendente += Number(v.valor_a_pagar) || 0;
+        if (["NÃO PAGOU", "FALT. PARTE PAG.", "DESISTIU"].includes(v.status)) map[m].naoPagas++;
+      }
     });
     return Object.values(map).sort((a, b) => a.mes.localeCompare(b.mes)).map(d => ({
       ...d,
       label: (() => {
         const [y, m] = d.mes.split("-");
-        return `${new Date(+y, +m - 1).toLocaleDateString("pt-BR", { month: "short" })}/${y.slice(2)}`;
+        return `${MONTH_NAMES[+m - 1]}/${y.slice(2)}`;
       })(),
+      ticketMedio: d.pagas > 0 ? d.receita / d.pagas : 0,
+      conversao: d.vendas > 0 ? (d.pagas / d.vendas) * 100 : 0,
     }));
   }, [vendas]);
 
   // ─── Revenue by Service ───
   const revenueByService = useMemo(() => {
-    const map: Record<number, { nome: string; receita: number; qty: number }> = {};
-    itens.forEach(i => {
+    const map: Record<number, { nome: string; receita: number; qty: number; vendaIds: Set<any> }> = {};
+    filteredItens.forEach(i => {
       const sid = i.servico_id;
       if (!sid) return;
       const svc = servicoMap.get(sid);
       const nome = svc?.nome_servico || `#${sid}`;
-      if (!map[sid]) map[sid] = { nome, receita: 0, qty: 0 };
+      if (!map[sid]) map[sid] = { nome, receita: 0, qty: 0, vendaIds: new Set() };
       map[sid].receita += Number(i.valor) || 0;
       map[sid].qty++;
+      if (i.venda_id) map[sid].vendaIds.add(i.venda_id);
     });
     return Object.values(map)
       .sort((a, b) => b.receita - a.receita)
-      .map(d => ({
-        ...d,
-        shortName: d.nome.length > 35 ? d.nome.slice(0, 33) + "…" : d.nome,
-      }));
-  }, [itens, servicoMap]);
+      .map(d => ({ nome: d.nome, receita: d.receita, qty: d.qty, clientesUnicos: d.vendaIds.size }));
+  }, [filteredItens, servicoMap]);
 
-  // ─── Revenue by Payment Method ───
+  // ─── Revenue by Payment Method (only valid methods) ───
   const revenueByMethod = useMemo(() => {
+    const allowed = new Set(["PIX", "CARTÃO DE CRÉDITO", "CARTÃO DE DÉBITO", "QR CODE", "DINHEIRO"]);
     const map: Record<string, { metodo: string; total: number; qty: number }> = {};
-    vendas.filter(v => v.status === "PAGO").forEach(v => {
-      let m = (v.forma_pagamento || "Não informado").trim().toUpperCase();
-      // Normalize
+    filteredVendas.filter(v => v.status === "PAGO").forEach(v => {
+      let m = (v.forma_pagamento || "").trim().toUpperCase();
       if (m.includes("PIX")) m = "PIX";
+      else if (m.includes("DÉBITO") || m.includes("DEBITO")) m = "CARTÃO DE DÉBITO";
       else if (m.includes("CARTÃO") || m.includes("CREDITO") || m.includes("CRÉDITO")) m = "CARTÃO DE CRÉDITO";
-      else if (m.includes("PERMUTA")) m = "PERMUTA";
-      else if (m.includes("CORTESIA") || m.includes("COMISSÃO")) m = "OUTROS";
+      else if (m.includes("QR")) m = "QR CODE";
+      else if (m.includes("DINHEIRO") || m.includes("ESPÉCIE") || m.includes("ESPECIE")) m = "DINHEIRO";
+      else return; // skip invalid/unrecognized
+      if (!allowed.has(m)) return;
       if (!map[m]) map[m] = { metodo: m, total: 0, qty: 0 };
       map[m].total += Number(v.valor_a_pagar) || 0;
       map[m].qty++;
     });
     return Object.values(map).sort((a, b) => b.total - a.total);
-  }, [vendas]);
+  }, [filteredVendas]);
 
   // ─── Top Clients by Revenue ───
   const topClients = useMemo(() => {
-    const map: Record<number, { nome: string; total: number; vendas: number }> = {};
-    vendas.filter(v => v.status === "PAGO").forEach(v => {
+    const map: Record<number, { nome: string; total: number; vendas: number; ticketMedio: number; servicos: string[] }> = {};
+    filteredVendas.filter(v => v.status === "PAGO").forEach(v => {
       const cid = v.cliente_id;
       const cli = clienteMap.get(cid);
       const nome = cli?.nome_completo || `#${cid}`;
-      if (!map[cid]) map[cid] = { nome, total: 0, vendas: 0 };
+      if (!map[cid]) map[cid] = { nome, total: 0, vendas: 0, ticketMedio: 0, servicos: [] };
       map[cid].total += Number(v.valor_a_pagar) || 0;
       map[cid].vendas++;
     });
-    return Object.values(map).sort((a, b) => b.total - a.total).slice(0, 10);
-  }, [vendas, clienteMap]);
+    // Add ticket medio
+    Object.values(map).forEach(c => { c.ticketMedio = c.vendas > 0 ? c.total / c.vendas : 0; });
+    return Object.values(map).sort((a, b) => b.total - a.total).slice(0, 15);
+  }, [filteredVendas, clienteMap]);
 
   // ─── Status Distribution ───
   const statusDist = useMemo(() => {
     const map: Record<string, { status: string; total: number; valor: number }> = {};
-    vendas.forEach(v => {
+    filteredVendas.forEach(v => {
       const s = v.status || "Sem status";
       if (!map[s]) map[s] = { status: s, total: 0, valor: 0 };
       map[s].total++;
       map[s].valor += Number(v.valor_a_pagar) || 0;
     });
     return Object.values(map).sort((a, b) => b.valor - a.valor);
-  }, [vendas]);
+  }, [filteredVendas]);
 
   // ─── Pending items by client ───
   const pendingClients = useMemo(() => {
-    const naoPagas = vendas.filter(v => ["NÃO PAGOU", "FALT. PARTE PAG."].includes(v.status));
+    const naoPagas = filteredVendas.filter(v => ["NÃO PAGOU", "FALT. PARTE PAG."].includes(v.status));
     return naoPagas.map(v => {
       const cli = clienteMap.get(v.cliente_id);
       return {
@@ -240,9 +372,10 @@ export default function QAFinanceiroPage() {
         valor: Number(v.valor_a_pagar) || 0,
         status: v.status,
         data: v.data_cadastro,
+        forma: v.forma_pagamento || "—",
       };
     }).sort((a, b) => b.valor - a.valor);
-  }, [vendas, clienteMap]);
+  }, [filteredVendas, clienteMap]);
 
   // ─── Cumulative revenue ───
   const cumulativeRevenue = useMemo(() => {
@@ -252,6 +385,51 @@ export default function QAFinanceiroPage() {
       return { ...d, acumulado: cum };
     });
   }, [revenueByMonth]);
+
+  // ─── Daily breakdown for selected month ───
+  const dailyBreakdown = useMemo(() => {
+    if (!selectedMonth) return [];
+    const map: Record<string, { dia: string; receita: number; vendas: number; descontos: number }> = {};
+    filteredVendas.forEach(v => {
+      const d = v.data_cadastro || "";
+      if (!d.startsWith(selectedMonth)) return;
+      if (!map[d]) map[d] = { dia: d, receita: 0, vendas: 0, descontos: 0 };
+      map[d].vendas++;
+      if (v.status === "PAGO") map[d].receita += Number(v.valor_a_pagar) || 0;
+      map[d].descontos += Number(v.desconto) || 0;
+    });
+    return Object.values(map).sort((a, b) => a.dia.localeCompare(b.dia)).map(d => ({
+      ...d,
+      label: d.dia.split("-")[2] || d.dia,
+    }));
+  }, [filteredVendas, selectedMonth]);
+
+  // ─── All sales listing for selected month ───
+  const salesListing = useMemo(() => {
+    return filteredVendas.map(v => {
+      const cli = clienteMap.get(v.cliente_id);
+      const vendaItens = filteredItens.filter(i => i.venda_id === v.id);
+      const servicosNomes = vendaItens.map(i => {
+        const svc = servicoMap.get(i.servico_id);
+        return svc?.nome_servico || `#${i.servico_id}`;
+      });
+      return {
+        id: v.id,
+        data: v.data_cadastro,
+        cliente: cli?.nome_completo || `#${v.cliente_id}`,
+        servicos: servicosNomes.join(", ") || "—",
+        valor: Number(v.valor_a_pagar) || 0,
+        desconto: Number(v.desconto) || 0,
+        forma: v.forma_pagamento || "—",
+        status: v.status || "—",
+        observacao: v.observacao || "",
+      };
+    }).sort((a, b) => (b.data || "").localeCompare(a.data || ""));
+  }, [filteredVendas, filteredItens, clienteMap, servicoMap]);
+
+  const selectedMonthLabel = selectedMonth
+    ? (() => { const [y, m] = selectedMonth.split("-"); return `${MONTH_NAMES[+m - 1]} ${y}`; })()
+    : "Todos os meses";
 
   if (loading) {
     return (
@@ -265,12 +443,14 @@ export default function QAFinanceiroPage() {
   }
 
   return (
-    <div className="space-y-8 max-w-[1400px] mx-auto">
+    <div className="space-y-6 max-w-[1400px] mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-xl font-bold text-slate-800 tracking-tight">Painel Financeiro</h1>
-          <p className="text-sm text-slate-400 mt-0.5">Inteligência financeira completa · Receita · Serviços · Clientes</p>
+          <p className="text-sm text-slate-400 mt-0.5">
+            Inteligência financeira completa · {selectedMonthLabel}
+          </p>
         </div>
         <button onClick={load}
           className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all shadow-sm">
@@ -278,22 +458,29 @@ export default function QAFinanceiroPage() {
         </button>
       </div>
 
+      {/* Month Selector */}
+      <div className="rounded-xl border border-slate-200/80 bg-white p-4">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400 mb-3">Filtrar por período</p>
+        <MonthSelector months={allMonths} selected={selectedMonth} onSelect={setSelectedMonth} />
+      </div>
+
       {/* ─── KPI Row 1: Revenue ─── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-3">
         <MetricCard label="Receita Total" value={fmt(metrics.totalReceita)} icon={DollarSign}
           color="text-emerald-600" bgColor="bg-emerald-50"
           subtitle={`${metrics.totalPagas} vendas pagas`} />
-        <MetricCard label="Receita do Mês" value={fmt(metrics.thisMonthRev)} icon={TrendingUp}
+        <MetricCard label={selectedMonth ? "Receita do Período" : "Receita do Mês"} value={fmt(selectedMonth ? metrics.totalReceita : metrics.thisMonthRev)} icon={TrendingUp}
           color="text-indigo-600" bgColor="bg-indigo-50"
-          trend={metrics.lastMonthRev > 0 ? { value: metrics.monthTrend, label: "vs mês ant." } : undefined} />
+          trend={!selectedMonth && metrics.lastMonthRev > 0 ? { value: metrics.monthTrend, label: "vs mês ant." } : undefined} />
         <MetricCard label="Ticket Médio" value={fmt(metrics.ticketMedio)} icon={CreditCard}
-          color="text-purple-600" bgColor="bg-purple-50" />
+          color="text-purple-600" bgColor="bg-purple-50"
+          subtitle={`por venda paga`} />
         <MetricCard label="LTV Médio" value={fmt(metrics.ltvMedio)} icon={Crown}
           color="text-amber-600" bgColor="bg-amber-50"
           subtitle={`${metrics.clientesUnicos} clientes únicos`} />
-        <MetricCard label="Descontos Dados" value={fmt(metrics.totalDescontos)} icon={Percent}
+        <MetricCard label="Descontos" value={fmt(metrics.totalDescontos)} icon={Percent}
           color="text-orange-600" bgColor="bg-orange-50"
-          subtitle={`${metrics.totalReceita > 0 ? ((metrics.totalDescontos / (metrics.totalReceita + metrics.totalDescontos)) * 100).toFixed(1) : 0}% do bruto`} />
+          subtitle={`${metrics.totalBruto > 0 ? ((metrics.totalDescontos / metrics.totalBruto) * 100).toFixed(1) : 0}% do bruto`} />
         <MetricCard label="A Receber" value={fmt(metrics.totalPendente)} icon={AlertTriangle}
           color="text-red-600" bgColor="bg-red-50"
           subtitle={`${metrics.inadimplencia.toFixed(1)}% inadimplência`} />
@@ -302,20 +489,71 @@ export default function QAFinanceiroPage() {
       {/* ─── KPI Row 2: Operational ─── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <MetricCard label="Total de Vendas" value={String(metrics.totalVendas)} icon={ShoppingCart}
-          color="text-blue-600" bgColor="bg-blue-50" subtitle={`${metrics.totalPagas} pagas`} />
+          color="text-blue-600" bgColor="bg-blue-50" subtitle={`${metrics.totalPagas} pagas · ${metrics.totalNaoPagas} não pagas`} />
         <MetricCard label="Serviços Vendidos" value={String(metrics.totalServicosVendidos)} icon={FileText}
-          color="text-teal-600" bgColor="bg-teal-50" />
+          color="text-teal-600" bgColor="bg-teal-50"
+          subtitle={`${revenueByService.length} tipos diferentes`} />
         <MetricCard label="Taxa de Conversão" value={`${metrics.taxaConversao.toFixed(1)}%`} icon={CheckCircle2}
           color="text-emerald-600" bgColor="bg-emerald-50" subtitle="vendas pagas / total" />
         <MetricCard label="Clientes Ativos" value={String(clientes.length)} icon={Users}
           color="text-indigo-600" bgColor="bg-indigo-50"
-          subtitle={`${metrics.clientesUnicos} compradores`} />
+          subtitle={`${metrics.clientesUnicos} compradores no período`} />
       </div>
+
+      {/* ─── Daily Breakdown (only when month selected) ─── */}
+      {selectedMonth && dailyBreakdown.length > 0 && (
+        <ExpandableChartCard
+          icon={CalendarDays}
+          title={`Vendas Diárias — ${selectedMonthLabel}`}
+          subtitle="Detalhamento dia a dia do mês selecionado"
+          detailContent={
+            <DetailTable
+              headers={["Dia", "Vendas", "Receita", "Descontos"]}
+              rows={dailyBreakdown.map(d => [
+                fmtDate(d.dia),
+                String(d.vendas),
+                <span className="text-emerald-600 font-semibold">{fmt(d.receita)}</span>,
+                fmt(d.descontos),
+              ])}
+            />
+          }
+        >
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={dailyBreakdown} margin={{ top: 5, right: 5, left: -10, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 13%, 93%)" />
+              <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#94a3b8" }} />
+              <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} tickFormatter={v => `${(v / 1000).toFixed(0)}k`} />
+              <Tooltip contentStyle={tooltipStyle} formatter={(v: number, name: string) => name === "vendas" ? `${v}` : fmt(v)} />
+              <Legend wrapperStyle={{ fontSize: 11 }} />
+              <Bar dataKey="receita" name="Receita" fill={COLORS.emerald} radius={[4, 4, 0, 0]} />
+              <Bar dataKey="vendas" name="Vendas" fill={COLORS.indigo} radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </ExpandableChartCard>
+      )}
 
       {/* ─── Charts Row 1: Revenue Over Time + Cumulative ─── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <ChartCard>
-          <SectionTitle icon={BarChart3} title="Receita por Mês" subtitle="Histórico de faturamento mensal" />
+        <ExpandableChartCard
+          icon={BarChart3}
+          title="Receita por Mês"
+          subtitle="Histórico de faturamento mensal"
+          detailContent={
+            <DetailTable
+              headers={["Mês", "Receita", "Descontos", "Pendente", "Vendas", "Pagas", "Ticket Médio", "Conversão"]}
+              rows={revenueByMonth.map(d => [
+                d.label,
+                <span className="text-emerald-600 font-semibold">{fmt(d.receita)}</span>,
+                fmt(d.descontos),
+                <span className="text-red-500">{fmt(d.pendente)}</span>,
+                String(d.vendas),
+                String(d.pagas),
+                fmt(d.ticketMedio),
+                `${d.conversao.toFixed(1)}%`,
+              ])}
+            />
+          }
+        >
           {revenueByMonth.length === 0 ? (
             <p className="text-xs text-slate-400 text-center py-10">Sem dados</p>
           ) : (
@@ -331,10 +569,23 @@ export default function QAFinanceiroPage() {
               </BarChart>
             </ResponsiveContainer>
           )}
-        </ChartCard>
+        </ExpandableChartCard>
 
-        <ChartCard>
-          <SectionTitle icon={TrendingUp} title="Receita Acumulada" subtitle="Evolução patrimonial ao longo do tempo" />
+        <ExpandableChartCard
+          icon={TrendingUp}
+          title="Receita Acumulada"
+          subtitle="Evolução patrimonial ao longo do tempo"
+          detailContent={
+            <DetailTable
+              headers={["Mês", "Receita no Mês", "Acumulado"]}
+              rows={cumulativeRevenue.map(d => [
+                d.label,
+                fmt(d.receita),
+                <span className="text-emerald-600 font-bold">{fmt(d.acumulado)}</span>,
+              ])}
+            />
+          }
+        >
           {cumulativeRevenue.length === 0 ? (
             <p className="text-xs text-slate-400 text-center py-10">Sem dados</p>
           ) : (
@@ -354,13 +605,38 @@ export default function QAFinanceiroPage() {
               </AreaChart>
             </ResponsiveContainer>
           )}
-        </ChartCard>
+        </ExpandableChartCard>
       </div>
 
       {/* ─── Charts Row 2: Payment Methods + Status ─── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <ChartCard>
-          <SectionTitle icon={CreditCard} title="Formas de Pagamento" subtitle="Distribuição por método" />
+        <ExpandableChartCard
+          icon={CreditCard}
+          title="Formas de Pagamento"
+          subtitle="Cartão de Crédito · Débito · PIX · QR Code · Dinheiro"
+          detailContent={
+            <div className="space-y-3">
+              <p className="text-[11px] text-slate-500 font-medium mb-2">Detalhamento completo por forma de pagamento:</p>
+              {revenueByMethod.map((m, i) => {
+                const pct = metrics.totalReceita > 0 ? (m.total / metrics.totalReceita) * 100 : 0;
+                return (
+                  <div key={m.metodo} className="flex items-center gap-3 p-3 rounded-lg bg-white border border-slate-100">
+                    <div className="w-3 h-3 rounded-full shrink-0" style={{ background: PIE_COLORS[i % PIE_COLORS.length] }} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-slate-700">{m.metodo}</p>
+                      <p className="text-[10px] text-slate-400">{m.qty} transações · {pct.toFixed(1)}% do faturamento</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-bold font-mono text-emerald-600">{fmt(m.total)}</p>
+                      <p className="text-[10px] text-slate-400">ticket: {m.qty > 0 ? fmt(m.total / m.qty) : "—"}</p>
+                    </div>
+                  </div>
+                );
+              })}
+              {revenueByMethod.length === 0 && <p className="text-xs text-slate-400">Nenhuma venda paga no período.</p>}
+            </div>
+          }
+        >
           {revenueByMethod.length === 0 ? (
             <p className="text-xs text-slate-400 text-center py-10">Sem dados</p>
           ) : (
@@ -376,15 +652,34 @@ export default function QAFinanceiroPage() {
               </ResponsiveContainer>
             </div>
           )}
-        </ChartCard>
+        </ExpandableChartCard>
 
-        <ChartCard>
-          <SectionTitle icon={PiggyBank} title="Status das Vendas" subtitle="Distribuição por situação" />
+        <ExpandableChartCard
+          icon={PiggyBank}
+          title="Status das Vendas"
+          subtitle="Distribuição por situação de pagamento"
+          detailContent={
+            <DetailTable
+              headers={["Status", "Qtd", "Valor Total", "% Total", "Ticket Médio"]}
+              rows={statusDist.map(s => {
+                const pct = metrics.totalVendas > 0 ? (s.total / metrics.totalVendas) * 100 : 0;
+                return [
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
+                    s.status === "PAGO" ? "bg-emerald-100 text-emerald-700" : s.status.includes("NÃO") ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-600"
+                  }`}>{s.status}</span>,
+                  String(s.total),
+                  fmt(s.valor),
+                  `${pct.toFixed(1)}%`,
+                  s.total > 0 ? fmt(s.valor / s.total) : "—",
+                ];
+              })}
+            />
+          }
+        >
           <div className="space-y-2.5">
-            {statusDist.map((s, i) => {
+            {statusDist.map((s) => {
               const pct = metrics.totalVendas > 0 ? (s.total / metrics.totalVendas) * 100 : 0;
-              const isPago = s.status === "PAGO";
-              const barColor = isPago ? "bg-emerald-500" : s.status.includes("NÃO") ? "bg-red-400" : "bg-amber-400";
+              const barColor = s.status === "PAGO" ? "bg-emerald-500" : s.status.includes("NÃO") ? "bg-red-400" : "bg-amber-400";
               return (
                 <div key={s.status}>
                   <div className="flex items-center justify-between text-[11px] mb-1">
@@ -402,12 +697,52 @@ export default function QAFinanceiroPage() {
               );
             })}
           </div>
-        </ChartCard>
+        </ExpandableChartCard>
       </div>
 
       {/* ─── Revenue by Service ─── */}
-      <ChartCard>
-        <SectionTitle icon={FileText} title="Receita por Serviço" subtitle="Performance financeira de cada serviço" />
+      <ExpandableChartCard
+        icon={FileText}
+        title="Receita por Serviço"
+        subtitle="Performance financeira de cada serviço prestado"
+        detailContent={
+          <div className="space-y-4">
+            <p className="text-[11px] text-slate-500">Análise detalhada de cada serviço com ticket médio, quantidade e participação no faturamento total:</p>
+            {revenueByService.map((s, i) => {
+              const pct = metrics.totalReceita > 0 ? (s.receita / metrics.totalReceita) * 100 : 0;
+              return (
+                <div key={i} className="p-3 rounded-lg bg-white border border-slate-100">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs font-bold text-slate-800">{s.nome}</p>
+                    <span className="text-sm font-bold font-mono text-emerald-600">{fmt(s.receita)}</span>
+                  </div>
+                  <div className="grid grid-cols-4 gap-2 text-[10px]">
+                    <div className="bg-slate-50 rounded p-2">
+                      <p className="text-slate-400">Quantidade</p>
+                      <p className="font-bold text-slate-700 mt-0.5">{s.qty}x</p>
+                    </div>
+                    <div className="bg-slate-50 rounded p-2">
+                      <p className="text-slate-400">Ticket Médio</p>
+                      <p className="font-bold text-slate-700 mt-0.5">{s.qty > 0 ? fmt(s.receita / s.qty) : "—"}</p>
+                    </div>
+                    <div className="bg-slate-50 rounded p-2">
+                      <p className="text-slate-400">% Faturamento</p>
+                      <p className="font-bold text-indigo-600 mt-0.5">{pct.toFixed(1)}%</p>
+                    </div>
+                    <div className="bg-slate-50 rounded p-2">
+                      <p className="text-slate-400">Clientes</p>
+                      <p className="font-bold text-slate-700 mt-0.5">{s.clientesUnicos}</p>
+                    </div>
+                  </div>
+                  <div className="mt-2 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${pct}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        }
+      >
         {revenueByService.length === 0 ? (
           <p className="text-xs text-slate-400 text-center py-10">Sem dados</p>
         ) : (
@@ -448,17 +783,32 @@ export default function QAFinanceiroPage() {
             </table>
           </div>
         )}
-      </ChartCard>
+      </ExpandableChartCard>
 
       {/* ─── Row: Top Clients + Pending ─── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <ChartCard>
-          <SectionTitle icon={Crown} title="Top 10 Clientes" subtitle="Por receita total" />
+        <ExpandableChartCard
+          icon={Crown}
+          title="Top 15 Clientes"
+          subtitle="Ranking por receita total"
+          detailContent={
+            <DetailTable
+              headers={["#", "Cliente", "Vendas", "Ticket Médio", "Receita Total"]}
+              rows={topClients.map((c, i) => [
+                String(i + 1),
+                c.nome,
+                String(c.vendas),
+                fmt(c.ticketMedio),
+                <span className="text-emerald-600 font-bold">{fmt(c.total)}</span>,
+              ])}
+            />
+          }
+        >
           {topClients.length === 0 ? (
             <p className="text-xs text-slate-400 text-center py-10">Sem dados</p>
           ) : (
             <div className="space-y-2">
-              {topClients.map((c, i) => {
+              {topClients.slice(0, 10).map((c, i) => {
                 const maxVal = topClients[0]?.total || 1;
                 const pct = (c.total / maxVal) * 100;
                 return (
@@ -481,10 +831,29 @@ export default function QAFinanceiroPage() {
               })}
             </div>
           )}
-        </ChartCard>
+        </ExpandableChartCard>
 
-        <ChartCard>
-          <SectionTitle icon={AlertTriangle} title="Inadimplentes" subtitle="Vendas com pagamento pendente" />
+        <ExpandableChartCard
+          icon={AlertTriangle}
+          title="Inadimplentes"
+          subtitle="Vendas com pagamento pendente"
+          detailContent={
+            pendingClients.length > 0 ? (
+              <DetailTable
+                headers={["Cliente", "Data", "Forma", "Status", "Valor"]}
+                rows={pendingClients.map(c => [
+                  c.nome,
+                  fmtDate(c.data),
+                  c.forma,
+                  <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                    c.status === "NÃO PAGOU" ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-600"
+                  }`}>{c.status}</span>,
+                  <span className="text-red-600 font-semibold">{fmt(c.valor)}</span>,
+                ])}
+              />
+            ) : undefined
+          }
+        >
           {pendingClients.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 gap-2">
               <CheckCircle2 className="h-8 w-8 text-emerald-400" />
@@ -492,7 +861,7 @@ export default function QAFinanceiroPage() {
             </div>
           ) : (
             <div className="space-y-2">
-              {pendingClients.map((c, i) => (
+              {pendingClients.slice(0, 8).map((c, i) => (
                 <div key={i} className="flex items-center gap-3 text-[12px] py-2 px-3 rounded-lg border border-red-100 bg-red-50/50">
                   <AlertTriangle className="h-3.5 w-3.5 text-red-400 shrink-0" />
                   <span className="flex-1 min-w-0 truncate text-slate-700 font-medium">{c.nome}</span>
@@ -502,14 +871,33 @@ export default function QAFinanceiroPage() {
                   <span className="font-mono font-semibold text-red-600 shrink-0">{fmt(c.valor)}</span>
                 </div>
               ))}
+              {pendingClients.length > 8 && (
+                <p className="text-[10px] text-slate-400 text-center">+ {pendingClients.length - 8} inadimplentes (clique em expandir)</p>
+              )}
             </div>
           )}
-        </ChartCard>
+        </ExpandableChartCard>
       </div>
 
       {/* ─── Monthly Revenue Trend Line ─── */}
-      <ChartCard>
-        <SectionTitle icon={Banknote} title="Tendência Mensal" subtitle="Receita + Vendas ao longo dos meses" />
+      <ExpandableChartCard
+        icon={Banknote}
+        title="Tendência Mensal"
+        subtitle="Receita + Vendas ao longo dos meses"
+        detailContent={
+          <DetailTable
+            headers={["Mês", "Receita", "Vendas", "Descontos", "Ticket Médio", "Conversão"]}
+            rows={revenueByMonth.map(d => [
+              d.label,
+              <span className="text-emerald-600 font-semibold">{fmt(d.receita)}</span>,
+              String(d.vendas),
+              fmt(d.descontos),
+              fmt(d.ticketMedio),
+              `${d.conversao.toFixed(1)}%`,
+            ])}
+          />
+        }
+      >
         {revenueByMonth.length === 0 ? (
           <p className="text-xs text-slate-400 text-center py-10">Sem dados</p>
         ) : (
@@ -526,7 +914,62 @@ export default function QAFinanceiroPage() {
             </LineChart>
           </ResponsiveContainer>
         )}
-      </ChartCard>
+      </ExpandableChartCard>
+
+      {/* ─── Full Sales Listing ─── */}
+      <ExpandableChartCard
+        icon={Table2}
+        title={`Relatório de Vendas${selectedMonth ? ` — ${selectedMonthLabel}` : ""}`}
+        subtitle={`${salesListing.length} vendas no período · Clique para ver todas as transações`}
+        defaultExpanded={!!selectedMonth}
+        detailContent={
+          <div className="space-y-2">
+            <p className="text-[11px] text-slate-500 mb-3">
+              Listagem completa de todas as vendas {selectedMonth ? `em ${selectedMonthLabel}` : ""} com cliente, serviços, valor, forma de pagamento e status.
+            </p>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-slate-200">
+                    <th className="text-left py-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Data</th>
+                    <th className="text-left py-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Cliente</th>
+                    <th className="text-left py-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Serviços</th>
+                    <th className="text-left py-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Forma</th>
+                    <th className="text-right py-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Desc.</th>
+                    <th className="text-right py-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Valor</th>
+                    <th className="text-center py-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {salesListing.map((v, i) => (
+                    <tr key={v.id || i} className="border-b border-slate-50 hover:bg-white transition-colors">
+                      <td className="py-2 px-2 text-slate-500 whitespace-nowrap">{fmtDate(v.data)}</td>
+                      <td className="py-2 px-2 text-slate-700 font-medium max-w-[160px] truncate">{v.cliente}</td>
+                      <td className="py-2 px-2 text-slate-500 max-w-[200px] truncate">{v.servicos}</td>
+                      <td className="py-2 px-2 text-slate-500 whitespace-nowrap">{v.forma}</td>
+                      <td className="py-2 px-2 text-right font-mono text-slate-400">{v.desconto > 0 ? fmt(v.desconto) : "—"}</td>
+                      <td className="py-2 px-2 text-right font-mono font-semibold text-emerald-600">{fmt(v.valor)}</td>
+                      <td className="py-2 px-2 text-center">
+                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold whitespace-nowrap ${
+                          v.status === "PAGO" ? "bg-emerald-100 text-emerald-700" : v.status.includes("NÃO") ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-600"
+                        }`}>{v.status}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        }
+      >
+        <div className="flex items-center gap-4 py-6 justify-center text-slate-400">
+          <Table2 className="h-6 w-6" />
+          <div>
+            <p className="text-xs font-medium text-slate-600">{salesListing.length} vendas registradas</p>
+            <p className="text-[10px] text-slate-400">Clique em "Expandir detalhes" para ver a listagem completa</p>
+          </div>
+        </div>
+      </ExpandableChartCard>
     </div>
   );
 }
