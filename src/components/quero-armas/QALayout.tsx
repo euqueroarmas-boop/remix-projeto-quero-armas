@@ -22,16 +22,10 @@ export default function QALayout() {
   }
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={false}>
       <div className="min-h-screen flex w-full qa-premium">
         <QASidebar perfil={profile.perfil} nome={profile.nome} />
         <div className="flex-1 flex flex-col min-w-0">
-          {/* Minimal header - only sidebar trigger on mobile */}
-          <header className="h-10 flex items-center px-3 shrink-0 md:hidden"
-            style={{ background: "hsl(220 20% 97%)" }}>
-            <SidebarTrigger className="h-8 w-8 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors" />
-          </header>
-
           <main className="flex-1 overflow-auto p-3 md:p-6 lg:p-8"
             style={{ background: "hsl(220 20% 97%)" }}>
             <Outlet />
