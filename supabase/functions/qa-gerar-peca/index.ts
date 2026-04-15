@@ -724,34 +724,42 @@ Deno.serve(async (req) => {
       enderecamento = "A DOUTA DELEGACIA DE POLÍCIA FEDERAL DA COMARCA DE [CIDADE A DEFINIR]/[ESTADO A DEFINIR].";
     }
 
-    // Retrieve sources
+    // ═══ RETRIEVE SOURCES — 4-LAYER HIERARCHY ═══
+    // Layer 1: LEGISLAÇÃO (peso base: 1.0 — obrigatória)
+    // Layer 2: JURISPRUDÊNCIA (peso base: 0.8 — reforço interpretativo)
+    // Layer 3: BASE JURÍDICA (peso base: 0.6 — apoio argumentativo)
+    // Layer 4: PEÇAS VALIDADAS (peso base: 0.9 — aprendizado prático)
     const fontesRecuperadas: any[] = [];
     const searchTerms = entrada_caso.split(" ").slice(0, 5).join(" & ");
 
+    // LAYER 1: LEGISLAÇÃO — base normativa obrigatória
     const { data: normas } = await supabase.from("qa_fontes_normativas")
       .select("id, titulo_norma, tipo_norma, numero_norma, ano_norma, ementa, texto_integral, revisada_humanamente")
       .eq("ativa", true).textSearch("ementa", searchTerms, { type: "websearch" }).limit(10);
 
     normas?.forEach((n: any) => fontesRecuperadas.push({
-      tipo: "norma", id: n.id, titulo: n.titulo_norma,
+      tipo: "norma", camada: "legislacao", peso_hierarquia: 1.0,
+      id: n.id, titulo: n.titulo_norma,
       referencia: `${n.tipo_norma} ${n.numero_norma || ""}/${n.ano_norma || ""}`.trim(),
       conteudo: n.ementa || n.texto_integral?.substring(0, 3000) || "",
       validada: n.revisada_humanamente,
     }));
 
+    // LAYER 2: JURISPRUDÊNCIA — reforço interpretativo
     const { data: jurisps } = await supabase.from("qa_jurisprudencias")
       .select("id, tribunal, numero_processo, relator, tema, ementa_resumida, tese_aplicavel, validada_humanamente")
       .textSearch("ementa_resumida", searchTerms, { type: "websearch" }).limit(10);
 
     jurisps?.forEach((j: any) => fontesRecuperadas.push({
-      tipo: "jurisprudencia", id: j.id,
+      tipo: "jurisprudencia", camada: "jurisprudencia", peso_hierarquia: 0.8,
+      id: j.id,
       titulo: `${j.tribunal} - ${j.numero_processo || ""}`,
       referencia: j.tema || "",
       conteudo: `${j.ementa_resumida || ""}\nTese: ${j.tese_aplicavel || ""}`,
       validada: j.validada_humanamente,
     }));
 
-    // Learning documents only
+    // LAYER 3: BASE JURÍDICA — apoio argumentativo (documentos de aprendizado)
     const { data: docs } = await supabase.from("qa_documentos_conhecimento")
       .select("id, titulo, tipo_documento, resumo_extraido")
       .eq("status_processamento", "concluido")
@@ -761,10 +769,52 @@ Deno.serve(async (req) => {
       .textSearch("resumo_extraido", searchTerms, { type: "websearch" }).limit(5);
 
     docs?.forEach((d: any) => fontesRecuperadas.push({
-      tipo: "documento", id: d.id, titulo: d.titulo,
+      tipo: "documento", camada: "base_juridica", peso_hierarquia: 0.6,
+      id: d.id, titulo: d.titulo,
       referencia: d.tipo_documento,
       conteudo: d.resumo_extraido?.substring(0, 1500) || "",
     }));
+
+    // LAYER 4: PEÇAS VALIDADAS / SUCESSO — aprendizado prático evolutivo
+    const { data: pecasValidadas } = await supabase.from("qa_feedback_geracoes")
+      .select("id, geracao_id, resultado_pratico, classificacao_aprendizado, peso_aprendizado, observacoes")
+      .or("aprovada_como_modelo.eq.true,resultado_pratico.eq.deferida,classificacao_aprendizado.eq.peca_modelo,classificacao_aprendizado.eq.excelente_fundamentacao")
+      .order("peso_aprendizado", { ascending: false })
+      .limit(5);
+
+    if (pecasValidadas && pecasValidadas.length > 0) {
+      const geracaoIds = pecasValidadas.map((f: any) => f.geracao_id).filter(Boolean);
+      if (geracaoIds.length > 0) {
+        const { data: pecasGeradas } = await supabase.from("qa_geracoes_pecas")
+          .select("id, tipo_peca, titulo_geracao, minuta_gerada, foco, score_confianca")
+          .in("id", geracaoIds)
+          .eq("tipo_peca", tipo_peca);
+
+        pecasGeradas?.forEach((p: any) => {
+          const feedback = pecasValidadas.find((f: any) => f.geracao_id === p.id);
+          const peso = feedback?.peso_aprendizado || 0.7;
+          // Extract key sections (DOS FATOS, DO DIREITO) for learning, not the full text
+          const direitoMatch = p.minuta_gerada?.match(/II\s*[—–-]\s*DO DIREITO[\s\S]*?(?=III\s*[—–-]|$)/i);
+          const alegacoesMatch = p.minuta_gerada?.match(/III\s*[—–-]\s*ALEGAÇÕES[\s\S]*?(?=IV\s*[—–-]|$)/i);
+          const learningContent = [
+            direitoMatch?.[0]?.substring(0, 2000) || "",
+            alegacoesMatch?.[0]?.substring(0, 1000) || "",
+          ].filter(Boolean).join("\n\n");
+
+          if (learningContent.length > 100) {
+            fontesRecuperadas.push({
+              tipo: "peca_validada", camada: "aprendizado_pratico", peso_hierarquia: 0.9 * peso,
+              id: p.id, titulo: `PEÇA VALIDADA: ${p.titulo_geracao}`,
+              referencia: `${feedback?.resultado_pratico || "aprovada"} | ${feedback?.classificacao_aprendizado || "modelo"} | Score: ${p.score_confianca}`,
+              conteudo: learningContent,
+              validada: true,
+            });
+          }
+        });
+      }
+    }
+
+    console.log(`Sources retrieved: ${fontesRecuperadas.filter(f => f.camada === "legislacao").length} legislação, ${fontesRecuperadas.filter(f => f.camada === "jurisprudencia").length} jurisprudência, ${fontesRecuperadas.filter(f => f.camada === "base_juridica").length} base jurídica, ${fontesRecuperadas.filter(f => f.camada === "aprendizado_pratico").length} peças validadas`);
 
     // === AUXILIARY CASE DOCUMENTS — TYPED EVIDENCE PROCESSING ===
     let fontesAuxiliares: any[] = [];
