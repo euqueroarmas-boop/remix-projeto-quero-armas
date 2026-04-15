@@ -221,9 +221,9 @@ export function CrModal({ open, onClose, onSaved, clienteId, cadastro }: CrModal
 
   useEffect(() => {
     if (cadastro) setF({
-      numero_cr: cadastro.numero_cr || "", validade_cr: cadastro.validade_cr || "",
-      validade_laudo_psicologico: cadastro.validade_laudo_psicologico || "",
-      validade_exame_tiro: cadastro.validade_exame_tiro || "", senha_gov: cadastro.senha_gov || "",
+      numero_cr: cadastro.numero_cr || "", validade_cr: isoToBr(cadastro.validade_cr),
+      validade_laudo_psicologico: isoToBr(cadastro.validade_laudo_psicologico),
+      validade_exame_tiro: isoToBr(cadastro.validade_exame_tiro), senha_gov: cadastro.senha_gov || "",
       check_laudo_psi: cadastro.check_laudo_psi || false, check_exame_tiro: cadastro.check_exame_tiro || false,
     });
     else setF({ numero_cr: "", validade_cr: "", validade_laudo_psicologico: "", validade_exame_tiro: "", senha_gov: "", check_laudo_psi: false, check_exame_tiro: false });
@@ -232,11 +232,20 @@ export function CrModal({ open, onClose, onSaved, clienteId, cadastro }: CrModal
   const save = async () => {
     setSaving(true);
     try {
+      const payload = {
+        numero_cr: f.numero_cr,
+        validade_cr: brToIso(f.validade_cr),
+        validade_laudo_psicologico: brToIso(f.validade_laudo_psicologico),
+        validade_exame_tiro: brToIso(f.validade_exame_tiro),
+        senha_gov: f.senha_gov,
+        check_laudo_psi: f.check_laudo_psi,
+        check_exame_tiro: f.check_exame_tiro,
+      };
       if (isEdit) {
-        const { error } = await supabase.from("qa_cadastro_cr" as any).update(f).eq("id", cadastro.id);
+        const { error } = await supabase.from("qa_cadastro_cr" as any).update(payload).eq("id", cadastro.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("qa_cadastro_cr" as any).insert({ ...f, cliente_id: clienteId });
+        const { error } = await supabase.from("qa_cadastro_cr" as any).insert({ ...payload, cliente_id: clienteId });
         if (error) throw error;
       }
       toast.success(isEdit ? "CR atualizado" : "CR cadastrado");
