@@ -308,7 +308,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
   const [saving, setSaving] = useState(false);
   const [servicos, setServicos] = useState<{ id: number; nome_servico: string; valor_servico: number }[]>([]);
   const [selectedServicos, setSelectedServicos] = useState<Map<number, { valor: number; checked: boolean }>>(new Map());
-  const [f, setF] = useState({ forma_pagamento: "", desconto: "0", status: "EM ANÁLISE", numero_processo: "", data_cadastro: new Date().toISOString().slice(0, 10) });
+  const [f, setF] = useState({ forma_pagamento: "", desconto: "0", status: "EM ANÁLISE", numero_processo: "", data_cadastro: "" });
 
   useEffect(() => {
     supabase.from("qa_servicos" as any).select("*").order("nome_servico").then(({ data }) => {
@@ -321,7 +321,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
       setF({
         forma_pagamento: venda.forma_pagamento || "", desconto: String(venda.desconto || 0),
         status: venda.status || "EM ANÁLISE", numero_processo: venda.numero_processo || "",
-        data_cadastro: venda.data_cadastro || new Date().toISOString().slice(0, 10),
+        data_cadastro: isoToBr(venda.data_cadastro) || isoToBr(new Date().toISOString().slice(0, 10)),
       });
       const vendaLegacyId = venda.id_legado ?? venda.id;
       supabase.from("qa_itens_venda" as any).select("*").eq("venda_id", vendaLegacyId).then(({ data }) => {
@@ -332,7 +332,9 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
         setSelectedServicos(map);
       });
     } else {
-      setF({ forma_pagamento: "", desconto: "0", status: "EM ANÁLISE", numero_processo: "", data_cadastro: new Date().toISOString().slice(0, 10) });
+      const today = new Date();
+      const todayBr = `${String(today.getDate()).padStart(2,'0')}/${String(today.getMonth()+1).padStart(2,'0')}/${today.getFullYear()}`;
+      setF({ forma_pagamento: "", desconto: "0", status: "EM ANÁLISE", numero_processo: "", data_cadastro: todayBr });
       setSelectedServicos(new Map());
     }
   }, [venda, open]);
@@ -363,7 +365,8 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
     if (selectedServicos.size === 0) { toast.error("Selecione ao menos um serviço"); return; }
     setSaving(true);
     try {
-      const payload: any = { ...f, desconto: desconto, valor_a_pagar: total };
+      const dataCadIso = brToIso(f.data_cadastro) || new Date().toISOString().slice(0, 10);
+      const payload: any = { ...f, data_cadastro: dataCadIso, desconto: desconto, valor_a_pagar: total };
       let vendaId: number;
       if (isEdit) {
         const { error } = await supabase.from("qa_vendas" as any).update(payload).eq("id", venda.id);
@@ -391,7 +394,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
     <PremiumModalShell open={open} onClose={onClose} title={isEdit ? "Editar Venda" : "Nova Venda"} icon={ShoppingCart} accentColor="bg-blue-600">
       <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
         <div className="grid grid-cols-2 gap-3">
-          <PremiumField label="Data" value={f.data_cadastro} onChange={v => setF(p => ({ ...p, data_cadastro: v }))} placeholder="14/04/2026" icon={CalendarDays} />
+          <PremiumField label="Data da Venda" value={f.data_cadastro} onChange={v => setF(p => ({ ...p, data_cadastro: applyDateMask(v) }))} type="date" icon={CalendarDays} />
           <PremiumField label="Nº Processo" value={f.numero_processo} onChange={v => setF(p => ({ ...p, numero_processo: v }))} icon={Hash} />
         </div>
         <div className="grid grid-cols-2 gap-3">

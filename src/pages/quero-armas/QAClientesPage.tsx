@@ -611,6 +611,14 @@ export default function QAClientesPage() {
           <Button variant="ghost" size="sm" onClick={() => setSelected(null)} className="text-slate-500 hover:text-slate-700 h-8 w-8 p-0 shrink-0 mt-0.5 rounded-xl border" style={{ borderColor: "hsl(220 13% 90%)" }}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
+          {/* Client photo or fallback */}
+          {(c as any).imagem ? (
+            <img
+              src={supabase.storage.from("qa-documentos").getPublicUrl((c as any).imagem).data?.publicUrl || ""}
+              alt={c.nome_completo}
+              className="w-11 h-11 rounded-xl shrink-0 mt-0.5 object-cover border border-slate-200"
+            />
+          ) : null}
           <div className="flex-1 min-w-0">
             <h1 className="text-[15px] md:text-base font-bold truncate" style={{ color: "hsl(220 20% 18%)" }}>{c.nome_completo}</h1>
             <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
@@ -1390,9 +1398,17 @@ export default function QAClientesPage() {
               className="w-full flex items-start gap-3 px-3 py-3 md:px-4 rounded-xl border transition-all hover:shadow-sm active:scale-[0.99] text-left group qa-card"
               style={{ borderColor: "hsl(220 13% 93%)" }}>
               {/* Avatar */}
-              <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5" style={{ background: "hsl(230 80% 96%)" }}>
-                <User className="h-4 w-4" style={{ color: "hsl(230 80% 56%)" }} />
-              </div>
+              {(c as any).imagem ? (
+                <img
+                  src={supabase.storage.from("qa-documentos").getPublicUrl((c as any).imagem).data?.publicUrl || ""}
+                  alt={c.nome_completo}
+                  className="w-9 h-9 md:w-10 md:h-10 rounded-xl shrink-0 mt-0.5 object-cover"
+                />
+              ) : (
+                <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5" style={{ background: "hsl(230 80% 96%)" }}>
+                  <User className="h-4 w-4" style={{ color: "hsl(230 80% 56%)" }} />
+                </div>
+              )}
               {/* Content */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">

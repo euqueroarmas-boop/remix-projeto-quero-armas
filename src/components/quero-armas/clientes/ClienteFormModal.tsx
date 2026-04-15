@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useBrasilApiLookup } from "@/hooks/useBrasilApiLookup";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Loader2, Save, User, Users, Phone, MapPin, Home, Settings, ChevronLeft, ChevronRight, CheckCircle2 } from "lucide-react";
+import { Loader2, Save, User, Users, Phone, MapPin, Home, Settings, ChevronLeft, ChevronRight, CheckCircle2, Camera, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -117,6 +117,47 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
   const [step, setStep] = useState(0);
   const { lookupCep, cepLoading } = useBrasilApiLookup();
 
+  // Photo upload state
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { toast.error("Selecione um arquivo de imagem"); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("Imagem deve ter no máximo 5MB"); return; }
+    setPhotoFile(file);
+    const reader = new FileReader();
+    reader.onload = () => setPhotoPreview(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const removePhoto = () => {
+    setPhotoFile(null);
+    setPhotoPreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const uploadPhoto = async (clienteId: number): Promise<string | null> => {
+    if (!photoFile) return null;
+    setUploadingPhoto(true);
+    try {
+      const ext = photoFile.name.split(".").pop() || "jpg";
+      const path = `clientes/fotos/${clienteId}-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from("qa-documentos").upload(path, photoFile, { upsert: true });
+      if (error) throw error;
+      return path;
+    } catch (e: any) {
+      console.error("Photo upload error:", e);
+      toast.error("Erro ao enviar foto");
+      return null;
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
   const handleCepBlur = useCallback(async (cepValue: string, prefix: "" | "2") => {
     const result = await lookupCep(cepValue);
     if (result) {
@@ -141,7 +182,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
   });
 
   useEffect(() => {
-    if (!open) { setStep(0); return; }
+    if (!open) { setStep(0); setPhotoFile(null); setPhotoPreview(null); return; }
     if (cliente) {
       setF({
         nome_completo: cliente.nome_completo || "", cpf: cliente.cpf || "",
@@ -165,8 +206,16 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         observacao: cliente.observacao || "", status: cliente.status || "ATIVO",
         cliente_lions: cliente.cliente_lions || false,
       });
+      // Load existing photo preview
+      if (cliente.imagem) {
+        const { data: urlData } = supabase.storage.from("qa-documentos").getPublicUrl(cliente.imagem);
+        setPhotoPreview(urlData?.publicUrl || null);
+      } else {
+        setPhotoPreview(null);
+      }
     } else {
       setF(prev => ({ ...prev, nome_completo: "", cpf: "", rg: "", email: "", celular: "" }));
+      setPhotoPreview(null);
     }
   }, [cliente, open]);
 
@@ -181,13 +230,28 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         expedicao_rg: formatDateForDatabase(f.expedicao_rg),
         data_nascimento: formatDateForDatabase(f.data_nascimento),
       };
+      let savedId: number | null = null;
       if (isEdit) {
+        // Upload photo if new file selected
+        if (photoFile) {
+          const path = await uploadPhoto(cliente.id);
+          if (path) payload.imagem = path;
+        }
         const { error } = await supabase.from("qa_clientes" as any).update(payload).eq("id", cliente.id);
         if (error) throw error;
+        savedId = cliente.id;
         toast.success("Cliente atualizado");
       } else {
-        const { error } = await supabase.from("qa_clientes" as any).insert(payload);
+        const { data, error } = await supabase.from("qa_clientes" as any).insert(payload).select("id").single();
         if (error) throw error;
+        savedId = (data as any)?.id;
+        // Upload photo after insert (need the ID)
+        if (photoFile && savedId) {
+          const path = await uploadPhoto(savedId);
+          if (path) {
+            await supabase.from("qa_clientes" as any).update({ imagem: path }).eq("id", savedId);
+          }
+        }
         toast.success("Cliente cadastrado");
       }
       onSaved();
@@ -274,6 +338,35 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
           {/* Step 0: Identificação */}
           {step === 0 && (
             <div className="space-y-5">
+              {/* Photo upload */}
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-20 h-20 rounded-xl border-2 border-dashed border-slate-200 hover:border-blue-400 flex items-center justify-center cursor-pointer overflow-hidden transition-colors bg-slate-50"
+                  >
+                    {photoPreview ? (
+                      <img src={photoPreview} alt="Foto" className="w-full h-full object-cover" />
+                    ) : (
+                      <Camera className="h-6 w-6 text-slate-300" />
+                    )}
+                  </div>
+                  {photoPreview && (
+                    <button
+                      onClick={removePhoto}
+                      className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
+                  <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoSelect} className="hidden" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Foto do Cliente</p>
+                  <p className="text-[10px] text-slate-400 mt-0.5">Clique para adicionar ou trocar a foto</p>
+                  {uploadingPhoto && <p className="text-[10px] text-blue-500 mt-0.5 flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> Enviando...</p>}
+                </div>
+              </div>
               <div className="grid grid-cols-1 gap-4">
                 <FInput label="Nome Completo *" value={f.nome_completo} onChange={v => set("nome_completo", v)} span />
               </div>
