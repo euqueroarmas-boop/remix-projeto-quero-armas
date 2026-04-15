@@ -7,10 +7,33 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, Save, Trash2, Shield, Crosshair, FileCheck, ShoppingCart, Users, CalendarDays, Hash, Key, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 
+/* ─── Date helpers ─── */
+const applyDateMask = (raw: string): string => {
+  const digits = raw.replace(/\D/g, "").slice(0, 8);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+};
+
+const isoToBr = (iso: string | null): string => {
+  if (!iso) return "";
+  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return `${m[3]}/${m[2]}/${m[1]}`;
+  return iso;
+};
+
+const brToIso = (br: string): string | null => {
+  if (!br) return null;
+  const m = br.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!m) return null;
+  return `${m[3]}-${m[2]}-${m[1]}`;
+};
+
 /* ─── Shared Premium Input ─── */
 function PremiumField({ label, value, onChange, type = "text", placeholder, icon: Icon, required }: {
   label: string; value: string; onChange: (v: string) => void; type?: string; placeholder?: string; icon?: any; required?: boolean;
 }) {
+  const isDate = type === "date";
   return (
     <div className="group flex-1">
       <label className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-500 uppercase tracking-[0.1em] mb-2">
@@ -19,10 +42,17 @@ function PremiumField({ label, value, onChange, type = "text", placeholder, icon
         {required && <span className="text-red-400">*</span>}
       </label>
       <Input
-        type={type}
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        placeholder={placeholder}
+        type="text"
+        value={isDate ? value : value}
+        onChange={e => {
+          if (isDate) {
+            onChange(applyDateMask(e.target.value));
+          } else {
+            onChange(e.target.value);
+          }
+        }}
+        placeholder={isDate ? "DD/MM/AAAA" : placeholder}
+        maxLength={isDate ? 10 : undefined}
         className="h-10 text-sm bg-slate-50/80 border-slate-200/80 text-slate-800 rounded-lg
           placeholder:text-slate-300 font-medium
           transition-all duration-200
@@ -191,9 +221,9 @@ export function CrModal({ open, onClose, onSaved, clienteId, cadastro }: CrModal
 
   useEffect(() => {
     if (cadastro) setF({
-      numero_cr: cadastro.numero_cr || "", validade_cr: cadastro.validade_cr || "",
-      validade_laudo_psicologico: cadastro.validade_laudo_psicologico || "",
-      validade_exame_tiro: cadastro.validade_exame_tiro || "", senha_gov: cadastro.senha_gov || "",
+      numero_cr: cadastro.numero_cr || "", validade_cr: isoToBr(cadastro.validade_cr),
+      validade_laudo_psicologico: isoToBr(cadastro.validade_laudo_psicologico),
+      validade_exame_tiro: isoToBr(cadastro.validade_exame_tiro), senha_gov: cadastro.senha_gov || "",
       check_laudo_psi: cadastro.check_laudo_psi || false, check_exame_tiro: cadastro.check_exame_tiro || false,
     });
     else setF({ numero_cr: "", validade_cr: "", validade_laudo_psicologico: "", validade_exame_tiro: "", senha_gov: "", check_laudo_psi: false, check_exame_tiro: false });
@@ -202,11 +232,20 @@ export function CrModal({ open, onClose, onSaved, clienteId, cadastro }: CrModal
   const save = async () => {
     setSaving(true);
     try {
+      const payload = {
+        numero_cr: f.numero_cr,
+        validade_cr: brToIso(f.validade_cr),
+        validade_laudo_psicologico: brToIso(f.validade_laudo_psicologico),
+        validade_exame_tiro: brToIso(f.validade_exame_tiro),
+        senha_gov: f.senha_gov,
+        check_laudo_psi: f.check_laudo_psi,
+        check_exame_tiro: f.check_exame_tiro,
+      };
       if (isEdit) {
-        const { error } = await supabase.from("qa_cadastro_cr" as any).update(f).eq("id", cadastro.id);
+        const { error } = await supabase.from("qa_cadastro_cr" as any).update(payload).eq("id", cadastro.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("qa_cadastro_cr" as any).insert({ ...f, cliente_id: clienteId });
+        const { error } = await supabase.from("qa_cadastro_cr" as any).insert({ ...payload, cliente_id: clienteId });
         if (error) throw error;
       }
       toast.success(isEdit ? "CR atualizado" : "CR cadastrado");
