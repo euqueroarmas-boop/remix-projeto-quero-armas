@@ -266,7 +266,7 @@ export default function NovoCasoModal({ open, onOpenChange, onCreated, preselect
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-3 border-t flex items-center justify-end gap-2" style={{ borderColor: "hsl(220 13% 91%)" }}>
+        <div className="px-5 py-3 border-t flex items-center justify-end gap-2 shrink-0" style={{ borderColor: "hsl(220 13% 91%)" }}>
           <button
             onClick={() => { resetForm(); onOpenChange(false); }}
             className="h-9 px-4 rounded-lg text-xs font-medium uppercase hover:bg-slate-100 transition-colors"
