@@ -18,6 +18,7 @@ import PortalFiscal from "./sections/PortalFiscal";
 import PortalDocumentos from "./sections/PortalDocumentos";
 import PortalPerfil from "./sections/PortalPerfil";
 import PortalSuporte from "./sections/PortalSuporte";
+import PortalPecas from "./sections/PortalPecas";
 import PaymentPendingBanner from "./shared/PaymentPendingBanner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -28,6 +29,7 @@ const tabs = [
   { id: "financeiro", label: "Financeiro", icon: DollarSign },
   { id: "fiscal", label: "Fiscal", icon: FileText },
   { id: "documentos", label: "Documentos", icon: FolderOpen },
+  { id: "pecas", label: "Peças", icon: FileText },
   { id: "suporte", label: "Suporte", icon: Headphones },
   { id: "perfil", label: "Perfil", icon: Building2 },
 ] as const;
