@@ -667,7 +667,7 @@ async function buildExamContextGerar(supabase: any, clienteId: number | string |
   try {
     const { data: exames } = await supabase
       .from("qa_exames_cliente")
-      .select("tipo_exame, data_realizacao, data_vencimento, observacoes")
+      .select("tipo, data_realizacao, data_vencimento, observacoes")
       .eq("cliente_id", clienteId)
       .order("data_realizacao", { ascending: false })
       .limit(20);
@@ -685,7 +685,7 @@ async function buildExamContextGerar(supabase: any, clienteId: number | string |
     let ctx = "\n\n═══ EXAMES DO REQUERENTE ═══\n";
     for (const tipo of ["psicologico", "tiro"]) {
       const label = tipo === "psicologico" ? "EXAME PSICOLÓGICO" : "EXAME DE TIRO";
-      const grupo = exames.filter((e: any) => e.tipo_exame === tipo);
+      const grupo = exames.filter((e: any) => e.tipo === tipo);
       if (grupo.length === 0) { ctx += `\n${label}: Nenhum registro.\n`; continue; }
       ctx += `\n${label} (${grupo.length} registro(s)):\n`;
       grupo.forEach((e: any, i: number) => {

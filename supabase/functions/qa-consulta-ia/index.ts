@@ -63,7 +63,7 @@ async function buildExamContext(supabase: any, clienteId: number | string | null
   try {
     const { data: exames } = await supabase
       .from("qa_exames_cliente")
-      .select("tipo_exame, data_realizacao, data_vencimento, observacoes, created_at")
+      .select("tipo, data_realizacao, data_vencimento, observacoes, created_at")
       .eq("cliente_id", clienteId)
       .order("data_realizacao", { ascending: false })
       .limit(20);
@@ -82,7 +82,7 @@ async function buildExamContext(supabase: any, clienteId: number | string | null
     const tipos = ["psicologico", "tiro"] as const;
     for (const tipo of tipos) {
       const label = tipo === "psicologico" ? "EXAME PSICOLÓGICO" : "EXAME DE TIRO";
-      const grupo = exames.filter((e: any) => e.tipo_exame === tipo);
+      const grupo = exames.filter((e: any) => e.tipo === tipo);
       if (grupo.length === 0) {
         ctx += `\n${label}: Nenhum registro cadastrado.\n`;
         continue;
