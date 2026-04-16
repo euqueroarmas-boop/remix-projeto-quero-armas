@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -296,11 +297,31 @@ export default function QAClientesPage() {
   const [servicos, setServicos] = useState<{ id: number; nome_servico: string }[]>([]);
 
   const dataLoadedRef = useRef(false);
+  const [searchParams, setSearchParams] = useSearchParams();
   useEffect(() => {
     if (dataLoadedRef.current) return;
     dataLoadedRef.current = true;
     loadClientes(); loadCadastrosPublicos(); loadServicos();
   }, []);
+
+  // Auto-abrir cliente via ?cliente=ID (vindo do Dashboard de Exames, etc.)
+  const autoOpenedRef = useRef(false);
+  useEffect(() => {
+    const targetId = searchParams.get("cliente");
+    if (!targetId || autoOpenedRef.current || clientes.length === 0) return;
+    const cli = clientes.find((c) => String(c.id) === targetId);
+    if (cli) {
+      autoOpenedRef.current = true;
+      openClient(cli);
+      const tabParam = searchParams.get("tab");
+      if (tabParam) setTab(tabParam);
+      // Limpa a URL para não reabrir ao navegar
+      const next = new URLSearchParams(searchParams);
+      next.delete("cliente");
+      next.delete("tab");
+      setSearchParams(next, { replace: true });
+    }
+  }, [clientes, searchParams]);
 
   const loadServicos = async () => {
     const { data } = await supabase.from("qa_servicos" as any).select("id, nome_servico").order("id");
