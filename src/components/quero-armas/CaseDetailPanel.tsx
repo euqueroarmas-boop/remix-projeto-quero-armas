@@ -64,35 +64,20 @@ export default function CaseDetailPanel({
 
   const loadGeracao = async () => {
     setLoadingGeracao(true);
-    // Try by geracao_id first, then fall back to name match
-    let found = false;
-    if (caso.geracao_id) {
+    try {
+      setGeracao(null);
+      if (!caso.geracao_id) return;
+
       const { data } = await supabase
         .from("qa_geracoes_pecas" as any)
         .select("*")
         .eq("id", caso.geracao_id)
-        .limit(1);
-      if (data && (data as any[]).length > 0) {
-        setGeracao((data as any[])[0]);
-        found = true;
-      }
+        .maybeSingle();
+
+      setGeracao(data ?? null);
+    } finally {
+      setLoadingGeracao(false);
     }
-    if (!found) {
-      // Fall back: match by nome_requerente in titulo_geracao
-      const name = caso.nome_requerente || caso.titulo?.replace(/^Caso\s+/i, "") || "";
-      if (name) {
-        const { data } = await supabase
-          .from("qa_geracoes_pecas" as any)
-          .select("*")
-          .ilike("titulo_geracao", `%${name}%`)
-          .order("created_at", { ascending: false })
-          .limit(1);
-        if (data && (data as any[]).length > 0) {
-          setGeracao((data as any[])[0]);
-        }
-      }
-    }
-    setLoadingGeracao(false);
   };
 
   const copyText = async (text: string) => {
