@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { User } from "@supabase/supabase-js";
+import type { Session, User } from "@supabase/supabase-js";
 
 export interface QAProfile {
   id: string;
@@ -60,22 +60,29 @@ export function useQAAuth() {
       }
     };
 
+    const applySessionState = (session: Session | null) => {
+      if (!mountedRef.current) return;
+
+      const u = session?.user ?? null;
+      setUser(u);
+
+      if (u) {
+        void fetchProfile(u.id).then((p) => {
+          if (mountedRef.current) setProfile(p);
+        });
+      } else {
+        setProfile(null);
+      }
+    };
+
     // 1. Subscribe to auth changes FIRST (for subsequent events)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      (_event, session) => {
         // Skip if this is the initial event before getSession resolves
         if (!initializedRef.current) return;
         if (!mountedRef.current) return;
 
-        const u = session?.user ?? null;
-        setUser(u);
-
-        if (u) {
-          const p = await fetchProfile(u.id);
-          if (mountedRef.current) setProfile(p);
-        } else {
-          setProfile(null);
-        }
+        applySessionState(session);
       }
     );
 
@@ -89,6 +96,8 @@ export function useQAAuth() {
       if (u) {
         const p = await fetchProfile(u.id);
         if (mountedRef.current) setProfile(p);
+      } else {
+        setProfile(null);
       }
 
       // Mark as initialized so onAuthStateChange can process future events

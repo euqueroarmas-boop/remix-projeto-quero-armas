@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SeoHead from "@/components/SeoHead";
@@ -29,23 +29,33 @@ const AreaDoClientePage = () => {
   const [customer, setCustomer] = useState<CustomerData | null>(null);
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const initializedRef = useRef(false);
+  const mountedRef = useRef(false);
+  const loadingRef = useRef(true);
 
   useEffect(() => {
+    mountedRef.current = true;
+    loadingRef.current = true;
     window.scrollTo(0, 0);
 
     const syncPortalState = async (sess: any, shouldLog = false) => {
+      if (!mountedRef.current) return;
+
       if (!sess?.user) {
         setCustomer(null);
+        loadingRef.current = false;
         setLoading(false);
         return;
       }
 
       try {
         const resolvedCustomer = await resolvePortalCustomer(sess.user.id, sess.user.email ?? null);
+        if (!mountedRef.current) return;
+
         setCustomer(resolvedCustomer ? (resolvedCustomer as CustomerData) : null);
 
         if (resolvedCustomer && shouldLog) {
-          logSistema({
+          void logSistema({
             tipo: "admin",
             status: "info",
             mensagem: "Acesso à Área do Cliente",
@@ -54,23 +64,50 @@ const AreaDoClientePage = () => {
         }
       } catch (error) {
         console.error("[AreaDoClientePage] Erro ao carregar cliente:", error);
+        if (!mountedRef.current) return;
         setCustomer(null);
       } finally {
-        setLoading(false);
+        if (mountedRef.current) {
+          loadingRef.current = false;
+          setLoading(false);
+        }
       }
     };
 
+    const safetyTimer = setTimeout(() => {
+      if (mountedRef.current && loadingRef.current) {
+        console.warn("[AreaDoClientePage] Safety timeout: forcing loading=false after 6s");
+        loadingRef.current = false;
+        setLoading(false);
+      }
+    }, 6000);
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, sess) => {
+      if (!initializedRef.current || !mountedRef.current) return;
       setSession(sess);
       void syncPortalState(sess, event === "SIGNED_IN");
     });
 
     supabase.auth.getSession().then(({ data: { session: sess } }) => {
+      if (!mountedRef.current) return;
       setSession(sess);
+      initializedRef.current = true;
       void syncPortalState(sess);
+    }).catch((error) => {
+      console.error("[AreaDoClientePage] Erro ao restaurar sessão:", error);
+      if (!mountedRef.current) return;
+      initializedRef.current = true;
+      loadingRef.current = false;
+      setSession(null);
+      setCustomer(null);
+      setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mountedRef.current = false;
+      clearTimeout(safetyTimer);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleLogin = async () => {

@@ -33,6 +33,11 @@ Deno.serve(async (req) => {
       });
     }
 
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
     // Auth check: admin token, password, or valid Supabase JWT
     const adminToken = req.headers.get("x-admin-token");
     let authorized = false;
@@ -69,11 +74,6 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
 
     // ── RESET PASSWORD ACTION ──
     if (action === "reset_password") {
