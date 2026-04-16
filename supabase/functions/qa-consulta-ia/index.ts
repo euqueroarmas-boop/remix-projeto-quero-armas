@@ -69,10 +69,14 @@ async function buildExamContext(supabase: any, clienteId: number | string | null
       .limit(20);
     if (!exames || exames.length === 0) return "";
 
-    const now = new Date();
+    // Regra: data_vencimento já vem como "data_realizacao + 1 ano" do banco.
+    // Comparamos APENAS por data (00:00 local) para evitar deslocamento por fuso/horas.
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
     const calcStatus = (venc: string) => {
-      const d = new Date(venc);
-      const dias = Math.ceil((d.getTime() - now.getTime()) / 86400000);
+      const [y, m, d] = venc.split("T")[0].split("-").map(Number);
+      const vencDate = new Date(y, (m || 1) - 1, d || 1);
+      const dias = Math.floor((vencDate.getTime() - hoje.getTime()) / 86400000);
       if (dias < 0) return { status: "VENCIDO", dias };
       if (dias <= 45) return { status: "A VENCER", dias };
       return { status: "VIGENTE", dias };

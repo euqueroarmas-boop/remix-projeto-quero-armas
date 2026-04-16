@@ -55,6 +55,7 @@ export default function QAClientePortalPage() {
   const [gtes, setGtes] = useState<any[]>([]);
   const [cadastro, setCadastro] = useState<any>(null);
   const [filiacoes, setFiliacoes] = useState<any[]>([]);
+  const [examesCliente, setExamesCliente] = useState<any[]>([]);
   const [userName, setUserName] = useState("");
 
   useEffect(() => {
@@ -103,14 +104,20 @@ export default function QAClientePortalPage() {
 
         const clienteId = clienteData.id_legado ?? clienteData.id;
 
-        // Load sub-data in parallel
-        const [vRes, iRes, crRes, cfRes, gtRes, flRes] = await Promise.all([
+        // Load sub-data in parallel. Exames usam o ID REAL do cliente (não o id_legado),
+        // pois qa_exames_cliente.cliente_id referencia qa_clientes.id.
+        const clienteIdReal = clienteData.id;
+        const [vRes, iRes, crRes, cfRes, gtRes, flRes, exRes] = await Promise.all([
           supabase.from("qa_vendas" as any).select("*").eq("cliente_id", clienteId).order("data_cadastro", { ascending: false }),
           supabase.from("qa_itens_venda" as any).select("*").eq("cliente_id", clienteId),
           supabase.from("qa_cadastro_cr" as any).select("*").eq("cliente_id", clienteId).maybeSingle(),
           supabase.from("qa_crafs" as any).select("*").eq("cliente_id", clienteId),
           supabase.from("qa_gtes" as any).select("*").eq("cliente_id", clienteId),
           supabase.from("qa_filiacoes" as any).select("*").eq("cliente_id", clienteId),
+          supabase.from("qa_exames_cliente" as any)
+            .select("id, tipo, data_realizacao, data_vencimento, observacoes")
+            .eq("cliente_id", clienteIdReal)
+            .order("data_realizacao", { ascending: false }),
         ]);
 
         setVendas((vRes.data as any[]) ?? []);
@@ -119,6 +126,14 @@ export default function QAClientePortalPage() {
         setCrafs((cfRes.data as any[]) ?? []);
         setGtes((gtRes.data as any[]) ?? []);
         setFiliacoes((flRes.data as any[]) ?? []);
+
+        // Pega apenas o exame mais recente de cada tipo (psicologico, tiro)
+        const exames = (exRes.data as any[]) ?? [];
+        const latestByTipo = new Map<string, any>();
+        for (const e of exames) {
+          if (!latestByTipo.has(e.tipo)) latestByTipo.set(e.tipo, e);
+        }
+        setExamesCliente(Array.from(latestByTipo.values()));
       } catch (e: any) {
         console.error("[Portal] load error:", e);
         toast.error("Erro ao carregar dados");
@@ -144,16 +159,26 @@ export default function QAClientePortalPage() {
     const expDocs: ExpiringDoc[] = [];
     if (cadastro) {
       if (cadastro.validade_cr) expDocs.push({ label: "Certificado de Registro (CR)", date: cadastro.validade_cr, days: daysUntil(cadastro.validade_cr), category: "CR" });
-      if (cadastro.validade_laudo_psicologico) expDocs.push({ label: "Laudo Psicológico", date: cadastro.validade_laudo_psicologico, days: daysUntil(cadastro.validade_laudo_psicologico), category: "EXAME" });
-      if (cadastro.validade_exame_tiro) expDocs.push({ label: "Exame de Tiro", date: cadastro.validade_exame_tiro, days: daysUntil(cadastro.validade_exame_tiro), category: "EXAME" });
     }
+    // Exames psicológico e tiro: SEMPRE usar qa_exames_cliente (data_vencimento = data_realizacao + 1 ano).
+    // Os campos legados validade_laudo_psicologico / validade_exame_tiro foram descontinuados
+    // porque historicamente armazenavam a data de realização, não o vencimento real.
+    examesCliente.forEach((e: any) => {
+      const dias = daysUntil(e.data_vencimento);
+      expDocs.push({
+        label: e.tipo === "psicologico" ? "Laudo Psicológico" : "Exame de Tiro",
+        date: e.data_vencimento,
+        days: dias,
+        category: "EXAME",
+      });
+    });
     crafs.forEach((cr: any) => { if (cr.data_validade) expDocs.push({ label: `CRAF — ${cr.nome_arma || "Arma"}`, date: cr.data_validade, days: daysUntil(cr.data_validade), category: "CRAF" }); });
     gtes.forEach((g: any) => { if (g.data_validade) expDocs.push({ label: `GTE — ${g.nome_arma || "Arma"}`, date: g.data_validade, days: daysUntil(g.data_validade), category: "GTE" }); });
     expDocs.sort((a, b) => (a.days ?? 999) - (b.days ?? 999));
     const alerts = expDocs.filter(d => d.days !== null && d.days <= 90);
 
     return { totalServicos, concluidos, emAndamento, totalVendas, expDocs, alerts };
-  }, [cliente, vendas, itens, crafs, gtes, cadastro]);
+  }, [cliente, vendas, itens, crafs, gtes, cadastro, examesCliente]);
 
   // Timeline
   const timeline = useMemo(() => {

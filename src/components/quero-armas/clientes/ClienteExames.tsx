@@ -134,13 +134,16 @@ export default function ClienteExames({ cliente }: Props) {
     }
     setSaving(tipo);
     try {
-      const venc = new Date(data + "T00:00:00");
-      venc.setDate(venc.getDate() + 365);
+      // Regra: mesma data no ano seguinte (respeita ano bissexto). O trigger no banco
+      // recalcula isso de qualquer forma, mas mandamos consistente para evitar piscar valor errado.
+      const [yy, mm, dd] = data.split("-").map(Number);
+      const vencDate = new Date(yy + 1, (mm || 1) - 1, dd || 1);
+      const vencISO = `${vencDate.getFullYear()}-${String(vencDate.getMonth() + 1).padStart(2, "0")}-${String(vencDate.getDate()).padStart(2, "0")}`;
       const payload = {
         cliente_id: cliente.id,
         tipo,
         data_realizacao: data,
-        data_vencimento: venc.toISOString().slice(0, 10),
+        data_vencimento: vencISO,
         observacoes: obs?.trim() || null,
         cadastrado_por: user?.id || null,
         cadastrado_por_nome: user?.email || null,
