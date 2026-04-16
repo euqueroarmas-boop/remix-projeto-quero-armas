@@ -270,12 +270,12 @@ export default function NovoCasoModal({ open, onOpenChange, onCreated, preselect
 
         {/* Footer - always visible at bottom */}
         <div
-          className="shrink-0 border-t bg-white px-5 py-3 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end"
+          className="shrink-0 grid grid-cols-2 gap-2 border-t bg-white px-5 py-3"
           style={{ borderColor: "hsl(220 13% 91%)", paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
         >
           <button
             onClick={() => { resetForm(); onOpenChange(false); }}
-            className="h-9 w-full sm:w-auto px-4 rounded-lg text-xs font-medium uppercase hover:bg-slate-100 transition-colors"
+            className="h-9 w-full px-4 rounded-lg text-xs font-medium uppercase hover:bg-slate-100 transition-colors"
             style={{ color: "hsl(220 10% 45%)" }}
           >
             Cancelar
@@ -283,7 +283,7 @@ export default function NovoCasoModal({ open, onOpenChange, onCreated, preselect
           <button
             onClick={handleSave}
             disabled={saving}
-            className="qa-btn-primary h-9 w-full sm:w-auto px-5 text-xs font-semibold uppercase flex items-center justify-center gap-1.5 no-glow"
+            className="qa-btn-primary h-9 w-full px-5 text-xs font-semibold uppercase flex items-center justify-center gap-1.5 no-glow"
           >
             {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
             Criar Caso
