@@ -55,6 +55,7 @@ export default function QAClientePortalPage() {
   const [gtes, setGtes] = useState<any[]>([]);
   const [cadastro, setCadastro] = useState<any>(null);
   const [filiacoes, setFiliacoes] = useState<any[]>([]);
+  const [examesCliente, setExamesCliente] = useState<any[]>([]);
   const [userName, setUserName] = useState("");
 
   useEffect(() => {
@@ -103,14 +104,20 @@ export default function QAClientePortalPage() {
 
         const clienteId = clienteData.id_legado ?? clienteData.id;
 
-        // Load sub-data in parallel
-        const [vRes, iRes, crRes, cfRes, gtRes, flRes] = await Promise.all([
+        // Load sub-data in parallel. Exames usam o ID REAL do cliente (não o id_legado),
+        // pois qa_exames_cliente.cliente_id referencia qa_clientes.id.
+        const clienteIdReal = clienteData.id;
+        const [vRes, iRes, crRes, cfRes, gtRes, flRes, exRes] = await Promise.all([
           supabase.from("qa_vendas" as any).select("*").eq("cliente_id", clienteId).order("data_cadastro", { ascending: false }),
           supabase.from("qa_itens_venda" as any).select("*").eq("cliente_id", clienteId),
           supabase.from("qa_cadastro_cr" as any).select("*").eq("cliente_id", clienteId).maybeSingle(),
           supabase.from("qa_crafs" as any).select("*").eq("cliente_id", clienteId),
           supabase.from("qa_gtes" as any).select("*").eq("cliente_id", clienteId),
           supabase.from("qa_filiacoes" as any).select("*").eq("cliente_id", clienteId),
+          supabase.from("qa_exames_cliente" as any)
+            .select("id, tipo, data_realizacao, data_vencimento, observacoes")
+            .eq("cliente_id", clienteIdReal)
+            .order("data_realizacao", { ascending: false }),
         ]);
 
         setVendas((vRes.data as any[]) ?? []);
@@ -119,6 +126,14 @@ export default function QAClientePortalPage() {
         setCrafs((cfRes.data as any[]) ?? []);
         setGtes((gtRes.data as any[]) ?? []);
         setFiliacoes((flRes.data as any[]) ?? []);
+
+        // Pega apenas o exame mais recente de cada tipo (psicologico, tiro)
+        const exames = (exRes.data as any[]) ?? [];
+        const latestByTipo = new Map<string, any>();
+        for (const e of exames) {
+          if (!latestByTipo.has(e.tipo)) latestByTipo.set(e.tipo, e);
+        }
+        setExamesCliente(Array.from(latestByTipo.values()));
       } catch (e: any) {
         console.error("[Portal] load error:", e);
         toast.error("Erro ao carregar dados");
