@@ -114,17 +114,17 @@ export default function NovoCasoModal({ open, onOpenChange, onCreated, preselect
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="bg-white border-slate-200 rounded-xl !p-0 !top-auto !bottom-auto !translate-y-0 !max-h-[calc(100vh-2rem)] overflow-y-auto"
-        style={{ width: "calc(100vw - 2rem)", maxWidth: "32rem", top: "1rem", transform: "translateX(-50%)" }}
+        className="!flex !w-[calc(100vw-1rem)] !max-w-lg !max-h-[calc(100dvh-1rem)] !flex-col !gap-0 overflow-hidden rounded-xl border-slate-200 bg-white !p-0"
       >
         {/* Header */}
-        <div className="px-5 pt-5 pb-3 border-b" style={{ borderColor: "hsl(220 13% 91%)" }}>
+        <div className="shrink-0 border-b px-5 pb-3 pt-5 pr-12" style={{ borderColor: "hsl(220 13% 91%)" }}>
           <h2 className="text-base font-bold uppercase" style={{ color: "hsl(220 20% 18%)" }}>Novo Caso</h2>
           <p className="text-xs mt-0.5" style={{ color: "hsl(220 10% 62%)" }}>Cadastre um novo processo</p>
         </div>
 
         {/* Content */}
-        <div className="px-5 py-4 space-y-4">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4">
+          <div className="space-y-4 pb-2">
           {/* Client Picker */}
           <div>
             <label className="text-[11px] font-semibold uppercase mb-1.5 block" style={{ color: "hsl(220 10% 45%)" }}>
@@ -265,13 +265,17 @@ export default function NovoCasoModal({ open, onOpenChange, onCreated, preselect
               style={{ borderColor: "hsl(220 13% 91%)", color: "hsl(220 10% 18%)" }}
             />
           </div>
+          </div>
         </div>
 
         {/* Footer - always visible at bottom */}
-        <div className="shrink-0 bg-white flex items-center justify-end gap-2 px-5 py-3 border-t" style={{ borderColor: "hsl(220 13% 91%)" }}>
+        <div
+          className="shrink-0 border-t bg-white px-5 py-3 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end"
+          style={{ borderColor: "hsl(220 13% 91%)", paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
+        >
           <button
             onClick={() => { resetForm(); onOpenChange(false); }}
-            className="h-9 px-4 rounded-lg text-xs font-medium uppercase hover:bg-slate-100 transition-colors"
+            className="h-9 w-full sm:w-auto px-4 rounded-lg text-xs font-medium uppercase hover:bg-slate-100 transition-colors"
             style={{ color: "hsl(220 10% 45%)" }}
           >
             Cancelar
@@ -279,7 +283,7 @@ export default function NovoCasoModal({ open, onOpenChange, onCreated, preselect
           <button
             onClick={handleSave}
             disabled={saving}
-            className="qa-btn-primary h-9 px-5 text-xs font-semibold uppercase flex items-center gap-1.5 no-glow"
+            className="qa-btn-primary h-9 w-full sm:w-auto px-5 text-xs font-semibold uppercase flex items-center justify-center gap-1.5 no-glow"
           >
             {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
             Criar Caso

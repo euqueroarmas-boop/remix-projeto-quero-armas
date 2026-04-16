@@ -906,7 +906,8 @@ export default function QAGerarPecaPage() {
       let savedId: string;
       if (casoId) {
         // Update existing case
-        await supabase.from("qa_casos" as any).update(casoData).eq("id", casoId);
+        const { error } = await supabase.from("qa_casos" as any).update(casoData).eq("id", casoId);
+        if (error) throw error;
         savedId = casoId;
       } else {
         const { data, error } = await supabase.from("qa_casos" as any).insert(casoData).select("id").single();
