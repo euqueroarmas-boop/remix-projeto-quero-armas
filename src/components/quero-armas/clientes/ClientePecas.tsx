@@ -326,6 +326,7 @@ export default function ClientePecas({ cliente }: Props) {
           tipo_peca: tipoPeca,
           foco,
           caso_id: null,
+          cliente_id: cliente.id,
           cliente_cidade: clienteCidade.trim(),
           cliente_uf: clienteUf.trim(),
           cliente_endereco: clienteEndereco.trim() || null,
