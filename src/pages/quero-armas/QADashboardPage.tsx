@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, lazy, Suspense } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import {
@@ -11,6 +11,8 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer,
 } from "recharts";
+
+const DashboardExames = lazy(() => import("@/components/quero-armas/dashboard/DashboardExames"));
 
 interface Stats {
   documentos: number;
@@ -257,6 +259,11 @@ export default function QADashboardPage() {
           ))}
         </div>
       )}
+
+      {/* Exames Monitoring */}
+      <Suspense fallback={<div className="qa-card p-6 flex justify-center"><div className="w-5 h-5 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" /></div>}>
+        <DashboardExames />
+      </Suspense>
 
       {/* KPI Cards - Row 1 */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
