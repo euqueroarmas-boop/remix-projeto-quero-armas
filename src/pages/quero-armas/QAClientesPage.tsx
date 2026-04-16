@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   Search, User, Phone, Mail, MapPin, FileText, Shield, ChevronLeft,
   Loader2, Eye, Plus, Crosshair, Edit, Trash2, Download, FileDown,
-  ChevronDown, ChevronUp, Save, X, CheckCircle, TrendingUp,
+  ChevronDown, ChevronUp, Save, X, CheckCircle, TrendingUp, KeyRound,
 } from "lucide-react";
 
 import { toast } from "sonner";
@@ -651,6 +651,8 @@ export default function QAClientesPage() {
                 { value: "armas", icon: Crosshair, label: `Armas (${crafs.length + gtes.length})` },
                 { value: "cr", icon: Shield, label: "CR" },
                 { value: "docs", icon: FileDown, label: "Docs" },
+                { value: "portal", icon: KeyRound, label: "Portal" },
+                { value: "docs", icon: FileDown, label: "Docs" },
               ].map(t => (
                 <TabsTrigger key={t.value} value={t.value} className="text-[10px] whitespace-nowrap px-2.5 data-[state=active]:bg-slate-800 data-[state=active]:text-white rounded-lg font-semibold">
                   <t.icon className="h-3 w-3 mr-1" /> {t.label}
@@ -961,6 +963,10 @@ export default function QAClientesPage() {
               {/* DOCUMENTOS */}
               <TabsContent value="docs" className="mt-3">
                 <DocumentGenerator cliente={c} />
+              </TabsContent>
+              {/* ACESSO AO PORTAL */}
+              <TabsContent value="portal" className="mt-3">
+                <ClienteAcessoPortal cliente={c} />
               </TabsContent>
             </>
           )}
