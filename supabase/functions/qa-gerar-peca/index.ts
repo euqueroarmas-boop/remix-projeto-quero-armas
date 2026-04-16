@@ -1394,6 +1394,17 @@ IGNORE qualquer menção no contexto a tipos de peça diferentes. O tipo é FIXO
       },
     });
 
+    // Link geracao to caso if caso_id was provided (non-streaming path)
+    if (caso_id && geracaoData?.id) {
+      await supabase.from("qa_casos").update({
+        geracao_id: geracaoData.id,
+        status: "gerado",
+        minuta_gerada: minutaGerada,
+        updated_at: new Date().toISOString(),
+      }).eq("id", caso_id);
+      console.log(`Linked geracao ${geracaoData.id} to caso ${caso_id}`);
+    }
+
     return new Response(JSON.stringify({
       geracao_id: geracaoData?.id,
       minuta_gerada: minutaGerada,
