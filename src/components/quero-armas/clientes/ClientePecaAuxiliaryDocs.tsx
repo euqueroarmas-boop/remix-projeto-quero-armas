@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -30,8 +30,7 @@ export interface AuxiliaryDocItemState {
 }
 
 interface Props {
-  items: AuxiliaryDocItemState[];
-  onChange: (items: AuxiliaryDocItemState[]) => void;
+  onChange?: (items: AuxiliaryDocItemState[]) => void;
   userId?: string;
   caseId?: string | null;
 }
@@ -186,11 +185,11 @@ function stageTone(stage: DocUploadStage): string {
 function ElapsedTime({ startedAt }: { startedAt?: number }) {
   const [elapsed, setElapsed] = useState(0);
 
-  useState(() => {
+  useEffect(() => {
     if (!startedAt) return;
     const interval = window.setInterval(() => setElapsed(Math.floor((Date.now() - startedAt) / 1000)), 1000);
     return () => window.clearInterval(interval);
-  });
+  }, [startedAt]);
 
   if (!startedAt) return null;
 
@@ -204,7 +203,8 @@ function ElapsedTime({ startedAt }: { startedAt?: number }) {
   );
 }
 
-export default function ClientePecaAuxiliaryDocs({ items, onChange, userId, caseId }: Props) {
+export default function ClientePecaAuxiliaryDocs({ onChange, userId, caseId }: Props) {
+  const [items, setItems] = useState<AuxiliaryDocItemState[]>([]);
   const [showList, setShowList] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadQueueRef = useRef<Array<{ item: AuxiliaryDocItemState; index: number }>>([]);
@@ -215,13 +215,9 @@ export default function ClientePecaAuxiliaryDocs({ items, onChange, userId, case
   const docFailed = items.filter((item) => item.stage === "failed").length;
   const docPendingClassification = items.filter((item) => item.stage === "pending").length;
 
-  const setItems = (updater: AuxiliaryDocItemState[] | ((prev: AuxiliaryDocItemState[]) => AuxiliaryDocItemState[])) => {
-    if (typeof updater === "function") {
-      onChange(updater(items));
-      return;
-    }
-    onChange(updater);
-  };
+  useEffect(() => {
+    onChange?.(items);
+  }, [items, onChange]);
 
   const sanitizeFileName = (name: string): string => {
     let sanitized = name.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
