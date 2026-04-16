@@ -14,6 +14,7 @@ interface Props {
   gtes: any[];
   filiacoes: any[];
   cadastro: any;
+  examesAtuais?: any[]; // qa_exames_cliente_status — fonte de verdade
   onNavigate: (tab: string) => void;
 }
 
@@ -116,7 +117,7 @@ function StatPill({ label, value, color }: { label: string; value: string | numb
   );
 }
 
-export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, filiacoes, cadastro, onNavigate }: Props) {
+export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, filiacoes, cadastro, examesAtuais = [], onNavigate }: Props) {
   const analysis = useMemo(() => {
     const totalServicos = itens.length;
     const concluidos = itens.filter((i: any) => i.status === "CONCLUÍDO" || i.status === "DEFERIDO").length;
@@ -129,9 +130,30 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
     const expDocs: ExpiringDoc[] = [];
     if (cadastro) {
       if (cadastro.validade_cr) expDocs.push({ label: "Certificado de Registro (CR)", date: cadastro.validade_cr, days: daysUntil(cadastro.validade_cr), category: "CR" });
-      if (cadastro.validade_laudo_psicologico) expDocs.push({ label: "Laudo Psicológico", date: cadastro.validade_laudo_psicologico, days: daysUntil(cadastro.validade_laudo_psicologico), category: "CR" });
-      if (cadastro.validade_exame_tiro) expDocs.push({ label: "Exame de Tiro", date: cadastro.validade_exame_tiro, days: daysUntil(cadastro.validade_exame_tiro), category: "CR" });
     }
+
+    // ─── EXAMES (fonte de verdade: qa_exames_cliente_status) ───
+    // Pega o exame mais recente por tipo (já vem ordenado por data_realizacao DESC).
+    const exameByTipo = new Map<string, any>();
+    for (const e of examesAtuais) {
+      if (!exameByTipo.has(e.tipo)) exameByTipo.set(e.tipo, e);
+    }
+    const psi = exameByTipo.get("psicologico");
+    const tiro = exameByTipo.get("tiro");
+
+    if (psi) {
+      // data_vencimento JÁ é data_realizacao + 365 (calculado pelo trigger)
+      expDocs.push({ label: "Laudo Psicológico", date: psi.data_vencimento, days: daysUntil(psi.data_vencimento), category: "EXAME" });
+    } else if (cadastro?.validade_laudo_psicologico) {
+      // Fallback legado
+      expDocs.push({ label: "Laudo Psicológico (legado)", date: cadastro.validade_laudo_psicologico, days: daysUntil(cadastro.validade_laudo_psicologico), category: "EXAME" });
+    }
+    if (tiro) {
+      expDocs.push({ label: "Exame de Tiro", date: tiro.data_vencimento, days: daysUntil(tiro.data_vencimento), category: "EXAME" });
+    } else if (cadastro?.validade_exame_tiro) {
+      expDocs.push({ label: "Exame de Tiro (legado)", date: cadastro.validade_exame_tiro, days: daysUntil(cadastro.validade_exame_tiro), category: "EXAME" });
+    }
+
     crafs.forEach((cr: any) => { if (cr.data_validade) expDocs.push({ label: `CRAF — ${cr.nome_arma || cr.nome_craf || "Arma"}`, date: cr.data_validade, days: daysUntil(cr.data_validade), category: "CRAF" }); });
     gtes.forEach((g: any) => { if (g.data_validade) expDocs.push({ label: `GTE — ${g.nome_arma || g.nome_gte || "Arma"}`, date: g.data_validade, days: daysUntil(g.data_validade), category: "GTE" }); });
     filiacoes.forEach((f: any) => { if (f.validade_filiacao) expDocs.push({ label: `Filiação — ${f.nome_filiacao || `Clube #${f.clube_id}`}`, date: f.validade_filiacao, days: daysUntil(f.validade_filiacao), category: "FILIAÇÃO" }); });
@@ -149,7 +171,7 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
     const validos = expDocs.filter(d => d.days !== null && d.days > 90);
 
     return { totalServicos, concluidos, emAndamento, cancelados, totalVendas, totalDescontos, totalArmas, expDocs, alerts, vencidos, validos };
-  }, [vendas, itens, crafs, gtes, filiacoes, cadastro]);
+  }, [vendas, itens, crafs, gtes, filiacoes, cadastro, examesAtuais]);
 
   // Timeline events
   const timeline = useMemo(() => {
