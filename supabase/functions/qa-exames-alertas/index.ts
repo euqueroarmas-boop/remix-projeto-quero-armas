@@ -24,6 +24,7 @@ interface ExameRow {
   tipo: string;
   data_realizacao: string;
   data_vencimento: string;
+  dias_restantes: number | null;
 }
 
 serve(async (req) => {
@@ -36,11 +37,11 @@ serve(async (req) => {
   const sb = createClient(supabaseUrl, supabaseKey);
 
   try {
-    // 1) Buscar todos os exames
-    const { data: exames, error: exErr } = await sb.from("qa_exames_cliente").select("*");
+    const { data: exames, error: exErr } = await sb
+      .from("qa_exames_cliente_status")
+      .select("id, cliente_id, tipo, data_realizacao, data_vencimento, dias_restantes");
     if (exErr) throw exErr;
 
-    // 2) Pegar o exame mais recente por (cliente, tipo)
     const latestMap = new Map<string, ExameRow>();
     for (const e of (exames || []) as ExameRow[]) {
       const key = `${e.cliente_id}_${e.tipo}`;
@@ -50,9 +51,8 @@ serve(async (req) => {
       }
     }
 
-    // 3) Calcular dias restantes
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
     interface AlertCandidate {
       exame: ExameRow;
@@ -62,13 +62,14 @@ serve(async (req) => {
 
     const candidates: AlertCandidate[] = [];
     for (const e of latestMap.values()) {
-      const venc = new Date(e.data_vencimento + "T00:00:00");
-      const dias = Math.floor((venc.getTime() - hoje.getTime()) / 86400000);
-      
+      const dias = typeof e.dias_restantes === "number"
+        ? e.dias_restantes
+        : Math.floor((new Date(`${e.data_vencimento}T00:00:00`).getTime() - today.getTime()) / 86400000);
+
       for (const marco of MARCOS) {
         if (dias <= marco && dias >= 0) {
           candidates.push({ exame: e, marco, diasRestantes: dias });
-          break; // Só o marco mais próximo
+          break;
         }
       }
     }
@@ -79,7 +80,6 @@ serve(async (req) => {
       });
     }
 
-    // 4) Buscar alertas já enviados para evitar duplicidade
     const exameIds = candidates.map((c) => c.exame.id);
     const { data: jaEnviados } = await sb
       .from("qa_exames_alertas_enviados")
@@ -90,19 +90,24 @@ serve(async (req) => {
       (jaEnviados || []).map((a: any) => `${a.exame_id}_${a.marco_dias}_${a.canal}`)
     );
 
-    // 5) Buscar clientes para e-mail
-    const clienteIds = [...new Set(candidates.map((c) => c.exame.cliente_id))];
     const { data: clientes } = await sb
       .from("qa_clientes")
-      .select("id, nome_completo, email, celular")
-      .in("id", clienteIds);
+      .select("id, id_legado, nome_completo, email, celular");
 
-    const clienteMap = new Map((clientes || []).map((c: any) => [c.id, c]));
+    const clienteAliasMap = new Map<number, any>();
+    for (const cliente of (clientes || []) as any[]) {
+      if (typeof cliente.id === "number") clienteAliasMap.set(cliente.id, cliente);
+      if (typeof cliente.id_legado === "number") clienteAliasMap.set(cliente.id_legado, cliente);
+    }
 
-    // 6) Verificar serviços pendentes por cliente
-    const { data: vendas } = await sb.from("qa_vendas").select("id, cliente_id").in("cliente_id", clienteIds);
+    const salesLookupIds = [...new Set(candidates.flatMap((candidate) => {
+      const cliente = clienteAliasMap.get(candidate.exame.cliente_id);
+      return cliente ? [candidate.exame.cliente_id, cliente.id] : [candidate.exame.cliente_id];
+    }))];
+
+    const { data: vendas } = await sb.from("qa_vendas").select("id, cliente_id").in("cliente_id", salesLookupIds);
     const vendaIds = (vendas || []).map((v: any) => v.id);
-    const vendaClienteMap = new Map((vendas || []).map((v: any) => [v.id, v.cliente_id]));
+    const vendaClienteMap = new Map((vendas || []).map((v: any) => [v.id, clienteAliasMap.get(v.cliente_id)?.id ?? v.cliente_id]));
 
     const clienteComPendente = new Set<number>();
     if (vendaIds.length > 0) {
@@ -115,7 +120,6 @@ serve(async (req) => {
       }
     }
 
-    // 7) Enviar alertas
     let emailsSent = 0;
     let dashboardAlerts = 0;
     const insertAlerts: any[] = [];
@@ -126,10 +130,9 @@ serve(async (req) => {
     };
 
     for (const c of candidates) {
-      const cliente = clienteMap.get(c.exame.cliente_id);
+      const cliente = clienteAliasMap.get(c.exame.cliente_id);
       if (!cliente) continue;
 
-      // E-mail ao cliente (sempre, se não duplicado)
       const emailKey = `${c.exame.id}_${c.marco}_email`;
       if (!enviadoSet.has(emailKey) && cliente.email) {
         const nome = cliente.nome_completo || "Cliente";
@@ -144,7 +147,7 @@ serve(async (req) => {
             <div style="background:#fff;padding:25px;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 12px 12px;">
               <p style="font-size:14px;color:#334155;">Olá, <strong>${nome}</strong>!</p>
               <p style="font-size:14px;color:#334155;">
-                Seu <strong>${tipo}</strong> vence em <strong style="color:#dc2626;">${c.diasRestantes} dia(s)</strong> 
+                Seu <strong>${tipo}</strong> vence em <strong style="color:#dc2626;">${c.diasRestantes} dia(s)</strong>
                 (${vencStr}).
               </p>
               <p style="font-size:14px;color:#334155;">
@@ -152,7 +155,7 @@ serve(async (req) => {
               </p>
               <div style="margin-top:20px;padding:15px;background:#fef3c7;border-radius:8px;border:1px solid #fde68a;">
                 <p style="margin:0;font-size:13px;color:#92400e;">
-                  <strong>📋 Importante:</strong> Exames vencem 365 dias após a realização. 
+                  <strong>📋 Importante:</strong> Exames vencem 1 ano após a realização, na mesma data do ano seguinte.
                   Após o vencimento, será necessário novo exame.
                 </p>
               </div>
@@ -181,24 +184,22 @@ serve(async (req) => {
           exame_id: c.exame.id,
           marco_dias: c.marco,
           canal: "email",
-          cliente_id: c.exame.cliente_id,
+          cliente_id: cliente.id,
         });
       }
 
-      // Alerta dashboard (só se tem serviço pendente)
       const dashKey = `${c.exame.id}_${c.marco}_dashboard`;
-      if (!enviadoSet.has(dashKey) && clienteComPendente.has(c.exame.cliente_id)) {
+      if (!enviadoSet.has(dashKey) && clienteComPendente.has(cliente.id)) {
         insertAlerts.push({
           exame_id: c.exame.id,
           marco_dias: c.marco,
           canal: "dashboard",
-          cliente_id: c.exame.cliente_id,
+          cliente_id: cliente.id,
         });
         dashboardAlerts++;
       }
     }
 
-    // 8) Registrar alertas enviados
     if (insertAlerts.length > 0) {
       await sb.from("qa_exames_alertas_enviados").insert(insertAlerts);
     }

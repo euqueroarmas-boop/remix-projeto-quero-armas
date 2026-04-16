@@ -5,6 +5,7 @@ import {
   ArrowRight, Eye, Activity, Zap, Target, Bell, CreditCard,
   ChevronRight, MapPin, Phone, Mail, User,
 } from "lucide-react";
+import { computeExameStatus, formatExameCountdown } from "@/components/quero-armas/clientes/ClienteExames";
 
 interface Props {
   cliente: any;
@@ -40,10 +41,10 @@ const SERVICO_MAP: Record<number, string> = {
 function daysUntil(dateStr: string | null): number | null {
   if (!dateStr) return null;
   try {
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return null;
-    return Math.ceil((d.getTime() - Date.now()) / 86400000);
-  } catch { return null; }
+    return computeExameStatus(dateStr).dias_restantes;
+  } catch {
+    return null;
+  }
 }
 
 function urgencyColor(days: number | null): string {
@@ -63,10 +64,8 @@ function urgencyBg(days: number | null): string {
 }
 
 function urgencyLabel(days: number | null): string {
-  if (days === null) return "SEM DATA";
-  if (days < 0) return `VENCIDO HÁ ${Math.abs(days)}D`;
-  if (days === 0) return "VENCE HOJE";
-  return `${days}D RESTANTES`;
+  if (days === null) return "Sem data";
+  return formatExameCountdown(days);
 }
 
 function urgencyIcon(days: number | null) {
@@ -128,30 +127,32 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
     const totalArmas = crafs.length + gtes.length;
 
     const expDocs: ExpiringDoc[] = [];
-    if (cadastro) {
-      if (cadastro.validade_cr) expDocs.push({ label: "Certificado de Registro (CR)", date: cadastro.validade_cr, days: daysUntil(cadastro.validade_cr), category: "CR" });
+    if (cadastro?.validade_cr) {
+      expDocs.push({ label: "Certificado de Registro (CR)", date: cadastro.validade_cr, days: daysUntil(cadastro.validade_cr), category: "CR" });
     }
 
-    // ─── EXAMES (fonte de verdade: qa_exames_cliente_status) ───
-    // Pega o exame mais recente por tipo (já vem ordenado por data_realizacao DESC).
     const exameByTipo = new Map<string, any>();
     for (const e of examesAtuais) {
-      if (!exameByTipo.has(e.tipo)) exameByTipo.set(e.tipo, e);
+      if (e?.tipo && !exameByTipo.has(e.tipo)) exameByTipo.set(e.tipo, e);
     }
     const psi = exameByTipo.get("psicologico");
     const tiro = exameByTipo.get("tiro");
 
-    if (psi) {
-      // data_vencimento JÁ é data_realizacao + 365 (calculado pelo trigger)
-      expDocs.push({ label: "Laudo Psicológico", date: psi.data_vencimento, days: daysUntil(psi.data_vencimento), category: "EXAME" });
-    } else if (cadastro?.validade_laudo_psicologico) {
-      // Fallback legado
-      expDocs.push({ label: "Laudo Psicológico (legado)", date: cadastro.validade_laudo_psicologico, days: daysUntil(cadastro.validade_laudo_psicologico), category: "EXAME" });
+    if (psi?.data_vencimento) {
+      expDocs.push({
+        label: "Laudo Psicológico",
+        date: psi.data_vencimento,
+        days: computeExameStatus(psi.data_vencimento).dias_restantes,
+        category: "EXAME",
+      });
     }
-    if (tiro) {
-      expDocs.push({ label: "Exame de Tiro", date: tiro.data_vencimento, days: daysUntil(tiro.data_vencimento), category: "EXAME" });
-    } else if (cadastro?.validade_exame_tiro) {
-      expDocs.push({ label: "Exame de Tiro (legado)", date: cadastro.validade_exame_tiro, days: daysUntil(cadastro.validade_exame_tiro), category: "EXAME" });
+    if (tiro?.data_vencimento) {
+      expDocs.push({
+        label: "Exame de Tiro",
+        date: tiro.data_vencimento,
+        days: computeExameStatus(tiro.data_vencimento).dias_restantes,
+        category: "EXAME",
+      });
     }
 
     crafs.forEach((cr: any) => { if (cr.data_validade) expDocs.push({ label: `CRAF — ${cr.nome_arma || cr.nome_craf || "Arma"}`, date: cr.data_validade, days: daysUntil(cr.data_validade), category: "CRAF" }); });

@@ -34,18 +34,34 @@ export interface ExameComStatus extends ExameRecord {
   status: "vigente" | "a_vencer" | "vencido";
 }
 
+const MS_PER_DAY = 86400000;
+
+const toDateOnly = (value: string) => {
+  const [y, m, d] = value.split("T")[0].split("-").map(Number);
+  return new Date(y, (m || 1) - 1, d || 1);
+};
+
 /** Cálculo único de status — fonte de verdade no front (espelha a view do banco). */
 export function computeExameStatus(dataVencimento: string): {
   status: ExameComStatus["status"];
   dias_restantes: number;
 } {
-  const venc = new Date(dataVencimento + "T00:00:00");
+  const venc = toDateOnly(dataVencimento);
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
-  const dias = Math.floor((venc.getTime() - hoje.getTime()) / 86400000);
+  const dias = Math.floor((venc.getTime() - hoje.getTime()) / MS_PER_DAY);
   if (dias < 0) return { status: "vencido", dias_restantes: dias };
   if (dias <= 45) return { status: "a_vencer", dias_restantes: dias };
   return { status: "vigente", dias_restantes: dias };
+}
+
+export function formatExameCountdown(diasRestantes: number): string {
+  if (diasRestantes < 0) {
+    const dias = Math.abs(diasRestantes);
+    return `Vencido há ${dias} ${dias === 1 ? "dia" : "dias"}`;
+  }
+  if (diasRestantes === 0) return "Vence hoje";
+  return `Vence em ${diasRestantes} ${diasRestantes === 1 ? "dia" : "dias"}`;
 }
 
 const TIPO_LABEL: Record<ExameTipo, string> = {
