@@ -965,6 +965,10 @@ export default function QAClientesPage() {
               <TabsContent value="docs" className="mt-3">
                 <DocumentGenerator cliente={c} />
               </TabsContent>
+              {/* PEÇAS JURÍDICAS */}
+              <TabsContent value="pecas" className="mt-3">
+                <ClientePecas cliente={c} />
+              </TabsContent>
               {/* ACESSO AO PORTAL */}
               <TabsContent value="portal" className="mt-3">
                 <ClienteAcessoPortal cliente={c} />
