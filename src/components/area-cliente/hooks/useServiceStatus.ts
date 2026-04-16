@@ -4,7 +4,7 @@ export type ServiceStatusLevel = "restricted" | "full";
 
 const FULL_ACCESS_STATUSES = new Set(["paid", "active"]);
 const RESTRICTED_TABS = new Set(["servicos", "solicitacoes", "suporte"]);
-const ALWAYS_ALLOWED_TABS = new Set(["overview", "financeiro", "documentos", "perfil", "fiscal"]);
+const ALWAYS_ALLOWED_TABS = new Set(["overview", "financeiro", "documentos", "perfil", "fiscal", "pecas"]);
 
 /**
  * Derives the portal access level from the best contract service_status.
