@@ -178,7 +178,7 @@ export default function QAClientePortalPage() {
     const alerts = expDocs.filter(d => d.days !== null && d.days <= 90);
 
     return { totalServicos, concluidos, emAndamento, totalVendas, expDocs, alerts };
-  }, [cliente, vendas, itens, crafs, gtes, cadastro]);
+  }, [cliente, vendas, itens, crafs, gtes, cadastro, examesCliente]);
 
   // Timeline
   const timeline = useMemo(() => {
