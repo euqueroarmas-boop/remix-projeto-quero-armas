@@ -673,6 +673,7 @@ Deno.serve(async (req) => {
       circunscricao_resolvida,
       data_notificacao, info_tempestividade,
       numero_requerimento, caso_id: req_caso_id,
+      cliente_id: reqClienteId,
     } = reqBody;
     const wantStream = !!reqBody.stream;
 
@@ -1016,12 +1017,16 @@ Deno.serve(async (req) => {
     const tituloObrigatorio = TIPO_PECA_LABELS[tipo_peca];
     const tipoServico = TIPO_SERVICO_MAP[tipo_peca];
 
+    // Fetch exam context for this client
+    const exameContextGerar = await buildExamContextGerar(supabase, reqClienteId);
+
     let dadosAdicionais = "";
     if (data_notificacao) dadosAdicionais += `\nDATA DA NOTIFICAÇÃO: ${data_notificacao}`;
     if (info_tempestividade) dadosAdicionais += `\nINFORMAÇÕES DE TEMPESTIVIDADE: ${info_tempestividade}`;
     if (cliente_endereco) dadosAdicionais += `\nENDEREÇO DO CLIENTE: ${cliente_endereco}`;
     if (cliente_cep) dadosAdicionais += `\nCEP DO CLIENTE: ${cliente_cep}`;
     if (numero_requerimento) dadosAdicionais += `\nNÚMERO DO REQUERIMENTO: ${numero_requerimento}`;
+    if (exameContextGerar) dadosAdicionais += exameContextGerar;
 
     // Evidence-specific instructions for the user prompt
     const bos = evidenceDocs.filter(d => d.tipo === "boletim_ocorrencia");
