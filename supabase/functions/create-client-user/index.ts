@@ -33,7 +33,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Auth check
+    // Auth check: admin token, password, or valid Supabase JWT
     const adminToken = req.headers.get("x-admin-token");
     let authorized = false;
 
@@ -49,6 +49,18 @@ Deno.serve(async (req) => {
 
     if (!authorized && adminPwd) {
       authorized = adminPwd === ADMIN_PASSWORD;
+    }
+
+    // Also accept valid Supabase JWT (for QA admin module)
+    if (!authorized) {
+      const authHeader = req.headers.get("authorization");
+      if (authHeader?.startsWith("Bearer ")) {
+        const jwt = authHeader.replace("Bearer ", "");
+        const { data: userData, error: authErr } = await supabase.auth.getUser(jwt);
+        if (!authErr && userData?.user) {
+          authorized = true;
+        }
+      }
     }
 
     if (!authorized) {

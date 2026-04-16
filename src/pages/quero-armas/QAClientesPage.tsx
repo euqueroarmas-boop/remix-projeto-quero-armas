@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   Search, User, Phone, Mail, MapPin, FileText, Shield, ChevronLeft,
   Loader2, Eye, Plus, Crosshair, Edit, Trash2, Download, FileDown,
-  ChevronDown, ChevronUp, Save, X, CheckCircle, TrendingUp,
+  ChevronDown, ChevronUp, Save, X, CheckCircle, TrendingUp, KeyRound,
 } from "lucide-react";
 
 import { toast } from "sonner";
@@ -16,6 +16,7 @@ import ClienteFormModal from "@/components/quero-armas/clientes/ClienteFormModal
 import ClienteOverview from "@/components/quero-armas/clientes/ClienteOverview";
 import { CrafModal, GteModal, CrModal, VendaModal, FiliacaoModal, DeleteConfirm } from "@/components/quero-armas/clientes/SubEntityModals";
 import { exportClientes, exportCrafs, exportGtes, exportCr, exportVendas } from "@/components/quero-armas/clientes/ClienteExport";
+import ClienteAcessoPortal from "@/components/quero-armas/clientes/ClienteAcessoPortal";
 
 const formatCpf = (v: string | null | undefined): string => {
   if (!v) return "—";
@@ -650,6 +651,8 @@ export default function QAClientesPage() {
                 { value: "armas", icon: Crosshair, label: `Armas (${crafs.length + gtes.length})` },
                 { value: "cr", icon: Shield, label: "CR" },
                 { value: "docs", icon: FileDown, label: "Docs" },
+                { value: "portal", icon: KeyRound, label: "Portal" },
+                { value: "docs", icon: FileDown, label: "Docs" },
               ].map(t => (
                 <TabsTrigger key={t.value} value={t.value} className="text-[10px] whitespace-nowrap px-2.5 data-[state=active]:bg-slate-800 data-[state=active]:text-white rounded-lg font-semibold">
                   <t.icon className="h-3 w-3 mr-1" /> {t.label}
@@ -960,6 +963,10 @@ export default function QAClientesPage() {
               {/* DOCUMENTOS */}
               <TabsContent value="docs" className="mt-3">
                 <DocumentGenerator cliente={c} />
+              </TabsContent>
+              {/* ACESSO AO PORTAL */}
+              <TabsContent value="portal" className="mt-3">
+                <ClienteAcessoPortal cliente={c} />
               </TabsContent>
             </>
           )}
