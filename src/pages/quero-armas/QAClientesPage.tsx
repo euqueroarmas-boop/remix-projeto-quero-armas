@@ -652,7 +652,6 @@ export default function QAClientesPage() {
                 { value: "cr", icon: Shield, label: "CR" },
                 { value: "docs", icon: FileDown, label: "Docs" },
                 { value: "portal", icon: KeyRound, label: "Portal" },
-                { value: "docs", icon: FileDown, label: "Docs" },
               ].map(t => (
                 <TabsTrigger key={t.value} value={t.value} className="text-[10px] whitespace-nowrap px-2.5 data-[state=active]:bg-slate-800 data-[state=active]:text-white rounded-lg font-semibold">
                   <t.icon className="h-3 w-3 mr-1" /> {t.label}
