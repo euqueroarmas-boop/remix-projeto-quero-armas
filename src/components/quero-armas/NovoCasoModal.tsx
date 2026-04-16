@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -76,7 +76,9 @@ export default function NovoCasoModal({ open, onOpenChange, onCreated, preselect
     setObservacoes(""); setSelectedCliente(null); setSearchCliente("");
   };
 
-  const handleSave = async () => {
+  const handleSave = async (event?: FormEvent<HTMLFormElement>) => {
+    event?.preventDefault();
+
     if (!selectedCliente) { toast.error("Selecione um cliente."); return; }
     if (!titulo.trim()) { toast.error("Informe o título do caso."); return; }
     if (!tipoServico) { toast.error("Selecione o tipo de serviço."); return; }
@@ -97,7 +99,7 @@ export default function NovoCasoModal({ open, onOpenChange, onCreated, preselect
         status,
       };
 
-      const { error } = await supabase.from("qa_casos" as any).insert(payload);
+      const { error } = await supabase.from("qa_casos" as any).insert(payload).select("id").single();
       if (error) throw error;
 
       toast.success("Caso criado com sucesso!");
@@ -116,15 +118,16 @@ export default function NovoCasoModal({ open, onOpenChange, onCreated, preselect
       <DialogContent
         className="!fixed !left-1/2 !top-auto !bottom-0 sm:!top-[50%] sm:!bottom-auto !-translate-x-1/2 !translate-y-0 sm:!-translate-y-1/2 !flex !w-full sm:!w-[calc(100vw-1rem)] !max-w-lg !max-h-[100dvh] sm:!max-h-[calc(100dvh-1rem)] !flex-col !gap-0 overflow-hidden !rounded-t-xl sm:!rounded-xl border-slate-200 bg-white !p-0"
       >
-        {/* Header */}
-        <div className="shrink-0 border-b px-5 pb-3 pt-5 pr-12" style={{ borderColor: "hsl(220 13% 91%)" }}>
-          <h2 className="text-base font-bold uppercase" style={{ color: "hsl(220 20% 18%)" }}>Novo Caso</h2>
-          <p className="text-xs mt-0.5" style={{ color: "hsl(220 10% 62%)" }}>Cadastre um novo processo</p>
-        </div>
+        <form onSubmit={handleSave} className="flex min-h-0 flex-1 flex-col">
+          {/* Header */}
+          <div className="shrink-0 border-b px-5 pb-3 pt-5 pr-12" style={{ borderColor: "hsl(220 13% 91%)" }}>
+            <h2 className="text-base font-bold uppercase" style={{ color: "hsl(220 20% 18%)" }}>Novo Caso</h2>
+            <p className="text-xs mt-0.5" style={{ color: "hsl(220 10% 62%)" }}>Cadastre um novo processo</p>
+          </div>
 
-        {/* Content */}
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4">
-          <div className="space-y-4 pb-2">
+          {/* Content */}
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4">
+            <div className="space-y-4 pb-3">
           {/* Client Picker */}
           <div>
             <label className="text-[11px] font-semibold uppercase mb-1.5 block" style={{ color: "hsl(220 10% 45%)" }}>
@@ -265,30 +268,33 @@ export default function NovoCasoModal({ open, onOpenChange, onCreated, preselect
               style={{ borderColor: "hsl(220 13% 91%)", color: "hsl(220 10% 18%)" }}
             />
           </div>
+            </div>
           </div>
-        </div>
 
-        {/* Footer - always visible at bottom */}
-        <div
-          className="shrink-0 grid grid-cols-2 gap-2 border-t bg-white px-5 py-3"
-          style={{ borderColor: "hsl(220 13% 91%)", paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
-        >
-          <button
-            onClick={() => { resetForm(); onOpenChange(false); }}
-            className="h-9 w-full px-4 rounded-lg text-xs font-medium uppercase hover:bg-slate-100 transition-colors"
-            style={{ color: "hsl(220 10% 45%)" }}
+          {/* Footer - always visible at bottom */}
+          <div
+            className="sticky bottom-0 z-10 mt-auto grid shrink-0 grid-cols-2 gap-2 border-t bg-white px-5 py-3"
+            style={{ borderColor: "hsl(220 13% 91%)", paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))", pointerEvents: "auto" }}
           >
-            Cancelar
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="qa-btn-primary h-9 w-full px-5 text-xs font-semibold uppercase flex items-center justify-center gap-1.5 no-glow"
-          >
-            {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-            Criar Caso
-          </button>
-        </div>
+            <button
+              type="button"
+              onClick={() => { resetForm(); onOpenChange(false); }}
+              className="h-11 w-full px-4 rounded-lg text-xs font-medium uppercase hover:bg-slate-100 transition-colors"
+              style={{ color: "hsl(220 10% 45%)" }}
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="qa-btn-primary h-11 w-full px-5 text-xs font-semibold uppercase flex items-center justify-center gap-1.5 no-glow"
+              style={{ pointerEvents: saving ? "none" : "auto" }}
+            >
+              {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              Criar Caso
+            </button>
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   );

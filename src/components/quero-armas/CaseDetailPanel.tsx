@@ -66,12 +66,29 @@ export default function CaseDetailPanel({
     setLoadingGeracao(true);
     try {
       setGeracao(null);
-      if (!caso.geracao_id) return;
+      let geracaoId = caso.geracao_id;
+
+      if (!geracaoId && caso?.id) {
+        const { data: latestCase } = await supabase
+          .from("qa_casos" as any)
+          .select("geracao_id, minuta_gerada")
+          .eq("id", caso.id)
+          .maybeSingle();
+
+        geracaoId = (latestCase as any)?.geracao_id || null;
+
+        if (!geracaoId && (latestCase as any)?.minuta_gerada) {
+          setGeracao({ minuta_gerada: (latestCase as any).minuta_gerada });
+          return;
+        }
+      }
+
+      if (!geracaoId) return;
 
       const { data } = await supabase
         .from("qa_geracoes_pecas" as any)
         .select("*")
-        .eq("id", caso.geracao_id)
+        .eq("id", geracaoId)
         .maybeSingle();
 
       setGeracao(data ?? null);

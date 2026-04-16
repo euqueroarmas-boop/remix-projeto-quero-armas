@@ -896,24 +896,43 @@ export default function QAGerarPecaPage() {
         foco_argumentativo: foco,
         status: "gerado",
         minuta_gerada: geracaoResult?.minuta_gerada || null,
-        geracao_id: geracaoResult?.geracao_id || null,
         documentos_auxiliares_json: docsJson,
         erros_documentos_json: errosJson.length > 0 ? errosJson : null,
         usuario_id: user?.id || null,
         updated_at: new Date().toISOString(),
       };
 
+      if (geracaoResult?.geracao_id) {
+        casoData.geracao_id = geracaoResult.geracao_id;
+      }
+
       let savedId: string;
+      let persistedGeracaoId: string | null = geracaoResult?.geracao_id || null;
       if (casoId) {
         // Update existing case
-        const { error } = await supabase.from("qa_casos" as any).update(casoData).eq("id", casoId);
+        const { data, error } = await supabase
+          .from("qa_casos" as any)
+          .update(casoData)
+          .eq("id", casoId)
+          .select("id, geracao_id, minuta_gerada")
+          .single();
         if (error) throw error;
         savedId = casoId;
+        persistedGeracaoId = (data as any)?.geracao_id || persistedGeracaoId;
       } else {
-        const { data, error } = await supabase.from("qa_casos" as any).insert(casoData).select("id").single();
+        const { data, error } = await supabase
+          .from("qa_casos" as any)
+          .insert(casoData)
+          .select("id, geracao_id, minuta_gerada")
+          .single();
         if (error) throw error;
         savedId = (data as any).id;
+        persistedGeracaoId = (data as any)?.geracao_id || persistedGeracaoId;
         setCasoId(savedId);
+      }
+
+      if (persistedGeracaoId) {
+        setResultado((prev) => prev ? { ...prev, geracao_id: persistedGeracaoId } : prev);
       }
 
       if (auxiliarDocIds.length > 0) {
