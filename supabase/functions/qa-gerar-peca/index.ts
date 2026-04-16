@@ -672,7 +672,7 @@ Deno.serve(async (req) => {
       cliente_cidade, cliente_uf, cliente_endereco, cliente_cep,
       circunscricao_resolvida,
       data_notificacao, info_tempestividade,
-      numero_requerimento,
+      numero_requerimento, caso_id: req_caso_id,
     } = reqBody;
     const wantStream = !!reqBody.stream;
 
@@ -819,7 +819,7 @@ Deno.serve(async (req) => {
     // === AUXILIARY CASE DOCUMENTS — TYPED EVIDENCE PROCESSING ===
     let fontesAuxiliares: any[] = [];
     let evidenceDocs: EvidenceDoc[] = [];
-    const caso_id = caso_titulo?.trim() || null;
+    const caso_id = req_caso_id?.trim() || null;
 
     if (caso_id) {
       const { data: auxDocs } = await supabase.from("qa_documentos_conhecimento")
@@ -1240,6 +1240,17 @@ IGNORE qualquer menção no contexto a tipos de peça diferentes. O tipo é FIXO
               },
             });
 
+            // Link geracao to caso if caso_id was provided
+            if (caso_id && geracaoData?.id) {
+              await supabase.from("qa_casos").update({
+                geracao_id: geracaoData.id,
+                status: "gerado",
+                minuta_gerada: fullText,
+                updated_at: new Date().toISOString(),
+              }).eq("id", caso_id);
+              console.log(`Linked geracao ${geracaoData.id} to caso ${caso_id}`);
+            }
+
             // Send final metadata event
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({
               type: "done",
@@ -1382,6 +1393,17 @@ IGNORE qualquer menção no contexto a tipos de peça diferentes. O tipo é FIXO
         quality_issues: qualityCheck.issues,
       },
     });
+
+    // Link geracao to caso if caso_id was provided (non-streaming path)
+    if (caso_id && geracaoData?.id) {
+      await supabase.from("qa_casos").update({
+        geracao_id: geracaoData.id,
+        status: "gerado",
+        minuta_gerada: minutaGerada,
+        updated_at: new Date().toISOString(),
+      }).eq("id", caso_id);
+      console.log(`Linked geracao ${geracaoData.id} to caso ${caso_id}`);
+    }
 
     return new Response(JSON.stringify({
       geracao_id: geracaoData?.id,
