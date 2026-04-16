@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useBrasilApiLookup } from "@/hooks/useBrasilApiLookup";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import {
   Send, Loader2, User, MapPin, FileText, Scale, ChevronUp, ChevronDown,
-  CheckCircle, AlertTriangle, X, Building2, Info,
+  CheckCircle, AlertTriangle, X, Building2, Info, Mail, Phone, Briefcase,
+  Shield, Sparkles,
 } from "lucide-react";
 import { useQAAuthContext } from "@/components/quero-armas/QAAuthContext";
 import DraftingView, { type DraftingResult } from "@/components/quero-armas/DraftingView";
@@ -64,18 +65,16 @@ export default function ClientePecasGerador({ cliente, onClose, onSaved }: Props
   const { user } = useQAAuthContext();
   const { lookupCep } = useBrasilApiLookup();
 
-  // Pre-filled from client
-  const [nomeRequerente, setNomeRequerente] = useState(cliente.nome_completo || "");
+  const [nomeRequerente] = useState(cliente.nome_completo || "");
   const [cpfCnpj] = useState((cliente.cpf || "").replace(/\D/g, ""));
-  const [clienteCidade, setClienteCidade] = useState(cliente.cidade || "");
-  const [clienteUf, setClienteUf] = useState(cliente.estado || "");
-  const [clienteEndereco, setClienteEndereco] = useState(
+  const [clienteCidade] = useState(cliente.cidade || "");
+  const [clienteUf] = useState(cliente.estado || "");
+  const [clienteEndereco] = useState(
     [cliente.endereco, cliente.numero].filter(Boolean).join(", ") || ""
   );
-  const [clienteBairro, setClienteBairro] = useState(cliente.bairro || "");
-  const [clienteCep, setClienteCep] = useState(cliente.cep || "");
+  const [clienteBairro] = useState(cliente.bairro || "");
+  const [clienteCep] = useState(cliente.cep || "");
 
-  // Form fields
   const [tipoPeca, setTipoPeca] = useState("defesa_posse_arma");
   const [foco, setFoco] = useState("legalidade");
   const [entradaCaso, setEntradaCaso] = useState("");
@@ -83,11 +82,9 @@ export default function ClientePecasGerador({ cliente, onClose, onSaved }: Props
   const [infoTempestividade, setInfoTempestividade] = useState("");
   const [numeroRequerimento, setNumeroRequerimento] = useState("");
 
-  // Circumscription
   const [circunscricao, setCircunscricao] = useState<any>(null);
   const [circStatus, setCircStatus] = useState<"idle" | "resolving" | "resolved" | "error">("idle");
 
-  // Generation
   const [loading, setLoading] = useState(false);
   const [resultado, setResultado] = useState<DraftingResult | null>(null);
   const [streamedText, setStreamedText] = useState("");
@@ -103,12 +100,11 @@ export default function ClientePecasGerador({ cliente, onClose, onSaved }: Props
   const needsTempestividade = tipoPeca === "recurso_administrativo" || tipoPeca === "resposta_a_notificacao";
   const tipoPecaLabel = TIPOS_PECA.find(t => t.value === tipoPeca)?.label || tipoPeca;
 
-  // Auto-resolve circumscription when city/uf available
   useEffect(() => {
     if (clienteCidade && clienteUf && circStatus === "idle") {
       resolverCircunscricao(clienteCidade, clienteUf);
     }
-  }, []); // Only on mount
+  }, []);
 
   const resolverCircunscricao = async (cidade: string, uf: string) => {
     const c = cidade.replace(/\s+/g, " ").trim();
@@ -210,17 +206,14 @@ export default function ClientePecasGerador({ cliente, onClose, onSaved }: Props
     setDraftingStep("context");
 
     try {
-      // Circumscription
       let circ = circunscricao;
       if (!circ) circ = await resolverCircunscricao(clienteCidade, clienteUf);
 
-      // Build context
       setDraftingStep("context");
       await new Promise(r => setTimeout(r, 300));
       setDraftingStep("sources");
       await new Promise(r => setTimeout(r, 300));
 
-      // Stream generation - same edge function
       setDraftingStep("writing");
       setIsStreaming(true);
 
@@ -268,7 +261,6 @@ export default function ClientePecasGerador({ cliente, onClose, onSaved }: Props
         throw new Error(errData.error || "Erro na geração");
       }
 
-      // Read SSE stream
       const reader = response.body!.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
@@ -349,28 +341,38 @@ export default function ClientePecasGerador({ cliente, onClose, onSaved }: Props
     }
   };
 
-  const cpfFormatted = cpfCnpj.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+  const cpfFormatted = cpfCnpj.length === 11
+    ? cpfCnpj.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4")
+    : cpfCnpj;
 
-  // If drafting view is active, show it
+  const enderecoCompleto = [clienteEndereco, clienteBairro].filter(Boolean).join(", ");
+  const cidadeUf = [clienteCidade, clienteUf].filter(Boolean).join(" / ");
+
+  // ── Drafting View ──
   if (showDrafting) {
     return (
-      <div className="space-y-4">
-        {/* Header */}
+      <div className="space-y-5">
         <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-[13px] font-bold uppercase tracking-wide" style={{ color: "hsl(220 20% 18%)" }}>
-              GERANDO PEÇA
-            </h3>
-            <p className="text-[10px] uppercase mt-0.5" style={{ color: "hsl(220 10% 55%)" }}>
-              {nomeRequerente} • {cpfFormatted}
-            </p>
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl flex items-center justify-center"
+              style={{ background: "linear-gradient(135deg, hsl(220 20% 18%), hsl(220 20% 28%))" }}>
+              <Sparkles className="h-4.5 w-4.5 text-white" />
+            </div>
+            <div>
+              <h3 className="text-[14px] font-bold uppercase tracking-wide" style={{ color: "hsl(220 20% 18%)" }}>
+                GERANDO PEÇA JURÍDICA
+              </h3>
+              <p className="text-[10px] uppercase mt-0.5 font-medium" style={{ color: "hsl(220 10% 50%)" }}>
+                {nomeRequerente} • {cpfFormatted}
+              </p>
+            </div>
           </div>
           {draftingStep === "done" && (
             <Button
               size="sm"
-              variant="outline"
               onClick={onClose}
-              className="h-7 text-[10px] font-semibold uppercase"
+              className="h-8 px-4 text-[10px] font-bold uppercase tracking-wide rounded-lg"
+              style={{ background: "hsl(220 20% 18%)", color: "white" }}
             >
               VOLTAR À LISTA
             </Button>
@@ -395,134 +397,167 @@ export default function ClientePecasGerador({ cliente, onClose, onSaved }: Props
     );
   }
 
+  // ── Data Field Component ──
+  const DataField = ({ icon: Icon, label, value, mono }: { icon: any; label: string; value: string; mono?: boolean }) => (
+    <div className="flex items-start gap-2.5 py-2.5">
+      <div className="h-7 w-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
+        style={{ background: "hsl(220 15% 96%)" }}>
+        <Icon className="h-3.5 w-3.5" style={{ color: "hsl(220 10% 50%)" }} />
+      </div>
+      <div className="min-w-0">
+        <span className="text-[9px] font-bold uppercase tracking-wider block" style={{ color: "hsl(220 10% 55%)" }}>
+          {label}
+        </span>
+        <p className={`text-[12px] font-semibold mt-0.5 uppercase ${mono ? "font-mono" : ""}`}
+          style={{ color: "hsl(220 20% 18%)" }}>
+          {value || "—"}
+        </p>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="space-y-4">
-      {/* Header */}
+    <div className="space-y-5">
+      {/* ── Header ── */}
       <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-[13px] font-bold uppercase tracking-wide" style={{ color: "hsl(220 20% 18%)" }}>
-            NOVA PEÇA JURÍDICA
-          </h3>
-          <p className="text-[10px] uppercase mt-0.5" style={{ color: "hsl(220 10% 55%)" }}>
-            DADOS DO CLIENTE CARREGADOS AUTOMATICAMENTE
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl flex items-center justify-center"
+            style={{ background: "linear-gradient(135deg, hsl(220 20% 18%), hsl(220 20% 28%))" }}>
+            <Scale className="h-4.5 w-4.5 text-white" />
+          </div>
+          <div>
+            <h3 className="text-[14px] font-bold uppercase tracking-wide" style={{ color: "hsl(220 20% 18%)" }}>
+              NOVA PEÇA JURÍDICA
+            </h3>
+            <p className="text-[10px] uppercase mt-0.5 font-medium" style={{ color: "hsl(220 10% 50%)" }}>
+              DADOS DO CLIENTE CARREGADOS AUTOMATICAMENTE
+            </p>
+          </div>
         </div>
         <Button
           size="sm"
           variant="outline"
           onClick={onClose}
-          className="h-7 px-3 text-[10px] font-semibold uppercase"
+          className="h-8 px-3.5 text-[10px] font-bold uppercase tracking-wide rounded-lg border-2"
+          style={{ borderColor: "hsl(220 15% 88%)", color: "hsl(220 10% 45%)" }}
         >
-          <X className="h-3 w-3 mr-1" /> CANCELAR
+          <X className="h-3 w-3 mr-1.5" /> CANCELAR
         </Button>
       </div>
 
-      {/* Client data summary - collapsible */}
-      <div className="qa-card overflow-hidden">
+      {/* ── Client Data Card ── */}
+      <div className="rounded-xl border-2 overflow-hidden" style={{ borderColor: "hsl(220 15% 93%)", background: "white" }}>
         <button
           onClick={() => setShowClientData(!showClientData)}
-          className="w-full flex items-center justify-between p-3 hover:bg-slate-50/50 transition-colors"
+          className="w-full flex items-center justify-between px-4 py-3 transition-colors"
+          style={{ background: "hsl(220 15% 97.5%)" }}
         >
-          <div className="flex items-center gap-2">
-            <User className="h-3.5 w-3.5" style={{ color: "hsl(210 60% 55%)" }} />
-            <span className="text-[11px] font-bold uppercase tracking-wide" style={{ color: "hsl(220 20% 18%)" }}>
+          <div className="flex items-center gap-2.5">
+            <User className="h-4 w-4" style={{ color: "hsl(210 60% 50%)" }} />
+            <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "hsl(220 20% 18%)" }}>
               DADOS DO CLIENTE
             </span>
-            <span className="text-[9px] uppercase px-1.5 py-0.5 rounded font-semibold"
-              style={{ background: "hsl(145 60% 40% / 0.1)", color: "hsl(145 60% 40%)" }}>
+            <span className="text-[8px] uppercase px-2 py-0.5 rounded-full font-bold tracking-wider"
+              style={{ background: "hsl(145 60% 40% / 0.12)", color: "hsl(145 55% 35%)" }}>
               AUTO-PREENCHIDO
             </span>
           </div>
-          {showClientData ? <ChevronUp className="h-3.5 w-3.5" style={{ color: "hsl(220 10% 55%)" }} /> : <ChevronDown className="h-3.5 w-3.5" style={{ color: "hsl(220 10% 55%)" }} />}
+          {showClientData
+            ? <ChevronUp className="h-4 w-4" style={{ color: "hsl(220 10% 55%)" }} />
+            : <ChevronDown className="h-4 w-4" style={{ color: "hsl(220 10% 55%)" }} />
+          }
         </button>
+
         {showClientData && (
-          <div className="px-3 pb-3 grid grid-cols-1 sm:grid-cols-2 gap-2 border-t" style={{ borderColor: "hsl(220 15% 93%)" }}>
-            <div className="pt-2">
-              <span className="text-[9px] font-semibold uppercase" style={{ color: "hsl(220 10% 55%)" }}>NOME COMPLETO</span>
-              <p className="text-[11px] font-semibold uppercase mt-0.5" style={{ color: "hsl(220 20% 18%)" }}>{nomeRequerente || "—"}</p>
+          <div className="px-4 pb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-0 pt-1"
+              style={{ borderTop: "1px solid hsl(220 15% 93%)" }}>
+              <DataField icon={User} label="Nome Completo" value={nomeRequerente} />
+              <DataField icon={Shield} label="CPF" value={cpfFormatted} mono />
+              {cliente.email && <DataField icon={Mail} label="E-mail" value={cliente.email} />}
+              {cliente.celular && <DataField icon={Phone} label="Celular" value={cliente.celular} mono />}
+              <DataField icon={MapPin} label="Endereço" value={enderecoCompleto} />
+              <DataField icon={Building2} label="Cidade / UF" value={cidadeUf} />
+              {cliente.profissao && <DataField icon={Briefcase} label="Profissão" value={cliente.profissao} />}
+              {cliente.rg && (
+                <DataField icon={FileText} label="RG" value={`${cliente.rg}${cliente.emissor_rg ? ` — ${cliente.emissor_rg}` : ""}`} mono />
+              )}
             </div>
-            <div className="pt-2">
-              <span className="text-[9px] font-semibold uppercase" style={{ color: "hsl(220 10% 55%)" }}>CPF</span>
-              <p className="text-[11px] font-mono font-semibold mt-0.5" style={{ color: "hsl(220 20% 18%)" }}>{cpfFormatted || "—"}</p>
-            </div>
-            {cliente.email && (
-              <div>
-                <span className="text-[9px] font-semibold uppercase" style={{ color: "hsl(220 10% 55%)" }}>E-MAIL</span>
-                <p className="text-[11px] font-semibold mt-0.5" style={{ color: "hsl(220 20% 18%)" }}>{cliente.email}</p>
-              </div>
-            )}
-            {cliente.celular && (
-              <div>
-                <span className="text-[9px] font-semibold uppercase" style={{ color: "hsl(220 10% 55%)" }}>CELULAR</span>
-                <p className="text-[11px] font-mono font-semibold mt-0.5" style={{ color: "hsl(220 20% 18%)" }}>{cliente.celular}</p>
-              </div>
-            )}
-            <div>
-              <span className="text-[9px] font-semibold uppercase" style={{ color: "hsl(220 10% 55%)" }}>ENDEREÇO</span>
-              <p className="text-[11px] font-semibold uppercase mt-0.5" style={{ color: "hsl(220 20% 18%)" }}>
-                {[clienteEndereco, clienteBairro].filter(Boolean).join(", ") || "—"}
-              </p>
-            </div>
-            <div>
-              <span className="text-[9px] font-semibold uppercase" style={{ color: "hsl(220 10% 55%)" }}>CIDADE / UF</span>
-              <p className="text-[11px] font-semibold uppercase mt-0.5" style={{ color: "hsl(220 20% 18%)" }}>
-                {[clienteCidade, clienteUf].filter(Boolean).join(" / ") || "—"}
-              </p>
-            </div>
+
+            {/* Circumscription */}
             {circStatus === "resolved" && circunscricao && (
-              <div className="sm:col-span-2">
-                <span className="text-[9px] font-semibold uppercase" style={{ color: "hsl(220 10% 55%)" }}>CIRCUNSCRIÇÃO PF</span>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <Building2 className="h-3 w-3" style={{ color: "hsl(145 60% 40%)" }} />
-                  <p className="text-[11px] font-semibold uppercase" style={{ color: "hsl(145 60% 40%)" }}>
+              <div className="mt-2 rounded-lg px-3.5 py-2.5 flex items-center gap-2.5"
+                style={{ background: "hsl(145 60% 40% / 0.06)", border: "1px solid hsl(145 60% 40% / 0.15)" }}>
+                <Building2 className="h-4 w-4 shrink-0" style={{ color: "hsl(145 55% 35%)" }} />
+                <div>
+                  <span className="text-[9px] font-bold uppercase tracking-wider block" style={{ color: "hsl(145 55% 35%)" }}>
+                    CIRCUNSCRIÇÃO PF
+                  </span>
+                  <p className="text-[11px] font-bold uppercase mt-0.5" style={{ color: "hsl(145 45% 30%)" }}>
                     {circunscricao.sigla_unidade} — {circunscricao.unidade_pf}
                   </p>
                 </div>
               </div>
             )}
             {circStatus === "resolving" && (
-              <div className="sm:col-span-2 flex items-center gap-1.5">
-                <Loader2 className="h-3 w-3 animate-spin" style={{ color: "hsl(210 60% 55%)" }} />
-                <span className="text-[10px] uppercase" style={{ color: "hsl(210 60% 55%)" }}>RESOLVENDO CIRCUNSCRIÇÃO...</span>
+              <div className="mt-2 rounded-lg px-3.5 py-2.5 flex items-center gap-2"
+                style={{ background: "hsl(210 60% 55% / 0.06)" }}>
+                <Loader2 className="h-3.5 w-3.5 animate-spin" style={{ color: "hsl(210 60% 55%)" }} />
+                <span className="text-[10px] font-semibold uppercase" style={{ color: "hsl(210 60% 55%)" }}>
+                  RESOLVENDO CIRCUNSCRIÇÃO...
+                </span>
               </div>
             )}
           </div>
         )}
       </div>
 
-      {/* Form */}
-      <div className="qa-card p-3 space-y-3">
-        <div className="flex items-center gap-2 mb-1">
-          <Scale className="h-3.5 w-3.5" style={{ color: "hsl(260 50% 55%)" }} />
-          <span className="text-[11px] font-bold uppercase tracking-wide" style={{ color: "hsl(220 20% 18%)" }}>
+      {/* ── Configuration Card ── */}
+      <div className="rounded-xl border-2 p-4 space-y-4" style={{ borderColor: "hsl(220 15% 93%)", background: "white" }}>
+        <div className="flex items-center gap-2.5">
+          <div className="h-7 w-7 rounded-lg flex items-center justify-center"
+            style={{ background: "hsl(260 50% 55% / 0.1)" }}>
+            <Scale className="h-3.5 w-3.5" style={{ color: "hsl(260 50% 55%)" }} />
+          </div>
+          <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "hsl(220 20% 18%)" }}>
             CONFIGURAÇÃO DA PEÇA
           </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div className="space-y-1">
-            <Label className="text-[10px] font-semibold uppercase" style={{ color: "hsl(220 10% 55%)" }}>TIPO DE PEÇA</Label>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <Label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "hsl(220 10% 50%)" }}>
+              TIPO DE PEÇA
+            </Label>
             <Select value={tipoPeca} onValueChange={setTipoPeca}>
-              <SelectTrigger className="h-9 text-[11px] uppercase">
+              <SelectTrigger className="h-10 text-[11px] uppercase rounded-lg border-2 font-semibold"
+                style={{ borderColor: "hsl(220 15% 90%)" }}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {TIPOS_PECA.map(t => (
-                  <SelectItem key={t.value} value={t.value} className="text-[11px] uppercase">{t.label}</SelectItem>
+                  <SelectItem key={t.value} value={t.value} className="text-[11px] uppercase font-medium">
+                    {t.label}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
-          <div className="space-y-1">
-            <Label className="text-[10px] font-semibold uppercase" style={{ color: "hsl(220 10% 55%)" }}>FOCO ARGUMENTATIVO</Label>
+          <div className="space-y-1.5">
+            <Label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "hsl(220 10% 50%)" }}>
+              FOCO ARGUMENTATIVO
+            </Label>
             <Select value={foco} onValueChange={setFoco}>
-              <SelectTrigger className="h-9 text-[11px] uppercase">
+              <SelectTrigger className="h-10 text-[11px] uppercase rounded-lg border-2 font-semibold"
+                style={{ borderColor: "hsl(220 15% 90%)" }}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {FOCOS.map(f => (
-                  <SelectItem key={f.value} value={f.value} className="text-[11px] uppercase">{f.label}</SelectItem>
+                  <SelectItem key={f.value} value={f.value} className="text-[11px] uppercase font-medium">
+                    {f.label}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -530,66 +565,79 @@ export default function ClientePecasGerador({ cliente, onClose, onSaved }: Props
         </div>
 
         {needsTempestividade && (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="space-y-1">
-              <Label className="text-[10px] font-semibold uppercase" style={{ color: "hsl(220 10% 55%)" }}>DATA NOTIFICAÇÃO</Label>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "hsl(220 10% 50%)" }}>
+                DATA NOTIFICAÇÃO
+              </Label>
               <Input
                 value={dataNotificacao}
                 onChange={e => setDataNotificacao(e.target.value)}
                 placeholder="DD/MM/AAAA"
-                className="h-9 text-[11px] uppercase"
+                className="h-10 text-[11px] uppercase rounded-lg border-2 font-semibold"
+                style={{ borderColor: "hsl(220 15% 90%)" }}
               />
             </div>
-            <div className="space-y-1">
-              <Label className="text-[10px] font-semibold uppercase" style={{ color: "hsl(220 10% 55%)" }}>Nº REQUERIMENTO</Label>
+            <div className="space-y-1.5">
+              <Label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "hsl(220 10% 50%)" }}>
+                Nº REQUERIMENTO
+              </Label>
               <Input
                 value={numeroRequerimento}
                 onChange={e => setNumeroRequerimento(e.target.value)}
-                className="h-9 text-[11px] uppercase"
+                className="h-10 text-[11px] uppercase rounded-lg border-2 font-semibold"
+                style={{ borderColor: "hsl(220 15% 90%)" }}
               />
             </div>
-            <div className="space-y-1">
-              <Label className="text-[10px] font-semibold uppercase" style={{ color: "hsl(220 10% 55%)" }}>INFO TEMPESTIVIDADE</Label>
+            <div className="space-y-1.5">
+              <Label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "hsl(220 10% 50%)" }}>
+                INFO TEMPESTIVIDADE
+              </Label>
               <Input
                 value={infoTempestividade}
                 onChange={e => setInfoTempestividade(e.target.value)}
-                className="h-9 text-[11px] uppercase"
+                className="h-10 text-[11px] uppercase rounded-lg border-2 font-semibold"
+                style={{ borderColor: "hsl(220 15% 90%)" }}
               />
             </div>
           </div>
         )}
 
-        <div className="space-y-1">
-          <Label className="text-[10px] font-semibold uppercase" style={{ color: "hsl(220 10% 55%)" }}>
+        <div className="space-y-1.5">
+          <Label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "hsl(220 10% 50%)" }}>
             DESCRIÇÃO DO CASO *
           </Label>
           <Textarea
             value={entradaCaso}
             onChange={e => setEntradaCaso(e.target.value)}
             placeholder="DESCREVA OS FATOS, CIRCUNSTÂNCIAS E INFORMAÇÕES RELEVANTES PARA A DEFESA..."
-            className="min-h-[100px] text-[11px] uppercase resize-none"
+            className="min-h-[120px] text-[11px] uppercase resize-none rounded-lg border-2 font-medium leading-relaxed"
+            style={{ borderColor: "hsl(220 15% 90%)" }}
           />
-          <div className="flex items-center gap-1.5 mt-1">
+          <div className="flex items-center gap-1.5 mt-1.5">
             <Info className="h-3 w-3" style={{ color: "hsl(210 60% 55%)" }} />
-            <span className="text-[9px] uppercase" style={{ color: "hsl(220 10% 55%)" }}>
+            <span className="text-[9px] uppercase font-semibold tracking-wide" style={{ color: "hsl(220 10% 55%)" }}>
               QUANTO MAIS DETALHES, MELHOR SERÁ A PEÇA GERADA
             </span>
           </div>
         </div>
       </div>
 
-      {/* Generate button */}
-      <div className="flex justify-end">
+      {/* ── Generate Button ── */}
+      <div className="flex justify-end pt-1">
         <Button
           onClick={gerar}
           disabled={loading || !entradaCaso.trim() || !nomeRequerente.trim()}
-          className="h-9 px-6 text-[11px] font-bold uppercase tracking-wide rounded-lg shadow-sm"
-          style={{ background: "hsl(220 20% 18%)", color: "hsl(0 0% 100%)" }}
+          className="h-11 px-7 text-[12px] font-bold uppercase tracking-wider rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100"
+          style={{
+            background: "linear-gradient(135deg, hsl(220 20% 18%), hsl(220 20% 28%))",
+            color: "white",
+          }}
         >
           {loading ? (
-            <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
           ) : (
-            <Send className="h-3.5 w-3.5 mr-1.5" />
+            <Send className="h-4 w-4 mr-2" />
           )}
           GERAR PEÇA JURÍDICA
         </Button>
