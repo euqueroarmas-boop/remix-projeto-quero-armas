@@ -144,7 +144,7 @@ export default function NovoCasoModal({ open, onOpenChange, onCreated, preselect
                     {selectedCliente.cpf} {selectedCliente.cidade && `• ${selectedCliente.cidade}/${selectedCliente.estado || ""}`}
                   </div>
                 </div>
-                <button onClick={() => setSelectedCliente(null)} className="p-1 rounded hover:bg-slate-200">
+                <button type="button" onClick={() => setSelectedCliente(null)} className="p-1 rounded hover:bg-slate-200">
                   <X className="h-3.5 w-3.5" style={{ color: "hsl(220 10% 55%)" }} />
                 </button>
               </div>
@@ -172,6 +172,7 @@ export default function NovoCasoModal({ open, onOpenChange, onCreated, preselect
                   ) : (
                     filteredClientes.slice(0, 20).map(c => (
                       <button
+                        type="button"
                         key={c.id}
                         onClick={() => { setSelectedCliente(c); setSearchCliente(""); }}
                         className="w-full text-left px-3 py-2 hover:bg-slate-50 transition-colors border-b last:border-b-0"
