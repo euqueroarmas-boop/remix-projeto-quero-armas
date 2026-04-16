@@ -320,7 +320,7 @@ function ExameCard({ tipo, icon: Icon, color, historico, vigente, novo, setNovo,
               value={novo.data}
               max={todayISO()}
               onChange={(e) => setNovo({ ...novo, data: e.target.value })}
-              className="bg-white text-xs h-9 mt-1"
+              className="bg-white text-slate-900 text-xs h-9 mt-1 border-slate-300"
             />
           </div>
           <div>
@@ -332,7 +332,7 @@ function ExameCard({ tipo, icon: Icon, color, historico, vigente, novo, setNovo,
               onChange={(e) => setNovo({ ...novo, obs: e.target.value })}
               rows={2}
               placeholder="Ex.: clínica, profissional responsável, etc."
-              className="bg-white text-xs mt-1 resize-none"
+              className="bg-white text-slate-900 placeholder:text-slate-400 text-xs mt-1 resize-none border-slate-300"
             />
           </div>
           <Button
@@ -352,7 +352,7 @@ function ExameCard({ tipo, icon: Icon, color, historico, vigente, novo, setNovo,
           <History className="h-3 w-3" /> Histórico ({historico.length})
         </div>
         {historico.length === 0 ? (
-          <div className="text-center py-6 text-xs text-slate-400">Nenhum lançamento ainda</div>
+          <div className="text-center py-6 text-xs text-slate-600 font-medium">Nenhum lançamento ainda</div>
         ) : (
           <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
             {historico.map((e, idx) => {
