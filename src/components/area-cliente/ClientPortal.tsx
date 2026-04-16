@@ -18,6 +18,7 @@ import PortalFiscal from "./sections/PortalFiscal";
 import PortalDocumentos from "./sections/PortalDocumentos";
 import PortalPerfil from "./sections/PortalPerfil";
 import PortalSuporte from "./sections/PortalSuporte";
+import PortalPecas from "./sections/PortalPecas";
 import PaymentPendingBanner from "./shared/PaymentPendingBanner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -28,6 +29,7 @@ const tabs = [
   { id: "financeiro", label: "Financeiro", icon: DollarSign },
   { id: "fiscal", label: "Fiscal", icon: FileText },
   { id: "documentos", label: "Documentos", icon: FolderOpen },
+  { id: "pecas", label: "Peças", icon: FileText },
   { id: "suporte", label: "Suporte", icon: Headphones },
   { id: "perfil", label: "Perfil", icon: Building2 },
 ] as const;
@@ -47,6 +49,12 @@ export default function ClientPortal({ customer, onLogout }: Props) {
   const { contracts } = useClientContracts(customer.id);
   const { payments } = useClientPayments(customer.id);
   const { accessLevel, bestStatus, isTabAllowed, restrictedMessage } = useServiceStatus(contracts);
+
+  // Eligibility: client has posse or porte contract/service
+  const isPecasEligible = contracts.some((c: any) => {
+    const type = (c.contract_type || "").toLowerCase();
+    return type.includes("posse") || type.includes("porte");
+  });
 
   const latestInvoiceUrl = payments.find((p: any) => p.asaas_invoice_url)?.asaas_invoice_url || null;
 
@@ -87,6 +95,7 @@ export default function ClientPortal({ customer, onLogout }: Props) {
       case "financeiro": return <PortalFinanceiro customer={customer} />;
       case "fiscal": return <PortalFiscal customer={customer} />;
       case "documentos": return <PortalDocumentos customer={customer} />;
+      case "pecas": return <PortalPecas customer={customer} eligible={isPecasEligible} />;
       case "suporte": return <PortalSuporte customer={customer} />;
       case "perfil": return <PortalPerfil customer={customer} />;
     }
