@@ -9,6 +9,7 @@ import {
   Search, User, Phone, Mail, MapPin, FileText, Shield, ChevronLeft,
   Loader2, Eye, Plus, Crosshair, Edit, Trash2, Download, FileDown,
   ChevronDown, ChevronUp, Save, X, CheckCircle, TrendingUp, KeyRound, PenTool,
+  HeartPulse,
 } from "lucide-react";
 
 import { toast } from "sonner";
