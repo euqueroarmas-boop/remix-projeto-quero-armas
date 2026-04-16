@@ -312,6 +312,9 @@ Deno.serve(async (req) => {
     parametros += `\n- Tom: ${tom || "tecnico_padrao"}`;
     parametros += `\n- Foco argumentativo: ${foco || "legalidade"}`;
 
+    // ── 3b. Fetch exam context ──
+    const exameContext = await buildExamContext(supabase, cliente_id);
+
     // ── 4. Call AI ──
     const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -325,7 +328,7 @@ Deno.serve(async (req) => {
           { role: "system", content: SYSTEM_PROMPT },
           {
             role: "user",
-            content: `CASO: ${caso_titulo || "Sem título"}\nTIPO DE PEÇA: ${tipo_peca || "não especificado"}${parametros}\n\nDESCRIÇÃO DO CASO:\n${entrada_usuario}${contextoFontes}\n\nCom base EXCLUSIVAMENTE nas fontes acima (se disponíveis), forneça:\n1. Análise jurídica do caso\n2. Fundamentos legais aplicáveis (apenas os que constam na base)\n3. Jurisprudência relevante (apenas a cadastrada e listada acima)\n4. Sugestão de estrutura argumentativa\n5. Observações sobre lacunas de fonte\n6. Lista final das fontes efetivamente utilizadas na resposta`,
+            content: `CASO: ${caso_titulo || "Sem título"}\nTIPO DE PEÇA: ${tipo_peca || "não especificado"}${parametros}${exameContext}\n\nDESCRIÇÃO DO CASO:\n${entrada_usuario}${contextoFontes}\n\nCom base EXCLUSIVAMENTE nas fontes acima (se disponíveis), forneça:\n1. Análise jurídica do caso\n2. Fundamentos legais aplicáveis (apenas os que constam na base)\n3. Jurisprudência relevante (apenas a cadastrada e listada acima)\n4. Sugestão de estrutura argumentativa\n5. Observações sobre lacunas de fonte\n6. Lista final das fontes efetivamente utilizadas na resposta`,
           },
         ],
         max_tokens: 6000,
