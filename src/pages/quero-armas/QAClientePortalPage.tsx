@@ -144,9 +144,19 @@ export default function QAClientePortalPage() {
     const expDocs: ExpiringDoc[] = [];
     if (cadastro) {
       if (cadastro.validade_cr) expDocs.push({ label: "Certificado de Registro (CR)", date: cadastro.validade_cr, days: daysUntil(cadastro.validade_cr), category: "CR" });
-      if (cadastro.validade_laudo_psicologico) expDocs.push({ label: "Laudo Psicológico", date: cadastro.validade_laudo_psicologico, days: daysUntil(cadastro.validade_laudo_psicologico), category: "EXAME" });
-      if (cadastro.validade_exame_tiro) expDocs.push({ label: "Exame de Tiro", date: cadastro.validade_exame_tiro, days: daysUntil(cadastro.validade_exame_tiro), category: "EXAME" });
     }
+    // Exames psicológico e tiro: SEMPRE usar qa_exames_cliente (data_vencimento = data_realizacao + 1 ano).
+    // Os campos legados validade_laudo_psicologico / validade_exame_tiro foram descontinuados
+    // porque historicamente armazenavam a data de realização, não o vencimento real.
+    examesCliente.forEach((e: any) => {
+      const dias = daysUntil(e.data_vencimento);
+      expDocs.push({
+        label: e.tipo === "psicologico" ? "Laudo Psicológico" : "Exame de Tiro",
+        date: e.data_vencimento,
+        days: dias,
+        category: "EXAME",
+      });
+    });
     crafs.forEach((cr: any) => { if (cr.data_validade) expDocs.push({ label: `CRAF — ${cr.nome_arma || "Arma"}`, date: cr.data_validade, days: daysUntil(cr.data_validade), category: "CRAF" }); });
     gtes.forEach((g: any) => { if (g.data_validade) expDocs.push({ label: `GTE — ${g.nome_arma || "Arma"}`, date: g.data_validade, days: daysUntil(g.data_validade), category: "GTE" }); });
     expDocs.sort((a, b) => (a.days ?? 999) - (b.days ?? 999));
