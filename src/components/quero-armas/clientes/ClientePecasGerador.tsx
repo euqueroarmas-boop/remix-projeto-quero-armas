@@ -34,7 +34,16 @@ interface ClienteData {
   estado_civil?: string;
   rg?: string;
   emissor_rg?: string;
+  uf_emissor_rg?: string;
   nacionalidade?: string;
+  data_nascimento?: string;
+  naturalidade?: string;
+  nome_mae?: string;
+  nome_pai?: string;
+  escolaridade?: string;
+  titulo_eleitor?: string;
+  expedicao_rg?: string;
+  observacao?: string;
 }
 
 interface Props {
