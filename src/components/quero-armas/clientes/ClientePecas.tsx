@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useQAAuthContext } from "@/components/quero-armas/QAAuthContext";
 import { useBrasilApiLookup } from "@/hooks/useBrasilApiLookup";
 import DraftingView, { type DraftingResult } from "@/components/quero-armas/DraftingView";
+import ClientePecaAuxiliaryDocs, { type AuxiliaryDocItemState } from "@/components/quero-armas/clientes/ClientePecaAuxiliaryDocs";
 
 interface Props {
   cliente: {
@@ -159,6 +160,7 @@ export default function ClientePecas({ cliente }: Props) {
   const [genStartedAt, setGenStartedAt] = useState<number | undefined>();
   const [savedCasoId, setSavedCasoId] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [auxiliaryDocs, setAuxiliaryDocs] = useState<AuxiliaryDocItemState[]>([]);
 
   const cpfNorm = (cliente.cpf || "").replace(/\D/g, "");
   const cpfFormatted = cpfNorm.length === 11
@@ -245,8 +247,21 @@ export default function ClientePecas({ cliente }: Props) {
   };
 
   // ── Save caso ──
-  const saveCaso = async (geracaoResult: DraftingResult, circ: any) => {
+  const saveCaso = async (geracaoResult: DraftingResult, circ: any, auxiliarDocIds: string[]) => {
     try {
+      const docsJson = auxiliaryDocs.map((a) => ({
+        nome: a.nome,
+        tipo: a.tipo,
+        stage: a.stage,
+        docId: a.docId || null,
+        error: a.error || null,
+      }));
+      const errosJson = auxiliaryDocs.filter((a) => a.stage === "failed").map((a) => ({
+        nome: a.nome,
+        tipo: a.tipo,
+        error: a.error || "Erro desconhecido",
+      }));
+
       const casoData: Record<string, any> = {
         titulo: `Caso ${cliente.nome_completo || "sem título"}`,
         nome_requerente: cliente.nome_completo,
@@ -264,6 +279,8 @@ export default function ClientePecas({ cliente }: Props) {
         foco_argumentativo: foco,
         status: "gerado",
         minuta_gerada: geracaoResult?.minuta_gerada || null,
+        documentos_auxiliares_json: docsJson.length > 0 ? docsJson : null,
+        erros_documentos_json: errosJson.length > 0 ? errosJson : null,
         usuario_id: user?.id || null,
         updated_at: new Date().toISOString(),
       };
@@ -274,6 +291,12 @@ export default function ClientePecas({ cliente }: Props) {
         .select("id, geracao_id")
         .single();
       if (error) throw error;
+      if (auxiliarDocIds.length > 0) {
+        await supabase
+          .from("qa_documentos_conhecimento" as any)
+          .update({ caso_id: (data as any).id, updated_at: new Date().toISOString() })
+          .in("id", auxiliarDocIds);
+      }
       return (data as any).id;
     } catch (err: any) {
       console.error("Erro ao salvar caso:", err);
@@ -300,6 +323,15 @@ export default function ClientePecas({ cliente }: Props) {
     try {
       let circ = circunscricao;
       if (!circ) circ = await resolverCircunscricao(clienteCidade, clienteUf);
+
+      let auxiliarDocIds: string[] = [];
+      if (auxiliaryDocs.length > 0) {
+        auxiliarDocIds = auxiliaryDocs.filter((a) => a.stage === "done" && a.docId).map((a) => a.docId!) as string[];
+        const unfinished = auxiliaryDocs.filter((a) => a.stage !== "done");
+        if (unfinished.length > 0) {
+          throw new Error(`Geração bloqueada: ${unfinished.length} documento(s) ainda não foram processados.`);
+        }
+      }
 
       setDraftingStep("context");
       await new Promise(r => setTimeout(r, 300));
@@ -344,7 +376,7 @@ export default function ClientePecas({ cliente }: Props) {
           data_notificacao: dataNotificacao.trim() || null,
           info_tempestividade: infoTempestividade.trim() || null,
           numero_requerimento: numeroRequerimento.trim() || null,
-          documentos_auxiliares_ids: null,
+          documentos_auxiliares_ids: auxiliarDocIds.length > 0 ? auxiliarDocIds : null,
         }),
       });
 
@@ -386,7 +418,7 @@ export default function ClientePecas({ cliente }: Props) {
       await new Promise(r => setTimeout(r, 400));
       setResultado(finalResult);
       setDraftingStep("saving");
-      const sId = await saveCaso(finalResult, circ);
+      const sId = await saveCaso(finalResult, circ, auxiliarDocIds);
       setSavedCasoId(sId);
       setDraftingStep("done");
       toast.success("Peça gerada e caso salvo com sucesso");
@@ -503,6 +535,10 @@ export default function ClientePecas({ cliente }: Props) {
 
   const total = geracoes.length;
   const aprovadas = geracoes.filter(g => g.status_revisao === "aprovado").length;
+  const hasDocsPending = auxiliaryDocs.some((a) => !["done", "failed", "pending"].includes(a.stage));
+  const hasDocsFailed = auxiliaryDocs.some((a) => a.stage === "failed");
+  const hasDocsUnclassified = auxiliaryDocs.some((a) => a.stage === "pending");
+  const canGenerate = !generating && !!entradaCaso.trim() && !hasDocsPending && !hasDocsFailed && !hasDocsUnclassified;
 
   return (
     <div className="space-y-5">
@@ -689,10 +725,26 @@ export default function ClientePecas({ cliente }: Props) {
           </div>
         </div>
 
+        <ClientePecaAuxiliaryDocs
+          userId={user?.id}
+          caseId={null}
+          onChange={setAuxiliaryDocs}
+        />
+
+        {(hasDocsPending || hasDocsFailed || hasDocsUnclassified) && (
+          <div className="rounded-lg border border-border/70 bg-muted/40 px-3 py-2 text-[10px] font-medium text-muted-foreground">
+            {hasDocsUnclassified
+              ? "Classifique os anexos para liberar a geração."
+              : hasDocsPending
+                ? "Aguarde a extração integral das provas antes de gerar a peça."
+                : "Reprocesse ou remova os anexos com falha para continuar."}
+          </div>
+        )}
+
         <div className="flex justify-end pt-1">
           <Button
             onClick={gerar}
-            disabled={generating || !entradaCaso.trim()}
+            disabled={!canGenerate}
             className="h-11 px-7 text-[12px] font-bold uppercase tracking-wider rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100"
             style={{ background: "linear-gradient(135deg, hsl(220 20% 18%), hsl(220 20% 28%))", color: "white" }}>
             {generating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
