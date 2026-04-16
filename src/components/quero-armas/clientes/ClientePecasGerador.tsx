@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import {
   Send, Loader2, User, MapPin, FileText, Scale, ChevronUp, ChevronDown,
   CheckCircle, AlertTriangle, X, Building2, Info, Mail, Phone, Briefcase,
-  Shield, Sparkles,
+  Shield, Sparkles, Calendar, Heart, GraduationCap, Flag, Users, BookOpen,
 } from "lucide-react";
 import { useQAAuthContext } from "@/components/quero-armas/QAAuthContext";
 import DraftingView, { type DraftingResult } from "@/components/quero-armas/DraftingView";
@@ -34,7 +34,16 @@ interface ClienteData {
   estado_civil?: string;
   rg?: string;
   emissor_rg?: string;
+  uf_emissor_rg?: string;
   nacionalidade?: string;
+  data_nascimento?: string;
+  naturalidade?: string;
+  nome_mae?: string;
+  nome_pai?: string;
+  escolaridade?: string;
+  titulo_eleitor?: string;
+  expedicao_rg?: string;
+  observacao?: string;
 }
 
 interface Props {
@@ -478,10 +487,22 @@ export default function ClientePecasGerador({ cliente, onClose, onSaved }: Props
               {cliente.celular && <DataField icon={Phone} label="Celular" value={cliente.celular} mono />}
               <DataField icon={MapPin} label="Endereço" value={enderecoCompleto} />
               <DataField icon={Building2} label="Cidade / UF" value={cidadeUf} />
-              {cliente.profissao && <DataField icon={Briefcase} label="Profissão" value={cliente.profissao} />}
+              {clienteCep && <DataField icon={MapPin} label="CEP" value={clienteCep} mono />}
+              {clienteBairro && <DataField icon={MapPin} label="Bairro" value={clienteBairro} />}
+              {cliente.complemento && <DataField icon={MapPin} label="Complemento" value={cliente.complemento} />}
               {cliente.rg && (
-                <DataField icon={FileText} label="RG" value={`${cliente.rg}${cliente.emissor_rg ? ` — ${cliente.emissor_rg}` : ""}`} mono />
+                <DataField icon={FileText} label="RG" value={`${cliente.rg}${cliente.emissor_rg ? ` — ${cliente.emissor_rg}` : ""}${cliente.uf_emissor_rg ? ` (${cliente.uf_emissor_rg})` : ""}`} mono />
               )}
+              {cliente.expedicao_rg && <DataField icon={Calendar} label="Expedição RG" value={cliente.expedicao_rg} />}
+              {cliente.data_nascimento && <DataField icon={Calendar} label="Data de Nascimento" value={cliente.data_nascimento} />}
+              {cliente.naturalidade && <DataField icon={Flag} label="Naturalidade" value={cliente.naturalidade} />}
+              {cliente.nacionalidade && <DataField icon={Flag} label="Nacionalidade" value={cliente.nacionalidade} />}
+              {cliente.estado_civil && <DataField icon={Heart} label="Estado Civil" value={cliente.estado_civil} />}
+              {cliente.profissao && <DataField icon={Briefcase} label="Profissão" value={cliente.profissao} />}
+              {cliente.escolaridade && <DataField icon={GraduationCap} label="Escolaridade" value={cliente.escolaridade} />}
+              {cliente.nome_mae && <DataField icon={Users} label="Nome da Mãe" value={cliente.nome_mae} />}
+              {cliente.nome_pai && <DataField icon={Users} label="Nome do Pai" value={cliente.nome_pai} />}
+              {cliente.titulo_eleitor && <DataField icon={BookOpen} label="Título de Eleitor" value={cliente.titulo_eleitor} mono />}
             </div>
 
             {/* Circumscription */}
