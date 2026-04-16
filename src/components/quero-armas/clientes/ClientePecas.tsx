@@ -1,32 +1,35 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { downloadGeracaoDocx } from "@/lib/qaDocxDownload";
 import {
   FileText, Download, Plus, Loader2, Eye, Clock, CheckCircle,
-  AlertCircle, PenTool, ExternalLink,
+  AlertCircle, PenTool, User,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import ClientePecasGerador from "./ClientePecasGerador";
 
 interface Props {
   cliente: {
     id: number;
     cpf: string;
     nome_completo: string;
+    email?: string;
+    celular?: string;
+    endereco?: string;
+    numero?: string;
+    bairro?: string;
+    cep?: string;
+    cidade?: string;
+    estado?: string;
+    complemento?: string;
+    profissao?: string;
+    estado_civil?: string;
+    rg?: string;
+    emissor_rg?: string;
+    nacionalidade?: string;
   };
-}
-
-interface CasoRow {
-  id: string;
-  titulo: string;
-  tipo_peca: string | null;
-  tipo_servico: string | null;
-  status: string;
-  created_at: string;
-  geracao_id: string | null;
-  nome_requerente: string;
 }
 
 interface GeracaoRow {
@@ -38,6 +41,17 @@ interface GeracaoRow {
   score_confianca: number | null;
   created_at: string;
   docx_path: string | null;
+}
+
+interface CasoRow {
+  id: string;
+  titulo: string;
+  tipo_peca: string | null;
+  tipo_servico: string | null;
+  status: string;
+  created_at: string;
+  geracao_id: string | null;
+  nome_requerente: string;
 }
 
 const STATUS_MAP: Record<string, { label: string; color: string; icon: typeof CheckCircle }> = {
@@ -55,22 +69,24 @@ const TIPO_LABELS: Record<string, string> = {
   acao_declaratoria: "AÇÃO DECLARATÓRIA",
   peticao_inicial: "PETIÇÃO INICIAL",
   defesa_administrativa: "DEFESA ADMINISTRATIVA",
+  defesa_posse_arma: "DEFESA PARA POSSE",
+  defesa_porte_arma: "DEFESA PARA PORTE",
+  resposta_a_notificacao: "RESPOSTA À NOTIFICAÇÃO",
   impugnacao: "IMPUGNAÇÃO",
 };
 
 export default function ClientePecas({ cliente }: Props) {
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [casos, setCasos] = useState<CasoRow[]>([]);
   const [geracoes, setGeracoes] = useState<GeracaoRow[]>([]);
   const [downloading, setDownloading] = useState<string | null>(null);
+  const [showGenerator, setShowGenerator] = useState(false);
 
   const cpfNorm = (cliente.cpf || "").replace(/\D/g, "");
 
   const loadData = useCallback(async () => {
     if (!cpfNorm) { setLoading(false); return; }
     try {
-      // Load cases linked to this client's CPF
       const { data: casosData } = await supabase
         .from("qa_casos" as any)
         .select("id, titulo, tipo_peca, tipo_servico, status, created_at, geracao_id, nome_requerente")
@@ -80,7 +96,6 @@ export default function ClientePecas({ cliente }: Props) {
       const rows = (casosData as any[]) || [];
       setCasos(rows);
 
-      // Load linked generations
       const geracaoIds = rows.map(c => c.geracao_id).filter(Boolean);
       if (geracaoIds.length > 0) {
         const { data: geracoesData } = await supabase
@@ -114,13 +129,8 @@ export default function ClientePecas({ cliente }: Props) {
     }
   };
 
-  const handleNewPeca = () => {
-    // Navigate to gerar-peca pre-filling client data
-    const params = new URLSearchParams({
-      nome: cliente.nome_completo || "",
-      cpf: cpfNorm,
-    });
-    navigate(`/quero-armas/gerar-peca?${params.toString()}`);
+  const handleSaved = () => {
+    loadData();
   };
 
   const formatDate = (d: string) => {
@@ -138,29 +148,37 @@ export default function ClientePecas({ cliente }: Props) {
     );
   }
 
+  // Show inline generator
+  if (showGenerator) {
+    return (
+      <ClientePecasGerador
+        cliente={cliente}
+        onClose={() => setShowGenerator(false)}
+        onSaved={handleSaved}
+      />
+    );
+  }
+
   const total = geracoes.length;
   const aprovadas = geracoes.filter(g => g.status_revisao === "aprovado").length;
 
   return (
     <div className="space-y-4">
-      {/* Header / Stats */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
           <h3 className="text-[13px] font-bold uppercase tracking-wide" style={{ color: "hsl(220 20% 18%)" }}>
-            Peças Jurídicas
+            PEÇAS JURÍDICAS
           </h3>
           <p className="text-[10px] mt-0.5" style={{ color: "hsl(220 10% 55%)" }}>
             {total === 0 ? "NENHUMA PEÇA GERADA" : `${total} PEÇA${total > 1 ? "S" : ""} • ${aprovadas} APROVADA${aprovadas !== 1 ? "S" : ""}`}
           </p>
         </div>
         <Button
-          onClick={handleNewPeca}
+          onClick={() => setShowGenerator(true)}
           size="sm"
           className="h-8 px-4 text-[11px] font-semibold uppercase tracking-wide rounded-lg shadow-sm"
-          style={{
-            background: "hsl(220 20% 18%)",
-            color: "hsl(0 0% 100%)",
-          }}
+          style={{ background: "hsl(220 20% 18%)", color: "hsl(0 0% 100%)" }}
         >
           <Plus className="h-3.5 w-3.5 mr-1.5" /> NOVA PEÇA
         </Button>
@@ -180,6 +198,20 @@ export default function ClientePecas({ cliente }: Props) {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Client context badge */}
+      <div className="qa-card p-2.5 flex items-center gap-2.5">
+        <div className="h-7 w-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: "hsl(210 60% 55% / 0.1)" }}>
+          <User className="h-3.5 w-3.5" style={{ color: "hsl(210 60% 55%)" }} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[10px] font-bold uppercase truncate" style={{ color: "hsl(220 20% 18%)" }}>{cliente.nome_completo}</p>
+          <p className="text-[9px] font-mono uppercase" style={{ color: "hsl(220 10% 55%)" }}>
+            CPF: {cpfNorm.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4")}
+            {cliente.cidade && ` • ${cliente.cidade}/${cliente.estado}`}
+          </p>
+        </div>
       </div>
 
       {/* Pieces List */}
@@ -202,31 +234,17 @@ export default function ClientePecas({ cliente }: Props) {
             const st = STATUS_MAP[g.status_revisao || g.status] || STATUS_MAP.rascunho;
             const StIcon = st.icon;
             const isDownloading = downloading === g.id;
-
             return (
-              <div
-                key={g.id}
-                className="qa-card qa-hover-lift p-3.5 flex flex-col sm:flex-row sm:items-center gap-3 group"
-              >
-                {/* Icon */}
-                <div
-                  className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0"
-                  style={{ background: `${st.color}15` }}
-                >
+              <div key={g.id} className="qa-card qa-hover-lift p-3.5 flex flex-col sm:flex-row sm:items-center gap-3 group">
+                <div className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${st.color}15` }}>
                   <StIcon className="h-4 w-4" style={{ color: st.color }} />
                 </div>
-
-                {/* Content */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-[12px] font-bold uppercase truncate" style={{ color: "hsl(220 20% 18%)" }}>
                       {g.titulo_geracao || "SEM TÍTULO"}
                     </span>
-                    <Badge
-                      variant="outline"
-                      className="text-[8px] font-bold uppercase border px-1.5 py-0 h-4"
-                      style={{ color: st.color, borderColor: `${st.color}40` }}
-                    >
+                    <Badge variant="outline" className="text-[8px] font-bold uppercase border px-1.5 py-0 h-4" style={{ color: st.color, borderColor: `${st.color}40` }}>
                       {st.label}
                     </Badge>
                   </div>
@@ -251,19 +269,7 @@ export default function ClientePecas({ cliente }: Props) {
                     </div>
                   )}
                 </div>
-
-                {/* Actions */}
                 <div className="flex items-center gap-1.5 shrink-0">
-                  {caso && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-7 px-2.5 text-[10px] font-semibold uppercase bg-white border-slate-200 hover:border-slate-300"
-                      onClick={() => navigate(`/quero-armas/casos`)}
-                    >
-                      <Eye className="h-3 w-3 mr-1" /> VER CASO
-                    </Button>
-                  )}
                   <Button
                     variant="outline"
                     size="sm"
@@ -271,10 +277,7 @@ export default function ClientePecas({ cliente }: Props) {
                     disabled={isDownloading}
                     onClick={() => handleDownload(g)}
                   >
-                    {isDownloading
-                      ? <Loader2 className="h-3 w-3 animate-spin" />
-                      : <Download className="h-3 w-3 mr-1" />
-                    }
+                    {isDownloading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3 mr-1" />}
                     DOCX
                   </Button>
                 </div>
@@ -282,16 +285,10 @@ export default function ClientePecas({ cliente }: Props) {
             );
           })}
 
-          {/* Cases without generation (still in progress) */}
+          {/* Cases without generation */}
           {casos.filter(c => !c.geracao_id).map(c => (
-            <div
-              key={c.id}
-              className="qa-card p-3.5 flex flex-col sm:flex-row sm:items-center gap-3 opacity-70"
-            >
-              <div
-                className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0"
-                style={{ background: "hsl(40 80% 50% / 0.12)" }}
-              >
+            <div key={c.id} className="qa-card p-3.5 flex flex-col sm:flex-row sm:items-center gap-3 opacity-70">
+              <div className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: "hsl(40 80% 50% / 0.12)" }}>
                 <Clock className="h-4 w-4" style={{ color: "hsl(40 80% 50%)" }} />
               </div>
               <div className="flex-1 min-w-0">
@@ -307,14 +304,6 @@ export default function ClientePecas({ cliente }: Props) {
                   </span>
                 </div>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-7 px-2.5 text-[10px] font-semibold uppercase bg-white border-slate-200 hover:border-slate-300 shrink-0"
-                onClick={() => navigate(`/quero-armas/casos`)}
-              >
-                <ExternalLink className="h-3 w-3 mr-1" /> ABRIR
-              </Button>
             </div>
           ))}
         </div>
