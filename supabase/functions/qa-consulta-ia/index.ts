@@ -57,11 +57,56 @@ async function generateEmbedding(text: string): Promise<number[] | null> {
   } catch { return null; }
 }
 
+// Fetch and format exam data for AI context
+async function buildExamContext(supabase: any, clienteId: number | string | null): Promise<string> {
+  if (!clienteId) return "";
+  try {
+    const { data: exames } = await supabase
+      .from("qa_exames_cliente")
+      .select("tipo_exame, data_realizacao, data_vencimento, observacoes, created_at")
+      .eq("cliente_id", clienteId)
+      .order("data_realizacao", { ascending: false })
+      .limit(20);
+    if (!exames || exames.length === 0) return "";
+
+    const now = new Date();
+    const calcStatus = (venc: string) => {
+      const d = new Date(venc);
+      const dias = Math.ceil((d.getTime() - now.getTime()) / 86400000);
+      if (dias < 0) return { status: "VENCIDO", dias };
+      if (dias <= 45) return { status: "A VENCER", dias };
+      return { status: "VIGENTE", dias };
+    };
+
+    let ctx = "\n\n═══ EXAMES DO REQUERENTE ═══\n";
+    const tipos = ["psicologico", "tiro"] as const;
+    for (const tipo of tipos) {
+      const label = tipo === "psicologico" ? "EXAME PSICOLÓGICO" : "EXAME DE TIRO";
+      const grupo = exames.filter((e: any) => e.tipo_exame === tipo);
+      if (grupo.length === 0) {
+        ctx += `\n${label}: Nenhum registro cadastrado.\n`;
+        continue;
+      }
+      ctx += `\n${label} (${grupo.length} registro(s)):\n`;
+      grupo.forEach((e: any, i: number) => {
+        const { status, dias } = calcStatus(e.data_vencimento);
+        ctx += `  [${i === 0 ? "ATUAL" : `Histórico ${i}`}] Realizado: ${e.data_realizacao} | Vencimento: ${e.data_vencimento} | Status: ${status} (${dias} dias)`;
+        if (e.observacoes) ctx += ` | Obs: ${e.observacoes}`;
+        ctx += "\n";
+      });
+    }
+    return ctx;
+  } catch (e) {
+    console.warn("buildExamContext error:", e);
+    return "";
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsH });
 
   try {
-    const { usuario_id, caso_titulo, entrada_usuario, tipo_peca, profundidade, tom, foco } = await req.json();
+    const { usuario_id, caso_titulo, entrada_usuario, tipo_peca, profundidade, tom, foco, cliente_id } = await req.json();
     if (!entrada_usuario) throw new Error("entrada_usuario required");
 
     const supabase = createClient(
@@ -267,6 +312,9 @@ Deno.serve(async (req) => {
     parametros += `\n- Tom: ${tom || "tecnico_padrao"}`;
     parametros += `\n- Foco argumentativo: ${foco || "legalidade"}`;
 
+    // ── 3b. Fetch exam context ──
+    const exameContext = await buildExamContext(supabase, cliente_id);
+
     // ── 4. Call AI ──
     const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -280,7 +328,7 @@ Deno.serve(async (req) => {
           { role: "system", content: SYSTEM_PROMPT },
           {
             role: "user",
-            content: `CASO: ${caso_titulo || "Sem título"}\nTIPO DE PEÇA: ${tipo_peca || "não especificado"}${parametros}\n\nDESCRIÇÃO DO CASO:\n${entrada_usuario}${contextoFontes}\n\nCom base EXCLUSIVAMENTE nas fontes acima (se disponíveis), forneça:\n1. Análise jurídica do caso\n2. Fundamentos legais aplicáveis (apenas os que constam na base)\n3. Jurisprudência relevante (apenas a cadastrada e listada acima)\n4. Sugestão de estrutura argumentativa\n5. Observações sobre lacunas de fonte\n6. Lista final das fontes efetivamente utilizadas na resposta`,
+            content: `CASO: ${caso_titulo || "Sem título"}\nTIPO DE PEÇA: ${tipo_peca || "não especificado"}${parametros}${exameContext}\n\nDESCRIÇÃO DO CASO:\n${entrada_usuario}${contextoFontes}\n\nCom base EXCLUSIVAMENTE nas fontes acima (se disponíveis), forneça:\n1. Análise jurídica do caso\n2. Fundamentos legais aplicáveis (apenas os que constam na base)\n3. Jurisprudência relevante (apenas a cadastrada e listada acima)\n4. Sugestão de estrutura argumentativa\n5. Observações sobre lacunas de fonte\n6. Lista final das fontes efetivamente utilizadas na resposta`,
           },
         ],
         max_tokens: 6000,

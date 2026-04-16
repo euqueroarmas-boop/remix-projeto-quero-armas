@@ -661,6 +661,44 @@ FORMATAÇÃO:
 - Citações normativas entre aspas com referência precisa.
 - Jurisprudência citada com tribunal, número do processo e tese.`;
 
+// Fetch and format exam data for AI context
+async function buildExamContextGerar(supabase: any, clienteId: number | string | null): Promise<string> {
+  if (!clienteId) return "";
+  try {
+    const { data: exames } = await supabase
+      .from("qa_exames_cliente")
+      .select("tipo_exame, data_realizacao, data_vencimento, observacoes")
+      .eq("cliente_id", clienteId)
+      .order("data_realizacao", { ascending: false })
+      .limit(20);
+    if (!exames || exames.length === 0) return "";
+
+    const now = new Date();
+    const calcStatus = (venc: string) => {
+      const d = new Date(venc);
+      const dias = Math.ceil((d.getTime() - now.getTime()) / 86400000);
+      if (dias < 0) return { status: "VENCIDO", dias };
+      if (dias <= 45) return { status: "A VENCER", dias };
+      return { status: "VIGENTE", dias };
+    };
+
+    let ctx = "\n\n═══ EXAMES DO REQUERENTE ═══\n";
+    for (const tipo of ["psicologico", "tiro"]) {
+      const label = tipo === "psicologico" ? "EXAME PSICOLÓGICO" : "EXAME DE TIRO";
+      const grupo = exames.filter((e: any) => e.tipo_exame === tipo);
+      if (grupo.length === 0) { ctx += `\n${label}: Nenhum registro.\n`; continue; }
+      ctx += `\n${label} (${grupo.length} registro(s)):\n`;
+      grupo.forEach((e: any, i: number) => {
+        const { status, dias } = calcStatus(e.data_vencimento);
+        ctx += `  [${i === 0 ? "ATUAL" : `Histórico ${i}`}] Realizado: ${e.data_realizacao} | Vencimento: ${e.data_vencimento} | Status: ${status} (${dias} dias)`;
+        if (e.observacoes) ctx += ` | Obs: ${e.observacoes}`;
+        ctx += "\n";
+      });
+    }
+    return ctx;
+  } catch (e) { console.warn("buildExamContextGerar:", e); return ""; }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsH });
 
@@ -673,6 +711,7 @@ Deno.serve(async (req) => {
       circunscricao_resolvida,
       data_notificacao, info_tempestividade,
       numero_requerimento, caso_id: req_caso_id,
+      cliente_id: reqClienteId,
     } = reqBody;
     const wantStream = !!reqBody.stream;
 
@@ -1016,12 +1055,16 @@ Deno.serve(async (req) => {
     const tituloObrigatorio = TIPO_PECA_LABELS[tipo_peca];
     const tipoServico = TIPO_SERVICO_MAP[tipo_peca];
 
+    // Fetch exam context for this client
+    const exameContextGerar = await buildExamContextGerar(supabase, reqClienteId);
+
     let dadosAdicionais = "";
     if (data_notificacao) dadosAdicionais += `\nDATA DA NOTIFICAÇÃO: ${data_notificacao}`;
     if (info_tempestividade) dadosAdicionais += `\nINFORMAÇÕES DE TEMPESTIVIDADE: ${info_tempestividade}`;
     if (cliente_endereco) dadosAdicionais += `\nENDEREÇO DO CLIENTE: ${cliente_endereco}`;
     if (cliente_cep) dadosAdicionais += `\nCEP DO CLIENTE: ${cliente_cep}`;
     if (numero_requerimento) dadosAdicionais += `\nNÚMERO DO REQUERIMENTO: ${numero_requerimento}`;
+    if (exameContextGerar) dadosAdicionais += exameContextGerar;
 
     // Evidence-specific instructions for the user prompt
     const bos = evidenceDocs.filter(d => d.tipo === "boletim_ocorrencia");
