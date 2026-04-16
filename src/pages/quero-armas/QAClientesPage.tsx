@@ -189,6 +189,7 @@ export default function QAClientesPage() {
   const [gtes, setGtes] = useState<any[]>([]);
   const [filiacoes, setFiliacoes] = useState<any[]>([]);
   const [cadastro, setCadastro] = useState<any>(null);
+  const [examesAtuais, setExamesAtuais] = useState<any[]>([]);
   const [loadingSub, setLoadingSub] = useState(false);
 
   // Modal states
@@ -499,12 +500,13 @@ export default function QAClientesPage() {
     setLoadingSub(true);
     try {
       const lid = c.id_legado ?? c.id;
-      const [vRes, cRes, gRes, fRes, cadRes] = await Promise.all([
+      const [vRes, cRes, gRes, fRes, cadRes, exRes] = await Promise.all([
         supabase.from("qa_vendas" as any).select("*").eq("cliente_id", lid).order("data_cadastro", { ascending: false }),
         supabase.from("qa_crafs" as any).select("*").eq("cliente_id", lid),
         supabase.from("qa_gtes" as any).select("*").eq("cliente_id", lid),
         supabase.from("qa_filiacoes" as any).select("*").eq("cliente_id", lid),
         supabase.from("qa_cadastro_cr" as any).select("*").eq("cliente_id", lid).limit(1),
+        supabase.from("qa_exames_cliente_status" as any).select("*").eq("cliente_id", lid).order("data_realizacao", { ascending: false }),
       ]);
       const vendasData = (vRes.data as any[]) ?? [];
       setVendas(vendasData);
@@ -512,6 +514,7 @@ export default function QAClientesPage() {
       setGtes((gRes.data as any[]) ?? []);
       setFiliacoes((fRes.data as any[]) ?? []);
       setCadastro((cadRes.data as any[])?.[0] ?? null);
+      setExamesAtuais((exRes.data as any[]) ?? []);
       if (vendasData.length > 0) {
         const vendaIds = vendasData.map((v: any) => v.id_legado ?? v.id);
         const { data: itensData } = await supabase.from("qa_itens_venda" as any).select("*").in("venda_id", vendaIds);
@@ -682,6 +685,7 @@ export default function QAClientesPage() {
                   gtes={gtes}
                   filiacoes={filiacoes}
                   cadastro={cadastro}
+                  examesAtuais={examesAtuais}
                   onNavigate={setTab}
                 />
               </TabsContent>
