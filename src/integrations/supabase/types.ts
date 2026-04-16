@@ -2858,6 +2858,87 @@ export type Database = {
           },
         ]
       }
+      qa_exames_alertas_enviados: {
+        Row: {
+          canal: string
+          detalhes: Json | null
+          enviado_em: string
+          exame_id: string
+          id: string
+          marco_dias: number
+        }
+        Insert: {
+          canal: string
+          detalhes?: Json | null
+          enviado_em?: string
+          exame_id: string
+          id?: string
+          marco_dias: number
+        }
+        Update: {
+          canal?: string
+          detalhes?: Json | null
+          enviado_em?: string
+          exame_id?: string
+          id?: string
+          marco_dias?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_exames_alertas_enviados_exame_id_fkey"
+            columns: ["exame_id"]
+            isOneToOne: false
+            referencedRelation: "qa_exames_cliente"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_exames_alertas_enviados_exame_id_fkey"
+            columns: ["exame_id"]
+            isOneToOne: false
+            referencedRelation: "qa_exames_cliente_status"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_exames_cliente: {
+        Row: {
+          cadastrado_por: string | null
+          cadastrado_por_nome: string | null
+          cliente_id: number
+          created_at: string
+          data_realizacao: string
+          data_vencimento: string
+          id: string
+          observacoes: string | null
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          cadastrado_por?: string | null
+          cadastrado_por_nome?: string | null
+          cliente_id: number
+          created_at?: string
+          data_realizacao: string
+          data_vencimento: string
+          id?: string
+          observacoes?: string | null
+          tipo: string
+          updated_at?: string
+        }
+        Update: {
+          cadastrado_por?: string | null
+          cadastrado_por_nome?: string | null
+          cliente_id?: number
+          created_at?: string
+          data_realizacao?: string
+          data_vencimento?: string
+          id?: string
+          observacoes?: string | null
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       qa_feedback_geracoes: {
         Row: {
           aprovada_como_modelo: boolean
@@ -4376,7 +4457,54 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      qa_exames_cliente_status: {
+        Row: {
+          cadastrado_por: string | null
+          cadastrado_por_nome: string | null
+          cliente_id: number | null
+          created_at: string | null
+          data_realizacao: string | null
+          data_vencimento: string | null
+          dias_restantes: number | null
+          id: string | null
+          marco_alerta_atual: number | null
+          observacoes: string | null
+          status: string | null
+          tipo: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          cadastrado_por?: string | null
+          cadastrado_por_nome?: string | null
+          cliente_id?: number | null
+          created_at?: string | null
+          data_realizacao?: string | null
+          data_vencimento?: string | null
+          dias_restantes?: never
+          id?: string | null
+          marco_alerta_atual?: never
+          observacoes?: string | null
+          status?: never
+          tipo?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          cadastrado_por?: string | null
+          cadastrado_por_nome?: string | null
+          cliente_id?: number | null
+          created_at?: string | null
+          data_realizacao?: string | null
+          data_vencimento?: string | null
+          dias_restantes?: never
+          id?: string | null
+          marco_alerta_atual?: never
+          observacoes?: string | null
+          status?: never
+          tipo?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       qa_busca_auxiliar_caso: {

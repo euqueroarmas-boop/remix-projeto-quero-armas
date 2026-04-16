@@ -9,6 +9,7 @@ import {
   Search, User, Phone, Mail, MapPin, FileText, Shield, ChevronLeft,
   Loader2, Eye, Plus, Crosshair, Edit, Trash2, Download, FileDown,
   ChevronDown, ChevronUp, Save, X, CheckCircle, TrendingUp, KeyRound, PenTool,
+  HeartPulse,
 } from "lucide-react";
 
 import { toast } from "sonner";
@@ -18,6 +19,7 @@ import { CrafModal, GteModal, CrModal, VendaModal, FiliacaoModal, DeleteConfirm 
 import { exportClientes, exportCrafs, exportGtes, exportCr, exportVendas } from "@/components/quero-armas/clientes/ClienteExport";
 import ClienteAcessoPortal from "@/components/quero-armas/clientes/ClienteAcessoPortal";
 import ClientePecas from "@/components/quero-armas/clientes/ClientePecas";
+import ClienteExames from "@/components/quero-armas/clientes/ClienteExames";
 
 const formatCpf = (v: string | null | undefined): string => {
   if (!v) return "—";
@@ -652,6 +654,7 @@ export default function QAClientesPage() {
                 { value: "armas", icon: Crosshair, label: `Armas (${crafs.length + gtes.length})` },
                 { value: "cr", icon: Shield, label: "CR" },
                 { value: "docs", icon: FileDown, label: "Docs" },
+                { value: "exames", icon: HeartPulse, label: "Exames" },
                 { value: "pecas", icon: PenTool, label: "Peças" },
                 { value: "portal", icon: KeyRound, label: "Portal" },
               ].map(t => (
@@ -964,6 +967,10 @@ export default function QAClientesPage() {
               {/* DOCUMENTOS */}
               <TabsContent value="docs" className="mt-3">
                 <DocumentGenerator cliente={c} />
+              </TabsContent>
+              {/* EXAMES */}
+              <TabsContent value="exames" className="mt-3">
+                <ClienteExames cliente={c} />
               </TabsContent>
               {/* PEÇAS JURÍDICAS */}
               <TabsContent value="pecas" className="mt-3">
