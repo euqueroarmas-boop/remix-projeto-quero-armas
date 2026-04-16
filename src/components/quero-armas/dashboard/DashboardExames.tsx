@@ -174,10 +174,10 @@ export default function DashboardExames() {
   const filtered = useMemo(() => {
     switch (filterKey) {
       case "vencido": return items.filter((i) => i.bucket === "vencido");
-      case "d7":  return items.filter((i) => ["vencido", "d7"].includes(i.bucket));
-      case "d15": return items.filter((i) => ["vencido", "d7", "d15"].includes(i.bucket));
-      case "d30": return items.filter((i) => ["vencido", "d7", "d15", "d30"].includes(i.bucket));
-      case "d45": return items.filter((i) => i.status !== "vigente");
+      case "d7":  return items.filter((i) => i.bucket === "d7");
+      case "d15": return items.filter((i) => i.bucket === "d15");
+      case "d30": return items.filter((i) => i.bucket === "d30");
+      case "d45": return items.filter((i) => i.bucket === "d45");
       case "pend": return items.filter((i) => i.temServicoPendente && i.status !== "vigente");
       case "psicologico": return items.filter((i) => i.tipo === "psicologico");
       case "tiro": return items.filter((i) => i.tipo === "tiro");
