@@ -50,6 +50,12 @@ export default function ClientPortal({ customer, onLogout }: Props) {
   const { payments } = useClientPayments(customer.id);
   const { accessLevel, bestStatus, isTabAllowed, restrictedMessage } = useServiceStatus(contracts);
 
+  // Eligibility: client has posse or porte contract/service
+  const isPecasEligible = contracts.some((c: any) => {
+    const type = (c.contract_type || "").toLowerCase();
+    return type.includes("posse") || type.includes("porte");
+  });
+
   const latestInvoiceUrl = payments.find((p: any) => p.asaas_invoice_url)?.asaas_invoice_url || null;
 
   const handleTabClick = (tabId: TabId) => {
@@ -89,6 +95,7 @@ export default function ClientPortal({ customer, onLogout }: Props) {
       case "financeiro": return <PortalFinanceiro customer={customer} />;
       case "fiscal": return <PortalFiscal customer={customer} />;
       case "documentos": return <PortalDocumentos customer={customer} />;
+      case "pecas": return <PortalPecas customer={customer} eligible={isPecasEligible} />;
       case "suporte": return <PortalSuporte customer={customer} />;
       case "perfil": return <PortalPerfil customer={customer} />;
     }
