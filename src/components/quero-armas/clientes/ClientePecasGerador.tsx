@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import {
   Send, Loader2, User, MapPin, FileText, Scale, ChevronUp, ChevronDown,
   CheckCircle, AlertTriangle, X, Building2, Info, Mail, Phone, Briefcase,
-  Shield, Sparkles,
+  Shield, Sparkles, Calendar, Heart, GraduationCap, Flag, Users, BookOpen,
 } from "lucide-react";
 import { useQAAuthContext } from "@/components/quero-armas/QAAuthContext";
 import DraftingView, { type DraftingResult } from "@/components/quero-armas/DraftingView";
