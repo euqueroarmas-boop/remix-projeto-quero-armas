@@ -9,7 +9,7 @@ import {
   HeartPulse, Crosshair, Plus, Loader2, Calendar, CheckCircle2,
   AlertTriangle, XCircle, Clock, ShieldCheck, History, Trash2,
 } from "lucide-react";
-import { useQAAuthContext } from "@/contexts/QAAuthContext";
+import { useQAAuthContext } from "@/components/quero-armas/QAAuthContext";
 
 /* ============================================================
  * Tipos e helpers de status (centralizados)
