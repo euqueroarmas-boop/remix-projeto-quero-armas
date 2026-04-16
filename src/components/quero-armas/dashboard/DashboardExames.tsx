@@ -79,10 +79,10 @@ export default function DashboardExames() {
           supabase.from("qa_vendas" as any).select("id, cliente_id"),
         ]);
 
-        const exames = (examesRes.data || []) as ExameRow[];
-        const clientes = (clientesRes.data || []) as ClienteRow[];
-        const itens = (itensRes.data || []) as ItemServicoRow[];
-        const vendas = (vendasRes.data || []) as VendaRow[];
+        const exames = ((examesRes.data || []) as any[]) as ExameRow[];
+        const clientes = ((clientesRes.data || []) as any[]) as ClienteRow[];
+        const itens = ((itensRes.data || []) as any[]) as ItemServicoRow[];
+        const vendas = ((vendasRes.data || []) as any[]) as VendaRow[];
 
         const clienteMap = new Map(clientes.map((c) => [c.id, c.nome_completo || "—"]));
         const vendaMap = new Map(vendas.map((v) => [v.id, v.cliente_id]));
