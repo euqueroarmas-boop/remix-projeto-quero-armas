@@ -672,7 +672,7 @@ Deno.serve(async (req) => {
       cliente_cidade, cliente_uf, cliente_endereco, cliente_cep,
       circunscricao_resolvida,
       data_notificacao, info_tempestividade,
-      numero_requerimento,
+      numero_requerimento, caso_id: req_caso_id,
     } = reqBody;
     const wantStream = !!reqBody.stream;
 
@@ -819,7 +819,7 @@ Deno.serve(async (req) => {
     // === AUXILIARY CASE DOCUMENTS — TYPED EVIDENCE PROCESSING ===
     let fontesAuxiliares: any[] = [];
     let evidenceDocs: EvidenceDoc[] = [];
-    const caso_id = caso_titulo?.trim() || null;
+    const caso_id = req_caso_id?.trim() || null;
 
     if (caso_id) {
       const { data: auxDocs } = await supabase.from("qa_documentos_conhecimento")
