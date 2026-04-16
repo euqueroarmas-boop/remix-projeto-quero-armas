@@ -500,13 +500,20 @@ export default function QAClientesPage() {
     setLoadingSub(true);
     try {
       const lid = c.id_legado ?? c.id;
+      const examClientIds = Array.from(new Set([c.id, c.id_legado].filter((value): value is number => typeof value === "number" && Number.isFinite(value))));
+      const examesQuery = supabase
+        .from("qa_exames_cliente_status" as any)
+        .select("*")
+        .in("cliente_id", examClientIds)
+        .order("data_realizacao", { ascending: false });
+
       const [vRes, cRes, gRes, fRes, cadRes, exRes] = await Promise.all([
         supabase.from("qa_vendas" as any).select("*").eq("cliente_id", lid).order("data_cadastro", { ascending: false }),
         supabase.from("qa_crafs" as any).select("*").eq("cliente_id", lid),
         supabase.from("qa_gtes" as any).select("*").eq("cliente_id", lid),
         supabase.from("qa_filiacoes" as any).select("*").eq("cliente_id", lid),
         supabase.from("qa_cadastro_cr" as any).select("*").eq("cliente_id", lid).limit(1),
-        supabase.from("qa_exames_cliente_status" as any).select("*").eq("cliente_id", lid).order("data_realizacao", { ascending: false }),
+        examesQuery,
       ]);
       const vendasData = (vRes.data as any[]) ?? [];
       setVendas(vendasData);
