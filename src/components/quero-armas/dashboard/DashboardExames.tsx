@@ -23,9 +23,10 @@ interface ExameRow {
   data_vencimento: string;
   observacoes: string | null;
 }
-interface ClienteRow { id: number; nome_completo: string | null; telefone_principal?: string | null; }
-interface ItemServicoRow { venda_id: number; status: string; }
+interface ClienteRow { id: number; nome_completo: string | null; celular?: string | null; }
+interface ItemServicoRow { venda_id: number; status: string; servico_id: number | null; }
 interface VendaRow { id: number; cliente_id: number; }
+interface ServicoRow { id: number; nome_servico: string | null; }
 
 interface ExameDashItem {
   exameId: string;
@@ -38,6 +39,7 @@ interface ExameDashItem {
   diasRestantes: number;
   status: ExameComStatus["status"];
   temServicoPendente: boolean;
+  servicosPendentes: string[];
   prioridade: number;
   bucket: "vencido" | "d7" | "d15" | "d30" | "d45" | "vigente";
 }
@@ -99,33 +101,35 @@ export default function DashboardExames() {
   useEffect(() => {
     const load = async () => {
       try {
-        const [examesRes, itensRes, vendasRes] = await Promise.all([
+        const [examesRes, itensRes, vendasRes, servicosRes] = await Promise.all([
           supabase.from("qa_exames_cliente" as any).select("id, cliente_id, tipo, data_realizacao, data_vencimento, observacoes").limit(5000),
-          supabase.from("qa_itens_venda" as any).select("venda_id, status").limit(10000),
+          supabase.from("qa_itens_venda" as any).select("venda_id, status, servico_id").limit(10000),
           supabase.from("qa_vendas" as any).select("id, cliente_id").limit(10000),
+          supabase.from("qa_servicos" as any).select("id, nome_servico").limit(1000),
         ]);
 
         const exames = ((examesRes.data || []) as any[]) as ExameRow[];
         const itens = ((itensRes.data || []) as any[]) as ItemServicoRow[];
         const vendas = ((vendasRes.data || []) as any[]) as VendaRow[];
+        const servicos = ((servicosRes.data || []) as any[]) as ServicoRow[];
 
-        // Busca apenas os clientes que efetivamente possuem exames cadastrados
         const clienteIds = Array.from(new Set(exames.map((e) => e.cliente_id).filter(Boolean)));
         let clientes: ClienteRow[] = [];
         if (clienteIds.length > 0) {
           const clientesRes = await supabase
             .from("qa_clientes" as any)
-            .select("id, nome_completo, telefone_principal")
+            .select("id, nome_completo, celular")
             .in("id", clienteIds);
           clientes = ((clientesRes.data || []) as any[]) as ClienteRow[];
         }
 
-        // Normaliza chaves para String para evitar mismatch entre bigint (string) e integer (number)
         const clienteMap = new Map(clientes.map((c) => [String(c.id), c]));
         const vendaMap = new Map(vendas.map((v) => [String(v.id), String(v.cliente_id)]));
+        const servicoMap = new Map(servicos.map((s) => [String(s.id), s.nome_servico || "Serviço"]));
 
         const clientesComPendente = new Set<string>();
         const clientesComDeferido = new Set<string>();
+        const servicosPendentesPorCliente = new Map<string, Set<string>>();
         for (const item of itens) {
           const status = (item.status || "").toUpperCase();
           const cid = vendaMap.get(String(item.venda_id));
@@ -135,12 +139,16 @@ export default function DashboardExames() {
           }
           if (!FINISHED.includes(status)) {
             clientesComPendente.add(cid);
+            const nome = item.servico_id != null ? servicoMap.get(String(item.servico_id)) : null;
+            if (nome) {
+              if (!servicosPendentesPorCliente.has(cid)) servicosPendentesPorCliente.set(cid, new Set());
+              servicosPendentesPorCliente.get(cid)!.add(nome);
+            }
           }
         }
 
         const latestMap = new Map<string, ExameRow>();
         for (const e of exames) {
-          // Oculta exames de clientes que já tiveram serviço DEFERIDO
           if (clientesComDeferido.has(String(e.cliente_id))) continue;
           const key = `${e.cliente_id}_${e.tipo}`;
           const existing = latestMap.get(key);
@@ -154,17 +162,19 @@ export default function DashboardExames() {
           const cli = clienteMap.get(String(e.cliente_id));
           const { status, dias_restantes } = computeExameStatus(e.data_vencimento);
           const bucket = bucketize(status, dias_restantes);
+          const cidStr = String(e.cliente_id);
           result.push({
             exameId: e.id,
             clienteId: e.cliente_id,
             clienteNome: cli?.nome_completo || "—",
-            clienteTelefone: cli?.telefone_principal || null,
+            clienteTelefone: cli?.celular || null,
             tipo: e.tipo,
             dataRealizacao: e.data_realizacao,
             dataVencimento: e.data_vencimento,
             diasRestantes: dias_restantes,
             status,
-            temServicoPendente: clientesComPendente.has(String(e.cliente_id)),
+            temServicoPendente: clientesComPendente.has(cidStr),
+            servicosPendentes: Array.from(servicosPendentesPorCliente.get(cidStr) || []),
             prioridade: BUCKET_ORDER[bucket],
             bucket,
           });
@@ -215,6 +225,7 @@ export default function DashboardExames() {
         clienteNome: principal.clienteNome,
         clienteTelefone: principal.clienteTelefone,
         temServicoPendente: principal.temServicoPendente,
+        servicosPendentes: principal.servicosPendentes,
         exames: allOfCliente.sort((a, b) => a.prioridade - b.prioridade),
         prioridadeCliente: Math.min(...matched.map((m) => m.prioridade)),
       };
@@ -338,6 +349,7 @@ function ClienteCard({
     clienteNome: string;
     clienteTelefone: string | null;
     temServicoPendente: boolean;
+    servicosPendentes: string[];
     exames: ExameDashItem[];
   };
   variant: typeof KPI_VARIANTS[keyof typeof KPI_VARIANTS];
@@ -361,7 +373,7 @@ function ClienteCard({
                 </span>
               )}
             </div>
-            <div className="font-bold text-slate-900 text-[14px] break-words" title={group.clienteNome}>
+            <div className="font-bold text-slate-900 text-[14px] break-words uppercase" title={group.clienteNome}>
               {group.clienteNome}
             </div>
           </div>
@@ -386,6 +398,25 @@ function ClienteCard({
             )}
           </div>
         </div>
+
+        {/* Serviços contratados pendentes */}
+        {group.servicosPendentes.length > 0 && (
+          <div>
+            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+              Serviços contratados
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {group.servicosPendentes.map((nome) => (
+                <span
+                  key={nome}
+                  className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200"
+                >
+                  {nome}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Lista de exames do cliente */}
         <ul className="space-y-1.5">
