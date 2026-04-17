@@ -1008,19 +1008,20 @@ export default function QAClientesPage() {
                                       </SelectContent>
                                     </Select>
                                     <span className="text-slate-700 truncate">{getServicoNome(it.servico_id)}</span>
-                                  </div>
-                                  <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                                     {(() => {
-                                      // Exibe inline o número identificador conforme o serviço:
-                                      // Posse PF (2) → numero_posse | Porte PF (3) → numero_requerimento | demais → numero_processo
+                                      // Número identificador exibido em coluna central de largura fixa para manter o alinhamento entre todos os serviços.
                                       const inlineNumero =
                                         it.servico_id === 2 ? it.numero_posse :
                                         it.servico_id === 3 ? it.numero_requerimento :
                                         it.numero_processo;
-                                      return inlineNumero ? (
-                                        <span className="hidden sm:inline text-slate-400 font-mono text-[9px]">{inlineNumero}</span>
-                                      ) : null;
+                                      return (
+                                        <span className="hidden sm:flex w-[140px] shrink-0 justify-center text-slate-400 font-mono text-[9px] tabular-nums">
+                                          {inlineNumero || ""}
+                                        </span>
+                                      );
                                     })()}
+                                  </div>
+                                  <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                                     {it.cortesia ? (
                                       <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 border border-emerald-200" title={it.cortesia_motivo || "Cortesia"}>
                                         Cortesia
