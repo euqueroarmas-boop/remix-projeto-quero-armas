@@ -209,7 +209,7 @@ export default function QAClientesPage() {
   const [savingItem, setSavingItem] = useState(false);
 
   // Serviços de Concessão de CR (Exército Brasileiro) — possuem apenas campos do CR
-  const SERVICOS_CR = [13, 20];
+  const SERVICOS_CR = [13, 20, 27];
   // Serviços CAC (Colecionador, Atirador, Caçador) e correlatos onde campos SIGMA/CRAF/Porte/GTE são aplicáveis
   // OBS: Porte na Polícia Federal (id=3) NÃO é CAC — possui apenas Nº Porte, sem CRAF/GTE/CR/SIGMA/SINARM
   // OBS: Concessão de CR (13, 20) foi REMOVIDA daqui — possui apenas campos exclusivos do CR
