@@ -206,19 +206,19 @@ export default function DashboardExames() {
       {/* KPIs clicáveis */}
       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 divide-x divide-y sm:divide-y-0 divide-slate-100">
-          <KpiTile variant="vencido" value={kpis.vencido} active={filterKey === "vencido"} onClick={() => setFilterKey(filterKey === "vencido" ? null : "vencido")} />
-          <KpiTile variant="d7"      value={kpis.d7}      active={filterKey === "d7"}      onClick={() => setFilterKey(filterKey === "d7" ? null : "d7")} />
-          <KpiTile variant="d15"     value={kpis.d15}     active={filterKey === "d15"}     onClick={() => setFilterKey(filterKey === "d15" ? null : "d15")} />
-          <KpiTile variant="d30"     value={kpis.d30}     active={filterKey === "d30"}     onClick={() => setFilterKey(filterKey === "d30" ? null : "d30")} />
-          <KpiTile variant="d45"     value={kpis.d45}     active={filterKey === "d45"}     onClick={() => setFilterKey(filterKey === "d45" ? null : "d45")} />
-          <KpiTile variant="vigente" value={kpis.vigente} active={filterKey === "vigente"} onClick={() => setFilterKey(filterKey === "vigente" ? null : "vigente")} />
-          <KpiTile variant="pend"    value={kpis.pend}    active={filterKey === "pend"}    onClick={() => setFilterKey(filterKey === "pend" ? null : "pend")} />
+          <KpiTile variant="vencido" value={kpis.vencido} active={filterKey === "vencido"} onClick={() => handleKpiClick("vencido")} />
+          <KpiTile variant="d7"      value={kpis.d7}      active={filterKey === "d7"}      onClick={() => handleKpiClick("d7")} />
+          <KpiTile variant="d15"     value={kpis.d15}     active={filterKey === "d15"}     onClick={() => handleKpiClick("d15")} />
+          <KpiTile variant="d30"     value={kpis.d30}     active={filterKey === "d30"}     onClick={() => handleKpiClick("d30")} />
+          <KpiTile variant="d45"     value={kpis.d45}     active={filterKey === "d45"}     onClick={() => handleKpiClick("d45")} />
+          <KpiTile variant="vigente" value={kpis.vigente} active={filterKey === "vigente"} onClick={() => handleKpiClick("vigente")} />
+          <KpiTile variant="pend"    value={kpis.pend}    active={filterKey === "pend"}    onClick={() => handleKpiClick("pend")} />
         </div>
       </div>
 
       {/* Lista de clientes (aparece ao clicar em um KPI) */}
       {filterKey && activeVariant && ActiveIcon && (
-        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+        <div ref={listRef} className="bg-white border-2 border-slate-300 rounded-xl overflow-hidden shadow-md scroll-mt-4 ring-1 ring-slate-200">
           <div className={`px-4 py-3 border-b ${activeVariant.border} ${activeVariant.bg} flex items-center justify-between gap-2`}>
             <div className="flex items-center gap-2 min-w-0">
               <span className={`h-2 w-2 rounded-full ${activeVariant.dot} shrink-0`} />
