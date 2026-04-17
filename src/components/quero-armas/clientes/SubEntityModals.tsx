@@ -63,30 +63,59 @@ function PremiumField({ label, value, onChange, type = "text", placeholder, icon
   );
 }
 
-/* ─── Premium Modal Shell ─── */
-function PremiumModalShell({ open, onClose, title, icon: Icon, accentColor, children }: {
-  open: boolean; onClose: () => void; title: string; icon: any; accentColor: string; children: React.ReactNode;
+/* ─── Premium Modal Shell ───
+   Mobile-first: bottom-sheet em telas pequenas, dialog centralizado no desktop.
+   Estrutura: header fixo + body com scroll interno + footer opcional sticky.
+*/
+function PremiumModalShell({ open, onClose, title, icon: Icon, accentColor, children, footer }: {
+  open: boolean; onClose: () => void; title: string; icon: any; accentColor: string;
+  children: React.ReactNode; footer?: React.ReactNode;
 }) {
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
       <DialogContent
-        className="border-0 shadow-2xl shadow-slate-200/60 rounded-2xl overflow-hidden p-0 bg-white w-[calc(100vw-1rem)] max-w-md sm:max-w-lg"
+        className="
+          !p-0 border-0 bg-white shadow-2xl shadow-slate-200/60 overflow-hidden
+          !fixed !left-1/2 !-translate-x-1/2
+          !top-auto !bottom-0 !translate-y-0 !rounded-t-2xl !rounded-b-none
+          sm:!top-1/2 sm:!bottom-auto sm:!-translate-y-1/2 sm:!rounded-2xl
+          !w-full sm:!w-[calc(100vw-2rem)] !max-w-full sm:!max-w-lg
+          flex flex-col
+          !max-h-[100dvh] sm:!max-h-[calc(100dvh-2rem)]
+        "
       >
-        {/* Header gradient strip */}
-        <div className={`h-1 w-full ${accentColor}`} />
-        <div className="px-4 sm:px-6 pt-5 pb-0">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2.5 text-base font-bold text-slate-800 tracking-tight">
-              <div className={`h-8 w-8 rounded-lg ${accentColor} bg-opacity-10 flex items-center justify-center`}>
-                <Icon className="h-4 w-4 text-white" />
-              </div>
-              {title}
-            </DialogTitle>
-          </DialogHeader>
+        {/* Header (fixo) */}
+        <div className="shrink-0">
+          <div className={`h-1 w-full ${accentColor}`} />
+          <div className="px-4 sm:px-6 pt-4 pb-3 pr-12">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2.5 text-base font-bold text-slate-800 tracking-tight">
+                <div className={`h-8 w-8 rounded-lg ${accentColor} bg-opacity-10 flex items-center justify-center`}>
+                  <Icon className="h-4 w-4 text-white" />
+                </div>
+                {title}
+              </DialogTitle>
+            </DialogHeader>
+          </div>
         </div>
-        <div className="px-4 sm:px-6 pb-6 pt-4">
+
+        {/* Body (scroll interno) */}
+        <div
+          className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain px-4 sm:px-6 py-3"
+          style={{ WebkitOverflowScrolling: "touch" }}
+        >
           {children}
         </div>
+
+        {/* Footer (sticky, respeita safe-area do iPhone) */}
+        {footer && (
+          <div
+            className="shrink-0 border-t border-slate-100 bg-white px-4 sm:px-6 py-3"
+            style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
+          >
+            {footer}
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
@@ -390,8 +419,59 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
   };
 
   return (
-    <PremiumModalShell open={open} onClose={onClose} title={isEdit ? "Editar Venda" : "Nova Venda"} icon={ShoppingCart} accentColor="bg-blue-600">
-      <div className="space-y-4 max-h-[70vh] overflow-y-auto overflow-x-hidden pr-1">
+    <PremiumModalShell
+      open={open}
+      onClose={onClose}
+      title={isEdit ? "Editar Venda" : "Nova Venda"}
+      icon={ShoppingCart}
+      accentColor="bg-blue-600"
+      footer={
+        <div className="space-y-3">
+          {/* Totals */}
+          <div className="rounded-xl bg-slate-50 border border-slate-200/60 p-3 space-y-2 text-xs">
+            <div className="flex justify-between items-center gap-2">
+              <span className="text-slate-500 font-medium">Subtotal ({selectedServicos.size})</span>
+              <span className="text-slate-700 font-mono font-semibold">R$ {subtotal.toLocaleString('pt-BR')}</span>
+            </div>
+            <div className="flex justify-between items-center gap-2">
+              <span className="text-slate-500 font-medium shrink-0">Desconto (R$)</span>
+              <Input
+                type="number"
+                inputMode="decimal"
+                min={0}
+                placeholder="0"
+                value={f.desconto}
+                onChange={e => setF(p => ({ ...p, desconto: e.target.value }))}
+                className="h-8 w-24 text-xs text-right bg-white border-slate-300 text-slate-700 px-2 rounded-md font-mono focus-visible:ring-1 focus-visible:ring-indigo-400 focus-visible:ring-offset-0"
+              />
+            </div>
+            <div className="flex justify-between items-center gap-2 pt-2 border-t border-slate-200/80">
+              <span className="text-slate-800 font-bold">Total</span>
+              <span className="text-indigo-700 font-bold font-mono text-sm">R$ {total.toLocaleString('pt-BR')}</span>
+            </div>
+          </div>
+          {/* Actions */}
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              variant="ghost"
+              onClick={onClose}
+              className="h-11 text-xs font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-lg"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={save}
+              disabled={saving}
+              className="h-11 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow-md shadow-indigo-200/50 disabled:opacity-50"
+            >
+              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <Save className="h-3.5 w-3.5 mr-1.5" />}
+              {isEdit ? "Salvar" : "Cadastrar Venda"}
+            </Button>
+          </div>
+        </div>
+      }
+    >
+      <div className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <PremiumField label="Data da Venda" value={f.data_cadastro} onChange={v => setF(p => ({ ...p, data_cadastro: applyDateMask(v) }))} type="date" icon={CalendarDays} />
           <PremiumField label="Nº Processo" value={f.numero_processo} onChange={v => setF(p => ({ ...p, numero_processo: v }))} icon={Hash} />
@@ -419,7 +499,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
             <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-[0.1em]">Serviços Contratados</label>
             <span className="text-[10px] text-indigo-500 font-bold bg-indigo-50 px-2 py-0.5 rounded-full">{selectedServicos.size} sel.</span>
           </div>
-          <div className="max-h-[180px] overflow-y-auto space-y-1 rounded-xl border border-slate-200/80 bg-slate-50/50 p-2">
+          <div className="max-h-[44vh] sm:max-h-[220px] overflow-y-auto space-y-1 rounded-xl border border-slate-200/80 bg-slate-50/50 p-2">
             {servicos.map(svc => {
               const isChecked = selectedServicos.has(svc.id);
               const svcData = selectedServicos.get(svc.id);
@@ -456,32 +536,6 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
             })}
           </div>
         </div>
-
-        {/* Totals */}
-        <div className="rounded-xl bg-slate-50 border border-slate-200/60 p-3 space-y-2 text-xs">
-          <div className="flex justify-between items-center gap-2">
-            <span className="text-slate-500 font-medium">Subtotal ({selectedServicos.size})</span>
-            <span className="text-slate-700 font-mono font-semibold">R$ {subtotal.toLocaleString('pt-BR')}</span>
-          </div>
-          <div className="flex justify-between items-center gap-2">
-            <span className="text-slate-500 font-medium shrink-0">Desconto (R$)</span>
-            <Input
-              type="number"
-              inputMode="decimal"
-              min={0}
-              placeholder="0"
-              value={f.desconto}
-              onChange={e => setF(p => ({ ...p, desconto: e.target.value }))}
-              className="h-8 w-24 text-xs text-right bg-white border-slate-300 text-slate-700 px-2 rounded-md font-mono focus-visible:ring-1 focus-visible:ring-indigo-400 focus-visible:ring-offset-0"
-            />
-          </div>
-          <div className="flex justify-between items-center gap-2 pt-2 border-t border-slate-200/80">
-            <span className="text-slate-800 font-bold">Total</span>
-            <span className="text-indigo-700 font-bold font-mono text-sm">R$ {total.toLocaleString('pt-BR')}</span>
-          </div>
-        </div>
-
-        <ModalActions onClose={onClose} onSave={save} saving={saving} saveLabel={isEdit ? "Salvar" : "Cadastrar Venda"} />
       </div>
     </PremiumModalShell>
   );
