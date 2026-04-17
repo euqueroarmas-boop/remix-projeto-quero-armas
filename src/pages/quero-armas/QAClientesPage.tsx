@@ -232,8 +232,11 @@ export default function QAClientesPage() {
     // Nº do Requerimento — exclusivo de Porte na Polícia Federal
     { key: "numero_requerimento", label: "Nº do Requerimento", type: "text", servicos: [3] },
     { key: "data_notificacao", label: "Data da Notificação", type: "date", servicos: SERVICOS_POSSE },
-    { key: "data_indeferimento", label: "Data de Indeferimento", type: "date", servicos: SERVICOS_POSSE, condition: (_f, it) => (it?.status || "").toUpperCase() === "INDEFERIDO" },
-    { key: "data_recurso_administrativo", label: "Data do Recurso Administrativo", type: "date", servicos: SERVICOS_POSSE, condition: (f) => !!f.data_notificacao },
+    // Indeferimento e Recurso Administrativo: sempre disponíveis em Posse PF.
+    // Um processo pode ser indeferido, ter recurso protocolado em até 10 dias e ser
+    // posteriormente deferido — toda a linha do tempo precisa ficar registrada.
+    { key: "data_indeferimento", label: "Data de Indeferimento", type: "date", servicos: SERVICOS_POSSE },
+    { key: "data_recurso_administrativo", label: "Data do Recurso Administrativo", type: "date", servicos: SERVICOS_POSSE },
     { key: "data_deferimento", label: "Data Deferimento do CR", type: "date", servicos: SERVICOS_CR, condition: (_f, it) => (it?.status || "").toUpperCase() !== "INDEFERIDO" },
     { key: "data_deferimento", label: "Data Deferimento", type: "date", servicos: [2, 3, 4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 26], condition: (_f, it) => (it?.status || "").toUpperCase() !== "INDEFERIDO" },
     // Data de Indeferimento — REGRA GLOBAL: aparece APENAS quando o status do item é INDEFERIDO

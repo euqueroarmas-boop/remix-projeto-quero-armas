@@ -113,6 +113,7 @@ interface ItemRow {
   status: string;
   data_protocolo: string | null;
   data_ultima_atualizacao: string | null;
+  data_recurso_administrativo?: string | null;
 }
 interface VendaRow { id: number; id_legado: number | null; cliente_id: number | null; data_cadastro: string | null; created_at: string | null; }
 interface ClienteRow { id: number; id_legado: number | null; nome_completo: string | null; }
@@ -145,6 +146,9 @@ interface MonitorRow {
   vendaDate: string | null;
   diasParado: number;
   entidade: Entidade;
+  /** Quando o status é RECURSO ADMINISTRATIVO, indica os dias restantes
+   *  do prazo fatal de 10 dias contado a partir de data_recurso_administrativo. */
+  recursoDiasRestantes?: number | null;
 }
 
 /** Linha agrupada para exibição: um COMBO por (cliente, status) lista todos os serviços COMBO. */
@@ -161,6 +165,7 @@ interface DisplayRow {
   isComboGroup: boolean;
   servicoNome: string;
   servicosList: string[];
+  recursoDiasRestantes?: number | null;
 }
 
 /* ================================================================
@@ -182,10 +187,24 @@ function fmtBR(iso: string | null): string {
   return d && m && y ? `${d}/${m}/${y}` : "—";
 }
 
+/** Urgência padrão por dias parados no status. */
 function urgencyClass(dias: number, encerrado: boolean): string {
   if (encerrado) return "bg-slate-50 text-slate-600 border-slate-200";
   if (dias >= 15) return "bg-rose-50 text-rose-700 border-rose-200";
   if (dias >= 7) return "bg-amber-50 text-amber-700 border-amber-200";
+  return "bg-emerald-50 text-emerald-700 border-emerald-200";
+}
+
+/** Urgência ESPECÍFICA do status RECURSO ADMINISTRATIVO.
+ *  Prazo legal fatal: 10 dias corridos a partir do indeferimento/notificação.
+ *  Aqui usamos o contador como dias RESTANTES até o fim do prazo:
+ *    > 5 dias  → verde (folga)
+ *    1..5 dias → vermelho (prazo fatal entrando)
+ *    ≤ 0       → vermelho intenso (prazo expirado)
+ */
+function recursoUrgencyClass(diasRestantes: number): string {
+  if (diasRestantes <= 0) return "bg-rose-100 text-rose-800 border-rose-300";
+  if (diasRestantes <= 5) return "bg-rose-50 text-rose-700 border-rose-200";
   return "bg-emerald-50 text-emerald-700 border-emerald-200";
 }
 
@@ -247,7 +266,7 @@ export default function DashboardProcessosMonitor() {
         // CARREGA TODOS os itens com status não-nulo — descoberta dinâmica de status novos.
         const { data: itens, error: e1 } = await supabase
           .from("qa_itens_venda" as any)
-          .select("id, venda_id, servico_id, status, data_protocolo, data_ultima_atualizacao, data_indeferimento, data_deferimento")
+          .select("id, venda_id, servico_id, status, data_protocolo, data_ultima_atualizacao, data_indeferimento, data_deferimento, data_recurso_administrativo")
           .not("status", "is", null);
         if (e1) throw e1;
 
@@ -296,14 +315,26 @@ export default function DashboardProcessosMonitor() {
             const servico = it.servico_id ? servicosMap.get(it.servico_id) : undefined;
             const vendaDate = venda?.data_cadastro || (venda?.created_at ? venda.created_at.slice(0, 10) : null);
             // "Tempo no status" prioriza a data específica do status atual quando existir:
-            //   INDEFERIDO → data_indeferimento; DEFERIDO → data_deferimento.
+            //   INDEFERIDO  → data_indeferimento
+            //   DEFERIDO    → data_deferimento
+            //   RECURSO ADM → data_recurso_administrativo (contagem do prazo fatal de 10 dias)
             // Caso contrário, usa data_ultima_atualizacao → data_protocolo → data da venda.
             const statusUpper = canon.toUpperCase();
+            const dataRecurso = (it as any).data_recurso_administrativo as string | null;
             const dataDoStatus =
-              statusUpper === "INDEFERIDO" ? (it as any).data_indeferimento :
-              statusUpper === "DEFERIDO"   ? (it as any).data_deferimento   : null;
+              statusUpper === "INDEFERIDO"             ? (it as any).data_indeferimento :
+              statusUpper === "DEFERIDO"               ? (it as any).data_deferimento   :
+              statusUpper === "RECURSO ADMINISTRATIVO" ? dataRecurso                    : null;
             const stopRef = dataDoStatus || it.data_ultima_atualizacao || it.data_protocolo || vendaDate;
             const servicoNome = servico?.nome_servico || `Serviço #${it.servico_id ?? "?"}`;
+
+            // Recurso administrativo possui prazo legal fatal de 10 dias.
+            // Calculamos os dias RESTANTES (positivos = dentro do prazo, ≤0 = expirado).
+            const isRecurso = statusUpper === "RECURSO ADMINISTRATIVO";
+            const recursoDiasRestantes = isRecurso && dataRecurso
+              ? 10 - diffDays(dataRecurso)
+              : null;
+
             return {
               itemId: it.id,
               vendaId: it.venda_id,
@@ -316,6 +347,7 @@ export default function DashboardProcessosMonitor() {
               vendaDate,
               diasParado: diffDays(stopRef),
               entidade: classifyEntidade(servicoNome),
+              recursoDiasRestantes,
             } as MonitorRow;
           })
           .filter(Boolean) as MonitorRow[];
@@ -427,6 +459,7 @@ export default function DashboardProcessosMonitor() {
         vendaId: r.vendaId, status: r.status, meta: r.meta,
         vendaDate: r.vendaDate, diasParado: r.diasParado,
         isComboGroup: false, servicoNome: r.servicoNome, servicosList: [],
+        recursoDiasRestantes: r.recursoDiasRestantes,
       });
     }
     for (const [k, arr] of groups) {
@@ -439,9 +472,13 @@ export default function DashboardProcessosMonitor() {
           vendaId: r.vendaId, status: r.status, meta: r.meta,
           vendaDate: r.vendaDate, diasParado: r.diasParado,
           isComboGroup: false, servicoNome: r.servicoNome, servicosList: [],
+          recursoDiasRestantes: r.recursoDiasRestantes,
         });
       } else {
         const ref = [...arr].sort((a, b) => b.diasParado - a.diasParado)[0];
+        // Para grupos COMBO em recurso, propaga o MENOR prazo restante (mais urgente).
+        const recursos = arr.map(x => x.recursoDiasRestantes).filter((v): v is number => typeof v === "number");
+        const recursoMin = recursos.length ? Math.min(...recursos) : null;
         display.push({
           key: `cg-${k}`,
           itemIds: arr.map(x => x.itemId),
@@ -451,6 +488,7 @@ export default function DashboardProcessosMonitor() {
           isComboGroup: true,
           servicoNome: `COMBO • ${arr.length} serviços`,
           servicosList: arr.map(x => x.servicoNome),
+          recursoDiasRestantes: recursoMin,
         });
       }
     }
@@ -629,10 +667,20 @@ export default function DashboardProcessosMonitor() {
                         </td>
                         <td className="px-3 py-2 text-slate-500">{fmtBR(r.vendaDate)}</td>
                         <td className="px-3 py-2">
-                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${urgencyClass(r.diasParado, encerrado)}`}>
-                            <Clock className="w-3 h-3" />
-                            {r.diasParado}d
-                          </span>
+                          {typeof r.recursoDiasRestantes === "number" ? (
+                            <span
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${recursoUrgencyClass(r.recursoDiasRestantes)}`}
+                              title={`Prazo fatal de 10 dias para recurso administrativo. Restam ${r.recursoDiasRestantes} dia(s).`}
+                            >
+                              <Gavel className="w-3 h-3" />
+                              {r.recursoDiasRestantes > 0 ? `${r.recursoDiasRestantes}d restantes` : "Prazo expirado"}
+                            </span>
+                          ) : (
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${urgencyClass(r.diasParado, encerrado)}`}>
+                              <Clock className="w-3 h-3" />
+                              {r.diasParado}d
+                            </span>
+                          )}
                         </td>
                         <td className="px-3 py-2 text-right">
                           {r.clienteId && (
@@ -682,10 +730,20 @@ export default function DashboardProcessosMonitor() {
                           <div className="text-[11.5px] text-slate-500 truncate mt-0.5">{r.servicoNome}</div>
                         )}
                       </div>
-                      <span className={`shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${urgencyClass(r.diasParado, encerrado)}`}>
-                        <Clock className="w-3 h-3" />
-                        {r.diasParado}d
-                      </span>
+                      {typeof r.recursoDiasRestantes === "number" ? (
+                        <span
+                          className={`shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${recursoUrgencyClass(r.recursoDiasRestantes)}`}
+                          title={`Prazo fatal de 10 dias para recurso. Restam ${r.recursoDiasRestantes} dia(s).`}
+                        >
+                          <Gavel className="w-3 h-3" />
+                          {r.recursoDiasRestantes > 0 ? `${r.recursoDiasRestantes}d` : "Expirado"}
+                        </span>
+                      ) : (
+                        <span className={`shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${urgencyClass(r.diasParado, encerrado)}`}>
+                          <Clock className="w-3 h-3" />
+                          {r.diasParado}d
+                        </span>
+                      )}
                     </div>
                     <div className="mt-2 flex flex-wrap items-center gap-1.5">
                       {editingKey === r.key ? (
