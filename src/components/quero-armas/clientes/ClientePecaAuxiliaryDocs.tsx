@@ -515,21 +515,23 @@ export default function ClientePecaAuxiliaryDocs({ onChange, userId, caseId }: P
   };
 
   return (
-    <div className="rounded-lg border border-border/70 bg-card/40 p-3 space-y-3">
+    <div className="rounded-xl border border-border/60 bg-muted/30 p-4 space-y-3">
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-foreground">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="h-6 w-6 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
+              <Paperclip className="h-3 w-3 text-primary" />
+            </div>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-foreground">
               Provas e documentos auxiliares
             </span>
             {docTotal > 0 && (
-              <span className="text-[9px] font-semibold text-muted-foreground">
+              <span className="text-[10px] font-semibold text-muted-foreground tabular-nums">
                 {docDone}/{docTotal}{docFailed > 0 ? ` · ${docFailed} falha(s)` : ""}
               </span>
             )}
           </div>
-          <p className="mt-1 text-[10px] leading-relaxed text-muted-foreground">
+          <p className="mt-1.5 text-[10px] leading-relaxed text-muted-foreground">
             BOs, laudos e demais provas seguem com extração integral antes da IA gerar a peça.
           </p>
         </div>
@@ -538,7 +540,7 @@ export default function ClientePecaAuxiliaryDocs({ onChange, userId, caseId }: P
           <button
             type="button"
             onClick={() => setShowList((prev) => !prev)}
-            className="text-muted-foreground hover:text-foreground transition-colors"
+            className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors shrink-0"
             aria-label={showList ? "Ocultar anexos" : "Mostrar anexos"}
           >
             {showList ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
@@ -563,7 +565,7 @@ export default function ClientePecaAuxiliaryDocs({ onChange, userId, caseId }: P
           type="button"
           variant="outline"
           size="sm"
-          className="h-8 px-3 text-[10px] font-semibold uppercase tracking-wider"
+          className="h-9 px-4 text-[10px] font-bold uppercase tracking-wider bg-background border-border/70 text-foreground hover:bg-primary/5 hover:border-primary/40 hover:text-primary transition-colors"
           onClick={() => fileInputRef.current?.click()}
         >
           <Upload className="h-3 w-3 mr-1.5" />
