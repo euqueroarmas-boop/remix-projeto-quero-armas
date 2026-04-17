@@ -915,7 +915,7 @@ export default function QAClientesPage() {
                                       </div>
                                     </div>
                                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                                      {ITEM_EDIT_FIELDS.map(field => (
+                                      {getFieldsForServico(it.servico_id).map(field => (
                                         <div key={field.key}>
                                           <label className="block text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">{field.label}</label>
                                           <input
