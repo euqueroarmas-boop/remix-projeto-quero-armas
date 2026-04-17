@@ -208,19 +208,26 @@ export default function QAClientesPage() {
   const [itemEditForm, setItemEditForm] = useState<Record<string, string>>({});
   const [savingItem, setSavingItem] = useState(false);
 
+  // Serviços CAC (Colecionador, Atirador, Caçador) e correlatos onde campos SIGMA/CR/CRAF/Porte/GTE são aplicáveis
+  const SERVICOS_CAC = [3, 4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 20];
+  // Serviço de Posse na Polícia Federal
+  const SERVICOS_POSSE = [2];
+
   const ITEM_EDIT_FIELDS: { key: string; label: string; type: "date" | "text"; servicos?: number[] }[] = [
     { key: "data_protocolo", label: "Data Protocolo", type: "date" },
     { key: "data_deferimento", label: "Data Deferimento", type: "date" },
     { key: "data_vencimento", label: "Data Vencimento", type: "date" },
     { key: "numero_processo", label: "Nº Processo", type: "text" },
-    { key: "numero_craf", label: "Nº SIGMA", type: "text" },
-    { key: "numero_gte", label: "Nº GTE", type: "text" },
-    { key: "numero_cr", label: "Nº CR", type: "text" },
-    { key: "numero_posse", label: "Nº Posse", type: "text" },
-    { key: "numero_porte", label: "Nº Porte", type: "text" },
-    { key: "numero_sigma", label: "Nº SIGMA", type: "text" },
-    { key: "numero_sinarm", label: "Nº SINARM", type: "text" },
-    { key: "registro_cad", label: "Registro CAD", type: "text" },
+    // Campos exclusivos de CAC — NÃO aparecem em Posse na Polícia Federal
+    { key: "numero_craf", label: "Nº CRAF", type: "text", servicos: SERVICOS_CAC },
+    { key: "numero_gte", label: "Nº GTE", type: "text", servicos: SERVICOS_CAC },
+    { key: "numero_cr", label: "Nº CR", type: "text", servicos: SERVICOS_CAC },
+    { key: "numero_porte", label: "Nº Porte", type: "text", servicos: [3, ...SERVICOS_CAC] },
+    { key: "numero_sigma", label: "Nº SIGMA", type: "text", servicos: SERVICOS_CAC },
+    { key: "numero_sinarm", label: "Nº SINARM", type: "text", servicos: SERVICOS_CAC },
+    { key: "registro_cad", label: "Registro CAD", type: "text", servicos: SERVICOS_CAC },
+    // Específico de Posse na Polícia Federal
+    { key: "numero_posse", label: "Nº do Requerimento de Posse", type: "text", servicos: SERVICOS_POSSE },
     // Específicos de Posse / Autorização de compra de arma de fogo
     { key: "numero_autorizacao", label: "Nº Autorização", type: "text", servicos: [2, 5, 15] },
     { key: "validade_autorizacao", label: "Validade Autorização", type: "date", servicos: [2, 5, 15] },
