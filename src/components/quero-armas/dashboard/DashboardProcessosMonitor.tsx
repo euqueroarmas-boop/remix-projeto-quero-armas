@@ -204,10 +204,11 @@ export default function DashboardProcessosMonitor() {
 
       setRows(prev => prev.map(r => {
         if (!itemIds.includes(r.itemId)) return r;
-        const meta = STATUS_BY_KEY.get(newStatus)!;
+        const canon = canonical(newStatus);
+        const meta = BASE_BY_CANONICAL.get(canon) || buildAutoMeta(newStatus);
         return {
           ...r,
-          status: newStatus,
+          status: canon,
           meta,
           diasParado: diffDays(dataProtocolo),
         };
@@ -226,11 +227,11 @@ export default function DashboardProcessosMonitor() {
     let mounted = true;
     (async () => {
       try {
-        const allKeys = STATUS_CATALOG.map(s => s.key);
+        // CARREGA TODOS os itens com status não-nulo — descoberta dinâmica de status novos.
         const { data: itens, error: e1 } = await supabase
           .from("qa_itens_venda" as any)
           .select("id, venda_id, servico_id, status, data_protocolo, data_ultima_atualizacao")
-          .in("status", allKeys);
+          .not("status", "is", null);
         if (e1) throw e1;
 
         const itensList = (itens as any[] as ItemRow[]) || [];
@@ -250,8 +251,6 @@ export default function DashboardProcessosMonitor() {
         ]);
 
         const vendas = (vRes.data as any[] as VendaRow[]) || [];
-        // CHAVE CANÔNICA: vendas.cliente_id referencia qa_clientes.id_legado
-        // (com fallback para id quando id_legado for nulo).
         const clienteFKs = Array.from(new Set(vendas.map(v => v.cliente_id).filter(Boolean) as number[]));
         const cRes = clienteFKs.length
           ? await supabase.from("qa_clientes" as any).select("id, id_legado, nome_completo").or(
@@ -262,7 +261,6 @@ export default function DashboardProcessosMonitor() {
         const vendasMap = new Map<number, VendaRow>(
           vendas.map((v) => [typeof v.id_legado === "number" ? v.id_legado : v.id, v])
         );
-        // Indexar clientes pela chave canônica (id_legado quando existir, senão id).
         const clientesMap = new Map<number, ClienteRow>();
         for (const c of (((cRes.data as any[]) || []) as ClienteRow[])) {
           const fk = (typeof c.id_legado === "number" && Number.isFinite(c.id_legado)) ? c.id_legado : c.id;
@@ -272,9 +270,10 @@ export default function DashboardProcessosMonitor() {
 
         const built: MonitorRow[] = itensList
           .map((it) => {
-            const statusKey = normalizeStatus(it.status);
-            if (!statusKey) return null;
-            const meta = STATUS_BY_KEY.get(statusKey)!;
+            const raw = (it.status || "").trim();
+            if (!raw) return null;
+            const canon = canonical(raw);
+            const meta = BASE_BY_CANONICAL.get(canon) || buildAutoMeta(raw);
             const venda = vendasMap.get(it.venda_id);
             const cliente = venda?.cliente_id ? clientesMap.get(venda.cliente_id) : undefined;
             const servico = it.servico_id ? servicosMap.get(it.servico_id) : undefined;
@@ -287,7 +286,7 @@ export default function DashboardProcessosMonitor() {
               clienteNome: cliente?.nome_completo || "—",
               servicoNome: servico?.nome_servico || `Serviço #${it.servico_id ?? "?"}`,
               isCombo: !!servico?.is_combo,
-              status: statusKey,
+              status: canon,
               meta,
               vendaDate,
               diasParado: diffDays(stopRef),
@@ -305,15 +304,30 @@ export default function DashboardProcessosMonitor() {
     return () => { mounted = false; };
   }, []);
 
+  /* ── Catálogo DINÂMICO: base + qualquer status descoberto nos dados ── */
+  const dynamicCatalog = useMemo<StatusMeta[]>(() => {
+    const seen = new Map<string, StatusMeta>();
+    STATUS_CATALOG_BASE.forEach(s => seen.set(canonical(s.key), s));
+    rows.forEach(r => {
+      if (!seen.has(r.status)) seen.set(r.status, r.meta);
+    });
+    return Array.from(seen.values());
+  }, [rows]);
+
+  const catalogByKey = useMemo(
+    () => new Map<string, StatusMeta>(dynamicCatalog.map(s => [s.key, s])),
+    [dynamicCatalog]
+  );
+
   /* ── Contagens por status ── */
   const counts = useMemo(() => {
     const map = new Map<StatusKey, number>();
-    STATUS_CATALOG.forEach(s => map.set(s.key, 0));
+    dynamicCatalog.forEach(s => map.set(s.key, 0));
     rows.forEach(r => map.set(r.status, (map.get(r.status) || 0) + 1));
-    const ativos = STATUS_CATALOG.filter(s => s.group === "ativo").reduce((sum, s) => sum + (map.get(s.key) || 0), 0);
-    const encerrados = STATUS_CATALOG.filter(s => s.group === "encerrado").reduce((sum, s) => sum + (map.get(s.key) || 0), 0);
+    const ativos = dynamicCatalog.filter(s => s.group === "ativo").reduce((sum, s) => sum + (map.get(s.key) || 0), 0);
+    const encerrados = dynamicCatalog.filter(s => s.group === "encerrado").reduce((sum, s) => sum + (map.get(s.key) || 0), 0);
     return { byStatus: map, ativos, encerrados, total: rows.length };
-  }, [rows]);
+  }, [rows, dynamicCatalog]);
 
   /* ── Lista filtrada + ordenada ── */
   const visible = useMemo(() => {
