@@ -225,7 +225,7 @@ export default function QAClientesPage() {
   // Serviço COMBO - Registro de arma de fogo (CRAF) no Exército Brasileiro
   const SERVICOS_CRAF_EB = [6];
 
-  const ITEM_EDIT_FIELDS: { key: string; label: string; type: "date" | "text"; servicos?: number[]; condition?: (form: Record<string, string>, item?: any) => boolean }[] = [
+  const ITEM_EDIT_FIELDS: { key: string; label: string; type: "date" | "text"; servicos?: number[]; condition?: (form: Record<string, string>, item?: any) => boolean; required?: boolean }[] = [
     /* ================================================================
      * POSSE NA POLÍCIA FEDERAL (servico_id = 2) — formulário dedicado
      * Ordem fixa solicitada: Nº Requerimento → Protocolo → Notificação →
@@ -234,6 +234,7 @@ export default function QAClientesPage() {
      * Regra: Nº Processo NÃO aparece em Posse PF.
      * ================================================================ */
     { key: "numero_posse",                  label: "Nº do Requerimento de Posse",       type: "text", servicos: SERVICOS_POSSE },
+    { key: "registro_cad",                  label: "Nº CAD SINARM",                     type: "text", servicos: SERVICOS_POSSE, required: true },
     { key: "data_protocolo",                label: "Data Protocolo",                    type: "date", servicos: SERVICOS_POSSE },
     { key: "data_notificacao",              label: "Data da Notificação",               type: "date", servicos: SERVICOS_POSSE },
     { key: "data_indeferimento",            label: "Data de Indeferimento",             type: "date", servicos: SERVICOS_POSSE },
@@ -271,6 +272,8 @@ export default function QAClientesPage() {
     { key: "numero_sigma", label: "Nº SIGMA", type: "text", servicos: SERVICOS_CAC },
     { key: "numero_sinarm", label: "Nº SINARM", type: "text", servicos: SERVICOS_CAC },
     { key: "registro_cad", label: "Registro CAD", type: "text", servicos: SERVICOS_CAC },
+    // Nº CAD SINARM — obrigatório em CRAF na Polícia Federal
+    { key: "registro_cad", label: "Nº CAD SINARM", type: "text", servicos: [26], required: true },
     // Autorização de compra EB (Posse PF tem campos próprios na seção dedicada acima)
     { key: "numero_autorizacao", label: "Nº Autorização", type: "text", servicos: [5, 15] },
     { key: "validade_autorizacao", label: "Validade Autorização", type: "date", servicos: [5, 15] },
@@ -352,6 +355,11 @@ export default function QAClientesPage() {
       const payload: Record<string, any> = {};
       for (const f of applicableFields) {
         const v = itemEditForm[f.key]?.trim() || null;
+        if (f.required && !v) {
+          toast.error(`Campo obrigatório: "${f.label}".`);
+          setSavingItem(false);
+          return;
+        }
         if (f.type === "date") {
           if (v) {
             const iso = dateBrToIso(v);
@@ -1043,7 +1051,10 @@ export default function QAClientesPage() {
                                       <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                                         {getFieldsForServico(it.servico_id, itemEditForm, it).map(field => (
                                           <div key={field.key}>
-                                            <label className="block text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">{field.label}</label>
+                                            <label className="block text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">
+                                              {field.label}
+                                              {field.required && <span className="text-red-500 ml-0.5">*</span>}
+                                            </label>
                                             <input
                                               type="text"
                                               value={itemEditForm[field.key] || ""}
@@ -1053,7 +1064,7 @@ export default function QAClientesPage() {
                                                 setItemEditForm(prev => ({ ...prev, [field.key]: val }));
                                               }}
                                               placeholder={field.type === "date" ? "DD/MM/AAAA" : "—"}
-                                              className="w-full h-7 px-2 text-[10px] rounded bg-white border border-slate-200 text-slate-700 placeholder:text-slate-300 focus:border-blue-500 focus:outline-none transition-colors"
+                                              className={`w-full h-7 px-2 text-[10px] rounded bg-white border text-slate-700 placeholder:text-slate-300 focus:outline-none transition-colors ${field.required && !itemEditForm[field.key] ? "border-red-300 focus:border-red-500" : "border-slate-200 focus:border-blue-500"}`}
                                             />
                                           </div>
                                         ))}
