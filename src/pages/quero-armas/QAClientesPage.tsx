@@ -953,7 +953,7 @@ export default function QAClientesPage() {
                               <span className="text-slate-400 ml-2">{formatDate(v.data_cadastro)}</span>
                             </div>
                             <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                              <span className="w-[72px] flex justify-end">
+                              <span className="w-[72px] flex justify-start">
                                 {(() => {
                                   const allCortesia = vItens.length > 0 && vItens.every((i: any) => i.cortesia);
                                   const isPago = v.status === "PAGO" || !!v.forma_pagamento;
@@ -1026,7 +1026,7 @@ export default function QAClientesPage() {
                                     })()}
                                   </div>
                                   <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                                    <span className="w-[72px] flex justify-end">
+                                    <span className="w-[72px] flex justify-start">
                                       {it.cortesia ? (
                                         <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 border border-emerald-200" title={it.cortesia_motivo || "Cortesia"}>
                                           Cortesia
