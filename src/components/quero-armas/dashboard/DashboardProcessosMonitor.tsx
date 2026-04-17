@@ -108,6 +108,7 @@ interface MonitorRow {
 /** Linha agrupada para exibição: um COMBO por (cliente, status) lista todos os serviços COMBO. */
 interface DisplayRow {
   key: string;
+  itemIds: number[];               // ids dos itens (1 para single, N para combo)
   clienteId: number | null;
   clienteNome: string;
   vendaId: number;
