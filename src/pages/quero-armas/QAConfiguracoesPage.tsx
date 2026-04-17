@@ -24,9 +24,68 @@ export default function QAConfiguracoesPage() {
   const [showNew, setShowNew] = useState(false);
   const [savingSvc, setSavingSvc] = useState(false);
 
+  // Status de Serviço (CRUD)
+  const [statuses, setStatuses] = useState<{ id: string; nome: string; ordem: number; ativo: boolean }[]>([]);
+  const [editingStatusId, setEditingStatusId] = useState<string | null>(null);
+  const [editStatusForm, setEditStatusForm] = useState({ nome: "", ordem: "" });
+  const [newStatusForm, setNewStatusForm] = useState({ nome: "", ordem: "" });
+  const [showNewStatus, setShowNewStatus] = useState(false);
+  const [savingStatus, setSavingStatus] = useState(false);
+
   const loadServicos = async () => {
     const { data } = await supabase.from("qa_servicos" as any).select("*").order("nome_servico");
     setServicos((data as any[]) ?? []);
+  };
+
+  const loadStatuses = async () => {
+    const { data } = await supabase.from("qa_status_servico" as any).select("*").order("ordem", { ascending: true });
+    setStatuses((data as any[]) ?? []);
+  };
+
+  const handleAddStatus = async () => {
+    if (!newStatusForm.nome.trim()) { toast.error("Nome obrigatório"); return; }
+    setSavingStatus(true);
+    try {
+      const { error } = await supabase.from("qa_status_servico" as any).insert({
+        nome: newStatusForm.nome.trim(),
+        ordem: Number(newStatusForm.ordem) || 0,
+      });
+      if (error) throw error;
+      toast.success("Status criado");
+      setNewStatusForm({ nome: "", ordem: "" });
+      setShowNewStatus(false);
+      await loadStatuses();
+    } catch (e: any) { toast.error(e.message); } finally { setSavingStatus(false); }
+  };
+
+  const handleUpdateStatus = async (id: string) => {
+    if (!editStatusForm.nome.trim()) { toast.error("Nome obrigatório"); return; }
+    setSavingStatus(true);
+    try {
+      const { error } = await supabase.from("qa_status_servico" as any).update({
+        nome: editStatusForm.nome.trim(),
+        ordem: Number(editStatusForm.ordem) || 0,
+      }).eq("id", id);
+      if (error) throw error;
+      toast.success("Status atualizado");
+      setEditingStatusId(null);
+      await loadStatuses();
+    } catch (e: any) { toast.error(e.message); } finally { setSavingStatus(false); }
+  };
+
+  const handleDeleteStatus = async (id: string) => {
+    if (!confirm("Excluir este status?")) return;
+    try {
+      const { error } = await supabase.from("qa_status_servico" as any).delete().eq("id", id);
+      if (error) throw error;
+      toast.success("Status excluído");
+      await loadStatuses();
+    } catch (e: any) { toast.error(e.message); }
+  };
+
+  const startEditStatus = (s: { id: string; nome: string; ordem: number }) => {
+    setEditingStatusId(s.id);
+    setEditStatusForm({ nome: s.nome, ordem: String(s.ordem) });
   };
 
   useEffect(() => {
