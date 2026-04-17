@@ -160,11 +160,9 @@ export default function DashboardExames() {
 
         const latestMap = new Map<string, ExameRow>();
         for (const e of exames) {
-          const cidStr = String(e.cliente_id);
-          // Esconde exames apenas de clientes que JÁ NÃO TÊM nenhum serviço em aberto
-          // (ou seja, têm deferido E não têm mais pendentes). Se ainda houver
-          // qualquer item em aberto, mantemos o exame visível no monitoramento.
-          if (clientesComDeferido.has(cidStr) && !clientesComPendente.has(cidStr)) continue;
+          // Mantém TODOS os exames visíveis — inclusive de clientes sem serviço
+          // em aberto cadastrado, para que o admin use a relação como base de
+          // cadastro de novos serviços.
           const key = `${e.cliente_id}_${e.tipo}`;
           const existing = latestMap.get(key);
           if (!existing || e.data_realizacao > existing.data_realizacao) {
@@ -382,9 +380,13 @@ function ClienteCard({
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">CLIENTE</span>
-              {group.temServicoPendente && (
+              {group.temServicoPendente ? (
                 <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
                   <Users className="h-2.5 w-2.5" /> SERVIÇO PENDENTE
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-amber-50 text-amber-800 border border-amber-300">
+                  <AlertTriangle className="h-2.5 w-2.5" /> SEM SERVIÇO CADASTRADO
                 </span>
               )}
             </div>
