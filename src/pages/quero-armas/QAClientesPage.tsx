@@ -658,8 +658,10 @@ export default function QAClientesPage() {
     } catch { return d; }
   };
   const getServicoNome = (id: number) => {
-    const map: Record<number, string> = { 2:"Posse PF",3:"Porte PF",4:"Lions Gun",5:"COMBO Autoriz.",6:"COMBO CRAF",7:"COMBO GTE",8:"Apost. Atual.",9:"Apost. Mudança",10:"Apost. 2º End.",11:"Curso Pistola",12:"Curso Cal.12",13:"Mudança Serv.",14:"Reg. Recarga",15:"Autoriz. Compra",16:"Reg. Arma",17:"GTE Avulso",18:"GTE",20:"CR EB",21:"VIP Pistola" };
-    return map[id] || `Serviço #${id}`;
+    // Fonte de verdade: tabela qa_servicos (carregada via loadServicos).
+    // Mapas hardcoded foram removidos pois divergiam dos IDs reais e exibiam nomes errados (ex: "Posse PF", "Serviço #23").
+    const svc = (servicos as any[]).find(s => s.id === id);
+    return svc?.nome_servico || `Serviço #${id}`;
   };
 
   const clienteIdForSub = selected ? (selected.id_legado ?? selected.id) : 0;
