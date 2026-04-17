@@ -13,28 +13,17 @@ import {
   Clock, ArrowUpRight, Search, ChevronRight, Loader2,
   AlertTriangle, CheckCircle2, XCircle, FileWarning, FolderKanban,
   PlayCircle, ListChecks, Hourglass, Archive, Undo2, Ban, Sparkles,
-  Pencil, Check, X,
+  Pencil, Check, X, Circle, Gavel,
 } from "lucide-react";
 import { toast } from "sonner";
 
 /* ================================================================
- * Catálogo de status (estado atual do serviço)
- * Ordem reflete fluxo operacional.
+ * Catálogo BASE de status conhecidos (ícone, cor, grupo, ordem).
+ * Status novos descobertos em runtime são adicionados automaticamente
+ * usando defaults neutros. Ordem aqui define posição dos cards.
  * ================================================================ */
 
-type StatusKey =
-  | "EM ANÁLISE"
-  | "PRONTO PARA ANÁLISE"
-  | "À INICIAR"
-  | "À FAZER"
-  | "AGUARDANDO DOCUMENTAÇÃO"
-  | "AGUARDANDO DOCUMENTOS DO CLIENTE"
-  | "PASTA FÍSICA – AGUARDANDO LIBERAÇÃO"
-  | "DEFERIDO"
-  | "INDEFERIDO"
-  | "CONCLUÍDO"
-  | "DESISTIU"
-  | "RESTITUÍDO";
+type StatusKey = string; // dinâmico: aceita qualquer status presente no banco
 
 interface StatusMeta {
   key: StatusKey;
@@ -45,20 +34,54 @@ interface StatusMeta {
   group: "ativo" | "encerrado";
 }
 
-const STATUS_CATALOG: StatusMeta[] = [
+/** Normaliza chave canônica: UPPER + trim + colapsa espaços +
+ * unifica hífen/en-dash/em-dash em "-" para comparação resiliente. */
+function canonical(raw: string): string {
+  return (raw || "")
+    .toString()
+    .normalize("NFC")
+    .toUpperCase()
+    .replace(/[–—−]/g, "-")        // en-dash, em-dash, minus → hyphen
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+const STATUS_CATALOG_BASE: StatusMeta[] = [
   { key: "EM ANÁLISE",                          label: "Em Análise",                       short: "Em Análise",          icon: Sparkles,     tone: "indigo",  group: "ativo" },
   { key: "PRONTO PARA ANÁLISE",                 label: "Pronto para Análise",              short: "Pronto p/ Análise",   icon: ListChecks,   tone: "violet",  group: "ativo" },
   { key: "À INICIAR",                           label: "À Iniciar",                        short: "À Iniciar",           icon: PlayCircle,   tone: "blue",    group: "ativo" },
   { key: "À FAZER",                             label: "À Fazer",                          short: "À Fazer",             icon: ListChecks,   tone: "blue",    group: "ativo" },
   { key: "AGUARDANDO DOCUMENTAÇÃO",             label: "Aguardando Documentação",          short: "Aguard. Documentação",icon: FileWarning,  tone: "amber",   group: "ativo" },
   { key: "AGUARDANDO DOCUMENTOS DO CLIENTE",    label: "Aguardando Docs do Cliente",       short: "Aguard. Docs Cliente",icon: FileWarning,  tone: "amber",   group: "ativo" },
-  { key: "PASTA FÍSICA – AGUARDANDO LIBERAÇÃO", label: "Pasta Física — Aguard. Liberação", short: "Pasta Física",        icon: FolderKanban, tone: "amber",   group: "ativo" },
+  { key: "PASTA FÍSICA - AGUARDANDO LIBERAÇÃO", label: "Pasta Física — Aguard. Liberação", short: "Pasta Física",        icon: FolderKanban, tone: "amber",   group: "ativo" },
+  { key: "RECURSO ADMINISTRATIVO",              label: "Recurso Administrativo",           short: "Recurso Adm.",        icon: Gavel,        tone: "violet",  group: "ativo" },
   { key: "DEFERIDO",                            label: "Deferido",                         short: "Deferido",            icon: CheckCircle2, tone: "emerald", group: "encerrado" },
   { key: "CONCLUÍDO",                           label: "Concluído",                        short: "Concluído",           icon: CheckCircle2, tone: "emerald", group: "encerrado" },
   { key: "INDEFERIDO",                          label: "Indeferido",                       short: "Indeferido",          icon: XCircle,      tone: "rose",    group: "encerrado" },
   { key: "DESISTIU",                            label: "Desistiu",                         short: "Desistiu",            icon: Ban,          tone: "zinc",    group: "encerrado" },
   { key: "RESTITUÍDO",                          label: "Restituído",                       short: "Restituído",          icon: Undo2,        tone: "slate",   group: "encerrado" },
 ];
+
+/** Heurística para classificar status DESCONHECIDOS automaticamente.
+ *  Palavras-chave de encerramento → grupo "encerrado". Caso contrário "ativo". */
+const ENCERRADO_HINTS = ["DEFERIDO", "INDEFERIDO", "CONCLU", "DESIST", "RESTITU", "ENCERR", "ARQUIV", "CANCEL", "FINALIZ"];
+
+function buildAutoMeta(rawKey: string): StatusMeta {
+  const key = canonical(rawKey);
+  const isEncerrado = ENCERRADO_HINTS.some(h => key.includes(h));
+  // Capitaliza para label legível
+  const label = key
+    .toLowerCase()
+    .replace(/(^|\s|-)([a-zà-ÿ])/g, (_, p, c) => p + c.toUpperCase());
+  return {
+    key,
+    label,
+    short: label.length > 22 ? label.slice(0, 20) + "…" : label,
+    icon: isEncerrado ? Archive : Circle,
+    tone: isEncerrado ? "slate" : "zinc",
+    group: isEncerrado ? "encerrado" : "ativo",
+  };
+}
 
 const TONE_CLASSES: Record<StatusMeta["tone"], { bg: string; border: string; text: string; ring: string; dot: string }> = {
   amber:   { bg: "bg-amber-50",   border: "border-amber-200",   text: "text-amber-700",   ring: "ring-amber-300",   dot: "bg-amber-500" },
@@ -71,9 +94,12 @@ const TONE_CLASSES: Record<StatusMeta["tone"], { bg: string; border: string; tex
   zinc:    { bg: "bg-zinc-50",    border: "border-zinc-200",    text: "text-zinc-700",    ring: "ring-zinc-300",    dot: "bg-zinc-500" },
 };
 
-const STATUS_BY_KEY = new Map<string, StatusMeta>(STATUS_CATALOG.map(s => [s.key, s]));
+/** Mapa por chave canônica (resiliente a variações de hífen/espaços). */
+const BASE_BY_CANONICAL = new Map<string, StatusMeta>(
+  STATUS_CATALOG_BASE.map(s => [canonical(s.key), s])
+);
 
-type FilterKey = "todos" | "ativos" | "encerrados" | StatusKey;
+type FilterKey = "todos" | "ativos" | "encerrados" | string;
 type SortKey = "tempo_parado" | "recente" | "cliente" | "status" | "servico";
 
 /* ================================================================
@@ -108,7 +134,7 @@ interface MonitorRow {
 /** Linha agrupada para exibição: um COMBO por (cliente, status) lista todos os serviços COMBO. */
 interface DisplayRow {
   key: string;
-  itemIds: number[];               // ids dos itens (1 para single, N para combo)
+  itemIds: number[];
   clienteId: number | null;
   clienteNome: string;
   vendaId: number;
@@ -117,8 +143,8 @@ interface DisplayRow {
   vendaDate: string | null;
   diasParado: number;
   isComboGroup: boolean;
-  servicoNome: string;            // único (não-combo) ou rótulo do grupo
-  servicosList: string[];         // lista quando é grupo COMBO
+  servicoNome: string;
+  servicosList: string[];
 }
 
 /* ================================================================
@@ -138,12 +164,6 @@ function fmtBR(iso: string | null): string {
   if (!iso) return "—";
   const [y, m, d] = iso.slice(0, 10).split("-");
   return d && m && y ? `${d}/${m}/${y}` : "—";
-}
-
-function normalizeStatus(raw: string): StatusKey | null {
-  const up = (raw || "").toUpperCase().trim();
-  if (STATUS_BY_KEY.has(up)) return up as StatusKey;
-  return null;
 }
 
 function urgencyClass(dias: number, encerrado: boolean): string {
