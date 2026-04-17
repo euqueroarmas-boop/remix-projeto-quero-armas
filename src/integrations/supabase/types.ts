@@ -3213,6 +3213,7 @@ export type Database = {
           numero_posse: string | null
           numero_processo: string | null
           numero_registro: string | null
+          numero_requerimento: string | null
           numero_serie: string | null
           numero_sigma: string | null
           numero_sinarm: string | null
@@ -3245,6 +3246,7 @@ export type Database = {
           numero_posse?: string | null
           numero_processo?: string | null
           numero_registro?: string | null
+          numero_requerimento?: string | null
           numero_serie?: string | null
           numero_sigma?: string | null
           numero_sinarm?: string | null
@@ -3277,6 +3279,7 @@ export type Database = {
           numero_posse?: string | null
           numero_processo?: string | null
           numero_registro?: string | null
+          numero_requerimento?: string | null
           numero_serie?: string | null
           numero_sigma?: string | null
           numero_sinarm?: string | null
