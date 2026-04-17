@@ -630,6 +630,11 @@ export default function QAClientesPage() {
           supabase.from("qa_filiacoes" as any).delete().eq("cliente_id", clienteId),
         ]);
       }
+      if (deleteModal.table === "qa_vendas") {
+        const vendaObj = (vendas as any[]).find(v => v.id === deleteModal.id);
+        const vendaFk = vendaObj ? getVendaFK(vendaObj) : deleteModal.id;
+        await supabase.from("qa_itens_venda" as any).delete().eq("venda_id", vendaFk);
+      }
       const { error } = await supabase.from(deleteModal.table as any).delete().eq("id", deleteModal.id);
       if (error) throw error;
       toast.success("Excluído com sucesso");
