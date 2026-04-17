@@ -3198,6 +3198,7 @@ export type Database = {
           data_vencimento: string | null
           id: number
           id_legado: number | null
+          numero_autorizacao: string | null
           numero_cr: string | null
           numero_craf: string | null
           numero_gte: string | null
@@ -3209,6 +3210,7 @@ export type Database = {
           registro_cad: string | null
           servico_id: number | null
           status: string | null
+          validade_autorizacao: string | null
           valor: number | null
           venda_id: number | null
         }
@@ -3219,6 +3221,7 @@ export type Database = {
           data_vencimento?: string | null
           id?: number
           id_legado?: number | null
+          numero_autorizacao?: string | null
           numero_cr?: string | null
           numero_craf?: string | null
           numero_gte?: string | null
@@ -3230,6 +3233,7 @@ export type Database = {
           registro_cad?: string | null
           servico_id?: number | null
           status?: string | null
+          validade_autorizacao?: string | null
           valor?: number | null
           venda_id?: number | null
         }
@@ -3240,6 +3244,7 @@ export type Database = {
           data_vencimento?: string | null
           id?: number
           id_legado?: number | null
+          numero_autorizacao?: string | null
           numero_cr?: string | null
           numero_craf?: string | null
           numero_gte?: string | null
@@ -3251,6 +3256,7 @@ export type Database = {
           registro_cad?: string | null
           servico_id?: number | null
           status?: string | null
+          validade_autorizacao?: string | null
           valor?: number | null
           venda_id?: number | null
         }
