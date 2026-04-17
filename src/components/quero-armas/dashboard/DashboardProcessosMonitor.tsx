@@ -295,17 +295,19 @@ export default function DashboardProcessosMonitor() {
             const servico = it.servico_id ? servicosMap.get(it.servico_id) : undefined;
             const vendaDate = venda?.data_cadastro || (venda?.created_at ? venda.created_at.slice(0, 10) : null);
             const stopRef = it.data_ultima_atualizacao || it.data_protocolo || vendaDate;
+            const servicoNome = servico?.nome_servico || `Serviço #${it.servico_id ?? "?"}`;
             return {
               itemId: it.id,
               vendaId: it.venda_id,
               clienteId: venda?.cliente_id ?? null,
               clienteNome: cliente?.nome_completo || "—",
-              servicoNome: servico?.nome_servico || `Serviço #${it.servico_id ?? "?"}`,
+              servicoNome,
               isCombo: !!servico?.is_combo,
               status: canon,
               meta,
               vendaDate,
               diasParado: diffDays(stopRef),
+              entidade: classifyEntidade(servicoNome),
             } as MonitorRow;
           })
           .filter(Boolean) as MonitorRow[];
