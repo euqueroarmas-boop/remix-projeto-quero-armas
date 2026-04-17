@@ -421,17 +421,15 @@ export default function DashboardProcessosMonitor() {
 
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+      {/* Header — mesmo padrão do Monitoramento de Exames */}
+      <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-base md:text-lg font-bold tracking-tight" style={{ color: "hsl(220 20% 18%)" }}>
-            Monitor Operacional de Processos
-          </h2>
-          <p className="text-xs mt-0.5" style={{ color: "hsl(220 10% 62%)" }}>
+          <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide">MONITOR OPERACIONAL DE PROCESSOS</h3>
+          <p className="text-[11px] text-slate-500 mt-0.5">
             Estado atual de cada serviço — clique em um status para filtrar
           </p>
         </div>
-        <div className="hidden md:flex items-center gap-3 text-[11px]">
+        <div className="hidden md:flex items-center gap-3 text-[11px] shrink-0">
           <span className="inline-flex items-center gap-1.5 text-slate-500">
             <span className="w-1.5 h-1.5 rounded-full bg-blue-500" /> Ativos: <b className="text-slate-700">{counts.ativos}</b>
           </span>
@@ -441,35 +439,39 @@ export default function DashboardProcessosMonitor() {
         </div>
       </div>
 
-      {/* KPIs — Ativos */}
-      <div>
-        <div className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold mb-2 px-0.5">Em andamento</div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-2">
-          {ativosCatalog.map(s => (
-            <StatusKPI
-              key={s.key}
-              meta={s}
-              total={counts.byStatus.get(s.key) || 0}
-              active={filter === s.key}
-              onClick={() => setFilter(filter === s.key ? "ativos" : s.key)}
-            />
-          ))}
+      {/* KPIs — Ativos (mesmo visual dos cards de Exames) */}
+      <div className="space-y-2">
+        <div className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold px-0.5">Em andamento</div>
+        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+          <div className={`grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-${Math.min(ativosCatalog.length, 7)} divide-x divide-y sm:divide-y-0 divide-slate-100`}>
+            {ativosCatalog.map(s => (
+              <StatusKPI
+                key={s.key}
+                meta={s}
+                total={counts.byStatus.get(s.key) || 0}
+                active={filter === s.key}
+                onClick={() => setFilter(filter === s.key ? "ativos" : s.key)}
+              />
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* KPIs — Encerrados */}
-      <div>
-        <div className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold mb-2 px-0.5">Encerrados</div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
-          {encerradosCatalog.map(s => (
-            <StatusKPI
-              key={s.key}
-              meta={s}
-              total={counts.byStatus.get(s.key) || 0}
-              active={filter === s.key}
-              onClick={() => setFilter(filter === s.key ? "encerrados" : s.key)}
-            />
-          ))}
+      {/* KPIs — Encerrados (mesmo visual dos cards de Exames) */}
+      <div className="space-y-2">
+        <div className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold px-0.5">Encerrados</div>
+        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+          <div className={`grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-${Math.min(encerradosCatalog.length, 5)} divide-x divide-y sm:divide-y-0 divide-slate-100`}>
+            {encerradosCatalog.map(s => (
+              <StatusKPI
+                key={s.key}
+                meta={s}
+                total={counts.byStatus.get(s.key) || 0}
+                active={filter === s.key}
+                onClick={() => setFilter(filter === s.key ? "encerrados" : s.key)}
+              />
+            ))}
+          </div>
         </div>
       </div>
 
