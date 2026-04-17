@@ -421,17 +421,15 @@ export default function DashboardProcessosMonitor() {
 
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+      {/* Header — mesmo padrão do Monitoramento de Exames */}
+      <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-base md:text-lg font-bold tracking-tight" style={{ color: "hsl(220 20% 18%)" }}>
-            Monitor Operacional de Processos
-          </h2>
-          <p className="text-xs mt-0.5" style={{ color: "hsl(220 10% 62%)" }}>
+          <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide">MONITOR OPERACIONAL DE PROCESSOS</h3>
+          <p className="text-[11px] text-slate-500 mt-0.5">
             Estado atual de cada serviço — clique em um status para filtrar
           </p>
         </div>
-        <div className="hidden md:flex items-center gap-3 text-[11px]">
+        <div className="hidden md:flex items-center gap-3 text-[11px] shrink-0">
           <span className="inline-flex items-center gap-1.5 text-slate-500">
             <span className="w-1.5 h-1.5 rounded-full bg-blue-500" /> Ativos: <b className="text-slate-700">{counts.ativos}</b>
           </span>
@@ -441,35 +439,39 @@ export default function DashboardProcessosMonitor() {
         </div>
       </div>
 
-      {/* KPIs — Ativos */}
-      <div>
-        <div className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold mb-2 px-0.5">Em andamento</div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-2">
-          {ativosCatalog.map(s => (
-            <StatusKPI
-              key={s.key}
-              meta={s}
-              total={counts.byStatus.get(s.key) || 0}
-              active={filter === s.key}
-              onClick={() => setFilter(filter === s.key ? "ativos" : s.key)}
-            />
-          ))}
+      {/* KPIs — Ativos (mesmo visual dos cards de Exames) */}
+      <div className="space-y-2">
+        <div className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold px-0.5">Em andamento</div>
+        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 divide-x divide-y sm:divide-y-0 divide-slate-100">
+            {ativosCatalog.map(s => (
+              <StatusKPI
+                key={s.key}
+                meta={s}
+                total={counts.byStatus.get(s.key) || 0}
+                active={filter === s.key}
+                onClick={() => setFilter(filter === s.key ? "ativos" : s.key)}
+              />
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* KPIs — Encerrados */}
-      <div>
-        <div className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold mb-2 px-0.5">Encerrados</div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
-          {encerradosCatalog.map(s => (
-            <StatusKPI
-              key={s.key}
-              meta={s}
-              total={counts.byStatus.get(s.key) || 0}
-              active={filter === s.key}
-              onClick={() => setFilter(filter === s.key ? "encerrados" : s.key)}
-            />
-          ))}
+      {/* KPIs — Encerrados (mesmo visual dos cards de Exames) */}
+      <div className="space-y-2">
+        <div className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold px-0.5">Encerrados</div>
+        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 divide-x divide-y sm:divide-y-0 divide-slate-100">
+            {encerradosCatalog.map(s => (
+              <StatusKPI
+                key={s.key}
+                meta={s}
+                total={counts.byStatus.get(s.key) || 0}
+                active={filter === s.key}
+                onClick={() => setFilter(filter === s.key ? "encerrados" : s.key)}
+              />
+            ))}
+          </div>
         </div>
       </div>
 
@@ -701,16 +703,20 @@ function StatusKPI({
   const Icon = meta.icon;
   return (
     <button
+      type="button"
       onClick={onClick}
-      className={`text-left qa-card p-2.5 transition-all hover:shadow-md ${active ? `ring-2 ${tone.ring}` : ""}`}
+      className={`group relative px-3 py-3 text-left transition-all hover:bg-slate-50 cursor-pointer ${
+        active ? `ring-2 ${tone.ring} ring-inset bg-slate-50` : ""
+      }`}
     >
-      <div className="flex items-center justify-between gap-2">
-        <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${tone.bg} border ${tone.border}`}>
-          <Icon className={`w-3.5 h-3.5 ${tone.text}`} />
-        </div>
-        <div className="text-xl font-bold tabular-nums" style={{ color: "hsl(220 20% 18%)" }}>{total}</div>
+      <div className="flex items-center gap-2">
+        <span className={`h-2 w-2 rounded-full ${tone.dot}`} />
+        <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500 line-clamp-1">{meta.short}</span>
       </div>
-      <div className="mt-2 text-[11px] font-semibold text-slate-700 leading-tight line-clamp-2">{meta.short}</div>
+      <div className="mt-1.5 flex items-baseline gap-1.5">
+        <span className={`text-2xl font-black ${tone.text}`}>{total}</span>
+        <Icon className={`h-3.5 w-3.5 ${tone.text} opacity-60`} />
+      </div>
     </button>
   );
 }
