@@ -162,6 +162,44 @@ export default function DashboardProcessosMonitor() {
   const [filter, setFilter] = useState<FilterKey>("ativos");
   const [sortBy, setSortBy] = useState<SortKey>("tempo_parado");
   const [search, setSearch] = useState("");
+  const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  /** Aplica novo status + data de protocolo nos itens (1 ou N para combo).
+   *  Zera o "tempo no status" setando data_ultima_atualizacao = data informada. */
+  async function applyStatusChange(itemIds: number[], newStatus: StatusKey, dataProtocolo: string) {
+    if (!itemIds.length) return;
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("qa_itens_venda" as any)
+        .update({
+          status: newStatus,
+          data_protocolo: dataProtocolo,
+          data_ultima_atualizacao: dataProtocolo,
+        })
+        .in("id", itemIds);
+      if (error) throw error;
+
+      setRows(prev => prev.map(r => {
+        if (!itemIds.includes(r.itemId)) return r;
+        const meta = STATUS_BY_KEY.get(newStatus)!;
+        return {
+          ...r,
+          status: newStatus,
+          meta,
+          diasParado: diffDays(dataProtocolo),
+        };
+      }));
+      setEditingKey(null);
+      toast.success(`Status atualizado · ${itemIds.length > 1 ? `${itemIds.length} serviços` : "1 serviço"}`);
+    } catch (err: any) {
+      console.error("[applyStatusChange] error:", err);
+      toast.error("Falha ao atualizar status: " + (err?.message || "erro desconhecido"));
+    } finally {
+      setSaving(false);
+    }
+  }
 
   useEffect(() => {
     let mounted = true;
