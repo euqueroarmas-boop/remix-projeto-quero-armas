@@ -461,7 +461,7 @@ export default function DashboardProcessosMonitor() {
       <div className="space-y-2">
         <div className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold px-0.5">Encerrados</div>
         <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-          <div className={`grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-${Math.min(encerradosCatalog.length, 5)} divide-x divide-y sm:divide-y-0 divide-slate-100`}>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 divide-x divide-y sm:divide-y-0 divide-slate-100">
             {encerradosCatalog.map(s => (
               <StatusKPI
                 key={s.key}
