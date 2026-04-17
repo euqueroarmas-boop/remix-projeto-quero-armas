@@ -953,7 +953,7 @@ export default function QAClientesPage() {
                               <span className="text-slate-400 ml-2">{formatDate(v.data_cadastro)}</span>
                             </div>
                             <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                              <span className="w-[72px] flex justify-end">
+                              <span className="w-[72px] flex justify-start">
                                 {(() => {
                                   const allCortesia = vItens.length > 0 && vItens.every((i: any) => i.cortesia);
                                   const isPago = v.status === "PAGO" || !!v.forma_pagamento;
