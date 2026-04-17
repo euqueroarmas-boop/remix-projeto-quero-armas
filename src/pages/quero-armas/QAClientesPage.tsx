@@ -231,7 +231,8 @@ export default function QAClientesPage() {
     { key: "data_deferimento", label: "Data Deferimento do CR", type: "date", servicos: SERVICOS_CR },
     { key: "data_deferimento", label: "Data Deferimento", type: "date", servicos: [2, 3, 4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 26] },
     { key: "data_vencimento", label: "Data Vencimento do CR", type: "date", servicos: SERVICOS_CR },
-    { key: "data_vencimento", label: "Data Vencimento", type: "date", servicos: [2, 3, 4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 26] },
+    // Data Vencimento — removida para Autorização de compra EB (5, 15); substituída por "Validade Autorização"
+    { key: "data_vencimento", label: "Data Vencimento", type: "date", servicos: [2, 3, 4, 6, 7, 8, 9, 10, 14, 16, 17, 18, 26] },
     // Nº Processo — para CR é "Nº de Protocolo do CR"; demais usam "Nº Processo"
     { key: "numero_processo", label: "Nº de Protocolo do CR", type: "text", servicos: SERVICOS_CR },
     { key: "numero_processo", label: "Nº Processo", type: "text", servicos: [2, 4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 26] },
