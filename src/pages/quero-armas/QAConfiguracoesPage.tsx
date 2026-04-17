@@ -113,6 +113,7 @@ export default function QAConfiguracoesPage() {
         items.forEach((c: any) => { initial[c.id] = String(c.valor); });
         setEditedValues(initial);
         await loadServicos();
+        await loadStatuses();
       } catch (err) {
         console.error("[QAConfiguracoes] load error:", err);
       } finally {
