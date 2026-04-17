@@ -8,6 +8,7 @@ import {
   Crosshair, CreditCard, ChevronRight, Bell, Target, Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getClienteFK, getVendaFK } from "@/components/quero-armas/clientes/clientFK";
 
 const formatDate = (d: string | null) => {
   if (!d) return "—";
@@ -102,7 +103,7 @@ export default function QAClientePortalPage() {
         if (!clienteData) { setLoading(false); return; }
         setCliente(clienteData);
 
-        const clienteId = clienteData.id_legado ?? clienteData.id;
+        const clienteId = getClienteFK(clienteData);
 
         // Load sub-data in parallel. Exames usam o ID REAL do cliente (não o id_legado),
         // pois qa_exames_cliente.cliente_id referencia qa_clientes.id.

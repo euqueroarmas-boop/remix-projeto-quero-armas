@@ -21,6 +21,7 @@ import { exportClientes, exportCrafs, exportGtes, exportCr, exportVendas } from 
 import ClienteAcessoPortal from "@/components/quero-armas/clientes/ClienteAcessoPortal";
 import ClientePecas from "@/components/quero-armas/clientes/ClientePecas";
 import ClienteExames from "@/components/quero-armas/clientes/ClienteExames";
+import { getClienteFK, getVendaFK } from "@/components/quero-armas/clientes/clientFK";
 
 const formatCpf = (v: string | null | undefined): string => {
   if (!v) return "—";
@@ -337,7 +338,10 @@ export default function QAClientesPage() {
   useEffect(() => {
     const targetId = searchParams.get("cliente");
     if (!targetId || autoOpenedRef.current || clientes.length === 0) return;
-    const cli = clientes.find((c) => String(c.id) === targetId);
+    // O Monitor envia o FK canônico (id_legado). Buscamos por id_legado primeiro,
+    // com fallback para id quando o cliente não tiver id_legado.
+    const targetNum = Number(targetId);
+    const cli = clientes.find((c) => c.id_legado === targetNum) ?? clientes.find((c) => c.id === targetNum);
     if (cli) {
       autoOpenedRef.current = true;
       openClient(cli);
@@ -548,16 +552,13 @@ export default function QAClientesPage() {
   const loadSubData = useCallback(async (c: Cliente) => {
     setLoadingSub(true);
     try {
-      // CORREÇÃO CRÍTICA: usar SEMPRE c.id puro como cliente_id.
-      // O fallback "c.id_legado ?? c.id" causava colisão entre o `id` de um cliente
-      // e o `id_legado` de outro, misturando vendas/itens de clientes diferentes
-      // (ex.: Fábio id=4/leg=32 puxava vendas do Breno id=32).
-      const cid = c.id;
-      const examClientIds = Array.from(new Set([c.id, c.id_legado].filter((value): value is number => typeof value === "number" && Number.isFinite(value))));
+      // CHAVE CANÔNICA APROVADA: vendas/itens/crafs/gtes/cr/filiações usam id_legado.
+      // Exames usam c.id (qa_exames_cliente.cliente_id ainda referencia o id real).
+      const cid = getClienteFK(c);
       const examesQuery = supabase
         .from("qa_exames_cliente_status" as any)
         .select("*")
-        .in("cliente_id", examClientIds)
+        .eq("cliente_id", c.id)
         .order("data_realizacao", { ascending: false });
 
       const [vRes, cRes, gRes, fRes, cadRes, exRes] = await Promise.all([
@@ -576,8 +577,8 @@ export default function QAClientesPage() {
       setCadastro((cadRes.data as any[])?.[0] ?? null);
       setExamesAtuais((exRes.data as any[]) ?? []);
       if (vendasData.length > 0) {
-        // qa_itens_venda.venda_id referencia qa_vendas.id puro — nunca id_legado.
-        const vendaIds = vendasData.map((v: any) => v.id);
+        // qa_itens_venda.venda_id referencia qa_vendas.id_legado (chave canônica).
+        const vendaIds = vendasData.map((v: any) => getVendaFK(v));
         const { data: itensData } = await supabase.from("qa_itens_venda" as any).select("*").in("venda_id", vendaIds);
         setItens((itensData as any[]) ?? []);
       } else {
@@ -597,10 +598,10 @@ export default function QAClientesPage() {
       if (deleteModal.table === "qa_clientes") {
         // Cascade: delete sub-entities first
         const clienteObj = clientes.find(c => c.id === deleteModal.id);
-        const clienteId = clienteObj ? (clienteObj.id_legado ?? clienteObj.id) : deleteModal.id;
-        const { data: vendasCliente } = await supabase.from("qa_vendas" as any).select("id").eq("cliente_id", clienteId);
+        const clienteId = clienteObj ? getClienteFK(clienteObj) : deleteModal.id;
+        const { data: vendasCliente } = await supabase.from("qa_vendas" as any).select("id, id_legado").eq("cliente_id", clienteId);
         if (vendasCliente && vendasCliente.length > 0) {
-          const vendaIds = (vendasCliente as any[]).map(v => v.id);
+          const vendaIds = (vendasCliente as any[]).map(v => getVendaFK(v));
           await supabase.from("qa_itens_venda" as any).delete().in("venda_id", vendaIds);
           await supabase.from("qa_vendas" as any).delete().eq("cliente_id", clienteId);
         }
@@ -669,7 +670,7 @@ export default function QAClientesPage() {
     return svc?.nome_servico || `Serviço #${id}`;
   };
 
-  const clienteIdForSub = selected ? (selected.id_legado ?? selected.id) : 0;
+  const clienteIdForSub = selected ? getClienteFK(selected) : 0;
 
   // ── Detail View ──
   if (selected) {
