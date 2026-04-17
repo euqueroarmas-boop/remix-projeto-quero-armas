@@ -908,7 +908,7 @@ export default function QAClientesPage() {
                                         <SelectValue />
                                       </SelectTrigger>
                                       <SelectContent>
-                                        {["EM ANÁLISE", "PRONTO PARA ANÁLISE", "À INICIAR", "À FAZER", "AGUARDANDO DOCUMENTAÇÃO", "PASTA FÍSICA - AGUARDANDO LIBERAÇÃO", "DEFERIDO", "INDEFERIDO", "CONCLUÍDO", "DESISTIU", "RESTITUÍDO"].map(s => (
+                                        {["EM ANÁLISE", "PRONTO PARA ANÁLISE", "À INICIAR", "À FAZER", "AGUARDANDO DOCUMENTAÇÃO", "PASTA FÍSICA - AGUARDANDO LIBERAÇÃO", "DEFERIDO", "INDEFERIDO", "RECURSO ADMINISTRATIVO", "CONCLUÍDO", "DESISTIU", "RESTITUÍDO"].map(s => (
                                           <SelectItem key={s} value={s} className="text-[10px]">{s}</SelectItem>
                                         ))}
                                       </SelectContent>
