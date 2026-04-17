@@ -209,7 +209,8 @@ export default function QAClientesPage() {
   const [savingItem, setSavingItem] = useState(false);
 
   // Serviços CAC (Colecionador, Atirador, Caçador) e correlatos onde campos SIGMA/CR/CRAF/Porte/GTE são aplicáveis
-  const SERVICOS_CAC = [3, 4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 20];
+  // OBS: Porte na Polícia Federal (id=3) NÃO é CAC — possui apenas Nº Porte, sem CRAF/GTE/CR/SIGMA/SINARM
+  const SERVICOS_CAC = [4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 20];
   // Serviço de Posse na Polícia Federal
   const SERVICOS_POSSE = [2];
 
