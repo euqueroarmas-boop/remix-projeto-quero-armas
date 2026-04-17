@@ -3542,6 +3542,42 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_servicos_com_exame: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          exige_psicologico: boolean
+          exige_tiro: boolean
+          id: string
+          nome_servico: string
+          observacoes: string | null
+          servico_id: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          exige_psicologico?: boolean
+          exige_tiro?: boolean
+          id?: string
+          nome_servico: string
+          observacoes?: string | null
+          servico_id: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          exige_psicologico?: boolean
+          exige_tiro?: boolean
+          id?: string
+          nome_servico?: string
+          observacoes?: string | null
+          servico_id?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       qa_status_tipos: {
         Row: {
           id: number
