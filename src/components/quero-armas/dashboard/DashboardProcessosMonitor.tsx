@@ -118,6 +118,21 @@ interface VendaRow { id: number; id_legado: number | null; cliente_id: number | 
 interface ClienteRow { id: number; id_legado: number | null; nome_completo: string | null; }
 interface ServicoRow { id: number; nome_servico: string | null; is_combo?: boolean | null; }
 
+type Entidade = "PF" | "EB";
+
+/** Classifica o serviço pela entidade responsável.
+ *  Regra: Posse ou Porte → Polícia Federal. Demais → Exército Brasileiro. */
+function classifyEntidade(servicoNome: string): Entidade {
+  const n = (servicoNome || "").toLowerCase();
+  if (n.includes("posse") || n.includes("porte")) return "PF";
+  return "EB";
+}
+
+const ENTIDADE_META: Record<Entidade, { label: string; sigla: string; ref: string }> = {
+  PF: { label: "Polícia Federal",   sigla: "PF", ref: "ID_ENT: PF-01" },
+  EB: { label: "Exército Brasileiro", sigla: "EB", ref: "ID_ENT: EB-04" },
+};
+
 interface MonitorRow {
   itemId: number;
   vendaId: number;
@@ -129,6 +144,7 @@ interface MonitorRow {
   meta: StatusMeta;
   vendaDate: string | null;
   diasParado: number;
+  entidade: Entidade;
 }
 
 /** Linha agrupada para exibição: um COMBO por (cliente, status) lista todos os serviços COMBO. */
@@ -279,17 +295,19 @@ export default function DashboardProcessosMonitor() {
             const servico = it.servico_id ? servicosMap.get(it.servico_id) : undefined;
             const vendaDate = venda?.data_cadastro || (venda?.created_at ? venda.created_at.slice(0, 10) : null);
             const stopRef = it.data_ultima_atualizacao || it.data_protocolo || vendaDate;
+            const servicoNome = servico?.nome_servico || `Serviço #${it.servico_id ?? "?"}`;
             return {
               itemId: it.id,
               vendaId: it.venda_id,
               clienteId: venda?.cliente_id ?? null,
               clienteNome: cliente?.nome_completo || "—",
-              servicoNome: servico?.nome_servico || `Serviço #${it.servico_id ?? "?"}`,
+              servicoNome,
               isCombo: !!servico?.is_combo,
               status: canon,
               meta,
               vendaDate,
               diasParado: diffDays(stopRef),
+              entidade: classifyEntidade(servicoNome),
             } as MonitorRow;
           })
           .filter(Boolean) as MonitorRow[];
@@ -319,14 +337,36 @@ export default function DashboardProcessosMonitor() {
     [dynamicCatalog]
   );
 
-  /* ── Contagens por status ── */
+  /* ── Contagens por status (global e por entidade) ── */
   const counts = useMemo(() => {
     const map = new Map<StatusKey, number>();
-    dynamicCatalog.forEach(s => map.set(s.key, 0));
-    rows.forEach(r => map.set(r.status, (map.get(r.status) || 0) + 1));
+    const byEntStatus: Record<Entidade, Map<StatusKey, number>> = {
+      PF: new Map(), EB: new Map(),
+    };
+    dynamicCatalog.forEach(s => {
+      map.set(s.key, 0);
+      byEntStatus.PF.set(s.key, 0);
+      byEntStatus.EB.set(s.key, 0);
+    });
+    rows.forEach(r => {
+      map.set(r.status, (map.get(r.status) || 0) + 1);
+      const m = byEntStatus[r.entidade];
+      m.set(r.status, (m.get(r.status) || 0) + 1);
+    });
     const ativos = dynamicCatalog.filter(s => s.group === "ativo").reduce((sum, s) => sum + (map.get(s.key) || 0), 0);
     const encerrados = dynamicCatalog.filter(s => s.group === "encerrado").reduce((sum, s) => sum + (map.get(s.key) || 0), 0);
-    return { byStatus: map, ativos, encerrados, total: rows.length };
+    const entTotals = (ent: Entidade) => {
+      const m = byEntStatus[ent];
+      const a = dynamicCatalog.filter(s => s.group === "ativo").reduce((sum, s) => sum + (m.get(s.key) || 0), 0);
+      const e = dynamicCatalog.filter(s => s.group === "encerrado").reduce((sum, s) => sum + (m.get(s.key) || 0), 0);
+      return { ativos: a, encerrados: e, total: a + e };
+    };
+    return {
+      byStatus: map, ativos, encerrados, total: rows.length,
+      byEntStatus,
+      pf: entTotals("PF"),
+      eb: entTotals("EB"),
+    };
   }, [rows, dynamicCatalog]);
 
   /* ── Lista filtrada + ordenada ── */
@@ -439,40 +479,26 @@ export default function DashboardProcessosMonitor() {
         </div>
       </div>
 
-      {/* KPIs — Ativos (mesmo visual dos cards de Exames) */}
-      <div className="space-y-2">
-        <div className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold px-0.5">Em andamento</div>
-        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 divide-x divide-y sm:divide-y-0 divide-slate-100">
-            {ativosCatalog.map(s => (
-              <StatusKPI
-                key={s.key}
-                meta={s}
-                total={counts.byStatus.get(s.key) || 0}
-                active={filter === s.key}
-                onClick={() => setFilter(filter === s.key ? "ativos" : s.key)}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* KPIs — Encerrados (mesmo visual dos cards de Exames) */}
-      <div className="space-y-2">
-        <div className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold px-0.5">Encerrados</div>
-        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 divide-x divide-y sm:divide-y-0 divide-slate-100">
-            {encerradosCatalog.map(s => (
-              <StatusKPI
-                key={s.key}
-                meta={s}
-                total={counts.byStatus.get(s.key) || 0}
-                active={filter === s.key}
-                onClick={() => setFilter(filter === s.key ? "encerrados" : s.key)}
-              />
-            ))}
-          </div>
-        </div>
+      {/* Painéis por Entidade — Polícia Federal e Exército Brasileiro lado a lado */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <EntityPanel
+          entidade="PF"
+          totals={counts.pf}
+          ativosCatalog={ativosCatalog}
+          encerradosCatalog={encerradosCatalog}
+          counts={counts.byEntStatus.PF}
+          filter={filter}
+          setFilter={setFilter}
+        />
+        <EntityPanel
+          entidade="EB"
+          totals={counts.eb}
+          ativosCatalog={ativosCatalog}
+          encerradosCatalog={encerradosCatalog}
+          counts={counts.byEntStatus.EB}
+          filter={filter}
+          setFilter={setFilter}
+        />
       </div>
 
       {/* Toolbar */}
@@ -695,6 +721,95 @@ export default function DashboardProcessosMonitor() {
 /* ================================================================
  * UI helpers
  * ================================================================ */
+
+function EntityPanel({
+  entidade, totals, ativosCatalog, encerradosCatalog, counts, filter, setFilter,
+}: {
+  entidade: Entidade;
+  totals: { ativos: number; encerrados: number; total: number };
+  ativosCatalog: StatusMeta[];
+  encerradosCatalog: StatusMeta[];
+  counts: Map<StatusKey, number>;
+  filter: FilterKey;
+  setFilter: (f: FilterKey) => void;
+}) {
+  const meta = ENTIDADE_META[entidade];
+  return (
+    <section className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm flex flex-col">
+      {/* Header da entidade */}
+      <div className="bg-slate-50 border-b border-slate-200 px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className={`size-2.5 rounded-full ${entidade === "PF" ? "bg-slate-900" : "bg-emerald-700"}`} />
+          <h4 className="text-sm font-bold uppercase tracking-wide text-slate-900">{meta.label}</h4>
+        </div>
+        <span className="font-mono text-[10px] font-semibold text-slate-500 bg-slate-200/60 px-2 py-0.5 rounded">{meta.ref}</span>
+      </div>
+
+      {/* Totais */}
+      <div className="grid grid-cols-2 divide-x divide-slate-200 border-b border-slate-200">
+        <div className="p-4">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Em Andamento</span>
+          <div className="text-3xl font-bold tabular-nums text-slate-900 mt-1">{totals.ativos}</div>
+        </div>
+        <div className="p-4">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Encerrados</span>
+          <div className="text-3xl font-bold tabular-nums text-slate-500 mt-1">{totals.encerrados}</div>
+        </div>
+      </div>
+
+      {/* Detalhamento de status */}
+      <div className="grid grid-cols-2 divide-x divide-slate-100">
+        <div className="p-3 flex flex-col gap-2">
+          <h5 className="text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-1.5">Fluxo Ativo</h5>
+          {ativosCatalog.length === 0 ? (
+            <span className="text-[11px] text-slate-300 italic">—</span>
+          ) : ativosCatalog.map(s => (
+            <StatusLine
+              key={s.key} meta={s}
+              total={counts.get(s.key) || 0}
+              active={filter === s.key}
+              onClick={() => setFilter(filter === s.key ? "ativos" : s.key)}
+            />
+          ))}
+        </div>
+        <div className="p-3 flex flex-col gap-2">
+          <h5 className="text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-1.5">Resoluções</h5>
+          {encerradosCatalog.length === 0 ? (
+            <span className="text-[11px] text-slate-300 italic">—</span>
+          ) : encerradosCatalog.map(s => (
+            <StatusLine
+              key={s.key} meta={s}
+              total={counts.get(s.key) || 0}
+              active={filter === s.key}
+              onClick={() => setFilter(filter === s.key ? "encerrados" : s.key)}
+            />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function StatusLine({
+  meta, total, active, onClick,
+}: { meta: StatusMeta; total: number; active: boolean; onClick: () => void }) {
+  const tone = TONE_CLASSES[meta.tone];
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex items-center justify-between px-2 py-1.5 rounded-md text-left transition hover:bg-slate-50 ${
+        active ? `ring-2 ${tone.ring} ring-inset bg-slate-50` : ""
+      }`}
+    >
+      <div className="flex items-center gap-2 min-w-0">
+        <span className={`size-2 rounded-full shrink-0 ${tone.dot}`} />
+        <span className="text-[11px] font-medium text-slate-700 truncate">{meta.short}</span>
+      </div>
+      <span className={`text-sm font-bold tabular-nums shrink-0 ml-2 ${total > 0 ? tone.text : "text-slate-300"}`}>{total}</span>
+    </button>
+  );
+}
 
 function StatusKPI({
   meta, total, active, onClick,
