@@ -88,7 +88,7 @@ interface ItemRow {
 }
 interface VendaRow { id: number; id_legado: number | null; cliente_id: number | null; data_cadastro: string | null; created_at: string | null; }
 interface ClienteRow { id: number; id_legado: number | null; nome_completo: string | null; }
-interface ServicoRow { id: number; nome_servico: string | null; }
+interface ServicoRow { id: number; nome_servico: string | null; is_combo?: boolean | null; }
 
 interface MonitorRow {
   itemId: number;
@@ -96,10 +96,26 @@ interface MonitorRow {
   clienteId: number | null;
   clienteNome: string;
   servicoNome: string;
+  isCombo: boolean;
   status: StatusKey;
   meta: StatusMeta;
   vendaDate: string | null;
   diasParado: number;
+}
+
+/** Linha agrupada para exibição: um COMBO por (cliente, status) lista todos os serviços COMBO. */
+interface DisplayRow {
+  key: string;
+  clienteId: number | null;
+  clienteNome: string;
+  vendaId: number;
+  status: StatusKey;
+  meta: StatusMeta;
+  vendaDate: string | null;
+  diasParado: number;
+  isComboGroup: boolean;
+  servicoNome: string;            // único (não-combo) ou rótulo do grupo
+  servicosList: string[];         // lista quando é grupo COMBO
 }
 
 /* ================================================================
@@ -168,7 +184,7 @@ export default function DashboardProcessosMonitor() {
         const [vRes, sRes] = await Promise.all([
           supabase.from("qa_vendas" as any).select("id, id_legado, cliente_id, data_cadastro, created_at").in("id_legado", vendaIds),
           servicoIds.length
-            ? supabase.from("qa_servicos" as any).select("id, nome_servico").in("id", servicoIds)
+            ? supabase.from("qa_servicos" as any).select("id, nome_servico, is_combo").in("id", servicoIds)
             : Promise.resolve({ data: [] as any[] }),
         ]);
 
@@ -209,6 +225,7 @@ export default function DashboardProcessosMonitor() {
               clienteId: venda?.cliente_id ?? null,
               clienteNome: cliente?.nome_completo || "—",
               servicoNome: servico?.nome_servico || `Serviço #${it.servico_id ?? "?"}`,
+              isCombo: !!servico?.is_combo,
               status: statusKey,
               meta,
               vendaDate,
@@ -262,7 +279,56 @@ export default function DashboardProcessosMonitor() {
         default: return b.diasParado - a.diasParado;
       }
     });
-    return list;
+
+    /* ── AGRUPAMENTO COMBO ──
+     * Mantém a lógica do card ativo (filtro/status). Para cada chave (cliente+status),
+     * se houver múltiplos serviços marcados como COMBO, eles são unificados em uma
+     * única linha listando todos os serviços abaixo do nome do cliente.
+     * Serviços não-COMBO continuam como linhas individuais (preserva função do card). */
+    const groups = new Map<string, MonitorRow[]>();
+    const singles: MonitorRow[] = [];
+    for (const r of list) {
+      if (!r.isCombo) { singles.push(r); continue; }
+      const k = `${r.clienteId ?? "x"}|${r.status}`;
+      const arr = groups.get(k) || [];
+      arr.push(r);
+      groups.set(k, arr);
+    }
+    const display: DisplayRow[] = [];
+    for (const r of singles) {
+      display.push({
+        key: `s-${r.itemId}`,
+        clienteId: r.clienteId, clienteNome: r.clienteNome,
+        vendaId: r.vendaId, status: r.status, meta: r.meta,
+        vendaDate: r.vendaDate, diasParado: r.diasParado,
+        isComboGroup: false, servicoNome: r.servicoNome, servicosList: [],
+      });
+    }
+    for (const [k, arr] of groups) {
+      if (arr.length === 1) {
+        const r = arr[0];
+        display.push({
+          key: `c1-${r.itemId}`,
+          clienteId: r.clienteId, clienteNome: r.clienteNome,
+          vendaId: r.vendaId, status: r.status, meta: r.meta,
+          vendaDate: r.vendaDate, diasParado: r.diasParado,
+          isComboGroup: false, servicoNome: r.servicoNome, servicosList: [],
+        });
+      } else {
+        // Pega referências do mais recente
+        const ref = [...arr].sort((a, b) => b.diasParado - a.diasParado)[0];
+        display.push({
+          key: `cg-${k}`,
+          clienteId: ref.clienteId, clienteNome: ref.clienteNome,
+          vendaId: ref.vendaId, status: ref.status, meta: ref.meta,
+          vendaDate: ref.vendaDate, diasParado: ref.diasParado,
+          isComboGroup: true,
+          servicoNome: `COMBO • ${arr.length} serviços`,
+          servicosList: arr.map(x => x.servicoNome),
+        });
+      }
+    }
+    return display;
   }, [rows, filter, sortBy, search]);
 
   if (loading) {
@@ -394,9 +460,22 @@ export default function DashboardProcessosMonitor() {
                     const tone = TONE_CLASSES[r.meta.tone];
                     const encerrado = r.meta.group === "encerrado";
                     return (
-                      <tr key={r.itemId} className="border-t border-slate-100 hover:bg-slate-50/60">
+                      <tr key={r.key} className="border-t border-slate-100 hover:bg-slate-50/60 align-top">
                         <td className="px-3 py-2 font-medium text-slate-700">{r.clienteNome}</td>
-                        <td className="px-3 py-2 text-slate-600">{r.servicoNome}</td>
+                        <td className="px-3 py-2 text-slate-600">
+                          {r.isComboGroup ? (
+                            <div className="space-y-1">
+                              <div className="inline-flex items-center gap-1 text-[10px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-full px-2 py-0.5">
+                                <Sparkles className="w-3 h-3" /> COMBO • {r.servicosList.length} serviços
+                              </div>
+                              <ul className="text-[11.5px] text-slate-600 list-disc pl-4 space-y-0.5">
+                                {r.servicosList.map((s, i) => <li key={i}>{s}</li>)}
+                              </ul>
+                            </div>
+                          ) : (
+                            r.servicoNome
+                          )}
+                        </td>
                         <td className="px-3 py-2 text-slate-500 font-mono text-[11px]">#{r.vendaId}</td>
                         <td className="px-3 py-2">
                           <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border ${tone.bg} ${tone.text} ${tone.border}`}>
@@ -434,11 +513,22 @@ export default function DashboardProcessosMonitor() {
                 const tone = TONE_CLASSES[r.meta.tone];
                 const encerrado = r.meta.group === "encerrado";
                 return (
-                  <div key={r.itemId} className="p-3">
+                  <div key={r.key} className="p-3">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
                         <div className="text-[13px] font-semibold text-slate-700 truncate">{r.clienteNome}</div>
-                        <div className="text-[11.5px] text-slate-500 truncate">{r.servicoNome}</div>
+                        {r.isComboGroup ? (
+                          <div className="mt-1">
+                            <div className="inline-flex items-center gap-1 text-[10px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-full px-2 py-0.5">
+                              <Sparkles className="w-3 h-3" /> COMBO • {r.servicosList.length}
+                            </div>
+                            <ul className="mt-1 text-[11px] text-slate-600 list-disc pl-4 space-y-0.5">
+                              {r.servicosList.map((s, i) => <li key={i}>{s}</li>)}
+                            </ul>
+                          </div>
+                        ) : (
+                          <div className="text-[11.5px] text-slate-500 truncate">{r.servicoNome}</div>
+                        )}
                       </div>
                       <span className={`shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${urgencyClass(r.diasParado, encerrado)}`}>
                         <Clock className="w-3 h-3" />
