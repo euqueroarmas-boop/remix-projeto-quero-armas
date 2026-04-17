@@ -515,7 +515,7 @@ export default function ClientePecaAuxiliaryDocs({ onChange, userId, caseId }: P
   };
 
   return (
-    <div className="rounded-xl border border-border/60 bg-muted/30 p-4 space-y-3">
+    <div className="rounded-xl border-2 border-border/60 bg-white p-4 space-y-3">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
