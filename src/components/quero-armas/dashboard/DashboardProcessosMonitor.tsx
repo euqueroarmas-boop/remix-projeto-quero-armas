@@ -339,6 +339,7 @@ export default function DashboardProcessosMonitor() {
     for (const r of singles) {
       display.push({
         key: `s-${r.itemId}`,
+        itemIds: [r.itemId],
         clienteId: r.clienteId, clienteNome: r.clienteNome,
         vendaId: r.vendaId, status: r.status, meta: r.meta,
         vendaDate: r.vendaDate, diasParado: r.diasParado,
@@ -350,16 +351,17 @@ export default function DashboardProcessosMonitor() {
         const r = arr[0];
         display.push({
           key: `c1-${r.itemId}`,
+          itemIds: [r.itemId],
           clienteId: r.clienteId, clienteNome: r.clienteNome,
           vendaId: r.vendaId, status: r.status, meta: r.meta,
           vendaDate: r.vendaDate, diasParado: r.diasParado,
           isComboGroup: false, servicoNome: r.servicoNome, servicosList: [],
         });
       } else {
-        // Pega referências do mais recente
         const ref = [...arr].sort((a, b) => b.diasParado - a.diasParado)[0];
         display.push({
           key: `cg-${k}`,
+          itemIds: arr.map(x => x.itemId),
           clienteId: ref.clienteId, clienteNome: ref.clienteNome,
           vendaId: ref.vendaId, status: ref.status, meta: ref.meta,
           vendaDate: ref.vendaDate, diasParado: ref.diasParado,
