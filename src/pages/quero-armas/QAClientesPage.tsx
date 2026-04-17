@@ -354,9 +354,14 @@ export default function QAClientesPage() {
     setSavingItem(true);
     try {
       const payload: Record<string, any> = {};
+      // Status que dispensam campos de "outorga" (deferimento) — ex.: INDEFERIDO, EM ANÁLISE, etc.
+      const statusAtual = String(currentItem?.status || "").toLowerCase();
+      const dispensaDeferimento = ["indeferido", "cancelado", "em_analise", "pronto_para_analise", "a_iniciar", "montando_pasta", "aguardando_documentos"].includes(statusAtual);
       for (const f of applicableFields) {
         const v = itemEditForm[f.key]?.trim() || null;
-        if (f.required && !v) {
+        // Campos só obrigatórios quando o processo foi efetivamente DEFERIDO/CONCLUÍDO
+        const isFieldRequired = f.required && !dispensaDeferimento;
+        if (isFieldRequired && !v) {
           toast.error(`Campo obrigatório: "${f.label}".`);
           setSavingItem(false);
           return;
