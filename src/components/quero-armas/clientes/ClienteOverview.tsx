@@ -479,6 +479,9 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
       {timeline.length > 0 && (
         <div className="qa-card p-5">
           <SectionHeader icon={Activity} title="Linha do Tempo" color="hsl(190 80% 42%)" />
+          <div className="text-[10px] mb-3" style={{ color: "hsl(220 10% 55%)" }}>
+            {timeline.length} eventos · ordem cronológica (mais antigo → mais recente)
+          </div>
           <div className="relative pl-6">
             <div className="absolute left-2.5 top-1 bottom-1 w-px" style={{ background: "hsl(220 13% 90%)" }} />
             <div className="space-y-3">
@@ -490,8 +493,19 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
                       <Icon className="h-2.5 w-2.5" style={{ color: ev.color }} />
                     </div>
                     <div className="flex-1 min-w-0 pl-4">
-                      <div className="text-[11px] font-medium" style={{ color: "hsl(220 20% 18%)" }}>{ev.label}</div>
-                      <div className="text-[10px] mt-0.5" style={{ color: "hsl(220 10% 55%)" }}>{formatDate(ev.date)}</div>
+                      <div className="flex items-baseline gap-2 flex-wrap">
+                        <span className="text-[10px] font-mono font-bold shrink-0" style={{ color: ev.color }}>
+                          {formatDate(ev.date)}
+                        </span>
+                        <span className="text-[11px] font-semibold" style={{ color: "hsl(220 20% 18%)" }}>
+                          {ev.label}
+                        </span>
+                      </div>
+                      {ev.sublabel && (
+                        <div className="text-[10px] mt-0.5" style={{ color: "hsl(220 10% 55%)" }}>
+                          {ev.sublabel}
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
