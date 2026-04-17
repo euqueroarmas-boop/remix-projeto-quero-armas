@@ -216,11 +216,14 @@ export default function QAClientesPage() {
 
   const ITEM_EDIT_FIELDS: { key: string; label: string; type: "date" | "text"; servicos?: number[]; condition?: (form: Record<string, string>) => boolean }[] = [
     { key: "data_protocolo", label: "Data Protocolo", type: "date" },
+    // Nº do Requerimento — exclusivo de Porte na Polícia Federal
+    { key: "numero_requerimento", label: "Nº do Requerimento", type: "text", servicos: [3] },
     { key: "data_notificacao", label: "Data da Notificação", type: "date", servicos: SERVICOS_POSSE },
     { key: "data_recurso_administrativo", label: "Data do Recurso Administrativo", type: "date", servicos: SERVICOS_POSSE, condition: (f) => !!f.data_notificacao },
     { key: "data_deferimento", label: "Data Deferimento", type: "date" },
     { key: "data_vencimento", label: "Data Vencimento", type: "date" },
-    { key: "numero_processo", label: "Nº Processo", type: "text" },
+    // Nº Processo — não se aplica a Porte na Polícia Federal
+    { key: "numero_processo", label: "Nº Processo", type: "text", servicos: [2, 4, 5, 6, 7, 8, 9, 10, 13, 14, 15, 16, 17, 18, 20, 26] },
     // Campos exclusivos de CAC — NÃO aparecem em Posse na Polícia Federal
     { key: "numero_craf", label: "Nº CRAF", type: "text", servicos: SERVICOS_CAC },
     { key: "numero_gte", label: "Nº GTE", type: "text", servicos: SERVICOS_CAC },
