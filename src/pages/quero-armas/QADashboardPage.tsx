@@ -264,6 +264,11 @@ export default function QADashboardPage() {
         </div>
       )}
 
+      {/* Prazos Recursais (PF) — alta prioridade, vem antes de tudo */}
+      <Suspense fallback={null}>
+        <DashboardPrazosRecursais />
+      </Suspense>
+
       {/* Exames Monitoring */}
       <Suspense fallback={<div className="qa-card p-6 flex justify-center"><div className="w-5 h-5 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" /></div>}>
         <DashboardExames />
