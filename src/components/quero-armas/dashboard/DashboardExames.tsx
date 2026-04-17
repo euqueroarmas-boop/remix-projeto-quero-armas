@@ -30,7 +30,8 @@ interface ServicoRow { id: number; nome_servico: string | null; }
 
 interface ExameDashItem {
   exameId: string;
-  clienteId: number;
+  clienteId: number;          // id puro de qa_clientes (uso interno p/ agrupamento)
+  clienteIdCanonical: string; // id_legado quando existir, senão id puro — usado em links
   clienteNome: string;
   clienteTelefone: string | null;
   tipo: ExameTipo;
