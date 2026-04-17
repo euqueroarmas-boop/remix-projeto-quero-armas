@@ -3847,6 +3847,7 @@ export type Database = {
           numero_processo: string | null
           status: string | null
           valor_a_pagar: number | null
+          valor_aberto: number
         }
         Insert: {
           cliente_id?: number | null
@@ -3862,6 +3863,7 @@ export type Database = {
           numero_processo?: string | null
           status?: string | null
           valor_a_pagar?: number | null
+          valor_aberto?: number
         }
         Update: {
           cliente_id?: number | null
@@ -3877,6 +3879,7 @@ export type Database = {
           numero_processo?: string | null
           status?: string | null
           valor_a_pagar?: number | null
+          valor_aberto?: number
         }
         Relationships: [
           {

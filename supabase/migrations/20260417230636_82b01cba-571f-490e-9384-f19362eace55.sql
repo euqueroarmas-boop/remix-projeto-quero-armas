@@ -1,0 +1,1 @@
+ALTER TABLE public.qa_vendas ADD COLUMN IF NOT EXISTS valor_aberto numeric NOT NULL DEFAULT 0;

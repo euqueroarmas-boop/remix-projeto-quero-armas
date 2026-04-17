@@ -338,7 +338,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
   const [saving, setSaving] = useState(false);
   const [servicos, setServicos] = useState<{ id: number; nome_servico: string; valor_servico: number }[]>([]);
   const [selectedServicos, setSelectedServicos] = useState<Map<number, { valor: number; checked: boolean; cortesia: boolean; cortesia_motivo: string; status: string | null }>>(new Map());
-  const [f, setF] = useState({ forma_pagamento: "", desconto: "0", status: "", numero_processo: "", data_cadastro: "" });
+  const [f, setF] = useState({ forma_pagamento: "", desconto: "0", status: "", numero_processo: "", data_cadastro: "", valor_aberto: "0" });
 
   useEffect(() => {
     supabase.from("qa_servicos" as any).select("*").order("nome_servico").then(({ data }) => {
@@ -352,6 +352,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
         forma_pagamento: venda.forma_pagamento || "", desconto: String(venda.desconto || 0),
         status: venda.status || "", numero_processo: venda.numero_processo || "",
         data_cadastro: isoToBr(venda.data_cadastro) || isoToBr(new Date().toISOString().slice(0, 10)),
+        valor_aberto: String(venda.valor_aberto || 0),
       });
       const vendaLegacyId = venda.id_legado ?? venda.id;
       supabase.from("qa_itens_venda" as any).select("*").eq("venda_id", vendaLegacyId).then(({ data }) => {
@@ -370,7 +371,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
     } else {
       const today = new Date();
       const todayBr = `${String(today.getDate()).padStart(2,'0')}/${String(today.getMonth()+1).padStart(2,'0')}/${today.getFullYear()}`;
-      setF({ forma_pagamento: "", desconto: "0", status: "", numero_processo: "", data_cadastro: todayBr });
+      setF({ forma_pagamento: "", desconto: "0", status: "", numero_processo: "", data_cadastro: todayBr, valor_aberto: "0" });
       setSelectedServicos(new Map());
     }
   }, [venda, open]);
@@ -420,7 +421,8 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
     setSaving(true);
     try {
       const dataCadIso = brToIso(f.data_cadastro) || new Date().toISOString().slice(0, 10);
-      const payload: any = { ...f, data_cadastro: dataCadIso, desconto: desconto, valor_a_pagar: total };
+      const valorAberto = f.status === "EM ABERTO" ? (Number(f.valor_aberto) || 0) : 0;
+      const payload: any = { ...f, data_cadastro: dataCadIso, desconto: desconto, valor_a_pagar: total, valor_aberto: valorAberto };
       let vendaId: number;
       if (isEdit) {
         const { error } = await supabase.from("qa_vendas" as any).update(payload).eq("id", venda.id);
@@ -529,14 +531,28 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
             <label className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-500 uppercase tracking-[0.1em] mb-2">Status</label>
             <Select value={f.status} onValueChange={v => setF(p => ({ ...p, status: v }))}>
               <SelectTrigger className="h-10 text-sm bg-slate-50/80 border-slate-200/80 text-slate-800 rounded-lg font-medium hover:border-indigo-300 hover:bg-white transition-all duration-200 focus:ring-2 focus:ring-indigo-500/20 focus:ring-offset-0 focus:border-indigo-400">
-                <SelectValue />
+                <SelectValue placeholder="Selecionar" />
               </SelectTrigger>
               <SelectContent className="bg-white border-slate-200 rounded-lg shadow-xl">
-                {["EM ANÁLISE", "PRONTO PARA ANÁLISE", "À INICIAR", "MONTANDO PASTA", "AGUARDANDO DOCUMENTOS DO CLIENTE", "DEFERIDO", "INDEFERIDO", "CONCLUÍDO", "PAGO"].map(s => (
+                {["PAGO", "EM ABERTO"].map(s => (
                   <SelectItem key={s} value={s} className="text-sm text-slate-700">{s}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {f.status === "EM ABERTO" && (
+              <div className="mt-2">
+                <label className="flex items-center gap-1.5 text-[10px] font-semibold text-amber-600 uppercase tracking-[0.1em] mb-1">Valor em aberto (R$)</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={f.valor_aberto}
+                  onChange={e => setF(p => ({ ...p, valor_aberto: e.target.value }))}
+                  className="w-full h-10 px-3 text-sm bg-amber-50/60 border border-amber-200 rounded-lg text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-amber-400/30 focus:border-amber-400"
+                  placeholder="0,00"
+                />
+              </div>
+            )}
           </div>
         </div>
 
