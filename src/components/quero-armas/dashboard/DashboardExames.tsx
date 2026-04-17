@@ -84,6 +84,17 @@ export default function DashboardExames() {
   const [items, setItems] = useState<ExameDashItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterKey, setFilterKey] = useState<FilterKey | null>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  const handleKpiClick = (key: FilterKey) => {
+    const next = filterKey === key ? null : key;
+    setFilterKey(next);
+    if (next) {
+      setTimeout(() => {
+        listRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 80);
+    }
+  };
 
   useEffect(() => {
     const load = async () => {
