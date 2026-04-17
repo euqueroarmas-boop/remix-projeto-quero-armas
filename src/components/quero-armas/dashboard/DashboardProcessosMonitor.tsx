@@ -225,6 +225,7 @@ export default function DashboardProcessosMonitor() {
               clienteId: venda?.cliente_id ?? null,
               clienteNome: cliente?.nome_completo || "—",
               servicoNome: servico?.nome_servico || `Serviço #${it.servico_id ?? "?"}`,
+              isCombo: !!servico?.is_combo,
               status: statusKey,
               meta,
               vendaDate,
