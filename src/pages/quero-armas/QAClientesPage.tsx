@@ -212,8 +212,11 @@ export default function QAClientesPage() {
   const SERVICOS_CR = [13, 20, 27];
   // Serviços CAC (Colecionador, Atirador, Caçador) e correlatos onde campos SIGMA/CRAF/Porte/GTE são aplicáveis
   // OBS: Porte na Polícia Federal (id=3) NÃO é CAC — possui apenas Nº Porte, sem CRAF/GTE/CR/SIGMA/SINARM
-  // OBS: Concessão de CR (13, 20) foi REMOVIDA daqui — possui apenas campos exclusivos do CR
-  const SERVICOS_CAC = [4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18];
+  // OBS: Concessão de CR (13, 20, 27) foi REMOVIDA daqui — possui apenas campos exclusivos do CR
+  // OBS: Autorização de compra de arma de fogo no EB (5, 15) foi REMOVIDA daqui — possui apenas campos específicos da autorização
+  const SERVICOS_CAC = [4, 6, 7, 8, 9, 10, 14, 16, 17, 18];
+  // Serviços de Autorização de compra de arma de fogo no Exército Brasileiro
+  const SERVICOS_AUTORIZACAO_EB = [5, 15];
   // Serviço de Posse na Polícia Federal
   const SERVICOS_POSSE = [2];
 
