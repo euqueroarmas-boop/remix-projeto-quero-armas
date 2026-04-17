@@ -503,7 +503,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-white border-slate-200 rounded-lg shadow-xl">
-                {["EM ANÁLISE", "PRONTO PARA ANÁLISE", "À INICIAR", "DEFERIDO", "INDEFERIDO", "CONCLUÍDO", "PAGO"].map(s => (
+                {["EM ANÁLISE", "PRONTO PARA ANÁLISE", "À INICIAR", "MONTANDO PASTA", "AGUARDANDO DOCUMENTOS DO CLIENTE", "DEFERIDO", "INDEFERIDO", "CONCLUÍDO", "PAGO"].map(s => (
                   <SelectItem key={s} value={s} className="text-sm text-slate-700">{s}</SelectItem>
                 ))}
               </SelectContent>
