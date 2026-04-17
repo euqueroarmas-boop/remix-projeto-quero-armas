@@ -1551,7 +1551,8 @@ export default function QAClientesPage() {
             <Download className="h-3.5 w-3.5 mr-1" /> CSV
           </Button>
           <button onClick={() => { setEditingCliente(null); setClienteModal(true); }}
-            className="qa-btn-primary flex items-center gap-1.5 h-8 px-3 text-[11px] font-semibold">
+            className="flex items-center gap-1.5 h-8 px-3 text-[11px] font-semibold rounded-md transition-all hover:opacity-90 shadow-sm"
+            style={{ background: "hsl(230 80% 56%)", color: "#ffffff" }}>
             <Plus className="h-3.5 w-3.5" /> NOVO CLIENTE
           </button>
         </div>
