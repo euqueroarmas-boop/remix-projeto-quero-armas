@@ -3197,6 +3197,7 @@ export type Database = {
           cortesia_motivo: string | null
           data_deferimento: string | null
           data_indeferimento: string | null
+          data_indeferimento_recurso: string | null
           data_notificacao: string | null
           data_protocolo: string | null
           data_recurso_administrativo: string | null
@@ -3232,6 +3233,7 @@ export type Database = {
           cortesia_motivo?: string | null
           data_deferimento?: string | null
           data_indeferimento?: string | null
+          data_indeferimento_recurso?: string | null
           data_notificacao?: string | null
           data_protocolo?: string | null
           data_recurso_administrativo?: string | null
@@ -3267,6 +3269,7 @@ export type Database = {
           cortesia_motivo?: string | null
           data_deferimento?: string | null
           data_indeferimento?: string | null
+          data_indeferimento_recurso?: string | null
           data_notificacao?: string | null
           data_protocolo?: string | null
           data_recurso_administrativo?: string | null
