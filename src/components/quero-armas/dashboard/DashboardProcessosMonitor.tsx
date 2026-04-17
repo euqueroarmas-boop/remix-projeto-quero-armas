@@ -88,7 +88,7 @@ interface ItemRow {
 }
 interface VendaRow { id: number; id_legado: number | null; cliente_id: number | null; data_cadastro: string | null; created_at: string | null; }
 interface ClienteRow { id: number; id_legado: number | null; nome_completo: string | null; }
-interface ServicoRow { id: number; nome_servico: string | null; }
+interface ServicoRow { id: number; nome_servico: string | null; is_combo?: boolean | null; }
 
 interface MonitorRow {
   itemId: number;
@@ -96,10 +96,26 @@ interface MonitorRow {
   clienteId: number | null;
   clienteNome: string;
   servicoNome: string;
+  isCombo: boolean;
   status: StatusKey;
   meta: StatusMeta;
   vendaDate: string | null;
   diasParado: number;
+}
+
+/** Linha agrupada para exibição: um COMBO por (cliente, status) lista todos os serviços COMBO. */
+interface DisplayRow {
+  key: string;
+  clienteId: number | null;
+  clienteNome: string;
+  vendaId: number;
+  status: StatusKey;
+  meta: StatusMeta;
+  vendaDate: string | null;
+  diasParado: number;
+  isComboGroup: boolean;
+  servicoNome: string;            // único (não-combo) ou rótulo do grupo
+  servicosList: string[];         // lista quando é grupo COMBO
 }
 
 /* ================================================================
