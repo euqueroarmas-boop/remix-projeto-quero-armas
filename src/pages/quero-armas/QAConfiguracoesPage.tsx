@@ -7,7 +7,7 @@ import { Loader2, Save, Plus, Pencil, Trash2, X, Check, Settings, Database, User
 import { useQAAuthContext } from "@/components/quero-armas/QAAuthContext";
 
 interface ConfigItem { id: string; chave: string; valor: number; descricao: string | null; }
-interface Servico { id: number; nome_servico: string; valor_servico: number; }
+interface Servico { id: number; nome_servico: string; valor_servico: number; is_combo?: boolean; }
 
 export default function QAConfiguracoesPage() {
   const { profile } = useQAAuthContext();
@@ -19,8 +19,8 @@ export default function QAConfiguracoesPage() {
 
   const [servicos, setServicos] = useState<Servico[]>([]);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [editForm, setEditForm] = useState({ nome_servico: "", valor_servico: "" });
-  const [newForm, setNewForm] = useState({ nome_servico: "", valor_servico: "" });
+  const [editForm, setEditForm] = useState({ nome_servico: "", valor_servico: "", is_combo: false });
+  const [newForm, setNewForm] = useState({ nome_servico: "", valor_servico: "", is_combo: false });
   const [showNew, setShowNew] = useState(false);
   const [savingSvc, setSavingSvc] = useState(false);
 
@@ -87,10 +87,11 @@ export default function QAConfiguracoesPage() {
       const { error } = await supabase.from("qa_servicos" as any).insert({
         nome_servico: newForm.nome_servico.trim(),
         valor_servico: Number(newForm.valor_servico) || 0,
+        is_combo: newForm.is_combo,
       });
       if (error) throw error;
       toast.success("Serviço cadastrado");
-      setNewForm({ nome_servico: "", valor_servico: "" });
+      setNewForm({ nome_servico: "", valor_servico: "", is_combo: false });
       setShowNew(false);
       await loadServicos();
     } catch (e: any) { toast.error(e.message); } finally { setSavingSvc(false); }
@@ -103,6 +104,7 @@ export default function QAConfiguracoesPage() {
       const { error } = await supabase.from("qa_servicos" as any).update({
         nome_servico: editForm.nome_servico.trim(),
         valor_servico: Number(editForm.valor_servico) || 0,
+        is_combo: editForm.is_combo,
       }).eq("id", id);
       if (error) throw error;
       toast.success("Serviço atualizado");
@@ -123,7 +125,7 @@ export default function QAConfiguracoesPage() {
 
   const startEdit = (svc: Servico) => {
     setEditingId(svc.id);
-    setEditForm({ nome_servico: svc.nome_servico, valor_servico: String(svc.valor_servico) });
+    setEditForm({ nome_servico: svc.nome_servico, valor_servico: String(svc.valor_servico), is_combo: !!svc.is_combo });
   };
 
   const isAdmin = profile?.perfil === "administrador";
@@ -175,7 +177,7 @@ export default function QAConfiguracoesPage() {
         <div className="qa-card p-5">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "hsl(220 10% 45%)" }}>Serviços ({servicos.length})</span>
-            <button onClick={() => { setShowNew(!showNew); setNewForm({ nome_servico: "", valor_servico: "" }); }}
+            <button onClick={() => { setShowNew(!showNew); setNewForm({ nome_servico: "", valor_servico: "", is_combo: false }); }}
               className="qa-btn-primary h-8 px-3 text-[11px] flex items-center gap-1 no-glow">
               <Plus className="h-3 w-3" /> Novo Serviço
             </button>
