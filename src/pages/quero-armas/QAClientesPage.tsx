@@ -225,7 +225,7 @@ export default function QAClientesPage() {
   // Serviço COMBO - Registro de arma de fogo (CRAF) no Exército Brasileiro
   const SERVICOS_CRAF_EB = [6];
 
-  const ITEM_EDIT_FIELDS: { key: string; label: string; type: "date" | "text"; servicos?: number[]; condition?: (form: Record<string, string>) => boolean }[] = [
+  const ITEM_EDIT_FIELDS: { key: string; label: string; type: "date" | "text"; servicos?: number[]; condition?: (form: Record<string, string>, item?: any) => boolean }[] = [
     // Datas — para CR usam rótulo específico "do CR"
     { key: "data_protocolo", label: "Data Protocolo do CR", type: "date", servicos: SERVICOS_CR },
     { key: "data_protocolo", label: "Data Protocolo", type: "date", servicos: [2, 3, 4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 26] },
@@ -233,8 +233,10 @@ export default function QAClientesPage() {
     { key: "numero_requerimento", label: "Nº do Requerimento", type: "text", servicos: [3] },
     { key: "data_notificacao", label: "Data da Notificação", type: "date", servicos: SERVICOS_POSSE },
     { key: "data_recurso_administrativo", label: "Data do Recurso Administrativo", type: "date", servicos: SERVICOS_POSSE, condition: (f) => !!f.data_notificacao },
-    { key: "data_deferimento", label: "Data Deferimento do CR", type: "date", servicos: SERVICOS_CR },
-    { key: "data_deferimento", label: "Data Deferimento", type: "date", servicos: [2, 3, 4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 26] },
+    { key: "data_deferimento", label: "Data Deferimento do CR", type: "date", servicos: SERVICOS_CR, condition: (_f, it) => (it?.status || "").toUpperCase() !== "INDEFERIDO" },
+    { key: "data_deferimento", label: "Data Deferimento", type: "date", servicos: [2, 3, 4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 26], condition: (_f, it) => (it?.status || "").toUpperCase() !== "INDEFERIDO" },
+    // Data de Indeferimento — REGRA GLOBAL: aparece APENAS quando o status do item é INDEFERIDO
+    { key: "data_indeferimento", label: "Data de Indeferimento", type: "date", condition: (_f, it) => (it?.status || "").toUpperCase() === "INDEFERIDO" },
     { key: "data_vencimento", label: "Data Vencimento do CR", type: "date", servicos: SERVICOS_CR },
     // Data Vencimento — removida para Autorização de compra EB (5, 15); substituída por "Validade Autorização"
     { key: "data_vencimento", label: "Data Vencimento", type: "date", servicos: [2, 3, 4, 6, 7, 8, 9, 10, 14, 16, 17, 18, 26] },
@@ -270,11 +272,14 @@ export default function QAClientesPage() {
     { key: "quantidade_tiros", label: "Quantidade de Tiros da Arma", type: "text", servicos: SERVICOS_CRAF_EB },
   ];
 
+  /** REGRA GLOBAL: o formulário de detalhes só é liberado após o status do item ser definido. */
+  const isStatusDefinido = (s: any) => String(s || "").trim().length > 0;
+
   /** Retorna apenas os campos aplicáveis ao serviço (filtra por servico_id quando definido). */
-  const getFieldsForServico = (servicoId: number | null | undefined, form?: Record<string, string>) =>
+  const getFieldsForServico = (servicoId: number | null | undefined, form?: Record<string, string>, item?: any) =>
     ITEM_EDIT_FIELDS.filter(f =>
       (!f.servicos || (servicoId != null && f.servicos.includes(servicoId))) &&
-      (!f.condition || (form && f.condition(form)))
+      (!f.condition || f.condition(form || {}, item))
     );
 
   const handleExpandItem = (item: any) => {
@@ -317,7 +322,7 @@ export default function QAClientesPage() {
     if (!expandedItemId) return;
     const currentItem = (itens as any[]).find(i => i.id === expandedItemId);
     const servicoId = currentItem?.servico_id;
-    const applicableFields = getFieldsForServico(servicoId, itemEditForm);
+    const applicableFields = getFieldsForServico(servicoId, itemEditForm, currentItem);
     setSavingItem(true);
     try {
       const payload: Record<string, any> = {};
@@ -994,24 +999,30 @@ export default function QAClientesPage() {
                                         </Button>
                                       </div>
                                     </div>
-                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                                      {getFieldsForServico(it.servico_id, itemEditForm).map(field => (
-                                        <div key={field.key}>
-                                          <label className="block text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">{field.label}</label>
-                                          <input
-                                            type="text"
-                                            value={itemEditForm[field.key] || ""}
-                                            onChange={e => {
-                                              const raw = e.target.value;
-                                              const val = field.type === "date" ? applyDateMask(raw) : raw.toUpperCase();
-                                              setItemEditForm(prev => ({ ...prev, [field.key]: val }));
-                                            }}
-                                            placeholder={field.type === "date" ? "DD/MM/AAAA" : "—"}
-                                            className="w-full h-7 px-2 text-[10px] rounded bg-white border border-slate-200 text-slate-700 placeholder:text-slate-300 focus:border-blue-500 focus:outline-none transition-colors"
-                                          />
-                                        </div>
-                                      ))}
-                                    </div>
+                                    {!isStatusDefinido(it.status) ? (
+                                      <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-[10px] text-amber-700">
+                                        ⚠️ Selecione o <strong>status</strong> deste serviço para liberar o preenchimento do formulário.
+                                      </div>
+                                    ) : (
+                                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                        {getFieldsForServico(it.servico_id, itemEditForm, it).map(field => (
+                                          <div key={field.key}>
+                                            <label className="block text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">{field.label}</label>
+                                            <input
+                                              type="text"
+                                              value={itemEditForm[field.key] || ""}
+                                              onChange={e => {
+                                                const raw = e.target.value;
+                                                const val = field.type === "date" ? applyDateMask(raw) : raw.toUpperCase();
+                                                setItemEditForm(prev => ({ ...prev, [field.key]: val }));
+                                              }}
+                                              placeholder={field.type === "date" ? "DD/MM/AAAA" : "—"}
+                                              className="w-full h-7 px-2 text-[10px] rounded bg-white border border-slate-200 text-slate-700 placeholder:text-slate-300 focus:border-blue-500 focus:outline-none transition-colors"
+                                            />
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
                                     {/* Declarações movidas para a aba "Docs" — não exibir aqui */}
                                   </div>
                                 )}
