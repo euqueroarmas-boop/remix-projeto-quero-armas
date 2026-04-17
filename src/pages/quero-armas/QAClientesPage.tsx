@@ -963,15 +963,27 @@ export default function QAClientesPage() {
                           <div className="px-3 py-2 space-y-1.5">
                             {vItens.map((it: any) => (
                               <div key={it.id}>
-                                <div className={`flex items-center justify-between text-[10px] gap-1 rounded px-1 -mx-1 py-0.5 ${isStatusDefinido(it.status) ? "cursor-pointer hover:bg-white" : "cursor-not-allowed opacity-90"}`} onClick={() => handleExpandItem(it)}>
+                                <div className={`flex items-center justify-between text-[10px] gap-1 rounded px-1 -mx-1 py-0.5 ${isStatusDefinido(it.status) ? "hover:bg-white" : "opacity-90"}`}>
                                   <div className="flex items-center gap-2 flex-1 min-w-0">
-                                    {expandedItemId === it.id ? <ChevronUp className="h-3 w-3 shrink-0 text-slate-500" /> : <ChevronDown className="h-3 w-3 shrink-0 text-slate-500" />}
+                                    <button
+                                      type="button"
+                                      onClick={() => handleExpandItem(it)}
+                                      disabled={!isStatusDefinido(it.status)}
+                                      title={isStatusDefinido(it.status) ? "Abrir formulário" : "Selecione o status para liberar o formulário"}
+                                      className={`inline-flex h-5 w-5 items-center justify-center rounded transition-colors ${isStatusDefinido(it.status) ? "text-slate-500 hover:bg-slate-100 hover:text-slate-700" : "cursor-not-allowed text-slate-300"}`}
+                                    >
+                                      {expandedItemId === it.id ? <ChevronUp className="h-3 w-3 shrink-0" /> : <ChevronDown className="h-3 w-3 shrink-0" />}
+                                    </button>
                                     <Select
                                       value={it.status || ""}
                                       onValueChange={async (newStatus) => {
                                         const { error } = await supabase.from("qa_itens_venda" as any).update({ status: newStatus }).eq("id", it.id);
                                         if (error) { toast.error(error.message); return; }
                                         setItens(prev => prev.map((i: any) => i.id === it.id ? { ...i, status: newStatus } : i));
+                                         if (expandedItemId === it.id) {
+                                           setExpandedItemId(null);
+                                           setItemEditForm({});
+                                         }
                                         toast.success(`Status → ${newStatus}`);
                                       }}
                                     >
