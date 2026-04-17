@@ -70,8 +70,7 @@ function PremiumModalShell({ open, onClose, title, icon: Icon, accentColor, chil
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
       <DialogContent
-        className="border-0 shadow-2xl shadow-slate-200/60 rounded-2xl overflow-hidden p-0 bg-white"
-        style={{ width: "calc(100vw - 2rem)", maxWidth: "28rem" }}
+        className="border-0 shadow-2xl shadow-slate-200/60 rounded-2xl overflow-hidden p-0 bg-white w-[calc(100vw-1rem)] max-w-md sm:max-w-lg"
       >
         {/* Header gradient strip */}
         <div className={`h-1 w-full ${accentColor}`} />
@@ -392,14 +391,14 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
 
   return (
     <PremiumModalShell open={open} onClose={onClose} title={isEdit ? "Editar Venda" : "Nova Venda"} icon={ShoppingCart} accentColor="bg-blue-600">
-      <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
-        <div className="grid grid-cols-2 gap-3">
+      <div className="space-y-4 max-h-[70vh] overflow-y-auto overflow-x-hidden pr-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <PremiumField label="Data da Venda" value={f.data_cadastro} onChange={v => setF(p => ({ ...p, data_cadastro: applyDateMask(v) }))} type="date" icon={CalendarDays} />
           <PremiumField label="Nº Processo" value={f.numero_processo} onChange={v => setF(p => ({ ...p, numero_processo: v }))} icon={Hash} />
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <PremiumField label="Forma Pagamento" value={f.forma_pagamento} onChange={v => setF(p => ({ ...p, forma_pagamento: v }))} />
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <label className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-500 uppercase tracking-[0.1em] mb-2">Status</label>
             <Select value={f.status} onValueChange={v => setF(p => ({ ...p, status: v }))}>
               <SelectTrigger className="h-10 text-sm bg-slate-50/80 border-slate-200/80 text-slate-800 rounded-lg font-medium hover:border-indigo-300 hover:bg-white transition-all duration-200 focus:ring-2 focus:ring-indigo-500/20 focus:ring-offset-0 focus:border-indigo-400">
@@ -427,7 +426,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
               return (
                 <label
                   key={svc.id}
-                  className={`flex items-center gap-2.5 rounded-lg px-3 py-2 cursor-pointer text-xs transition-all duration-200 ${
+                  className={`flex items-center gap-2 rounded-lg px-2.5 py-2 cursor-pointer text-xs transition-all duration-200 ${
                     isChecked
                       ? "bg-indigo-50 border border-indigo-200/60 text-slate-800 shadow-sm"
                       : "text-slate-500 hover:bg-white border border-transparent"
@@ -443,9 +442,11 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
                   {isChecked ? (
                     <Input
                       type="number"
+                      inputMode="decimal"
                       value={String(svcData?.valor ?? svc.valor_servico)}
                       onChange={e => updateServicoValor(svc.id, Number(e.target.value) || 0)}
-                      className="h-7 w-20 text-xs text-right bg-white border-slate-200 text-slate-700 px-2 shrink-0 rounded-md focus-visible:ring-1 focus-visible:ring-indigo-400 focus-visible:ring-offset-0 font-mono"
+                      onClick={e => e.preventDefault()}
+                      className="h-7 w-16 sm:w-20 text-xs text-right bg-white border-slate-200 text-slate-700 px-1.5 shrink-0 rounded-md focus-visible:ring-1 focus-visible:ring-indigo-400 focus-visible:ring-offset-0 font-mono"
                     />
                   ) : (
                     <span className="text-[10px] text-slate-400 font-mono shrink-0">R$ {svc.valor_servico}</span>
@@ -457,21 +458,24 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
         </div>
 
         {/* Totals */}
-        <div className="rounded-xl bg-slate-50 border border-slate-200/60 p-3.5 space-y-2 text-xs">
-          <div className="flex justify-between">
+        <div className="rounded-xl bg-slate-50 border border-slate-200/60 p-3 space-y-2 text-xs">
+          <div className="flex justify-between items-center gap-2">
             <span className="text-slate-500 font-medium">Subtotal ({selectedServicos.size})</span>
             <span className="text-slate-700 font-mono font-semibold">R$ {subtotal.toLocaleString('pt-BR')}</span>
           </div>
-          <div className="flex justify-between items-center">
-            <span className="text-slate-500 font-medium">Desconto</span>
+          <div className="flex justify-between items-center gap-2">
+            <span className="text-slate-500 font-medium shrink-0">Desconto (R$)</span>
             <Input
               type="number"
+              inputMode="decimal"
+              min={0}
+              placeholder="0"
               value={f.desconto}
               onChange={e => setF(p => ({ ...p, desconto: e.target.value }))}
-              className="h-7 w-20 text-xs text-right bg-white border-slate-200 text-slate-700 px-2 rounded-md font-mono focus-visible:ring-1 focus-visible:ring-indigo-400 focus-visible:ring-offset-0"
+              className="h-8 w-24 text-xs text-right bg-white border-slate-300 text-slate-700 px-2 rounded-md font-mono focus-visible:ring-1 focus-visible:ring-indigo-400 focus-visible:ring-offset-0"
             />
           </div>
-          <div className="flex justify-between pt-2 border-t border-slate-200/80">
+          <div className="flex justify-between items-center gap-2 pt-2 border-t border-slate-200/80">
             <span className="text-slate-800 font-bold">Total</span>
             <span className="text-indigo-700 font-bold font-mono text-sm">R$ {total.toLocaleString('pt-BR')}</span>
           </div>
