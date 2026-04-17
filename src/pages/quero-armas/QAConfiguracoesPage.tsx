@@ -188,7 +188,7 @@ export default function QAConfiguracoesPage() {
               <div className="flex-1 space-y-1">
                 <Label className="text-[10px] uppercase" style={{ color: "hsl(220 10% 45%)" }}>Nome</Label>
                 <Input value={newForm.nome_servico} onChange={e => setNewForm(p => ({ ...p, nome_servico: e.target.value }))}
-                  className="h-9 bg-white border-slate-200 text-slate-700 uppercase" placeholder="Nome do serviço" />
+                  className="h-9 bg-white border-slate-200 text-slate-700" placeholder="Nome do serviço" />
               </div>
               <div className="w-24 space-y-1">
                 <Label className="text-[10px] uppercase" style={{ color: "hsl(220 10% 45%)" }}>Valor (R$)</Label>
@@ -210,7 +210,7 @@ export default function QAConfiguracoesPage() {
                 {editingId === svc.id ? (
                   <>
                     <Input value={editForm.nome_servico} onChange={e => setEditForm(p => ({ ...p, nome_servico: e.target.value }))}
-                      className="flex-1 bg-white border-slate-200 text-slate-700 h-8 text-xs uppercase" />
+                      className="flex-1 bg-white border-slate-200 text-slate-700 h-8 text-xs" />
                     <Input type="number" value={editForm.valor_servico} onChange={e => setEditForm(p => ({ ...p, valor_servico: e.target.value }))}
                       className="w-24 bg-white border-slate-200 text-slate-700 h-8 text-xs font-mono text-right" />
                     <button onClick={() => handleUpdateServico(svc.id)} disabled={savingSvc} className="h-7 w-7 rounded-lg flex items-center justify-center text-emerald-600 hover:bg-emerald-50">
@@ -222,7 +222,7 @@ export default function QAConfiguracoesPage() {
                   </>
                 ) : (
                   <>
-                    <span className="flex-1 truncate uppercase" style={{ color: "hsl(220 20% 25%)" }}>{svc.nome_servico}</span>
+                    <span className="flex-1 truncate" style={{ color: "hsl(220 20% 25%)" }}>{svc.nome_servico}</span>
                     <span className="font-mono shrink-0" style={{ color: "hsl(220 10% 55%)" }}>R$ {svc.valor_servico}</span>
                     <button onClick={() => startEdit(svc)} className="h-7 w-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Pencil className="h-3 w-3" />
