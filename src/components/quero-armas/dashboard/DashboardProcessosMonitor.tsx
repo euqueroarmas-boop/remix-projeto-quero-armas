@@ -448,7 +448,7 @@ export default function DashboardProcessosMonitor() {
       }
     }
     return display;
-  }, [rows, filter, sortBy, search]);
+  }, [rows, filter, entidadeFilter, sortBy, search]);
 
   if (loading) {
     return (
