@@ -335,7 +335,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
   const isEdit = !!venda;
   const [saving, setSaving] = useState(false);
   const [servicos, setServicos] = useState<{ id: number; nome_servico: string; valor_servico: number }[]>([]);
-  const [selectedServicos, setSelectedServicos] = useState<Map<number, { valor: number; checked: boolean }>>(new Map());
+  const [selectedServicos, setSelectedServicos] = useState<Map<number, { valor: number; checked: boolean; cortesia: boolean; cortesia_motivo: string }>>(new Map());
   const [f, setF] = useState({ forma_pagamento: "", desconto: "0", status: "EM ANÁLISE", numero_processo: "", data_cadastro: "" });
 
   useEffect(() => {
@@ -353,9 +353,14 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
       });
       const vendaLegacyId = venda.id_legado ?? venda.id;
       supabase.from("qa_itens_venda" as any).select("*").eq("venda_id", vendaLegacyId).then(({ data }) => {
-        const map = new Map<number, { valor: number; checked: boolean }>();
+        const map = new Map<number, { valor: number; checked: boolean; cortesia: boolean; cortesia_motivo: string }>();
         ((data as any[]) ?? []).forEach((it: any) => {
-          map.set(it.servico_id, { valor: Number(it.valor || 0), checked: true });
+          map.set(it.servico_id, {
+            valor: Number(it.valor || 0),
+            checked: true,
+            cortesia: !!it.cortesia,
+            cortesia_motivo: it.cortesia_motivo || "",
+          });
         });
         setSelectedServicos(map);
       });
@@ -371,7 +376,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
     setSelectedServicos(prev => {
       const next = new Map(prev);
       if (next.has(svc.id)) next.delete(svc.id);
-      else next.set(svc.id, { valor: svc.valor_servico, checked: true });
+      else next.set(svc.id, { valor: svc.valor_servico, checked: true, cortesia: false, cortesia_motivo: "" });
       return next;
     });
   };
@@ -385,7 +390,25 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
     });
   };
 
-  const subtotal = Array.from(selectedServicos.values()).reduce((sum, s) => sum + s.valor, 0);
+  const toggleCortesia = (id: number) => {
+    setSelectedServicos(prev => {
+      const next = new Map(prev);
+      const existing = next.get(id);
+      if (existing) next.set(id, { ...existing, cortesia: !existing.cortesia });
+      return next;
+    });
+  };
+
+  const updateCortesiaMotivo = (id: number, motivo: string) => {
+    setSelectedServicos(prev => {
+      const next = new Map(prev);
+      const existing = next.get(id);
+      if (existing) next.set(id, { ...existing, cortesia_motivo: motivo });
+      return next;
+    });
+  };
+
+  const subtotal = Array.from(selectedServicos.values()).reduce((sum, s) => sum + (s.cortesia ? 0 : s.valor), 0);
   const desconto = Number(f.desconto) || 0;
   const total = Math.max(0, subtotal - desconto);
 
