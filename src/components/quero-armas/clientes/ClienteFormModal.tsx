@@ -3,9 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useBrasilApiLookup } from "@/hooks/useBrasilApiLookup";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Loader2, Save, User, Users, Phone, MapPin, Home, Settings, ChevronLeft, ChevronRight, CheckCircle2, Camera, X } from "lucide-react";
+import { Loader2, Save, User, Users, Phone, MapPin, Home, Settings, ChevronLeft, ChevronRight, CheckCircle2, Camera, X, Shield, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { CATEGORIAS, CATEGORIA_OPTIONS, CATEGORIA_MAP, type CategoriaTitular } from "./categoriaTitular";
 
 interface ClienteFormModalProps {
   open: boolean;
@@ -179,6 +180,11 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     endereco: "", numero: "", complemento: "", bairro: "", cep: "", cidade: "", estado: "", pais: "Brasil",
     endereco2: "", numero2: "", complemento2: "", bairro2: "", cep2: "", cidade2: "", estado2: "", pais2: "",
     observacao: "", status: "ATIVO", cliente_lions: false,
+    // Categorização legal (Lei 10.826/03 art. 6º)
+    categoria_titular: "" as CategoriaTitular | "",
+    subcategoria: "",
+    orgao_vinculado: "",
+    matricula_funcional: "",
   });
 
   useEffect(() => {
