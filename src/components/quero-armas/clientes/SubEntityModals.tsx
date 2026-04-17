@@ -337,8 +337,8 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
   const isEdit = !!venda;
   const [saving, setSaving] = useState(false);
   const [servicos, setServicos] = useState<{ id: number; nome_servico: string; valor_servico: number }[]>([]);
-  const [selectedServicos, setSelectedServicos] = useState<Map<number, { valor: number; checked: boolean; cortesia: boolean; cortesia_motivo: string }>>(new Map());
-  const [f, setF] = useState({ forma_pagamento: "", desconto: "0", status: "AGUARDANDO DOCUMENTOS DO CLIENTE", numero_processo: "", data_cadastro: "" });
+  const [selectedServicos, setSelectedServicos] = useState<Map<number, { valor: number; checked: boolean; cortesia: boolean; cortesia_motivo: string; status: string | null }>>(new Map());
+  const [f, setF] = useState({ forma_pagamento: "", desconto: "0", status: "", numero_processo: "", data_cadastro: "" });
 
   useEffect(() => {
     supabase.from("qa_servicos" as any).select("*").order("nome_servico").then(({ data }) => {
@@ -350,18 +350,19 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
     if (venda) {
       setF({
         forma_pagamento: venda.forma_pagamento || "", desconto: String(venda.desconto || 0),
-        status: venda.status || "AGUARDANDO DOCUMENTOS DO CLIENTE", numero_processo: venda.numero_processo || "",
+        status: venda.status || "", numero_processo: venda.numero_processo || "",
         data_cadastro: isoToBr(venda.data_cadastro) || isoToBr(new Date().toISOString().slice(0, 10)),
       });
       const vendaLegacyId = venda.id_legado ?? venda.id;
       supabase.from("qa_itens_venda" as any).select("*").eq("venda_id", vendaLegacyId).then(({ data }) => {
-        const map = new Map<number, { valor: number; checked: boolean; cortesia: boolean; cortesia_motivo: string }>();
+        const map = new Map<number, { valor: number; checked: boolean; cortesia: boolean; cortesia_motivo: string; status: string | null }>();
         ((data as any[]) ?? []).forEach((it: any) => {
           map.set(it.servico_id, {
             valor: Number(it.valor || 0),
             checked: true,
             cortesia: !!it.cortesia,
             cortesia_motivo: it.cortesia_motivo || "",
+            status: it.status || null,
           });
         });
         setSelectedServicos(map);
@@ -369,7 +370,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
     } else {
       const today = new Date();
       const todayBr = `${String(today.getDate()).padStart(2,'0')}/${String(today.getMonth()+1).padStart(2,'0')}/${today.getFullYear()}`;
-      setF({ forma_pagamento: "", desconto: "0", status: "AGUARDANDO DOCUMENTOS DO CLIENTE", numero_processo: "", data_cadastro: todayBr });
+      setF({ forma_pagamento: "", desconto: "0", status: "", numero_processo: "", data_cadastro: todayBr });
       setSelectedServicos(new Map());
     }
   }, [venda, open]);
@@ -377,8 +378,8 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
   const toggleServico = (svc: { id: number; valor_servico: number }) => {
     setSelectedServicos(prev => {
       const next = new Map(prev);
-      if (next.has(svc.id)) next.delete(svc.id);
-      else next.set(svc.id, { valor: svc.valor_servico, checked: true, cortesia: false, cortesia_motivo: "" });
+       if (next.has(svc.id)) next.delete(svc.id);
+       else next.set(svc.id, { valor: svc.valor_servico, checked: true, cortesia: false, cortesia_motivo: "", status: null });
       return next;
     });
   };
@@ -431,8 +432,8 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
         if (error) throw error;
         vendaId = (data as any).id_legado ?? (data as any).id;
       }
-      const items = Array.from(selectedServicos.entries()).map(([servicoId, { valor, cortesia, cortesia_motivo }]) => ({
-        venda_id: vendaId, servico_id: servicoId, valor: cortesia ? 0 : valor, status: f.status,
+      const items = Array.from(selectedServicos.entries()).map(([servicoId, { valor, cortesia, cortesia_motivo, status }]) => ({
+        venda_id: vendaId, servico_id: servicoId, valor: cortesia ? 0 : valor, status: status || null,
         cortesia, cortesia_motivo: cortesia ? (cortesia_motivo || null) : null,
       }));
       if (items.length > 0) {
