@@ -349,6 +349,7 @@ function ClienteCard({
     clienteNome: string;
     clienteTelefone: string | null;
     temServicoPendente: boolean;
+    servicosPendentes: string[];
     exames: ExameDashItem[];
   };
   variant: typeof KPI_VARIANTS[keyof typeof KPI_VARIANTS];
@@ -372,7 +373,7 @@ function ClienteCard({
                 </span>
               )}
             </div>
-            <div className="font-bold text-slate-900 text-[14px] break-words" title={group.clienteNome}>
+            <div className="font-bold text-slate-900 text-[14px] break-words uppercase" title={group.clienteNome}>
               {group.clienteNome}
             </div>
           </div>
@@ -398,6 +399,25 @@ function ClienteCard({
           </div>
         </div>
 
+        {/* Serviços contratados pendentes */}
+        {group.servicosPendentes.length > 0 && (
+          <div>
+            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+              Serviços contratados
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {group.servicosPendentes.map((nome) => (
+                <span
+                  key={nome}
+                  className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200"
+                >
+                  {nome}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Lista de exames do cliente */}
         <ul className="space-y-1.5">
           {group.exames.map((ex) => (
@@ -405,6 +425,17 @@ function ClienteCard({
           ))}
         </ul>
 
+        {/* Link discreto para abrir cadastro completo */}
+        <Link
+          to={`/quero-armas/clientes?cliente=${group.clienteId}`}
+          className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-slate-500 hover:text-slate-800 uppercase tracking-wider"
+        >
+          Abrir cadastro completo <ChevronRight className="h-3 w-3" />
+        </Link>
+      </div>
+    </li>
+  );
+}
         {/* Link discreto para abrir cadastro completo */}
         <Link
           to={`/quero-armas/clientes?cliente=${group.clienteId}`}
