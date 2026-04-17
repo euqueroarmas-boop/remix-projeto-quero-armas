@@ -266,7 +266,7 @@ export default function DashboardProcessosMonitor() {
         // CARREGA TODOS os itens com status não-nulo — descoberta dinâmica de status novos.
         const { data: itens, error: e1 } = await supabase
           .from("qa_itens_venda" as any)
-          .select("id, venda_id, servico_id, status, data_protocolo, data_ultima_atualizacao, data_indeferimento, data_deferimento")
+          .select("id, venda_id, servico_id, status, data_protocolo, data_ultima_atualizacao, data_indeferimento, data_deferimento, data_recurso_administrativo")
           .not("status", "is", null);
         if (e1) throw e1;
 
@@ -315,14 +315,26 @@ export default function DashboardProcessosMonitor() {
             const servico = it.servico_id ? servicosMap.get(it.servico_id) : undefined;
             const vendaDate = venda?.data_cadastro || (venda?.created_at ? venda.created_at.slice(0, 10) : null);
             // "Tempo no status" prioriza a data específica do status atual quando existir:
-            //   INDEFERIDO → data_indeferimento; DEFERIDO → data_deferimento.
+            //   INDEFERIDO  → data_indeferimento
+            //   DEFERIDO    → data_deferimento
+            //   RECURSO ADM → data_recurso_administrativo (contagem do prazo fatal de 10 dias)
             // Caso contrário, usa data_ultima_atualizacao → data_protocolo → data da venda.
             const statusUpper = canon.toUpperCase();
+            const dataRecurso = (it as any).data_recurso_administrativo as string | null;
             const dataDoStatus =
-              statusUpper === "INDEFERIDO" ? (it as any).data_indeferimento :
-              statusUpper === "DEFERIDO"   ? (it as any).data_deferimento   : null;
+              statusUpper === "INDEFERIDO"             ? (it as any).data_indeferimento :
+              statusUpper === "DEFERIDO"               ? (it as any).data_deferimento   :
+              statusUpper === "RECURSO ADMINISTRATIVO" ? dataRecurso                    : null;
             const stopRef = dataDoStatus || it.data_ultima_atualizacao || it.data_protocolo || vendaDate;
             const servicoNome = servico?.nome_servico || `Serviço #${it.servico_id ?? "?"}`;
+
+            // Recurso administrativo possui prazo legal fatal de 10 dias.
+            // Calculamos os dias RESTANTES (positivos = dentro do prazo, ≤0 = expirado).
+            const isRecurso = statusUpper === "RECURSO ADMINISTRATIVO";
+            const recursoDiasRestantes = isRecurso && dataRecurso
+              ? 10 - diffDays(dataRecurso)
+              : null;
+
             return {
               itemId: it.id,
               vendaId: it.venda_id,
@@ -335,6 +347,7 @@ export default function DashboardProcessosMonitor() {
               vendaDate,
               diasParado: diffDays(stopRef),
               entidade: classifyEntidade(servicoNome),
+              recursoDiasRestantes,
             } as MonitorRow;
           })
           .filter(Boolean) as MonitorRow[];
@@ -446,6 +459,7 @@ export default function DashboardProcessosMonitor() {
         vendaId: r.vendaId, status: r.status, meta: r.meta,
         vendaDate: r.vendaDate, diasParado: r.diasParado,
         isComboGroup: false, servicoNome: r.servicoNome, servicosList: [],
+        recursoDiasRestantes: r.recursoDiasRestantes,
       });
     }
     for (const [k, arr] of groups) {
@@ -458,9 +472,13 @@ export default function DashboardProcessosMonitor() {
           vendaId: r.vendaId, status: r.status, meta: r.meta,
           vendaDate: r.vendaDate, diasParado: r.diasParado,
           isComboGroup: false, servicoNome: r.servicoNome, servicosList: [],
+          recursoDiasRestantes: r.recursoDiasRestantes,
         });
       } else {
         const ref = [...arr].sort((a, b) => b.diasParado - a.diasParado)[0];
+        // Para grupos COMBO em recurso, propaga o MENOR prazo restante (mais urgente).
+        const recursos = arr.map(x => x.recursoDiasRestantes).filter((v): v is number => typeof v === "number");
+        const recursoMin = recursos.length ? Math.min(...recursos) : null;
         display.push({
           key: `cg-${k}`,
           itemIds: arr.map(x => x.itemId),
@@ -470,6 +488,7 @@ export default function DashboardProcessosMonitor() {
           isComboGroup: true,
           servicoNome: `COMBO • ${arr.length} serviços`,
           servicosList: arr.map(x => x.servicoNome),
+          recursoDiasRestantes: recursoMin,
         });
       }
     }
