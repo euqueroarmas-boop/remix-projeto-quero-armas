@@ -164,7 +164,7 @@ export default function DashboardExames() {
             dataVencimento: e.data_vencimento,
             diasRestantes: dias_restantes,
             status,
-            temServicoPendente: clientesComPendente.has(e.cliente_id),
+            temServicoPendente: clientesComPendente.has(String(e.cliente_id)),
             prioridade: BUCKET_ORDER[bucket],
             bucket,
           });
