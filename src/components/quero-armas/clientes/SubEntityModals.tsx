@@ -477,7 +477,25 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
           <PremiumField label="Nº Processo" value={f.numero_processo} onChange={v => setF(p => ({ ...p, numero_processo: v }))} icon={Hash} />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <PremiumField label="Forma Pagamento" value={f.forma_pagamento} onChange={v => setF(p => ({ ...p, forma_pagamento: v }))} />
+          <div className="flex-1 min-w-0">
+            <label className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-500 uppercase tracking-[0.1em] mb-2">Forma Pagamento</label>
+            <Select value={f.forma_pagamento} onValueChange={v => setF(p => ({ ...p, forma_pagamento: v }))}>
+              <SelectTrigger className="h-10 text-sm bg-slate-50/80 border-slate-200/80 text-slate-800 rounded-lg font-medium hover:border-indigo-300 hover:bg-white transition-all duration-200 focus:ring-2 focus:ring-indigo-500/20 focus:ring-offset-0 focus:border-indigo-400">
+                <SelectValue placeholder="Selecionar" />
+              </SelectTrigger>
+              <SelectContent className="bg-white border-slate-200 rounded-lg shadow-xl z-[100]">
+                {[
+                  { value: "PIX", label: "PIX" },
+                  { value: "CARTAO_CREDITO", label: "Cartão de Crédito" },
+                  { value: "CARTAO_DEBITO", label: "Cartão de Débito" },
+                  { value: "QR_CODE", label: "QR Code" },
+                  { value: "DINHEIRO", label: "Dinheiro" },
+                ].map(o => (
+                  <SelectItem key={o.value} value={o.value} className="text-sm text-slate-700">{o.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="flex-1 min-w-0">
             <label className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-500 uppercase tracking-[0.1em] mb-2">Status</label>
             <Select value={f.status} onValueChange={v => setF(p => ({ ...p, status: v }))}>
