@@ -113,6 +113,7 @@ interface ItemRow {
   status: string;
   data_protocolo: string | null;
   data_ultima_atualizacao: string | null;
+  data_recurso_administrativo?: string | null;
 }
 interface VendaRow { id: number; id_legado: number | null; cliente_id: number | null; data_cadastro: string | null; created_at: string | null; }
 interface ClienteRow { id: number; id_legado: number | null; nome_completo: string | null; }
@@ -145,6 +146,9 @@ interface MonitorRow {
   vendaDate: string | null;
   diasParado: number;
   entidade: Entidade;
+  /** Quando o status é RECURSO ADMINISTRATIVO, indica os dias restantes
+   *  do prazo fatal de 10 dias contado a partir de data_recurso_administrativo. */
+  recursoDiasRestantes?: number | null;
 }
 
 /** Linha agrupada para exibição: um COMBO por (cliente, status) lista todos os serviços COMBO. */
@@ -161,6 +165,7 @@ interface DisplayRow {
   isComboGroup: boolean;
   servicoNome: string;
   servicosList: string[];
+  recursoDiasRestantes?: number | null;
 }
 
 /* ================================================================
@@ -182,10 +187,24 @@ function fmtBR(iso: string | null): string {
   return d && m && y ? `${d}/${m}/${y}` : "—";
 }
 
+/** Urgência padrão por dias parados no status. */
 function urgencyClass(dias: number, encerrado: boolean): string {
   if (encerrado) return "bg-slate-50 text-slate-600 border-slate-200";
   if (dias >= 15) return "bg-rose-50 text-rose-700 border-rose-200";
   if (dias >= 7) return "bg-amber-50 text-amber-700 border-amber-200";
+  return "bg-emerald-50 text-emerald-700 border-emerald-200";
+}
+
+/** Urgência ESPECÍFICA do status RECURSO ADMINISTRATIVO.
+ *  Prazo legal fatal: 10 dias corridos a partir do indeferimento/notificação.
+ *  Aqui usamos o contador como dias RESTANTES até o fim do prazo:
+ *    > 5 dias  → verde (folga)
+ *    1..5 dias → vermelho (prazo fatal entrando)
+ *    ≤ 0       → vermelho intenso (prazo expirado)
+ */
+function recursoUrgencyClass(diasRestantes: number): string {
+  if (diasRestantes <= 0) return "bg-rose-100 text-rose-800 border-rose-300";
+  if (diasRestantes <= 5) return "bg-rose-50 text-rose-700 border-rose-200";
   return "bg-emerald-50 text-emerald-700 border-emerald-200";
 }
 
