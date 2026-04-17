@@ -6,6 +6,7 @@ import {
   ChevronRight, MapPin, Phone, Mail, User,
 } from "lucide-react";
 import { computeExameStatus, formatExameCountdown } from "@/components/quero-armas/clientes/ClienteExames";
+import { useQAServicosMap } from "@/hooks/useQAServicosMap";
 
 interface Props {
   cliente: any;
@@ -31,12 +32,6 @@ const formatDate = (d: string | null) => {
 
 const formatCurrency = (v: number) => `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
 
-const SERVICO_MAP: Record<number, string> = {
-  2: "Posse PF", 3: "Porte PF", 4: "Lions Gun", 5: "COMBO Autoriz.", 6: "COMBO CRAF",
-  7: "COMBO GTE", 8: "Apost. Atual.", 9: "Apost. Mudança", 10: "Apost. 2º End.",
-  11: "Curso Pistola", 12: "Curso Cal.12", 13: "Mudança Serv.", 14: "Reg. Recarga",
-  15: "Autoriz. Compra", 16: "Reg. Arma", 17: "GTE Avulso", 18: "GTE", 20: "CR EB", 21: "VIP Pistola",
-};
 
 function daysUntil(dateStr: string | null): number | null {
   if (!dateStr) return null;
@@ -117,6 +112,7 @@ function StatPill({ label, value, color }: { label: string; value: string | numb
 }
 
 export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, filiacoes, cadastro, examesAtuais = [], onNavigate }: Props) {
+  const { map: SERVICO_MAP, getNome: getServicoNome } = useQAServicosMap();
   const analysis = useMemo(() => {
     const totalServicos = itens.length;
     const concluidos = itens.filter((i: any) => i.status === "CONCLUÍDO" || i.status === "DEFERIDO").length;
