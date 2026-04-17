@@ -2395,6 +2395,7 @@ export type Database = {
         Row: {
           bairro: string | null
           bairro2: string | null
+          categoria_titular: string | null
           celular: string | null
           cep: string | null
           cep2: string | null
@@ -2421,6 +2422,7 @@ export type Database = {
           id: number
           id_legado: number
           imagem: string | null
+          matricula_funcional: string | null
           nacionalidade: string | null
           naturalidade: string | null
           nome_completo: string
@@ -2429,11 +2431,13 @@ export type Database = {
           numero: string | null
           numero2: string | null
           observacao: string | null
+          orgao_vinculado: string | null
           pais: string | null
           pais2: string | null
           profissao: string | null
           rg: string | null
           status: string | null
+          subcategoria: string | null
           titulo_eleitor: string | null
           uf_emissor_rg: string | null
           updated_at: string
@@ -2441,6 +2445,7 @@ export type Database = {
         Insert: {
           bairro?: string | null
           bairro2?: string | null
+          categoria_titular?: string | null
           celular?: string | null
           cep?: string | null
           cep2?: string | null
@@ -2467,6 +2472,7 @@ export type Database = {
           id?: number
           id_legado: number
           imagem?: string | null
+          matricula_funcional?: string | null
           nacionalidade?: string | null
           naturalidade?: string | null
           nome_completo: string
@@ -2475,11 +2481,13 @@ export type Database = {
           numero?: string | null
           numero2?: string | null
           observacao?: string | null
+          orgao_vinculado?: string | null
           pais?: string | null
           pais2?: string | null
           profissao?: string | null
           rg?: string | null
           status?: string | null
+          subcategoria?: string | null
           titulo_eleitor?: string | null
           uf_emissor_rg?: string | null
           updated_at?: string
@@ -2487,6 +2495,7 @@ export type Database = {
         Update: {
           bairro?: string | null
           bairro2?: string | null
+          categoria_titular?: string | null
           celular?: string | null
           cep?: string | null
           cep2?: string | null
@@ -2513,6 +2522,7 @@ export type Database = {
           id?: number
           id_legado?: number
           imagem?: string | null
+          matricula_funcional?: string | null
           nacionalidade?: string | null
           naturalidade?: string | null
           nome_completo?: string
@@ -2521,11 +2531,13 @@ export type Database = {
           numero?: string | null
           numero2?: string | null
           observacao?: string | null
+          orgao_vinculado?: string | null
           pais?: string | null
           pais2?: string | null
           profissao?: string | null
           rg?: string | null
           status?: string | null
+          subcategoria?: string | null
           titulo_eleitor?: string | null
           uf_emissor_rg?: string | null
           updated_at?: string

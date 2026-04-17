@@ -3,9 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useBrasilApiLookup } from "@/hooks/useBrasilApiLookup";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Loader2, Save, User, Users, Phone, MapPin, Home, Settings, ChevronLeft, ChevronRight, CheckCircle2, Camera, X } from "lucide-react";
+import { Loader2, Save, User, Users, Phone, MapPin, Home, Settings, ChevronLeft, ChevronRight, CheckCircle2, Camera, X, Shield, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { CATEGORIAS, CATEGORIA_OPTIONS, CATEGORIA_MAP, type CategoriaTitular } from "./categoriaTitular";
 
 interface ClienteFormModalProps {
   open: boolean;
@@ -179,6 +180,11 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     endereco: "", numero: "", complemento: "", bairro: "", cep: "", cidade: "", estado: "", pais: "Brasil",
     endereco2: "", numero2: "", complemento2: "", bairro2: "", cep2: "", cidade2: "", estado2: "", pais2: "",
     observacao: "", status: "ATIVO", cliente_lions: false,
+    // Categorização legal (Lei 10.826/03 art. 6º)
+    categoria_titular: "" as CategoriaTitular | "",
+    subcategoria: "",
+    orgao_vinculado: "",
+    matricula_funcional: "",
   });
 
   useEffect(() => {
@@ -205,6 +211,10 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         pais2: cliente.pais2 || "",
         observacao: cliente.observacao || "", status: cliente.status || "ATIVO",
         cliente_lions: cliente.cliente_lions || false,
+        categoria_titular: (cliente.categoria_titular || "") as CategoriaTitular | "",
+        subcategoria: cliente.subcategoria || "",
+        orgao_vinculado: cliente.orgao_vinculado || "",
+        matricula_funcional: cliente.matricula_funcional || "",
       });
       // Load existing photo preview
       if (cliente.imagem) {
@@ -465,6 +475,52 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
           {/* Step 4: Configurações */}
           {step === 4 && (
             <div className="space-y-5">
+              {/* Categoria Legal do Titular (Lei 10.826/03 art. 6º) */}
+              <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-4 space-y-3">
+                <div className="flex items-start gap-2">
+                  <Shield className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-amber-700">Categoria Legal do Titular</p>
+                    <p className="text-[10px] text-amber-600/80 mt-0.5">
+                      Define quais documentos/exames são exigidos. Base: Lei 10.826/03 art. 6º, Decreto 11.615/23.
+                    </p>
+                  </div>
+                </div>
+                {!f.categoria_titular && (
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-amber-100/80 border border-amber-200">
+                    <AlertTriangle className="h-3.5 w-3.5 text-amber-700 flex-shrink-0" />
+                    <span className="text-[11px] text-amber-800 font-medium">
+                      Categoria não definida — sistema considerará todas as exigências.
+                    </span>
+                  </div>
+                )}
+                <FSelect
+                  label="Categoria *"
+                  value={f.categoria_titular}
+                  onChange={v => setF(prev => ({ ...prev, categoria_titular: v as CategoriaTitular | "", subcategoria: "" }))}
+                  options={CATEGORIA_OPTIONS}
+                  placeholder="Selecione a categoria do titular..."
+                />
+                {f.categoria_titular && (
+                  <>
+                    <p className="text-[10px] text-amber-700/80 italic">
+                      {CATEGORIA_MAP[f.categoria_titular as CategoriaTitular]?.descricao}
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <FSelect
+                        label="Subcategoria"
+                        value={f.subcategoria}
+                        onChange={v => set("subcategoria", v)}
+                        options={(CATEGORIA_MAP[f.categoria_titular as CategoriaTitular]?.subcategorias || []).map(s => ({ value: s, label: s }))}
+                        placeholder="Selecione..."
+                      />
+                      <FInput label="Órgão / Instituição" value={f.orgao_vinculado} onChange={v => set("orgao_vinculado", v)} placeholder="Ex: Polícia Civil/SP" />
+                    </div>
+                    <FInput label="Matrícula Funcional" value={f.matricula_funcional} onChange={v => set("matricula_funcional", v)} placeholder="Identidade funcional" />
+                  </>
+                )}
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FSelect label="Status do Cliente" value={f.status} onChange={v => set("status", v)} options={statusOptions} />
                 <Field label="Cliente Lions">
