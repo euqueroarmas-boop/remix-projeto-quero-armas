@@ -191,6 +191,9 @@ export default function DashboardExames() {
           const { status, dias_restantes } = computeExameStatus(e.data_vencimento);
           const bucket = bucketize(status, dias_restantes);
           const cidCanonical = canonicalIdOf(cli);
+          // Regra: só monitora exames de clientes com PELO MENOS UM processo em andamento.
+          // Cliente sem processo ativo (todos finalizados/inexistente) não polui o monitoramento.
+          if (!clientesComPendente.has(cidCanonical)) continue;
           result.push({
             exameId: e.id,
             clienteId: e.cliente_id,
