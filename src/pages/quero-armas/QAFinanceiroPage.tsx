@@ -243,7 +243,7 @@ export default function QAFinanceiroPage() {
       const [vRes, iRes, cRes, sRes] = await Promise.all([
         supabase.from("qa_vendas" as any).select("*"),
         supabase.from("qa_itens_venda" as any).select("*"),
-        supabase.from("qa_clientes" as any).select("id, nome_completo, excluido"),
+        supabase.from("qa_clientes" as any).select("id, id_legado, nome_completo, excluido"),
         supabase.from("qa_servicos" as any).select("id, nome_servico, valor_servico"),
       ]);
       setVendas((vRes.data as any[]) || []);
@@ -261,7 +261,15 @@ export default function QAFinanceiroPage() {
   useEffect(() => { if (_loadedRef.current) return; _loadedRef.current = true; load(); }, []);
 
   const servicoMap = useMemo(() => new Map(servicos.map(s => [s.id, s])), [servicos]);
-  const clienteMap = useMemo(() => new Map(clientes.map(c => [c.id, c])), [clientes]);
+  // qa_vendas.cliente_id referencia qa_clientes.id_legado (chave canônica)
+  const clienteMap = useMemo(() => {
+    const m = new Map<string, any>();
+    clientes.forEach((c: any) => {
+      const key = String(c.id_legado ?? c.id);
+      m.set(key, c);
+    });
+    return m;
+  }, [clientes]);
 
   // All months available
   const allMonths = useMemo(() => {
@@ -281,8 +289,9 @@ export default function QAFinanceiroPage() {
 
   const filteredItens = useMemo(() => {
     if (!selectedMonth) return itens;
-    const vendaIds = new Set(filteredVendas.map(v => v.id));
-    return itens.filter(i => vendaIds.has(i.venda_id));
+    // qa_itens_venda.venda_id referencia qa_vendas.id_legado
+    const vendaIds = new Set(filteredVendas.map((v: any) => String(v.id_legado ?? v.id)));
+    return itens.filter(i => vendaIds.has(String(i.venda_id)));
   }, [itens, filteredVendas, selectedMonth]);
 
   // ─── Core Metrics ───
