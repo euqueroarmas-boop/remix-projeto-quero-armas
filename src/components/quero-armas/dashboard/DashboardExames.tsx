@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import {
   HeartPulse, Crosshair, AlertTriangle, CheckCircle2, XCircle,
   Clock, ArrowRight, Loader2, Users, Phone, ChevronRight, Calendar,
-  ShieldAlert, ShieldCheck, Activity,
+  ShieldAlert, ShieldCheck, Activity, MessageCircle,
 } from "lucide-react";
 import {
   computeExameStatus, formatExameCountdown,
@@ -101,17 +101,25 @@ export default function DashboardExames() {
   useEffect(() => {
     const load = async () => {
       try {
-        const [examesRes, itensRes, vendasRes, servicosRes] = await Promise.all([
+        const [examesRes, itensRes, vendasRes, servicosRes, servicosExameRes] = await Promise.all([
           supabase.from("qa_exames_cliente" as any).select("id, cliente_id, tipo, data_realizacao, data_vencimento, observacoes").limit(5000),
           supabase.from("qa_itens_venda" as any).select("venda_id, status, servico_id").limit(10000),
           supabase.from("qa_vendas" as any).select("id, cliente_id").limit(10000),
           supabase.from("qa_servicos" as any).select("id, nome_servico").limit(1000),
+          supabase.from("qa_servicos_com_exame" as any).select("servico_id, ativo").limit(1000),
         ]);
 
         const exames = ((examesRes.data || []) as any[]) as ExameRow[];
         const itens = ((itensRes.data || []) as any[]) as ItemServicoRow[];
         const vendas = ((vendasRes.data || []) as any[]) as VendaRow[];
         const servicos = ((servicosRes.data || []) as any[]) as ServicoRow[];
+        const servicosExame = ((servicosExameRes.data || []) as any[]) as { servico_id: number; ativo: boolean }[];
+        // Se a tabela estiver vazia, considera TODOS os serviços (modo permissivo).
+        // Quando o admin cadastrar entradas, somente serviços listados como ativos serão filtrados.
+        const servicosComExameSet = new Set(
+          servicosExame.filter((s) => s.ativo).map((s) => String(s.servico_id))
+        );
+        const filtrarPorServicoExame = servicosComExameSet.size > 0;
 
         const clienteIds = Array.from(new Set(exames.map((e) => e.cliente_id).filter(Boolean)));
         let clientes: ClienteRow[] = [];
@@ -138,8 +146,11 @@ export default function DashboardExames() {
             clientesComDeferido.add(cid);
           }
           if (!FINISHED.includes(status)) {
+            const sid = item.servico_id != null ? String(item.servico_id) : null;
+            // Se filtro ativo, só conta serviços marcados como "exigem exame"
+            if (filtrarPorServicoExame && (!sid || !servicosComExameSet.has(sid))) continue;
             clientesComPendente.add(cid);
-            const nome = item.servico_id != null ? servicoMap.get(String(item.servico_id)) : null;
+            const nome = sid ? servicoMap.get(sid) : null;
             if (nome) {
               if (!servicosPendentesPorCliente.has(cid)) servicosPendentesPorCliente.set(cid, new Set());
               servicosPendentesPorCliente.get(cid)!.add(nome);
@@ -354,9 +365,9 @@ function ClienteCard({
   };
   variant: typeof KPI_VARIANTS[keyof typeof KPI_VARIANTS];
 }) {
-  const telLink = group.clienteTelefone
-    ? `https://wa.me/55${group.clienteTelefone.replace(/\D/g, "")}`
-    : null;
+  const digits = group.clienteTelefone ? group.clienteTelefone.replace(/\D/g, "") : "";
+  const waLink = digits ? `https://wa.me/55${digits}` : null;
+  const telLink = digits ? `tel:+55${digits}` : null;
 
   return (
     <li className="px-4 py-3 relative hover:bg-slate-50/70 transition-colors">
@@ -385,13 +396,22 @@ function ClienteCard({
             >
               <CheckCircle2 className="h-3 w-3" /> DEFERIDO
             </Link>
+            {waLink && (
+              <a
+                href={waLink}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center justify-center gap-1 px-2 py-1.5 rounded-md text-[10px] font-bold bg-[#25D366] text-white hover:brightness-95 transition-all shadow-sm"
+                title="Enviar mensagem no WhatsApp"
+              >
+                <MessageCircle className="h-3 w-3" />
+              </a>
+            )}
             {telLink && (
               <a
                 href={telLink}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center justify-center gap-1 px-2 py-1.5 rounded-md text-[10px] font-semibold bg-white text-emerald-700 border border-emerald-200 hover:bg-emerald-50 transition-colors"
-                title="WhatsApp"
+                className="inline-flex items-center justify-center gap-1 px-2 py-1.5 rounded-md text-[10px] font-semibold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 transition-colors"
+                title="Ligar"
               >
                 <Phone className="h-3 w-3" />
               </a>
