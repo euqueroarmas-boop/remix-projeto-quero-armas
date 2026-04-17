@@ -201,6 +201,25 @@ export default function DashboardExames() {
     return items.filter((i) => i.bucket === filterKey);
   }, [items, filterKey]);
 
+  // Agrupa por cliente — mostra TODOS os exames do cliente para visão completa
+  const groupedByCliente = useMemo(() => {
+    if (!filterKey) return [];
+    const clienteIds = Array.from(new Set(filtered.map((i) => i.clienteId)));
+    return clienteIds.map((cid) => {
+      const matched = filtered.filter((i) => i.clienteId === cid);
+      const allOfCliente = items.filter((i) => i.clienteId === cid);
+      const principal = matched[0];
+      return {
+        clienteId: cid,
+        clienteNome: principal.clienteNome,
+        clienteTelefone: principal.clienteTelefone,
+        temServicoPendente: principal.temServicoPendente,
+        exames: allOfCliente.sort((a, b) => a.prioridade - b.prioridade),
+        prioridadeCliente: Math.min(...matched.map((m) => m.prioridade)),
+      };
+    }).sort((a, b) => a.prioridadeCliente - b.prioridadeCliente);
+  }, [filtered, items, filterKey]);
+
   if (loading) {
     return (
       <div className="qa-card p-6 flex justify-center">
@@ -259,14 +278,14 @@ export default function DashboardExames() {
           </div>
 
           <div className="max-h-[32rem] overflow-y-auto">
-            {filtered.length === 0 ? (
+            {groupedByCliente.length === 0 ? (
               <div className="text-center py-10 text-xs text-slate-500">
                 Nenhum cliente neste indicador.
               </div>
             ) : (
               <ul className="divide-y divide-slate-100">
-                {filtered.map((item) => (
-                  <ClienteRow key={item.exameId} item={item} variant={activeVariant} />
+                {groupedByCliente.map((g) => (
+                  <ClienteCard key={g.clienteId} group={g} variant={activeVariant} />
                 ))}
               </ul>
             )}
@@ -309,75 +328,117 @@ function KpiTile({
   );
 }
 
-function ClienteRow({
-  item,
+function ClienteCard({
+  group,
   variant,
 }: {
-  item: ExameDashItem;
+  group: {
+    clienteId: number;
+    clienteNome: string;
+    clienteTelefone: string | null;
+    temServicoPendente: boolean;
+    exames: ExameDashItem[];
+  };
   variant: typeof KPI_VARIANTS[keyof typeof KPI_VARIANTS];
 }) {
-  const telLink = item.clienteTelefone
-    ? `https://wa.me/55${item.clienteTelefone.replace(/\D/g, "")}`
+  const telLink = group.clienteTelefone
+    ? `https://wa.me/55${group.clienteTelefone.replace(/\D/g, "")}`
     : null;
+
+  return (
+    <li className="px-4 py-3 relative hover:bg-slate-50/70 transition-colors">
+      <span className={`absolute left-0 top-0 bottom-0 w-1 ${variant.dot}`} />
+      <div className="pl-2 space-y-2">
+        {/* Cabeçalho: Nome + Ações */}
+        <div className="flex items-start justify-between gap-2 flex-wrap">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">CLIENTE</span>
+              {group.temServicoPendente && (
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                  <Users className="h-2.5 w-2.5" /> SERVIÇO PENDENTE
+                </span>
+              )}
+            </div>
+            <div className="font-bold text-slate-900 text-[14px] break-words" title={group.clienteNome}>
+              {group.clienteNome}
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <Link
+              to={`/quero-armas/clientes?cliente=${group.clienteId}&tab=servicos`}
+              className="inline-flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-md text-[10px] font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow-sm"
+              title="Marcar serviço como DEFERIDO no cadastro do cliente"
+            >
+              <CheckCircle2 className="h-3 w-3" /> DEFERIDO
+            </Link>
+            {telLink && (
+              <a
+                href={telLink}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center justify-center gap-1 px-2 py-1.5 rounded-md text-[10px] font-semibold bg-white text-emerald-700 border border-emerald-200 hover:bg-emerald-50 transition-colors"
+                title="WhatsApp"
+              >
+                <Phone className="h-3 w-3" />
+              </a>
+            )}
+          </div>
+        </div>
+
+        {/* Lista de exames do cliente */}
+        <ul className="space-y-1.5">
+          {group.exames.map((ex) => (
+            <ExameLine key={ex.exameId} item={ex} />
+          ))}
+        </ul>
+
+        {/* Link discreto para abrir cadastro completo */}
+        <Link
+          to={`/quero-armas/clientes?cliente=${group.clienteId}`}
+          className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-slate-500 hover:text-slate-800 uppercase tracking-wider"
+        >
+          Abrir cadastro completo <ChevronRight className="h-3 w-3" />
+        </Link>
+      </div>
+    </li>
+  );
+}
+
+function ExameLine({ item }: { item: ExameDashItem }) {
   const isPsi = item.tipo === "psicologico";
   const abs = Math.abs(item.diasRestantes);
   const numero = item.diasRestantes === 0 ? "HOJE" : abs.toString();
   const label = formatExameCountdown(item.diasRestantes);
 
-  return (
-    <li className="px-4 py-3 relative hover:bg-slate-50/70 transition-colors">
-      <span className={`absolute left-0 top-0 bottom-0 w-1 ${variant.dot}`} />
-      <div className="pl-2 flex items-center gap-3 flex-wrap sm:flex-nowrap">
-        {/* Tipo + Nome */}
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5 mb-1">
-            {isPsi
-              ? <HeartPulse className="h-3 w-3 text-violet-500 shrink-0" />
-              : <Crosshair className="h-3 w-3 text-orange-500 shrink-0" />}
-            <span className={`text-[10px] font-semibold uppercase tracking-wider ${isPsi ? "text-violet-700" : "text-orange-700"}`}>
-              {isPsi ? "Psicológico" : "Tiro"}
-            </span>
-            {item.temServicoPendente && (
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                <Users className="h-2.5 w-2.5" /> PEND.
-              </span>
-            )}
-          </div>
-          <div className="font-bold text-slate-900 text-[13px] truncate" title={item.clienteNome}>
-            {item.clienteNome}
-          </div>
-          <div className="mt-0.5 text-[11px] text-slate-600 flex items-center gap-1 flex-wrap">
-            <Calendar className="h-3 w-3 shrink-0" />
-            <span>Realizado <span className="font-semibold text-slate-700">{fmtDate(item.dataRealizacao)}</span></span>
-            <span className="text-slate-300">·</span>
-            <span>Vence <span className="font-semibold text-slate-700">{fmtDate(item.dataVencimento)}</span></span>
-          </div>
-          <div className={`mt-1 inline-flex items-baseline gap-1.5 ${variant.text}`}>
-            <span className="text-base font-black leading-none">{numero}</span>
-            <span className="text-[10px] font-semibold uppercase tracking-wider opacity-80">{label}</span>
-          </div>
-        </div>
+  // Cor do exame conforme bucket individual
+  const colorByBucket: Record<ExameDashItem["bucket"], { text: string; bg: string; border: string }> = {
+    vencido: { text: "text-rose-700",   bg: "bg-rose-50",   border: "border-rose-200" },
+    d7:      { text: "text-red-700",    bg: "bg-red-50",    border: "border-red-200" },
+    d15:     { text: "text-orange-700", bg: "bg-orange-50", border: "border-orange-200" },
+    d30:     { text: "text-amber-700",  bg: "bg-amber-50",  border: "border-amber-200" },
+    d45:     { text: "text-yellow-700", bg: "bg-yellow-50", border: "border-yellow-200" },
+    vigente: { text: "text-emerald-700",bg: "bg-emerald-50",border: "border-emerald-200" },
+  };
+  const c = colorByBucket[item.bucket];
 
-        {/* Ações */}
-        <div className="flex items-center gap-1.5 shrink-0 w-full sm:w-auto">
-          <Link
-            to={`/quero-armas/clientes?cliente=${item.clienteId}`}
-            className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-md text-[11px] font-bold bg-slate-900 text-white hover:bg-slate-800 transition-colors"
-          >
-            Abrir cadastro <ChevronRight className="h-3 w-3" />
-          </Link>
-          {telLink && (
-            <a
-              href={telLink}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-md text-[11px] font-semibold bg-white text-emerald-700 border border-emerald-200 hover:bg-emerald-50 transition-colors"
-              title="WhatsApp"
-            >
-              <Phone className="h-3 w-3" />
-            </a>
-          )}
-        </div>
+  return (
+    <li className={`rounded-md border ${c.border} ${c.bg} px-2.5 py-1.5`}>
+      <div className="flex items-center gap-2 flex-wrap">
+        {isPsi
+          ? <HeartPulse className="h-3 w-3 text-violet-600 shrink-0" />
+          : <Crosshair className="h-3 w-3 text-orange-600 shrink-0" />}
+        <span className={`text-[10px] font-bold uppercase tracking-wider ${isPsi ? "text-violet-700" : "text-orange-700"}`}>
+          {isPsi ? "Psicológico" : "Tiro"}
+        </span>
+        <span className="text-[10px] text-slate-500 flex items-center gap-1">
+          <Calendar className="h-2.5 w-2.5" />
+          <span>Vence <span className="font-semibold text-slate-700">{fmtDate(item.dataVencimento)}</span></span>
+        </span>
+        <span className={`ml-auto inline-flex items-baseline gap-1 ${c.text}`}>
+          <span className="text-xs font-black leading-none">{numero}</span>
+          <span className="text-[9px] font-bold uppercase tracking-wider opacity-80">{label}</span>
+        </span>
       </div>
     </li>
   );
