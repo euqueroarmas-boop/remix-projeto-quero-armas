@@ -338,7 +338,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
   const [saving, setSaving] = useState(false);
   const [servicos, setServicos] = useState<{ id: number; nome_servico: string; valor_servico: number }[]>([]);
   const [selectedServicos, setSelectedServicos] = useState<Map<number, { valor: number; checked: boolean; cortesia: boolean; cortesia_motivo: string }>>(new Map());
-  const [f, setF] = useState({ forma_pagamento: "", desconto: "0", status: "AGUARDANDO DOCUMENTOS DO CLIENTE", numero_processo: "", data_cadastro: "" });
+  const [f, setF] = useState({ forma_pagamento: "", desconto: "0", status: "", numero_processo: "", data_cadastro: "" });
 
   useEffect(() => {
     supabase.from("qa_servicos" as any).select("*").order("nome_servico").then(({ data }) => {
@@ -350,7 +350,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
     if (venda) {
       setF({
         forma_pagamento: venda.forma_pagamento || "", desconto: String(venda.desconto || 0),
-        status: venda.status || "AGUARDANDO DOCUMENTOS DO CLIENTE", numero_processo: venda.numero_processo || "",
+        status: venda.status || "", numero_processo: venda.numero_processo || "",
         data_cadastro: isoToBr(venda.data_cadastro) || isoToBr(new Date().toISOString().slice(0, 10)),
       });
       const vendaLegacyId = venda.id_legado ?? venda.id;
@@ -369,7 +369,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
     } else {
       const today = new Date();
       const todayBr = `${String(today.getDate()).padStart(2,'0')}/${String(today.getMonth()+1).padStart(2,'0')}/${today.getFullYear()}`;
-      setF({ forma_pagamento: "", desconto: "0", status: "AGUARDANDO DOCUMENTOS DO CLIENTE", numero_processo: "", data_cadastro: todayBr });
+      setF({ forma_pagamento: "", desconto: "0", status: "", numero_processo: "", data_cadastro: todayBr });
       setSelectedServicos(new Map());
     }
   }, [venda, open]);
@@ -432,7 +432,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
         vendaId = (data as any).id_legado ?? (data as any).id;
       }
       const items = Array.from(selectedServicos.entries()).map(([servicoId, { valor, cortesia, cortesia_motivo }]) => ({
-        venda_id: vendaId, servico_id: servicoId, valor: cortesia ? 0 : valor, status: f.status,
+        venda_id: vendaId, servico_id: servicoId, valor: cortesia ? 0 : valor, status: null,
         cortesia, cortesia_motivo: cortesia ? (cortesia_motivo || null) : null,
       }));
       if (items.length > 0) {
