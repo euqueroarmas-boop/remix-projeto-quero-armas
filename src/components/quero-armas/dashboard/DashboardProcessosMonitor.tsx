@@ -612,10 +612,24 @@ export default function DashboardProcessosMonitor() {
                       </span>
                     </div>
                     <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border ${tone.bg} ${tone.text} ${tone.border}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${tone.dot}`} />
-                        {r.meta.label}
-                      </span>
+                      {editingKey === r.key ? (
+                        <StatusEditor
+                          currentStatus={r.status}
+                          currentDate={todayISO()}
+                          saving={saving}
+                          onCancel={() => setEditingKey(null)}
+                          onSave={(s, d) => applyStatusChange(r.itemIds, s, d)}
+                        />
+                      ) : (
+                        <button
+                          onClick={() => setEditingKey(r.key)}
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border ${tone.bg} ${tone.text} ${tone.border}`}
+                        >
+                          <span className={`w-1.5 h-1.5 rounded-full ${tone.dot}`} />
+                          {r.meta.label}
+                          <Pencil className="w-2.5 h-2.5 opacity-60 ml-0.5" />
+                        </button>
+                      )}
                       <span className="text-[10px] text-slate-400 font-mono">#{r.vendaId}</span>
                       <span className="text-[10px] text-slate-400">• {fmtBR(r.vendaDate)}</span>
                     </div>
