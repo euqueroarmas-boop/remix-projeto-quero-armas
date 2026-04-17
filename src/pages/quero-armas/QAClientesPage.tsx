@@ -225,7 +225,7 @@ export default function QAClientesPage() {
   // Serviço COMBO - Registro de arma de fogo (CRAF) no Exército Brasileiro
   const SERVICOS_CRAF_EB = [6];
 
-  const ITEM_EDIT_FIELDS: { key: string; label: string; type: "date" | "text"; servicos?: number[]; condition?: (form: Record<string, string>) => boolean }[] = [
+  const ITEM_EDIT_FIELDS: { key: string; label: string; type: "date" | "text"; servicos?: number[]; condition?: (form: Record<string, string>, item?: any) => boolean }[] = [
     // Datas — para CR usam rótulo específico "do CR"
     { key: "data_protocolo", label: "Data Protocolo do CR", type: "date", servicos: SERVICOS_CR },
     { key: "data_protocolo", label: "Data Protocolo", type: "date", servicos: [2, 3, 4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 26] },
@@ -233,8 +233,10 @@ export default function QAClientesPage() {
     { key: "numero_requerimento", label: "Nº do Requerimento", type: "text", servicos: [3] },
     { key: "data_notificacao", label: "Data da Notificação", type: "date", servicos: SERVICOS_POSSE },
     { key: "data_recurso_administrativo", label: "Data do Recurso Administrativo", type: "date", servicos: SERVICOS_POSSE, condition: (f) => !!f.data_notificacao },
-    { key: "data_deferimento", label: "Data Deferimento do CR", type: "date", servicos: SERVICOS_CR },
-    { key: "data_deferimento", label: "Data Deferimento", type: "date", servicos: [2, 3, 4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 26] },
+    { key: "data_deferimento", label: "Data Deferimento do CR", type: "date", servicos: SERVICOS_CR, condition: (_f, it) => (it?.status || "").toUpperCase() !== "INDEFERIDO" },
+    { key: "data_deferimento", label: "Data Deferimento", type: "date", servicos: [2, 3, 4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 26], condition: (_f, it) => (it?.status || "").toUpperCase() !== "INDEFERIDO" },
+    // Data de Indeferimento — REGRA GLOBAL: aparece APENAS quando o status do item é INDEFERIDO
+    { key: "data_indeferimento", label: "Data de Indeferimento", type: "date", condition: (_f, it) => (it?.status || "").toUpperCase() === "INDEFERIDO" },
     { key: "data_vencimento", label: "Data Vencimento do CR", type: "date", servicos: SERVICOS_CR },
     // Data Vencimento — removida para Autorização de compra EB (5, 15); substituída por "Validade Autorização"
     { key: "data_vencimento", label: "Data Vencimento", type: "date", servicos: [2, 3, 4, 6, 7, 8, 9, 10, 14, 16, 17, 18, 26] },
@@ -270,11 +272,14 @@ export default function QAClientesPage() {
     { key: "quantidade_tiros", label: "Quantidade de Tiros da Arma", type: "text", servicos: SERVICOS_CRAF_EB },
   ];
 
+  /** REGRA GLOBAL: o formulário de detalhes só é liberado após o status do item ser definido. */
+  const isStatusDefinido = (s: any) => String(s || "").trim().length > 0;
+
   /** Retorna apenas os campos aplicáveis ao serviço (filtra por servico_id quando definido). */
-  const getFieldsForServico = (servicoId: number | null | undefined, form?: Record<string, string>) =>
+  const getFieldsForServico = (servicoId: number | null | undefined, form?: Record<string, string>, item?: any) =>
     ITEM_EDIT_FIELDS.filter(f =>
       (!f.servicos || (servicoId != null && f.servicos.includes(servicoId))) &&
-      (!f.condition || (form && f.condition(form)))
+      (!f.condition || f.condition(form || {}, item))
     );
 
   const handleExpandItem = (item: any) => {
