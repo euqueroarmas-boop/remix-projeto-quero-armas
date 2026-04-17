@@ -24,6 +24,8 @@ interface PageMeta {
   h1: string;
   content: string;
   links: { label: string; href: string }[];
+  ogImage?: string;
+  siteName?: string;
 }
 
 const staticPages: Record<string, PageMeta> = {
@@ -538,11 +540,15 @@ function renderHtml(page: PageMeta, path: string, extraSections = ""): string {
   <meta property="og:description" content="${esc(page.description)}" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="${canonical}" />
-  <meta property="og:site_name" content="WMTi Tecnologia da Informação" />
+  <meta property="og:site_name" content="${esc(page.siteName || "WMTi Tecnologia da Informação")}" />
   <meta property="og:locale" content="pt_BR" />
+  <meta property="og:image" content="${CANONICAL}${page.ogImage || "/wmti-preview.jpg"}" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="${esc(page.title)}" />
   <meta name="twitter:description" content="${esc(page.description)}" />
+  <meta name="twitter:image" content="${CANONICAL}${page.ogImage || "/wmti-preview.jpg"}" />
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
