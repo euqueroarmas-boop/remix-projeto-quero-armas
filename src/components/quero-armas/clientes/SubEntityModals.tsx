@@ -337,7 +337,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
   const isEdit = !!venda;
   const [saving, setSaving] = useState(false);
   const [servicos, setServicos] = useState<{ id: number; nome_servico: string; valor_servico: number }[]>([]);
-  const [selectedServicos, setSelectedServicos] = useState<Map<number, { valor: number; checked: boolean; cortesia: boolean; cortesia_motivo: string }>>(new Map());
+  const [selectedServicos, setSelectedServicos] = useState<Map<number, { valor: number; checked: boolean; cortesia: boolean; cortesia_motivo: string; status: string | null }>>(new Map());
   const [f, setF] = useState({ forma_pagamento: "", desconto: "0", status: "", numero_processo: "", data_cadastro: "" });
 
   useEffect(() => {
@@ -355,13 +355,14 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
       });
       const vendaLegacyId = venda.id_legado ?? venda.id;
       supabase.from("qa_itens_venda" as any).select("*").eq("venda_id", vendaLegacyId).then(({ data }) => {
-        const map = new Map<number, { valor: number; checked: boolean; cortesia: boolean; cortesia_motivo: string }>();
+        const map = new Map<number, { valor: number; checked: boolean; cortesia: boolean; cortesia_motivo: string; status: string | null }>();
         ((data as any[]) ?? []).forEach((it: any) => {
           map.set(it.servico_id, {
             valor: Number(it.valor || 0),
             checked: true,
             cortesia: !!it.cortesia,
             cortesia_motivo: it.cortesia_motivo || "",
+            status: it.status || null,
           });
         });
         setSelectedServicos(map);
@@ -377,8 +378,8 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
   const toggleServico = (svc: { id: number; valor_servico: number }) => {
     setSelectedServicos(prev => {
       const next = new Map(prev);
-      if (next.has(svc.id)) next.delete(svc.id);
-      else next.set(svc.id, { valor: svc.valor_servico, checked: true, cortesia: false, cortesia_motivo: "" });
+       if (next.has(svc.id)) next.delete(svc.id);
+       else next.set(svc.id, { valor: svc.valor_servico, checked: true, cortesia: false, cortesia_motivo: "", status: null });
       return next;
     });
   };
