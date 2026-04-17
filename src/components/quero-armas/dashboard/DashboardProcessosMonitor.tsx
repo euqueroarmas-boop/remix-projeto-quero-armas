@@ -629,10 +629,16 @@ export default function DashboardProcessosMonitor() {
                         </td>
                         <td className="px-3 py-2 text-slate-500">{fmtBR(r.vendaDate)}</td>
                         <td className="px-3 py-2">
-                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${urgencyClass(r.diasParado, encerrado)}`}>
-                            <Clock className="w-3 h-3" />
-                            {r.diasParado}d
-                          </span>
+                          {(() => {
+                            const su = r.status.toUpperCase();
+                            const lbl = su === "INDEFERIDO" ? "Dias indeferido" : su === "DEFERIDO" ? "Dias deferido" : "Tempo no status";
+                            return (
+                              <span title={lbl} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${urgencyClass(r.diasParado, encerrado)}`}>
+                                <Clock className="w-3 h-3" />
+                                {r.diasParado}d
+                              </span>
+                            );
+                          })()}
                         </td>
                         <td className="px-3 py-2 text-right">
                           {r.clienteId && (
