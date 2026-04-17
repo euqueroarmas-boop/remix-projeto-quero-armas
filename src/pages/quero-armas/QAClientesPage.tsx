@@ -225,7 +225,7 @@ export default function QAClientesPage() {
   // Serviço COMBO - Registro de arma de fogo (CRAF) no Exército Brasileiro
   const SERVICOS_CRAF_EB = [6];
 
-  const ITEM_EDIT_FIELDS: { key: string; label: string; type: "date" | "text"; servicos?: number[]; condition?: (form: Record<string, string>, item?: any) => boolean }[] = [
+  const ITEM_EDIT_FIELDS: { key: string; label: string; type: "date" | "text"; servicos?: number[]; condition?: (form: Record<string, string>, item?: any) => boolean; required?: boolean }[] = [
     /* ================================================================
      * POSSE NA POLÍCIA FEDERAL (servico_id = 2) — formulário dedicado
      * Ordem fixa solicitada: Nº Requerimento → Protocolo → Notificação →
@@ -234,6 +234,7 @@ export default function QAClientesPage() {
      * Regra: Nº Processo NÃO aparece em Posse PF.
      * ================================================================ */
     { key: "numero_posse",                  label: "Nº do Requerimento de Posse",       type: "text", servicos: SERVICOS_POSSE },
+    { key: "registro_cad",                  label: "Nº CAD SINARM",                     type: "text", servicos: SERVICOS_POSSE, required: true },
     { key: "data_protocolo",                label: "Data Protocolo",                    type: "date", servicos: SERVICOS_POSSE },
     { key: "data_notificacao",              label: "Data da Notificação",               type: "date", servicos: SERVICOS_POSSE },
     { key: "data_indeferimento",            label: "Data de Indeferimento",             type: "date", servicos: SERVICOS_POSSE },
@@ -271,6 +272,8 @@ export default function QAClientesPage() {
     { key: "numero_sigma", label: "Nº SIGMA", type: "text", servicos: SERVICOS_CAC },
     { key: "numero_sinarm", label: "Nº SINARM", type: "text", servicos: SERVICOS_CAC },
     { key: "registro_cad", label: "Registro CAD", type: "text", servicos: SERVICOS_CAC },
+    // Nº CAD SINARM — obrigatório em CRAF na Polícia Federal
+    { key: "registro_cad", label: "Nº CAD SINARM", type: "text", servicos: [26], required: true },
     // Autorização de compra EB (Posse PF tem campos próprios na seção dedicada acima)
     { key: "numero_autorizacao", label: "Nº Autorização", type: "text", servicos: [5, 15] },
     { key: "validade_autorizacao", label: "Validade Autorização", type: "date", servicos: [5, 15] },
