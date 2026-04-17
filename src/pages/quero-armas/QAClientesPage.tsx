@@ -548,7 +548,11 @@ export default function QAClientesPage() {
   const loadSubData = useCallback(async (c: Cliente) => {
     setLoadingSub(true);
     try {
-      const lid = c.id_legado ?? c.id;
+      // CORREÇÃO CRÍTICA: usar SEMPRE c.id puro como cliente_id.
+      // O fallback "c.id_legado ?? c.id" causava colisão entre o `id` de um cliente
+      // e o `id_legado` de outro, misturando vendas/itens de clientes diferentes
+      // (ex.: Fábio id=4/leg=32 puxava vendas do Breno id=32).
+      const cid = c.id;
       const examClientIds = Array.from(new Set([c.id, c.id_legado].filter((value): value is number => typeof value === "number" && Number.isFinite(value))));
       const examesQuery = supabase
         .from("qa_exames_cliente_status" as any)
@@ -557,11 +561,11 @@ export default function QAClientesPage() {
         .order("data_realizacao", { ascending: false });
 
       const [vRes, cRes, gRes, fRes, cadRes, exRes] = await Promise.all([
-        supabase.from("qa_vendas" as any).select("*").eq("cliente_id", lid).order("data_cadastro", { ascending: false }),
-        supabase.from("qa_crafs" as any).select("*").eq("cliente_id", lid),
-        supabase.from("qa_gtes" as any).select("*").eq("cliente_id", lid),
-        supabase.from("qa_filiacoes" as any).select("*").eq("cliente_id", lid),
-        supabase.from("qa_cadastro_cr" as any).select("*").eq("cliente_id", lid).limit(1),
+        supabase.from("qa_vendas" as any).select("*").eq("cliente_id", cid).order("data_cadastro", { ascending: false }),
+        supabase.from("qa_crafs" as any).select("*").eq("cliente_id", cid),
+        supabase.from("qa_gtes" as any).select("*").eq("cliente_id", cid),
+        supabase.from("qa_filiacoes" as any).select("*").eq("cliente_id", cid),
+        supabase.from("qa_cadastro_cr" as any).select("*").eq("cliente_id", cid).limit(1),
         examesQuery,
       ]);
       const vendasData = (vRes.data as any[]) ?? [];
@@ -572,7 +576,8 @@ export default function QAClientesPage() {
       setCadastro((cadRes.data as any[])?.[0] ?? null);
       setExamesAtuais((exRes.data as any[]) ?? []);
       if (vendasData.length > 0) {
-        const vendaIds = vendasData.map((v: any) => v.id_legado ?? v.id);
+        // qa_itens_venda.venda_id referencia qa_vendas.id puro — nunca id_legado.
+        const vendaIds = vendasData.map((v: any) => v.id);
         const { data: itensData } = await supabase.from("qa_itens_venda" as any).select("*").in("venda_id", vendaIds);
         setItens((itensData as any[]) ?? []);
       } else {
