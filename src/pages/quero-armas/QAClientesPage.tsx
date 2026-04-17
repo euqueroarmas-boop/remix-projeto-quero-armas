@@ -180,6 +180,7 @@ const buildClientePayload = (cadastro: CadastroPublico, cur?: Partial<Cliente> |
 };
 
 export default function QAClientesPage() {
+  const { statuses: statusList } = useQAStatusServico();
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
