@@ -208,25 +208,35 @@ export default function QAClientesPage() {
   const [itemEditForm, setItemEditForm] = useState<Record<string, string>>({});
   const [savingItem, setSavingItem] = useState(false);
 
-  // Serviços CAC (Colecionador, Atirador, Caçador) e correlatos onde campos SIGMA/CR/CRAF/Porte/GTE são aplicáveis
+  // Serviços de Concessão de CR (Exército Brasileiro) — possuem apenas campos do CR
+  const SERVICOS_CR = [13, 20];
+  // Serviços CAC (Colecionador, Atirador, Caçador) e correlatos onde campos SIGMA/CRAF/Porte/GTE são aplicáveis
   // OBS: Porte na Polícia Federal (id=3) NÃO é CAC — possui apenas Nº Porte, sem CRAF/GTE/CR/SIGMA/SINARM
-  const SERVICOS_CAC = [4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 20];
+  // OBS: Concessão de CR (13, 20) foi REMOVIDA daqui — possui apenas campos exclusivos do CR
+  const SERVICOS_CAC = [4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18];
   // Serviço de Posse na Polícia Federal
   const SERVICOS_POSSE = [2];
 
   const ITEM_EDIT_FIELDS: { key: string; label: string; type: "date" | "text"; servicos?: number[]; condition?: (form: Record<string, string>) => boolean }[] = [
-    { key: "data_protocolo", label: "Data Protocolo", type: "date" },
+    // Datas — para CR usam rótulo específico "do CR"
+    { key: "data_protocolo", label: "Data Protocolo do CR", type: "date", servicos: SERVICOS_CR },
+    { key: "data_protocolo", label: "Data Protocolo", type: "date", servicos: [2, 3, 4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 26] },
     // Nº do Requerimento — exclusivo de Porte na Polícia Federal
     { key: "numero_requerimento", label: "Nº do Requerimento", type: "text", servicos: [3] },
     { key: "data_notificacao", label: "Data da Notificação", type: "date", servicos: SERVICOS_POSSE },
     { key: "data_recurso_administrativo", label: "Data do Recurso Administrativo", type: "date", servicos: SERVICOS_POSSE, condition: (f) => !!f.data_notificacao },
-    { key: "data_deferimento", label: "Data Deferimento", type: "date" },
-    { key: "data_vencimento", label: "Data Vencimento", type: "date" },
-    // Nº Processo — não se aplica a Porte na Polícia Federal
-    { key: "numero_processo", label: "Nº Processo", type: "text", servicos: [2, 4, 5, 6, 7, 8, 9, 10, 13, 14, 15, 16, 17, 18, 20, 26] },
-    // Campos exclusivos de CAC — NÃO aparecem em Posse na Polícia Federal
+    { key: "data_deferimento", label: "Data Deferimento do CR", type: "date", servicos: SERVICOS_CR },
+    { key: "data_deferimento", label: "Data Deferimento", type: "date", servicos: [2, 3, 4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 26] },
+    { key: "data_vencimento", label: "Data Vencimento do CR", type: "date", servicos: SERVICOS_CR },
+    { key: "data_vencimento", label: "Data Vencimento", type: "date", servicos: [2, 3, 4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 26] },
+    // Nº Processo — para CR é "Nº de Protocolo do CR"; demais usam "Nº Processo"
+    { key: "numero_processo", label: "Nº de Protocolo do CR", type: "text", servicos: SERVICOS_CR },
+    { key: "numero_processo", label: "Nº Processo", type: "text", servicos: [2, 4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 26] },
+    // Campos exclusivos de CAC — NÃO aparecem em Posse na PF nem em Concessão de CR
     { key: "numero_craf", label: "Nº CRAF", type: "text", servicos: SERVICOS_CAC },
     { key: "numero_gte", label: "Nº GTE", type: "text", servicos: SERVICOS_CAC },
+    // Nº CR — aparece em CAC e em Concessão de CR (com rótulo "Nº de Certificado de Registro (CR)")
+    { key: "numero_cr", label: "Nº de Certificado de Registro (CR)", type: "text", servicos: SERVICOS_CR },
     { key: "numero_cr", label: "Nº CR", type: "text", servicos: SERVICOS_CAC },
     { key: "numero_porte", label: "Nº Porte", type: "text", servicos: [3, ...SERVICOS_CAC] },
     { key: "numero_sigma", label: "Nº SIGMA", type: "text", servicos: SERVICOS_CAC },
