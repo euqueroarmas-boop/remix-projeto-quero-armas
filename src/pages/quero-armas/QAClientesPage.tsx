@@ -871,9 +871,19 @@ export default function QAClientesPage() {
                                     </Select>
                                     <span className="text-slate-700 truncate">{getServicoNome(it.servico_id)}</span>
                                   </div>
-                                  <div className="flex items-center gap-3 shrink-0">
-                                    {it.numero_processo && <span className="text-slate-400 font-mono text-[9px]">{it.numero_processo}</span>}
+                                  <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                                    {it.numero_processo && <span className="hidden sm:inline text-slate-400 font-mono text-[9px]">{it.numero_processo}</span>}
                                     <span className="text-slate-600 font-mono">R$ {Number(it.valor || 0).toFixed(0)}</span>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={(e) => { e.stopPropagation(); handleDeleteItem(it); }}
+                                      className="h-7 w-7 p-0 text-slate-400 hover:text-red-500 hover:bg-red-50"
+                                      title="Excluir item"
+                                      aria-label="Excluir item"
+                                    >
+                                      <Trash2 className="h-3.5 w-3.5" />
+                                    </Button>
                                   </div>
                                 </div>
                                 {expandedItemId === it.id && (
@@ -907,10 +917,7 @@ export default function QAClientesPage() {
                                         </div>
                                       ))}
                                     </div>
-                                    {/* Declarações filtradas pelo serviço */}
-                                    <div className="pt-3 border-t border-slate-100">
-                                      <DocumentGenerator cliente={c} nomeServico={getServicoNome(it.servico_id)} />
-                                    </div>
+                                    {/* Declarações movidas para a aba "Docs" — não exibir aqui */}
                                   </div>
                                 )}
                               </div>
