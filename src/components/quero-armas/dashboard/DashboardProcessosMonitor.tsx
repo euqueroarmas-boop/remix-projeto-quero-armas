@@ -279,7 +279,56 @@ export default function DashboardProcessosMonitor() {
         default: return b.diasParado - a.diasParado;
       }
     });
-    return list;
+
+    /* ── AGRUPAMENTO COMBO ──
+     * Mantém a lógica do card ativo (filtro/status). Para cada chave (cliente+status),
+     * se houver múltiplos serviços marcados como COMBO, eles são unificados em uma
+     * única linha listando todos os serviços abaixo do nome do cliente.
+     * Serviços não-COMBO continuam como linhas individuais (preserva função do card). */
+    const groups = new Map<string, MonitorRow[]>();
+    const singles: MonitorRow[] = [];
+    for (const r of list) {
+      if (!r.isCombo) { singles.push(r); continue; }
+      const k = `${r.clienteId ?? "x"}|${r.status}`;
+      const arr = groups.get(k) || [];
+      arr.push(r);
+      groups.set(k, arr);
+    }
+    const display: DisplayRow[] = [];
+    for (const r of singles) {
+      display.push({
+        key: `s-${r.itemId}`,
+        clienteId: r.clienteId, clienteNome: r.clienteNome,
+        vendaId: r.vendaId, status: r.status, meta: r.meta,
+        vendaDate: r.vendaDate, diasParado: r.diasParado,
+        isComboGroup: false, servicoNome: r.servicoNome, servicosList: [],
+      });
+    }
+    for (const [k, arr] of groups) {
+      if (arr.length === 1) {
+        const r = arr[0];
+        display.push({
+          key: `c1-${r.itemId}`,
+          clienteId: r.clienteId, clienteNome: r.clienteNome,
+          vendaId: r.vendaId, status: r.status, meta: r.meta,
+          vendaDate: r.vendaDate, diasParado: r.diasParado,
+          isComboGroup: false, servicoNome: r.servicoNome, servicosList: [],
+        });
+      } else {
+        // Pega referências do mais recente
+        const ref = [...arr].sort((a, b) => b.diasParado - a.diasParado)[0];
+        display.push({
+          key: `cg-${k}`,
+          clienteId: ref.clienteId, clienteNome: ref.clienteNome,
+          vendaId: ref.vendaId, status: ref.status, meta: ref.meta,
+          vendaDate: ref.vendaDate, diasParado: ref.diasParado,
+          isComboGroup: true,
+          servicoNome: `COMBO • ${arr.length} serviços`,
+          servicosList: arr.map(x => x.servicoNome),
+        });
+      }
+    }
+    return display;
   }, [rows, filter, sortBy, search]);
 
   if (loading) {
