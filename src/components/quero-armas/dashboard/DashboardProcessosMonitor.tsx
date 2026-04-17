@@ -722,6 +722,95 @@ export default function DashboardProcessosMonitor() {
  * UI helpers
  * ================================================================ */
 
+function EntityPanel({
+  entidade, totals, ativosCatalog, encerradosCatalog, counts, filter, setFilter,
+}: {
+  entidade: Entidade;
+  totals: { ativos: number; encerrados: number; total: number };
+  ativosCatalog: StatusMeta[];
+  encerradosCatalog: StatusMeta[];
+  counts: Map<StatusKey, number>;
+  filter: FilterKey;
+  setFilter: (f: FilterKey) => void;
+}) {
+  const meta = ENTIDADE_META[entidade];
+  return (
+    <section className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm flex flex-col">
+      {/* Header da entidade */}
+      <div className="bg-slate-50 border-b border-slate-200 px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className={`size-2.5 rounded-full ${entidade === "PF" ? "bg-slate-900" : "bg-emerald-700"}`} />
+          <h4 className="text-sm font-bold uppercase tracking-wide text-slate-900">{meta.label}</h4>
+        </div>
+        <span className="font-mono text-[10px] font-semibold text-slate-500 bg-slate-200/60 px-2 py-0.5 rounded">{meta.ref}</span>
+      </div>
+
+      {/* Totais */}
+      <div className="grid grid-cols-2 divide-x divide-slate-200 border-b border-slate-200">
+        <div className="p-4">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Em Andamento</span>
+          <div className="text-3xl font-bold tabular-nums text-slate-900 mt-1">{totals.ativos}</div>
+        </div>
+        <div className="p-4">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Encerrados</span>
+          <div className="text-3xl font-bold tabular-nums text-slate-500 mt-1">{totals.encerrados}</div>
+        </div>
+      </div>
+
+      {/* Detalhamento de status */}
+      <div className="grid grid-cols-2 divide-x divide-slate-100">
+        <div className="p-3 flex flex-col gap-2">
+          <h5 className="text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-1.5">Fluxo Ativo</h5>
+          {ativosCatalog.length === 0 ? (
+            <span className="text-[11px] text-slate-300 italic">—</span>
+          ) : ativosCatalog.map(s => (
+            <StatusLine
+              key={s.key} meta={s}
+              total={counts.get(s.key) || 0}
+              active={filter === s.key}
+              onClick={() => setFilter(filter === s.key ? "ativos" : s.key)}
+            />
+          ))}
+        </div>
+        <div className="p-3 flex flex-col gap-2">
+          <h5 className="text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-1.5">Resoluções</h5>
+          {encerradosCatalog.length === 0 ? (
+            <span className="text-[11px] text-slate-300 italic">—</span>
+          ) : encerradosCatalog.map(s => (
+            <StatusLine
+              key={s.key} meta={s}
+              total={counts.get(s.key) || 0}
+              active={filter === s.key}
+              onClick={() => setFilter(filter === s.key ? "encerrados" : s.key)}
+            />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function StatusLine({
+  meta, total, active, onClick,
+}: { meta: StatusMeta; total: number; active: boolean; onClick: () => void }) {
+  const tone = TONE_CLASSES[meta.tone];
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex items-center justify-between px-2 py-1.5 rounded-md text-left transition hover:bg-slate-50 ${
+        active ? `ring-2 ${tone.ring} ring-inset bg-slate-50` : ""
+      }`}
+    >
+      <div className="flex items-center gap-2 min-w-0">
+        <span className={`size-2 rounded-full shrink-0 ${tone.dot}`} />
+        <span className="text-[11px] font-medium text-slate-700 truncate">{meta.short}</span>
+      </div>
+      <span className={`text-sm font-bold tabular-nums shrink-0 ml-2 ${total > 0 ? tone.text : "text-slate-300"}`}>{total}</span>
+    </button>
+  );
+}
+
 function StatusKPI({
   meta, total, active, onClick,
 }: { meta: StatusMeta; total: number; active: boolean; onClick: () => void }) {
