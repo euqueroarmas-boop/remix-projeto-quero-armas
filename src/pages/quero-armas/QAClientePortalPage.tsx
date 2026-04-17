@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getClienteFK, getVendaFK } from "@/components/quero-armas/clientes/clientFK";
+import { useQAServicosMap } from "@/hooks/useQAServicosMap";
 
 const formatDate = (d: string | null) => {
   if (!d) return "—";
@@ -23,12 +24,6 @@ const urgencyColor = (d: number | null) => d === null ? "text-slate-400" : d < 0
 const urgencyBg = (d: number | null) => d === null ? "bg-slate-50 border-slate-200" : d < 0 ? "bg-red-50/60 border-red-200/60" : d <= 30 ? "bg-red-50/60 border-red-200/60" : d <= 90 ? "bg-amber-50/60 border-amber-200/60" : "bg-emerald-50/60 border-emerald-200/60";
 const urgencyLabel = (d: number | null) => d === null ? "SEM DATA" : d < 0 ? `VENCIDO HÁ ${Math.abs(d)}D` : d === 0 ? "VENCE HOJE" : `${d}D RESTANTES`;
 
-const SERVICO_MAP: Record<number, string> = {
-  2: "Posse PF", 3: "Porte PF", 4: "Lions Gun", 5: "COMBO Autoriz.", 6: "COMBO CRAF",
-  7: "COMBO GTE", 8: "Apost. Atual.", 9: "Apost. Mudança", 10: "Apost. 2º End.",
-  11: "Curso Pistola", 12: "Curso Cal.12", 13: "Mudança Serv.", 14: "Reg. Recarga",
-  15: "Autoriz. Compra", 16: "Reg. Arma", 17: "GTE Avulso", 18: "GTE", 20: "CR EB", 21: "VIP Pistola",
-};
 
 interface ExpiringDoc { label: string; date: string | null; days: number | null; category: string; }
 
