@@ -959,7 +959,7 @@ export default function QAClientesPage() {
                                   <div className="flex items-center gap-2 flex-1 min-w-0">
                                     {expandedItemId === it.id ? <ChevronUp className="h-3 w-3 shrink-0 text-slate-500" /> : <ChevronDown className="h-3 w-3 shrink-0 text-slate-500" />}
                                     <Select
-                                      value={it.status || "EM ANÁLISE"}
+                                      value={it.status || ""}
                                       onValueChange={async (newStatus) => {
                                         const { error } = await supabase.from("qa_itens_venda" as any).update({ status: newStatus }).eq("id", it.id);
                                         if (error) { toast.error(error.message); return; }
@@ -968,7 +968,7 @@ export default function QAClientesPage() {
                                       }}
                                     >
                                       <SelectTrigger className={`h-5 w-auto min-w-0 px-1.5 text-[9px] font-mono border-0 bg-transparent gap-0.5 ${svcStatusColor(it.status)}`} onClick={(e) => e.stopPropagation()}>
-                                        <SelectValue />
+                                        <SelectValue placeholder="SELECIONAR STATUS" />
                                       </SelectTrigger>
                                       <SelectContent>
                                         {(statusList.length > 0
