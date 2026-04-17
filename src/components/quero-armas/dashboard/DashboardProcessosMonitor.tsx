@@ -337,14 +337,36 @@ export default function DashboardProcessosMonitor() {
     [dynamicCatalog]
   );
 
-  /* ── Contagens por status ── */
+  /* ── Contagens por status (global e por entidade) ── */
   const counts = useMemo(() => {
     const map = new Map<StatusKey, number>();
-    dynamicCatalog.forEach(s => map.set(s.key, 0));
-    rows.forEach(r => map.set(r.status, (map.get(r.status) || 0) + 1));
+    const byEntStatus: Record<Entidade, Map<StatusKey, number>> = {
+      PF: new Map(), EB: new Map(),
+    };
+    dynamicCatalog.forEach(s => {
+      map.set(s.key, 0);
+      byEntStatus.PF.set(s.key, 0);
+      byEntStatus.EB.set(s.key, 0);
+    });
+    rows.forEach(r => {
+      map.set(r.status, (map.get(r.status) || 0) + 1);
+      const m = byEntStatus[r.entidade];
+      m.set(r.status, (m.get(r.status) || 0) + 1);
+    });
     const ativos = dynamicCatalog.filter(s => s.group === "ativo").reduce((sum, s) => sum + (map.get(s.key) || 0), 0);
     const encerrados = dynamicCatalog.filter(s => s.group === "encerrado").reduce((sum, s) => sum + (map.get(s.key) || 0), 0);
-    return { byStatus: map, ativos, encerrados, total: rows.length };
+    const entTotals = (ent: Entidade) => {
+      const m = byEntStatus[ent];
+      const a = dynamicCatalog.filter(s => s.group === "ativo").reduce((sum, s) => sum + (m.get(s.key) || 0), 0);
+      const e = dynamicCatalog.filter(s => s.group === "encerrado").reduce((sum, s) => sum + (m.get(s.key) || 0), 0);
+      return { ativos: a, encerrados: e, total: a + e };
+    };
+    return {
+      byStatus: map, ativos, encerrados, total: rows.length,
+      byEntStatus,
+      pf: entTotals("PF"),
+      eb: entTotals("EB"),
+    };
   }, [rows, dynamicCatalog]);
 
   /* ── Lista filtrada + ordenada ── */
