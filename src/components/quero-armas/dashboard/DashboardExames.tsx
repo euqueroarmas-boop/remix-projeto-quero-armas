@@ -160,7 +160,11 @@ export default function DashboardExames() {
 
         const latestMap = new Map<string, ExameRow>();
         for (const e of exames) {
-          if (clientesComDeferido.has(String(e.cliente_id))) continue;
+          const cidStr = String(e.cliente_id);
+          // Esconde exames apenas de clientes que JÁ NÃO TÊM nenhum serviço em aberto
+          // (ou seja, têm deferido E não têm mais pendentes). Se ainda houver
+          // qualquer item em aberto, mantemos o exame visível no monitoramento.
+          if (clientesComDeferido.has(cidStr) && !clientesComPendente.has(cidStr)) continue;
           const key = `${e.cliente_id}_${e.tipo}`;
           const existing = latestMap.get(key);
           if (!existing || e.data_realizacao > existing.data_realizacao) {
