@@ -416,8 +416,8 @@ export default function DashboardProcessosMonitor() {
     );
   }
 
-  const ativosCatalog = STATUS_CATALOG.filter(s => s.group === "ativo");
-  const encerradosCatalog = STATUS_CATALOG.filter(s => s.group === "encerrado");
+  const ativosCatalog = dynamicCatalog.filter(s => s.group === "ativo");
+  const encerradosCatalog = dynamicCatalog.filter(s => s.group === "encerrado");
 
   return (
     <div className="space-y-4">
