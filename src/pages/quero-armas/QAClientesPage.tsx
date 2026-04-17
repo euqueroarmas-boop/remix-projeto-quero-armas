@@ -355,6 +355,11 @@ export default function QAClientesPage() {
       const payload: Record<string, any> = {};
       for (const f of applicableFields) {
         const v = itemEditForm[f.key]?.trim() || null;
+        if (f.required && !v) {
+          toast.error(`Campo obrigatório: "${f.label}".`);
+          setSavingItem(false);
+          return;
+        }
         if (f.type === "date") {
           if (v) {
             const iso = dateBrToIso(v);
@@ -1046,7 +1051,10 @@ export default function QAClientesPage() {
                                       <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                                         {getFieldsForServico(it.servico_id, itemEditForm, it).map(field => (
                                           <div key={field.key}>
-                                            <label className="block text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">{field.label}</label>
+                                            <label className="block text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">
+                                              {field.label}
+                                              {field.required && <span className="text-red-500 ml-0.5">*</span>}
+                                            </label>
                                             <input
                                               type="text"
                                               value={itemEditForm[field.key] || ""}
@@ -1056,7 +1064,7 @@ export default function QAClientesPage() {
                                                 setItemEditForm(prev => ({ ...prev, [field.key]: val }));
                                               }}
                                               placeholder={field.type === "date" ? "DD/MM/AAAA" : "—"}
-                                              className="w-full h-7 px-2 text-[10px] rounded bg-white border border-slate-200 text-slate-700 placeholder:text-slate-300 focus:border-blue-500 focus:outline-none transition-colors"
+                                              className={`w-full h-7 px-2 text-[10px] rounded bg-white border text-slate-700 placeholder:text-slate-300 focus:outline-none transition-colors ${field.required && !itemEditForm[field.key] ? "border-red-300 focus:border-red-500" : "border-slate-200 focus:border-blue-500"}`}
                                             />
                                           </div>
                                         ))}
