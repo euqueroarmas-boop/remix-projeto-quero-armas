@@ -868,7 +868,13 @@ export default function QAClientesPage() {
                               <span className="text-slate-400 ml-2">{formatDate(v.data_cadastro)}</span>
                             </div>
                             <div className="flex items-center gap-1">
-                              <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded ${svcStatusColor(v.status)}`}>{v.status}</span>
+                              {(() => {
+                                const allCortesia = vItens.length > 0 && vItens.every((i: any) => i.cortesia);
+                                const isPago = v.status === "PAGO" || !!v.forma_pagamento;
+                                if (allCortesia) return <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 border border-emerald-200">CORTESIA</span>;
+                                if (isPago) return <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 border border-blue-200">PAGO</span>;
+                                return <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-200">PENDENTE</span>;
+                              })()}
                               <Button variant="ghost" size="sm" onClick={() => setVendaModal({ open: true, item: v })} className="h-5 w-5 p-0 text-slate-400 hover:text-slate-700">
                                 <Edit className="h-3 w-3" />
                               </Button>
