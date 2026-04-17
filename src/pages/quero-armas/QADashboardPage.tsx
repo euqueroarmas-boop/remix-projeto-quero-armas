@@ -14,6 +14,7 @@ import {
 
 const DashboardExames = lazy(() => import("@/components/quero-armas/dashboard/DashboardExames"));
 const DashboardProcessosMonitor = lazy(() => import("@/components/quero-armas/dashboard/DashboardProcessosMonitor"));
+const DashboardPrazosRecursais = lazy(() => import("@/components/quero-armas/dashboard/DashboardPrazosRecursais"));
 
 interface Stats {
   documentos: number;
