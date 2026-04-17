@@ -225,6 +225,7 @@ export default function DashboardExames() {
         clienteNome: principal.clienteNome,
         clienteTelefone: principal.clienteTelefone,
         temServicoPendente: principal.temServicoPendente,
+        servicosPendentes: principal.servicosPendentes,
         exames: allOfCliente.sort((a, b) => a.prioridade - b.prioridade),
         prioridadeCliente: Math.min(...matched.map((m) => m.prioridade)),
       };
