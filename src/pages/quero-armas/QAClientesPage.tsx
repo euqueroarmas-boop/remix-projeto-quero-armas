@@ -338,7 +338,10 @@ export default function QAClientesPage() {
   useEffect(() => {
     const targetId = searchParams.get("cliente");
     if (!targetId || autoOpenedRef.current || clientes.length === 0) return;
-    const cli = clientes.find((c) => String(c.id) === targetId);
+    // O Monitor envia o FK canônico (id_legado). Buscamos por id_legado primeiro,
+    // com fallback para id quando o cliente não tiver id_legado.
+    const targetNum = Number(targetId);
+    const cli = clientes.find((c) => c.id_legado === targetNum) ?? clientes.find((c) => c.id === targetNum);
     if (cli) {
       autoOpenedRef.current = true;
       openClient(cli);
