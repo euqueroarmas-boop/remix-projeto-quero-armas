@@ -1026,7 +1026,7 @@ export default function QAClientesPage() {
                                     })()}
                                   </div>
                                   <div className="flex items-center gap-1 shrink-0">
-                                    <span className="w-[88px] flex justify-end">
+                                    <span className="w-[88px] flex justify-start">
                                       {it.cortesia ? (
                                         <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 border border-emerald-200" title={it.cortesia_motivo || "Cortesia"}>
                                           CORTESIA
