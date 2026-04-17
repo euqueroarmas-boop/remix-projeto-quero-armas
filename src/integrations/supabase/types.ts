@@ -3556,16 +3556,19 @@ export type Database = {
       qa_servicos: {
         Row: {
           id: number
+          is_combo: boolean
           nome_servico: string
           valor_servico: number
         }
         Insert: {
           id?: number
+          is_combo?: boolean
           nome_servico: string
           valor_servico?: number
         }
         Update: {
           id?: number
+          is_combo?: boolean
           nome_servico?: string
           valor_servico?: number
         }
