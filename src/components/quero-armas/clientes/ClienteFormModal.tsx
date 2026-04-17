@@ -211,6 +211,10 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         pais2: cliente.pais2 || "",
         observacao: cliente.observacao || "", status: cliente.status || "ATIVO",
         cliente_lions: cliente.cliente_lions || false,
+        categoria_titular: (cliente.categoria_titular || "") as CategoriaTitular | "",
+        subcategoria: cliente.subcategoria || "",
+        orgao_vinculado: cliente.orgao_vinculado || "",
+        matricula_funcional: cliente.matricula_funcional || "",
       });
       // Load existing photo preview
       if (cliente.imagem) {
