@@ -1,0 +1,1 @@
+UPDATE public.qa_servicos SET nome_servico = 'Aguardando nota fiscal da arma' WHERE id = 28;
