@@ -197,6 +197,7 @@ export default function DashboardProcessosMonitor() {
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<MonitorRow[]>([]);
   const [filter, setFilter] = useState<FilterKey>("ativos");
+  const [entidadeFilter, setEntidadeFilter] = useState<Entidade | null>(null);
   const [sortBy, setSortBy] = useState<SortKey>("tempo_parado");
   const [search, setSearch] = useState("");
   const [editingKey, setEditingKey] = useState<string | null>(null);
@@ -372,6 +373,7 @@ export default function DashboardProcessosMonitor() {
   /* ── Lista filtrada + ordenada ── */
   const visible = useMemo(() => {
     let list = rows;
+    if (entidadeFilter) list = list.filter(r => r.entidade === entidadeFilter);
     if (filter === "ativos") list = list.filter(r => r.meta.group === "ativo");
     else if (filter === "encerrados") list = list.filter(r => r.meta.group === "encerrado");
     else if (filter !== "todos") list = list.filter(r => r.status === filter);
@@ -446,7 +448,7 @@ export default function DashboardProcessosMonitor() {
       }
     }
     return display;
-  }, [rows, filter, sortBy, search]);
+  }, [rows, filter, entidadeFilter, sortBy, search]);
 
   if (loading) {
     return (
@@ -488,7 +490,9 @@ export default function DashboardProcessosMonitor() {
           encerradosCatalog={encerradosCatalog}
           counts={counts.byEntStatus.PF}
           filter={filter}
+          entidadeFilter={entidadeFilter}
           setFilter={setFilter}
+          setEntidadeFilter={setEntidadeFilter}
         />
         <EntityPanel
           entidade="EB"
@@ -497,7 +501,9 @@ export default function DashboardProcessosMonitor() {
           encerradosCatalog={encerradosCatalog}
           counts={counts.byEntStatus.EB}
           filter={filter}
+          entidadeFilter={entidadeFilter}
           setFilter={setFilter}
+          setEntidadeFilter={setEntidadeFilter}
         />
       </div>
 
@@ -505,12 +511,12 @@ export default function DashboardProcessosMonitor() {
       <div className="qa-card p-3 md:p-4">
         <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3">
           <div className="flex items-center gap-1 flex-wrap">
-            <FilterChip active={filter === "todos"} onClick={() => setFilter("todos")}>Todos ({counts.total})</FilterChip>
-            <FilterChip active={filter === "ativos"} onClick={() => setFilter("ativos")}>Ativos ({counts.ativos})</FilterChip>
-            <FilterChip active={filter === "encerrados"} onClick={() => setFilter("encerrados")}>Encerrados ({counts.encerrados})</FilterChip>
+            <FilterChip active={filter === "todos" && !entidadeFilter} onClick={() => { setFilter("todos"); setEntidadeFilter(null); }}>Todos ({counts.total})</FilterChip>
+            <FilterChip active={filter === "ativos" && !entidadeFilter} onClick={() => { setFilter("ativos"); setEntidadeFilter(null); }}>Ativos ({counts.ativos})</FilterChip>
+            <FilterChip active={filter === "encerrados" && !entidadeFilter} onClick={() => { setFilter("encerrados"); setEntidadeFilter(null); }}>Encerrados ({counts.encerrados})</FilterChip>
             {catalogByKey.has(filter as string) && (
-              <FilterChip active onClick={() => setFilter("ativos")}>
-                {catalogByKey.get(filter as string)!.label} ✕
+              <FilterChip active onClick={() => { setFilter("ativos"); setEntidadeFilter(null); }}>
+                {catalogByKey.get(filter as string)!.label}{entidadeFilter ? ` · ${entidadeFilter}` : ""} ✕
               </FilterChip>
             )}
           </div>
@@ -723,7 +729,7 @@ export default function DashboardProcessosMonitor() {
  * ================================================================ */
 
 function EntityPanel({
-  entidade, totals, ativosCatalog, encerradosCatalog, counts, filter, setFilter,
+  entidade, totals, ativosCatalog, encerradosCatalog, counts, filter, entidadeFilter, setFilter, setEntidadeFilter,
 }: {
   entidade: Entidade;
   totals: { ativos: number; encerrados: number; total: number };
@@ -731,7 +737,9 @@ function EntityPanel({
   encerradosCatalog: StatusMeta[];
   counts: Map<StatusKey, number>;
   filter: FilterKey;
+  entidadeFilter: Entidade | null;
   setFilter: (f: FilterKey) => void;
+  setEntidadeFilter: (e: Entidade | null) => void;
 }) {
   const meta = ENTIDADE_META[entidade];
   return (
@@ -763,27 +771,49 @@ function EntityPanel({
           <h5 className="text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-1.5">Fluxo Ativo</h5>
           {ativosCatalog.length === 0 ? (
             <span className="text-[11px] text-slate-300 italic">—</span>
-          ) : ativosCatalog.map(s => (
-            <StatusLine
-              key={s.key} meta={s}
-              total={counts.get(s.key) || 0}
-              active={filter === s.key}
-              onClick={() => setFilter(filter === s.key ? "ativos" : s.key)}
-            />
-          ))}
+          ) : ativosCatalog.map(s => {
+            const isActive = filter === s.key && entidadeFilter === entidade;
+            return (
+              <StatusLine
+                key={s.key} meta={s}
+                total={counts.get(s.key) || 0}
+                active={isActive}
+                onClick={() => {
+                  if (isActive) {
+                    setFilter("ativos");
+                    setEntidadeFilter(null);
+                  } else {
+                    setFilter(s.key);
+                    setEntidadeFilter(entidade);
+                  }
+                }}
+              />
+            );
+          })}
         </div>
         <div className="p-3 flex flex-col gap-2">
           <h5 className="text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-1.5">Resoluções</h5>
           {encerradosCatalog.length === 0 ? (
             <span className="text-[11px] text-slate-300 italic">—</span>
-          ) : encerradosCatalog.map(s => (
-            <StatusLine
-              key={s.key} meta={s}
-              total={counts.get(s.key) || 0}
-              active={filter === s.key}
-              onClick={() => setFilter(filter === s.key ? "encerrados" : s.key)}
-            />
-          ))}
+          ) : encerradosCatalog.map(s => {
+            const isActive = filter === s.key && entidadeFilter === entidade;
+            return (
+              <StatusLine
+                key={s.key} meta={s}
+                total={counts.get(s.key) || 0}
+                active={isActive}
+                onClick={() => {
+                  if (isActive) {
+                    setFilter("encerrados");
+                    setEntidadeFilter(null);
+                  } else {
+                    setFilter(s.key);
+                    setEntidadeFilter(entidade);
+                  }
+                }}
+              />
+            );
+          })}
         </div>
       </div>
     </section>
