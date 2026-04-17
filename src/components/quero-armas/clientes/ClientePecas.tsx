@@ -755,8 +755,8 @@ export default function ClientePecas({ cliente }: Props) {
           <Button
             onClick={gerar}
             disabled={!canGenerate}
-            className="h-11 px-7 text-[12px] font-bold uppercase tracking-wider rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100"
-            style={{ background: "linear-gradient(135deg, hsl(220 20% 18%), hsl(220 20% 28%))", color: "white" }}>
+            className="h-11 px-7 text-[12px] font-bold uppercase tracking-wider rounded-xl border-2 bg-white text-foreground transition-all duration-200 hover:bg-primary/5 hover:border-primary/50 hover:text-primary hover:shadow-md disabled:opacity-50 disabled:hover:bg-white disabled:hover:text-foreground disabled:hover:border-border"
+            style={{ borderColor: "hsl(220 15% 88%)" }}>
             {generating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
             GERAR PEÇA JURÍDICA
           </Button>
