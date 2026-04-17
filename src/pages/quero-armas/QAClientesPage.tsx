@@ -22,6 +22,7 @@ import ClienteAcessoPortal from "@/components/quero-armas/clientes/ClienteAcesso
 import ClientePecas from "@/components/quero-armas/clientes/ClientePecas";
 import ClienteExames from "@/components/quero-armas/clientes/ClienteExames";
 import { getClienteFK, getVendaFK } from "@/components/quero-armas/clientes/clientFK";
+import { useQAStatusServico } from "@/hooks/useQAStatusServico";
 
 const formatCpf = (v: string | null | undefined): string => {
   if (!v) return "—";
@@ -179,6 +180,7 @@ const buildClientePayload = (cadastro: CadastroPublico, cur?: Partial<Cliente> |
 };
 
 export default function QAClientesPage() {
+  const { statuses: statusList } = useQAStatusServico();
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -939,7 +941,10 @@ export default function QAClientesPage() {
                                         <SelectValue />
                                       </SelectTrigger>
                                       <SelectContent>
-                                        {["EM ANÁLISE", "PRONTO PARA ANÁLISE", "À INICIAR", "À FAZER", "AGUARDANDO DOCUMENTAÇÃO", "PASTA FÍSICA - AGUARDANDO LIBERAÇÃO", "DEFERIDO", "INDEFERIDO", "RECURSO ADMINISTRATIVO", "CONCLUÍDO", "DESISTIU", "RESTITUÍDO"].map(s => (
+                                        {(statusList.length > 0
+                                          ? statusList.map(s => s.nome)
+                                          : ["EM ANÁLISE", "PRONTO PARA ANÁLISE", "À INICIAR", "À FAZER", "AGUARDANDO DOCUMENTAÇÃO", "PASTA FÍSICA - AGUARDANDO LIBERAÇÃO", "DEFERIDO", "INDEFERIDO", "RECURSO ADMINISTRATIVO", "CONCLUÍDO", "DESISTIU", "RESTITUÍDO"]
+                                        ).map(s => (
                                           <SelectItem key={s} value={s} className="text-[10px]">{s}</SelectItem>
                                         ))}
                                       </SelectContent>
