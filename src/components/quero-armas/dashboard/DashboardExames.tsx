@@ -99,17 +99,26 @@ export default function DashboardExames() {
   useEffect(() => {
     const load = async () => {
       try {
-        const [examesRes, clientesRes, itensRes, vendasRes] = await Promise.all([
-          supabase.from("qa_exames_cliente" as any).select("id, cliente_id, tipo, data_realizacao, data_vencimento, observacoes"),
-          supabase.from("qa_clientes" as any).select("id, nome_completo, telefone_principal"),
-          supabase.from("qa_itens_venda" as any).select("venda_id, status"),
-          supabase.from("qa_vendas" as any).select("id, cliente_id"),
+        const [examesRes, itensRes, vendasRes] = await Promise.all([
+          supabase.from("qa_exames_cliente" as any).select("id, cliente_id, tipo, data_realizacao, data_vencimento, observacoes").limit(5000),
+          supabase.from("qa_itens_venda" as any).select("venda_id, status").limit(10000),
+          supabase.from("qa_vendas" as any).select("id, cliente_id").limit(10000),
         ]);
 
         const exames = ((examesRes.data || []) as any[]) as ExameRow[];
-        const clientes = ((clientesRes.data || []) as any[]) as ClienteRow[];
         const itens = ((itensRes.data || []) as any[]) as ItemServicoRow[];
         const vendas = ((vendasRes.data || []) as any[]) as VendaRow[];
+
+        // Busca apenas os clientes que efetivamente possuem exames cadastrados
+        const clienteIds = Array.from(new Set(exames.map((e) => e.cliente_id).filter(Boolean)));
+        let clientes: ClienteRow[] = [];
+        if (clienteIds.length > 0) {
+          const clientesRes = await supabase
+            .from("qa_clientes" as any)
+            .select("id, nome_completo, telefone_principal")
+            .in("id", clienteIds);
+          clientes = ((clientesRes.data || []) as any[]) as ClienteRow[];
+        }
 
         const clienteMap = new Map(clientes.map((c) => [c.id, c]));
         const vendaMap = new Map(vendas.map((v) => [v.id, v.cliente_id]));
