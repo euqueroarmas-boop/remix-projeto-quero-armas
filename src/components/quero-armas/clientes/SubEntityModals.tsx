@@ -74,14 +74,15 @@ function PremiumModalShell({ open, onClose, title, icon: Icon, accentColor, chil
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
       <DialogContent
+        onOpenAutoFocus={e => e.preventDefault()}
         className="
           !p-0 border-0 bg-white shadow-2xl shadow-slate-200/60 overflow-hidden
           !fixed !left-1/2 !-translate-x-1/2
           !top-auto !bottom-0 !translate-y-0 !rounded-t-2xl !rounded-b-none
-          sm:!top-1/2 sm:!bottom-auto sm:!-translate-y-1/2 sm:!rounded-2xl
+          sm:!top-[5vh] sm:!bottom-auto sm:!translate-y-0 sm:!rounded-2xl
           !w-full sm:!w-[calc(100vw-2rem)] !max-w-full sm:!max-w-lg
           flex flex-col
-          !max-h-[100dvh] sm:!max-h-[85vh]
+          !max-h-[100dvh] sm:!max-h-[90vh]
         "
       >
         {/* Header (fixo) */}
