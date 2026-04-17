@@ -43,6 +43,9 @@ interface ExameDashItem {
 }
 
 const FINISHED = ["DEFERIDO", "CONCLUÍDO", "DESISTIU", "RESTITUÍDO", "INDEFERIDO"];
+// Status que "consomem" o exame — quando o cliente tem QUALQUER serviço DEFERIDO,
+// seus exames somem do monitoramento do Dashboard (foram usados no processo).
+const CONSUMED_STATUSES = ["DEFERIDO"];
 
 function bucketize(status: ExameComStatus["status"], dias: number): ExameDashItem["bucket"] {
   if (status === "vencido") return "vencido";
