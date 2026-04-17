@@ -736,13 +736,14 @@ function FilterChip({
  * (data_ultima_atualizacao = data informada).
  * ================================================================ */
 function StatusEditor({
-  currentStatus, currentDate, saving, onCancel, onSave,
+  currentStatus, currentDate, saving, onCancel, onSave, catalog,
 }: {
   currentStatus: StatusKey;
   currentDate: string;
   saving: boolean;
   onCancel: () => void;
   onSave: (newStatus: StatusKey, dataProtocolo: string) => void;
+  catalog: StatusMeta[];
 }) {
   const [status, setStatus] = useState<StatusKey>(currentStatus);
   const [date, setDate] = useState<string>(currentDate);
@@ -756,12 +757,12 @@ function StatusEditor({
         className="h-7 text-[11px] rounded-md border border-slate-200 bg-white px-1.5 focus:outline-none focus:ring-2 focus:ring-blue-200 max-w-[180px]"
       >
         <optgroup label="Em andamento">
-          {STATUS_CATALOG.filter(s => s.group === "ativo").map(s => (
+          {catalog.filter(s => s.group === "ativo").map(s => (
             <option key={s.key} value={s.key}>{s.label}</option>
           ))}
         </optgroup>
         <optgroup label="Encerrados">
-          {STATUS_CATALOG.filter(s => s.group === "encerrado").map(s => (
+          {catalog.filter(s => s.group === "encerrado").map(s => (
             <option key={s.key} value={s.key}>{s.label}</option>
           ))}
         </optgroup>
