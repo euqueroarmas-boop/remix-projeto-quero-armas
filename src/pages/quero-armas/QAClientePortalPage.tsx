@@ -43,6 +43,7 @@ function SectionCard({ icon: Icon, title, color, children }: { icon: any; title:
 
 export default function QAClientePortalPage() {
   const navigate = useNavigate();
+  const { map: SERVICO_MAP } = useQAServicosMap();
   const [loading, setLoading] = useState(true);
   const [cliente, setCliente] = useState<any>(null);
   const [vendas, setVendas] = useState<any[]>([]);
