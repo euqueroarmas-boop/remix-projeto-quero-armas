@@ -299,7 +299,73 @@ export default function QAConfiguracoesPage() {
         </div>
       )}
 
-      {/* Ranking Weights */}
+      {/* Status de Serviço CRUD */}
+      {isAdmin && (
+        <div className="qa-card p-5">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "hsl(220 10% 45%)" }}>Status dos Serviços ({statuses.length})</span>
+            <button onClick={() => { setShowNewStatus(!showNewStatus); setNewStatusForm({ nome: "", ordem: "" }); }}
+              className="qa-btn-primary h-8 px-3 text-[11px] flex items-center gap-1 no-glow">
+              <Plus className="h-3 w-3" /> Novo Status
+            </button>
+          </div>
+
+          {showNewStatus && (
+            <div className="flex gap-2 items-end mb-3 rounded-xl p-3 border" style={{ borderColor: "hsl(220 13% 91%)", background: "hsl(220 20% 97%)" }}>
+              <div className="flex-1 space-y-1">
+                <Label className="text-[10px] uppercase" style={{ color: "hsl(220 10% 45%)" }}>Nome</Label>
+                <Input value={newStatusForm.nome} onChange={e => setNewStatusForm(p => ({ ...p, nome: e.target.value }))}
+                  className="h-9 bg-white border-slate-200 text-slate-700" placeholder="Nome do status" />
+              </div>
+              <div className="w-24 space-y-1">
+                <Label className="text-[10px] uppercase" style={{ color: "hsl(220 10% 45%)" }}>Ordem</Label>
+                <Input type="number" value={newStatusForm.ordem} onChange={e => setNewStatusForm(p => ({ ...p, ordem: e.target.value }))}
+                  className="h-9 bg-white border-slate-200 text-slate-700 font-mono text-right" placeholder="0" />
+              </div>
+              <button onClick={handleAddStatus} disabled={savingStatus} className="h-9 w-9 rounded-lg flex items-center justify-center bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100 shrink-0">
+                {savingStatus ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+              </button>
+              <button onClick={() => setShowNewStatus(false)} className="h-9 w-9 rounded-lg flex items-center justify-center hover:bg-slate-100 text-slate-400 shrink-0">
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
+
+          <div className="space-y-1">
+            {statuses.map(s => (
+              <div key={s.id} className="flex items-center gap-2 rounded-lg px-3 py-2 text-[12px] hover:bg-slate-50 transition-colors group">
+                {editingStatusId === s.id ? (
+                  <>
+                    <Input value={editStatusForm.nome} onChange={e => setEditStatusForm(p => ({ ...p, nome: e.target.value }))}
+                      className="flex-1 bg-white border-slate-200 text-slate-700 h-8 text-xs" />
+                    <Input type="number" value={editStatusForm.ordem} onChange={e => setEditStatusForm(p => ({ ...p, ordem: e.target.value }))}
+                      className="w-20 bg-white border-slate-200 text-slate-700 h-8 text-xs font-mono text-right" />
+                    <button onClick={() => handleUpdateStatus(s.id)} disabled={savingStatus} className="h-7 w-7 rounded-lg flex items-center justify-center text-emerald-600 hover:bg-emerald-50">
+                      <Check className="h-3.5 w-3.5" />
+                    </button>
+                    <button onClick={() => setEditingStatusId(null)} className="h-7 w-7 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-100">
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <span className="flex-1 truncate" style={{ color: "hsl(220 20% 25%)" }}>{s.nome}</span>
+                    <span className="font-mono text-[10px] shrink-0" style={{ color: "hsl(220 10% 55%)" }}>#{s.ordem}</span>
+                    <button onClick={() => startEditStatus(s)} className="h-7 w-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Pencil className="h-3 w-3" />
+                    </button>
+                    <button onClick={() => handleDeleteStatus(s.id)} className="h-7 w-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  </>
+                )}
+              </div>
+            ))}
+            {statuses.length === 0 && <p className="text-xs text-center py-4" style={{ color: "hsl(220 10% 62%)" }}>Nenhum status cadastrado</p>}
+          </div>
+        </div>
+      )}
+
       <div className="qa-card p-5">
         <div className="flex items-center justify-between mb-3">
           <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "hsl(220 10% 45%)" }}>Pesos de Ranking</span>
