@@ -363,7 +363,7 @@ export default function QARelatoriosPage() {
     const map = new Map<number, number>();
     vendas.forEach(v => map.set(v.cliente_id, (map.get(v.cliente_id) || 0) + 1));
     return Array.from(map.entries())
-      .map(([id, count]) => ({ name: clienteMap.get(id)?.nome_completo || `#${id}`, count }))
+      .map(([id, count]) => ({ name: clienteMap.get(String(id))?.nome_completo || `#${id}`, count }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 8);
   }, [vendas, clienteMap]);
