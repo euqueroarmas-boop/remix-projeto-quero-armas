@@ -198,6 +198,7 @@ export default function DashboardExames() {
           result.push({
             exameId: e.id,
             clienteId: e.cliente_id,
+            clienteIdCanonical: cidCanonical || String(e.cliente_id),
             clienteNome: cli?.nome_completo || "—",
             clienteTelefone: cli?.celular || null,
             tipo: e.tipo,
