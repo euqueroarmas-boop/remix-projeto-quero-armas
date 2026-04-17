@@ -208,7 +208,7 @@ export default function QAClientesPage() {
   const [itemEditForm, setItemEditForm] = useState<Record<string, string>>({});
   const [savingItem, setSavingItem] = useState(false);
 
-  const ITEM_EDIT_FIELDS: { key: string; label: string; type: "date" | "text" }[] = [
+  const ITEM_EDIT_FIELDS: { key: string; label: string; type: "date" | "text"; servicos?: number[] }[] = [
     { key: "data_protocolo", label: "Data Protocolo", type: "date" },
     { key: "data_deferimento", label: "Data Deferimento", type: "date" },
     { key: "data_vencimento", label: "Data Vencimento", type: "date" },
@@ -221,7 +221,14 @@ export default function QAClientesPage() {
     { key: "numero_sigma", label: "Nº SIGMA", type: "text" },
     { key: "numero_sinarm", label: "Nº SINARM", type: "text" },
     { key: "registro_cad", label: "Registro CAD", type: "text" },
+    // Específicos de Posse / Autorização de compra de arma de fogo
+    { key: "numero_autorizacao", label: "Nº Autorização", type: "text", servicos: [2, 5, 15] },
+    { key: "validade_autorizacao", label: "Validade Autorização", type: "date", servicos: [2, 5, 15] },
   ];
+
+  /** Retorna apenas os campos aplicáveis ao serviço (filtra por servico_id quando definido). */
+  const getFieldsForServico = (servicoId: number | null | undefined) =>
+    ITEM_EDIT_FIELDS.filter(f => !f.servicos || (servicoId != null && f.servicos.includes(servicoId)));
 
   const handleExpandItem = (item: any) => {
     if (expandedItemId === item.id) {
