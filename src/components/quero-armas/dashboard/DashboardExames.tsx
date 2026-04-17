@@ -278,14 +278,14 @@ export default function DashboardExames() {
           </div>
 
           <div className="max-h-[32rem] overflow-y-auto">
-            {filtered.length === 0 ? (
+            {groupedByCliente.length === 0 ? (
               <div className="text-center py-10 text-xs text-slate-500">
                 Nenhum cliente neste indicador.
               </div>
             ) : (
               <ul className="divide-y divide-slate-100">
-                {filtered.map((item) => (
-                  <ClienteRow key={item.exameId} item={item} variant={activeVariant} />
+                {groupedByCliente.map((g) => (
+                  <ClienteCard key={g.clienteId} group={g} variant={activeVariant} />
                 ))}
               </ul>
             )}
