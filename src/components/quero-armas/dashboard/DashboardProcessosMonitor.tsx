@@ -373,6 +373,7 @@ export default function DashboardProcessosMonitor() {
   /* ── Lista filtrada + ordenada ── */
   const visible = useMemo(() => {
     let list = rows;
+    if (entidadeFilter) list = list.filter(r => r.entidade === entidadeFilter);
     if (filter === "ativos") list = list.filter(r => r.meta.group === "ativo");
     else if (filter === "encerrados") list = list.filter(r => r.meta.group === "encerrado");
     else if (filter !== "todos") list = list.filter(r => r.status === filter);
