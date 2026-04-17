@@ -2419,7 +2419,7 @@ export type Database = {
           geolocalizacao: string | null
           geolocalizacao2: string | null
           id: number
-          id_legado: number | null
+          id_legado: number
           imagem: string | null
           nacionalidade: string | null
           naturalidade: string | null
@@ -2465,7 +2465,7 @@ export type Database = {
           geolocalizacao?: string | null
           geolocalizacao2?: string | null
           id?: number
-          id_legado?: number | null
+          id_legado: number
           imagem?: string | null
           nacionalidade?: string | null
           naturalidade?: string | null
@@ -2511,7 +2511,7 @@ export type Database = {
           geolocalizacao?: string | null
           geolocalizacao2?: string | null
           id?: number
-          id_legado?: number | null
+          id_legado?: number
           imagem?: string | null
           nacionalidade?: string | null
           naturalidade?: string | null
@@ -3254,6 +3254,35 @@ export type Database = {
           valor?: number | null
           venda_id?: number | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "qa_itens_venda_venda_id_fk"
+            columns: ["venda_id"]
+            isOneToOne: false
+            referencedRelation: "qa_vendas"
+            referencedColumns: ["id_legado"]
+          },
+        ]
+      }
+      qa_itens_venda_orfaos: {
+        Row: {
+          id: number
+          motivo: string
+          movido_em: string
+          payload: Json
+        }
+        Insert: {
+          id: number
+          motivo?: string
+          movido_em?: string
+          payload: Json
+        }
+        Update: {
+          id?: number
+          motivo?: string
+          movido_em?: string
+          payload?: Json
+        }
         Relationships: []
       }
       qa_jurisprudencias: {
@@ -3739,7 +3768,7 @@ export type Database = {
           desconto: number | null
           forma_pagamento: string | null
           id: number
-          id_legado: number | null
+          id_legado: number
           numero_processo: string | null
           status: string | null
           valor_a_pagar: number | null
@@ -3754,7 +3783,7 @@ export type Database = {
           desconto?: number | null
           forma_pagamento?: string | null
           id?: number
-          id_legado?: number | null
+          id_legado: number
           numero_processo?: string | null
           status?: string | null
           valor_a_pagar?: number | null
@@ -3769,12 +3798,19 @@ export type Database = {
           desconto?: number | null
           forma_pagamento?: string | null
           id?: number
-          id_legado?: number | null
+          id_legado?: number
           numero_processo?: string | null
           status?: string | null
           valor_a_pagar?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "qa_vendas_cliente_id_fk"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id_legado"]
+          },
           {
             foreignKeyName: "qa_vendas_cliente_id_fkey"
             columns: ["cliente_id"]
