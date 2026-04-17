@@ -304,6 +304,10 @@ export default function QAClientesPage() {
       setItemEditForm({});
       return;
     }
+    if (!isStatusDefinido(item?.status)) {
+      toast.error("Selecione o status do serviço antes de preencher o formulário.");
+      return;
+    }
     setExpandedItemId(item.id);
     const form: Record<string, string> = {};
     ITEM_EDIT_FIELDS.forEach(f => {
@@ -337,6 +341,10 @@ export default function QAClientesPage() {
   const handleSaveItem = async () => {
     if (!expandedItemId) return;
     const currentItem = (itens as any[]).find(i => i.id === expandedItemId);
+    if (!isStatusDefinido(currentItem?.status)) {
+      toast.error("Selecione o status do serviço antes de salvar.");
+      return;
+    }
     const servicoId = currentItem?.servico_id;
     const applicableFields = getFieldsForServico(servicoId, itemEditForm, currentItem);
     setSavingItem(true);
@@ -955,7 +963,7 @@ export default function QAClientesPage() {
                           <div className="px-3 py-2 space-y-1.5">
                             {vItens.map((it: any) => (
                               <div key={it.id}>
-                                <div className="flex items-center justify-between text-[10px] gap-1 cursor-pointer hover:bg-white rounded px-1 -mx-1 py-0.5" onClick={() => handleExpandItem(it)}>
+                                <div className={`flex items-center justify-between text-[10px] gap-1 rounded px-1 -mx-1 py-0.5 ${isStatusDefinido(it.status) ? "cursor-pointer hover:bg-white" : "cursor-not-allowed opacity-90"}`} onClick={() => handleExpandItem(it)}>
                                   <div className="flex items-center gap-2 flex-1 min-w-0">
                                     {expandedItemId === it.id ? <ChevronUp className="h-3 w-3 shrink-0 text-slate-500" /> : <ChevronDown className="h-3 w-3 shrink-0 text-slate-500" />}
                                     <Select
