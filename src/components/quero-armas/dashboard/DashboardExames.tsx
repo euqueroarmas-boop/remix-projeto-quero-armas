@@ -201,6 +201,25 @@ export default function DashboardExames() {
     return items.filter((i) => i.bucket === filterKey);
   }, [items, filterKey]);
 
+  // Agrupa por cliente — mostra TODOS os exames do cliente para visão completa
+  const groupedByCliente = useMemo(() => {
+    if (!filterKey) return [];
+    const clienteIds = Array.from(new Set(filtered.map((i) => i.clienteId)));
+    return clienteIds.map((cid) => {
+      const matched = filtered.filter((i) => i.clienteId === cid);
+      const allOfCliente = items.filter((i) => i.clienteId === cid);
+      const principal = matched[0];
+      return {
+        clienteId: cid,
+        clienteNome: principal.clienteNome,
+        clienteTelefone: principal.clienteTelefone,
+        temServicoPendente: principal.temServicoPendente,
+        exames: allOfCliente.sort((a, b) => a.prioridade - b.prioridade),
+        prioridadeCliente: Math.min(...matched.map((m) => m.prioridade)),
+      };
+    }).sort((a, b) => a.prioridadeCliente - b.prioridadeCliente);
+  }, [filtered, items, filterKey]);
+
   if (loading) {
     return (
       <div className="qa-card p-6 flex justify-center">
