@@ -132,16 +132,7 @@ export default function DashboardExames() {
           clientes = ((clientesRes.data || []) as any[]) as ClienteRow[];
         }
 
-        // Indexa por id (para exames) E por id_legado (para vendas)
-        const clienteMap = new Map<string, ClienteRow>();
-        clientes.forEach((c: any) => {
-          clienteMap.set(`id:${c.id}`, c);
-          if (c.id_legado != null) clienteMap.set(`leg:${c.id_legado}`, c);
-        });
-        // venda_id em itens referencia id_legado (canônico) → mapeia para cliente_id (que é id_legado de cliente)
-        const vendaMap = new Map<string, string>(
-          vendas.map((v: any) => [String(v.id_legado ?? v.id), String(v.cliente_id)])
-        );
+        // (mapas canônicos construídos abaixo)
         // Indexa cliente por AMBAS as chaves para tradução cruzada (exames usam id puro, vendas usam id_legado)
         const clienteByIdPuro = new Map<string, ClienteRow>();
         const clienteByIdLegado = new Map<string, ClienteRow>();
