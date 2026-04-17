@@ -104,15 +104,23 @@ export default function DashboardExames() {
         const vendaMap = new Map(vendas.map((v) => [v.id, v.cliente_id]));
 
         const clientesComPendente = new Set<number>();
+        const clientesComDeferido = new Set<number>();
         for (const item of itens) {
-          if (!FINISHED.includes((item.status || "").toUpperCase())) {
-            const cid = vendaMap.get(item.venda_id);
-            if (cid) clientesComPendente.add(cid);
+          const status = (item.status || "").toUpperCase();
+          const cid = vendaMap.get(item.venda_id);
+          if (!cid) continue;
+          if (CONSUMED_STATUSES.includes(status)) {
+            clientesComDeferido.add(cid);
+          }
+          if (!FINISHED.includes(status)) {
+            clientesComPendente.add(cid);
           }
         }
 
         const latestMap = new Map<string, ExameRow>();
         for (const e of exames) {
+          // Oculta exames de clientes que já tiveram serviço DEFERIDO
+          if (clientesComDeferido.has(e.cliente_id)) continue;
           const key = `${e.cliente_id}_${e.tipo}`;
           const existing = latestMap.get(key);
           if (!existing || e.data_realizacao > existing.data_realizacao) {
