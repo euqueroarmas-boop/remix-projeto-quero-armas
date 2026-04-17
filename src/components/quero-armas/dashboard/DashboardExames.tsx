@@ -380,9 +380,13 @@ function ClienteCard({
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">CLIENTE</span>
-              {group.temServicoPendente && (
+              {group.temServicoPendente ? (
                 <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
                   <Users className="h-2.5 w-2.5" /> SERVIÇO PENDENTE
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-amber-50 text-amber-800 border border-amber-300">
+                  <AlertTriangle className="h-2.5 w-2.5" /> SEM SERVIÇO CADASTRADO
                 </span>
               )}
             </div>
