@@ -139,7 +139,7 @@ function ModalActions({ onClose, onSave, saving, saveLabel = "Salvar" }: {
         type="button"
         onClick={onSave}
         disabled={saving}
-        className="qa-btn-primary no-glow h-9 px-5 text-xs rounded-md text-white disabled:opacity-60"
+        className="h-9 px-5 text-xs rounded-md bg-blue-600 hover:bg-blue-700 text-white shadow-sm disabled:opacity-60"
       >
         {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <Save className="h-3.5 w-3.5 mr-1.5" />}
         {saveLabel}
