@@ -24,6 +24,8 @@ interface PageMeta {
   h1: string;
   content: string;
   links: { label: string; href: string }[];
+  ogImage?: string;
+  siteName?: string;
 }
 
 const staticPages: Record<string, PageMeta> = {
@@ -538,11 +540,15 @@ function renderHtml(page: PageMeta, path: string, extraSections = ""): string {
   <meta property="og:description" content="${esc(page.description)}" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="${canonical}" />
-  <meta property="og:site_name" content="WMTi Tecnologia da Informação" />
+  <meta property="og:site_name" content="${esc(page.siteName || "WMTi Tecnologia da Informação")}" />
   <meta property="og:locale" content="pt_BR" />
+  <meta property="og:image" content="${CANONICAL}${page.ogImage || "/wmti-preview.jpg"}" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="${esc(page.title)}" />
   <meta name="twitter:description" content="${esc(page.description)}" />
+  <meta name="twitter:image" content="${CANONICAL}${page.ogImage || "/wmti-preview.jpg"}" />
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -636,6 +642,49 @@ async function renderBlogPost(slug: string): Promise<PageMeta | null> {
   };
 }
 
+// Quero Armas pages — branded OG preview
+function renderQuerArmasPage(path: string): PageMeta {
+  const QA_OG = "/quero-armas-preview.jpg";
+  const QA_SITE = "Quero Armas — Assessoria Jurídica";
+
+  if (path === "/quero-armas/cadastro") {
+    return {
+      title: "Cadastro de Cliente | Quero Armas",
+      description: "Inicie seu processo de Posse, Porte ou CAC. Cadastro 100% online, seguro e em conformidade com a LGPD.",
+      h1: "Cadastro Quero Armas",
+      content: "Preencha seus dados para iniciar seu processo de aquisição de arma de fogo (Posse, Porte, CAC). Atendimento jurídico especializado, processo digital e acompanhamento integral.",
+      links: [{ label: "Área do Cliente", href: "/quero-armas/area-do-cliente" }],
+      ogImage: QA_OG,
+      siteName: QA_SITE,
+    };
+  }
+
+  if (path === "/quero-armas/area-do-cliente" || path === "/quero-armas/area-do-cliente/login") {
+    return {
+      title: "Área do Cliente | Quero Armas",
+      description: "Acesse seu portal Quero Armas: acompanhe processos, documentos, prazos e protocolos de Posse, Porte e CAC.",
+      h1: "Área do Cliente Quero Armas",
+      content: "Portal seguro para acompanhamento de processos jurídicos de Posse, Porte e CAC. Acesso 24/7 a documentos, status e prazos.",
+      links: [{ label: "Cadastro", href: "/quero-armas/cadastro" }],
+      ogImage: QA_OG,
+      siteName: QA_SITE,
+    };
+  }
+
+  return {
+    title: "Quero Armas — Assessoria Jurídica em Posse, Porte e CAC",
+    description: "Assessoria jurídica especializada em aquisição de armas de fogo: Posse, Porte e CAC. Processo 100% digital, seguro e acompanhado por especialistas.",
+    h1: "Quero Armas",
+    content: "Plataforma jurídica especializada em direito armamentista: Posse, Porte de arma de fogo e CAC (Caçador, Atirador e Colecionador). Acompanhamento integral, processo digital e equipe especializada.",
+    links: [
+      { label: "Cadastro", href: "/quero-armas/cadastro" },
+      { label: "Área do Cliente", href: "/quero-armas/area-do-cliente" },
+    ],
+    ogImage: QA_OG,
+    siteName: QA_SITE,
+  };
+}
+
 // ─── Main handler ───
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -654,6 +703,14 @@ Deno.serve(async (req) => {
   if (staticPage) {
     return new Response(renderHtml(staticPage, path), {
       headers: { ...corsHeaders, "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=3600, s-maxage=3600" },
+    });
+  }
+
+  // 1b. Quero Armas pages (custom OG branding)
+  if (path === "/quero-armas" || path.startsWith("/quero-armas/")) {
+    const qaPage = renderQuerArmasPage(path);
+    return new Response(renderHtml(qaPage, path), {
+      headers: { ...corsHeaders, "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=3600" },
     });
   }
 
