@@ -30,7 +30,8 @@ interface ServicoRow { id: number; nome_servico: string | null; }
 
 interface ExameDashItem {
   exameId: string;
-  clienteId: number;
+  clienteId: number;          // id puro de qa_clientes (uso interno p/ agrupamento)
+  clienteIdCanonical: string; // id_legado quando existir, senão id puro — usado em links
   clienteNome: string;
   clienteTelefone: string | null;
   tipo: ExameTipo;
@@ -197,6 +198,7 @@ export default function DashboardExames() {
           result.push({
             exameId: e.id,
             clienteId: e.cliente_id,
+            clienteIdCanonical: cidCanonical || String(e.cliente_id),
             clienteNome: cli?.nome_completo || "—",
             clienteTelefone: cli?.celular || null,
             tipo: e.tipo,
@@ -253,6 +255,7 @@ export default function DashboardExames() {
       const principal = matched[0];
       return {
         clienteId: cid,
+        clienteIdCanonical: principal.clienteIdCanonical,
         clienteNome: principal.clienteNome,
         clienteTelefone: principal.clienteTelefone,
         temServicoPendente: principal.temServicoPendente,
@@ -377,6 +380,7 @@ function ClienteCard({
 }: {
   group: {
     clienteId: number;
+    clienteIdCanonical: string;
     clienteNome: string;
     clienteTelefone: string | null;
     temServicoPendente: boolean;
@@ -409,7 +413,7 @@ function ClienteCard({
               )}
             </div>
             <Link
-              to={`/quero-armas/clientes?cliente=${group.clienteId}`}
+              to={`/quero-armas/clientes?cliente=${group.clienteIdCanonical}`}
               className="block font-bold text-slate-900 text-[14px] break-words uppercase hover:text-blue-700 hover:underline transition-colors"
               title={`Abrir cadastro de ${group.clienteNome}`}
             >
@@ -418,7 +422,7 @@ function ClienteCard({
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
             <Link
-              to={`/quero-armas/clientes?cliente=${group.clienteId}&tab=servicos`}
+              to={`/quero-armas/clientes?cliente=${group.clienteIdCanonical}&tab=servicos`}
               className="inline-flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-md text-[10px] font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow-sm"
               title="Marcar serviço como DEFERIDO no cadastro do cliente"
             >
@@ -475,7 +479,7 @@ function ClienteCard({
 
         {/* Link discreto para abrir cadastro completo */}
         <Link
-          to={`/quero-armas/clientes?cliente=${group.clienteId}`}
+          to={`/quero-armas/clientes?cliente=${group.clienteIdCanonical}`}
           className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-slate-500 hover:text-slate-800 uppercase tracking-wider"
         >
           Abrir cadastro completo <ChevronRight className="h-3 w-3" />
