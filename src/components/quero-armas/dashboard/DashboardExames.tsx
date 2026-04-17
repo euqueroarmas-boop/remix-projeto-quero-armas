@@ -436,17 +436,6 @@ function ClienteCard({
     </li>
   );
 }
-        {/* Link discreto para abrir cadastro completo */}
-        <Link
-          to={`/quero-armas/clientes?cliente=${group.clienteId}`}
-          className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-slate-500 hover:text-slate-800 uppercase tracking-wider"
-        >
-          Abrir cadastro completo <ChevronRight className="h-3 w-3" />
-        </Link>
-      </div>
-    </li>
-  );
-}
 
 function ExameLine({ item }: { item: ExameDashItem }) {
   const isPsi = item.tipo === "psicologico";
