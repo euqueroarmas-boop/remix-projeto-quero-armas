@@ -999,24 +999,30 @@ export default function QAClientesPage() {
                                         </Button>
                                       </div>
                                     </div>
-                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                                      {getFieldsForServico(it.servico_id, itemEditForm).map(field => (
-                                        <div key={field.key}>
-                                          <label className="block text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">{field.label}</label>
-                                          <input
-                                            type="text"
-                                            value={itemEditForm[field.key] || ""}
-                                            onChange={e => {
-                                              const raw = e.target.value;
-                                              const val = field.type === "date" ? applyDateMask(raw) : raw.toUpperCase();
-                                              setItemEditForm(prev => ({ ...prev, [field.key]: val }));
-                                            }}
-                                            placeholder={field.type === "date" ? "DD/MM/AAAA" : "—"}
-                                            className="w-full h-7 px-2 text-[10px] rounded bg-white border border-slate-200 text-slate-700 placeholder:text-slate-300 focus:border-blue-500 focus:outline-none transition-colors"
-                                          />
-                                        </div>
-                                      ))}
-                                    </div>
+                                    {!isStatusDefinido(it.status) ? (
+                                      <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-[10px] text-amber-700">
+                                        ⚠️ Selecione o <strong>status</strong> deste serviço para liberar o preenchimento do formulário.
+                                      </div>
+                                    ) : (
+                                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                        {getFieldsForServico(it.servico_id, itemEditForm, it).map(field => (
+                                          <div key={field.key}>
+                                            <label className="block text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">{field.label}</label>
+                                            <input
+                                              type="text"
+                                              value={itemEditForm[field.key] || ""}
+                                              onChange={e => {
+                                                const raw = e.target.value;
+                                                const val = field.type === "date" ? applyDateMask(raw) : raw.toUpperCase();
+                                                setItemEditForm(prev => ({ ...prev, [field.key]: val }));
+                                              }}
+                                              placeholder={field.type === "date" ? "DD/MM/AAAA" : "—"}
+                                              className="w-full h-7 px-2 text-[10px] rounded bg-white border border-slate-200 text-slate-700 placeholder:text-slate-300 focus:border-blue-500 focus:outline-none transition-colors"
+                                            />
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
                                     {/* Declarações movidas para a aba "Docs" — não exibir aqui */}
                                   </div>
                                 )}
