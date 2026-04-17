@@ -23,9 +23,10 @@ interface ExameRow {
   data_vencimento: string;
   observacoes: string | null;
 }
-interface ClienteRow { id: number; nome_completo: string | null; telefone_principal?: string | null; }
-interface ItemServicoRow { venda_id: number; status: string; }
+interface ClienteRow { id: number; nome_completo: string | null; celular?: string | null; }
+interface ItemServicoRow { venda_id: number; status: string; servico_id: number | null; }
 interface VendaRow { id: number; cliente_id: number; }
+interface ServicoRow { id: number; nome_servico: string | null; }
 
 interface ExameDashItem {
   exameId: string;
