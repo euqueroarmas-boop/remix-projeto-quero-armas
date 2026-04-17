@@ -59,7 +59,7 @@ const STATUS_CATALOG_BASE: StatusMeta[] = [
   { key: "CONCLUÍDO",                           label: "Concluído",                        short: "Concluído",           icon: CheckCircle2, tone: "emerald", group: "encerrado" },
   { key: "INDEFERIDO",                          label: "Indeferido",                       short: "Indeferido",          icon: XCircle,      tone: "rose",    group: "encerrado" },
   { key: "DESISTIU",                            label: "Desistiu",                         short: "Desistiu",            icon: Ban,          tone: "zinc",    group: "encerrado" },
-  { key: "RESTITUÍDO",                          label: "Restituído",                       short: "Restituído",          icon: Undo2,        tone: "slate",   group: "encerrado" },
+  { key: "RESTITUÍDO",                          label: "Restituído",                       short: "Restituído",          icon: Undo2,        tone: "slate",   group: "ativo" },
 ];
 
 /** Heurística para classificar status DESCONHECIDOS automaticamente.
