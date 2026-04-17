@@ -128,16 +128,18 @@ function ModalActions({ onClose, onSave, saving, saveLabel = "Salvar" }: {
   return (
     <div className="flex justify-end gap-2.5 pt-5 mt-5 border-t border-slate-100">
       <Button
+        type="button"
         variant="ghost"
         onClick={onClose}
-        className="h-9 px-4 text-xs font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-lg"
+        className="qa-btn-outline no-glow h-9 px-4 text-xs rounded-md text-slate-600 hover:text-slate-800"
       >
         Cancelar
       </Button>
       <Button
+        type="button"
         onClick={onSave}
         disabled={saving}
-        className="h-9 px-5 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow-md shadow-indigo-200/50 transition-all duration-200 hover:shadow-lg hover:shadow-indigo-200/60 disabled:opacity-50"
+        className="qa-btn-primary no-glow h-9 px-5 text-xs rounded-md text-white disabled:opacity-60"
       >
         {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <Save className="h-3.5 w-3.5 mr-1.5" />}
         {saveLabel}
@@ -477,16 +479,18 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
           {/* Actions */}
           <div className="grid grid-cols-2 gap-2">
             <Button
+              type="button"
               variant="ghost"
               onClick={onClose}
-              className="h-11 text-xs font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-lg"
+              className="qa-btn-outline no-glow h-11 text-xs rounded-md text-slate-600 hover:text-slate-800"
             >
               Cancelar
             </Button>
             <Button
+              type="button"
               onClick={save}
               disabled={saving}
-              className="h-11 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow-md shadow-indigo-200/50 disabled:opacity-50"
+              className="qa-btn-primary no-glow h-11 text-xs rounded-md text-white disabled:opacity-60"
             >
               {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <Save className="h-3.5 w-3.5 mr-1.5" />}
               {isEdit ? "Salvar" : "Cadastrar Venda"}
