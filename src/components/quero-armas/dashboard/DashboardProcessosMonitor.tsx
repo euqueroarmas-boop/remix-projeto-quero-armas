@@ -479,40 +479,26 @@ export default function DashboardProcessosMonitor() {
         </div>
       </div>
 
-      {/* KPIs — Ativos (mesmo visual dos cards de Exames) */}
-      <div className="space-y-2">
-        <div className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold px-0.5">Em andamento</div>
-        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 divide-x divide-y sm:divide-y-0 divide-slate-100">
-            {ativosCatalog.map(s => (
-              <StatusKPI
-                key={s.key}
-                meta={s}
-                total={counts.byStatus.get(s.key) || 0}
-                active={filter === s.key}
-                onClick={() => setFilter(filter === s.key ? "ativos" : s.key)}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* KPIs — Encerrados (mesmo visual dos cards de Exames) */}
-      <div className="space-y-2">
-        <div className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold px-0.5">Encerrados</div>
-        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 divide-x divide-y sm:divide-y-0 divide-slate-100">
-            {encerradosCatalog.map(s => (
-              <StatusKPI
-                key={s.key}
-                meta={s}
-                total={counts.byStatus.get(s.key) || 0}
-                active={filter === s.key}
-                onClick={() => setFilter(filter === s.key ? "encerrados" : s.key)}
-              />
-            ))}
-          </div>
-        </div>
+      {/* Painéis por Entidade — Polícia Federal e Exército Brasileiro lado a lado */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <EntityPanel
+          entidade="PF"
+          totals={counts.pf}
+          ativosCatalog={ativosCatalog}
+          encerradosCatalog={encerradosCatalog}
+          counts={counts.byEntStatus.PF}
+          filter={filter}
+          setFilter={setFilter}
+        />
+        <EntityPanel
+          entidade="EB"
+          totals={counts.eb}
+          ativosCatalog={ativosCatalog}
+          encerradosCatalog={encerradosCatalog}
+          counts={counts.byEntStatus.EB}
+          filter={filter}
+          setFilter={setFilter}
+        />
       </div>
 
       {/* Toolbar */}
