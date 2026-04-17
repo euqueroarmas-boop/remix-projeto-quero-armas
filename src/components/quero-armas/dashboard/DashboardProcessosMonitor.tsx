@@ -480,9 +480,9 @@ export default function DashboardProcessosMonitor() {
             <FilterChip active={filter === "todos"} onClick={() => setFilter("todos")}>Todos ({counts.total})</FilterChip>
             <FilterChip active={filter === "ativos"} onClick={() => setFilter("ativos")}>Ativos ({counts.ativos})</FilterChip>
             <FilterChip active={filter === "encerrados"} onClick={() => setFilter("encerrados")}>Encerrados ({counts.encerrados})</FilterChip>
-            {STATUS_BY_KEY.has(filter as string) && (
+            {catalogByKey.has(filter as string) && (
               <FilterChip active onClick={() => setFilter("ativos")}>
-                {STATUS_BY_KEY.get(filter as string)!.label} ✕
+                {catalogByKey.get(filter as string)!.label} ✕
               </FilterChip>
             )}
           </div>
