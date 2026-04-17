@@ -120,8 +120,9 @@ export default function DashboardExames() {
           clientes = ((clientesRes.data || []) as any[]) as ClienteRow[];
         }
 
-        const clienteMap = new Map(clientes.map((c) => [c.id, c]));
-        const vendaMap = new Map(vendas.map((v) => [v.id, v.cliente_id]));
+        // Normaliza chaves para String para evitar mismatch entre bigint (string) e integer (number)
+        const clienteMap = new Map(clientes.map((c) => [String(c.id), c]));
+        const vendaMap = new Map(vendas.map((v) => [String(v.id), String(v.cliente_id)]));
 
         const clientesComPendente = new Set<number>();
         const clientesComDeferido = new Set<number>();
