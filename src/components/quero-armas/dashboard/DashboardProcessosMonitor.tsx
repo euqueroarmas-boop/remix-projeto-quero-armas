@@ -570,6 +570,7 @@ export default function DashboardProcessosMonitor() {
                               currentStatus={r.status}
                               currentDate={todayISO()}
                               saving={saving}
+                              catalog={dynamicCatalog}
                               onCancel={() => setEditingKey(null)}
                               onSave={(s, d) => applyStatusChange(r.itemIds, s, d)}
                             />
