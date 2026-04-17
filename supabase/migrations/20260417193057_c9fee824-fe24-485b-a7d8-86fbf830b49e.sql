@@ -1,0 +1,1 @@
+UPDATE public.qa_servicos SET nome_servico = 'Concessão de CR no Exército Brasileiro (Sem Clube)' WHERE id = 27;
