@@ -335,7 +335,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
   const isEdit = !!venda;
   const [saving, setSaving] = useState(false);
   const [servicos, setServicos] = useState<{ id: number; nome_servico: string; valor_servico: number }[]>([]);
-  const [selectedServicos, setSelectedServicos] = useState<Map<number, { valor: number; checked: boolean }>>(new Map());
+  const [selectedServicos, setSelectedServicos] = useState<Map<number, { valor: number; checked: boolean; cortesia: boolean; cortesia_motivo: string }>>(new Map());
   const [f, setF] = useState({ forma_pagamento: "", desconto: "0", status: "EM ANÁLISE", numero_processo: "", data_cadastro: "" });
 
   useEffect(() => {
@@ -353,9 +353,14 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
       });
       const vendaLegacyId = venda.id_legado ?? venda.id;
       supabase.from("qa_itens_venda" as any).select("*").eq("venda_id", vendaLegacyId).then(({ data }) => {
-        const map = new Map<number, { valor: number; checked: boolean }>();
+        const map = new Map<number, { valor: number; checked: boolean; cortesia: boolean; cortesia_motivo: string }>();
         ((data as any[]) ?? []).forEach((it: any) => {
-          map.set(it.servico_id, { valor: Number(it.valor || 0), checked: true });
+          map.set(it.servico_id, {
+            valor: Number(it.valor || 0),
+            checked: true,
+            cortesia: !!it.cortesia,
+            cortesia_motivo: it.cortesia_motivo || "",
+          });
         });
         setSelectedServicos(map);
       });
@@ -371,7 +376,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
     setSelectedServicos(prev => {
       const next = new Map(prev);
       if (next.has(svc.id)) next.delete(svc.id);
-      else next.set(svc.id, { valor: svc.valor_servico, checked: true });
+      else next.set(svc.id, { valor: svc.valor_servico, checked: true, cortesia: false, cortesia_motivo: "" });
       return next;
     });
   };
@@ -385,7 +390,25 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
     });
   };
 
-  const subtotal = Array.from(selectedServicos.values()).reduce((sum, s) => sum + s.valor, 0);
+  const toggleCortesia = (id: number) => {
+    setSelectedServicos(prev => {
+      const next = new Map(prev);
+      const existing = next.get(id);
+      if (existing) next.set(id, { ...existing, cortesia: !existing.cortesia });
+      return next;
+    });
+  };
+
+  const updateCortesiaMotivo = (id: number, motivo: string) => {
+    setSelectedServicos(prev => {
+      const next = new Map(prev);
+      const existing = next.get(id);
+      if (existing) next.set(id, { ...existing, cortesia_motivo: motivo });
+      return next;
+    });
+  };
+
+  const subtotal = Array.from(selectedServicos.values()).reduce((sum, s) => sum + (s.cortesia ? 0 : s.valor), 0);
   const desconto = Number(f.desconto) || 0;
   const total = Math.max(0, subtotal - desconto);
 
@@ -406,8 +429,9 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
         if (error) throw error;
         vendaId = (data as any).id_legado ?? (data as any).id;
       }
-      const items = Array.from(selectedServicos.entries()).map(([servicoId, { valor }]) => ({
-        venda_id: vendaId, servico_id: servicoId, valor, status: f.status,
+      const items = Array.from(selectedServicos.entries()).map(([servicoId, { valor, cortesia, cortesia_motivo }]) => ({
+        venda_id: vendaId, servico_id: servicoId, valor: cortesia ? 0 : valor, status: f.status,
+        cortesia, cortesia_motivo: cortesia ? (cortesia_motivo || null) : null,
       }));
       if (items.length > 0) {
         const { error: itemErr } = await supabase.from("qa_itens_venda" as any).insert(items);
@@ -522,34 +546,61 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
               const isChecked = selectedServicos.has(svc.id);
               const svcData = selectedServicos.get(svc.id);
               return (
-                <label
+                <div
                   key={svc.id}
-                  className={`flex items-center gap-2 rounded-lg px-2.5 py-2 cursor-pointer text-xs transition-all duration-200 ${
+                  className={`rounded-lg px-2.5 py-2 text-xs transition-all duration-200 ${
                     isChecked
                       ? "bg-indigo-50 border border-indigo-200/60 text-slate-800 shadow-sm"
                       : "text-slate-500 hover:bg-white border border-transparent"
                   }`}
                 >
-                  <div className={`h-4 w-4 rounded flex items-center justify-center shrink-0 transition-colors ${
-                    isChecked ? "bg-indigo-600 text-white" : "bg-slate-200"
-                  }`}>
-                    {isChecked && <CheckCircle2 className="h-3 w-3" />}
-                  </div>
-                  <input type="checkbox" checked={isChecked} onChange={() => toggleServico(svc)} className="sr-only" />
-                  <span className="flex-1 min-w-0 truncate font-medium">{svc.nome_servico}</span>
-                  {isChecked ? (
-                    <Input
-                      type="number"
-                      inputMode="decimal"
-                      value={String(svcData?.valor ?? svc.valor_servico)}
-                      onChange={e => updateServicoValor(svc.id, Number(e.target.value) || 0)}
-                      onClick={e => e.preventDefault()}
-                      className="h-7 w-16 sm:w-20 text-xs text-right bg-white border-slate-200 text-slate-700 px-1.5 shrink-0 rounded-md focus-visible:ring-1 focus-visible:ring-indigo-400 focus-visible:ring-offset-0 font-mono"
-                    />
-                  ) : (
-                    <span className="text-[10px] text-slate-400 font-mono shrink-0">R$ {svc.valor_servico}</span>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <div className={`h-4 w-4 rounded flex items-center justify-center shrink-0 transition-colors ${
+                      isChecked ? "bg-indigo-600 text-white" : "bg-slate-200"
+                    }`}>
+                      {isChecked && <CheckCircle2 className="h-3 w-3" />}
+                    </div>
+                    <input type="checkbox" checked={isChecked} onChange={() => toggleServico(svc)} className="sr-only" />
+                    <span className="flex-1 min-w-0 truncate font-medium">{svc.nome_servico}</span>
+                    {isChecked ? (
+                      <Input
+                        type="number"
+                        inputMode="decimal"
+                        value={String(svcData?.valor ?? svc.valor_servico)}
+                        onChange={e => updateServicoValor(svc.id, Number(e.target.value) || 0)}
+                        onClick={e => e.preventDefault()}
+                        disabled={!!svcData?.cortesia}
+                        className="h-7 w-16 sm:w-20 text-xs text-right bg-white border-slate-200 text-slate-700 px-1.5 shrink-0 rounded-md focus-visible:ring-1 focus-visible:ring-indigo-400 focus-visible:ring-offset-0 font-mono disabled:opacity-50 disabled:line-through"
+                      />
+                    ) : (
+                      <span className="text-[10px] text-slate-400 font-mono shrink-0">R$ {svc.valor_servico}</span>
+                    )}
+                  </label>
+                  {isChecked && (
+                    <div className="mt-1.5 ml-6 flex items-center gap-2">
+                      <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={!!svcData?.cortesia}
+                          onChange={() => toggleCortesia(svc.id)}
+                          className="h-3 w-3 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                        />
+                        <span className={`text-[10px] font-bold uppercase tracking-wider ${svcData?.cortesia ? "text-emerald-600" : "text-slate-400"}`}>
+                          Cortesia
+                        </span>
+                      </label>
+                      {svcData?.cortesia && (
+                        <Input
+                          type="text"
+                          value={svcData?.cortesia_motivo || ""}
+                          onChange={e => updateCortesiaMotivo(svc.id, e.target.value)}
+                          placeholder="Motivo (opcional)"
+                          className="h-6 flex-1 text-[10px] bg-emerald-50/60 border-emerald-200 text-emerald-800 px-2 rounded-md placeholder:text-emerald-400 focus-visible:ring-1 focus-visible:ring-emerald-400 focus-visible:ring-offset-0"
+                        />
+                      )}
+                    </div>
                   )}
-                </label>
+                </div>
               );
             })}
           </div>

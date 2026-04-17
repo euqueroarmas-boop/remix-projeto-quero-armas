@@ -900,7 +900,13 @@ export default function QAClientesPage() {
                                   </div>
                                   <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                                     {it.numero_processo && <span className="hidden sm:inline text-slate-400 font-mono text-[9px]">{it.numero_processo}</span>}
-                                    <span className="text-slate-600 font-mono">R$ {Number(it.valor || 0).toFixed(0)}</span>
+                                    {it.cortesia ? (
+                                      <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 border border-emerald-200" title={it.cortesia_motivo || "Cortesia"}>
+                                        Cortesia
+                                      </span>
+                                    ) : (
+                                      <span className="text-slate-600 font-mono">R$ {Number(it.valor || 0).toFixed(0)}</span>
+                                    )}
                                     <Button
                                       variant="ghost"
                                       size="sm"
