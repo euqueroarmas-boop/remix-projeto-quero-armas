@@ -513,11 +513,22 @@ export default function DashboardProcessosMonitor() {
                 const tone = TONE_CLASSES[r.meta.tone];
                 const encerrado = r.meta.group === "encerrado";
                 return (
-                  <div key={r.itemId} className="p-3">
+                  <div key={r.key} className="p-3">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
                         <div className="text-[13px] font-semibold text-slate-700 truncate">{r.clienteNome}</div>
-                        <div className="text-[11.5px] text-slate-500 truncate">{r.servicoNome}</div>
+                        {r.isComboGroup ? (
+                          <div className="mt-1">
+                            <div className="inline-flex items-center gap-1 text-[10px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-full px-2 py-0.5">
+                              <Sparkles className="w-3 h-3" /> COMBO • {r.servicosList.length}
+                            </div>
+                            <ul className="mt-1 text-[11px] text-slate-600 list-disc pl-4 space-y-0.5">
+                              {r.servicosList.map((s, i) => <li key={i}>{s}</li>)}
+                            </ul>
+                          </div>
+                        ) : (
+                          <div className="text-[11.5px] text-slate-500 truncate">{r.servicoNome}</div>
+                        )}
                       </div>
                       <span className={`shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${urgencyClass(r.diasParado, encerrado)}`}>
                         <Clock className="w-3 h-3" />
