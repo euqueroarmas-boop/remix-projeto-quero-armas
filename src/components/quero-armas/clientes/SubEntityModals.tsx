@@ -70,8 +70,7 @@ function PremiumModalShell({ open, onClose, title, icon: Icon, accentColor, chil
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
       <DialogContent
-        className="border-0 shadow-2xl shadow-slate-200/60 rounded-2xl overflow-hidden p-0 bg-white"
-        style={{ width: "calc(100vw - 2rem)", maxWidth: "28rem" }}
+        className="border-0 shadow-2xl shadow-slate-200/60 rounded-2xl overflow-hidden p-0 bg-white w-[calc(100vw-1rem)] max-w-md sm:max-w-lg"
       >
         {/* Header gradient strip */}
         <div className={`h-1 w-full ${accentColor}`} />
