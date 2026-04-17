@@ -1032,7 +1032,7 @@ export default function QAClientesPage() {
                                           CORTESIA
                                         </span>
                                       ) : (
-                                        <span className="text-slate-600 font-mono tabular-nums text-[10px]">R$ {Number(it.valor || 0).toFixed(0)}</span>
+                                        <span className="text-slate-600 font-mono tabular-nums text-[10px] inline-block text-left" style={{ minWidth: 64 }}>R$ {Number(it.valor || 0).toFixed(0)}</span>
                                       )}
                                     </span>
                                     <Button
