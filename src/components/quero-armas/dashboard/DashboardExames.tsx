@@ -142,6 +142,24 @@ export default function DashboardExames() {
         const vendaMap = new Map<string, string>(
           vendas.map((v: any) => [String(v.id_legado ?? v.id), String(v.cliente_id)])
         );
+        // Indexa cliente por AMBAS as chaves para tradução cruzada (exames usam id puro, vendas usam id_legado)
+        const clienteByIdPuro = new Map<string, ClienteRow>();
+        const clienteByIdLegado = new Map<string, ClienteRow>();
+        clientes.forEach((c: any) => {
+          clienteByIdPuro.set(String(c.id), c);
+          if (c.id_legado != null) clienteByIdLegado.set(String(c.id_legado), c);
+        });
+        // Chave canônica unificada = id_legado quando existe; fallback id puro
+        const canonicalIdOf = (cli: any): string => String(cli?.id_legado ?? cli?.id ?? "");
+
+        // venda_id em itens referencia id_legado da venda → mapeia para canonical do cliente
+        const vendaToClienteCanonical = new Map<string, string>();
+        vendas.forEach((v: any) => {
+          const vendaKey = String(v.id_legado ?? v.id);
+          // v.cliente_id é id_legado do cliente
+          const cli = clienteByIdLegado.get(String(v.cliente_id));
+          if (cli) vendaToClienteCanonical.set(vendaKey, canonicalIdOf(cli));
+        });
         const servicoMap = new Map(servicos.map((s) => [String(s.id), s.nome_servico || "Serviço"]));
 
         const clientesComPendente = new Set<string>();
@@ -149,29 +167,25 @@ export default function DashboardExames() {
         const servicosPendentesPorCliente = new Map<string, Set<string>>();
         for (const item of itens) {
           const status = (item.status || "").toUpperCase();
-          const cid = vendaMap.get(String(item.venda_id));
-          if (!cid) continue;
+          const cidCanonical = vendaToClienteCanonical.get(String(item.venda_id));
+          if (!cidCanonical) continue;
           if (CONSUMED_STATUSES.includes(status)) {
-            clientesComDeferido.add(cid);
+            clientesComDeferido.add(cidCanonical);
           }
           if (!FINISHED.includes(status)) {
             const sid = item.servico_id != null ? String(item.servico_id) : null;
-            // Se filtro ativo, só conta serviços marcados como "exigem exame"
             if (filtrarPorServicoExame && (!sid || !servicosComExameSet.has(sid))) continue;
-            clientesComPendente.add(cid);
+            clientesComPendente.add(cidCanonical);
             const nome = sid ? servicoMap.get(sid) : null;
             if (nome) {
-              if (!servicosPendentesPorCliente.has(cid)) servicosPendentesPorCliente.set(cid, new Set());
-              servicosPendentesPorCliente.get(cid)!.add(nome);
+              if (!servicosPendentesPorCliente.has(cidCanonical)) servicosPendentesPorCliente.set(cidCanonical, new Set());
+              servicosPendentesPorCliente.get(cidCanonical)!.add(nome);
             }
           }
         }
 
         const latestMap = new Map<string, ExameRow>();
         for (const e of exames) {
-          // Mantém TODOS os exames visíveis — inclusive de clientes sem serviço
-          // em aberto cadastrado, para que o admin use a relação como base de
-          // cadastro de novos serviços.
           const key = `${e.cliente_id}_${e.tipo}`;
           const existing = latestMap.get(key);
           if (!existing || e.data_realizacao > existing.data_realizacao) {
@@ -181,10 +195,11 @@ export default function DashboardExames() {
 
         const result: ExameDashItem[] = [];
         for (const e of latestMap.values()) {
-          const cli = clienteMap.get(String(e.cliente_id));
+          // exame.cliente_id é id puro de qa_clientes (exceção documentada)
+          const cli = clienteByIdPuro.get(String(e.cliente_id));
           const { status, dias_restantes } = computeExameStatus(e.data_vencimento);
           const bucket = bucketize(status, dias_restantes);
-          const cidStr = String(e.cliente_id);
+          const cidCanonical = canonicalIdOf(cli);
           result.push({
             exameId: e.id,
             clienteId: e.cliente_id,
@@ -195,8 +210,8 @@ export default function DashboardExames() {
             dataVencimento: e.data_vencimento,
             diasRestantes: dias_restantes,
             status,
-            temServicoPendente: clientesComPendente.has(cidStr),
-            servicosPendentes: Array.from(servicosPendentesPorCliente.get(cidStr) || []),
+            temServicoPendente: clientesComPendente.has(cidCanonical),
+            servicosPendentes: Array.from(servicosPendentesPorCliente.get(cidCanonical) || []),
             prioridade: BUCKET_ORDER[bucket],
             bucket,
           });
