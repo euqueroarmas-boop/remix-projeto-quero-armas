@@ -1045,6 +1045,7 @@ export default function QAClientesPage() {
                                     >
                                       <Trash2 className="h-3.5 w-3.5" />
                                     </Button>
+                                    <span className="h-7 w-7 shrink-0" aria-hidden="true" />
                                   </div>
                                 </div>
                                 {expandedItemId === it.id && (
