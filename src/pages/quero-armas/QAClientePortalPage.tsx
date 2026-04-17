@@ -102,7 +102,7 @@ export default function QAClientePortalPage() {
         if (!clienteData) { setLoading(false); return; }
         setCliente(clienteData);
 
-        const clienteId = clienteData.id_legado ?? clienteData.id;
+        const clienteId = getClienteFK(clienteData);
 
         // Load sub-data in parallel. Exames usam o ID REAL do cliente (não o id_legado),
         // pois qa_exames_cliente.cliente_id referencia qa_clientes.id.

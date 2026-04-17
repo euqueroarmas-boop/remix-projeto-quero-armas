@@ -548,16 +548,13 @@ export default function QAClientesPage() {
   const loadSubData = useCallback(async (c: Cliente) => {
     setLoadingSub(true);
     try {
-      // CORREÇÃO CRÍTICA: usar SEMPRE c.id puro como cliente_id.
-      // O fallback "c.id_legado ?? c.id" causava colisão entre o `id` de um cliente
-      // e o `id_legado` de outro, misturando vendas/itens de clientes diferentes
-      // (ex.: Fábio id=4/leg=32 puxava vendas do Breno id=32).
-      const cid = c.id;
-      const examClientIds = Array.from(new Set([c.id, c.id_legado].filter((value): value is number => typeof value === "number" && Number.isFinite(value))));
+      // CHAVE CANÔNICA APROVADA: vendas/itens/crafs/gtes/cr/filiações usam id_legado.
+      // Exames usam c.id (qa_exames_cliente.cliente_id ainda referencia o id real).
+      const cid = getClienteFK(c);
       const examesQuery = supabase
         .from("qa_exames_cliente_status" as any)
         .select("*")
-        .in("cliente_id", examClientIds)
+        .eq("cliente_id", c.id)
         .order("data_realizacao", { ascending: false });
 
       const [vRes, cRes, gRes, fRes, cadRes, exRes] = await Promise.all([
@@ -576,8 +573,8 @@ export default function QAClientesPage() {
       setCadastro((cadRes.data as any[])?.[0] ?? null);
       setExamesAtuais((exRes.data as any[]) ?? []);
       if (vendasData.length > 0) {
-        // qa_itens_venda.venda_id referencia qa_vendas.id puro — nunca id_legado.
-        const vendaIds = vendasData.map((v: any) => v.id);
+        // qa_itens_venda.venda_id referencia qa_vendas.id_legado (chave canônica).
+        const vendaIds = vendasData.map((v: any) => getVendaFK(v));
         const { data: itensData } = await supabase.from("qa_itens_venda" as any).select("*").in("venda_id", vendaIds);
         setItens((itensData as any[]) ?? []);
       } else {
