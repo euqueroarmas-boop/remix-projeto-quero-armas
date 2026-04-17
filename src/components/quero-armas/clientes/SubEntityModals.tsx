@@ -81,7 +81,7 @@ function PremiumModalShell({ open, onClose, title, icon: Icon, accentColor, chil
           sm:!top-1/2 sm:!bottom-auto sm:!-translate-y-1/2 sm:!rounded-2xl
           !w-full sm:!w-[calc(100vw-2rem)] !max-w-full sm:!max-w-lg
           flex flex-col
-          !max-h-[100dvh] sm:!max-h-[calc(100dvh-2rem)]
+          !max-h-[100dvh] sm:!max-h-[85vh]
         "
       >
         {/* Header (fixo) */}
