@@ -108,9 +108,9 @@ export default function QAClientePortalPage() {
         // Load sub-data in parallel. Exames usam o ID REAL do cliente (não o id_legado),
         // pois qa_exames_cliente.cliente_id referencia qa_clientes.id.
         const clienteIdReal = clienteData.id;
-        const [vRes, iRes, crRes, cfRes, gtRes, flRes, exRes] = await Promise.all([
+        // Carrega vendas primeiro, depois itens via venda_id (qa_itens_venda NÃO possui cliente_id).
+        const [vRes, crRes, cfRes, gtRes, flRes, exRes] = await Promise.all([
           supabase.from("qa_vendas" as any).select("*").eq("cliente_id", clienteId).order("data_cadastro", { ascending: false }),
-          supabase.from("qa_itens_venda" as any).select("*").eq("cliente_id", clienteId),
           supabase.from("qa_cadastro_cr" as any).select("*").eq("cliente_id", clienteId).maybeSingle(),
           supabase.from("qa_crafs" as any).select("*").eq("cliente_id", clienteId),
           supabase.from("qa_gtes" as any).select("*").eq("cliente_id", clienteId),
@@ -121,8 +121,20 @@ export default function QAClientePortalPage() {
             .order("data_realizacao", { ascending: false }),
         ]);
 
-        setVendas((vRes.data as any[]) ?? []);
-        setItens((iRes.data as any[]) ?? []);
+        const vendasData = (vRes.data as any[]) ?? [];
+        setVendas(vendasData);
+
+        // Itens só pertencem ao cliente se sua venda_id estiver nas vendas dele.
+        let itensData: any[] = [];
+        if (vendasData.length > 0) {
+          const vendaIds = vendasData.map((v: any) => getVendaFK(v));
+          const { data: iData } = await supabase
+            .from("qa_itens_venda" as any)
+            .select("*")
+            .in("venda_id", vendaIds);
+          itensData = (iData as any[]) ?? [];
+        }
+        setItens(itensData);
         setCadastro(crRes.data);
         setCrafs((cfRes.data as any[]) ?? []);
         setGtes((gtRes.data as any[]) ?? []);
