@@ -1,0 +1,1 @@
+ALTER TABLE public.qa_itens_venda ADD COLUMN IF NOT EXISTS quantidade_tiros text;

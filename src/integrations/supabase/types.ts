@@ -3217,6 +3217,7 @@ export type Database = {
           numero_serie: string | null
           numero_sigma: string | null
           numero_sinarm: string | null
+          quantidade_tiros: string | null
           registro_cad: string | null
           servico_id: number | null
           status: string | null
@@ -3250,6 +3251,7 @@ export type Database = {
           numero_serie?: string | null
           numero_sigma?: string | null
           numero_sinarm?: string | null
+          quantidade_tiros?: string | null
           registro_cad?: string | null
           servico_id?: number | null
           status?: string | null
@@ -3283,6 +3285,7 @@ export type Database = {
           numero_serie?: string | null
           numero_sigma?: string | null
           numero_sinarm?: string | null
+          quantidade_tiros?: string | null
           registro_cad?: string | null
           servico_id?: number | null
           status?: string | null
