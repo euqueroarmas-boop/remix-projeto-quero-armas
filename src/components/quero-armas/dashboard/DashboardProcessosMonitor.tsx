@@ -247,7 +247,7 @@ export default function DashboardProcessosMonitor() {
         // CARREGA TODOS os itens com status não-nulo — descoberta dinâmica de status novos.
         const { data: itens, error: e1 } = await supabase
           .from("qa_itens_venda" as any)
-          .select("id, venda_id, servico_id, status, data_protocolo, data_ultima_atualizacao")
+          .select("id, venda_id, servico_id, status, data_protocolo, data_ultima_atualizacao, data_indeferimento, data_deferimento")
           .not("status", "is", null);
         if (e1) throw e1;
 
@@ -295,7 +295,14 @@ export default function DashboardProcessosMonitor() {
             const cliente = venda?.cliente_id ? clientesMap.get(venda.cliente_id) : undefined;
             const servico = it.servico_id ? servicosMap.get(it.servico_id) : undefined;
             const vendaDate = venda?.data_cadastro || (venda?.created_at ? venda.created_at.slice(0, 10) : null);
-            const stopRef = it.data_ultima_atualizacao || it.data_protocolo || vendaDate;
+            // "Tempo no status" prioriza a data específica do status atual quando existir:
+            //   INDEFERIDO → data_indeferimento; DEFERIDO → data_deferimento.
+            // Caso contrário, usa data_ultima_atualizacao → data_protocolo → data da venda.
+            const statusUpper = canon.toUpperCase();
+            const dataDoStatus =
+              statusUpper === "INDEFERIDO" ? (it as any).data_indeferimento :
+              statusUpper === "DEFERIDO"   ? (it as any).data_deferimento   : null;
+            const stopRef = dataDoStatus || it.data_ultima_atualizacao || it.data_protocolo || vendaDate;
             const servicoNome = servico?.nome_servico || `Serviço #${it.servico_id ?? "?"}`;
             return {
               itemId: it.id,
