@@ -952,8 +952,8 @@ export default function QAClientesPage() {
                               <span className="text-slate-700 font-medium">Venda #{v.id_legado ?? v.id}</span>
                               <span className="text-slate-400 ml-2">{formatDate(v.data_cadastro)}</span>
                             </div>
-                            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                              <span className="w-[72px] flex justify-start">
+                            <div className="flex items-center gap-1 shrink-0">
+                              <span className="w-[88px] flex justify-center">
                                 {(() => {
                                   const allCortesia = vItens.length > 0 && vItens.every((i: any) => i.cortesia);
                                   const isPago = v.status === "PAGO" || !!v.forma_pagamento;
@@ -1025,14 +1025,14 @@ export default function QAClientesPage() {
                                       );
                                     })()}
                                   </div>
-                                  <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                                    <span className="w-[72px] flex justify-start">
+                                  <div className="flex items-center gap-1 shrink-0">
+                                    <span className="w-[88px] flex justify-center">
                                       {it.cortesia ? (
                                         <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 border border-emerald-200" title={it.cortesia_motivo || "Cortesia"}>
-                                          Cortesia
+                                          CORTESIA
                                         </span>
                                       ) : (
-                                        <span className="text-slate-600 font-mono tabular-nums">R$ {Number(it.valor || 0).toFixed(0)}</span>
+                                        <span className="text-slate-600 font-mono tabular-nums text-[10px]">R$ {Number(it.valor || 0).toFixed(0)}</span>
                                       )}
                                     </span>
                                     <Button
