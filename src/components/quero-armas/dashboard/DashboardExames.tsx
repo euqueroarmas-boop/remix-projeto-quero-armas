@@ -255,6 +255,7 @@ export default function DashboardExames() {
       const principal = matched[0];
       return {
         clienteId: cid,
+        clienteIdCanonical: principal.clienteIdCanonical,
         clienteNome: principal.clienteNome,
         clienteTelefone: principal.clienteTelefone,
         temServicoPendente: principal.temServicoPendente,
