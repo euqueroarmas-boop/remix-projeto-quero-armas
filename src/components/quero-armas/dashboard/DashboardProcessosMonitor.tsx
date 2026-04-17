@@ -13,7 +13,9 @@ import {
   Clock, ArrowUpRight, Search, ChevronRight, Loader2,
   AlertTriangle, CheckCircle2, XCircle, FileWarning, FolderKanban,
   PlayCircle, ListChecks, Hourglass, Archive, Undo2, Ban, Sparkles,
+  Pencil, Check, X,
 } from "lucide-react";
+import { toast } from "sonner";
 
 /* ================================================================
  * Catálogo de status (estado atual do serviço)
