@@ -177,7 +177,7 @@ export default function QAConfiguracoesPage() {
         <div className="qa-card p-5">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "hsl(220 10% 45%)" }}>Serviços ({servicos.length})</span>
-            <button onClick={() => { setShowNew(!showNew); setNewForm({ nome_servico: "", valor_servico: "" }); }}
+            <button onClick={() => { setShowNew(!showNew); setNewForm({ nome_servico: "", valor_servico: "", is_combo: false }); }}
               className="qa-btn-primary h-8 px-3 text-[11px] flex items-center gap-1 no-glow">
               <Plus className="h-3 w-3" /> Novo Serviço
             </button>
