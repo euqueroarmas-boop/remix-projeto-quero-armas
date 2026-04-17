@@ -460,9 +460,22 @@ export default function DashboardProcessosMonitor() {
                     const tone = TONE_CLASSES[r.meta.tone];
                     const encerrado = r.meta.group === "encerrado";
                     return (
-                      <tr key={r.itemId} className="border-t border-slate-100 hover:bg-slate-50/60">
+                      <tr key={r.key} className="border-t border-slate-100 hover:bg-slate-50/60 align-top">
                         <td className="px-3 py-2 font-medium text-slate-700">{r.clienteNome}</td>
-                        <td className="px-3 py-2 text-slate-600">{r.servicoNome}</td>
+                        <td className="px-3 py-2 text-slate-600">
+                          {r.isComboGroup ? (
+                            <div className="space-y-1">
+                              <div className="inline-flex items-center gap-1 text-[10px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-full px-2 py-0.5">
+                                <Sparkles className="w-3 h-3" /> COMBO • {r.servicosList.length} serviços
+                              </div>
+                              <ul className="text-[11.5px] text-slate-600 list-disc pl-4 space-y-0.5">
+                                {r.servicosList.map((s, i) => <li key={i}>{s}</li>)}
+                              </ul>
+                            </div>
+                          ) : (
+                            r.servicoNome
+                          )}
+                        </td>
                         <td className="px-3 py-2 text-slate-500 font-mono text-[11px]">#{r.vendaId}</td>
                         <td className="px-3 py-2">
                           <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border ${tone.bg} ${tone.text} ${tone.border}`}>
