@@ -197,6 +197,7 @@ export default function DashboardProcessosMonitor() {
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<MonitorRow[]>([]);
   const [filter, setFilter] = useState<FilterKey>("ativos");
+  const [entidadeFilter, setEntidadeFilter] = useState<Entidade | null>(null);
   const [sortBy, setSortBy] = useState<SortKey>("tempo_parado");
   const [search, setSearch] = useState("");
   const [editingKey, setEditingKey] = useState<string | null>(null);
