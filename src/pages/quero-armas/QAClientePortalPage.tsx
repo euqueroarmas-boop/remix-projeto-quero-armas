@@ -8,6 +8,7 @@ import {
   Crosshair, CreditCard, ChevronRight, Bell, Target, Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getClienteFK, getVendaFK } from "@/components/quero-armas/clientes/clientFK";
 
 const formatDate = (d: string | null) => {
   if (!d) return "—";

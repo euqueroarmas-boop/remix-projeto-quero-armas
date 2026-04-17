@@ -21,6 +21,7 @@ import { exportClientes, exportCrafs, exportGtes, exportCr, exportVendas } from 
 import ClienteAcessoPortal from "@/components/quero-armas/clientes/ClienteAcessoPortal";
 import ClientePecas from "@/components/quero-armas/clientes/ClientePecas";
 import ClienteExames from "@/components/quero-armas/clientes/ClienteExames";
+import { getClienteFK, getVendaFK } from "@/components/quero-armas/clientes/clientFK";
 
 const formatCpf = (v: string | null | undefined): string => {
   if (!v) return "—";
@@ -594,10 +595,10 @@ export default function QAClientesPage() {
       if (deleteModal.table === "qa_clientes") {
         // Cascade: delete sub-entities first
         const clienteObj = clientes.find(c => c.id === deleteModal.id);
-        const clienteId = clienteObj ? (clienteObj.id_legado ?? clienteObj.id) : deleteModal.id;
-        const { data: vendasCliente } = await supabase.from("qa_vendas" as any).select("id").eq("cliente_id", clienteId);
+        const clienteId = clienteObj ? getClienteFK(clienteObj) : deleteModal.id;
+        const { data: vendasCliente } = await supabase.from("qa_vendas" as any).select("id, id_legado").eq("cliente_id", clienteId);
         if (vendasCliente && vendasCliente.length > 0) {
-          const vendaIds = (vendasCliente as any[]).map(v => v.id);
+          const vendaIds = (vendasCliente as any[]).map(v => getVendaFK(v));
           await supabase.from("qa_itens_venda" as any).delete().in("venda_id", vendaIds);
           await supabase.from("qa_vendas" as any).delete().eq("cliente_id", clienteId);
         }
@@ -666,7 +667,7 @@ export default function QAClientesPage() {
     return svc?.nome_servico || `Serviço #${id}`;
   };
 
-  const clienteIdForSub = selected ? (selected.id_legado ?? selected.id) : 0;
+  const clienteIdForSub = selected ? getClienteFK(selected) : 0;
 
   // ── Detail View ──
   if (selected) {
