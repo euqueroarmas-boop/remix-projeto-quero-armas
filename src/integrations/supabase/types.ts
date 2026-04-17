@@ -3193,7 +3193,9 @@ export type Database = {
       qa_itens_venda: {
         Row: {
           data_deferimento: string | null
+          data_notificacao: string | null
           data_protocolo: string | null
+          data_recurso_administrativo: string | null
           data_ultima_atualizacao: string | null
           data_vencimento: string | null
           id: number
@@ -3216,7 +3218,9 @@ export type Database = {
         }
         Insert: {
           data_deferimento?: string | null
+          data_notificacao?: string | null
           data_protocolo?: string | null
+          data_recurso_administrativo?: string | null
           data_ultima_atualizacao?: string | null
           data_vencimento?: string | null
           id?: number
@@ -3239,7 +3243,9 @@ export type Database = {
         }
         Update: {
           data_deferimento?: string | null
+          data_notificacao?: string | null
           data_protocolo?: string | null
+          data_recurso_administrativo?: string | null
           data_ultima_atualizacao?: string | null
           data_vencimento?: string | null
           id?: number

@@ -213,8 +213,10 @@ export default function QAClientesPage() {
   // Serviço de Posse na Polícia Federal
   const SERVICOS_POSSE = [2];
 
-  const ITEM_EDIT_FIELDS: { key: string; label: string; type: "date" | "text"; servicos?: number[] }[] = [
+  const ITEM_EDIT_FIELDS: { key: string; label: string; type: "date" | "text"; servicos?: number[]; condition?: (form: Record<string, string>) => boolean }[] = [
     { key: "data_protocolo", label: "Data Protocolo", type: "date" },
+    { key: "data_notificacao", label: "Data da Notificação", type: "date", servicos: SERVICOS_POSSE },
+    { key: "data_recurso_administrativo", label: "Data do Recurso Administrativo", type: "date", servicos: SERVICOS_POSSE, condition: (f) => !!f.data_notificacao },
     { key: "data_deferimento", label: "Data Deferimento", type: "date" },
     { key: "data_vencimento", label: "Data Vencimento", type: "date" },
     { key: "numero_processo", label: "Nº Processo", type: "text" },
@@ -234,8 +236,11 @@ export default function QAClientesPage() {
   ];
 
   /** Retorna apenas os campos aplicáveis ao serviço (filtra por servico_id quando definido). */
-  const getFieldsForServico = (servicoId: number | null | undefined) =>
-    ITEM_EDIT_FIELDS.filter(f => !f.servicos || (servicoId != null && f.servicos.includes(servicoId)));
+  const getFieldsForServico = (servicoId: number | null | undefined, form?: Record<string, string>) =>
+    ITEM_EDIT_FIELDS.filter(f =>
+      (!f.servicos || (servicoId != null && f.servicos.includes(servicoId))) &&
+      (!f.condition || (form && f.condition(form)))
+    );
 
   const handleExpandItem = (item: any) => {
     if (expandedItemId === item.id) {
@@ -922,7 +927,7 @@ export default function QAClientesPage() {
                                       </div>
                                     </div>
                                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                                      {getFieldsForServico(it.servico_id).map(field => (
+                                      {getFieldsForServico(it.servico_id, itemEditForm).map(field => (
                                         <div key={field.key}>
                                           <label className="block text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">{field.label}</label>
                                           <input
