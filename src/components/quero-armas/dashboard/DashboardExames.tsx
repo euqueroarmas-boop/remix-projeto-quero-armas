@@ -479,7 +479,7 @@ function ClienteCard({
 
         {/* Link discreto para abrir cadastro completo */}
         <Link
-          to={`/quero-armas/clientes?cliente=${group.clienteId}`}
+          to={`/quero-armas/clientes?cliente=${group.clienteIdCanonical}`}
           className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-slate-500 hover:text-slate-800 uppercase tracking-wider"
         >
           Abrir cadastro completo <ChevronRight className="h-3 w-3" />
