@@ -429,8 +429,9 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
         if (error) throw error;
         vendaId = (data as any).id_legado ?? (data as any).id;
       }
-      const items = Array.from(selectedServicos.entries()).map(([servicoId, { valor }]) => ({
-        venda_id: vendaId, servico_id: servicoId, valor, status: f.status,
+      const items = Array.from(selectedServicos.entries()).map(([servicoId, { valor, cortesia, cortesia_motivo }]) => ({
+        venda_id: vendaId, servico_id: servicoId, valor: cortesia ? 0 : valor, status: f.status,
+        cortesia, cortesia_motivo: cortesia ? (cortesia_motivo || null) : null,
       }));
       if (items.length > 0) {
         const { error: itemErr } = await supabase.from("qa_itens_venda" as any).insert(items);
