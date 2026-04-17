@@ -523,21 +523,29 @@ export default function DashboardProcessosMonitor() {
                 const tone = TONE_CLASSES[r.meta.tone];
                 const encerrado = r.meta.group === "encerrado";
                 return (
-                  <div key={r.key} className="p-3">
+                  <div key={r.key} className={`p-3 ${r.isComboGroup ? "bg-indigo-50/30" : ""}`}>
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
-                        <div className="text-[13px] font-semibold text-slate-700 truncate">{r.clienteNome}</div>
+                        <div className="flex items-center gap-1.5">
+                          {r.isComboGroup && <Sparkles className="w-3.5 h-3.5 text-indigo-500 shrink-0" />}
+                          <div className="text-[13px] font-semibold text-slate-700 truncate">{r.clienteNome}</div>
+                        </div>
                         {r.isComboGroup ? (
-                          <div className="mt-1">
-                            <div className="inline-flex items-center gap-1 text-[10px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-full px-2 py-0.5">
-                              <Sparkles className="w-3 h-3" /> COMBO • {r.servicosList.length}
-                            </div>
-                            <ul className="mt-1 text-[11px] text-slate-600 list-disc pl-4 space-y-0.5">
-                              {r.servicosList.map((s, i) => <li key={i}>{s}</li>)}
+                          <div className="mt-1.5 space-y-1">
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-indigo-700 bg-indigo-100 border border-indigo-200 rounded px-1.5 py-0.5">
+                              COMBO · {r.servicosList.length} serviços
+                            </span>
+                            <ul className="text-[11px] text-slate-700 space-y-0.5">
+                              {r.servicosList.map((s, i) => (
+                                <li key={i} className="flex gap-1.5">
+                                  <span className="text-indigo-400">›</span>
+                                  <span>{s.replace(/^COMBO\s*[-–·•]?\s*/i, "")}</span>
+                                </li>
+                              ))}
                             </ul>
                           </div>
                         ) : (
-                          <div className="text-[11.5px] text-slate-500 truncate">{r.servicoNome}</div>
+                          <div className="text-[11.5px] text-slate-500 truncate mt-0.5">{r.servicoNome}</div>
                         )}
                       </div>
                       <span className={`shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${urgencyClass(r.diasParado, encerrado)}`}>
