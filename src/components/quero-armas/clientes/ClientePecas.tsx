@@ -7,6 +7,7 @@ import {
   AlertCircle, PenTool, User, Scale, Sparkles, Send,
   Mail, Phone, MapPin, Building2, Shield, Briefcase,
   Calendar, Heart, GraduationCap, Flag, Users, BookOpen, Info,
+  ChevronDown, ChevronUp,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -161,6 +162,7 @@ export default function ClientePecas({ cliente }: Props) {
   const [savedCasoId, setSavedCasoId] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [auxiliaryDocs, setAuxiliaryDocs] = useState<AuxiliaryDocItemState[]>([]);
+  const [showClientData, setShowClientData] = useState(false);
 
   const cpfNorm = (cliente.cpf || "").replace(/\D/g, "");
   const cpfFormatted = cpfNorm.length === 11
@@ -558,71 +560,79 @@ export default function ClientePecas({ cliente }: Props) {
         </div>
       </div>
 
-      {/* ── Client Data Card (always visible) ── */}
+      {/* ── Client Data Card (compact + collapsible) ── */}
       <div className="rounded-xl border-2 overflow-hidden" style={{ borderColor: "hsl(220 15% 93%)", background: "white" }}>
-        <div className="flex items-center gap-2.5 px-4 py-3"
-          style={{ background: "hsl(220 15% 97.5%)", borderBottom: "1px solid hsl(220 15% 93%)" }}>
-          <User className="h-4 w-4" style={{ color: "hsl(210 60% 50%)" }} />
-          <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "hsl(220 20% 18%)" }}>
-            DADOS DO CLIENTE
-          </span>
-          <span className="text-[8px] uppercase px-2 py-0.5 rounded-full font-bold tracking-wider"
-            style={{ background: "hsl(145 60% 40% / 0.12)", color: "hsl(145 55% 35%)" }}>
-            AUTO-PREENCHIDO
-          </span>
-        </div>
-        <div className="px-4 pb-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-0 pt-1">
-            <DataField icon={User} label="Nome Completo" value={cliente.nome_completo} />
-            <DataField icon={Shield} label="CPF" value={cpfFormatted} mono />
-            {cliente.email && <DataField icon={Mail} label="E-mail" value={cliente.email} />}
-            {cliente.celular && <DataField icon={Phone} label="Celular" value={cliente.celular} mono />}
-            {enderecoCompleto && <DataField icon={MapPin} label="Endereço" value={enderecoCompleto} />}
-            {cidadeUf && <DataField icon={Building2} label="Cidade / UF" value={cidadeUf} />}
-            {clienteCep && <DataField icon={MapPin} label="CEP" value={clienteCep} mono />}
-            {clienteBairro && <DataField icon={MapPin} label="Bairro" value={clienteBairro} />}
-            {cliente.complemento && <DataField icon={MapPin} label="Complemento" value={cliente.complemento} />}
-            {cliente.rg && (
-              <DataField icon={FileText} label="RG"
-                value={`${cliente.rg}${cliente.emissor_rg ? ` — ${cliente.emissor_rg}` : ""}${cliente.uf_emissor_rg ? ` ${cliente.uf_emissor_rg}` : ""}`} mono />
-            )}
-            {cliente.expedicao_rg && <DataField icon={Calendar} label="Expedição RG" value={cliente.expedicao_rg} />}
-            {cliente.data_nascimento && <DataField icon={Calendar} label="Data de Nascimento" value={cliente.data_nascimento} />}
-            {cliente.naturalidade && <DataField icon={Flag} label="Naturalidade" value={cliente.naturalidade} />}
-            {cliente.nacionalidade && <DataField icon={Flag} label="Nacionalidade" value={cliente.nacionalidade} />}
-            {cliente.estado_civil && <DataField icon={Heart} label="Estado Civil" value={cliente.estado_civil} />}
-            {cliente.profissao && <DataField icon={Briefcase} label="Profissão" value={cliente.profissao} />}
-            {cliente.escolaridade && <DataField icon={GraduationCap} label="Escolaridade" value={cliente.escolaridade} />}
-            {cliente.nome_mae && <DataField icon={Users} label="Nome da Mãe" value={cliente.nome_mae} />}
-            {cliente.nome_pai && <DataField icon={Users} label="Nome do Pai" value={cliente.nome_pai} />}
-            {cliente.titulo_eleitor && <DataField icon={BookOpen} label="Título de Eleitor" value={cliente.titulo_eleitor} mono />}
+        <button
+          type="button"
+          onClick={() => setShowClientData(v => !v)}
+          className="w-full flex items-center gap-2.5 px-4 py-3 text-left hover:bg-muted/30 transition-colors"
+          style={{ background: showClientData ? "hsl(220 15% 97.5%)" : "transparent", borderBottom: showClientData ? "1px solid hsl(220 15% 93%)" : "none" }}
+        >
+          <div className="h-7 w-7 rounded-lg flex items-center justify-center shrink-0"
+            style={{ background: "hsl(210 60% 50% / 0.1)" }}>
+            <User className="h-3.5 w-3.5" style={{ color: "hsl(210 60% 50%)" }} />
           </div>
-
-          {/* Circumscription */}
-          {circStatus === "resolved" && circunscricao && (
-            <div className="mt-2 rounded-lg px-3.5 py-2.5 flex items-center gap-2.5"
-              style={{ background: "hsl(145 60% 40% / 0.06)", border: "1px solid hsl(145 60% 40% / 0.15)" }}>
-              <Building2 className="h-4 w-4 shrink-0" style={{ color: "hsl(145 55% 35%)" }} />
-              <div>
-                <span className="text-[9px] font-bold uppercase tracking-wider block" style={{ color: "hsl(145 55% 35%)" }}>
-                  CIRCUNSCRIÇÃO PF
-                </span>
-                <p className="text-[11px] font-bold uppercase mt-0.5" style={{ color: "hsl(145 45% 30%)" }}>
-                  {circunscricao.sigla_unidade} — {circunscricao.unidade_pf}
-                </p>
-              </div>
-            </div>
-          )}
-          {circStatus === "resolving" && (
-            <div className="mt-2 rounded-lg px-3.5 py-2.5 flex items-center gap-2"
-              style={{ background: "hsl(210 60% 55% / 0.06)" }}>
-              <Loader2 className="h-3.5 w-3.5 animate-spin" style={{ color: "hsl(210 60% 55%)" }} />
-              <span className="text-[10px] font-semibold uppercase" style={{ color: "hsl(210 60% 55%)" }}>
-                RESOLVENDO CIRCUNSCRIÇÃO...
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[11px] font-bold uppercase tracking-wider truncate" style={{ color: "hsl(220 20% 18%)" }}>
+                {cliente.nome_completo}
+              </span>
+              <span className="text-[8px] uppercase px-2 py-0.5 rounded-full font-bold tracking-wider shrink-0"
+                style={{ background: "hsl(145 60% 40% / 0.12)", color: "hsl(145 55% 35%)" }}>
+                AUTO
               </span>
             </div>
-          )}
-        </div>
+            <p className="text-[10px] font-mono mt-0.5 truncate" style={{ color: "hsl(220 10% 50%)" }}>
+              {cpfFormatted}{cidadeUf ? ` • ${cidadeUf}` : ""}
+            </p>
+          </div>
+          {showClientData
+            ? <ChevronUp className="h-4 w-4 shrink-0" style={{ color: "hsl(220 10% 50%)" }} />
+            : <ChevronDown className="h-4 w-4 shrink-0" style={{ color: "hsl(220 10% 50%)" }} />}
+        </button>
+
+        {showClientData && (
+          <div className="px-4 pb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-0 pt-1">
+              {cliente.email && <DataField icon={Mail} label="E-mail" value={cliente.email} />}
+              {cliente.celular && <DataField icon={Phone} label="Celular" value={cliente.celular} mono />}
+              {enderecoCompleto && <DataField icon={MapPin} label="Endereço" value={enderecoCompleto} />}
+              {clienteCep && <DataField icon={MapPin} label="CEP" value={clienteCep} mono />}
+              {cliente.rg && (
+                <DataField icon={FileText} label="RG"
+                  value={`${cliente.rg}${cliente.emissor_rg ? ` — ${cliente.emissor_rg}` : ""}${cliente.uf_emissor_rg ? ` ${cliente.uf_emissor_rg}` : ""}`} mono />
+              )}
+              {cliente.data_nascimento && <DataField icon={Calendar} label="Nascimento" value={cliente.data_nascimento} />}
+              {cliente.estado_civil && <DataField icon={Heart} label="Estado Civil" value={cliente.estado_civil} />}
+              {cliente.profissao && <DataField icon={Briefcase} label="Profissão" value={cliente.profissao} />}
+            </div>
+          </div>
+        )}
+
+        {/* Circumscription — sempre visível, é crítico para a peça */}
+        {circStatus === "resolved" && circunscricao && (
+          <div className="mx-4 mb-4 mt-2 rounded-lg px-3.5 py-2.5 flex items-center gap-2.5"
+            style={{ background: "hsl(145 60% 40% / 0.06)", border: "1px solid hsl(145 60% 40% / 0.15)" }}>
+            <Building2 className="h-4 w-4 shrink-0" style={{ color: "hsl(145 55% 35%)" }} />
+            <div className="min-w-0">
+              <span className="text-[9px] font-bold uppercase tracking-wider block" style={{ color: "hsl(145 55% 35%)" }}>
+                CIRCUNSCRIÇÃO PF
+              </span>
+              <p className="text-[11px] font-bold uppercase mt-0.5 truncate" style={{ color: "hsl(145 45% 30%)" }}>
+                {circunscricao.sigla_unidade} — {circunscricao.unidade_pf}
+              </p>
+            </div>
+          </div>
+        )}
+        {circStatus === "resolving" && (
+          <div className="mx-4 mb-4 mt-2 rounded-lg px-3.5 py-2.5 flex items-center gap-2"
+            style={{ background: "hsl(210 60% 55% / 0.06)" }}>
+            <Loader2 className="h-3.5 w-3.5 animate-spin" style={{ color: "hsl(210 60% 55%)" }} />
+            <span className="text-[10px] font-semibold uppercase" style={{ color: "hsl(210 60% 55%)" }}>
+              RESOLVENDO CIRCUNSCRIÇÃO...
+            </span>
+          </div>
+        )}
       </div>
 
       {/* ── Generation Config (always visible) ── */}
@@ -745,8 +755,8 @@ export default function ClientePecas({ cliente }: Props) {
           <Button
             onClick={gerar}
             disabled={!canGenerate}
-            className="h-11 px-7 text-[12px] font-bold uppercase tracking-wider rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100"
-            style={{ background: "linear-gradient(135deg, hsl(220 20% 18%), hsl(220 20% 28%))", color: "white" }}>
+            className="h-11 px-7 text-[12px] font-bold uppercase tracking-wider rounded-xl border-2 bg-white text-foreground transition-all duration-200 hover:bg-primary/5 hover:border-primary/50 hover:text-primary hover:shadow-md disabled:opacity-50 disabled:hover:bg-white disabled:hover:text-foreground disabled:hover:border-border"
+            style={{ borderColor: "hsl(220 15% 88%)" }}>
             {generating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
             GERAR PEÇA JURÍDICA
           </Button>
