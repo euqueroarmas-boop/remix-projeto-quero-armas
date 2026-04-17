@@ -663,6 +663,14 @@ Deno.serve(async (req) => {
     });
   }
 
+  // 1b. Quero Armas pages (custom OG branding)
+  if (path === "/quero-armas" || path.startsWith("/quero-armas/")) {
+    const qaPage = renderQuerArmasPage(path);
+    return new Response(renderHtml(qaPage, path), {
+      headers: { ...corsHeaders, "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=3600" },
+    });
+  }
+
   // 2. Blog listing — delegate to existing blog-prerender
   if (path === "/blog") {
     const staticBlog = staticPages["/blog"]!;
