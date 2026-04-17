@@ -286,6 +286,34 @@ export default function QAClientesPage() {
     }
   };
 
+  const handleDeleteItem = async (item: any) => {
+    if (!item?.id) return;
+    const nome = (() => {
+      const map: Record<number, string> = { 2:"Posse PF",3:"Porte PF",4:"Lions Gun",5:"COMBO Autoriz.",6:"COMBO CRAF",7:"COMBO GTE",8:"Apost. Atual.",9:"Apost. Mudança",10:"Apost. 2º End.",11:"Curso Pistola",12:"Curso Cal.12",13:"Mudança Serv.",14:"Reg. Recarga",15:"Autoriz. Compra",16:"Reg. Arma",17:"GTE Avulso",18:"GTE",20:"CR EB",21:"VIP Pistola" };
+      return map[item.servico_id] || `Serviço #${item.servico_id}`;
+    })();
+    if (!window.confirm(`Excluir o item "${nome}" (R$ ${Number(item.valor || 0).toFixed(2)}) desta venda?\n\nEsta ação não pode ser desfeita.`)) return;
+    try {
+      const { error } = await supabase.from("qa_itens_venda" as any).delete().eq("id", item.id);
+      if (error) throw error;
+      // Recalcula total da venda (soma dos itens restantes - desconto)
+      const venda = (vendas as any[]).find(v => (v.id_legado ?? v.id) === item.venda_id);
+      if (venda) {
+        const restantes = (itens as any[]).filter(i => i.venda_id === item.venda_id && i.id !== item.id);
+        const subtotal = restantes.reduce((s, i) => s + Number(i.valor || 0), 0);
+        const desconto = Number(venda.desconto || 0);
+        const novoTotal = Math.max(0, subtotal - desconto);
+        await supabase.from("qa_vendas" as any).update({ valor_a_pagar: novoTotal, valor_total: subtotal }).eq("id", venda.id);
+        setVendas(prev => (prev as any[]).map(v => v.id === venda.id ? { ...v, valor_a_pagar: novoTotal, valor_total: subtotal } : v));
+      }
+      setItens(prev => (prev as any[]).filter(i => i.id !== item.id));
+      if (expandedItemId === item.id) { setExpandedItemId(null); setItemEditForm({}); }
+      toast.success("Item excluído e total recalculado");
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao excluir item");
+    }
+  };
+
   const [cadastrosPublicos, setCadastrosPublicos] = useState<CadastroPublico[]>([]);
   const [tabView, setTabView] = useState<"clientes" | "cadastros">("clientes");
   const [selectedCadastroPublico, setSelectedCadastroPublico] = useState<CadastroPublico | null>(null);
@@ -843,9 +871,19 @@ export default function QAClientesPage() {
                                     </Select>
                                     <span className="text-slate-700 truncate">{getServicoNome(it.servico_id)}</span>
                                   </div>
-                                  <div className="flex items-center gap-3 shrink-0">
-                                    {it.numero_processo && <span className="text-slate-400 font-mono text-[9px]">{it.numero_processo}</span>}
+                                  <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                                    {it.numero_processo && <span className="hidden sm:inline text-slate-400 font-mono text-[9px]">{it.numero_processo}</span>}
                                     <span className="text-slate-600 font-mono">R$ {Number(it.valor || 0).toFixed(0)}</span>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={(e) => { e.stopPropagation(); handleDeleteItem(it); }}
+                                      className="h-7 w-7 p-0 text-slate-400 hover:text-red-500 hover:bg-red-50"
+                                      title="Excluir item"
+                                      aria-label="Excluir item"
+                                    >
+                                      <Trash2 className="h-3.5 w-3.5" />
+                                    </Button>
                                   </div>
                                 </div>
                                 {expandedItemId === it.id && (
@@ -879,10 +917,7 @@ export default function QAClientesPage() {
                                         </div>
                                       ))}
                                     </div>
-                                    {/* Declarações filtradas pelo serviço */}
-                                    <div className="pt-3 border-t border-slate-100">
-                                      <DocumentGenerator cliente={c} nomeServico={getServicoNome(it.servico_id)} />
-                                    </div>
+                                    {/* Declarações movidas para a aba "Docs" — não exibir aqui */}
                                   </div>
                                 )}
                               </div>
