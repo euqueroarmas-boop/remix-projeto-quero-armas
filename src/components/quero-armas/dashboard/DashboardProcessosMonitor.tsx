@@ -13,28 +13,17 @@ import {
   Clock, ArrowUpRight, Search, ChevronRight, Loader2,
   AlertTriangle, CheckCircle2, XCircle, FileWarning, FolderKanban,
   PlayCircle, ListChecks, Hourglass, Archive, Undo2, Ban, Sparkles,
-  Pencil, Check, X,
+  Pencil, Check, X, Circle, Gavel,
 } from "lucide-react";
 import { toast } from "sonner";
 
 /* ================================================================
- * Catálogo de status (estado atual do serviço)
- * Ordem reflete fluxo operacional.
+ * Catálogo BASE de status conhecidos (ícone, cor, grupo, ordem).
+ * Status novos descobertos em runtime são adicionados automaticamente
+ * usando defaults neutros. Ordem aqui define posição dos cards.
  * ================================================================ */
 
-type StatusKey =
-  | "EM ANÁLISE"
-  | "PRONTO PARA ANÁLISE"
-  | "À INICIAR"
-  | "À FAZER"
-  | "AGUARDANDO DOCUMENTAÇÃO"
-  | "AGUARDANDO DOCUMENTOS DO CLIENTE"
-  | "PASTA FÍSICA – AGUARDANDO LIBERAÇÃO"
-  | "DEFERIDO"
-  | "INDEFERIDO"
-  | "CONCLUÍDO"
-  | "DESISTIU"
-  | "RESTITUÍDO";
+type StatusKey = string; // dinâmico: aceita qualquer status presente no banco
 
 interface StatusMeta {
   key: StatusKey;
@@ -45,20 +34,54 @@ interface StatusMeta {
   group: "ativo" | "encerrado";
 }
 
-const STATUS_CATALOG: StatusMeta[] = [
+/** Normaliza chave canônica: UPPER + trim + colapsa espaços +
+ * unifica hífen/en-dash/em-dash em "-" para comparação resiliente. */
+function canonical(raw: string): string {
+  return (raw || "")
+    .toString()
+    .normalize("NFC")
+    .toUpperCase()
+    .replace(/[–—−]/g, "-")        // en-dash, em-dash, minus → hyphen
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+const STATUS_CATALOG_BASE: StatusMeta[] = [
   { key: "EM ANÁLISE",                          label: "Em Análise",                       short: "Em Análise",          icon: Sparkles,     tone: "indigo",  group: "ativo" },
   { key: "PRONTO PARA ANÁLISE",                 label: "Pronto para Análise",              short: "Pronto p/ Análise",   icon: ListChecks,   tone: "violet",  group: "ativo" },
   { key: "À INICIAR",                           label: "À Iniciar",                        short: "À Iniciar",           icon: PlayCircle,   tone: "blue",    group: "ativo" },
   { key: "À FAZER",                             label: "À Fazer",                          short: "À Fazer",             icon: ListChecks,   tone: "blue",    group: "ativo" },
   { key: "AGUARDANDO DOCUMENTAÇÃO",             label: "Aguardando Documentação",          short: "Aguard. Documentação",icon: FileWarning,  tone: "amber",   group: "ativo" },
   { key: "AGUARDANDO DOCUMENTOS DO CLIENTE",    label: "Aguardando Docs do Cliente",       short: "Aguard. Docs Cliente",icon: FileWarning,  tone: "amber",   group: "ativo" },
-  { key: "PASTA FÍSICA – AGUARDANDO LIBERAÇÃO", label: "Pasta Física — Aguard. Liberação", short: "Pasta Física",        icon: FolderKanban, tone: "amber",   group: "ativo" },
+  { key: "PASTA FÍSICA - AGUARDANDO LIBERAÇÃO", label: "Pasta Física — Aguard. Liberação", short: "Pasta Física",        icon: FolderKanban, tone: "amber",   group: "ativo" },
+  { key: "RECURSO ADMINISTRATIVO",              label: "Recurso Administrativo",           short: "Recurso Adm.",        icon: Gavel,        tone: "violet",  group: "ativo" },
   { key: "DEFERIDO",                            label: "Deferido",                         short: "Deferido",            icon: CheckCircle2, tone: "emerald", group: "encerrado" },
   { key: "CONCLUÍDO",                           label: "Concluído",                        short: "Concluído",           icon: CheckCircle2, tone: "emerald", group: "encerrado" },
   { key: "INDEFERIDO",                          label: "Indeferido",                       short: "Indeferido",          icon: XCircle,      tone: "rose",    group: "encerrado" },
   { key: "DESISTIU",                            label: "Desistiu",                         short: "Desistiu",            icon: Ban,          tone: "zinc",    group: "encerrado" },
   { key: "RESTITUÍDO",                          label: "Restituído",                       short: "Restituído",          icon: Undo2,        tone: "slate",   group: "encerrado" },
 ];
+
+/** Heurística para classificar status DESCONHECIDOS automaticamente.
+ *  Palavras-chave de encerramento → grupo "encerrado". Caso contrário "ativo". */
+const ENCERRADO_HINTS = ["DEFERIDO", "INDEFERIDO", "CONCLU", "DESIST", "RESTITU", "ENCERR", "ARQUIV", "CANCEL", "FINALIZ"];
+
+function buildAutoMeta(rawKey: string): StatusMeta {
+  const key = canonical(rawKey);
+  const isEncerrado = ENCERRADO_HINTS.some(h => key.includes(h));
+  // Capitaliza para label legível
+  const label = key
+    .toLowerCase()
+    .replace(/(^|\s|-)([a-zà-ÿ])/g, (_, p, c) => p + c.toUpperCase());
+  return {
+    key,
+    label,
+    short: label.length > 22 ? label.slice(0, 20) + "…" : label,
+    icon: isEncerrado ? Archive : Circle,
+    tone: isEncerrado ? "slate" : "zinc",
+    group: isEncerrado ? "encerrado" : "ativo",
+  };
+}
 
 const TONE_CLASSES: Record<StatusMeta["tone"], { bg: string; border: string; text: string; ring: string; dot: string }> = {
   amber:   { bg: "bg-amber-50",   border: "border-amber-200",   text: "text-amber-700",   ring: "ring-amber-300",   dot: "bg-amber-500" },
@@ -71,9 +94,12 @@ const TONE_CLASSES: Record<StatusMeta["tone"], { bg: string; border: string; tex
   zinc:    { bg: "bg-zinc-50",    border: "border-zinc-200",    text: "text-zinc-700",    ring: "ring-zinc-300",    dot: "bg-zinc-500" },
 };
 
-const STATUS_BY_KEY = new Map<string, StatusMeta>(STATUS_CATALOG.map(s => [s.key, s]));
+/** Mapa por chave canônica (resiliente a variações de hífen/espaços). */
+const BASE_BY_CANONICAL = new Map<string, StatusMeta>(
+  STATUS_CATALOG_BASE.map(s => [canonical(s.key), s])
+);
 
-type FilterKey = "todos" | "ativos" | "encerrados" | StatusKey;
+type FilterKey = "todos" | "ativos" | "encerrados" | string;
 type SortKey = "tempo_parado" | "recente" | "cliente" | "status" | "servico";
 
 /* ================================================================
@@ -108,7 +134,7 @@ interface MonitorRow {
 /** Linha agrupada para exibição: um COMBO por (cliente, status) lista todos os serviços COMBO. */
 interface DisplayRow {
   key: string;
-  itemIds: number[];               // ids dos itens (1 para single, N para combo)
+  itemIds: number[];
   clienteId: number | null;
   clienteNome: string;
   vendaId: number;
@@ -117,8 +143,8 @@ interface DisplayRow {
   vendaDate: string | null;
   diasParado: number;
   isComboGroup: boolean;
-  servicoNome: string;            // único (não-combo) ou rótulo do grupo
-  servicosList: string[];         // lista quando é grupo COMBO
+  servicoNome: string;
+  servicosList: string[];
 }
 
 /* ================================================================
@@ -138,12 +164,6 @@ function fmtBR(iso: string | null): string {
   if (!iso) return "—";
   const [y, m, d] = iso.slice(0, 10).split("-");
   return d && m && y ? `${d}/${m}/${y}` : "—";
-}
-
-function normalizeStatus(raw: string): StatusKey | null {
-  const up = (raw || "").toUpperCase().trim();
-  if (STATUS_BY_KEY.has(up)) return up as StatusKey;
-  return null;
 }
 
 function urgencyClass(dias: number, encerrado: boolean): string {
@@ -184,10 +204,11 @@ export default function DashboardProcessosMonitor() {
 
       setRows(prev => prev.map(r => {
         if (!itemIds.includes(r.itemId)) return r;
-        const meta = STATUS_BY_KEY.get(newStatus)!;
+        const canon = canonical(newStatus);
+        const meta = BASE_BY_CANONICAL.get(canon) || buildAutoMeta(newStatus);
         return {
           ...r,
-          status: newStatus,
+          status: canon,
           meta,
           diasParado: diffDays(dataProtocolo),
         };
@@ -206,11 +227,11 @@ export default function DashboardProcessosMonitor() {
     let mounted = true;
     (async () => {
       try {
-        const allKeys = STATUS_CATALOG.map(s => s.key);
+        // CARREGA TODOS os itens com status não-nulo — descoberta dinâmica de status novos.
         const { data: itens, error: e1 } = await supabase
           .from("qa_itens_venda" as any)
           .select("id, venda_id, servico_id, status, data_protocolo, data_ultima_atualizacao")
-          .in("status", allKeys);
+          .not("status", "is", null);
         if (e1) throw e1;
 
         const itensList = (itens as any[] as ItemRow[]) || [];
@@ -230,8 +251,6 @@ export default function DashboardProcessosMonitor() {
         ]);
 
         const vendas = (vRes.data as any[] as VendaRow[]) || [];
-        // CHAVE CANÔNICA: vendas.cliente_id referencia qa_clientes.id_legado
-        // (com fallback para id quando id_legado for nulo).
         const clienteFKs = Array.from(new Set(vendas.map(v => v.cliente_id).filter(Boolean) as number[]));
         const cRes = clienteFKs.length
           ? await supabase.from("qa_clientes" as any).select("id, id_legado, nome_completo").or(
@@ -242,7 +261,6 @@ export default function DashboardProcessosMonitor() {
         const vendasMap = new Map<number, VendaRow>(
           vendas.map((v) => [typeof v.id_legado === "number" ? v.id_legado : v.id, v])
         );
-        // Indexar clientes pela chave canônica (id_legado quando existir, senão id).
         const clientesMap = new Map<number, ClienteRow>();
         for (const c of (((cRes.data as any[]) || []) as ClienteRow[])) {
           const fk = (typeof c.id_legado === "number" && Number.isFinite(c.id_legado)) ? c.id_legado : c.id;
@@ -252,9 +270,10 @@ export default function DashboardProcessosMonitor() {
 
         const built: MonitorRow[] = itensList
           .map((it) => {
-            const statusKey = normalizeStatus(it.status);
-            if (!statusKey) return null;
-            const meta = STATUS_BY_KEY.get(statusKey)!;
+            const raw = (it.status || "").trim();
+            if (!raw) return null;
+            const canon = canonical(raw);
+            const meta = BASE_BY_CANONICAL.get(canon) || buildAutoMeta(raw);
             const venda = vendasMap.get(it.venda_id);
             const cliente = venda?.cliente_id ? clientesMap.get(venda.cliente_id) : undefined;
             const servico = it.servico_id ? servicosMap.get(it.servico_id) : undefined;
@@ -267,7 +286,7 @@ export default function DashboardProcessosMonitor() {
               clienteNome: cliente?.nome_completo || "—",
               servicoNome: servico?.nome_servico || `Serviço #${it.servico_id ?? "?"}`,
               isCombo: !!servico?.is_combo,
-              status: statusKey,
+              status: canon,
               meta,
               vendaDate,
               diasParado: diffDays(stopRef),
@@ -285,15 +304,30 @@ export default function DashboardProcessosMonitor() {
     return () => { mounted = false; };
   }, []);
 
+  /* ── Catálogo DINÂMICO: base + qualquer status descoberto nos dados ── */
+  const dynamicCatalog = useMemo<StatusMeta[]>(() => {
+    const seen = new Map<string, StatusMeta>();
+    STATUS_CATALOG_BASE.forEach(s => seen.set(canonical(s.key), s));
+    rows.forEach(r => {
+      if (!seen.has(r.status)) seen.set(r.status, r.meta);
+    });
+    return Array.from(seen.values());
+  }, [rows]);
+
+  const catalogByKey = useMemo(
+    () => new Map<string, StatusMeta>(dynamicCatalog.map(s => [s.key, s])),
+    [dynamicCatalog]
+  );
+
   /* ── Contagens por status ── */
   const counts = useMemo(() => {
     const map = new Map<StatusKey, number>();
-    STATUS_CATALOG.forEach(s => map.set(s.key, 0));
+    dynamicCatalog.forEach(s => map.set(s.key, 0));
     rows.forEach(r => map.set(r.status, (map.get(r.status) || 0) + 1));
-    const ativos = STATUS_CATALOG.filter(s => s.group === "ativo").reduce((sum, s) => sum + (map.get(s.key) || 0), 0);
-    const encerrados = STATUS_CATALOG.filter(s => s.group === "encerrado").reduce((sum, s) => sum + (map.get(s.key) || 0), 0);
+    const ativos = dynamicCatalog.filter(s => s.group === "ativo").reduce((sum, s) => sum + (map.get(s.key) || 0), 0);
+    const encerrados = dynamicCatalog.filter(s => s.group === "encerrado").reduce((sum, s) => sum + (map.get(s.key) || 0), 0);
     return { byStatus: map, ativos, encerrados, total: rows.length };
-  }, [rows]);
+  }, [rows, dynamicCatalog]);
 
   /* ── Lista filtrada + ordenada ── */
   const visible = useMemo(() => {
@@ -382,8 +416,8 @@ export default function DashboardProcessosMonitor() {
     );
   }
 
-  const ativosCatalog = STATUS_CATALOG.filter(s => s.group === "ativo");
-  const encerradosCatalog = STATUS_CATALOG.filter(s => s.group === "encerrado");
+  const ativosCatalog = dynamicCatalog.filter(s => s.group === "ativo");
+  const encerradosCatalog = dynamicCatalog.filter(s => s.group === "encerrado");
 
   return (
     <div className="space-y-4">
@@ -446,9 +480,9 @@ export default function DashboardProcessosMonitor() {
             <FilterChip active={filter === "todos"} onClick={() => setFilter("todos")}>Todos ({counts.total})</FilterChip>
             <FilterChip active={filter === "ativos"} onClick={() => setFilter("ativos")}>Ativos ({counts.ativos})</FilterChip>
             <FilterChip active={filter === "encerrados"} onClick={() => setFilter("encerrados")}>Encerrados ({counts.encerrados})</FilterChip>
-            {STATUS_BY_KEY.has(filter as string) && (
+            {catalogByKey.has(filter as string) && (
               <FilterChip active onClick={() => setFilter("ativos")}>
-                {STATUS_BY_KEY.get(filter as string)!.label} ✕
+                {catalogByKey.get(filter as string)!.label} ✕
               </FilterChip>
             )}
           </div>
@@ -536,6 +570,7 @@ export default function DashboardProcessosMonitor() {
                               currentStatus={r.status}
                               currentDate={todayISO()}
                               saving={saving}
+                              catalog={dynamicCatalog}
                               onCancel={() => setEditingKey(null)}
                               onSave={(s, d) => applyStatusChange(r.itemIds, s, d)}
                             />
@@ -617,6 +652,7 @@ export default function DashboardProcessosMonitor() {
                           currentStatus={r.status}
                           currentDate={todayISO()}
                           saving={saving}
+                          catalog={dynamicCatalog}
                           onCancel={() => setEditingKey(null)}
                           onSave={(s, d) => applyStatusChange(r.itemIds, s, d)}
                         />
@@ -702,13 +738,14 @@ function FilterChip({
  * (data_ultima_atualizacao = data informada).
  * ================================================================ */
 function StatusEditor({
-  currentStatus, currentDate, saving, onCancel, onSave,
+  currentStatus, currentDate, saving, onCancel, onSave, catalog,
 }: {
   currentStatus: StatusKey;
   currentDate: string;
   saving: boolean;
   onCancel: () => void;
   onSave: (newStatus: StatusKey, dataProtocolo: string) => void;
+  catalog: StatusMeta[];
 }) {
   const [status, setStatus] = useState<StatusKey>(currentStatus);
   const [date, setDate] = useState<string>(currentDate);
@@ -722,12 +759,12 @@ function StatusEditor({
         className="h-7 text-[11px] rounded-md border border-slate-200 bg-white px-1.5 focus:outline-none focus:ring-2 focus:ring-blue-200 max-w-[180px]"
       >
         <optgroup label="Em andamento">
-          {STATUS_CATALOG.filter(s => s.group === "ativo").map(s => (
+          {catalog.filter(s => s.group === "ativo").map(s => (
             <option key={s.key} value={s.key}>{s.label}</option>
           ))}
         </optgroup>
         <optgroup label="Encerrados">
-          {STATUS_CATALOG.filter(s => s.group === "encerrado").map(s => (
+          {catalog.filter(s => s.group === "encerrado").map(s => (
             <option key={s.key} value={s.key}>{s.label}</option>
           ))}
         </optgroup>
