@@ -216,11 +216,14 @@ export default function QAClientesPage() {
   // OBS: Porte na Polícia Federal (id=3) NÃO é CAC — possui apenas Nº Porte, sem CRAF/GTE/CR/SIGMA/SINARM
   // OBS: Concessão de CR (13, 20, 27) foi REMOVIDA daqui — possui apenas campos exclusivos do CR
   // OBS: Autorização de compra de arma de fogo no EB (5, 15) foi REMOVIDA daqui — possui apenas campos específicos da autorização
-  const SERVICOS_CAC = [4, 6, 7, 8, 9, 10, 14, 16, 17, 18];
+  // OBS: COMBO - Registro de arma de fogo CRAF no EB (id=6) foi REMOVIDA daqui — possui formulário próprio com dados da arma
+  const SERVICOS_CAC = [4, 7, 8, 9, 10, 14, 16, 17, 18];
   // Serviços de Autorização de compra de arma de fogo no Exército Brasileiro
   const SERVICOS_AUTORIZACAO_EB = [5, 15];
   // Serviço de Posse na Polícia Federal
   const SERVICOS_POSSE = [2];
+  // Serviço COMBO - Registro de arma de fogo (CRAF) no Exército Brasileiro
+  const SERVICOS_CRAF_EB = [6];
 
   const ITEM_EDIT_FIELDS: { key: string; label: string; type: "date" | "text"; servicos?: number[]; condition?: (form: Record<string, string>) => boolean }[] = [
     // Datas — para CR usam rótulo específico "do CR"
@@ -238,7 +241,7 @@ export default function QAClientesPage() {
     // Nº Processo — para CR é "Nº de Protocolo do CR"; demais usam "Nº Processo"
     { key: "numero_processo", label: "Nº de Protocolo do CR", type: "text", servicos: SERVICOS_CR },
     { key: "numero_processo", label: "Nº Processo", type: "text", servicos: [2, 4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 26] },
-    // Campos exclusivos de CAC — NÃO aparecem em Posse na PF nem em Concessão de CR
+    // Campos exclusivos de CAC — NÃO aparecem em Posse na PF, Concessão de CR, nem CRAF EB (id=6)
     { key: "numero_craf", label: "Nº CRAF", type: "text", servicos: SERVICOS_CAC },
     { key: "numero_gte", label: "Nº GTE", type: "text", servicos: SERVICOS_CAC },
     // Nº CR — aparece em CAC e em Concessão de CR (com rótulo "Nº de Certificado de Registro (CR)")
@@ -259,6 +262,12 @@ export default function QAClientesPage() {
     { key: "fabricante", label: "Fabricante", type: "text", servicos: [26] },
     { key: "modelo", label: "Modelo", type: "text", servicos: [26] },
     { key: "calibre", label: "Calibre", type: "text", servicos: [26] },
+    // COMBO - Registro de arma de fogo (CRAF) no Exército Brasileiro — dados da arma
+    { key: "numero_serie", label: "Nº de Série da Arma", type: "text", servicos: SERVICOS_CRAF_EB },
+    { key: "fabricante", label: "Fabricante da Arma", type: "text", servicos: SERVICOS_CRAF_EB },
+    { key: "modelo", label: "Modelo da Arma", type: "text", servicos: SERVICOS_CRAF_EB },
+    { key: "calibre", label: "Calibre da Arma", type: "text", servicos: SERVICOS_CRAF_EB },
+    { key: "quantidade_tiros", label: "Quantidade de Tiros da Arma", type: "text", servicos: SERVICOS_CRAF_EB },
   ];
 
   /** Retorna apenas os campos aplicáveis ao serviço (filtra por servico_id quando definido). */
