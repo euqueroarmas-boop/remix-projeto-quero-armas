@@ -412,7 +412,7 @@ function ClienteCard({
               )}
             </div>
             <Link
-              to={`/quero-armas/clientes?cliente=${group.clienteId}`}
+              to={`/quero-armas/clientes?cliente=${group.clienteIdCanonical}`}
               className="block font-bold text-slate-900 text-[14px] break-words uppercase hover:text-blue-700 hover:underline transition-colors"
               title={`Abrir cadastro de ${group.clienteNome}`}
             >
