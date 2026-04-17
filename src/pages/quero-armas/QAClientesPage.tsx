@@ -322,7 +322,7 @@ export default function QAClientesPage() {
     if (!expandedItemId) return;
     const currentItem = (itens as any[]).find(i => i.id === expandedItemId);
     const servicoId = currentItem?.servico_id;
-    const applicableFields = getFieldsForServico(servicoId, itemEditForm);
+    const applicableFields = getFieldsForServico(servicoId, itemEditForm, currentItem);
     setSavingItem(true);
     try {
       const payload: Record<string, any> = {};
