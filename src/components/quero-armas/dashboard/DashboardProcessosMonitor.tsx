@@ -118,6 +118,21 @@ interface VendaRow { id: number; id_legado: number | null; cliente_id: number | 
 interface ClienteRow { id: number; id_legado: number | null; nome_completo: string | null; }
 interface ServicoRow { id: number; nome_servico: string | null; is_combo?: boolean | null; }
 
+type Entidade = "PF" | "EB";
+
+/** Classifica o serviço pela entidade responsável.
+ *  Regra: Posse ou Porte → Polícia Federal. Demais → Exército Brasileiro. */
+function classifyEntidade(servicoNome: string): Entidade {
+  const n = (servicoNome || "").toLowerCase();
+  if (n.includes("posse") || n.includes("porte")) return "PF";
+  return "EB";
+}
+
+const ENTIDADE_META: Record<Entidade, { label: string; sigla: string; ref: string }> = {
+  PF: { label: "Polícia Federal",   sigla: "PF", ref: "ID_ENT: PF-01" },
+  EB: { label: "Exército Brasileiro", sigla: "EB", ref: "ID_ENT: EB-04" },
+};
+
 interface MonitorRow {
   itemId: number;
   vendaId: number;
@@ -129,6 +144,7 @@ interface MonitorRow {
   meta: StatusMeta;
   vendaDate: string | null;
   diasParado: number;
+  entidade: Entidade;
 }
 
 /** Linha agrupada para exibição: um COMBO por (cliente, status) lista todos os serviços COMBO. */
