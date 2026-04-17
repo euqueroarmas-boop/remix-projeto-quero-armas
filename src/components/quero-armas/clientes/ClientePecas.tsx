@@ -162,6 +162,7 @@ export default function ClientePecas({ cliente }: Props) {
   const [savedCasoId, setSavedCasoId] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [auxiliaryDocs, setAuxiliaryDocs] = useState<AuxiliaryDocItemState[]>([]);
+  const [showClientData, setShowClientData] = useState(false);
 
   const cpfNorm = (cliente.cpf || "").replace(/\D/g, "");
   const cpfFormatted = cpfNorm.length === 11
