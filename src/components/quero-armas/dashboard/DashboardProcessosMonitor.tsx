@@ -86,7 +86,7 @@ interface ItemRow {
   data_protocolo: string | null;
   data_ultima_atualizacao: string | null;
 }
-interface VendaRow { id: number; cliente_id: number | null; data_cadastro: string | null; created_at: string | null; }
+interface VendaRow { id: number; id_legado: number | null; cliente_id: number | null; data_cadastro: string | null; created_at: string | null; }
 interface ClienteRow { id: number; id_legado: number | null; nome_completo: string | null; }
 interface ServicoRow { id: number; nome_servico: string | null; }
 
@@ -166,7 +166,7 @@ export default function DashboardProcessosMonitor() {
         const servicoIds = Array.from(new Set(itensList.map(i => i.servico_id).filter(Boolean) as number[]));
 
         const [vRes, sRes] = await Promise.all([
-          supabase.from("qa_vendas" as any).select("id, cliente_id, data_cadastro, created_at").in("id", vendaIds),
+          supabase.from("qa_vendas" as any).select("id, id_legado, cliente_id, data_cadastro, created_at").in("id_legado", vendaIds),
           servicoIds.length
             ? supabase.from("qa_servicos" as any).select("id, nome_servico").in("id", servicoIds)
             : Promise.resolve({ data: [] as any[] }),
@@ -182,7 +182,9 @@ export default function DashboardProcessosMonitor() {
             )
           : { data: [] as any[] };
 
-        const vendasMap = new Map<number, VendaRow>(vendas.map(v => [v.id, v]));
+        const vendasMap = new Map<number, VendaRow>(
+          vendas.map((v) => [typeof v.id_legado === "number" ? v.id_legado : v.id, v])
+        );
         // Indexar clientes pela chave canônica (id_legado quando existir, senão id).
         const clientesMap = new Map<number, ClienteRow>();
         for (const c of (((cRes.data as any[]) || []) as ClienteRow[])) {
