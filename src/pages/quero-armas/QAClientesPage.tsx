@@ -287,17 +287,30 @@ export default function QAClientesPage() {
 
   const handleSaveItem = async () => {
     if (!expandedItemId) return;
+    const currentItem = (itens as any[]).find(i => i.id === expandedItemId);
+    const servicoId = currentItem?.servico_id;
+    const applicableFields = getFieldsForServico(servicoId, itemEditForm);
     setSavingItem(true);
     try {
       const payload: Record<string, any> = {};
-      ITEM_EDIT_FIELDS.forEach(f => {
+      for (const f of applicableFields) {
         const v = itemEditForm[f.key]?.trim() || null;
         if (f.type === "date") {
-          payload[f.key] = v ? dateBrToIso(v) : null;
+          if (v) {
+            const iso = dateBrToIso(v);
+            if (!iso) {
+              toast.error(`Data inválida em "${f.label}". Use DD/MM/AAAA.`);
+              setSavingItem(false);
+              return;
+            }
+            payload[f.key] = iso;
+          } else {
+            payload[f.key] = null;
+          }
         } else {
           payload[f.key] = v;
         }
-      });
+      }
       const today = new Date();
       payload.data_ultima_atualizacao = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
       const { error } = await supabase.from("qa_itens_venda" as any).update(payload).eq("id", expandedItemId);
