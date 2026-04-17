@@ -184,7 +184,7 @@ export default function DashboardProcessosMonitor() {
         const [vRes, sRes] = await Promise.all([
           supabase.from("qa_vendas" as any).select("id, id_legado, cliente_id, data_cadastro, created_at").in("id_legado", vendaIds),
           servicoIds.length
-            ? supabase.from("qa_servicos" as any).select("id, nome_servico").in("id", servicoIds)
+            ? supabase.from("qa_servicos" as any).select("id, nome_servico, is_combo").in("id", servicoIds)
             : Promise.resolve({ data: [] as any[] }),
         ]);
 
