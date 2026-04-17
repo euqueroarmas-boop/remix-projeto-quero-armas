@@ -695,3 +695,67 @@ function FilterChip({
     </button>
   );
 }
+
+/* ================================================================
+ * Editor inline de status + data de protocolo
+ * Ao salvar: atualiza status, data_protocolo e zera o "tempo no status"
+ * (data_ultima_atualizacao = data informada).
+ * ================================================================ */
+function StatusEditor({
+  currentStatus, currentDate, saving, onCancel, onSave,
+}: {
+  currentStatus: StatusKey;
+  currentDate: string;
+  saving: boolean;
+  onCancel: () => void;
+  onSave: (newStatus: StatusKey, dataProtocolo: string) => void;
+}) {
+  const [status, setStatus] = useState<StatusKey>(currentStatus);
+  const [date, setDate] = useState<string>(currentDate);
+
+  return (
+    <div className="inline-flex flex-wrap items-center gap-1.5 p-2 rounded-lg border border-slate-300 bg-white shadow-sm">
+      <select
+        value={status}
+        onChange={(e) => setStatus(e.target.value as StatusKey)}
+        disabled={saving}
+        className="h-7 text-[11px] rounded-md border border-slate-200 bg-white px-1.5 focus:outline-none focus:ring-2 focus:ring-blue-200 max-w-[180px]"
+      >
+        <optgroup label="Em andamento">
+          {STATUS_CATALOG.filter(s => s.group === "ativo").map(s => (
+            <option key={s.key} value={s.key}>{s.label}</option>
+          ))}
+        </optgroup>
+        <optgroup label="Encerrados">
+          {STATUS_CATALOG.filter(s => s.group === "encerrado").map(s => (
+            <option key={s.key} value={s.key}>{s.label}</option>
+          ))}
+        </optgroup>
+      </select>
+      <input
+        type="date"
+        value={date}
+        onChange={(e) => setDate(e.target.value)}
+        disabled={saving}
+        title="Data do protocolo (zera o tempo no status)"
+        className="h-7 text-[11px] rounded-md border border-slate-200 bg-white px-1.5 focus:outline-none focus:ring-2 focus:ring-blue-200"
+      />
+      <button
+        onClick={() => onSave(status, date)}
+        disabled={saving || !date}
+        className="h-7 inline-flex items-center gap-1 px-2 rounded-md bg-emerald-600 text-white text-[11px] font-semibold hover:bg-emerald-700 disabled:opacity-50"
+      >
+        {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+        Salvar
+      </button>
+      <button
+        onClick={onCancel}
+        disabled={saving}
+        className="h-7 inline-flex items-center justify-center w-7 rounded-md border border-slate-200 bg-white text-slate-500 hover:bg-slate-50"
+        title="Cancelar"
+      >
+        <X className="w-3 h-3" />
+      </button>
+    </div>
+  );
+}
