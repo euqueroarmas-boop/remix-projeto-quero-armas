@@ -241,7 +241,9 @@ export default function QADashboardPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Link to="/quero-armas/gerar-peca" className="qa-btn-primary flex items-center gap-1.5 no-glow">
+          <Link to="/quero-armas/gerar-peca"
+            className="flex items-center gap-1.5 h-8 px-3 text-[11px] font-semibold rounded-md transition-all hover:opacity-90 shadow-sm no-glow"
+            style={{ background: "hsl(230 80% 56%)", color: "#ffffff" }}>
             <PenTool className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Nova Peça</span>
           </Link>
         </div>
