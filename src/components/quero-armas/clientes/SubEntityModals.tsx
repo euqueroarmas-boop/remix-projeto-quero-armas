@@ -491,7 +491,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
               type="button"
               onClick={save}
               disabled={saving}
-              className="qa-btn-primary no-glow h-11 text-xs rounded-md text-white disabled:opacity-60"
+              className="h-11 text-xs rounded-md bg-blue-600 hover:bg-blue-700 text-white shadow-sm disabled:opacity-60"
             >
               {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <Save className="h-3.5 w-3.5 mr-1.5" />}
               {isEdit ? "Salvar" : "Cadastrar Venda"}
