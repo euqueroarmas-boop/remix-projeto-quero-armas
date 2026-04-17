@@ -531,10 +531,25 @@ export default function DashboardProcessosMonitor() {
                         </td>
                         <td className="px-3 py-2 text-slate-500 font-mono text-[11px]">#{r.vendaId}</td>
                         <td className="px-3 py-2">
-                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border ${tone.bg} ${tone.text} ${tone.border}`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${tone.dot}`} />
-                            {r.meta.label}
-                          </span>
+                          {editingKey === r.key ? (
+                            <StatusEditor
+                              currentStatus={r.status}
+                              currentDate={todayISO()}
+                              saving={saving}
+                              onCancel={() => setEditingKey(null)}
+                              onSave={(s, d) => applyStatusChange(r.itemIds, s, d)}
+                            />
+                          ) : (
+                            <button
+                              onClick={() => setEditingKey(r.key)}
+                              className={`group inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border ${tone.bg} ${tone.text} ${tone.border} hover:ring-2 hover:ring-offset-1 hover:${tone.ring} transition`}
+                              title="Clique para alterar o status"
+                            >
+                              <span className={`w-1.5 h-1.5 rounded-full ${tone.dot}`} />
+                              {r.meta.label}
+                              <Pencil className="w-2.5 h-2.5 opacity-0 group-hover:opacity-70 ml-0.5" />
+                            </button>
+                          )}
                         </td>
                         <td className="px-3 py-2 text-slate-500">{fmtBR(r.vendaDate)}</td>
                         <td className="px-3 py-2">
