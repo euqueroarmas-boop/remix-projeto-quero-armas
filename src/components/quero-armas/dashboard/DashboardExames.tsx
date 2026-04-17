@@ -124,11 +124,11 @@ export default function DashboardExames() {
         const clienteMap = new Map(clientes.map((c) => [String(c.id), c]));
         const vendaMap = new Map(vendas.map((v) => [String(v.id), String(v.cliente_id)]));
 
-        const clientesComPendente = new Set<number>();
-        const clientesComDeferido = new Set<number>();
+        const clientesComPendente = new Set<string>();
+        const clientesComDeferido = new Set<string>();
         for (const item of itens) {
           const status = (item.status || "").toUpperCase();
-          const cid = vendaMap.get(item.venda_id);
+          const cid = vendaMap.get(String(item.venda_id));
           if (!cid) continue;
           if (CONSUMED_STATUSES.includes(status)) {
             clientesComDeferido.add(cid);
@@ -141,7 +141,7 @@ export default function DashboardExames() {
         const latestMap = new Map<string, ExameRow>();
         for (const e of exames) {
           // Oculta exames de clientes que já tiveram serviço DEFERIDO
-          if (clientesComDeferido.has(e.cliente_id)) continue;
+          if (clientesComDeferido.has(String(e.cliente_id))) continue;
           const key = `${e.cliente_id}_${e.tipo}`;
           const existing = latestMap.get(key);
           if (!existing || e.data_realizacao > existing.data_realizacao) {
@@ -151,7 +151,7 @@ export default function DashboardExames() {
 
         const result: ExameDashItem[] = [];
         for (const e of latestMap.values()) {
-          const cli = clienteMap.get(e.cliente_id);
+          const cli = clienteMap.get(String(e.cliente_id));
           const { status, dias_restantes } = computeExameStatus(e.data_vencimento);
           const bucket = bucketize(status, dias_restantes);
           result.push({
