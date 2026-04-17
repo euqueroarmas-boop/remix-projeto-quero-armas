@@ -522,7 +522,7 @@ export default function ClientePecaAuxiliaryDocs({ onChange, userId, caseId }: P
             <div className="h-6 w-6 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
               <Paperclip className="h-3 w-3 text-primary" />
             </div>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-foreground">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-900">
               Provas e documentos auxiliares
             </span>
             {docTotal > 0 && (
