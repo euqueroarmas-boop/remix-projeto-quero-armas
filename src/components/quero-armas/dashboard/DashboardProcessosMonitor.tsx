@@ -13,7 +13,9 @@ import {
   Clock, ArrowUpRight, Search, ChevronRight, Loader2,
   AlertTriangle, CheckCircle2, XCircle, FileWarning, FolderKanban,
   PlayCircle, ListChecks, Hourglass, Archive, Undo2, Ban, Sparkles,
+  Pencil, Check, X,
 } from "lucide-react";
+import { toast } from "sonner";
 
 /* ================================================================
  * Catálogo de status (estado atual do serviço)
@@ -106,6 +108,7 @@ interface MonitorRow {
 /** Linha agrupada para exibição: um COMBO por (cliente, status) lista todos os serviços COMBO. */
 interface DisplayRow {
   key: string;
+  itemIds: number[];               // ids dos itens (1 para single, N para combo)
   clienteId: number | null;
   clienteNome: string;
   vendaId: number;
@@ -160,6 +163,44 @@ export default function DashboardProcessosMonitor() {
   const [filter, setFilter] = useState<FilterKey>("ativos");
   const [sortBy, setSortBy] = useState<SortKey>("tempo_parado");
   const [search, setSearch] = useState("");
+  const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  /** Aplica novo status + data de protocolo nos itens (1 ou N para combo).
+   *  Zera o "tempo no status" setando data_ultima_atualizacao = data informada. */
+  async function applyStatusChange(itemIds: number[], newStatus: StatusKey, dataProtocolo: string) {
+    if (!itemIds.length) return;
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("qa_itens_venda" as any)
+        .update({
+          status: newStatus,
+          data_protocolo: dataProtocolo,
+          data_ultima_atualizacao: dataProtocolo,
+        })
+        .in("id", itemIds);
+      if (error) throw error;
+
+      setRows(prev => prev.map(r => {
+        if (!itemIds.includes(r.itemId)) return r;
+        const meta = STATUS_BY_KEY.get(newStatus)!;
+        return {
+          ...r,
+          status: newStatus,
+          meta,
+          diasParado: diffDays(dataProtocolo),
+        };
+      }));
+      setEditingKey(null);
+      toast.success(`Status atualizado · ${itemIds.length > 1 ? `${itemIds.length} serviços` : "1 serviço"}`);
+    } catch (err: any) {
+      console.error("[applyStatusChange] error:", err);
+      toast.error("Falha ao atualizar status: " + (err?.message || "erro desconhecido"));
+    } finally {
+      setSaving(false);
+    }
+  }
 
   useEffect(() => {
     let mounted = true;
@@ -298,6 +339,7 @@ export default function DashboardProcessosMonitor() {
     for (const r of singles) {
       display.push({
         key: `s-${r.itemId}`,
+        itemIds: [r.itemId],
         clienteId: r.clienteId, clienteNome: r.clienteNome,
         vendaId: r.vendaId, status: r.status, meta: r.meta,
         vendaDate: r.vendaDate, diasParado: r.diasParado,
@@ -309,16 +351,17 @@ export default function DashboardProcessosMonitor() {
         const r = arr[0];
         display.push({
           key: `c1-${r.itemId}`,
+          itemIds: [r.itemId],
           clienteId: r.clienteId, clienteNome: r.clienteNome,
           vendaId: r.vendaId, status: r.status, meta: r.meta,
           vendaDate: r.vendaDate, diasParado: r.diasParado,
           isComboGroup: false, servicoNome: r.servicoNome, servicosList: [],
         });
       } else {
-        // Pega referências do mais recente
         const ref = [...arr].sort((a, b) => b.diasParado - a.diasParado)[0];
         display.push({
           key: `cg-${k}`,
+          itemIds: arr.map(x => x.itemId),
           clienteId: ref.clienteId, clienteNome: ref.clienteNome,
           vendaId: ref.vendaId, status: ref.status, meta: ref.meta,
           vendaDate: ref.vendaDate, diasParado: ref.diasParado,
@@ -488,10 +531,25 @@ export default function DashboardProcessosMonitor() {
                         </td>
                         <td className="px-3 py-2 text-slate-500 font-mono text-[11px]">#{r.vendaId}</td>
                         <td className="px-3 py-2">
-                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border ${tone.bg} ${tone.text} ${tone.border}`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${tone.dot}`} />
-                            {r.meta.label}
-                          </span>
+                          {editingKey === r.key ? (
+                            <StatusEditor
+                              currentStatus={r.status}
+                              currentDate={todayISO()}
+                              saving={saving}
+                              onCancel={() => setEditingKey(null)}
+                              onSave={(s, d) => applyStatusChange(r.itemIds, s, d)}
+                            />
+                          ) : (
+                            <button
+                              onClick={() => setEditingKey(r.key)}
+                              className={`group inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border ${tone.bg} ${tone.text} ${tone.border} hover:ring-2 hover:ring-offset-1 hover:${tone.ring} transition`}
+                              title="Clique para alterar o status"
+                            >
+                              <span className={`w-1.5 h-1.5 rounded-full ${tone.dot}`} />
+                              {r.meta.label}
+                              <Pencil className="w-2.5 h-2.5 opacity-0 group-hover:opacity-70 ml-0.5" />
+                            </button>
+                          )}
                         </td>
                         <td className="px-3 py-2 text-slate-500">{fmtBR(r.vendaDate)}</td>
                         <td className="px-3 py-2">
@@ -554,10 +612,24 @@ export default function DashboardProcessosMonitor() {
                       </span>
                     </div>
                     <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border ${tone.bg} ${tone.text} ${tone.border}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${tone.dot}`} />
-                        {r.meta.label}
-                      </span>
+                      {editingKey === r.key ? (
+                        <StatusEditor
+                          currentStatus={r.status}
+                          currentDate={todayISO()}
+                          saving={saving}
+                          onCancel={() => setEditingKey(null)}
+                          onSave={(s, d) => applyStatusChange(r.itemIds, s, d)}
+                        />
+                      ) : (
+                        <button
+                          onClick={() => setEditingKey(r.key)}
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border ${tone.bg} ${tone.text} ${tone.border}`}
+                        >
+                          <span className={`w-1.5 h-1.5 rounded-full ${tone.dot}`} />
+                          {r.meta.label}
+                          <Pencil className="w-2.5 h-2.5 opacity-60 ml-0.5" />
+                        </button>
+                      )}
                       <span className="text-[10px] text-slate-400 font-mono">#{r.vendaId}</span>
                       <span className="text-[10px] text-slate-400">• {fmtBR(r.vendaDate)}</span>
                     </div>
@@ -621,5 +693,69 @@ function FilterChip({
     >
       {children}
     </button>
+  );
+}
+
+/* ================================================================
+ * Editor inline de status + data de protocolo
+ * Ao salvar: atualiza status, data_protocolo e zera o "tempo no status"
+ * (data_ultima_atualizacao = data informada).
+ * ================================================================ */
+function StatusEditor({
+  currentStatus, currentDate, saving, onCancel, onSave,
+}: {
+  currentStatus: StatusKey;
+  currentDate: string;
+  saving: boolean;
+  onCancel: () => void;
+  onSave: (newStatus: StatusKey, dataProtocolo: string) => void;
+}) {
+  const [status, setStatus] = useState<StatusKey>(currentStatus);
+  const [date, setDate] = useState<string>(currentDate);
+
+  return (
+    <div className="inline-flex flex-wrap items-center gap-1.5 p-2 rounded-lg border border-slate-300 bg-white shadow-sm">
+      <select
+        value={status}
+        onChange={(e) => setStatus(e.target.value as StatusKey)}
+        disabled={saving}
+        className="h-7 text-[11px] rounded-md border border-slate-200 bg-white px-1.5 focus:outline-none focus:ring-2 focus:ring-blue-200 max-w-[180px]"
+      >
+        <optgroup label="Em andamento">
+          {STATUS_CATALOG.filter(s => s.group === "ativo").map(s => (
+            <option key={s.key} value={s.key}>{s.label}</option>
+          ))}
+        </optgroup>
+        <optgroup label="Encerrados">
+          {STATUS_CATALOG.filter(s => s.group === "encerrado").map(s => (
+            <option key={s.key} value={s.key}>{s.label}</option>
+          ))}
+        </optgroup>
+      </select>
+      <input
+        type="date"
+        value={date}
+        onChange={(e) => setDate(e.target.value)}
+        disabled={saving}
+        title="Data do protocolo (zera o tempo no status)"
+        className="h-7 text-[11px] rounded-md border border-slate-200 bg-white px-1.5 focus:outline-none focus:ring-2 focus:ring-blue-200"
+      />
+      <button
+        onClick={() => onSave(status, date)}
+        disabled={saving || !date}
+        className="h-7 inline-flex items-center gap-1 px-2 rounded-md bg-emerald-600 text-white text-[11px] font-semibold hover:bg-emerald-700 disabled:opacity-50"
+      >
+        {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+        Salvar
+      </button>
+      <button
+        onClick={onCancel}
+        disabled={saving}
+        className="h-7 inline-flex items-center justify-center w-7 rounded-md border border-slate-200 bg-white text-slate-500 hover:bg-slate-50"
+        title="Cancelar"
+      >
+        <X className="w-3 h-3" />
+      </button>
+    </div>
   );
 }
