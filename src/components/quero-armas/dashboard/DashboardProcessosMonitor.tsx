@@ -703,16 +703,20 @@ function StatusKPI({
   const Icon = meta.icon;
   return (
     <button
+      type="button"
       onClick={onClick}
-      className={`text-left qa-card p-2.5 transition-all hover:shadow-md ${active ? `ring-2 ${tone.ring}` : ""}`}
+      className={`group relative px-3 py-3 text-left transition-all hover:bg-slate-50 cursor-pointer ${
+        active ? `ring-2 ${tone.ring} ring-inset bg-slate-50` : ""
+      }`}
     >
-      <div className="flex items-center justify-between gap-2">
-        <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${tone.bg} border ${tone.border}`}>
-          <Icon className={`w-3.5 h-3.5 ${tone.text}`} />
-        </div>
-        <div className="text-xl font-bold tabular-nums" style={{ color: "hsl(220 20% 18%)" }}>{total}</div>
+      <div className="flex items-center gap-2">
+        <span className={`h-2 w-2 rounded-full ${tone.dot}`} />
+        <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500 line-clamp-1">{meta.short}</span>
       </div>
-      <div className="mt-2 text-[11px] font-semibold text-slate-700 leading-tight line-clamp-2">{meta.short}</div>
+      <div className="mt-1.5 flex items-baseline gap-1.5">
+        <span className={`text-2xl font-black ${tone.text}`}>{total}</span>
+        <Icon className={`h-3.5 w-3.5 ${tone.text} opacity-60`} />
+      </div>
     </button>
   );
 }
