@@ -380,6 +380,7 @@ function ClienteCard({
 }: {
   group: {
     clienteId: number;
+    clienteIdCanonical: string;
     clienteNome: string;
     clienteTelefone: string | null;
     temServicoPendente: boolean;
