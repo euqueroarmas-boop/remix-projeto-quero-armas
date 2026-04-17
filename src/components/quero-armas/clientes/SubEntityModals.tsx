@@ -63,30 +63,59 @@ function PremiumField({ label, value, onChange, type = "text", placeholder, icon
   );
 }
 
-/* ─── Premium Modal Shell ─── */
-function PremiumModalShell({ open, onClose, title, icon: Icon, accentColor, children }: {
-  open: boolean; onClose: () => void; title: string; icon: any; accentColor: string; children: React.ReactNode;
+/* ─── Premium Modal Shell ───
+   Mobile-first: bottom-sheet em telas pequenas, dialog centralizado no desktop.
+   Estrutura: header fixo + body com scroll interno + footer opcional sticky.
+*/
+function PremiumModalShell({ open, onClose, title, icon: Icon, accentColor, children, footer }: {
+  open: boolean; onClose: () => void; title: string; icon: any; accentColor: string;
+  children: React.ReactNode; footer?: React.ReactNode;
 }) {
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
       <DialogContent
-        className="border-0 shadow-2xl shadow-slate-200/60 rounded-2xl overflow-hidden p-0 bg-white w-[calc(100vw-1rem)] max-w-md sm:max-w-lg"
+        className="
+          !p-0 border-0 bg-white shadow-2xl shadow-slate-200/60 overflow-hidden
+          !fixed !left-1/2 !-translate-x-1/2
+          !top-auto !bottom-0 !translate-y-0 !rounded-t-2xl !rounded-b-none
+          sm:!top-1/2 sm:!bottom-auto sm:!-translate-y-1/2 sm:!rounded-2xl
+          !w-full sm:!w-[calc(100vw-2rem)] !max-w-full sm:!max-w-lg
+          flex flex-col
+          !max-h-[100dvh] sm:!max-h-[calc(100dvh-2rem)]
+        "
       >
-        {/* Header gradient strip */}
-        <div className={`h-1 w-full ${accentColor}`} />
-        <div className="px-4 sm:px-6 pt-5 pb-0">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2.5 text-base font-bold text-slate-800 tracking-tight">
-              <div className={`h-8 w-8 rounded-lg ${accentColor} bg-opacity-10 flex items-center justify-center`}>
-                <Icon className="h-4 w-4 text-white" />
-              </div>
-              {title}
-            </DialogTitle>
-          </DialogHeader>
+        {/* Header (fixo) */}
+        <div className="shrink-0">
+          <div className={`h-1 w-full ${accentColor}`} />
+          <div className="px-4 sm:px-6 pt-4 pb-3 pr-12">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2.5 text-base font-bold text-slate-800 tracking-tight">
+                <div className={`h-8 w-8 rounded-lg ${accentColor} bg-opacity-10 flex items-center justify-center`}>
+                  <Icon className="h-4 w-4 text-white" />
+                </div>
+                {title}
+              </DialogTitle>
+            </DialogHeader>
+          </div>
         </div>
-        <div className="px-4 sm:px-6 pb-6 pt-4">
+
+        {/* Body (scroll interno) */}
+        <div
+          className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain px-4 sm:px-6 py-3"
+          style={{ WebkitOverflowScrolling: "touch" }}
+        >
           {children}
         </div>
+
+        {/* Footer (sticky, respeita safe-area do iPhone) */}
+        {footer && (
+          <div
+            className="shrink-0 border-t border-slate-100 bg-white px-4 sm:px-6 py-3"
+            style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
+          >
+            {footer}
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
