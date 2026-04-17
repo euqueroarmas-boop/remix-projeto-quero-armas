@@ -629,16 +629,10 @@ export default function DashboardProcessosMonitor() {
                         </td>
                         <td className="px-3 py-2 text-slate-500">{fmtBR(r.vendaDate)}</td>
                         <td className="px-3 py-2">
-                          {(() => {
-                            const su = r.status.toUpperCase();
-                            const lbl = su === "INDEFERIDO" ? "Dias indeferido" : su === "DEFERIDO" ? "Dias deferido" : "Tempo no status";
-                            return (
-                              <span title={lbl} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${urgencyClass(r.diasParado, encerrado)}`}>
-                                <Clock className="w-3 h-3" />
-                                {r.diasParado}d
-                              </span>
-                            );
-                          })()}
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${urgencyClass(r.diasParado, encerrado)}`}>
+                            <Clock className="w-3 h-3" />
+                            {r.diasParado}d
+                          </span>
                         </td>
                         <td className="px-3 py-2 text-right">
                           {r.clienteId && (
@@ -688,16 +682,10 @@ export default function DashboardProcessosMonitor() {
                           <div className="text-[11.5px] text-slate-500 truncate mt-0.5">{r.servicoNome}</div>
                         )}
                       </div>
-                      {(() => {
-                        const su = r.status.toUpperCase();
-                        const lbl = su === "INDEFERIDO" ? "Dias indeferido" : su === "DEFERIDO" ? "Dias deferido" : "Tempo no status";
-                        return (
-                          <span title={lbl} className={`shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${urgencyClass(r.diasParado, encerrado)}`}>
-                            <Clock className="w-3 h-3" />
-                            {r.diasParado}d
-                          </span>
-                        );
-                      })()}
+                      <span className={`shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${urgencyClass(r.diasParado, encerrado)}`}>
+                        <Clock className="w-3 h-3" />
+                        {r.diasParado}d
+                      </span>
                     </div>
                     <div className="mt-2 flex flex-wrap items-center gap-1.5">
                       {editingKey === r.key ? (
