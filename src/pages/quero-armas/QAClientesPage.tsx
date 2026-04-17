@@ -226,27 +226,41 @@ export default function QAClientesPage() {
   const SERVICOS_CRAF_EB = [6];
 
   const ITEM_EDIT_FIELDS: { key: string; label: string; type: "date" | "text"; servicos?: number[]; condition?: (form: Record<string, string>, item?: any) => boolean }[] = [
-    // Datas — para CR usam rótulo específico "do CR"
+    /* ================================================================
+     * POSSE NA POLÍCIA FEDERAL (servico_id = 2) — formulário dedicado
+     * Ordem fixa solicitada: Nº Requerimento → Protocolo → Notificação →
+     * Indeferimento → Recurso Adm. → Indeferimento do Recurso → Deferimento →
+     * Nº Autorização → Validade Autorização.
+     * Regra: Nº Processo NÃO aparece em Posse PF.
+     * ================================================================ */
+    { key: "numero_posse",                  label: "Nº do Requerimento de Posse",       type: "text", servicos: SERVICOS_POSSE },
+    { key: "data_protocolo",                label: "Data Protocolo",                    type: "date", servicos: SERVICOS_POSSE },
+    { key: "data_notificacao",              label: "Data da Notificação",               type: "date", servicos: SERVICOS_POSSE },
+    { key: "data_indeferimento",            label: "Data de Indeferimento",             type: "date", servicos: SERVICOS_POSSE },
+    { key: "data_recurso_administrativo",   label: "Data do Recurso Administrativo",    type: "date", servicos: SERVICOS_POSSE },
+    { key: "data_indeferimento_recurso",    label: "Data de Indeferimento do Recurso",  type: "date", servicos: SERVICOS_POSSE },
+    { key: "data_deferimento",              label: "Data Deferimento",                  type: "date", servicos: SERVICOS_POSSE, condition: (_f, it) => (it?.status || "").toUpperCase() !== "INDEFERIDO" },
+    { key: "numero_autorizacao",            label: "Código da Autorização",             type: "text", servicos: SERVICOS_POSSE },
+    { key: "validade_autorizacao",          label: "Validade da Autorização",           type: "date", servicos: SERVICOS_POSSE },
+
+    /* ================================================================
+     * DEMAIS SERVIÇOS (mantém estrutura anterior)
+     * Posse PF (id=2) FOI REMOVIDA das listas abaixo — possui form próprio.
+     * ================================================================ */
     { key: "data_protocolo", label: "Data Protocolo do CR", type: "date", servicos: SERVICOS_CR },
-    { key: "data_protocolo", label: "Data Protocolo", type: "date", servicos: [2, 3, 4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 26] },
+    { key: "data_protocolo", label: "Data Protocolo", type: "date", servicos: [3, 4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 26] },
     // Nº do Requerimento — exclusivo de Porte na Polícia Federal
     { key: "numero_requerimento", label: "Nº do Requerimento", type: "text", servicos: [3] },
-    { key: "data_notificacao", label: "Data da Notificação", type: "date", servicos: SERVICOS_POSSE },
-    // Indeferimento e Recurso Administrativo: sempre disponíveis em Posse PF.
-    // Um processo pode ser indeferido, ter recurso protocolado em até 10 dias e ser
-    // posteriormente deferido — toda a linha do tempo precisa ficar registrada.
-    { key: "data_indeferimento", label: "Data de Indeferimento", type: "date", servicos: SERVICOS_POSSE },
-    { key: "data_recurso_administrativo", label: "Data do Recurso Administrativo", type: "date", servicos: SERVICOS_POSSE },
     { key: "data_deferimento", label: "Data Deferimento do CR", type: "date", servicos: SERVICOS_CR, condition: (_f, it) => (it?.status || "").toUpperCase() !== "INDEFERIDO" },
-    { key: "data_deferimento", label: "Data Deferimento", type: "date", servicos: [2, 3, 4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 26], condition: (_f, it) => (it?.status || "").toUpperCase() !== "INDEFERIDO" },
-    // Data de Indeferimento — REGRA GLOBAL: aparece APENAS quando o status do item é INDEFERIDO
-    { key: "data_indeferimento", label: "Data de Indeferimento", type: "date", condition: (_f, it) => (it?.status || "").toUpperCase() === "INDEFERIDO" },
+    { key: "data_deferimento", label: "Data Deferimento", type: "date", servicos: [3, 4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 26], condition: (_f, it) => (it?.status || "").toUpperCase() !== "INDEFERIDO" },
+    // Data de Indeferimento — REGRA GLOBAL: aparece APENAS quando o status do item é INDEFERIDO (exceto Posse, que tem regra própria acima)
+    { key: "data_indeferimento", label: "Data de Indeferimento", type: "date", condition: (_f, it) => (it?.status || "").toUpperCase() === "INDEFERIDO", servicos: [3, 4, 5, 6, 7, 8, 9, 10, 13, 14, 15, 16, 17, 18, 20, 26, 27] },
     { key: "data_vencimento", label: "Data Vencimento do CR", type: "date", servicos: SERVICOS_CR },
     // Data Vencimento — removida para Autorização de compra EB (5, 15); substituída por "Validade Autorização"
-    { key: "data_vencimento", label: "Data Vencimento", type: "date", servicos: [2, 3, 4, 6, 7, 8, 9, 10, 14, 16, 17, 18, 26] },
-    // Nº Processo — para CR é "Nº de Protocolo do CR"; demais usam "Nº Processo"
+    { key: "data_vencimento", label: "Data Vencimento", type: "date", servicos: [3, 4, 6, 7, 8, 9, 10, 14, 16, 17, 18, 26] },
+    // Nº Processo — para CR é "Nº de Protocolo do CR"; demais usam "Nº Processo" (REMOVIDO de Posse PF)
     { key: "numero_processo", label: "Nº de Protocolo do CR", type: "text", servicos: SERVICOS_CR },
-    { key: "numero_processo", label: "Nº Processo", type: "text", servicos: [2, 4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 26] },
+    { key: "numero_processo", label: "Nº Processo", type: "text", servicos: [4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 26] },
     // Campos exclusivos de CAC — NÃO aparecem em Posse na PF, Concessão de CR, nem CRAF EB (id=6)
     { key: "numero_craf", label: "Nº CRAF", type: "text", servicos: SERVICOS_CAC },
     { key: "numero_gte", label: "Nº GTE", type: "text", servicos: SERVICOS_CAC },
@@ -257,11 +271,9 @@ export default function QAClientesPage() {
     { key: "numero_sigma", label: "Nº SIGMA", type: "text", servicos: SERVICOS_CAC },
     { key: "numero_sinarm", label: "Nº SINARM", type: "text", servicos: SERVICOS_CAC },
     { key: "registro_cad", label: "Registro CAD", type: "text", servicos: SERVICOS_CAC },
-    // Específico de Posse na Polícia Federal
-    { key: "numero_posse", label: "Nº do Requerimento de Posse", type: "text", servicos: SERVICOS_POSSE },
-    // Específicos de Posse / Autorização de compra de arma de fogo
-    { key: "numero_autorizacao", label: "Nº Autorização", type: "text", servicos: [2, 5, 15] },
-    { key: "validade_autorizacao", label: "Validade Autorização", type: "date", servicos: [2, 5, 15] },
+    // Autorização de compra EB (Posse PF tem campos próprios na seção dedicada acima)
+    { key: "numero_autorizacao", label: "Nº Autorização", type: "text", servicos: [5, 15] },
+    { key: "validade_autorizacao", label: "Validade Autorização", type: "date", servicos: [5, 15] },
     // CRAF na Polícia Federal — dados da arma
     { key: "numero_registro", label: "Nº Registro", type: "text", servicos: [26] },
     { key: "numero_serie", label: "Nº Série", type: "text", servicos: [26] },
