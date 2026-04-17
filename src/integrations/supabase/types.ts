@@ -3192,6 +3192,8 @@ export type Database = {
       }
       qa_itens_venda: {
         Row: {
+          cortesia: boolean
+          cortesia_motivo: string | null
           data_deferimento: string | null
           data_notificacao: string | null
           data_protocolo: string | null
@@ -3217,6 +3219,8 @@ export type Database = {
           venda_id: number | null
         }
         Insert: {
+          cortesia?: boolean
+          cortesia_motivo?: string | null
           data_deferimento?: string | null
           data_notificacao?: string | null
           data_protocolo?: string | null
@@ -3242,6 +3246,8 @@ export type Database = {
           venda_id?: number | null
         }
         Update: {
+          cortesia?: boolean
+          cortesia_motivo?: string | null
           data_deferimento?: string | null
           data_notificacao?: string | null
           data_protocolo?: string | null
