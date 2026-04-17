@@ -87,7 +87,7 @@ interface ItemRow {
   data_ultima_atualizacao: string | null;
 }
 interface VendaRow { id: number; cliente_id: number | null; data_cadastro: string | null; created_at: string | null; }
-interface ClienteRow { id: number; nome_completo: string | null; }
+interface ClienteRow { id: number; id_legado: number | null; nome_completo: string | null; }
 interface ServicoRow { id: number; nome_servico: string | null; }
 
 interface MonitorRow {
@@ -173,13 +173,22 @@ export default function DashboardProcessosMonitor() {
         ]);
 
         const vendas = (vRes.data as any[] as VendaRow[]) || [];
-        const clienteIds = Array.from(new Set(vendas.map(v => v.cliente_id).filter(Boolean) as number[]));
-        const cRes = clienteIds.length
-          ? await supabase.from("qa_clientes" as any).select("id, nome_completo").in("id", clienteIds)
+        // CHAVE CANÔNICA: vendas.cliente_id referencia qa_clientes.id_legado
+        // (com fallback para id quando id_legado for nulo).
+        const clienteFKs = Array.from(new Set(vendas.map(v => v.cliente_id).filter(Boolean) as number[]));
+        const cRes = clienteFKs.length
+          ? await supabase.from("qa_clientes" as any).select("id, id_legado, nome_completo").or(
+              `id_legado.in.(${clienteFKs.join(",")}),id.in.(${clienteFKs.join(",")})`
+            )
           : { data: [] as any[] };
 
         const vendasMap = new Map<number, VendaRow>(vendas.map(v => [v.id, v]));
-        const clientesMap = new Map<number, ClienteRow>(((cRes.data as any[]) || []).map((c: any) => [c.id, c]));
+        // Indexar clientes pela chave canônica (id_legado quando existir, senão id).
+        const clientesMap = new Map<number, ClienteRow>();
+        for (const c of (((cRes.data as any[]) || []) as ClienteRow[])) {
+          const fk = (typeof c.id_legado === "number" && Number.isFinite(c.id_legado)) ? c.id_legado : c.id;
+          clientesMap.set(fk, c);
+        }
         const servicosMap = new Map<number, ServicoRow>(((sRes.data as any[]) || []).map((s: any) => [s.id, s]));
 
         const built: MonitorRow[] = itensList
