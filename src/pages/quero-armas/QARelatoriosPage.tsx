@@ -175,7 +175,7 @@ export default function QARelatoriosPage() {
       const [iRes, vRes, cRes, sRes] = await Promise.all([
         supabase.from("qa_itens_venda" as any).select("*"),
         supabase.from("qa_vendas" as any).select("*"),
-        supabase.from("qa_clientes" as any).select("id, nome_completo, celular, email, cpf"),
+        supabase.from("qa_clientes" as any).select("id, id_legado, nome_completo, celular, email, cpf"),
         supabase.from("qa_servicos" as any).select("id, nome_servico"),
       ]);
       setItens((iRes.data as any[]) || []);
@@ -192,17 +192,27 @@ export default function QARelatoriosPage() {
   const _loadedRef = useRef(false);
   useEffect(() => { if (_loadedRef.current) return; _loadedRef.current = true; load(); }, []);
 
-  const clienteMap = useMemo(() => new Map(clientes.map(c => [c.id, c])), [clientes]);
+  // qa_vendas.cliente_id → qa_clientes.id_legado (chave canônica)
+  const clienteMap = useMemo(() => {
+    const m = new Map<string, any>();
+    clientes.forEach((c: any) => m.set(String(c.id_legado ?? c.id), c));
+    return m;
+  }, [clientes]);
   const servicoMap = useMemo(() => new Map(servicos.map(s => [s.id, s])), [servicos]);
-  const vendaMap = useMemo(() => new Map(vendas.map(v => [v.id, v])), [vendas]);
+  // qa_itens_venda.venda_id → qa_vendas.id_legado (chave canônica)
+  const vendaMap = useMemo(() => {
+    const m = new Map<string, any>();
+    vendas.forEach((v: any) => m.set(String(v.id_legado ?? v.id), v));
+    return m;
+  }, [vendas]);
 
   const pendingItems = useMemo(() => {
     return itens
       .filter(i => !FINISHED_STATUSES.includes((i.status || "").toUpperCase()))
       .map(item => {
-        const venda = vendaMap.get(item.venda_id);
+        const venda = vendaMap.get(String(item.venda_id));
         if (!venda) return null;
-        const cliente = clienteMap.get(venda.cliente_id);
+        const cliente = clienteMap.get(String(venda.cliente_id));
         const servico = item.servico_id ? servicoMap.get(item.servico_id) : null;
         const dataCadastro = venda.data_cadastro;
         const dias = getDaysSince(dataCadastro);

@@ -104,7 +104,7 @@ export default function DashboardExames() {
         const [examesRes, itensRes, vendasRes, servicosRes, servicosExameRes] = await Promise.all([
           supabase.from("qa_exames_cliente" as any).select("id, cliente_id, tipo, data_realizacao, data_vencimento, observacoes").limit(5000),
           supabase.from("qa_itens_venda" as any).select("venda_id, status, servico_id").limit(10000),
-          supabase.from("qa_vendas" as any).select("id, cliente_id").limit(10000),
+          supabase.from("qa_vendas" as any).select("id, id_legado, cliente_id").limit(10000),
           supabase.from("qa_servicos" as any).select("id, nome_servico").limit(1000),
           supabase.from("qa_servicos_com_exame" as any).select("servico_id, ativo").limit(1000),
         ]);
@@ -114,25 +114,43 @@ export default function DashboardExames() {
         const vendas = ((vendasRes.data || []) as any[]) as VendaRow[];
         const servicos = ((servicosRes.data || []) as any[]) as ServicoRow[];
         const servicosExame = ((servicosExameRes.data || []) as any[]) as { servico_id: number; ativo: boolean }[];
-        // Se a tabela estiver vazia, considera TODOS os serviços (modo permissivo).
-        // Quando o admin cadastrar entradas, somente serviços listados como ativos serão filtrados.
         const servicosComExameSet = new Set(
           servicosExame.filter((s) => s.ativo).map((s) => String(s.servico_id))
         );
         const filtrarPorServicoExame = servicosComExameSet.size > 0;
 
-        const clienteIds = Array.from(new Set(exames.map((e) => e.cliente_id).filter(Boolean)));
+        // qa_exames_cliente.cliente_id → qa_clientes.id (puro, exceção documentada)
+        const clienteIdsExames = Array.from(new Set(exames.map((e) => e.cliente_id).filter(Boolean)));
+        // qa_vendas.cliente_id → qa_clientes.id_legado (chave canônica)
+        const clienteIdsLegadoVendas = Array.from(new Set(vendas.map((v: any) => v.cliente_id).filter(Boolean)));
         let clientes: ClienteRow[] = [];
-        if (clienteIds.length > 0) {
+        if (clienteIdsExames.length > 0 || clienteIdsLegadoVendas.length > 0) {
           const clientesRes = await supabase
             .from("qa_clientes" as any)
-            .select("id, nome_completo, celular")
-            .in("id", clienteIds);
+            .select("id, id_legado, nome_completo, celular")
+            .or(`id.in.(${clienteIdsExames.join(",") || 0}),id_legado.in.(${clienteIdsLegadoVendas.join(",") || 0})`);
           clientes = ((clientesRes.data || []) as any[]) as ClienteRow[];
         }
 
-        const clienteMap = new Map(clientes.map((c) => [String(c.id), c]));
-        const vendaMap = new Map(vendas.map((v) => [String(v.id), String(v.cliente_id)]));
+        // (mapas canônicos construídos abaixo)
+        // Indexa cliente por AMBAS as chaves para tradução cruzada (exames usam id puro, vendas usam id_legado)
+        const clienteByIdPuro = new Map<string, ClienteRow>();
+        const clienteByIdLegado = new Map<string, ClienteRow>();
+        clientes.forEach((c: any) => {
+          clienteByIdPuro.set(String(c.id), c);
+          if (c.id_legado != null) clienteByIdLegado.set(String(c.id_legado), c);
+        });
+        // Chave canônica unificada = id_legado quando existe; fallback id puro
+        const canonicalIdOf = (cli: any): string => String(cli?.id_legado ?? cli?.id ?? "");
+
+        // venda_id em itens referencia id_legado da venda → mapeia para canonical do cliente
+        const vendaToClienteCanonical = new Map<string, string>();
+        vendas.forEach((v: any) => {
+          const vendaKey = String(v.id_legado ?? v.id);
+          // v.cliente_id é id_legado do cliente
+          const cli = clienteByIdLegado.get(String(v.cliente_id));
+          if (cli) vendaToClienteCanonical.set(vendaKey, canonicalIdOf(cli));
+        });
         const servicoMap = new Map(servicos.map((s) => [String(s.id), s.nome_servico || "Serviço"]));
 
         const clientesComPendente = new Set<string>();
@@ -140,29 +158,25 @@ export default function DashboardExames() {
         const servicosPendentesPorCliente = new Map<string, Set<string>>();
         for (const item of itens) {
           const status = (item.status || "").toUpperCase();
-          const cid = vendaMap.get(String(item.venda_id));
-          if (!cid) continue;
+          const cidCanonical = vendaToClienteCanonical.get(String(item.venda_id));
+          if (!cidCanonical) continue;
           if (CONSUMED_STATUSES.includes(status)) {
-            clientesComDeferido.add(cid);
+            clientesComDeferido.add(cidCanonical);
           }
           if (!FINISHED.includes(status)) {
             const sid = item.servico_id != null ? String(item.servico_id) : null;
-            // Se filtro ativo, só conta serviços marcados como "exigem exame"
             if (filtrarPorServicoExame && (!sid || !servicosComExameSet.has(sid))) continue;
-            clientesComPendente.add(cid);
+            clientesComPendente.add(cidCanonical);
             const nome = sid ? servicoMap.get(sid) : null;
             if (nome) {
-              if (!servicosPendentesPorCliente.has(cid)) servicosPendentesPorCliente.set(cid, new Set());
-              servicosPendentesPorCliente.get(cid)!.add(nome);
+              if (!servicosPendentesPorCliente.has(cidCanonical)) servicosPendentesPorCliente.set(cidCanonical, new Set());
+              servicosPendentesPorCliente.get(cidCanonical)!.add(nome);
             }
           }
         }
 
         const latestMap = new Map<string, ExameRow>();
         for (const e of exames) {
-          // Mantém TODOS os exames visíveis — inclusive de clientes sem serviço
-          // em aberto cadastrado, para que o admin use a relação como base de
-          // cadastro de novos serviços.
           const key = `${e.cliente_id}_${e.tipo}`;
           const existing = latestMap.get(key);
           if (!existing || e.data_realizacao > existing.data_realizacao) {
@@ -172,10 +186,11 @@ export default function DashboardExames() {
 
         const result: ExameDashItem[] = [];
         for (const e of latestMap.values()) {
-          const cli = clienteMap.get(String(e.cliente_id));
+          // exame.cliente_id é id puro de qa_clientes (exceção documentada)
+          const cli = clienteByIdPuro.get(String(e.cliente_id));
           const { status, dias_restantes } = computeExameStatus(e.data_vencimento);
           const bucket = bucketize(status, dias_restantes);
-          const cidStr = String(e.cliente_id);
+          const cidCanonical = canonicalIdOf(cli);
           result.push({
             exameId: e.id,
             clienteId: e.cliente_id,
@@ -186,8 +201,8 @@ export default function DashboardExames() {
             dataVencimento: e.data_vencimento,
             diasRestantes: dias_restantes,
             status,
-            temServicoPendente: clientesComPendente.has(cidStr),
-            servicosPendentes: Array.from(servicosPendentesPorCliente.get(cidStr) || []),
+            temServicoPendente: clientesComPendente.has(cidCanonical),
+            servicosPendentes: Array.from(servicosPendentesPorCliente.get(cidCanonical) || []),
             prioridade: BUCKET_ORDER[bucket],
             bucket,
           });
