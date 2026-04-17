@@ -390,9 +390,13 @@ function ClienteCard({
                 </span>
               )}
             </div>
-            <div className="font-bold text-slate-900 text-[14px] break-words uppercase" title={group.clienteNome}>
+            <Link
+              to={`/quero-armas/clientes?cliente=${group.clienteId}`}
+              className="block font-bold text-slate-900 text-[14px] break-words uppercase hover:text-blue-700 hover:underline transition-colors"
+              title={`Abrir cadastro de ${group.clienteNome}`}
+            >
               {group.clienteNome}
-            </div>
+            </Link>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
             <Link
