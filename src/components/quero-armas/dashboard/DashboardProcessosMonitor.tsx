@@ -490,7 +490,9 @@ export default function DashboardProcessosMonitor() {
           encerradosCatalog={encerradosCatalog}
           counts={counts.byEntStatus.PF}
           filter={filter}
+          entidadeFilter={entidadeFilter}
           setFilter={setFilter}
+          setEntidadeFilter={setEntidadeFilter}
         />
         <EntityPanel
           entidade="EB"
@@ -499,7 +501,9 @@ export default function DashboardProcessosMonitor() {
           encerradosCatalog={encerradosCatalog}
           counts={counts.byEntStatus.EB}
           filter={filter}
+          entidadeFilter={entidadeFilter}
           setFilter={setFilter}
+          setEntidadeFilter={setEntidadeFilter}
         />
       </div>
 
