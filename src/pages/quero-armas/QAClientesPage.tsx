@@ -233,6 +233,12 @@ export default function QAClientesPage() {
     // Específicos de Posse / Autorização de compra de arma de fogo
     { key: "numero_autorizacao", label: "Nº Autorização", type: "text", servicos: [2, 5, 15] },
     { key: "validade_autorizacao", label: "Validade Autorização", type: "date", servicos: [2, 5, 15] },
+    // CRAF na Polícia Federal — dados da arma
+    { key: "numero_registro", label: "Nº Registro", type: "text", servicos: [26] },
+    { key: "numero_serie", label: "Nº Série", type: "text", servicos: [26] },
+    { key: "fabricante", label: "Fabricante", type: "text", servicos: [26] },
+    { key: "modelo", label: "Modelo", type: "text", servicos: [26] },
+    { key: "calibre", label: "Calibre", type: "text", servicos: [26] },
   ];
 
   /** Retorna apenas os campos aplicáveis ao serviço (filtra por servico_id quando definido). */
