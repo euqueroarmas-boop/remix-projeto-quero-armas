@@ -220,11 +220,42 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
         });
       }
 
+      // Indeferimento (pode existir mesmo que o serviço seja posteriormente DEFERIDO via recurso).
+      if (it.data_indeferimento) {
+        events.push({
+          date: it.data_indeferimento,
+          label: `${tag} — Indeferido`,
+          sublabel: "Aberto prazo de 10 dias para recurso administrativo",
+          type: "indeferimento",
+          icon: XCircle,
+          color: "hsl(0 72% 55%)",
+          vendaNum, servico: servicoNome, status: "INDEFERIDO",
+        });
+      }
+
+      // Recurso administrativo protocolado (parte da MESMA linha do tempo do processo).
+      if (it.data_recurso_administrativo) {
+        events.push({
+          date: it.data_recurso_administrativo,
+          label: `${tag} — Recurso Administrativo protocolado`,
+          sublabel: "Aguardando análise do recurso pela Polícia Federal",
+          type: "recurso",
+          icon: Activity,
+          color: "hsl(262 60% 55%)",
+          vendaNum, servico: servicoNome, status: "RECURSO ADMINISTRATIVO",
+        });
+      }
+
       if (it.data_deferimento) {
         const isIndef = ["INDEFERIDO", "DESISTIU", "RESTITUÍDO"].includes((it.status || "").toUpperCase());
+        // Se houve indeferimento prévio + recurso, o deferimento representa o ACATAMENTO do recurso.
+        const houveRecurso = !!it.data_recurso_administrativo || !!it.data_indeferimento;
+        const labelDef = isIndef
+          ? it.status
+          : (houveRecurso ? "Deferido (recurso acatado)" : "Deferido");
         events.push({
           date: it.data_deferimento,
-          label: `${tag} — ${isIndef ? it.status : "Deferido"}`,
+          label: `${tag} — ${labelDef}`,
           type: isIndef ? "indeferimento" : "deferimento",
           icon: isIndef ? XCircle : CheckCircle,
           color: isIndef ? "hsl(0 72% 55%)" : "hsl(152 60% 42%)",
