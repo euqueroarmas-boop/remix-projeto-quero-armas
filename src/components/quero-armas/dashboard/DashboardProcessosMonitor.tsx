@@ -511,12 +511,12 @@ export default function DashboardProcessosMonitor() {
       <div className="qa-card p-3 md:p-4">
         <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3">
           <div className="flex items-center gap-1 flex-wrap">
-            <FilterChip active={filter === "todos"} onClick={() => setFilter("todos")}>Todos ({counts.total})</FilterChip>
-            <FilterChip active={filter === "ativos"} onClick={() => setFilter("ativos")}>Ativos ({counts.ativos})</FilterChip>
-            <FilterChip active={filter === "encerrados"} onClick={() => setFilter("encerrados")}>Encerrados ({counts.encerrados})</FilterChip>
+            <FilterChip active={filter === "todos" && !entidadeFilter} onClick={() => { setFilter("todos"); setEntidadeFilter(null); }}>Todos ({counts.total})</FilterChip>
+            <FilterChip active={filter === "ativos" && !entidadeFilter} onClick={() => { setFilter("ativos"); setEntidadeFilter(null); }}>Ativos ({counts.ativos})</FilterChip>
+            <FilterChip active={filter === "encerrados" && !entidadeFilter} onClick={() => { setFilter("encerrados"); setEntidadeFilter(null); }}>Encerrados ({counts.encerrados})</FilterChip>
             {catalogByKey.has(filter as string) && (
-              <FilterChip active onClick={() => setFilter("ativos")}>
-                {catalogByKey.get(filter as string)!.label} ✕
+              <FilterChip active onClick={() => { setFilter("ativos"); setEntidadeFilter(null); }}>
+                {catalogByKey.get(filter as string)!.label}{entidadeFilter ? ` · ${entidadeFilter}` : ""} ✕
               </FilterChip>
             )}
           </div>
