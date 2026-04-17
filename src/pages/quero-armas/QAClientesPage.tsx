@@ -286,6 +286,34 @@ export default function QAClientesPage() {
     }
   };
 
+  const handleDeleteItem = async (item: any) => {
+    if (!item?.id) return;
+    const nome = (() => {
+      const map: Record<number, string> = { 2:"Posse PF",3:"Porte PF",4:"Lions Gun",5:"COMBO Autoriz.",6:"COMBO CRAF",7:"COMBO GTE",8:"Apost. Atual.",9:"Apost. Mudança",10:"Apost. 2º End.",11:"Curso Pistola",12:"Curso Cal.12",13:"Mudança Serv.",14:"Reg. Recarga",15:"Autoriz. Compra",16:"Reg. Arma",17:"GTE Avulso",18:"GTE",20:"CR EB",21:"VIP Pistola" };
+      return map[item.servico_id] || `Serviço #${item.servico_id}`;
+    })();
+    if (!window.confirm(`Excluir o item "${nome}" (R$ ${Number(item.valor || 0).toFixed(2)}) desta venda?\n\nEsta ação não pode ser desfeita.`)) return;
+    try {
+      const { error } = await supabase.from("qa_itens_venda" as any).delete().eq("id", item.id);
+      if (error) throw error;
+      // Recalcula total da venda (soma dos itens restantes - desconto)
+      const venda = (vendas as any[]).find(v => (v.id_legado ?? v.id) === item.venda_id);
+      if (venda) {
+        const restantes = (itens as any[]).filter(i => i.venda_id === item.venda_id && i.id !== item.id);
+        const subtotal = restantes.reduce((s, i) => s + Number(i.valor || 0), 0);
+        const desconto = Number(venda.desconto || 0);
+        const novoTotal = Math.max(0, subtotal - desconto);
+        await supabase.from("qa_vendas" as any).update({ valor_a_pagar: novoTotal, valor_total: subtotal }).eq("id", venda.id);
+        setVendas(prev => (prev as any[]).map(v => v.id === venda.id ? { ...v, valor_a_pagar: novoTotal, valor_total: subtotal } : v));
+      }
+      setItens(prev => (prev as any[]).filter(i => i.id !== item.id));
+      if (expandedItemId === item.id) { setExpandedItemId(null); setItemEditForm({}); }
+      toast.success("Item excluído e total recalculado");
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao excluir item");
+    }
+  };
+
   const [cadastrosPublicos, setCadastrosPublicos] = useState<CadastroPublico[]>([]);
   const [tabView, setTabView] = useState<"clientes" | "cadastros">("clientes");
   const [selectedCadastroPublico, setSelectedCadastroPublico] = useState<CadastroPublico | null>(null);
