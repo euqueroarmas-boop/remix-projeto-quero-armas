@@ -3192,6 +3192,7 @@ export type Database = {
       }
       qa_itens_venda: {
         Row: {
+          calibre: string | null
           cortesia: boolean
           cortesia_motivo: string | null
           data_deferimento: string | null
@@ -3200,8 +3201,10 @@ export type Database = {
           data_recurso_administrativo: string | null
           data_ultima_atualizacao: string | null
           data_vencimento: string | null
+          fabricante: string | null
           id: number
           id_legado: number | null
+          modelo: string | null
           numero_autorizacao: string | null
           numero_cr: string | null
           numero_craf: string | null
@@ -3209,6 +3212,8 @@ export type Database = {
           numero_porte: string | null
           numero_posse: string | null
           numero_processo: string | null
+          numero_registro: string | null
+          numero_serie: string | null
           numero_sigma: string | null
           numero_sinarm: string | null
           registro_cad: string | null
@@ -3219,6 +3224,7 @@ export type Database = {
           venda_id: number | null
         }
         Insert: {
+          calibre?: string | null
           cortesia?: boolean
           cortesia_motivo?: string | null
           data_deferimento?: string | null
@@ -3227,8 +3233,10 @@ export type Database = {
           data_recurso_administrativo?: string | null
           data_ultima_atualizacao?: string | null
           data_vencimento?: string | null
+          fabricante?: string | null
           id?: number
           id_legado?: number | null
+          modelo?: string | null
           numero_autorizacao?: string | null
           numero_cr?: string | null
           numero_craf?: string | null
@@ -3236,6 +3244,8 @@ export type Database = {
           numero_porte?: string | null
           numero_posse?: string | null
           numero_processo?: string | null
+          numero_registro?: string | null
+          numero_serie?: string | null
           numero_sigma?: string | null
           numero_sinarm?: string | null
           registro_cad?: string | null
@@ -3246,6 +3256,7 @@ export type Database = {
           venda_id?: number | null
         }
         Update: {
+          calibre?: string | null
           cortesia?: boolean
           cortesia_motivo?: string | null
           data_deferimento?: string | null
@@ -3254,8 +3265,10 @@ export type Database = {
           data_recurso_administrativo?: string | null
           data_ultima_atualizacao?: string | null
           data_vencimento?: string | null
+          fabricante?: string | null
           id?: number
           id_legado?: number | null
+          modelo?: string | null
           numero_autorizacao?: string | null
           numero_cr?: string | null
           numero_craf?: string | null
@@ -3263,6 +3276,8 @@ export type Database = {
           numero_porte?: string | null
           numero_posse?: string | null
           numero_processo?: string | null
+          numero_registro?: string | null
+          numero_serie?: string | null
           numero_sigma?: string | null
           numero_sinarm?: string | null
           registro_cad?: string | null
