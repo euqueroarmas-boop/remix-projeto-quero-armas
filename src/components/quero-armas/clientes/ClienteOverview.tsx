@@ -174,18 +174,103 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
     return { totalServicos, concluidos, emAndamento, cancelados, totalVendas, totalDescontos, totalArmas, expDocs, alerts, vencidos, validos };
   }, [vendas, itens, crafs, gtes, filiacoes, cadastro, examesAtuais]);
 
-  // Timeline events
+  // Timeline events — ORDEM CRONOLÓGICA ASCENDENTE com TODOS os marcos por serviço
   const timeline = useMemo(() => {
-    const events: { date: string; label: string; type: string; icon: any; color: string }[] = [];
+    type Ev = {
+      date: string;
+      label: string;
+      sublabel?: string;
+      type: string;
+      icon: any;
+      color: string;
+      vendaNum?: string | number;
+      servico?: string;
+      status?: string;
+    };
+    const events: Ev[] = [];
+
+    // 1) Recebimento do cliente (venda criada)
     vendas.forEach((v: any) => {
-      events.push({ date: v.data_cadastro || v.created_at, label: `Venda #${v.id_legado ?? v.id} — ${formatCurrency(Number(v.valor_a_pagar || 0))}`, type: "venda", icon: CreditCard, color: "hsl(230 80% 56%)" });
+      const vendaNum = v.id_legado ?? v.id;
+      const vItens = itens.filter((i: any) => i.venda_id === vendaNum);
+      const servicosNomes = vItens.map((i: any) => SERVICO_MAP[i.servico_id] || `#${i.servico_id}`).join(" · ");
+      events.push({
+        date: v.data_cadastro || v.created_at,
+        label: `Venda #${vendaNum} recebida — ${formatCurrency(Number(v.valor_a_pagar || 0))}`,
+        sublabel: servicosNomes ? `Serviços: ${servicosNomes}${v.forma_pagamento ? ` · ${v.forma_pagamento}` : ""}` : undefined,
+        type: "venda",
+        icon: CreditCard,
+        color: "hsl(230 80% 56%)",
+        vendaNum,
+      });
     });
+
+    // 2) Marcos por item de serviço
     itens.forEach((it: any) => {
-      if (it.data_protocolo) events.push({ date: it.data_protocolo, label: `${SERVICO_MAP[it.servico_id] || "Serviço"} — Protocolado`, type: "protocolo", icon: FileText, color: "hsl(38 92% 50%)" });
-      if (it.data_deferimento) events.push({ date: it.data_deferimento, label: `${SERVICO_MAP[it.servico_id] || "Serviço"} — Deferido`, type: "deferimento", icon: CheckCircle, color: "hsl(152 60% 42%)" });
+      const servicoNome = SERVICO_MAP[it.servico_id] || `Serviço #${it.servico_id}`;
+      const venda = vendas.find((v: any) => (v.id_legado ?? v.id) === it.venda_id);
+      const vendaNum = venda ? (venda.id_legado ?? venda.id) : it.venda_id;
+      const tag = `Venda #${vendaNum} · ${servicoNome}`;
+
+      if (it.data_protocolo) {
+        events.push({
+          date: it.data_protocolo,
+          label: `${tag} — Protocolado`,
+          sublabel: it.numero_processo ? `Processo: ${it.numero_processo}` : undefined,
+          type: "protocolo",
+          icon: FileText,
+          color: "hsl(38 92% 50%)",
+          vendaNum, servico: servicoNome, status: "PROTOCOLADO",
+        });
+      }
+
+      if (it.data_deferimento) {
+        const isIndef = ["INDEFERIDO", "DESISTIU", "RESTITUÍDO"].includes((it.status || "").toUpperCase());
+        events.push({
+          date: it.data_deferimento,
+          label: `${tag} — ${isIndef ? it.status : "Deferido"}`,
+          type: isIndef ? "indeferimento" : "deferimento",
+          icon: isIndef ? XCircle : CheckCircle,
+          color: isIndef ? "hsl(0 72% 55%)" : "hsl(152 60% 42%)",
+          vendaNum, servico: servicoNome, status: it.status,
+        });
+      }
+
+      // Última atualização de status (apenas se diferir de protocolo/deferimento)
+      if (
+        it.data_ultima_atualizacao &&
+        it.data_ultima_atualizacao !== it.data_protocolo &&
+        it.data_ultima_atualizacao !== it.data_deferimento &&
+        it.status &&
+        !["DEFERIDO", "CONCLUÍDO", "INDEFERIDO"].includes((it.status || "").toUpperCase())
+      ) {
+        events.push({
+          date: it.data_ultima_atualizacao,
+          label: `${tag} — ${it.status}`,
+          sublabel: "Atualização de status",
+          type: "status",
+          icon: Activity,
+          color: "hsl(262 60% 55%)",
+          vendaNum, servico: servicoNome, status: it.status,
+        });
+      }
+
+      // Vencimento (futuro ou passado)
+      if (it.data_vencimento) {
+        events.push({
+          date: it.data_vencimento,
+          label: `${tag} — Vencimento`,
+          type: "vencimento",
+          icon: Clock,
+          color: "hsl(220 10% 50%)",
+          vendaNum, servico: servicoNome,
+        });
+      }
     });
-    events.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    return events.slice(0, 10);
+
+    // Ordem cronológica ASCENDENTE (do mais antigo ao mais recente)
+    events.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    return events;
   }, [vendas, itens]);
 
   const statusText = cliente.status === "ATIVO" ? "ATIVO" : cliente.status || "—";
