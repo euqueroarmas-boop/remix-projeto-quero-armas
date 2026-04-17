@@ -7,6 +7,7 @@ import {
   AlertCircle, PenTool, User, Scale, Sparkles, Send,
   Mail, Phone, MapPin, Building2, Shield, Briefcase,
   Calendar, Heart, GraduationCap, Flag, Users, BookOpen, Info,
+  ChevronDown, ChevronUp,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
