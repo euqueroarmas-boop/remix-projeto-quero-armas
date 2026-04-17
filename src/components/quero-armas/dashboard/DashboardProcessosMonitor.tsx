@@ -247,7 +247,7 @@ export default function DashboardProcessosMonitor() {
         // CARREGA TODOS os itens com status não-nulo — descoberta dinâmica de status novos.
         const { data: itens, error: e1 } = await supabase
           .from("qa_itens_venda" as any)
-          .select("id, venda_id, servico_id, status, data_protocolo, data_ultima_atualizacao")
+          .select("id, venda_id, servico_id, status, data_protocolo, data_ultima_atualizacao, data_indeferimento, data_deferimento")
           .not("status", "is", null);
         if (e1) throw e1;
 
