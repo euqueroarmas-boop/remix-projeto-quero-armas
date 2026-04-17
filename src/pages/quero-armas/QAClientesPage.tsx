@@ -213,8 +213,10 @@ export default function QAClientesPage() {
   // Serviço de Posse na Polícia Federal
   const SERVICOS_POSSE = [2];
 
-  const ITEM_EDIT_FIELDS: { key: string; label: string; type: "date" | "text"; servicos?: number[] }[] = [
+  const ITEM_EDIT_FIELDS: { key: string; label: string; type: "date" | "text"; servicos?: number[]; condition?: (form: Record<string, string>) => boolean }[] = [
     { key: "data_protocolo", label: "Data Protocolo", type: "date" },
+    { key: "data_notificacao", label: "Data da Notificação", type: "date", servicos: SERVICOS_POSSE },
+    { key: "data_recurso_administrativo", label: "Data do Recurso Administrativo", type: "date", servicos: SERVICOS_POSSE, condition: (f) => !!f.data_notificacao },
     { key: "data_deferimento", label: "Data Deferimento", type: "date" },
     { key: "data_vencimento", label: "Data Vencimento", type: "date" },
     { key: "numero_processo", label: "Nº Processo", type: "text" },
