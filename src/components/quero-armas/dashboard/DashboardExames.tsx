@@ -421,7 +421,7 @@ function ClienteCard({
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
             <Link
-              to={`/quero-armas/clientes?cliente=${group.clienteId}&tab=servicos`}
+              to={`/quero-armas/clientes?cliente=${group.clienteIdCanonical}&tab=servicos`}
               className="inline-flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-md text-[10px] font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow-sm"
               title="Marcar serviço como DEFERIDO no cadastro do cliente"
             >
