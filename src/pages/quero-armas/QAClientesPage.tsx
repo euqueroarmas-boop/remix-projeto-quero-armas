@@ -23,6 +23,7 @@ import ClientePecas from "@/components/quero-armas/clientes/ClientePecas";
 import ClienteExames from "@/components/quero-armas/clientes/ClienteExames";
 import { getClienteFK, getVendaFK } from "@/components/quero-armas/clientes/clientFK";
 import { useQAStatusServico } from "@/hooks/useQAStatusServico";
+import { isDispensado, getBaseLegalDispensa, CATEGORIA_MAP, type CategoriaTitular } from "@/components/quero-armas/clientes/categoriaTitular";
 
 const formatCpf = (v: string | null | undefined): string => {
   if (!v) return "—";
@@ -1188,19 +1189,55 @@ export default function QAClientesPage() {
                     </Button>
                   </div>
                 </div>
-                {!cadastro ? <Empty text="Nenhum cadastro CR encontrado." /> : (
-                  <div className="space-y-1">
-                    <Field label="Nº CR" value={cadastro.numero_cr} />
-                    <Field label="Validade CR" value={formatDate(cadastro.validade_cr)} />
-                    <Field label="Laudo Psicológico" value={formatDate(cadastro.validade_laudo_psicologico)} />
-                    <Field label="Exame de Tiro" value={formatDate(cadastro.validade_exame_tiro)} />
-                    <Field label="Senha Gov" value={cadastro.senha_gov} />
-                    <div className="flex gap-4 mt-2 text-[10px]">
-                      {cadastro.check_laudo_psi && <span className="text-emerald-400">✓ Laudo Psicológico OK</span>}
-                      {cadastro.check_exame_tiro && <span className="text-emerald-400">✓ Exame de Tiro OK</span>}
+                {!cadastro ? <Empty text="Nenhum cadastro CR encontrado." /> : (() => {
+                  const cat = (c as any).categoria_titular as CategoriaTitular | null | undefined;
+                  const dispensaLaudo = isDispensado(cat, "laudo_psicologico");
+                  const dispensaTiro = isDispensado(cat, "exame_tiro");
+                  const baseLegal = getBaseLegalDispensa(cat);
+                  const catLabel = cat ? CATEGORIA_MAP[cat]?.label : null;
+                  return (
+                    <div className="space-y-1">
+                      {catLabel && (
+                        <div className="mb-2 px-2 py-1.5 rounded-md bg-blue-50 border border-blue-100 flex items-center gap-1.5">
+                          <Shield className="h-3 w-3 text-blue-600" />
+                          <span className="text-[10px] font-bold text-blue-700 uppercase tracking-wider">{catLabel}</span>
+                        </div>
+                      )}
+                      <Field label="Nº CR" value={cadastro.numero_cr} />
+                      <Field label="Validade CR" value={formatDate(cadastro.validade_cr)} />
+                      {dispensaLaudo ? (
+                        <div className="py-1.5">
+                          <div className="text-[9px] text-slate-400 uppercase tracking-wider mb-0.5">Laudo Psicológico</div>
+                          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-50 border border-emerald-200">
+                            <Shield className="h-2.5 w-2.5 text-emerald-700" />
+                            <span className="text-[10px] font-bold text-emerald-700">DISPENSADO POR LEI</span>
+                          </div>
+                          {baseLegal && <div className="text-[9px] text-slate-400 mt-0.5 italic">{baseLegal}</div>}
+                        </div>
+                      ) : (
+                        <Field label="Laudo Psicológico" value={formatDate(cadastro.validade_laudo_psicologico)} />
+                      )}
+                      {dispensaTiro ? (
+                        <div className="py-1.5">
+                          <div className="text-[9px] text-slate-400 uppercase tracking-wider mb-0.5">Exame de Tiro</div>
+                          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-50 border border-emerald-200">
+                            <Shield className="h-2.5 w-2.5 text-emerald-700" />
+                            <span className="text-[10px] font-bold text-emerald-700">DISPENSADO POR LEI</span>
+                          </div>
+                          {baseLegal && <div className="text-[9px] text-slate-400 mt-0.5 italic">{baseLegal}</div>}
+                        </div>
+                      ) : (
+                        <Field label="Exame de Tiro" value={formatDate(cadastro.validade_exame_tiro)} />
+                      )}
+                      <Field label="Senha Gov" value={cadastro.senha_gov} />
+                      {/* Checks ✓ só aparecem se NÃO dispensado E marcado */}
+                      <div className="flex gap-4 mt-2 text-[10px]">
+                        {!dispensaLaudo && cadastro.check_laudo_psi && <span className="text-emerald-400">✓ Laudo Psicológico OK</span>}
+                        {!dispensaTiro && cadastro.check_exame_tiro && <span className="text-emerald-400">✓ Exame de Tiro OK</span>}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
               </TabsContent>
               {/* DOCUMENTOS */}
               <TabsContent value="docs" className="mt-3">
