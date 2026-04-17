@@ -236,8 +236,11 @@ export default function QAClientesPage() {
   ];
 
   /** Retorna apenas os campos aplicáveis ao serviço (filtra por servico_id quando definido). */
-  const getFieldsForServico = (servicoId: number | null | undefined) =>
-    ITEM_EDIT_FIELDS.filter(f => !f.servicos || (servicoId != null && f.servicos.includes(servicoId)));
+  const getFieldsForServico = (servicoId: number | null | undefined, form?: Record<string, string>) =>
+    ITEM_EDIT_FIELDS.filter(f =>
+      (!f.servicos || (servicoId != null && f.servicos.includes(servicoId))) &&
+      (!f.condition || (form && f.condition(form)))
+    );
 
   const handleExpandItem = (item: any) => {
     if (expandedItemId === item.id) {
