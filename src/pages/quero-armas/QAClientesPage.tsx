@@ -22,6 +22,7 @@ import ClienteAcessoPortal from "@/components/quero-armas/clientes/ClienteAcesso
 import ClientePecas from "@/components/quero-armas/clientes/ClientePecas";
 import ClienteExames from "@/components/quero-armas/clientes/ClienteExames";
 import { getClienteFK, getVendaFK } from "@/components/quero-armas/clientes/clientFK";
+import { useQAStatusServico } from "@/hooks/useQAStatusServico";
 
 const formatCpf = (v: string | null | undefined): string => {
   if (!v) return "—";
