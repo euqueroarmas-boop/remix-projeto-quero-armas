@@ -49,7 +49,7 @@ export default function QAClienteLoginPage() {
       }
 
       toast.success("Bem-vindo!");
-      navigate("/quero-armas/portal", { replace: true });
+      navigate("/quero-armas/area-do-cliente", { replace: true });
     } catch (err: any) {
       toast.error(err.message || "Erro ao autenticar");
     } finally {

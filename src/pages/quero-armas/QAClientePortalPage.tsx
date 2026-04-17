@@ -59,7 +59,7 @@ export default function QAClientePortalPage() {
     const load = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) { navigate("/quero-armas/portal/login", { replace: true }); return; }
+        if (!user) { navigate("/quero-armas/area-do-cliente/login", { replace: true }); return; }
 
         // Check client profile
         const { data: profile } = await supabase
@@ -69,7 +69,7 @@ export default function QAClientePortalPage() {
           .eq("ativo", true)
           .maybeSingle();
 
-        if (!profile) { toast.error("Perfil não encontrado."); navigate("/quero-armas/portal/login", { replace: true }); return; }
+        if (!profile) { toast.error("Perfil não encontrado."); navigate("/quero-armas/area-do-cliente/login", { replace: true }); return; }
 
         setUserName((profile as any).nome || user.email || "");
 
@@ -155,7 +155,7 @@ export default function QAClientePortalPage() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    navigate("/quero-armas/portal/login", { replace: true });
+    navigate("/quero-armas/area-do-cliente/login", { replace: true });
   };
 
   const analysis = useMemo(() => {
