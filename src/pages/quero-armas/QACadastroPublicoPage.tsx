@@ -34,6 +34,7 @@ interface FormData {
   servico_interesse: string;
   consentimento_dados_verdadeiros: boolean;
   consentimento_tratamento_dados: boolean;
+  selfie_data_url: string;
 }
 
 const initialForm: FormData = {
