@@ -861,7 +861,7 @@ function DocUploadCard({
           <Upload className="w-4 h-4" /> Enviar foto ou tirar agora
         </button>
       )}
-      <input ref={fileRef} type="file" accept={accepted} capture="environment" hidden onChange={e => { const f = e.target.files?.[0]; if (f) onFile(f); }} />
+      <input ref={fileRef} type="file" accept={accepted} hidden onChange={e => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ""; }} />
     </div>
   );
 }
