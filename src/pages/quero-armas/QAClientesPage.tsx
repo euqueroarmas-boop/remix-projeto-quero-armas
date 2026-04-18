@@ -1914,7 +1914,7 @@ export default function QAClientesPage() {
                   </div>
                 </>
               ) : (
-                <DetailField label="RG" value={c.rg ? `${maskRg(c.rg)}${c.emissor_rg ? ` — ${c.emissor_rg}` : ""}${(c as any).uf_emissor_rg ? `/${(c as any).uf_emissor_rg}` : ""}` : null} />
+                <DetailField label="RG / CIN" value={c.rg ? `${maskRg(c.rg)}${c.emissor_rg ? ` — ${c.emissor_rg}` : ""}${(c as any).uf_emissor_rg ? `/${(c as any).uf_emissor_rg}` : ""}` : null} />
               )}
               {renderField("Nascimento", "data_nascimento", c.data_nascimento)}
               {renderField("Estado Civil", "estado_civil", c.estado_civil)}
