@@ -255,7 +255,7 @@ export default function DashboardExames() {
             diasRestantes: dias_restantes,
             status,
             temServicoPendente: clientesComPendente.has(cidCanonical),
-            servicosPendentes: Array.from(servicosPendentesPorCliente.get(cidCanonical) || []),
+            servicosPendentes: Array.from(servicosPendentesPorCliente.get(cidCanonical)?.entries() || []).map(([nome, entidade]) => ({ nome, entidade })),
             prioridade: BUCKET_ORDER[bucket],
             bucket,
           });
