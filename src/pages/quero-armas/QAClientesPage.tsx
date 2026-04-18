@@ -895,6 +895,46 @@ export default function QAClientesPage() {
     if (!d) return "—";
     return dateToBr(d) || "—";
   };
+  const formatDateTime = (d: string | null | undefined) => {
+    if (!d) return "—";
+    const dt = new Date(d);
+    if (isNaN(dt.getTime())) return dateToBr(d) || "—";
+    const day = String(dt.getDate()).padStart(2, "0");
+    const month = String(dt.getMonth() + 1).padStart(2, "0");
+    const year = dt.getFullYear();
+    const hh = String(dt.getHours()).padStart(2, "0");
+    const mm = String(dt.getMinutes()).padStart(2, "0");
+    return `${day}/${month}/${year} às ${hh}:${mm}`;
+  };
+  const parseUserAgent = (ua: string | null | undefined) => {
+    if (!ua) return { navegador: "—", sistema: "—", dispositivo: "—" };
+    let navegador = "Desconhecido";
+    if (/Edg\//i.test(ua)) navegador = "Microsoft Edge";
+    else if (/OPR\/|Opera/i.test(ua)) navegador = "Opera";
+    else if (/Chrome\//i.test(ua) && !/Chromium/i.test(ua)) navegador = "Google Chrome";
+    else if (/Firefox\//i.test(ua)) navegador = "Mozilla Firefox";
+    else if (/Safari\//i.test(ua) && /Version\//i.test(ua)) navegador = "Safari";
+    let sistema = "Desconhecido";
+    if (/Windows NT 10/i.test(ua)) sistema = "Windows 10/11";
+    else if (/Windows/i.test(ua)) sistema = "Windows";
+    else if (/Android/i.test(ua)) {
+      const m = ua.match(/Android\s([0-9.]+)/i);
+      sistema = m ? `Android ${m[1]}` : "Android";
+    }
+    else if (/iPhone|iPad|iOS/i.test(ua)) {
+      const m = ua.match(/OS\s([0-9_]+)/i);
+      sistema = m ? `iOS ${m[1].replace(/_/g, ".")}` : "iOS";
+    }
+    else if (/Mac OS X/i.test(ua)) sistema = "macOS";
+    else if (/Linux/i.test(ua)) sistema = "Linux";
+    let dispositivo = "Desktop";
+    if (/iPad/i.test(ua)) dispositivo = "Tablet (iPad)";
+    else if (/Tablet/i.test(ua)) dispositivo = "Tablet";
+    else if (/iPhone/i.test(ua)) dispositivo = "Celular (iPhone)";
+    else if (/Android/i.test(ua) && /Mobile/i.test(ua)) dispositivo = "Celular (Android)";
+    else if (/Mobile/i.test(ua)) dispositivo = "Celular";
+    return { navegador, sistema, dispositivo };
+  };
   const getServicoNome = (id: number) => {
     // Fonte de verdade: tabela qa_servicos (carregada via loadServicos).
     // Mapas hardcoded foram removidos pois divergiam dos IDs reais e exibiam nomes errados (ex: "Posse PF", "Serviço #23").
@@ -1592,7 +1632,7 @@ export default function QAClientesPage() {
         <div className="space-y-4">
           <DetailCard title="Resumo do Cadastro">
             <DetailGrid>
-              <DetailField label="Recebido em" value={formatDate(c.created_at)} />
+              <DetailField label="Recebido em" value={formatDateTime(c.created_at)} />
               {isEditing ? (
                 <div className="flex items-baseline gap-2">
                   <span className="text-xs shrink-0" style={{ color: "hsl(220 10% 50%)", minWidth: "140px" }}>Serviço:</span>
@@ -1615,9 +1655,27 @@ export default function QAClientesPage() {
               <DetailField label="Comprovante em nome próprio" value={comprovanteEndereco} />
               <DetailField label="Consentimento de veracidade" value={c.consentimento_dados_verdadeiros ? "Sim" : "Não"} />
               <DetailField label="Consentimento LGPD" value={c.consentimento_tratamento_dados ? "Sim" : "Não"} />
-              <DetailField label="Aceite em" value={formatDate(c.consentimento_timestamp ?? c.created_at)} />
+              <DetailField label="Aceite em" value={formatDateTime(c.consentimento_timestamp ?? c.created_at)} />
             </DetailGrid>
           </DetailCard>
+
+          {(() => {
+            const ua = (c as any).consentimento_user_agent as string | null | undefined;
+            const ip = (c as any).consentimento_ip as string | null | undefined;
+            const parsed = parseUserAgent(ua);
+            return (
+              <DetailCard title="Captura técnica (LGPD)">
+                <DetailGrid>
+                  <DetailField label="Endereço IP" value={ip || "—"} copyable={!!ip} />
+                  <DetailField label="Dispositivo" value={parsed.dispositivo} />
+                  <DetailField label="Sistema operacional" value={parsed.sistema} />
+                  <DetailField label="Navegador" value={parsed.navegador} />
+                  <DetailField label="User-Agent completo" value={ua || "—"} />
+                  <DetailField label="Data/hora do aceite" value={formatDateTime(c.consentimento_timestamp)} />
+                </DetailGrid>
+              </DetailCard>
+            );
+          })()}
 
           <DetailCard title="Identificação">
             <DetailGrid>
