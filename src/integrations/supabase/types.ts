@@ -2397,6 +2397,42 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_cliente_historico_atualizacoes: {
+        Row: {
+          autor: string | null
+          cadastro_publico_id: string | null
+          changed_fields: Json
+          cliente_id: number
+          created_at: string
+          id: string
+          origem: string
+          snapshot_anterior: Json
+          snapshot_novo: Json
+        }
+        Insert: {
+          autor?: string | null
+          cadastro_publico_id?: string | null
+          changed_fields?: Json
+          cliente_id: number
+          created_at?: string
+          id?: string
+          origem?: string
+          snapshot_anterior?: Json
+          snapshot_novo?: Json
+        }
+        Update: {
+          autor?: string | null
+          cadastro_publico_id?: string | null
+          changed_fields?: Json
+          cliente_id?: number
+          created_at?: string
+          id?: string
+          origem?: string
+          snapshot_anterior?: Json
+          snapshot_novo?: Json
+        }
+        Relationships: []
+      }
       qa_clientes: {
         Row: {
           bairro: string | null
