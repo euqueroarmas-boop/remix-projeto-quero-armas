@@ -193,7 +193,15 @@ export default function DashboardExames() {
 
         const clientesComPendente = new Set<string>();
         const clientesComDeferido = new Set<string>();
-        const servicosPendentesPorCliente = new Map<string, Set<string>>();
+        const servicosPendentesPorCliente = new Map<string, Map<string, "PF" | "EB">>();
+        const classifyEntidade = (sid: string | null, nome: string): "PF" | "EB" => {
+          // IDs canônicos PF: 2 (Posse PF), 3 (Porte PF), 26 (CRAF PF)
+          if (sid === "2" || sid === "3" || sid === "26") return "PF";
+          const n = (nome || "").toLowerCase();
+          if (n.includes("polícia federal") || n.includes("policia federal") || /\bpf\b/.test(n)) return "PF";
+          if (n.includes("posse") || n.includes("porte")) return "PF";
+          return "EB";
+        };
         for (const item of itens) {
           const status = (item.status || "").toUpperCase();
           const cidCanonical = vendaToClienteCanonical.get(String(item.venda_id));
@@ -202,12 +210,7 @@ export default function DashboardExames() {
             clientesComDeferido.add(cidCanonical);
           }
           if (!FINISHED.includes(status)) {
-            // ── REGRA DE BLOQUEIO ──
-            // Se a venda tem um serviço inicial INDEFERIDO, os demais itens em
-            // "AGUARDANDO ETAPA ANTERIOR"/etc. NÃO contam como pendência.
             if (vendasBloqueadas.has(String(item.venda_id))) continue;
-
-            // ── REGRA: processos em andamento não são "pendência de iniciar" ──
             if (EM_ANDAMENTO_NAO_PENDENTE.has(status)) continue;
 
             const sid = item.servico_id != null ? String(item.servico_id) : null;
@@ -215,8 +218,8 @@ export default function DashboardExames() {
             clientesComPendente.add(cidCanonical);
             const nome = sid ? servicoMap.get(sid) : null;
             if (nome) {
-              if (!servicosPendentesPorCliente.has(cidCanonical)) servicosPendentesPorCliente.set(cidCanonical, new Set());
-              servicosPendentesPorCliente.get(cidCanonical)!.add(nome);
+              if (!servicosPendentesPorCliente.has(cidCanonical)) servicosPendentesPorCliente.set(cidCanonical, new Map());
+              servicosPendentesPorCliente.get(cidCanonical)!.set(nome, classifyEntidade(sid, nome));
             }
           }
         }
