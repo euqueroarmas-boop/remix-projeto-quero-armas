@@ -122,7 +122,7 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
             const visibleItems = group.items.filter(i => canAccess(i.url));
             if (visibleItems.length === 0) return null;
             return (
-              <SidebarGroup key={group.label}>
+              <SidebarGroup key={group.label} className={collapsed ? "px-0" : ""}>
                 {!collapsed && (
                   <SidebarGroupLabel className="text-[10px] uppercase tracking-[0.15em] font-semibold px-5 py-1.5"
                     style={{ color: "hsl(220 10% 62%)" }}>
