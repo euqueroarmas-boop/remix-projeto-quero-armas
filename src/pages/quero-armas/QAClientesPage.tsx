@@ -26,6 +26,7 @@ import { toast } from "sonner";
 import ClienteFormModal from "@/components/quero-armas/clientes/ClienteFormModal";
 import ClienteOverview from "@/components/quero-armas/clientes/ClienteOverview";
 import { CrafModal, GteModal, CrModal, VendaModal, FiliacaoModal, DeleteConfirm } from "@/components/quero-armas/clientes/SubEntityModals";
+import { HistoricoAtualizacoes } from "@/components/quero-armas/clientes/HistoricoAtualizacoes";
 import { exportClientes, exportCrafs, exportGtes, exportCr, exportVendas } from "@/components/quero-armas/clientes/ClienteExport";
 import ClienteAcessoPortal from "@/components/quero-armas/clientes/ClienteAcessoPortal";
 import ClientePecas from "@/components/quero-armas/clientes/ClientePecas";
@@ -188,6 +189,24 @@ const pickNew = (incoming: string | null | undefined, current: string | null | u
   return next ?? current ?? null;
 };
 
+/** Convert "DD/MM/YYYY" or "YYYY-MM-DD" to ISO "YYYY-MM-DD". Returns null if invalid. */
+const toIsoDate = (value: string | null | undefined): string | null => {
+  const v = (value ?? "").trim();
+  if (!v) return null;
+  // Already ISO
+  const isoMatch = v.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (isoMatch) return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
+  // BR
+  const brMatch = v.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (brMatch) {
+    const [, dd, mm, yyyy] = brMatch;
+    const day = Number(dd), month = Number(mm), year = Number(yyyy);
+    if (month < 1 || month > 12 || day < 1 || day > 31 || year < 1900 || year > 2100) return null;
+    return `${yyyy}-${mm}-${dd}`;
+  }
+  return null;
+};
+
 /** Build update payload from cadastro público → qa_clientes. NEVER touches observacao when current has content. */
 const buildClientePayload = (cadastro: CadastroPublico, cur?: Partial<Cliente> | null) => {
   const estado1 = emptyToNull(cadastro.end1_estado)?.toUpperCase() ?? null;
@@ -198,13 +217,16 @@ const buildClientePayload = (cadastro: CadastroPublico, cur?: Partial<Cliente> |
   const observacao = currentObs
     ? (incomingObs && incomingObs !== currentObs ? `${currentObs}\n\n--- Cadastro público ---\n${incomingObs}` : currentObs)
     : incomingObs;
+  // data_nascimento na qa_clientes é DATE — precisa ISO ou null
+  const dnIncomingIso = toIsoDate(cadastro.data_nascimento);
+  const dnCurrentIso = toIsoDate(cur?.data_nascimento as any);
   return {
     nome_completo: pickNew(cadastro.nome_completo, cur?.nome_completo) ?? "",
     cpf: normalizeDigits(cadastro.cpf) || cur?.cpf || null,
     rg: pickNew(cadastro.rg, cur?.rg),
     emissor_rg: pickNew(cadastro.emissor_rg, cur?.emissor_rg),
     uf_emissor_rg: emptyToNull((cadastro as any).uf_emissor_rg)?.toUpperCase() ?? cur?.uf_emissor_rg ?? null,
-    data_nascimento: pickNew(cadastro.data_nascimento, cur?.data_nascimento),
+    data_nascimento: dnIncomingIso ?? dnCurrentIso ?? null,
     nacionalidade: pickNew(cadastro.nacionalidade, cur?.nacionalidade),
     estado_civil: pickNew(cadastro.estado_civil, cur?.estado_civil),
     profissao: pickNew(cadastro.profissao, cur?.profissao),
@@ -230,6 +252,33 @@ const buildClientePayload = (cadastro: CadastroPublico, cur?: Partial<Cliente> |
     status: cur?.status ?? "ATIVO",
     cliente_lions: cur?.cliente_lions ?? false,
   };
+};
+
+/** Computes diff between previous client state and new payload, returning only changed fields. */
+const FIELD_LABELS: Record<string, string> = {
+  nome_completo: "Nome completo", cpf: "CPF", rg: "RG", emissor_rg: "Emissor RG", uf_emissor_rg: "UF Emissor",
+  data_nascimento: "Data de nascimento", nacionalidade: "Nacionalidade", estado_civil: "Estado civil",
+  profissao: "Profissão", nome_mae: "Nome da mãe", nome_pai: "Nome do pai", email: "E-mail", celular: "Celular",
+  endereco: "Endereço", numero: "Número", complemento: "Complemento", bairro: "Bairro", cep: "CEP",
+  cidade: "Cidade", estado: "Estado",
+  endereco2: "Endereço (2º)", numero2: "Número (2º)", complemento2: "Complemento (2º)", bairro2: "Bairro (2º)",
+  cep2: "CEP (2º)", cidade2: "Cidade (2º)", estado2: "Estado (2º)", observacao: "Observações",
+};
+const computeDiff = (
+  oldData: Record<string, any>,
+  newData: Record<string, any>,
+): Array<{ field: string; label: string; old: any; new: any }> => {
+  const changes: Array<{ field: string; label: string; old: any; new: any }> = [];
+  for (const key of Object.keys(newData)) {
+    const oldV = oldData?.[key] ?? null;
+    const newV = newData?.[key] ?? null;
+    const oldNorm = oldV === undefined || oldV === "" ? null : oldV;
+    const newNorm = newV === undefined || newV === "" ? null : newV;
+    if (String(oldNorm ?? "") !== String(newNorm ?? "")) {
+      changes.push({ field: key, label: FIELD_LABELS[key] || key, old: oldNorm, new: newNorm });
+    }
+  }
+  return changes;
 };
 
 function SortableServicoRow({ id, children }: { id: string; children: (handleProps: { listeners: any; attributes: any; isDragging: boolean }) => React.ReactNode }) {
@@ -564,7 +613,8 @@ export default function QAClientesPage() {
   };
 
   const [cadastrosPublicos, setCadastrosPublicos] = useState<CadastroPublico[]>([]);
-  const [tabView, setTabView] = useState<"clientes" | "cadastros">("clientes");
+  const [tabView, setTabView] = useState<"clientes" | "cadastros" | "rejeitados">("clientes");
+  const [cadastroFilter, setCadastroFilter] = useState<"pendente" | "aprovado">("pendente");
   const [selectedCadastroPublico, setSelectedCadastroPublico] = useState<CadastroPublico | null>(null);
   const [loadingCadastroPublico, setLoadingCadastroPublico] = useState(false);
   const [savingCadastroPublicoStatus, setSavingCadastroPublicoStatus] = useState<string | null>(null);
@@ -685,6 +735,7 @@ export default function QAClientesPage() {
     try {
       const cpfDigits = normalizeDigits(selectedCadastroPublico.cpf);
       let clienteVinculadoId: number | null = null;
+      let historicoMsg = "";
 
       if (status === "aprovado") {
         if (!cpfDigits || cpfDigits.length !== 11) {
@@ -699,13 +750,35 @@ export default function QAClientesPage() {
         const payload = buildClientePayload(selectedCadastroPublico, existing);
 
         if (existing) {
+          // Calcular diff e snapshot ANTES de atualizar
+          const diff = computeDiff(existing as any, payload);
           const { error: ue } = await supabase.from("qa_clientes" as any).update(payload).eq("id", existing.id);
           if (ue) throw ue;
           clienteVinculadoId = existing.id;
+
+          // Persistir histórico (só se houve mudança real)
+          if (diff.length > 0) {
+            const { error: hErr } = await supabase
+              .from("qa_cliente_historico_atualizacoes" as any)
+              .insert({
+                cliente_id: existing.id,
+                cadastro_publico_id: selectedCadastroPublico.id,
+                changed_fields: diff,
+                snapshot_anterior: existing as any,
+                snapshot_novo: payload,
+                origem: "cadastro_publico",
+                autor: "admin",
+              });
+            if (hErr) console.error("[historico] erro ao salvar:", hErr.message);
+            historicoMsg = ` ${diff.length} ${diff.length === 1 ? "campo atualizado" : "campos atualizados"}.`;
+          } else {
+            historicoMsg = " Nenhum campo modificado.";
+          }
         } else {
           const { data: ins, error: ie } = await supabase.from("qa_clientes" as any).insert(payload).select("id").single();
           if (ie) throw ie;
           clienteVinculadoId = ((ins as unknown) as { id?: number } | null)?.id ?? null;
+          historicoMsg = " Novo cliente criado.";
         }
       }
 
@@ -714,7 +787,7 @@ export default function QAClientesPage() {
         updatePayload.cliente_id_vinculado = clienteVinculadoId;
         updatePayload.processado_em = new Date().toISOString();
         updatePayload.notas_processamento = clienteVinculadoId
-          ? `Vinculado ao cliente #${clienteVinculadoId} por CPF.`
+          ? `Vinculado ao cliente #${clienteVinculadoId} por CPF.${historicoMsg}`
           : "Aprovado sem vínculo automático.";
       }
 
@@ -737,7 +810,7 @@ export default function QAClientesPage() {
       if (status === "aprovado") {
         await loadClientes();
         toast.success(clienteVinculadoId
-          ? `Cadastro aprovado e sincronizado com o cliente #${clienteVinculadoId}`
+          ? `Cadastro aprovado e sincronizado com o cliente #${clienteVinculadoId}.${historicoMsg}`
           : "Cadastro aprovado com sucesso");
       } else {
         toast.success(`Cadastro marcado como ${status}`);
@@ -915,7 +988,7 @@ export default function QAClientesPage() {
     return false;
   });
 
-  const filteredCadastros = cadastrosPublicos.filter(c => {
+  const matchSearch = (c: CadastroPublico) => {
     const s = search.toLowerCase();
     const sDigits = s.replace(/\D/g, "");
     if (!s) return true;
@@ -924,7 +997,17 @@ export default function QAClientesPage() {
     if (sDigits && c.cpf?.replace(/\D/g, "").includes(sDigits)) return true;
     if (sDigits && c.telefone_principal?.replace(/\D/g, "").includes(sDigits)) return true;
     return false;
+  };
+  const isRejeitado = (s: string | null | undefined) => String(s || "").toLowerCase() === "rejeitado";
+  const cadastrosNaoRejeitados = cadastrosPublicos.filter(c => !isRejeitado(c.status));
+  const cadastrosRejeitados = cadastrosPublicos.filter(c => isRejeitado(c.status));
+  const filteredCadastros = cadastrosNaoRejeitados.filter(c => {
+    if (!matchSearch(c)) return false;
+    const status = String(c.status || "").toLowerCase();
+    if (cadastroFilter === "aprovado") return status === "aprovado";
+    return status !== "aprovado"; // pendente / em análise / etc.
   });
+  const filteredRejeitados = cadastrosRejeitados.filter(matchSearch);
 
   const statusColor = (s: string) => s === "ATIVO" ? "text-emerald-600" : s === "DESISTENTE" ? "text-red-600" : "text-amber-600";
   const svcStatusColor = (s: string) => {
@@ -1031,6 +1114,7 @@ export default function QAClientesPage() {
               {[
                 { value: "resumo", icon: TrendingUp, label: "Resumo" },
                 { value: "dados", icon: User, label: "Dados" },
+                { value: "historico", icon: FileText, label: "Histórico" },
                 { value: "servicos", icon: FileText, label: `Serviços (${itens.length})` },
                 { value: "armas", icon: Crosshair, label: `Armas (${crafs.length + gtes.length})` },
                 { value: "cr", icon: Shield, label: "CR" },
@@ -1488,6 +1572,9 @@ export default function QAClientesPage() {
                 <ClientePecas cliente={c} />
               </TabsContent>
               {/* ACESSO AO PORTAL */}
+              <TabsContent value="historico" className="mt-3">
+                <HistoricoAtualizacoes clienteId={c.id} showSnapshot />
+              </TabsContent>
               <TabsContent value="portal" className="mt-3">
                 <ClienteAcessoPortal cliente={c} />
               </TabsContent>
