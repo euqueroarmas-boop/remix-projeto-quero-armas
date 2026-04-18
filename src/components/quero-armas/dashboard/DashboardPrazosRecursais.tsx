@@ -197,16 +197,13 @@ export default function DashboardPrazosRecursais() {
                   <span className={`text-[10px] font-bold uppercase tracking-wider ${tone.text}`}>
                     {tone.label}
                   </span>
-                  {r.diasRestantes < 0 && <AlertTriangle className="h-3 w-3 text-slate-700 shrink-0" />}
                 </div>
                 <div className="text-[11px] font-semibold text-slate-900 leading-tight line-clamp-2 group-hover:text-blue-700 group-hover:underline uppercase">
                   {r.clienteNome}
                 </div>
                 <div className="mt-auto flex items-baseline gap-1">
-                  <span className={`text-xl font-black leading-none ${tone.text}`}>{dias}</span>
-                  <span className={`text-[9px] font-bold uppercase ${tone.text}`}>
-                    {r.diasRestantes < 0 ? "d. vencidos" : "d. restantes"}
-                  </span>
+                  <span className={`text-xl font-black leading-none ${tone.text}`}>{r.diasRestantes}</span>
+                  <span className={`text-[9px] font-bold uppercase ${tone.text}`}>d. restantes</span>
                 </div>
               </Link>
             );
