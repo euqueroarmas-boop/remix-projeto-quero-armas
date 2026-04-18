@@ -46,6 +46,15 @@ interface ExameDashItem {
 }
 
 const FINISHED = ["DEFERIDO", "CONCLUÍDO", "DESISTIU", "RESTITUÍDO", "INDEFERIDO"];
+// Status que NÃO contam como "pendência de iniciar" — processos já em andamento
+// (em análise, prontos para análise, etc.) não devem inflar o card "C/ PEND.".
+// Apenas itens efetivamente parados ("À INICIAR", "AGUARDANDO ETAPA ANTERIOR") contam.
+const EM_ANDAMENTO_NAO_PENDENTE = new Set([
+  "EM ANÁLISE",
+  "EM ANALISE",
+  "PRONTO PARA ANÁLISE",
+  "PRONTO PARA ANALISE",
+]);
 // Status que "consomem" o exame — quando o cliente tem QUALQUER serviço DEFERIDO,
 // seus exames somem do monitoramento do Dashboard (foram usados no processo).
 const CONSUMED_STATUSES = ["DEFERIDO"];
