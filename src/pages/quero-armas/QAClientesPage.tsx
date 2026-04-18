@@ -1802,7 +1802,7 @@ export default function QAClientesPage() {
             color: tabView === "cadastros" ? "hsl(220 20% 18%)" : "hsl(220 10% 55%)",
             boxShadow: tabView === "cadastros" ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
           }}>
-          <FileText className="h-3.5 w-3.5 inline mr-1" /> CADASTROS ({filteredCadastros.length})
+          <FileText className="h-3.5 w-3.5 inline mr-1" /> FORMULÁRIOS ({filteredCadastros.length})
         </button>
       </div>
 
