@@ -288,6 +288,7 @@ export default function QACadastroPublicoPage() {
         errs.telefone_principal = "Telefone é obrigatório";
       if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
         errs.email = "E-mail inválido";
+      if (!form.selfie_data_url) (errs as any).selfie_data_url = "Tire uma selfie para confirmar sua identidade";
     }
     if (s === 2) {
       if (!form.end1_numero.trim()) errs.end1_numero = "Número é obrigatório";
