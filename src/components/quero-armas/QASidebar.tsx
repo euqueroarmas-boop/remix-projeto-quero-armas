@@ -135,12 +135,12 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
                       const active = isActive(item.url);
                       return (
                         <SidebarMenuItem key={item.url}>
-                          <SidebarMenuButton asChild tooltip={collapsed ? item.title : undefined}>
+                          <SidebarMenuButton asChild tooltip={collapsed ? item.title : undefined} className={collapsed ? "justify-center !p-0 w-full" : ""}>
                             <Link
                               to={item.url}
                               onClick={() => { if (isMobile) setOpenMobile(false); }}
-                              className={`flex items-center gap-2.5 rounded-lg text-[13px] font-medium transition-all ${
-                                collapsed ? "justify-center px-0 py-2.5 mx-1" : "px-4 py-2 mx-2"
+                              className={`flex items-center rounded-lg text-[13px] font-medium transition-all ${
+                                collapsed ? "justify-center w-9 h-9 mx-auto" : "gap-2.5 px-4 py-2 mx-2"
                               }`}
                               style={{
                                 background: active ? "hsl(230 80% 96%)" : "transparent",
