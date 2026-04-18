@@ -1659,6 +1659,11 @@ export default function QAClientesPage() {
             </DetailGrid>
           </DetailCard>
 
+          {(c as any).selfie_path && (
+            <DetailCard title="Selfie de identificação">
+              <SelfieViewer path={(c as any).selfie_path} alt={c.nome_completo} />
+            </DetailCard>
+          )}
           {(() => {
             const ua = (c as any).consentimento_user_agent as string | null | undefined;
             const ip = (c as any).consentimento_ip as string | null | undefined;
