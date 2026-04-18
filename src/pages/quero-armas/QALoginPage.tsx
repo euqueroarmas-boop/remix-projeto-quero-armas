@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Loader2, Shield } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { QALogo } from "@/components/quero-armas/QALogo";
 
 export default function QALoginPage() {
   const [email, setEmail] = useState("");
@@ -58,8 +59,8 @@ export default function QALoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-blue-50 border border-blue-200 mb-4">
-            <Shield className="h-6 w-6 text-blue-600" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white border border-slate-200 mb-4 overflow-hidden shadow-sm">
+            <QALogo className="h-14 w-14" />
           </div>
           <h1 className="text-xl font-bold text-slate-800 tracking-tight">Quero Armas</h1>
           <p className="text-[11px] text-slate-400 mt-1 tracking-wider uppercase">Acesso Restrito</p>
