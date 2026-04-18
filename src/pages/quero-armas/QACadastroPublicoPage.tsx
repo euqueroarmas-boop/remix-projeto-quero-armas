@@ -1193,7 +1193,7 @@ function DivergenceModal({
 }
 
 /* ── Step 1: Dados Pessoais ── */
-function Step1({ form, set, errors, onCpfLookup, cpfLooking, cpfFound, autoFilled }: { form: FormData; set: any; errors: any; onCpfLookup?: () => void; cpfLooking?: boolean; cpfFound?: boolean | null; autoFilled?: Set<string> }) {
+function Step1({ form, set, errors, onCpfLookup, cpfLooking, cpfFound, autoFilled, isUpdating }: { form: FormData; set: any; errors: any; onCpfLookup?: () => void; cpfLooking?: boolean; cpfFound?: boolean | null; autoFilled?: Set<string>; isUpdating?: boolean }) {
   const hl = (f: string) => autoFilled?.has(f) ? { boxShadow: "0 0 0 2px hsl(152 60% 80%)", background: "hsl(152 60% 99%)" } : undefined;
   return (
     <div>
@@ -1203,6 +1203,12 @@ function Step1({ form, set, errors, onCpfLookup, cpfLooking, cpfFound, autoFille
           ? "Confira os dados extraídos dos seus documentos. Campos destacados em verde foram preenchidos automaticamente — revise e complete o que faltar."
           : "Informe seus dados de identificação pessoal."}
       </SectionDesc>
+      {isUpdating && (
+        <div className="mb-4 p-3 rounded-lg flex items-start gap-2 text-[12px]" style={{ background: "hsl(220 95% 96%)", border: "1px solid hsl(220 80% 80%)", color: "hsl(220 70% 30%)" }}>
+          <CheckCircle className="w-4 h-4 shrink-0 mt-0.5" />
+          <span><strong>Modo atualização:</strong> seus dados serão atualizados no cadastro existente. Revise as informações e complete o que precisa ser alterado.</span>
+        </div>
+      )}
       {autoFilled && autoFilled.size > 0 && (
         <div className="mb-4 p-2.5 rounded-lg flex items-center gap-2 text-[11px]" style={{ background: "hsl(152 60% 96%)", border: "1px solid hsl(152 40% 80%)", color: "hsl(152 40% 25%)" }}>
           <Sparkles className="w-3.5 h-3.5" />
