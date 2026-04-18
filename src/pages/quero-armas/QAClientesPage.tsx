@@ -564,7 +564,8 @@ export default function QAClientesPage() {
   };
 
   const [cadastrosPublicos, setCadastrosPublicos] = useState<CadastroPublico[]>([]);
-  const [tabView, setTabView] = useState<"clientes" | "cadastros">("clientes");
+  const [tabView, setTabView] = useState<"clientes" | "cadastros" | "rejeitados">("clientes");
+  const [cadastroFilter, setCadastroFilter] = useState<"pendente" | "aprovado">("pendente");
   const [selectedCadastroPublico, setSelectedCadastroPublico] = useState<CadastroPublico | null>(null);
   const [loadingCadastroPublico, setLoadingCadastroPublico] = useState(false);
   const [savingCadastroPublicoStatus, setSavingCadastroPublicoStatus] = useState<string | null>(null);
@@ -915,7 +916,7 @@ export default function QAClientesPage() {
     return false;
   });
 
-  const filteredCadastros = cadastrosPublicos.filter(c => {
+  const matchSearch = (c: CadastroPublico) => {
     const s = search.toLowerCase();
     const sDigits = s.replace(/\D/g, "");
     if (!s) return true;
@@ -924,7 +925,17 @@ export default function QAClientesPage() {
     if (sDigits && c.cpf?.replace(/\D/g, "").includes(sDigits)) return true;
     if (sDigits && c.telefone_principal?.replace(/\D/g, "").includes(sDigits)) return true;
     return false;
+  };
+  const isRejeitado = (s: string | null | undefined) => String(s || "").toLowerCase() === "rejeitado";
+  const cadastrosNaoRejeitados = cadastrosPublicos.filter(c => !isRejeitado(c.status));
+  const cadastrosRejeitados = cadastrosPublicos.filter(c => isRejeitado(c.status));
+  const filteredCadastros = cadastrosNaoRejeitados.filter(c => {
+    if (!matchSearch(c)) return false;
+    const status = String(c.status || "").toLowerCase();
+    if (cadastroFilter === "aprovado") return status === "aprovado";
+    return status !== "aprovado"; // pendente / em análise / etc.
   });
+  const filteredRejeitados = cadastrosRejeitados.filter(matchSearch);
 
   const statusColor = (s: string) => s === "ATIVO" ? "text-emerald-600" : s === "DESISTENTE" ? "text-red-600" : "text-amber-600";
   const svcStatusColor = (s: string) => {
