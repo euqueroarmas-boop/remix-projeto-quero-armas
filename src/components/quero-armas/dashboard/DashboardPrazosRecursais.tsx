@@ -48,12 +48,29 @@ const SERVICOS_PF_RECURSO: Record<number, "Posse" | "Porte" | "CRAF"> = {
   26: "CRAF",   // CRAF na Polícia Federal
 };
 
-const todayISO = () => new Date().toISOString().slice(0, 10);
-const diffDays = (a: string, b: string) =>
-  Math.floor((new Date(b + "T00:00:00").getTime() - new Date(a + "T00:00:00").getTime()) / 86_400_000);
+// Hoje no fuso local (evita drift UTC que joga o dia para trás em BRT/-03)
+const todayISO = () => {
+  const n = new Date();
+  const y = n.getFullYear();
+  const m = String(n.getMonth() + 1).padStart(2, "0");
+  const d = String(n.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+};
+// Diferença em dias usando UTC puro nas duas pontas (sem efeito de timezone)
+const diffDays = (a: string, b: string) => {
+  const [ay, am, ad] = a.split("-").map(Number);
+  const [by, bm, bd] = b.split("-").map(Number);
+  const aUTC = Date.UTC(ay, am - 1, ad);
+  const bUTC = Date.UTC(by, bm - 1, bd);
+  return Math.round((bUTC - aUTC) / 86_400_000);
+};
 const addDaysISO = (iso: string, days: number) => {
-  const d = new Date(iso + "T00:00:00"); d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
+  const [y, m, d] = iso.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d + days));
+  const yy = dt.getUTCFullYear();
+  const mm = String(dt.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(dt.getUTCDate()).padStart(2, "0");
+  return `${yy}-${mm}-${dd}`;
 };
 
 function toneFor(dias: number) {
