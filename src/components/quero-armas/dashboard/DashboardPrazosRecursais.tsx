@@ -1,22 +1,21 @@
 /**
  * Dashboard — Prazos Recursais (PF: Posse e Porte)
  *
- * IMPORTANTE — convenções de FK descobertas em produção:
- *   - qa_itens_venda.venda_id  → qa_vendas.id_legado  (NÃO id)
- *   - qa_vendas.cliente_id     → qa_clientes.id_legado (NÃO id)
+ * Trigger: item de Posse/Porte na PF com status = 'RECURSO ADMINISTRATIVO'.
+ * Janela: D = data_indeferimento; prazo = D+10 (Lei 9.784/99 art. 59 +
+ * Decreto 9.847/19 art. 10). Vencidos NÃO aparecem (filtra diasRestantes >= 0).
+ * Cores por dias restantes: 🟢 8–10 · 🟡 5–7 · 🔴 0–4.
  *
- * Regra: item INDEFERIDO de Posse/Porte na PF abre prazo de 10 dias corridos
- * para protocolar recurso (Lei 9.784/99 art. 59 + Decreto 9.847/19 art. 10).
- * O contador para quando data_recurso_administrativo é preenchida ou o status
- * deixa de ser INDEFERIDO (ex.: DESISTIU, CANCELADO).
+ * FKs em produção:
+ *   - qa_itens_venda.venda_id  → qa_vendas.id_legado
+ *   - qa_vendas.cliente_id     → qa_clientes.id_legado
  *
- * Layout: grid de até 9 cards pequenos (mais antigo → mais novo). O 10º card
- * agrega "+N" restantes.
+ * Layout: grid de até 9 cards pequenos (mais antigo → mais novo). 10º card "+N".
  */
 
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Loader2, AlertTriangle, Plus } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface ItemRow {
@@ -60,10 +59,10 @@ function classifyPF(nome: string): "Posse" | "Porte" | null {
 }
 
 function toneFor(dias: number) {
-  if (dias < 0)  return { dot: "bg-slate-800", text: "text-slate-800",  border: "border-slate-300", bg: "bg-slate-50",   label: "VENCIDO" };
-  if (dias <= 2) return { dot: "bg-rose-600",  text: "text-rose-700",   border: "border-rose-200",  bg: "bg-rose-50",    label: "CRÍTICO" };
-  if (dias <= 5) return { dot: "bg-amber-500", text: "text-amber-700",  border: "border-amber-200", bg: "bg-amber-50",   label: "ATENÇÃO" };
-  return            { dot: "bg-emerald-500", text: "text-emerald-700", border: "border-emerald-200", bg: "bg-white",    label: "EM PRAZO" };
+  // dias = dias restantes até o limite (D+10). Sempre 0..10 aqui (vencidos já filtrados).
+  if (dias <= 4) return { dot: "bg-rose-600",    text: "text-rose-700",    border: "border-rose-200",    bg: "bg-rose-50",    label: "CRÍTICO" };
+  if (dias <= 7) return { dot: "bg-amber-500",   text: "text-amber-700",   border: "border-amber-200",   bg: "bg-amber-50",   label: "ATENÇÃO" };
+  return            { dot: "bg-emerald-500", text: "text-emerald-700", border: "border-emerald-200", bg: "bg-white",     label: "EM PRAZO" };
 }
 
 export default function DashboardPrazosRecursais() {
@@ -77,8 +76,7 @@ export default function DashboardPrazosRecursais() {
         const { data: itens, error: e1 } = await supabase
           .from("qa_itens_venda" as any)
           .select("id, venda_id, servico_id, status, data_indeferimento, data_recurso_administrativo")
-          .ilike("status", "INDEFERIDO")
-          .is("data_recurso_administrativo", null)
+          .ilike("status", "RECURSO ADMINISTRATIVO")
           .not("data_indeferimento", "is", null);
         if (e1) throw e1;
         const itensList = (itens || []) as unknown as ItemRow[];
@@ -122,6 +120,8 @@ export default function DashboardPrazosRecursais() {
           const dIndef = it.data_indeferimento!;
           const dLimite = addDaysISO(dIndef, 10);
           const diasRestantes = diffDays(today, dLimite);
+          // Filtra vencidos (negativos) e fora da janela de 10 dias.
+          if (diasRestantes < 0 || diasRestantes > 10) continue;
 
           built.push({
             itemId: it.id,
@@ -197,16 +197,13 @@ export default function DashboardPrazosRecursais() {
                   <span className={`text-[10px] font-bold uppercase tracking-wider ${tone.text}`}>
                     {tone.label}
                   </span>
-                  {r.diasRestantes < 0 && <AlertTriangle className="h-3 w-3 text-slate-700 shrink-0" />}
                 </div>
                 <div className="text-[11px] font-semibold text-slate-900 leading-tight line-clamp-2 group-hover:text-blue-700 group-hover:underline uppercase">
                   {r.clienteNome}
                 </div>
                 <div className="mt-auto flex items-baseline gap-1">
-                  <span className={`text-xl font-black leading-none ${tone.text}`}>{dias}</span>
-                  <span className={`text-[9px] font-bold uppercase ${tone.text}`}>
-                    {r.diasRestantes < 0 ? "d. vencidos" : "d. restantes"}
-                  </span>
+                  <span className={`text-xl font-black leading-none ${tone.text}`}>{r.diasRestantes}</span>
+                  <span className={`text-[9px] font-bold uppercase ${tone.text}`}>d. restantes</span>
                 </div>
               </Link>
             );
