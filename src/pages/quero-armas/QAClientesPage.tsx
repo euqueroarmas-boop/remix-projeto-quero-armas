@@ -188,6 +188,24 @@ const pickNew = (incoming: string | null | undefined, current: string | null | u
   return next ?? current ?? null;
 };
 
+/** Convert "DD/MM/YYYY" or "YYYY-MM-DD" to ISO "YYYY-MM-DD". Returns null if invalid. */
+const toIsoDate = (value: string | null | undefined): string | null => {
+  const v = (value ?? "").trim();
+  if (!v) return null;
+  // Already ISO
+  const isoMatch = v.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (isoMatch) return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
+  // BR
+  const brMatch = v.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (brMatch) {
+    const [, dd, mm, yyyy] = brMatch;
+    const day = Number(dd), month = Number(mm), year = Number(yyyy);
+    if (month < 1 || month > 12 || day < 1 || day > 31 || year < 1900 || year > 2100) return null;
+    return `${yyyy}-${mm}-${dd}`;
+  }
+  return null;
+};
+
 /** Build update payload from cadastro público → qa_clientes. NEVER touches observacao when current has content. */
 const buildClientePayload = (cadastro: CadastroPublico, cur?: Partial<Cliente> | null) => {
   const estado1 = emptyToNull(cadastro.end1_estado)?.toUpperCase() ?? null;
@@ -198,13 +216,16 @@ const buildClientePayload = (cadastro: CadastroPublico, cur?: Partial<Cliente> |
   const observacao = currentObs
     ? (incomingObs && incomingObs !== currentObs ? `${currentObs}\n\n--- Cadastro público ---\n${incomingObs}` : currentObs)
     : incomingObs;
+  // data_nascimento na qa_clientes é DATE — precisa ISO ou null
+  const dnIncomingIso = toIsoDate(cadastro.data_nascimento);
+  const dnCurrentIso = toIsoDate(cur?.data_nascimento as any);
   return {
     nome_completo: pickNew(cadastro.nome_completo, cur?.nome_completo) ?? "",
     cpf: normalizeDigits(cadastro.cpf) || cur?.cpf || null,
     rg: pickNew(cadastro.rg, cur?.rg),
     emissor_rg: pickNew(cadastro.emissor_rg, cur?.emissor_rg),
     uf_emissor_rg: emptyToNull((cadastro as any).uf_emissor_rg)?.toUpperCase() ?? cur?.uf_emissor_rg ?? null,
-    data_nascimento: pickNew(cadastro.data_nascimento, cur?.data_nascimento),
+    data_nascimento: dnIncomingIso ?? dnCurrentIso ?? null,
     nacionalidade: pickNew(cadastro.nacionalidade, cur?.nacionalidade),
     estado_civil: pickNew(cadastro.estado_civil, cur?.estado_civil),
     profissao: pickNew(cadastro.profissao, cur?.profissao),
@@ -230,6 +251,33 @@ const buildClientePayload = (cadastro: CadastroPublico, cur?: Partial<Cliente> |
     status: cur?.status ?? "ATIVO",
     cliente_lions: cur?.cliente_lions ?? false,
   };
+};
+
+/** Computes diff between previous client state and new payload, returning only changed fields. */
+const FIELD_LABELS: Record<string, string> = {
+  nome_completo: "Nome completo", cpf: "CPF", rg: "RG", emissor_rg: "Emissor RG", uf_emissor_rg: "UF Emissor",
+  data_nascimento: "Data de nascimento", nacionalidade: "Nacionalidade", estado_civil: "Estado civil",
+  profissao: "Profissão", nome_mae: "Nome da mãe", nome_pai: "Nome do pai", email: "E-mail", celular: "Celular",
+  endereco: "Endereço", numero: "Número", complemento: "Complemento", bairro: "Bairro", cep: "CEP",
+  cidade: "Cidade", estado: "Estado",
+  endereco2: "Endereço (2º)", numero2: "Número (2º)", complemento2: "Complemento (2º)", bairro2: "Bairro (2º)",
+  cep2: "CEP (2º)", cidade2: "Cidade (2º)", estado2: "Estado (2º)", observacao: "Observações",
+};
+const computeDiff = (
+  oldData: Record<string, any>,
+  newData: Record<string, any>,
+): Array<{ field: string; label: string; old: any; new: any }> => {
+  const changes: Array<{ field: string; label: string; old: any; new: any }> = [];
+  for (const key of Object.keys(newData)) {
+    const oldV = oldData?.[key] ?? null;
+    const newV = newData?.[key] ?? null;
+    const oldNorm = oldV === undefined || oldV === "" ? null : oldV;
+    const newNorm = newV === undefined || newV === "" ? null : newV;
+    if (String(oldNorm ?? "") !== String(newNorm ?? "")) {
+      changes.push({ field: key, label: FIELD_LABELS[key] || key, old: oldNorm, new: newNorm });
+    }
+  }
+  return changes;
 };
 
 function SortableServicoRow({ id, children }: { id: string; children: (handleProps: { listeners: any; attributes: any; isDragging: boolean }) => React.ReactNode }) {
