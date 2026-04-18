@@ -36,6 +36,37 @@ import { usePrivateStorageUrl } from "@/hooks/usePrivateStorageUrl";
 import { useQAStatusServico } from "@/hooks/useQAStatusServico";
 import { isDispensado, getBaseLegalDispensa, CATEGORIA_MAP, type CategoriaTitular } from "@/components/quero-armas/clientes/categoriaTitular";
 
+/* ── Lightbox 5:4 espelhado (compartilhado por todas as miniaturas) ── */
+function PhotoLightbox({ url, alt, onClose }: { url: string; alt: string; onClose: () => void }) {
+  return (
+    <div
+      className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div
+        className="relative w-full max-w-2xl"
+        style={{ aspectRatio: "5 / 4" }}
+        onClick={e => e.stopPropagation()}
+      >
+        <img
+          src={url}
+          alt={alt}
+          className="w-full h-full object-cover rounded-2xl shadow-2xl"
+          style={{ transform: "scaleX(-1)" }}
+        />
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Fechar"
+          className="absolute -top-3 -right-3 w-9 h-9 rounded-full bg-white text-slate-700 shadow-lg flex items-center justify-center hover:bg-slate-100"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /* ── Selfie Thumbnail (loads private storage signed URL) ── */
 function SelfieThumb({ path, name, size = "lg" }: { path: string | null | undefined; name?: string | null; size?: "lg" | "sm" }) {
   const url = usePrivateStorageUrl("qa-cadastro-selfies", path);
@@ -55,26 +86,35 @@ function SelfieThumb({ path, name, size = "lg" }: { path: string | null | undefi
         title={url ? "Clique para ampliar" : "Sem selfie"}
       >
         {url ? (
-          <img src={url} alt={name || "Selfie"} className="w-full h-full object-cover" />
+          <img src={url} alt={name || "Selfie"} loading="lazy" decoding="async" className="w-full h-full object-cover" />
         ) : (
           <span className="text-xl font-bold" style={{ color: "hsl(220 10% 60%)" }}>{initial}</span>
         )}
       </button>
-      {open && url && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={() => setOpen(false)}>
-          <img src={url} alt={name || "Selfie"} className="max-w-full max-h-full rounded-lg shadow-2xl" onClick={e => e.stopPropagation()} />
-        </div>
-      )}
+      {open && url && <PhotoLightbox url={url} alt={name || "Selfie"} onClose={() => setOpen(false)} />}
     </>
   );
 }
 
 function ClientPhoto({ path, name, className }: { path: string | null | undefined; name: string; className: string }) {
   const url = usePrivateStorageUrl("qa-documentos", path);
+  const [open, setOpen] = useState(false);
 
   if (!url) return null;
 
-  return <img src={url} alt={name} className={className} />;
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="p-0 border-0 bg-transparent cursor-zoom-in"
+        title="Clique para ampliar"
+      >
+        <img src={url} alt={name} loading="lazy" decoding="async" className={className} />
+      </button>
+      {open && <PhotoLightbox url={url} alt={name} onClose={() => setOpen(false)} />}
+    </>
+  );
 }
 
 const formatCpf = (v: string | null | undefined): string => {
