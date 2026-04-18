@@ -92,7 +92,9 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
         {!collapsed && (
           <div className="px-5 pb-3 mb-1 border-b flex items-center justify-between" style={{ borderColor: "hsl(220 13% 93%)" }}>
             <div className="flex items-center gap-2.5 min-w-0">
-              <QALogo className="h-9 w-auto max-w-[150px]" />
+              <div className="rounded-lg bg-black p-1.5 flex items-center justify-center">
+                <QALogo className="h-9 w-auto max-w-[110px]" />
+              </div>
               <div className="text-[10px] tracking-widest uppercase truncate" style={{ color: "hsl(220 10% 62%)" }}>
                 Inteligência Jurídica
               </div>
