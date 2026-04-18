@@ -120,6 +120,8 @@ export default function DashboardPrazosRecursais() {
           const dIndef = it.data_indeferimento!;
           const dLimite = addDaysISO(dIndef, 10);
           const diasRestantes = diffDays(today, dLimite);
+          // Filtra vencidos (negativos) e fora da janela de 10 dias.
+          if (diasRestantes < 0 || diasRestantes > 10) continue;
 
           built.push({
             itemId: it.id,
