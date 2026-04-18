@@ -1,7 +1,8 @@
 /**
- * Dashboard — Prazos Recursais (PF: Posse e Porte)
+ * Dashboard — Prazos Recursais (PF: Posse, Porte e CRAF)
  *
- * Trigger: item de Posse/Porte na PF com status = 'RECURSO ADMINISTRATIVO'.
+ * Trigger: item com data_indeferimento preenchida E serviço sendo
+ * Posse PF (id=2), Porte PF (id=3) ou CRAF PF (id=26).
  * Janela: D = data_indeferimento; prazo = D+10 (Lei 9.784/99 art. 59 +
  * Decreto 9.847/19 art. 10). Vencidos NÃO aparecem (filtra diasRestantes >= 0).
  * Cores por dias restantes: 🟢 8–10 · 🟡 5–7 · 🔴 0–4.
