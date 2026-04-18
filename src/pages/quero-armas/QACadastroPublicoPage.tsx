@@ -169,7 +169,7 @@ function loadImageElement(src: string): Promise<HTMLImageElement> {
   });
 }
 
-async function normalizeUploadToDataUrl(file: File, maxSide = 1800): Promise<string> {
+async function normalizeUploadToDataUrl(file: File, maxSide = 1800, mirror = false): Promise<string> {
   if (!file.type.startsWith("image/")) return readFileAsDataUrl(file);
 
   const objectUrl = URL.createObjectURL(file);
@@ -183,6 +183,10 @@ async function normalizeUploadToDataUrl(file: File, maxSide = 1800): Promise<str
     canvas.height = height;
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("Não foi possível preparar a imagem.");
+    if (mirror) {
+      ctx.translate(width, 0);
+      ctx.scale(-1, 1);
+    }
     ctx.drawImage(img, 0, 0, width, height);
     return canvas.toDataURL("image/jpeg", 0.9);
   } catch {
