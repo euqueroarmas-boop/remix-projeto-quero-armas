@@ -264,7 +264,19 @@ export default function QACadastroPublicoPage() {
       const { data, error } = await supabase.functions.invoke("qa-cadastro-publico", {
         body: { action: "lookup-cpf", cpf: cpfDigits },
       });
-      if (error || !data?.found) {
+      if (error) {
+        setCpfFound(false);
+        return;
+      }
+
+      // 1) Cadastro público já existente → abrir modal de confirmação
+      if (data?.existing_cadastro?.id) {
+        setDuplicateInfo(data.existing_cadastro);
+        setCpfFound(false); // não usa autopreenchimento legado
+        return;
+      }
+
+      if (!data?.found) {
         setCpfFound(false);
         return;
       }
@@ -308,6 +320,63 @@ export default function QACadastroPublicoPage() {
       setCpfLooking(false);
     }
   }, [form.cpf]);
+
+  /* ── Aceitar atualização do cadastro existente ── */
+  const acceptUpdateExisting = useCallback(() => {
+    if (!duplicateInfo?.id) return;
+    const f = duplicateInfo.full || {};
+    setExistingCadastroId(duplicateInfo.id);
+    // Preserva o serviço atual desejado pelo usuário (se já tiver selecionado);
+    // caso contrário, herda do cadastro existente.
+    setForm(prev => ({
+      ...prev,
+      nome_completo: f.nome_completo || prev.nome_completo,
+      rg: f.rg || prev.rg,
+      emissor_rg: f.emissor_rg || prev.emissor_rg,
+      uf_emissor_rg: f.uf_emissor_rg || prev.uf_emissor_rg,
+      data_nascimento: f.data_nascimento || prev.data_nascimento,
+      telefone_principal: f.telefone_principal ? maskPhone(f.telefone_principal) : prev.telefone_principal,
+      telefone_secundario: f.telefone_secundario ? maskPhone(f.telefone_secundario) : prev.telefone_secundario,
+      email: f.email || prev.email,
+      nome_mae: f.nome_mae || prev.nome_mae,
+      nome_pai: f.nome_pai || prev.nome_pai,
+      estado_civil: f.estado_civil || prev.estado_civil,
+      nacionalidade: f.nacionalidade || prev.nacionalidade,
+      profissao: f.profissao || prev.profissao,
+      observacoes: f.observacoes || prev.observacoes,
+      end1_cep: f.end1_cep ? maskCep(f.end1_cep) : prev.end1_cep,
+      end1_logradouro: f.end1_logradouro || prev.end1_logradouro,
+      end1_numero: f.end1_numero || prev.end1_numero,
+      end1_complemento: f.end1_complemento || prev.end1_complemento,
+      end1_bairro: f.end1_bairro || prev.end1_bairro,
+      end1_cidade: f.end1_cidade || prev.end1_cidade,
+      end1_estado: f.end1_estado || prev.end1_estado,
+      end1_latitude: f.end1_latitude || prev.end1_latitude,
+      end1_longitude: f.end1_longitude || prev.end1_longitude,
+      tem_segundo_endereco: !!f.tem_segundo_endereco || prev.tem_segundo_endereco,
+      end2_tipo: f.end2_tipo || prev.end2_tipo,
+      end2_cep: f.end2_cep ? maskCep(f.end2_cep) : prev.end2_cep,
+      end2_logradouro: f.end2_logradouro || prev.end2_logradouro,
+      end2_numero: f.end2_numero || prev.end2_numero,
+      end2_complemento: f.end2_complemento || prev.end2_complemento,
+      end2_bairro: f.end2_bairro || prev.end2_bairro,
+      end2_cidade: f.end2_cidade || prev.end2_cidade,
+      end2_estado: f.end2_estado || prev.end2_estado,
+      vinculo_tipo: f.vinculo_tipo || prev.vinculo_tipo,
+      // Mantém o serviço novo se o usuário já escolheu, senão herda do existente
+      servico_interesse: prev.servico_interesse || f.servico_interesse || "",
+    }));
+    setCpfFound(true);
+    setDuplicateInfo(null);
+  }, [duplicateInfo]);
+
+  /* ── Cancelar — reset CPF e limpar formulário ── */
+  const declineUpdateExisting = useCallback(() => {
+    setDuplicateInfo(null);
+    setExistingCadastroId(null);
+    setCpfFound(null);
+    setForm(prev => ({ ...prev, cpf: "" }));
+  }, []);
 
   /* ── Address CEP lookup ── */
   const handleCepLookup = useCallback(async (prefix: "end1" | "end2") => {
