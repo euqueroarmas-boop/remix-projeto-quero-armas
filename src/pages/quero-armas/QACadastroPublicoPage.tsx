@@ -823,8 +823,200 @@ function SelfieCapture({ value, onChange, error }: { value: string; onChange: (v
   );
 }
 
+/* ══════════════════════════════════════
+   Step 0: Envio de Documentos (extração automática por IA)
+   ══════════════════════════════════════ */
+function DocUploadCard({
+  title, description, accepted, value, onChange, icon: Icon,
+}: {
+  title: string; description: string; accepted: string;
+  value: string; onChange: (v: string) => void; icon: any;
+}) {
+  const fileRef = useRef<HTMLInputElement | null>(null);
+  const onFile = (f: File) => {
+    const reader = new FileReader();
+    reader.onload = () => onChange(String(reader.result || ""));
+    reader.readAsDataURL(f);
+  };
+  return (
+    <div className="rounded-xl border p-4" style={{ borderColor: value ? "hsl(152 40% 70%)" : "hsl(220 13% 88%)", background: value ? "hsl(152 60% 98%)" : "hsl(0 0% 100%)" }}>
+      <div className="flex items-start gap-3">
+        <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ background: value ? "hsl(152 60% 92%)" : "hsl(230 80% 96%)" }}>
+          {value ? <CheckCircle className="w-5 h-5" style={{ color: "hsl(152 60% 38%)" }} /> : <Icon className="w-5 h-5" style={{ color: "hsl(230 80% 56%)" }} />}
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="text-sm font-bold" style={{ color: "hsl(220 20% 18%)" }}>{title}</h3>
+          <p className="text-[11px] leading-relaxed mt-0.5" style={{ color: "hsl(220 10% 50%)" }}>{description}</p>
+        </div>
+      </div>
+      {value ? (
+        <div className="mt-3 flex items-center gap-2">
+          <img src={value} alt={title} className="h-16 w-16 object-cover rounded-lg border" style={{ borderColor: "hsl(220 13% 85%)" }} />
+          <button type="button" onClick={() => onChange("")} className="text-[11px] font-medium px-2.5 py-1 rounded-md flex items-center gap-1" style={{ background: "hsl(0 80% 96%)", color: "hsl(0 70% 45%)" }}>
+            <X className="w-3 h-3" /> Trocar
+          </button>
+        </div>
+      ) : (
+        <button type="button" onClick={() => fileRef.current?.click()} className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-xs font-semibold border-2 border-dashed transition-colors" style={{ borderColor: "hsl(230 60% 80%)", color: "hsl(230 80% 50%)", background: "hsl(230 80% 99%)" }}>
+          <Upload className="w-4 h-4" /> Enviar foto ou tirar agora
+        </button>
+      )}
+      <input ref={fileRef} type="file" accept={accepted} capture="environment" hidden onChange={e => { const f = e.target.files?.[0]; if (f) onFile(f); }} />
+    </div>
+  );
+}
+
+function Step0Documents({
+  docImages, setDocImages, selfieDataUrl, setSelfieDataUrl,
+  extracting, extractStage, extractError, onExtract, onSkip,
+}: {
+  docImages: DocImages;
+  setDocImages: (v: DocImages | ((p: DocImages) => DocImages)) => void;
+  selfieDataUrl: string;
+  setSelfieDataUrl: (v: string) => void;
+  extracting: boolean;
+  extractStage: string;
+  extractError: string | null;
+  onExtract: () => void;
+  onSkip: () => void;
+}) {
+  const hasAny = !!(docImages.identity_data_url || docImages.address_data_url || selfieDataUrl);
+
+  if (extracting) {
+    return (
+      <div className="py-12 text-center">
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4" style={{ background: "hsl(230 80% 96%)" }}>
+          <Sparkles className="w-8 h-8 animate-pulse" style={{ color: "hsl(230 80% 56%)" }} />
+        </div>
+        <h2 className="text-xl font-bold mb-2" style={{ color: "hsl(220 20% 18%)" }}>Processando seus documentos</h2>
+        <p className="text-sm flex items-center justify-center gap-2" style={{ color: "hsl(220 10% 50%)" }}>
+          <Loader2 className="w-4 h-4 animate-spin" />
+          {extractStage || "Extraindo dados…"}
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-1">
+        <Sparkles className="w-5 h-5" style={{ color: "hsl(230 80% 56%)" }} />
+        <SectionTitle>Envio de Documentos (preenchimento automático)</SectionTitle>
+      </div>
+      <SectionDesc>
+        Envie um documento oficial de identificação com CPF e um comprovante de endereço legível.
+        Nossa IA extrai os dados e preenche o cadastro para você. Você poderá revisar tudo antes de enviar.
+      </SectionDesc>
+
+      <div className="p-3 rounded-lg mb-5 text-[11px] leading-relaxed flex items-start gap-2" style={{ background: "hsl(220 20% 97%)", color: "hsl(220 15% 35%)", border: "1px solid hsl(220 13% 90%)" }}>
+        <Shield className="w-3.5 h-3.5 mt-0.5 shrink-0" style={{ color: "hsl(230 80% 56%)" }} />
+        <span>
+          Conforme a <strong>Lei 10.826/2003</strong>, o <strong>Decreto 11.615/2023</strong> e os normativos vigentes da Polícia Federal aplicáveis ao público CAC,
+          o cadastro exige identificação civil com CPF e comprovação de endereço. Seus arquivos são tratados conforme a LGPD.
+        </span>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <DocUploadCard
+          icon={IdCard}
+          title="Documento de identificação com CPF"
+          description="RG, CNH, CIN ou outro documento oficial. Se já contiver o CPF, não é preciso enviar separado."
+          accepted="image/*,application/pdf"
+          value={docImages.identity_data_url}
+          onChange={(v) => setDocImages(prev => ({ ...prev, identity_data_url: v }))}
+        />
+        <DocUploadCard
+          icon={FileText}
+          title="Comprovante de endereço"
+          description="Conta de luz, água, telefone, internet, gás ou IPTU. Legível e atualizado."
+          accepted="image/*,application/pdf"
+          value={docImages.address_data_url}
+          onChange={(v) => setDocImages(prev => ({ ...prev, address_data_url: v }))}
+        />
+      </div>
+
+      <div className="mt-4">
+        <SelfieCapture value={selfieDataUrl} onChange={setSelfieDataUrl} />
+      </div>
+
+      {extractError && (
+        <div className="mt-4 p-3 rounded-lg flex items-start gap-2 text-xs" style={{ background: "hsl(40 90% 96%)", border: "1px solid hsl(40 70% 80%)", color: "hsl(40 50% 25%)" }}>
+          <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" style={{ color: "hsl(40 80% 45%)" }} />
+          <span>{extractError}</span>
+        </div>
+      )}
+
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mt-6 pt-5 border-t" style={{ borderColor: "hsl(220 13% 93%)" }}>
+        <button onClick={onSkip} type="button" className="text-sm font-medium px-4 py-2.5 rounded-lg transition-colors" style={{ color: "hsl(220 10% 46%)", background: "hsl(220 14% 96%)" }}>
+          Preencher manualmente
+        </button>
+        <button
+          onClick={onExtract}
+          disabled={!hasAny}
+          type="button"
+          className="qa-btn-primary flex items-center justify-center gap-1.5 no-glow disabled:opacity-50"
+        >
+          <Sparkles className="w-4 h-4" />
+          Extrair dados e continuar
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ── Address Divergence Modal ── */
+function DivergenceModal({
+  divergence, onChoose, onClose,
+}: {
+  divergence: AddressDivergence;
+  onChoose: (c: "cep" | "doc") => void;
+  onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={onClose}>
+      <div className="qa-card max-w-lg w-full rounded-2xl p-6" onClick={e => e.stopPropagation()} style={{ background: "white" }}>
+        <div className="flex items-start gap-3 mb-4">
+          <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ background: "hsl(40 90% 96%)" }}>
+            <AlertCircle className="w-5 h-5" style={{ color: "hsl(40 80% 45%)" }} />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-base font-bold" style={{ color: "hsl(220 20% 18%)" }}>Divergência no endereço</h3>
+            <p className="text-xs mt-0.5" style={{ color: "hsl(220 10% 50%)" }}>
+              O CEP informado localizou um endereço diferente do que está no comprovante. Qual deseja usar?
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+          <button onClick={() => onChoose("cep")} className="text-left p-3 rounded-xl border-2 hover:border-blue-400 transition-colors" style={{ borderColor: "hsl(220 13% 88%)" }}>
+            <div className="text-[11px] font-bold uppercase tracking-wide mb-1.5" style={{ color: "hsl(230 80% 56%)" }}>Do CEP (oficial)</div>
+            <div className="text-xs leading-relaxed" style={{ color: "hsl(220 20% 25%)" }}>
+              <div className="font-semibold">{divergence.cep_address.logradouro}</div>
+              <div>{divergence.cep_address.bairro}</div>
+              <div>{divergence.cep_address.cidade}/{divergence.cep_address.estado}</div>
+            </div>
+          </button>
+          <button onClick={() => onChoose("doc")} className="text-left p-3 rounded-xl border-2 hover:border-blue-400 transition-colors" style={{ borderColor: "hsl(220 13% 88%)" }}>
+            <div className="text-[11px] font-bold uppercase tracking-wide mb-1.5" style={{ color: "hsl(152 60% 42%)" }}>Do comprovante</div>
+            <div className="text-xs leading-relaxed" style={{ color: "hsl(220 20% 25%)" }}>
+              <div className="font-semibold">{divergence.doc_address.logradouro}</div>
+              <div>{divergence.doc_address.bairro}</div>
+              <div>{divergence.doc_address.cidade}/{divergence.doc_address.estado}</div>
+            </div>
+          </button>
+        </div>
+
+        <button onClick={onClose} className="w-full text-xs font-medium py-2 rounded-lg" style={{ color: "hsl(220 10% 46%)", background: "hsl(220 14% 96%)" }}>
+          Decidir depois
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /* ── Step 1: Dados Pessoais ── */
-function Step1({ form, set, errors, onCpfLookup, cpfLooking, cpfFound }: { form: FormData; set: any; errors: any; onCpfLookup?: () => void; cpfLooking?: boolean; cpfFound?: boolean | null }) {
+function Step1({ form, set, errors, onCpfLookup, cpfLooking, cpfFound, autoFilled }: { form: FormData; set: any; errors: any; onCpfLookup?: () => void; cpfLooking?: boolean; cpfFound?: boolean | null; autoFilled?: Set<string> }) {
   return (
     <div>
       <SectionTitle>Dados Pessoais</SectionTitle>
