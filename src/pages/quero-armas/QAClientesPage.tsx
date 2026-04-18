@@ -1506,20 +1506,20 @@ export default function QAClientesPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:flex md:items-center md:flex-nowrap md:justify-end gap-1.5 md:gap-2">
             {isEditing ? (
               <>
                 <button
                   onClick={() => setEditingCadastroPublico(false)}
-                  className="h-9 px-4 rounded-lg text-xs font-medium border transition-all hover:bg-slate-50"
+                  className="h-8 md:h-9 px-2 md:px-4 rounded-lg text-[11px] md:text-xs font-medium border transition-all hover:bg-slate-50 flex items-center justify-center gap-1"
                   style={{ borderColor: "hsl(220 13% 88%)", color: "hsl(220 20% 30%)" }}
                 >
-                  <X className="h-3.5 w-3.5 mr-1 inline" /> Cancelar
+                  <X className="h-3.5 w-3.5" /> Cancelar
                 </button>
                 <button
                   onClick={saveCadastroEdit}
                   disabled={savingCadastroEdit}
-                  className="h-9 px-4 rounded-lg text-xs font-semibold text-white transition-all disabled:opacity-40 flex items-center gap-1.5"
+                  className="h-8 md:h-9 px-2 md:px-4 rounded-lg text-[11px] md:text-xs font-semibold text-white transition-all disabled:opacity-40 flex items-center justify-center gap-1"
                   style={{ background: "hsl(152 60% 40%)" }}
                 >
                   {savingCadastroEdit ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
@@ -1530,7 +1530,7 @@ export default function QAClientesPage() {
               <>
                 <button
                   onClick={startEditCadastro}
-                  className="h-9 px-3 rounded-lg text-xs font-medium border transition-all hover:bg-slate-50 flex items-center gap-1.5"
+                  className="h-8 md:h-9 px-2 md:px-3 rounded-lg text-[11px] md:text-xs font-medium border transition-all hover:bg-slate-50 flex items-center justify-center gap-1"
                   style={{ borderColor: "hsl(220 13% 88%)", color: "hsl(220 20% 30%)" }}
                 >
                   <Edit className="h-3.5 w-3.5" /> Editar
@@ -1538,25 +1538,25 @@ export default function QAClientesPage() {
                 <button
                   disabled={!!savingCadastroPublicoStatus || c.status === "rejeitado"}
                   onClick={() => updateCadastroPublicoStatus("rejeitado")}
-                  className="h-9 px-3 rounded-lg text-xs font-medium border transition-all disabled:opacity-40 hover:bg-slate-50"
+                  className="h-8 md:h-9 px-2 md:px-3 rounded-lg text-[11px] md:text-xs font-medium border transition-all disabled:opacity-40 hover:bg-slate-50 flex items-center justify-center gap-1"
                   style={{ borderColor: "hsl(220 13% 88%)", color: "hsl(220 20% 30%)" }}
                 >
-                  {savingCadastroPublicoStatus === "rejeitado" && <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin inline" />}
+                  {savingCadastroPublicoStatus === "rejeitado" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <X className="h-3.5 w-3.5" />}
                   Rejeitar
                 </button>
                 <button
                   disabled={!!savingCadastroPublicoStatus || c.status === "pendente"}
                   onClick={() => updateCadastroPublicoStatus("pendente")}
-                  className="h-9 px-3 rounded-lg text-xs font-medium border transition-all disabled:opacity-40 hover:bg-slate-50"
+                  className="h-8 md:h-9 px-2 md:px-3 rounded-lg text-[11px] md:text-xs font-medium border transition-all disabled:opacity-40 hover:bg-slate-50 flex items-center justify-center gap-1"
                   style={{ borderColor: "hsl(220 13% 88%)", color: "hsl(220 20% 30%)" }}
                 >
-                  {savingCadastroPublicoStatus === "pendente" && <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin inline" />}
+                  {savingCadastroPublicoStatus === "pendente" && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                   Pendente
                 </button>
                 <button
                   disabled={!!savingCadastroPublicoStatus}
                   onClick={() => togglePagoCadastroPublico()}
-                  className={`h-9 px-3 rounded-lg text-xs font-semibold border transition-all disabled:opacity-40 flex items-center gap-1.5 ${
+                  className={`h-8 md:h-9 px-2 md:px-3 rounded-lg text-[11px] md:text-xs font-semibold border transition-all disabled:opacity-40 flex items-center justify-center gap-1 ${
                     c.pago
                       ? "bg-emerald-500 text-white border-emerald-500 hover:bg-emerald-600"
                       : "bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-100"
@@ -1573,7 +1573,7 @@ export default function QAClientesPage() {
                 <button
                   disabled={!!savingCadastroPublicoStatus || c.status === "aprovado"}
                   onClick={() => updateCadastroPublicoStatus("aprovado")}
-                  className="h-9 px-3 rounded-lg text-xs font-semibold text-white transition-all disabled:opacity-40 flex items-center gap-1.5 ml-auto"
+                  className="col-span-2 sm:col-span-1 h-8 md:h-9 px-2 md:px-4 rounded-lg text-[11px] md:text-xs font-semibold text-white transition-all disabled:opacity-40 flex items-center justify-center gap-1"
                   style={{ background: "hsl(230 80% 56%)" }}
                 >
                   {savingCadastroPublicoStatus === "aprovado" ? (
