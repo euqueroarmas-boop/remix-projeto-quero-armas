@@ -210,6 +210,20 @@ export default function QACadastroPublicoPage() {
   const [showComplementoConfirm, setShowComplementoConfirm] = useState(false);
   const [servicos, setServicos] = useState<{ id: number; nome_servico: string }[]>([]);
 
+  // Cadastro público duplicado (mesmo CPF) — fluxo de atualização
+  const [existingCadastroId, setExistingCadastroId] = useState<string | null>(null);
+  const [duplicateInfo, setDuplicateInfo] = useState<
+    | {
+        id: string;
+        nome_completo?: string | null;
+        status?: string | null;
+        servico_interesse?: string | null;
+        created_at?: string | null;
+        full?: any;
+      }
+    | null
+  >(null);
+
   // ── Step 0: Document extraction state ──
   const [docImages, setDocImages] = useState<DocImages>({ identity_data_url: "", address_data_url: "" });
   const [extracting, setExtracting] = useState(false);
