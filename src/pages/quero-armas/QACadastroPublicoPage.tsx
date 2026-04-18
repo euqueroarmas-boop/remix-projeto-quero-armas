@@ -301,6 +301,124 @@ export default function QACadastroPublicoPage() {
     }
   }, [form, lookupCnpj, set]);
 
+  /* ── Step 0: Document extraction ── */
+  const handleExtractDocuments = useCallback(async () => {
+    setExtractError(null);
+    if (!docImages.identity_data_url && !docImages.address_data_url) {
+      setExtractError("Envie pelo menos um documento ou pule esta etapa.");
+      return;
+    }
+    setExtracting(true);
+    setExtractStage("Lendo documentos enviados…");
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-extract-documents", {
+        body: {
+          identity_image: docImages.identity_data_url || undefined,
+          address_image: docImages.address_data_url || undefined,
+        },
+      });
+      if (error || !data?.success) {
+        throw new Error(data?.error || "Falha ao extrair dados");
+      }
+
+      const filled = new Set<string>();
+      const id = data.identity || {};
+      const ad = data.address || {};
+
+      // ── Apply identity fields ──
+      setExtractStage("Preenchendo dados pessoais…");
+      setForm(prev => {
+        const next = { ...prev };
+        if (id.nome_completo && !next.nome_completo) { next.nome_completo = String(id.nome_completo).toUpperCase(); filled.add("nome_completo"); }
+        if (id.cpf) {
+          const masked = maskCpf(String(id.cpf));
+          if (!next.cpf || next.cpf.replace(/\D/g, "").length < 11) { next.cpf = masked; filled.add("cpf"); }
+        }
+        if (id.rg && !next.rg) { next.rg = maskRgInput(String(id.rg)); filled.add("rg"); }
+        if (id.emissor_rg && !next.emissor_rg) { next.emissor_rg = String(id.emissor_rg).toUpperCase(); filled.add("emissor_rg"); }
+        if (id.uf_emissor_rg && !next.uf_emissor_rg) { next.uf_emissor_rg = String(id.uf_emissor_rg).toUpperCase().slice(0, 2); filled.add("uf_emissor_rg"); }
+        if (id.data_nascimento && !next.data_nascimento) {
+          const d = String(id.data_nascimento).replace(/\D/g, "");
+          if (d.length === 8) { next.data_nascimento = maskDate(d); filled.add("data_nascimento"); }
+        }
+        if (id.nome_mae && !next.nome_mae) { next.nome_mae = String(id.nome_mae).toUpperCase(); filled.add("nome_mae"); }
+        if (id.nome_pai && !next.nome_pai) { next.nome_pai = String(id.nome_pai).toUpperCase(); filled.add("nome_pai"); }
+
+        // ── Address fields from comprovante ──
+        if (ad.cep && !next.end1_cep) { next.end1_cep = maskCep(String(ad.cep)); filled.add("end1_cep"); }
+        if (ad.logradouro) { next.end1_logradouro = String(ad.logradouro).toUpperCase(); filled.add("end1_logradouro"); }
+        if (ad.numero) { next.end1_numero = String(ad.numero); filled.add("end1_numero"); }
+        if (ad.complemento) { next.end1_complemento = String(ad.complemento).toUpperCase(); filled.add("end1_complemento"); }
+        if (ad.bairro) { next.end1_bairro = String(ad.bairro).toUpperCase(); filled.add("end1_bairro"); }
+        if (ad.cidade) { next.end1_cidade = String(ad.cidade).toUpperCase(); filled.add("end1_cidade"); }
+        if (ad.estado) { next.end1_estado = String(ad.estado).toUpperCase().slice(0, 2); filled.add("end1_estado"); }
+        return next;
+      });
+      setAutoFilled(filled);
+
+      // ── Confront CEP with extracted address ──
+      if (ad.cep) {
+        setExtractStage("Conferindo endereço com o CEP informado…");
+        const cepDigits = String(ad.cep).replace(/\D/g, "");
+        if (cepDigits.length === 8) {
+          const cepData = await lookupCep(cepDigits);
+          if (cepData) {
+            const norm = (s?: string) => (s || "").toLowerCase().replace(/[^a-z0-9]/g, "").trim();
+            const cepLog = norm(cepData.street);
+            const docLog = norm(ad.logradouro);
+            const cepCity = norm(cepData.city);
+            const docCity = norm(ad.cidade);
+            const divergeLog = cepLog && docLog && !cepLog.includes(docLog) && !docLog.includes(cepLog);
+            const divergeCity = cepCity && docCity && cepCity !== docCity;
+            if (divergeLog || divergeCity) {
+              setDivergence({
+                cep_address: {
+                  logradouro: cepData.street || "",
+                  bairro: cepData.neighborhood || "",
+                  cidade: cepData.city || "",
+                  estado: cepData.state || "",
+                },
+                doc_address: {
+                  logradouro: ad.logradouro || "",
+                  bairro: ad.bairro || "",
+                  cidade: ad.cidade || "",
+                  estado: ad.estado || "",
+                },
+              });
+            }
+          }
+        }
+      }
+
+      setExtractStage("Cadastro pré-preenchido!");
+      setTimeout(() => setStep(1), 400);
+    } catch (e: any) {
+      setExtractError(
+        e?.message === "RATE_LIMIT"
+          ? "Limite de uso atingido. Tente novamente em alguns segundos."
+          : "Não foi possível extrair todos os dados automaticamente. Revise e complete manualmente.",
+      );
+      // Allow user to proceed manually
+    } finally {
+      setExtracting(false);
+    }
+  }, [docImages, lookupCep]);
+
+  const skipDocuments = () => setStep(1);
+
+  const applyDivergenceChoice = (choice: "cep" | "doc") => {
+    if (!divergence) return;
+    const src = choice === "cep" ? divergence.cep_address : divergence.doc_address;
+    setForm(prev => ({
+      ...prev,
+      end1_logradouro: src.logradouro.toUpperCase() || prev.end1_logradouro,
+      end1_bairro: src.bairro.toUpperCase() || prev.end1_bairro,
+      end1_cidade: src.cidade.toUpperCase() || prev.end1_cidade,
+      end1_estado: src.estado.toUpperCase().slice(0, 2) || prev.end1_estado,
+    }));
+    setDivergence(null);
+  };
+
   /* ── Validation per step ── */
   const validateStep = (s: Step): boolean => {
     const errs: Partial<Record<keyof FormData, string>> = {};
@@ -339,6 +457,7 @@ export default function QACadastroPublicoPage() {
   };
 
   const nextStep = () => {
+    if (step === 0) return; // Step 0 has its own button
     if (!validateStep(step)) return;
     if (step === 2) {
       proceedFromStep2();
@@ -350,8 +469,10 @@ export default function QACadastroPublicoPage() {
   const prevStep = () => {
     if (step === 4 && !form.tem_segundo_endereco) {
       setStep(2);
+    } else if (step === 1) {
+      setStep(0);
     } else {
-      setStep(Math.max(step - 1, 1) as Step);
+      setStep(Math.max(step - 1, 0) as Step);
     }
   };
 
