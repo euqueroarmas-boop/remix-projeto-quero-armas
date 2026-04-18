@@ -1664,15 +1664,119 @@ function Step5({ form, set, errors }: any) {
       {/* Summary */}
       <div className="p-4 rounded-xl mb-6" style={{ background: "hsl(220 20% 97%)", border: "1px solid hsl(220 13% 91%)" }}>
         <h3 className="text-sm font-semibold mb-3" style={{ color: "hsl(220 20% 18%)" }}>Resumo dos Dados</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+
+        {/* Foto / Selfie */}
+        {form.selfie_data_url && (
+          <div className="mb-4 flex items-center gap-3">
+            <img
+              src={form.selfie_data_url}
+              alt="Selfie"
+              className="w-20 h-20 rounded-full object-cover border-2"
+              style={{ borderColor: "hsl(220 13% 85%)" }}
+            />
+            <div>
+              <div className="text-[11px] font-medium" style={{ color: "hsl(220 10% 50%)" }}>Foto capturada</div>
+              <div className="text-xs" style={{ color: "hsl(220 20% 25%)" }}>Será enviada no cadastro</div>
+            </div>
+          </div>
+        )}
+
+        {/* Dados Pessoais */}
+        <SummarySection title="Dados Pessoais">
           <SummaryItem label="Nome" value={form.nome_completo} />
           <SummaryItem label="CPF" value={form.cpf} />
+          <SummaryItem label="RG" value={form.rg} />
+          <SummaryItem label="Emissor RG" value={form.emissor_rg} />
+          <SummaryItem label="Nascimento" value={form.data_nascimento} />
           <SummaryItem label="E-mail" value={form.email} />
           <SummaryItem label="Telefone" value={form.telefone_principal} />
-          {form.end1_cidade && <SummaryItem label="Cidade" value={`${form.end1_cidade}/${form.end1_estado}`} />}
-          {form.servico_interesse && <SummaryItem label="Serviço" value={form.servico_interesse} />}
-          {form.vinculo_tipo && <SummaryItem label="Vínculo" value={form.vinculo_tipo.replace(/_/g, " ")} />}
-        </div>
+          <SummaryItem label="Tel. secundário" value={form.telefone_secundario} />
+          <SummaryItem label="Nome da mãe" value={form.nome_mae} />
+          <SummaryItem label="Nome do pai" value={form.nome_pai} />
+          <SummaryItem label="Estado civil" value={form.estado_civil} />
+          <SummaryItem label="Nacionalidade" value={form.nacionalidade} />
+          <SummaryItem label="Profissão" value={form.profissao} />
+        </SummarySection>
+
+        {/* Endereço Principal */}
+        {(form.end1_cep || form.end1_logradouro || form.end1_cidade) && (
+          <SummarySection title="Endereço Principal">
+            <SummaryItem label="CEP" value={form.end1_cep} />
+            <SummaryItem label="Logradouro" value={form.end1_logradouro} />
+            <SummaryItem label="Número" value={form.end1_numero} />
+            <SummaryItem label="Complemento" value={form.end1_complemento} />
+            <SummaryItem label="Bairro" value={form.end1_bairro} />
+            <SummaryItem
+              label="Cidade/UF"
+              value={form.end1_cidade ? `${form.end1_cidade}${form.end1_estado ? "/" + form.end1_estado : ""}` : ""}
+            />
+            <SummaryItem
+              label="Geolocalização"
+              value={form.end1_latitude && form.end1_longitude ? `${form.end1_latitude}, ${form.end1_longitude}` : ""}
+            />
+          </SummarySection>
+        )}
+
+        {/* Endereço Secundário */}
+        {form.tem_segundo_endereco && (form.end2_cep || form.end2_logradouro || form.end2_cidade) && (
+          <SummarySection title="Endereço Secundário">
+            <SummaryItem label="Tipo" value={form.end2_tipo} />
+            <SummaryItem label="CEP" value={form.end2_cep} />
+            <SummaryItem label="Logradouro" value={form.end2_logradouro} />
+            <SummaryItem label="Número" value={form.end2_numero} />
+            <SummaryItem label="Complemento" value={form.end2_complemento} />
+            <SummaryItem label="Bairro" value={form.end2_bairro} />
+            <SummaryItem
+              label="Cidade/UF"
+              value={form.end2_cidade ? `${form.end2_cidade}${form.end2_estado ? "/" + form.end2_estado : ""}` : ""}
+            />
+          </SummarySection>
+        )}
+
+        {/* Vínculo / Empresa */}
+        {form.vinculo_tipo && (
+          <SummarySection title="Vínculo Profissional">
+            <SummaryItem label="Tipo de vínculo" value={form.vinculo_tipo.replace(/_/g, " ")} />
+
+            {/* Empresa (sócio/proprietário) */}
+            <SummaryItem label="CNPJ (empresa)" value={form.emp_cnpj} />
+            <SummaryItem label="Razão social" value={form.emp_razao_social} />
+            <SummaryItem label="Nome fantasia" value={form.emp_nome_fantasia} />
+            <SummaryItem label="Situação cadastral" value={form.emp_situacao_cadastral} />
+            <SummaryItem label="Data de abertura" value={form.emp_data_abertura} />
+            <SummaryItem label="CNAE principal" value={form.emp_cnae_principal} />
+            <SummaryItem label="Natureza jurídica" value={form.emp_natureza_juridica} />
+            <SummaryItem label="Endereço (empresa)" value={form.emp_endereco} />
+            <SummaryItem label="Telefone (empresa)" value={form.emp_telefone} />
+            <SummaryItem label="E-mail (empresa)" value={form.emp_email} />
+            <SummaryItem label="Cargo/Função" value={form.emp_cargo_funcao} />
+            <SummaryItem label="Participação societária" value={form.emp_participacao_societaria} />
+
+            {/* Trabalho registrado */}
+            <SummaryItem label="Empresa (CLT)" value={form.trab_nome_empresa} />
+            <SummaryItem label="CNPJ (CLT)" value={form.trab_cnpj_empresa} />
+            <SummaryItem label="Cargo (CLT)" value={form.trab_cargo_funcao} />
+            <SummaryItem label="Admissão" value={form.trab_data_admissao} />
+            <SummaryItem label="Faixa salarial" value={form.trab_faixa_salarial} />
+            <SummaryItem label="Endereço (CLT)" value={form.trab_endereco_empresa} />
+            <SummaryItem label="Telefone (CLT)" value={form.trab_telefone_empresa} />
+
+            {/* Autônomo */}
+            <SummaryItem label="Atividade (autônomo)" value={form.aut_atividade} />
+            <SummaryItem label="Nome profissional" value={form.aut_nome_profissional} />
+            <SummaryItem label="CNPJ (autônomo)" value={form.aut_cnpj} />
+            <SummaryItem label="Telefone (autônomo)" value={form.aut_telefone} />
+            <SummaryItem label="Endereço (autônomo)" value={form.aut_endereco} />
+          </SummarySection>
+        )}
+
+        {/* Serviço e observações */}
+        {(form.servico_interesse || form.observacoes) && (
+          <SummarySection title="Serviço e Observações">
+            <SummaryItem label="Serviço de interesse" value={form.servico_interesse} />
+            <SummaryItem label="Observações" value={form.observacoes} />
+          </SummarySection>
+        )}
       </div>
 
       {/* Consent text */}
@@ -1719,12 +1823,28 @@ function Step5({ form, set, errors }: any) {
   );
 }
 
-function SummaryItem({ label, value }: { label: string; value: string }) {
+function SummaryItem({ label, value }: { label: string; value?: string | null }) {
   if (!value) return null;
   return (
     <div className="flex gap-2 py-1">
-      <span className="font-medium" style={{ color: "hsl(220 10% 50%)" }}>{label}:</span>
-      <span style={{ color: "hsl(220 20% 18%)" }}>{value}</span>
+      <span className="font-medium whitespace-nowrap" style={{ color: "hsl(220 10% 50%)" }}>{label}:</span>
+      <span className="break-words" style={{ color: "hsl(220 20% 18%)" }}>{value}</span>
+    </div>
+  );
+}
+
+function SummarySection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="mb-4 last:mb-0">
+      <div
+        className="text-[11px] font-semibold uppercase tracking-wide mb-1.5 pb-1 border-b"
+        style={{ color: "hsl(220 20% 30%)", borderColor: "hsl(220 13% 88%)" }}
+      >
+        {title}
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-0.5 text-xs">
+        {children}
+      </div>
     </div>
   );
 }
