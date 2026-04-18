@@ -739,7 +739,7 @@ export default function QAClientesPage() {
       if (vendasData.length > 0) {
         // qa_itens_venda.venda_id referencia qa_vendas.id_legado (chave canônica).
         const vendaIds = vendasData.map((v: any) => getVendaFK(v));
-        const { data: itensData } = await supabase.from("qa_itens_venda" as any).select("*").in("venda_id", vendaIds);
+        const { data: itensData } = await supabase.from("qa_itens_venda" as any).select("*").in("venda_id", vendaIds).order("sort_order", { ascending: true, nullsFirst: false }).order("id", { ascending: true });
         setItens((itensData as any[]) ?? []);
       } else {
         setItens([]);
