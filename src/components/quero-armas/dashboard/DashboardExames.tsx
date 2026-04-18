@@ -168,6 +168,20 @@ export default function DashboardExames() {
         });
         const servicoMap = new Map(servicos.map((s) => [String(s.id), s.nome_servico || "Serviço"]));
 
+        // ── PASSO 1: identifica vendas BLOQUEADAS ──
+        // Uma venda está bloqueada quando possui um item INDEFERIDO de serviço inicial
+        // (Posse PF, Porte PF, Autorização Exército, CR Exército). Nesses casos, todos
+        // os demais itens da MESMA VENDA são considerados mortos por dependência —
+        // o processo não pode mais avançar e o cliente NÃO é pendência.
+        const vendasBloqueadas = new Set<string>();
+        for (const item of itens) {
+          const status = (item.status || "").toUpperCase();
+          const sid = item.servico_id != null ? String(item.servico_id) : null;
+          if (status === "INDEFERIDO" && sid && SERVICOS_INICIAIS_BLOQUEADORES.has(sid)) {
+            vendasBloqueadas.add(String(item.venda_id));
+          }
+        }
+
         const clientesComPendente = new Set<string>();
         const clientesComDeferido = new Set<string>();
         const servicosPendentesPorCliente = new Map<string, Set<string>>();
@@ -179,6 +193,11 @@ export default function DashboardExames() {
             clientesComDeferido.add(cidCanonical);
           }
           if (!FINISHED.includes(status)) {
+            // ── REGRA DE BLOQUEIO ──
+            // Se a venda tem um serviço inicial INDEFERIDO, os demais itens em
+            // "AGUARDANDO ETAPA ANTERIOR"/etc. NÃO contam como pendência.
+            if (vendasBloqueadas.has(String(item.venda_id))) continue;
+
             const sid = item.servico_id != null ? String(item.servico_id) : null;
             if (filtrarPorServicoExame && (!sid || !servicosComExameSet.has(sid))) continue;
             clientesComPendente.add(cidCanonical);
