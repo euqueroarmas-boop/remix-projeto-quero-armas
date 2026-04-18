@@ -15,6 +15,9 @@ function json(body: Record<string, unknown>, status = 200) {
 }
 
 const CadastroSchema = z.object({
+  // Quando presente, indica que é uma ATUALIZAÇÃO de cadastro existente
+  update_existing_id: z.string().uuid().optional().nullable(),
+
   // Dados pessoais
   nome_completo: z.string().min(3).max(200),
   cpf: z.string().min(11).max(18),
@@ -115,12 +118,48 @@ Deno.serve(async (req) => {
       if (cpfDigits.length !== 11) {
         return json({ error: "CPF inválido" }, 400);
       }
+
+      // 1) Cadastro público existente (prioridade — evita duplicata)
+      const { data: existingCadastro } = await supabase
+        .from("qa_cadastro_publico")
+        .select("id, nome_completo, status, servico_interesse, created_at, email, telefone_principal")
+        .eq("cpf", cpfDigits)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      // 2) Cliente legado (apenas para auto-preenchimento)
       const { data: cliente } = await supabase
         .from("qa_clientes")
         .select("nome_completo, cpf, data_nascimento, celular, email, nome_mae, nome_pai, estado_civil, nacionalidade, profissao, observacao, endereco, numero, complemento, bairro, cep, cidade, estado, geolocalizacao, endereco2, numero2, complemento2, bairro2, cep2, cidade2, estado2, geolocalizacao2")
         .eq("cpf", cpfDigits)
         .eq("excluido", false)
         .maybeSingle();
+
+      // Se existe cadastro público, retorna com flag para o cliente decidir
+      if (existingCadastro) {
+        // Carrega o cadastro completo para auto-preenchimento caso o usuário escolha atualizar
+        const { data: full } = await supabase
+          .from("qa_cadastro_publico")
+          .select("*")
+          .eq("id", existingCadastro.id)
+          .maybeSingle();
+
+        return json({
+          found: !!cliente,
+          cliente: cliente || null,
+          existing_cadastro: {
+            id: existingCadastro.id,
+            nome_completo: existingCadastro.nome_completo,
+            status: existingCadastro.status,
+            servico_interesse: existingCadastro.servico_interesse,
+            created_at: existingCadastro.created_at,
+            email: existingCadastro.email,
+            telefone_principal: existingCadastro.telefone_principal,
+            full,
+          },
+        });
+      }
 
       if (!cliente) {
         return json({ found: false });
@@ -139,6 +178,9 @@ Deno.serve(async (req) => {
     }
 
     const data = parsed.data;
+    const updateExistingId = data.update_existing_id || null;
+    // Remove campo de controle do payload de persistência
+    const { update_existing_id: _u, ...persistData } = data;
 
     // Capture audit metadata
     const ip = req.headers.get("x-forwarded-for") || req.headers.get("cf-connecting-ip") || "unknown";
@@ -148,15 +190,98 @@ Deno.serve(async (req) => {
     // Clean CPF
     const cpfDigits = data.cpf.replace(/\D/g, "");
 
+    // ── Caminho UPDATE ──
+    if (updateExistingId) {
+      // Confirma que o registro existe e pertence ao mesmo CPF
+      const { data: existing } = await supabase
+        .from("qa_cadastro_publico")
+        .select("id, cpf, servico_interesse, notas_processamento")
+        .eq("id", updateExistingId)
+        .maybeSingle();
+
+      if (!existing) {
+        return json({ error: "Cadastro existente não encontrado" }, 404);
+      }
+      if (existing.cpf !== cpfDigits) {
+        return json({ error: "CPF não confere com o cadastro informado" }, 400);
+      }
+
+      const novoServico = persistData.servico_interesse || null;
+      const servicoAnterior = existing.servico_interesse || null;
+      const historicoNota = `[${now}] Cadastro atualizado pelo titular (formulário público)` +
+        (novoServico && novoServico !== servicoAnterior
+          ? `. Novo serviço solicitado: ${novoServico}` +
+            (servicoAnterior ? ` (anterior: ${servicoAnterior})` : "")
+          : "");
+      const notasAtualizadas = [existing.notas_processamento, historicoNota]
+        .filter(Boolean)
+        .join("\n");
+
+      const { error: updErr } = await supabase
+        .from("qa_cadastro_publico")
+        .update({
+          ...persistData,
+          cpf: cpfDigits,
+          consentimento_timestamp: now,
+          consentimento_ip: ip.substring(0, 45),
+          consentimento_user_agent: userAgent.substring(0, 500),
+          consentimento_texto:
+            "Declaro que as informações prestadas são verdadeiras, completas e de minha responsabilidade, e autorizo seu uso para fins de cadastro, validação, análise e continuidade do atendimento, nos termos aplicáveis de privacidade e proteção de dados.",
+          status: "pendente",
+          notas_processamento: notasAtualizadas,
+          updated_at: now,
+        })
+        .eq("id", updateExistingId);
+
+      if (updErr) {
+        console.error("[qa-cadastro-publico] Update error:", updErr);
+        return json({ error: "Erro ao atualizar cadastro" }, 500);
+      }
+
+      await supabase.from("integration_logs").insert({
+        integration_name: "qa_cadastro_publico",
+        operation_name: "update",
+        request_payload: {
+          cpf: cpfDigits.slice(0, 3) + "***",
+          id: updateExistingId,
+          novo_servico: novoServico,
+        },
+        status: "success",
+      }).then();
+
+      return json({ success: true, id: updateExistingId, updated: true });
+    }
+
+    // ── Caminho INSERT — proteção contra duplicidade ──
+    const { data: dup } = await supabase
+      .from("qa_cadastro_publico")
+      .select("id, status, created_at")
+      .eq("cpf", cpfDigits)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (dup) {
+      // Bloqueia o INSERT — o frontend deve oferecer atualizar
+      return json({
+        error: "duplicate_cpf",
+        message: "Já existe um cadastro com este CPF. Para atualizar seus dados, confirme a atualização do cadastro existente.",
+        existing_id: dup.id,
+        existing_status: dup.status,
+        existing_created_at: dup.created_at,
+      }, 409);
+    }
+
     const { data: inserted, error } = await supabase
       .from("qa_cadastro_publico")
       .insert({
-        ...data,
+        ...persistData,
         cpf: cpfDigits,
         consentimento_timestamp: now,
         consentimento_ip: ip.substring(0, 45),
         consentimento_user_agent: userAgent.substring(0, 500),
-        consentimento_texto: "Declaro que as informações prestadas são verdadeiras, completas e de minha responsabilidade, e autorizo seu uso para fins de cadastro, validação, análise e continuidade do atendimento, nos termos aplicáveis de privacidade e proteção de dados.",
+        consentimento_texto:
+          "Declaro que as informações prestadas são verdadeiras, completas e de minha responsabilidade, e autorizo seu uso para fins de cadastro, validação, análise e continuidade do atendimento, nos termos aplicáveis de privacidade e proteção de dados.",
         status: "pendente",
       })
       .select("id")
@@ -167,7 +292,6 @@ Deno.serve(async (req) => {
       return json({ error: "Erro ao salvar cadastro" }, 500);
     }
 
-    // Log
     await supabase.from("integration_logs").insert({
       integration_name: "qa_cadastro_publico",
       operation_name: "submit",

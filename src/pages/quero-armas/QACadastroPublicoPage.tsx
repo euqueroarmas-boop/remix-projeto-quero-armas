@@ -210,6 +210,20 @@ export default function QACadastroPublicoPage() {
   const [showComplementoConfirm, setShowComplementoConfirm] = useState(false);
   const [servicos, setServicos] = useState<{ id: number; nome_servico: string }[]>([]);
 
+  // Cadastro público duplicado (mesmo CPF) — fluxo de atualização
+  const [existingCadastroId, setExistingCadastroId] = useState<string | null>(null);
+  const [duplicateInfo, setDuplicateInfo] = useState<
+    | {
+        id: string;
+        nome_completo?: string | null;
+        status?: string | null;
+        servico_interesse?: string | null;
+        created_at?: string | null;
+        full?: any;
+      }
+    | null
+  >(null);
+
   // ── Step 0: Document extraction state ──
   const [docImages, setDocImages] = useState<DocImages>({ identity_data_url: "", address_data_url: "" });
   const [extracting, setExtracting] = useState(false);
@@ -250,7 +264,19 @@ export default function QACadastroPublicoPage() {
       const { data, error } = await supabase.functions.invoke("qa-cadastro-publico", {
         body: { action: "lookup-cpf", cpf: cpfDigits },
       });
-      if (error || !data?.found) {
+      if (error) {
+        setCpfFound(false);
+        return;
+      }
+
+      // 1) Cadastro público já existente → abrir modal de confirmação
+      if (data?.existing_cadastro?.id) {
+        setDuplicateInfo(data.existing_cadastro);
+        setCpfFound(false); // não usa autopreenchimento legado
+        return;
+      }
+
+      if (!data?.found) {
         setCpfFound(false);
         return;
       }
@@ -294,6 +320,63 @@ export default function QACadastroPublicoPage() {
       setCpfLooking(false);
     }
   }, [form.cpf]);
+
+  /* ── Aceitar atualização do cadastro existente ── */
+  const acceptUpdateExisting = useCallback(() => {
+    if (!duplicateInfo?.id) return;
+    const f = duplicateInfo.full || {};
+    setExistingCadastroId(duplicateInfo.id);
+    // Preserva o serviço atual desejado pelo usuário (se já tiver selecionado);
+    // caso contrário, herda do cadastro existente.
+    setForm(prev => ({
+      ...prev,
+      nome_completo: f.nome_completo || prev.nome_completo,
+      rg: f.rg || prev.rg,
+      emissor_rg: f.emissor_rg || prev.emissor_rg,
+      uf_emissor_rg: f.uf_emissor_rg || prev.uf_emissor_rg,
+      data_nascimento: f.data_nascimento || prev.data_nascimento,
+      telefone_principal: f.telefone_principal ? maskPhone(f.telefone_principal) : prev.telefone_principal,
+      telefone_secundario: f.telefone_secundario ? maskPhone(f.telefone_secundario) : prev.telefone_secundario,
+      email: f.email || prev.email,
+      nome_mae: f.nome_mae || prev.nome_mae,
+      nome_pai: f.nome_pai || prev.nome_pai,
+      estado_civil: f.estado_civil || prev.estado_civil,
+      nacionalidade: f.nacionalidade || prev.nacionalidade,
+      profissao: f.profissao || prev.profissao,
+      observacoes: f.observacoes || prev.observacoes,
+      end1_cep: f.end1_cep ? maskCep(f.end1_cep) : prev.end1_cep,
+      end1_logradouro: f.end1_logradouro || prev.end1_logradouro,
+      end1_numero: f.end1_numero || prev.end1_numero,
+      end1_complemento: f.end1_complemento || prev.end1_complemento,
+      end1_bairro: f.end1_bairro || prev.end1_bairro,
+      end1_cidade: f.end1_cidade || prev.end1_cidade,
+      end1_estado: f.end1_estado || prev.end1_estado,
+      end1_latitude: f.end1_latitude || prev.end1_latitude,
+      end1_longitude: f.end1_longitude || prev.end1_longitude,
+      tem_segundo_endereco: !!f.tem_segundo_endereco || prev.tem_segundo_endereco,
+      end2_tipo: f.end2_tipo || prev.end2_tipo,
+      end2_cep: f.end2_cep ? maskCep(f.end2_cep) : prev.end2_cep,
+      end2_logradouro: f.end2_logradouro || prev.end2_logradouro,
+      end2_numero: f.end2_numero || prev.end2_numero,
+      end2_complemento: f.end2_complemento || prev.end2_complemento,
+      end2_bairro: f.end2_bairro || prev.end2_bairro,
+      end2_cidade: f.end2_cidade || prev.end2_cidade,
+      end2_estado: f.end2_estado || prev.end2_estado,
+      vinculo_tipo: f.vinculo_tipo || prev.vinculo_tipo,
+      // Mantém o serviço novo se o usuário já escolheu, senão herda do existente
+      servico_interesse: prev.servico_interesse || f.servico_interesse || "",
+    }));
+    setCpfFound(true);
+    setDuplicateInfo(null);
+  }, [duplicateInfo]);
+
+  /* ── Cancelar — reset CPF e limpar formulário ── */
+  const declineUpdateExisting = useCallback(() => {
+    setDuplicateInfo(null);
+    setExistingCadastroId(null);
+    setCpfFound(null);
+    setForm(prev => ({ ...prev, cpf: "" }));
+  }, []);
 
   /* ── Address CEP lookup ── */
   const handleCepLookup = useCallback(async (prefix: "end1" | "end2") => {
@@ -559,11 +642,25 @@ export default function QACadastroPublicoPage() {
       }
 
       const { selfie_data_url: _omit, ...rest } = form;
+      const payload: any = { ...rest, selfie_path };
+      if (existingCadastroId) payload.update_existing_id = existingCadastroId;
+
       const { data, error } = await supabase.functions.invoke("qa-cadastro-publico", {
-        body: { ...rest, selfie_path },
+        body: payload,
       });
+
+      // Tratar duplicata detectada no servidor (race condition)
+      const errMsg = (error as any)?.message || data?.error;
+      if (errMsg === "duplicate_cpf" || data?.error === "duplicate_cpf") {
+        setDuplicateInfo({
+          id: data?.existing_id,
+          status: data?.existing_status,
+          created_at: data?.existing_created_at,
+        });
+        throw new Error("Já existe um cadastro com este CPF. Confirme a atualização para prosseguir.");
+      }
       if (error || !data?.success) {
-        throw new Error(data?.error || error?.message || "Erro ao enviar");
+        throw new Error(data?.message || data?.error || (error as any)?.message || "Erro ao enviar");
       }
       setSubmitted(true);
     } catch (err: any) {
@@ -598,6 +695,70 @@ export default function QACadastroPublicoPage() {
   return (
     <div className="min-h-screen qa-premium" style={{ background: "linear-gradient(135deg, hsl(220 20% 97%) 0%, hsl(230 20% 94%) 100%)" }}>
       <div className="max-w-3xl mx-auto px-4 py-6 md:py-10">
+        {/* Modal: cadastro duplicado — perguntar se deseja atualizar */}
+        {duplicateInfo && (
+          <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onClick={declineUpdateExisting}>
+            <div
+              className="qa-card max-w-md w-full rounded-2xl p-6 md:p-7 shadow-2xl"
+              style={{ background: "white" }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-start gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "hsl(35 95% 95%)" }}>
+                  <AlertCircle className="w-5 h-5" style={{ color: "hsl(35 90% 45%)" }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-base md:text-lg font-bold leading-tight" style={{ color: "hsl(220 20% 18%)" }}>
+                    Já existe um cadastro com este CPF
+                  </h2>
+                  <p className="text-xs mt-1" style={{ color: "hsl(220 10% 50%)" }}>
+                    Identificamos que você já enviou um cadastro anteriormente.
+                  </p>
+                </div>
+              </div>
+
+              <div className="rounded-xl p-3 mb-4 space-y-1.5 text-[12px]" style={{ background: "hsl(220 20% 97%)", color: "hsl(220 15% 30%)" }}>
+                {duplicateInfo.nome_completo && (
+                  <div><span className="opacity-60">Nome:</span> <span className="font-medium">{duplicateInfo.nome_completo}</span></div>
+                )}
+                {duplicateInfo.created_at && (
+                  <div><span className="opacity-60">Enviado em:</span> <span className="font-medium">{new Date(duplicateInfo.created_at).toLocaleDateString("pt-BR")}</span></div>
+                )}
+                {duplicateInfo.status && (
+                  <div><span className="opacity-60">Status:</span> <span className="font-medium uppercase">{duplicateInfo.status}</span></div>
+                )}
+                {duplicateInfo.servico_interesse && (
+                  <div><span className="opacity-60">Serviço anterior:</span> <span className="font-medium">{duplicateInfo.servico_interesse}</span></div>
+                )}
+              </div>
+
+              <p className="text-[13px] leading-relaxed mb-5" style={{ color: "hsl(220 15% 30%)" }}>
+                Deseja <strong>atualizar seu cadastro</strong> com as informações atuais? Pode ser que algo tenha mudado (endereço, telefone, etc.).
+                {form.servico_interesse && form.servico_interesse !== duplicateInfo.servico_interesse && (
+                  <> O novo serviço solicitado (<strong>{form.servico_interesse}</strong>) será adicionado ao seu cadastro existente.</>
+                )}
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-2">
+                <button
+                  onClick={declineUpdateExisting}
+                  className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium border transition-all hover:bg-slate-50"
+                  style={{ borderColor: "hsl(220 13% 88%)", color: "hsl(220 20% 30%)" }}
+                >
+                  Não, cancelar
+                </button>
+                <button
+                  onClick={acceptUpdateExisting}
+                  className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-all"
+                  style={{ background: "hsl(230 80% 56%)" }}
+                >
+                  Sim, atualizar cadastro
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div className="text-center mb-8">
           <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center overflow-hidden bg-black shadow-sm">
@@ -659,7 +820,7 @@ export default function QACadastroPublicoPage() {
               onSkip={skipDocuments}
             />
           )}
-          {step === 1 && <Step1 form={form} set={set} errors={errors} onCpfLookup={handleCpfLookup} cpfLooking={cpfLooking} cpfFound={cpfFound} autoFilled={autoFilled} />}
+          {step === 1 && <Step1 form={form} set={set} errors={errors} onCpfLookup={handleCpfLookup} cpfLooking={cpfLooking} cpfFound={cpfFound} autoFilled={autoFilled} isUpdating={!!existingCadastroId} />}
           {step === 2 && <Step2 form={form} set={set} errors={errors} onCepLookup={() => handleCepLookup("end1")} cepLoading={cepLoading} showComplementoConfirm={showComplementoConfirm} onComplementoConfirmDismiss={() => { setShowComplementoConfirm(false); proceedFromStep2(); }} onGeocodeLookup={() => handleGeocodeLookup("end1")} geocodeLoading={geocodeLoading} autoFilled={autoFilled} />}
           {step === 3 && <Step3 form={form} set={set} errors={errors} onCepLookup={() => handleCepLookup("end2")} cepLoading={cepLoading} onGeocodeLookup={() => handleGeocodeLookup("end2")} geocodeLoading={geocodeLoading} />}
           {step === 4 && <Step4 form={form} set={set} errors={errors} onCnpjLookup={handleCnpjLookup} cnpjLoading={cnpjLoading} servicos={servicos} />}
@@ -1032,7 +1193,7 @@ function DivergenceModal({
 }
 
 /* ── Step 1: Dados Pessoais ── */
-function Step1({ form, set, errors, onCpfLookup, cpfLooking, cpfFound, autoFilled }: { form: FormData; set: any; errors: any; onCpfLookup?: () => void; cpfLooking?: boolean; cpfFound?: boolean | null; autoFilled?: Set<string> }) {
+function Step1({ form, set, errors, onCpfLookup, cpfLooking, cpfFound, autoFilled, isUpdating }: { form: FormData; set: any; errors: any; onCpfLookup?: () => void; cpfLooking?: boolean; cpfFound?: boolean | null; autoFilled?: Set<string>; isUpdating?: boolean }) {
   const hl = (f: string) => autoFilled?.has(f) ? { boxShadow: "0 0 0 2px hsl(152 60% 80%)", background: "hsl(152 60% 99%)" } : undefined;
   return (
     <div>
@@ -1042,6 +1203,12 @@ function Step1({ form, set, errors, onCpfLookup, cpfLooking, cpfFound, autoFille
           ? "Confira os dados extraídos dos seus documentos. Campos destacados em verde foram preenchidos automaticamente — revise e complete o que faltar."
           : "Informe seus dados de identificação pessoal."}
       </SectionDesc>
+      {isUpdating && (
+        <div className="mb-4 p-3 rounded-lg flex items-start gap-2 text-[12px]" style={{ background: "hsl(220 95% 96%)", border: "1px solid hsl(220 80% 80%)", color: "hsl(220 70% 30%)" }}>
+          <CheckCircle className="w-4 h-4 shrink-0 mt-0.5" />
+          <span><strong>Modo atualização:</strong> seus dados serão atualizados no cadastro existente. Revise as informações e complete o que precisa ser alterado.</span>
+        </div>
+      )}
       {autoFilled && autoFilled.size > 0 && (
         <div className="mb-4 p-2.5 rounded-lg flex items-center gap-2 text-[11px]" style={{ background: "hsl(152 60% 96%)", border: "1px solid hsl(152 40% 80%)", color: "hsl(152 40% 25%)" }}>
           <Sparkles className="w-3.5 h-3.5" />
