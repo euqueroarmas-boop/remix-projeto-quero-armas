@@ -553,61 +553,75 @@ export default function QACadastroPublicoPage() {
           </p>
         </div>
 
-        {/* Steps indicator */}
-        <div className="flex items-center justify-center gap-1 mb-8 overflow-x-auto pb-2">
-          {STEPS.filter(s => s.num !== 3 || form.tem_segundo_endereco).map((s, i, arr) => {
-            const active = step === s.num;
-            const done = step > s.num || (s.num === 3 && !form.tem_segundo_endereco);
-            return (
-              <div key={s.num} className="flex items-center">
-                <div className="flex flex-col items-center gap-1">
-                  <div
-                    className="w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all"
-                    style={{
-                      background: active ? "hsl(230 80% 56%)" : done ? "hsl(152 60% 42%)" : "hsl(220 13% 93%)",
-                      color: active || done ? "white" : "hsl(220 10% 55%)",
-                    }}
-                  >
-                    {done && !active ? <CheckCircle className="w-4 h-4" /> : i + 1}
+        {/* Steps indicator (hidden on Step 0) */}
+        {step > 0 && (
+          <div className="flex items-center justify-center gap-1 mb-8 overflow-x-auto pb-2">
+            {STEPS.filter(s => s.num !== 3 || form.tem_segundo_endereco).map((s, i, arr) => {
+              const active = step === s.num;
+              const done = step > s.num || (s.num === 3 && !form.tem_segundo_endereco);
+              return (
+                <div key={s.num} className="flex items-center">
+                  <div className="flex flex-col items-center gap-1">
+                    <div
+                      className="w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all"
+                      style={{
+                        background: active ? "hsl(230 80% 56%)" : done ? "hsl(152 60% 42%)" : "hsl(220 13% 93%)",
+                        color: active || done ? "white" : "hsl(220 10% 55%)",
+                      }}
+                    >
+                      {done && !active ? <CheckCircle className="w-4 h-4" /> : i + 1}
+                    </div>
+                    <span className="text-[10px] font-medium hidden md:block" style={{
+                      color: active ? "hsl(230 80% 46%)" : "hsl(220 10% 55%)",
+                    }}>
+                      {s.label}
+                    </span>
                   </div>
-                  <span className="text-[10px] font-medium hidden md:block" style={{
-                    color: active ? "hsl(230 80% 46%)" : "hsl(220 10% 55%)",
-                  }}>
-                    {s.label}
-                  </span>
+                  {i < arr.length - 1 && (
+                    <div className="w-8 md:w-12 h-px mx-1" style={{ background: "hsl(220 13% 88%)" }} />
+                  )}
                 </div>
-                {i < arr.length - 1 && (
-                  <div className="w-8 md:w-12 h-px mx-1" style={{ background: "hsl(220 13% 88%)" }} />
-                )}
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* Form card */}
         <div className="qa-card rounded-2xl p-5 md:p-8" style={{ boxShadow: "0 4px 20px rgba(0,0,0,0.04)" }}>
-          {step === 1 && <Step1 form={form} set={set} errors={errors} onCpfLookup={handleCpfLookup} cpfLooking={cpfLooking} cpfFound={cpfFound} />}
-          {step === 2 && <Step2 form={form} set={set} errors={errors} onCepLookup={() => handleCepLookup("end1")} cepLoading={cepLoading} showComplementoConfirm={showComplementoConfirm} onComplementoConfirmDismiss={() => { setShowComplementoConfirm(false); proceedFromStep2(); }} onGeocodeLookup={() => handleGeocodeLookup("end1")} geocodeLoading={geocodeLoading} />}
+          {step === 0 && (
+            <Step0Documents
+              docImages={docImages}
+              setDocImages={setDocImages}
+              selfieDataUrl={form.selfie_data_url}
+              setSelfieDataUrl={(v) => set("selfie_data_url", v)}
+              extracting={extracting}
+              extractStage={extractStage}
+              extractError={extractError}
+              onExtract={handleExtractDocuments}
+              onSkip={skipDocuments}
+            />
+          )}
+          {step === 1 && <Step1 form={form} set={set} errors={errors} onCpfLookup={handleCpfLookup} cpfLooking={cpfLooking} cpfFound={cpfFound} autoFilled={autoFilled} />}
+          {step === 2 && <Step2 form={form} set={set} errors={errors} onCepLookup={() => handleCepLookup("end1")} cepLoading={cepLoading} showComplementoConfirm={showComplementoConfirm} onComplementoConfirmDismiss={() => { setShowComplementoConfirm(false); proceedFromStep2(); }} onGeocodeLookup={() => handleGeocodeLookup("end1")} geocodeLoading={geocodeLoading} autoFilled={autoFilled} />}
           {step === 3 && <Step3 form={form} set={set} errors={errors} onCepLookup={() => handleCepLookup("end2")} cepLoading={cepLoading} onGeocodeLookup={() => handleGeocodeLookup("end2")} geocodeLoading={geocodeLoading} />}
           {step === 4 && <Step4 form={form} set={set} errors={errors} onCnpjLookup={handleCnpjLookup} cnpjLoading={cnpjLoading} servicos={servicos} />}
           {step === 5 && <Step5 form={form} set={set} errors={errors} />}
 
-          {/* Navigation */}
-          <div className="flex items-center justify-between mt-8 pt-6 border-t" style={{ borderColor: "hsl(220 13% 93%)" }}>
-            {step > 1 ? (
+          {/* Navigation (hidden on Step 0; Step 0 has its own buttons) */}
+          {step > 0 && (
+            <div className="flex items-center justify-between mt-8 pt-6 border-t" style={{ borderColor: "hsl(220 13% 93%)" }}>
               <button onClick={prevStep} className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
                 style={{ color: "hsl(220 10% 46%)", background: "hsl(220 14% 96%)" }}>
                 <ChevronLeft className="w-4 h-4" /> Voltar
               </button>
-            ) : <div />}
-            {step < 5 ? (
-              <button onClick={nextStep} className="qa-btn-primary flex items-center gap-1.5 no-glow">
-                Continuar <ChevronRight className="w-4 h-4" />
-              </button>
-            ) : (
-              <button onClick={handleSubmit} disabled={submitting}
-                className="qa-btn-primary flex items-center gap-1.5 no-glow disabled:opacity-50">
-                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+              {step < 5 ? (
+                <button onClick={nextStep} className="qa-btn-primary flex items-center gap-1.5 no-glow">
+                  Continuar <ChevronRight className="w-4 h-4" />
+                </button>
+              ) : (
+                <button onClick={handleSubmit} disabled={submitting}
+                  className="qa-btn-primary flex items-center gap-1.5 no-glow disabled:opacity-50">
+                  {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
                 {submitting ? "Enviando..." : "Enviar Cadastro"}
               </button>
             )}
