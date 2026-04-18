@@ -5,8 +5,9 @@ import { toast } from "sonner";
 import {
   Shield, User, Phone, Mail, MapPin, LogOut, Calendar, DollarSign,
   CheckCircle, Clock, XCircle, AlertTriangle, Activity, FileText,
-  Crosshair, CreditCard, ChevronRight, Bell, Target, Zap,
+  Crosshair, CreditCard, ChevronRight, Bell, Target, Zap, History,
 } from "lucide-react";
+import { HistoricoAtualizacoes } from "@/components/quero-armas/clientes/HistoricoAtualizacoes";
 import { Button } from "@/components/ui/button";
 import { getClienteFK, getVendaFK } from "@/components/quero-armas/clientes/clientFK";
 import { useQAServicosMap } from "@/hooks/useQAServicosMap";
@@ -421,6 +422,13 @@ export default function QAClientePortalPage() {
                 })}
               </div>
             </div>
+          </SectionCard>
+        )}
+
+        {/* ═══ HISTÓRICO DE ATUALIZAÇÕES ═══ */}
+        {cliente?.id && (
+          <SectionCard icon={History} title="Histórico de Atualizações" color="hsl(220 65% 48%)">
+            <HistoricoAtualizacoes clienteId={cliente.id} showSnapshot={false} />
           </SectionCard>
         )}
 
