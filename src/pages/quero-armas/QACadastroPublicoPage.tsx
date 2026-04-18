@@ -1823,12 +1823,32 @@ function Step5({ form, set, errors }: any) {
   );
 }
 
-function SummaryItem({ label, value }: { label: string; value: string }) {
+function SummaryItem({ label, value }: { label: string; value?: string | null }) {
   if (!value) return null;
   return (
     <div className="flex gap-2 py-1">
-      <span className="font-medium" style={{ color: "hsl(220 10% 50%)" }}>{label}:</span>
-      <span style={{ color: "hsl(220 20% 18%)" }}>{value}</span>
+      <span className="font-medium whitespace-nowrap" style={{ color: "hsl(220 10% 50%)" }}>{label}:</span>
+      <span className="break-words" style={{ color: "hsl(220 20% 18%)" }}>{value}</span>
+    </div>
+  );
+}
+
+function SummarySection({ title, children }: { title: string; children: React.ReactNode }) {
+  // Filter out null/false children (SummaryItems with empty values render null)
+  const arr = React.Children.toArray(children).filter(Boolean) as any[];
+  const hasContent = arr.some((c) => c && c.type === SummaryItem ? !!c.props?.value : true);
+  if (!hasContent) return null;
+  return (
+    <div className="mb-4 last:mb-0">
+      <div
+        className="text-[11px] font-semibold uppercase tracking-wide mb-1.5 pb-1 border-b"
+        style={{ color: "hsl(220 20% 30%)", borderColor: "hsl(220 13% 88%)" }}
+      >
+        {title}
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-0.5 text-xs">
+        {children}
+      </div>
     </div>
   );
 }
