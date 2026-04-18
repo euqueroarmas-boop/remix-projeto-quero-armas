@@ -5,6 +5,7 @@ import {
   User, MapPin, Building2, FileCheck, ChevronRight, ChevronLeft,
   Loader2, CheckCircle, Search, Plus, AlertCircle, Shield,
 } from "lucide-react";
+import { QALogo } from "@/components/quero-armas/QALogo";
 
 /* ── Types ── */
 type Step = 1 | 2 | 3 | 4 | 5;
