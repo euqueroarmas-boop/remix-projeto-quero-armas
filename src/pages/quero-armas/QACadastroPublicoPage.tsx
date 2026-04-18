@@ -1834,10 +1834,6 @@ function SummaryItem({ label, value }: { label: string; value?: string | null })
 }
 
 function SummarySection({ title, children }: { title: string; children: React.ReactNode }) {
-  // Filter out null/false children (SummaryItems with empty values render null)
-  const arr = React.Children.toArray(children).filter(Boolean) as any[];
-  const hasContent = arr.some((c) => c && c.type === SummaryItem ? !!c.props?.value : true);
-  if (!hasContent) return null;
   return (
     <div className="mb-4 last:mb-0">
       <div
