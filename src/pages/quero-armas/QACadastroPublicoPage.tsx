@@ -332,10 +332,30 @@ export default function QACadastroPublicoPage() {
   /* ── Submit ── */
   const handleSubmit = async () => {
     if (!validateStep(5)) return;
+    if (!form.selfie_data_url) {
+      setStep(1);
+      setErrors({ nome_completo: "É necessário tirar a selfie no Passo 1" } as any);
+      return;
+    }
     setSubmitting(true);
     try {
+      // Upload selfie first
+      let selfie_path: string | null = null;
+      try {
+        const blob = await (await fetch(form.selfie_data_url)).blob();
+        const cpfDigits = form.cpf.replace(/\D/g, "");
+        const key = `cadastro-publico/${cpfDigits || "anon"}-${Date.now()}.jpg`;
+        const { error: upErr } = await supabase.storage
+          .from("qa-cadastro-selfies")
+          .upload(key, blob, { contentType: "image/jpeg", upsert: true });
+        if (!upErr) selfie_path = key;
+      } catch (e) {
+        console.error("[selfie upload]", e);
+      }
+
+      const { selfie_data_url: _omit, ...rest } = form;
       const { data, error } = await supabase.functions.invoke("qa-cadastro-publico", {
-        body: form,
+        body: { ...rest, selfie_path },
       });
       if (error || !data?.success) {
         throw new Error(data?.error || "Erro ao enviar");
