@@ -1279,7 +1279,7 @@ function Step1({ form, set, errors, onCpfLookup, cpfLooking, cpfFound, autoFille
             </p>
           )}
         </Field>
-        <Field label="RG">
+        <Field label="RG / CIN">
           <TextInput value={form.rg} onChange={v => set("rg", maskRgInput(v))} placeholder="00.000.000-X" maxLength={14} />
         </Field>
         <Field label="Órgão emissor">
