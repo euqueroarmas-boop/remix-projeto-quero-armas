@@ -40,7 +40,7 @@ interface ExameDashItem {
   diasRestantes: number;
   status: ExameComStatus["status"];
   temServicoPendente: boolean;
-  servicosPendentes: string[];
+  servicosPendentes: { nome: string; entidade: "PF" | "EB" }[];
   prioridade: number;
   bucket: "vencido" | "d7" | "d15" | "d30" | "d45" | "vigente";
 }
