@@ -1947,7 +1947,11 @@ export default function QAClientesPage() {
             </DetailCard>
           )}
 
-          {(c.emp_cnpj || c.emp_razao_social || c.emp_nome_fantasia) && (
+          {(c.emp_cnpj || c.emp_razao_social || c.emp_nome_fantasia) && (() => {
+            const cepMatch = c.emp_endereco?.match(/(\d{5}-?\d{3})/);
+            const empCep = cepMatch ? cepMatch[1] : null;
+            const empEnderecoSemCep = c.emp_endereco?.replace(/^CEP\s*\d{5}-?\d{3}\s*-\s*/i, "").replace(/\s*-?\s*CEP\s*\d{5}-?\d{3}\s*/i, "").trim() || c.emp_endereco;
+            return (
             <DetailCard title="Empresa / Sociedade">
               <DetailGrid>
                 <DetailField label="CNPJ" value={c.emp_cnpj} copyable />
@@ -1956,12 +1960,14 @@ export default function QAClientesPage() {
                 <DetailField label="Situação Cadastral" value={c.emp_situacao_cadastral} />
                 <DetailField label="Cargo/Função" value={c.emp_cargo_funcao} />
                 <DetailField label="Participação" value={c.emp_participacao_societaria} />
-                <DetailField label="Endereço" value={c.emp_endereco} />
+                <DetailField label="CEP" value={empCep} copyable />
+                <DetailField label="Endereço" value={empEnderecoSemCep} />
                 <DetailField label="Telefone" value={c.emp_telefone} copyable />
                 <DetailField label="Email" value={c.emp_email} copyable />
               </DetailGrid>
             </DetailCard>
-          )}
+            );
+          })()}
 
           {(c.trab_cnpj_empresa || c.trab_nome_empresa) && (
             <DetailCard title="Trabalho Registrado">
