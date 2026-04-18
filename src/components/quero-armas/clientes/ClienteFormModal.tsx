@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Loader2, Save, User, Users, Phone, MapPin, Home, Settings, ChevronLeft, ChevronRight, CheckCircle2, Camera, X, Shield, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { usePrivateStorageUrl } from "@/hooks/usePrivateStorageUrl";
 import { CATEGORIAS, CATEGORIA_OPTIONS, CATEGORIA_MAP, type CategoriaTitular } from "./categoriaTitular";
 
 interface ClienteFormModalProps {
@@ -114,6 +115,7 @@ function FSelect({ label, value, onChange, options, placeholder = "Selecionar...
 
 export default function ClienteFormModal({ open, onClose, onSaved, cliente }: ClienteFormModalProps) {
   const isEdit = !!cliente;
+  const existingPhotoUrl = usePrivateStorageUrl("qa-documentos", cliente?.imagem || null);
   const [saving, setSaving] = useState(false);
   const [step, setStep] = useState(0);
   const { lookupCep, cepLoading } = useBrasilApiLookup();
@@ -218,8 +220,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
       });
       // Load existing photo preview
       if (cliente.imagem) {
-        const { data: urlData } = supabase.storage.from("qa-documentos").getPublicUrl(cliente.imagem);
-        setPhotoPreview(urlData?.publicUrl || null);
+        setPhotoPreview(existingPhotoUrl || null);
       } else {
         setPhotoPreview(null);
       }
@@ -227,7 +228,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
       setF(prev => ({ ...prev, nome_completo: "", cpf: "", rg: "", email: "", celular: "" }));
       setPhotoPreview(null);
     }
-  }, [cliente, open]);
+  }, [cliente, existingPhotoUrl, open]);
 
   const set = (key: string, val: any) => setF(prev => ({ ...prev, [key]: val }));
 
