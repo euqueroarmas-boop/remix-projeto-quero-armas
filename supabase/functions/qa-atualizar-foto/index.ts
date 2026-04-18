@@ -96,9 +96,30 @@ Deno.serve(async (req) => {
         .maybeSingle();
 
       if (cli?.id) {
+        // Copiar a selfie do bucket qa-cadastro-selfies para qa-documentos
+        // (a UI do admin lê fotos do cliente em qa-documentos)
+        let imagemPath = selfie_path;
+        try {
+          const { data: blob, error: dlErr } = await supabase.storage
+            .from("qa-cadastro-selfies")
+            .download(selfie_path);
+          if (!dlErr && blob) {
+            const destPath = `clientes/${cli.id}/foto-${Date.now()}.jpg`;
+            const { error: upErr } = await supabase.storage
+              .from("qa-documentos")
+              .upload(destPath, blob, { contentType: "image/jpeg", upsert: true });
+            if (!upErr) imagemPath = destPath;
+            else console.error("[qa-atualizar-foto] copy upload err", upErr);
+          } else if (dlErr) {
+            console.error("[qa-atualizar-foto] copy download err", dlErr);
+          }
+        } catch (copyErr) {
+          console.error("[qa-atualizar-foto] copy exception", copyErr);
+        }
+
         const { error: e2 } = await supabase
           .from("qa_clientes")
-          .update({ imagem: selfie_path, updated_at: now })
+          .update({ imagem: imagemPath, updated_at: now })
           .eq("id", cli.id);
         if (!e2) clienteAtualizado = true;
       }
