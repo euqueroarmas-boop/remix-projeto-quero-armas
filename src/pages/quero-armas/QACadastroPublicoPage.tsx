@@ -61,6 +61,7 @@ const initialForm: FormData = {
   servico_interesse: "",
   consentimento_dados_verdadeiros: false,
   consentimento_tratamento_dados: false,
+  selfie_data_url: "",
 };
 
 const STEPS: { num: Step; label: string; icon: any }[] = [
