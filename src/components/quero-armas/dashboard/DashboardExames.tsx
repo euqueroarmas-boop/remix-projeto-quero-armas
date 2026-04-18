@@ -432,7 +432,7 @@ function ClienteCard({
     clienteNome: string;
     clienteTelefone: string | null;
     temServicoPendente: boolean;
-    servicosPendentes: string[];
+    servicosPendentes: { nome: string; entidade: "PF" | "EB" }[];
     exames: ExameDashItem[];
   };
   variant: typeof KPI_VARIANTS[keyof typeof KPI_VARIANTS];
@@ -506,11 +506,21 @@ function ClienteCard({
               Serviços contratados
             </div>
             <div className="flex flex-wrap gap-1">
-              {group.servicosPendentes.map((nome) => (
+              {group.servicosPendentes.map(({ nome, entidade }) => (
                 <span
                   key={nome}
-                  className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200"
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200"
                 >
+                  <span
+                    className={`inline-flex items-center px-1.5 py-px rounded text-[9px] font-bold tracking-wider ${
+                      entidade === "PF"
+                        ? "bg-blue-600 text-white"
+                        : "bg-emerald-700 text-white"
+                    }`}
+                    title={entidade === "PF" ? "Polícia Federal" : "Exército Brasileiro"}
+                  >
+                    {entidade}
+                  </span>
                   {nome}
                 </span>
               ))}
