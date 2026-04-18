@@ -176,7 +176,44 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
         </div>
 
         {/* Admin profile + Logout */}
-        <div className="pt-3 border-t mx-3" style={{ borderColor: "hsl(220 13% 93%)" }}>
+        <div className={`pt-3 border-t ${collapsed ? "mx-0" : "mx-3"}`} style={{ borderColor: "hsl(220 13% 93%)" }}>
+          {!collapsed && (
+            <div className="flex items-center gap-2.5 px-4 py-2.5 mb-2">
+              <div className="h-8 w-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0"
+                style={{ background: "hsl(230 80% 56%)" }}>
+                {initials}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-xs font-medium truncate" style={{ color: "hsl(220 20% 18%)" }}>{nome}</div>
+                <div className="text-[10px] capitalize" style={{ color: "hsl(220 10% 62%)" }}>{perfil.replace(/_/g, " ")}</div>
+              </div>
+            </div>
+          )}
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip={collapsed ? "Sair" : undefined} className={collapsed ? "justify-center !p-0 w-full" : ""}>
+                <button
+                  onClick={signOut}
+                  className={`flex items-center rounded-lg text-[13px] font-medium transition-all ${
+                    collapsed ? "justify-center w-9 h-9 mx-auto" : "gap-2.5 px-4 py-2 w-full"
+                  }`}
+                  style={{ color: "hsl(220 10% 62%)" }}
+                  onMouseEnter={e => {
+                    (e.currentTarget as HTMLElement).style.color = "hsl(0 72% 51%)";
+                    (e.currentTarget as HTMLElement).style.background = "hsl(0 72% 96%)";
+                  }}
+                  onMouseLeave={e => {
+                    (e.currentTarget as HTMLElement).style.color = "hsl(220 10% 62%)";
+                    (e.currentTarget as HTMLElement).style.background = "transparent";
+                  }}
+                >
+                  <LogOut className={`shrink-0 ${collapsed ? "h-5 w-5" : "h-4 w-4"}`} />
+                  {!collapsed && <span>Sair</span>}
+                </button>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </div>
           {!collapsed && (
             <div className="flex items-center gap-2.5 px-4 py-2.5 mb-2">
               <div className="h-8 w-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0"
