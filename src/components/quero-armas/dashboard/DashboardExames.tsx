@@ -40,7 +40,7 @@ interface ExameDashItem {
   diasRestantes: number;
   status: ExameComStatus["status"];
   temServicoPendente: boolean;
-  servicosPendentes: string[];
+  servicosPendentes: { nome: string; entidade: "PF" | "EB" }[];
   prioridade: number;
   bucket: "vencido" | "d7" | "d15" | "d30" | "d45" | "vigente";
 }
@@ -193,7 +193,15 @@ export default function DashboardExames() {
 
         const clientesComPendente = new Set<string>();
         const clientesComDeferido = new Set<string>();
-        const servicosPendentesPorCliente = new Map<string, Set<string>>();
+        const servicosPendentesPorCliente = new Map<string, Map<string, "PF" | "EB">>();
+        const classifyEntidade = (sid: string | null, nome: string): "PF" | "EB" => {
+          // IDs canônicos PF: 2 (Posse PF), 3 (Porte PF), 26 (CRAF PF)
+          if (sid === "2" || sid === "3" || sid === "26") return "PF";
+          const n = (nome || "").toLowerCase();
+          if (n.includes("polícia federal") || n.includes("policia federal") || /\bpf\b/.test(n)) return "PF";
+          if (n.includes("posse") || n.includes("porte")) return "PF";
+          return "EB";
+        };
         for (const item of itens) {
           const status = (item.status || "").toUpperCase();
           const cidCanonical = vendaToClienteCanonical.get(String(item.venda_id));
@@ -202,12 +210,7 @@ export default function DashboardExames() {
             clientesComDeferido.add(cidCanonical);
           }
           if (!FINISHED.includes(status)) {
-            // ── REGRA DE BLOQUEIO ──
-            // Se a venda tem um serviço inicial INDEFERIDO, os demais itens em
-            // "AGUARDANDO ETAPA ANTERIOR"/etc. NÃO contam como pendência.
             if (vendasBloqueadas.has(String(item.venda_id))) continue;
-
-            // ── REGRA: processos em andamento não são "pendência de iniciar" ──
             if (EM_ANDAMENTO_NAO_PENDENTE.has(status)) continue;
 
             const sid = item.servico_id != null ? String(item.servico_id) : null;
@@ -215,8 +218,8 @@ export default function DashboardExames() {
             clientesComPendente.add(cidCanonical);
             const nome = sid ? servicoMap.get(sid) : null;
             if (nome) {
-              if (!servicosPendentesPorCliente.has(cidCanonical)) servicosPendentesPorCliente.set(cidCanonical, new Set());
-              servicosPendentesPorCliente.get(cidCanonical)!.add(nome);
+              if (!servicosPendentesPorCliente.has(cidCanonical)) servicosPendentesPorCliente.set(cidCanonical, new Map());
+              servicosPendentesPorCliente.get(cidCanonical)!.set(nome, classifyEntidade(sid, nome));
             }
           }
         }
@@ -252,7 +255,7 @@ export default function DashboardExames() {
             diasRestantes: dias_restantes,
             status,
             temServicoPendente: clientesComPendente.has(cidCanonical),
-            servicosPendentes: Array.from(servicosPendentesPorCliente.get(cidCanonical) || []),
+            servicosPendentes: Array.from(servicosPendentesPorCliente.get(cidCanonical)?.entries() || []).map(([nome, entidade]) => ({ nome, entidade })),
             prioridade: BUCKET_ORDER[bucket],
             bucket,
           });
@@ -429,7 +432,7 @@ function ClienteCard({
     clienteNome: string;
     clienteTelefone: string | null;
     temServicoPendente: boolean;
-    servicosPendentes: string[];
+    servicosPendentes: { nome: string; entidade: "PF" | "EB" }[];
     exames: ExameDashItem[];
   };
   variant: typeof KPI_VARIANTS[keyof typeof KPI_VARIANTS];
@@ -503,11 +506,21 @@ function ClienteCard({
               Serviços contratados
             </div>
             <div className="flex flex-wrap gap-1">
-              {group.servicosPendentes.map((nome) => (
+              {group.servicosPendentes.map(({ nome, entidade }) => (
                 <span
                   key={nome}
-                  className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200"
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200"
                 >
+                  <span
+                    className={`inline-flex items-center px-1.5 py-px rounded text-[9px] font-bold tracking-wider ${
+                      entidade === "PF"
+                        ? "bg-blue-600 text-white"
+                        : "bg-emerald-700 text-white"
+                    }`}
+                    title={entidade === "PF" ? "Polícia Federal" : "Exército Brasileiro"}
+                  >
+                    {entidade}
+                  </span>
                   {nome}
                 </span>
               ))}
