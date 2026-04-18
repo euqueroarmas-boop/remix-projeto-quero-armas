@@ -1,9 +1,9 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useBrasilApiLookup } from "@/hooks/useBrasilApiLookup";
 import {
   User, MapPin, Building2, FileCheck, ChevronRight, ChevronLeft,
-  Loader2, CheckCircle, Search, Plus, AlertCircle, Shield,
+  Loader2, CheckCircle, Search, Plus, AlertCircle, Shield, Camera, RotateCcw,
 } from "lucide-react";
 import { QALogo } from "@/components/quero-armas/QALogo";
 
