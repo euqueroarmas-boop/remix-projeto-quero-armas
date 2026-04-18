@@ -40,7 +40,7 @@ interface ExameDashItem {
   diasRestantes: number;
   status: ExameComStatus["status"];
   temServicoPendente: boolean;
-  servicosPendentes: { nome: string; entidade: "PF" | "EB" }[];
+  servicosPendentes: { nome: string; entidade: "PF" | "EB" | "CURSO" }[];
   prioridade: number;
   bucket: "vencido" | "d7" | "d15" | "d30" | "d45" | "vigente";
 }
@@ -434,7 +434,7 @@ function ClienteCard({
     clienteNome: string;
     clienteTelefone: string | null;
     temServicoPendente: boolean;
-    servicosPendentes: { nome: string; entidade: "PF" | "EB" }[];
+    servicosPendentes: { nome: string; entidade: "PF" | "EB" | "CURSO" }[];
     exames: ExameDashItem[];
   };
   variant: typeof KPI_VARIANTS[keyof typeof KPI_VARIANTS];
@@ -517,9 +517,17 @@ function ClienteCard({
                     className={`inline-flex items-center px-1.5 py-px rounded text-[9px] font-bold tracking-wider ${
                       entidade === "PF"
                         ? "bg-blue-600 text-white"
-                        : "bg-emerald-700 text-white"
+                        : entidade === "EB"
+                        ? "bg-emerald-700 text-white"
+                        : "bg-slate-500 text-white"
                     }`}
-                    title={entidade === "PF" ? "Polícia Federal" : "Exército Brasileiro"}
+                    title={
+                      entidade === "PF"
+                        ? "Polícia Federal"
+                        : entidade === "EB"
+                        ? "Exército Brasileiro"
+                        : "Curso / Capacitação"
+                    }
                   >
                     {entidade}
                   </span>

@@ -385,12 +385,13 @@ export default function DashboardProcessosMonitor() {
   const counts = useMemo(() => {
     const map = new Map<StatusKey, number>();
     const byEntStatus: Record<Entidade, Map<StatusKey, number>> = {
-      PF: new Map(), EB: new Map(),
+      PF: new Map(), EB: new Map(), CURSO: new Map(),
     };
     dynamicCatalog.forEach(s => {
       map.set(s.key, 0);
       byEntStatus.PF.set(s.key, 0);
       byEntStatus.EB.set(s.key, 0);
+      byEntStatus.CURSO.set(s.key, 0);
     });
     rows.forEach(r => {
       map.set(r.status, (map.get(r.status) || 0) + 1);
