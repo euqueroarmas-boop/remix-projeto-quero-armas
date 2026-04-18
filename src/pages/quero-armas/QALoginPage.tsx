@@ -59,8 +59,8 @@ export default function QALoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center mb-4 rounded-2xl bg-black p-4 shadow-sm">
-            <QALogo className="h-20 w-auto" alt="Quero Armas" />
+          <div className="inline-flex items-center justify-center mb-4">
+            <QALogo className="h-24 w-auto rounded-2xl" alt="Quero Armas" />
           </div>
           <p className="text-[11px] text-slate-400 mt-1 tracking-wider uppercase">Acesso Restrito</p>
         </div>
