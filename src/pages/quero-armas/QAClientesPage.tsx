@@ -1039,7 +1039,14 @@ export default function QAClientesPage() {
                 {vendas.length === 0 ? <Empty text="Nenhuma venda registrada." /> : (
                   <div className="space-y-3">
                     {vendas.map((v: any) => {
-                      const vItens = itens.filter((i: any) => i.venda_id === (v.id_legado ?? v.id));
+                      const vItens = itens
+                        .filter((i: any) => i.venda_id === (v.id_legado ?? v.id))
+                        .sort((a: any, b: any) => {
+                          const sa = a.sort_order ?? Number.MAX_SAFE_INTEGER;
+                          const sb = b.sort_order ?? Number.MAX_SAFE_INTEGER;
+                          if (sa !== sb) return sa - sb;
+                          return Number(a.id) - Number(b.id);
+                        });
                       return (
                         <div key={v.id} className="bg-white border border-slate-200 rounded-lg overflow-hidden">
                           <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200">
