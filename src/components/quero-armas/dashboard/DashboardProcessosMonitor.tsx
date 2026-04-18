@@ -221,6 +221,8 @@ export default function DashboardProcessosMonitor() {
   const [search, setSearch] = useState("");
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
 
   /** Aplica novo status + data de protocolo nos itens (1 ou N para combo).
    *  Zera o "tempo no status" setando data_ultima_atualizacao = data informada. */
