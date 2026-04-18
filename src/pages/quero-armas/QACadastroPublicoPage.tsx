@@ -757,10 +757,10 @@ function SelfieCapture({ value, onChange, error }: { value: string; onChange: (v
   const cameraRef = useRef<HTMLInputElement | null>(null);
   const [camErr, setCamErr] = useState<string | null>(null);
 
-  const onFile = async (f: File) => {
+  const onFile = async (f: File, mirror = false) => {
     setCamErr(null);
     try {
-      const normalized = await normalizeUploadToDataUrl(f, 1400);
+      const normalized = await normalizeUploadToDataUrl(f, 1400, mirror);
       onChange(normalized);
     } catch {
       setCamErr("Não foi possível carregar a imagem. Tente novamente com outra foto.");
