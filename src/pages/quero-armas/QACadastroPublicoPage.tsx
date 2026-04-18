@@ -695,6 +695,70 @@ export default function QACadastroPublicoPage() {
   return (
     <div className="min-h-screen qa-premium" style={{ background: "linear-gradient(135deg, hsl(220 20% 97%) 0%, hsl(230 20% 94%) 100%)" }}>
       <div className="max-w-3xl mx-auto px-4 py-6 md:py-10">
+        {/* Modal: cadastro duplicado — perguntar se deseja atualizar */}
+        {duplicateInfo && (
+          <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onClick={declineUpdateExisting}>
+            <div
+              className="qa-card max-w-md w-full rounded-2xl p-6 md:p-7 shadow-2xl"
+              style={{ background: "white" }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-start gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "hsl(35 95% 95%)" }}>
+                  <AlertCircle className="w-5 h-5" style={{ color: "hsl(35 90% 45%)" }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-base md:text-lg font-bold leading-tight" style={{ color: "hsl(220 20% 18%)" }}>
+                    Já existe um cadastro com este CPF
+                  </h2>
+                  <p className="text-xs mt-1" style={{ color: "hsl(220 10% 50%)" }}>
+                    Identificamos que você já enviou um cadastro anteriormente.
+                  </p>
+                </div>
+              </div>
+
+              <div className="rounded-xl p-3 mb-4 space-y-1.5 text-[12px]" style={{ background: "hsl(220 20% 97%)", color: "hsl(220 15% 30%)" }}>
+                {duplicateInfo.nome_completo && (
+                  <div><span className="opacity-60">Nome:</span> <span className="font-medium">{duplicateInfo.nome_completo}</span></div>
+                )}
+                {duplicateInfo.created_at && (
+                  <div><span className="opacity-60">Enviado em:</span> <span className="font-medium">{new Date(duplicateInfo.created_at).toLocaleDateString("pt-BR")}</span></div>
+                )}
+                {duplicateInfo.status && (
+                  <div><span className="opacity-60">Status:</span> <span className="font-medium uppercase">{duplicateInfo.status}</span></div>
+                )}
+                {duplicateInfo.servico_interesse && (
+                  <div><span className="opacity-60">Serviço anterior:</span> <span className="font-medium">{duplicateInfo.servico_interesse}</span></div>
+                )}
+              </div>
+
+              <p className="text-[13px] leading-relaxed mb-5" style={{ color: "hsl(220 15% 30%)" }}>
+                Deseja <strong>atualizar seu cadastro</strong> com as informações atuais? Pode ser que algo tenha mudado (endereço, telefone, etc.).
+                {form.servico_interesse && form.servico_interesse !== duplicateInfo.servico_interesse && (
+                  <> O novo serviço solicitado (<strong>{form.servico_interesse}</strong>) será adicionado ao seu cadastro existente.</>
+                )}
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-2">
+                <button
+                  onClick={declineUpdateExisting}
+                  className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium border transition-all hover:bg-slate-50"
+                  style={{ borderColor: "hsl(220 13% 88%)", color: "hsl(220 20% 30%)" }}
+                >
+                  Não, cancelar
+                </button>
+                <button
+                  onClick={acceptUpdateExisting}
+                  className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-all"
+                  style={{ background: "hsl(230 80% 56%)" }}
+                >
+                  Sim, atualizar cadastro
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div className="text-center mb-8">
           <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center overflow-hidden bg-black shadow-sm">
