@@ -1945,19 +1945,26 @@ export default function QAClientesPage() {
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <div className="flex flex-col items-end gap-1">
-                  <span
-                    className={`text-[10px] px-2 py-0.5 rounded-full font-semibold border ${
-                      c.pago
-                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                        : "bg-slate-50 text-slate-400 border-slate-200 opacity-60"
-                    }`}
-                    title={c.pago ? "Pagamento confirmado" : "Pagamento ainda não confirmado"}
-                  >
-                    {c.pago ? "PAGO" : "PAGO"}
-                  </span>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${cadastroStatusColor(c.status)}`}>{c.status}</span>
+                  <div className="flex items-center gap-1">
+                    <span
+                      className={`text-[10px] px-2 py-0.5 rounded-full font-semibold border ${cadastroStatusColor(c.status)}`}
+                      title={`Status de validação: ${c.status}`}
+                    >
+                      {String(c.status || "").toUpperCase()}
+                    </span>
+                    <span
+                      className={`text-[10px] px-2 py-0.5 rounded-full font-semibold border ${
+                        c.pago
+                          ? "bg-emerald-500 text-white border-emerald-500"
+                          : "bg-slate-50 text-slate-400 border-slate-200 opacity-60"
+                      }`}
+                      title={c.pago ? "Pagamento confirmado" : "Pagamento ainda não confirmado"}
+                    >
+                      {c.pago ? "PAGO" : "NÃO PAGO"}
+                    </span>
+                  </div>
                   <span className="text-[10px]" style={{ color: "hsl(220 10% 62%)" }}>
-                    {new Date(c.created_at).toLocaleDateString("pt-BR")}
+                    {new Date(c.created_at).toLocaleDateString("pt-BR")} {new Date(c.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
                   </span>
                 </div>
                 {loadingCadastroPublico ? (
