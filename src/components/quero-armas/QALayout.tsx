@@ -40,6 +40,7 @@ function QALayoutInner() {
             <div className="p-3 md:p-6 lg:p-8">
               <Outlet />
             </div>
+            <QAFooter />
           </main>
         </div>
       </div>
