@@ -339,7 +339,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
   const [saving, setSaving] = useState(false);
   const [servicos, setServicos] = useState<{ id: number; nome_servico: string; valor_servico: number }[]>([]);
   const [selectedServicos, setSelectedServicos] = useState<Map<number, { valor: number; checked: boolean; cortesia: boolean; cortesia_motivo: string; status: string | null }>>(new Map());
-  const [f, setF] = useState({ forma_pagamento: "", desconto: "0", status: "", numero_processo: "", data_cadastro: "", valor_aberto: "0" });
+  const [f, setF] = useState({ forma_pagamento: "", desconto: "0", status: "", data_cadastro: "", valor_aberto: "0" });
 
   useEffect(() => {
     supabase.from("qa_servicos" as any).select("*").order("nome_servico").then(({ data }) => {
@@ -351,7 +351,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
     if (venda) {
       setF({
         forma_pagamento: venda.forma_pagamento || "", desconto: String(venda.desconto || 0),
-        status: venda.status || "", numero_processo: venda.numero_processo || "",
+        status: venda.status || "",
         data_cadastro: isoToBr(venda.data_cadastro) || isoToBr(new Date().toISOString().slice(0, 10)),
         valor_aberto: String(venda.valor_aberto || 0),
       });
@@ -372,7 +372,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
     } else {
       const today = new Date();
       const todayBr = `${String(today.getDate()).padStart(2,'0')}/${String(today.getMonth()+1).padStart(2,'0')}/${today.getFullYear()}`;
-      setF({ forma_pagamento: "", desconto: "0", status: "", numero_processo: "", data_cadastro: todayBr, valor_aberto: "0" });
+      setF({ forma_pagamento: "", desconto: "0", status: "", data_cadastro: todayBr, valor_aberto: "0" });
       setSelectedServicos(new Map());
     }
   }, [venda, open]);
@@ -504,9 +504,8 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
       }
     >
       <div className="space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
           <PremiumField label="Data da Venda" value={f.data_cadastro} onChange={v => setF(p => ({ ...p, data_cadastro: applyDateMask(v) }))} type="date" icon={CalendarDays} />
-          <PremiumField label="Nº Processo" value={f.numero_processo} onChange={v => setF(p => ({ ...p, numero_processo: v }))} icon={Hash} />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="flex-1 min-w-0">
