@@ -2079,6 +2079,36 @@ function DetailGrid({ children }: { children: React.ReactNode }) {
   return <div className="space-y-2.5">{children}</div>;
 }
 
+function SelfieViewer({ path, alt }: { path: string; alt: string }) {
+  const [url, setUrl] = useState<string | null>(null);
+  const [err, setErr] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase.storage
+        .from("qa-cadastro-selfies")
+        .createSignedUrl(path, 3600);
+      if (cancelled) return;
+      if (error || !data?.signedUrl) setErr(true);
+      else setUrl(data.signedUrl);
+    })();
+    return () => { cancelled = true; };
+  }, [path]);
+  if (err) return <div className="text-xs text-slate-400">Não foi possível carregar a selfie.</div>;
+  if (!url) return <div className="text-xs text-slate-400 flex items-center gap-2"><Loader2 className="h-3 w-3 animate-spin" /> Carregando...</div>;
+  return (
+    <div className="flex items-start gap-3">
+      <a href={url} target="_blank" rel="noopener noreferrer">
+        <img src={url} alt={alt} className="w-32 h-32 md:w-40 md:h-40 object-cover rounded-xl border" style={{ borderColor: "hsl(220 13% 88%)" }} />
+      </a>
+      <div className="text-[11px]" style={{ color: "hsl(220 10% 50%)" }}>
+        <p>Foto enviada pelo cliente no preenchimento do formulário.</p>
+        <p className="mt-1">Clique na imagem para ampliar.</p>
+      </div>
+    </div>
+  );
+}
+
 function DetailField({ label, value, icon: Icon, copyable, highlight }: {
   label: string; value?: string | null; icon?: any; copyable?: boolean; highlight?: boolean;
 }) {
