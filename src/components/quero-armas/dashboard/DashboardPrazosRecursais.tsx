@@ -59,10 +59,10 @@ function classifyPF(nome: string): "Posse" | "Porte" | null {
 }
 
 function toneFor(dias: number) {
-  if (dias < 0)  return { dot: "bg-slate-800", text: "text-slate-800",  border: "border-slate-300", bg: "bg-slate-50",   label: "VENCIDO" };
-  if (dias <= 2) return { dot: "bg-rose-600",  text: "text-rose-700",   border: "border-rose-200",  bg: "bg-rose-50",    label: "CRÍTICO" };
-  if (dias <= 5) return { dot: "bg-amber-500", text: "text-amber-700",  border: "border-amber-200", bg: "bg-amber-50",   label: "ATENÇÃO" };
-  return            { dot: "bg-emerald-500", text: "text-emerald-700", border: "border-emerald-200", bg: "bg-white",    label: "EM PRAZO" };
+  // dias = dias restantes até o limite (D+10). Sempre 0..10 aqui (vencidos já filtrados).
+  if (dias <= 4) return { dot: "bg-rose-600",    text: "text-rose-700",    border: "border-rose-200",    bg: "bg-rose-50",    label: "CRÍTICO" };
+  if (dias <= 7) return { dot: "bg-amber-500",   text: "text-amber-700",   border: "border-amber-200",   bg: "bg-amber-50",   label: "ATENÇÃO" };
+  return            { dot: "bg-emerald-500", text: "text-emerald-700", border: "border-emerald-200", bg: "bg-white",     label: "EM PRAZO" };
 }
 
 export default function DashboardPrazosRecursais() {
