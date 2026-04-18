@@ -60,3 +60,6 @@ verify_jwt = false
 [functions.qa-process-job]
 verify_jwt = false
 
+[functions.qa-atualizar-foto]
+verify_jwt = false
+
