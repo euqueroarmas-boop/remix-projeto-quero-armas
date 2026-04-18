@@ -50,6 +50,20 @@ const FINISHED = ["DEFERIDO", "CONCLUÍDO", "DESISTIU", "RESTITUÍDO", "INDEFERI
 // seus exames somem do monitoramento do Dashboard (foram usados no processo).
 const CONSUMED_STATUSES = ["DEFERIDO"];
 
+/**
+ * Serviços "iniciais bloqueadores": quando INDEFERIDOS, impedem a continuidade dos
+ * demais itens da MESMA VENDA (CRAF, GTE, etc. ficam em "Aguardando Etapa Anterior").
+ * Nesses casos o cliente NÃO deve aparecer como pendência — o processo morreu na origem.
+ *
+ * - 2  Posse na Polícia Federal
+ * - 3  Porte na Polícia Federal
+ * - 5  COMBO - Autorização de compra de arma de Fogo
+ * - 15 Autorização de compra de arma de fogo (Exército)
+ * - 20 Concessão de CR no Exército Brasileiro sem clube / Militar
+ * - 27 Concessão de CR no Exército Brasileiro (Sem Clube)
+ */
+const SERVICOS_INICIAIS_BLOQUEADORES = new Set(["2", "3", "5", "15", "20", "27"]);
+
 function bucketize(status: ExameComStatus["status"], dias: number): ExameDashItem["bucket"] {
   if (status === "vencido") return "vencido";
   if (status === "vigente") return "vigente";
