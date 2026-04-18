@@ -372,7 +372,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
     } else {
       const today = new Date();
       const todayBr = `${String(today.getDate()).padStart(2,'0')}/${String(today.getMonth()+1).padStart(2,'0')}/${today.getFullYear()}`;
-      setF({ forma_pagamento: "", desconto: "0", status: "", numero_processo: "", data_cadastro: todayBr, valor_aberto: "0" });
+      setF({ forma_pagamento: "", desconto: "0", status: "", data_cadastro: todayBr, valor_aberto: "0" });
       setSelectedServicos(new Map());
     }
   }, [venda, open]);
