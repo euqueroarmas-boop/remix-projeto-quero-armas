@@ -609,6 +609,33 @@ export default function QAClientesPage() {
     }
   };
 
+  const togglePagoCadastroPublico = async () => {
+    if (!selectedCadastroPublico) return;
+    const novoPago = !selectedCadastroPublico.pago;
+    setSavingCadastroPublicoStatus("pago");
+    try {
+      const { data, error } = await supabase.from("qa_cadastro_publico" as any)
+        .update({ pago: novoPago })
+        .eq("id", selectedCadastroPublico.id)
+        .select("*")
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) {
+        toast.error("Cadastro público não encontrado");
+        return;
+      }
+      const updated = data as unknown as CadastroPublico;
+      setSelectedCadastroPublico(updated);
+      setCadastrosPublicos(prev => prev.map(item => item.id === updated.id ? { ...item, ...updated } : item));
+      toast.success(novoPago ? "Marcado como pago" : "Marcado como não pago");
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao atualizar pagamento");
+    } finally {
+      setSavingCadastroPublicoStatus(null);
+    }
+  };
+
   const updateCadastroPublicoStatus = async (status: string) => {
     if (!selectedCadastroPublico) return;
 
