@@ -91,17 +91,10 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
         {/* Logo - expanded only */}
         {!collapsed && (
           <div className="px-5 pb-3 mb-1 border-b flex items-center justify-between" style={{ borderColor: "hsl(220 13% 93%)" }}>
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-lg overflow-hidden flex items-center justify-center bg-white border" style={{ borderColor: "hsl(220 13% 90%)" }}>
-                <QALogo className="h-9 w-9" />
-              </div>
-              <div>
-                <div className="text-sm font-bold tracking-tight" style={{ color: "hsl(220 20% 18%)" }}>
-                  Quero Armas
-                </div>
-                <div className="text-[10px] tracking-widest uppercase" style={{ color: "hsl(220 10% 62%)" }}>
-                  Inteligência Jurídica
-                </div>
+            <div className="flex items-center gap-2.5 min-w-0">
+              <QALogo className="h-9 w-auto max-w-[150px]" />
+              <div className="text-[10px] tracking-widest uppercase truncate" style={{ color: "hsl(220 10% 62%)" }}>
+                Inteligência Jurídica
               </div>
             </div>
             <button
