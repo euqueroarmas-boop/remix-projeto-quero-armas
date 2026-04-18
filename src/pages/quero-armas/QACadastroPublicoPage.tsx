@@ -3,8 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useBrasilApiLookup } from "@/hooks/useBrasilApiLookup";
 import {
   User, MapPin, Building2, FileCheck, ChevronRight, ChevronLeft,
-  Loader2, CheckCircle, Search, Plus, AlertCircle, Shield,
-  Camera, RefreshCw, X as XIcon,
+  Loader2, CheckCircle, Search, Plus, AlertCircle, Shield, Camera, RotateCcw,
 } from "lucide-react";
 import { QALogo } from "@/components/quero-armas/QALogo";
 
@@ -35,8 +34,7 @@ interface FormData {
   servico_interesse: string;
   consentimento_dados_verdadeiros: boolean;
   consentimento_tratamento_dados: boolean;
-  selfie_data_url: string; // base64 (preview only — not sent)
-  selfie_path: string;     // storage object path (sent to backend)
+  selfie_data_url: string;
 }
 
 const initialForm: FormData = {
@@ -64,7 +62,6 @@ const initialForm: FormData = {
   consentimento_dados_verdadeiros: false,
   consentimento_tratamento_dados: false,
   selfie_data_url: "",
-  selfie_path: "",
 };
 
 const STEPS: { num: Step; label: string; icon: any }[] = [
@@ -288,7 +285,7 @@ export default function QACadastroPublicoPage() {
         errs.telefone_principal = "Telefone é obrigatório";
       if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
         errs.email = "E-mail inválido";
-      if (!form.selfie_data_url) (errs as any).selfie_data_url = "Tire uma selfie para confirmar sua identidade";
+      if (!form.selfie_data_url) (errs as any).selfie_data_url = "Selfie é obrigatória";
     }
     if (s === 2) {
       if (!form.end1_numero.trim()) errs.end1_numero = "Número é obrigatório";
@@ -335,27 +332,30 @@ export default function QACadastroPublicoPage() {
   /* ── Submit ── */
   const handleSubmit = async () => {
     if (!validateStep(5)) return;
+    if (!form.selfie_data_url) {
+      setStep(1);
+      setErrors({ nome_completo: "É necessário tirar a selfie no Passo 1" } as any);
+      return;
+    }
     setSubmitting(true);
     try {
-      // 1. Upload selfie to private storage (if provided)
-      let selfiePath = form.selfie_path;
-      if (form.selfie_data_url && !selfiePath) {
+      // Upload selfie first
+      let selfie_path: string | null = null;
+      try {
         const blob = await (await fetch(form.selfie_data_url)).blob();
-        const cpfDigits = form.cpf.replace(/\D/g, "") || "sem-cpf";
-        const ts = Date.now();
-        const key = `cadastro-publico/${cpfDigits}-${ts}.jpg`;
+        const cpfDigits = form.cpf.replace(/\D/g, "");
+        const key = `cadastro-publico/${cpfDigits || "anon"}-${Date.now()}.jpg`;
         const { error: upErr } = await supabase.storage
           .from("qa-cadastro-selfies")
           .upload(key, blob, { contentType: "image/jpeg", upsert: true });
-        if (upErr) throw new Error("Falha ao enviar a selfie. Tente novamente.");
-        selfiePath = key;
-        set("selfie_path", key);
+        if (!upErr) selfie_path = key;
+      } catch (e) {
+        console.error("[selfie upload]", e);
       }
 
-      // 2. Submit form (omit local-only preview field)
-      const { selfie_data_url: _omit, ...payload } = { ...form, selfie_path: selfiePath };
+      const { selfie_data_url: _omit, ...rest } = form;
       const { data, error } = await supabase.functions.invoke("qa-cadastro-publico", {
-        body: payload,
+        body: { ...rest, selfie_path },
       });
       if (error || !data?.success) {
         throw new Error(data?.error || "Erro ao enviar");
@@ -535,6 +535,123 @@ function SelectInput({ value, onChange, options, placeholder }: { value: string;
   );
 }
 
+/* ── Selfie Capture ── */
+function SelfieCapture({ value, onChange, error }: { value: string; onChange: (v: string) => void; error?: string }) {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const fileRef = useRef<HTMLInputElement | null>(null);
+  const [streaming, setStreaming] = useState(false);
+  const [starting, setStarting] = useState(false);
+  const [camErr, setCamErr] = useState<string | null>(null);
+
+  const stopStream = useCallback(() => {
+    streamRef.current?.getTracks().forEach(t => t.stop());
+    streamRef.current = null;
+    setStreaming(false);
+  }, []);
+
+  useEffect(() => () => stopStream(), [stopStream]);
+
+  const startCamera = async () => {
+    setCamErr(null);
+    setStarting(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user", width: { ideal: 720 }, height: { ideal: 720 } },
+        audio: false,
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
+      setStreaming(true);
+    } catch (e: any) {
+      setCamErr("Não foi possível acessar a câmera. Use o envio de arquivo abaixo.");
+    } finally {
+      setStarting(false);
+    }
+  };
+
+  const capture = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    const size = Math.min(video.videoWidth, video.videoHeight);
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const sx = (video.videoWidth - size) / 2;
+    const sy = (video.videoHeight - size) / 2;
+    ctx.drawImage(video, sx, sy, size, size, 0, 0, size, size);
+    onChange(canvas.toDataURL("image/jpeg", 0.85));
+    stopStream();
+  };
+
+  const onFile = (f: File) => {
+    const reader = new FileReader();
+    reader.onload = () => onChange(String(reader.result || ""));
+    reader.readAsDataURL(f);
+  };
+
+  return (
+    <div className="md:col-span-2">
+      <div className="flex items-center gap-2 mb-2">
+        <Camera className="w-4 h-4" style={{ color: "hsl(230 80% 56%)" }} />
+        <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "hsl(220 20% 25%)" }}>
+          Selfie de Identificação <span style={{ color: "hsl(0 70% 55%)" }}>*</span>
+        </span>
+      </div>
+      <div className="rounded-xl border p-3 flex flex-col sm:flex-row items-center gap-3" style={{ borderColor: "hsl(220 13% 88%)", background: "hsl(220 20% 98%)" }}>
+        <div className="w-32 h-32 rounded-xl overflow-hidden flex items-center justify-center shrink-0 bg-black/5" style={{ border: "1px dashed hsl(220 13% 80%)" }}>
+          {value ? (
+            <img src={value} alt="Selfie" className="w-full h-full object-cover" />
+          ) : streaming ? (
+            <video ref={videoRef} className="w-full h-full object-cover" playsInline muted />
+          ) : (
+            <Camera className="w-8 h-8" style={{ color: "hsl(220 10% 60%)" }} />
+          )}
+        </div>
+        <div className="flex-1 min-w-0 w-full">
+          <p className="text-xs leading-relaxed mb-2" style={{ color: "hsl(220 10% 50%)" }}>
+            Tire uma foto do seu rosto bem iluminado, sem óculos escuros ou boné. Será usada para identificação.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {value ? (
+              <button type="button" onClick={() => { onChange(""); }} className="text-xs font-medium px-3 py-1.5 rounded-lg border flex items-center gap-1.5" style={{ borderColor: "hsl(220 13% 85%)", color: "hsl(220 20% 30%)" }}>
+                <RotateCcw className="w-3.5 h-3.5" /> Tirar outra
+              </button>
+            ) : streaming ? (
+              <>
+                <button type="button" onClick={capture} className="text-xs font-semibold px-3 py-1.5 rounded-lg text-white flex items-center gap-1.5" style={{ background: "hsl(230 80% 56%)" }}>
+                  <Camera className="w-3.5 h-3.5" /> Capturar
+                </button>
+                <button type="button" onClick={stopStream} className="text-xs font-medium px-3 py-1.5 rounded-lg border" style={{ borderColor: "hsl(220 13% 85%)", color: "hsl(220 20% 30%)" }}>
+                  Cancelar
+                </button>
+              </>
+            ) : (
+              <>
+                <button type="button" onClick={startCamera} disabled={starting} className="text-xs font-semibold px-3 py-1.5 rounded-lg text-white flex items-center gap-1.5 disabled:opacity-50" style={{ background: "hsl(230 80% 56%)" }}>
+                  {starting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5" />}
+                  Abrir câmera
+                </button>
+                <button type="button" onClick={() => fileRef.current?.click()} className="text-xs font-medium px-3 py-1.5 rounded-lg border" style={{ borderColor: "hsl(220 13% 85%)", color: "hsl(220 20% 30%)" }}>
+                  Enviar arquivo
+                </button>
+                <input ref={fileRef} type="file" accept="image/*" capture="user" hidden onChange={e => { const f = e.target.files?.[0]; if (f) onFile(f); }} />
+              </>
+            )}
+          </div>
+          {camErr && <p className="text-[11px] mt-1.5" style={{ color: "hsl(0 70% 50%)" }}>{camErr}</p>}
+          {error && !value && <p className="text-[11px] mt-1.5" style={{ color: "hsl(0 70% 50%)" }}>{error}</p>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── Step 1: Dados Pessoais ── */
 function Step1({ form, set, errors, onCpfLookup, cpfLooking, cpfFound }: { form: FormData; set: any; errors: any; onCpfLookup?: () => void; cpfLooking?: boolean; cpfFound?: boolean | null }) {
   return (
@@ -542,6 +659,7 @@ function Step1({ form, set, errors, onCpfLookup, cpfLooking, cpfFound }: { form:
       <SectionTitle>Dados Pessoais</SectionTitle>
       <SectionDesc>Informe seus dados de identificação pessoal.</SectionDesc>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <SelfieCapture value={form.selfie_data_url} onChange={v => set("selfie_data_url", v)} error={(errors as any).selfie_data_url} />
         <div className="md:col-span-2">
           <Field label="Nome completo" required error={errors.nome_completo}>
             <TextInput value={form.nome_completo} onChange={v => set("nome_completo", v)} placeholder="Nome completo" />
@@ -621,14 +739,6 @@ function Step1({ form, set, errors, onCpfLookup, cpfLooking, cpfFound }: { form:
               value={form.observacoes}
               onChange={e => set("observacoes", e.target.value.toUpperCase())}
               placeholder="Informações adicionais (opcional)"
-            />
-          </Field>
-        </div>
-        <div className="md:col-span-2">
-          <Field label="Selfie de identificação" required error={(errors as any).selfie_data_url}>
-            <SelfieCapture
-              value={form.selfie_data_url}
-              onChange={(dataUrl) => { set("selfie_data_url", dataUrl); set("selfie_path", ""); }}
             />
           </Field>
         </div>
@@ -1056,186 +1166,6 @@ function SummaryItem({ label, value }: { label: string; value: string }) {
     <div className="flex gap-2 py-1">
       <span className="font-medium" style={{ color: "hsl(220 10% 50%)" }}>{label}:</span>
       <span style={{ color: "hsl(220 20% 18%)" }}>{value}</span>
-    </div>
-  );
-}
-
-/* ── Selfie Capture Component ── */
-function SelfieCapture({ value, onChange }: { value: string; onChange: (dataUrl: string) => void }) {
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [active, setActive] = useState(false);
-  const [starting, setStarting] = useState(false);
-  const [camError, setCamError] = useState<string | null>(null);
-
-  const stopStream = useCallback(() => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(t => t.stop());
-      streamRef.current = null;
-    }
-    setActive(false);
-  }, []);
-
-  useEffect(() => () => stopStream(), [stopStream]);
-
-  const startCamera = async () => {
-    setCamError(null);
-    setStarting(true);
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "user", width: { ideal: 720 }, height: { ideal: 720 } },
-        audio: false,
-      });
-      streamRef.current = stream;
-      setActive(true);
-      // Wait next tick for video element to mount
-      setTimeout(() => {
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          videoRef.current.play().catch(() => {});
-        }
-      }, 50);
-    } catch {
-      setCamError("Não foi possível acessar a câmera. Toque em \"Enviar foto\" para usar a galeria.");
-      setActive(false);
-    } finally {
-      setStarting(false);
-    }
-  };
-
-  const capture = () => {
-    const video = videoRef.current;
-    if (!video) return;
-    const w = video.videoWidth || 480;
-    const h = video.videoHeight || 480;
-    const canvas = canvasRef.current || document.createElement("canvas");
-    canvas.width = w;
-    canvas.height = h;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    ctx.drawImage(video, 0, 0, w, h);
-    const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
-    onChange(dataUrl);
-    stopStream();
-  };
-
-  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      setCamError("Selecione um arquivo de imagem.");
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => onChange(String(reader.result || ""));
-    reader.readAsDataURL(file);
-  };
-
-  const retake = () => {
-    onChange("");
-    startCamera();
-  };
-
-  // Has captured photo
-  if (value) {
-    return (
-      <div className="flex flex-col sm:flex-row items-center gap-4 p-3 rounded-xl" style={{ background: "hsl(220 20% 97%)", border: "1px solid hsl(220 13% 91%)" }}>
-        <img src={value} alt="Selfie" className="w-32 h-32 object-cover rounded-xl border" style={{ borderColor: "hsl(220 13% 85%)" }} />
-        <div className="flex-1 text-center sm:text-left">
-          <p className="flex items-center justify-center sm:justify-start gap-1.5 text-sm font-medium mb-1" style={{ color: "hsl(152 60% 35%)" }}>
-            <CheckCircle className="w-4 h-4" /> Selfie capturada
-          </p>
-          <p className="text-[12px] mb-3" style={{ color: "hsl(220 10% 50%)" }}>
-            Confira se seu rosto está nítido e bem iluminado.
-          </p>
-          <button
-            type="button"
-            onClick={retake}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
-            style={{ background: "white", border: "1px solid hsl(220 15% 85%)", color: "hsl(220 20% 30%)" }}
-          >
-            <RefreshCw className="w-3.5 h-3.5" /> Tirar novamente
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Camera active
-  if (active) {
-    return (
-      <div className="rounded-xl overflow-hidden" style={{ background: "hsl(220 20% 10%)", border: "1px solid hsl(220 13% 85%)" }}>
-        <div className="relative aspect-square max-w-[320px] mx-auto">
-          <video ref={videoRef} playsInline muted className="w-full h-full object-cover" style={{ transform: "scaleX(-1)" }} />
-          <canvas ref={canvasRef} className="hidden" />
-        </div>
-        <div className="flex items-center justify-center gap-2 p-3" style={{ background: "hsl(220 20% 12%)" }}>
-          <button
-            type="button"
-            onClick={stopStream}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium"
-            style={{ background: "hsl(220 20% 20%)", color: "white" }}
-          >
-            <XIcon className="w-3.5 h-3.5" /> Cancelar
-          </button>
-          <button
-            type="button"
-            onClick={capture}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold text-white"
-            style={{ background: "hsl(230 80% 56%)" }}
-          >
-            <Camera className="w-4 h-4" /> Capturar
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Idle state
-  return (
-    <div className="p-4 rounded-xl text-center" style={{ background: "hsl(220 20% 97%)", border: "1px dashed hsl(220 15% 80%)" }}>
-      <div className="w-14 h-14 mx-auto mb-3 rounded-full flex items-center justify-center" style={{ background: "hsl(230 80% 95%)" }}>
-        <Camera className="w-6 h-6" style={{ color: "hsl(230 80% 56%)" }} />
-      </div>
-      <p className="text-sm font-medium mb-1" style={{ color: "hsl(220 20% 18%)" }}>Tire uma selfie agora</p>
-      <p className="text-[12px] mb-4" style={{ color: "hsl(220 10% 50%)" }}>
-        Segure o celular na altura do rosto, em ambiente bem iluminado, sem óculos escuros ou boné.
-      </p>
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
-        <button
-          type="button"
-          onClick={startCamera}
-          disabled={starting}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-50"
-          style={{ background: "hsl(230 80% 56%)" }}
-        >
-          {starting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
-          {starting ? "Abrindo câmera..." : "Abrir câmera"}
-        </button>
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium"
-          style={{ background: "white", border: "1px solid hsl(220 15% 85%)", color: "hsl(220 20% 30%)" }}
-        >
-          Enviar foto
-        </button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          capture="user"
-          className="hidden"
-          onChange={handleFile}
-        />
-      </div>
-      {camError && (
-        <p className="mt-3 text-[11px]" style={{ color: "hsl(0 72% 51%)" }}>
-          <AlertCircle className="w-3 h-3 inline mr-0.5" /> {camError}
-        </p>
-      )}
     </div>
   );
 }

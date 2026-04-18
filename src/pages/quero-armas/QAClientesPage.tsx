@@ -34,6 +34,48 @@ import { getClienteFK, getVendaFK } from "@/components/quero-armas/clientes/clie
 import { useQAStatusServico } from "@/hooks/useQAStatusServico";
 import { isDispensado, getBaseLegalDispensa, CATEGORIA_MAP, type CategoriaTitular } from "@/components/quero-armas/clientes/categoriaTitular";
 
+/* ── Selfie Thumbnail (loads private storage signed URL) ── */
+function SelfieThumb({ path, name, size = "lg" }: { path: string | null | undefined; name?: string | null; size?: "lg" | "sm" }) {
+  const [url, setUrl] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    if (!path) { setUrl(null); return; }
+    supabase.storage.from("qa-cadastro-selfies").createSignedUrl(path, 3600).then(({ data }) => {
+      if (active) setUrl(data?.signedUrl || null);
+    });
+    return () => { active = false; };
+  }, [path]);
+
+  const dim = size === "lg" ? "w-20 h-20 md:w-24 md:h-24" : "w-12 h-12";
+  const initial = (name || "?").trim().charAt(0).toUpperCase();
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => url && setOpen(true)}
+        disabled={!url}
+        className={`${dim} rounded-xl overflow-hidden shrink-0 flex items-center justify-center border bg-slate-50 transition-all ${url ? "hover:ring-2 hover:ring-blue-300 cursor-zoom-in" : "cursor-default"}`}
+        style={{ borderColor: "hsl(220 13% 88%)" }}
+        title={url ? "Clique para ampliar" : "Sem selfie"}
+      >
+        {url ? (
+          <img src={url} alt={name || "Selfie"} className="w-full h-full object-cover" />
+        ) : (
+          <span className="text-xl font-bold" style={{ color: "hsl(220 10% 60%)" }}>{initial}</span>
+        )}
+      </button>
+      {open && url && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={() => setOpen(false)}>
+          <img src={url} alt={name || "Selfie"} className="max-w-full max-h-full rounded-lg shadow-2xl" onClick={e => e.stopPropagation()} />
+        </div>
+      )}
+    </>
+  );
+}
+
 const formatCpf = (v: string | null | undefined): string => {
   if (!v) return "—";
   const d = v.replace(/\D/g, "");
@@ -1544,6 +1586,7 @@ export default function QAClientesPage() {
                 <span className="text-[11px]" style={{ color: "hsl(220 10% 55%)" }}>CPF: {formatCpf(c.cpf)}</span>
               </div>
             </div>
+            <SelfieThumb path={(c as any).selfie_path} name={c.nome_completo} />
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:flex md:items-center md:flex-nowrap md:justify-end gap-1.5 md:gap-2">
@@ -1659,11 +1702,6 @@ export default function QAClientesPage() {
             </DetailGrid>
           </DetailCard>
 
-          {(c as any).selfie_path && (
-            <DetailCard title="Selfie de identificação">
-              <SelfieViewer path={(c as any).selfie_path} alt={c.nome_completo} />
-            </DetailCard>
-          )}
           {(() => {
             const ua = (c as any).consentimento_user_agent as string | null | undefined;
             const ip = (c as any).consentimento_ip as string | null | undefined;
@@ -2077,36 +2115,6 @@ function DetailCard({ title, children }: { title: string; children: React.ReactN
 
 function DetailGrid({ children }: { children: React.ReactNode }) {
   return <div className="space-y-2.5">{children}</div>;
-}
-
-function SelfieViewer({ path, alt }: { path: string; alt: string }) {
-  const [url, setUrl] = useState<string | null>(null);
-  const [err, setErr] = useState(false);
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const { data, error } = await supabase.storage
-        .from("qa-cadastro-selfies")
-        .createSignedUrl(path, 3600);
-      if (cancelled) return;
-      if (error || !data?.signedUrl) setErr(true);
-      else setUrl(data.signedUrl);
-    })();
-    return () => { cancelled = true; };
-  }, [path]);
-  if (err) return <div className="text-xs text-slate-400">Não foi possível carregar a selfie.</div>;
-  if (!url) return <div className="text-xs text-slate-400 flex items-center gap-2"><Loader2 className="h-3 w-3 animate-spin" /> Carregando...</div>;
-  return (
-    <div className="flex items-start gap-3">
-      <a href={url} target="_blank" rel="noopener noreferrer">
-        <img src={url} alt={alt} className="w-32 h-32 md:w-40 md:h-40 object-cover rounded-xl border" style={{ borderColor: "hsl(220 13% 88%)" }} />
-      </a>
-      <div className="text-[11px]" style={{ color: "hsl(220 10% 50%)" }}>
-        <p>Foto enviada pelo cliente no preenchimento do formulário.</p>
-        <p className="mt-1">Clique na imagem para ampliar.</p>
-      </div>
-    </div>
-  );
 }
 
 function DetailField({ label, value, icon: Icon, copyable, highlight }: {
