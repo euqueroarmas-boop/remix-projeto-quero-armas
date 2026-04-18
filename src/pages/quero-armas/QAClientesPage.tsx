@@ -2049,7 +2049,41 @@ export default function QAClientesPage() {
           }}>
           <FileText className="h-3.5 w-3.5 inline mr-1" /> FORMULÁRIOS ({filteredCadastros.length})
         </button>
+        <button
+          onClick={() => setTabView("rejeitados")}
+          className="flex-1 py-2 px-3 rounded-lg text-[11px] font-semibold transition-all"
+          style={{
+            background: tabView === "rejeitados" ? "hsl(0 0% 100%)" : "transparent",
+            color: tabView === "rejeitados" ? "hsl(0 65% 45%)" : "hsl(220 10% 55%)",
+            boxShadow: tabView === "rejeitados" ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+          }}>
+          <XCircle className="h-3.5 w-3.5 inline mr-1" /> REJEITADOS ({filteredRejeitados.length})
+        </button>
       </div>
+
+      {/* Sub-filter for FORMULÁRIOS (pendente / aprovado) */}
+      {tabView === "cadastros" && (
+        <div className="flex gap-1 p-1 rounded-lg w-fit" style={{ background: "hsl(220 20% 96%)" }}>
+          <button
+            onClick={() => setCadastroFilter("pendente")}
+            className="px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all"
+            style={{
+              background: cadastroFilter === "pendente" ? "hsl(38 92% 50%)" : "transparent",
+              color: cadastroFilter === "pendente" ? "white" : "hsl(220 10% 55%)",
+            }}>
+            Pendentes
+          </button>
+          <button
+            onClick={() => setCadastroFilter("aprovado")}
+            className="px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all"
+            style={{
+              background: cadastroFilter === "aprovado" ? "hsl(152 60% 42%)" : "transparent",
+              color: cadastroFilter === "aprovado" ? "white" : "hsl(220 10% 55%)",
+            }}>
+            Aprovados
+          </button>
+        </div>
+      )}
 
       {loading ? (
         <div className="flex flex-col items-center justify-center py-16 gap-3">
