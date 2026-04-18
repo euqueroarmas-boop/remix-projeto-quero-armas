@@ -618,35 +618,44 @@ export default function QACadastroPublicoPage() {
     }
     setSubmitting(true);
     try {
-      // Upload selfie — DataURL→Blob direto (mais confiável em iOS Safari)
-      let selfie_path: string | null = null;
-      try {
-        const dataUrl = form.selfie_data_url;
-        const [meta, b64] = dataUrl.split(",");
-        const mime = /data:([^;]+)/.exec(meta || "")?.[1] || "image/jpeg";
-        const bin = atob(b64 || "");
-        const bytes = new Uint8Array(bin.length);
-        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-        const blob = new Blob([bytes], { type: mime });
+      const cpfDigits = form.cpf.replace(/\D/g, "");
 
-        const cpfDigits = form.cpf.replace(/\D/g, "");
-        const key = `cadastro-publico/${cpfDigits || "anon"}-${Date.now()}.jpg`;
-        const { error: upErr } = await supabase.storage
-          .from("qa-cadastro-selfies")
-          .upload(key, blob, { contentType: mime, upsert: true });
-        if (upErr) {
-          console.error("[selfie upload] storage error:", upErr);
-          throw new Error(`Falha ao enviar selfie: ${upErr.message}`);
+      // Helper to upload a data URL to qa-cadastro-selfies
+      const uploadDataUrl = async (dataUrl: string, suffix: string): Promise<string | null> => {
+        if (!dataUrl) return null;
+        try {
+          const [meta, b64] = dataUrl.split(",");
+          const mime = /data:([^;]+)/.exec(meta || "")?.[1] || "image/jpeg";
+          const ext = mime.includes("png") ? "png" : "jpg";
+          const bin = atob(b64 || "");
+          const bytes = new Uint8Array(bin.length);
+          for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+          const blob = new Blob([bytes], { type: mime });
+          const key = `cadastro-publico/${cpfDigits || "anon"}-${suffix}-${Date.now()}.${ext}`;
+          const { error: upErr } = await supabase.storage
+            .from("qa-cadastro-selfies")
+            .upload(key, blob, { contentType: mime, upsert: true });
+          if (upErr) {
+            console.error(`[upload ${suffix}]`, upErr);
+            throw new Error(`Falha ao enviar ${suffix}: ${upErr.message}`);
+          }
+          return key;
+        } catch (e: any) {
+          console.error(`[upload ${suffix}]`, e);
+          throw new Error(e?.message || `Não foi possível enviar ${suffix}.`);
         }
-        selfie_path = key;
-        console.log("[selfie upload] ok →", key);
-      } catch (e: any) {
-        console.error("[selfie upload]", e);
-        throw new Error(e?.message || "Não foi possível enviar a selfie. Tente novamente.");
-      }
+      };
+
+      // Upload selfie (obrigatória)
+      const selfie_path = await uploadDataUrl(form.selfie_data_url, "selfie");
+      console.log("[selfie upload] ok →", selfie_path);
+
+      // Upload identidade e comprovante de endereço (opcionais)
+      const documento_identidade_path = await uploadDataUrl(docImages.identity_data_url, "identidade");
+      const comprovante_endereco_path = await uploadDataUrl(docImages.address_data_url, "endereco");
 
       const { selfie_data_url: _omit, ...rest } = form;
-      const payload: any = { ...rest, selfie_path };
+      const payload: any = { ...rest, selfie_path, documento_identidade_path, comprovante_endereco_path };
       if (existingCadastroId) payload.update_existing_id = existingCadastroId;
 
       const { data, error } = await supabase.functions.invoke("qa-cadastro-publico", {

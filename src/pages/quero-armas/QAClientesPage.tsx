@@ -96,6 +96,31 @@ function SelfieThumb({ path, name, size = "lg" }: { path: string | null | undefi
   );
 }
 
+function DocumentThumb({ path, label, name }: { path: string | null | undefined; label: string; name?: string | null }) {
+  const url = usePrivateStorageUrl("qa-cadastro-selfies", path);
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="flex flex-col gap-2">
+      <span className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "hsl(220 10% 45%)" }}>{label}</span>
+      <button
+        type="button"
+        onClick={() => url && setOpen(true)}
+        disabled={!url}
+        className={`relative w-full aspect-[4/3] rounded-lg overflow-hidden border bg-slate-50 flex items-center justify-center transition-all ${url ? "hover:ring-2 hover:ring-blue-300 cursor-zoom-in" : "cursor-default"}`}
+        style={{ borderColor: "hsl(220 13% 88%)" }}
+        title={url ? "Clique para ampliar" : "Não enviado"}
+      >
+        {url ? (
+          <img src={url} alt={label} loading="lazy" decoding="async" className="w-full h-full object-cover" />
+        ) : (
+          <span className="text-xs font-medium" style={{ color: "hsl(220 10% 60%)" }}>NÃO ENVIADO</span>
+        )}
+      </button>
+      {open && url && <PhotoLightbox url={url} alt={`${label} — ${name || ""}`} onClose={() => setOpen(false)} />}
+    </div>
+  );
+}
 function ClientPhoto({ path, name, className }: { path: string | null | undefined; name: string; className: string }) {
   const url = usePrivateStorageUrl("qa-documentos", path);
   const [open, setOpen] = useState(false);
@@ -214,6 +239,9 @@ interface CadastroPublico {
   consentimento_timestamp?: string | null;
   status: string;
   pago?: boolean | null;
+  selfie_path?: string | null;
+  documento_identidade_path?: string | null;
+  comprovante_endereco_path?: string | null;
   created_at: string;
 }
 
@@ -1825,6 +1853,15 @@ export default function QAClientesPage() {
             </DetailGrid>
           </DetailCard>
 
+          {(c.selfie_path || c.documento_identidade_path || c.comprovante_endereco_path) && (
+            <DetailCard title="Documentos enviados pelo cliente">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <DocumentThumb path={c.selfie_path} label="Selfie" name={c.nome_completo} />
+                <DocumentThumb path={c.documento_identidade_path} label="Documento de identidade" name={c.nome_completo} />
+                <DocumentThumb path={c.comprovante_endereco_path} label="Comprovante de endereço" name={c.nome_completo} />
+              </div>
+            </DetailCard>
+          )}
           {(() => {
             const ua = (c as any).consentimento_user_agent as string | null | undefined;
             const ip = (c as any).consentimento_ip as string | null | undefined;
