@@ -194,12 +194,13 @@ export default function DashboardPrazosRecursais() {
             const link = r.clienteIdLegado
               ? `/quero-armas/clientes?cliente=${r.clienteIdLegado}`
               : `/quero-armas/clientes`;
-            const dias = r.diasRestantes < 0 ? Math.abs(r.diasRestantes) : r.diasRestantes;
+            const [ly, lm, ld] = r.dataLimite.split("-");
+            const dataLimiteBr = `${ld}/${lm}/${ly}`;
             return (
               <Link
                 key={r.itemId}
                 to={link}
-                title={`${r.clienteNome} — ${r.tipo} PF`}
+                title={`${r.clienteNome} — ${r.tipo} PF · prazo fatal ${dataLimiteBr}`}
                 className={`group flex flex-col gap-1.5 px-3 py-3 ${tone.bg} hover:bg-slate-50 transition-colors min-h-[88px]`}
               >
                 <div className="flex items-center gap-1.5">
@@ -214,6 +215,9 @@ export default function DashboardPrazosRecursais() {
                 <div className="mt-auto flex items-baseline gap-1">
                   <span className={`text-xl font-black leading-none ${tone.text}`}>{r.diasRestantes}</span>
                   <span className={`text-[9px] font-bold uppercase ${tone.text}`}>d. restantes</span>
+                </div>
+                <div className="text-[9px] font-semibold uppercase tracking-wider text-rose-600 leading-none">
+                  Fatal: {dataLimiteBr}
                 </div>
               </Link>
             );
