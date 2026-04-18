@@ -71,27 +71,24 @@ export default function DashboardPrazosRecursais() {
     let cancelled = false;
     (async () => {
       try {
+        const servicoIdsPF = Object.keys(SERVICOS_PF_RECURSO).map(Number);
         const { data: itens, error: e1 } = await supabase
           .from("qa_itens_venda" as any)
           .select("id, venda_id, servico_id, status, data_indeferimento, data_recurso_administrativo")
-          .ilike("status", "RECURSO ADMINISTRATIVO")
+          .in("servico_id", servicoIdsPF as any)
           .not("data_indeferimento", "is", null);
         if (e1) throw e1;
         const itensList = (itens || []) as unknown as ItemRow[];
         if (!itensList.length) { if (!cancelled) { setRows([]); setLoading(false); } return; }
 
         const vendaLegadoIds = Array.from(new Set(itensList.map(i => i.venda_id)));
-        const servicoIds = Array.from(new Set(itensList.map(i => i.servico_id).filter(Boolean) as number[]));
 
         // FK: qa_itens_venda.venda_id → qa_vendas.id_legado
-        const [vendasRes, servicosRes] = await Promise.all([
-          supabase.from("qa_vendas" as any).select("id, id_legado, cliente_id").in("id_legado", vendaLegadoIds as any),
-          servicoIds.length
-            ? supabase.from("qa_servicos" as any).select("id, nome_servico").in("id", servicoIds as any)
-            : Promise.resolve({ data: [] as any[], error: null }),
-        ]);
+        const vendasRes = await supabase
+          .from("qa_vendas" as any)
+          .select("id, id_legado, cliente_id")
+          .in("id_legado", vendaLegadoIds as any);
         const vendas = ((vendasRes as any).data || []) as VendaRow[];
-        const servicos = ((servicosRes as any).data || []) as ServicoRow[];
 
         // FK: qa_vendas.cliente_id → qa_clientes.id_legado
         const clienteLegadoIds = Array.from(new Set(vendas.map(v => v.cliente_id).filter(Boolean) as number[]));
@@ -102,13 +99,11 @@ export default function DashboardPrazosRecursais() {
 
         const vMap = new Map(vendas.map(v => [v.id_legado, v]));
         const cMap = new Map(clientes.map(c => [c.id_legado, c])); // chave = id_legado
-        const sMap = new Map(servicos.map(s => [s.id, s]));
 
         const today = todayISO();
         const built: PrazoRow[] = [];
         for (const it of itensList) {
-          const servico = it.servico_id ? sMap.get(it.servico_id) : null;
-          const tipo = classifyPF(servico?.nome_servico || "");
+          const tipo = it.servico_id ? SERVICOS_PF_RECURSO[it.servico_id] : null;
           if (!tipo) continue;
 
           const venda = vMap.get(it.venda_id);
