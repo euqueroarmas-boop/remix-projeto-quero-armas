@@ -624,6 +624,14 @@ function Step1({ form, set, errors, onCpfLookup, cpfLooking, cpfFound }: { form:
             />
           </Field>
         </div>
+        <div className="md:col-span-2">
+          <Field label="Selfie de identificação" required error={(errors as any).selfie_data_url}>
+            <SelfieCapture
+              value={form.selfie_data_url}
+              onChange={(dataUrl) => { set("selfie_data_url", dataUrl); set("selfie_path", ""); }}
+            />
+          </Field>
+        </div>
       </div>
     </div>
   );
