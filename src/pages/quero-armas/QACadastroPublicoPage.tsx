@@ -672,7 +672,7 @@ export default function QACadastroPublicoPage() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4" style={{ background: "linear-gradient(135deg, hsl(220 20% 97%) 0%, hsl(230 20% 94%) 100%)" }}>
+      <div className="min-h-screen flex flex-col items-center justify-center p-4" style={{ background: "linear-gradient(135deg, hsl(220 20% 97%) 0%, hsl(230 20% 94%) 100%)" }}>
         <div className="max-w-md w-full text-center qa-card p-8 md:p-12 rounded-2xl">
           <div className="w-16 h-16 mx-auto mb-6 rounded-full flex items-center justify-center" style={{ background: "hsl(152 60% 95%)" }}>
             <CheckCircle className="w-8 h-8" style={{ color: "hsl(152 60% 42%)" }} />
@@ -687,6 +687,17 @@ export default function QACadastroPublicoPage() {
             <Shield className="h-3.5 w-3.5 inline mr-1.5" style={{ color: "hsl(230 80% 56%)" }} />
             Seus dados estão protegidos conforme a LGPD.
           </div>
+        </div>
+
+        <div
+          className="max-w-md w-full text-center mt-6 pt-4 text-[11px] border-t"
+          style={{ color: "hsl(220 10% 50%)", borderColor: "hsl(220 13% 88%)" }}
+        >
+          © {new Date().getFullYear()} · Criado e desenvolvido por{" "}
+          <span className="font-semibold" style={{ color: "hsl(220 20% 25%)" }}>
+            WMTi Tecnologia da Informação
+          </span>
+          . Todos os direitos reservados.
         </div>
       </div>
     );
