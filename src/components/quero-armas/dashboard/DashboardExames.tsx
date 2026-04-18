@@ -207,6 +207,9 @@ export default function DashboardExames() {
             // "AGUARDANDO ETAPA ANTERIOR"/etc. NÃO contam como pendência.
             if (vendasBloqueadas.has(String(item.venda_id))) continue;
 
+            // ── REGRA: processos em andamento não são "pendência de iniciar" ──
+            if (EM_ANDAMENTO_NAO_PENDENTE.has(status)) continue;
+
             const sid = item.servico_id != null ? String(item.servico_id) : null;
             if (filtrarPorServicoExame && (!sid || !servicosComExameSet.has(sid))) continue;
             clientesComPendente.add(cidCanonical);
