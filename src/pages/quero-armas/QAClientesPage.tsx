@@ -32,22 +32,14 @@ import ClienteAcessoPortal from "@/components/quero-armas/clientes/ClienteAcesso
 import ClientePecas from "@/components/quero-armas/clientes/ClientePecas";
 import ClienteExames from "@/components/quero-armas/clientes/ClienteExames";
 import { getClienteFK, getVendaFK } from "@/components/quero-armas/clientes/clientFK";
+import { usePrivateStorageUrl } from "@/hooks/usePrivateStorageUrl";
 import { useQAStatusServico } from "@/hooks/useQAStatusServico";
 import { isDispensado, getBaseLegalDispensa, CATEGORIA_MAP, type CategoriaTitular } from "@/components/quero-armas/clientes/categoriaTitular";
 
 /* ── Selfie Thumbnail (loads private storage signed URL) ── */
 function SelfieThumb({ path, name, size = "lg" }: { path: string | null | undefined; name?: string | null; size?: "lg" | "sm" }) {
-  const [url, setUrl] = useState<string | null>(null);
+  const url = usePrivateStorageUrl("qa-cadastro-selfies", path);
   const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    let active = true;
-    if (!path) { setUrl(null); return; }
-    supabase.storage.from("qa-cadastro-selfies").createSignedUrl(path, 3600).then(({ data }) => {
-      if (active) setUrl(data?.signedUrl || null);
-    });
-    return () => { active = false; };
-  }, [path]);
 
   const dim = size === "lg" ? "w-20 h-20 md:w-24 md:h-24" : "w-12 h-12";
   const initial = (name || "?").trim().charAt(0).toUpperCase();
@@ -75,6 +67,14 @@ function SelfieThumb({ path, name, size = "lg" }: { path: string | null | undefi
       )}
     </>
   );
+}
+
+function ClientPhoto({ path, name, className }: { path: string | null | undefined; name: string; className: string }) {
+  const url = usePrivateStorageUrl("qa-documentos", path);
+
+  if (!url) return null;
+
+  return <img src={url} alt={name} className={className} />;
 }
 
 const formatCpf = (v: string | null | undefined): string => {
@@ -1080,13 +1080,7 @@ export default function QAClientesPage() {
             <ChevronLeft className="h-4 w-4" />
           </Button>
           {/* Client photo or fallback */}
-          {(c as any).imagem ? (
-            <img
-              src={supabase.storage.from("qa-documentos").getPublicUrl((c as any).imagem).data?.publicUrl || ""}
-              alt={c.nome_completo}
-              className="w-11 h-11 rounded-xl shrink-0 mt-0.5 object-cover border border-slate-200"
-            />
-          ) : null}
+          {(c as any).imagem ? <ClientPhoto path={(c as any).imagem} name={c.nome_completo} className="w-11 h-11 rounded-xl shrink-0 mt-0.5 object-cover border border-slate-200" /> : null}
           <div className="flex-1 min-w-0">
             <h1 className="text-[15px] md:text-base font-bold truncate" style={{ color: "hsl(220 20% 18%)" }}>{c.nome_completo}</h1>
             <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
@@ -2099,11 +2093,7 @@ export default function QAClientesPage() {
               style={{ borderColor: "hsl(220 13% 93%)" }}>
               {/* Avatar */}
               {(c as any).imagem ? (
-                <img
-                  src={supabase.storage.from("qa-documentos").getPublicUrl((c as any).imagem).data?.publicUrl || ""}
-                  alt={c.nome_completo}
-                  className="w-9 h-9 md:w-10 md:h-10 rounded-xl shrink-0 mt-0.5 object-cover"
-                />
+                <ClientPhoto path={(c as any).imagem} name={c.nome_completo} className="w-9 h-9 md:w-10 md:h-10 rounded-xl shrink-0 mt-0.5 object-cover" />
               ) : (
                 <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5" style={{ background: "hsl(230 80% 96%)" }}>
                   <User className="h-4 w-4" style={{ color: "hsl(230 80% 56%)" }} />
