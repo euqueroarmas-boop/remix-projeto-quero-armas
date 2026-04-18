@@ -1,17 +1,16 @@
 /**
  * Dashboard — Prazos Recursais (PF: Posse e Porte)
  *
- * IMPORTANTE — convenções de FK descobertas em produção:
- *   - qa_itens_venda.venda_id  → qa_vendas.id_legado  (NÃO id)
- *   - qa_vendas.cliente_id     → qa_clientes.id_legado (NÃO id)
+ * Trigger: item de Posse/Porte na PF com status = 'RECURSO ADMINISTRATIVO'.
+ * Janela: D = data_indeferimento; prazo = D+10 (Lei 9.784/99 art. 59 +
+ * Decreto 9.847/19 art. 10). Vencidos NÃO aparecem (filtra diasRestantes >= 0).
+ * Cores por dias restantes: 🟢 8–10 · 🟡 5–7 · 🔴 0–4.
  *
- * Regra: item INDEFERIDO de Posse/Porte na PF abre prazo de 10 dias corridos
- * para protocolar recurso (Lei 9.784/99 art. 59 + Decreto 9.847/19 art. 10).
- * O contador para quando data_recurso_administrativo é preenchida ou o status
- * deixa de ser INDEFERIDO (ex.: DESISTIU, CANCELADO).
+ * FKs em produção:
+ *   - qa_itens_venda.venda_id  → qa_vendas.id_legado
+ *   - qa_vendas.cliente_id     → qa_clientes.id_legado
  *
- * Layout: grid de até 9 cards pequenos (mais antigo → mais novo). O 10º card
- * agrega "+N" restantes.
+ * Layout: grid de até 9 cards pequenos (mais antigo → mais novo). 10º card "+N".
  */
 
 import { useEffect, useMemo, useState } from "react";
