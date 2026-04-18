@@ -302,6 +302,51 @@ export default function QAClientesPage() {
       (!f.condition || f.condition(form || {}, item))
     );
 
+  const parseCalendarDate = (value: string): Date | null => {
+    if (!value) return null;
+
+    const dmy = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+    if (dmy) {
+      let [, d, m, y] = dmy;
+      let year = Number(y);
+      if (year < 100) year += 2000;
+
+      const day = Number(d);
+      const month = Number(m);
+      if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+
+      const parsed = new Date(Date.UTC(year, month - 1, day));
+      if (parsed.getUTCFullYear() !== year || parsed.getUTCMonth() !== month - 1 || parsed.getUTCDate() !== day) return null;
+      return parsed;
+    }
+
+    const iso = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (iso) {
+      const [, y, m, d] = iso;
+      const year = Number(y);
+      const month = Number(m);
+      const day = Number(d);
+      const parsed = new Date(Date.UTC(year, month - 1, day));
+      if (parsed.getUTCFullYear() !== year || parsed.getUTCMonth() !== month - 1 || parsed.getUTCDate() !== day) return null;
+      return parsed;
+    }
+
+    return null;
+  };
+
+  const dateToBr = (value: string | null | undefined): string => {
+    if (!value) return "";
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(value)) return value;
+
+    const parsed = parseCalendarDate(value);
+    if (!parsed) return value;
+
+    const day = String(parsed.getUTCDate()).padStart(2, "0");
+    const month = String(parsed.getUTCMonth() + 1).padStart(2, "0");
+    const year = parsed.getUTCFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
   const handleExpandItem = (item: any) => {
     if (expandedItemId === item.id) {
       setExpandedItemId(null);
@@ -316,11 +361,7 @@ export default function QAClientesPage() {
     const form: Record<string, string> = {};
     ITEM_EDIT_FIELDS.forEach(f => {
       const val = item[f.key];
-      if (f.type === "date" && val) {
-        try { form[f.key] = new Date(val).toLocaleDateString("pt-BR"); } catch { form[f.key] = val || ""; }
-      } else {
-        form[f.key] = val || "";
-      }
+      form[f.key] = f.type === "date" ? dateToBr(val) : (val || "");
     });
     setItemEditForm(form);
   };
@@ -770,13 +811,7 @@ export default function QAClientesPage() {
   };
   const formatDate = (d: string | null) => {
     if (!d) return "—";
-    // Already DD/MM/YYYY format
-    if (/^\d{2}\/\d{2}\/\d{4}$/.test(d)) return d;
-    try {
-      const parsed = new Date(d);
-      if (isNaN(parsed.getTime())) return d;
-      return parsed.toLocaleDateString("pt-BR");
-    } catch { return d; }
+    return dateToBr(d) || "—";
   };
   const getServicoNome = (id: number) => {
     // Fonte de verdade: tabela qa_servicos (carregada via loadServicos).
