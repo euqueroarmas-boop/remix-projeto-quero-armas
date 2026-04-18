@@ -4,11 +4,12 @@ import { useBrasilApiLookup } from "@/hooks/useBrasilApiLookup";
 import {
   User, MapPin, Building2, FileCheck, ChevronRight, ChevronLeft,
   Loader2, CheckCircle, Search, Plus, AlertCircle, Shield, Camera, RotateCcw,
+  IdCard, FileText, Sparkles, Upload, X,
 } from "lucide-react";
 import { QALogo } from "@/components/quero-armas/QALogo";
 
 /* ── Types ── */
-type Step = 1 | 2 | 3 | 4 | 5;
+type Step = 0 | 1 | 2 | 3 | 4 | 5;
 
 interface FormData {
   nome_completo: string; cpf: string; rg: string; emissor_rg: string; uf_emissor_rg: string; data_nascimento: string;
@@ -35,6 +36,16 @@ interface FormData {
   consentimento_dados_verdadeiros: boolean;
   consentimento_tratamento_dados: boolean;
   selfie_data_url: string;
+}
+
+interface DocImages {
+  identity_data_url: string;
+  address_data_url: string;
+}
+
+interface AddressDivergence {
+  cep_address: { logradouro: string; bairro: string; cidade: string; estado: string };
+  doc_address: { logradouro: string; bairro: string; cidade: string; estado: string };
 }
 
 const initialForm: FormData = {
@@ -142,7 +153,7 @@ function validateCpf(cpf: string): boolean {
 
 /* ── Component ── */
 export default function QACadastroPublicoPage() {
-  const [step, setStep] = useState<Step>(1);
+  const [step, setStep] = useState<Step>(0);
   const [form, setForm] = useState<FormData>(initialForm);
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -153,6 +164,14 @@ export default function QACadastroPublicoPage() {
   const [cpfFound, setCpfFound] = useState<boolean | null>(null);
   const [showComplementoConfirm, setShowComplementoConfirm] = useState(false);
   const [servicos, setServicos] = useState<{ id: number; nome_servico: string }[]>([]);
+
+  // ── Step 0: Document extraction state ──
+  const [docImages, setDocImages] = useState<DocImages>({ identity_data_url: "", address_data_url: "" });
+  const [extracting, setExtracting] = useState(false);
+  const [extractStage, setExtractStage] = useState<string>("");
+  const [extractError, setExtractError] = useState<string | null>(null);
+  const [autoFilled, setAutoFilled] = useState<Set<string>>(new Set());
+  const [divergence, setDivergence] = useState<AddressDivergence | null>(null);
 
   useEffect(() => {
     supabase.from("qa_servicos" as any).select("id, nome_servico").order("id").then(({ data }) => {
@@ -165,6 +184,13 @@ export default function QACadastroPublicoPage() {
     setErrors(prev => {
       const n = { ...prev };
       delete n[field];
+      return n;
+    });
+    // Once user manually changes a field, remove the auto-filled highlight
+    setAutoFilled(prev => {
+      if (!prev.has(field as string)) return prev;
+      const n = new Set(prev);
+      n.delete(field as string);
       return n;
     });
   }, []);
@@ -275,6 +301,124 @@ export default function QACadastroPublicoPage() {
     }
   }, [form, lookupCnpj, set]);
 
+  /* ── Step 0: Document extraction ── */
+  const handleExtractDocuments = useCallback(async () => {
+    setExtractError(null);
+    if (!docImages.identity_data_url && !docImages.address_data_url) {
+      setExtractError("Envie pelo menos um documento ou pule esta etapa.");
+      return;
+    }
+    setExtracting(true);
+    setExtractStage("Lendo documentos enviados…");
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-extract-documents", {
+        body: {
+          identity_image: docImages.identity_data_url || undefined,
+          address_image: docImages.address_data_url || undefined,
+        },
+      });
+      if (error || !data?.success) {
+        throw new Error(data?.error || "Falha ao extrair dados");
+      }
+
+      const filled = new Set<string>();
+      const id = data.identity || {};
+      const ad = data.address || {};
+
+      // ── Apply identity fields ──
+      setExtractStage("Preenchendo dados pessoais…");
+      setForm(prev => {
+        const next = { ...prev };
+        if (id.nome_completo && !next.nome_completo) { next.nome_completo = String(id.nome_completo).toUpperCase(); filled.add("nome_completo"); }
+        if (id.cpf) {
+          const masked = maskCpf(String(id.cpf));
+          if (!next.cpf || next.cpf.replace(/\D/g, "").length < 11) { next.cpf = masked; filled.add("cpf"); }
+        }
+        if (id.rg && !next.rg) { next.rg = maskRgInput(String(id.rg)); filled.add("rg"); }
+        if (id.emissor_rg && !next.emissor_rg) { next.emissor_rg = String(id.emissor_rg).toUpperCase(); filled.add("emissor_rg"); }
+        if (id.uf_emissor_rg && !next.uf_emissor_rg) { next.uf_emissor_rg = String(id.uf_emissor_rg).toUpperCase().slice(0, 2); filled.add("uf_emissor_rg"); }
+        if (id.data_nascimento && !next.data_nascimento) {
+          const d = String(id.data_nascimento).replace(/\D/g, "");
+          if (d.length === 8) { next.data_nascimento = maskDate(d); filled.add("data_nascimento"); }
+        }
+        if (id.nome_mae && !next.nome_mae) { next.nome_mae = String(id.nome_mae).toUpperCase(); filled.add("nome_mae"); }
+        if (id.nome_pai && !next.nome_pai) { next.nome_pai = String(id.nome_pai).toUpperCase(); filled.add("nome_pai"); }
+
+        // ── Address fields from comprovante ──
+        if (ad.cep && !next.end1_cep) { next.end1_cep = maskCep(String(ad.cep)); filled.add("end1_cep"); }
+        if (ad.logradouro) { next.end1_logradouro = String(ad.logradouro).toUpperCase(); filled.add("end1_logradouro"); }
+        if (ad.numero) { next.end1_numero = String(ad.numero); filled.add("end1_numero"); }
+        if (ad.complemento) { next.end1_complemento = String(ad.complemento).toUpperCase(); filled.add("end1_complemento"); }
+        if (ad.bairro) { next.end1_bairro = String(ad.bairro).toUpperCase(); filled.add("end1_bairro"); }
+        if (ad.cidade) { next.end1_cidade = String(ad.cidade).toUpperCase(); filled.add("end1_cidade"); }
+        if (ad.estado) { next.end1_estado = String(ad.estado).toUpperCase().slice(0, 2); filled.add("end1_estado"); }
+        return next;
+      });
+      setAutoFilled(filled);
+
+      // ── Confront CEP with extracted address ──
+      if (ad.cep) {
+        setExtractStage("Conferindo endereço com o CEP informado…");
+        const cepDigits = String(ad.cep).replace(/\D/g, "");
+        if (cepDigits.length === 8) {
+          const cepData = await lookupCep(cepDigits);
+          if (cepData) {
+            const norm = (s?: string) => (s || "").toLowerCase().replace(/[^a-z0-9]/g, "").trim();
+            const cepLog = norm(cepData.street);
+            const docLog = norm(ad.logradouro);
+            const cepCity = norm(cepData.city);
+            const docCity = norm(ad.cidade);
+            const divergeLog = cepLog && docLog && !cepLog.includes(docLog) && !docLog.includes(cepLog);
+            const divergeCity = cepCity && docCity && cepCity !== docCity;
+            if (divergeLog || divergeCity) {
+              setDivergence({
+                cep_address: {
+                  logradouro: cepData.street || "",
+                  bairro: cepData.neighborhood || "",
+                  cidade: cepData.city || "",
+                  estado: cepData.state || "",
+                },
+                doc_address: {
+                  logradouro: ad.logradouro || "",
+                  bairro: ad.bairro || "",
+                  cidade: ad.cidade || "",
+                  estado: ad.estado || "",
+                },
+              });
+            }
+          }
+        }
+      }
+
+      setExtractStage("Cadastro pré-preenchido!");
+      setTimeout(() => setStep(1), 400);
+    } catch (e: any) {
+      setExtractError(
+        e?.message === "RATE_LIMIT"
+          ? "Limite de uso atingido. Tente novamente em alguns segundos."
+          : "Não foi possível extrair todos os dados automaticamente. Revise e complete manualmente.",
+      );
+      // Allow user to proceed manually
+    } finally {
+      setExtracting(false);
+    }
+  }, [docImages, lookupCep]);
+
+  const skipDocuments = () => setStep(1);
+
+  const applyDivergenceChoice = (choice: "cep" | "doc") => {
+    if (!divergence) return;
+    const src = choice === "cep" ? divergence.cep_address : divergence.doc_address;
+    setForm(prev => ({
+      ...prev,
+      end1_logradouro: src.logradouro.toUpperCase() || prev.end1_logradouro,
+      end1_bairro: src.bairro.toUpperCase() || prev.end1_bairro,
+      end1_cidade: src.cidade.toUpperCase() || prev.end1_cidade,
+      end1_estado: src.estado.toUpperCase().slice(0, 2) || prev.end1_estado,
+    }));
+    setDivergence(null);
+  };
+
   /* ── Validation per step ── */
   const validateStep = (s: Step): boolean => {
     const errs: Partial<Record<keyof FormData, string>> = {};
@@ -313,6 +457,7 @@ export default function QACadastroPublicoPage() {
   };
 
   const nextStep = () => {
+    if (step === 0) return; // Step 0 has its own button
     if (!validateStep(step)) return;
     if (step === 2) {
       proceedFromStep2();
@@ -324,8 +469,10 @@ export default function QACadastroPublicoPage() {
   const prevStep = () => {
     if (step === 4 && !form.tem_segundo_endereco) {
       setStep(2);
+    } else if (step === 1) {
+      setStep(0);
     } else {
-      setStep(Math.max(step - 1, 1) as Step);
+      setStep(Math.max(step - 1, 0) as Step);
     }
   };
 
@@ -406,66 +553,90 @@ export default function QACadastroPublicoPage() {
           </p>
         </div>
 
-        {/* Steps indicator */}
-        <div className="flex items-center justify-center gap-1 mb-8 overflow-x-auto pb-2">
-          {STEPS.filter(s => s.num !== 3 || form.tem_segundo_endereco).map((s, i, arr) => {
-            const active = step === s.num;
-            const done = step > s.num || (s.num === 3 && !form.tem_segundo_endereco);
-            return (
-              <div key={s.num} className="flex items-center">
-                <div className="flex flex-col items-center gap-1">
-                  <div
-                    className="w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all"
-                    style={{
-                      background: active ? "hsl(230 80% 56%)" : done ? "hsl(152 60% 42%)" : "hsl(220 13% 93%)",
-                      color: active || done ? "white" : "hsl(220 10% 55%)",
-                    }}
-                  >
-                    {done && !active ? <CheckCircle className="w-4 h-4" /> : i + 1}
+        {/* Steps indicator (hidden on Step 0) */}
+        {step > 0 && (
+          <div className="flex items-center justify-center gap-1 mb-8 overflow-x-auto pb-2">
+            {STEPS.filter(s => s.num !== 3 || form.tem_segundo_endereco).map((s, i, arr) => {
+              const active = step === s.num;
+              const done = step > s.num || (s.num === 3 && !form.tem_segundo_endereco);
+              return (
+                <div key={s.num} className="flex items-center">
+                  <div className="flex flex-col items-center gap-1">
+                    <div
+                      className="w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all"
+                      style={{
+                        background: active ? "hsl(230 80% 56%)" : done ? "hsl(152 60% 42%)" : "hsl(220 13% 93%)",
+                        color: active || done ? "white" : "hsl(220 10% 55%)",
+                      }}
+                    >
+                      {done && !active ? <CheckCircle className="w-4 h-4" /> : i + 1}
+                    </div>
+                    <span className="text-[10px] font-medium hidden md:block" style={{
+                      color: active ? "hsl(230 80% 46%)" : "hsl(220 10% 55%)",
+                    }}>
+                      {s.label}
+                    </span>
                   </div>
-                  <span className="text-[10px] font-medium hidden md:block" style={{
-                    color: active ? "hsl(230 80% 46%)" : "hsl(220 10% 55%)",
-                  }}>
-                    {s.label}
-                  </span>
+                  {i < arr.length - 1 && (
+                    <div className="w-8 md:w-12 h-px mx-1" style={{ background: "hsl(220 13% 88%)" }} />
+                  )}
                 </div>
-                {i < arr.length - 1 && (
-                  <div className="w-8 md:w-12 h-px mx-1" style={{ background: "hsl(220 13% 88%)" }} />
-                )}
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* Form card */}
         <div className="qa-card rounded-2xl p-5 md:p-8" style={{ boxShadow: "0 4px 20px rgba(0,0,0,0.04)" }}>
-          {step === 1 && <Step1 form={form} set={set} errors={errors} onCpfLookup={handleCpfLookup} cpfLooking={cpfLooking} cpfFound={cpfFound} />}
-          {step === 2 && <Step2 form={form} set={set} errors={errors} onCepLookup={() => handleCepLookup("end1")} cepLoading={cepLoading} showComplementoConfirm={showComplementoConfirm} onComplementoConfirmDismiss={() => { setShowComplementoConfirm(false); proceedFromStep2(); }} onGeocodeLookup={() => handleGeocodeLookup("end1")} geocodeLoading={geocodeLoading} />}
+          {step === 0 && (
+            <Step0Documents
+              docImages={docImages}
+              setDocImages={setDocImages}
+              selfieDataUrl={form.selfie_data_url}
+              setSelfieDataUrl={(v) => set("selfie_data_url", v)}
+              extracting={extracting}
+              extractStage={extractStage}
+              extractError={extractError}
+              onExtract={handleExtractDocuments}
+              onSkip={skipDocuments}
+            />
+          )}
+          {step === 1 && <Step1 form={form} set={set} errors={errors} onCpfLookup={handleCpfLookup} cpfLooking={cpfLooking} cpfFound={cpfFound} autoFilled={autoFilled} />}
+          {step === 2 && <Step2 form={form} set={set} errors={errors} onCepLookup={() => handleCepLookup("end1")} cepLoading={cepLoading} showComplementoConfirm={showComplementoConfirm} onComplementoConfirmDismiss={() => { setShowComplementoConfirm(false); proceedFromStep2(); }} onGeocodeLookup={() => handleGeocodeLookup("end1")} geocodeLoading={geocodeLoading} autoFilled={autoFilled} />}
           {step === 3 && <Step3 form={form} set={set} errors={errors} onCepLookup={() => handleCepLookup("end2")} cepLoading={cepLoading} onGeocodeLookup={() => handleGeocodeLookup("end2")} geocodeLoading={geocodeLoading} />}
           {step === 4 && <Step4 form={form} set={set} errors={errors} onCnpjLookup={handleCnpjLookup} cnpjLoading={cnpjLoading} servicos={servicos} />}
           {step === 5 && <Step5 form={form} set={set} errors={errors} />}
 
-          {/* Navigation */}
-          <div className="flex items-center justify-between mt-8 pt-6 border-t" style={{ borderColor: "hsl(220 13% 93%)" }}>
-            {step > 1 ? (
+          {/* Navigation (hidden on Step 0; Step 0 has its own buttons) */}
+          {step > 0 && (
+            <div className="flex items-center justify-between mt-8 pt-6 border-t" style={{ borderColor: "hsl(220 13% 93%)" }}>
               <button onClick={prevStep} className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
                 style={{ color: "hsl(220 10% 46%)", background: "hsl(220 14% 96%)" }}>
                 <ChevronLeft className="w-4 h-4" /> Voltar
               </button>
-            ) : <div />}
-            {step < 5 ? (
-              <button onClick={nextStep} className="qa-btn-primary flex items-center gap-1.5 no-glow">
-                Continuar <ChevronRight className="w-4 h-4" />
-              </button>
-            ) : (
-              <button onClick={handleSubmit} disabled={submitting}
-                className="qa-btn-primary flex items-center gap-1.5 no-glow disabled:opacity-50">
-                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-                {submitting ? "Enviando..." : "Enviar Cadastro"}
-              </button>
-            )}
-          </div>
+              {step < 5 ? (
+                <button onClick={nextStep} className="qa-btn-primary flex items-center gap-1.5 no-glow">
+                  Continuar <ChevronRight className="w-4 h-4" />
+                </button>
+              ) : (
+                <button onClick={handleSubmit} disabled={submitting}
+                  className="qa-btn-primary flex items-center gap-1.5 no-glow disabled:opacity-50">
+                  {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                  {submitting ? "Enviando..." : "Enviar Cadastro"}
+                </button>
+              )}
+            </div>
+          )}
         </div>
+
+        {/* Address divergence modal */}
+        {divergence && (
+          <DivergenceModal
+            divergence={divergence}
+            onChoose={applyDivergenceChoice}
+            onClose={() => setDivergence(null)}
+          />
+        )}
 
         {/* Footer */}
         <div className="text-center mt-6 text-[11px]" style={{ color: "hsl(220 10% 62%)" }}>
@@ -652,14 +823,219 @@ function SelfieCapture({ value, onChange, error }: { value: string; onChange: (v
   );
 }
 
+/* ══════════════════════════════════════
+   Step 0: Envio de Documentos (extração automática por IA)
+   ══════════════════════════════════════ */
+function DocUploadCard({
+  title, description, accepted, value, onChange, icon: Icon,
+}: {
+  title: string; description: string; accepted: string;
+  value: string; onChange: (v: string) => void; icon: any;
+}) {
+  const fileRef = useRef<HTMLInputElement | null>(null);
+  const onFile = (f: File) => {
+    const reader = new FileReader();
+    reader.onload = () => onChange(String(reader.result || ""));
+    reader.readAsDataURL(f);
+  };
+  return (
+    <div className="rounded-xl border p-4" style={{ borderColor: value ? "hsl(152 40% 70%)" : "hsl(220 13% 88%)", background: value ? "hsl(152 60% 98%)" : "hsl(0 0% 100%)" }}>
+      <div className="flex items-start gap-3">
+        <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ background: value ? "hsl(152 60% 92%)" : "hsl(230 80% 96%)" }}>
+          {value ? <CheckCircle className="w-5 h-5" style={{ color: "hsl(152 60% 38%)" }} /> : <Icon className="w-5 h-5" style={{ color: "hsl(230 80% 56%)" }} />}
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="text-sm font-bold" style={{ color: "hsl(220 20% 18%)" }}>{title}</h3>
+          <p className="text-[11px] leading-relaxed mt-0.5" style={{ color: "hsl(220 10% 50%)" }}>{description}</p>
+        </div>
+      </div>
+      {value ? (
+        <div className="mt-3 flex items-center gap-2">
+          <img src={value} alt={title} className="h-16 w-16 object-cover rounded-lg border" style={{ borderColor: "hsl(220 13% 85%)" }} />
+          <button type="button" onClick={() => onChange("")} className="text-[11px] font-medium px-2.5 py-1 rounded-md flex items-center gap-1" style={{ background: "hsl(0 80% 96%)", color: "hsl(0 70% 45%)" }}>
+            <X className="w-3 h-3" /> Trocar
+          </button>
+        </div>
+      ) : (
+        <button type="button" onClick={() => fileRef.current?.click()} className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-xs font-semibold border-2 border-dashed transition-colors" style={{ borderColor: "hsl(230 60% 80%)", color: "hsl(230 80% 50%)", background: "hsl(230 80% 99%)" }}>
+          <Upload className="w-4 h-4" /> Enviar foto ou tirar agora
+        </button>
+      )}
+      <input ref={fileRef} type="file" accept={accepted} capture="environment" hidden onChange={e => { const f = e.target.files?.[0]; if (f) onFile(f); }} />
+    </div>
+  );
+}
+
+function Step0Documents({
+  docImages, setDocImages, selfieDataUrl, setSelfieDataUrl,
+  extracting, extractStage, extractError, onExtract, onSkip,
+}: {
+  docImages: DocImages;
+  setDocImages: (v: DocImages | ((p: DocImages) => DocImages)) => void;
+  selfieDataUrl: string;
+  setSelfieDataUrl: (v: string) => void;
+  extracting: boolean;
+  extractStage: string;
+  extractError: string | null;
+  onExtract: () => void;
+  onSkip: () => void;
+}) {
+  const hasAny = !!(docImages.identity_data_url || docImages.address_data_url || selfieDataUrl);
+
+  if (extracting) {
+    return (
+      <div className="py-12 text-center">
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4" style={{ background: "hsl(230 80% 96%)" }}>
+          <Sparkles className="w-8 h-8 animate-pulse" style={{ color: "hsl(230 80% 56%)" }} />
+        </div>
+        <h2 className="text-xl font-bold mb-2" style={{ color: "hsl(220 20% 18%)" }}>Processando seus documentos</h2>
+        <p className="text-sm flex items-center justify-center gap-2" style={{ color: "hsl(220 10% 50%)" }}>
+          <Loader2 className="w-4 h-4 animate-spin" />
+          {extractStage || "Extraindo dados…"}
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-1">
+        <Sparkles className="w-5 h-5" style={{ color: "hsl(230 80% 56%)" }} />
+        <SectionTitle>Envio de Documentos (preenchimento automático)</SectionTitle>
+      </div>
+      <SectionDesc>
+        Envie um documento oficial de identificação com CPF e um comprovante de endereço legível.
+        Nossa IA extrai os dados e preenche o cadastro para você. Você poderá revisar tudo antes de enviar.
+      </SectionDesc>
+
+      <div className="p-3 rounded-lg mb-5 text-[11px] leading-relaxed flex items-start gap-2" style={{ background: "hsl(220 20% 97%)", color: "hsl(220 15% 35%)", border: "1px solid hsl(220 13% 90%)" }}>
+        <Shield className="w-3.5 h-3.5 mt-0.5 shrink-0" style={{ color: "hsl(230 80% 56%)" }} />
+        <span>
+          Conforme a <strong>Lei 10.826/2003</strong>, o <strong>Decreto 11.615/2023</strong> e os normativos vigentes da Polícia Federal aplicáveis ao público CAC,
+          o cadastro exige identificação civil com CPF e comprovação de endereço. Seus arquivos são tratados conforme a LGPD.
+        </span>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <DocUploadCard
+          icon={IdCard}
+          title="Documento de identificação com CPF"
+          description="RG, CNH, CIN ou outro documento oficial. Se já contiver o CPF, não é preciso enviar separado."
+          accepted="image/*,application/pdf"
+          value={docImages.identity_data_url}
+          onChange={(v) => setDocImages(prev => ({ ...prev, identity_data_url: v }))}
+        />
+        <DocUploadCard
+          icon={FileText}
+          title="Comprovante de endereço"
+          description="Conta de luz, água, telefone, internet, gás ou IPTU. Legível e atualizado."
+          accepted="image/*,application/pdf"
+          value={docImages.address_data_url}
+          onChange={(v) => setDocImages(prev => ({ ...prev, address_data_url: v }))}
+        />
+      </div>
+
+      <div className="mt-4">
+        <SelfieCapture value={selfieDataUrl} onChange={setSelfieDataUrl} />
+      </div>
+
+      {extractError && (
+        <div className="mt-4 p-3 rounded-lg flex items-start gap-2 text-xs" style={{ background: "hsl(40 90% 96%)", border: "1px solid hsl(40 70% 80%)", color: "hsl(40 50% 25%)" }}>
+          <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" style={{ color: "hsl(40 80% 45%)" }} />
+          <span>{extractError}</span>
+        </div>
+      )}
+
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mt-6 pt-5 border-t" style={{ borderColor: "hsl(220 13% 93%)" }}>
+        <button onClick={onSkip} type="button" className="text-sm font-medium px-4 py-2.5 rounded-lg transition-colors" style={{ color: "hsl(220 10% 46%)", background: "hsl(220 14% 96%)" }}>
+          Preencher manualmente
+        </button>
+        <button
+          onClick={onExtract}
+          disabled={!hasAny}
+          type="button"
+          className="qa-btn-primary flex items-center justify-center gap-1.5 no-glow disabled:opacity-50"
+        >
+          <Sparkles className="w-4 h-4" />
+          Extrair dados e continuar
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ── Address Divergence Modal ── */
+function DivergenceModal({
+  divergence, onChoose, onClose,
+}: {
+  divergence: AddressDivergence;
+  onChoose: (c: "cep" | "doc") => void;
+  onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={onClose}>
+      <div className="qa-card max-w-lg w-full rounded-2xl p-6" onClick={e => e.stopPropagation()} style={{ background: "white" }}>
+        <div className="flex items-start gap-3 mb-4">
+          <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ background: "hsl(40 90% 96%)" }}>
+            <AlertCircle className="w-5 h-5" style={{ color: "hsl(40 80% 45%)" }} />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-base font-bold" style={{ color: "hsl(220 20% 18%)" }}>Divergência no endereço</h3>
+            <p className="text-xs mt-0.5" style={{ color: "hsl(220 10% 50%)" }}>
+              O CEP informado localizou um endereço diferente do que está no comprovante. Qual deseja usar?
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+          <button onClick={() => onChoose("cep")} className="text-left p-3 rounded-xl border-2 hover:border-blue-400 transition-colors" style={{ borderColor: "hsl(220 13% 88%)" }}>
+            <div className="text-[11px] font-bold uppercase tracking-wide mb-1.5" style={{ color: "hsl(230 80% 56%)" }}>Do CEP (oficial)</div>
+            <div className="text-xs leading-relaxed" style={{ color: "hsl(220 20% 25%)" }}>
+              <div className="font-semibold">{divergence.cep_address.logradouro}</div>
+              <div>{divergence.cep_address.bairro}</div>
+              <div>{divergence.cep_address.cidade}/{divergence.cep_address.estado}</div>
+            </div>
+          </button>
+          <button onClick={() => onChoose("doc")} className="text-left p-3 rounded-xl border-2 hover:border-blue-400 transition-colors" style={{ borderColor: "hsl(220 13% 88%)" }}>
+            <div className="text-[11px] font-bold uppercase tracking-wide mb-1.5" style={{ color: "hsl(152 60% 42%)" }}>Do comprovante</div>
+            <div className="text-xs leading-relaxed" style={{ color: "hsl(220 20% 25%)" }}>
+              <div className="font-semibold">{divergence.doc_address.logradouro}</div>
+              <div>{divergence.doc_address.bairro}</div>
+              <div>{divergence.doc_address.cidade}/{divergence.doc_address.estado}</div>
+            </div>
+          </button>
+        </div>
+
+        <button onClick={onClose} className="w-full text-xs font-medium py-2 rounded-lg" style={{ color: "hsl(220 10% 46%)", background: "hsl(220 14% 96%)" }}>
+          Decidir depois
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /* ── Step 1: Dados Pessoais ── */
-function Step1({ form, set, errors, onCpfLookup, cpfLooking, cpfFound }: { form: FormData; set: any; errors: any; onCpfLookup?: () => void; cpfLooking?: boolean; cpfFound?: boolean | null }) {
+function Step1({ form, set, errors, onCpfLookup, cpfLooking, cpfFound, autoFilled }: { form: FormData; set: any; errors: any; onCpfLookup?: () => void; cpfLooking?: boolean; cpfFound?: boolean | null; autoFilled?: Set<string> }) {
+  const hl = (f: string) => autoFilled?.has(f) ? { boxShadow: "0 0 0 2px hsl(152 60% 80%)", background: "hsl(152 60% 99%)" } : undefined;
   return (
     <div>
       <SectionTitle>Dados Pessoais</SectionTitle>
-      <SectionDesc>Informe seus dados de identificação pessoal.</SectionDesc>
+      <SectionDesc>
+        {autoFilled && autoFilled.size > 0
+          ? "Confira os dados extraídos dos seus documentos. Campos destacados em verde foram preenchidos automaticamente — revise e complete o que faltar."
+          : "Informe seus dados de identificação pessoal."}
+      </SectionDesc>
+      {autoFilled && autoFilled.size > 0 && (
+        <div className="mb-4 p-2.5 rounded-lg flex items-center gap-2 text-[11px]" style={{ background: "hsl(152 60% 96%)", border: "1px solid hsl(152 40% 80%)", color: "hsl(152 40% 25%)" }}>
+          <Sparkles className="w-3.5 h-3.5" />
+          <span><strong>{autoFilled.size}</strong> campos preenchidos automaticamente pela IA. Revise antes de continuar.</span>
+        </div>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <SelfieCapture value={form.selfie_data_url} onChange={v => set("selfie_data_url", v)} error={(errors as any).selfie_data_url} />
+        {!form.selfie_data_url && (
+          <SelfieCapture value={form.selfie_data_url} onChange={v => set("selfie_data_url", v)} error={(errors as any).selfie_data_url} />
+        )}
         <div className="md:col-span-2">
           <Field label="Nome completo" required error={errors.nome_completo}>
             <TextInput value={form.nome_completo} onChange={v => set("nome_completo", v)} placeholder="Nome completo" />
