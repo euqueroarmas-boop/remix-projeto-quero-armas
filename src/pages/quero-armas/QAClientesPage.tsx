@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   Search, User, Phone, Mail, MapPin, FileText, Shield, ChevronLeft,
   Loader2, Eye, Plus, Crosshair, Edit, Trash2, Download, FileDown,
-  ChevronDown, ChevronUp, Save, X, CheckCircle, TrendingUp, KeyRound, PenTool,
+  ChevronDown, ChevronUp, Save, X, XCircle, CheckCircle, TrendingUp, KeyRound, PenTool,
   HeartPulse, GripVertical,
 } from "lucide-react";
 import {
@@ -2149,7 +2149,7 @@ export default function QAClientesPage() {
             </button>
           ))}
         </div>
-      ) : (
+      ) : tabView === "cadastros" ? (
         <div className="space-y-1.5">
           {filteredCadastros.length === 0 && <div className="text-center py-12 text-sm" style={{ color: "hsl(220 10% 62%)" }}>Nenhum cadastro público encontrado.</div>}
           {filteredCadastros.map(c => (
@@ -2197,6 +2197,57 @@ export default function QAClientesPage() {
                   </span>
                   <span className="text-[10px]" style={{ color: "hsl(220 10% 62%)" }}>
                     {new Date(c.created_at).toLocaleDateString("pt-BR")} {new Date(c.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                </div>
+                {loadingCadastroPublico ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" style={{ color: "hsl(220 10% 62%)" }} />
+                ) : (
+                  <Eye className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: "hsl(220 10% 62%)" }} />
+                )}
+              </div>
+            </button>
+          ))}
+        </div>
+      ) : (
+        // tabView === "rejeitados"
+        <div className="space-y-1.5">
+          {filteredRejeitados.length === 0 && (
+            <div className="text-center py-12 text-sm" style={{ color: "hsl(220 10% 62%)" }}>
+              Nenhum cadastro rejeitado.
+            </div>
+          )}
+          {filteredRejeitados.map(c => (
+            <button
+              key={c.id}
+              type="button"
+              onClick={() => openCadastroPublico(c.id)}
+              disabled={loadingCadastroPublico}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-all hover:shadow-sm text-left group disabled:opacity-70"
+              style={{ borderColor: "hsl(0 60% 92%)", background: "hsl(0 60% 99%)" }}
+            >
+              <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: "hsl(0 60% 95%)" }}>
+                <XCircle className="h-4 w-4" style={{ color: "hsl(0 65% 50%)" }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-[13px] font-medium truncate" style={{ color: "hsl(220 20% 18%)" }}>{c.nome_completo}</div>
+                <div className="flex items-center gap-2 text-[11px] flex-wrap" style={{ color: "hsl(220 10% 55%)" }}>
+                  <span>{formatCpf(c.cpf)}</span>
+                  <span>•</span>
+                  <span>{c.telefone_principal || "—"}</span>
+                  <span>•</span>
+                  <span>{c.email || "—"}</span>
+                </div>
+                {c.servico_interesse && (
+                  <div className="text-[10px] mt-0.5" style={{ color: "hsl(0 65% 50%)" }}>🎯 {c.servico_interesse}</div>
+                )}
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <div className="flex flex-col items-end gap-1">
+                  <span className="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase border bg-red-50 text-red-600 border-red-200">
+                    REJEITADO
+                  </span>
+                  <span className="text-[10px]" style={{ color: "hsl(220 10% 62%)" }}>
+                    {new Date(c.created_at).toLocaleDateString("pt-BR")}
                   </span>
                 </div>
                 {loadingCadastroPublico ? (
