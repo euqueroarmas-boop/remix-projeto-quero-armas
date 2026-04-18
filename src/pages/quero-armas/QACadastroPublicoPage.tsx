@@ -1017,12 +1017,25 @@ function DivergenceModal({
 
 /* ── Step 1: Dados Pessoais ── */
 function Step1({ form, set, errors, onCpfLookup, cpfLooking, cpfFound, autoFilled }: { form: FormData; set: any; errors: any; onCpfLookup?: () => void; cpfLooking?: boolean; cpfFound?: boolean | null; autoFilled?: Set<string> }) {
+  const hl = (f: string) => autoFilled?.has(f) ? { boxShadow: "0 0 0 2px hsl(152 60% 80%)", background: "hsl(152 60% 99%)" } : undefined;
   return (
     <div>
       <SectionTitle>Dados Pessoais</SectionTitle>
-      <SectionDesc>Informe seus dados de identificação pessoal.</SectionDesc>
+      <SectionDesc>
+        {autoFilled && autoFilled.size > 0
+          ? "Confira os dados extraídos dos seus documentos. Campos destacados em verde foram preenchidos automaticamente — revise e complete o que faltar."
+          : "Informe seus dados de identificação pessoal."}
+      </SectionDesc>
+      {autoFilled && autoFilled.size > 0 && (
+        <div className="mb-4 p-2.5 rounded-lg flex items-center gap-2 text-[11px]" style={{ background: "hsl(152 60% 96%)", border: "1px solid hsl(152 40% 80%)", color: "hsl(152 40% 25%)" }}>
+          <Sparkles className="w-3.5 h-3.5" />
+          <span><strong>{autoFilled.size}</strong> campos preenchidos automaticamente pela IA. Revise antes de continuar.</span>
+        </div>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <SelfieCapture value={form.selfie_data_url} onChange={v => set("selfie_data_url", v)} error={(errors as any).selfie_data_url} />
+        {!form.selfie_data_url && (
+          <SelfieCapture value={form.selfie_data_url} onChange={v => set("selfie_data_url", v)} error={(errors as any).selfie_data_url} />
+        )}
         <div className="md:col-span-2">
           <Field label="Nome completo" required error={errors.nome_completo}>
             <TextInput value={form.nome_completo} onChange={v => set("nome_completo", v)} placeholder="Nome completo" />
