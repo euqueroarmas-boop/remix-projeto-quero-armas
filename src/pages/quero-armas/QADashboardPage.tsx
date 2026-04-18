@@ -52,6 +52,7 @@ interface NovoCadastro {
   end1_estado: string;
   servico_interesse: string;
   status: string;
+  pago?: boolean | null;
   created_at: string;
 }
 
@@ -113,7 +114,7 @@ export default function QADashboardPage() {
         supabase.from("qa_geracoes_pecas" as any).select("id, titulo_geracao, tipo_peca, created_at, status_revisao").order("created_at", { ascending: false }).limit(6),
         supabase.from("qa_documentos_conhecimento" as any).select("id, titulo, tipo_documento, created_at, status_processamento").eq("ativo", true).eq("papel_documento", "aprendizado").order("created_at", { ascending: false }).limit(6),
         supabase.from("qa_cadastro_publico" as any).select("id", { count: "exact", head: true }),
-        supabase.from("qa_cadastro_publico" as any).select("id, nome_completo, cpf, telefone_principal, email, end1_cidade, end1_estado, servico_interesse, status, created_at").order("created_at", { ascending: false }).limit(8),
+        supabase.from("qa_cadastro_publico" as any).select("id, nome_completo, cpf, telefone_principal, email, end1_cidade, end1_estado, servico_interesse, status, pago, created_at").order("created_at", { ascending: false }).limit(8),
       ]);
       setStats({
         documentos: d.count ?? 0, normas: n.count ?? 0, jurisprudencias: j.count ?? 0,
@@ -320,6 +321,11 @@ export default function QADashboardPage() {
                     c.status === "aprovado" ? "bg-emerald-50 text-emerald-600" :
                     "bg-slate-100 text-slate-500"
                   }`}>{c.status}</span>
+                  <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-semibold border ${
+                    c.pago
+                      ? "bg-emerald-500 text-white border-emerald-500"
+                      : "bg-slate-50 text-slate-400 border-slate-200 opacity-60"
+                  }`}>{c.pago ? "PAGO" : "NÃO PAGO"}</span>
                   <span className="text-[10px]" style={{ color: "hsl(220 10% 62%)" }}>
                     {new Date(c.created_at).toLocaleDateString("pt-BR")}
                   </span>
