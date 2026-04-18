@@ -565,42 +565,62 @@ export default function DashboardProcessosMonitor() {
         />
       </div>
 
-      {/* Toolbar */}
-      <div className="qa-card p-3 md:p-4">
-        <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3">
-          <div className="flex items-center gap-1 flex-wrap">
-            <FilterChip active={filter === "todos" && !entidadeFilter} onClick={() => { setFilter("todos"); setEntidadeFilter(null); }}>Todos ({counts.total})</FilterChip>
-            <FilterChip active={filter === "ativos" && !entidadeFilter} onClick={() => { setFilter("ativos"); setEntidadeFilter(null); }}>Ativos ({counts.ativos})</FilterChip>
-            <FilterChip active={filter === "encerrados" && !entidadeFilter} onClick={() => { setFilter("encerrados"); setEntidadeFilter(null); }}>Encerrados ({counts.encerrados})</FilterChip>
-            {catalogByKey.has(filter as string) && (
-              <FilterChip active onClick={() => { setFilter("ativos"); setEntidadeFilter(null); }}>
-                {catalogByKey.get(filter as string)!.label}{entidadeFilter ? ` · ${entidadeFilter}` : ""} ✕
-              </FilterChip>
-            )}
-          </div>
-          <div className="flex-1" />
-          <div className="relative">
-            <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Cliente, serviço ou nº venda..."
-              className="pl-7 pr-3 h-8 w-full md:w-56 text-xs rounded-md border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-200"
-            />
-          </div>
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as SortKey)}
-            className="h-8 text-xs rounded-md border border-slate-200 bg-white px-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
+      {/* Toolbar de busca — aparece só quando o usuário aciona (clique em status ou botão) */}
+      {!collapsed && !showSearch && (
+        <div className="flex justify-end">
+          <button
+            onClick={() => setShowSearch(true)}
+            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-slate-200 bg-white text-[11px] font-medium text-slate-600 hover:bg-slate-50"
           >
-            <option value="tempo_parado">Mais tempo no status</option>
-            <option value="recente">Mais recente</option>
-            <option value="cliente">Cliente (A→Z)</option>
-            <option value="status">Status</option>
-            <option value="servico">Serviço</option>
-          </select>
+            <Search className="w-3.5 h-3.5" /> Buscar / Listar serviços
+          </button>
         </div>
-      </div>
+      )}
+
+      {!collapsed && showSearch && (
+        <div className="qa-card p-3 md:p-4">
+          <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3">
+            <div className="flex items-center gap-1 flex-wrap">
+              <FilterChip active={filter === "todos" && !entidadeFilter} onClick={() => { setFilter("todos"); setEntidadeFilter(null); }}>Todos ({counts.total})</FilterChip>
+              <FilterChip active={filter === "ativos" && !entidadeFilter} onClick={() => { setFilter("ativos"); setEntidadeFilter(null); }}>Ativos ({counts.ativos})</FilterChip>
+              <FilterChip active={filter === "encerrados" && !entidadeFilter} onClick={() => { setFilter("encerrados"); setEntidadeFilter(null); }}>Encerrados ({counts.encerrados})</FilterChip>
+              {catalogByKey.has(filter as string) && (
+                <FilterChip active onClick={() => { setFilter("ativos"); setEntidadeFilter(null); }}>
+                  {catalogByKey.get(filter as string)!.label}{entidadeFilter ? ` · ${entidadeFilter}` : ""} ✕
+                </FilterChip>
+              )}
+            </div>
+            <div className="flex-1" />
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Cliente, serviço ou nº venda..."
+                className="pl-7 pr-3 h-8 w-full md:w-56 text-xs rounded-md border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-200"
+              />
+            </div>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortKey)}
+              className="h-8 text-xs rounded-md border border-slate-200 bg-white px-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
+            >
+              <option value="tempo_parado">Mais tempo no status</option>
+              <option value="recente">Mais recente</option>
+              <option value="cliente">Cliente (A→Z)</option>
+              <option value="status">Status</option>
+              <option value="servico">Serviço</option>
+            </select>
+            <button
+              onClick={() => { setShowSearch(false); setSearch(""); setFilter("ativos"); setEntidadeFilter(null); }}
+              className="h-8 inline-flex items-center justify-center w-8 rounded-md border border-slate-200 bg-white text-slate-500 hover:bg-slate-50"
+              title="Fechar busca"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Lista */}
       <div className="qa-card overflow-hidden">
