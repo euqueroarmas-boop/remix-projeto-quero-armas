@@ -1068,10 +1068,31 @@ export default function QAClientesPage() {
                             </div>
                           </div>
                           <div className="px-3 py-2 space-y-1.5">
+                            <DndContext
+                              sensors={dndSensors}
+                              collisionDetection={closestCenter}
+                              onDragEnd={(e) => handleReorderItens(v.id_legado ?? v.id, e)}
+                            >
+                              <SortableContext
+                                items={vItens.map((i: any) => String(i.id))}
+                                strategy={verticalListSortingStrategy}
+                              >
                             {vItens.map((it: any) => (
-                              <div key={it.id}>
-                                <div className={`flex items-center justify-between text-[10px] gap-1 rounded px-1 -mx-1 py-0.5 ${isStatusDefinido(it.status) ? "hover:bg-white" : "opacity-90"}`}>
+                              <SortableServicoRow key={it.id} id={String(it.id)}>
+                                {({ listeners, attributes, isDragging }) => (
+                                <div>
+                                <div className={`flex items-center justify-between text-[10px] gap-1 rounded px-1 -mx-1 py-0.5 ${isStatusDefinido(it.status) ? "hover:bg-white" : "opacity-90"} ${isDragging ? "bg-slate-100 shadow-sm" : ""}`}>
                                   <div className="flex items-center gap-2 flex-1 min-w-0">
+                                    <button
+                                      type="button"
+                                      {...listeners}
+                                      {...attributes}
+                                      title="Arraste para reordenar"
+                                      aria-label="Reordenar serviço"
+                                      className="inline-flex h-5 w-5 items-center justify-center rounded text-slate-300 hover:text-slate-600 hover:bg-slate-100 cursor-grab active:cursor-grabbing touch-none"
+                                    >
+                                      <GripVertical className="h-3 w-3 shrink-0" />
+                                    </button>
                                     <button
                                       type="button"
                                       onClick={() => handleExpandItem(it)}
