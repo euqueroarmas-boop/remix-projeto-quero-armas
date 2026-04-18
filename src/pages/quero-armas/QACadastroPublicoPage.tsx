@@ -531,18 +531,31 @@ export default function QACadastroPublicoPage() {
     }
     setSubmitting(true);
     try {
-      // Upload selfie first
+      // Upload selfie — DataURL→Blob direto (mais confiável em iOS Safari)
       let selfie_path: string | null = null;
       try {
-        const blob = await (await fetch(form.selfie_data_url)).blob();
+        const dataUrl = form.selfie_data_url;
+        const [meta, b64] = dataUrl.split(",");
+        const mime = /data:([^;]+)/.exec(meta || "")?.[1] || "image/jpeg";
+        const bin = atob(b64 || "");
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        const blob = new Blob([bytes], { type: mime });
+
         const cpfDigits = form.cpf.replace(/\D/g, "");
         const key = `cadastro-publico/${cpfDigits || "anon"}-${Date.now()}.jpg`;
         const { error: upErr } = await supabase.storage
           .from("qa-cadastro-selfies")
-          .upload(key, blob, { contentType: "image/jpeg", upsert: true });
-        if (!upErr) selfie_path = key;
-      } catch (e) {
+          .upload(key, blob, { contentType: mime, upsert: true });
+        if (upErr) {
+          console.error("[selfie upload] storage error:", upErr);
+          throw new Error(`Falha ao enviar selfie: ${upErr.message}`);
+        }
+        selfie_path = key;
+        console.log("[selfie upload] ok →", key);
+      } catch (e: any) {
         console.error("[selfie upload]", e);
+        throw new Error(e?.message || "Não foi possível enviar a selfie. Tente novamente.");
       }
 
       const { selfie_data_url: _omit, ...rest } = form;
@@ -550,7 +563,7 @@ export default function QACadastroPublicoPage() {
         body: { ...rest, selfie_path },
       });
       if (error || !data?.success) {
-        throw new Error(data?.error || "Erro ao enviar");
+        throw new Error(data?.error || error?.message || "Erro ao enviar");
       }
       setSubmitted(true);
     } catch (err: any) {
