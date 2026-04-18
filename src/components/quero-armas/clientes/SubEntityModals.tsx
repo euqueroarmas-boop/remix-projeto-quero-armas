@@ -504,9 +504,8 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
       }
     >
       <div className="space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
           <PremiumField label="Data da Venda" value={f.data_cadastro} onChange={v => setF(p => ({ ...p, data_cadastro: applyDateMask(v) }))} type="date" icon={CalendarDays} />
-          <PremiumField label="Nº Processo" value={f.numero_processo} onChange={v => setF(p => ({ ...p, numero_processo: v }))} icon={Hash} />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="flex-1 min-w-0">
