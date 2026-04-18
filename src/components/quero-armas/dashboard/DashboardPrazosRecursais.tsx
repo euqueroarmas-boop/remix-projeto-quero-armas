@@ -1,7 +1,8 @@
 /**
- * Dashboard — Prazos Recursais (PF: Posse e Porte)
+ * Dashboard — Prazos Recursais (PF: Posse, Porte e CRAF)
  *
- * Trigger: item de Posse/Porte na PF com status = 'RECURSO ADMINISTRATIVO'.
+ * Trigger: item com data_indeferimento preenchida E serviço sendo
+ * Posse PF (id=2), Porte PF (id=3) ou CRAF PF (id=26).
  * Janela: D = data_indeferimento; prazo = D+10 (Lei 9.784/99 art. 59 +
  * Decreto 9.847/19 art. 10). Vencidos NÃO aparecem (filtra diasRestantes >= 0).
  * Cores por dias restantes: 🟢 8–10 · 🟡 5–7 · 🔴 0–4.
@@ -28,19 +29,25 @@ interface ItemRow {
 }
 interface VendaRow { id: number; id_legado: number | null; cliente_id: number | null; }
 interface ClienteRow { id: number; id_legado: number | null; nome_completo: string | null; }
-interface ServicoRow { id: number; nome_servico: string | null; }
 
 interface PrazoRow {
   itemId: number;
   clienteIdLegado: number | null;
   clienteNome: string;
-  tipo: "Posse" | "Porte";
+  tipo: "Posse" | "Porte" | "CRAF";
   dataIndeferimento: string;
   dataLimite: string;
   diasRestantes: number;
 }
 
 const MAX_CARDS = 9; // 9 cards individuais + 1 card "+N"
+// IDs dos serviços PF que disparam prazo recursal
+const SERVICOS_PF_RECURSO: Record<number, "Posse" | "Porte" | "CRAF"> = {
+  2: "Posse",   // Posse na Polícia Federal
+  3: "Porte",   // Porte na Polícia Federal
+  26: "CRAF",   // CRAF na Polícia Federal
+};
+
 const todayISO = () => new Date().toISOString().slice(0, 10);
 const diffDays = (a: string, b: string) =>
   Math.floor((new Date(b + "T00:00:00").getTime() - new Date(a + "T00:00:00").getTime()) / 86_400_000);
@@ -48,15 +55,6 @@ const addDaysISO = (iso: string, days: number) => {
   const d = new Date(iso + "T00:00:00"); d.setDate(d.getDate() + days);
   return d.toISOString().slice(0, 10);
 };
-
-function classifyPF(nome: string): "Posse" | "Porte" | null {
-  const n = (nome || "").toLowerCase();
-  const isPF = n.includes("polícia federal") || n.includes("policia federal") || /\bpf\b/.test(n);
-  if (!isPF) return null;
-  if (n.includes("posse")) return "Posse";
-  if (n.includes("porte")) return "Porte";
-  return null;
-}
 
 function toneFor(dias: number) {
   // dias = dias restantes até o limite (D+10). Sempre 0..10 aqui (vencidos já filtrados).
@@ -73,27 +71,24 @@ export default function DashboardPrazosRecursais() {
     let cancelled = false;
     (async () => {
       try {
+        const servicoIdsPF = Object.keys(SERVICOS_PF_RECURSO).map(Number);
         const { data: itens, error: e1 } = await supabase
           .from("qa_itens_venda" as any)
           .select("id, venda_id, servico_id, status, data_indeferimento, data_recurso_administrativo")
-          .ilike("status", "RECURSO ADMINISTRATIVO")
+          .in("servico_id", servicoIdsPF as any)
           .not("data_indeferimento", "is", null);
         if (e1) throw e1;
         const itensList = (itens || []) as unknown as ItemRow[];
         if (!itensList.length) { if (!cancelled) { setRows([]); setLoading(false); } return; }
 
         const vendaLegadoIds = Array.from(new Set(itensList.map(i => i.venda_id)));
-        const servicoIds = Array.from(new Set(itensList.map(i => i.servico_id).filter(Boolean) as number[]));
 
         // FK: qa_itens_venda.venda_id → qa_vendas.id_legado
-        const [vendasRes, servicosRes] = await Promise.all([
-          supabase.from("qa_vendas" as any).select("id, id_legado, cliente_id").in("id_legado", vendaLegadoIds as any),
-          servicoIds.length
-            ? supabase.from("qa_servicos" as any).select("id, nome_servico").in("id", servicoIds as any)
-            : Promise.resolve({ data: [] as any[], error: null }),
-        ]);
+        const vendasRes = await supabase
+          .from("qa_vendas" as any)
+          .select("id, id_legado, cliente_id")
+          .in("id_legado", vendaLegadoIds as any);
         const vendas = ((vendasRes as any).data || []) as VendaRow[];
-        const servicos = ((servicosRes as any).data || []) as ServicoRow[];
 
         // FK: qa_vendas.cliente_id → qa_clientes.id_legado
         const clienteLegadoIds = Array.from(new Set(vendas.map(v => v.cliente_id).filter(Boolean) as number[]));
@@ -104,13 +99,11 @@ export default function DashboardPrazosRecursais() {
 
         const vMap = new Map(vendas.map(v => [v.id_legado, v]));
         const cMap = new Map(clientes.map(c => [c.id_legado, c])); // chave = id_legado
-        const sMap = new Map(servicos.map(s => [s.id, s]));
 
         const today = todayISO();
         const built: PrazoRow[] = [];
         for (const it of itensList) {
-          const servico = it.servico_id ? sMap.get(it.servico_id) : null;
-          const tipo = classifyPF(servico?.nome_servico || "");
+          const tipo = it.servico_id ? SERVICOS_PF_RECURSO[it.servico_id] : null;
           if (!tipo) continue;
 
           const venda = vMap.get(it.venda_id);
