@@ -189,6 +189,22 @@ const buildClientePayload = (cadastro: CadastroPublico, cur?: Partial<Cliente> |
   };
 };
 
+function SortableServicoRow({ id, children }: { id: string; children: (handleProps: { listeners: any; attributes: any; isDragging: boolean }) => React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+    zIndex: isDragging ? 10 : "auto",
+    position: "relative",
+  };
+  return (
+    <div ref={setNodeRef} style={style}>
+      {children({ listeners, attributes, isDragging })}
+    </div>
+  );
+}
+
 export default function QAClientesPage() {
   const { statuses: statusList } = useQAStatusServico();
   const [clientes, setClientes] = useState<Cliente[]>([]);
