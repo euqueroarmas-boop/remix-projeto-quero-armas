@@ -337,8 +337,25 @@ export default function QACadastroPublicoPage() {
     if (!validateStep(5)) return;
     setSubmitting(true);
     try {
+      // 1. Upload selfie to private storage (if provided)
+      let selfiePath = form.selfie_path;
+      if (form.selfie_data_url && !selfiePath) {
+        const blob = await (await fetch(form.selfie_data_url)).blob();
+        const cpfDigits = form.cpf.replace(/\D/g, "") || "sem-cpf";
+        const ts = Date.now();
+        const key = `cadastro-publico/${cpfDigits}-${ts}.jpg`;
+        const { error: upErr } = await supabase.storage
+          .from("qa-cadastro-selfies")
+          .upload(key, blob, { contentType: "image/jpeg", upsert: true });
+        if (upErr) throw new Error("Falha ao enviar a selfie. Tente novamente.");
+        selfiePath = key;
+        set("selfie_path", key);
+      }
+
+      // 2. Submit form (omit local-only preview field)
+      const { selfie_data_url: _omit, ...payload } = { ...form, selfie_path: selfiePath };
       const { data, error } = await supabase.functions.invoke("qa-cadastro-publico", {
-        body: form,
+        body: payload,
       });
       if (error || !data?.success) {
         throw new Error(data?.error || "Erro ao enviar");
