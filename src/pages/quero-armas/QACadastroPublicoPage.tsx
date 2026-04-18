@@ -4,11 +4,12 @@ import { useBrasilApiLookup } from "@/hooks/useBrasilApiLookup";
 import {
   User, MapPin, Building2, FileCheck, ChevronRight, ChevronLeft,
   Loader2, CheckCircle, Search, Plus, AlertCircle, Shield, Camera, RotateCcw,
+  IdCard, FileText, Sparkles, Upload, X,
 } from "lucide-react";
 import { QALogo } from "@/components/quero-armas/QALogo";
 
 /* ── Types ── */
-type Step = 1 | 2 | 3 | 4 | 5;
+type Step = 0 | 1 | 2 | 3 | 4 | 5;
 
 interface FormData {
   nome_completo: string; cpf: string; rg: string; emissor_rg: string; uf_emissor_rg: string; data_nascimento: string;
