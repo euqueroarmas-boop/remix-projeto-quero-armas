@@ -547,7 +547,8 @@ export default function DashboardProcessosMonitor() {
           counts={counts.byEntStatus.PF}
           filter={filter}
           entidadeFilter={entidadeFilter}
-          setFilter={setFilter}
+          onlyAtivos={collapsed}
+          setFilter={(f) => { setFilter(f); setShowSearch(true); }}
           setEntidadeFilter={setEntidadeFilter}
         />
         <EntityPanel
@@ -558,7 +559,8 @@ export default function DashboardProcessosMonitor() {
           counts={counts.byEntStatus.EB}
           filter={filter}
           entidadeFilter={entidadeFilter}
-          setFilter={setFilter}
+          onlyAtivos={collapsed}
+          setFilter={(f) => { setFilter(f); setShowSearch(true); }}
           setEntidadeFilter={setEntidadeFilter}
         />
       </div>
