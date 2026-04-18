@@ -29,19 +29,25 @@ interface ItemRow {
 }
 interface VendaRow { id: number; id_legado: number | null; cliente_id: number | null; }
 interface ClienteRow { id: number; id_legado: number | null; nome_completo: string | null; }
-interface ServicoRow { id: number; nome_servico: string | null; }
 
 interface PrazoRow {
   itemId: number;
   clienteIdLegado: number | null;
   clienteNome: string;
-  tipo: "Posse" | "Porte";
+  tipo: "Posse" | "Porte" | "CRAF";
   dataIndeferimento: string;
   dataLimite: string;
   diasRestantes: number;
 }
 
 const MAX_CARDS = 9; // 9 cards individuais + 1 card "+N"
+// IDs dos serviços PF que disparam prazo recursal
+const SERVICOS_PF_RECURSO: Record<number, "Posse" | "Porte" | "CRAF"> = {
+  2: "Posse",   // Posse na Polícia Federal
+  3: "Porte",   // Porte na Polícia Federal
+  26: "CRAF",   // CRAF na Polícia Federal
+};
+
 const todayISO = () => new Date().toISOString().slice(0, 10);
 const diffDays = (a: string, b: string) =>
   Math.floor((new Date(b + "T00:00:00").getTime() - new Date(a + "T00:00:00").getTime()) / 86_400_000);
@@ -49,15 +55,6 @@ const addDaysISO = (iso: string, days: number) => {
   const d = new Date(iso + "T00:00:00"); d.setDate(d.getDate() + days);
   return d.toISOString().slice(0, 10);
 };
-
-function classifyPF(nome: string): "Posse" | "Porte" | null {
-  const n = (nome || "").toLowerCase();
-  const isPF = n.includes("polícia federal") || n.includes("policia federal") || /\bpf\b/.test(n);
-  if (!isPF) return null;
-  if (n.includes("posse")) return "Posse";
-  if (n.includes("porte")) return "Porte";
-  return null;
-}
 
 function toneFor(dias: number) {
   // dias = dias restantes até o limite (D+10). Sempre 0..10 aqui (vencidos já filtrados).
