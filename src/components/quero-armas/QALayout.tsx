@@ -4,6 +4,7 @@ import { Outlet, Navigate } from "react-router-dom";
 import { QAAuthProvider, useQAAuthContext } from "./QAAuthContext";
 import { PanelLeftOpen } from "lucide-react";
 import { QABreadcrumb } from "./QABreadcrumb";
+import { QAFooter } from "./QAFooter";
 
 function QALayoutInner() {
   const { user, profile, loading, signOut } = useQAAuthContext();
@@ -39,6 +40,7 @@ function QALayoutInner() {
             <div className="p-3 md:p-6 lg:p-8">
               <Outlet />
             </div>
+            <QAFooter />
           </main>
         </div>
       </div>
