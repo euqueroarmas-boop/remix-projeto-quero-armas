@@ -1059,3 +1059,183 @@ function SummaryItem({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+
+/* ── Selfie Capture Component ── */
+function SelfieCapture({ value, onChange }: { value: string; onChange: (dataUrl: string) => void }) {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [active, setActive] = useState(false);
+  const [starting, setStarting] = useState(false);
+  const [camError, setCamError] = useState<string | null>(null);
+
+  const stopStream = useCallback(() => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(t => t.stop());
+      streamRef.current = null;
+    }
+    setActive(false);
+  }, []);
+
+  useEffect(() => () => stopStream(), [stopStream]);
+
+  const startCamera = async () => {
+    setCamError(null);
+    setStarting(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user", width: { ideal: 720 }, height: { ideal: 720 } },
+        audio: false,
+      });
+      streamRef.current = stream;
+      setActive(true);
+      // Wait next tick for video element to mount
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play().catch(() => {});
+        }
+      }, 50);
+    } catch {
+      setCamError("Não foi possível acessar a câmera. Toque em \"Enviar foto\" para usar a galeria.");
+      setActive(false);
+    } finally {
+      setStarting(false);
+    }
+  };
+
+  const capture = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    const w = video.videoWidth || 480;
+    const h = video.videoHeight || 480;
+    const canvas = canvasRef.current || document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.drawImage(video, 0, 0, w, h);
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+    onChange(dataUrl);
+    stopStream();
+  };
+
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setCamError("Selecione um arquivo de imagem.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => onChange(String(reader.result || ""));
+    reader.readAsDataURL(file);
+  };
+
+  const retake = () => {
+    onChange("");
+    startCamera();
+  };
+
+  // Has captured photo
+  if (value) {
+    return (
+      <div className="flex flex-col sm:flex-row items-center gap-4 p-3 rounded-xl" style={{ background: "hsl(220 20% 97%)", border: "1px solid hsl(220 13% 91%)" }}>
+        <img src={value} alt="Selfie" className="w-32 h-32 object-cover rounded-xl border" style={{ borderColor: "hsl(220 13% 85%)" }} />
+        <div className="flex-1 text-center sm:text-left">
+          <p className="flex items-center justify-center sm:justify-start gap-1.5 text-sm font-medium mb-1" style={{ color: "hsl(152 60% 35%)" }}>
+            <CheckCircle className="w-4 h-4" /> Selfie capturada
+          </p>
+          <p className="text-[12px] mb-3" style={{ color: "hsl(220 10% 50%)" }}>
+            Confira se seu rosto está nítido e bem iluminado.
+          </p>
+          <button
+            type="button"
+            onClick={retake}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+            style={{ background: "white", border: "1px solid hsl(220 15% 85%)", color: "hsl(220 20% 30%)" }}
+          >
+            <RefreshCw className="w-3.5 h-3.5" /> Tirar novamente
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Camera active
+  if (active) {
+    return (
+      <div className="rounded-xl overflow-hidden" style={{ background: "hsl(220 20% 10%)", border: "1px solid hsl(220 13% 85%)" }}>
+        <div className="relative aspect-square max-w-[320px] mx-auto">
+          <video ref={videoRef} playsInline muted className="w-full h-full object-cover" style={{ transform: "scaleX(-1)" }} />
+          <canvas ref={canvasRef} className="hidden" />
+        </div>
+        <div className="flex items-center justify-center gap-2 p-3" style={{ background: "hsl(220 20% 12%)" }}>
+          <button
+            type="button"
+            onClick={stopStream}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium"
+            style={{ background: "hsl(220 20% 20%)", color: "white" }}
+          >
+            <XIcon className="w-3.5 h-3.5" /> Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={capture}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold text-white"
+            style={{ background: "hsl(230 80% 56%)" }}
+          >
+            <Camera className="w-4 h-4" /> Capturar
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Idle state
+  return (
+    <div className="p-4 rounded-xl text-center" style={{ background: "hsl(220 20% 97%)", border: "1px dashed hsl(220 15% 80%)" }}>
+      <div className="w-14 h-14 mx-auto mb-3 rounded-full flex items-center justify-center" style={{ background: "hsl(230 80% 95%)" }}>
+        <Camera className="w-6 h-6" style={{ color: "hsl(230 80% 56%)" }} />
+      </div>
+      <p className="text-sm font-medium mb-1" style={{ color: "hsl(220 20% 18%)" }}>Tire uma selfie agora</p>
+      <p className="text-[12px] mb-4" style={{ color: "hsl(220 10% 50%)" }}>
+        Segure o celular na altura do rosto, em ambiente bem iluminado, sem óculos escuros ou boné.
+      </p>
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+        <button
+          type="button"
+          onClick={startCamera}
+          disabled={starting}
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-50"
+          style={{ background: "hsl(230 80% 56%)" }}
+        >
+          {starting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
+          {starting ? "Abrindo câmera..." : "Abrir câmera"}
+        </button>
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium"
+          style={{ background: "white", border: "1px solid hsl(220 15% 85%)", color: "hsl(220 20% 30%)" }}
+        >
+          Enviar foto
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          capture="user"
+          className="hidden"
+          onChange={handleFile}
+        />
+      </div>
+      {camError && (
+        <p className="mt-3 text-[11px]" style={{ color: "hsl(0 72% 51%)" }}>
+          <AlertCircle className="w-3 h-3 inline mr-0.5" /> {camError}
+        </p>
+      )}
+    </div>
+  );
+}

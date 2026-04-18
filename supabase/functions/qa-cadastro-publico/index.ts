@@ -93,6 +93,7 @@ const CadastroSchema = z.object({
   consentimento_tratamento_dados: z.literal(true),
   consentimento_texto: z.string().max(2000).optional().nullable(),
   servico_interesse: z.string().max(200).optional().nullable(),
+  selfie_path: z.string().max(500).optional().nullable(),
 });
 
 Deno.serve(async (req) => {
