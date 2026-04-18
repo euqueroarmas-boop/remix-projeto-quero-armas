@@ -383,8 +383,8 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 <FInput label="CPF" value={f.cpf} onChange={v => set("cpf", v)} />
-                <FInput label="RG" value={f.rg} onChange={v => set("rg", v)} />
-                <FInput label="Emissor RG" value={f.emissor_rg} onChange={v => set("emissor_rg", v)} />
+                <FInput label="RG / CIN" value={f.rg} onChange={v => set("rg", v)} />
+                <FInput label="Emissor RG / CIN" value={f.emissor_rg} onChange={v => set("emissor_rg", v)} />
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 <FInput label="Expedição RG" value={f.expedicao_rg} onChange={v => set("expedicao_rg", normalizeDateInput(v))} placeholder="DD/MM/AAAA" inputMode="numeric" maxLength={10} />
