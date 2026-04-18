@@ -868,8 +868,9 @@ function EntityPanel({
         )}
       </div>
 
-      {/* Detalhamento de status */}
-      <div className={`grid ${onlyAtivos ? "grid-cols-1" : "grid-cols-2 divide-x"} divide-slate-100`}>
+      {/* Detalhamento de status — oculto quando recolhido (onlyAtivos) */}
+      {!onlyAtivos && (
+      <div className="grid grid-cols-2 divide-x divide-slate-100">
         <div className="p-3 flex flex-col gap-2">
           <h5 className="text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-1.5">Fluxo Ativo</h5>
           {ativosCatalog.length === 0 ? (
