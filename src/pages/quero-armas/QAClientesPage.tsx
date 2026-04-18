@@ -214,6 +214,9 @@ interface CadastroPublico {
   consentimento_timestamp?: string | null;
   status: string;
   pago?: boolean | null;
+  selfie_path?: string | null;
+  documento_identidade_path?: string | null;
+  comprovante_endereco_path?: string | null;
   created_at: string;
 }
 
