@@ -13,7 +13,7 @@ import {
   Clock, ArrowUpRight, Search, ChevronRight, Loader2,
   AlertTriangle, CheckCircle2, XCircle, FileWarning, FolderKanban,
   PlayCircle, ListChecks, Hourglass, Archive, Undo2, Ban, Sparkles,
-  Pencil, Check, X, Circle, Gavel,
+  Pencil, Check, X, Circle, Gavel, ChevronDown, ChevronUp,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -221,6 +221,8 @@ export default function DashboardProcessosMonitor() {
   const [search, setSearch] = useState("");
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
 
   /** Aplica novo status + data de protocolo nos itens (1 ou N para combo).
    *  Zera o "tempo no status" setando data_ultima_atualizacao = data informada. */
@@ -510,11 +512,20 @@ export default function DashboardProcessosMonitor() {
     <div className="space-y-4">
       {/* Header — mesmo padrão do Monitoramento de Exames */}
       <div className="flex items-start justify-between gap-3">
-        <div>
-          <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide">MONITOR OPERACIONAL DE PROCESSOS</h3>
-          <p className="text-[11px] text-slate-500 mt-0.5">
-            Estado atual de cada serviço — clique em um status para filtrar
-          </p>
+        <div className="flex items-start gap-2">
+          <button
+            onClick={() => setCollapsed(c => !c)}
+            className="mt-0.5 h-6 w-6 inline-flex items-center justify-center rounded-md border border-slate-200 bg-white hover:bg-slate-50 text-slate-500"
+            title={collapsed ? "Expandir monitor" : "Recolher monitor (manter apenas status em andamento)"}
+          >
+            {collapsed ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
+          </button>
+          <div>
+            <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide">MONITOR OPERACIONAL DE PROCESSOS</h3>
+            <p className="text-[11px] text-slate-500 mt-0.5">
+              {collapsed ? "Mostrando apenas status em andamento — clique para expandir" : "Estado atual de cada serviço — clique em um status para filtrar"}
+            </p>
+          </div>
         </div>
         <div className="hidden md:flex items-center gap-3 text-[11px] shrink-0">
           <span className="inline-flex items-center gap-1.5 text-slate-500">
@@ -536,7 +547,8 @@ export default function DashboardProcessosMonitor() {
           counts={counts.byEntStatus.PF}
           filter={filter}
           entidadeFilter={entidadeFilter}
-          setFilter={setFilter}
+          onlyAtivos={collapsed}
+          setFilter={(f) => { setFilter(f); setShowSearch(true); }}
           setEntidadeFilter={setEntidadeFilter}
         />
         <EntityPanel
@@ -547,49 +559,71 @@ export default function DashboardProcessosMonitor() {
           counts={counts.byEntStatus.EB}
           filter={filter}
           entidadeFilter={entidadeFilter}
-          setFilter={setFilter}
+          onlyAtivos={collapsed}
+          setFilter={(f) => { setFilter(f); setShowSearch(true); }}
           setEntidadeFilter={setEntidadeFilter}
         />
       </div>
 
-      {/* Toolbar */}
-      <div className="qa-card p-3 md:p-4">
-        <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3">
-          <div className="flex items-center gap-1 flex-wrap">
-            <FilterChip active={filter === "todos" && !entidadeFilter} onClick={() => { setFilter("todos"); setEntidadeFilter(null); }}>Todos ({counts.total})</FilterChip>
-            <FilterChip active={filter === "ativos" && !entidadeFilter} onClick={() => { setFilter("ativos"); setEntidadeFilter(null); }}>Ativos ({counts.ativos})</FilterChip>
-            <FilterChip active={filter === "encerrados" && !entidadeFilter} onClick={() => { setFilter("encerrados"); setEntidadeFilter(null); }}>Encerrados ({counts.encerrados})</FilterChip>
-            {catalogByKey.has(filter as string) && (
-              <FilterChip active onClick={() => { setFilter("ativos"); setEntidadeFilter(null); }}>
-                {catalogByKey.get(filter as string)!.label}{entidadeFilter ? ` · ${entidadeFilter}` : ""} ✕
-              </FilterChip>
-            )}
-          </div>
-          <div className="flex-1" />
-          <div className="relative">
-            <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Cliente, serviço ou nº venda..."
-              className="pl-7 pr-3 h-8 w-full md:w-56 text-xs rounded-md border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-200"
-            />
-          </div>
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as SortKey)}
-            className="h-8 text-xs rounded-md border border-slate-200 bg-white px-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
+      {/* Toolbar de busca — aparece só quando o usuário aciona (clique em status ou botão) */}
+      {!collapsed && !showSearch && (
+        <div className="flex justify-end">
+          <button
+            onClick={() => setShowSearch(true)}
+            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-slate-200 bg-white text-[11px] font-medium text-slate-600 hover:bg-slate-50"
           >
-            <option value="tempo_parado">Mais tempo no status</option>
-            <option value="recente">Mais recente</option>
-            <option value="cliente">Cliente (A→Z)</option>
-            <option value="status">Status</option>
-            <option value="servico">Serviço</option>
-          </select>
+            <Search className="w-3.5 h-3.5" /> Buscar / Listar serviços
+          </button>
         </div>
-      </div>
+      )}
+
+      {!collapsed && showSearch && (
+        <div className="qa-card p-3 md:p-4">
+          <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3">
+            <div className="flex items-center gap-1 flex-wrap">
+              <FilterChip active={filter === "todos" && !entidadeFilter} onClick={() => { setFilter("todos"); setEntidadeFilter(null); }}>Todos ({counts.total})</FilterChip>
+              <FilterChip active={filter === "ativos" && !entidadeFilter} onClick={() => { setFilter("ativos"); setEntidadeFilter(null); }}>Ativos ({counts.ativos})</FilterChip>
+              <FilterChip active={filter === "encerrados" && !entidadeFilter} onClick={() => { setFilter("encerrados"); setEntidadeFilter(null); }}>Encerrados ({counts.encerrados})</FilterChip>
+              {catalogByKey.has(filter as string) && (
+                <FilterChip active onClick={() => { setFilter("ativos"); setEntidadeFilter(null); }}>
+                  {catalogByKey.get(filter as string)!.label}{entidadeFilter ? ` · ${entidadeFilter}` : ""} ✕
+                </FilterChip>
+              )}
+            </div>
+            <div className="flex-1" />
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Cliente, serviço ou nº venda..."
+                className="pl-7 pr-3 h-8 w-full md:w-56 text-xs rounded-md border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-200"
+              />
+            </div>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortKey)}
+              className="h-8 text-xs rounded-md border border-slate-200 bg-white px-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
+            >
+              <option value="tempo_parado">Mais tempo no status</option>
+              <option value="recente">Mais recente</option>
+              <option value="cliente">Cliente (A→Z)</option>
+              <option value="status">Status</option>
+              <option value="servico">Serviço</option>
+            </select>
+            <button
+              onClick={() => { setShowSearch(false); setSearch(""); setFilter("ativos"); setEntidadeFilter(null); }}
+              className="h-8 inline-flex items-center justify-center w-8 rounded-md border border-slate-200 bg-white text-slate-500 hover:bg-slate-50"
+              title="Fechar busca"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Lista */}
+      {!collapsed && showSearch && (
       <div className="qa-card overflow-hidden">
         {visible.length === 0 ? (
           <div className="px-4 py-10 text-center text-xs text-slate-400">
@@ -785,6 +819,7 @@ export default function DashboardProcessosMonitor() {
           </>
         )}
       </div>
+      )}
     </div>
   );
 }
@@ -794,7 +829,7 @@ export default function DashboardProcessosMonitor() {
  * ================================================================ */
 
 function EntityPanel({
-  entidade, totals, ativosCatalog, encerradosCatalog, counts, filter, entidadeFilter, setFilter, setEntidadeFilter,
+  entidade, totals, ativosCatalog, encerradosCatalog, counts, filter, entidadeFilter, setFilter, setEntidadeFilter, onlyAtivos = false,
 }: {
   entidade: Entidade;
   totals: { ativos: number; encerrados: number; total: number };
@@ -805,6 +840,7 @@ function EntityPanel({
   entidadeFilter: Entidade | null;
   setFilter: (f: FilterKey) => void;
   setEntidadeFilter: (e: Entidade | null) => void;
+  onlyAtivos?: boolean;
 }) {
   const meta = ENTIDADE_META[entidade];
   return (
@@ -819,19 +855,21 @@ function EntityPanel({
       </div>
 
       {/* Totais */}
-      <div className="grid grid-cols-2 divide-x divide-slate-200 border-b border-slate-200">
+      <div className={`grid ${onlyAtivos ? "grid-cols-1" : "grid-cols-2 divide-x"} divide-slate-200 border-b border-slate-200`}>
         <div className="p-4">
           <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Em Andamento</span>
           <div className="text-3xl font-bold tabular-nums text-slate-900 mt-1">{totals.ativos}</div>
         </div>
-        <div className="p-4">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Encerrados</span>
-          <div className="text-3xl font-bold tabular-nums text-slate-500 mt-1">{totals.encerrados}</div>
-        </div>
+        {!onlyAtivos && (
+          <div className="p-4">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Encerrados</span>
+            <div className="text-3xl font-bold tabular-nums text-slate-500 mt-1">{totals.encerrados}</div>
+          </div>
+        )}
       </div>
 
       {/* Detalhamento de status */}
-      <div className="grid grid-cols-2 divide-x divide-slate-100">
+      <div className={`grid ${onlyAtivos ? "grid-cols-1" : "grid-cols-2 divide-x"} divide-slate-100`}>
         <div className="p-3 flex flex-col gap-2">
           <h5 className="text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-1.5">Fluxo Ativo</h5>
           {ativosCatalog.length === 0 ? (
@@ -856,30 +894,32 @@ function EntityPanel({
             );
           })}
         </div>
-        <div className="p-3 flex flex-col gap-2">
-          <h5 className="text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-1.5">Resoluções</h5>
-          {encerradosCatalog.length === 0 ? (
-            <span className="text-[11px] text-slate-300 italic">—</span>
-          ) : encerradosCatalog.map(s => {
-            const isActive = filter === s.key && entidadeFilter === entidade;
-            return (
-              <StatusLine
-                key={s.key} meta={s}
-                total={counts.get(s.key) || 0}
-                active={isActive}
-                onClick={() => {
-                  if (isActive) {
-                    setFilter("encerrados");
-                    setEntidadeFilter(null);
-                  } else {
-                    setFilter(s.key);
-                    setEntidadeFilter(entidade);
-                  }
-                }}
-              />
-            );
-          })}
-        </div>
+        {!onlyAtivos && (
+          <div className="p-3 flex flex-col gap-2">
+            <h5 className="text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-1.5">Resoluções</h5>
+            {encerradosCatalog.length === 0 ? (
+              <span className="text-[11px] text-slate-300 italic">—</span>
+            ) : encerradosCatalog.map(s => {
+              const isActive = filter === s.key && entidadeFilter === entidade;
+              return (
+                <StatusLine
+                  key={s.key} meta={s}
+                  total={counts.get(s.key) || 0}
+                  active={isActive}
+                  onClick={() => {
+                    if (isActive) {
+                      setFilter("encerrados");
+                      setEntidadeFilter(null);
+                    } else {
+                      setFilter(s.key);
+                      setEntidadeFilter(entidade);
+                    }
+                  }}
+                />
+              );
+            })}
+          </div>
+        )}
       </div>
     </section>
   );
