@@ -3,6 +3,7 @@ import { QASidebar } from "./QASidebar";
 import { Outlet, Navigate } from "react-router-dom";
 import { QAAuthProvider, useQAAuthContext } from "./QAAuthContext";
 import { PanelLeftOpen } from "lucide-react";
+import { QABreadcrumb } from "./QABreadcrumb";
 
 function QALayoutInner() {
   const { user, profile, loading, signOut } = useQAAuthContext();
