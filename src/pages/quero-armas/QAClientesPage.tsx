@@ -1828,6 +1828,15 @@ export default function QAClientesPage() {
             </DetailGrid>
           </DetailCard>
 
+          {(c.selfie_path || c.documento_identidade_path || c.comprovante_endereco_path) && (
+            <DetailCard title="Documentos enviados pelo cliente">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <DocumentThumb path={c.selfie_path} label="Selfie" name={c.nome_completo} />
+                <DocumentThumb path={c.documento_identidade_path} label="Documento de identidade" name={c.nome_completo} />
+                <DocumentThumb path={c.comprovante_endereco_path} label="Comprovante de endereço" name={c.nome_completo} />
+              </div>
+            </DetailCard>
+          )}
           {(() => {
             const ua = (c as any).consentimento_user_agent as string | null | undefined;
             const ip = (c as any).consentimento_ip as string | null | undefined;
