@@ -425,6 +425,13 @@ export default function QAClientePortalPage() {
           </SectionCard>
         )}
 
+        {/* ═══ HISTÓRICO DE ATUALIZAÇÕES ═══ */}
+        {cliente?.id && (
+          <SectionCard icon={History} title="Histórico de Atualizações" color="hsl(220 65% 48%)">
+            <HistoricoAtualizacoes clienteId={cliente.id} showSnapshot={false} />
+          </SectionCard>
+        )}
+
         {/* Footer */}
         <div className="text-center py-4">
           <p className="text-[10px] text-slate-300 tracking-wider">Quero Armas · Área do Cliente · Acesso seguro e auditado</p>
