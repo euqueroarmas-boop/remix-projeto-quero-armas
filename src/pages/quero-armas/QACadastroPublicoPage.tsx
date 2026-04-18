@@ -38,6 +38,16 @@ interface FormData {
   selfie_data_url: string;
 }
 
+interface DocImages {
+  identity_data_url: string;
+  address_data_url: string;
+}
+
+interface AddressDivergence {
+  cep_address: { logradouro: string; bairro: string; cidade: string; estado: string };
+  doc_address: { logradouro: string; bairro: string; cidade: string; estado: string };
+}
+
 const initialForm: FormData = {
   nome_completo: "", cpf: "", rg: "", emissor_rg: "", uf_emissor_rg: "", data_nascimento: "",
   telefone_principal: "", telefone_secundario: "", email: "",
