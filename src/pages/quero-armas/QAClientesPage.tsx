@@ -235,7 +235,6 @@ export default function QAClientesPage() {
      * Regra: Nº Processo NÃO aparece em Posse PF.
      * ================================================================ */
     { key: "numero_posse",                  label: "Nº do Requerimento de Posse",       type: "text", servicos: SERVICOS_POSSE },
-    { key: "registro_cad",                  label: "Nº CAD SINARM",                     type: "text", servicos: SERVICOS_POSSE, required: true },
     { key: "data_protocolo",                label: "Data Protocolo",                    type: "date", servicos: SERVICOS_POSSE },
     { key: "data_notificacao",              label: "Data da Notificação",               type: "date", servicos: SERVICOS_POSSE },
     { key: "data_indeferimento",            label: "Data de Indeferimento",             type: "date", servicos: SERVICOS_POSSE },
