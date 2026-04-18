@@ -796,7 +796,7 @@ function SelfieCapture({ value, onChange, error }: { value: string; onChange: (v
               <>
                 <label className="relative overflow-hidden text-xs font-semibold px-3 py-1.5 rounded-lg text-white flex items-center gap-1.5 cursor-pointer" style={{ background: "hsl(230 80% 56%)" }}>
                   <Camera className="w-3.5 h-3.5" /> Abrir câmera
-                  <input ref={cameraRef} type="file" accept="image/*" capture="user" className="absolute inset-0 opacity-0 cursor-pointer" onChange={async e => { const f = e.target.files?.[0]; if (f) await onFile(f); e.target.value = ""; }} />
+                  <input ref={cameraRef} type="file" accept="image/*" capture="user" className="absolute inset-0 opacity-0 cursor-pointer" onChange={async e => { const f = e.target.files?.[0]; if (f) await onFile(f, true); e.target.value = ""; }} />
                 </label>
                 <label className="relative overflow-hidden text-xs font-medium px-3 py-1.5 rounded-lg border cursor-pointer" style={{ borderColor: "hsl(220 13% 85%)", color: "hsl(220 20% 30%)" }}>
                   Enviar arquivo
