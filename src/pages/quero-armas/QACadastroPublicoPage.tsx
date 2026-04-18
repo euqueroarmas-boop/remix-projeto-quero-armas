@@ -642,11 +642,25 @@ export default function QACadastroPublicoPage() {
       }
 
       const { selfie_data_url: _omit, ...rest } = form;
+      const payload: any = { ...rest, selfie_path };
+      if (existingCadastroId) payload.update_existing_id = existingCadastroId;
+
       const { data, error } = await supabase.functions.invoke("qa-cadastro-publico", {
-        body: { ...rest, selfie_path },
+        body: payload,
       });
+
+      // Tratar duplicata detectada no servidor (race condition)
+      const errMsg = (error as any)?.message || data?.error;
+      if (errMsg === "duplicate_cpf" || data?.error === "duplicate_cpf") {
+        setDuplicateInfo({
+          id: data?.existing_id,
+          status: data?.existing_status,
+          created_at: data?.existing_created_at,
+        });
+        throw new Error("Já existe um cadastro com este CPF. Confirme a atualização para prosseguir.");
+      }
       if (error || !data?.success) {
-        throw new Error(data?.error || error?.message || "Erro ao enviar");
+        throw new Error(data?.message || data?.error || (error as any)?.message || "Erro ao enviar");
       }
       setSubmitted(true);
     } catch (err: any) {
