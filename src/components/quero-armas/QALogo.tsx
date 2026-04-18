@@ -1,4 +1,4 @@
-import logoSrc from "@/assets/quero-armas-logo.jpeg";
+import logoSrc from "@/assets/quero-armas-logo.png";
 
 interface QALogoProps {
   className?: string;
