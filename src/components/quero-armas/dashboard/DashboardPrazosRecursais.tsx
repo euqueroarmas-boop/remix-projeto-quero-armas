@@ -76,8 +76,7 @@ export default function DashboardPrazosRecursais() {
         const { data: itens, error: e1 } = await supabase
           .from("qa_itens_venda" as any)
           .select("id, venda_id, servico_id, status, data_indeferimento, data_recurso_administrativo")
-          .ilike("status", "INDEFERIDO")
-          .is("data_recurso_administrativo", null)
+          .ilike("status", "RECURSO ADMINISTRATIVO")
           .not("data_indeferimento", "is", null);
         if (e1) throw e1;
         const itensList = (itens || []) as unknown as ItemRow[];
