@@ -34,6 +34,48 @@ import { getClienteFK, getVendaFK } from "@/components/quero-armas/clientes/clie
 import { useQAStatusServico } from "@/hooks/useQAStatusServico";
 import { isDispensado, getBaseLegalDispensa, CATEGORIA_MAP, type CategoriaTitular } from "@/components/quero-armas/clientes/categoriaTitular";
 
+/* ── Selfie Thumbnail (loads private storage signed URL) ── */
+function SelfieThumb({ path, name, size = "lg" }: { path: string | null | undefined; name?: string | null; size?: "lg" | "sm" }) {
+  const [url, setUrl] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    if (!path) { setUrl(null); return; }
+    supabase.storage.from("qa-cadastro-selfies").createSignedUrl(path, 3600).then(({ data }) => {
+      if (active) setUrl(data?.signedUrl || null);
+    });
+    return () => { active = false; };
+  }, [path]);
+
+  const dim = size === "lg" ? "w-20 h-20 md:w-24 md:h-24" : "w-12 h-12";
+  const initial = (name || "?").trim().charAt(0).toUpperCase();
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => url && setOpen(true)}
+        disabled={!url}
+        className={`${dim} rounded-xl overflow-hidden shrink-0 flex items-center justify-center border bg-slate-50 transition-all ${url ? "hover:ring-2 hover:ring-blue-300 cursor-zoom-in" : "cursor-default"}`}
+        style={{ borderColor: "hsl(220 13% 88%)" }}
+        title={url ? "Clique para ampliar" : "Sem selfie"}
+      >
+        {url ? (
+          <img src={url} alt={name || "Selfie"} className="w-full h-full object-cover" />
+        ) : (
+          <span className="text-xl font-bold" style={{ color: "hsl(220 10% 60%)" }}>{initial}</span>
+        )}
+      </button>
+      {open && url && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={() => setOpen(false)}>
+          <img src={url} alt={name || "Selfie"} className="max-w-full max-h-full rounded-lg shadow-2xl" onClick={e => e.stopPropagation()} />
+        </div>
+      )}
+    </>
+  );
+}
+
 const formatCpf = (v: string | null | undefined): string => {
   if (!v) return "—";
   const d = v.replace(/\D/g, "");
