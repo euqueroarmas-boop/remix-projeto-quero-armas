@@ -169,7 +169,7 @@ function loadImageElement(src: string): Promise<HTMLImageElement> {
   });
 }
 
-async function normalizeUploadToDataUrl(file: File, maxSide = 1800): Promise<string> {
+async function normalizeUploadToDataUrl(file: File, maxSide = 1800, mirror = false): Promise<string> {
   if (!file.type.startsWith("image/")) return readFileAsDataUrl(file);
 
   const objectUrl = URL.createObjectURL(file);
@@ -183,6 +183,10 @@ async function normalizeUploadToDataUrl(file: File, maxSide = 1800): Promise<str
     canvas.height = height;
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("Não foi possível preparar a imagem.");
+    if (mirror) {
+      ctx.translate(width, 0);
+      ctx.scale(-1, 1);
+    }
     ctx.drawImage(img, 0, 0, width, height);
     return canvas.toDataURL("image/jpeg", 0.9);
   } catch {
@@ -753,10 +757,10 @@ function SelfieCapture({ value, onChange, error }: { value: string; onChange: (v
   const cameraRef = useRef<HTMLInputElement | null>(null);
   const [camErr, setCamErr] = useState<string | null>(null);
 
-  const onFile = async (f: File) => {
+  const onFile = async (f: File, mirror = false) => {
     setCamErr(null);
     try {
-      const normalized = await normalizeUploadToDataUrl(f, 1400);
+      const normalized = await normalizeUploadToDataUrl(f, 1400, mirror);
       onChange(normalized);
     } catch {
       setCamErr("Não foi possível carregar a imagem. Tente novamente com outra foto.");
@@ -792,7 +796,7 @@ function SelfieCapture({ value, onChange, error }: { value: string; onChange: (v
               <>
                 <label className="relative overflow-hidden text-xs font-semibold px-3 py-1.5 rounded-lg text-white flex items-center gap-1.5 cursor-pointer" style={{ background: "hsl(230 80% 56%)" }}>
                   <Camera className="w-3.5 h-3.5" /> Abrir câmera
-                  <input ref={cameraRef} type="file" accept="image/*" capture="user" className="absolute inset-0 opacity-0 cursor-pointer" onChange={async e => { const f = e.target.files?.[0]; if (f) await onFile(f); e.target.value = ""; }} />
+                  <input ref={cameraRef} type="file" accept="image/*" capture="user" className="absolute inset-0 opacity-0 cursor-pointer" onChange={async e => { const f = e.target.files?.[0]; if (f) await onFile(f, true); e.target.value = ""; }} />
                 </label>
                 <label className="relative overflow-hidden text-xs font-medium px-3 py-1.5 rounded-lg border cursor-pointer" style={{ borderColor: "hsl(220 13% 85%)", color: "hsl(220 20% 30%)" }}>
                   Enviar arquivo
