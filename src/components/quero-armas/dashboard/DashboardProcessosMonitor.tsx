@@ -512,11 +512,20 @@ export default function DashboardProcessosMonitor() {
     <div className="space-y-4">
       {/* Header — mesmo padrão do Monitoramento de Exames */}
       <div className="flex items-start justify-between gap-3">
-        <div>
-          <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide">MONITOR OPERACIONAL DE PROCESSOS</h3>
-          <p className="text-[11px] text-slate-500 mt-0.5">
-            Estado atual de cada serviço — clique em um status para filtrar
-          </p>
+        <div className="flex items-start gap-2">
+          <button
+            onClick={() => setCollapsed(c => !c)}
+            className="mt-0.5 h-6 w-6 inline-flex items-center justify-center rounded-md border border-slate-200 bg-white hover:bg-slate-50 text-slate-500"
+            title={collapsed ? "Expandir monitor" : "Recolher monitor (manter apenas status em andamento)"}
+          >
+            {collapsed ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
+          </button>
+          <div>
+            <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide">MONITOR OPERACIONAL DE PROCESSOS</h3>
+            <p className="text-[11px] text-slate-500 mt-0.5">
+              {collapsed ? "Mostrando apenas status em andamento — clique para expandir" : "Estado atual de cada serviço — clique em um status para filtrar"}
+            </p>
+          </div>
         </div>
         <div className="hidden md:flex items-center gap-3 text-[11px] shrink-0">
           <span className="inline-flex items-center gap-1.5 text-slate-500">
