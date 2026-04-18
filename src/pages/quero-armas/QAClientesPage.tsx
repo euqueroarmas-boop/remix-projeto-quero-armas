@@ -1222,7 +1222,7 @@ export default function QAClientesPage() {
                   <Field label="Nome" value={c.nome_completo} />
                   <Field label="CPF" value={formatCpf(c.cpf)} copyable />
                   {cadastro?.senha_gov && <Field label="Senha Gov" value={cadastro.senha_gov} copyable />}
-                  <Field label="RG" value={c.rg ? `${maskRg(c.rg)}${c.emissor_rg ? ` — ${c.emissor_rg}` : ""}${(c as any).uf_emissor_rg ? `/${(c as any).uf_emissor_rg}` : ""}` : "—"} />
+                  <Field label="RG / CIN" value={c.rg ? `${maskRg(c.rg)}${c.emissor_rg ? ` — ${c.emissor_rg}` : ""}${(c as any).uf_emissor_rg ? `/${(c as any).uf_emissor_rg}` : ""}` : "—"} />
                   <Field label="Nascimento" value={formatDate(c.data_nascimento)} />
                   <Field label="Naturalidade" value={c.naturalidade} />
                   <Field label="Nacionalidade" value={c.nacionalidade} />
@@ -1914,7 +1914,7 @@ export default function QAClientesPage() {
                   </div>
                 </>
               ) : (
-                <DetailField label="RG" value={c.rg ? `${maskRg(c.rg)}${c.emissor_rg ? ` — ${c.emissor_rg}` : ""}${(c as any).uf_emissor_rg ? `/${(c as any).uf_emissor_rg}` : ""}` : null} />
+                <DetailField label="RG / CIN" value={c.rg ? `${maskRg(c.rg)}${c.emissor_rg ? ` — ${c.emissor_rg}` : ""}${(c as any).uf_emissor_rg ? `/${(c as any).uf_emissor_rg}` : ""}` : null} />
               )}
               {renderField("Nascimento", "data_nascimento", c.data_nascimento)}
               {renderField("Estado Civil", "estado_civil", c.estado_civil)}

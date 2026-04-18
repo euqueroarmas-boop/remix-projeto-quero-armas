@@ -599,7 +599,7 @@ export default function ClientePecas({ cliente }: Props) {
               {enderecoCompleto && <DataField icon={MapPin} label="Endereço" value={enderecoCompleto} />}
               {clienteCep && <DataField icon={MapPin} label="CEP" value={clienteCep} mono />}
               {cliente.rg && (
-                <DataField icon={FileText} label="RG"
+                <DataField icon={FileText} label="RG / CIN"
                   value={`${cliente.rg}${cliente.emissor_rg ? ` — ${cliente.emissor_rg}` : ""}${cliente.uf_emissor_rg ? ` ${cliente.uf_emissor_rg}` : ""}`} mono />
               )}
               {cliente.data_nascimento && <DataField icon={Calendar} label="Nascimento" value={cliente.data_nascimento} />}

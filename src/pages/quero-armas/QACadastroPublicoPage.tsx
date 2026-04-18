@@ -1279,7 +1279,7 @@ function Step1({ form, set, errors, onCpfLookup, cpfLooking, cpfFound, autoFille
             </p>
           )}
         </Field>
-        <Field label="RG">
+        <Field label="RG / CIN">
           <TextInput value={form.rg} onChange={v => set("rg", maskRgInput(v))} placeholder="00.000.000-X" maxLength={14} />
         </Field>
         <Field label="Órgão emissor">
@@ -1720,8 +1720,8 @@ function Step5({ form, set, errors }: any) {
         <SummarySection title="Dados Pessoais">
           <SummaryItem label="Nome" value={form.nome_completo} />
           <SummaryItem label="CPF" value={form.cpf} />
-          <SummaryItem label="RG" value={form.rg} />
-          <SummaryItem label="Emissor RG" value={form.emissor_rg} />
+          <SummaryItem label="RG / CIN" value={form.rg} />
+          <SummaryItem label="Emissor RG / CIN" value={form.emissor_rg} />
           <SummaryItem label="Nascimento" value={form.data_nascimento} />
           <SummaryItem label="E-mail" value={form.email} />
           <SummaryItem label="Telefone" value={form.telefone_principal} />
