@@ -3234,6 +3234,7 @@ export type Database = {
           quantidade_tiros: string | null
           registro_cad: string | null
           servico_id: number | null
+          sort_order: number | null
           status: string | null
           validade_autorizacao: string | null
           valor: number | null
@@ -3270,6 +3271,7 @@ export type Database = {
           quantidade_tiros?: string | null
           registro_cad?: string | null
           servico_id?: number | null
+          sort_order?: number | null
           status?: string | null
           validade_autorizacao?: string | null
           valor?: number | null
@@ -3306,6 +3308,7 @@ export type Database = {
           quantidade_tiros?: string | null
           registro_cad?: string | null
           servico_id?: number | null
+          sort_order?: number | null
           status?: string | null
           validade_autorizacao?: string | null
           valor?: number | null

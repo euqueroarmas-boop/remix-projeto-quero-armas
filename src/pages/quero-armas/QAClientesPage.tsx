@@ -10,8 +10,17 @@ import {
   Search, User, Phone, Mail, MapPin, FileText, Shield, ChevronLeft,
   Loader2, Eye, Plus, Crosshair, Edit, Trash2, Download, FileDown,
   ChevronDown, ChevronUp, Save, X, CheckCircle, TrendingUp, KeyRound, PenTool,
-  HeartPulse,
+  HeartPulse, GripVertical,
 } from "lucide-react";
+import {
+  DndContext, closestCenter, PointerSensor, TouchSensor, KeyboardSensor,
+  useSensor, useSensors, type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy,
+  arrayMove, useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 import { toast } from "sonner";
 import ClienteFormModal from "@/components/quero-armas/clientes/ClienteFormModal";
@@ -180,6 +189,22 @@ const buildClientePayload = (cadastro: CadastroPublico, cur?: Partial<Cliente> |
   };
 };
 
+function SortableServicoRow({ id, children }: { id: string; children: (handleProps: { listeners: any; attributes: any; isDragging: boolean }) => React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+    zIndex: isDragging ? 10 : "auto",
+    position: "relative",
+  };
+  return (
+    <div ref={setNodeRef} style={style}>
+      {children({ listeners, attributes, isDragging })}
+    </div>
+  );
+}
+
 export default function QAClientesPage() {
   const { statuses: statusList } = useQAStatusServico();
   const [clientes, setClientes] = useState<Cliente[]>([]);
@@ -210,6 +235,35 @@ export default function QAClientesPage() {
   const [expandedItemId, setExpandedItemId] = useState<number | null>(null);
   const [itemEditForm, setItemEditForm] = useState<Record<string, string>>({});
   const [savingItem, setSavingItem] = useState(false);
+
+  // Sensores DnD para reordenar serviços dentro de uma venda
+  const dndSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const handleReorderItens = async (vendaFk: number | string, event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const vendaItens = itens.filter((i: any) => i.venda_id === vendaFk);
+    const oldIndex = vendaItens.findIndex((i: any) => String(i.id) === String(active.id));
+    const newIndex = vendaItens.findIndex((i: any) => String(i.id) === String(over.id));
+    if (oldIndex < 0 || newIndex < 0) return;
+    const reordered = arrayMove(vendaItens, oldIndex, newIndex);
+    const reorderedById = new Map(reordered.map((it: any, idx: number) => [it.id, idx + 1]));
+    setItens(prev => prev.map((i: any) =>
+      reorderedById.has(i.id) ? { ...i, sort_order: reorderedById.get(i.id) } : i
+    ));
+    try {
+      await Promise.all(reordered.map((it: any, idx: number) =>
+        supabase.from("qa_itens_venda" as any).update({ sort_order: idx + 1 }).eq("id", it.id)
+      ));
+    } catch (e: any) {
+      toast.error("Falha ao salvar ordem: " + (e?.message || "erro"));
+    }
+  };
+
 
   // Serviços de Concessão de CR (Exército Brasileiro) — possuem apenas campos do CR
   const SERVICOS_CR = [13, 20, 27, 29];
@@ -730,7 +784,7 @@ export default function QAClientesPage() {
       if (vendasData.length > 0) {
         // qa_itens_venda.venda_id referencia qa_vendas.id_legado (chave canônica).
         const vendaIds = vendasData.map((v: any) => getVendaFK(v));
-        const { data: itensData } = await supabase.from("qa_itens_venda" as any).select("*").in("venda_id", vendaIds);
+        const { data: itensData } = await supabase.from("qa_itens_venda" as any).select("*").in("venda_id", vendaIds).order("sort_order", { ascending: true, nullsFirst: false }).order("id", { ascending: true });
         setItens((itensData as any[]) ?? []);
       } else {
         setItens([]);
@@ -1014,10 +1068,31 @@ export default function QAClientesPage() {
                             </div>
                           </div>
                           <div className="px-3 py-2 space-y-1.5">
+                            <DndContext
+                              sensors={dndSensors}
+                              collisionDetection={closestCenter}
+                              onDragEnd={(e) => handleReorderItens(v.id_legado ?? v.id, e)}
+                            >
+                              <SortableContext
+                                items={vItens.map((i: any) => String(i.id))}
+                                strategy={verticalListSortingStrategy}
+                              >
                             {vItens.map((it: any) => (
-                              <div key={it.id}>
-                                <div className={`flex items-center justify-between text-[10px] gap-1 rounded px-1 -mx-1 py-0.5 ${isStatusDefinido(it.status) ? "hover:bg-white" : "opacity-90"}`}>
+                              <SortableServicoRow key={it.id} id={String(it.id)}>
+                                {({ listeners, attributes, isDragging }) => (
+                                <div>
+                                <div className={`flex items-center justify-between text-[10px] gap-1 rounded px-1 -mx-1 py-0.5 ${isStatusDefinido(it.status) ? "hover:bg-white" : "opacity-90"} ${isDragging ? "bg-slate-100 shadow-sm" : ""}`}>
                                   <div className="flex items-center gap-2 flex-1 min-w-0">
+                                    <button
+                                      type="button"
+                                      {...listeners}
+                                      {...attributes}
+                                      title="Arraste para reordenar"
+                                      aria-label="Reordenar serviço"
+                                      className="inline-flex h-5 w-5 items-center justify-center rounded text-slate-300 hover:text-slate-600 hover:bg-slate-100 cursor-grab active:cursor-grabbing touch-none"
+                                    >
+                                      <GripVertical className="h-3 w-3 shrink-0" />
+                                    </button>
                                     <button
                                       type="button"
                                       onClick={() => handleExpandItem(it)}
@@ -1132,8 +1207,12 @@ export default function QAClientesPage() {
                                     {/* Declarações movidas para a aba "Docs" — não exibir aqui */}
                                   </div>
                                 )}
-                              </div>
+                                </div>
+                                )}
+                              </SortableServicoRow>
                             ))}
+                              </SortableContext>
+                            </DndContext>
                             <div className="flex justify-between pt-1 border-t border-slate-200 text-[10px]">
                               <span className="text-slate-400">Total</span>
                               <div className="flex gap-3">
