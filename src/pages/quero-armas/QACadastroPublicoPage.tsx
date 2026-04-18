@@ -371,8 +371,8 @@ export default function QACadastroPublicoPage() {
       <div className="max-w-3xl mx-auto px-4 py-6 md:py-10">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="w-12 h-12 mx-auto mb-4 rounded-xl flex items-center justify-center" style={{ background: "hsl(230 80% 96%)" }}>
-            <Shield className="w-6 h-6" style={{ color: "hsl(230 80% 56%)" }} />
+          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center overflow-hidden bg-white border shadow-sm" style={{ borderColor: "hsl(220 13% 90%)" }}>
+            <QALogo className="h-14 w-14" />
           </div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight" style={{ color: "hsl(220 20% 18%)" }}>
             Cadastro de Cliente

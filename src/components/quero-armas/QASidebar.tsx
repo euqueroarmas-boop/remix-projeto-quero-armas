@@ -8,6 +8,7 @@ import {
   BookOpen, FileBox, History, Settings, LogOut, Shield, Users, Building2, BarChart3, DollarSign, ShieldCheck,
   PanelLeftOpen,
 } from "lucide-react";
+import { QALogo } from "./QALogo";
 
 
 const NAV_GROUPS = [
