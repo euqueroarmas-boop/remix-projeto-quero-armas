@@ -895,33 +895,32 @@ function EntityPanel({
             );
           })}
         </div>
-        {!onlyAtivos && (
-          <div className="p-3 flex flex-col gap-2">
-            <h5 className="text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-1.5">Resoluções</h5>
-            {encerradosCatalog.length === 0 ? (
-              <span className="text-[11px] text-slate-300 italic">—</span>
-            ) : encerradosCatalog.map(s => {
-              const isActive = filter === s.key && entidadeFilter === entidade;
-              return (
-                <StatusLine
-                  key={s.key} meta={s}
-                  total={counts.get(s.key) || 0}
-                  active={isActive}
-                  onClick={() => {
-                    if (isActive) {
-                      setFilter("encerrados");
-                      setEntidadeFilter(null);
-                    } else {
-                      setFilter(s.key);
-                      setEntidadeFilter(entidade);
-                    }
-                  }}
-                />
-              );
-            })}
-          </div>
-        )}
+        <div className="p-3 flex flex-col gap-2">
+          <h5 className="text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-1.5">Resoluções</h5>
+          {encerradosCatalog.length === 0 ? (
+            <span className="text-[11px] text-slate-300 italic">—</span>
+          ) : encerradosCatalog.map(s => {
+            const isActive = filter === s.key && entidadeFilter === entidade;
+            return (
+              <StatusLine
+                key={s.key} meta={s}
+                total={counts.get(s.key) || 0}
+                active={isActive}
+                onClick={() => {
+                  if (isActive) {
+                    setFilter("encerrados");
+                    setEntidadeFilter(null);
+                  } else {
+                    setFilter(s.key);
+                    setEntidadeFilter(entidade);
+                  }
+                }}
+              />
+            );
+          })}
+        </div>
       </div>
+      )}
     </section>
   );
 }
