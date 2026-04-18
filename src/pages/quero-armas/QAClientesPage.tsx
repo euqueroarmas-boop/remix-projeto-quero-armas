@@ -1207,8 +1207,12 @@ export default function QAClientesPage() {
                                     {/* Declarações movidas para a aba "Docs" — não exibir aqui */}
                                   </div>
                                 )}
-                              </div>
+                                </div>
+                                )}
+                              </SortableServicoRow>
                             ))}
+                              </SortableContext>
+                            </DndContext>
                             <div className="flex justify-between pt-1 border-t border-slate-200 text-[10px]">
                               <span className="text-slate-400">Total</span>
                               <div className="flex gap-3">
