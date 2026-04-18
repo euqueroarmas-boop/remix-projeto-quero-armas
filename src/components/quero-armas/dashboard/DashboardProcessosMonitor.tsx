@@ -807,7 +807,7 @@ export default function DashboardProcessosMonitor() {
  * ================================================================ */
 
 function EntityPanel({
-  entidade, totals, ativosCatalog, encerradosCatalog, counts, filter, entidadeFilter, setFilter, setEntidadeFilter,
+  entidade, totals, ativosCatalog, encerradosCatalog, counts, filter, entidadeFilter, setFilter, setEntidadeFilter, onlyAtivos = false,
 }: {
   entidade: Entidade;
   totals: { ativos: number; encerrados: number; total: number };
@@ -818,6 +818,7 @@ function EntityPanel({
   entidadeFilter: Entidade | null;
   setFilter: (f: FilterKey) => void;
   setEntidadeFilter: (e: Entidade | null) => void;
+  onlyAtivos?: boolean;
 }) {
   const meta = ENTIDADE_META[entidade];
   return (
