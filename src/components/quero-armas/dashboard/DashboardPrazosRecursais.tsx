@@ -177,13 +177,21 @@ export default function DashboardPrazosRecursais() {
   return (
     <div className="space-y-4">
       {/* Header — mesmo padrão do Monitoramento de Exames */}
-      <div>
-        <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide">
-          Recursos Administrativos — Prazo de 10 Dias (PF)
-        </h3>
-        <p className="text-[11px] text-slate-500 mt-0.5">
-          {rows.length} cliente(s) em prazo de recurso · ordenado do mais antigo ao mais novo
-        </p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide">
+            Recursos Administrativos — Prazo de 10 Dias (PF)
+          </h3>
+          <p className="text-[11px] text-slate-500 mt-0.5">
+            {rows.length} cliente(s) em prazo de recurso · ordenado do mais antigo ao mais novo
+          </p>
+        </div>
+        <Link
+          to="/quero-armas/recursos-auditoria"
+          className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1.5 rounded-md border border-slate-300 text-slate-700 hover:bg-slate-900 hover:text-white hover:border-slate-900 transition whitespace-nowrap"
+        >
+          Auditoria de Recursos →
+        </Link>
       </div>
 
       {/* Grid de cards pequenos — 2/3/5 colunas */}
