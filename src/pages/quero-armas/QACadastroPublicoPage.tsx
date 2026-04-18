@@ -833,6 +833,7 @@ function DocUploadCard({
   value: string; onChange: (v: string) => void; icon: any;
 }) {
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const cameraRef = useRef<HTMLInputElement | null>(null);
   const onFile = (f: File) => {
     const reader = new FileReader();
     reader.onload = () => onChange(String(reader.result || ""));
@@ -857,10 +858,16 @@ function DocUploadCard({
           </button>
         </div>
       ) : (
-        <button type="button" onClick={() => fileRef.current?.click()} className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-xs font-semibold border-2 border-dashed transition-colors" style={{ borderColor: "hsl(230 60% 80%)", color: "hsl(230 80% 50%)", background: "hsl(230 80% 99%)" }}>
-          <Upload className="w-4 h-4" /> Enviar foto ou tirar agora
-        </button>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <button type="button" onClick={() => cameraRef.current?.click()} className="flex items-center justify-center gap-1.5 px-2 py-2.5 rounded-lg text-xs font-semibold border-2 border-dashed transition-colors" style={{ borderColor: "hsl(230 60% 80%)", color: "hsl(230 80% 50%)", background: "hsl(230 80% 99%)" }}>
+            <Camera className="w-4 h-4" /> Câmera
+          </button>
+          <button type="button" onClick={() => fileRef.current?.click()} className="flex items-center justify-center gap-1.5 px-2 py-2.5 rounded-lg text-xs font-semibold border-2 border-dashed transition-colors" style={{ borderColor: "hsl(230 60% 80%)", color: "hsl(230 80% 50%)", background: "hsl(230 80% 99%)" }}>
+            <Upload className="w-4 h-4" /> Arquivo
+          </button>
+        </div>
       )}
+      <input ref={cameraRef} type="file" accept="image/*" capture="environment" hidden onChange={e => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ""; }} />
       <input ref={fileRef} type="file" accept={accepted} hidden onChange={e => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ""; }} />
     </div>
   );
