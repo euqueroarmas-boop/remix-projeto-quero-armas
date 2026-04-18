@@ -1,9 +1,10 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useBrasilApiLookup } from "@/hooks/useBrasilApiLookup";
 import {
   User, MapPin, Building2, FileCheck, ChevronRight, ChevronLeft,
   Loader2, CheckCircle, Search, Plus, AlertCircle, Shield,
+  Camera, RefreshCw, X as XIcon,
 } from "lucide-react";
 import { QALogo } from "@/components/quero-armas/QALogo";
 
@@ -34,6 +35,8 @@ interface FormData {
   servico_interesse: string;
   consentimento_dados_verdadeiros: boolean;
   consentimento_tratamento_dados: boolean;
+  selfie_data_url: string; // base64 (preview only — not sent)
+  selfie_path: string;     // storage object path (sent to backend)
 }
 
 const initialForm: FormData = {
@@ -60,6 +63,8 @@ const initialForm: FormData = {
   servico_interesse: "",
   consentimento_dados_verdadeiros: false,
   consentimento_tratamento_dados: false,
+  selfie_data_url: "",
+  selfie_path: "",
 };
 
 const STEPS: { num: Step; label: string; icon: any }[] = [
