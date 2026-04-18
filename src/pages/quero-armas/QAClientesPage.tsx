@@ -96,6 +96,31 @@ function SelfieThumb({ path, name, size = "lg" }: { path: string | null | undefi
   );
 }
 
+function DocumentThumb({ path, label, name }: { path: string | null | undefined; label: string; name?: string | null }) {
+  const url = usePrivateStorageUrl("qa-cadastro-selfies", path);
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="flex flex-col gap-2">
+      <span className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "hsl(220 10% 45%)" }}>{label}</span>
+      <button
+        type="button"
+        onClick={() => url && setOpen(true)}
+        disabled={!url}
+        className={`relative w-full aspect-[4/3] rounded-lg overflow-hidden border bg-slate-50 flex items-center justify-center transition-all ${url ? "hover:ring-2 hover:ring-blue-300 cursor-zoom-in" : "cursor-default"}`}
+        style={{ borderColor: "hsl(220 13% 88%)" }}
+        title={url ? "Clique para ampliar" : "Não enviado"}
+      >
+        {url ? (
+          <img src={url} alt={label} loading="lazy" decoding="async" className="w-full h-full object-cover" />
+        ) : (
+          <span className="text-xs font-medium" style={{ color: "hsl(220 10% 60%)" }}>NÃO ENVIADO</span>
+        )}
+      </button>
+      {open && url && <PhotoLightbox url={url} alt={`${label} — ${name || ""}`} onClose={() => setOpen(false)} />}
+    </div>
+  );
+}
 function ClientPhoto({ path, name, className }: { path: string | null | undefined; name: string; className: string }) {
   const url = usePrivateStorageUrl("qa-documentos", path);
   const [open, setOpen] = useState(false);
