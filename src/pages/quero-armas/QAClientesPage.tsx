@@ -734,6 +734,7 @@ export default function QAClientesPage() {
     try {
       const cpfDigits = normalizeDigits(selectedCadastroPublico.cpf);
       let clienteVinculadoId: number | null = null;
+      let historicoMsg = "";
 
       if (status === "aprovado") {
         if (!cpfDigits || cpfDigits.length !== 11) {
@@ -748,13 +749,35 @@ export default function QAClientesPage() {
         const payload = buildClientePayload(selectedCadastroPublico, existing);
 
         if (existing) {
+          // Calcular diff e snapshot ANTES de atualizar
+          const diff = computeDiff(existing as any, payload);
           const { error: ue } = await supabase.from("qa_clientes" as any).update(payload).eq("id", existing.id);
           if (ue) throw ue;
           clienteVinculadoId = existing.id;
+
+          // Persistir histórico (só se houve mudança real)
+          if (diff.length > 0) {
+            const { error: hErr } = await supabase
+              .from("qa_cliente_historico_atualizacoes" as any)
+              .insert({
+                cliente_id: existing.id,
+                cadastro_publico_id: selectedCadastroPublico.id,
+                changed_fields: diff,
+                snapshot_anterior: existing as any,
+                snapshot_novo: payload,
+                origem: "cadastro_publico",
+                autor: "admin",
+              });
+            if (hErr) console.error("[historico] erro ao salvar:", hErr.message);
+            historicoMsg = ` ${diff.length} ${diff.length === 1 ? "campo atualizado" : "campos atualizados"}.`;
+          } else {
+            historicoMsg = " Nenhum campo modificado.";
+          }
         } else {
           const { data: ins, error: ie } = await supabase.from("qa_clientes" as any).insert(payload).select("id").single();
           if (ie) throw ie;
           clienteVinculadoId = ((ins as unknown) as { id?: number } | null)?.id ?? null;
+          historicoMsg = " Novo cliente criado.";
         }
       }
 
@@ -763,7 +786,7 @@ export default function QAClientesPage() {
         updatePayload.cliente_id_vinculado = clienteVinculadoId;
         updatePayload.processado_em = new Date().toISOString();
         updatePayload.notas_processamento = clienteVinculadoId
-          ? `Vinculado ao cliente #${clienteVinculadoId} por CPF.`
+          ? `Vinculado ao cliente #${clienteVinculadoId} por CPF.${historicoMsg}`
           : "Aprovado sem vínculo automático.";
       }
 
@@ -786,7 +809,7 @@ export default function QAClientesPage() {
       if (status === "aprovado") {
         await loadClientes();
         toast.success(clienteVinculadoId
-          ? `Cadastro aprovado e sincronizado com o cliente #${clienteVinculadoId}`
+          ? `Cadastro aprovado e sincronizado com o cliente #${clienteVinculadoId}.${historicoMsg}`
           : "Cadastro aprovado com sucesso");
       } else {
         toast.success(`Cadastro marcado como ${status}`);
