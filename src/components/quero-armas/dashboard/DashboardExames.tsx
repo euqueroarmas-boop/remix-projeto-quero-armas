@@ -40,7 +40,7 @@ interface ExameDashItem {
   diasRestantes: number;
   status: ExameComStatus["status"];
   temServicoPendente: boolean;
-  servicosPendentes: { nome: string; entidade: "PF" | "EB" }[];
+  servicosPendentes: { nome: string; entidade: "PF" | "EB" | "CURSO" }[];
   prioridade: number;
   bucket: "vencido" | "d7" | "d15" | "d30" | "d45" | "vigente";
 }
@@ -193,11 +193,13 @@ export default function DashboardExames() {
 
         const clientesComPendente = new Set<string>();
         const clientesComDeferido = new Set<string>();
-        const servicosPendentesPorCliente = new Map<string, Map<string, "PF" | "EB">>();
-        const classifyEntidade = (sid: string | null, nome: string): "PF" | "EB" => {
+        const servicosPendentesPorCliente = new Map<string, Map<string, "PF" | "EB" | "CURSO">>();
+        const classifyEntidade = (sid: string | null, nome: string): "PF" | "EB" | "CURSO" => {
+          const n = (nome || "").toLowerCase();
+          // Cursos não pertencem a PF nem EB
+          if (n.startsWith("curso") || n.includes("curso -") || n.includes("operador de pistola")) return "CURSO";
           // IDs canônicos PF: 2 (Posse PF), 3 (Porte PF), 26 (CRAF PF)
           if (sid === "2" || sid === "3" || sid === "26") return "PF";
-          const n = (nome || "").toLowerCase();
           if (n.includes("polícia federal") || n.includes("policia federal") || /\bpf\b/.test(n)) return "PF";
           if (n.includes("posse") || n.includes("porte")) return "PF";
           return "EB";
@@ -432,7 +434,7 @@ function ClienteCard({
     clienteNome: string;
     clienteTelefone: string | null;
     temServicoPendente: boolean;
-    servicosPendentes: { nome: string; entidade: "PF" | "EB" }[];
+    servicosPendentes: { nome: string; entidade: "PF" | "EB" | "CURSO" }[];
     exames: ExameDashItem[];
   };
   variant: typeof KPI_VARIANTS[keyof typeof KPI_VARIANTS];
@@ -515,9 +517,17 @@ function ClienteCard({
                     className={`inline-flex items-center px-1.5 py-px rounded text-[9px] font-bold tracking-wider ${
                       entidade === "PF"
                         ? "bg-blue-600 text-white"
-                        : "bg-emerald-700 text-white"
+                        : entidade === "EB"
+                        ? "bg-emerald-700 text-white"
+                        : "bg-slate-500 text-white"
                     }`}
-                    title={entidade === "PF" ? "Polícia Federal" : "Exército Brasileiro"}
+                    title={
+                      entidade === "PF"
+                        ? "Polícia Federal"
+                        : entidade === "EB"
+                        ? "Exército Brasileiro"
+                        : "Curso / Capacitação"
+                    }
                   >
                     {entidade}
                   </span>

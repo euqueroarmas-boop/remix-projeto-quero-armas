@@ -119,19 +119,21 @@ interface VendaRow { id: number; id_legado: number | null; cliente_id: number | 
 interface ClienteRow { id: number; id_legado: number | null; nome_completo: string | null; }
 interface ServicoRow { id: number; nome_servico: string | null; is_combo?: boolean | null; }
 
-type Entidade = "PF" | "EB";
+type Entidade = "PF" | "EB" | "CURSO";
 
 /** Classifica o serviço pela entidade responsável.
- *  Regra: Posse ou Porte → Polícia Federal. Demais → Exército Brasileiro. */
+ *  Regra: Posse/Porte → PF. Cursos → CURSO. Demais → EB. */
 function classifyEntidade(servicoNome: string): Entidade {
   const n = (servicoNome || "").toLowerCase();
+  if (n.startsWith("curso") || n.includes("curso -") || n.includes("operador de pistola")) return "CURSO";
   if (n.includes("posse") || n.includes("porte")) return "PF";
   return "EB";
 }
 
 const ENTIDADE_META: Record<Entidade, { label: string; sigla: string; ref: string }> = {
-  PF: { label: "Polícia Federal",   sigla: "PF", ref: "ID_ENT: PF-01" },
-  EB: { label: "Exército Brasileiro", sigla: "EB", ref: "ID_ENT: EB-04" },
+  PF:    { label: "Polícia Federal",   sigla: "PF",    ref: "ID_ENT: PF-01" },
+  EB:    { label: "Exército Brasileiro", sigla: "EB",  ref: "ID_ENT: EB-04" },
+  CURSO: { label: "Curso/Capacitação",  sigla: "CURSO", ref: "ID_ENT: CR-01" },
 };
 
 interface MonitorRow {
@@ -383,12 +385,13 @@ export default function DashboardProcessosMonitor() {
   const counts = useMemo(() => {
     const map = new Map<StatusKey, number>();
     const byEntStatus: Record<Entidade, Map<StatusKey, number>> = {
-      PF: new Map(), EB: new Map(),
+      PF: new Map(), EB: new Map(), CURSO: new Map(),
     };
     dynamicCatalog.forEach(s => {
       map.set(s.key, 0);
       byEntStatus.PF.set(s.key, 0);
       byEntStatus.EB.set(s.key, 0);
+      byEntStatus.CURSO.set(s.key, 0);
     });
     rows.forEach(r => {
       map.set(r.status, (map.get(r.status) || 0) + 1);
