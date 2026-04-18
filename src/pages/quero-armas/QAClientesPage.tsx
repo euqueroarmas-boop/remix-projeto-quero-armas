@@ -236,6 +236,35 @@ export default function QAClientesPage() {
   const [itemEditForm, setItemEditForm] = useState<Record<string, string>>({});
   const [savingItem, setSavingItem] = useState(false);
 
+  // Sensores DnD para reordenar serviços dentro de uma venda
+  const dndSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const handleReorderItens = async (vendaFk: number | string, event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const vendaItens = itens.filter((i: any) => i.venda_id === vendaFk);
+    const oldIndex = vendaItens.findIndex((i: any) => String(i.id) === String(active.id));
+    const newIndex = vendaItens.findIndex((i: any) => String(i.id) === String(over.id));
+    if (oldIndex < 0 || newIndex < 0) return;
+    const reordered = arrayMove(vendaItens, oldIndex, newIndex);
+    const reorderedById = new Map(reordered.map((it: any, idx: number) => [it.id, idx + 1]));
+    setItens(prev => prev.map((i: any) =>
+      reorderedById.has(i.id) ? { ...i, sort_order: reorderedById.get(i.id) } : i
+    ));
+    try {
+      await Promise.all(reordered.map((it: any, idx: number) =>
+        supabase.from("qa_itens_venda" as any).update({ sort_order: idx + 1 }).eq("id", it.id)
+      ));
+    } catch (e: any) {
+      toast.error("Falha ao salvar ordem: " + (e?.message || "erro"));
+    }
+  };
+
+
   // Serviços de Concessão de CR (Exército Brasileiro) — possuem apenas campos do CR
   const SERVICOS_CR = [13, 20, 27, 29];
   // Serviços CAC (Colecionador, Atirador, Caçador) e correlatos onde campos SIGMA/CRAF/Porte/GTE são aplicáveis
