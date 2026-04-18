@@ -21,6 +21,7 @@ const QAClubesPage = lazyRetry(() => import("./QAClubesPage"), "QAClubesPage");
 const QARelatoriosPage = lazyRetry(() => import("./QARelatoriosPage"), "QARelatoriosPage");
 const QAFinanceiroPage = lazyRetry(() => import("./QAFinanceiroPage"), "QAFinanceiroPage");
 const QARecursosAuditoriaPage = lazyRetry(() => import("./QARecursosAuditoriaPage"), "QARecursosAuditoriaPage");
+const QAAuditoriaPage = lazyRetry(() => import("./QAAuditoriaPage"), "QAAuditoriaPage");
 const QACadastroPublicoPage = lazyRetry(() => import("./QACadastroPublicoPage"), "QACadastroPublicoPage");
 const QAClienteLoginPage = lazyRetry(() => import("./QAClienteLoginPage"), "QAClienteLoginPage");
 const QAClientePortalPage = lazyRetry(() => import("./QAClientePortalPage"), "QAClientePortalPage");
@@ -64,7 +65,10 @@ export default function QARoutes() {
           <Route path="clubes" element={<QAClubesPage />} />
           <Route path="financeiro" element={<QAFinanceiroPage />} />
           <Route path="relatorios" element={<QARelatoriosPage />} />
-          <Route path="recursos-auditoria" element={<QARecursosAuditoriaPage />} />
+          <Route path="auditoria" element={<QAAuditoriaPage />} />
+          <Route path="auditoria/recursos-administrativos" element={<QARecursosAuditoriaPage />} />
+          {/* Legacy redirect: rota antiga */}
+          <Route path="recursos-auditoria" element={<Navigate to="/quero-armas/auditoria/recursos-administrativos" replace />} />
         </Route>
       </Routes>
     </Suspense>
