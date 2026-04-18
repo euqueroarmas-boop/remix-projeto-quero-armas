@@ -623,6 +623,7 @@ export default function DashboardProcessosMonitor() {
       )}
 
       {/* Lista */}
+      {!collapsed && showSearch && (
       <div className="qa-card overflow-hidden">
         {visible.length === 0 ? (
           <div className="px-4 py-10 text-center text-xs text-slate-400">
