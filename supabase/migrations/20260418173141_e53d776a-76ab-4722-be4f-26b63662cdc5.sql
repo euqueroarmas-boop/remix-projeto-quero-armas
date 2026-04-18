@@ -1,0 +1,2 @@
+ALTER TABLE public.qa_cadastro_publico 
+ADD COLUMN IF NOT EXISTS pago BOOLEAN NOT NULL DEFAULT false;

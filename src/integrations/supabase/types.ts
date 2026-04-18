@@ -2051,6 +2051,7 @@ export type Database = {
           nome_pai: string | null
           notas_processamento: string | null
           observacoes: string | null
+          pago: boolean
           processado_em: string | null
           processado_por: string | null
           profissao: string | null
@@ -2128,6 +2129,7 @@ export type Database = {
           nome_pai?: string | null
           notas_processamento?: string | null
           observacoes?: string | null
+          pago?: boolean
           processado_em?: string | null
           processado_por?: string | null
           profissao?: string | null
@@ -2205,6 +2207,7 @@ export type Database = {
           nome_pai?: string | null
           notas_processamento?: string | null
           observacoes?: string | null
+          pago?: boolean
           processado_em?: string | null
           processado_por?: string | null
           profissao?: string | null
