@@ -417,12 +417,16 @@ export default function QACadastroPublicoPage() {
         set("emp_razao_social", data.razao_social || "");
         set("emp_nome_fantasia", data.nome_fantasia || "");
         
-        const addr = [data.logradouro, data.numero, data.complemento, data.bairro, data.municipio, data.uf].filter(Boolean).join(", ");
+        const cepFmt = data.cep ? String(data.cep).replace(/\D/g, "").replace(/^(\d{5})(\d{3})$/, "$1-$2") : "";
+        const addrParts = [data.logradouro, data.numero, data.complemento, data.bairro, data.municipio, data.uf].filter(Boolean).join(", ");
+        const addr = cepFmt ? `CEP ${cepFmt} - ${addrParts}` : addrParts;
         set("emp_endereco", addr);
         set("emp_telefone", data.ddd_telefone_1 ? maskPhone(data.ddd_telefone_1) : "");
       } else {
         set("trab_nome_empresa", data.razao_social || "");
-        const addr = [data.logradouro, data.numero, data.bairro, data.municipio, data.uf].filter(Boolean).join(", ");
+        const cepFmt = data.cep ? String(data.cep).replace(/\D/g, "").replace(/^(\d{5})(\d{3})$/, "$1-$2") : "";
+        const addrBase = [data.logradouro, data.numero, data.bairro, data.municipio, data.uf].filter(Boolean).join(", ");
+        const addr = cepFmt ? `CEP ${cepFmt} - ${addrBase}` : addrBase;
         set("trab_endereco_empresa", addr);
         set("trab_telefone_empresa", data.ddd_telefone_1 ? maskPhone(data.ddd_telefone_1) : "");
       }
