@@ -622,11 +622,21 @@ export default function QACadastroPublicoPage() {
                 <button onClick={handleSubmit} disabled={submitting}
                   className="qa-btn-primary flex items-center gap-1.5 no-glow disabled:opacity-50">
                   {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-                {submitting ? "Enviando..." : "Enviar Cadastro"}
-              </button>
-            )}
-          </div>
+                  {submitting ? "Enviando..." : "Enviar Cadastro"}
+                </button>
+              )}
+            </div>
+          )}
         </div>
+
+        {/* Address divergence modal */}
+        {divergence && (
+          <DivergenceModal
+            divergence={divergence}
+            onChoose={applyDivergenceChoice}
+            onClose={() => setDivergence(null)}
+          />
+        )}
 
         {/* Footer */}
         <div className="text-center mt-6 text-[11px]" style={{ color: "hsl(220 10% 62%)" }}>
