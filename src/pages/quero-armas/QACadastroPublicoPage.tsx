@@ -153,7 +153,7 @@ function validateCpf(cpf: string): boolean {
 
 /* ── Component ── */
 export default function QACadastroPublicoPage() {
-  const [step, setStep] = useState<Step>(1);
+  const [step, setStep] = useState<Step>(0);
   const [form, setForm] = useState<FormData>(initialForm);
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -164,6 +164,14 @@ export default function QACadastroPublicoPage() {
   const [cpfFound, setCpfFound] = useState<boolean | null>(null);
   const [showComplementoConfirm, setShowComplementoConfirm] = useState(false);
   const [servicos, setServicos] = useState<{ id: number; nome_servico: string }[]>([]);
+
+  // ── Step 0: Document extraction state ──
+  const [docImages, setDocImages] = useState<DocImages>({ identity_data_url: "", address_data_url: "" });
+  const [extracting, setExtracting] = useState(false);
+  const [extractStage, setExtractStage] = useState<string>("");
+  const [extractError, setExtractError] = useState<string | null>(null);
+  const [autoFilled, setAutoFilled] = useState<Set<string>>(new Set());
+  const [divergence, setDivergence] = useState<AddressDivergence | null>(null);
 
   useEffect(() => {
     supabase.from("qa_servicos" as any).select("id, nome_servico").order("id").then(({ data }) => {
@@ -176,6 +184,13 @@ export default function QACadastroPublicoPage() {
     setErrors(prev => {
       const n = { ...prev };
       delete n[field];
+      return n;
+    });
+    // Once user manually changes a field, remove the auto-filled highlight
+    setAutoFilled(prev => {
+      if (!prev.has(field as string)) return prev;
+      const n = new Set(prev);
+      n.delete(field as string);
       return n;
     });
   }, []);
