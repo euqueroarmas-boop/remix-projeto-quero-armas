@@ -1632,7 +1632,7 @@ export default function QAClientesPage() {
         <div className="space-y-4">
           <DetailCard title="Resumo do Cadastro">
             <DetailGrid>
-              <DetailField label="Recebido em" value={formatDate(c.created_at)} />
+              <DetailField label="Recebido em" value={formatDateTime(c.created_at)} />
               {isEditing ? (
                 <div className="flex items-baseline gap-2">
                   <span className="text-xs shrink-0" style={{ color: "hsl(220 10% 50%)", minWidth: "140px" }}>Serviço:</span>
@@ -1655,9 +1655,27 @@ export default function QAClientesPage() {
               <DetailField label="Comprovante em nome próprio" value={comprovanteEndereco} />
               <DetailField label="Consentimento de veracidade" value={c.consentimento_dados_verdadeiros ? "Sim" : "Não"} />
               <DetailField label="Consentimento LGPD" value={c.consentimento_tratamento_dados ? "Sim" : "Não"} />
-              <DetailField label="Aceite em" value={formatDate(c.consentimento_timestamp ?? c.created_at)} />
+              <DetailField label="Aceite em" value={formatDateTime(c.consentimento_timestamp ?? c.created_at)} />
             </DetailGrid>
           </DetailCard>
+
+          {(() => {
+            const ua = (c as any).consentimento_user_agent as string | null | undefined;
+            const ip = (c as any).consentimento_ip as string | null | undefined;
+            const parsed = parseUserAgent(ua);
+            return (
+              <DetailCard title="Captura técnica (LGPD)">
+                <DetailGrid>
+                  <DetailField label="Endereço IP" value={ip || "—"} copyable={!!ip} />
+                  <DetailField label="Dispositivo" value={parsed.dispositivo} />
+                  <DetailField label="Sistema operacional" value={parsed.sistema} />
+                  <DetailField label="Navegador" value={parsed.navegador} />
+                  <DetailField label="User-Agent completo" value={ua || "—"} />
+                  <DetailField label="Data/hora do aceite" value={formatDateTime(c.consentimento_timestamp)} />
+                </DetailGrid>
+              </DetailCard>
+            );
+          })()}
 
           <DetailCard title="Identificação">
             <DetailGrid>
