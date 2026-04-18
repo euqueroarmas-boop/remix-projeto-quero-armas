@@ -1586,6 +1586,7 @@ export default function QAClientesPage() {
                 <span className="text-[11px]" style={{ color: "hsl(220 10% 55%)" }}>CPF: {formatCpf(c.cpf)}</span>
               </div>
             </div>
+            <SelfieThumb path={(c as any).selfie_path} name={c.nome_completo} />
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:flex md:items-center md:flex-nowrap md:justify-end gap-1.5 md:gap-2">
