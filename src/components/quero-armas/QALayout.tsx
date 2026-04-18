@@ -3,6 +3,7 @@ import { QASidebar } from "./QASidebar";
 import { Outlet, Navigate } from "react-router-dom";
 import { QAAuthProvider, useQAAuthContext } from "./QAAuthContext";
 import { PanelLeftOpen } from "lucide-react";
+import { QABreadcrumb } from "./QABreadcrumb";
 
 function QALayoutInner() {
   const { user, profile, loading, signOut } = useQAAuthContext();
@@ -32,9 +33,12 @@ function QALayoutInner() {
               <PanelLeftOpen className="h-5 w-5" style={{ color: "hsl(220 10% 40%)" }} />
             </SidebarTrigger>
           </header>
-          <main className="flex-1 overflow-auto p-3 md:p-6 lg:p-8"
+          <main className="flex-1 overflow-auto"
             style={{ background: "hsl(220 20% 97%)" }}>
-            <Outlet />
+            <QABreadcrumb />
+            <div className="p-3 md:p-6 lg:p-8">
+              <Outlet />
+            </div>
           </main>
         </div>
       </div>
