@@ -122,7 +122,7 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
             const visibleItems = group.items.filter(i => canAccess(i.url));
             if (visibleItems.length === 0) return null;
             return (
-              <SidebarGroup key={group.label}>
+              <SidebarGroup key={group.label} className={collapsed ? "px-0" : ""}>
                 {!collapsed && (
                   <SidebarGroupLabel className="text-[10px] uppercase tracking-[0.15em] font-semibold px-5 py-1.5"
                     style={{ color: "hsl(220 10% 62%)" }}>
@@ -135,12 +135,12 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
                       const active = isActive(item.url);
                       return (
                         <SidebarMenuItem key={item.url}>
-                          <SidebarMenuButton asChild tooltip={collapsed ? item.title : undefined}>
+                          <SidebarMenuButton asChild tooltip={collapsed ? item.title : undefined} className={collapsed ? "justify-center !p-0 w-full" : ""}>
                             <Link
                               to={item.url}
                               onClick={() => { if (isMobile) setOpenMobile(false); }}
-                              className={`flex items-center gap-2.5 rounded-lg text-[13px] font-medium transition-all ${
-                                collapsed ? "justify-center px-0 py-2.5 mx-1" : "px-4 py-2 mx-2"
+                              className={`flex items-center rounded-lg text-[13px] font-medium transition-all ${
+                                collapsed ? "justify-center w-9 h-9 mx-auto" : "gap-2.5 px-4 py-2 mx-2"
                               }`}
                               style={{
                                 background: active ? "hsl(230 80% 96%)" : "transparent",
@@ -176,7 +176,7 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
         </div>
 
         {/* Admin profile + Logout */}
-        <div className="pt-3 border-t mx-3" style={{ borderColor: "hsl(220 13% 93%)" }}>
+        <div className={`pt-3 border-t ${collapsed ? "mx-0" : "mx-3"}`} style={{ borderColor: "hsl(220 13% 93%)" }}>
           {!collapsed && (
             <div className="flex items-center gap-2.5 px-4 py-2.5 mb-2">
               <div className="h-8 w-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0"
@@ -191,11 +191,11 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
           )}
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip={collapsed ? "Sair" : undefined}>
+              <SidebarMenuButton asChild tooltip={collapsed ? "Sair" : undefined} className={collapsed ? "justify-center !p-0 w-full" : ""}>
                 <button
                   onClick={signOut}
-                  className={`flex items-center gap-2.5 rounded-lg text-[13px] font-medium w-full transition-all ${
-                    collapsed ? "justify-center px-0 py-2.5" : "px-4 py-2"
+                  className={`flex items-center rounded-lg text-[13px] font-medium transition-all ${
+                    collapsed ? "justify-center w-9 h-9 mx-auto" : "gap-2.5 px-4 py-2 w-full"
                   }`}
                   style={{ color: "hsl(220 10% 62%)" }}
                   onMouseEnter={e => {
