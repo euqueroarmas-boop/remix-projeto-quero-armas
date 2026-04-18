@@ -351,7 +351,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
     if (venda) {
       setF({
         forma_pagamento: venda.forma_pagamento || "", desconto: String(venda.desconto || 0),
-        status: venda.status || "", numero_processo: venda.numero_processo || "",
+        status: venda.status || "",
         data_cadastro: isoToBr(venda.data_cadastro) || isoToBr(new Date().toISOString().slice(0, 10)),
         valor_aberto: String(venda.valor_aberto || 0),
       });
