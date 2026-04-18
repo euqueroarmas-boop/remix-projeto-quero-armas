@@ -2001,6 +2001,7 @@ export type Database = {
           aut_nome_profissional: string | null
           aut_telefone: string | null
           cliente_id_vinculado: number | null
+          comprovante_endereco_path: string | null
           consentimento_dados_verdadeiros: boolean
           consentimento_ip: string | null
           consentimento_texto: string | null
@@ -2010,6 +2011,7 @@ export type Database = {
           cpf: string
           created_at: string
           data_nascimento: string | null
+          documento_identidade_path: string | null
           email: string
           emissor_rg: string | null
           emp_cargo_funcao: string | null
@@ -2080,6 +2082,7 @@ export type Database = {
           aut_nome_profissional?: string | null
           aut_telefone?: string | null
           cliente_id_vinculado?: number | null
+          comprovante_endereco_path?: string | null
           consentimento_dados_verdadeiros?: boolean
           consentimento_ip?: string | null
           consentimento_texto?: string | null
@@ -2089,6 +2092,7 @@ export type Database = {
           cpf: string
           created_at?: string
           data_nascimento?: string | null
+          documento_identidade_path?: string | null
           email: string
           emissor_rg?: string | null
           emp_cargo_funcao?: string | null
@@ -2159,6 +2163,7 @@ export type Database = {
           aut_nome_profissional?: string | null
           aut_telefone?: string | null
           cliente_id_vinculado?: number | null
+          comprovante_endereco_path?: string | null
           consentimento_dados_verdadeiros?: boolean
           consentimento_ip?: string | null
           consentimento_texto?: string | null
@@ -2168,6 +2173,7 @@ export type Database = {
           cpf?: string
           created_at?: string
           data_nascimento?: string | null
+          documento_identidade_path?: string | null
           email?: string
           emissor_rg?: string | null
           emp_cargo_funcao?: string | null
