@@ -2056,6 +2056,7 @@ export type Database = {
           processado_por: string | null
           profissao: string | null
           rg: string | null
+          selfie_path: string | null
           servico_interesse: string | null
           status: string
           telefone_principal: string
@@ -2134,6 +2135,7 @@ export type Database = {
           processado_por?: string | null
           profissao?: string | null
           rg?: string | null
+          selfie_path?: string | null
           servico_interesse?: string | null
           status?: string
           telefone_principal: string
@@ -2212,6 +2214,7 @@ export type Database = {
           processado_por?: string | null
           profissao?: string | null
           rg?: string | null
+          selfie_path?: string | null
           servico_interesse?: string | null
           status?: string
           telefone_principal?: string
