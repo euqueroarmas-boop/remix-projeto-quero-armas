@@ -124,7 +124,7 @@ export default function QAEnviarFotoPage() {
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "linear-gradient(135deg, hsl(220 20% 97%) 0%, hsl(230 20% 94%) 100%)" }}>
       <div className="max-w-md w-full mx-auto px-4 py-8 flex-1">
-        <div className="flex justify-center mb-6"><QALogo size="md" /></div>
+        <div className="flex justify-center mb-6"><QALogo /></div>
 
         <div className="qa-card rounded-2xl p-6 md:p-8">
           {step === "cpf" && (

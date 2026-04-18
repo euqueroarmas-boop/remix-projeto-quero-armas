@@ -23,6 +23,7 @@ const QAFinanceiroPage = lazyRetry(() => import("./QAFinanceiroPage"), "QAFinanc
 const QARecursosAuditoriaPage = lazyRetry(() => import("./QARecursosAuditoriaPage"), "QARecursosAuditoriaPage");
 const QAAuditoriaPage = lazyRetry(() => import("./QAAuditoriaPage"), "QAAuditoriaPage");
 const QACadastroPublicoPage = lazyRetry(() => import("./QACadastroPublicoPage"), "QACadastroPublicoPage");
+const QAEnviarFotoPage = lazyRetry(() => import("./QAEnviarFotoPage"), "QAEnviarFotoPage");
 const QAClienteLoginPage = lazyRetry(() => import("./QAClienteLoginPage"), "QAClienteLoginPage");
 const QAClientePortalPage = lazyRetry(() => import("./QAClientePortalPage"), "QAClientePortalPage");
 
@@ -39,6 +40,8 @@ export default function QARoutes() {
         {/* Public routes (no auth required) */}
         <Route path="login" element={<QALoginPage />} />
         <Route path="cadastro" element={<QACadastroPublicoPage />} />
+        <Route path="cadastro/foto" element={<QAEnviarFotoPage />} />
+        <Route path="enviar-foto" element={<QAEnviarFotoPage />} />
         
         {/* Client portal (separate auth flow) */}
         <Route path="area-do-cliente/login" element={<QAClienteLoginPage />} />
