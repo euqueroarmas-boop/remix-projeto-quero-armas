@@ -862,6 +862,17 @@ export default function QACadastroPublicoPage() {
           <Shield className="w-3 h-3 inline mr-1" />
           Dados protegidos conforme a Lei Geral de Proteção de Dados (LGPD)
         </div>
+
+        <div
+          className="text-center mt-3 pt-3 text-[11px] border-t"
+          style={{ color: "hsl(220 10% 50%)", borderColor: "hsl(220 13% 88%)" }}
+        >
+          © {new Date().getFullYear()} · Criado e desenvolvido por{" "}
+          <span className="font-semibold" style={{ color: "hsl(220 20% 25%)" }}>
+            WMTi Tecnologia da Informação
+          </span>
+          . Todos os direitos reservados.
+        </div>
       </div>
     </div>
   );
