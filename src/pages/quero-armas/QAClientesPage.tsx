@@ -712,7 +712,7 @@ export default function QAClientesPage() {
 
   const loadCadastrosPublicos = async () => {
     const { data } = await supabase.from("qa_cadastro_publico" as any)
-      .select("id, nome_completo, cpf, telefone_principal, email, end1_cidade, end1_estado, servico_interesse, vinculo_tipo, status, created_at")
+      .select("id, nome_completo, cpf, telefone_principal, email, end1_cidade, end1_estado, servico_interesse, vinculo_tipo, status, pago, created_at")
       .order("created_at", { ascending: false });
     setCadastrosPublicos((data as unknown as CadastroPublico[]) ?? []);
   };
