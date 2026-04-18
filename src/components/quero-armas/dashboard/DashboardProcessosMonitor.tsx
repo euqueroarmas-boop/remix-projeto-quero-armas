@@ -833,19 +833,21 @@ function EntityPanel({
       </div>
 
       {/* Totais */}
-      <div className="grid grid-cols-2 divide-x divide-slate-200 border-b border-slate-200">
+      <div className={`grid ${onlyAtivos ? "grid-cols-1" : "grid-cols-2 divide-x"} divide-slate-200 border-b border-slate-200`}>
         <div className="p-4">
           <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Em Andamento</span>
           <div className="text-3xl font-bold tabular-nums text-slate-900 mt-1">{totals.ativos}</div>
         </div>
-        <div className="p-4">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Encerrados</span>
-          <div className="text-3xl font-bold tabular-nums text-slate-500 mt-1">{totals.encerrados}</div>
-        </div>
+        {!onlyAtivos && (
+          <div className="p-4">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Encerrados</span>
+            <div className="text-3xl font-bold tabular-nums text-slate-500 mt-1">{totals.encerrados}</div>
+          </div>
+        )}
       </div>
 
       {/* Detalhamento de status */}
-      <div className="grid grid-cols-2 divide-x divide-slate-100">
+      <div className={`grid ${onlyAtivos ? "grid-cols-1" : "grid-cols-2 divide-x"} divide-slate-100`}>
         <div className="p-3 flex flex-col gap-2">
           <h5 className="text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-1.5">Fluxo Ativo</h5>
           {ativosCatalog.length === 0 ? (
@@ -870,30 +872,32 @@ function EntityPanel({
             );
           })}
         </div>
-        <div className="p-3 flex flex-col gap-2">
-          <h5 className="text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-1.5">Resoluções</h5>
-          {encerradosCatalog.length === 0 ? (
-            <span className="text-[11px] text-slate-300 italic">—</span>
-          ) : encerradosCatalog.map(s => {
-            const isActive = filter === s.key && entidadeFilter === entidade;
-            return (
-              <StatusLine
-                key={s.key} meta={s}
-                total={counts.get(s.key) || 0}
-                active={isActive}
-                onClick={() => {
-                  if (isActive) {
-                    setFilter("encerrados");
-                    setEntidadeFilter(null);
-                  } else {
-                    setFilter(s.key);
-                    setEntidadeFilter(entidade);
-                  }
-                }}
-              />
-            );
-          })}
-        </div>
+        {!onlyAtivos && (
+          <div className="p-3 flex flex-col gap-2">
+            <h5 className="text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-1.5">Resoluções</h5>
+            {encerradosCatalog.length === 0 ? (
+              <span className="text-[11px] text-slate-300 italic">—</span>
+            ) : encerradosCatalog.map(s => {
+              const isActive = filter === s.key && entidadeFilter === entidade;
+              return (
+                <StatusLine
+                  key={s.key} meta={s}
+                  total={counts.get(s.key) || 0}
+                  active={isActive}
+                  onClick={() => {
+                    if (isActive) {
+                      setFilter("encerrados");
+                      setEntidadeFilter(null);
+                    } else {
+                      setFilter(s.key);
+                      setEntidadeFilter(entidade);
+                    }
+                  }}
+                />
+              );
+            })}
+          </div>
+        )}
       </div>
     </section>
   );
