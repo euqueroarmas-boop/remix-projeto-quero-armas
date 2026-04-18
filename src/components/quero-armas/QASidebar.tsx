@@ -5,7 +5,7 @@ import {
 } from "@/components/ui/sidebar";
 import {
   LayoutDashboard, PenTool, FolderOpen, FileText, Scale, Gavel,
-  BookOpen, FileBox, History, Settings, LogOut, Shield, Users, Building2, BarChart3, DollarSign,
+  BookOpen, FileBox, History, Settings, LogOut, Shield, Users, Building2, BarChart3, DollarSign, ShieldCheck,
   PanelLeftOpen,
 } from "lucide-react";
 
@@ -36,6 +36,7 @@ const NAV_GROUPS = [
   {
     label: "Sistema",
     items: [
+      { title: "Auditoria", url: "/quero-armas/auditoria", icon: ShieldCheck },
       { title: "Histórico", url: "/quero-armas/historico", icon: History },
       { title: "Configurações", url: "/quero-armas/configuracoes", icon: Settings },
     ],
