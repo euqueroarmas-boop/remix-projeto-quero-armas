@@ -225,6 +225,7 @@ export default function DashboardProcessosMonitor() {
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const { isHomologado, toggle: toggleHomologado } = useHomologados();
   const [showSearch, setShowSearch] = useState(false);
   // Override local para mutações otimistas (após editar status na UI).
   // Quando preenchido, prevalece sobre os dados vindos do loader.
