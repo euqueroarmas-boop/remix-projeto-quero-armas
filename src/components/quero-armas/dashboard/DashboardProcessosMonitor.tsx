@@ -483,12 +483,15 @@ export default function DashboardProcessosMonitor() {
     return display;
   }, [rows, filter, entidadeFilter, sortBy, search]);
 
-  if (loading) {
+  if (state === "loading") {
     return (
       <div className="qa-card p-6 flex justify-center">
         <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
       </div>
     );
+  }
+  if (state === "error" || state === "timeout") {
+    return <WidgetStateView title="Monitor Operacional de Processos" state={state} onRetry={reload} />;
   }
 
   const ativosCatalog = dynamicCatalog.filter(s => s.group === "ativo");
