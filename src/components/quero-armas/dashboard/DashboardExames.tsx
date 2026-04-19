@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import {
@@ -10,6 +10,8 @@ import {
   computeExameStatus, formatExameCountdown,
   type ExameComStatus, type ExameTipo,
 } from "@/components/quero-armas/clientes/ClienteExames";
+import { useWidgetLoader } from "@/hooks/useWidgetLoader";
+import WidgetStateView from "./WidgetStateView";
 
 /* ================================================================
  * Tipos

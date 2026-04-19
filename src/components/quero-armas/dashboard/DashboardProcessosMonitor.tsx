@@ -6,7 +6,7 @@
  *   (fallback: data_protocolo → venda.data_cadastro → venda.created_at)
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -16,6 +16,8 @@ import {
   Pencil, Check, X, Circle, Gavel, ChevronDown, ChevronUp,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useWidgetLoader } from "@/hooks/useWidgetLoader";
+import WidgetStateView from "./WidgetStateView";
 
 /* ================================================================
  * Catálogo BASE de status conhecidos (ícone, cor, grupo, ordem).
