@@ -562,6 +562,7 @@ export default function DashboardProcessosMonitor() {
           ativosCatalog={ativosCatalog}
           encerradosCatalog={encerradosCatalog}
           counts={counts.byEntStatus.EB}
+          homologados={homologadosByEnt.EB}
           filter={filter}
           entidadeFilter={entidadeFilter}
           onlyAtivos={collapsed}
