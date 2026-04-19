@@ -1056,3 +1056,53 @@ function StatusEditor({
     </div>
   );
 }
+
+/* ================================================================
+ * Homologação visual (apenas localStorage — não altera o banco)
+ * ================================================================ */
+
+function HomologadoButton({ checked, onClick }: { checked: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={checked ? "Homologado — clique para desmarcar" : "Marcar como homologado (validação visual local)"}
+      className={
+        checked
+          ? "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border border-emerald-300 bg-emerald-500 text-white shadow-sm hover:bg-emerald-600 transition"
+          : "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border border-slate-200 bg-white text-slate-500 hover:border-emerald-300 hover:text-emerald-700 transition"
+      }
+    >
+      {checked ? <Check className="w-3 h-3" /> : <Circle className="w-3 h-3" />}
+      Homologado
+    </button>
+  );
+}
+
+function HomologadosCounter({
+  visible,
+  isHomologado,
+}: {
+  visible: Array<{ itemIds: number[] }>;
+  isHomologado: (ids: number[]) => boolean;
+}) {
+  const total = visible.length;
+  const ok = visible.reduce((acc, r) => acc + (isHomologado(r.itemIds) ? 1 : 0), 0);
+  const pct = total > 0 ? Math.round((ok / total) * 100) : 0;
+  const allDone = ok === total && total > 0;
+  return (
+    <span
+      className={
+        "inline-flex items-center gap-1.5 px-2.5 h-8 rounded-md border text-[11px] font-semibold " +
+        (allDone
+          ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+          : "border-slate-200 bg-white text-slate-600")
+      }
+      title="Homologados (validação visual local) / total filtrado"
+    >
+      <Check className={`w-3.5 h-3.5 ${allDone ? "text-emerald-600" : "text-slate-400"}`} />
+      Homologados <b className={allDone ? "text-emerald-700" : "text-slate-800"}>{ok}/{total}</b>
+      <span className="text-slate-400">· {pct}%</span>
+    </span>
+  );
+}
