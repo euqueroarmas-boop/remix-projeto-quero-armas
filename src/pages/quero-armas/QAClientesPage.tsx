@@ -2116,7 +2116,7 @@ export default function QAClientesPage() {
             color: tabView === "clientes" ? "hsl(220 20% 18%)" : "hsl(220 10% 55%)",
             boxShadow: tabView === "clientes" ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
           }}>
-          <User className="h-3.5 w-3.5 inline mr-1" /> CLIENTES ({filtered.length})
+          <User className="h-3.5 w-3.5 inline mr-1" /> CLIENTES <br />({filtered.length})
         </button>
         <button
           onClick={() => setTabView("cadastros")}
