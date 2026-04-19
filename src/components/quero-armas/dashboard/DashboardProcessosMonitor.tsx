@@ -18,6 +18,7 @@ import {
 import { toast } from "sonner";
 import { useWidgetLoader } from "@/hooks/useWidgetLoader";
 import WidgetStateView from "./WidgetStateView";
+import { useHomologados } from "./useHomologados";
 
 /* ================================================================
  * Catálogo BASE de status conhecidos (ícone, cor, grupo, ordem).
