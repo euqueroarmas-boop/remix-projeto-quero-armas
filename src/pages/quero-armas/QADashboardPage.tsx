@@ -98,6 +98,8 @@ export default function QADashboardPage() {
   const [cadastrosPorMes, setCadastrosPorMes] = useState<MonthCount[]>([]);
   const [servicosDistrib, setServicosDistrib] = useState<ServicoCount[]>([]);
   const [loading, setLoading] = useState(true);
+  // Widgets pesados (Prazos, Exames, Processos) só montam depois da parte estática.
+  const [mountHeavy, setMountHeavy] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -242,6 +244,14 @@ export default function QADashboardPage() {
     };
   }, []);
 
+  // Após a parte estática estar pronta (loading=false), liberamos os widgets pesados
+  // em um segundo "tick" para que o navegador pinte primeiro o layout/KPIs.
+  useEffect(() => {
+    if (loading || mountHeavy) return;
+    const t = setTimeout(() => setMountHeavy(true), 120);
+    return () => clearTimeout(t);
+  }, [loading, mountHeavy]);
+
   // Generate chart data from real stats
   const acervoData = useMemo(() => [
     { name: "Docs", value: stats.documentos, fill: COLORS.blue },
@@ -326,20 +336,22 @@ export default function QADashboardPage() {
         </div>
       )}
 
-      {/* Prazos Recursais (PF) — mount único, fetch único, com timeout interno (useWidgetLoader) */}
-      <Suspense fallback={<div className="qa-card p-6 flex justify-center"><div className="w-5 h-5 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" /></div>}>
-        <DashboardPrazosRecursais />
-      </Suspense>
+      {/* Widgets pesados — só montam DEPOIS que a parte estática foi pintada (mountHeavy) */}
+      {mountHeavy && (
+        <>
+          <Suspense fallback={<div className="qa-card p-6 flex justify-center"><div className="w-5 h-5 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" /></div>}>
+            <DashboardPrazosRecursais />
+          </Suspense>
 
-      {/* Exames Monitoring */}
-      <Suspense fallback={<div className="qa-card p-6 flex justify-center"><div className="w-5 h-5 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" /></div>}>
-        <DashboardExames />
-      </Suspense>
+          <Suspense fallback={<div className="qa-card p-6 flex justify-center"><div className="w-5 h-5 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" /></div>}>
+            <DashboardExames />
+          </Suspense>
 
-      {/* Monitor Operacional de Processos */}
-      <Suspense fallback={<div className="qa-card p-6 flex justify-center"><div className="w-5 h-5 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" /></div>}>
-        <DashboardProcessosMonitor />
-      </Suspense>
+          <Suspense fallback={<div className="qa-card p-6 flex justify-center"><div className="w-5 h-5 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" /></div>}>
+            <DashboardProcessosMonitor />
+          </Suspense>
+        </>
+      )}
 
       {/* KPI Cards - Row 1 */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
