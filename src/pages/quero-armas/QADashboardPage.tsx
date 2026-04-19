@@ -244,6 +244,14 @@ export default function QADashboardPage() {
     };
   }, []);
 
+  // Após a parte estática estar pronta (loading=false), liberamos os widgets pesados
+  // em um segundo "tick" para que o navegador pinte primeiro o layout/KPIs.
+  useEffect(() => {
+    if (loading || mountHeavy) return;
+    const t = setTimeout(() => setMountHeavy(true), 120);
+    return () => clearTimeout(t);
+  }, [loading, mountHeavy]);
+
   // Generate chart data from real stats
   const acervoData = useMemo(() => [
     { name: "Docs", value: stats.documentos, fill: COLORS.blue },
