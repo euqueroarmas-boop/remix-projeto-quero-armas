@@ -399,6 +399,19 @@ export default function DashboardProcessosMonitor() {
     };
   }, [rows, dynamicCatalog]);
 
+  // Homologados (validação visual local) por entidade — apenas ativos (Em Andamento)
+  const homologadosByEnt = useMemo(() => {
+    const acc: Record<Entidade, { ok: number; total: number }> = {
+      PF: { ok: 0, total: 0 }, EB: { ok: 0, total: 0 }, CURSO: { ok: 0, total: 0 },
+    };
+    rows.forEach(r => {
+      if (r.meta.group !== "ativo") return;
+      acc[r.entidade].total += 1;
+      if (isHomologado([r.itemId])) acc[r.entidade].ok += 1;
+    });
+    return acc;
+  }, [rows, isHomologado]);
+
   /* ── Lista filtrada + ordenada ── */
   const visible = useMemo(() => {
     let list = rows;
