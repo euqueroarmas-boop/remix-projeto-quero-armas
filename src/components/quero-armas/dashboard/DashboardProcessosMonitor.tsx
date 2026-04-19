@@ -693,20 +693,26 @@ export default function DashboardProcessosMonitor() {
                         </td>
                         <td className="px-3 py-2 text-slate-500">{fmtBR(r.vendaDate)}</td>
                         <td className="px-3 py-2">
-                          {typeof r.recursoDiasRestantes === "number" ? (
-                            <span
-                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${recursoUrgencyClass(r.recursoDiasRestantes)}`}
-                              title={`Prazo fatal de 10 dias para recurso administrativo. Restam ${r.recursoDiasRestantes} dia(s).`}
-                            >
-                              <Gavel className="w-3 h-3" />
-                              {r.recursoDiasRestantes > 0 ? `${r.recursoDiasRestantes}d restantes` : "Prazo expirado"}
-                            </span>
-                          ) : (
-                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${urgencyClass(r.diasParado, encerrado)}`}>
-                              <Clock className="w-3 h-3" />
-                              {r.diasParado}d
-                            </span>
-                          )}
+                          <div className="flex flex-col items-start gap-1">
+                            {typeof r.recursoDiasRestantes === "number" ? (
+                              <span
+                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${recursoUrgencyClass(r.recursoDiasRestantes)}`}
+                                title={`Prazo fatal de 10 dias para recurso administrativo. Restam ${r.recursoDiasRestantes} dia(s).`}
+                              >
+                                <Gavel className="w-3 h-3" />
+                                {r.recursoDiasRestantes > 0 ? `${r.recursoDiasRestantes}d restantes` : "Prazo expirado"}
+                              </span>
+                            ) : (
+                              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${urgencyClass(r.diasParado, encerrado)}`}>
+                                <Clock className="w-3 h-3" />
+                                {r.diasParado}d
+                              </span>
+                            )}
+                            <HomologadoButton
+                              checked={isHomologado(r.itemIds)}
+                              onClick={() => toggleHomologado(r.itemIds)}
+                            />
+                          </div>
                         </td>
                         <td className="px-3 py-2 text-right">
                           {r.clienteId && (
