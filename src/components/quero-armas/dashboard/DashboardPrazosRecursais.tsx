@@ -14,10 +14,12 @@
  * Layout: grid de até 9 cards pequenos (mais antigo → mais novo). 10º card "+N".
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Loader2, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useWidgetLoader } from "@/hooks/useWidgetLoader";
+import WidgetStateView from "./WidgetStateView";
 
 interface ItemRow {
   id: number;
@@ -81,84 +83,64 @@ function toneFor(dias: number) {
 }
 
 export default function DashboardPrazosRecursais() {
-  const [loading, setLoading] = useState(true);
-  const [rows, setRows] = useState<PrazoRow[]>([]);
+  const { state, data, reload } = useWidgetLoader<PrazoRow[]>(async () => {
+    const servicoIdsPF = Object.keys(SERVICOS_PF_RECURSO).map(Number);
+    const { data: itens, error: e1 } = await supabase
+      .from("qa_itens_venda" as any)
+      .select("id, venda_id, servico_id, status, data_indeferimento, data_recurso_administrativo")
+      .in("servico_id", servicoIdsPF as any)
+      .not("data_indeferimento", "is", null);
+    if (e1) throw e1;
+    const itensList = (itens || []) as unknown as ItemRow[];
+    if (!itensList.length) return [];
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const servicoIdsPF = Object.keys(SERVICOS_PF_RECURSO).map(Number);
-        const { data: itens, error: e1 } = await supabase
-          .from("qa_itens_venda" as any)
-          .select("id, venda_id, servico_id, status, data_indeferimento, data_recurso_administrativo")
-          .in("servico_id", servicoIdsPF as any)
-          .not("data_indeferimento", "is", null);
-        if (e1) throw e1;
-        const itensList = (itens || []) as unknown as ItemRow[];
-        if (!itensList.length) { if (!cancelled) { setRows([]); setLoading(false); } return; }
+    const vendaLegadoIds = Array.from(new Set(itensList.map(i => i.venda_id)));
+    const vendasRes = await supabase
+      .from("qa_vendas" as any)
+      .select("id, id_legado, cliente_id")
+      .in("id_legado", vendaLegadoIds as any);
+    const vendas = ((vendasRes as any).data || []) as VendaRow[];
 
-        const vendaLegadoIds = Array.from(new Set(itensList.map(i => i.venda_id)));
+    const clienteLegadoIds = Array.from(new Set(vendas.map(v => v.cliente_id).filter(Boolean) as number[]));
+    const { data: clientesData } = clienteLegadoIds.length
+      ? await supabase.from("qa_clientes" as any).select("id, id_legado, nome_completo").in("id_legado", clienteLegadoIds as any)
+      : { data: [] as any[] };
+    const clientes = (clientesData || []) as ClienteRow[];
 
-        // FK: qa_itens_venda.venda_id → qa_vendas.id_legado
-        const vendasRes = await supabase
-          .from("qa_vendas" as any)
-          .select("id, id_legado, cliente_id")
-          .in("id_legado", vendaLegadoIds as any);
-        const vendas = ((vendasRes as any).data || []) as VendaRow[];
+    const vMap = new Map(vendas.map(v => [v.id_legado, v]));
+    const cMap = new Map(clientes.map(c => [c.id_legado, c]));
 
-        // FK: qa_vendas.cliente_id → qa_clientes.id_legado
-        const clienteLegadoIds = Array.from(new Set(vendas.map(v => v.cliente_id).filter(Boolean) as number[]));
-        const { data: clientesData } = clienteLegadoIds.length
-          ? await supabase.from("qa_clientes" as any).select("id, id_legado, nome_completo").in("id_legado", clienteLegadoIds as any)
-          : { data: [] as any[] };
-        const clientes = (clientesData || []) as ClienteRow[];
+    const today = todayISO();
+    const built: PrazoRow[] = [];
+    for (const it of itensList) {
+      const tipo = it.servico_id ? SERVICOS_PF_RECURSO[it.servico_id] : null;
+      if (!tipo) continue;
+      const venda = vMap.get(it.venda_id);
+      const cliente = venda?.cliente_id != null ? cMap.get(venda.cliente_id) : null;
+      if (!cliente) continue;
+      const dIndef = it.data_indeferimento!;
+      const dLimite = addDaysISO(dIndef, 10);
+      const diasRestantes = diffDays(today, dLimite);
+      if (diasRestantes < 0 || diasRestantes > 10) continue;
+      built.push({
+        itemId: it.id,
+        clienteIdLegado: cliente.id_legado ?? null,
+        clienteNome: cliente.nome_completo || `Cliente #${cliente.id}`,
+        tipo,
+        dataIndeferimento: dIndef,
+        dataLimite: dLimite,
+        diasRestantes,
+      });
+    }
+    built.sort((a, b) => a.diasRestantes - b.diasRestantes);
+    return built;
+  }, [], { timeoutMs: 6000 });
 
-        const vMap = new Map(vendas.map(v => [v.id_legado, v]));
-        const cMap = new Map(clientes.map(c => [c.id_legado, c])); // chave = id_legado
-
-        const today = todayISO();
-        const built: PrazoRow[] = [];
-        for (const it of itensList) {
-          const tipo = it.servico_id ? SERVICOS_PF_RECURSO[it.servico_id] : null;
-          if (!tipo) continue;
-
-          const venda = vMap.get(it.venda_id);
-          const cliente = venda?.cliente_id != null ? cMap.get(venda.cliente_id) : null;
-          if (!cliente) continue;
-
-          const dIndef = it.data_indeferimento!;
-          const dLimite = addDaysISO(dIndef, 10);
-          const diasRestantes = diffDays(today, dLimite);
-          // Filtra vencidos (negativos) e fora da janela de 10 dias.
-          if (diasRestantes < 0 || diasRestantes > 10) continue;
-
-          built.push({
-            itemId: it.id,
-            clienteIdLegado: cliente.id_legado ?? null,
-            clienteNome: cliente.nome_completo || `Cliente #${cliente.id}`,
-            tipo,
-            dataIndeferimento: dIndef,
-            dataLimite: dLimite,
-            diasRestantes,
-          });
-        }
-
-        // ordem: mais antigo (menor diasRestantes / mais vencido) → mais novo
-        built.sort((a, b) => a.diasRestantes - b.diasRestantes);
-        if (!cancelled) { setRows(built); setLoading(false); }
-      } catch (err) {
-        console.error("[DashboardPrazosRecursais]", err);
-        if (!cancelled) { setRows([]); setLoading(false); }
-      }
-    })();
-    return () => { cancelled = true; };
-  }, []);
-
+  const rows = data ?? [];
   const visible = useMemo(() => rows.slice(0, MAX_CARDS), [rows]);
   const overflow = useMemo(() => rows.slice(MAX_CARDS), [rows]);
 
-  if (loading) {
+  if (state === "loading") {
     return (
       <div className="space-y-4">
         <div>
@@ -169,6 +151,16 @@ export default function DashboardPrazosRecursais() {
           <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
         </div>
       </div>
+    );
+  }
+
+  if (state === "error" || state === "timeout") {
+    return (
+      <WidgetStateView
+        title="Recursos Administrativos — Prazo de 10 Dias (PF)"
+        state={state}
+        onRetry={reload}
+      />
     );
   }
 

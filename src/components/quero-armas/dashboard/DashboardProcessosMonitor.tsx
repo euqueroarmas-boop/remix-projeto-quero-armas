@@ -6,7 +6,7 @@
  *   (fallback: data_protocolo → venda.data_cadastro → venda.created_at)
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -16,6 +16,8 @@ import {
   Pencil, Check, X, Circle, Gavel, ChevronDown, ChevronUp,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useWidgetLoader } from "@/hooks/useWidgetLoader";
+import WidgetStateView from "./WidgetStateView";
 
 /* ================================================================
  * Catálogo BASE de status conhecidos (ícone, cor, grupo, ordem).
@@ -215,8 +217,6 @@ function recursoUrgencyClass(diasRestantes: number): string {
  * ================================================================ */
 
 export default function DashboardProcessosMonitor() {
-  const [loading, setLoading] = useState(true);
-  const [rows, setRows] = useState<MonitorRow[]>([]);
   const [filter, setFilter] = useState<FilterKey>("ativos");
   const [entidadeFilter, setEntidadeFilter] = useState<Entidade | null>(null);
   const [sortBy, setSortBy] = useState<SortKey>("tempo_parado");
@@ -225,6 +225,90 @@ export default function DashboardProcessosMonitor() {
   const [saving, setSaving] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  // Override local para mutações otimistas (após editar status na UI).
+  // Quando preenchido, prevalece sobre os dados vindos do loader.
+  const [override, setOverride] = useState<MonitorRow[] | null>(null);
+
+  const { state, data, reload } = useWidgetLoader<MonitorRow[]>(async () => {
+    const { data: itens, error: e1 } = await supabase
+      .from("qa_itens_venda" as any)
+      .select("id, venda_id, servico_id, status, data_protocolo, data_ultima_atualizacao, data_indeferimento, data_deferimento, data_recurso_administrativo")
+      .not("status", "is", null);
+    if (e1) throw e1;
+
+    const itensList = (itens as any[] as ItemRow[]) || [];
+    if (!itensList.length) return [];
+
+    const vendaIds = Array.from(new Set(itensList.map(i => i.venda_id).filter(Boolean)));
+    const servicoIds = Array.from(new Set(itensList.map(i => i.servico_id).filter(Boolean) as number[]));
+
+    const [vRes, sRes] = await Promise.all([
+      supabase.from("qa_vendas" as any).select("id, id_legado, cliente_id, data_cadastro, created_at").in("id_legado", vendaIds),
+      servicoIds.length
+        ? supabase.from("qa_servicos" as any).select("id, nome_servico, is_combo").in("id", servicoIds)
+        : Promise.resolve({ data: [] as any[] }),
+    ]);
+
+    const vendas = (vRes.data as any[] as VendaRow[]) || [];
+    const clienteFKs = Array.from(new Set(vendas.map(v => v.cliente_id).filter(Boolean) as number[]));
+    const cRes = clienteFKs.length
+      ? await supabase.from("qa_clientes" as any).select("id, id_legado, nome_completo").or(
+          `id_legado.in.(${clienteFKs.join(",")}),id.in.(${clienteFKs.join(",")})`
+        )
+      : { data: [] as any[] };
+
+    const vendasMap = new Map<number, VendaRow>(
+      vendas.map((v) => [typeof v.id_legado === "number" ? v.id_legado : v.id, v])
+    );
+    const clientesMap = new Map<number, ClienteRow>();
+    for (const c of (((cRes.data as any[]) || []) as ClienteRow[])) {
+      const fk = (typeof c.id_legado === "number" && Number.isFinite(c.id_legado)) ? c.id_legado : c.id;
+      clientesMap.set(fk, c);
+    }
+    const servicosMap = new Map<number, ServicoRow>(((sRes.data as any[]) || []).map((s: any) => [s.id, s]));
+
+    const built: MonitorRow[] = itensList
+      .map((it) => {
+        const raw = (it.status || "").trim();
+        if (!raw) return null;
+        const canon = canonical(raw);
+        const meta = BASE_BY_CANONICAL.get(canon) || buildAutoMeta(raw);
+        const venda = vendasMap.get(it.venda_id);
+        const cliente = venda?.cliente_id ? clientesMap.get(venda.cliente_id) : undefined;
+        const servico = it.servico_id ? servicosMap.get(it.servico_id) : undefined;
+        const vendaDate = venda?.data_cadastro || (venda?.created_at ? venda.created_at.slice(0, 10) : null);
+        const statusUpper = canon.toUpperCase();
+        const dataRecurso = (it as any).data_recurso_administrativo as string | null;
+        const dataDoStatus =
+          statusUpper === "INDEFERIDO"             ? (it as any).data_indeferimento :
+          statusUpper === "DEFERIDO"               ? (it as any).data_deferimento   :
+          statusUpper === "RECURSO ADMINISTRATIVO" ? dataRecurso                    : null;
+        const stopRef = dataDoStatus || it.data_ultima_atualizacao || it.data_protocolo || vendaDate;
+        const servicoNome = servico?.nome_servico || `Serviço #${it.servico_id ?? "?"}`;
+        const isRecurso = statusUpper === "RECURSO ADMINISTRATIVO";
+        const recursoDiasRestantes = isRecurso && dataRecurso ? 10 - diffDays(dataRecurso) : null;
+
+        return {
+          itemId: it.id,
+          vendaId: it.venda_id,
+          clienteId: venda?.cliente_id ?? null,
+          clienteNome: cliente?.nome_completo || "—",
+          servicoNome,
+          isCombo: !!servico?.is_combo,
+          status: canon,
+          meta,
+          vendaDate,
+          diasParado: diffDays(stopRef),
+          entidade: classifyEntidade(servicoNome),
+          recursoDiasRestantes,
+        } as MonitorRow;
+      })
+      .filter(Boolean) as MonitorRow[];
+
+    return built;
+  }, [], { timeoutMs: 8000 });
+
+  const rows = override ?? data ?? [];
 
   /** Aplica novo status + data de protocolo nos itens (1 ou N para combo).
    *  Zera o "tempo no status" setando data_ultima_atualizacao = data informada. */
@@ -242,7 +326,7 @@ export default function DashboardProcessosMonitor() {
         .in("id", itemIds);
       if (error) throw error;
 
-      setRows(prev => prev.map(r => {
+      const next = rows.map(r => {
         if (!itemIds.includes(r.itemId)) return r;
         const canon = canonical(newStatus);
         const meta = BASE_BY_CANONICAL.get(canon) || buildAutoMeta(newStatus);
@@ -252,7 +336,8 @@ export default function DashboardProcessosMonitor() {
           meta,
           diasParado: diffDays(dataProtocolo),
         };
-      }));
+      });
+      setOverride(next);
       setEditingKey(null);
       toast.success(`Status atualizado · ${itemIds.length > 1 ? `${itemIds.length} serviços` : "1 serviço"}`);
     } catch (err: any) {
@@ -263,108 +348,6 @@ export default function DashboardProcessosMonitor() {
     }
   }
 
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        // CARREGA TODOS os itens com status não-nulo — descoberta dinâmica de status novos.
-        const { data: itens, error: e1 } = await supabase
-          .from("qa_itens_venda" as any)
-          .select("id, venda_id, servico_id, status, data_protocolo, data_ultima_atualizacao, data_indeferimento, data_deferimento, data_recurso_administrativo")
-          .not("status", "is", null);
-        if (e1) throw e1;
-
-        const itensList = (itens as any[] as ItemRow[]) || [];
-        if (!itensList.length) {
-          if (mounted) { setRows([]); setLoading(false); }
-          return;
-        }
-
-        const vendaIds = Array.from(new Set(itensList.map(i => i.venda_id).filter(Boolean)));
-        const servicoIds = Array.from(new Set(itensList.map(i => i.servico_id).filter(Boolean) as number[]));
-
-        const [vRes, sRes] = await Promise.all([
-          supabase.from("qa_vendas" as any).select("id, id_legado, cliente_id, data_cadastro, created_at").in("id_legado", vendaIds),
-          servicoIds.length
-            ? supabase.from("qa_servicos" as any).select("id, nome_servico, is_combo").in("id", servicoIds)
-            : Promise.resolve({ data: [] as any[] }),
-        ]);
-
-        const vendas = (vRes.data as any[] as VendaRow[]) || [];
-        const clienteFKs = Array.from(new Set(vendas.map(v => v.cliente_id).filter(Boolean) as number[]));
-        const cRes = clienteFKs.length
-          ? await supabase.from("qa_clientes" as any).select("id, id_legado, nome_completo").or(
-              `id_legado.in.(${clienteFKs.join(",")}),id.in.(${clienteFKs.join(",")})`
-            )
-          : { data: [] as any[] };
-
-        const vendasMap = new Map<number, VendaRow>(
-          vendas.map((v) => [typeof v.id_legado === "number" ? v.id_legado : v.id, v])
-        );
-        const clientesMap = new Map<number, ClienteRow>();
-        for (const c of (((cRes.data as any[]) || []) as ClienteRow[])) {
-          const fk = (typeof c.id_legado === "number" && Number.isFinite(c.id_legado)) ? c.id_legado : c.id;
-          clientesMap.set(fk, c);
-        }
-        const servicosMap = new Map<number, ServicoRow>(((sRes.data as any[]) || []).map((s: any) => [s.id, s]));
-
-        const built: MonitorRow[] = itensList
-          .map((it) => {
-            const raw = (it.status || "").trim();
-            if (!raw) return null;
-            const canon = canonical(raw);
-            const meta = BASE_BY_CANONICAL.get(canon) || buildAutoMeta(raw);
-            const venda = vendasMap.get(it.venda_id);
-            const cliente = venda?.cliente_id ? clientesMap.get(venda.cliente_id) : undefined;
-            const servico = it.servico_id ? servicosMap.get(it.servico_id) : undefined;
-            const vendaDate = venda?.data_cadastro || (venda?.created_at ? venda.created_at.slice(0, 10) : null);
-            // "Tempo no status" prioriza a data específica do status atual quando existir:
-            //   INDEFERIDO  → data_indeferimento
-            //   DEFERIDO    → data_deferimento
-            //   RECURSO ADM → data_recurso_administrativo (contagem do prazo fatal de 10 dias)
-            // Caso contrário, usa data_ultima_atualizacao → data_protocolo → data da venda.
-            const statusUpper = canon.toUpperCase();
-            const dataRecurso = (it as any).data_recurso_administrativo as string | null;
-            const dataDoStatus =
-              statusUpper === "INDEFERIDO"             ? (it as any).data_indeferimento :
-              statusUpper === "DEFERIDO"               ? (it as any).data_deferimento   :
-              statusUpper === "RECURSO ADMINISTRATIVO" ? dataRecurso                    : null;
-            const stopRef = dataDoStatus || it.data_ultima_atualizacao || it.data_protocolo || vendaDate;
-            const servicoNome = servico?.nome_servico || `Serviço #${it.servico_id ?? "?"}`;
-
-            // Recurso administrativo possui prazo legal fatal de 10 dias.
-            // Calculamos os dias RESTANTES (positivos = dentro do prazo, ≤0 = expirado).
-            const isRecurso = statusUpper === "RECURSO ADMINISTRATIVO";
-            const recursoDiasRestantes = isRecurso && dataRecurso
-              ? 10 - diffDays(dataRecurso)
-              : null;
-
-            return {
-              itemId: it.id,
-              vendaId: it.venda_id,
-              clienteId: venda?.cliente_id ?? null,
-              clienteNome: cliente?.nome_completo || "—",
-              servicoNome,
-              isCombo: !!servico?.is_combo,
-              status: canon,
-              meta,
-              vendaDate,
-              diasParado: diffDays(stopRef),
-              entidade: classifyEntidade(servicoNome),
-              recursoDiasRestantes,
-            } as MonitorRow;
-          })
-          .filter(Boolean) as MonitorRow[];
-
-        if (mounted) setRows(built);
-      } catch (err) {
-        console.error("[DashboardProcessosMonitor] load error:", err);
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    })();
-    return () => { mounted = false; };
-  }, []);
 
   /* ── Catálogo DINÂMICO: base + qualquer status descoberto nos dados ── */
   const dynamicCatalog = useMemo<StatusMeta[]>(() => {
@@ -500,12 +483,15 @@ export default function DashboardProcessosMonitor() {
     return display;
   }, [rows, filter, entidadeFilter, sortBy, search]);
 
-  if (loading) {
+  if (state === "loading") {
     return (
       <div className="qa-card p-6 flex justify-center">
         <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
       </div>
     );
+  }
+  if (state === "error" || state === "timeout") {
+    return <WidgetStateView title="Monitor Operacional de Processos" state={state} onRetry={reload} />;
   }
 
   const ativosCatalog = dynamicCatalog.filter(s => s.group === "ativo");
