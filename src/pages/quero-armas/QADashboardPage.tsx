@@ -12,6 +12,8 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
+import { LazyOnVisible } from "@/components/quero-armas/dashboard/LazyOnVisible";
+
 const DashboardExames = lazy(() => import("@/components/quero-armas/dashboard/DashboardExames"));
 const DashboardProcessosMonitor = lazy(() => import("@/components/quero-armas/dashboard/DashboardProcessosMonitor"));
 const DashboardPrazosRecursais = lazy(() => import("@/components/quero-armas/dashboard/DashboardPrazosRecursais"));
