@@ -12,7 +12,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-import { LazyOnVisible } from "@/components/quero-armas/dashboard/LazyOnVisible";
+// LazyOnVisible removido dos widgets críticos por estabilidade (mount único, sem IO).
 
 const DashboardExames = lazy(() => import("@/components/quero-armas/dashboard/DashboardExames"));
 const DashboardProcessosMonitor = lazy(() => import("@/components/quero-armas/dashboard/DashboardProcessosMonitor"));
@@ -224,23 +224,16 @@ export default function QADashboardPage() {
       }
     };
 
-    const runIdle = (fn: () => void, delay = 100) => {
-      const w = window as any;
-      if (typeof w.requestIdleCallback === "function") {
-        w.requestIdleCallback(fn, { timeout: 2000 });
-      } else {
-        setTimeout(fn, delay);
-      }
-    };
-
+    // Estabilidade > esperteza: setTimeout simples e previsível.
+    // Onda 2 entra logo após a crítica; Onda 3 (gráficos, fora da primeira dobra) fica mais tarde.
     loadCritical()
       .catch((err) => {
         console.error("[QADashboard] crítica falhou:", err);
         if (!cancelled) { clearTimeout(safety); setLoading(false); }
       })
       .finally(() => {
-        runIdle(() => { void loadSecondary(); }, 200);
-        runIdle(() => { void loadCharts(); }, 600);
+        setTimeout(() => { if (!cancelled) void loadSecondary(); }, 250);
+        setTimeout(() => { if (!cancelled) void loadCharts(); }, 800);
       });
 
     return () => {
@@ -333,26 +326,20 @@ export default function QADashboardPage() {
         </div>
       )}
 
-      {/* Prazos Recursais (PF) — lazy on visible para não pesar o pós-login */}
-      <LazyOnVisible minHeight={140}>
-        <Suspense fallback={<div className="qa-card p-6 flex justify-center"><div className="w-5 h-5 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" /></div>}>
-          <DashboardPrazosRecursais />
-        </Suspense>
-      </LazyOnVisible>
+      {/* Prazos Recursais (PF) — mount único, fetch único, com timeout interno (useWidgetLoader) */}
+      <Suspense fallback={<div className="qa-card p-6 flex justify-center"><div className="w-5 h-5 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" /></div>}>
+        <DashboardPrazosRecursais />
+      </Suspense>
 
-      {/* Exames Monitoring — lazy on visible */}
-      <LazyOnVisible minHeight={160}>
-        <Suspense fallback={<div className="qa-card p-6 flex justify-center"><div className="w-5 h-5 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" /></div>}>
-          <DashboardExames />
-        </Suspense>
-      </LazyOnVisible>
+      {/* Exames Monitoring */}
+      <Suspense fallback={<div className="qa-card p-6 flex justify-center"><div className="w-5 h-5 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" /></div>}>
+        <DashboardExames />
+      </Suspense>
 
-      {/* Monitor Operacional de Processos — lazy on visible */}
-      <LazyOnVisible minHeight={180}>
-        <Suspense fallback={<div className="qa-card p-6 flex justify-center"><div className="w-5 h-5 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" /></div>}>
-          <DashboardProcessosMonitor />
-        </Suspense>
-      </LazyOnVisible>
+      {/* Monitor Operacional de Processos */}
+      <Suspense fallback={<div className="qa-card p-6 flex justify-center"><div className="w-5 h-5 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" /></div>}>
+        <DashboardProcessosMonitor />
+      </Suspense>
 
       {/* KPI Cards - Row 1 */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
