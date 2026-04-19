@@ -883,6 +883,23 @@ function EntityPanel({
         <div className="p-4">
           <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Em Andamento</span>
           <div className="text-3xl font-bold tabular-nums text-slate-900 mt-1">{totals.ativos}</div>
+          {homTotal > 0 && (
+            <div
+              className={`mt-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md border text-[10px] font-bold ${
+                homAllDone
+                  ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+                  : "border-slate-200 bg-slate-50 text-slate-600"
+              }`}
+              title="Homologados (validação visual local) sobre os ativos desta entidade"
+            >
+              <Check className={`w-3 h-3 ${homAllDone ? "text-emerald-600" : "text-slate-400"}`} />
+              <span className="uppercase tracking-wider">Homologados</span>
+              <span className={`tabular-nums ${homAllDone ? "text-emerald-700" : "text-slate-800"}`}>
+                {homOk}/{homTotal}
+              </span>
+              <span className="text-slate-400">· {homPct}%</span>
+            </div>
+          )}
         </div>
         {!onlyAtivos && (
           <div className="p-4">
