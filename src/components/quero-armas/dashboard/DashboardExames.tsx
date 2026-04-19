@@ -109,8 +109,6 @@ const KPI_VARIANTS = {
  * ================================================================ */
 
 export default function DashboardExames() {
-  const [items, setItems] = useState<ExameDashItem[]>([]);
-  const [loading, setLoading] = useState(true);
   const [filterKey, setFilterKey] = useState<FilterKey | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -124,161 +122,130 @@ export default function DashboardExames() {
     }
   };
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const [examesRes, itensRes, vendasRes, servicosRes, servicosExameRes] = await Promise.all([
-          supabase.from("qa_exames_cliente" as any).select("id, cliente_id, tipo, data_realizacao, data_vencimento, observacoes").limit(5000),
-          supabase.from("qa_itens_venda" as any).select("venda_id, status, servico_id").limit(10000),
-          supabase.from("qa_vendas" as any).select("id, id_legado, cliente_id").limit(10000),
-          supabase.from("qa_servicos" as any).select("id, nome_servico").limit(1000),
-          supabase.from("qa_servicos_com_exame" as any).select("servico_id, ativo").limit(1000),
-        ]);
+  const { state, data, reload } = useWidgetLoader<ExameDashItem[]>(async () => {
+    const [examesRes, itensRes, vendasRes, servicosRes, servicosExameRes] = await Promise.all([
+      supabase.from("qa_exames_cliente" as any).select("id, cliente_id, tipo, data_realizacao, data_vencimento, observacoes").limit(5000),
+      supabase.from("qa_itens_venda" as any).select("venda_id, status, servico_id").limit(10000),
+      supabase.from("qa_vendas" as any).select("id, id_legado, cliente_id").limit(10000),
+      supabase.from("qa_servicos" as any).select("id, nome_servico").limit(1000),
+      supabase.from("qa_servicos_com_exame" as any).select("servico_id, ativo").limit(1000),
+    ]);
 
-        const exames = ((examesRes.data || []) as any[]) as ExameRow[];
-        const itens = ((itensRes.data || []) as any[]) as ItemServicoRow[];
-        const vendas = ((vendasRes.data || []) as any[]) as VendaRow[];
-        const servicos = ((servicosRes.data || []) as any[]) as ServicoRow[];
-        const servicosExame = ((servicosExameRes.data || []) as any[]) as { servico_id: number; ativo: boolean }[];
-        const servicosComExameSet = new Set(
-          servicosExame.filter((s) => s.ativo).map((s) => String(s.servico_id))
-        );
-        const filtrarPorServicoExame = servicosComExameSet.size > 0;
+    const exames = ((examesRes.data || []) as any[]) as ExameRow[];
+    const itens = ((itensRes.data || []) as any[]) as ItemServicoRow[];
+    const vendas = ((vendasRes.data || []) as any[]) as VendaRow[];
+    const servicos = ((servicosRes.data || []) as any[]) as ServicoRow[];
+    const servicosExame = ((servicosExameRes.data || []) as any[]) as { servico_id: number; ativo: boolean }[];
+    const servicosComExameSet = new Set(
+      servicosExame.filter((s) => s.ativo).map((s) => String(s.servico_id))
+    );
+    const filtrarPorServicoExame = servicosComExameSet.size > 0;
 
-        // qa_exames_cliente.cliente_id → qa_clientes.id (puro, exceção documentada)
-        const clienteIdsExames = Array.from(new Set(exames.map((e) => e.cliente_id).filter(Boolean)));
-        // qa_vendas.cliente_id → qa_clientes.id_legado (chave canônica)
-        const clienteIdsLegadoVendas = Array.from(new Set(vendas.map((v: any) => v.cliente_id).filter(Boolean)));
-        let clientes: ClienteRow[] = [];
-        if (clienteIdsExames.length > 0 || clienteIdsLegadoVendas.length > 0) {
-          const clientesRes = await supabase
-            .from("qa_clientes" as any)
-            .select("id, id_legado, nome_completo, celular")
-            .or(`id.in.(${clienteIdsExames.join(",") || 0}),id_legado.in.(${clienteIdsLegadoVendas.join(",") || 0})`);
-          clientes = ((clientesRes.data || []) as any[]) as ClienteRow[];
-        }
+    const clienteIdsExames = Array.from(new Set(exames.map((e) => e.cliente_id).filter(Boolean)));
+    const clienteIdsLegadoVendas = Array.from(new Set(vendas.map((v: any) => v.cliente_id).filter(Boolean)));
+    let clientes: ClienteRow[] = [];
+    if (clienteIdsExames.length > 0 || clienteIdsLegadoVendas.length > 0) {
+      const clientesRes = await supabase
+        .from("qa_clientes" as any)
+        .select("id, id_legado, nome_completo, celular")
+        .or(`id.in.(${clienteIdsExames.join(",") || 0}),id_legado.in.(${clienteIdsLegadoVendas.join(",") || 0})`);
+      clientes = ((clientesRes.data || []) as any[]) as ClienteRow[];
+    }
 
-        // (mapas canônicos construídos abaixo)
-        // Indexa cliente por AMBAS as chaves para tradução cruzada (exames usam id puro, vendas usam id_legado)
-        const clienteByIdPuro = new Map<string, ClienteRow>();
-        const clienteByIdLegado = new Map<string, ClienteRow>();
-        clientes.forEach((c: any) => {
-          clienteByIdPuro.set(String(c.id), c);
-          if (c.id_legado != null) clienteByIdLegado.set(String(c.id_legado), c);
-        });
-        // Chave canônica unificada = id_legado quando existe; fallback id puro
-        const canonicalIdOf = (cli: any): string => String(cli?.id_legado ?? cli?.id ?? "");
+    const clienteByIdPuro = new Map<string, ClienteRow>();
+    const clienteByIdLegado = new Map<string, ClienteRow>();
+    clientes.forEach((c: any) => {
+      clienteByIdPuro.set(String(c.id), c);
+      if (c.id_legado != null) clienteByIdLegado.set(String(c.id_legado), c);
+    });
+    const canonicalIdOf = (cli: any): string => String(cli?.id_legado ?? cli?.id ?? "");
 
-        // venda_id em itens referencia id_legado da venda → mapeia para canonical do cliente
-        const vendaToClienteCanonical = new Map<string, string>();
-        vendas.forEach((v: any) => {
-          const vendaKey = String(v.id_legado ?? v.id);
-          // v.cliente_id é id_legado do cliente
-          const cli = clienteByIdLegado.get(String(v.cliente_id));
-          if (cli) vendaToClienteCanonical.set(vendaKey, canonicalIdOf(cli));
-        });
-        const servicoMap = new Map(servicos.map((s) => [String(s.id), s.nome_servico || "Serviço"]));
+    const vendaToClienteCanonical = new Map<string, string>();
+    vendas.forEach((v: any) => {
+      const vendaKey = String(v.id_legado ?? v.id);
+      const cli = clienteByIdLegado.get(String(v.cliente_id));
+      if (cli) vendaToClienteCanonical.set(vendaKey, canonicalIdOf(cli));
+    });
+    const servicoMap = new Map(servicos.map((s) => [String(s.id), s.nome_servico || "Serviço"]));
 
-        // ── PASSO 1: identifica vendas BLOQUEADAS ──
-        // Uma venda está bloqueada quando possui um item INDEFERIDO de serviço inicial
-        // (Posse PF, Porte PF, Autorização Exército, CR Exército). Nesses casos, todos
-        // os demais itens da MESMA VENDA são considerados mortos por dependência —
-        // o processo não pode mais avançar e o cliente NÃO é pendência.
-        const vendasBloqueadas = new Set<string>();
-        for (const item of itens) {
-          const status = (item.status || "").toUpperCase();
-          const sid = item.servico_id != null ? String(item.servico_id) : null;
-          if (status === "INDEFERIDO" && sid && SERVICOS_INICIAIS_BLOQUEADORES.has(sid)) {
-            vendasBloqueadas.add(String(item.venda_id));
-          }
-        }
-
-        const clientesComPendente = new Set<string>();
-        const clientesComDeferido = new Set<string>();
-        const servicosPendentesPorCliente = new Map<string, Map<string, "PF" | "EB" | "CURSO">>();
-        const classifyEntidade = (sid: string | null, nome: string): "PF" | "EB" | "CURSO" => {
-          const n = (nome || "").toLowerCase();
-          // Cursos não pertencem a PF nem EB
-          if (n.startsWith("curso") || n.includes("curso -") || n.includes("operador de pistola")) return "CURSO";
-          // IDs canônicos PF: 2 (Posse PF), 3 (Porte PF), 26 (CRAF PF)
-          if (sid === "2" || sid === "3" || sid === "26") return "PF";
-          if (n.includes("polícia federal") || n.includes("policia federal") || /\bpf\b/.test(n)) return "PF";
-          if (n.includes("posse") || n.includes("porte")) return "PF";
-          return "EB";
-        };
-        for (const item of itens) {
-          const status = (item.status || "").toUpperCase();
-          const cidCanonical = vendaToClienteCanonical.get(String(item.venda_id));
-          if (!cidCanonical) continue;
-          if (CONSUMED_STATUSES.includes(status)) {
-            clientesComDeferido.add(cidCanonical);
-          }
-          if (!FINISHED.includes(status)) {
-            if (vendasBloqueadas.has(String(item.venda_id))) continue;
-            if (EM_ANDAMENTO_NAO_PENDENTE.has(status)) continue;
-
-            const sid = item.servico_id != null ? String(item.servico_id) : null;
-            if (filtrarPorServicoExame && (!sid || !servicosComExameSet.has(sid))) continue;
-            clientesComPendente.add(cidCanonical);
-            const nome = sid ? servicoMap.get(sid) : null;
-            if (nome) {
-              if (!servicosPendentesPorCliente.has(cidCanonical)) servicosPendentesPorCliente.set(cidCanonical, new Map());
-              servicosPendentesPorCliente.get(cidCanonical)!.set(nome, classifyEntidade(sid, nome));
-            }
-          }
-        }
-
-        const latestMap = new Map<string, ExameRow>();
-        for (const e of exames) {
-          const key = `${e.cliente_id}_${e.tipo}`;
-          const existing = latestMap.get(key);
-          if (!existing || e.data_realizacao > existing.data_realizacao) {
-            latestMap.set(key, e);
-          }
-        }
-
-        const result: ExameDashItem[] = [];
-        for (const e of latestMap.values()) {
-          // exame.cliente_id é id puro de qa_clientes (exceção documentada)
-          const cli = clienteByIdPuro.get(String(e.cliente_id));
-          const { status, dias_restantes } = computeExameStatus(e.data_vencimento);
-          const bucket = bucketize(status, dias_restantes);
-          const cidCanonical = canonicalIdOf(cli);
-          // Regra: só monitora exames de clientes com PELO MENOS UM processo em andamento.
-          // Cliente sem processo ativo (todos finalizados/inexistente) não polui o monitoramento.
-          if (!clientesComPendente.has(cidCanonical)) continue;
-          result.push({
-            exameId: e.id,
-            clienteId: e.cliente_id,
-            clienteIdCanonical: cidCanonical || String(e.cliente_id),
-            clienteNome: cli?.nome_completo || "—",
-            clienteTelefone: cli?.celular || null,
-            tipo: e.tipo,
-            dataRealizacao: e.data_realizacao,
-            dataVencimento: e.data_vencimento,
-            diasRestantes: dias_restantes,
-            status,
-            temServicoPendente: clientesComPendente.has(cidCanonical),
-            servicosPendentes: Array.from(servicosPendentesPorCliente.get(cidCanonical)?.entries() || []).map(([nome, entidade]) => ({ nome, entidade })),
-            prioridade: BUCKET_ORDER[bucket],
-            bucket,
-          });
-        }
-
-        result.sort((a, b) => {
-          if (a.prioridade !== b.prioridade) return a.prioridade - b.prioridade;
-          return a.diasRestantes - b.diasRestantes;
-        });
-
-        setItems(result);
-      } catch (err) {
-        console.error("[DashboardExames] load:", err);
-      } finally {
-        setLoading(false);
+    const vendasBloqueadas = new Set<string>();
+    for (const item of itens) {
+      const status = (item.status || "").toUpperCase();
+      const sid = item.servico_id != null ? String(item.servico_id) : null;
+      if (status === "INDEFERIDO" && sid && SERVICOS_INICIAIS_BLOQUEADORES.has(sid)) {
+        vendasBloqueadas.add(String(item.venda_id));
       }
+    }
+
+    const clientesComPendente = new Set<string>();
+    const servicosPendentesPorCliente = new Map<string, Map<string, "PF" | "EB" | "CURSO">>();
+    const classifyEntidade = (sid: string | null, nome: string): "PF" | "EB" | "CURSO" => {
+      const n = (nome || "").toLowerCase();
+      if (n.startsWith("curso") || n.includes("curso -") || n.includes("operador de pistola")) return "CURSO";
+      if (sid === "2" || sid === "3" || sid === "26") return "PF";
+      if (n.includes("polícia federal") || n.includes("policia federal") || /\bpf\b/.test(n)) return "PF";
+      if (n.includes("posse") || n.includes("porte")) return "PF";
+      return "EB";
     };
-    load();
-  }, []);
+    for (const item of itens) {
+      const status = (item.status || "").toUpperCase();
+      const cidCanonical = vendaToClienteCanonical.get(String(item.venda_id));
+      if (!cidCanonical) continue;
+      if (!FINISHED.includes(status)) {
+        if (vendasBloqueadas.has(String(item.venda_id))) continue;
+        if (EM_ANDAMENTO_NAO_PENDENTE.has(status)) continue;
+        const sid = item.servico_id != null ? String(item.servico_id) : null;
+        if (filtrarPorServicoExame && (!sid || !servicosComExameSet.has(sid))) continue;
+        clientesComPendente.add(cidCanonical);
+        const nome = sid ? servicoMap.get(sid) : null;
+        if (nome) {
+          if (!servicosPendentesPorCliente.has(cidCanonical)) servicosPendentesPorCliente.set(cidCanonical, new Map());
+          servicosPendentesPorCliente.get(cidCanonical)!.set(nome, classifyEntidade(sid, nome));
+        }
+      }
+    }
+
+    const latestMap = new Map<string, ExameRow>();
+    for (const e of exames) {
+      const key = `${e.cliente_id}_${e.tipo}`;
+      const existing = latestMap.get(key);
+      if (!existing || e.data_realizacao > existing.data_realizacao) {
+        latestMap.set(key, e);
+      }
+    }
+
+    const result: ExameDashItem[] = [];
+    for (const e of latestMap.values()) {
+      const cli = clienteByIdPuro.get(String(e.cliente_id));
+      const { status, dias_restantes } = computeExameStatus(e.data_vencimento);
+      const bucket = bucketize(status, dias_restantes);
+      const cidCanonical = canonicalIdOf(cli);
+      if (!clientesComPendente.has(cidCanonical)) continue;
+      result.push({
+        exameId: e.id,
+        clienteId: e.cliente_id,
+        clienteIdCanonical: cidCanonical || String(e.cliente_id),
+        clienteNome: cli?.nome_completo || "—",
+        clienteTelefone: cli?.celular || null,
+        tipo: e.tipo,
+        dataRealizacao: e.data_realizacao,
+        dataVencimento: e.data_vencimento,
+        diasRestantes: dias_restantes,
+        status,
+        temServicoPendente: clientesComPendente.has(cidCanonical),
+        servicosPendentes: Array.from(servicosPendentesPorCliente.get(cidCanonical)?.entries() || []).map(([nome, entidade]) => ({ nome, entidade })),
+        prioridade: BUCKET_ORDER[bucket],
+        bucket,
+      });
+    }
+    result.sort((a, b) => {
+      if (a.prioridade !== b.prioridade) return a.prioridade - b.prioridade;
+      return a.diasRestantes - b.diasRestantes;
+    });
+    return result;
+  }, [], { timeoutMs: 7000 });
+
+  const items = data ?? [];
 
   const kpis = useMemo(() => ({
     vencido: items.filter((i) => i.bucket === "vencido").length,
@@ -297,7 +264,6 @@ export default function DashboardExames() {
     return items.filter((i) => i.bucket === filterKey);
   }, [items, filterKey]);
 
-  // Agrupa por cliente — mostra TODOS os exames do cliente para visão completa
   const groupedByCliente = useMemo(() => {
     if (!filterKey) return [];
     const clienteIds = Array.from(new Set(filtered.map((i) => i.clienteId)));
@@ -318,14 +284,18 @@ export default function DashboardExames() {
     }).sort((a, b) => a.prioridadeCliente - b.prioridadeCliente);
   }, [filtered, items, filterKey]);
 
-  if (loading) {
+  if (state === "loading") {
     return (
       <div className="qa-card p-6 flex justify-center">
         <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
       </div>
     );
   }
+  if (state === "error" || state === "timeout") {
+    return <WidgetStateView title="Monitoramento de Exames" state={state} onRetry={reload} />;
+  }
   if (items.length === 0) return null;
+
 
   const activeVariant = filterKey ? KPI_VARIANTS[filterKey] : null;
   const ActiveIcon = activeVariant?.icon;
