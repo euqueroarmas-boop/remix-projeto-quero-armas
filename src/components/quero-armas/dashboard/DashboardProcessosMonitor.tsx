@@ -18,6 +18,7 @@ import {
 import { toast } from "sonner";
 import { useWidgetLoader } from "@/hooks/useWidgetLoader";
 import WidgetStateView from "./WidgetStateView";
+import { useHomologados } from "./useHomologados";
 
 /* ================================================================
  * Catálogo BASE de status conhecidos (ícone, cor, grupo, ordem).
@@ -224,6 +225,7 @@ export default function DashboardProcessosMonitor() {
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const { isHomologado, toggle: toggleHomologado } = useHomologados();
   const [showSearch, setShowSearch] = useState(false);
   // Override local para mutações otimistas (após editar status na UI).
   // Quando preenchido, prevalece sobre os dados vindos do loader.
@@ -579,6 +581,7 @@ export default function DashboardProcessosMonitor() {
                 </FilterChip>
               )}
             </div>
+            <HomologadosCounter visible={visible} isHomologado={isHomologado} />
             <div className="flex-1" />
             <div className="relative">
               <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -690,20 +693,26 @@ export default function DashboardProcessosMonitor() {
                         </td>
                         <td className="px-3 py-2 text-slate-500">{fmtBR(r.vendaDate)}</td>
                         <td className="px-3 py-2">
-                          {typeof r.recursoDiasRestantes === "number" ? (
-                            <span
-                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${recursoUrgencyClass(r.recursoDiasRestantes)}`}
-                              title={`Prazo fatal de 10 dias para recurso administrativo. Restam ${r.recursoDiasRestantes} dia(s).`}
-                            >
-                              <Gavel className="w-3 h-3" />
-                              {r.recursoDiasRestantes > 0 ? `${r.recursoDiasRestantes}d restantes` : "Prazo expirado"}
-                            </span>
-                          ) : (
-                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${urgencyClass(r.diasParado, encerrado)}`}>
-                              <Clock className="w-3 h-3" />
-                              {r.diasParado}d
-                            </span>
-                          )}
+                          <div className="flex flex-col items-start gap-1">
+                            {typeof r.recursoDiasRestantes === "number" ? (
+                              <span
+                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${recursoUrgencyClass(r.recursoDiasRestantes)}`}
+                                title={`Prazo fatal de 10 dias para recurso administrativo. Restam ${r.recursoDiasRestantes} dia(s).`}
+                              >
+                                <Gavel className="w-3 h-3" />
+                                {r.recursoDiasRestantes > 0 ? `${r.recursoDiasRestantes}d restantes` : "Prazo expirado"}
+                              </span>
+                            ) : (
+                              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${urgencyClass(r.diasParado, encerrado)}`}>
+                                <Clock className="w-3 h-3" />
+                                {r.diasParado}d
+                              </span>
+                            )}
+                            <HomologadoButton
+                              checked={isHomologado(r.itemIds)}
+                              onClick={() => toggleHomologado(r.itemIds)}
+                            />
+                          </div>
                         </td>
                         <td className="px-3 py-2 text-right">
                           {r.clienteId && (
@@ -753,20 +762,26 @@ export default function DashboardProcessosMonitor() {
                           <div className="text-[11.5px] text-slate-500 truncate mt-0.5">{r.servicoNome}</div>
                         )}
                       </div>
-                      {typeof r.recursoDiasRestantes === "number" ? (
-                        <span
-                          className={`shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${recursoUrgencyClass(r.recursoDiasRestantes)}`}
-                          title={`Prazo fatal de 10 dias para recurso. Restam ${r.recursoDiasRestantes} dia(s).`}
-                        >
-                          <Gavel className="w-3 h-3" />
-                          {r.recursoDiasRestantes > 0 ? `${r.recursoDiasRestantes}d` : "Expirado"}
-                        </span>
-                      ) : (
-                        <span className={`shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${urgencyClass(r.diasParado, encerrado)}`}>
-                          <Clock className="w-3 h-3" />
-                          {r.diasParado}d
-                        </span>
-                      )}
+                      <div className="shrink-0 flex flex-col items-end gap-1">
+                        {typeof r.recursoDiasRestantes === "number" ? (
+                          <span
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${recursoUrgencyClass(r.recursoDiasRestantes)}`}
+                            title={`Prazo fatal de 10 dias para recurso. Restam ${r.recursoDiasRestantes} dia(s).`}
+                          >
+                            <Gavel className="w-3 h-3" />
+                            {r.recursoDiasRestantes > 0 ? `${r.recursoDiasRestantes}d` : "Expirado"}
+                          </span>
+                        ) : (
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${urgencyClass(r.diasParado, encerrado)}`}>
+                            <Clock className="w-3 h-3" />
+                            {r.diasParado}d
+                          </span>
+                        )}
+                        <HomologadoButton
+                          checked={isHomologado(r.itemIds)}
+                          onClick={() => toggleHomologado(r.itemIds)}
+                        />
+                      </div>
                     </div>
                     <div className="mt-2 flex flex-wrap items-center gap-1.5">
                       {editingKey === r.key ? (
@@ -1039,5 +1054,55 @@ function StatusEditor({
         <X className="w-3 h-3" />
       </button>
     </div>
+  );
+}
+
+/* ================================================================
+ * Homologação visual (apenas localStorage — não altera o banco)
+ * ================================================================ */
+
+function HomologadoButton({ checked, onClick }: { checked: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={checked ? "Homologado — clique para desmarcar" : "Marcar como homologado (validação visual local)"}
+      className={
+        checked
+          ? "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border border-emerald-300 bg-emerald-500 text-white shadow-sm hover:bg-emerald-600 transition"
+          : "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border border-slate-200 bg-white text-slate-500 hover:border-emerald-300 hover:text-emerald-700 transition"
+      }
+    >
+      {checked ? <Check className="w-3 h-3" /> : <Circle className="w-3 h-3" />}
+      Homologado
+    </button>
+  );
+}
+
+function HomologadosCounter({
+  visible,
+  isHomologado,
+}: {
+  visible: Array<{ itemIds: number[] }>;
+  isHomologado: (ids: number[]) => boolean;
+}) {
+  const total = visible.length;
+  const ok = visible.reduce((acc, r) => acc + (isHomologado(r.itemIds) ? 1 : 0), 0);
+  const pct = total > 0 ? Math.round((ok / total) * 100) : 0;
+  const allDone = ok === total && total > 0;
+  return (
+    <span
+      className={
+        "inline-flex items-center gap-1.5 px-2.5 h-8 rounded-md border text-[11px] font-semibold " +
+        (allDone
+          ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+          : "border-slate-200 bg-white text-slate-600")
+      }
+      title="Homologados (validação visual local) / total filtrado"
+    >
+      <Check className={`w-3.5 h-3.5 ${allDone ? "text-emerald-600" : "text-slate-400"}`} />
+      Homologados <b className={allDone ? "text-emerald-700" : "text-slate-800"}>{ok}/{total}</b>
+      <span className="text-slate-400">· {pct}%</span>
+    </span>
   );
 }
