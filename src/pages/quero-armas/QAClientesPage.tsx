@@ -35,6 +35,7 @@ import { getClienteFK, getVendaFK } from "@/components/quero-armas/clientes/clie
 import { usePrivateStorageUrl } from "@/hooks/usePrivateStorageUrl";
 import { useQAStatusServico } from "@/hooks/useQAStatusServico";
 import { isDispensado, getBaseLegalDispensa, CATEGORIA_MAP, type CategoriaTitular } from "@/components/quero-armas/clientes/categoriaTitular";
+import { invalidateQADashboardSnapshot } from "@/components/quero-armas/dashboard/dashboardSnapshot";
 
 /* ── Lightbox 5:4 espelhado (compartilhado por todas as miniaturas) ── */
 function PhotoLightbox({ url, alt, onClose }: { url: string; alt: string; onClose: () => void }) {
@@ -1369,15 +1370,24 @@ export default function QAClientesPage() {
                                     </button>
                                     <Select
                                       value={it.status || ""}
-                                      onValueChange={async (newStatus) => {
-                                        const { error } = await supabase.from("qa_itens_venda" as any).update({ status: newStatus }).eq("id", it.id);
-                                        if (error) { toast.error(error.message); return; }
+                                      onValueChange={(newStatus) => {
+                                        // Optimistic update — UI responde instantaneamente
+                                        const prevStatus = it.status;
                                         setItens(prev => prev.map((i: any) => i.id === it.id ? { ...i, status: newStatus } : i));
-                                         if (expandedItemId === it.id) {
-                                           setExpandedItemId(null);
-                                           setItemEditForm({});
-                                         }
+                                        if (expandedItemId === it.id) {
+                                          setExpandedItemId(null);
+                                          setItemEditForm({});
+                                        }
                                         toast.success(`Status → ${newStatus}`);
+                                        invalidateQADashboardSnapshot();
+                                        // Persistência em background; reverte se falhar
+                                        supabase.from("qa_itens_venda" as any).update({ status: newStatus }).eq("id", it.id)
+                                          .then(({ error }) => {
+                                            if (error) {
+                                              toast.error(`Falha ao salvar: ${error.message}`);
+                                              setItens(prev => prev.map((i: any) => i.id === it.id ? { ...i, status: prevStatus } : i));
+                                            }
+                                          });
                                       }}
                                     >
                                       <SelectTrigger className={`h-5 w-auto min-w-0 px-1.5 text-[9px] font-mono border-0 bg-transparent gap-0.5 ${svcStatusColor(it.status)}`} onClick={(e) => e.stopPropagation()}>
