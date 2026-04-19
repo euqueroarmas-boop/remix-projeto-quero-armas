@@ -14,10 +14,12 @@
  * Layout: grid de até 9 cards pequenos (mais antigo → mais novo). 10º card "+N".
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Loader2, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useWidgetLoader } from "@/hooks/useWidgetLoader";
+import WidgetStateView from "./WidgetStateView";
 
 interface ItemRow {
   id: number;
