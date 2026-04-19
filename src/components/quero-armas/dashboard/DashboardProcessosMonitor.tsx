@@ -848,13 +848,14 @@ export default function DashboardProcessosMonitor() {
  * ================================================================ */
 
 function EntityPanel({
-  entidade, totals, ativosCatalog, encerradosCatalog, counts, filter, entidadeFilter, setFilter, setEntidadeFilter, onlyAtivos = false,
+  entidade, totals, ativosCatalog, encerradosCatalog, counts, homologados, filter, entidadeFilter, setFilter, setEntidadeFilter, onlyAtivos = false,
 }: {
   entidade: Entidade;
   totals: { ativos: number; encerrados: number; total: number };
   ativosCatalog: StatusMeta[];
   encerradosCatalog: StatusMeta[];
   counts: Map<StatusKey, number>;
+  homologados?: { ok: number; total: number };
   filter: FilterKey;
   entidadeFilter: Entidade | null;
   setFilter: (f: FilterKey) => void;
@@ -862,6 +863,10 @@ function EntityPanel({
   onlyAtivos?: boolean;
 }) {
   const meta = ENTIDADE_META[entidade];
+  const homOk = homologados?.ok ?? 0;
+  const homTotal = homologados?.total ?? 0;
+  const homPct = homTotal > 0 ? Math.round((homOk / homTotal) * 100) : 0;
+  const homAllDone = homTotal > 0 && homOk === homTotal;
   return (
     <section className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm flex flex-col">
       {/* Header da entidade */}
