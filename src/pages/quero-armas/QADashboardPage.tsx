@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, lazy, Suspense } from "react";
+import { useEffect, useState, useMemo, useRef, lazy, Suspense } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import {
@@ -11,6 +11,8 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer,
 } from "recharts";
+
+import { LazyOnVisible } from "@/components/quero-armas/dashboard/LazyOnVisible";
 
 const DashboardExames = lazy(() => import("@/components/quero-armas/dashboard/DashboardExames"));
 const DashboardProcessosMonitor = lazy(() => import("@/components/quero-armas/dashboard/DashboardProcessosMonitor"));
@@ -99,117 +101,148 @@ export default function QADashboardPage() {
 
   useEffect(() => {
     let cancelled = false;
-    // Safety: nunca deixar o spinner principal eterno. 7s é mais que suficiente
-    // mesmo em 4G ruim. Se estourar, libera a tela com o que já temos (zeros).
+    // Safety: nunca deixar o spinner principal eterno.
     const safety = setTimeout(() => {
       if (!cancelled) {
-        console.warn("[QADashboard] safety timeout 7s — liberando UI");
+        console.warn("[QADashboard] safety timeout 5s — liberando UI");
         setLoading(false);
       }
-    }, 7000);
+    }, 5000);
 
-    const load = async () => {
+    // ============================================================
+    // ONDA 1 — CRÍTICA (4 queries) — libera a tela imediatamente
+    // ============================================================
+    const loadCritical = async () => {
       const t0 = performance.now();
-      try {
-      // allSettled: uma query travada não bloqueia o resto da página
       const results = await Promise.allSettled([
         supabase.from("qa_documentos_conhecimento" as any).select("id", { count: "exact", head: true }).eq("ativo", true).eq("papel_documento", "aprendizado"),
-        supabase.from("qa_fontes_normativas" as any).select("id", { count: "exact", head: true }),
-        supabase.from("qa_jurisprudencias" as any).select("id", { count: "exact", head: true }),
         supabase.from("qa_geracoes_pecas" as any).select("id", { count: "exact", head: true }),
-        supabase.from("qa_documentos_conhecimento" as any).select("id", { count: "exact", head: true }).eq("status_validacao", "nao_validado").eq("ativo", true).eq("papel_documento", "aprendizado"),
-        supabase.from("qa_documentos_conhecimento" as any).select("id", { count: "exact", head: true }).in("status_processamento", ["erro", "texto_invalido"]).eq("ativo", true).eq("papel_documento", "aprendizado"),
-        supabase.from("qa_consultas_ia" as any).select("id", { count: "exact", head: true }),
-        supabase.from("qa_geracoes_pecas" as any).select("id", { count: "exact", head: true }).eq("status_revisao", "aprovado"),
-        supabase.from("qa_referencias_preferenciais" as any).select("id", { count: "exact", head: true }).eq("ativo", true),
-        supabase.from("qa_geracoes_pecas" as any).select("id", { count: "exact", head: true }).eq("status_revisao", "rascunho"),
+        supabase.from("qa_cadastro_publico" as any).select("id, nome_completo, cpf, telefone_principal, email, end1_cidade, end1_estado, servico_interesse, status, pago, created_at", { count: "exact" }).order("created_at", { ascending: false }).limit(8),
         supabase.from("qa_geracoes_pecas" as any).select("id, titulo_geracao, tipo_peca, created_at, status_revisao").order("created_at", { ascending: false }).limit(6),
-        supabase.from("qa_documentos_conhecimento" as any).select("id, titulo, tipo_documento, created_at, status_processamento").eq("ativo", true).eq("papel_documento", "aprendizado").order("created_at", { ascending: false }).limit(6),
-        supabase.from("qa_cadastro_publico" as any).select("id", { count: "exact", head: true }),
-        supabase.from("qa_cadastro_publico" as any).select("id, nome_completo, cpf, telefone_principal, email, end1_cidade, end1_estado, servico_interesse, status, pago, created_at").order("created_at", { ascending: false }).limit(8),
       ]);
       if (cancelled) return;
       const pick = <T,>(idx: number): T | null => {
         const r = results[idx];
         return r.status === "fulfilled" ? (r.value as T) : null;
       };
-      const d = pick<any>(0), n = pick<any>(1), j = pick<any>(2), p = pick<any>(3);
-      const pend = pick<any>(4), errosR = pick<any>(5), c = pick<any>(6), apr = pick<any>(7);
-      const ref = pick<any>(8), rasc = pick<any>(9), rPecas = pick<any>(10), rDocs = pick<any>(11);
-      const cadastrosCount = pick<any>(12), cadastrosRecent = pick<any>(13);
-
-      setStats({
-        documentos: d?.count ?? 0, normas: n?.count ?? 0, jurisprudencias: j?.count ?? 0,
-        pecas: p?.count ?? 0, pendentes: pend?.count ?? 0, erros: errosR?.count ?? 0,
-        consultas: c?.count ?? 0, aprovadas: apr?.count ?? 0, referencias: ref?.count ?? 0,
-        rascunhos: rasc?.count ?? 0, novosCadastros: cadastrosCount?.count ?? 0,
-      });
-      setNovosCadastros((cadastrosRecent?.data as any[]) ?? []);
+      const d = pick<any>(0), p = pick<any>(1), cad = pick<any>(2), rPecas = pick<any>(3);
+      setStats((s) => ({
+        ...s,
+        documentos: d?.count ?? 0,
+        pecas: p?.count ?? 0,
+        novosCadastros: cad?.count ?? 0,
+      }));
+      setNovosCadastros((cad?.data as any[]) ?? []);
       setRecentPecas(((rPecas?.data as any[]) ?? []).map((r: any) => ({
         id: r.id, titulo: r.titulo_geracao || "Sem título",
         tipo: r.tipo_peca, created_at: r.created_at, status: r.status_revisao,
       })));
+      clearTimeout(safety);
+      setLoading(false);
+      console.info(`[QADashboard] CRÍTICA (4 queries) ready in ${Math.round(performance.now() - t0)}ms`);
+    };
+
+    // ONDA 2 — SECUNDÁRIA (KPIs auxiliares)
+    const loadSecondary = async () => {
+      if (cancelled) return;
+      const t0 = performance.now();
+      const results = await Promise.allSettled([
+        supabase.from("qa_fontes_normativas" as any).select("id", { count: "exact", head: true }),
+        supabase.from("qa_jurisprudencias" as any).select("id", { count: "exact", head: true }),
+        supabase.from("qa_documentos_conhecimento" as any).select("id", { count: "exact", head: true }).eq("status_validacao", "nao_validado").eq("ativo", true).eq("papel_documento", "aprendizado"),
+        supabase.from("qa_documentos_conhecimento" as any).select("id", { count: "exact", head: true }).in("status_processamento", ["erro", "texto_invalido"]).eq("ativo", true).eq("papel_documento", "aprendizado"),
+        supabase.from("qa_consultas_ia" as any).select("id", { count: "exact", head: true }),
+        supabase.from("qa_geracoes_pecas" as any).select("id", { count: "exact", head: true }).eq("status_revisao", "aprovado"),
+        supabase.from("qa_referencias_preferenciais" as any).select("id", { count: "exact", head: true }).eq("ativo", true),
+        supabase.from("qa_geracoes_pecas" as any).select("id", { count: "exact", head: true }).eq("status_revisao", "rascunho"),
+        supabase.from("qa_documentos_conhecimento" as any).select("id, titulo, tipo_documento, created_at, status_processamento").eq("ativo", true).eq("papel_documento", "aprendizado").order("created_at", { ascending: false }).limit(6),
+      ]);
+      if (cancelled) return;
+      const pick = <T,>(idx: number): T | null => {
+        const r = results[idx];
+        return r.status === "fulfilled" ? (r.value as T) : null;
+      };
+      setStats((s) => ({
+        ...s,
+        normas: pick<any>(0)?.count ?? 0,
+        jurisprudencias: pick<any>(1)?.count ?? 0,
+        pendentes: pick<any>(2)?.count ?? 0,
+        erros: pick<any>(3)?.count ?? 0,
+        consultas: pick<any>(4)?.count ?? 0,
+        aprovadas: pick<any>(5)?.count ?? 0,
+        referencias: pick<any>(6)?.count ?? 0,
+        rascunhos: pick<any>(7)?.count ?? 0,
+      }));
+      const rDocs = pick<any>(8);
       setRecentDocs(((rDocs?.data as any[]) ?? []).map((r: any) => ({
         id: r.id, titulo: r.titulo || "Sem título",
         tipo: r.tipo_documento, created_at: r.created_at, status: r.status_processamento,
       })));
+      console.info(`[QADashboard] SECUNDÁRIA (9 queries) ready in ${Math.round(performance.now() - t0)}ms`);
+    };
 
-      // Libera a UI imediatamente após KPIs prontos — gráficos secundários carregam depois
-      setLoading(false);
-      console.info(`[QADashboard] KPIs ready in ${Math.round(performance.now() - t0)}ms`);
-
-      // Fetch cadastros por dia e mês + serviços (não bloqueia a tela)
+    // ONDA 3 — PESADA (gráficos)
+    const loadCharts = async () => {
+      if (cancelled) return;
       try {
         const { data: allCadastros } = await supabase
           .from("qa_cadastro_publico" as any)
           .select("created_at, servico_interesse")
-          .order("created_at", { ascending: true });
-        if (cancelled) return;
+          .order("created_at", { ascending: true })
+          .limit(2000);
+        if (cancelled || !allCadastros?.length) return;
 
-        if (allCadastros && allCadastros.length > 0) {
-          const dayMap: Record<string, number> = {};
-          const monthMap: Record<string, number> = {};
-          const servicoMap: Record<string, number> = {};
-          const now = new Date();
-          const fourteenDaysAgo = new Date(now);
-          fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 13);
+        const dayMap: Record<string, number> = {};
+        const monthMap: Record<string, number> = {};
+        const servicoMap: Record<string, number> = {};
+        const now = new Date();
+        const fourteenDaysAgo = new Date(now);
+        fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 13);
 
-          (allCadastros as any[]).forEach((c: any) => {
-            const d = new Date(c.created_at);
-            const dayKey = d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
-            const monthKey = d.toLocaleDateString("pt-BR", { month: "short", year: "2-digit" });
-            if (d >= fourteenDaysAgo) {
-              dayMap[dayKey] = (dayMap[dayKey] || 0) + 1;
-            }
-            monthMap[monthKey] = (monthMap[monthKey] || 0) + 1;
-            const serv = (c as any).servico_interesse || "Não informado";
-            servicoMap[serv] = (servicoMap[serv] || 0) + 1;
-          });
+        (allCadastros as any[]).forEach((c: any) => {
+          const d = new Date(c.created_at);
+          const dayKey = d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+          const monthKey = d.toLocaleDateString("pt-BR", { month: "short", year: "2-digit" });
+          if (d >= fourteenDaysAgo) dayMap[dayKey] = (dayMap[dayKey] || 0) + 1;
+          monthMap[monthKey] = (monthMap[monthKey] || 0) + 1;
+          const serv = c.servico_interesse || "Não informado";
+          servicoMap[serv] = (servicoMap[serv] || 0) + 1;
+        });
 
-          const dayData: DayCount[] = [];
-          for (let i = 0; i < 14; i++) {
-            const dt = new Date(fourteenDaysAgo);
-            dt.setDate(dt.getDate() + i);
-            const key = dt.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
-            dayData.push({ day: key, total: dayMap[key] || 0 });
-          }
-          setCadastrosPorDia(dayData);
-          setCadastrosPorMes(Object.entries(monthMap).map(([month, total]) => ({ month, total })));
-          setServicosDistrib(Object.entries(servicoMap).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value));
+        const dayData: DayCount[] = [];
+        for (let i = 0; i < 14; i++) {
+          const dt = new Date(fourteenDaysAgo);
+          dt.setDate(dt.getDate() + i);
+          const key = dt.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+          dayData.push({ day: key, total: dayMap[key] || 0 });
         }
+        setCadastrosPorDia(dayData);
+        setCadastrosPorMes(Object.entries(monthMap).map(([month, total]) => ({ month, total })));
+        setServicosDistrib(Object.entries(servicoMap).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value));
       } catch (err) {
-        console.warn("[QADashboard] gráficos secundários falharam (não bloqueante):", err);
-      }
-      } catch (err) {
-        console.error("[QADashboard] load error:", err);
-      } finally {
-        if (!cancelled) {
-          clearTimeout(safety);
-          setLoading(false);
-        }
+        console.warn("[QADashboard] gráficos falharam (não bloqueante):", err);
       }
     };
-    load();
+
+    const runIdle = (fn: () => void, delay = 100) => {
+      const w = window as any;
+      if (typeof w.requestIdleCallback === "function") {
+        w.requestIdleCallback(fn, { timeout: 2000 });
+      } else {
+        setTimeout(fn, delay);
+      }
+    };
+
+    loadCritical()
+      .catch((err) => {
+        console.error("[QADashboard] crítica falhou:", err);
+        if (!cancelled) { clearTimeout(safety); setLoading(false); }
+      })
+      .finally(() => {
+        runIdle(() => { void loadSecondary(); }, 200);
+        runIdle(() => { void loadCharts(); }, 600);
+      });
+
     return () => {
       cancelled = true;
       clearTimeout(safety);
@@ -300,20 +333,26 @@ export default function QADashboardPage() {
         </div>
       )}
 
-      {/* Prazos Recursais (PF) — alta prioridade, vem antes de tudo */}
-      <Suspense fallback={null}>
-        <DashboardPrazosRecursais />
-      </Suspense>
+      {/* Prazos Recursais (PF) — lazy on visible para não pesar o pós-login */}
+      <LazyOnVisible minHeight={140}>
+        <Suspense fallback={<div className="qa-card p-6 flex justify-center"><div className="w-5 h-5 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" /></div>}>
+          <DashboardPrazosRecursais />
+        </Suspense>
+      </LazyOnVisible>
 
-      {/* Exames Monitoring */}
-      <Suspense fallback={<div className="qa-card p-6 flex justify-center"><div className="w-5 h-5 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" /></div>}>
-        <DashboardExames />
-      </Suspense>
+      {/* Exames Monitoring — lazy on visible */}
+      <LazyOnVisible minHeight={160}>
+        <Suspense fallback={<div className="qa-card p-6 flex justify-center"><div className="w-5 h-5 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" /></div>}>
+          <DashboardExames />
+        </Suspense>
+      </LazyOnVisible>
 
-      {/* Monitor Operacional de Processos */}
-      <Suspense fallback={<div className="qa-card p-6 flex justify-center"><div className="w-5 h-5 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" /></div>}>
-        <DashboardProcessosMonitor />
-      </Suspense>
+      {/* Monitor Operacional de Processos — lazy on visible */}
+      <LazyOnVisible minHeight={180}>
+        <Suspense fallback={<div className="qa-card p-6 flex justify-center"><div className="w-5 h-5 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" /></div>}>
+          <DashboardProcessosMonitor />
+        </Suspense>
+      </LazyOnVisible>
 
       {/* KPI Cards - Row 1 */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
