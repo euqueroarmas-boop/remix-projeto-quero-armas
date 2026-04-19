@@ -17,9 +17,9 @@
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Loader2, Plus } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useWidgetLoader } from "@/hooks/useWidgetLoader";
 import WidgetStateView from "./WidgetStateView";
+import { loadQADashboardSnapshot } from "./dashboardSnapshot";
 
 interface ItemRow {
   id: number;
@@ -83,29 +83,20 @@ function toneFor(dias: number) {
 }
 
 export default function DashboardPrazosRecursais() {
-  const { state, data, reload } = useWidgetLoader<PrazoRow[]>(async () => {
+  const { state, data, reload } = useWidgetLoader<PrazoRow[]>(async (signal) => {
+    const snapshot = await loadQADashboardSnapshot(signal);
     const servicoIdsPF = Object.keys(SERVICOS_PF_RECURSO).map(Number);
-    const { data: itens, error: e1 } = await supabase
-      .from("qa_itens_venda" as any)
-      .select("id, venda_id, servico_id, status, data_indeferimento, data_recurso_administrativo")
-      .in("servico_id", servicoIdsPF as any)
-      .not("data_indeferimento", "is", null);
-    if (e1) throw e1;
-    const itensList = (itens || []) as unknown as ItemRow[];
+    const itensList = snapshot.itens.filter(
+      (item) => item.data_indeferimento && item.servico_id != null && servicoIdsPF.includes(item.servico_id)
+    ) as ItemRow[];
     if (!itensList.length) return [];
 
     const vendaLegadoIds = Array.from(new Set(itensList.map(i => i.venda_id)));
-    const vendasRes = await supabase
-      .from("qa_vendas" as any)
-      .select("id, id_legado, cliente_id")
-      .in("id_legado", vendaLegadoIds as any);
-    const vendas = ((vendasRes as any).data || []) as VendaRow[];
-
+    const vendas = snapshot.vendas.filter((venda) => venda.id_legado != null && vendaLegadoIds.includes(venda.id_legado)) as VendaRow[];
     const clienteLegadoIds = Array.from(new Set(vendas.map(v => v.cliente_id).filter(Boolean) as number[]));
-    const { data: clientesData } = clienteLegadoIds.length
-      ? await supabase.from("qa_clientes" as any).select("id, id_legado, nome_completo").in("id_legado", clienteLegadoIds as any)
-      : { data: [] as any[] };
-    const clientes = (clientesData || []) as ClienteRow[];
+    const clientes = snapshot.clientes.filter(
+      (cliente) => cliente.id_legado != null && clienteLegadoIds.includes(cliente.id_legado)
+    ) as ClienteRow[];
 
     const vMap = new Map(vendas.map(v => [v.id_legado, v]));
     const cMap = new Map(clientes.map(c => [c.id_legado, c]));

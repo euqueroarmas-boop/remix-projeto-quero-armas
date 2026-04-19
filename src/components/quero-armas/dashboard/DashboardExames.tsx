@@ -12,6 +12,7 @@ import {
 } from "@/components/quero-armas/clientes/ClienteExames";
 import { useWidgetLoader } from "@/hooks/useWidgetLoader";
 import WidgetStateView from "./WidgetStateView";
+import { loadQADashboardSnapshot } from "./dashboardSnapshot";
 
 /* ================================================================
  * Tipos
@@ -122,35 +123,19 @@ export default function DashboardExames() {
     }
   };
 
-  const { state, data, reload } = useWidgetLoader<ExameDashItem[]>(async () => {
-    const [examesRes, itensRes, vendasRes, servicosRes, servicosExameRes] = await Promise.all([
-      supabase.from("qa_exames_cliente" as any).select("id, cliente_id, tipo, data_realizacao, data_vencimento, observacoes").limit(5000),
-      supabase.from("qa_itens_venda" as any).select("venda_id, status, servico_id").limit(10000),
-      supabase.from("qa_vendas" as any).select("id, id_legado, cliente_id").limit(10000),
-      supabase.from("qa_servicos" as any).select("id, nome_servico").limit(1000),
-      supabase.from("qa_servicos_com_exame" as any).select("servico_id, ativo").limit(1000),
-    ]);
-
-    const exames = ((examesRes.data || []) as any[]) as ExameRow[];
-    const itens = ((itensRes.data || []) as any[]) as ItemServicoRow[];
-    const vendas = ((vendasRes.data || []) as any[]) as VendaRow[];
-    const servicos = ((servicosRes.data || []) as any[]) as ServicoRow[];
-    const servicosExame = ((servicosExameRes.data || []) as any[]) as { servico_id: number; ativo: boolean }[];
+  const { state, data, reload } = useWidgetLoader<ExameDashItem[]>(async (signal) => {
+    const snapshot = await loadQADashboardSnapshot(signal);
+    const exames = snapshot.exames as unknown as ExameRow[];
+    const itens = snapshot.itens as unknown as ItemServicoRow[];
+    const vendas = snapshot.vendas as unknown as VendaRow[];
+    const servicos = snapshot.servicos as unknown as ServicoRow[];
+    const servicosExame = snapshot.servicosComExame as { servico_id: number; ativo: boolean }[];
     const servicosComExameSet = new Set(
       servicosExame.filter((s) => s.ativo).map((s) => String(s.servico_id))
     );
     const filtrarPorServicoExame = servicosComExameSet.size > 0;
 
-    const clienteIdsExames = Array.from(new Set(exames.map((e) => e.cliente_id).filter(Boolean)));
-    const clienteIdsLegadoVendas = Array.from(new Set(vendas.map((v: any) => v.cliente_id).filter(Boolean)));
-    let clientes: ClienteRow[] = [];
-    if (clienteIdsExames.length > 0 || clienteIdsLegadoVendas.length > 0) {
-      const clientesRes = await supabase
-        .from("qa_clientes" as any)
-        .select("id, id_legado, nome_completo, celular")
-        .or(`id.in.(${clienteIdsExames.join(",") || 0}),id_legado.in.(${clienteIdsLegadoVendas.join(",") || 0})`);
-      clientes = ((clientesRes.data || []) as any[]) as ClienteRow[];
-    }
+    const clientes = snapshot.clientes as unknown as ClienteRow[];
 
     const clienteByIdPuro = new Map<string, ClienteRow>();
     const clienteByIdLegado = new Map<string, ClienteRow>();
