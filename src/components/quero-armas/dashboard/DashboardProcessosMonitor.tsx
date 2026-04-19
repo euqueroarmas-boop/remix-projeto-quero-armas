@@ -581,6 +581,7 @@ export default function DashboardProcessosMonitor() {
                 </FilterChip>
               )}
             </div>
+            <HomologadosCounter visible={visible} isHomologado={isHomologado} />
             <div className="flex-1" />
             <div className="relative">
               <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
