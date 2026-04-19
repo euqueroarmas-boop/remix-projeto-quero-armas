@@ -42,7 +42,9 @@ export function useWidgetLoader<T>(
     setState("loading");
     setError(null);
 
-    const safe = (fn: () => void) => { if (mountedRef.current && !settled) fn(); };
+    const safe = (fn: () => void) => {
+      if (mountedRef.current) fn();
+    };
 
     timeoutId = setTimeout(() => {
       if (settled) return;
