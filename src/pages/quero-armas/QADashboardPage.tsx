@@ -98,9 +98,21 @@ export default function QADashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
+    // Safety: nunca deixar o spinner principal eterno. 7s é mais que suficiente
+    // mesmo em 4G ruim. Se estourar, libera a tela com o que já temos (zeros).
+    const safety = setTimeout(() => {
+      if (!cancelled) {
+        console.warn("[QADashboard] safety timeout 7s — liberando UI");
+        setLoading(false);
+      }
+    }, 7000);
+
     const load = async () => {
+      const t0 = performance.now();
       try {
-      const [d, n, j, p, pend, erros, c, apr, ref, rasc, rPecas, rDocs, cadastrosCount, cadastrosRecent] = await Promise.all([
+      // allSettled: uma query travada não bloqueia o resto da página
+      const results = await Promise.allSettled([
         supabase.from("qa_documentos_conhecimento" as any).select("id", { count: "exact", head: true }).eq("ativo", true).eq("papel_documento", "aprendizado"),
         supabase.from("qa_fontes_normativas" as any).select("id", { count: "exact", head: true }),
         supabase.from("qa_jurisprudencias" as any).select("id", { count: "exact", head: true }),
