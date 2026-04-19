@@ -399,6 +399,19 @@ export default function DashboardProcessosMonitor() {
     };
   }, [rows, dynamicCatalog]);
 
+  // Homologados (validação visual local) por entidade — apenas ativos (Em Andamento)
+  const homologadosByEnt = useMemo(() => {
+    const acc: Record<Entidade, { ok: number; total: number }> = {
+      PF: { ok: 0, total: 0 }, EB: { ok: 0, total: 0 }, CURSO: { ok: 0, total: 0 },
+    };
+    rows.forEach(r => {
+      if (r.meta.group !== "ativo") return;
+      acc[r.entidade].total += 1;
+      if (isHomologado([r.itemId])) acc[r.entidade].ok += 1;
+    });
+    return acc;
+  }, [rows, isHomologado]);
+
   /* ── Lista filtrada + ordenada ── */
   const visible = useMemo(() => {
     let list = rows;
@@ -536,6 +549,7 @@ export default function DashboardProcessosMonitor() {
           ativosCatalog={ativosCatalog}
           encerradosCatalog={encerradosCatalog}
           counts={counts.byEntStatus.PF}
+          homologados={homologadosByEnt.PF}
           filter={filter}
           entidadeFilter={entidadeFilter}
           onlyAtivos={collapsed}
@@ -548,6 +562,7 @@ export default function DashboardProcessosMonitor() {
           ativosCatalog={ativosCatalog}
           encerradosCatalog={encerradosCatalog}
           counts={counts.byEntStatus.EB}
+          homologados={homologadosByEnt.EB}
           filter={filter}
           entidadeFilter={entidadeFilter}
           onlyAtivos={collapsed}
@@ -833,13 +848,14 @@ export default function DashboardProcessosMonitor() {
  * ================================================================ */
 
 function EntityPanel({
-  entidade, totals, ativosCatalog, encerradosCatalog, counts, filter, entidadeFilter, setFilter, setEntidadeFilter, onlyAtivos = false,
+  entidade, totals, ativosCatalog, encerradosCatalog, counts, homologados, filter, entidadeFilter, setFilter, setEntidadeFilter, onlyAtivos = false,
 }: {
   entidade: Entidade;
   totals: { ativos: number; encerrados: number; total: number };
   ativosCatalog: StatusMeta[];
   encerradosCatalog: StatusMeta[];
   counts: Map<StatusKey, number>;
+  homologados?: { ok: number; total: number };
   filter: FilterKey;
   entidadeFilter: Entidade | null;
   setFilter: (f: FilterKey) => void;
@@ -847,6 +863,10 @@ function EntityPanel({
   onlyAtivos?: boolean;
 }) {
   const meta = ENTIDADE_META[entidade];
+  const homOk = homologados?.ok ?? 0;
+  const homTotal = homologados?.total ?? 0;
+  const homPct = homTotal > 0 ? Math.round((homOk / homTotal) * 100) : 0;
+  const homAllDone = homTotal > 0 && homOk === homTotal;
   return (
     <section className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm flex flex-col">
       {/* Header da entidade */}
@@ -863,6 +883,23 @@ function EntityPanel({
         <div className="p-4">
           <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Em Andamento</span>
           <div className="text-3xl font-bold tabular-nums text-slate-900 mt-1">{totals.ativos}</div>
+          {homTotal > 0 && (
+            <div
+              className={`mt-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md border text-[10px] font-bold ${
+                homAllDone
+                  ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+                  : "border-slate-200 bg-slate-50 text-slate-600"
+              }`}
+              title="Homologados (validação visual local) sobre os ativos desta entidade"
+            >
+              <Check className={`w-3 h-3 ${homAllDone ? "text-emerald-600" : "text-slate-400"}`} />
+              <span className="uppercase tracking-wider">Homologados</span>
+              <span className={`tabular-nums ${homAllDone ? "text-emerald-700" : "text-slate-800"}`}>
+                {homOk}/{homTotal}
+              </span>
+              <span className="text-slate-400">· {homPct}%</span>
+            </div>
+          )}
         </div>
         {!onlyAtivos && (
           <div className="p-4">
