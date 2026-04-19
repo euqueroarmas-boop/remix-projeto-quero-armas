@@ -336,14 +336,21 @@ export default function QADashboardPage() {
         </div>
       )}
 
-      {/* Widgets pesados — montam após a parte estática (mountHeavy).
-          Um único Suspense boundary evita warnings de ref em lazy components. */}
+      {/* Widgets pesados — só montam DEPOIS que a parte estática foi pintada (mountHeavy) */}
       {mountHeavy && (
-        <Suspense fallback={<div className="qa-card p-6 flex justify-center"><div className="w-5 h-5 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" /></div>}>
-          <DashboardPrazosRecursais />
-          <DashboardExames />
-          <DashboardProcessosMonitor />
-        </Suspense>
+        <>
+          <Suspense fallback={<div className="qa-card p-6 flex justify-center"><div className="w-5 h-5 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" /></div>}>
+            <DashboardPrazosRecursais />
+          </Suspense>
+
+          <Suspense fallback={<div className="qa-card p-6 flex justify-center"><div className="w-5 h-5 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" /></div>}>
+            <DashboardExames />
+          </Suspense>
+
+          <Suspense fallback={<div className="qa-card p-6 flex justify-center"><div className="w-5 h-5 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" /></div>}>
+            <DashboardProcessosMonitor />
+          </Suspense>
+        </>
       )}
 
       {/* KPI Cards - Row 1 */}
