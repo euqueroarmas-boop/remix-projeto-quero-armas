@@ -98,6 +98,8 @@ export default function QADashboardPage() {
   const [cadastrosPorMes, setCadastrosPorMes] = useState<MonthCount[]>([]);
   const [servicosDistrib, setServicosDistrib] = useState<ServicoCount[]>([]);
   const [loading, setLoading] = useState(true);
+  // Widgets pesados (Prazos, Exames, Processos) só montam depois da parte estática.
+  const [mountHeavy, setMountHeavy] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
