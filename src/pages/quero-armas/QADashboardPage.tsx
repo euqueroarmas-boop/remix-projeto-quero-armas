@@ -333,20 +333,26 @@ export default function QADashboardPage() {
         </div>
       )}
 
-      {/* Prazos Recursais (PF) — alta prioridade, vem antes de tudo */}
-      <Suspense fallback={null}>
-        <DashboardPrazosRecursais />
-      </Suspense>
+      {/* Prazos Recursais (PF) — lazy on visible para não pesar o pós-login */}
+      <LazyOnVisible minHeight={140}>
+        <Suspense fallback={<div className="qa-card p-6 flex justify-center"><div className="w-5 h-5 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" /></div>}>
+          <DashboardPrazosRecursais />
+        </Suspense>
+      </LazyOnVisible>
 
-      {/* Exames Monitoring */}
-      <Suspense fallback={<div className="qa-card p-6 flex justify-center"><div className="w-5 h-5 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" /></div>}>
-        <DashboardExames />
-      </Suspense>
+      {/* Exames Monitoring — lazy on visible */}
+      <LazyOnVisible minHeight={160}>
+        <Suspense fallback={<div className="qa-card p-6 flex justify-center"><div className="w-5 h-5 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" /></div>}>
+          <DashboardExames />
+        </Suspense>
+      </LazyOnVisible>
 
-      {/* Monitor Operacional de Processos */}
-      <Suspense fallback={<div className="qa-card p-6 flex justify-center"><div className="w-5 h-5 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" /></div>}>
-        <DashboardProcessosMonitor />
-      </Suspense>
+      {/* Monitor Operacional de Processos — lazy on visible */}
+      <LazyOnVisible minHeight={180}>
+        <Suspense fallback={<div className="qa-card p-6 flex justify-center"><div className="w-5 h-5 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" /></div>}>
+          <DashboardProcessosMonitor />
+        </Suspense>
+      </LazyOnVisible>
 
       {/* KPI Cards - Row 1 */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
