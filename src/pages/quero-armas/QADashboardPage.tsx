@@ -224,23 +224,16 @@ export default function QADashboardPage() {
       }
     };
 
-    const runIdle = (fn: () => void, delay = 100) => {
-      const w = window as any;
-      if (typeof w.requestIdleCallback === "function") {
-        w.requestIdleCallback(fn, { timeout: 2000 });
-      } else {
-        setTimeout(fn, delay);
-      }
-    };
-
+    // Estabilidade > esperteza: setTimeout simples e previsível.
+    // Onda 2 entra logo após a crítica; Onda 3 (gráficos, fora da primeira dobra) fica mais tarde.
     loadCritical()
       .catch((err) => {
         console.error("[QADashboard] crítica falhou:", err);
         if (!cancelled) { clearTimeout(safety); setLoading(false); }
       })
       .finally(() => {
-        runIdle(() => { void loadSecondary(); }, 200);
-        runIdle(() => { void loadCharts(); }, 600);
+        setTimeout(() => { if (!cancelled) void loadSecondary(); }, 250);
+        setTimeout(() => { if (!cancelled) void loadCharts(); }, 800);
       });
 
     return () => {
