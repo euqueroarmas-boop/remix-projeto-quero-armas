@@ -63,3 +63,6 @@ verify_jwt = false
 [functions.qa-atualizar-foto]
 verify_jwt = false
 
+[functions.qa-resumo-diario-clientes]
+verify_jwt = false
+
