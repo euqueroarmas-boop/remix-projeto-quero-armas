@@ -409,8 +409,8 @@ const problems: ProbData[] = [
   { slug: "empresa-sem-infraestrutura-ti", name: "Sem Infraestrutura", h1Tpl: "Precisa de infraestrutura de TI em {city}?", desc: "Sem TI profissional: instabilidade, riscos e baixa produtividade.", painPoints: ["Sem servidor", "Rede sem planejamento", "Sem firewall/backup", "Equipamentos domésticos"], solutionIntro: "Infraestrutura completa: servidores, rede, firewall, backup e monitoramento 24/7." },
 ];
 
-// Cities will be loaded from a compact JSON-like structure
-// For performance, we embed the top ~100 cities and load more from DB if needed
+// Enriched context for top cities (used to differentiate content for the largest hubs).
+// The full city catalogue (665 SP municipalities) is loaded from _shared/seo-cities.ts.
 const topCities: CityData[] = [
   { name: "Jacareí", slug: "jacarei", region: "Vale do Paraíba", population: 240000, context: "polo industrial e tecnológico" },
   { name: "São José dos Campos", slug: "sao-jose-dos-campos", region: "Vale do Paraíba", population: 737000, context: "sede de empresas aeroespaciais" },
@@ -436,7 +436,16 @@ const topCities: CityData[] = [
   { name: "Campos do Jordão", slug: "campos-do-jordao", region: "Vale do Paraíba", population: 55000 },
 ];
 
-const cityBySlug = new Map<string, CityData>(topCities.map(c => [c.slug, c]));
+// Build city map: full catalogue of 665 SP cities + enriched context overrides for top cities.
+// This guarantees that every "*-em-{cidade}" SEO page returns a unique prerendered HTML
+// (instead of falling back to the SPA shell with canonical = home).
+const cityBySlug = new Map<string, CityData>();
+for (const c of SEO_CITIES) {
+  cityBySlug.set(c.slug, { name: c.name, slug: c.slug, region: c.region, population: c.population, context: c.context });
+}
+for (const c of topCities) {
+  cityBySlug.set(c.slug, c); // override with enriched context
+}
 
 // Build entity prefix maps
 const svcByPrefix = new Map<string, SvcData>(services.map(s => [s.slug, s]));
