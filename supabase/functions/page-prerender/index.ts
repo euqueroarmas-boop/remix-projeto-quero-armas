@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+import { SEO_CITIES } from "../_shared/seo-cities.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
