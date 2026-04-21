@@ -209,6 +209,145 @@ function ClientPhoto({ path, name, className }: { path: string | null | undefine
   );
 }
 
+/* ── OCR de documentos do cadastro público (admin) ── */
+function CadastroDocumentosCard({
+  cadastro,
+  onUpdated,
+}: {
+  cadastro: any;
+  onUpdated: (next: any) => void;
+}) {
+  const [extracting, setExtracting] = useState(false);
+  const idUrl = usePrivateStorageUrl("qa-cadastro-selfies", cadastro.documento_identidade_path);
+  const addrUrl = usePrivateStorageUrl("qa-cadastro-selfies", cadastro.comprovante_endereco_path);
+
+  const fetchAsDataUrl = async (url: string | null): Promise<string | null> => {
+    if (!url) return null;
+    try {
+      const resp = await fetch(url);
+      const blob = await resp.blob();
+      return await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    } catch (err) {
+      console.error("[ocr-fetch]", err);
+      return null;
+    }
+  };
+
+  const onlyDigits = (s: string | null | undefined) => (s || "").replace(/\D/g, "");
+
+  const handleExtract = async () => {
+    if (!idUrl && !addrUrl) {
+      toast.error("Nenhum documento disponível para extração");
+      return;
+    }
+    setExtracting(true);
+    const tId = toast.loading("Lendo documentos com IA…");
+    try {
+      const [identityDataUrl, addressDataUrl] = await Promise.all([
+        fetchAsDataUrl(idUrl),
+        fetchAsDataUrl(addrUrl),
+      ]);
+
+      const { data, error } = await supabase.functions.invoke("qa-extract-documents", {
+        body: {
+          identity_image: identityDataUrl || undefined,
+          address_image: addressDataUrl || undefined,
+        },
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || "Falha na extração");
+
+      const id = data.identity || {};
+      const addr = data.address || {};
+
+      const patch: Record<string, any> = {};
+      const setIfEmpty = (field: string, value: any) => {
+        if (value == null || value === "") return;
+        if (!cadastro[field]) patch[field] = value;
+      };
+
+      setIfEmpty("nome_completo", id.nome_completo);
+      if (id.cpf && onlyDigits(cadastro.cpf).length !== 11) patch.cpf = onlyDigits(id.cpf);
+      setIfEmpty("rg", id.rg);
+      setIfEmpty("emissor_rg", id.emissor_rg);
+      if (id.data_nascimento) {
+        const iso = id.data_nascimento.includes("/")
+          ? id.data_nascimento.split("/").reverse().join("-")
+          : id.data_nascimento;
+        setIfEmpty("data_nascimento", iso);
+      }
+      setIfEmpty("nome_mae", id.nome_mae);
+      setIfEmpty("nome_pai", id.nome_pai);
+
+      if (addr.cep) setIfEmpty("end1_cep", onlyDigits(addr.cep));
+      setIfEmpty("end1_logradouro", addr.logradouro);
+      setIfEmpty("end1_numero", addr.numero);
+      setIfEmpty("end1_complemento", addr.complemento);
+      setIfEmpty("end1_bairro", addr.bairro);
+      setIfEmpty("end1_cidade", addr.cidade);
+      setIfEmpty("end1_estado", addr.estado);
+
+      if (Object.keys(patch).length === 0) {
+        toast.dismiss(tId);
+        toast.info("Nenhum campo novo a preencher — o cadastro já está completo.");
+        return;
+      }
+
+      const { data: updated, error: upErr } = await supabase
+        .from("qa_cadastro_publico" as any)
+        .update(patch)
+        .eq("id", cadastro.id)
+        .select("*")
+        .maybeSingle();
+      if (upErr) throw upErr;
+
+      onUpdated(updated);
+      toast.dismiss(tId);
+      toast.success(`Cadastro atualizado: ${Object.keys(patch).length} campo(s) preenchido(s) via OCR`);
+    } catch (err: any) {
+      console.error("[ocr-extract]", err);
+      toast.dismiss(tId);
+      toast.error(err?.message || "Falha ao extrair dados do documento");
+    } finally {
+      setExtracting(false);
+    }
+  };
+
+  const hasAnyDoc = !!(cadastro.documento_identidade_path || cadastro.comprovante_endereco_path);
+
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <DocumentThumb path={cadastro.selfie_path} label="Selfie" name={cadastro.nome_completo} kind="selfie" />
+        <DocumentThumb path={cadastro.documento_identidade_path} label="Documento de identidade" name={cadastro.nome_completo} kind="doc" />
+        <DocumentThumb path={cadastro.comprovante_endereco_path} label="Comprovante de endereço" name={cadastro.nome_completo} kind="doc" />
+      </div>
+      {hasAnyDoc && (
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-3 border-t" style={{ borderColor: "hsl(220 13% 93%)" }}>
+          <p className="text-[11px] flex-1" style={{ color: "hsl(220 10% 50%)" }}>
+            A IA lê CNH/RG e comprovante e <strong>preenche apenas os campos vazios</strong> do cadastro automaticamente.
+          </p>
+          <Button
+            type="button"
+            size="sm"
+            onClick={handleExtract}
+            disabled={extracting}
+            className="shrink-0 gap-1.5 h-8 text-[11px]"
+          >
+            {extracting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Crosshair className="w-3 h-3" />}
+            EXTRAIR DADOS VIA OCR
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 const formatCpf = (v: string | null | undefined): string => {
   if (!v) return "—";
   const d = v.replace(/\D/g, "");
