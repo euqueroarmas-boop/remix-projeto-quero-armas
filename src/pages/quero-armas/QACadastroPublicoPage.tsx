@@ -323,6 +323,20 @@ export default function QACadastroPublicoPage() {
           </div>
         </div>
 
+        {duplicate && (
+          <DuplicateModal
+            info={duplicate}
+            busy={busy}
+            onCancel={() => setDuplicate(null)}
+            onConfirm={async () => {
+              setUpdateExistingId(duplicate.id);
+              setDuplicate(null);
+              // Re-submete imediatamente como atualização
+              setTimeout(() => submit(), 0);
+            }}
+          />
+        )}
+
         {/* Selo LGPD */}
         <div className="mt-4 flex items-center justify-center gap-1.5 text-[11px]" style={{ color: "hsl(220 10% 50%)" }}>
           <Shield className="w-3 h-3" style={{ color: "hsl(230 80% 56%)" }} />
