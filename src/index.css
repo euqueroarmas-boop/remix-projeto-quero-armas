@@ -355,3 +355,19 @@
 .scrollbar-none::-webkit-scrollbar {
   display: none;
 }
+
+/* Scrollbar discreta para o modal de duplicidade do Quero Armas */
+.qa-diff-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(220 15% 80%) transparent;
+}
+.qa-diff-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.qa-diff-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.qa-diff-scroll::-webkit-scrollbar-thumb {
+  background-color: hsl(220 15% 82%);
+  border-radius: 999px;
+}
