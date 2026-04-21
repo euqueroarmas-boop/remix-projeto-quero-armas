@@ -1018,45 +1018,18 @@ function Step4Done({ firstName }: { firstName: string }) {
 
 /* ─────────────────────── Bloco de boas-vindas ─────────────────────── */
 function WelcomeBlock() {
-  // Acento tático sutil: azul institucional PF + verde oliva Exército,
-  // agora em formato compacto que apoia (não compete com) o campo principal.
   return (
-    <div
-      className="rounded-xl px-3.5 py-3 relative overflow-hidden"
-      style={{
-        background:
-          "linear-gradient(135deg, hsl(215 42% 13%) 0%, hsl(215 40% 17%) 60%, hsl(86 22% 20%) 100%)",
-        boxShadow:
-          "0 4px 14px hsl(215 50% 12% / 0.16), inset 0 1px 0 hsl(50 60% 88% / 0.06)",
-      }}
-    >
-      {/* brilho sutil no topo */}
-      <div
-        className="absolute inset-x-0 top-0 h-px"
-        style={{ background: "linear-gradient(90deg, transparent, hsl(50 60% 88% / 0.25), transparent)" }}
-      />
-      <div className="flex items-start gap-2.5">
-        <div
-          className="shrink-0 w-7 h-7 rounded-md flex items-center justify-center mt-0.5"
-          style={{
-            background: "hsl(50 60% 88% / 0.10)",
-            border: "1px solid hsl(50 60% 88% / 0.22)",
-          }}
-        >
-          <Shield className="w-3.5 h-3.5" style={{ color: "hsl(50 65% 88%)" }} strokeWidth={2} />
-        </div>
-        <div className="min-w-0 flex-1">
-          <h2
-            className="text-[13.5px] font-semibold leading-snug tracking-tight"
-            style={{ color: "hsl(50 70% 94%)" }}
-          >
-            Burocracia descomplicada, do início ao fim.
-          </h2>
-          <p className="text-[11px] mt-1 leading-relaxed" style={{ color: "hsl(215 22% 80%)" }}>
-            Em poucos passos, deixamos seu processo claro, organizado e pronto para análise.
-          </p>
-        </div>
-      </div>
+    <div className="px-1">
+      <p
+        className="text-[13px] leading-relaxed"
+        style={{ color: "hsl(220 12% 38%)" }}
+      >
+        Cuidamos de toda a burocracia para você.{" "}
+        <span style={{ color: "hsl(220 18% 22%)", fontWeight: 600 }}>
+          Comece nos contando o que precisa
+        </span>{" "}
+        — seu processo será conduzido com clareza, sigilo e precisão técnica.
+      </p>
     </div>
   );
 }
