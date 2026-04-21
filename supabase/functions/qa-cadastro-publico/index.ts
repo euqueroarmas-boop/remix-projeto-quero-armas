@@ -99,6 +99,14 @@ const CadastroSchema = z.object({
   selfie_path: z.string().max(500).optional().nullable(),
   documento_identidade_path: z.string().max(500).optional().nullable(),
   comprovante_endereco_path: z.string().max(500).optional().nullable(),
+
+  // ── Qualificação comercial (Etapa 0) ──
+  objetivo_principal: z.string().max(60).optional().nullable(),
+  categoria_servico: z.string().max(60).optional().nullable(),
+  servico_principal: z.string().max(80).optional().nullable(),
+  subtipo_servico: z.string().max(120).optional().nullable(),
+  descricao_servico_livre: z.string().max(2000).optional().nullable(),
+  origem_cadastro: z.string().max(50).optional().nullable(),
 });
 
 Deno.serve(async (req) => {

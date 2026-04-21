@@ -36,6 +36,7 @@ import { usePrivateStorageUrl } from "@/hooks/usePrivateStorageUrl";
 import { useQAStatusServico } from "@/hooks/useQAStatusServico";
 import { isDispensado, getBaseLegalDispensa, CATEGORIA_MAP, type CategoriaTitular } from "@/components/quero-armas/clientes/categoriaTitular";
 import { invalidateQADashboardSnapshot } from "@/components/quero-armas/dashboard/dashboardSnapshot";
+import { objetivoLabel, categoriaLabel } from "./qaServiceCatalog";
 
 /* ── Lightbox 5:4 espelhado (compartilhado por todas as miniaturas) ── */
 function PhotoLightbox({ url, alt, onClose }: { url: string; alt: string; onClose: () => void }) {
@@ -235,6 +236,14 @@ interface CadastroPublico {
   aut_endereco?: string | null;
   comprovante_endereco_proprio?: string | null;
   servico_interesse?: string | null;
+  // Qualificação comercial (cadastro público v2)
+  objetivo_principal?: string | null;
+  categoria_servico?: string | null;
+  servico_principal?: string | null;
+  subtipo_servico?: string | null;
+  descricao_servico_livre?: string | null;
+  servico_fechado_final?: string | null;
+  origem_cadastro?: string | null;
   consentimento_dados_verdadeiros?: boolean | null;
   consentimento_tratamento_dados?: boolean | null;
   consentimento_timestamp?: string | null;
@@ -741,7 +750,7 @@ export default function QAClientesPage() {
 
   const loadCadastrosPublicos = async () => {
     const { data } = await supabase.from("qa_cadastro_publico" as any)
-      .select("id, nome_completo, cpf, telefone_principal, email, end1_cidade, end1_estado, servico_interesse, vinculo_tipo, status, pago, created_at")
+      .select("id, nome_completo, cpf, telefone_principal, email, end1_cidade, end1_estado, servico_interesse, vinculo_tipo, status, pago, created_at, objetivo_principal, categoria_servico, servico_principal, subtipo_servico, servico_fechado_final, origem_cadastro")
       .order("created_at", { ascending: false });
     setCadastrosPublicos((data as unknown as CadastroPublico[]) ?? []);
   };
@@ -929,6 +938,12 @@ export default function QAClientesPage() {
       observacoes: c.observacoes || "",
       vinculo_tipo: c.vinculo_tipo || "",
       servico_interesse: c.servico_interesse || "",
+      objetivo_principal: c.objetivo_principal || "",
+      categoria_servico: c.categoria_servico || "",
+      servico_principal: c.servico_principal || "",
+      subtipo_servico: c.subtipo_servico || "",
+      descricao_servico_livre: c.descricao_servico_livre || "",
+      servico_fechado_final: c.servico_fechado_final || "",
     });
     setEditingCadastroPublico(true);
   };
@@ -1861,6 +1876,36 @@ export default function QAClientesPage() {
               <DetailField label="Consentimento LGPD" value={c.consentimento_tratamento_dados ? "Sim" : "Não"} />
               <DetailField label="Aceite em" value={formatDateTime(c.consentimento_timestamp ?? c.created_at)} />
             </DetailGrid>
+          </DetailCard>
+
+          <DetailCard title="Qualificação comercial (cadastro público)">
+            <DetailGrid>
+              <DetailField label="Objetivo principal" value={objetivoLabel(c.objetivo_principal) || "—"} />
+              <DetailField label="Categoria" value={categoriaLabel(c.categoria_servico) || "—"} />
+              <DetailField label="Serviço escolhido" value={c.servico_principal || "—"} />
+              <DetailField label="Subtipo" value={c.subtipo_servico || "—"} />
+              <DetailField label="Origem" value={c.origem_cadastro || "—"} />
+              {isEditing ? (
+                <div className="flex items-baseline gap-2">
+                  <span className="text-xs shrink-0" style={{ color: "hsl(220 10% 50%)", minWidth: "140px" }}>Serviço fechado:</span>
+                  <input
+                    value={ef.servico_fechado_final || ""}
+                    onChange={e => setEf("servico_fechado_final", e.target.value)}
+                    placeholder="Defina após negociação"
+                    className="flex-1 text-sm font-medium border-b border-slate-300 bg-transparent outline-none focus:border-blue-500 py-0.5 uppercase"
+                    style={{ color: "hsl(220 20% 18%)" }}
+                  />
+                </div>
+              ) : (
+                <DetailField label="Serviço fechado (interno)" value={c.servico_fechado_final || "—"} />
+              )}
+            </DetailGrid>
+            {c.descricao_servico_livre && (
+              <div className="mt-3 text-xs leading-relaxed rounded-lg p-3"
+                style={{ background: "hsl(220 20% 97%)", color: "hsl(220 20% 25%)" }}>
+                <strong>Descrição livre do cliente:</strong> {c.descricao_servico_livre}
+              </div>
+            )}
           </DetailCard>
 
           {(c.selfie_path || c.documento_identidade_path || c.comprovante_endereco_path) && (
