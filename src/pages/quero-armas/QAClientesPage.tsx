@@ -210,6 +210,9 @@ function ClientPhoto({ path, name, className }: { path: string | null | undefine
 }
 
 const formatCpf = (v: string | null | undefined): string => {
+
+/* placeholder removed (see CadastroDocumentosCard inserted below) */
+
   if (!v) return "—";
   const d = v.replace(/\D/g, "");
   if (d.length !== 11) return v;
