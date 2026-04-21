@@ -39,6 +39,8 @@ interface DocumentScannerProps {
   title?: string;
   /** Quantidade mínima de páginas para concluir (default 1) */
   minPages?: number;
+  /** Se fornecido, abre o scanner já processando este arquivo (JPG/PNG/PDF) — sem precisar da câmera */
+  initialFile?: File | null;
 }
 
 declare global {
@@ -50,6 +52,39 @@ declare global {
 
 const OPENCV_URL = "https://docs.opencv.org/4.10.0/opencv.js";
 const JSCANIFY_URL = "https://cdn.jsdelivr.net/npm/jscanify@1.4.2/src/jscanify.min.js";
+const PDFJS_URL = "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.7.76/build/pdf.min.mjs";
+const PDFJS_WORKER_URL = "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.7.76/build/pdf.worker.min.mjs";
+
+let pdfjsLoading: Promise<any> | null = null;
+function loadPdfJs(): Promise<any> {
+  if (typeof window === "undefined") return Promise.reject(new Error("SSR"));
+  if ((window as any).__pdfjsLib) return Promise.resolve((window as any).__pdfjsLib);
+  if (pdfjsLoading) return pdfjsLoading;
+  pdfjsLoading = (async () => {
+    const lib: any = await import(/* @vite-ignore */ PDFJS_URL);
+    lib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER_URL;
+    (window as any).__pdfjsLib = lib;
+    return lib;
+  })();
+  return pdfjsLoading;
+}
+
+async function pdfFileToImages(file: File): Promise<HTMLCanvasElement[]> {
+  const pdfjs = await loadPdfJs();
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjs.getDocument({ data: buf }).promise;
+  const out: HTMLCanvasElement[] = [];
+  const maxPages = Math.min(pdf.numPages, 10);
+  for (let i = 1; i <= maxPages; i++) {
+    const page = await pdf.getPage(i);
+    const viewport = page.getViewport({ scale: 2 });
+    const c = document.createElement("canvas");
+    c.width = viewport.width; c.height = viewport.height;
+    await page.render({ canvasContext: c.getContext("2d")!, viewport }).promise;
+    out.push(c);
+  }
+  return out;
+}
 
 let opencvLoading: Promise<void> | null = null;
 function loadOpenCv(): Promise<void> {
@@ -221,7 +256,7 @@ async function buildPdf(pages: ScannedPage[]): Promise<{ blob: Blob; previewData
 }
 
 export default function DocumentScanner({
-  open, onClose, onComplete, title = "ESCANEAR DOCUMENTO", minPages = 1,
+  open, onClose, onComplete, title = "ESCANEAR DOCUMENTO", minPages = 1, initialFile = null,
 }: DocumentScannerProps) {
   const [libsReady, setLibsReady] = useState(false);
   const [libsError, setLibsError] = useState<string | null>(null);
@@ -385,23 +420,48 @@ export default function DocumentScanner({
   const handlePickFile = async (file: File) => {
     setBusy(true);
     try {
-      const url = URL.createObjectURL(file);
-      const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-        const i = new Image();
-        i.onload = () => resolve(i);
-        i.onerror = reject;
-        i.src = url;
-      });
-      const page = await processSourceToPage(img);
-      URL.revokeObjectURL(url);
-      setPages((p) => [...p, page]);
-      toast.success(`Página ${pages.length + 1} adicionada`);
+      const isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+      const sources: Array<HTMLImageElement | HTMLCanvasElement> = [];
+      if (isPdf) {
+        const canvases = await pdfFileToImages(file);
+        sources.push(...canvases);
+      } else {
+        const url = URL.createObjectURL(file);
+        const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+          const i = new Image();
+          i.onload = () => resolve(i);
+          i.onerror = reject;
+          i.src = url;
+        });
+        sources.push(img);
+        URL.revokeObjectURL(url);
+      }
+      const newPages: ScannedPage[] = [];
+      for (const src of sources) {
+        try {
+          const page = await processSourceToPage(src);
+          newPages.push(page);
+        } catch (perPageErr) {
+          console.warn("[scanner-pdf-page]", perPageErr);
+        }
+      }
+      if (newPages.length === 0) throw new Error("Não foi possível processar o arquivo. Tente outro.");
+      setPages((p) => [...p, ...newPages]);
+      setMode("review");
+      toast.success(`${newPages.length} página(s) digitalizada(s)`);
     } catch (e: any) {
-      toast.error(e?.message || "Falha ao processar imagem");
+      toast.error(e?.message || "Falha ao processar arquivo");
     } finally {
       setBusy(false);
     }
   };
+
+  // Quando recebe um arquivo inicial (importado), processa direto sem precisar de câmera
+  useEffect(() => {
+    if (!open || !initialFile || !libsReady) return;
+    handlePickFile(initialFile);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, libsReady, initialFile]);
 
   const reapplyFilter = (idx: number, filter: Filter) => {
     setPages((prev) => prev.map((p, i) => {
@@ -472,8 +532,14 @@ export default function DocumentScanner({
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent className="max-w-4xl p-0 overflow-hidden bg-slate-950 border-slate-800 text-slate-100">
-        <DialogHeader className="px-4 py-3 border-b border-slate-800 bg-slate-900">
+      <DialogContent
+        className="max-w-4xl p-0 overflow-hidden bg-slate-950 border-slate-800 text-slate-100 sm:rounded-xl
+                   w-screen h-[100dvh] sm:w-auto sm:h-auto sm:max-h-[92vh] flex flex-col"
+      >
+        <DialogHeader
+          className="px-4 py-3 border-b border-slate-800 bg-slate-900 shrink-0"
+          style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.75rem)" }}
+        >
           <DialogTitle className="text-sm font-semibold tracking-wider text-slate-100 flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-emerald-400" />
             {title}
@@ -499,17 +565,17 @@ export default function DocumentScanner({
         )}
 
         {!libsError && libsReady && mode === "capture" && (
-          <div className="relative bg-black">
-            <div className="relative w-full aspect-[3/4] sm:aspect-video max-h-[70vh] overflow-hidden flex items-center justify-center">
+          <div className="relative bg-black flex-1 flex flex-col min-h-0">
+            <div className="relative w-full flex-1 min-h-[40vh] overflow-hidden flex items-center justify-center bg-black">
               <video
                 ref={videoRef}
                 playsInline
                 muted
-                className="absolute inset-0 w-full h-full object-contain"
+                className="absolute inset-0 w-full h-full object-cover"
               />
               <canvas
                 ref={overlayRef}
-                className="absolute inset-0 w-full h-full object-contain pointer-events-none"
+                className="absolute inset-0 w-full h-full object-cover pointer-events-none"
               />
               {!stream && (
                 <div className="relative z-10 text-center text-slate-300 text-xs px-6">
@@ -538,7 +604,10 @@ export default function DocumentScanner({
             </div>
 
             {/* Controles */}
-            <div className="flex items-center justify-between gap-2 p-3 bg-slate-900 border-t border-slate-800">
+            <div
+              className="flex items-center justify-between gap-2 p-3 bg-slate-900 border-t border-slate-800 shrink-0"
+              style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 0.75rem)" }}
+            >
               <Button
                 type="button"
                 variant="outline"
