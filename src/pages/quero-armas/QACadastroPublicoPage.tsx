@@ -124,6 +124,8 @@ export default function QACadastroPublicoPage() {
 
   // submit
   const [savedId, setSavedId] = useState<string | null>(null);
+  const [duplicate, setDuplicate] = useState<{ id: string; status: string; created_at: string } | null>(null);
+  const [updateExistingId, setUpdateExistingId] = useState<string | null>(null);
 
   /* ─── upload handler ─── */
   const handlePick = async (e: React.ChangeEvent<HTMLInputElement>, key: string) => {
