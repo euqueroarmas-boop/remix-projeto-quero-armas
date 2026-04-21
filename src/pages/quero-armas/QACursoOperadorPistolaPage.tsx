@@ -59,14 +59,13 @@ const GUNMETAL_2 = BLACK;
 function SectionTag({ children }: { children: React.ReactNode }) {
   return (
     <span
-      className="inline-flex items-center gap-2 px-3 py-1 rounded-sm font-mono text-[11px] tracking-[0.22em] uppercase font-bold"
+      className="inline-flex items-center gap-2 px-2.5 py-1 font-mono text-[10.5px] tracking-[0.28em] uppercase"
       style={{
-        background: "rgba(0,0,0,0.45)",
-        border: `1px solid ${OD_LINE}`,
+        background: "transparent",
+        borderLeft: `2px solid ${SAND}`,
         color: SAND,
       }}
     >
-      <span className="w-1.5 h-1.5" style={{ background: SAND }} />
       {children}
     </span>
   );
@@ -77,24 +76,21 @@ function FeatureCard({
 }: { icon: any; title: string; children: React.ReactNode }) {
   return (
     <div
-      className="p-5 md:p-6 rounded-lg h-full transition-all hover:-translate-y-1"
+      className="p-5 md:p-6 h-full transition-colors group relative"
       style={{
-        background: "linear-gradient(180deg, hsl(220 18% 11%) 0%, hsl(220 22% 8%) 100%)",
-        border: "1px solid hsl(220 12% 18%)",
-        boxShadow: "0 8px 24px rgba(0,0,0,0.3)",
+        background: PANEL,
+        border: `1px solid ${HAIRLINE}`,
       }}
     >
-      <div
-        className="w-11 h-11 rounded-md flex items-center justify-center mb-4"
-        style={{
-          background: `linear-gradient(135deg, ${TAC_BLUE}, ${TAC_OLIVE})`,
-          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.1)",
-        }}
-      >
-        <Icon className="w-5 h-5 text-white" />
-      </div>
-      <h3 className="font-bold text-white mb-2 text-[15px] tracking-wide">{title}</h3>
-      <div className="text-[13.5px] leading-relaxed" style={{ color: "hsl(220 10% 70%)" }}>
+      {/* HUD corner brackets */}
+      <span aria-hidden className="absolute top-0 left-0 w-2.5 h-2.5"
+        style={{ borderTop: `1px solid ${SAND}`, borderLeft: `1px solid ${SAND}`, opacity: 0.55 }} />
+      <span aria-hidden className="absolute bottom-0 right-0 w-2.5 h-2.5"
+        style={{ borderBottom: `1px solid ${SAND}`, borderRight: `1px solid ${SAND}`, opacity: 0.55 }} />
+
+      <Icon className="w-5 h-5 mb-3" style={{ color: SAND }} strokeWidth={1.5} />
+      <h3 className="font-bold text-white mb-2 text-[14px] tracking-[0.04em] uppercase">{title}</h3>
+      <div className="text-[13px] leading-relaxed" style={{ color: STEEL_DIM }}>
         {children}
       </div>
     </div>
