@@ -376,7 +376,16 @@ export default function QACursoOperadorPistolaPage() {
         </section>
 
         {/* ============ DOR REAL ============ */}
-        <section className="py-20 md:py-28 relative overflow-hidden" style={{ background: "hsl(220 25% 5%)" }}>
+        <section className="py-20 md:py-28 relative overflow-hidden" style={{ background: GUNMETAL_2 }}>
+          {/* tarja tática */}
+          <div
+            aria-hidden
+            className="absolute top-0 left-0 right-0 h-[3px]"
+            style={{
+              background: `repeating-linear-gradient(90deg, ${BLOOD} 0 20px, transparent 20px 40px, ${AMBER} 40px 60px, transparent 60px 80px)`,
+              opacity: 0.55,
+            }}
+          />
           <div className="container max-w-6xl mx-auto px-4">
             <div className="grid md:grid-cols-2 gap-12 items-center">
               <div className="relative">
@@ -386,31 +395,50 @@ export default function QACursoOperadorPistolaPage() {
                   loading="lazy"
                   width={1280}
                   height={960}
-                  className="rounded-lg w-full"
-                  style={{ filter: "contrast(1.1)" }}
+                  className="rounded-sm w-full"
+                  style={{ filter: "grayscale(0.5) contrast(1.15) brightness(0.85)" }}
                 />
                 <div
-                  className="absolute inset-0 rounded-lg"
-                  style={{ boxShadow: "inset 0 0 80px rgba(0,0,0,0.6)" }}
+                  className="absolute inset-0 rounded-sm"
+                  style={{
+                    boxShadow: `inset 0 0 120px rgba(0,0,0,0.75)`,
+                    border: `1px solid ${COYOTE_DIM}`,
+                  }}
                 />
+                {/* Tag militar na imagem */}
+                <div
+                  className="absolute bottom-3 left-3 px-2.5 py-1 font-mono text-[10px] tracking-[0.2em] uppercase font-bold"
+                  style={{ background: "rgba(0,0,0,0.75)", border: `1px solid ${AMBER}`, color: AMBER }}
+                >
+                  ● SEC · ATIVO
+                </div>
               </div>
               <div>
-                <SectionTag>POR QUE ISSO IMPORTA</SectionTag>
-                <h2 className="text-3xl md:text-4xl font-bold leading-tight mt-5 mb-6">
-                  Você confiaria a vida da sua família
-                  <span style={{ color: "hsl(14 88% 60%)" }}> à sorte</span>?
+                <SectionTag>RECON · BRIEFING TÁTICO</SectionTag>
+                <h2 className="text-3xl md:text-[2.6rem] font-black leading-[1.1] mt-5 mb-6 uppercase tracking-tight">
+                  Sua família não tem
+                  <span style={{ color: BLOOD, textShadow: "0 0 20px hsla(2,72%,42%,0.4)" }}> second best</span>.
+                  <br />
+                  Ela tem <span style={{ color: AMBER }}>você</span>.
                 </h2>
-                <div className="space-y-4 text-[15px] leading-relaxed" style={{ color: "hsl(220 10% 75%)" }}>
+                <div className="space-y-4 text-[15px] leading-[1.7]" style={{ color: STEEL }}>
                   <p>
-                    A cada hora, dezenas de residências são invadidas no Brasil. Em <strong className="text-white">90% dos casos</strong>,
-                    o morador não tinha condição técnica ou legal de reagir.
+                    A cada <strong className="text-white">8 minutos</strong> uma residência é invadida neste país.
+                    Em <strong style={{ color: BLOOD }}>mais de 90% dos casos</strong>, o morador paralisa —
+                    porque nunca treinou saque, empunhadura, nem sabe se pode reagir sem virar réu.
                   </p>
                   <p>
-                    Você sabe atirar? Sabe a diferença entre uma munição que perfura paredes e uma que protege a sua família?
-                    Sabe quando pode reagir <strong className="text-white">sem ir preso</strong>?
+                    Comprar pistola não te torna operador.
+                    <br />
+                    Ler artigo de blog não te prepara.
+                    <br />
+                    <strong className="text-white">Só treino com munição real, sob pressão, com instrutor credenciado — torna.</strong>
                   </p>
-                  <p style={{ color: "hsl(45 90% 75%)", fontWeight: 600 }}>
-                    Comprar uma arma não te torna preparado. <span className="text-white">Treinar te torna.</span>
+                  <p
+                    className="font-mono uppercase tracking-[0.15em] pt-3 mt-3"
+                    style={{ color: AMBER, borderTop: `1px dashed ${COYOTE_DIM}` }}
+                  >
+                    » Adestrar o homem, antes de municiar a arma.
                   </p>
                 </div>
               </div>
@@ -419,59 +447,71 @@ export default function QACursoOperadorPistolaPage() {
         </section>
 
         {/* ============ O QUE VOCÊ APRENDE ============ */}
-        <section className="py-20 md:py-28" style={{ background: "hsl(220 25% 7%)" }}>
+        <section className="py-20 md:py-28" style={{ background: GUNMETAL }}>
           <div className="container max-w-6xl mx-auto px-4">
             <div className="text-center mb-14 max-w-2xl mx-auto">
-              <SectionTag>CONTEÚDO PROGRAMÁTICO</SectionTag>
-              <h2 className="text-3xl md:text-4xl font-bold mt-5 mb-4">
-                Do primeiro disparo ao <span style={{ color: "hsl(45 90% 60%)" }}>controle absoluto</span>
+              <SectionTag>FIELD MANUAL · GRADE DE INSTRUÇÃO</SectionTag>
+              <h2 className="text-3xl md:text-[2.4rem] font-black mt-5 mb-4 uppercase tracking-tight">
+                Do primeiro saque ao <span style={{ color: AMBER }}>domínio operacional</span>
               </h2>
-              <p className="text-[15px]" style={{ color: "hsl(220 10% 70%)" }}>
-                Conteúdo construído por instrutor credenciado CTT-CBC (XXVIII turma), aplicado de forma prática, sem enrolação.
+              <p className="text-[14.5px] font-mono" style={{ color: STEEL }}>
+                Currículo oficial baseado no material do Serviço de Armamento e Tiro da Academia Nacional de Polícia,
+                conduzido por IAT credenciado · CTT-CBC XXVIII.
               </p>
             </div>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <FeatureCard icon={Shield} title="Regras essenciais de segurança">
-                As 4 regras universais. Transporte, armazenamento e manuseio que evitam tragédias dentro de casa.
+              <FeatureCard icon={Shield} title="Normas de segurança (SOP)">
+                Dedo fora do gatilho. Arma sempre carregada. Cano em direção segura. As regras que separam operador de estatística.
               </FeatureCard>
-              <FeatureCard icon={Wrench} title="Funcionamento completo">
-                Carregamento, descarregamento e resolução de panes (chaminé, falha de ejeção, dupla alimentação).
+              <FeatureCard icon={Wrench} title="MCA · Manuseio e Carregamento">
+                Alma raiada, antecarga x retrocarga, sistemas manual, semi-automático e automático. Anatomia completa da pistola.
               </FeatureCard>
-              <FeatureCard icon={Crosshair} title="Técnicas avançadas de tiro">
-                Empunhadura firme, controle de gatilho ("esmagamento suave"), alinhamento de mira e postura tática real.
+              <FeatureCard icon={Crosshair} title="Fundamentos de tiro">
+                Empunhadura Weaver · Isósceles, controle de gatilho ("esmagamento suave"), alinhamento de aparelhos de pontaria e respiração tática.
               </FeatureCard>
-              <FeatureCard icon={Target} title="Treinamento no estande">
-                Disparo real com supervisão profissional. Aprenda a controlar o recuo e executar tiros precisos sob pressão.
+              <FeatureCard icon={Target} title="Linha de tiro · munição real">
+                120 disparos supervisionados. Controle de recuo, tiros múltiplos, correção de desvio e tiro sob estresse.
               </FeatureCard>
-              <FeatureCard icon={BookOpen} title="Tipos de munição">
-                Penetrantes vs. expansivas. Saber qual usar dentro de casa pode salvar — ou destruir — uma vida inocente.
+              <FeatureCard icon={BookOpen} title="Balística & munição">
+                Ponta oca x FMJ x expansiva. Calibre errado dentro de casa mata filho no quarto ao lado. Aqui você aprende o certo.
               </FeatureCard>
-              <FeatureCard icon={Zap} title="Como escolher sua pistola">
-                Hammer x Striker, mecanismos de segurança, gatilhos. Pare de comprar arma errada por influência de YouTube.
+              <FeatureCard icon={Zap} title="Hammer × Striker · Ação SA/DA">
+                Ação simples, ação dupla, sistemas de acionamento. Escolha pistola pela engenharia — não por influencer de YouTube.
+              </FeatureCard>
+              <FeatureCard icon={BookOpen} title="Legislação aplicada">
+                Lei nº 10.826/2003 (Estatuto do Desarmamento), Decreto 11.615/2023 e Portaria COLOG 61/2023 — o que pode, o que não pode, o que te prende.
+              </FeatureCard>
+              <FeatureCard icon={Shield} title="Resolução de pane">
+                Falha de alimentação, falha de extração, double feed, chaminé. O que fazer quando a arma trava no momento exato em que você mais precisa dela.
+              </FeatureCard>
+              <FeatureCard icon={AlertTriangle} title="Legítima defesa real">
+                Quando reagir sem ir preso. Proporcionalidade, retirada tática, comunicação com a polícia no pós-disparo.
               </FeatureCard>
             </div>
           </div>
         </section>
 
         {/* ============ MANUTENÇÃO + IMG ============ */}
-        <section className="py-20 md:py-28 relative" style={{ background: "hsl(220 25% 5%)" }}>
+        <section className="py-20 md:py-28 relative" style={{ background: GUNMETAL_2 }}>
           <div className="container max-w-6xl mx-auto px-4 grid md:grid-cols-2 gap-10 md:gap-16 items-center">
             <div className="order-2 md:order-1">
-              <SectionTag>MANUTENÇÃO E HISTÓRIA</SectionTag>
-              <h2 className="text-3xl md:text-4xl font-bold mt-5 mb-6 leading-tight">
-                Sua arma não é um enfeite. <br />
-                Aprenda a <span style={{ color: "hsl(45 90% 60%)" }}>mantê-la operacional</span>.
+              <SectionTag>1º ESCALÃO · MANUTENÇÃO DE CAMPO</SectionTag>
+              <h2 className="text-3xl md:text-[2.3rem] font-black mt-5 mb-6 leading-[1.1] uppercase tracking-tight">
+                Arma suja <span style={{ color: BLOOD }}>falha</span>. <br />
+                Arma mal lubrificada <span style={{ color: BLOOD }}>trava</span>. <br />
+                <span style={{ color: AMBER }}>Operador treinado previne.</span>
               </h2>
-              <ul className="space-y-3 text-[14.5px]" style={{ color: "hsl(220 10% 75%)" }}>
+              <ul className="space-y-3 text-[14.5px]" style={{ color: STEEL }}>
                 {[
-                  "Desmontagem e limpeza de 1º escalão (passo a passo)",
-                  "Lubrificação correta para evitar travamentos críticos",
-                  "História das pistolas: Hammers x Strikers e quando preferir cada uma",
-                  "Rotina de inspeção que prolonga a vida útil da arma",
+                  "Desmontagem e limpeza de 1º escalão — passo a passo, em campo",
+                  "Lubrificação correta: pontos críticos que evitam travamento em combate",
+                  "História das pistolas modernas: Hammer × Striker e quando preferir cada uma",
+                  "Inspeção de rotina (pré e pós-treino) que prolonga a vida útil da arma",
+                  "Identificação de desgaste: molas, pino percussor, extrator",
                 ].map((t) => (
                   <li key={t} className="flex gap-3 items-start">
-                    <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: "hsl(86 50% 55%)" }} />
+                    <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: AMBER }} />
                     <span>{t}</span>
                   </li>
                 ))}
@@ -484,8 +524,15 @@ export default function QACursoOperadorPistolaPage() {
                 loading="lazy"
                 width={1280}
                 height={960}
-                className="rounded-lg w-full"
+                className="rounded-sm w-full"
+                style={{ filter: "grayscale(0.4) contrast(1.1) brightness(0.9)", border: `1px solid ${COYOTE_DIM}` }}
               />
+              <div
+                className="absolute top-3 right-3 px-2.5 py-1 font-mono text-[10px] tracking-[0.2em] uppercase font-bold"
+                style={{ background: "rgba(0,0,0,0.75)", border: `1px solid ${AMBER}`, color: AMBER }}
+              >
+                FIELD STRIP · 01
+              </div>
             </div>
           </div>
         </section>
