@@ -658,13 +658,13 @@ export default function DocumentScanner({
         )}
 
         {!libsError && libsReady && mode === "review" && (
-          <div className="bg-slate-950">
-            <div className="flex items-center justify-center bg-black p-4 min-h-[40vh] max-h-[60vh] overflow-hidden">
+          <div className="bg-slate-950 flex-1 flex flex-col min-h-0 overflow-hidden">
+            <div className="flex-1 min-h-0 flex items-center justify-center bg-black p-4 overflow-hidden">
               {pages[reviewIdx] ? (
                 <img
                   src={pages[reviewIdx].dataUrl}
                   alt={`Página ${reviewIdx + 1}`}
-                  className="max-h-[58vh] max-w-full object-contain shadow-2xl"
+                  className="max-h-full max-w-full object-contain shadow-2xl"
                 />
               ) : (
                 <p className="text-slate-400 text-xs">Sem páginas</p>
@@ -673,7 +673,7 @@ export default function DocumentScanner({
 
             {/* Filtros por página */}
             {pages[reviewIdx] && (
-              <div className="flex items-center justify-center gap-1 py-2 bg-slate-900 border-y border-slate-800">
+              <div className="flex items-center justify-center gap-1 py-2 bg-slate-900 border-y border-slate-800 shrink-0">
                 {filterButtons.map((f) => (
                   <button
                     key={f.k}
@@ -692,7 +692,7 @@ export default function DocumentScanner({
             )}
 
             {/* Tira de miniaturas */}
-            <div className="flex gap-2 overflow-x-auto p-3 bg-slate-900 border-b border-slate-800">
+            <div className="flex gap-2 overflow-x-auto p-3 bg-slate-900 border-b border-slate-800 shrink-0">
               {pages.map((p, i) => (
                 <button
                   key={p.id}
@@ -708,7 +708,10 @@ export default function DocumentScanner({
               ))}
             </div>
 
-            <DialogFooter className="flex flex-row flex-wrap gap-2 p-3 bg-slate-900 border-t border-slate-800 sm:justify-between">
+            <DialogFooter
+              className="flex flex-row flex-wrap gap-2 p-3 bg-slate-900 border-t border-slate-800 sm:justify-between shrink-0"
+              style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 0.75rem)" }}
+            >
               <div className="flex gap-1">
                 <Button
                   type="button" size="sm" variant="outline"
