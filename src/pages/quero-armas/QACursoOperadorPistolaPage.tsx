@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Helmet } from "react-helmet-async";
 import { motion } from "framer-motion";
 import {
   Shield, Target, Award, Users, Clock, MapPin, CheckCircle2,
