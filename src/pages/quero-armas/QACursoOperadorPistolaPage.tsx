@@ -317,24 +317,23 @@ export default function QACursoOperadorPistolaPage() {
               <SectionTag>OP · CURSO OPERADOR DE PISTOLA I · IAT / CTT-CBC</SectionTag>
 
               <h1 className="text-3xl md:text-5xl lg:text-[4rem] font-black leading-[1.02] mt-6 mb-6 tracking-tight uppercase">
-                Na hora do tiro,
+                Quando alguém invade
                 <br />
-                <span style={{ color: AMBER, textShadow: "0 0 24px hsla(40,85%,55%,0.35)" }}>
-                  não existe segunda chance.
-                </span>
+                <span style={{ color: SAND }}>a sua casa,</span>
                 <br />
-                <span className="text-white/90">Existe treino.</span>
+                <span className="text-white/90">só existe você.</span>
               </h1>
 
-              <p className="text-lg md:text-xl leading-relaxed mb-4 font-medium" style={{ color: "hsl(210 8% 85%)" }}>
-                O criminoso entra armado, frio, treinado na rua. A polícia chega em minutos.
+              <p className="text-lg md:text-xl leading-relaxed mb-4 font-medium" style={{ color: "hsl(210 8% 86%)" }}>
+                Sua mulher dorme no quarto. Seu filho no outro. Você ouve o portão sendo arrombado.
                 <br className="hidden md:block" />
-                Você tem <strong style={{ color: BLOOD }}>3 segundos</strong> para decidir quem sai vivo daquela sala.
+                A polícia leva minutos. Você tem <strong style={{ color: SAND }}>segundos</strong> para proteger quem ama.
               </p>
               <p className="text-base md:text-[17px] leading-relaxed mb-8" style={{ color: STEEL }}>
-                O <strong className="text-white">Curso Operador de Pistola I</strong> da <strong className="text-white">Quero Armas</strong> forma civis para o mundo real:
-                empunhadura, saque, controle de gatilho, resolução de pane, <strong style={{ color: AMBER }}>MCA (Manuseio · Carregamento · Acervo)</strong> e a base legal
-                da <strong className="text-white">Lei nº 10.826/2003</strong>. Aqui você sai atirador — não estatística.
+                O <strong className="text-white">Curso Operador de Pistola I</strong> da <strong className="text-white">Quero Armas</strong> forma cidadãos comuns —
+                pais, mães, profissionais — para defender a família, a casa e o patrimônio com técnica, calma e
+                respaldo legal pela <strong className="text-white">Lei nº 10.826/2003</strong>. Sem fanfarra. Sem cosplay.
+                Treinamento real, com instrutor credenciado.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-3 mb-10">
@@ -342,20 +341,20 @@ export default function QACursoOperadorPistolaPage() {
                   onClick={() => openWpp("vaga")}
                   className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-sm font-black text-white tracking-[0.15em] uppercase text-[13.5px] transition-all hover:brightness-110"
                   style={{
-                    background: `linear-gradient(135deg, ${BLOOD}, hsl(2 72% 28%))`,
-                    boxShadow: "0 12px 32px hsla(2, 72%, 42%, 0.45), inset 0 1px 0 rgba(255,255,255,0.18), inset 0 -1px 0 rgba(0,0,0,0.35)",
-                    border: "1px solid hsl(2 60% 25%)",
+                    background: `linear-gradient(135deg, ${OD_GREEN}, ${OD_DEEP})`,
+                    boxShadow: "0 10px 28px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.08)",
+                    border: `1px solid ${OD_LINE}`,
                   }}
                 >
-                  <Flame className="w-4 h-4" />
-                  Alistar-me agora
+                  <Shield className="w-4 h-4" />
+                  Quero proteger minha família
                 </button>
                 <button
                   onClick={() => openWpp("duvida")}
                   className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-sm font-bold text-white tracking-[0.15em] uppercase text-[12.5px] transition-all hover:bg-white/10"
                   style={{
-                    background: "rgba(0,0,0,0.4)",
-                    border: `1px solid ${COYOTE_DIM}`,
+                    background: "rgba(0,0,0,0.35)",
+                    border: `1px solid ${OD_LINE}`,
                   }}
                 >
                   <MessageCircle className="w-4 h-4" />
