@@ -348,23 +348,54 @@ export default function QACadastroPublicoPage() {
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "linear-gradient(135deg, hsl(220 25% 97%) 0%, hsl(225 30% 94%) 100%)" }}>
       <div className="max-w-md w-full mx-auto px-4 py-6 flex-1">
-        <div className="bg-white rounded-2xl shadow-[0_8px_32px_rgba(15,23,42,0.06)] border border-slate-200/60 overflow-hidden">
-          {/* Cabeçalho + stepper */}
-          <div className="px-6 pt-6 pb-4">
-            <div className="flex items-start justify-between gap-3">
+        <div className="bg-white rounded-[20px] shadow-[0_10px_40px_-12px_rgba(15,23,42,0.12),0_2px_8px_-2px_rgba(15,23,42,0.04)] border border-slate-200/70 overflow-hidden">
+          {/* Cabeçalho — composição refinada com logo integrada */}
+          <div className="px-6 pt-6 pb-5 relative">
+            {/* hairline tático sutil no topo */}
+            <div
+              className="absolute top-0 left-0 right-0 h-[2px]"
+              style={{
+                background:
+                  "linear-gradient(90deg, transparent 0%, hsl(215 50% 25%) 30%, hsl(86 23% 30%) 70%, transparent 100%)",
+                opacity: 0.55,
+              }}
+            />
+            <div className="flex items-center gap-3.5">
+              <div
+                className="shrink-0 rounded-xl p-1.5 flex items-center justify-center"
+                style={{
+                  background: "linear-gradient(135deg, hsl(215 40% 12%) 0%, hsl(215 38% 18%) 100%)",
+                  boxShadow:
+                    "0 4px 12px hsl(215 50% 15% / 0.18), inset 0 1px 0 hsl(50 60% 88% / 0.08)",
+                }}
+              >
+                <QALogo className="h-11 w-11 rounded-lg" />
+              </div>
               <div className="min-w-0 flex-1">
-                <h1 className="text-[22px] font-bold leading-tight" style={{ color: "hsl(220 25% 15%)" }}>
-                  Cadastro do Cliente
+                <span
+                  className="text-[9px] font-semibold uppercase tracking-[0.18em] block mb-0.5"
+                  style={{ color: "hsl(215 35% 45%)" }}
+                >
+                  Quero Armas · Cadastro
+                </span>
+                <h1
+                  className="text-[20px] font-bold leading-tight tracking-tight"
+                  style={{ color: "hsl(215 35% 14%)" }}
+                >
+                  {step === 0 && "Vamos começar"}
+                  {step === 1 && "Seus documentos"}
+                  {step === 2 && "Lendo informações"}
+                  {step === 3 && "Confirme os dados"}
+                  {step === 4 && "Tudo pronto"}
                 </h1>
-                <p className="text-xs mt-1" style={{ color: "hsl(220 10% 50%)" }}>
-                  {step === 0 && "Vamos entender o que você precisa"}
+                <p className="text-[11.5px] mt-0.5 leading-snug" style={{ color: "hsl(220 10% 52%)" }}>
+                  {step === 0 && "Conte rapidamente o que você precisa"}
                   {step === 1 && "Envie seus documentos para iniciar"}
                   {step === 2 && "Estamos lendo suas informações"}
-                  {step === 3 && "Revise as informações extraídas"}
-                  {step === 4 && "Tudo pronto!"}
+                  {step === 3 && "Revise antes de enviar"}
+                  {step === 4 && "Recebemos seu cadastro com sucesso"}
                 </p>
               </div>
-              <QALogo className="h-16 w-auto shrink-0 rounded-xl" />
             </div>
             <Stepper current={step} />
           </div>
