@@ -426,6 +426,7 @@ function CadastroDocumentosCard({
   const [scannerTarget, setScannerTarget] = useState<"identidade" | "endereco" | "avulso">("avulso");
   const [scannerInitialFile, setScannerInitialFile] = useState<File | null>(null);
   const importInputRef = useRef<HTMLInputElement | null>(null);
+  const pendingImportTargetRef = useRef<"identidade" | "endereco" | "avulso" | null>(null);
   const [pendingImportTarget, setPendingImportTarget] = useState<"identidade" | "endereco" | "avulso" | null>(null);
   const idUrl = usePrivateStorageUrl("qa-cadastro-selfies", cadastro.documento_identidade_path);
   const addrUrl = usePrivateStorageUrl("qa-cadastro-selfies", cadastro.comprovante_endereco_path);
@@ -539,14 +540,24 @@ function CadastroDocumentosCard({
   };
 
   const openImportPicker = (target: "identidade" | "endereco" | "avulso") => {
+    pendingImportTargetRef.current = target;
     setPendingImportTarget(target);
-    importInputRef.current?.click();
+    const input = importInputRef.current;
+    if (!input) return;
+    input.value = "";
+    if (typeof input.showPicker === "function") {
+      input.showPicker();
+      return;
+    }
+    input.click();
   };
 
   const handleImportSelected = (file: File | null) => {
-    if (!file || !pendingImportTarget) return;
-    setScannerTarget(pendingImportTarget);
+    const target = pendingImportTargetRef.current ?? pendingImportTarget;
+    if (!file || !target) return;
+    setScannerTarget(target);
     setScannerInitialFile(file);
+    pendingImportTargetRef.current = null;
     setPendingImportTarget(null);
     setScannerOpen(true);
   };
@@ -683,7 +694,7 @@ function CadastroDocumentosCard({
         <input
           ref={importInputRef}
           type="file"
-          accept="image/*,application/pdf"
+          accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
           className="hidden"
           onChange={(e) => {
             const f = e.target.files?.[0] || null;
