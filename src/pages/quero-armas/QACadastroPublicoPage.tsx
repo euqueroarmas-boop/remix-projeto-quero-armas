@@ -348,23 +348,54 @@ export default function QACadastroPublicoPage() {
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "linear-gradient(135deg, hsl(220 25% 97%) 0%, hsl(225 30% 94%) 100%)" }}>
       <div className="max-w-md w-full mx-auto px-4 py-6 flex-1">
-        <div className="bg-white rounded-2xl shadow-[0_8px_32px_rgba(15,23,42,0.06)] border border-slate-200/60 overflow-hidden">
-          {/* Cabeçalho + stepper */}
-          <div className="px-6 pt-6 pb-4">
-            <div className="flex items-start justify-between gap-3">
+        <div className="bg-white rounded-[20px] shadow-[0_10px_40px_-12px_rgba(15,23,42,0.12),0_2px_8px_-2px_rgba(15,23,42,0.04)] border border-slate-200/70 overflow-hidden">
+          {/* Cabeçalho — composição refinada com logo integrada */}
+          <div className="px-6 pt-6 pb-5 relative">
+            {/* hairline tático sutil no topo */}
+            <div
+              className="absolute top-0 left-0 right-0 h-[2px]"
+              style={{
+                background:
+                  "linear-gradient(90deg, transparent 0%, hsl(215 50% 25%) 30%, hsl(86 23% 30%) 70%, transparent 100%)",
+                opacity: 0.55,
+              }}
+            />
+            <div className="flex items-center gap-3.5">
+              <div
+                className="shrink-0 rounded-xl p-1.5 flex items-center justify-center"
+                style={{
+                  background: "linear-gradient(135deg, hsl(215 40% 12%) 0%, hsl(215 38% 18%) 100%)",
+                  boxShadow:
+                    "0 4px 12px hsl(215 50% 15% / 0.18), inset 0 1px 0 hsl(50 60% 88% / 0.08)",
+                }}
+              >
+                <QALogo className="h-11 w-11 rounded-lg" />
+              </div>
               <div className="min-w-0 flex-1">
-                <h1 className="text-[22px] font-bold leading-tight" style={{ color: "hsl(220 25% 15%)" }}>
-                  Cadastro do Cliente
+                <span
+                  className="text-[9px] font-semibold uppercase tracking-[0.18em] block mb-0.5"
+                  style={{ color: "hsl(215 35% 45%)" }}
+                >
+                  Quero Armas · Cadastro
+                </span>
+                <h1
+                  className="text-[20px] font-bold leading-tight tracking-tight"
+                  style={{ color: "hsl(215 35% 14%)" }}
+                >
+                  {step === 0 && "Vamos começar"}
+                  {step === 1 && "Seus documentos"}
+                  {step === 2 && "Lendo informações"}
+                  {step === 3 && "Confirme os dados"}
+                  {step === 4 && "Tudo pronto"}
                 </h1>
-                <p className="text-xs mt-1" style={{ color: "hsl(220 10% 50%)" }}>
-                  {step === 0 && "Vamos entender o que você precisa"}
+                <p className="text-[11.5px] mt-0.5 leading-snug" style={{ color: "hsl(220 10% 52%)" }}>
+                  {step === 0 && "Conte rapidamente o que você precisa"}
                   {step === 1 && "Envie seus documentos para iniciar"}
                   {step === 2 && "Estamos lendo suas informações"}
-                  {step === 3 && "Revise as informações extraídas"}
-                  {step === 4 && "Tudo pronto!"}
+                  {step === 3 && "Revise antes de enviar"}
+                  {step === 4 && "Recebemos seu cadastro com sucesso"}
                 </p>
               </div>
-              <QALogo className="h-16 w-auto shrink-0 rounded-xl" />
             </div>
             <Stepper current={step} />
           </div>
@@ -423,10 +454,13 @@ export default function QACadastroPublicoPage() {
           />
         )}
 
-        {/* Selo LGPD */}
-        <div className="mt-4 flex items-center justify-center gap-1.5 text-[11px]" style={{ color: "hsl(220 10% 50%)" }}>
-          <Shield className="w-3 h-3" style={{ color: "hsl(230 80% 56%)" }} />
-          Dados protegidos conforme a LGPD
+        {/* Selo LGPD — discreto, institucional */}
+        <div
+          className="mt-5 flex items-center justify-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.14em]"
+          style={{ color: "hsl(220 10% 55%)" }}
+        >
+          <Shield className="w-3 h-3" style={{ color: "hsl(215 45% 35%)" }} strokeWidth={2.2} />
+          Protegido conforme a LGPD
         </div>
       </div>
     </div>
@@ -587,8 +621,7 @@ function DuplicateModal({
 
 function Stepper({ current }: { current: StepId }) {
   return (
-    <div className="mt-5 px-2">
-      {/* Linha de círculos + conectores */}
+    <div className="mt-6 px-1">
       <div className="flex items-start">
         {STEPS.map((s, i) => {
           const done = current > s.id;
@@ -597,32 +630,53 @@ function Stepper({ current }: { current: StepId }) {
           const isLast = i === STEPS.length - 1;
           return (
             <Fragment key={s.id}>
-              <div className="flex flex-col items-center shrink-0" style={{ width: 56 }}>
+              <div className="flex flex-col items-center shrink-0" style={{ width: 52 }}>
                 <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-semibold"
+                  className="rounded-full flex items-center justify-center text-[11px] font-bold transition-all"
                   style={{
+                    width: active ? 28 : 24,
+                    height: active ? 28 : 24,
                     background: done
-                      ? "hsl(152 65% 45%)"
+                      ? "hsl(152 50% 38%)"
                       : active
-                        ? "hsl(222 89% 55%)"
-                        : "hsl(220 15% 90%)",
-                    color: done || active ? "white" : "hsl(220 10% 55%)",
-                    boxShadow: active ? "0 0 0 4px hsl(222 89% 55% / 0.15)" : "none",
+                        ? "linear-gradient(135deg, hsl(215 52% 25%) 0%, hsl(215 50% 32%) 100%)"
+                        : "hsl(220 14% 95%)",
+                    color: done || active ? "white" : "hsl(220 10% 60%)",
+                    boxShadow: active
+                      ? "0 0 0 4px hsl(215 50% 25% / 0.10), 0 2px 6px hsl(215 50% 25% / 0.22)"
+                      : done
+                        ? "0 1px 3px hsl(152 50% 30% / 0.20)"
+                        : "inset 0 0 0 1px hsl(220 14% 88%)",
+                    border: !done && !active ? "1px solid hsl(220 14% 90%)" : "none",
                   }}
                 >
-                {done ? <CheckCircle2 className="w-4 h-4" /> : i + 1}
+                  {done ? <CheckCircle2 className="w-3.5 h-3.5" strokeWidth={2.5} /> : i + 1}
                 </div>
                 <span
-                  className="mt-1.5 text-[11px] font-medium text-center leading-tight"
-                  style={{ color: active ? "hsl(220 25% 20%)" : "hsl(220 10% 55%)" }}
+                  className="mt-2 text-[10px] text-center leading-tight transition-colors"
+                  style={{
+                    color: active
+                      ? "hsl(215 35% 18%)"
+                      : done
+                        ? "hsl(220 15% 35%)"
+                        : "hsl(220 10% 60%)",
+                    fontWeight: active ? 700 : 500,
+                    letterSpacing: active ? "0.01em" : "0",
+                  }}
                 >
                   {s.label}
                 </span>
               </div>
               {!isLast && (
                 <div
-                  className="flex-1 h-[3px] rounded-full mt-[14px]"
-                  style={{ background: nextReached ? "hsl(222 89% 55%)" : "hsl(220 13% 88%)" }}
+                  className="flex-1 h-px rounded-full self-start"
+                  style={{
+                    marginTop: active ? 14 : 12,
+                    background: nextReached
+                      ? "hsl(152 50% 38%)"
+                      : "hsl(220 14% 88%)",
+                    opacity: nextReached ? 0.6 : 1,
+                  }}
                 />
               )}
             </Fragment>
@@ -964,33 +1018,45 @@ function Step4Done({ firstName }: { firstName: string }) {
 
 /* ─────────────────────── Bloco de boas-vindas ─────────────────────── */
 function WelcomeBlock() {
-  // Acentos táticos sutis: azul institucional PF (#1e3a5f → 215 52% 25%)
-  // e verde oliva sóbrio do Exército (#4a5d3a → 86 23% 30%).
+  // Acento tático sutil: azul institucional PF + verde oliva Exército,
+  // agora em formato compacto que apoia (não compete com) o campo principal.
   return (
     <div
-      className="rounded-2xl p-4 mb-1 relative overflow-hidden"
+      className="rounded-xl px-3.5 py-3 relative overflow-hidden"
       style={{
         background:
-          "linear-gradient(135deg, hsl(215 40% 14%) 0%, hsl(215 38% 18%) 55%, hsl(86 22% 22%) 100%)",
-        boxShadow: "0 6px 20px hsl(215 50% 15% / 0.18)",
+          "linear-gradient(135deg, hsl(215 42% 13%) 0%, hsl(215 40% 17%) 60%, hsl(86 22% 20%) 100%)",
+        boxShadow:
+          "0 4px 14px hsl(215 50% 12% / 0.16), inset 0 1px 0 hsl(50 60% 88% / 0.06)",
       }}
     >
-      {/* Selo discreto */}
-      <div className="flex items-center gap-1.5 mb-2">
-        <span
-          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider"
-          style={{ background: "hsl(215 30% 95% / 0.12)", color: "hsl(50 60% 88%)", border: "1px solid hsl(50 60% 88% / 0.18)" }}
+      {/* brilho sutil no topo */}
+      <div
+        className="absolute inset-x-0 top-0 h-px"
+        style={{ background: "linear-gradient(90deg, transparent, hsl(50 60% 88% / 0.25), transparent)" }}
+      />
+      <div className="flex items-start gap-2.5">
+        <div
+          className="shrink-0 w-7 h-7 rounded-md flex items-center justify-center mt-0.5"
+          style={{
+            background: "hsl(50 60% 88% / 0.10)",
+            border: "1px solid hsl(50 60% 88% / 0.22)",
+          }}
         >
-          <Shield className="w-2.5 h-2.5" /> Quero Armas
-        </span>
+          <Shield className="w-3.5 h-3.5" style={{ color: "hsl(50 65% 88%)" }} strokeWidth={2} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h2
+            className="text-[13.5px] font-semibold leading-snug tracking-tight"
+            style={{ color: "hsl(50 70% 94%)" }}
+          >
+            Burocracia descomplicada, do início ao fim.
+          </h2>
+          <p className="text-[11px] mt-1 leading-relaxed" style={{ color: "hsl(215 22% 80%)" }}>
+            Em poucos passos, deixamos seu processo claro, organizado e pronto para análise.
+          </p>
+        </div>
       </div>
-      <h2 className="text-[17px] font-bold leading-tight mb-1.5" style={{ color: "hsl(50 70% 92%)" }}>
-        Bem-vindo à Quero Armas.
-      </h2>
-      <p className="text-[12px] leading-relaxed" style={{ color: "hsl(215 25% 85%)" }}>
-        A burocracia para arma de fogo no Brasil já é complicada demais. Com a Quero Armas, seu processo fica mais
-        claro, organizado e tranquilo. Selecione o serviço desejado e envie seus documentos para começarmos sua análise.
-      </p>
     </div>
   );
 }
@@ -1037,10 +1103,10 @@ function Step0Qualificacao({
     (!needsLivre || value.descricao_servico_livre.trim().length >= 10);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3.5">
       <WelcomeBlock />
 
-      {/* Campo 1 — Objetivo principal */}
+      {/* Campo 1 — Objetivo principal (destaque visual: variante primary) */}
       <TacticalSelect
         icon={Target}
         label="Qual é o seu objetivo principal?"
@@ -1049,6 +1115,7 @@ function Step0Qualificacao({
         placeholder="Selecione seu objetivo"
         options={OBJETIVOS_PRINCIPAIS.map((o) => ({ value: o.value, label: o.label }))}
         required
+        primary
       />
 
       {/* Campo 2 — Categoria */}
@@ -1119,21 +1186,41 @@ function Step0Qualificacao({
         </label>
       )}
 
+      {/* CTA principal — premium, com mais peso e claramente clicável quando ativo */}
       <button
         onClick={onContinue}
         disabled={!valido}
-        className="w-full h-12 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+        className="group w-full h-[52px] rounded-xl text-[13.5px] font-bold tracking-wide uppercase text-white flex items-center justify-center gap-2 transition-all duration-200 mt-1 relative overflow-hidden disabled:cursor-not-allowed"
         style={{
-          background: "linear-gradient(135deg, hsl(215 52% 25%) 0%, hsl(215 50% 32%) 100%)",
-          boxShadow: "0 6px 18px hsl(215 50% 25% / 0.28)",
+          background: valido
+            ? "linear-gradient(135deg, hsl(215 55% 22%) 0%, hsl(215 52% 28%) 50%, hsl(86 28% 26%) 100%)"
+            : "hsl(220 14% 92%)",
+          color: valido ? "white" : "hsl(220 10% 58%)",
+          boxShadow: valido
+            ? "0 10px 24px -8px hsl(215 55% 20% / 0.45), 0 4px 10px -2px hsl(215 55% 20% / 0.20), inset 0 1px 0 hsl(50 60% 88% / 0.18)"
+            : "inset 0 0 0 1px hsl(220 14% 86%)",
+          letterSpacing: "0.04em",
         }}
       >
-        Continuar para documentos
-        <ChevronRight className="w-4 h-4" />
+        {valido && (
+          <span
+            className="absolute inset-x-0 top-0 h-px"
+            style={{ background: "linear-gradient(90deg, transparent, hsl(50 60% 88% / 0.45), transparent)" }}
+          />
+        )}
+        <span>Continuar</span>
+        <ChevronRight
+          className="w-4 h-4 transition-transform group-hover:translate-x-0.5"
+          strokeWidth={2.5}
+        />
       </button>
 
-      <p className="text-[10px] text-center px-2" style={{ color: "hsl(220 10% 55%)" }}>
-        Suas respostas ajudam nossa equipe a preparar seu atendimento. Nenhum compromisso até a confirmação.
+      {/* Texto de apoio — discreto, secundário ao CTA */}
+      <p
+        className="text-[10px] text-center px-4 leading-relaxed pt-1"
+        style={{ color: "hsl(220 10% 62%)" }}
+      >
+        Sem compromisso até a confirmação · Dados protegidos
       </p>
     </div>
   );
@@ -1148,6 +1235,7 @@ function TacticalSelect({
   placeholder,
   options,
   required,
+  primary,
 }: {
   icon: typeof Target;
   label: string;
@@ -1156,24 +1244,58 @@ function TacticalSelect({
   placeholder: string;
   options: { value: string; label: string }[];
   required?: boolean;
+  /** Quando true, aplica acabamento mais forte: usado no campo focal da etapa. */
+  primary?: boolean;
 }) {
   return (
     <label className="block">
-      <span className="text-[10px] font-semibold uppercase tracking-wider flex items-center gap-1.5"
-        style={{ color: "hsl(215 35% 30%)" }}>
-        <Icon className="w-3 h-3" />
-        {label} {required && <span style={{ color: "hsl(0 70% 50%)" }}>*</span>}
+      <span
+        className="font-semibold uppercase flex items-center gap-1.5"
+        style={{
+          color: primary ? "hsl(215 45% 22%)" : "hsl(215 30% 38%)",
+          fontSize: primary ? "11px" : "10px",
+          letterSpacing: primary ? "0.06em" : "0.05em",
+        }}
+      >
+        <Icon className={primary ? "w-3.5 h-3.5" : "w-3 h-3"} strokeWidth={2.2} />
+        {label} {required && <span style={{ color: "hsl(0 65% 52%)" }}>*</span>}
       </span>
-      <div className="relative mt-1.5">
+      <div className="relative mt-2">
+        {/* halo de destaque para o campo focal quando ainda vazio */}
+        {primary && !value && (
+          <div
+            className="absolute -inset-px rounded-xl pointer-events-none"
+            style={{
+              background:
+                "linear-gradient(135deg, hsl(215 50% 25% / 0.10), hsl(86 23% 30% / 0.08))",
+              filter: "blur(6px)",
+            }}
+          />
+        )}
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full h-11 pl-3 pr-9 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(215_50%_45%)] transition appearance-none cursor-pointer"
+          className="relative w-full pl-3.5 pr-10 rounded-xl font-medium outline-none focus:ring-2 transition-all appearance-none cursor-pointer"
           style={{
-            border: value ? "1px solid hsl(215 40% 55%)" : "1px solid hsl(220 13% 86%)",
-            background: "white",
-            color: value ? "hsl(220 25% 18%)" : "hsl(220 10% 55%)",
-            boxShadow: value ? "0 1px 3px hsl(215 50% 30% / 0.08)" : "none",
+            height: primary ? 52 : 44,
+            fontSize: primary ? "14.5px" : "13.5px",
+            border: value
+              ? `1px solid hsl(215 45% ${primary ? 38 : 50}%)`
+              : `1px solid hsl(220 13% ${primary ? 80 : 86}%)`,
+            background: value
+              ? "linear-gradient(180deg, white 0%, hsl(215 30% 99%) 100%)"
+              : "white",
+            color: value ? "hsl(215 35% 16%)" : "hsl(220 10% 55%)",
+            boxShadow: value
+              ? primary
+                ? "0 4px 14px hsl(215 50% 25% / 0.14), inset 0 1px 0 white"
+                : "0 1px 3px hsl(215 50% 30% / 0.08)"
+              : primary
+                ? "0 2px 8px hsl(215 50% 25% / 0.06), inset 0 1px 0 white"
+                : "none",
+            // ring color via custom property
+            // @ts-ignore
+            "--tw-ring-color": "hsl(215 50% 45% / 0.35)",
           }}
         >
           <option value="">{placeholder}</option>
@@ -1181,7 +1303,23 @@ function TacticalSelect({
             <option key={o.value} value={o.value}>{o.label}</option>
           ))}
         </select>
-        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: "hsl(215 35% 35%)" }} />
+        <div
+          className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none rounded-md flex items-center justify-center"
+          style={{
+            width: primary ? 26 : 22,
+            height: primary ? 26 : 22,
+            background: value
+              ? "linear-gradient(135deg, hsl(215 52% 25%) 0%, hsl(215 50% 32%) 100%)"
+              : "hsl(220 14% 96%)",
+            boxShadow: value ? "0 1px 3px hsl(215 50% 25% / 0.25)" : "none",
+          }}
+        >
+          <ChevronDown
+            className={primary ? "w-4 h-4" : "w-3.5 h-3.5"}
+            style={{ color: value ? "white" : "hsl(220 10% 50%)" }}
+            strokeWidth={2.4}
+          />
+        </div>
       </div>
     </label>
   );
