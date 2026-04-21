@@ -8,7 +8,7 @@ import {
 import heroImg from "@/assets/qa-curso-hero.jpg";
 import maintImg from "@/assets/qa-curso-manutencao.jpg";
 import familyImg from "@/assets/qa-curso-familia.jpg";
-import instrutorImg from "@/assets/qa-instrutor.jpg";
+import ameacaImg from "@/assets/qa-ameaca.jpg";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
