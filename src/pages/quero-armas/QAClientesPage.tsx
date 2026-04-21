@@ -39,22 +39,22 @@ import { invalidateQADashboardSnapshot } from "@/components/quero-armas/dashboar
 import { objetivoLabel, categoriaLabel } from "./qaServiceCatalog";
 
 /* ── Lightbox 5:4 espelhado (compartilhado por todas as miniaturas) ── */
-function PhotoLightbox({ url, alt, onClose }: { url: string; alt: string; onClose: () => void }) {
+function PhotoLightbox({ url, alt, onClose, mirror = true, fit = "cover" }: { url: string; alt: string; onClose: () => void; mirror?: boolean; fit?: "cover" | "contain" }) {
   return (
     <div
       className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4"
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-2xl"
-        style={{ aspectRatio: "5 / 4" }}
+        className="relative w-full max-w-4xl"
+        style={{ aspectRatio: fit === "contain" ? "4 / 3" : "5 / 4" }}
         onClick={e => e.stopPropagation()}
       >
         <img
           src={url}
           alt={alt}
-          className="w-full h-full object-cover rounded-2xl shadow-2xl"
-          style={{ transform: "scaleX(-1)" }}
+          className={`w-full h-full ${fit === "contain" ? "object-contain bg-slate-900" : "object-cover"} rounded-2xl shadow-2xl`}
+          style={mirror ? { transform: "scaleX(-1)" } : undefined}
         />
         <button
           type="button"
