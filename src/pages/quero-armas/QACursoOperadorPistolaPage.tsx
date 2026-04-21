@@ -249,7 +249,23 @@ export default function QACursoOperadorPistolaPage() {
 
   return (
     <>
-      <div className="min-h-screen" style={{ background: "hsl(220 25% 6%)", color: "white" }}>
+      <div
+        className="min-h-screen relative"
+        style={{
+          background: `radial-gradient(1200px 600px at 10% -10%, ${OD_DEEP} 0%, ${GUNMETAL_2} 55%, #000 100%)`,
+          color: "white",
+        }}
+      >
+        {/* Grid tático sutil sobre todo o fundo */}
+        <div
+          aria-hidden
+          className="pointer-events-none fixed inset-0 z-0 opacity-[0.05] mix-blend-overlay"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(255,255,255,0.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.6) 1px, transparent 1px)",
+            backgroundSize: "48px 48px",
+          }}
+        />
         {/* ============ HERO ============ */}
         <section className="relative min-h-[100vh] flex items-center overflow-hidden">
           <div className="absolute inset-0">
@@ -257,6 +273,7 @@ export default function QACursoOperadorPistolaPage() {
               src={heroImg}
               alt="Operador de pistola treinado em estande de tiro profissional"
               className="w-full h-full object-cover"
+              style={{ filter: "grayscale(0.45) contrast(1.12) brightness(0.75)" }}
               fetchPriority="high"
               width={1920}
               height={1280}
@@ -265,9 +282,23 @@ export default function QACursoOperadorPistolaPage() {
               className="absolute inset-0"
               style={{
                 background:
-                  "linear-gradient(180deg, hsl(220 30% 6% / 0.85) 0%, hsl(220 30% 6% / 0.7) 50%, hsl(220 30% 6% / 0.95) 100%)",
+                  `linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.4) 45%, ${GUNMETAL_2} 100%), radial-gradient(800px 500px at 85% 20%, hsla(2,72%,42%,0.12), transparent 60%)`,
               }}
             />
+            {/* Crosshair decorativo */}
+            <div
+              aria-hidden
+              className="absolute top-10 right-10 w-40 h-40 rounded-full hidden md:block opacity-30"
+              style={{
+                border: `1px solid ${AMBER}`,
+                boxShadow: `inset 0 0 0 1px rgba(0,0,0,0.4), 0 0 40px hsla(40,85%,55%,0.15)`,
+              }}
+            >
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div style={{ width: 1, height: "100%", background: AMBER, opacity: 0.5 }} />
+                <div style={{ height: 1, width: "100%", background: AMBER, opacity: 0.5, position: "absolute" }} />
+              </div>
+            </div>
           </div>
 
           <div className="container relative z-10 py-16 md:py-24 max-w-6xl mx-auto px-4">
