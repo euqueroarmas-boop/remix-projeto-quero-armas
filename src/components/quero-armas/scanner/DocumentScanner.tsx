@@ -568,8 +568,8 @@ export default function DocumentScanner({
         )}
 
         {!libsError && libsReady && mode === "capture" && (
-          <div className="relative bg-black flex-1 flex flex-col min-h-0">
-            <div className="relative w-full flex-1 min-h-[40vh] overflow-hidden flex items-center justify-center bg-black">
+          <div className="relative bg-black flex-1 flex flex-col min-h-0 overflow-hidden">
+            <div className="relative w-full flex-1 min-h-0 overflow-hidden flex items-center justify-center bg-black">
               <video
                 ref={videoRef}
                 playsInline
