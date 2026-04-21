@@ -296,6 +296,18 @@ export default function QACadastroPublicoPage() {
         documento_identidade_path: pathOf("identity"),
         comprovante_endereco_path: pathOf("address"),
         selfie_path: pathOf("selfie"),
+        // ── Qualificação comercial (Etapa 0) ──
+        objetivo_principal: qualif.objetivo_principal || null,
+        categoria_servico: qualif.categoria_servico || null,
+        servico_principal: qualif.servico_principal || null,
+        subtipo_servico: qualif.subtipo_servico || null,
+        descricao_servico_livre: qualif.descricao_servico_livre || null,
+        origem_cadastro: "cadastro_publico" as const,
+        // Compat: também grava no campo legado para não quebrar telas que ainda leem dele
+        servico_interesse:
+          (findServico(qualif.categoria_servico, qualif.servico_principal)?.label as string | undefined) ||
+          qualif.descricao_servico_livre ||
+          null,
       };
 
       const { data, error } = await supabase.functions.invoke("qa-cadastro-publico", {
