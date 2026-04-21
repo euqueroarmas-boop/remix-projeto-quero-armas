@@ -57,13 +57,12 @@ function SectionTag({ children }: { children: React.ReactNode }) {
     <span
       className="inline-flex items-center gap-2 px-3 py-1 rounded-sm font-mono text-[11px] tracking-[0.22em] uppercase font-bold"
       style={{
-        background: "rgba(0,0,0,0.55)",
-        border: `1px solid ${COYOTE_DIM}`,
-        color: AMBER,
-        textShadow: "0 0 8px rgba(255,180,60,0.25)",
+        background: "rgba(0,0,0,0.45)",
+        border: `1px solid ${OD_LINE}`,
+        color: SAND,
       }}
     >
-      <span className="w-1.5 h-1.5" style={{ background: BLOOD, boxShadow: `0 0 6px ${BLOOD}` }} />
+      <span className="w-1.5 h-1.5" style={{ background: SAND }} />
       {children}
     </span>
   );
