@@ -373,7 +373,7 @@ function DocumentThumb({
           size="sm"
           onClick={handleDownload}
           disabled={downloading}
-          className="h-8 text-[11px] gap-1.5"
+          className="h-8 text-[11px] gap-1.5 bg-white text-slate-700 border-slate-300 hover:bg-slate-50 hover:text-slate-900"
         >
           {downloading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />}
           Baixar
