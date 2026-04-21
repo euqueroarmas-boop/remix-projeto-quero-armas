@@ -407,59 +407,67 @@ function DuplicateModal({
   const hasChanges = changedRows.length > 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-[0_8px_32px_rgba(15,23,42,0.18)] border border-slate-200/60 overflow-hidden max-h-[90vh] flex flex-col">
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 overflow-hidden"
+      style={{
+        paddingTop: "max(env(safe-area-inset-top), 12px)",
+        paddingBottom: "max(env(safe-area-inset-bottom), 12px)",
+        paddingLeft: "max(env(safe-area-inset-left), 12px)",
+        paddingRight: "max(env(safe-area-inset-right), 12px)",
+      }}
+    >
+      <div className="w-full max-w-md bg-white rounded-2xl sm:rounded-2xl shadow-[0_8px_32px_rgba(15,23,42,0.18)] border border-slate-200/60 overflow-hidden max-h-full flex flex-col min-w-0">
         {/* Cabeçalho */}
-        <div className="px-5 pt-5 pb-3 border-b border-slate-100">
-          <div className="flex items-center gap-2 mb-1">
-          <Info className="w-5 h-5" style={{ color: "hsl(230 80% 56%)" }} />
-          <h3 className="text-base font-bold" style={{ color: "hsl(220 25% 15%)" }}>
-            Cadastro já existe
-          </h3>
-        </div>
-          <p className="text-[11px] leading-relaxed" style={{ color: "hsl(220 10% 45%)" }}>
-          Já encontramos um cadastro com este CPF{dt ? ` (criado em ${dt})` : ""}.
+        <div className="px-4 sm:px-5 pt-4 pb-3 border-b border-slate-100 shrink-0">
+          <div className="flex items-start gap-2 mb-1.5">
+            <Info className="w-5 h-5 mt-0.5 shrink-0" style={{ color: "hsl(230 80% 56%)" }} />
+            <h3 className="text-base font-bold leading-snug break-words min-w-0 flex-1" style={{ color: "hsl(220 25% 15%)" }}>
+              Cadastro já existe
+            </h3>
+          </div>
+          <p className="text-[11px] leading-relaxed break-words" style={{ color: "hsl(220 10% 45%)" }}>
+            Já encontramos um cadastro com este CPF{dt ? ` (criado em ${dt})` : ""}.
             Status atual: <strong>{info.status}</strong>.
             {hasChanges
               ? " Confira abaixo as alterações que serão aplicadas:"
               : " Não detectamos alterações nos dados enviados."}
-        </p>
+          </p>
         </div>
 
         {/* Diff lado a lado */}
         {hasChanges && (
-          <div className="px-5 py-3 overflow-y-auto flex-1">
-            <div className="grid grid-cols-[1fr_auto_1fr] gap-2 mb-2 px-1">
+          <div className="px-4 sm:px-5 py-3 overflow-y-auto overflow-x-hidden flex-1 qa-diff-scroll min-w-0">
+            <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-2 mb-2 px-0.5">
               <span className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: "hsl(220 10% 50%)" }}>
                 Atual
               </span>
-              <span />
+              <span className="w-3.5" />
               <span className="text-[9px] font-semibold uppercase tracking-wider text-right" style={{ color: "hsl(230 80% 56%)" }}>
                 Novo
               </span>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               {changedRows.map((r) => (
                 <div
                   key={r.label}
-                  className="rounded-lg border p-2.5"
+                  className="rounded-lg border p-2.5 min-w-0"
                   style={{ borderColor: "hsl(230 80% 92%)", background: "hsl(230 90% 98%)" }}
                 >
                   <div className="text-[9px] font-semibold uppercase tracking-wide mb-1.5" style={{ color: "hsl(220 15% 45%)" }}>
                     {r.label}
                   </div>
-                  <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
                     <div
-                      className="text-[12px] font-medium px-2 py-1.5 rounded-md break-words line-through"
-                      style={{ background: "hsl(220 15% 96%)", color: "hsl(220 10% 55%)" }}
+                      className="text-[12px] font-medium px-2 py-1.5 rounded-md line-through min-w-0 break-all"
+                      style={{ background: "hsl(220 15% 96%)", color: "hsl(220 10% 55%)", overflowWrap: "anywhere" }}
                     >
                       {r.oldVal || <span className="italic opacity-60">vazio</span>}
                     </div>
                     <ChevronRight className="w-3.5 h-3.5 shrink-0" style={{ color: "hsl(230 80% 56%)" }} />
                     <div
-                      className="text-[12px] font-semibold px-2 py-1.5 rounded-md break-words"
-                      style={{ background: "white", color: "hsl(230 70% 35%)", border: "1px solid hsl(230 80% 80%)" }}
+                      className="text-[12px] font-semibold px-2 py-1.5 rounded-md min-w-0 break-all"
+                      style={{ background: "white", color: "hsl(230 70% 35%)", border: "1px solid hsl(230 80% 80%)", overflowWrap: "anywhere" }}
                     >
                       {r.newVal || <span className="italic opacity-60">vazio</span>}
                     </div>
@@ -474,12 +482,15 @@ function DuplicateModal({
           </div>
         )}
 
-        {/* Ações */}
-        <div className="px-5 py-4 border-t border-slate-100 flex gap-2">
+        {/* Ações — sticky bar */}
+        <div
+          className="px-4 sm:px-5 pt-3 pb-3 border-t border-slate-100 flex gap-2 shrink-0 bg-white"
+          style={{ paddingBottom: "max(env(safe-area-inset-bottom), 12px)" }}
+        >
           <button
             onClick={onCancel}
             disabled={busy}
-            className="flex-1 h-10 rounded-lg text-xs font-semibold border border-slate-200 disabled:opacity-50"
+            className="shrink-0 px-4 h-11 rounded-lg text-xs font-semibold border border-slate-200 disabled:opacity-50"
             style={{ color: "hsl(220 25% 25%)" }}
           >
             Cancelar
@@ -487,11 +498,11 @@ function DuplicateModal({
           <button
             onClick={onConfirm}
             disabled={busy}
-            className="flex-1 h-10 rounded-lg text-xs font-semibold text-white disabled:opacity-50 flex items-center justify-center gap-1.5"
+            className="flex-1 min-w-0 h-11 rounded-lg text-xs font-semibold text-white disabled:opacity-50 flex items-center justify-center gap-1.5 px-3"
             style={{ background: "linear-gradient(135deg, hsl(230 80% 56%), hsl(240 80% 60%))" }}
           >
-            {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-            {hasChanges ? "Confirmar atualização" : "Atualizar mesmo assim"}
+            {busy ? <Loader2 className="w-4 h-4 shrink-0 animate-spin" /> : <CheckCircle2 className="w-4 h-4 shrink-0" />}
+            <span className="truncate">{hasChanges ? "Confirmar atualização" : "Atualizar mesmo assim"}</span>
           </button>
         </div>
       </div>
