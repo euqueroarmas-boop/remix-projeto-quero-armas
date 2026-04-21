@@ -356,6 +356,7 @@ export default function QACadastroPublicoPage() {
                   Cadastro do Cliente
                 </h1>
                 <p className="text-xs mt-1" style={{ color: "hsl(220 10% 50%)" }}>
+                  {step === 0 && "Vamos entender o que você precisa"}
                   {step === 1 && "Envie seus documentos para iniciar"}
                   {step === 2 && "Estamos lendo suas informações"}
                   {step === 3 && "Revise as informações extraídas"}
@@ -369,6 +370,14 @@ export default function QACadastroPublicoPage() {
 
           {/* Conteúdo */}
           <div className="px-6 pb-6">
+            {step === 0 && (
+              <Step0Qualificacao
+                value={qualif}
+                onChange={setQualif}
+                onContinue={() => { setError(null); setStep(1); }}
+              />
+            )}
+
             {step === 1 && (
               <Step1Documents
                 files={files}
@@ -378,6 +387,7 @@ export default function QACadastroPublicoPage() {
                 onManual={() => { setExtracted(emptyExtracted); setStep(3); }}
                 allUploaded={allUploaded}
                 error={error}
+                onBack={() => setStep(0)}
               />
             )}
 
