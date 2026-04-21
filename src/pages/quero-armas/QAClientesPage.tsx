@@ -2114,11 +2114,13 @@ export default function QAClientesPage() {
 
           {(c.selfie_path || c.documento_identidade_path || c.comprovante_endereco_path) && (
             <DetailCard title="Documentos enviados pelo cliente">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <DocumentThumb path={c.selfie_path} label="Selfie" name={c.nome_completo} />
-                <DocumentThumb path={c.documento_identidade_path} label="Documento de identidade" name={c.nome_completo} />
-                <DocumentThumb path={c.comprovante_endereco_path} label="Comprovante de endereço" name={c.nome_completo} />
-              </div>
+              <CadastroDocumentosCard
+                cadastro={c}
+                onUpdated={(updated) => {
+                  setSelectedCadastroPublico(updated);
+                  setCadastrosPublicos(prev => prev.map(it => it.id === updated.id ? { ...it, ...updated } : it));
+                }}
+              />
             </DetailCard>
           )}
           {(() => {
