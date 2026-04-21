@@ -235,6 +235,14 @@ interface CadastroPublico {
   aut_endereco?: string | null;
   comprovante_endereco_proprio?: string | null;
   servico_interesse?: string | null;
+  // Qualificação comercial (cadastro público v2)
+  objetivo_principal?: string | null;
+  categoria_servico?: string | null;
+  servico_principal?: string | null;
+  subtipo_servico?: string | null;
+  descricao_servico_livre?: string | null;
+  servico_fechado_final?: string | null;
+  origem_cadastro?: string | null;
   consentimento_dados_verdadeiros?: boolean | null;
   consentimento_tratamento_dados?: boolean | null;
   consentimento_timestamp?: string | null;
