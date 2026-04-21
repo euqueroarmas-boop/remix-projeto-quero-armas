@@ -387,8 +387,8 @@ export default function QACursoOperadorPistolaPage() {
             aria-hidden
             className="absolute top-0 left-0 right-0 h-[3px]"
             style={{
-              background: `repeating-linear-gradient(90deg, ${BLOOD} 0 20px, transparent 20px 40px, ${AMBER} 40px 60px, transparent 60px 80px)`,
-              opacity: 0.55,
+              background: OD_GREEN,
+              opacity: 0.7,
             }}
           />
           <div className="container max-w-6xl mx-auto px-4">
@@ -413,37 +413,40 @@ export default function QACursoOperadorPistolaPage() {
                 {/* Tag militar na imagem */}
                 <div
                   className="absolute bottom-3 left-3 px-2.5 py-1 font-mono text-[10px] tracking-[0.2em] uppercase font-bold"
-                  style={{ background: "rgba(0,0,0,0.75)", border: `1px solid ${AMBER}`, color: AMBER }}
+                  style={{ background: "rgba(0,0,0,0.7)", border: `1px solid ${OD_LINE}`, color: SAND }}
                 >
-                  ● SEC · ATIVO
+                  ● PROTEÇÃO · ATIVA
                 </div>
               </div>
               <div>
                 <SectionTag>RECON · BRIEFING TÁTICO</SectionTag>
                 <h2 className="text-3xl md:text-[2.6rem] font-black leading-[1.1] mt-5 mb-6 uppercase tracking-tight">
-                  Sua família não tem
-                  <span style={{ color: BLOOD, textShadow: "0 0 20px hsla(2,72%,42%,0.4)" }}> second best</span>.
+                  A sua família
                   <br />
-                  Ela tem <span style={{ color: AMBER }}>você</span>.
+                  não pode esperar
+                  <br />
+                  <span style={{ color: SAND }}>a polícia chegar.</span>
                 </h2>
                 <div className="space-y-4 text-[15px] leading-[1.7]" style={{ color: STEEL }}>
                   <p>
-                    A cada <strong className="text-white">8 minutos</strong> uma residência é invadida neste país.
-                    Em <strong style={{ color: BLOOD }}>mais de 90% dos casos</strong>, o morador paralisa —
-                    porque nunca treinou saque, empunhadura, nem sabe se pode reagir sem virar réu.
+                    A cada <strong className="text-white">8 minutos</strong> uma residência é invadida no Brasil.
+                    Quase sempre o pai, o marido, a mãe — paralisam. Não por covardia.
+                    Por <strong className="text-white">falta de preparo</strong>.
                   </p>
                   <p>
-                    Comprar pistola não te torna operador.
-                    <br />
-                    Ler artigo de blog não te prepara.
-                    <br />
-                    <strong className="text-white">Só treino com munição real, sob pressão, com instrutor credenciado — torna.</strong>
+                    Ter uma pistola dentro do cofre não defende ninguém. Saber sacar com calma,
+                    apontar com técnica e parar a ameaça <strong className="text-white">sem ferir quem você ama</strong> — defende.
+                  </p>
+                  <p>
+                    Esse curso não é para quem quer brincar de tático.
+                    É para quem entende que a vida da esposa, do filho e o patrimônio construído numa vida inteira
+                    <strong className="text-white"> dependem de você estar pronto</strong> no único momento que importa.
                   </p>
                   <p
-                    className="font-mono uppercase tracking-[0.15em] pt-3 mt-3"
-                    style={{ color: AMBER, borderTop: `1px dashed ${COYOTE_DIM}` }}
+                    className="font-mono uppercase tracking-[0.12em] pt-3 mt-3 text-[13px]"
+                    style={{ color: SAND, borderTop: `1px solid ${OD_LINE}` }}
                   >
-                    » Adestrar o homem, antes de municiar a arma.
+                    » Treinar antes. Para nunca precisar improvisar depois.
                   </p>
                 </div>
               </div>
