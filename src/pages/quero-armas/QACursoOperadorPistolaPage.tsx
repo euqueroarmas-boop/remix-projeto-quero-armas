@@ -216,11 +216,12 @@ function InscricaoForm() {
         disabled={loading}
         className="w-full py-4 rounded-md font-bold text-white text-[14px] tracking-wider uppercase transition-all disabled:opacity-60"
         style={{
-          background: `linear-gradient(135deg, ${ACCENT}, hsl(14 88% 42%))`,
-          boxShadow: "0 8px 24px hsla(14, 88%, 52%, 0.35), inset 0 1px 0 rgba(255,255,255,0.2)",
+          background: `linear-gradient(135deg, ${OD_GREEN}, ${OD_DEEP})`,
+          boxShadow: "0 8px 24px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.08)",
+          border: `1px solid ${OD_LINE}`,
         }}
       >
-        {loading ? "Enviando..." : "Garantir minha vaga"}
+        {loading ? "Enviando..." : "Reservar minha vaga"}
       </button>
       <p className="text-[11px] text-center pt-1" style={{ color: "hsl(220 10% 55%)" }}>
         <Lock className="w-3 h-3 inline mr-1" />
@@ -614,7 +615,7 @@ export default function QACursoOperadorPistolaPage() {
                   "Apostila didática completa: doutrina, balística, legislação, manutenção",
                 ].map((b) => (
                   <li key={b} className="flex gap-3 items-start">
-                    <span className="font-mono font-black mt-0.5" style={{ color: BLOOD }}>[+]</span>
+                    <span className="font-mono font-black mt-0.5" style={{ color: SAND }}>[+]</span>
                     <span>{b}</span>
                   </li>
                 ))}
