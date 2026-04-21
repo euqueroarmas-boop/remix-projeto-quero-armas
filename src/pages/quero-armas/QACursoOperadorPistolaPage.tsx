@@ -214,33 +214,27 @@ function InscricaoForm() {
 export default function QACursoOperadorPistolaPage() {
   useEffect(() => {
     window.scrollTo(0, 0);
+    document.title = "Curso Operador de Pistola I — Quero Armas | Defesa Pessoal e Porte";
+    const setMeta = (selector: string, attr: string, key: string, value: string) => {
+      let el = document.head.querySelector(selector) as HTMLMetaElement | HTMLLinkElement | null;
+      if (!el) {
+        el = document.createElement(selector.startsWith("link") ? "link" : "meta") as any;
+        el.setAttribute(attr, key);
+        document.head.appendChild(el);
+      }
+      el.setAttribute(selector.startsWith("link") ? "href" : "content", value);
+    };
+    setMeta('meta[name="description"]', "name", "description",
+      "Aprenda a manusear pistolas com segurança, técnica e controle absoluto. Treinamento prático com munição real, instrutor credenciado CTT-CBC. Vagas limitadas.");
+    setMeta('meta[property="og:title"]', "property", "og:title", "Curso Operador de Pistola I — Quero Armas");
+    setMeta('meta[property="og:description"]', "property", "og:description",
+      "Defenda quem você ama. Treinamento tático completo: 10h prático + teórico, 120 disparos, certificado reconhecido.");
+    setMeta('meta[property="og:image"]', "property", "og:image", heroImg);
+    setMeta('link[rel="canonical"]', "rel", "canonical", "https://wmti.com.br/quero-armas/curso-operador-pistola");
   }, []);
 
   return (
     <>
-      <Helmet>
-        <title>Curso Operador de Pistola I — Quero Armas | Defesa Pessoal e Porte</title>
-        <meta
-          name="description"
-          content="Aprenda a manusear pistolas com segurança, técnica e controle absoluto. Treinamento prático com munição real, instrutor credenciado CTT-CBC. Vagas limitadas."
-        />
-        <meta property="og:title" content="Curso Operador de Pistola I — Quero Armas" />
-        <meta property="og:description" content="Defenda quem você ama. Treinamento tático completo: 10h prático + teórico, 120 disparos, certificado reconhecido." />
-        <meta property="og:image" content={heroImg} />
-        <link rel="canonical" href="https://wmti.com.br/quero-armas/curso-operador-pistola" />
-        <script type="application/ld+json">{JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "Course",
-          name: "Curso Operador de Pistola I",
-          description: "Treinamento prático e teórico de manuseio seguro de pistolas, com 120 disparos no estande, instrutor credenciado CTT-CBC.",
-          provider: { "@type": "Organization", name: "Quero Armas", url: "https://wmti.com.br/quero-armas" },
-          offers: [
-            { "@type": "Offer", price: "1890.00", priceCurrency: "BRL", category: "Padrão" },
-            { "@type": "Offer", price: "2490.00", priceCurrency: "BRL", category: "VIP" },
-          ],
-        })}</script>
-      </Helmet>
-
       <div className="min-h-screen" style={{ background: "hsl(220 25% 6%)", color: "white" }}>
         {/* ============ HERO ============ */}
         <section className="relative min-h-[100vh] flex items-center overflow-hidden">
