@@ -39,6 +39,8 @@ interface DocumentScannerProps {
   title?: string;
   /** Quantidade mínima de páginas para concluir (default 1) */
   minPages?: number;
+  /** Se fornecido, abre o scanner já processando este arquivo (JPG/PNG/PDF) — sem precisar da câmera */
+  initialFile?: File | null;
 }
 
 declare global {
@@ -221,7 +223,7 @@ async function buildPdf(pages: ScannedPage[]): Promise<{ blob: Blob; previewData
 }
 
 export default function DocumentScanner({
-  open, onClose, onComplete, title = "ESCANEAR DOCUMENTO", minPages = 1,
+  open, onClose, onComplete, title = "ESCANEAR DOCUMENTO", minPages = 1, initialFile = null,
 }: DocumentScannerProps) {
   const [libsReady, setLibsReady] = useState(false);
   const [libsError, setLibsError] = useState<string | null>(null);
