@@ -8,6 +8,7 @@ import {
 import heroImg from "@/assets/qa-curso-hero.jpg";
 import maintImg from "@/assets/qa-curso-manutencao.jpg";
 import familyImg from "@/assets/qa-curso-familia.jpg";
+import instrutorImg from "@/assets/qa-instrutor.jpg";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -27,36 +28,41 @@ const openWpp = (intent: "vaga" | "vip" | "duvida") => {
   window.open(wppLink(msgs[intent]), "_blank", "noopener,noreferrer");
 };
 
-// ============ MILITARY TACTICAL PALETTE ============
-// OD Green (Olive Drab) · FDE/Coyote Tan · Gunmetal · Blood Red · Ranger Amber
-const OD_GREEN   = "hsl(80 18% 22%)";
-const OD_DEEP    = "hsl(82 22% 14%)";
-const COYOTE     = "hsl(32 32% 45%)";
-const COYOTE_DIM = "hsl(32 22% 28%)";
+// ============ TACTICAL PALETTE — sóbria ============
+// 3 cores reais: OD Green · Steel Blue · Muted Amber (sand)
+// + tons neutros gunmetal para o fundo. Sem vermelhos, sem brilhos.
+const OD_GREEN   = "hsl(82 18% 26%)";   // verde militar principal
+const OD_DEEP    = "hsl(84 22% 13%)";   // verde profundo
+const OD_LINE    = "hsl(82 14% 32%)";   // borda discreta verde
+const STEEL_BLUE = "hsl(210 22% 32%)";  // azul aço tático
+const STEEL_DEEP = "hsl(212 28% 16%)";  // azul profundo
+const SAND       = "hsl(42 38% 62%)";   // amarelo areia (muted, não gritante)
+const SAND_DIM   = "hsl(42 22% 42%)";   // areia escura para borda
 const GUNMETAL   = "hsl(210 12% 10%)";
 const GUNMETAL_2 = "hsl(210 14% 7%)";
-const BLOOD      = "hsl(2 72% 42%)";
-const AMBER      = "hsl(40 85% 55%)";
-const STEEL      = "hsl(210 8% 62%)";
+const STEEL      = "hsl(210 8% 64%)";
 const STEEL_DIM  = "hsl(210 6% 48%)";
 
-// aliases de compatibilidade
-const TAC_BLUE = OD_GREEN;
-const TAC_OLIVE = COYOTE_DIM;
-const ACCENT = BLOOD;
+// aliases (mantidos pra não quebrar referências antigas)
+const TAC_BLUE = STEEL_BLUE;
+const TAC_OLIVE = OD_GREEN;
+const COYOTE_DIM = OD_LINE;
+const AMBER = SAND;
+const BLOOD = SAND;       // sem vermelho — substituído por areia
+const COYOTE = SAND_DIM;
+const ACCENT = OD_GREEN;
 
 function SectionTag({ children }: { children: React.ReactNode }) {
   return (
     <span
       className="inline-flex items-center gap-2 px-3 py-1 rounded-sm font-mono text-[11px] tracking-[0.22em] uppercase font-bold"
       style={{
-        background: "rgba(0,0,0,0.55)",
-        border: `1px solid ${COYOTE_DIM}`,
-        color: AMBER,
-        textShadow: "0 0 8px rgba(255,180,60,0.25)",
+        background: "rgba(0,0,0,0.45)",
+        border: `1px solid ${OD_LINE}`,
+        color: SAND,
       }}
     >
-      <span className="w-1.5 h-1.5" style={{ background: BLOOD, boxShadow: `0 0 6px ${BLOOD}` }} />
+      <span className="w-1.5 h-1.5" style={{ background: SAND }} />
       {children}
     </span>
   );
@@ -210,11 +216,12 @@ function InscricaoForm() {
         disabled={loading}
         className="w-full py-4 rounded-md font-bold text-white text-[14px] tracking-wider uppercase transition-all disabled:opacity-60"
         style={{
-          background: `linear-gradient(135deg, ${ACCENT}, hsl(14 88% 42%))`,
-          boxShadow: "0 8px 24px hsla(14, 88%, 52%, 0.35), inset 0 1px 0 rgba(255,255,255,0.2)",
+          background: `linear-gradient(135deg, ${OD_GREEN}, ${OD_DEEP})`,
+          boxShadow: "0 8px 24px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.08)",
+          border: `1px solid ${OD_LINE}`,
         }}
       >
-        {loading ? "Enviando..." : "Garantir minha vaga"}
+        {loading ? "Enviando..." : "Reservar minha vaga"}
       </button>
       <p className="text-[11px] text-center pt-1" style={{ color: "hsl(220 10% 55%)" }}>
         <Lock className="w-3 h-3 inline mr-1" />
@@ -290,13 +297,13 @@ export default function QACursoOperadorPistolaPage() {
               aria-hidden
               className="absolute top-10 right-10 w-40 h-40 rounded-full hidden md:block opacity-30"
               style={{
-                border: `1px solid ${AMBER}`,
-                boxShadow: `inset 0 0 0 1px rgba(0,0,0,0.4), 0 0 40px hsla(40,85%,55%,0.15)`,
+                border: `1px solid ${SAND_DIM}`,
+                boxShadow: `inset 0 0 0 1px rgba(0,0,0,0.4)`,
               }}
             >
               <div className="absolute inset-0 flex items-center justify-center">
-                <div style={{ width: 1, height: "100%", background: AMBER, opacity: 0.5 }} />
-                <div style={{ height: 1, width: "100%", background: AMBER, opacity: 0.5, position: "absolute" }} />
+                <div style={{ width: 1, height: "100%", background: SAND_DIM, opacity: 0.6 }} />
+                <div style={{ height: 1, width: "100%", background: SAND_DIM, opacity: 0.6, position: "absolute" }} />
               </div>
             </div>
           </div>
@@ -311,24 +318,23 @@ export default function QACursoOperadorPistolaPage() {
               <SectionTag>OP · CURSO OPERADOR DE PISTOLA I · IAT / CTT-CBC</SectionTag>
 
               <h1 className="text-3xl md:text-5xl lg:text-[4rem] font-black leading-[1.02] mt-6 mb-6 tracking-tight uppercase">
-                Na hora do tiro,
+                Quando alguém invade
                 <br />
-                <span style={{ color: AMBER, textShadow: "0 0 24px hsla(40,85%,55%,0.35)" }}>
-                  não existe segunda chance.
-                </span>
+                <span style={{ color: SAND }}>a sua casa,</span>
                 <br />
-                <span className="text-white/90">Existe treino.</span>
+                <span className="text-white/90">só existe você.</span>
               </h1>
 
-              <p className="text-lg md:text-xl leading-relaxed mb-4 font-medium" style={{ color: "hsl(210 8% 85%)" }}>
-                O criminoso entra armado, frio, treinado na rua. A polícia chega em minutos.
+              <p className="text-lg md:text-xl leading-relaxed mb-4 font-medium" style={{ color: "hsl(210 8% 86%)" }}>
+                Sua mulher dorme no quarto. Seu filho no outro. Você ouve o portão sendo arrombado.
                 <br className="hidden md:block" />
-                Você tem <strong style={{ color: BLOOD }}>3 segundos</strong> para decidir quem sai vivo daquela sala.
+                A polícia leva minutos. Você tem <strong style={{ color: SAND }}>segundos</strong> para proteger quem ama.
               </p>
               <p className="text-base md:text-[17px] leading-relaxed mb-8" style={{ color: STEEL }}>
-                O <strong className="text-white">Curso Operador de Pistola I</strong> da <strong className="text-white">Quero Armas</strong> forma civis para o mundo real:
-                empunhadura, saque, controle de gatilho, resolução de pane, <strong style={{ color: AMBER }}>MCA (Manuseio · Carregamento · Acervo)</strong> e a base legal
-                da <strong className="text-white">Lei nº 10.826/2003</strong>. Aqui você sai atirador — não estatística.
+                O <strong className="text-white">Curso Operador de Pistola I</strong> da <strong className="text-white">Quero Armas</strong> forma cidadãos comuns —
+                pais, mães, profissionais — para defender a família, a casa e o patrimônio com técnica, calma e
+                respaldo legal pela <strong className="text-white">Lei nº 10.826/2003</strong>. Sem fanfarra. Sem cosplay.
+                Treinamento real, com instrutor credenciado.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-3 mb-10">
@@ -336,20 +342,20 @@ export default function QACursoOperadorPistolaPage() {
                   onClick={() => openWpp("vaga")}
                   className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-sm font-black text-white tracking-[0.15em] uppercase text-[13.5px] transition-all hover:brightness-110"
                   style={{
-                    background: `linear-gradient(135deg, ${BLOOD}, hsl(2 72% 28%))`,
-                    boxShadow: "0 12px 32px hsla(2, 72%, 42%, 0.45), inset 0 1px 0 rgba(255,255,255,0.18), inset 0 -1px 0 rgba(0,0,0,0.35)",
-                    border: "1px solid hsl(2 60% 25%)",
+                    background: `linear-gradient(135deg, ${OD_GREEN}, ${OD_DEEP})`,
+                    boxShadow: "0 10px 28px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.08)",
+                    border: `1px solid ${OD_LINE}`,
                   }}
                 >
-                  <Flame className="w-4 h-4" />
-                  Alistar-me agora
+                  <Shield className="w-4 h-4" />
+                  Quero proteger minha família
                 </button>
                 <button
                   onClick={() => openWpp("duvida")}
                   className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-sm font-bold text-white tracking-[0.15em] uppercase text-[12.5px] transition-all hover:bg-white/10"
                   style={{
-                    background: "rgba(0,0,0,0.4)",
-                    border: `1px solid ${COYOTE_DIM}`,
+                    background: "rgba(0,0,0,0.35)",
+                    border: `1px solid ${OD_LINE}`,
                   }}
                 >
                   <MessageCircle className="w-4 h-4" />
@@ -382,8 +388,8 @@ export default function QACursoOperadorPistolaPage() {
             aria-hidden
             className="absolute top-0 left-0 right-0 h-[3px]"
             style={{
-              background: `repeating-linear-gradient(90deg, ${BLOOD} 0 20px, transparent 20px 40px, ${AMBER} 40px 60px, transparent 60px 80px)`,
-              opacity: 0.55,
+              background: OD_GREEN,
+              opacity: 0.7,
             }}
           />
           <div className="container max-w-6xl mx-auto px-4">
@@ -408,37 +414,40 @@ export default function QACursoOperadorPistolaPage() {
                 {/* Tag militar na imagem */}
                 <div
                   className="absolute bottom-3 left-3 px-2.5 py-1 font-mono text-[10px] tracking-[0.2em] uppercase font-bold"
-                  style={{ background: "rgba(0,0,0,0.75)", border: `1px solid ${AMBER}`, color: AMBER }}
+                  style={{ background: "rgba(0,0,0,0.7)", border: `1px solid ${OD_LINE}`, color: SAND }}
                 >
-                  ● SEC · ATIVO
+                  ● PROTEÇÃO · ATIVA
                 </div>
               </div>
               <div>
                 <SectionTag>RECON · BRIEFING TÁTICO</SectionTag>
                 <h2 className="text-3xl md:text-[2.6rem] font-black leading-[1.1] mt-5 mb-6 uppercase tracking-tight">
-                  Sua família não tem
-                  <span style={{ color: BLOOD, textShadow: "0 0 20px hsla(2,72%,42%,0.4)" }}> second best</span>.
+                  A sua família
                   <br />
-                  Ela tem <span style={{ color: AMBER }}>você</span>.
+                  não pode esperar
+                  <br />
+                  <span style={{ color: SAND }}>a polícia chegar.</span>
                 </h2>
                 <div className="space-y-4 text-[15px] leading-[1.7]" style={{ color: STEEL }}>
                   <p>
-                    A cada <strong className="text-white">8 minutos</strong> uma residência é invadida neste país.
-                    Em <strong style={{ color: BLOOD }}>mais de 90% dos casos</strong>, o morador paralisa —
-                    porque nunca treinou saque, empunhadura, nem sabe se pode reagir sem virar réu.
+                    A cada <strong className="text-white">8 minutos</strong> uma residência é invadida no Brasil.
+                    Quase sempre o pai, o marido, a mãe — paralisam. Não por covardia.
+                    Por <strong className="text-white">falta de preparo</strong>.
                   </p>
                   <p>
-                    Comprar pistola não te torna operador.
-                    <br />
-                    Ler artigo de blog não te prepara.
-                    <br />
-                    <strong className="text-white">Só treino com munição real, sob pressão, com instrutor credenciado — torna.</strong>
+                    Ter uma pistola dentro do cofre não defende ninguém. Saber sacar com calma,
+                    apontar com técnica e parar a ameaça <strong className="text-white">sem ferir quem você ama</strong> — defende.
+                  </p>
+                  <p>
+                    Esse curso não é para quem quer brincar de tático.
+                    É para quem entende que a vida da esposa, do filho e o patrimônio construído numa vida inteira
+                    <strong className="text-white"> dependem de você estar pronto</strong> no único momento que importa.
                   </p>
                   <p
-                    className="font-mono uppercase tracking-[0.15em] pt-3 mt-3"
-                    style={{ color: AMBER, borderTop: `1px dashed ${COYOTE_DIM}` }}
+                    className="font-mono uppercase tracking-[0.12em] pt-3 mt-3 text-[13px]"
+                    style={{ color: SAND, borderTop: `1px solid ${OD_LINE}` }}
                   >
-                    » Adestrar o homem, antes de municiar a arma.
+                    » Treinar antes. Para nunca precisar improvisar depois.
                   </p>
                 </div>
               </div>
@@ -498,9 +507,9 @@ export default function QACursoOperadorPistolaPage() {
             <div className="order-2 md:order-1">
               <SectionTag>1º ESCALÃO · MANUTENÇÃO DE CAMPO</SectionTag>
               <h2 className="text-3xl md:text-[2.3rem] font-black mt-5 mb-6 leading-[1.1] uppercase tracking-tight">
-                Arma suja <span style={{ color: BLOOD }}>falha</span>. <br />
-                Arma mal lubrificada <span style={{ color: BLOOD }}>trava</span>. <br />
-                <span style={{ color: AMBER }}>Operador treinado previne.</span>
+                Arma suja falha. <br />
+                Arma mal lubrificada trava. <br />
+                <span style={{ color: SAND }}>Quem treina, previne.</span>
               </h2>
               <ul className="space-y-3 text-[14.5px]" style={{ color: STEEL }}>
                 {[
@@ -529,7 +538,7 @@ export default function QACursoOperadorPistolaPage() {
               />
               <div
                 className="absolute top-3 right-3 px-2.5 py-1 font-mono text-[10px] tracking-[0.2em] uppercase font-bold"
-                style={{ background: "rgba(0,0,0,0.75)", border: `1px solid ${AMBER}`, color: AMBER }}
+                style={{ background: "rgba(0,0,0,0.7)", border: `1px solid ${OD_LINE}`, color: SAND }}
               >
                 FIELD STRIP · 01
               </div>
@@ -606,7 +615,7 @@ export default function QACursoOperadorPistolaPage() {
                   "Apostila didática completa: doutrina, balística, legislação, manutenção",
                 ].map((b) => (
                   <li key={b} className="flex gap-3 items-start">
-                    <span className="font-mono font-black mt-0.5" style={{ color: BLOOD }}>[+]</span>
+                    <span className="font-mono font-black mt-0.5" style={{ color: SAND }}>[+]</span>
                     <span>{b}</span>
                   </li>
                 ))}
@@ -616,18 +625,69 @@ export default function QACursoOperadorPistolaPage() {
         </section>
 
         {/* ============ PREÇO + FORM ============ */}
-        <section id="inscricao" className="py-20 md:py-28" style={{ background: GUNMETAL_2 }}>
+        {/* ============ INSTRUTOR ============ */}
+        <section className="py-20 md:py-28 relative" style={{ background: GUNMETAL_2 }}>
+          <div className="container max-w-6xl mx-auto px-4">
+            <div className="grid md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] gap-10 md:gap-16 items-center">
+              <div className="relative mx-auto md:mx-0 max-w-sm w-full">
+                <img
+                  src={instrutorImg}
+                  alt="Willian Rodrigues — instrutor de armamento e tiro da Quero Armas"
+                  loading="lazy"
+                  className="w-full rounded-sm"
+                  style={{
+                    filter: "grayscale(0.55) contrast(1.08) brightness(0.92)",
+                    border: `1px solid ${OD_LINE}`,
+                  }}
+                />
+                <div
+                  className="absolute bottom-3 left-3 px-2.5 py-1 font-mono text-[10px] tracking-[0.2em] uppercase font-bold"
+                  style={{ background: "rgba(0,0,0,0.75)", border: `1px solid ${OD_LINE}`, color: SAND }}
+                >
+                  IAT · CTT-CBC XXVIII
+                </div>
+              </div>
+              <div>
+                <SectionTag>QUEM TREINA VOCÊ</SectionTag>
+                <h2 className="text-3xl md:text-[2.4rem] font-black mt-5 mb-5 leading-[1.1] uppercase tracking-tight">
+                  Willian Rodrigues
+                  <br />
+                  <span style={{ color: SAND }} className="text-2xl md:text-[1.6rem] font-bold normal-case tracking-normal">
+                    Instrutor de Armamento e Tiro · IAT credenciado
+                  </span>
+                </h2>
+                <div className="space-y-4 text-[15px] leading-[1.7]" style={{ color: STEEL }}>
+                  <p>
+                    Quase <strong className="text-white">10 anos</strong> dedicados a desburocratizar o acesso legal
+                    às armas de fogo no Brasil. Formado na <strong className="text-white">maior fábrica de munições
+                    da América Latina</strong>, passou pela escola mais cobiçada do país para se tornar instrutor.
+                  </p>
+                  <p>
+                    Não vende ilusão. Vende <strong className="text-white">técnica</strong>, <strong className="text-white">responsabilidade</strong> e
+                    o conhecimento jurídico necessário para você defender sua família <strong className="text-white">sem virar réu</strong>.
+                  </p>
+                  <p className="font-mono text-[13px] uppercase tracking-[0.12em] pt-3 border-t" style={{ color: SAND, borderColor: OD_LINE }}>
+                    “Adestrar o cidadão antes de municiar a arma.”
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="inscricao" className="py-20 md:py-28" style={{ background: GUNMETAL }}>
           <div className="container max-w-6xl mx-auto px-4">
             <div className="grid lg:grid-cols-2 gap-10 lg:gap-14 items-start">
               {/* Esquerda: info */}
               <div>
                 <SectionTag>ENGAJAMENTO · RESERVA DE POSIÇÃO</SectionTag>
                 <h2 className="text-3xl md:text-[2.4rem] font-black mt-5 mb-6 leading-[1.1] uppercase tracking-tight">
-                  Pelotão limitado a <span style={{ color: BLOOD }}>05 operadores</span> por turma.
+                  Turma limitada a <span style={{ color: SAND }}>05 alunos</span>.
                 </h2>
                 <p className="text-[15px] mb-8" style={{ color: STEEL }}>
-                  Turma pequena não é marketing — é doutrina. Só assim o IAT corrige empunhadura, saque e controle de gatilho
-                  de cada aluno, um a um, sob munição real. <strong className="text-white">Curso de massa vira estatística. Aqui, não.</strong>
+                  Turma pequena não é marketing — é o que permite ao instrutor corrigir empunhadura, saque e
+                  controle de gatilho <strong className="text-white">de cada aluno, um a um</strong>. É assim que
+                  treinamento vira reflexo. E reflexo é o que protege a sua família.
                 </p>
 
                 {/* Pricing cards */}
@@ -718,7 +778,8 @@ export default function QACursoOperadorPistolaPage() {
                   aria-hidden
                   className="absolute top-0 left-0 right-0 h-1"
                   style={{
-                    background: `repeating-linear-gradient(90deg, ${BLOOD} 0 16px, ${GUNMETAL_2} 16px 18px, ${AMBER} 18px 34px, ${GUNMETAL_2} 34px 36px)`,
+                    background: `linear-gradient(90deg, ${OD_GREEN}, ${STEEL_BLUE}, ${SAND_DIM})`,
+                    opacity: 0.85,
                   }}
                 />
                 <div className="mb-5">
@@ -760,12 +821,12 @@ export default function QACursoOperadorPistolaPage() {
             aria-hidden
             className="absolute top-0 left-0 right-0 h-[2px]"
             style={{
-              background: `repeating-linear-gradient(90deg, ${BLOOD} 0 30px, transparent 30px 50px, ${AMBER} 50px 70px, transparent 70px 90px)`,
-              opacity: 0.5,
+              background: OD_GREEN,
+              opacity: 0.6,
             }}
           />
-          <p className="text-[13px] font-black mb-2 uppercase tracking-[0.15em]" style={{ color: AMBER }}>
-            ⬢ Proteja o que é seu · Domine o que é seu · Defenda quem ama
+          <p className="text-[13px] font-black mb-2 uppercase tracking-[0.15em]" style={{ color: SAND }}>
+            Proteja sua casa · Defenda sua família · Cuide do que é seu
           </p>
           <p className="text-[11px] font-mono" style={{ color: STEEL_DIM }}>
             © {new Date().getFullYear()} QUERO ARMAS · CURSO OPERADOR DE PISTOLA I · IAT WILLIAN RODRIGUES — TODOS OS DIREITOS RESERVADOS
