@@ -11,15 +11,15 @@
  * ============================================================================= */
 
 export const OBJETIVOS_PRINCIPAIS: { value: string; label: string }[] = [
-  { value: "defesa_pessoal", label: "Defesa pessoal" },
-  { value: "tiro_esportivo", label: "Tiro esportivo" },
-  { value: "caca", label: "Caça" },
-  { value: "colecionamento", label: "Colecionamento" },
-  { value: "regularizacao", label: "Regularização documental" },
-  { value: "loja_armas", label: "Loja de armas" },
-  { value: "clube_tiro", label: "Clube de tiro" },
   { value: "atividade_profissional", label: "Atividade profissional / controlada" },
+  { value: "caca", label: "Caça" },
+  { value: "clube_tiro", label: "Clube de tiro" },
+  { value: "colecionamento", label: "Colecionamento" },
+  { value: "defesa_pessoal", label: "Defesa pessoal" },
+  { value: "loja_armas", label: "Loja de armas" },
   { value: "orientacao", label: "Preciso de orientação" },
+  { value: "regularizacao", label: "Regularização documental" },
+  { value: "tiro_esportivo", label: "Tiro esportivo" },
 ];
 
 export interface ServicoOpcao {
@@ -53,14 +53,18 @@ export const CATEGORIAS_SERVICO: CategoriaOpcao[] = [
     value: "sinarm_pf",
     label: "SINARM / Polícia Federal",
     servicos: [
+      { value: "ameaca_grave_ameaca", label: "Ameaça / grave ameaça" },
       { value: "aquisicao_posse", label: "Aquisição / Posse de arma de fogo" },
-      { value: "renovacao_registro", label: "Renovação de registro" },
-      { value: "transferencia_propriedade", label: "Transferência de propriedade" },
+      { value: "atividade_de_risco", label: "Atividade de risco" },
       { value: "emissao_craf", label: "Emissão de CRAF" },
-      { value: "segunda_via_craf", label: "Segunda via de CRAF" },
       { value: "guia_transito", label: "Guia de trânsito" },
+      { value: "magistrado_mpf", label: "Magistrado / MPF" },
       { value: "porte_arma", label: "Porte de arma de fogo" },
       { value: "renovacao_porte", label: "Renovação de porte" },
+      { value: "renovacao_registro", label: "Renovação de registro" },
+      { value: "seguranca_publica", label: "Segurança pública" },
+      { value: "segunda_via_craf", label: "Segunda via de CRAF" },
+      { value: "transferencia_propriedade", label: "Transferência de propriedade" },
     ],
   },
   {
@@ -157,4 +161,80 @@ export function categoriaLabel(value: string | null | undefined): string {
 export function servicoLabel(catValue: string | null | undefined, svcValue: string | null | undefined): string {
   if (!svcValue) return "";
   return findServico(catValue, svcValue)?.label || svcValue;
+}
+
+/* ---------------------------------------------------------------------------
+ * Mapeamento OBJETIVO → CATEGORIAS PERMITIDAS (+ subset opcional de serviços)
+ * Quando um objetivo define `servicos`, apenas aqueles aparecem dentro
+ * daquela categoria. Caso contrário, todos os serviços da categoria são
+ * exibidos. A ordem alfabética é aplicada na função `getCategoriasPorObjetivo`.
+ * ------------------------------------------------------------------------- */
+interface ObjetivoCategoriaRule {
+  categoria: string;
+  /** subset de service.value que devem aparecer (se omitido, mostra todos). */
+  servicos?: string[];
+}
+
+export const OBJETIVO_CATEGORIAS: Record<string, ObjetivoCategoriaRule[]> = {
+  defesa_pessoal: [
+    {
+      categoria: "sinarm_pf",
+      servicos: [
+        "ameaca_grave_ameaca",
+        "aquisicao_posse",
+        "atividade_de_risco",
+        "magistrado_mpf",
+        "porte_arma",
+        "seguranca_publica",
+      ],
+    },
+  ],
+  tiro_esportivo: [{ categoria: "sinarm_cac_cr" }],
+  caca: [{ categoria: "sinarm_cac_cr" }],
+  colecionamento: [{ categoria: "sinarm_cac_cr" }],
+  loja_armas: [{ categoria: "empresarial", servicos: ["assessoria_loja"] }],
+  clube_tiro: [{ categoria: "empresarial", servicos: ["assessoria_clube"] }],
+  atividade_profissional: [
+    { categoria: "empresarial", servicos: ["assessoria_profissional"] },
+    { categoria: "sinarm_pf" },
+  ],
+  regularizacao: [
+    { categoria: "sinarm_pf" },
+    { categoria: "sinarm_cac_cr" },
+    { categoria: "atendimento_especial" },
+  ],
+  orientacao: [
+    { categoria: "sinarm_pf" },
+    { categoria: "sinarm_cac_cr" },
+    { categoria: "empresarial" },
+    { categoria: "atendimento_especial" },
+  ],
+};
+
+/** Retorna categorias filtradas (e ordenadas alfabeticamente) para um objetivo. */
+export function getCategoriasPorObjetivo(objetivo: string | null | undefined): CategoriaOpcao[] {
+  if (!objetivo) return [];
+  const rules = OBJETIVO_CATEGORIAS[objetivo];
+  const sortByLabel = (a: { label: string }, b: { label: string }) =>
+    a.label.localeCompare(b.label, "pt-BR");
+
+  // Sem regra explícita: mostrar todas as categorias.
+  if (!rules || rules.length === 0) {
+    return CATEGORIAS_SERVICO.map((c) => ({
+      ...c,
+      servicos: [...c.servicos].sort(sortByLabel),
+    })).sort(sortByLabel);
+  }
+
+  return rules
+    .map((rule) => {
+      const cat = findCategoria(rule.categoria);
+      if (!cat) return null;
+      const servicos = rule.servicos
+        ? cat.servicos.filter((s) => rule.servicos!.includes(s.value))
+        : cat.servicos;
+      return { ...cat, servicos: [...servicos].sort(sortByLabel) };
+    })
+    .filter((c): c is CategoriaOpcao => !!c)
+    .sort(sortByLabel);
 }

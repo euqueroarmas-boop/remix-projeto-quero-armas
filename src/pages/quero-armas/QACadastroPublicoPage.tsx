@@ -11,6 +11,7 @@ import {
   CATEGORIAS_SERVICO,
   findCategoria,
   findServico,
+  getCategoriasPorObjetivo,
 } from "./qaServiceCatalog";
 
 /* =========================================================================
@@ -1019,6 +1020,14 @@ function Step0Qualificacao({
   const needsSubtipo = !!(svc?.subtipos && svc.subtipos.length > 0);
   const needsLivre = !!svc?.livre;
 
+  // Categorias filtradas pelo objetivo escolhido (já ordenadas + serviços filtrados)
+  const categoriasDisponiveis = getCategoriasPorObjetivo(value.objetivo_principal);
+  // Serviços visíveis (com filtro/ordem do objetivo, com fallback para o catálogo bruto)
+  const servicosDisponiveis =
+    categoriasDisponiveis.find((c) => c.value === value.categoria_servico)?.servicos ||
+    cat?.servicos ||
+    [];
+
   // Validação
   const valido =
     !!value.objetivo_principal &&
@@ -1053,7 +1062,7 @@ function Step0Qualificacao({
             onChange({ ...value, categoria_servico: v, servico_principal: "", subtipo_servico: "", descricao_servico_livre: "" });
           }}
           placeholder="Selecione a categoria"
-          options={CATEGORIAS_SERVICO.map((c) => ({ value: c.value, label: c.label }))}
+          options={categoriasDisponiveis.map((c) => ({ value: c.value, label: c.label }))}
           required
         />
       )}
@@ -1066,7 +1075,7 @@ function Step0Qualificacao({
           value={value.servico_principal}
           onChange={(v) => onChange({ ...value, servico_principal: v, subtipo_servico: "", descricao_servico_livre: "" })}
           placeholder="Selecione o serviço"
-          options={cat.servicos.map((s) => ({ value: s.value, label: s.label }))}
+          options={servicosDisponiveis.map((s) => ({ value: s.value, label: s.label }))}
           required
         />
       )}
