@@ -423,7 +423,7 @@ function Stepper({ current }: { current: StepId }) {
               </div>
               {!isLast && (
                 <div
-                  className="flex-1 h-[2px] mx-1.5"
+                  className="flex-1 h-[3px] mx-1.5 rounded-full"
                   style={{ background: nextReached ? "hsl(222 89% 55%)" : "hsl(220 13% 88%)" }}
                 />
               )}
