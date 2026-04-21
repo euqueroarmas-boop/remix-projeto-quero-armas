@@ -39,22 +39,22 @@ import { invalidateQADashboardSnapshot } from "@/components/quero-armas/dashboar
 import { objetivoLabel, categoriaLabel } from "./qaServiceCatalog";
 
 /* ── Lightbox 5:4 espelhado (compartilhado por todas as miniaturas) ── */
-function PhotoLightbox({ url, alt, onClose }: { url: string; alt: string; onClose: () => void }) {
+function PhotoLightbox({ url, alt, onClose, mirror = true, fit = "cover" }: { url: string; alt: string; onClose: () => void; mirror?: boolean; fit?: "cover" | "contain" }) {
   return (
     <div
       className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4"
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-2xl"
-        style={{ aspectRatio: "5 / 4" }}
+        className="relative w-full max-w-4xl"
+        style={{ aspectRatio: fit === "contain" ? "4 / 3" : "5 / 4" }}
         onClick={e => e.stopPropagation()}
       >
         <img
           src={url}
           alt={alt}
-          className="w-full h-full object-cover rounded-2xl shadow-2xl"
-          style={{ transform: "scaleX(-1)" }}
+          className={`w-full h-full ${fit === "contain" ? "object-contain bg-slate-900" : "object-cover"} rounded-2xl shadow-2xl`}
+          style={mirror ? { transform: "scaleX(-1)" } : undefined}
         />
         <button
           type="button"
@@ -98,9 +98,47 @@ function SelfieThumb({ path, name, size = "lg" }: { path: string | null | undefi
   );
 }
 
-function DocumentThumb({ path, label, name }: { path: string | null | undefined; label: string; name?: string | null }) {
+function DocumentThumb({
+  path,
+  label,
+  name,
+  kind = "doc",
+}: {
+  path: string | null | undefined;
+  label: string;
+  name?: string | null;
+  kind?: "selfie" | "doc";
+}) {
   const url = usePrivateStorageUrl("qa-cadastro-selfies", path);
   const [open, setOpen] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const isSelfie = kind === "selfie";
+
+  const handleDownload = async () => {
+    if (!url || !path) return;
+    setDownloading(true);
+    try {
+      const resp = await fetch(url);
+      const blob = await resp.blob();
+      const ext = (path.split(".").pop() || "jpg").toLowerCase();
+      const safeName = (name || "documento").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      const safeLabel = label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      const filename = `${safeName}-${safeLabel}.${ext}`;
+      const objUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = objUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(objUrl);
+    } catch (err) {
+      console.error("[download]", err);
+      toast.error("Falha ao baixar o arquivo");
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   return (
     <div className="flex flex-col gap-2">
@@ -109,17 +147,44 @@ function DocumentThumb({ path, label, name }: { path: string | null | undefined;
         type="button"
         onClick={() => url && setOpen(true)}
         disabled={!url}
-        className={`relative w-full aspect-[4/3] rounded-lg overflow-hidden border bg-slate-50 flex items-center justify-center transition-all ${url ? "hover:ring-2 hover:ring-blue-300 cursor-zoom-in" : "cursor-default"}`}
+        className={`relative w-full aspect-[4/3] rounded-lg overflow-hidden border bg-slate-100 flex items-center justify-center transition-all ${url ? "hover:ring-2 hover:ring-blue-300 cursor-zoom-in" : "cursor-default"}`}
         style={{ borderColor: "hsl(220 13% 88%)" }}
         title={url ? "Clique para ampliar" : "Não enviado"}
       >
         {url ? (
-          <img src={url} alt={label} loading="lazy" decoding="async" className="w-full h-full object-cover" />
+          <img
+            src={url}
+            alt={label}
+            loading="lazy"
+            decoding="async"
+            className={`w-full h-full ${isSelfie ? "object-cover" : "object-contain"}`}
+          />
         ) : (
           <span className="text-xs font-medium" style={{ color: "hsl(220 10% 60%)" }}>NÃO ENVIADO</span>
         )}
       </button>
-      {open && url && <PhotoLightbox url={url} alt={`${label} — ${name || ""}`} onClose={() => setOpen(false)} />}
+      {url && (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={handleDownload}
+          disabled={downloading}
+          className="h-8 text-[11px] gap-1.5"
+        >
+          {downloading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />}
+          Baixar
+        </Button>
+      )}
+      {open && url && (
+        <PhotoLightbox
+          url={url}
+          alt={`${label} — ${name || ""}`}
+          onClose={() => setOpen(false)}
+          mirror={isSelfie}
+          fit={isSelfie ? "cover" : "contain"}
+        />
+      )}
     </div>
   );
 }
@@ -141,6 +206,145 @@ function ClientPhoto({ path, name, className }: { path: string | null | undefine
       </button>
       {open && <PhotoLightbox url={url} alt={name} onClose={() => setOpen(false)} />}
     </>
+  );
+}
+
+/* ── OCR de documentos do cadastro público (admin) ── */
+function CadastroDocumentosCard({
+  cadastro,
+  onUpdated,
+}: {
+  cadastro: any;
+  onUpdated: (next: any) => void;
+}) {
+  const [extracting, setExtracting] = useState(false);
+  const idUrl = usePrivateStorageUrl("qa-cadastro-selfies", cadastro.documento_identidade_path);
+  const addrUrl = usePrivateStorageUrl("qa-cadastro-selfies", cadastro.comprovante_endereco_path);
+
+  const fetchAsDataUrl = async (url: string | null): Promise<string | null> => {
+    if (!url) return null;
+    try {
+      const resp = await fetch(url);
+      const blob = await resp.blob();
+      return await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    } catch (err) {
+      console.error("[ocr-fetch]", err);
+      return null;
+    }
+  };
+
+  const onlyDigits = (s: string | null | undefined) => (s || "").replace(/\D/g, "");
+
+  const handleExtract = async () => {
+    if (!idUrl && !addrUrl) {
+      toast.error("Nenhum documento disponível para extração");
+      return;
+    }
+    setExtracting(true);
+    const tId = toast.loading("Lendo documentos com IA…");
+    try {
+      const [identityDataUrl, addressDataUrl] = await Promise.all([
+        fetchAsDataUrl(idUrl),
+        fetchAsDataUrl(addrUrl),
+      ]);
+
+      const { data, error } = await supabase.functions.invoke("qa-extract-documents", {
+        body: {
+          identity_image: identityDataUrl || undefined,
+          address_image: addressDataUrl || undefined,
+        },
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || "Falha na extração");
+
+      const id = data.identity || {};
+      const addr = data.address || {};
+
+      const patch: Record<string, any> = {};
+      const setIfEmpty = (field: string, value: any) => {
+        if (value == null || value === "") return;
+        if (!cadastro[field]) patch[field] = value;
+      };
+
+      setIfEmpty("nome_completo", id.nome_completo);
+      if (id.cpf && onlyDigits(cadastro.cpf).length !== 11) patch.cpf = onlyDigits(id.cpf);
+      setIfEmpty("rg", id.rg);
+      setIfEmpty("emissor_rg", id.emissor_rg);
+      if (id.data_nascimento) {
+        const iso = id.data_nascimento.includes("/")
+          ? id.data_nascimento.split("/").reverse().join("-")
+          : id.data_nascimento;
+        setIfEmpty("data_nascimento", iso);
+      }
+      setIfEmpty("nome_mae", id.nome_mae);
+      setIfEmpty("nome_pai", id.nome_pai);
+
+      if (addr.cep) setIfEmpty("end1_cep", onlyDigits(addr.cep));
+      setIfEmpty("end1_logradouro", addr.logradouro);
+      setIfEmpty("end1_numero", addr.numero);
+      setIfEmpty("end1_complemento", addr.complemento);
+      setIfEmpty("end1_bairro", addr.bairro);
+      setIfEmpty("end1_cidade", addr.cidade);
+      setIfEmpty("end1_estado", addr.estado);
+
+      if (Object.keys(patch).length === 0) {
+        toast.dismiss(tId);
+        toast.info("Nenhum campo novo a preencher — o cadastro já está completo.");
+        return;
+      }
+
+      const { data: updated, error: upErr } = await supabase
+        .from("qa_cadastro_publico" as any)
+        .update(patch)
+        .eq("id", cadastro.id)
+        .select("*")
+        .maybeSingle();
+      if (upErr) throw upErr;
+
+      onUpdated(updated);
+      toast.dismiss(tId);
+      toast.success(`Cadastro atualizado: ${Object.keys(patch).length} campo(s) preenchido(s) via OCR`);
+    } catch (err: any) {
+      console.error("[ocr-extract]", err);
+      toast.dismiss(tId);
+      toast.error(err?.message || "Falha ao extrair dados do documento");
+    } finally {
+      setExtracting(false);
+    }
+  };
+
+  const hasAnyDoc = !!(cadastro.documento_identidade_path || cadastro.comprovante_endereco_path);
+
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <DocumentThumb path={cadastro.selfie_path} label="Selfie" name={cadastro.nome_completo} kind="selfie" />
+        <DocumentThumb path={cadastro.documento_identidade_path} label="Documento de identidade" name={cadastro.nome_completo} kind="doc" />
+        <DocumentThumb path={cadastro.comprovante_endereco_path} label="Comprovante de endereço" name={cadastro.nome_completo} kind="doc" />
+      </div>
+      {hasAnyDoc && (
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-3 border-t" style={{ borderColor: "hsl(220 13% 93%)" }}>
+          <p className="text-[11px] flex-1" style={{ color: "hsl(220 10% 50%)" }}>
+            A IA lê CNH/RG e comprovante e <strong>preenche apenas os campos vazios</strong> do cadastro automaticamente.
+          </p>
+          <Button
+            type="button"
+            size="sm"
+            onClick={handleExtract}
+            disabled={extracting}
+            className="shrink-0 gap-1.5 h-8 text-[11px]"
+          >
+            {extracting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Crosshair className="w-3 h-3" />}
+            EXTRAIR DADOS VIA OCR
+          </Button>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -1910,11 +2114,13 @@ export default function QAClientesPage() {
 
           {(c.selfie_path || c.documento_identidade_path || c.comprovante_endereco_path) && (
             <DetailCard title="Documentos enviados pelo cliente">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <DocumentThumb path={c.selfie_path} label="Selfie" name={c.nome_completo} />
-                <DocumentThumb path={c.documento_identidade_path} label="Documento de identidade" name={c.nome_completo} />
-                <DocumentThumb path={c.comprovante_endereco_path} label="Comprovante de endereço" name={c.nome_completo} />
-              </div>
+              <CadastroDocumentosCard
+                cadastro={c}
+                onUpdated={(updated) => {
+                  setSelectedCadastroPublico(updated);
+                  setCadastrosPublicos(prev => prev.map(it => it.id === updated.id ? { ...it, ...updated } : it));
+                }}
+              />
             </DetailCard>
           )}
           {(() => {
