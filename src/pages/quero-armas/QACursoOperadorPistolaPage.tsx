@@ -675,29 +675,28 @@ export default function QACursoOperadorPistolaPage() {
           <div className="container max-w-6xl mx-auto px-4">
             <div className="grid md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] gap-10 md:gap-16 items-center">
               <div className="relative mx-auto md:mx-0 max-w-sm w-full">
-                <div
-                  className="w-full aspect-[3/4] rounded-sm flex flex-col items-center justify-center relative"
+                <div className="relative w-full aspect-[3/4] overflow-hidden rounded-sm"
                   style={{
                     background: `linear-gradient(135deg, ${PANEL}, ${BLACK_2})`,
                     border: `1px solid ${OD_LINE}`,
                   }}
                 >
-                  <Shield className="w-14 h-14 mb-3" style={{ color: SAND_DIM }} strokeWidth={1.2} />
-                  <span className="font-mono text-[10px] tracking-[0.25em] uppercase" style={{ color: STEEL_DIM }}>
-                    Foto do instrutor
-                  </span>
-                  <span className="font-mono text-[10px] tracking-[0.25em] uppercase mt-1" style={{ color: SAND_DIM }}>
-                    [ classified ]
-                  </span>
+                  <img
+                    src={instrutorImg}
+                    alt="Willian Massaroto — instrutor de armamento e tiro · IAT credenciado"
+                    loading="lazy"
+                    className="w-full h-full object-cover object-top"
+                    style={{ filter: "grayscale(0.2) contrast(1.08) brightness(0.96)" }}
+                  />
                   {/* HUD corners */}
                   <span aria-hidden className="absolute top-0 left-0 w-3 h-3"
-                    style={{ borderTop: `1px solid ${SAND}`, borderLeft: `1px solid ${SAND}`, opacity: 0.6 }} />
+                    style={{ borderTop: `1px solid ${SAND}`, borderLeft: `1px solid ${SAND}`, opacity: 0.7 }} />
                   <span aria-hidden className="absolute top-0 right-0 w-3 h-3"
-                    style={{ borderTop: `1px solid ${SAND}`, borderRight: `1px solid ${SAND}`, opacity: 0.6 }} />
+                    style={{ borderTop: `1px solid ${SAND}`, borderRight: `1px solid ${SAND}`, opacity: 0.7 }} />
                   <span aria-hidden className="absolute bottom-0 left-0 w-3 h-3"
-                    style={{ borderBottom: `1px solid ${SAND}`, borderLeft: `1px solid ${SAND}`, opacity: 0.6 }} />
+                    style={{ borderBottom: `1px solid ${SAND}`, borderLeft: `1px solid ${SAND}`, opacity: 0.7 }} />
                   <span aria-hidden className="absolute bottom-0 right-0 w-3 h-3"
-                    style={{ borderBottom: `1px solid ${SAND}`, borderRight: `1px solid ${SAND}`, opacity: 0.6 }} />
+                    style={{ borderBottom: `1px solid ${SAND}`, borderRight: `1px solid ${SAND}`, opacity: 0.7 }} />
                 </div>
                 <div
                   className="absolute bottom-3 left-3 px-2.5 py-1 font-mono text-[10px] tracking-[0.2em] uppercase font-bold"
