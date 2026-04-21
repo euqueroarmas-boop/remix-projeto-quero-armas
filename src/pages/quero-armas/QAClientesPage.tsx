@@ -430,16 +430,29 @@ function CadastroDocumentosCard({
           <p className="text-[11px] flex-1" style={{ color: "hsl(220 10% 50%)" }}>
             A IA lê CNH/RG e comprovante e <strong>preenche apenas os campos vazios</strong> do cadastro automaticamente.
           </p>
-          <Button
-            type="button"
-            size="sm"
-            onClick={handleExtract}
-            disabled={extracting}
-            className="shrink-0 gap-1.5 h-8 text-[11px]"
-          >
-            {extracting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Crosshair className="w-3 h-3" />}
-            EXTRAIR DADOS VIA OCR
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={handleScanPdf}
+              disabled={scanning}
+              className="gap-1.5 h-8 text-[11px]"
+            >
+              {scanning ? <Loader2 className="w-3 h-3 animate-spin" /> : <FileDown className="w-3 h-3" />}
+              BAIXAR PDF DIGITALIZADO
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              onClick={handleExtract}
+              disabled={extracting}
+              className="gap-1.5 h-8 text-[11px]"
+            >
+              {extracting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Crosshair className="w-3 h-3" />}
+              EXTRAIR DADOS VIA OCR
+            </Button>
+          </div>
         </div>
       )}
     </div>
