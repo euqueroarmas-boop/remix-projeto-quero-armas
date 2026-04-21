@@ -457,9 +457,6 @@ export default function QACursoOperadorPistolaPage() {
         </section>
 
         {/* ============ O QUE VOCÊ APRENDE ============ */}
-        <section className="py-20 md:py-28" style={{ background: GUNMETAL }}>
-        </section>
-
         {/* ============ 3 CENÁRIOS REAIS + CITAÇÃO ============ */}
         <section className="py-16 md:py-20 relative" style={{ background: BLACK }}>
           <div className="container max-w-6xl mx-auto px-4">
