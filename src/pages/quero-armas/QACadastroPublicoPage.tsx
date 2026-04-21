@@ -348,6 +348,53 @@ export default function QACadastroPublicoPage() {
 }
 
 /* ─────────────────────── Stepper ─────────────────────── */
+function DuplicateModal({
+  info, busy, onCancel, onConfirm,
+}: {
+  info: { id: string; status: string; created_at: string };
+  busy: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  const dt = info.created_at ? new Date(info.created_at).toLocaleDateString("pt-BR") : "";
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+      <div className="w-full max-w-sm bg-white rounded-2xl p-5 shadow-xl">
+        <div className="flex items-center gap-2 mb-2">
+          <Info className="w-5 h-5" style={{ color: "hsl(230 80% 56%)" }} />
+          <h3 className="text-base font-bold" style={{ color: "hsl(220 25% 15%)" }}>
+            Cadastro já existe
+          </h3>
+        </div>
+        <p className="text-xs leading-relaxed" style={{ color: "hsl(220 10% 40%)" }}>
+          Já encontramos um cadastro com este CPF{dt ? ` (criado em ${dt})` : ""}.
+          Status atual: <strong>{info.status}</strong>.
+          Deseja <strong>atualizar</strong> o cadastro existente com as informações enviadas?
+        </p>
+        <div className="mt-4 flex gap-2">
+          <button
+            onClick={onCancel}
+            disabled={busy}
+            className="flex-1 h-10 rounded-lg text-xs font-semibold border border-slate-200 disabled:opacity-50"
+            style={{ color: "hsl(220 25% 25%)" }}
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={busy}
+            className="flex-1 h-10 rounded-lg text-xs font-semibold text-white disabled:opacity-50 flex items-center justify-center gap-1.5"
+            style={{ background: "linear-gradient(135deg, hsl(230 80% 56%), hsl(240 80% 60%))" }}
+          >
+            {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+            Atualizar cadastro
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Stepper({ current }: { current: StepId }) {
   return (
     <div className="mt-5 flex items-center justify-between">
