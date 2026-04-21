@@ -3,18 +3,26 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Upload, Camera, CheckCircle2, Loader2, FileText, IdCard, UserCircle2,
   Sparkles, ChevronRight, RotateCcw, AlertCircle, ArrowLeft, Shield, Info, Search,
+  Target, Layers, ChevronDown,
 } from "lucide-react";
 import { QALogo } from "@/components/quero-armas/QALogo";
+import {
+  OBJETIVOS_PRINCIPAIS,
+  CATEGORIAS_SERVICO,
+  findCategoria,
+  findServico,
+} from "./qaServiceCatalog";
 
 /* =========================================================================
- * Cadastro do Cliente — Fluxo guiado em 4 etapas
- * 1) DOCUMENTOS  → 2) EXTRAÇÃO  → 3) REVISÃO  → 4) CONCLUSÃO
+ * Cadastro do Cliente — Fluxo guiado em 5 etapas
+ * 0) QUALIFICAÇÃO → 1) DOCUMENTOS → 2) EXTRAÇÃO → 3) REVISÃO → 4) CONCLUSÃO
  * Premium, mobile-first, alta UX.
  * ========================================================================= */
 
-type StepId = 1 | 2 | 3 | 4;
+type StepId = 0 | 1 | 2 | 3 | 4;
 
 const STEPS: { id: StepId; label: string }[] = [
+  { id: 0, label: "Serviço" },
   { id: 1, label: "Documentos" },
   { id: 2, label: "Extração" },
   { id: 3, label: "Revisão" },
