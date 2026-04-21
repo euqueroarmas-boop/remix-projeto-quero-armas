@@ -2000,6 +2000,7 @@ export type Database = {
           aut_endereco: string | null
           aut_nome_profissional: string | null
           aut_telefone: string | null
+          categoria_servico: string | null
           cliente_id_vinculado: number | null
           comprovante_endereco_path: string | null
           consentimento_dados_verdadeiros: boolean
@@ -2011,6 +2012,7 @@ export type Database = {
           cpf: string
           created_at: string
           data_nascimento: string | null
+          descricao_servico_livre: string | null
           documento_identidade_path: string | null
           email: string
           emissor_rg: string | null
@@ -2052,15 +2054,20 @@ export type Database = {
           nome_mae: string | null
           nome_pai: string | null
           notas_processamento: string | null
+          objetivo_principal: string | null
           observacoes: string | null
+          origem_cadastro: string | null
           pago: boolean
           processado_em: string | null
           processado_por: string | null
           profissao: string | null
           rg: string | null
           selfie_path: string | null
+          servico_fechado_final: string | null
           servico_interesse: string | null
+          servico_principal: string | null
           status: string
+          subtipo_servico: string | null
           telefone_principal: string
           telefone_secundario: string | null
           tem_segundo_endereco: boolean | null
@@ -2081,6 +2088,7 @@ export type Database = {
           aut_endereco?: string | null
           aut_nome_profissional?: string | null
           aut_telefone?: string | null
+          categoria_servico?: string | null
           cliente_id_vinculado?: number | null
           comprovante_endereco_path?: string | null
           consentimento_dados_verdadeiros?: boolean
@@ -2092,6 +2100,7 @@ export type Database = {
           cpf: string
           created_at?: string
           data_nascimento?: string | null
+          descricao_servico_livre?: string | null
           documento_identidade_path?: string | null
           email: string
           emissor_rg?: string | null
@@ -2133,15 +2142,20 @@ export type Database = {
           nome_mae?: string | null
           nome_pai?: string | null
           notas_processamento?: string | null
+          objetivo_principal?: string | null
           observacoes?: string | null
+          origem_cadastro?: string | null
           pago?: boolean
           processado_em?: string | null
           processado_por?: string | null
           profissao?: string | null
           rg?: string | null
           selfie_path?: string | null
+          servico_fechado_final?: string | null
           servico_interesse?: string | null
+          servico_principal?: string | null
           status?: string
+          subtipo_servico?: string | null
           telefone_principal: string
           telefone_secundario?: string | null
           tem_segundo_endereco?: boolean | null
@@ -2162,6 +2176,7 @@ export type Database = {
           aut_endereco?: string | null
           aut_nome_profissional?: string | null
           aut_telefone?: string | null
+          categoria_servico?: string | null
           cliente_id_vinculado?: number | null
           comprovante_endereco_path?: string | null
           consentimento_dados_verdadeiros?: boolean
@@ -2173,6 +2188,7 @@ export type Database = {
           cpf?: string
           created_at?: string
           data_nascimento?: string | null
+          descricao_servico_livre?: string | null
           documento_identidade_path?: string | null
           email?: string
           emissor_rg?: string | null
@@ -2214,15 +2230,20 @@ export type Database = {
           nome_mae?: string | null
           nome_pai?: string | null
           notas_processamento?: string | null
+          objetivo_principal?: string | null
           observacoes?: string | null
+          origem_cadastro?: string | null
           pago?: boolean
           processado_em?: string | null
           processado_por?: string | null
           profissao?: string | null
           rg?: string | null
           selfie_path?: string | null
+          servico_fechado_final?: string | null
           servico_interesse?: string | null
+          servico_principal?: string | null
           status?: string
+          subtipo_servico?: string | null
           telefone_principal?: string
           telefone_secundario?: string | null
           tem_segundo_endereco?: boolean | null
