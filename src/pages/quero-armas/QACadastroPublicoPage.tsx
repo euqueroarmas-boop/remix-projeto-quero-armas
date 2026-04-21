@@ -110,10 +110,13 @@ export default function QACadastroPublicoPage() {
 
   // arquivos / data URLs
   const [files, setFiles] = useState<Record<string, string>>({});
+  const identityRef = useRef<HTMLInputElement | null>(null);
+  const addressRef = useRef<HTMLInputElement | null>(null);
+  const selfieRef = useRef<HTMLInputElement | null>(null);
   const fileRefs = {
-    identity: useRef<HTMLInputElement | null>(null),
-    address: useRef<HTMLInputElement | null>(null),
-    selfie: useRef<HTMLInputElement | null>(null),
+    identity: identityRef,
+    address: addressRef,
+    selfie: selfieRef,
   };
 
   // extração
