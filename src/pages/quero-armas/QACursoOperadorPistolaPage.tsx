@@ -296,13 +296,13 @@ export default function QACursoOperadorPistolaPage() {
               aria-hidden
               className="absolute top-10 right-10 w-40 h-40 rounded-full hidden md:block opacity-30"
               style={{
-                border: `1px solid ${AMBER}`,
-                boxShadow: `inset 0 0 0 1px rgba(0,0,0,0.4), 0 0 40px hsla(40,85%,55%,0.15)`,
+                border: `1px solid ${SAND_DIM}`,
+                boxShadow: `inset 0 0 0 1px rgba(0,0,0,0.4)`,
               }}
             >
               <div className="absolute inset-0 flex items-center justify-center">
-                <div style={{ width: 1, height: "100%", background: AMBER, opacity: 0.5 }} />
-                <div style={{ height: 1, width: "100%", background: AMBER, opacity: 0.5, position: "absolute" }} />
+                <div style={{ width: 1, height: "100%", background: SAND_DIM, opacity: 0.6 }} />
+                <div style={{ height: 1, width: "100%", background: SAND_DIM, opacity: 0.6, position: "absolute" }} />
               </div>
             </div>
           </div>
