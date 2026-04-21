@@ -112,9 +112,24 @@ function dataUrlToBlob(dataUrl: string): { blob: Blob; ext: string } {
 /* ============================================================== */
 
 export default function QACadastroPublicoPage() {
-  const [step, setStep] = useState<StepId>(1);
+  const [step, setStep] = useState<StepId>(0);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  // ── Etapa 0 — Qualificação comercial ──
+  const [qualif, setQualif] = useState<{
+    objetivo_principal: string;
+    categoria_servico: string;
+    servico_principal: string;
+    subtipo_servico: string;
+    descricao_servico_livre: string;
+  }>({
+    objetivo_principal: "",
+    categoria_servico: "",
+    servico_principal: "",
+    subtipo_servico: "",
+    descricao_servico_livre: "",
+  });
 
   // arquivos / data URLs
   const [files, setFiles] = useState<Record<string, string>>({});
