@@ -290,6 +290,7 @@ function CadastroDocumentosCard({
   onUpdated: (next: any) => void;
 }) {
   const [extracting, setExtracting] = useState(false);
+  const [scanning, setScanning] = useState(false);
   const idUrl = usePrivateStorageUrl("qa-cadastro-selfies", cadastro.documento_identidade_path);
   const addrUrl = usePrivateStorageUrl("qa-cadastro-selfies", cadastro.comprovante_endereco_path);
 
@@ -391,6 +392,31 @@ function CadastroDocumentosCard({
   };
 
   const hasAnyDoc = !!(cadastro.documento_identidade_path || cadastro.comprovante_endereco_path);
+
+  const handleScanPdf = async () => {
+    if (!idUrl && !addrUrl) {
+      toast.error("Nenhum documento disponível para digitalizar");
+      return;
+    }
+    setScanning(true);
+    const tId = toast.loading("Digitalizando documentos…");
+    try {
+      const items = [
+        idUrl ? { url: idUrl, title: "Documento de identidade" } : null,
+        addrUrl ? { url: addrUrl, title: "Comprovante de endereço" } : null,
+      ].filter(Boolean) as Array<{ url: string; title: string }>;
+      const safeName = (cadastro.nome_completo || "documento").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      await generateScannedPdf(items, `${safeName}-documentos-digitalizados.pdf`);
+      toast.dismiss(tId);
+      toast.success("PDF digitalizado gerado com sucesso");
+    } catch (err: any) {
+      console.error("[scan-pdf]", err);
+      toast.dismiss(tId);
+      toast.error(err?.message || "Falha ao gerar PDF digitalizado");
+    } finally {
+      setScanning(false);
+    }
+  };
 
   return (
     <div className="space-y-3">
