@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, Fragment } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Upload, Camera, CheckCircle2, Loader2, FileText, IdCard, UserCircle2,
@@ -399,53 +399,43 @@ function Stepper({ current }: { current: StepId }) {
   return (
     <div className="mt-5 px-2">
       {/* Linha de círculos + conectores */}
-      <div className="flex items-center">
+      <div className="flex items-start">
         {STEPS.map((s, i) => {
           const done = current > s.id;
           const active = current === s.id;
           const nextReached = current > s.id;
           const isLast = i === STEPS.length - 1;
           return (
-            <div key={s.id} className={`flex items-center ${isLast ? "" : "flex-1"}`}>
-              <div
-                className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-semibold shrink-0"
-                style={{
-                  background: done
-                    ? "hsl(152 65% 45%)"
-                    : active
-                      ? "hsl(222 89% 55%)"
-                      : "hsl(220 15% 90%)",
-                  color: done || active ? "white" : "hsl(220 10% 55%)",
-                  boxShadow: active ? "0 0 0 4px hsl(222 89% 55% / 0.15)" : "none",
-                }}
-              >
-                {done ? <CheckCircle2 className="w-4 h-4" /> : s.id}
+            <Fragment key={s.id}>
+              <div className="flex flex-col items-center shrink-0" style={{ width: 56 }}>
+                <div
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-semibold"
+                  style={{
+                    background: done
+                      ? "hsl(152 65% 45%)"
+                      : active
+                        ? "hsl(222 89% 55%)"
+                        : "hsl(220 15% 90%)",
+                    color: done || active ? "white" : "hsl(220 10% 55%)",
+                    boxShadow: active ? "0 0 0 4px hsl(222 89% 55% / 0.15)" : "none",
+                  }}
+                >
+                  {done ? <CheckCircle2 className="w-4 h-4" /> : s.id}
+                </div>
+                <span
+                  className="mt-1.5 text-[11px] font-medium text-center leading-tight"
+                  style={{ color: active ? "hsl(220 25% 20%)" : "hsl(220 10% 55%)" }}
+                >
+                  {s.label}
+                </span>
               </div>
               {!isLast && (
                 <div
-                  className="flex-1 h-[3px] mx-1.5 rounded-full"
+                  className="flex-1 h-[3px] rounded-full mt-[14px]"
                   style={{ background: nextReached ? "hsl(222 89% 55%)" : "hsl(220 13% 88%)" }}
                 />
               )}
-            </div>
-          );
-        })}
-      </div>
-      {/* Linha de rótulos */}
-      <div className="mt-1.5 flex justify-between">
-        {STEPS.map((s) => {
-          const active = current === s.id;
-          return (
-            <span
-              key={s.id}
-              className="text-[11px] font-medium text-center"
-              style={{
-                color: active ? "hsl(220 25% 20%)" : "hsl(220 10% 55%)",
-                width: "32px",
-              }}
-            >
-              {s.label}
-            </span>
+            </Fragment>
           );
         })}
       </div>
@@ -479,13 +469,17 @@ function Step1Documents({
             </div>
             <div className="flex items-center gap-3">
               {sent ? (
-                <img
-                  src={files[slot.key]}
-                  alt=""
+                <div
                   className={slot.key === "selfie"
-                    ? "w-12 h-12 object-cover border border-slate-200 rounded-full"
-                    : "w-[68px] h-[44px] object-cover border border-slate-200 rounded-md"}
-                />
+                    ? "w-12 h-12 rounded-full overflow-hidden border border-slate-200 shrink-0 bg-slate-50"
+                    : "w-[64px] h-[44px] rounded-md overflow-hidden border border-slate-200 shrink-0 bg-slate-50"}
+                >
+                  <img
+                    src={files[slot.key]}
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
+                </div>
               ) : (
                 <div className={slot.key === "selfie"
                   ? "w-12 h-12 flex items-center justify-center border border-dashed border-slate-300 bg-slate-50 rounded-full"
