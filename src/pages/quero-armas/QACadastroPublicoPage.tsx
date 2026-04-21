@@ -11,6 +11,7 @@ import {
   CATEGORIAS_SERVICO,
   findCategoria,
   findServico,
+  getCategoriasPorObjetivo,
 } from "./qaServiceCatalog";
 
 /* =========================================================================
