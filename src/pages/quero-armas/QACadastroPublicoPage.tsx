@@ -398,41 +398,44 @@ function DuplicateModal({
 function Stepper({ current }: { current: StepId }) {
   return (
     <div className="mt-5 px-2">
-      <div className="relative flex items-start justify-between">
-        {/* linha base cinza */}
-        <div className="absolute h-[2px]" style={{ left: "12.5%", right: "12.5%", top: "15px", background: "hsl(220 13% 88%)" }} />
-        {/* linha de progresso colorida */}
-        <div
-          className="absolute h-[2px] transition-all"
-          style={{
-            background: "hsl(222 89% 55%)",
-            left: "12.5%",
-            top: "15px",
-            width: `calc(75% * ${(current - 1) / (STEPS.length - 1)})`,
-          }}
-        />
+      <div className="flex items-start justify-between">
         {STEPS.map((s, i) => {
           const done = current > s.id;
           const active = current === s.id;
+          const nextReached = current > s.id; // a linha à direita fica colorida quando já passamos desse passo
+          const isLast = i === STEPS.length - 1;
           return (
-            <div key={s.id} className="flex-1 flex flex-col items-center relative">
-              <div
-                className="relative z-10 w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-semibold transition-all"
-                style={{
-                  background: done
-                    ? "hsl(152 65% 45%)"
-                    : active
-                      ? "hsl(222 89% 55%)"
-                      : "hsl(220 15% 90%)",
-                  color: done || active ? "white" : "hsl(220 10% 55%)",
-                  boxShadow: active ? "0 0 0 4px hsl(222 89% 55% / 0.15)" : "none",
-                }}
-              >
-                {done ? <CheckCircle2 className="w-4 h-4" /> : s.id}
+            <div key={s.id} className="flex flex-col items-center" style={{ flex: isLast ? "0 0 auto" : "1 1 0%" }}>
+              <div className="flex items-center w-full">
+                <div
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-semibold shrink-0"
+                  style={{
+                    background: done
+                      ? "hsl(152 65% 45%)"
+                      : active
+                        ? "hsl(222 89% 55%)"
+                        : "hsl(220 15% 90%)",
+                    color: done || active ? "white" : "hsl(220 10% 55%)",
+                    boxShadow: active ? "0 0 0 4px hsl(222 89% 55% / 0.15)" : "none",
+                  }}
+                >
+                  {done ? <CheckCircle2 className="w-4 h-4" /> : s.id}
+                </div>
+                {!isLast && (
+                  <div
+                    className="flex-1 h-[2px] mx-1"
+                    style={{ background: nextReached ? "hsl(222 89% 55%)" : "hsl(220 13% 88%)" }}
+                  />
+                )}
               </div>
               <span
                 className="mt-1.5 text-[11px] font-medium"
-                style={{ color: active ? "hsl(220 25% 20%)" : "hsl(220 10% 55%)" }}
+                style={{
+                  color: active ? "hsl(220 25% 20%)" : "hsl(220 10% 55%)",
+                  marginLeft: isLast ? 0 : "-50%",
+                  alignSelf: isLast ? "center" : "flex-start",
+                  paddingLeft: isLast ? 0 : "4px",
+                }}
               >
                 {s.label}
               </span>
