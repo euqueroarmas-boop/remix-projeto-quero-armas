@@ -444,41 +444,45 @@ function Step1Documents({
         const Icon = slot.icon;
         const sent = !!files[slot.key];
         return (
-          <div
+          <button
             key={slot.key}
-            className={`rounded-xl border transition-all p-3 ${sent ? "border-[hsl(152_60%_45%)] bg-[hsl(152_60%_98%)]" : "border-slate-200 bg-white hover:border-slate-300"}`}
+            type="button"
+            onClick={() => fileRefs[slot.key].current?.click()}
+            className="w-full text-left rounded-2xl border border-slate-200 bg-white p-3.5 transition-all hover:border-slate-300 hover:shadow-sm"
           >
+            <div className="flex items-center gap-2 mb-2.5">
+              <Icon className="w-4 h-4" style={{ color: "hsl(220 25% 25%)" }} />
+              <span className="text-sm font-semibold" style={{ color: "hsl(220 25% 15%)" }}>
+                {slot.label}
+              </span>
+            </div>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
-                style={{ background: sent ? "hsl(152 60% 92%)" : "hsl(220 20% 96%)" }}>
-                {sent
-                  ? <CheckCircle2 className="w-5 h-5" style={{ color: "hsl(152 60% 40%)" }} />
-                  : <Icon className="w-5 h-5" style={{ color: "hsl(230 60% 50%)" }} />}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold" style={{ color: "hsl(220 25% 18%)" }}>
-                  {slot.label}
+              {sent ? (
+                <img
+                  src={files[slot.key]}
+                  alt=""
+                  className={`w-14 h-14 object-cover border border-slate-200 ${slot.key === "selfie" ? "rounded-full" : "rounded-lg"}`}
+                />
+              ) : (
+                <div className={`w-14 h-14 flex items-center justify-center border border-dashed border-slate-300 bg-slate-50 ${slot.key === "selfie" ? "rounded-full" : "rounded-lg"}`}>
+                  {slot.key === "selfie"
+                    ? <Camera className="w-5 h-5" style={{ color: "hsl(220 10% 55%)" }} />
+                    : <Upload className="w-5 h-5" style={{ color: "hsl(220 10% 55%)" }} />}
                 </div>
-                <div className="text-[11px] truncate" style={{ color: "hsl(220 10% 50%)" }}>
-                  {sent ? "Enviado · toque para substituir" : slot.description}
-                </div>
-              </div>
-              {files[slot.key] && (
-                <img src={files[slot.key]} alt="" className="w-12 h-12 rounded-lg object-cover border border-slate-200" />
+              )}
+              {sent ? (
+                <span
+                  className="inline-flex items-center gap-1 h-7 px-2.5 rounded-full text-xs font-semibold"
+                  style={{ background: "hsl(152 65% 94%)", color: "hsl(152 65% 32%)" }}
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" /> Enviado
+                </span>
+              ) : (
+                <span className="text-[11px]" style={{ color: "hsl(220 10% 50%)" }}>
+                  {slot.description}
+                </span>
               )}
             </div>
-            <button
-              onClick={() => fileRefs[slot.key].current?.click()}
-              className="mt-2.5 w-full h-9 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
-              style={{
-                background: sent ? "white" : "hsl(220 20% 97%)",
-                color: "hsl(220 25% 25%)",
-                border: "1px solid hsl(220 13% 88%)",
-              }}
-            >
-              {slot.key === "selfie" ? <Camera className="w-3.5 h-3.5" /> : <Upload className="w-3.5 h-3.5" />}
-              {sent ? "Substituir arquivo" : (slot.key === "selfie" ? "Tirar selfie" : "Enviar arquivo")}
-            </button>
             <input
               ref={fileRefs[slot.key]}
               type="file"
@@ -487,7 +491,7 @@ function Step1Documents({
               hidden
               onChange={(e) => onPick(e, slot.key)}
             />
-          </div>
+          </button>
         );
       })}
 
@@ -502,9 +506,9 @@ function Step1Documents({
         onClick={onContinue}
         disabled={!allUploaded}
         className="w-full h-12 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-        style={{ background: "linear-gradient(135deg, hsl(230 80% 56%), hsl(240 80% 60%))", boxShadow: "0 4px 14px hsl(230 80% 56% / 0.35)" }}
+        style={{ background: "hsl(222 89% 55%)", boxShadow: "0 4px 14px hsl(222 89% 55% / 0.30)" }}
       >
-        <Sparkles className="w-4 h-4" /> Extrair dados
+        Extrair dados
       </button>
 
       <button
@@ -522,35 +526,46 @@ function Step1Documents({
 function Step2Extracting({ stages, error }: { stages: Record<string, string>; error: string | null }) {
   return (
     <div className="py-4">
-      <div className="mx-auto w-32 h-32 rounded-full flex items-center justify-center mb-5"
-        style={{ background: "radial-gradient(circle, hsl(230 90% 95%), hsl(220 25% 97%))" }}>
+      <div className="mx-auto w-36 h-36 rounded-full flex items-center justify-center mb-6"
+        style={{ background: "hsl(220 95% 96%)" }}>
         <div className="relative">
-          <FileText className="w-14 h-14" style={{ color: "hsl(230 70% 55%)" }} />
-          <Sparkles className="w-5 h-5 absolute -top-1 -right-2 animate-pulse" style={{ color: "hsl(45 90% 55%)" }} />
+          <FileText className="w-16 h-16" strokeWidth={1.6} style={{ color: "hsl(222 89% 55%)" }} />
+          <Sparkles className="w-5 h-5 absolute -top-2 -right-2 animate-pulse" style={{ color: "hsl(222 89% 55%)" }} />
+          <span className="absolute bottom-1 right-0 text-[9px] font-bold px-1.5 py-0.5 rounded text-white"
+            style={{ background: "hsl(222 89% 55%)" }}>AI</span>
         </div>
       </div>
-      <h2 className="text-center text-base font-bold mb-1.5" style={{ color: "hsl(220 25% 18%)" }}>
+      <h2 className="text-center text-lg font-bold mb-2" style={{ color: "hsl(220 25% 15%)" }}>
         Extraindo dados dos documentos…
       </h2>
-      <p className="text-center text-xs mb-4" style={{ color: "hsl(220 10% 50%)" }}>Aguarde um momento</p>
 
-      <div className="h-1.5 rounded-full overflow-hidden mb-5" style={{ background: "hsl(220 20% 92%)" }}>
+      <div className="h-1.5 rounded-full overflow-hidden mb-2 mx-6" style={{ background: "hsl(220 20% 92%)" }}>
         <div className="h-full animate-[progress_2.5s_ease-in-out_infinite]"
-          style={{ background: "linear-gradient(90deg, hsl(230 80% 56%), hsl(240 80% 60%))", width: "60%" }} />
+          style={{ background: "hsl(222 89% 55%)", width: "60%" }} />
       </div>
+      <p className="text-center text-xs mb-5" style={{ color: "hsl(220 10% 50%)" }}>Aguarde um momento…</p>
 
-      <div className="space-y-2">
+      <div className="space-y-2 border-t border-slate-100 pt-4">
         {SLOTS.map(s => {
           const Icon = s.icon;
           const st = stages[s.key];
           return (
-            <div key={s.key} className="flex items-center justify-between px-3 py-2 rounded-lg" style={{ background: "hsl(220 25% 98%)" }}>
+            <div key={s.key} className="flex items-center justify-between px-1 py-1.5">
               <div className="flex items-center gap-2">
-                <Icon className="w-4 h-4" style={{ color: "hsl(230 50% 55%)" }} />
-                <span className="text-xs font-medium" style={{ color: "hsl(220 25% 25%)" }}>{s.label}</span>
+                <Icon className="w-4 h-4" style={{ color: "hsl(220 25% 25%)" }} />
+                <span className="text-sm font-medium" style={{ color: "hsl(220 25% 20%)" }}>{s.label}</span>
               </div>
-              {st === "ok" && <CheckCircle2 className="w-4 h-4" style={{ color: "hsl(152 60% 45%)" }} />}
-              {st === "processing" && <Loader2 className="w-4 h-4 animate-spin" style={{ color: "hsl(230 70% 55%)" }} />}
+              {st === "ok" && (
+                <span className="w-5 h-5 rounded-full flex items-center justify-center"
+                  style={{ background: "hsl(152 65% 45%)" }}>
+                  <CheckCircle2 className="w-4 h-4 text-white" />
+                </span>
+              )}
+              {st === "processing" && (
+                <span className="flex items-center gap-1.5 text-xs font-medium" style={{ color: "hsl(222 89% 55%)" }}>
+                  <Loader2 className="w-4 h-4 animate-spin" /> processando
+                </span>
+              )}
               {st === "fail" && <AlertCircle className="w-4 h-4" style={{ color: "hsl(0 70% 55%)" }} />}
             </div>
           );
