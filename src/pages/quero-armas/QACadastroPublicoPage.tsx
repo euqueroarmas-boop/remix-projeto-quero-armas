@@ -124,6 +124,8 @@ export default function QACadastroPublicoPage() {
 
   // submit
   const [savedId, setSavedId] = useState<string | null>(null);
+  const [duplicate, setDuplicate] = useState<{ id: string; status: string; created_at: string } | null>(null);
+  const [updateExistingId, setUpdateExistingId] = useState<string | null>(null);
 
   /* ─── upload handler ─── */
   const handlePick = async (e: React.ChangeEvent<HTMLInputElement>, key: string) => {
@@ -236,12 +238,28 @@ export default function QACadastroPublicoPage() {
       };
 
       const { data, error } = await supabase.functions.invoke("qa-cadastro-publico", {
-        body: payload,
+        body: updateExistingId ? { ...payload, update_existing_id: updateExistingId } : payload,
       });
-      if (error) throw new Error(error.message || "Erro ao enviar cadastro");
-      if (data?.error) throw new Error(data.message || data.error);
+      // Tenta extrair o body mesmo em erros HTTP (ex.: 409 duplicate_cpf)
+      let body: any = data;
+      if (error && (error as any).context?.json) {
+        try { body = await (error as any).context.json(); } catch { /* ignore */ }
+      } else if (error && (error as any).context?.text) {
+        try { body = JSON.parse(await (error as any).context.text()); } catch { /* ignore */ }
+      }
 
-      setSavedId(data?.id || null);
+      if (body?.error === "duplicate_cpf" && body.existing_id) {
+        setDuplicate({
+          id: body.existing_id,
+          status: body.existing_status || "—",
+          created_at: body.existing_created_at || "",
+        });
+        return;
+      }
+      if (error) throw new Error(error.message || "Erro ao enviar cadastro");
+      if (body?.error) throw new Error(body.message || body.error);
+
+      setSavedId(body?.id || null);
       setStep(4);
     } catch (e: any) {
       setError(e?.message || "Erro ao concluir cadastro");
@@ -305,6 +323,20 @@ export default function QACadastroPublicoPage() {
           </div>
         </div>
 
+        {duplicate && (
+          <DuplicateModal
+            info={duplicate}
+            busy={busy}
+            onCancel={() => setDuplicate(null)}
+            onConfirm={async () => {
+              setUpdateExistingId(duplicate.id);
+              setDuplicate(null);
+              // Re-submete imediatamente como atualização
+              setTimeout(() => submit(), 0);
+            }}
+          />
+        )}
+
         {/* Selo LGPD */}
         <div className="mt-4 flex items-center justify-center gap-1.5 text-[11px]" style={{ color: "hsl(220 10% 50%)" }}>
           <Shield className="w-3 h-3" style={{ color: "hsl(230 80% 56%)" }} />
@@ -316,6 +348,53 @@ export default function QACadastroPublicoPage() {
 }
 
 /* ─────────────────────── Stepper ─────────────────────── */
+function DuplicateModal({
+  info, busy, onCancel, onConfirm,
+}: {
+  info: { id: string; status: string; created_at: string };
+  busy: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  const dt = info.created_at ? new Date(info.created_at).toLocaleDateString("pt-BR") : "";
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+      <div className="w-full max-w-sm bg-white rounded-2xl p-5 shadow-xl">
+        <div className="flex items-center gap-2 mb-2">
+          <Info className="w-5 h-5" style={{ color: "hsl(230 80% 56%)" }} />
+          <h3 className="text-base font-bold" style={{ color: "hsl(220 25% 15%)" }}>
+            Cadastro já existe
+          </h3>
+        </div>
+        <p className="text-xs leading-relaxed" style={{ color: "hsl(220 10% 40%)" }}>
+          Já encontramos um cadastro com este CPF{dt ? ` (criado em ${dt})` : ""}.
+          Status atual: <strong>{info.status}</strong>.
+          Deseja <strong>atualizar</strong> o cadastro existente com as informações enviadas?
+        </p>
+        <div className="mt-4 flex gap-2">
+          <button
+            onClick={onCancel}
+            disabled={busy}
+            className="flex-1 h-10 rounded-lg text-xs font-semibold border border-slate-200 disabled:opacity-50"
+            style={{ color: "hsl(220 25% 25%)" }}
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={busy}
+            className="flex-1 h-10 rounded-lg text-xs font-semibold text-white disabled:opacity-50 flex items-center justify-center gap-1.5"
+            style={{ background: "linear-gradient(135deg, hsl(230 80% 56%), hsl(240 80% 60%))" }}
+          >
+            {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+            Atualizar cadastro
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Stepper({ current }: { current: StepId }) {
   return (
     <div className="mt-5 flex items-center justify-between">
