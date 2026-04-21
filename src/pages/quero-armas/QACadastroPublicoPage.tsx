@@ -285,7 +285,7 @@ export default function QACadastroPublicoPage() {
       <div className="max-w-md w-full mx-auto px-4 py-6 flex-1">
         {/* Logo */}
         <div className="flex justify-center mb-5">
-          <QALogo className="h-10 w-10" />
+          <QALogo className="h-14 w-auto" />
         </div>
 
         <div className="bg-white rounded-2xl shadow-[0_8px_32px_rgba(15,23,42,0.06)] border border-slate-200/60 overflow-hidden">
