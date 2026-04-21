@@ -397,39 +397,58 @@ function DuplicateModal({
 
 function Stepper({ current }: { current: StepId }) {
   return (
-    <div className="mt-5 flex items-center justify-between">
-      {STEPS.map((s, i) => {
-        const done = current > s.id;
-        const active = current === s.id;
-        return (
-          <div key={s.id} className="flex-1 flex flex-col items-center relative">
-            {i > 0 && (
+    <div className="mt-5 px-2">
+      {/* Linha de círculos + conectores */}
+      <div className="flex items-center">
+        {STEPS.map((s, i) => {
+          const done = current > s.id;
+          const active = current === s.id;
+          const nextReached = current > s.id;
+          const isLast = i === STEPS.length - 1;
+          return (
+            <div key={s.id} className={`flex items-center ${isLast ? "" : "flex-1"}`}>
               <div
-                className="absolute top-3 right-1/2 w-full h-[2px]"
-                style={{ background: done || active ? "hsl(152 60% 50%)" : "hsl(220 13% 88%)" }}
-              />
-            )}
-            <div
-              className="relative z-10 w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-semibold text-white transition-all"
-              style={{
-                background: done
-                  ? "hsl(152 60% 45%)"
-                  : active
-                    ? "linear-gradient(135deg, hsl(230 80% 56%), hsl(240 80% 60%))"
-                    : "hsl(220 13% 85%)",
-              }}
-            >
-              {done ? <CheckCircle2 className="w-4 h-4" /> : s.id}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-semibold shrink-0"
+                style={{
+                  background: done
+                    ? "hsl(152 65% 45%)"
+                    : active
+                      ? "hsl(222 89% 55%)"
+                      : "hsl(220 15% 90%)",
+                  color: done || active ? "white" : "hsl(220 10% 55%)",
+                  boxShadow: active ? "0 0 0 4px hsl(222 89% 55% / 0.15)" : "none",
+                }}
+              >
+                {done ? <CheckCircle2 className="w-4 h-4" /> : s.id}
+              </div>
+              {!isLast && (
+                <div
+                  className="flex-1 h-[3px] mx-1.5 rounded-full"
+                  style={{ background: nextReached ? "hsl(222 89% 55%)" : "hsl(220 13% 88%)" }}
+                />
+              )}
             </div>
+          );
+        })}
+      </div>
+      {/* Linha de rótulos */}
+      <div className="mt-1.5 flex justify-between">
+        {STEPS.map((s) => {
+          const active = current === s.id;
+          return (
             <span
-              className="mt-1.5 text-[10px] uppercase tracking-wide font-medium"
-              style={{ color: active ? "hsl(220 25% 20%)" : "hsl(220 10% 55%)" }}
+              key={s.id}
+              className="text-[11px] font-medium text-center"
+              style={{
+                color: active ? "hsl(220 25% 20%)" : "hsl(220 10% 55%)",
+                width: "32px",
+              }}
             >
               {s.label}
             </span>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }
