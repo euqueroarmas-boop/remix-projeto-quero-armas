@@ -1878,6 +1878,36 @@ export default function QAClientesPage() {
             </DetailGrid>
           </DetailCard>
 
+          <DetailCard title="Qualificação comercial (cadastro público)">
+            <DetailGrid>
+              <DetailField label="Objetivo principal" value={objetivoLabel(c.objetivo_principal) || "—"} />
+              <DetailField label="Categoria" value={categoriaLabel(c.categoria_servico) || "—"} />
+              <DetailField label="Serviço escolhido" value={c.servico_principal || "—"} />
+              <DetailField label="Subtipo" value={c.subtipo_servico || "—"} />
+              <DetailField label="Origem" value={c.origem_cadastro || "—"} />
+              {isEditing ? (
+                <div className="flex items-baseline gap-2">
+                  <span className="text-xs shrink-0" style={{ color: "hsl(220 10% 50%)", minWidth: "140px" }}>Serviço fechado:</span>
+                  <input
+                    value={ef.servico_fechado_final || ""}
+                    onChange={e => setEf("servico_fechado_final", e.target.value)}
+                    placeholder="Defina após negociação"
+                    className="flex-1 text-sm font-medium border-b border-slate-300 bg-transparent outline-none focus:border-blue-500 py-0.5 uppercase"
+                    style={{ color: "hsl(220 20% 18%)" }}
+                  />
+                </div>
+              ) : (
+                <DetailField label="Serviço fechado (interno)" value={c.servico_fechado_final || "—"} />
+              )}
+            </DetailGrid>
+            {c.descricao_servico_livre && (
+              <div className="mt-3 text-xs leading-relaxed rounded-lg p-3"
+                style={{ background: "hsl(220 20% 97%)", color: "hsl(220 20% 25%)" }}>
+                <strong>Descrição livre do cliente:</strong> {c.descricao_servico_livre}
+              </div>
+            )}
+          </DetailCard>
+
           {(c.selfie_path || c.documento_identidade_path || c.comprovante_endereco_path) && (
             <DetailCard title="Documentos enviados pelo cliente">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
