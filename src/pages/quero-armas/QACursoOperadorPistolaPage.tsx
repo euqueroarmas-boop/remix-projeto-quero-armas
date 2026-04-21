@@ -538,42 +538,47 @@ export default function QACursoOperadorPistolaPage() {
         </section>
 
         {/* ============ INCLUSO ============ */}
-        <section className="py-20 md:py-28" style={{ background: "hsl(220 25% 7%)" }}>
+        <section className="py-20 md:py-28" style={{ background: GUNMETAL }}>
           <div className="container max-w-5xl mx-auto px-4">
             <div className="text-center mb-12">
-              <SectionTag>O QUE ESTÁ INCLUSO</SectionTag>
-              <h2 className="text-3xl md:text-4xl font-bold mt-5 mb-3">
-                Sem letra miúda. Sem custo extra.
+              <SectionTag>LOADOUT · KIT INCLUSO</SectionTag>
+              <h2 className="text-3xl md:text-[2.3rem] font-black mt-5 mb-3 uppercase tracking-tight">
+                Sem letra miúda. <span style={{ color: AMBER }}>Sem taxa escondida.</span>
               </h2>
-              <p style={{ color: "hsl(220 10% 70%)" }}>Tudo que você precisa para sair operador — já está pago.</p>
+              <p className="font-mono text-[13.5px]" style={{ color: STEEL }}>
+                Todo o equipamento e suprimento para operar — <span style={{ color: AMBER }}>já incluso</span>.
+              </p>
             </div>
 
             <div className="grid sm:grid-cols-2 gap-3">
               {[
-                { i: Clock, t: "10h de treinamento", d: "Prático + teórico, com instrutor CTT-CBC" },
-                { i: Coffee, t: "Café da manhã + almoço", d: "Refeições completas, sem custo adicional" },
-                { i: Target, t: "120 disparos reais", d: "Técnica nova a cada 20 disparos" },
-                { i: Shield, t: "EPIs inclusos", d: "Óculos de proteção e abafadores de ruído" },
-                { i: Crosshair, t: "Alvos e munições", d: "Tudo por conta da Quero Armas" },
-                { i: Award, t: "Certificado de conclusão", d: "Reconhecido para POSSE, PORTE e CR" },
+                { i: Clock, t: "10h de instrução", d: "Teoria + linha de tiro, IAT credenciado" },
+                { i: Coffee, t: "Rancho incluso", d: "Café da manhã e almoço — sem custo adicional" },
+                { i: Target, t: "120 munições reais", d: "Disparos cronometrados e supervisionados" },
+                { i: Shield, t: "EPI completo", d: "Óculos balísticos e protetor auricular fornecidos" },
+                { i: Crosshair, t: "Alvos e munição", d: "Todo suprimento por conta da Quero Armas" },
+                { i: Award, t: "Certificado oficial", d: "Reconhecido para POSSE, PORTE e CR" },
               ].map((it) => (
                 <div
                   key={it.t}
-                  className="flex gap-4 p-5 rounded-lg"
+                  className="flex gap-4 p-5 rounded-sm transition-colors hover:border-amber-500/40"
                   style={{
-                    background: "hsl(220 22% 9%)",
-                    border: "1px solid hsl(220 14% 16%)",
+                    background: OD_DEEP,
+                    border: `1px solid ${COYOTE_DIM}`,
                   }}
                 >
                   <div
-                    className="w-10 h-10 rounded-md flex items-center justify-center flex-shrink-0"
-                    style={{ background: `linear-gradient(135deg, ${TAC_BLUE}, ${TAC_OLIVE})` }}
+                    className="w-10 h-10 rounded-sm flex items-center justify-center flex-shrink-0"
+                    style={{
+                      background: `linear-gradient(135deg, ${OD_GREEN}, ${GUNMETAL})`,
+                      border: `1px solid ${COYOTE_DIM}`,
+                    }}
                   >
-                    <it.i className="w-5 h-5 text-white" />
+                    <it.i className="w-5 h-5" style={{ color: AMBER }} />
                   </div>
                   <div>
-                    <div className="font-semibold text-white text-[14.5px]">{it.t}</div>
-                    <div className="text-[13px] mt-0.5" style={{ color: "hsl(220 10% 65%)" }}>{it.d}</div>
+                    <div className="font-bold text-white text-[14.5px] uppercase tracking-wide">{it.t}</div>
+                    <div className="text-[13px] mt-0.5" style={{ color: STEEL_DIM }}>{it.d}</div>
                   </div>
                 </div>
               ))}
@@ -581,111 +586,119 @@ export default function QACursoOperadorPistolaPage() {
 
             {/* Bônus */}
             <div
-              className="mt-10 p-6 md:p-8 rounded-lg"
+              className="mt-10 p-6 md:p-8 rounded-sm relative overflow-hidden"
               style={{
-                background: `linear-gradient(135deg, hsl(14 50% 12%), hsl(220 25% 8%))`,
-                border: "1px solid hsl(14 60% 25%)",
+                background: `linear-gradient(135deg, ${OD_DEEP}, ${GUNMETAL_2})`,
+                border: `1px solid ${AMBER}`,
+                boxShadow: `0 0 40px hsla(40,85%,55%,0.12) inset`,
               }}
             >
               <div className="flex items-center gap-2 mb-4">
-                <Trophy className="w-5 h-5" style={{ color: "hsl(45 90% 60%)" }} />
-                <span className="font-mono text-[11px] tracking-[0.2em] uppercase font-bold" style={{ color: "hsl(45 90% 70%)" }}>
-                  Bônus exclusivos
+                <Trophy className="w-5 h-5" style={{ color: AMBER }} />
+                <span className="font-mono text-[11px] tracking-[0.25em] uppercase font-black" style={{ color: AMBER }}>
+                  Classified · Bônus de Operador
                 </span>
               </div>
-              <ul className="space-y-2 text-[14px]" style={{ color: "hsl(220 10% 80%)" }}>
-                <li>💣 Simulações práticas de situações reais no estande</li>
-                <li>💣 Acesso ao Grupo VIP no WhatsApp — tire dúvidas direto com o instrutor</li>
-                <li>💣 Material didático completo: conceitos, técnicas e procedimentos detalhados</li>
+              <ul className="space-y-2.5 text-[14px]" style={{ color: "hsl(210 8% 88%)" }}>
+                {[
+                  "Simulações de invasão domiciliar no estande (CQB adaptado para civil)",
+                  "Acesso ao canal operacional no WhatsApp — contato direto com o IAT",
+                  "Apostila didática completa: doutrina, balística, legislação, manutenção",
+                ].map((b) => (
+                  <li key={b} className="flex gap-3 items-start">
+                    <span className="font-mono font-black mt-0.5" style={{ color: BLOOD }}>[+]</span>
+                    <span>{b}</span>
+                  </li>
+                ))}
               </ul>
             </div>
           </div>
         </section>
 
         {/* ============ PREÇO + FORM ============ */}
-        <section id="inscricao" className="py-20 md:py-28" style={{ background: "hsl(220 25% 5%)" }}>
+        <section id="inscricao" className="py-20 md:py-28" style={{ background: GUNMETAL_2 }}>
           <div className="container max-w-6xl mx-auto px-4">
             <div className="grid lg:grid-cols-2 gap-10 lg:gap-14 items-start">
               {/* Esquerda: info */}
               <div>
-                <SectionTag>RESERVE SUA VAGA</SectionTag>
-                <h2 className="text-3xl md:text-4xl font-bold mt-5 mb-6 leading-tight">
-                  Vagas <span style={{ color: "hsl(14 88% 60%)" }}>limitadas a 5 alunos</span> por turma.
+                <SectionTag>ENGAJAMENTO · RESERVA DE POSIÇÃO</SectionTag>
+                <h2 className="text-3xl md:text-[2.4rem] font-black mt-5 mb-6 leading-[1.1] uppercase tracking-tight">
+                  Pelotão limitado a <span style={{ color: BLOOD }}>05 operadores</span> por turma.
                 </h2>
-                <p className="text-[15px] mb-8" style={{ color: "hsl(220 10% 75%)" }}>
-                  Turmas pequenas garantem acompanhamento individual real. Não é curso de massa — é treinamento sério com quem precisa
-                  estar pronto.
+                <p className="text-[15px] mb-8" style={{ color: STEEL }}>
+                  Turma pequena não é marketing — é doutrina. Só assim o IAT corrige empunhadura, saque e controle de gatilho
+                  de cada aluno, um a um, sob munição real. <strong className="text-white">Curso de massa vira estatística. Aqui, não.</strong>
                 </p>
 
                 {/* Pricing cards */}
                 <div className="grid sm:grid-cols-2 gap-4 mb-8">
                   <div
-                    className="p-5 rounded-lg"
+                    className="p-5 rounded-sm"
                     style={{
-                      background: "hsl(220 22% 9%)",
-                      border: "1px solid hsl(220 14% 18%)",
+                      background: OD_DEEP,
+                      border: `1px solid ${COYOTE_DIM}`,
                     }}
                   >
-                    <div className="text-[11px] font-mono uppercase tracking-wider mb-2" style={{ color: "hsl(220 10% 60%)" }}>
-                      Turma Padrão
+                    <div className="text-[10.5px] font-mono uppercase tracking-[0.2em] mb-2 font-bold" style={{ color: STEEL }}>
+                      Operador · Padrão
                     </div>
-                    <div className="text-3xl font-bold text-white">R$ 1.890</div>
-                    <div className="text-[12px] mt-1" style={{ color: "hsl(220 10% 60%)" }}>
+                    <div className="text-3xl font-black text-white">R$ 1.890</div>
+                    <div className="text-[12px] mt-1 font-mono" style={{ color: STEEL_DIM }}>
                       em até 18x no cartão*
                     </div>
                   </div>
                   <div
-                    className="p-5 rounded-lg relative"
+                    className="p-5 rounded-sm relative"
                     style={{
-                      background: `linear-gradient(135deg, hsl(220 30% 12%), hsl(220 22% 9%))`,
-                      border: `1px solid hsl(45 90% 50%)`,
-                      boxShadow: "0 8px 24px hsla(45, 90%, 50%, 0.15)",
+                      background: `linear-gradient(135deg, ${OD_GREEN}, ${OD_DEEP})`,
+                      border: `1px solid ${AMBER}`,
+                      boxShadow: `0 8px 32px hsla(40, 85%, 55%, 0.2), inset 0 0 0 1px rgba(255,255,255,0.04)`,
                     }}
                   >
                     <span
-                      className="absolute -top-2.5 right-4 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider"
-                      style={{ background: "hsl(45 90% 55%)", color: "hsl(220 30% 10%)" }}
+                      className="absolute -top-2.5 right-4 px-2 py-0.5 rounded-none text-[9.5px] font-black uppercase tracking-[0.2em] font-mono"
+                      style={{ background: AMBER, color: GUNMETAL_2 }}
                     >
-                      Recomendado
+                      ▲ ELITE
                     </span>
-                    <div className="text-[11px] font-mono uppercase tracking-wider mb-2" style={{ color: "hsl(45 90% 70%)" }}>
-                      Turma VIP
+                    <div className="text-[10.5px] font-mono uppercase tracking-[0.2em] mb-2 font-bold" style={{ color: AMBER }}>
+                      Operador · VIP
                     </div>
-                    <div className="text-3xl font-bold text-white">R$ 2.490</div>
-                    <div className="text-[12px] mt-1" style={{ color: "hsl(220 10% 65%)" }}>
+                    <div className="text-3xl font-black text-white">R$ 2.490</div>
+                    <div className="text-[12px] mt-1 font-mono" style={{ color: STEEL }}>
                       em até 18x no cartão*
                     </div>
                   </div>
                 </div>
 
-                <div className="space-y-3 text-[14px]" style={{ color: "hsl(220 10% 75%)" }}>
+                <div className="space-y-3 text-[14px]" style={{ color: STEEL }}>
                   <div className="flex gap-3 items-center">
-                    <MapPin className="w-4 h-4" style={{ color: "hsl(45 90% 60%)" }} />
-                    <span>Jacareí ou São José dos Campos</span>
+                    <MapPin className="w-4 h-4" style={{ color: AMBER }} />
+                    <span className="font-mono">AO · JACAREÍ / SÃO JOSÉ DOS CAMPOS</span>
                   </div>
                   <div className="flex gap-3 items-center">
-                    <Clock className="w-4 h-4" style={{ color: "hsl(45 90% 60%)" }} />
-                    <span>Sábados, das 7h às 19h (com 2h de almoço)</span>
+                    <Clock className="w-4 h-4" style={{ color: AMBER }} />
+                    <span className="font-mono">H · SÁB · 07:00–19:00 (rancho 2h)</span>
                   </div>
                   <div className="flex gap-3 items-center">
-                    <Users className="w-4 h-4" style={{ color: "hsl(45 90% 60%)" }} />
-                    <span>Máximo 5 alunos por turma</span>
+                    <Users className="w-4 h-4" style={{ color: AMBER }} />
+                    <span className="font-mono">PAX · MAX 05 OPERADORES / TURMA</span>
                   </div>
                 </div>
 
-                <div className="mt-8 pt-6 border-t" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
-                  <div className="text-[11px] font-mono uppercase tracking-wider mb-3" style={{ color: "hsl(220 10% 55%)" }}>
-                    Contato direto
+                <div className="mt-8 pt-6 border-t" style={{ borderColor: COYOTE_DIM }}>
+                  <div className="text-[10.5px] font-mono uppercase tracking-[0.22em] mb-3 font-bold" style={{ color: STEEL_DIM }}>
+                    ⬢ COMUNICAÇÃO DIRETA · COMANDO
                   </div>
                   <div className="space-y-2 text-[14px]">
                     <a href={`tel:+${WPP_NUMBER}`} className="flex items-center gap-2 text-white hover:underline">
-                      <Phone className="w-4 h-4" /> {WPP_DISPLAY}
+                      <Phone className="w-4 h-4" style={{ color: AMBER }} /> <span className="font-mono">{WPP_DISPLAY}</span>
                     </a>
                     <a href={`mailto:${EMAIL}`} className="flex items-center gap-2 text-white hover:underline">
-                      <Mail className="w-4 h-4" /> {EMAIL}
+                      <Mail className="w-4 h-4" style={{ color: AMBER }} /> <span className="font-mono">{EMAIL}</span>
                     </a>
                   </div>
-                  <p className="text-[10.5px] mt-4" style={{ color: "hsl(220 10% 50%)" }}>
+                  <p className="text-[10.5px] mt-4 font-mono" style={{ color: STEEL_DIM }}>
                     *Acréscimo da máquina de cartões aplicado nas parcelas.
                   </p>
                 </div>
@@ -693,30 +706,47 @@ export default function QACursoOperadorPistolaPage() {
 
               {/* Direita: formulário */}
               <div
-                className="p-6 md:p-8 rounded-xl sticky top-6"
+                className="p-6 md:p-8 rounded-sm sticky top-6 relative overflow-hidden"
                 style={{
-                  background: "linear-gradient(180deg, hsl(220 25% 9%), hsl(220 25% 7%))",
-                  border: "1px solid hsl(220 14% 20%)",
-                  boxShadow: "0 24px 60px rgba(0,0,0,0.5)",
+                  background: `linear-gradient(180deg, ${OD_DEEP}, ${GUNMETAL})`,
+                  border: `1px solid ${COYOTE_DIM}`,
+                  boxShadow: `0 24px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.04)`,
                 }}
               >
+                {/* faixa militar topo */}
+                <div
+                  aria-hidden
+                  className="absolute top-0 left-0 right-0 h-1"
+                  style={{
+                    background: `repeating-linear-gradient(90deg, ${BLOOD} 0 16px, ${GUNMETAL_2} 16px 18px, ${AMBER} 18px 34px, ${GUNMETAL_2} 34px 36px)`,
+                  }}
+                />
                 <div className="mb-5">
-                  <h3 className="text-xl md:text-2xl font-bold text-white mb-2">Garanta sua vaga</h3>
-                  <p className="text-[13px]" style={{ color: "hsl(220 10% 65%)" }}>
-                    Preencha abaixo e nosso instrutor entra em contato em até 1 dia útil.
+                  <div className="text-[10px] font-mono tracking-[0.25em] uppercase font-bold mb-1.5" style={{ color: AMBER }}>
+                    [ FORMULÁRIO DE ALISTAMENTO ]
+                  </div>
+                  <h3 className="text-xl md:text-2xl font-black text-white mb-2 uppercase tracking-tight">Reserve sua posição</h3>
+                  <p className="text-[13px] font-mono" style={{ color: STEEL }}>
+                    Envio protocolado · retorno do IAT em até 1 dia útil.
                   </p>
                 </div>
                 <InscricaoForm />
 
-                <div className="mt-6 pt-5 border-t text-center" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
-                  <p className="text-[12px] mb-3" style={{ color: "hsl(220 10% 60%)" }}>Prefere conversar agora?</p>
+                <div className="mt-6 pt-5 border-t text-center" style={{ borderColor: COYOTE_DIM }}>
+                  <p className="text-[11.5px] mb-3 font-mono uppercase tracking-[0.15em]" style={{ color: STEEL_DIM }}>
+                    » Canal direto / prioritário
+                  </p>
                   <button
                     onClick={() => openWpp("vaga")}
-                    className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-md font-bold text-white text-[13px]"
-                    style={{ background: "#25D366" }}
+                    className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-sm font-black text-white text-[12.5px] uppercase tracking-[0.15em] transition-all hover:brightness-110"
+                    style={{
+                      background: "linear-gradient(135deg, #128C3F, #075E2B)",
+                      border: "1px solid #075E2B",
+                      boxShadow: "0 6px 20px rgba(18,140,63,0.35), inset 0 1px 0 rgba(255,255,255,0.15)",
+                    }}
                   >
                     <MessageCircle className="w-4 h-4" />
-                    Falar pelo WhatsApp
+                    Engajar no WhatsApp
                   </button>
                 </div>
               </div>
@@ -725,12 +755,20 @@ export default function QACursoOperadorPistolaPage() {
         </section>
 
         {/* ============ FOOTER ============ */}
-        <footer className="py-10 text-center" style={{ background: "hsl(220 30% 4%)", borderTop: "1px solid hsl(220 14% 12%)" }}>
-          <p className="text-[13px] font-bold mb-2" style={{ color: "hsl(45 90% 60%)" }}>
-            🛡️ Proteja o que é seu. Domine o que é seu. Tenha o direito de defender quem ama.
+        <footer className="py-10 text-center relative" style={{ background: "#000", borderTop: `1px solid ${OD_GREEN}` }}>
+          <div
+            aria-hidden
+            className="absolute top-0 left-0 right-0 h-[2px]"
+            style={{
+              background: `repeating-linear-gradient(90deg, ${BLOOD} 0 30px, transparent 30px 50px, ${AMBER} 50px 70px, transparent 70px 90px)`,
+              opacity: 0.5,
+            }}
+          />
+          <p className="text-[13px] font-black mb-2 uppercase tracking-[0.15em]" style={{ color: AMBER }}>
+            ⬢ Proteja o que é seu · Domine o que é seu · Defenda quem ama
           </p>
-          <p className="text-[11px]" style={{ color: "hsl(220 10% 45%)" }}>
-            © {new Date().getFullYear()} Quero Armas — Curso Operador de Pistola I · Todos os direitos reservados.
+          <p className="text-[11px] font-mono" style={{ color: STEEL_DIM }}>
+            © {new Date().getFullYear()} QUERO ARMAS · CURSO OPERADOR DE PISTOLA I · IAT WILLIAN RODRIGUES — TODOS OS DIREITOS RESERVADOS
           </p>
         </footer>
       </div>
