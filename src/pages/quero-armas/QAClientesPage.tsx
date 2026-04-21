@@ -38,6 +38,7 @@ import { isDispensado, getBaseLegalDispensa, CATEGORIA_MAP, type CategoriaTitula
 import { invalidateQADashboardSnapshot } from "@/components/quero-armas/dashboard/dashboardSnapshot";
 import { objetivoLabel, categoriaLabel } from "./qaServiceCatalog";
 import jsPDF from "jspdf";
+import DocumentScanner from "@/components/quero-armas/scanner/DocumentScanner";
 
 /* ── Pipeline "scanner" real ──
  * 1) Auto-crop: detecta as bordas do papel (regiões claras) e descarta o fundo escuro da foto.
