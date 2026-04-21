@@ -98,9 +98,47 @@ function SelfieThumb({ path, name, size = "lg" }: { path: string | null | undefi
   );
 }
 
-function DocumentThumb({ path, label, name }: { path: string | null | undefined; label: string; name?: string | null }) {
+function DocumentThumb({
+  path,
+  label,
+  name,
+  kind = "doc",
+}: {
+  path: string | null | undefined;
+  label: string;
+  name?: string | null;
+  kind?: "selfie" | "doc";
+}) {
   const url = usePrivateStorageUrl("qa-cadastro-selfies", path);
   const [open, setOpen] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const isSelfie = kind === "selfie";
+
+  const handleDownload = async () => {
+    if (!url || !path) return;
+    setDownloading(true);
+    try {
+      const resp = await fetch(url);
+      const blob = await resp.blob();
+      const ext = (path.split(".").pop() || "jpg").toLowerCase();
+      const safeName = (name || "documento").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      const safeLabel = label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      const filename = `${safeName}-${safeLabel}.${ext}`;
+      const objUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = objUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(objUrl);
+    } catch (err) {
+      console.error("[download]", err);
+      toast.error("Falha ao baixar o arquivo");
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   return (
     <div className="flex flex-col gap-2">
@@ -109,17 +147,44 @@ function DocumentThumb({ path, label, name }: { path: string | null | undefined;
         type="button"
         onClick={() => url && setOpen(true)}
         disabled={!url}
-        className={`relative w-full aspect-[4/3] rounded-lg overflow-hidden border bg-slate-50 flex items-center justify-center transition-all ${url ? "hover:ring-2 hover:ring-blue-300 cursor-zoom-in" : "cursor-default"}`}
+        className={`relative w-full aspect-[4/3] rounded-lg overflow-hidden border bg-slate-100 flex items-center justify-center transition-all ${url ? "hover:ring-2 hover:ring-blue-300 cursor-zoom-in" : "cursor-default"}`}
         style={{ borderColor: "hsl(220 13% 88%)" }}
         title={url ? "Clique para ampliar" : "Não enviado"}
       >
         {url ? (
-          <img src={url} alt={label} loading="lazy" decoding="async" className="w-full h-full object-cover" />
+          <img
+            src={url}
+            alt={label}
+            loading="lazy"
+            decoding="async"
+            className={`w-full h-full ${isSelfie ? "object-cover" : "object-contain"}`}
+          />
         ) : (
           <span className="text-xs font-medium" style={{ color: "hsl(220 10% 60%)" }}>NÃO ENVIADO</span>
         )}
       </button>
-      {open && url && <PhotoLightbox url={url} alt={`${label} — ${name || ""}`} onClose={() => setOpen(false)} />}
+      {url && (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={handleDownload}
+          disabled={downloading}
+          className="h-8 text-[11px] gap-1.5"
+        >
+          {downloading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />}
+          Baixar
+        </Button>
+      )}
+      {open && url && (
+        <PhotoLightbox
+          url={url}
+          alt={`${label} — ${name || ""}`}
+          onClose={() => setOpen(false)}
+          mirror={isSelfie}
+          fit={isSelfie ? "cover" : "contain"}
+        />
+      )}
     </div>
   );
 }
