@@ -454,10 +454,13 @@ export default function QACadastroPublicoPage() {
           />
         )}
 
-        {/* Selo LGPD */}
-        <div className="mt-4 flex items-center justify-center gap-1.5 text-[11px]" style={{ color: "hsl(220 10% 50%)" }}>
-          <Shield className="w-3 h-3" style={{ color: "hsl(230 80% 56%)" }} />
-          Dados protegidos conforme a LGPD
+        {/* Selo LGPD — discreto, institucional */}
+        <div
+          className="mt-5 flex items-center justify-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.14em]"
+          style={{ color: "hsl(220 10% 55%)" }}
+        >
+          <Shield className="w-3 h-3" style={{ color: "hsl(215 45% 35%)" }} strokeWidth={2.2} />
+          Protegido conforme a LGPD
         </div>
       </div>
     </div>
