@@ -162,3 +162,79 @@ export function servicoLabel(catValue: string | null | undefined, svcValue: stri
   if (!svcValue) return "";
   return findServico(catValue, svcValue)?.label || svcValue;
 }
+
+/* ---------------------------------------------------------------------------
+ * Mapeamento OBJETIVO → CATEGORIAS PERMITIDAS (+ subset opcional de serviços)
+ * Quando um objetivo define `servicos`, apenas aqueles aparecem dentro
+ * daquela categoria. Caso contrário, todos os serviços da categoria são
+ * exibidos. A ordem alfabética é aplicada na função `getCategoriasPorObjetivo`.
+ * ------------------------------------------------------------------------- */
+interface ObjetivoCategoriaRule {
+  categoria: string;
+  /** subset de service.value que devem aparecer (se omitido, mostra todos). */
+  servicos?: string[];
+}
+
+export const OBJETIVO_CATEGORIAS: Record<string, ObjetivoCategoriaRule[]> = {
+  defesa_pessoal: [
+    {
+      categoria: "sinarm_pf",
+      servicos: [
+        "ameaca_grave_ameaca",
+        "aquisicao_posse",
+        "atividade_de_risco",
+        "magistrado_mpf",
+        "porte_arma",
+        "seguranca_publica",
+      ],
+    },
+  ],
+  tiro_esportivo: [{ categoria: "sinarm_cac_cr" }],
+  caca: [{ categoria: "sinarm_cac_cr" }],
+  colecionamento: [{ categoria: "sinarm_cac_cr" }],
+  loja_armas: [{ categoria: "empresarial", servicos: ["assessoria_loja"] }],
+  clube_tiro: [{ categoria: "empresarial", servicos: ["assessoria_clube"] }],
+  atividade_profissional: [
+    { categoria: "empresarial", servicos: ["assessoria_profissional"] },
+    { categoria: "sinarm_pf" },
+  ],
+  regularizacao: [
+    { categoria: "sinarm_pf" },
+    { categoria: "sinarm_cac_cr" },
+    { categoria: "atendimento_especial" },
+  ],
+  orientacao: [
+    { categoria: "sinarm_pf" },
+    { categoria: "sinarm_cac_cr" },
+    { categoria: "empresarial" },
+    { categoria: "atendimento_especial" },
+  ],
+};
+
+/** Retorna categorias filtradas (e ordenadas alfabeticamente) para um objetivo. */
+export function getCategoriasPorObjetivo(objetivo: string | null | undefined): CategoriaOpcao[] {
+  if (!objetivo) return [];
+  const rules = OBJETIVO_CATEGORIAS[objetivo];
+  const sortByLabel = (a: { label: string }, b: { label: string }) =>
+    a.label.localeCompare(b.label, "pt-BR");
+
+  // Sem regra explícita: mostrar todas as categorias.
+  if (!rules || rules.length === 0) {
+    return CATEGORIAS_SERVICO.map((c) => ({
+      ...c,
+      servicos: [...c.servicos].sort(sortByLabel),
+    })).sort(sortByLabel);
+  }
+
+  return rules
+    .map((rule) => {
+      const cat = findCategoria(rule.categoria);
+      if (!cat) return null;
+      const servicos = rule.servicos
+        ? cat.servicos.filter((s) => rule.servicos!.includes(s.value))
+        : cat.servicos;
+      return { ...cat, servicos: [...servicos].sort(sortByLabel) };
+    })
+    .filter((c): c is CategoriaOpcao => !!c)
+    .sort(sortByLabel);
+}
