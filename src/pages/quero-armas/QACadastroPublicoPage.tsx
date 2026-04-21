@@ -400,13 +400,15 @@ function Stepper({ current }: { current: StepId }) {
     <div className="mt-5 px-2">
       <div className="relative flex items-start justify-between">
         {/* linha base cinza */}
-        <div className="absolute left-[12%] right-[12%] top-[15px] h-[2px]" style={{ background: "hsl(220 13% 88%)" }} />
+        <div className="absolute h-[2px]" style={{ left: "12.5%", right: "12.5%", top: "15px", background: "hsl(220 13% 88%)" }} />
         {/* linha de progresso colorida */}
         <div
-          className="absolute left-[12%] top-[15px] h-[2px] transition-all"
+          className="absolute h-[2px] transition-all"
           style={{
             background: "hsl(222 89% 55%)",
-            width: `calc((100% - 24%) * ${(current - 1) / (STEPS.length - 1)})`,
+            left: "12.5%",
+            top: "15px",
+            width: `calc(75% * ${(current - 1) / (STEPS.length - 1)})`,
           }}
         />
         {STEPS.map((s, i) => {
