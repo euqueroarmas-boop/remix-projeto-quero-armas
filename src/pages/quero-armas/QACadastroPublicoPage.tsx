@@ -526,35 +526,46 @@ function Step1Documents({
 function Step2Extracting({ stages, error }: { stages: Record<string, string>; error: string | null }) {
   return (
     <div className="py-4">
-      <div className="mx-auto w-32 h-32 rounded-full flex items-center justify-center mb-5"
-        style={{ background: "radial-gradient(circle, hsl(230 90% 95%), hsl(220 25% 97%))" }}>
+      <div className="mx-auto w-36 h-36 rounded-full flex items-center justify-center mb-6"
+        style={{ background: "hsl(220 95% 96%)" }}>
         <div className="relative">
-          <FileText className="w-14 h-14" style={{ color: "hsl(230 70% 55%)" }} />
-          <Sparkles className="w-5 h-5 absolute -top-1 -right-2 animate-pulse" style={{ color: "hsl(45 90% 55%)" }} />
+          <FileText className="w-16 h-16" strokeWidth={1.6} style={{ color: "hsl(222 89% 55%)" }} />
+          <Sparkles className="w-5 h-5 absolute -top-2 -right-2 animate-pulse" style={{ color: "hsl(222 89% 55%)" }} />
+          <span className="absolute bottom-1 right-0 text-[9px] font-bold px-1.5 py-0.5 rounded text-white"
+            style={{ background: "hsl(222 89% 55%)" }}>AI</span>
         </div>
       </div>
-      <h2 className="text-center text-base font-bold mb-1.5" style={{ color: "hsl(220 25% 18%)" }}>
+      <h2 className="text-center text-lg font-bold mb-2" style={{ color: "hsl(220 25% 15%)" }}>
         Extraindo dados dos documentos…
       </h2>
-      <p className="text-center text-xs mb-4" style={{ color: "hsl(220 10% 50%)" }}>Aguarde um momento</p>
 
-      <div className="h-1.5 rounded-full overflow-hidden mb-5" style={{ background: "hsl(220 20% 92%)" }}>
+      <div className="h-1.5 rounded-full overflow-hidden mb-2 mx-6" style={{ background: "hsl(220 20% 92%)" }}>
         <div className="h-full animate-[progress_2.5s_ease-in-out_infinite]"
-          style={{ background: "linear-gradient(90deg, hsl(230 80% 56%), hsl(240 80% 60%))", width: "60%" }} />
+          style={{ background: "hsl(222 89% 55%)", width: "60%" }} />
       </div>
+      <p className="text-center text-xs mb-5" style={{ color: "hsl(220 10% 50%)" }}>Aguarde um momento…</p>
 
-      <div className="space-y-2">
+      <div className="space-y-2 border-t border-slate-100 pt-4">
         {SLOTS.map(s => {
           const Icon = s.icon;
           const st = stages[s.key];
           return (
-            <div key={s.key} className="flex items-center justify-between px-3 py-2 rounded-lg" style={{ background: "hsl(220 25% 98%)" }}>
+            <div key={s.key} className="flex items-center justify-between px-1 py-1.5">
               <div className="flex items-center gap-2">
-                <Icon className="w-4 h-4" style={{ color: "hsl(230 50% 55%)" }} />
-                <span className="text-xs font-medium" style={{ color: "hsl(220 25% 25%)" }}>{s.label}</span>
+                <Icon className="w-4 h-4" style={{ color: "hsl(220 25% 25%)" }} />
+                <span className="text-sm font-medium" style={{ color: "hsl(220 25% 20%)" }}>{s.label}</span>
               </div>
-              {st === "ok" && <CheckCircle2 className="w-4 h-4" style={{ color: "hsl(152 60% 45%)" }} />}
-              {st === "processing" && <Loader2 className="w-4 h-4 animate-spin" style={{ color: "hsl(230 70% 55%)" }} />}
+              {st === "ok" && (
+                <span className="w-5 h-5 rounded-full flex items-center justify-center"
+                  style={{ background: "hsl(152 65% 45%)" }}>
+                  <CheckCircle2 className="w-4 h-4 text-white" />
+                </span>
+              )}
+              {st === "processing" && (
+                <span className="flex items-center gap-1.5 text-xs font-medium" style={{ color: "hsl(222 89% 55%)" }}>
+                  <Loader2 className="w-4 h-4 animate-spin" /> processando
+                </span>
+              )}
               {st === "fail" && <AlertCircle className="w-4 h-4" style={{ color: "hsl(0 70% 55%)" }} />}
             </div>
           );
