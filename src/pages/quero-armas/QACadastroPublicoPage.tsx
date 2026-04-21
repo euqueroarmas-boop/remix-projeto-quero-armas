@@ -477,8 +477,8 @@ function Step1Documents({
                     ? "rounded-full overflow-hidden border border-slate-200 shrink-0 bg-slate-50 block"
                     : "rounded-md overflow-hidden border border-slate-200 shrink-0 bg-slate-50 block"}
                   style={slot.key === "selfie"
-                    ? { width: 56, height: 56, minWidth: 56, maxWidth: 56, minHeight: 56, maxHeight: 56 }
-                    : { width: 88, height: 56, minWidth: 88, maxWidth: 88, minHeight: 56, maxHeight: 56 }}
+                    ? { width: 90, height: 90, minWidth: 90, maxWidth: 90, minHeight: 90, maxHeight: 90 }
+                    : { width: 140, height: 90, minWidth: 140, maxWidth: 140, minHeight: 90, maxHeight: 90 }}
                 >
                   <img
                     src={files[slot.key]}
@@ -489,11 +489,11 @@ function Step1Documents({
                 </div>
               ) : (
                 <div className={slot.key === "selfie"
-                  ? "w-14 h-14 flex items-center justify-center border border-dashed border-slate-300 bg-slate-50 rounded-full"
-                  : "w-[88px] h-14 flex items-center justify-center border border-dashed border-slate-300 bg-slate-50 rounded-md"}>
+                  ? "w-[90px] h-[90px] flex items-center justify-center border border-dashed border-slate-300 bg-slate-50 rounded-full"
+                  : "w-[140px] h-[90px] flex items-center justify-center border border-dashed border-slate-300 bg-slate-50 rounded-md"}>
                   {slot.key === "selfie"
-                    ? <Camera className="w-5.5 h-5.5" style={{ color: "hsl(220 10% 55%)" }} />
-                    : <Upload className="w-5.5 h-5.5" style={{ color: "hsl(220 10% 55%)" }} />}
+                    ? <Camera className="w-6 h-6" style={{ color: "hsl(220 10% 55%)" }} />
+                    : <Upload className="w-6 h-6" style={{ color: "hsl(220 10% 55%)" }} />}
                 </div>
               )}
               <span
