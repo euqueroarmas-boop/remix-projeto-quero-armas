@@ -36,6 +36,7 @@ import { usePrivateStorageUrl } from "@/hooks/usePrivateStorageUrl";
 import { useQAStatusServico } from "@/hooks/useQAStatusServico";
 import { isDispensado, getBaseLegalDispensa, CATEGORIA_MAP, type CategoriaTitular } from "@/components/quero-armas/clientes/categoriaTitular";
 import { invalidateQADashboardSnapshot } from "@/components/quero-armas/dashboard/dashboardSnapshot";
+import { objetivoLabel, categoriaLabel } from "./qaServiceCatalog";
 
 /* ── Lightbox 5:4 espelhado (compartilhado por todas as miniaturas) ── */
 function PhotoLightbox({ url, alt, onClose }: { url: string; alt: string; onClose: () => void }) {
