@@ -27,22 +27,36 @@ const openWpp = (intent: "vaga" | "vip" | "duvida") => {
   window.open(wppLink(msgs[intent]), "_blank", "noopener,noreferrer");
 };
 
-// ----- Tactical primitives -----
-const TAC_BLUE = "hsl(215 52% 25%)";
-const TAC_OLIVE = "hsl(86 23% 30%)";
-const ACCENT = "hsl(14 88% 52%)"; // tactical orange/red
+// ============ MILITARY TACTICAL PALETTE ============
+// OD Green (Olive Drab) · FDE/Coyote Tan · Gunmetal · Blood Red · Ranger Amber
+const OD_GREEN   = "hsl(80 18% 22%)";
+const OD_DEEP    = "hsl(82 22% 14%)";
+const COYOTE     = "hsl(32 32% 45%)";
+const COYOTE_DIM = "hsl(32 22% 28%)";
+const GUNMETAL   = "hsl(210 12% 10%)";
+const GUNMETAL_2 = "hsl(210 14% 7%)";
+const BLOOD      = "hsl(2 72% 42%)";
+const AMBER      = "hsl(40 85% 55%)";
+const STEEL      = "hsl(210 8% 62%)";
+const STEEL_DIM  = "hsl(210 6% 48%)";
+
+// aliases de compatibilidade
+const TAC_BLUE = OD_GREEN;
+const TAC_OLIVE = COYOTE_DIM;
+const ACCENT = BLOOD;
 
 function SectionTag({ children }: { children: React.ReactNode }) {
   return (
     <span
-      className="inline-flex items-center gap-2 px-3 py-1 rounded-full font-mono text-[11px] tracking-[0.18em] uppercase font-semibold"
+      className="inline-flex items-center gap-2 px-3 py-1 rounded-sm font-mono text-[11px] tracking-[0.22em] uppercase font-bold"
       style={{
-        background: "rgba(255,255,255,0.06)",
-        border: "1px solid rgba(255,255,255,0.12)",
-        color: "hsl(45 90% 70%)",
+        background: "rgba(0,0,0,0.55)",
+        border: `1px solid ${COYOTE_DIM}`,
+        color: AMBER,
+        textShadow: "0 0 8px rgba(255,180,60,0.25)",
       }}
     >
-      <span className="w-1.5 h-1.5 rounded-full" style={{ background: ACCENT }} />
+      <span className="w-1.5 h-1.5" style={{ background: BLOOD, boxShadow: `0 0 6px ${BLOOD}` }} />
       {children}
     </span>
   );
