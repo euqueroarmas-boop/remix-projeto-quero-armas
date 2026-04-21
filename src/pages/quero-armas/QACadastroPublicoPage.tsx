@@ -469,13 +469,17 @@ function Step1Documents({
             </div>
             <div className="flex items-center gap-3">
               {sent ? (
-                <img
-                  src={files[slot.key]}
-                  alt=""
+                <div
                   className={slot.key === "selfie"
-                    ? "w-12 h-12 object-cover border border-slate-200 rounded-full"
-                    : "w-[68px] h-[44px] object-cover border border-slate-200 rounded-md"}
-                />
+                    ? "w-12 h-12 rounded-full overflow-hidden border border-slate-200 shrink-0 bg-slate-50"
+                    : "w-[64px] h-[44px] rounded-md overflow-hidden border border-slate-200 shrink-0 bg-slate-50"}
+                >
+                  <img
+                    src={files[slot.key]}
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
+                </div>
               ) : (
                 <div className={slot.key === "selfie"
                   ? "w-12 h-12 flex items-center justify-center border border-dashed border-slate-300 bg-slate-50 rounded-full"
