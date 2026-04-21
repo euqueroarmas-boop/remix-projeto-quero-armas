@@ -28,41 +28,44 @@ const openWpp = (intent: "vaga" | "vip" | "duvida") => {
   window.open(wppLink(msgs[intent]), "_blank", "noopener,noreferrer");
 };
 
-// ============ TACTICAL PALETTE — sóbria ============
-// 3 cores reais: OD Green · Steel Blue · Muted Amber (sand)
-// + tons neutros gunmetal para o fundo. Sem vermelhos, sem brilhos.
-const OD_GREEN   = "hsl(82 18% 26%)";   // verde militar principal
-const OD_DEEP    = "hsl(84 22% 13%)";   // verde profundo
-const OD_LINE    = "hsl(82 14% 32%)";   // borda discreta verde
-const STEEL_BLUE = "hsl(210 22% 32%)";  // azul aço tático
-const STEEL_DEEP = "hsl(212 28% 16%)";  // azul profundo
-const SAND       = "hsl(42 38% 62%)";   // amarelo areia (muted, não gritante)
-const SAND_DIM   = "hsl(42 22% 42%)";   // areia escura para borda
-const GUNMETAL   = "hsl(210 12% 10%)";
-const GUNMETAL_2 = "hsl(210 14% 7%)";
-const STEEL      = "hsl(210 8% 64%)";
-const STEEL_DIM  = "hsl(210 6% 48%)";
+// ============ COD / BATTLEFIELD — preto absoluto, monocromático ============
+// Quase só preto + cinzas. Sand (areia) é o ÚNICO acento, usado com parcimônia.
+const BLACK      = "#050607";
+const BLACK_2    = "#0a0c0e";
+const PANEL      = "#0d1012";
+const PANEL_2    = "#11151a";
+const HAIRLINE   = "#1a1f25";
+const HAIRLINE_2 = "#252b33";
+const SAND       = "hsl(42 30% 56%)";  // acento HUD
+const SAND_DIM   = "hsl(42 16% 36%)";
+const STEEL      = "hsl(210 6% 70%)";
+const STEEL_DIM  = "hsl(210 4% 46%)";
 
-// aliases (mantidos pra não quebrar referências antigas)
-const TAC_BLUE = STEEL_BLUE;
-const TAC_OLIVE = OD_GREEN;
-const COYOTE_DIM = OD_LINE;
-const AMBER = SAND;
-const BLOOD = SAND;       // sem vermelho — substituído por areia
-const COYOTE = SAND_DIM;
-const ACCENT = OD_GREEN;
+// aliases (mantidos pra não quebrar referências espalhadas)
+const OD_GREEN   = PANEL;
+const OD_DEEP    = BLACK_2;
+const OD_LINE    = HAIRLINE_2;
+const STEEL_BLUE = PANEL_2;
+const TAC_BLUE   = PANEL_2;
+const TAC_OLIVE  = PANEL;
+const COYOTE_DIM = HAIRLINE_2;
+const AMBER      = SAND;
+const BLOOD      = SAND;
+const COYOTE     = SAND_DIM;
+const ACCENT     = SAND;
+const GUNMETAL   = BLACK_2;
+const GUNMETAL_2 = BLACK;
 
 function SectionTag({ children }: { children: React.ReactNode }) {
   return (
     <span
-      className="inline-flex items-center gap-2 px-3 py-1 rounded-sm font-mono text-[11px] tracking-[0.22em] uppercase font-bold"
+      className="inline-flex items-center gap-2 px-2.5 py-1 font-mono text-[10.5px] tracking-[0.28em] uppercase"
       style={{
-        background: "rgba(0,0,0,0.45)",
-        border: `1px solid ${OD_LINE}`,
+        background: "transparent",
+        borderLeft: `2px solid ${SAND}`,
         color: SAND,
       }}
     >
-      <span className="w-1.5 h-1.5" style={{ background: SAND }} />
       {children}
     </span>
   );
@@ -73,24 +76,21 @@ function FeatureCard({
 }: { icon: any; title: string; children: React.ReactNode }) {
   return (
     <div
-      className="p-5 md:p-6 rounded-lg h-full transition-all hover:-translate-y-1"
+      className="p-5 md:p-6 h-full transition-colors group relative"
       style={{
-        background: "linear-gradient(180deg, hsl(220 18% 11%) 0%, hsl(220 22% 8%) 100%)",
-        border: "1px solid hsl(220 12% 18%)",
-        boxShadow: "0 8px 24px rgba(0,0,0,0.3)",
+        background: PANEL,
+        border: `1px solid ${HAIRLINE}`,
       }}
     >
-      <div
-        className="w-11 h-11 rounded-md flex items-center justify-center mb-4"
-        style={{
-          background: `linear-gradient(135deg, ${TAC_BLUE}, ${TAC_OLIVE})`,
-          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.1)",
-        }}
-      >
-        <Icon className="w-5 h-5 text-white" />
-      </div>
-      <h3 className="font-bold text-white mb-2 text-[15px] tracking-wide">{title}</h3>
-      <div className="text-[13.5px] leading-relaxed" style={{ color: "hsl(220 10% 70%)" }}>
+      {/* HUD corner brackets */}
+      <span aria-hidden className="absolute top-0 left-0 w-2.5 h-2.5"
+        style={{ borderTop: `1px solid ${SAND}`, borderLeft: `1px solid ${SAND}`, opacity: 0.55 }} />
+      <span aria-hidden className="absolute bottom-0 right-0 w-2.5 h-2.5"
+        style={{ borderBottom: `1px solid ${SAND}`, borderRight: `1px solid ${SAND}`, opacity: 0.55 }} />
+
+      <Icon className="w-5 h-5 mb-3" style={{ color: SAND }} strokeWidth={1.5} />
+      <h3 className="font-bold text-white mb-2 text-[14px] tracking-[0.04em] uppercase">{title}</h3>
+      <div className="text-[13px] leading-relaxed" style={{ color: STEEL_DIM }}>
         {children}
       </div>
     </div>
@@ -246,10 +246,10 @@ export default function QACursoOperadorPistolaPage() {
       el.setAttribute(selector.startsWith("link") ? "href" : "content", value);
     };
     setMeta('meta[name="description"]', "name", "description",
-      "Aprenda a manusear pistolas com segurança, técnica e controle absoluto. Treinamento prático com munição real, instrutor credenciado CTT-CBC. Vagas limitadas.");
+      "Defesa pessoal real para proteger sua família. 6 a 8h de treinamento prático com munição real, instrutor credenciado. Vagas limitadas.");
     setMeta('meta[property="og:title"]', "property", "og:title", "Curso Operador de Pistola I — Quero Armas");
     setMeta('meta[property="og:description"]', "property", "og:description",
-      "Defenda quem você ama. Treinamento tático completo: 10h prático + teórico, 120 disparos, certificado reconhecido.");
+      "Defenda quem você ama. Treinamento tático: 6 a 8h prático + teórico, 120 disparos, certificado reconhecido.");
     setMeta('meta[property="og:image"]', "property", "og:image", heroImg);
     setMeta('link[rel="canonical"]', "rel", "canonical", "https://wmti.com.br/quero-armas/curso-operador-pistola");
   }, []);
@@ -259,18 +259,18 @@ export default function QACursoOperadorPistolaPage() {
       <div
         className="min-h-screen relative"
         style={{
-          background: `radial-gradient(1200px 600px at 10% -10%, ${OD_DEEP} 0%, ${GUNMETAL_2} 55%, #000 100%)`,
+          background: BLACK,
           color: "white",
         }}
       >
         {/* Grid tático sutil sobre todo o fundo */}
         <div
           aria-hidden
-          className="pointer-events-none fixed inset-0 z-0 opacity-[0.05] mix-blend-overlay"
+          className="pointer-events-none fixed inset-0 z-0 opacity-[0.025]"
           style={{
             backgroundImage:
-              "linear-gradient(rgba(255,255,255,0.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.6) 1px, transparent 1px)",
-            backgroundSize: "48px 48px",
+              "linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)",
+            backgroundSize: "64px 64px",
           }}
         />
         {/* ============ HERO ============ */}
@@ -366,7 +366,7 @@ export default function QACursoOperadorPistolaPage() {
               {/* Trust strip */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-6 border-t" style={{ borderColor: COYOTE_DIM }}>
                 {[
-                  { n: "10h", l: "Instrução ao vivo" },
+                  { n: "6–8h", l: "Instrução ao vivo" },
                   { n: "120", l: "Munições reais" },
                   { n: "05", l: "Operadores / turma" },
                   { n: "IAT", l: "Instrutor credenciado" },
@@ -561,7 +561,7 @@ export default function QACursoOperadorPistolaPage() {
 
             <div className="grid sm:grid-cols-2 gap-3">
               {[
-                { i: Clock, t: "10h de instrução", d: "Teoria + linha de tiro, IAT credenciado" },
+                { i: Clock, t: "6 a 8h de instrução", d: "Teoria + linha de tiro, IAT credenciado" },
                 { i: Coffee, t: "Rancho incluso", d: "Café da manhã e almoço — sem custo adicional" },
                 { i: Target, t: "120 munições reais", d: "Disparos cronometrados e supervisionados" },
                 { i: Shield, t: "EPI completo", d: "Óculos balísticos e protetor auricular fornecidos" },
@@ -632,7 +632,7 @@ export default function QACursoOperadorPistolaPage() {
               <div className="relative mx-auto md:mx-0 max-w-sm w-full">
                 <img
                   src={instrutorImg}
-                  alt="Willian Rodrigues — instrutor de armamento e tiro da Quero Armas"
+                  alt="Willian Massaroto — instrutor de armamento e tiro da Quero Armas"
                   loading="lazy"
                   className="w-full rounded-sm"
                   style={{
@@ -650,7 +650,7 @@ export default function QACursoOperadorPistolaPage() {
               <div>
                 <SectionTag>QUEM TREINA VOCÊ</SectionTag>
                 <h2 className="text-3xl md:text-[2.4rem] font-black mt-5 mb-5 leading-[1.1] uppercase tracking-tight">
-                  Willian Rodrigues
+                  Willian Massaroto
                   <br />
                   <span style={{ color: SAND }} className="text-2xl md:text-[1.6rem] font-bold normal-case tracking-normal">
                     Instrutor de Armamento e Tiro · IAT credenciado
@@ -738,7 +738,7 @@ export default function QACursoOperadorPistolaPage() {
                   </div>
                   <div className="flex gap-3 items-center">
                     <Clock className="w-4 h-4" style={{ color: AMBER }} />
-                    <span className="font-mono">H · SÁB · 07:00–19:00 (rancho 2h)</span>
+                  <span className="font-mono">H · SÁB · 6 a 8h de instrução (rancho incluso)</span>
                   </div>
                   <div className="flex gap-3 items-center">
                     <Users className="w-4 h-4" style={{ color: AMBER }} />
@@ -829,7 +829,7 @@ export default function QACursoOperadorPistolaPage() {
             Proteja sua casa · Defenda sua família · Cuide do que é seu
           </p>
           <p className="text-[11px] font-mono" style={{ color: STEEL_DIM }}>
-            © {new Date().getFullYear()} QUERO ARMAS · CURSO OPERADOR DE PISTOLA I · IAT WILLIAN RODRIGUES — TODOS OS DIREITOS RESERVADOS
+            © {new Date().getFullYear()} QUERO ARMAS · CURSO OPERADOR DE PISTOLA I · IAT WILLIAN MASSAROTO — TODOS OS DIREITOS RESERVADOS
           </p>
         </footer>
       </div>
