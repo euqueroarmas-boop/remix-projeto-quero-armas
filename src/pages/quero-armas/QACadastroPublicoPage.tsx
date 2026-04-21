@@ -618,8 +618,7 @@ function DuplicateModal({
 
 function Stepper({ current }: { current: StepId }) {
   return (
-    <div className="mt-5 px-2">
-      {/* Linha de círculos + conectores */}
+    <div className="mt-6 px-1">
       <div className="flex items-start">
         {STEPS.map((s, i) => {
           const done = current > s.id;
@@ -628,32 +627,53 @@ function Stepper({ current }: { current: StepId }) {
           const isLast = i === STEPS.length - 1;
           return (
             <Fragment key={s.id}>
-              <div className="flex flex-col items-center shrink-0" style={{ width: 56 }}>
+              <div className="flex flex-col items-center shrink-0" style={{ width: 52 }}>
                 <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-semibold"
+                  className="rounded-full flex items-center justify-center text-[11px] font-bold transition-all"
                   style={{
+                    width: active ? 28 : 24,
+                    height: active ? 28 : 24,
                     background: done
-                      ? "hsl(152 65% 45%)"
+                      ? "hsl(152 50% 38%)"
                       : active
-                        ? "hsl(222 89% 55%)"
-                        : "hsl(220 15% 90%)",
-                    color: done || active ? "white" : "hsl(220 10% 55%)",
-                    boxShadow: active ? "0 0 0 4px hsl(222 89% 55% / 0.15)" : "none",
+                        ? "linear-gradient(135deg, hsl(215 52% 25%) 0%, hsl(215 50% 32%) 100%)"
+                        : "hsl(220 14% 95%)",
+                    color: done || active ? "white" : "hsl(220 10% 60%)",
+                    boxShadow: active
+                      ? "0 0 0 4px hsl(215 50% 25% / 0.10), 0 2px 6px hsl(215 50% 25% / 0.22)"
+                      : done
+                        ? "0 1px 3px hsl(152 50% 30% / 0.20)"
+                        : "inset 0 0 0 1px hsl(220 14% 88%)",
+                    border: !done && !active ? "1px solid hsl(220 14% 90%)" : "none",
                   }}
                 >
-                {done ? <CheckCircle2 className="w-4 h-4" /> : i + 1}
+                  {done ? <CheckCircle2 className="w-3.5 h-3.5" strokeWidth={2.5} /> : i + 1}
                 </div>
                 <span
-                  className="mt-1.5 text-[11px] font-medium text-center leading-tight"
-                  style={{ color: active ? "hsl(220 25% 20%)" : "hsl(220 10% 55%)" }}
+                  className="mt-2 text-[10px] text-center leading-tight transition-colors"
+                  style={{
+                    color: active
+                      ? "hsl(215 35% 18%)"
+                      : done
+                        ? "hsl(220 15% 35%)"
+                        : "hsl(220 10% 60%)",
+                    fontWeight: active ? 700 : 500,
+                    letterSpacing: active ? "0.01em" : "0",
+                  }}
                 >
                   {s.label}
                 </span>
               </div>
               {!isLast && (
                 <div
-                  className="flex-1 h-[3px] rounded-full mt-[14px]"
-                  style={{ background: nextReached ? "hsl(222 89% 55%)" : "hsl(220 13% 88%)" }}
+                  className="flex-1 h-px rounded-full self-start"
+                  style={{
+                    marginTop: active ? 14 : 12,
+                    background: nextReached
+                      ? "hsl(152 50% 38%)"
+                      : "hsl(220 14% 88%)",
+                    opacity: nextReached ? 0.6 : 1,
+                  }}
                 />
               )}
             </Fragment>
