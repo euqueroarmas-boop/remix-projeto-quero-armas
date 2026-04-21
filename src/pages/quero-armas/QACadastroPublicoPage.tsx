@@ -444,41 +444,45 @@ function Step1Documents({
         const Icon = slot.icon;
         const sent = !!files[slot.key];
         return (
-          <div
+          <button
             key={slot.key}
-            className={`rounded-xl border transition-all p-3 ${sent ? "border-[hsl(152_60%_45%)] bg-[hsl(152_60%_98%)]" : "border-slate-200 bg-white hover:border-slate-300"}`}
+            type="button"
+            onClick={() => fileRefs[slot.key].current?.click()}
+            className="w-full text-left rounded-2xl border border-slate-200 bg-white p-3.5 transition-all hover:border-slate-300 hover:shadow-sm"
           >
+            <div className="flex items-center gap-2 mb-2.5">
+              <Icon className="w-4 h-4" style={{ color: "hsl(220 25% 25%)" }} />
+              <span className="text-sm font-semibold" style={{ color: "hsl(220 25% 15%)" }}>
+                {slot.label}
+              </span>
+            </div>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
-                style={{ background: sent ? "hsl(152 60% 92%)" : "hsl(220 20% 96%)" }}>
-                {sent
-                  ? <CheckCircle2 className="w-5 h-5" style={{ color: "hsl(152 60% 40%)" }} />
-                  : <Icon className="w-5 h-5" style={{ color: "hsl(230 60% 50%)" }} />}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold" style={{ color: "hsl(220 25% 18%)" }}>
-                  {slot.label}
+              {sent ? (
+                <img
+                  src={files[slot.key]}
+                  alt=""
+                  className={`w-14 h-14 object-cover border border-slate-200 ${slot.key === "selfie" ? "rounded-full" : "rounded-lg"}`}
+                />
+              ) : (
+                <div className={`w-14 h-14 flex items-center justify-center border border-dashed border-slate-300 bg-slate-50 ${slot.key === "selfie" ? "rounded-full" : "rounded-lg"}`}>
+                  {slot.key === "selfie"
+                    ? <Camera className="w-5 h-5" style={{ color: "hsl(220 10% 55%)" }} />
+                    : <Upload className="w-5 h-5" style={{ color: "hsl(220 10% 55%)" }} />}
                 </div>
-                <div className="text-[11px] truncate" style={{ color: "hsl(220 10% 50%)" }}>
-                  {sent ? "Enviado · toque para substituir" : slot.description}
-                </div>
-              </div>
-              {files[slot.key] && (
-                <img src={files[slot.key]} alt="" className="w-12 h-12 rounded-lg object-cover border border-slate-200" />
+              )}
+              {sent ? (
+                <span
+                  className="inline-flex items-center gap-1 h-7 px-2.5 rounded-full text-xs font-semibold"
+                  style={{ background: "hsl(152 65% 94%)", color: "hsl(152 65% 32%)" }}
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" /> Enviado
+                </span>
+              ) : (
+                <span className="text-[11px]" style={{ color: "hsl(220 10% 50%)" }}>
+                  {slot.description}
+                </span>
               )}
             </div>
-            <button
-              onClick={() => fileRefs[slot.key].current?.click()}
-              className="mt-2.5 w-full h-9 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
-              style={{
-                background: sent ? "white" : "hsl(220 20% 97%)",
-                color: "hsl(220 25% 25%)",
-                border: "1px solid hsl(220 13% 88%)",
-              }}
-            >
-              {slot.key === "selfie" ? <Camera className="w-3.5 h-3.5" /> : <Upload className="w-3.5 h-3.5" />}
-              {sent ? "Substituir arquivo" : (slot.key === "selfie" ? "Tirar selfie" : "Enviar arquivo")}
-            </button>
             <input
               ref={fileRefs[slot.key]}
               type="file"
@@ -487,7 +491,7 @@ function Step1Documents({
               hidden
               onChange={(e) => onPick(e, slot.key)}
             />
-          </div>
+          </button>
         );
       })}
 
@@ -502,9 +506,9 @@ function Step1Documents({
         onClick={onContinue}
         disabled={!allUploaded}
         className="w-full h-12 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-        style={{ background: "linear-gradient(135deg, hsl(230 80% 56%), hsl(240 80% 60%))", boxShadow: "0 4px 14px hsl(230 80% 56% / 0.35)" }}
+        style={{ background: "hsl(222 89% 55%)", boxShadow: "0 4px 14px hsl(222 89% 55% / 0.30)" }}
       >
-        <Sparkles className="w-4 h-4" /> Extrair dados
+        Extrair dados
       </button>
 
       <button
