@@ -8,6 +8,7 @@ import {
 import heroImg from "@/assets/qa-curso-hero.jpg";
 import maintImg from "@/assets/qa-curso-manutencao.jpg";
 import familyImg from "@/assets/qa-curso-familia.jpg";
+import instrutorImg from "@/assets/qa-instrutor.jpg";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -27,23 +28,29 @@ const openWpp = (intent: "vaga" | "vip" | "duvida") => {
   window.open(wppLink(msgs[intent]), "_blank", "noopener,noreferrer");
 };
 
-// ============ MILITARY TACTICAL PALETTE ============
-// OD Green (Olive Drab) · FDE/Coyote Tan · Gunmetal · Blood Red · Ranger Amber
-const OD_GREEN   = "hsl(80 18% 22%)";
-const OD_DEEP    = "hsl(82 22% 14%)";
-const COYOTE     = "hsl(32 32% 45%)";
-const COYOTE_DIM = "hsl(32 22% 28%)";
+// ============ TACTICAL PALETTE — sóbria ============
+// 3 cores reais: OD Green · Steel Blue · Muted Amber (sand)
+// + tons neutros gunmetal para o fundo. Sem vermelhos, sem brilhos.
+const OD_GREEN   = "hsl(82 18% 26%)";   // verde militar principal
+const OD_DEEP    = "hsl(84 22% 13%)";   // verde profundo
+const OD_LINE    = "hsl(82 14% 32%)";   // borda discreta verde
+const STEEL_BLUE = "hsl(210 22% 32%)";  // azul aço tático
+const STEEL_DEEP = "hsl(212 28% 16%)";  // azul profundo
+const SAND       = "hsl(42 38% 62%)";   // amarelo areia (muted, não gritante)
+const SAND_DIM   = "hsl(42 22% 42%)";   // areia escura para borda
 const GUNMETAL   = "hsl(210 12% 10%)";
 const GUNMETAL_2 = "hsl(210 14% 7%)";
-const BLOOD      = "hsl(2 72% 42%)";
-const AMBER      = "hsl(40 85% 55%)";
-const STEEL      = "hsl(210 8% 62%)";
+const STEEL      = "hsl(210 8% 64%)";
 const STEEL_DIM  = "hsl(210 6% 48%)";
 
-// aliases de compatibilidade
-const TAC_BLUE = OD_GREEN;
-const TAC_OLIVE = COYOTE_DIM;
-const ACCENT = BLOOD;
+// aliases (mantidos pra não quebrar referências antigas)
+const TAC_BLUE = STEEL_BLUE;
+const TAC_OLIVE = OD_GREEN;
+const COYOTE_DIM = OD_LINE;
+const AMBER = SAND;
+const BLOOD = SAND;       // sem vermelho — substituído por areia
+const COYOTE = SAND_DIM;
+const ACCENT = OD_GREEN;
 
 function SectionTag({ children }: { children: React.ReactNode }) {
   return (
