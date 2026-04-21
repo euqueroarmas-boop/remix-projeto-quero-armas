@@ -238,12 +238,28 @@ export default function QACadastroPublicoPage() {
       };
 
       const { data, error } = await supabase.functions.invoke("qa-cadastro-publico", {
-        body: payload,
+        body: updateExistingId ? { ...payload, update_existing_id: updateExistingId } : payload,
       });
-      if (error) throw new Error(error.message || "Erro ao enviar cadastro");
-      if (data?.error) throw new Error(data.message || data.error);
+      // Tenta extrair o body mesmo em erros HTTP (ex.: 409 duplicate_cpf)
+      let body: any = data;
+      if (error && (error as any).context?.json) {
+        try { body = await (error as any).context.json(); } catch { /* ignore */ }
+      } else if (error && (error as any).context?.text) {
+        try { body = JSON.parse(await (error as any).context.text()); } catch { /* ignore */ }
+      }
 
-      setSavedId(data?.id || null);
+      if (body?.error === "duplicate_cpf" && body.existing_id) {
+        setDuplicate({
+          id: body.existing_id,
+          status: body.existing_status || "—",
+          created_at: body.existing_created_at || "",
+        });
+        return;
+      }
+      if (error) throw new Error(error.message || "Erro ao enviar cadastro");
+      if (body?.error) throw new Error(body.message || body.error);
+
+      setSavedId(body?.id || null);
       setStep(4);
     } catch (e: any) {
       setError(e?.message || "Erro ao concluir cadastro");
