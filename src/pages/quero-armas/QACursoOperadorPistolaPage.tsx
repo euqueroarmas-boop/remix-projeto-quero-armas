@@ -719,8 +719,15 @@ export default function QACursoOperadorPistolaPage() {
                   </p>
                   <p>
                     <strong className="text-white">Bacharel em Direito</strong> e <strong className="text-white">especialista
-                    em legislação de arma de fogo</strong> — domina o Estatuto do Desarmamento, Decreto 11.615/2023
-                    e portarias do Exército. Você treina com quem entende da técnica <em>e</em> da lei.
+                    em legislação de arma de fogo</strong> — domina o Estatuto do Desarmamento (Lei nº 10.826/2003),
+                    o Decreto 11.615/2023 e as Portarias COLOG/Exército que regem CACs e colecionadores.
+                  </p>
+                  <p>
+                    Atua em todo o ciclo legal feito na <strong className="text-white">Polícia Federal</strong>:
+                    <strong className="text-white"> Posse</strong> (residencial), <strong className="text-white">Porte para Defesa Pessoal</strong>,
+                    <strong className="text-white"> Porte funcional para Segurança Pública</strong> (PM, PC, PRF, agentes penitenciários, GCMs armadas)
+                    e <strong className="text-white">Porte de Magistrados e membros do Ministério Público</strong> (LC 75/93, LC 35/79 e Resoluções CNJ/CNMP).
+                    Você treina com quem entende da técnica <em>e</em> da lei.
                   </p>
                   <p>
                     Não vende ilusão. Vende <strong className="text-white">técnica</strong>, <strong className="text-white">responsabilidade</strong> e
