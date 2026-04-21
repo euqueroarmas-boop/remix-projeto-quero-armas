@@ -327,7 +327,7 @@ export default function QACadastroPublicoPage() {
                   {step === 4 && "Tudo pronto!"}
                 </p>
               </div>
-              <QALogo className="h-10 w-auto shrink-0" />
+              <QALogo className="h-16 w-auto shrink-0 rounded-xl" />
             </div>
             <Stepper current={step} />
           </div>
