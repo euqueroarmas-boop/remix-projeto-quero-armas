@@ -396,13 +396,13 @@ export default function QACursoOperadorPistolaPage() {
             <div className="grid md:grid-cols-2 gap-12 items-center">
               <div className="relative">
                 <img
-                  src={familyImg}
-                  alt="Família protegida em casa"
+                  src={ameacaImg}
+                  alt="Ameaça noturna — invasor encapuzado representando o risco real à família"
                   loading="lazy"
                   width={1280}
                   height={960}
                   className="rounded-sm w-full"
-                  style={{ filter: "grayscale(0.5) contrast(1.15) brightness(0.85)" }}
+                  style={{ filter: "grayscale(1) contrast(1.2) brightness(0.78)" }}
                 />
                 <div
                   className="absolute inset-0 rounded-sm"
@@ -414,9 +414,9 @@ export default function QACursoOperadorPistolaPage() {
                 {/* Tag militar na imagem */}
                 <div
                   className="absolute bottom-3 left-3 px-2.5 py-1 font-mono text-[10px] tracking-[0.2em] uppercase font-bold"
-                  style={{ background: "rgba(0,0,0,0.7)", border: `1px solid ${OD_LINE}`, color: SAND }}
+                  style={{ background: "rgba(0,0,0,0.78)", border: `1px solid ${OD_LINE}`, color: SAND }}
                 >
-                  ● PROTEÇÃO · ATIVA
+                  ● THREAT · IDENTIFICADA
                 </div>
               </div>
               <div>
