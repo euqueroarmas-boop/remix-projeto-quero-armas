@@ -534,6 +534,20 @@ function CadastroDocumentosCard({
 
   const openScanner = (target: "identidade" | "endereco" | "avulso") => {
     setScannerTarget(target);
+    setScannerInitialFile(null);
+    setScannerOpen(true);
+  };
+
+  const openImportPicker = (target: "identidade" | "endereco" | "avulso") => {
+    setPendingImportTarget(target);
+    importInputRef.current?.click();
+  };
+
+  const handleImportSelected = (file: File | null) => {
+    if (!file || !pendingImportTarget) return;
+    setScannerTarget(pendingImportTarget);
+    setScannerInitialFile(file);
+    setPendingImportTarget(null);
     setScannerOpen(true);
   };
 
@@ -591,55 +605,99 @@ function CadastroDocumentosCard({
         <DocumentThumb path={cadastro.documento_identidade_path} label="Documento de identidade" name={cadastro.nome_completo} kind="doc" />
         <DocumentThumb path={cadastro.comprovante_endereco_path} label="Comprovante de endereço" name={cadastro.nome_completo} kind="doc" />
       </div>
-      <div className="flex flex-col gap-3 pt-3 border-t" style={{ borderColor: "hsl(220 13% 93%)" }}>
-        <p className="text-[11px]" style={{ color: "hsl(220 10% 50%)" }}>
-          Use o <strong>scanner de documentos</strong> para capturar com detecção de bordas, correção de
-          perspectiva e geração de PDF multipágina (sem foto comum). Em seguida, o OCR preenche os
-          campos vazios automaticamente.
+      <div className="mt-3 rounded-xl border border-slate-800 bg-slate-950 p-3 sm:p-4">
+        <p className="text-[11px] leading-relaxed text-slate-400 mb-3">
+          <span className="text-slate-200 font-semibold">Scanner de documentos.</span> Capture pela câmera <em>ou</em> importe
+          um arquivo (JPG, PNG, PDF) já existente. O sistema detecta bordas, corrige perspectiva e gera um
+          PDF com aparência de documento escaneado. Depois, o OCR preenche os campos vazios.
         </p>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            type="button" size="sm"
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          {/* Linha 1 — escanear via câmera */}
+          <button
+            type="button"
             onClick={() => openScanner("identidade")}
-            className="gap-1.5 h-8 text-[11px] bg-emerald-600 hover:bg-emerald-500 text-white"
+            className="group h-9 inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-700 bg-slate-900 px-3 text-[11px] font-semibold tracking-wider text-slate-100 hover:bg-slate-800 hover:border-emerald-500/40 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
           >
-            <Camera className="w-3 h-3" />
-            ESCANEAR IDENTIDADE
-          </Button>
-          <Button
-            type="button" size="sm"
+            <Camera className="w-3.5 h-3.5 text-emerald-400" />
+            IDENTIDADE
+          </button>
+          <button
+            type="button"
             onClick={() => openScanner("endereco")}
-            className="gap-1.5 h-8 text-[11px] bg-emerald-600 hover:bg-emerald-500 text-white"
+            className="group h-9 inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-700 bg-slate-900 px-3 text-[11px] font-semibold tracking-wider text-slate-100 hover:bg-slate-800 hover:border-emerald-500/40 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
           >
-            <Camera className="w-3 h-3" />
-            ESCANEAR COMPROVANTE
-          </Button>
-          <Button
-            type="button" size="sm" variant="outline"
+            <Camera className="w-3.5 h-3.5 text-emerald-400" />
+            COMPROVANTE
+          </button>
+          <button
+            type="button"
             onClick={() => openScanner("avulso")}
-            className="gap-1.5 h-8 text-[11px] bg-white text-slate-700 border-slate-300 hover:bg-slate-50 hover:text-slate-900"
+            className="group h-9 inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-700 bg-slate-900 px-3 text-[11px] font-semibold tracking-wider text-slate-100 hover:bg-slate-800 hover:border-emerald-500/40 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
           >
-            <FileDown className="w-3 h-3" />
-            ESCANEAR & BAIXAR PDF
-          </Button>
-          {hasAnyDoc && (
-            <Button
-              type="button" size="sm"
+            <FileDown className="w-3.5 h-3.5 text-emerald-400" />
+            ESCANEAR & PDF
+          </button>
+
+          {/* Linha 2 — importar arquivo existente para o pipeline */}
+          <button
+            type="button"
+            onClick={() => openImportPicker("identidade")}
+            className="h-9 inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-800 bg-slate-900/60 px-3 text-[11px] font-semibold tracking-wider text-slate-300 hover:bg-slate-800 hover:text-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-500/40"
+          >
+            <Upload className="w-3.5 h-3.5" />
+            IMPORTAR IDENT.
+          </button>
+          <button
+            type="button"
+            onClick={() => openImportPicker("endereco")}
+            className="h-9 inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-800 bg-slate-900/60 px-3 text-[11px] font-semibold tracking-wider text-slate-300 hover:bg-slate-800 hover:text-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-500/40"
+          >
+            <Upload className="w-3.5 h-3.5" />
+            IMPORTAR COMP.
+          </button>
+          <button
+            type="button"
+            onClick={() => openImportPicker("avulso")}
+            className="h-9 inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-800 bg-slate-900/60 px-3 text-[11px] font-semibold tracking-wider text-slate-300 hover:bg-slate-800 hover:text-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-500/40"
+          >
+            <Upload className="w-3.5 h-3.5" />
+            IMPORTAR ARQUIVO
+          </button>
+        </div>
+
+        {hasAnyDoc && (
+          <div className="mt-3 pt-3 border-t border-slate-800 flex justify-end">
+            <button
+              type="button"
               onClick={handleExtract}
               disabled={extracting}
-              className="gap-1.5 h-8 text-[11px] ml-auto"
+              className="h-9 inline-flex items-center justify-center gap-1.5 rounded-md bg-emerald-500 px-4 text-[11px] font-bold tracking-wider text-slate-950 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-300"
             >
-              {extracting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Crosshair className="w-3 h-3" />}
+              {extracting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Crosshair className="w-3.5 h-3.5" />}
               EXTRAIR DADOS VIA OCR
-            </Button>
-          )}
-        </div>
+            </button>
+          </div>
+        )}
+
+        <input
+          ref={importInputRef}
+          type="file"
+          accept="image/*,application/pdf"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0] || null;
+            handleImportSelected(f);
+            e.target.value = "";
+          }}
+        />
       </div>
 
       <DocumentScanner
         open={scannerOpen}
         onClose={() => setScannerOpen(false)}
         onComplete={handleScannerComplete}
+        initialFile={scannerInitialFile}
         title={
           scannerTarget === "identidade" ? "ESCANEAR DOCUMENTO DE IDENTIDADE" :
           scannerTarget === "endereco" ? "ESCANEAR COMPROVANTE DE ENDEREÇO" :
