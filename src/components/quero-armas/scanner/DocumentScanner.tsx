@@ -319,6 +319,9 @@ export default function DocumentScanner({
     if (!open) return;
     if (mode !== "capture") return;
     if (!libsReady) return;
+    // Quando o scanner foi aberto a partir de um arquivo importado,
+    // NUNCA abrir a câmera. O fluxo de importação processa o arquivo direto.
+    if (initialFile) return;
     startCamera();
     return () => stopCamera();
     // eslint-disable-next-line react-hooks/exhaustive-deps
