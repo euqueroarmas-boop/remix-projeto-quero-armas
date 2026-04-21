@@ -399,22 +399,21 @@ function Stepper({ current }: { current: StepId }) {
   return (
     <div className="mt-5 px-2">
       <div className="relative flex items-start justify-between">
+        {/* linha base cinza */}
+        <div className="absolute left-[12%] right-[12%] top-[15px] h-[2px]" style={{ background: "hsl(220 13% 88%)" }} />
+        {/* linha de progresso colorida */}
+        <div
+          className="absolute left-[12%] top-[15px] h-[2px] transition-all"
+          style={{
+            background: "hsl(222 89% 55%)",
+            width: `calc((100% - 24%) * ${(current - 1) / (STEPS.length - 1)})`,
+          }}
+        />
         {STEPS.map((s, i) => {
           const done = current > s.id;
           const active = current === s.id;
-          const prevDone = current > s.id - 1; // linha à esquerda colorida quando passou desse passo
           return (
             <div key={s.id} className="flex-1 flex flex-col items-center relative">
-              {i > 0 && (
-                <div
-                  className="absolute h-[2px] top-[14px]"
-                  style={{
-                    left: "-50%",
-                    right: "50%",
-                    background: prevDone ? "hsl(222 89% 55%)" : "hsl(220 13% 88%)",
-                  }}
-                />
-              )}
               <div
                 className="relative z-10 w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-semibold transition-all"
                 style={{
