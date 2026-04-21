@@ -52,6 +52,39 @@ declare global {
 
 const OPENCV_URL = "https://docs.opencv.org/4.10.0/opencv.js";
 const JSCANIFY_URL = "https://cdn.jsdelivr.net/npm/jscanify@1.4.2/src/jscanify.min.js";
+const PDFJS_URL = "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.7.76/build/pdf.min.mjs";
+const PDFJS_WORKER_URL = "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.7.76/build/pdf.worker.min.mjs";
+
+let pdfjsLoading: Promise<any> | null = null;
+function loadPdfJs(): Promise<any> {
+  if (typeof window === "undefined") return Promise.reject(new Error("SSR"));
+  if ((window as any).__pdfjsLib) return Promise.resolve((window as any).__pdfjsLib);
+  if (pdfjsLoading) return pdfjsLoading;
+  pdfjsLoading = (async () => {
+    const lib: any = await import(/* @vite-ignore */ PDFJS_URL);
+    lib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER_URL;
+    (window as any).__pdfjsLib = lib;
+    return lib;
+  })();
+  return pdfjsLoading;
+}
+
+async function pdfFileToImages(file: File): Promise<HTMLCanvasElement[]> {
+  const pdfjs = await loadPdfJs();
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjs.getDocument({ data: buf }).promise;
+  const out: HTMLCanvasElement[] = [];
+  const maxPages = Math.min(pdf.numPages, 10);
+  for (let i = 1; i <= maxPages; i++) {
+    const page = await pdf.getPage(i);
+    const viewport = page.getViewport({ scale: 2 });
+    const c = document.createElement("canvas");
+    c.width = viewport.width; c.height = viewport.height;
+    await page.render({ canvasContext: c.getContext("2d")!, viewport }).promise;
+    out.push(c);
+  }
+  return out;
+}
 
 let opencvLoading: Promise<void> | null = null;
 function loadOpenCv(): Promise<void> {
@@ -387,23 +420,48 @@ export default function DocumentScanner({
   const handlePickFile = async (file: File) => {
     setBusy(true);
     try {
-      const url = URL.createObjectURL(file);
-      const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-        const i = new Image();
-        i.onload = () => resolve(i);
-        i.onerror = reject;
-        i.src = url;
-      });
-      const page = await processSourceToPage(img);
-      URL.revokeObjectURL(url);
-      setPages((p) => [...p, page]);
-      toast.success(`Página ${pages.length + 1} adicionada`);
+      const isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+      const sources: Array<HTMLImageElement | HTMLCanvasElement> = [];
+      if (isPdf) {
+        const canvases = await pdfFileToImages(file);
+        sources.push(...canvases);
+      } else {
+        const url = URL.createObjectURL(file);
+        const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+          const i = new Image();
+          i.onload = () => resolve(i);
+          i.onerror = reject;
+          i.src = url;
+        });
+        sources.push(img);
+        URL.revokeObjectURL(url);
+      }
+      const newPages: ScannedPage[] = [];
+      for (const src of sources) {
+        try {
+          const page = await processSourceToPage(src);
+          newPages.push(page);
+        } catch (perPageErr) {
+          console.warn("[scanner-pdf-page]", perPageErr);
+        }
+      }
+      if (newPages.length === 0) throw new Error("Não foi possível processar o arquivo. Tente outro.");
+      setPages((p) => [...p, ...newPages]);
+      setMode("review");
+      toast.success(`${newPages.length} página(s) digitalizada(s)`);
     } catch (e: any) {
-      toast.error(e?.message || "Falha ao processar imagem");
+      toast.error(e?.message || "Falha ao processar arquivo");
     } finally {
       setBusy(false);
     }
   };
+
+  // Quando recebe um arquivo inicial (importado), processa direto sem precisar de câmera
+  useEffect(() => {
+    if (!open || !initialFile || !libsReady) return;
+    handlePickFile(initialFile);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, libsReady, initialFile]);
 
   const reapplyFilter = (idx: number, filter: Filter) => {
     setPages((prev) => prev.map((p, i) => {
