@@ -960,3 +960,220 @@ function Step4Done({ firstName }: { firstName: string }) {
     </div>
   );
 }
+
+/* ─────────────────────── Bloco de boas-vindas ─────────────────────── */
+function WelcomeBlock() {
+  // Acentos táticos sutis: azul institucional PF (#1e3a5f → 215 52% 25%)
+  // e verde oliva sóbrio do Exército (#4a5d3a → 86 23% 30%).
+  return (
+    <div
+      className="rounded-2xl p-4 mb-1 relative overflow-hidden"
+      style={{
+        background:
+          "linear-gradient(135deg, hsl(215 40% 14%) 0%, hsl(215 38% 18%) 55%, hsl(86 22% 22%) 100%)",
+        boxShadow: "0 6px 20px hsl(215 50% 15% / 0.18)",
+      }}
+    >
+      {/* Selo discreto */}
+      <div className="flex items-center gap-1.5 mb-2">
+        <span
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider"
+          style={{ background: "hsl(215 30% 95% / 0.12)", color: "hsl(50 60% 88%)", border: "1px solid hsl(50 60% 88% / 0.18)" }}
+        >
+          <Shield className="w-2.5 h-2.5" /> Quero Armas
+        </span>
+      </div>
+      <h2 className="text-[17px] font-bold leading-tight mb-1.5" style={{ color: "hsl(50 70% 92%)" }}>
+        Bem-vindo à Quero Armas.
+      </h2>
+      <p className="text-[12px] leading-relaxed" style={{ color: "hsl(215 25% 85%)" }}>
+        A burocracia para arma de fogo no Brasil já é complicada demais. Com a Quero Armas, seu processo fica mais
+        claro, organizado e tranquilo. Selecione o serviço desejado e envie seus documentos para começarmos sua análise.
+      </p>
+    </div>
+  );
+}
+
+/* ─────────────────────── Step 0 — Qualificação ─────────────────────── */
+interface QualifValue {
+  objetivo_principal: string;
+  categoria_servico: string;
+  servico_principal: string;
+  subtipo_servico: string;
+  descricao_servico_livre: string;
+}
+
+function Step0Qualificacao({
+  value,
+  onChange,
+  onContinue,
+}: {
+  value: QualifValue;
+  onChange: (v: QualifValue) => void;
+  onContinue: () => void;
+}) {
+  const set = <K extends keyof QualifValue>(k: K, v: QualifValue[K]) => onChange({ ...value, [k]: v });
+
+  const cat = findCategoria(value.categoria_servico);
+  const svc = findServico(value.categoria_servico, value.servico_principal);
+  const needsSubtipo = !!(svc?.subtipos && svc.subtipos.length > 0);
+  const needsLivre = !!svc?.livre;
+
+  // Validação
+  const valido =
+    !!value.objetivo_principal &&
+    !!value.categoria_servico &&
+    !!value.servico_principal &&
+    (!needsSubtipo || !!value.subtipo_servico) &&
+    (!needsLivre || value.descricao_servico_livre.trim().length >= 10);
+
+  return (
+    <div className="space-y-4">
+      <WelcomeBlock />
+
+      {/* Campo 1 — Objetivo principal */}
+      <TacticalSelect
+        icon={Target}
+        label="Qual é o seu objetivo principal?"
+        value={value.objetivo_principal}
+        onChange={(v) => set("objetivo_principal", v)}
+        placeholder="Selecione seu objetivo"
+        options={OBJETIVOS_PRINCIPAIS.map((o) => ({ value: o.value, label: o.label }))}
+        required
+      />
+
+      {/* Campo 2 — Categoria */}
+      {value.objetivo_principal && (
+        <TacticalSelect
+          icon={Layers}
+          label="Categoria"
+          value={value.categoria_servico}
+          onChange={(v) => {
+            // limpa serviço/subtipo ao trocar categoria
+            onChange({ ...value, categoria_servico: v, servico_principal: "", subtipo_servico: "", descricao_servico_livre: "" });
+          }}
+          placeholder="Selecione a categoria"
+          options={CATEGORIAS_SERVICO.map((c) => ({ value: c.value, label: c.label }))}
+          required
+        />
+      )}
+
+      {/* Campo 3 — Serviço */}
+      {cat && (
+        <TacticalSelect
+          icon={FileText}
+          label="Serviço"
+          value={value.servico_principal}
+          onChange={(v) => onChange({ ...value, servico_principal: v, subtipo_servico: "", descricao_servico_livre: "" })}
+          placeholder="Selecione o serviço"
+          options={cat.servicos.map((s) => ({ value: s.value, label: s.label }))}
+          required
+        />
+      )}
+
+      {/* Campo 4 — Subtipo (condicional) */}
+      {svc && needsSubtipo && (
+        <TacticalSelect
+          icon={ChevronRight}
+          label="Subtipo"
+          value={value.subtipo_servico}
+          onChange={(v) => set("subtipo_servico", v)}
+          placeholder="Selecione o subtipo"
+          options={(svc.subtipos || []).map((s) => ({ value: s, label: s }))}
+          required
+        />
+      )}
+
+      {/* Campo 5 — Texto livre (condicional) */}
+      {svc && needsLivre && (
+        <label className="block">
+          <span className="text-[10px] font-semibold uppercase tracking-wider flex items-center gap-1.5"
+            style={{ color: "hsl(215 35% 30%)" }}>
+            <FileText className="w-3 h-3" />
+            Descreva o serviço que você precisa <span style={{ color: "hsl(0 70% 50%)" }}>*</span>
+          </span>
+          <textarea
+            value={value.descricao_servico_livre}
+            onChange={(e) => set("descricao_servico_livre", e.target.value)}
+            placeholder="Explique brevemente qual atendimento ou processo você deseja solicitar"
+            rows={3}
+            className="mt-1.5 w-full px-3 py-2.5 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(215_50%_45%)] transition resize-none"
+            style={{
+              border: "1px solid hsl(220 13% 86%)",
+              background: "white",
+              color: "hsl(220 25% 18%)",
+            }}
+          />
+          <span className="text-[10px] mt-1 block" style={{ color: "hsl(220 10% 55%)" }}>
+            Mínimo 10 caracteres.
+          </span>
+        </label>
+      )}
+
+      <button
+        onClick={onContinue}
+        disabled={!valido}
+        className="w-full h-12 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+        style={{
+          background: "linear-gradient(135deg, hsl(215 52% 25%) 0%, hsl(215 50% 32%) 100%)",
+          boxShadow: "0 6px 18px hsl(215 50% 25% / 0.28)",
+        }}
+      >
+        Continuar para documentos
+        <ChevronRight className="w-4 h-4" />
+      </button>
+
+      <p className="text-[10px] text-center px-2" style={{ color: "hsl(220 10% 55%)" }}>
+        Suas respostas ajudam nossa equipe a preparar seu atendimento. Nenhum compromisso até a confirmação.
+      </p>
+    </div>
+  );
+}
+
+/* Select tático premium — visual sóbrio com acento institucional */
+function TacticalSelect({
+  icon: Icon,
+  label,
+  value,
+  onChange,
+  placeholder,
+  options,
+  required,
+}: {
+  icon: typeof Target;
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+  options: { value: string; label: string }[];
+  required?: boolean;
+}) {
+  return (
+    <label className="block">
+      <span className="text-[10px] font-semibold uppercase tracking-wider flex items-center gap-1.5"
+        style={{ color: "hsl(215 35% 30%)" }}>
+        <Icon className="w-3 h-3" />
+        {label} {required && <span style={{ color: "hsl(0 70% 50%)" }}>*</span>}
+      </span>
+      <div className="relative mt-1.5">
+        <select
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full h-11 pl-3 pr-9 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(215_50%_45%)] transition appearance-none cursor-pointer"
+          style={{
+            border: value ? "1px solid hsl(215 40% 55%)" : "1px solid hsl(220 13% 86%)",
+            background: "white",
+            color: value ? "hsl(220 25% 18%)" : "hsl(220 10% 55%)",
+            boxShadow: value ? "0 1px 3px hsl(215 50% 30% / 0.08)" : "none",
+          }}
+        >
+          <option value="">{placeholder}</option>
+          {options.map((o) => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
+        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: "hsl(215 35% 35%)" }} />
+      </div>
+    </label>
+  );
+}
