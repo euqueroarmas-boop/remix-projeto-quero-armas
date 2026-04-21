@@ -424,6 +424,9 @@ function CadastroDocumentosCard({
   const [extracting, setExtracting] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [scannerTarget, setScannerTarget] = useState<"identidade" | "endereco" | "avulso">("avulso");
+  const [scannerInitialFile, setScannerInitialFile] = useState<File | null>(null);
+  const importInputRef = useRef<HTMLInputElement | null>(null);
+  const [pendingImportTarget, setPendingImportTarget] = useState<"identidade" | "endereco" | "avulso" | null>(null);
   const idUrl = usePrivateStorageUrl("qa-cadastro-selfies", cadastro.documento_identidade_path);
   const addrUrl = usePrivateStorageUrl("qa-cadastro-selfies", cadastro.comprovante_endereco_path);
 
