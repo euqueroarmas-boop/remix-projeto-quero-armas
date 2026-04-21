@@ -37,6 +37,78 @@ import { useQAStatusServico } from "@/hooks/useQAStatusServico";
 import { isDispensado, getBaseLegalDispensa, CATEGORIA_MAP, type CategoriaTitular } from "@/components/quero-armas/clientes/categoriaTitular";
 import { invalidateQADashboardSnapshot } from "@/components/quero-armas/dashboard/dashboardSnapshot";
 import { objetivoLabel, categoriaLabel } from "./qaServiceCatalog";
+import jsPDF from "jspdf";
+
+/* ── Conversão "scanner": aprimora imagem (escala de cinza + contraste) e gera PDF A4 ── */
+async function loadImageEnhanced(url: string): Promise<HTMLCanvasElement> {
+  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const i = new Image();
+    i.crossOrigin = "anonymous";
+    i.onload = () => resolve(i);
+    i.onerror = reject;
+    i.src = url;
+  });
+  // Limita largura máxima (mantém qualidade boa para PDF A4)
+  const MAX_W = 1700;
+  const scale = Math.min(1, MAX_W / img.naturalWidth);
+  const w = Math.round(img.naturalWidth * scale);
+  const h = Math.round(img.naturalHeight * scale);
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d")!;
+  ctx.drawImage(img, 0, 0, w, h);
+  // Filtro estilo scanner: leve aumento de contraste e clareamento de fundo
+  try {
+    const data = ctx.getImageData(0, 0, w, h);
+    const d = data.data;
+    const contrast = 1.25;
+    const intercept = 128 * (1 - contrast);
+    for (let i = 0; i < d.length; i += 4) {
+      // Canal por canal (mantém leve cor) com contraste e branqueamento de tons claros
+      for (let c = 0; c < 3; c++) {
+        let v = d[i + c] * contrast + intercept;
+        if (v > 215) v = Math.min(255, v + 20); // clareia fundo (papel branco)
+        if (v < 0) v = 0;
+        if (v > 255) v = 255;
+        d[i + c] = v;
+      }
+    }
+    ctx.putImageData(data, 0, 0);
+  } catch (e) {
+    console.warn("[scan] enhancement skipped", e);
+  }
+  return canvas;
+}
+
+async function generateScannedPdf(images: Array<{ url: string; title: string }>, filename: string) {
+  const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+  const pageW = pdf.internal.pageSize.getWidth();
+  const pageH = pdf.internal.pageSize.getHeight();
+  const margin = 10;
+  const maxW = pageW - margin * 2;
+  const maxH = pageH - margin * 2;
+
+  let first = true;
+  for (const item of images) {
+    if (!item.url) continue;
+    const canvas = await loadImageEnhanced(item.url);
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
+    const ratio = canvas.width / canvas.height;
+    let drawW = maxW;
+    let drawH = drawW / ratio;
+    if (drawH > maxH) {
+      drawH = maxH;
+      drawW = drawH * ratio;
+    }
+    const x = (pageW - drawW) / 2;
+    const y = (pageH - drawH) / 2;
+    if (!first) pdf.addPage();
+    pdf.addImage(dataUrl, "JPEG", x, y, drawW, drawH, undefined, "FAST");
+    first = false;
+  }
+  pdf.save(filename);
+}
 
 /* ── Lightbox 5:4 espelhado (compartilhado por todas as miniaturas) ── */
 function PhotoLightbox({ url, alt, onClose, mirror = true, fit = "cover" }: { url: string; alt: string; onClose: () => void; mirror?: boolean; fit?: "cover" | "contain" }) {
