@@ -646,8 +646,6 @@ function Step1Documents({
       )}
 
       {/* Bloco de boas-vindas — premium, tático e sutil */}
-      <WelcomeBlock />
-
       {SLOTS.map(slot => {
         const Icon = slot.icon;
         const sent = !!files[slot.key];
