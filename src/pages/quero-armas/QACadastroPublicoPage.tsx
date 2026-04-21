@@ -216,10 +216,39 @@ export default function QACadastroPublicoPage() {
         if (!dataUrl) continue;
         const { blob, ext } = dataUrlToBlob(dataUrl);
         const key = `cadastro-publico/${cpfDigits}-${slot.key}-${Date.now()}.${ext}`;
-        const { error: upErr } = await supabase.storage
-          .from("qa-cadastro-selfies")
-          .upload(key, blob, { contentType: blob.type, upsert: true });
-        if (upErr) throw new Error(`Falha ao enviar ${slot.label}: ${upErr.message}`);
+        // Mobile-resilient upload: fetch direto + AbortController (evita "Load failed" no iOS)
+        const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+        const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+        const uploadUrl = `${SUPABASE_URL}/storage/v1/object/qa-cadastro-selfies/${key}`;
+        const ctrl = new AbortController();
+        const timeoutId = setTimeout(() => ctrl.abort(), 45000);
+        let upRes: Response;
+        try {
+          upRes = await fetch(uploadUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": blob.type || "application/octet-stream",
+              "x-upsert": "true",
+              "cache-control": "3600",
+              apikey: SUPABASE_KEY,
+              Authorization: `Bearer ${SUPABASE_KEY}`,
+            },
+            body: blob,
+            signal: ctrl.signal,
+          });
+        } catch (netErr: any) {
+          clearTimeout(timeoutId);
+          if (netErr?.name === "AbortError") {
+            throw new Error(`Tempo esgotado ao enviar ${slot.label}. Verifique sua conexão e tente novamente.`);
+          }
+          throw new Error(`Falha ao enviar ${slot.label}: conexão instável. Tente novamente.`);
+        }
+        clearTimeout(timeoutId);
+        if (!upRes.ok) {
+          let msg = `HTTP ${upRes.status}`;
+          try { const j = await upRes.json(); msg = j?.message || j?.error || msg; } catch { /* ignore */ }
+          throw new Error(`Falha ao enviar ${slot.label}: ${msg}`);
+        }
         uploaded.push({ key: slot.key, path: key });
       }
 
