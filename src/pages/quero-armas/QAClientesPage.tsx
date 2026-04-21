@@ -39,46 +39,177 @@ import { invalidateQADashboardSnapshot } from "@/components/quero-armas/dashboar
 import { objetivoLabel, categoriaLabel } from "./qaServiceCatalog";
 import jsPDF from "jspdf";
 
-/* ── Conversão "scanner": aprimora imagem (escala de cinza + contraste) e gera PDF A4 ── */
-async function loadImageEnhanced(url: string): Promise<HTMLCanvasElement> {
-  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+/* ── Pipeline "scanner" real ──
+ * 1) Auto-crop: detecta as bordas do papel (regiões claras) e descarta o fundo escuro da foto.
+ * 2) Background flattening: estima o fundo do papel via downsample/blur e divide para neutralizar
+ *    sombras e iluminação irregular (whiteboard / shadow removal).
+ * 3) White balance: normaliza para o papel ficar branco real (255).
+ * 4) Contraste/curva S leve para realçar texto sem queimar tinta.
+ * 5) Unsharp mask para nitidez tipo scanner.
+ */
+async function loadImage(url: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
     const i = new Image();
     i.crossOrigin = "anonymous";
     i.onload = () => resolve(i);
     i.onerror = reject;
     i.src = url;
   });
-  // Limita largura máxima (mantém qualidade boa para PDF A4)
+}
+
+function autoCropToPaper(src: HTMLCanvasElement): HTMLCanvasElement {
+  const ctx = src.getContext("2d")!;
+  const { width: w, height: h } = src;
+  const img = ctx.getImageData(0, 0, w, h);
+  const d = img.data;
+  // Luminância e limiar fixo: papel ≈ claro (>110). Fundo escuro de print/foto vai pra fora.
+  const isPaper = (i: number) => {
+    const y = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+    return y > 110;
+  };
+  // Projeções por linha/coluna (proporção de pixels claros)
+  const rowScore = new Float32Array(h);
+  const colScore = new Float32Array(w);
+  for (let y = 0; y < h; y++) {
+    let cnt = 0;
+    for (let x = 0; x < w; x++) {
+      if (isPaper((y * w + x) * 4)) cnt++;
+    }
+    rowScore[y] = cnt / w;
+  }
+  for (let x = 0; x < w; x++) {
+    let cnt = 0;
+    for (let y = 0; y < h; y++) {
+      if (isPaper((y * w + x) * 4)) cnt++;
+    }
+    colScore[x] = cnt / h;
+  }
+  const TH = 0.35; // pelo menos 35% claro = dentro do papel
+  let top = 0, bottom = h - 1, left = 0, right = w - 1;
+  while (top < h && rowScore[top] < TH) top++;
+  while (bottom > top && rowScore[bottom] < TH) bottom--;
+  while (left < w && colScore[left] < TH) left++;
+  while (right > left && colScore[right] < TH) right--;
+  // Margem de segurança
+  const pad = Math.round(Math.min(w, h) * 0.005);
+  top = Math.max(0, top - pad);
+  left = Math.max(0, left - pad);
+  bottom = Math.min(h - 1, bottom + pad);
+  right = Math.min(w - 1, right + pad);
+  const cw = Math.max(1, right - left + 1);
+  const ch = Math.max(1, bottom - top + 1);
+  // Sanidade: se cropped < 40% da área, descarta
+  if (cw * ch < w * h * 0.4) return src;
+  const out = document.createElement("canvas");
+  out.width = cw;
+  out.height = ch;
+  out.getContext("2d")!.drawImage(src, left, top, cw, ch, 0, 0, cw, ch);
+  return out;
+}
+
+function estimateBackground(src: HTMLCanvasElement, scale = 0.05): ImageData {
+  // Downsample agressivo + upsample = blur barato (estimativa do papel/iluminação)
+  const sw = Math.max(8, Math.round(src.width * scale));
+  const sh = Math.max(8, Math.round(src.height * scale));
+  const small = document.createElement("canvas");
+  small.width = sw;
+  small.height = sh;
+  const sctx = small.getContext("2d")!;
+  // Para "background", usamos o máximo local: pintamos várias passagens com blur
+  sctx.filter = "blur(2px)";
+  sctx.drawImage(src, 0, 0, sw, sh);
+  sctx.filter = "none";
+  // Estima como o "papel" seria: percentil alto. Como aproximação, dilatamos via 2 passagens de blur leve.
+  const big = document.createElement("canvas");
+  big.width = src.width;
+  big.height = src.height;
+  const bctx = big.getContext("2d")!;
+  bctx.imageSmoothingEnabled = true;
+  bctx.filter = "blur(8px)";
+  bctx.drawImage(small, 0, 0, src.width, src.height);
+  bctx.filter = "none";
+  return bctx.getImageData(0, 0, src.width, src.height);
+}
+
+function applyScannerFilter(src: HTMLCanvasElement): HTMLCanvasElement {
+  const w = src.width;
+  const h = src.height;
+  const ctx = src.getContext("2d")!;
+  const img = ctx.getImageData(0, 0, w, h);
+  const d = img.data;
+
+  // 1) Estimativa de fundo (iluminação/papel)
+  const bgImg = estimateBackground(src);
+  const bg = bgImg.data;
+
+  // 2) Encontra o branco-alvo: percentil 95 da luminância do fundo estimado
+  const sample: number[] = [];
+  const step = Math.max(1, Math.floor((w * h) / 5000));
+  for (let i = 0; i < bg.length; i += 4 * step) {
+    sample.push(0.299 * bg[i] + 0.587 * bg[i + 1] + 0.114 * bg[i + 2]);
+  }
+  sample.sort((a, b) => a - b);
+  const paperLum = Math.max(80, sample[Math.floor(sample.length * 0.92)] || 200);
+
+  // 3) Divisão por fundo (background flattening) por canal + curva
+  const gain = 255 / paperLum;
+  const contrast = 1.35;
+  const intercept = 128 * (1 - contrast);
+
+  for (let i = 0; i < d.length; i += 4) {
+    for (let c = 0; c < 3; c++) {
+      const bgV = Math.max(40, bg[i + c]); // evita divisão por zero
+      // Normaliza pela iluminação local (papel vira ~255)
+      let v = (d[i + c] / bgV) * 255 * (gain / (255 / paperLum));
+      // Curva de contraste
+      v = v * contrast + intercept;
+      // Branqueia tudo que já é claro (limpa fundo)
+      if (v > 205) v = Math.min(255, v + 35);
+      // Escurece tinta levemente
+      if (v < 90) v = Math.max(0, v - 10);
+      if (v < 0) v = 0;
+      else if (v > 255) v = 255;
+      d[i + c] = v;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+
+  // 4) Unsharp mask: nitidez tipo scanner
+  const sharp = document.createElement("canvas");
+  sharp.width = w;
+  sharp.height = h;
+  const sctx = sharp.getContext("2d")!;
+  sctx.filter = "blur(1.2px)";
+  sctx.drawImage(src, 0, 0);
+  const blurred = sctx.getImageData(0, 0, w, h).data;
+  const final = ctx.getImageData(0, 0, w, h);
+  const fd = final.data;
+  const amount = 0.7;
+  for (let i = 0; i < fd.length; i += 4) {
+    for (let c = 0; c < 3; c++) {
+      const orig = fd[i + c];
+      const sharpened = orig + (orig - blurred[i + c]) * amount;
+      fd[i + c] = sharpened < 0 ? 0 : sharpened > 255 ? 255 : sharpened;
+    }
+  }
+  ctx.putImageData(final, 0, 0);
+  return src;
+}
+
+async function loadImageEnhanced(url: string): Promise<HTMLCanvasElement> {
+  const img = await loadImage(url);
+  // Limita largura máxima (qualidade scanner @ ~200dpi A4)
   const MAX_W = 1700;
   const scale = Math.min(1, MAX_W / img.naturalWidth);
   const w = Math.round(img.naturalWidth * scale);
   const h = Math.round(img.naturalHeight * scale);
-  const canvas = document.createElement("canvas");
-  canvas.width = w;
-  canvas.height = h;
-  const ctx = canvas.getContext("2d")!;
-  ctx.drawImage(img, 0, 0, w, h);
-  // Filtro estilo scanner: leve aumento de contraste e clareamento de fundo
-  try {
-    const data = ctx.getImageData(0, 0, w, h);
-    const d = data.data;
-    const contrast = 1.25;
-    const intercept = 128 * (1 - contrast);
-    for (let i = 0; i < d.length; i += 4) {
-      // Canal por canal (mantém leve cor) com contraste e branqueamento de tons claros
-      for (let c = 0; c < 3; c++) {
-        let v = d[i + c] * contrast + intercept;
-        if (v > 215) v = Math.min(255, v + 20); // clareia fundo (papel branco)
-        if (v < 0) v = 0;
-        if (v > 255) v = 255;
-        d[i + c] = v;
-      }
-    }
-    ctx.putImageData(data, 0, 0);
-  } catch (e) {
-    console.warn("[scan] enhancement skipped", e);
-  }
-  return canvas;
+  const raw = document.createElement("canvas");
+  raw.width = w;
+  raw.height = h;
+  raw.getContext("2d")!.drawImage(img, 0, 0, w, h);
+  // Pipeline: crop → scanner filter
+  const cropped = autoCropToPaper(raw);
+  return applyScannerFilter(cropped);
 }
 
 async function generateScannedPdf(images: Array<{ url: string; title: string }>, filename: string) {
