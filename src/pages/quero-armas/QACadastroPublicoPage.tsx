@@ -471,8 +471,8 @@ function Step1Documents({
               {sent ? (
                 <div
                   className={slot.key === "selfie"
-                    ? "w-12 h-12 rounded-full overflow-hidden border border-slate-200 shrink-0 bg-slate-50"
-                    : "w-[64px] h-[44px] rounded-md overflow-hidden border border-slate-200 shrink-0 bg-slate-50"}
+                    ? "w-10 h-10 rounded-full overflow-hidden border border-slate-200 shrink-0 bg-slate-50"
+                    : "w-[48px] h-[32px] rounded-md overflow-hidden border border-slate-200 shrink-0 bg-slate-50"}
                 >
                   <img
                     src={files[slot.key]}
@@ -482,11 +482,11 @@ function Step1Documents({
                 </div>
               ) : (
                 <div className={slot.key === "selfie"
-                  ? "w-12 h-12 flex items-center justify-center border border-dashed border-slate-300 bg-slate-50 rounded-full"
-                  : "w-[68px] h-[44px] flex items-center justify-center border border-dashed border-slate-300 bg-slate-50 rounded-md"}>
+                  ? "w-10 h-10 flex items-center justify-center border border-dashed border-slate-300 bg-slate-50 rounded-full"
+                  : "w-[48px] h-[32px] flex items-center justify-center border border-dashed border-slate-300 bg-slate-50 rounded-md"}>
                   {slot.key === "selfie"
-                    ? <Camera className="w-5 h-5" style={{ color: "hsl(220 10% 55%)" }} />
-                    : <Upload className="w-5 h-5" style={{ color: "hsl(220 10% 55%)" }} />}
+                    ? <Camera className="w-4 h-4" style={{ color: "hsl(220 10% 55%)" }} />
+                    : <Upload className="w-4 h-4" style={{ color: "hsl(220 10% 55%)" }} />}
                 </div>
               )}
               <span
