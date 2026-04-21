@@ -474,13 +474,17 @@ function Step1Documents({
               {sent ? (
                 <div
                   className={slot.key === "selfie"
-                    ? "w-10 h-10 rounded-full overflow-hidden border border-slate-200 shrink-0 bg-slate-50"
-                    : "w-[48px] h-[32px] rounded-md overflow-hidden border border-slate-200 shrink-0 bg-slate-50"}
+                    ? "w-10 h-10 rounded-full overflow-hidden border border-slate-200 shrink-0 bg-slate-50 block"
+                    : "w-[48px] h-[32px] rounded-md overflow-hidden border border-slate-200 shrink-0 bg-slate-50 block"}
+                  style={slot.key === "selfie"
+                    ? { width: 40, height: 40, minWidth: 40, maxWidth: 40, minHeight: 40, maxHeight: 40 }
+                    : { width: 48, height: 32, minWidth: 48, maxWidth: 48, minHeight: 32, maxHeight: 32 }}
                 >
                   <img
                     src={files[slot.key]}
                     alt=""
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover block"
+                    style={{ width: "100%", height: "100%", maxWidth: "100%", maxHeight: "100%" }}
                   />
                 </div>
               ) : (
