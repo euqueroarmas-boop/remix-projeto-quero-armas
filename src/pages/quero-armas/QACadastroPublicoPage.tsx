@@ -283,23 +283,23 @@ export default function QACadastroPublicoPage() {
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "linear-gradient(135deg, hsl(220 25% 97%) 0%, hsl(225 30% 94%) 100%)" }}>
       <div className="max-w-md w-full mx-auto px-4 py-6 flex-1">
-        {/* Logo */}
-        <div className="flex justify-center mb-5">
-          <QALogo className="h-14 w-auto" />
-        </div>
-
         <div className="bg-white rounded-2xl shadow-[0_8px_32px_rgba(15,23,42,0.06)] border border-slate-200/60 overflow-hidden">
           {/* Cabeçalho + stepper */}
           <div className="px-6 pt-6 pb-4">
-            <h1 className="text-[22px] font-bold text-center" style={{ color: "hsl(220 25% 15%)" }}>
-              Cadastro do Cliente
-            </h1>
-            <p className="text-xs text-center mt-1" style={{ color: "hsl(220 10% 50%)" }}>
-              {step === 1 && "Envie seus documentos para iniciar"}
-              {step === 2 && "Estamos lendo suas informações"}
-              {step === 3 && "Revise as informações extraídas"}
-              {step === 4 && "Tudo pronto!"}
-            </p>
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <h1 className="text-[22px] font-bold leading-tight" style={{ color: "hsl(220 25% 15%)" }}>
+                  Cadastro do Cliente
+                </h1>
+                <p className="text-xs mt-1" style={{ color: "hsl(220 10% 50%)" }}>
+                  {step === 1 && "Envie seus documentos para iniciar"}
+                  {step === 2 && "Estamos lendo suas informações"}
+                  {step === 3 && "Revise as informações extraídas"}
+                  {step === 4 && "Tudo pronto!"}
+                </p>
+              </div>
+              <QALogo className="h-10 w-auto shrink-0" />
+            </div>
             <Stepper current={step} />
           </div>
 
