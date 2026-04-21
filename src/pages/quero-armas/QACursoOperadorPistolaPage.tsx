@@ -604,7 +604,7 @@ export default function QACursoOperadorPistolaPage() {
             <div className="grid sm:grid-cols-2 gap-3">
               {[
                 { i: Clock, t: "6 a 8h de instrução", d: "Teoria + linha de tiro, IAT credenciado" },
-                { i: Coffee, t: "Rancho incluso", d: "Café da manhã e almoço — sem custo adicional" },
+                { i: Coffee, t: "Alimentação inclusa", d: "Café da manhã e almoço — sem custo adicional" },
                 { i: Target, t: "120 munições reais", d: "Disparos cronometrados e supervisionados" },
                 { i: Shield, t: "EPI completo", d: "Óculos balísticos e protetor auricular fornecidos" },
                 { i: Crosshair, t: "Alvos e munição", d: "Todo suprimento por conta da Quero Armas" },
@@ -798,7 +798,7 @@ export default function QACursoOperadorPistolaPage() {
                   </div>
                   <div className="flex gap-3 items-center">
                     <Clock className="w-4 h-4" style={{ color: AMBER }} />
-                  <span className="font-mono">H · SÁB · 6 a 8h de instrução (rancho incluso)</span>
+                  <span className="font-mono">H · SÁB · 6 a 8h de instrução (alimentação inclusa)</span>
                   </div>
                   <div className="flex gap-3 items-center">
                     <Users className="w-4 h-4" style={{ color: AMBER }} />
