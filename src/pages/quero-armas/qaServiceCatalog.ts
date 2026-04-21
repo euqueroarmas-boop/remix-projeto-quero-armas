@@ -11,15 +11,15 @@
  * ============================================================================= */
 
 export const OBJETIVOS_PRINCIPAIS: { value: string; label: string }[] = [
-  { value: "defesa_pessoal", label: "Defesa pessoal" },
-  { value: "tiro_esportivo", label: "Tiro esportivo" },
-  { value: "caca", label: "Caça" },
-  { value: "colecionamento", label: "Colecionamento" },
-  { value: "regularizacao", label: "Regularização documental" },
-  { value: "loja_armas", label: "Loja de armas" },
-  { value: "clube_tiro", label: "Clube de tiro" },
   { value: "atividade_profissional", label: "Atividade profissional / controlada" },
+  { value: "caca", label: "Caça" },
+  { value: "clube_tiro", label: "Clube de tiro" },
+  { value: "colecionamento", label: "Colecionamento" },
+  { value: "defesa_pessoal", label: "Defesa pessoal" },
+  { value: "loja_armas", label: "Loja de armas" },
   { value: "orientacao", label: "Preciso de orientação" },
+  { value: "regularizacao", label: "Regularização documental" },
+  { value: "tiro_esportivo", label: "Tiro esportivo" },
 ];
 
 export interface ServicoOpcao {
