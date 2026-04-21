@@ -257,7 +257,7 @@ Deno.serve(async (req) => {
     // ── Caminho INSERT — proteção contra duplicidade ──
     const { data: dup } = await supabase
       .from("qa_cadastro_publico")
-      .select("id, status, created_at")
+      .select("id, status, created_at, nome_completo, cpf, rg, emissor_rg, data_nascimento, telefone_principal, email, end1_cep, end1_logradouro, end1_numero, end1_bairro, end1_cidade, end1_estado")
       .eq("cpf", cpfDigits)
       .order("created_at", { ascending: false })
       .limit(1)
@@ -271,6 +271,7 @@ Deno.serve(async (req) => {
         existing_id: dup.id,
         existing_status: dup.status,
         existing_created_at: dup.created_at,
+        existing_data: dup,
       }, 409);
     }
 
