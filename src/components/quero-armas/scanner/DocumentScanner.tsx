@@ -31,7 +31,7 @@ interface ScannedPage {
   filter: Filter;
 }
 
-interface DocumentScannerProps {
+export interface DocumentScannerProps {
   open: boolean;
   onClose: () => void;
   /** Devolve PDF gerado das páginas digitalizadas */
