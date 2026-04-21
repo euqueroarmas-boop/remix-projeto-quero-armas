@@ -406,8 +406,8 @@ function Stepper({ current }: { current: StepId }) {
           const nextReached = current > s.id;
           const isLast = i === STEPS.length - 1;
           return (
-            <>
-              <div key={s.id} className="flex flex-col items-center shrink-0" style={{ width: 56 }}>
+            <Fragment key={s.id}>
+              <div className="flex flex-col items-center shrink-0" style={{ width: 56 }}>
                 <div
                   className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-semibold"
                   style={{
@@ -431,12 +431,11 @@ function Stepper({ current }: { current: StepId }) {
               </div>
               {!isLast && (
                 <div
-                  key={`c-${s.id}`}
                   className="flex-1 h-[3px] rounded-full mt-[14px]"
                   style={{ background: nextReached ? "hsl(222 89% 55%)" : "hsl(220 13% 88%)" }}
                 />
               )}
-            </>
+            </Fragment>
           );
         })}
       </div>
