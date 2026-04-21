@@ -574,7 +574,7 @@ export default function QACursoOperadorPistolaPage() {
             <div className="order-1 md:order-2 relative">
               <img
                 src={maintImg}
-                alt="Pistola desmontada para manutenção"
+                alt="Glock G25 desmontada em primeiro escalão com carregador, munições .380 ACP e ferramentas de limpeza"
                 loading="lazy"
                 width={1280}
                 height={960}
