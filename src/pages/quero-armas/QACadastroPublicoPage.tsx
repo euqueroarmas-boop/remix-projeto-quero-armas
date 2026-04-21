@@ -398,48 +398,54 @@ function DuplicateModal({
 function Stepper({ current }: { current: StepId }) {
   return (
     <div className="mt-5 px-2">
-      <div className="flex items-start justify-between">
+      {/* Linha de círculos + conectores */}
+      <div className="flex items-center">
         {STEPS.map((s, i) => {
           const done = current > s.id;
           const active = current === s.id;
-          const nextReached = current > s.id; // a linha à direita fica colorida quando já passamos desse passo
+          const nextReached = current > s.id;
           const isLast = i === STEPS.length - 1;
           return (
-            <div key={s.id} className="flex flex-col items-center" style={{ flex: isLast ? "0 0 auto" : "1 1 0%" }}>
-              <div className="flex items-center w-full">
-                <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-semibold shrink-0"
-                  style={{
-                    background: done
-                      ? "hsl(152 65% 45%)"
-                      : active
-                        ? "hsl(222 89% 55%)"
-                        : "hsl(220 15% 90%)",
-                    color: done || active ? "white" : "hsl(220 10% 55%)",
-                    boxShadow: active ? "0 0 0 4px hsl(222 89% 55% / 0.15)" : "none",
-                  }}
-                >
-                  {done ? <CheckCircle2 className="w-4 h-4" /> : s.id}
-                </div>
-                {!isLast && (
-                  <div
-                    className="flex-1 h-[2px] mx-1"
-                    style={{ background: nextReached ? "hsl(222 89% 55%)" : "hsl(220 13% 88%)" }}
-                  />
-                )}
-              </div>
-              <span
-                className="mt-1.5 text-[11px] font-medium"
+            <div key={s.id} className={`flex items-center ${isLast ? "" : "flex-1"}`}>
+              <div
+                className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-semibold shrink-0"
                 style={{
-                  color: active ? "hsl(220 25% 20%)" : "hsl(220 10% 55%)",
-                  marginLeft: isLast ? 0 : "-50%",
-                  alignSelf: isLast ? "center" : "flex-start",
-                  paddingLeft: isLast ? 0 : "4px",
+                  background: done
+                    ? "hsl(152 65% 45%)"
+                    : active
+                      ? "hsl(222 89% 55%)"
+                      : "hsl(220 15% 90%)",
+                  color: done || active ? "white" : "hsl(220 10% 55%)",
+                  boxShadow: active ? "0 0 0 4px hsl(222 89% 55% / 0.15)" : "none",
                 }}
               >
-                {s.label}
-              </span>
+                {done ? <CheckCircle2 className="w-4 h-4" /> : s.id}
+              </div>
+              {!isLast && (
+                <div
+                  className="flex-1 h-[2px] mx-1.5"
+                  style={{ background: nextReached ? "hsl(222 89% 55%)" : "hsl(220 13% 88%)" }}
+                />
+              )}
             </div>
+          );
+        })}
+      </div>
+      {/* Linha de rótulos */}
+      <div className="mt-1.5 flex justify-between">
+        {STEPS.map((s) => {
+          const active = current === s.id;
+          return (
+            <span
+              key={s.id}
+              className="text-[11px] font-medium text-center"
+              style={{
+                color: active ? "hsl(220 25% 20%)" : "hsl(220 10% 55%)",
+                width: "32px",
+              }}
+            >
+              {s.label}
+            </span>
           );
         })}
       </div>
