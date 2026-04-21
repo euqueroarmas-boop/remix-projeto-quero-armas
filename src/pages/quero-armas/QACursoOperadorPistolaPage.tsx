@@ -8,7 +8,7 @@ import {
 import heroImg from "@/assets/qa-curso-hero.jpg";
 import maintImg from "@/assets/qa-curso-manutencao.jpg";
 import familyImg from "@/assets/qa-curso-familia.jpg";
-import instrutorImg from "@/assets/qa-instrutor.jpg";
+import ameacaImg from "@/assets/qa-ameaca.jpg";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -396,13 +396,13 @@ export default function QACursoOperadorPistolaPage() {
             <div className="grid md:grid-cols-2 gap-12 items-center">
               <div className="relative">
                 <img
-                  src={familyImg}
-                  alt="Família protegida em casa"
+                  src={ameacaImg}
+                  alt="Ameaça noturna — invasor encapuzado representando o risco real à família"
                   loading="lazy"
                   width={1280}
                   height={960}
                   className="rounded-sm w-full"
-                  style={{ filter: "grayscale(0.5) contrast(1.15) brightness(0.85)" }}
+                  style={{ filter: "grayscale(1) contrast(1.2) brightness(0.78)" }}
                 />
                 <div
                   className="absolute inset-0 rounded-sm"
@@ -414,9 +414,9 @@ export default function QACursoOperadorPistolaPage() {
                 {/* Tag militar na imagem */}
                 <div
                   className="absolute bottom-3 left-3 px-2.5 py-1 font-mono text-[10px] tracking-[0.2em] uppercase font-bold"
-                  style={{ background: "rgba(0,0,0,0.7)", border: `1px solid ${OD_LINE}`, color: SAND }}
+                  style={{ background: "rgba(0,0,0,0.78)", border: `1px solid ${OD_LINE}`, color: SAND }}
                 >
-                  ● PROTEÇÃO · ATIVA
+                  ● THREAT · IDENTIFICADA
                 </div>
               </div>
               <div>
@@ -456,6 +456,50 @@ export default function QACursoOperadorPistolaPage() {
         </section>
 
         {/* ============ O QUE VOCÊ APRENDE ============ */}
+        <section className="py-20 md:py-28" style={{ background: GUNMETAL }}>
+        </section>
+
+        {/* ============ 3 CENÁRIOS REAIS + CITAÇÃO ============ */}
+        <section className="py-16 md:py-20 relative" style={{ background: BLACK }}>
+          <div className="container max-w-6xl mx-auto px-4">
+            <div className="text-center mb-10 max-w-2xl mx-auto">
+              <SectionTag>SITREP · 3 CENÁRIOS REAIS</SectionTag>
+              <h2 className="text-2xl md:text-[2rem] font-black mt-5 mb-3 uppercase tracking-tight leading-[1.1]">
+                Não é filme. <span style={{ color: SAND }}>É terça-feira no Brasil.</span>
+              </h2>
+            </div>
+            <div className="grid md:grid-cols-3 gap-3 md:gap-4">
+              {[
+                { code: "01 · 03:14", title: "Invasão noturna", body: "Vidro do quintal estilhaça. Dois homens armados. Sua filha grita do quarto. Você tem 4 segundos antes de eles chegarem no corredor." },
+                { code: "02 · 19:42", title: "Saída do trabalho", body: "Garagem aberta, esposa descendo do carro com o bebê. Moto encosta. O cano vem na cabeça dela primeiro — porque sabem que você vai paralisar." },
+                { code: "03 · 06:08", title: "Sequestro relâmpago", body: "Levam você, sua mulher e seu filho dentro do próprio carro. Cada minuto sem reagir é uma decisão tomada por eles. Não por você." },
+              ].map((c) => (
+                <div key={c.code} className="p-5 md:p-6 relative" style={{ background: PANEL, border: `1px solid ${HAIRLINE}` }}>
+                  <span aria-hidden className="absolute top-0 left-0 w-2.5 h-2.5"
+                    style={{ borderTop: `1px solid ${SAND}`, borderLeft: `1px solid ${SAND}`, opacity: 0.55 }} />
+                  <span aria-hidden className="absolute bottom-0 right-0 w-2.5 h-2.5"
+                    style={{ borderBottom: `1px solid ${SAND}`, borderRight: `1px solid ${SAND}`, opacity: 0.55 }} />
+                  <div className="font-mono text-[10.5px] tracking-[0.22em] mb-2" style={{ color: SAND }}>{c.code}</div>
+                  <h3 className="font-black text-white text-[15px] uppercase tracking-wide mb-2">{c.title}</h3>
+                  <p className="text-[13.5px] leading-relaxed" style={{ color: STEEL_DIM }}>{c.body}</p>
+                </div>
+              ))}
+            </div>
+            <div className="mt-10 md:mt-12 mx-auto max-w-3xl p-6 md:p-8 relative text-center"
+              style={{ background: BLACK_2, borderTop: `1px solid ${SAND}`, borderBottom: `1px solid ${SAND}` }}>
+              <div className="font-mono text-[10px] tracking-[0.3em] uppercase mb-3" style={{ color: SAND_DIM }}>┃ TRANSMISSION</div>
+              <p className="text-xl md:text-[1.7rem] font-black uppercase tracking-tight leading-[1.15] text-white">
+                “Ninguém vai chegar a tempo.<br />
+                <span style={{ color: SAND }}>Só você.”</span>
+              </p>
+              <div className="font-mono text-[10.5px] tracking-[0.22em] uppercase mt-4" style={{ color: STEEL_DIM }}>
+                — doutrina operacional · quero armas
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ============ O QUE VOCÊ APRENDE (REAL) ============ */}
         <section className="py-20 md:py-28" style={{ background: GUNMETAL }}>
           <div className="container max-w-6xl mx-auto px-4">
             <div className="text-center mb-14 max-w-2xl mx-auto">
@@ -630,16 +674,30 @@ export default function QACursoOperadorPistolaPage() {
           <div className="container max-w-6xl mx-auto px-4">
             <div className="grid md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] gap-10 md:gap-16 items-center">
               <div className="relative mx-auto md:mx-0 max-w-sm w-full">
-                <img
-                  src={instrutorImg}
-                  alt="Willian Massaroto — instrutor de armamento e tiro da Quero Armas"
-                  loading="lazy"
-                  className="w-full rounded-sm"
+                <div
+                  className="w-full aspect-[3/4] rounded-sm flex flex-col items-center justify-center relative"
                   style={{
-                    filter: "grayscale(0.55) contrast(1.08) brightness(0.92)",
+                    background: `linear-gradient(135deg, ${PANEL}, ${BLACK_2})`,
                     border: `1px solid ${OD_LINE}`,
                   }}
-                />
+                >
+                  <Shield className="w-14 h-14 mb-3" style={{ color: SAND_DIM }} strokeWidth={1.2} />
+                  <span className="font-mono text-[10px] tracking-[0.25em] uppercase" style={{ color: STEEL_DIM }}>
+                    Foto do instrutor
+                  </span>
+                  <span className="font-mono text-[10px] tracking-[0.25em] uppercase mt-1" style={{ color: SAND_DIM }}>
+                    [ classified ]
+                  </span>
+                  {/* HUD corners */}
+                  <span aria-hidden className="absolute top-0 left-0 w-3 h-3"
+                    style={{ borderTop: `1px solid ${SAND}`, borderLeft: `1px solid ${SAND}`, opacity: 0.6 }} />
+                  <span aria-hidden className="absolute top-0 right-0 w-3 h-3"
+                    style={{ borderTop: `1px solid ${SAND}`, borderRight: `1px solid ${SAND}`, opacity: 0.6 }} />
+                  <span aria-hidden className="absolute bottom-0 left-0 w-3 h-3"
+                    style={{ borderBottom: `1px solid ${SAND}`, borderLeft: `1px solid ${SAND}`, opacity: 0.6 }} />
+                  <span aria-hidden className="absolute bottom-0 right-0 w-3 h-3"
+                    style={{ borderBottom: `1px solid ${SAND}`, borderRight: `1px solid ${SAND}`, opacity: 0.6 }} />
+                </div>
                 <div
                   className="absolute bottom-3 left-3 px-2.5 py-1 font-mono text-[10px] tracking-[0.2em] uppercase font-bold"
                   style={{ background: "rgba(0,0,0,0.75)", border: `1px solid ${OD_LINE}`, color: SAND }}
