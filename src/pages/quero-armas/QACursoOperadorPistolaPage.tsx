@@ -632,7 +632,7 @@ export default function QACursoOperadorPistolaPage() {
               <div className="relative mx-auto md:mx-0 max-w-sm w-full">
                 <img
                   src={instrutorImg}
-                  alt="Willian Rodrigues — instrutor de armamento e tiro da Quero Armas"
+                  alt="Willian Massaroto — instrutor de armamento e tiro da Quero Armas"
                   loading="lazy"
                   className="w-full rounded-sm"
                   style={{
@@ -650,7 +650,7 @@ export default function QACursoOperadorPistolaPage() {
               <div>
                 <SectionTag>QUEM TREINA VOCÊ</SectionTag>
                 <h2 className="text-3xl md:text-[2.4rem] font-black mt-5 mb-5 leading-[1.1] uppercase tracking-tight">
-                  Willian Rodrigues
+                  Willian Massaroto
                   <br />
                   <span style={{ color: SAND }} className="text-2xl md:text-[1.6rem] font-bold normal-case tracking-normal">
                     Instrutor de Armamento e Tiro · IAT credenciado
@@ -738,7 +738,7 @@ export default function QACursoOperadorPistolaPage() {
                   </div>
                   <div className="flex gap-3 items-center">
                     <Clock className="w-4 h-4" style={{ color: AMBER }} />
-                    <span className="font-mono">H · SÁB · 07:00–19:00 (rancho 2h)</span>
+                  <span className="font-mono">H · SÁB · 6 a 8h de instrução (rancho incluso)</span>
                   </div>
                   <div className="flex gap-3 items-center">
                     <Users className="w-4 h-4" style={{ color: AMBER }} />
@@ -829,7 +829,7 @@ export default function QACursoOperadorPistolaPage() {
             Proteja sua casa · Defenda sua família · Cuide do que é seu
           </p>
           <p className="text-[11px] font-mono" style={{ color: STEEL_DIM }}>
-            © {new Date().getFullYear()} QUERO ARMAS · CURSO OPERADOR DE PISTOLA I · IAT WILLIAN RODRIGUES — TODOS OS DIREITOS RESERVADOS
+            © {new Date().getFullYear()} QUERO ARMAS · CURSO OPERADOR DE PISTOLA I · IAT WILLIAN MASSAROTO — TODOS OS DIREITOS RESERVADOS
           </p>
         </footer>
       </div>
