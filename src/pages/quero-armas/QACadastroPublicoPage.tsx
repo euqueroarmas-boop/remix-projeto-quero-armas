@@ -609,7 +609,7 @@ function Stepper({ current }: { current: StepId }) {
                     boxShadow: active ? "0 0 0 4px hsl(222 89% 55% / 0.15)" : "none",
                   }}
                 >
-                  {done ? <CheckCircle2 className="w-4 h-4" /> : s.id}
+                {done ? <CheckCircle2 className="w-4 h-4" /> : i + 1}
                 </div>
                 <span
                   className="mt-1.5 text-[11px] font-medium text-center leading-tight"
