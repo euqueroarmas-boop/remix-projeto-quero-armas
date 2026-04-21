@@ -589,36 +589,61 @@ function CadastroDocumentosCard({
         <DocumentThumb path={cadastro.documento_identidade_path} label="Documento de identidade" name={cadastro.nome_completo} kind="doc" />
         <DocumentThumb path={cadastro.comprovante_endereco_path} label="Comprovante de endereço" name={cadastro.nome_completo} kind="doc" />
       </div>
-      {hasAnyDoc && (
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-3 border-t" style={{ borderColor: "hsl(220 13% 93%)" }}>
-          <p className="text-[11px] flex-1" style={{ color: "hsl(220 10% 50%)" }}>
-            A IA lê CNH/RG e comprovante e <strong>preenche apenas os campos vazios</strong> do cadastro automaticamente.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+      <div className="flex flex-col gap-3 pt-3 border-t" style={{ borderColor: "hsl(220 13% 93%)" }}>
+        <p className="text-[11px]" style={{ color: "hsl(220 10% 50%)" }}>
+          Use o <strong>scanner de documentos</strong> para capturar com detecção de bordas, correção de
+          perspectiva e geração de PDF multipágina (sem foto comum). Em seguida, o OCR preenche os
+          campos vazios automaticamente.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button" size="sm"
+            onClick={() => openScanner("identidade")}
+            className="gap-1.5 h-8 text-[11px] bg-emerald-600 hover:bg-emerald-500 text-white"
+          >
+            <Camera className="w-3 h-3" />
+            ESCANEAR IDENTIDADE
+          </Button>
+          <Button
+            type="button" size="sm"
+            onClick={() => openScanner("endereco")}
+            className="gap-1.5 h-8 text-[11px] bg-emerald-600 hover:bg-emerald-500 text-white"
+          >
+            <Camera className="w-3 h-3" />
+            ESCANEAR COMPROVANTE
+          </Button>
+          <Button
+            type="button" size="sm" variant="outline"
+            onClick={() => openScanner("avulso")}
+            className="gap-1.5 h-8 text-[11px] bg-white text-slate-700 border-slate-300 hover:bg-slate-50 hover:text-slate-900"
+          >
+            <FileDown className="w-3 h-3" />
+            ESCANEAR & BAIXAR PDF
+          </Button>
+          {hasAnyDoc && (
             <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={handleScanPdf}
-              disabled={scanning}
-              className="gap-1.5 h-8 text-[11px] bg-white text-slate-700 border-slate-300 hover:bg-slate-50 hover:text-slate-900"
-            >
-              {scanning ? <Loader2 className="w-3 h-3 animate-spin" /> : <FileDown className="w-3 h-3" />}
-              BAIXAR PDF DIGITALIZADO
-            </Button>
-            <Button
-              type="button"
-              size="sm"
+              type="button" size="sm"
               onClick={handleExtract}
               disabled={extracting}
-              className="gap-1.5 h-8 text-[11px]"
+              className="gap-1.5 h-8 text-[11px] ml-auto"
             >
               {extracting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Crosshair className="w-3 h-3" />}
               EXTRAIR DADOS VIA OCR
             </Button>
-          </div>
+          )}
         </div>
-      )}
+      </div>
+
+      <DocumentScanner
+        open={scannerOpen}
+        onClose={() => setScannerOpen(false)}
+        onComplete={handleScannerComplete}
+        title={
+          scannerTarget === "identidade" ? "ESCANEAR DOCUMENTO DE IDENTIDADE" :
+          scannerTarget === "endereco" ? "ESCANEAR COMPROVANTE DE ENDEREÇO" :
+          "ESCANEAR DOCUMENTO"
+        }
+      />
     </div>
   );
 }
