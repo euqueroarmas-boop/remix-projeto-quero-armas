@@ -938,6 +938,12 @@ export default function QAClientesPage() {
       observacoes: c.observacoes || "",
       vinculo_tipo: c.vinculo_tipo || "",
       servico_interesse: c.servico_interesse || "",
+      objetivo_principal: c.objetivo_principal || "",
+      categoria_servico: c.categoria_servico || "",
+      servico_principal: c.servico_principal || "",
+      subtipo_servico: c.subtipo_servico || "",
+      descricao_servico_livre: c.descricao_servico_livre || "",
+      servico_fechado_final: c.servico_fechado_final || "",
     });
     setEditingCadastroPublico(true);
   };
