@@ -1015,33 +1015,45 @@ function Step4Done({ firstName }: { firstName: string }) {
 
 /* ─────────────────────── Bloco de boas-vindas ─────────────────────── */
 function WelcomeBlock() {
-  // Acentos táticos sutis: azul institucional PF (#1e3a5f → 215 52% 25%)
-  // e verde oliva sóbrio do Exército (#4a5d3a → 86 23% 30%).
+  // Acento tático sutil: azul institucional PF + verde oliva Exército,
+  // agora em formato compacto que apoia (não compete com) o campo principal.
   return (
     <div
-      className="rounded-2xl p-4 mb-1 relative overflow-hidden"
+      className="rounded-xl px-3.5 py-3 relative overflow-hidden"
       style={{
         background:
-          "linear-gradient(135deg, hsl(215 40% 14%) 0%, hsl(215 38% 18%) 55%, hsl(86 22% 22%) 100%)",
-        boxShadow: "0 6px 20px hsl(215 50% 15% / 0.18)",
+          "linear-gradient(135deg, hsl(215 42% 13%) 0%, hsl(215 40% 17%) 60%, hsl(86 22% 20%) 100%)",
+        boxShadow:
+          "0 4px 14px hsl(215 50% 12% / 0.16), inset 0 1px 0 hsl(50 60% 88% / 0.06)",
       }}
     >
-      {/* Selo discreto */}
-      <div className="flex items-center gap-1.5 mb-2">
-        <span
-          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider"
-          style={{ background: "hsl(215 30% 95% / 0.12)", color: "hsl(50 60% 88%)", border: "1px solid hsl(50 60% 88% / 0.18)" }}
+      {/* brilho sutil no topo */}
+      <div
+        className="absolute inset-x-0 top-0 h-px"
+        style={{ background: "linear-gradient(90deg, transparent, hsl(50 60% 88% / 0.25), transparent)" }}
+      />
+      <div className="flex items-start gap-2.5">
+        <div
+          className="shrink-0 w-7 h-7 rounded-md flex items-center justify-center mt-0.5"
+          style={{
+            background: "hsl(50 60% 88% / 0.10)",
+            border: "1px solid hsl(50 60% 88% / 0.22)",
+          }}
         >
-          <Shield className="w-2.5 h-2.5" /> Quero Armas
-        </span>
+          <Shield className="w-3.5 h-3.5" style={{ color: "hsl(50 65% 88%)" }} strokeWidth={2} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h2
+            className="text-[13.5px] font-semibold leading-snug tracking-tight"
+            style={{ color: "hsl(50 70% 94%)" }}
+          >
+            Burocracia descomplicada, do início ao fim.
+          </h2>
+          <p className="text-[11px] mt-1 leading-relaxed" style={{ color: "hsl(215 22% 80%)" }}>
+            Em poucos passos, deixamos seu processo claro, organizado e pronto para análise.
+          </p>
+        </div>
       </div>
-      <h2 className="text-[17px] font-bold leading-tight mb-1.5" style={{ color: "hsl(50 70% 92%)" }}>
-        Bem-vindo à Quero Armas.
-      </h2>
-      <p className="text-[12px] leading-relaxed" style={{ color: "hsl(215 25% 85%)" }}>
-        A burocracia para arma de fogo no Brasil já é complicada demais. Com a Quero Armas, seu processo fica mais
-        claro, organizado e tranquilo. Selecione o serviço desejado e envie seus documentos para começarmos sua análise.
-      </p>
     </div>
   );
 }
