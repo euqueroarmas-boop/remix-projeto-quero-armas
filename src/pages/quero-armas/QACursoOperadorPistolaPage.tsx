@@ -308,62 +308,66 @@ export default function QACursoOperadorPistolaPage() {
               transition={{ duration: 0.7 }}
               className="max-w-3xl"
             >
-              <SectionTag>CURSO OPERADOR DE PISTOLA I · CTT-CBC</SectionTag>
+              <SectionTag>OP · CURSO OPERADOR DE PISTOLA I · IAT / CTT-CBC</SectionTag>
 
-              <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold leading-[1.05] mt-6 mb-6 tracking-tight">
-                Quando alguém invadir sua casa,
+              <h1 className="text-3xl md:text-5xl lg:text-[4rem] font-black leading-[1.02] mt-6 mb-6 tracking-tight uppercase">
+                Na hora do tiro,
                 <br />
-                <span style={{ color: "hsl(45 90% 60%)" }}>você vai estar pronto</span> —
+                <span style={{ color: AMBER, textShadow: "0 0 24px hsla(40,85%,55%,0.35)" }}>
+                  não existe segunda chance.
+                </span>
                 <br />
-                ou vai depender da sorte?
+                <span className="text-white/90">Existe treino.</span>
               </h1>
 
-              <p className="text-lg md:text-xl leading-relaxed mb-4" style={{ color: "hsl(220 10% 80%)" }}>
-                Toda noite, milhares de famílias brasileiras dormem rezando para que <strong className="text-white">não seja a vez delas</strong>.
-                A polícia chega em minutos. O criminoso age em <strong style={{ color: "hsl(14 88% 60%)" }}>segundos</strong>.
+              <p className="text-lg md:text-xl leading-relaxed mb-4 font-medium" style={{ color: "hsl(210 8% 85%)" }}>
+                O criminoso entra armado, frio, treinado na rua. A polícia chega em minutos.
+                <br className="hidden md:block" />
+                Você tem <strong style={{ color: BLOOD }}>3 segundos</strong> para decidir quem sai vivo daquela sala.
               </p>
-              <p className="text-base md:text-lg leading-relaxed mb-8" style={{ color: "hsl(220 10% 70%)" }}>
-                O Curso Operador de Pistola I da <strong className="text-white">Quero Armas</strong> existe para que você
-                deixe de ser refém da burocracia e do despreparo, e passe a ter o <strong className="text-white">conhecimento técnico, jurídico e prático</strong>
-                {" "}para defender quem você ama — com segurança, dentro da lei.
+              <p className="text-base md:text-[17px] leading-relaxed mb-8" style={{ color: STEEL }}>
+                O <strong className="text-white">Curso Operador de Pistola I</strong> da <strong className="text-white">Quero Armas</strong> forma civis para o mundo real:
+                empunhadura, saque, controle de gatilho, resolução de pane, <strong style={{ color: AMBER }}>MCA (Manuseio · Carregamento · Acervo)</strong> e a base legal
+                da <strong className="text-white">Lei nº 10.826/2003</strong>. Aqui você sai atirador — não estatística.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-3 mb-10">
                 <button
                   onClick={() => openWpp("vaga")}
-                  className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-md font-bold text-white tracking-wider uppercase text-[14px] transition-all hover:brightness-110"
+                  className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-sm font-black text-white tracking-[0.15em] uppercase text-[13.5px] transition-all hover:brightness-110"
                   style={{
-                    background: `linear-gradient(135deg, ${ACCENT}, hsl(14 88% 42%))`,
-                    boxShadow: "0 12px 32px hsla(14, 88%, 52%, 0.4), inset 0 1px 0 rgba(255,255,255,0.2)",
+                    background: `linear-gradient(135deg, ${BLOOD}, hsl(2 72% 28%))`,
+                    boxShadow: "0 12px 32px hsla(2, 72%, 42%, 0.45), inset 0 1px 0 rgba(255,255,255,0.18), inset 0 -1px 0 rgba(0,0,0,0.35)",
+                    border: "1px solid hsl(2 60% 25%)",
                   }}
                 >
                   <Flame className="w-4 h-4" />
-                  Quero garantir minha vaga
+                  Alistar-me agora
                 </button>
                 <button
                   onClick={() => openWpp("duvida")}
-                  className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-md font-bold text-white tracking-wider uppercase text-[13px] transition-all"
+                  className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-sm font-bold text-white tracking-[0.15em] uppercase text-[12.5px] transition-all hover:bg-white/10"
                   style={{
-                    background: "rgba(255,255,255,0.06)",
-                    border: "1px solid rgba(255,255,255,0.18)",
+                    background: "rgba(0,0,0,0.4)",
+                    border: `1px solid ${COYOTE_DIM}`,
                   }}
                 >
                   <MessageCircle className="w-4 h-4" />
-                  Falar com instrutor
+                  Falar com o instrutor
                 </button>
               </div>
 
               {/* Trust strip */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-6 border-t" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-6 border-t" style={{ borderColor: COYOTE_DIM }}>
                 {[
-                  { n: "10h", l: "Prático + teórico" },
-                  { n: "120", l: "Disparos reais" },
-                  { n: "5", l: "Alunos / turma" },
-                  { n: "100%", l: "Insumos inclusos" },
+                  { n: "10h", l: "Instrução ao vivo" },
+                  { n: "120", l: "Munições reais" },
+                  { n: "05", l: "Operadores / turma" },
+                  { n: "IAT", l: "Instrutor credenciado" },
                 ].map((s) => (
-                  <div key={s.l}>
-                    <div className="text-2xl md:text-3xl font-bold" style={{ color: "hsl(45 90% 60%)" }}>{s.n}</div>
-                    <div className="text-[11px] uppercase tracking-wider" style={{ color: "hsl(220 10% 60%)" }}>{s.l}</div>
+                  <div key={s.l} className="font-mono">
+                    <div className="text-2xl md:text-3xl font-black" style={{ color: AMBER }}>{s.n}</div>
+                    <div className="text-[10.5px] uppercase tracking-[0.18em]" style={{ color: STEEL_DIM }}>{s.l}</div>
                   </div>
                 ))}
               </div>
