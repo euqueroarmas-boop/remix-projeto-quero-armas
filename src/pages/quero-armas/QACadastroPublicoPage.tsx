@@ -362,27 +362,120 @@ export default function QACadastroPublicoPage() {
 function DuplicateModal({
   info, busy, onCancel, onConfirm,
 }: {
-  info: { id: string; status: string; created_at: string };
+  info: { id: string; status: string; created_at: string; existing: Record<string, any>; incoming: Record<string, any> };
   busy: boolean;
   onCancel: () => void;
   onConfirm: () => void;
 }) {
   const dt = info.created_at ? new Date(info.created_at).toLocaleDateString("pt-BR") : "";
+
+  // Campos comparados (rótulo + chave no objeto persistido)
+  const FIELDS: { label: string; key: string; format?: (v: any) => string }[] = [
+    { label: "Nome completo", key: "nome_completo" },
+    { label: "CPF", key: "cpf", format: (v) => v ? maskCpf(String(v)) : "" },
+    { label: "RG", key: "rg" },
+    { label: "Emissor", key: "emissor_rg" },
+    { label: "Data de nascimento", key: "data_nascimento", format: (v) => {
+        if (!v) return "";
+        const s = String(v);
+        if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
+          const [y, m, d] = s.slice(0, 10).split("-");
+          return `${d}/${m}/${y}`;
+        }
+        return s;
+      } },
+    { label: "Telefone", key: "telefone_principal", format: (v) => v ? maskTel(String(v)) : "" },
+    { label: "E-mail", key: "email" },
+    { label: "CEP", key: "end1_cep", format: (v) => v ? maskCep(String(v)) : "" },
+    { label: "Logradouro", key: "end1_logradouro" },
+    { label: "Número", key: "end1_numero" },
+    { label: "Bairro", key: "end1_bairro" },
+    { label: "Cidade", key: "end1_cidade" },
+    { label: "UF", key: "end1_estado" },
+  ];
+
+  const norm = (v: any) => (v === null || v === undefined ? "" : String(v).trim());
+  const rows = FIELDS.map((f) => {
+    const oldRaw = info.existing?.[f.key];
+    const newRaw = info.incoming?.[f.key];
+    const oldVal = f.format ? f.format(oldRaw) : norm(oldRaw);
+    const newVal = f.format ? f.format(newRaw) : norm(newRaw);
+    const changed = norm(oldRaw) !== norm(newRaw) && norm(newRaw) !== "";
+    return { label: f.label, oldVal, newVal, changed };
+  });
+  const changedRows = rows.filter((r) => r.changed);
+  const hasChanges = changedRows.length > 0;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-      <div className="w-full max-w-sm bg-white rounded-2xl p-5 shadow-xl">
-        <div className="flex items-center gap-2 mb-2">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-[0_8px_32px_rgba(15,23,42,0.18)] border border-slate-200/60 overflow-hidden max-h-[90vh] flex flex-col">
+        {/* Cabeçalho */}
+        <div className="px-5 pt-5 pb-3 border-b border-slate-100">
+          <div className="flex items-center gap-2 mb-1">
           <Info className="w-5 h-5" style={{ color: "hsl(230 80% 56%)" }} />
           <h3 className="text-base font-bold" style={{ color: "hsl(220 25% 15%)" }}>
             Cadastro já existe
           </h3>
         </div>
-        <p className="text-xs leading-relaxed" style={{ color: "hsl(220 10% 40%)" }}>
+          <p className="text-[11px] leading-relaxed" style={{ color: "hsl(220 10% 45%)" }}>
           Já encontramos um cadastro com este CPF{dt ? ` (criado em ${dt})` : ""}.
-          Status atual: <strong>{info.status}</strong>.
-          Deseja <strong>atualizar</strong> o cadastro existente com as informações enviadas?
+            Status atual: <strong>{info.status}</strong>.
+            {hasChanges
+              ? " Confira abaixo as alterações que serão aplicadas:"
+              : " Não detectamos alterações nos dados enviados."}
         </p>
-        <div className="mt-4 flex gap-2">
+        </div>
+
+        {/* Diff lado a lado */}
+        {hasChanges && (
+          <div className="px-5 py-3 overflow-y-auto flex-1">
+            <div className="grid grid-cols-[1fr_auto_1fr] gap-2 mb-2 px-1">
+              <span className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: "hsl(220 10% 50%)" }}>
+                Atual
+              </span>
+              <span />
+              <span className="text-[9px] font-semibold uppercase tracking-wider text-right" style={{ color: "hsl(230 80% 56%)" }}>
+                Novo
+              </span>
+            </div>
+
+            <div className="space-y-2">
+              {changedRows.map((r) => (
+                <div
+                  key={r.label}
+                  className="rounded-lg border p-2.5"
+                  style={{ borderColor: "hsl(230 80% 92%)", background: "hsl(230 90% 98%)" }}
+                >
+                  <div className="text-[9px] font-semibold uppercase tracking-wide mb-1.5" style={{ color: "hsl(220 15% 45%)" }}>
+                    {r.label}
+                  </div>
+                  <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                    <div
+                      className="text-[12px] font-medium px-2 py-1.5 rounded-md break-words line-through"
+                      style={{ background: "hsl(220 15% 96%)", color: "hsl(220 10% 55%)" }}
+                    >
+                      {r.oldVal || <span className="italic opacity-60">vazio</span>}
+                    </div>
+                    <ChevronRight className="w-3.5 h-3.5 shrink-0" style={{ color: "hsl(230 80% 56%)" }} />
+                    <div
+                      className="text-[12px] font-semibold px-2 py-1.5 rounded-md break-words"
+                      style={{ background: "white", color: "hsl(230 70% 35%)", border: "1px solid hsl(230 80% 80%)" }}
+                    >
+                      {r.newVal || <span className="italic opacity-60">vazio</span>}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-3 text-[10px] text-center" style={{ color: "hsl(220 10% 50%)" }}>
+              {changedRows.length} {changedRows.length === 1 ? "campo será alterado" : "campos serão alterados"}
+            </div>
+          </div>
+        )}
+
+        {/* Ações */}
+        <div className="px-5 py-4 border-t border-slate-100 flex gap-2">
           <button
             onClick={onCancel}
             disabled={busy}
@@ -398,7 +491,7 @@ function DuplicateModal({
             style={{ background: "linear-gradient(135deg, hsl(230 80% 56%), hsl(240 80% 60%))" }}
           >
             {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-            Atualizar cadastro
+            {hasChanges ? "Confirmar atualização" : "Atualizar mesmo assim"}
           </button>
         </div>
       </div>
