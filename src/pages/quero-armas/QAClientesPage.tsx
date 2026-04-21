@@ -527,28 +527,58 @@ function CadastroDocumentosCard({
 
   const hasAnyDoc = !!(cadastro.documento_identidade_path || cadastro.comprovante_endereco_path);
 
-  const handleScanPdf = async () => {
-    if (!idUrl && !addrUrl) {
-      toast.error("Nenhum documento disponível para digitalizar");
-      return;
-    }
-    setScanning(true);
-    const tId = toast.loading("Digitalizando documentos…");
+  const safeBaseName = (cadastro.nome_completo || "documento")
+    .toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
+  const openScanner = (target: "identidade" | "endereco" | "avulso") => {
+    setScannerTarget(target);
+    setScannerOpen(true);
+  };
+
+  const handleScannerComplete = async ({ blob, pageCount }: { blob: Blob; pageCount: number; previewDataUrl: string }) => {
+    const fileNameBase =
+      scannerTarget === "identidade" ? "identidade-digitalizada" :
+      scannerTarget === "endereco" ? "comprovante-endereco-digitalizado" :
+      "documento-digitalizado";
+    const fileName = `${safeBaseName}-${fileNameBase}.pdf`;
+
+    // 1) Sempre permite o download imediato
     try {
-      const items = [
-        idUrl ? { url: idUrl, title: "Documento de identidade" } : null,
-        addrUrl ? { url: addrUrl, title: "Comprovante de endereço" } : null,
-      ].filter(Boolean) as Array<{ url: string; title: string }>;
-      const safeName = (cadastro.nome_completo || "documento").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-      await generateScannedPdf(items, `${safeName}-documentos-digitalizados.pdf`);
-      toast.dismiss(tId);
-      toast.success("PDF digitalizado gerado com sucesso");
-    } catch (err: any) {
-      console.error("[scan-pdf]", err);
-      toast.dismiss(tId);
-      toast.error(err?.message || "Falha ao gerar PDF digitalizado");
-    } finally {
-      setScanning(false);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = fileName;
+      document.body.appendChild(a); a.click();
+      setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 0);
+    } catch (e) { console.error("[scanner-download]", e); }
+
+    // 2) Substitui o anexo do cadastro (somente quando o usuário escolheu um destino)
+    if (scannerTarget === "identidade" || scannerTarget === "endereco") {
+      const tId = toast.loading("Salvando documento digitalizado…");
+      try {
+        const path = `cadastro/${cadastro.id}/${scannerTarget}-${Date.now()}.pdf`;
+        const { error: upErr } = await supabase.storage
+          .from("qa-cadastro-selfies")
+          .upload(path, blob, { contentType: "application/pdf", upsert: true });
+        if (upErr) throw upErr;
+
+        const field = scannerTarget === "identidade" ? "documento_identidade_path" : "comprovante_endereco_path";
+        const { data: updated, error: dbErr } = await supabase
+          .from("qa_cadastro_publico" as any)
+          .update({ [field]: path })
+          .eq("id", cadastro.id)
+          .select("*")
+          .maybeSingle();
+        if (dbErr) throw dbErr;
+        onUpdated(updated);
+        toast.dismiss(tId);
+        toast.success(`Documento substituído (${pageCount} pág.)`);
+      } catch (err: any) {
+        console.error("[scanner-upload]", err);
+        toast.dismiss(tId);
+        toast.error(err?.message || "Falha ao salvar documento digitalizado");
+      }
+    } else {
+      toast.success(`PDF gerado (${pageCount} pág.)`);
     }
   };
 
