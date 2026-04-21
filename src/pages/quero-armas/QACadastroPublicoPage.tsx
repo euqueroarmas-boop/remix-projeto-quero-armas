@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Upload, Camera, CheckCircle2, Loader2, FileText, IdCard, UserCircle2,
-  Sparkles, ChevronRight, RotateCcw, AlertCircle, ArrowLeft, Shield, Info,
+  Sparkles, ChevronRight, RotateCcw, AlertCircle, ArrowLeft, Shield, Info, Search,
 } from "lucide-react";
 import { QALogo } from "@/components/quero-armas/QALogo";
 
@@ -467,11 +467,13 @@ function Step1Documents({
             key={slot.key}
             type="button"
             onClick={() => fileRefs[slot.key].current?.click()}
-            className="w-full text-left rounded-2xl border border-slate-200 bg-white p-3.5 transition-all hover:border-slate-300 hover:shadow-sm"
+            className="w-full text-left rounded-2xl border border-slate-200 bg-white px-3.5 py-3 transition-all hover:border-slate-300 shadow-[0_3px_12px_rgba(15,23,42,0.06)]"
           >
-            <div className="flex items-center gap-2 mb-2.5">
-              <Icon className="w-4 h-4" style={{ color: "hsl(220 25% 25%)" }} />
-              <span className="text-sm font-semibold" style={{ color: "hsl(220 25% 15%)" }}>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-5 h-5 rounded-md border border-slate-200 flex items-center justify-center" style={{ background: "hsl(220 20% 97%)" }}>
+                <Icon className="w-3.5 h-3.5" style={{ color: "hsl(220 25% 25%)" }} />
+              </div>
+              <span className="text-[15px] font-semibold leading-none" style={{ color: "hsl(220 25% 15%)" }}>
                 {slot.label}
               </span>
             </div>
@@ -480,27 +482,28 @@ function Step1Documents({
                 <img
                   src={files[slot.key]}
                   alt=""
-                  className={`w-14 h-14 object-cover border border-slate-200 ${slot.key === "selfie" ? "rounded-full" : "rounded-lg"}`}
+                  className={slot.key === "selfie"
+                    ? "w-12 h-12 object-cover border border-slate-200 rounded-full"
+                    : "w-[68px] h-[44px] object-cover border border-slate-200 rounded-md"}
                 />
               ) : (
-                <div className={`w-14 h-14 flex items-center justify-center border border-dashed border-slate-300 bg-slate-50 ${slot.key === "selfie" ? "rounded-full" : "rounded-lg"}`}>
+                <div className={slot.key === "selfie"
+                  ? "w-12 h-12 flex items-center justify-center border border-dashed border-slate-300 bg-slate-50 rounded-full"
+                  : "w-[68px] h-[44px] flex items-center justify-center border border-dashed border-slate-300 bg-slate-50 rounded-md"}>
                   {slot.key === "selfie"
                     ? <Camera className="w-5 h-5" style={{ color: "hsl(220 10% 55%)" }} />
                     : <Upload className="w-5 h-5" style={{ color: "hsl(220 10% 55%)" }} />}
                 </div>
               )}
-              {sent ? (
-                <span
-                  className="inline-flex items-center gap-1 h-7 px-2.5 rounded-full text-xs font-semibold"
-                  style={{ background: "hsl(152 65% 94%)", color: "hsl(152 65% 32%)" }}
-                >
-                  <CheckCircle2 className="w-3.5 h-3.5" /> Enviado
-                </span>
-              ) : (
-                <span className="text-[11px]" style={{ color: "hsl(220 10% 50%)" }}>
-                  {slot.description}
-                </span>
-              )}
+              <span
+                className="inline-flex items-center gap-1.5 h-7 px-3 rounded-full text-xs font-semibold"
+                style={sent
+                  ? { background: "hsl(152 65% 93%)", color: "hsl(152 65% 34%)" }
+                  : { background: "hsl(220 20% 96%)", color: "hsl(220 10% 48%)" }}
+              >
+                {sent ? <CheckCircle2 className="w-3.5 h-3.5" /> : (slot.key === "selfie" ? <Camera className="w-3.5 h-3.5" /> : <Upload className="w-3.5 h-3.5" />)}
+                {sent ? "Enviado" : "Enviar"}
+              </span>
             </div>
             <input
               ref={fileRefs[slot.key]}
@@ -525,7 +528,7 @@ function Step1Documents({
         onClick={onContinue}
         disabled={!allUploaded}
         className="w-full h-12 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-        style={{ background: "hsl(222 89% 55%)", boxShadow: "0 4px 14px hsl(222 89% 55% / 0.30)" }}
+        style={{ background: "linear-gradient(135deg, hsl(219 90% 56%), hsl(225 88% 54%))", boxShadow: "0 6px 18px hsl(222 89% 55% / 0.28)" }}
       >
         Extrair dados
       </button>
@@ -544,35 +547,40 @@ function Step1Documents({
 /* ─────────────────────── Step 2 — Extração ─────────────────────── */
 function Step2Extracting({ stages, error }: { stages: Record<string, string>; error: string | null }) {
   return (
-    <div className="py-4">
-      <div className="mx-auto w-36 h-36 rounded-full flex items-center justify-center mb-6"
-        style={{ background: "hsl(220 95% 96%)" }}>
-        <div className="relative">
-          <FileText className="w-16 h-16" strokeWidth={1.6} style={{ color: "hsl(222 89% 55%)" }} />
-          <Sparkles className="w-5 h-5 absolute -top-2 -right-2 animate-pulse" style={{ color: "hsl(222 89% 55%)" }} />
-          <span className="absolute bottom-1 right-0 text-[9px] font-bold px-1.5 py-0.5 rounded text-white"
-            style={{ background: "hsl(222 89% 55%)" }}>AI</span>
+    <div className="py-3">
+      <div className="rounded-[22px] border border-slate-200 bg-white px-4 py-5 shadow-[0_3px_12px_rgba(15,23,42,0.06)]">
+        <div className="mx-auto w-32 h-32 rounded-full flex items-center justify-center mb-5"
+          style={{ background: "hsl(220 95% 96%)" }}>
+          <div className="relative">
+            <FileText className="w-16 h-16" strokeWidth={1.6} style={{ color: "hsl(217 82% 58%)" }} />
+            <Search className="w-7 h-7 absolute -bottom-1 -right-1" strokeWidth={2} style={{ color: "hsl(217 82% 58%)" }} />
+            <Sparkles className="w-4 h-4 absolute -top-1 right-1 animate-pulse" style={{ color: "hsl(217 82% 68%)" }} />
+          </div>
         </div>
-      </div>
-      <h2 className="text-center text-lg font-bold mb-2" style={{ color: "hsl(220 25% 15%)" }}>
-        Extraindo dados dos documentos…
-      </h2>
+        <h2 className="text-center text-[17px] leading-tight font-bold mb-3" style={{ color: "hsl(220 25% 15%)" }}>
+          Extraindo dados dos<br />documentos...
+        </h2>
 
-      <div className="h-1.5 rounded-full overflow-hidden mb-2 mx-6" style={{ background: "hsl(220 20% 92%)" }}>
-        <div className="h-full animate-[progress_2.5s_ease-in-out_infinite]"
-          style={{ background: "hsl(222 89% 55%)", width: "60%" }} />
-      </div>
-      <p className="text-center text-xs mb-5" style={{ color: "hsl(220 10% 50%)" }}>Aguarde um momento…</p>
+        <div className="h-1.5 rounded-full overflow-hidden mb-2 mx-2" style={{ background: "hsl(220 20% 92%)" }}>
+          <div className="h-full animate-[progress_2.5s_ease-in-out_infinite]"
+            style={{ background: "hsl(217 82% 58%)", width: "66%" }} />
+        </div>
+        <p className="text-center text-xs mb-4" style={{ color: "hsl(220 10% 50%)" }}>Aguarde um momento...</p>
 
-      <div className="space-y-2 border-t border-slate-100 pt-4">
+        <div className="border-t border-slate-100 pt-3 space-y-2">
         {SLOTS.map(s => {
           const Icon = s.icon;
           const st = stages[s.key];
+          const chipStyle = s.key === "selfie"
+            ? { background: "hsl(217 95% 96%)", color: "hsl(217 82% 58%)" }
+            : { background: "hsl(152 65% 95%)", color: "hsl(152 55% 42%)" };
           return (
-            <div key={s.key} className="flex items-center justify-between px-1 py-1.5">
-              <div className="flex items-center gap-2">
-                <Icon className="w-4 h-4" style={{ color: "hsl(220 25% 25%)" }} />
-                <span className="text-sm font-medium" style={{ color: "hsl(220 25% 20%)" }}>{s.label}</span>
+            <div key={s.key} className="flex items-center justify-between py-1">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-5 h-5 rounded-md flex items-center justify-center shrink-0" style={chipStyle}>
+                  <Icon className="w-3.5 h-3.5" />
+                </div>
+                <span className="text-sm font-medium truncate" style={{ color: "hsl(220 25% 20%)" }}>{s.label}</span>
               </div>
               {st === "ok" && (
                 <span className="w-5 h-5 rounded-full flex items-center justify-center"
@@ -589,6 +597,7 @@ function Step2Extracting({ stages, error }: { stages: Record<string, string>; er
             </div>
           );
         })}
+        </div>
       </div>
 
       {error && (
