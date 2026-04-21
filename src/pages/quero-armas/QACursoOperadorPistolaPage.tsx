@@ -28,29 +28,33 @@ const openWpp = (intent: "vaga" | "vip" | "duvida") => {
   window.open(wppLink(msgs[intent]), "_blank", "noopener,noreferrer");
 };
 
-// ============ TACTICAL PALETTE — sóbria ============
-// 3 cores reais: OD Green · Steel Blue · Muted Amber (sand)
-// + tons neutros gunmetal para o fundo. Sem vermelhos, sem brilhos.
-const OD_GREEN   = "hsl(82 18% 26%)";   // verde militar principal
-const OD_DEEP    = "hsl(84 22% 13%)";   // verde profundo
-const OD_LINE    = "hsl(82 14% 32%)";   // borda discreta verde
-const STEEL_BLUE = "hsl(210 22% 32%)";  // azul aço tático
-const STEEL_DEEP = "hsl(212 28% 16%)";  // azul profundo
-const SAND       = "hsl(42 38% 62%)";   // amarelo areia (muted, não gritante)
-const SAND_DIM   = "hsl(42 22% 42%)";   // areia escura para borda
-const GUNMETAL   = "hsl(210 12% 10%)";
-const GUNMETAL_2 = "hsl(210 14% 7%)";
-const STEEL      = "hsl(210 8% 64%)";
-const STEEL_DIM  = "hsl(210 6% 48%)";
+// ============ COD / BATTLEFIELD — preto absoluto, monocromático ============
+// Quase só preto + cinzas. Sand (areia) é o ÚNICO acento, usado com parcimônia.
+const BLACK      = "#050607";
+const BLACK_2    = "#0a0c0e";
+const PANEL      = "#0d1012";
+const PANEL_2    = "#11151a";
+const HAIRLINE   = "#1a1f25";
+const HAIRLINE_2 = "#252b33";
+const SAND       = "hsl(42 30% 56%)";  // acento HUD
+const SAND_DIM   = "hsl(42 16% 36%)";
+const STEEL      = "hsl(210 6% 70%)";
+const STEEL_DIM  = "hsl(210 4% 46%)";
 
-// aliases (mantidos pra não quebrar referências antigas)
-const TAC_BLUE = STEEL_BLUE;
-const TAC_OLIVE = OD_GREEN;
-const COYOTE_DIM = OD_LINE;
-const AMBER = SAND;
-const BLOOD = SAND;       // sem vermelho — substituído por areia
-const COYOTE = SAND_DIM;
-const ACCENT = OD_GREEN;
+// aliases (mantidos pra não quebrar referências espalhadas)
+const OD_GREEN   = PANEL;
+const OD_DEEP    = BLACK_2;
+const OD_LINE    = HAIRLINE_2;
+const STEEL_BLUE = PANEL_2;
+const TAC_BLUE   = PANEL_2;
+const TAC_OLIVE  = PANEL;
+const COYOTE_DIM = HAIRLINE_2;
+const AMBER      = SAND;
+const BLOOD      = SAND;
+const COYOTE     = SAND_DIM;
+const ACCENT     = SAND;
+const GUNMETAL   = BLACK_2;
+const GUNMETAL_2 = BLACK;
 
 function SectionTag({ children }: { children: React.ReactNode }) {
   return (
