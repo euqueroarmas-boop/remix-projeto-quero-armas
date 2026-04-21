@@ -708,7 +708,7 @@ export default function QACursoOperadorPistolaPage() {
                   Willian Massaroto
                   <br />
                   <span style={{ color: SAND }} className="text-2xl md:text-[1.6rem] font-bold normal-case tracking-normal">
-                    Instrutor de Armamento e Tiro · IAT credenciado
+                    Instrutor de Armamento e Tiro · IAT credenciado · Bacharel em Direito
                   </span>
                 </h2>
                 <div className="space-y-4 text-[15px] leading-[1.7]" style={{ color: STEEL }}>
@@ -716,6 +716,11 @@ export default function QACursoOperadorPistolaPage() {
                     Quase <strong className="text-white">10 anos</strong> dedicados a desburocratizar o acesso legal
                     às armas de fogo no Brasil. Formado na <strong className="text-white">maior fábrica de munições
                     da América Latina</strong>, passou pela escola mais cobiçada do país para se tornar instrutor.
+                  </p>
+                  <p>
+                    <strong className="text-white">Bacharel em Direito</strong> e <strong className="text-white">especialista
+                    em legislação de arma de fogo</strong> — domina o Estatuto do Desarmamento, Decreto 11.615/2023
+                    e portarias do Exército. Você treina com quem entende da técnica <em>e</em> da lei.
                   </p>
                   <p>
                     Não vende ilusão. Vende <strong className="text-white">técnica</strong>, <strong className="text-white">responsabilidade</strong> e
