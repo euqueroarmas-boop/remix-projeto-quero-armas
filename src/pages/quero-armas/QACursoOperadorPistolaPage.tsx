@@ -506,9 +506,9 @@ export default function QACursoOperadorPistolaPage() {
             <div className="order-2 md:order-1">
               <SectionTag>1º ESCALÃO · MANUTENÇÃO DE CAMPO</SectionTag>
               <h2 className="text-3xl md:text-[2.3rem] font-black mt-5 mb-6 leading-[1.1] uppercase tracking-tight">
-                Arma suja <span style={{ color: BLOOD }}>falha</span>. <br />
-                Arma mal lubrificada <span style={{ color: BLOOD }}>trava</span>. <br />
-                <span style={{ color: AMBER }}>Operador treinado previne.</span>
+                Arma suja falha. <br />
+                Arma mal lubrificada trava. <br />
+                <span style={{ color: SAND }}>Quem treina, previne.</span>
               </h2>
               <ul className="space-y-3 text-[14.5px]" style={{ color: STEEL }}>
                 {[
@@ -537,7 +537,7 @@ export default function QACursoOperadorPistolaPage() {
               />
               <div
                 className="absolute top-3 right-3 px-2.5 py-1 font-mono text-[10px] tracking-[0.2em] uppercase font-bold"
-                style={{ background: "rgba(0,0,0,0.75)", border: `1px solid ${AMBER}`, color: AMBER }}
+                style={{ background: "rgba(0,0,0,0.7)", border: `1px solid ${OD_LINE}`, color: SAND }}
               >
                 FIELD STRIP · 01
               </div>
@@ -631,11 +631,12 @@ export default function QACursoOperadorPistolaPage() {
               <div>
                 <SectionTag>ENGAJAMENTO · RESERVA DE POSIÇÃO</SectionTag>
                 <h2 className="text-3xl md:text-[2.4rem] font-black mt-5 mb-6 leading-[1.1] uppercase tracking-tight">
-                  Pelotão limitado a <span style={{ color: BLOOD }}>05 operadores</span> por turma.
+                  Turma limitada a <span style={{ color: SAND }}>05 alunos</span>.
                 </h2>
                 <p className="text-[15px] mb-8" style={{ color: STEEL }}>
-                  Turma pequena não é marketing — é doutrina. Só assim o IAT corrige empunhadura, saque e controle de gatilho
-                  de cada aluno, um a um, sob munição real. <strong className="text-white">Curso de massa vira estatística. Aqui, não.</strong>
+                  Turma pequena não é marketing — é o que permite ao instrutor corrigir empunhadura, saque e
+                  controle de gatilho <strong className="text-white">de cada aluno, um a um</strong>. É assim que
+                  treinamento vira reflexo. E reflexo é o que protege a sua família.
                 </p>
 
                 {/* Pricing cards */}
@@ -726,7 +727,8 @@ export default function QACursoOperadorPistolaPage() {
                   aria-hidden
                   className="absolute top-0 left-0 right-0 h-1"
                   style={{
-                    background: `repeating-linear-gradient(90deg, ${BLOOD} 0 16px, ${GUNMETAL_2} 16px 18px, ${AMBER} 18px 34px, ${GUNMETAL_2} 34px 36px)`,
+                    background: `linear-gradient(90deg, ${OD_GREEN}, ${STEEL_BLUE}, ${SAND_DIM})`,
+                    opacity: 0.85,
                   }}
                 />
                 <div className="mb-5">
@@ -768,12 +770,12 @@ export default function QACursoOperadorPistolaPage() {
             aria-hidden
             className="absolute top-0 left-0 right-0 h-[2px]"
             style={{
-              background: `repeating-linear-gradient(90deg, ${BLOOD} 0 30px, transparent 30px 50px, ${AMBER} 50px 70px, transparent 70px 90px)`,
-              opacity: 0.5,
+              background: OD_GREEN,
+              opacity: 0.6,
             }}
           />
-          <p className="text-[13px] font-black mb-2 uppercase tracking-[0.15em]" style={{ color: AMBER }}>
-            ⬢ Proteja o que é seu · Domine o que é seu · Defenda quem ama
+          <p className="text-[13px] font-black mb-2 uppercase tracking-[0.15em]" style={{ color: SAND }}>
+            Proteja sua casa · Defenda sua família · Cuide do que é seu
           </p>
           <p className="text-[11px] font-mono" style={{ color: STEEL_DIM }}>
             © {new Date().getFullYear()} QUERO ARMAS · CURSO OPERADOR DE PISTOLA I · IAT WILLIAN RODRIGUES — TODOS OS DIREITOS RESERVADOS
