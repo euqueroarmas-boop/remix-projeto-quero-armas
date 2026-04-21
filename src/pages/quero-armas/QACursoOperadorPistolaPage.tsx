@@ -625,7 +625,57 @@ export default function QACursoOperadorPistolaPage() {
         </section>
 
         {/* ============ PREÇO + FORM ============ */}
-        <section id="inscricao" className="py-20 md:py-28" style={{ background: GUNMETAL_2 }}>
+        {/* ============ INSTRUTOR ============ */}
+        <section className="py-20 md:py-28 relative" style={{ background: GUNMETAL_2 }}>
+          <div className="container max-w-6xl mx-auto px-4">
+            <div className="grid md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] gap-10 md:gap-16 items-center">
+              <div className="relative mx-auto md:mx-0 max-w-sm w-full">
+                <img
+                  src={instrutorImg}
+                  alt="Willian Rodrigues — instrutor de armamento e tiro da Quero Armas"
+                  loading="lazy"
+                  className="w-full rounded-sm"
+                  style={{
+                    filter: "grayscale(0.55) contrast(1.08) brightness(0.92)",
+                    border: `1px solid ${OD_LINE}`,
+                  }}
+                />
+                <div
+                  className="absolute bottom-3 left-3 px-2.5 py-1 font-mono text-[10px] tracking-[0.2em] uppercase font-bold"
+                  style={{ background: "rgba(0,0,0,0.75)", border: `1px solid ${OD_LINE}`, color: SAND }}
+                >
+                  IAT · CTT-CBC XXVIII
+                </div>
+              </div>
+              <div>
+                <SectionTag>QUEM TREINA VOCÊ</SectionTag>
+                <h2 className="text-3xl md:text-[2.4rem] font-black mt-5 mb-5 leading-[1.1] uppercase tracking-tight">
+                  Willian Rodrigues
+                  <br />
+                  <span style={{ color: SAND }} className="text-2xl md:text-[1.6rem] font-bold normal-case tracking-normal">
+                    Instrutor de Armamento e Tiro · IAT credenciado
+                  </span>
+                </h2>
+                <div className="space-y-4 text-[15px] leading-[1.7]" style={{ color: STEEL }}>
+                  <p>
+                    Quase <strong className="text-white">10 anos</strong> dedicados a desburocratizar o acesso legal
+                    às armas de fogo no Brasil. Formado na <strong className="text-white">maior fábrica de munições
+                    da América Latina</strong>, passou pela escola mais cobiçada do país para se tornar instrutor.
+                  </p>
+                  <p>
+                    Não vende ilusão. Vende <strong className="text-white">técnica</strong>, <strong className="text-white">responsabilidade</strong> e
+                    o conhecimento jurídico necessário para você defender sua família <strong className="text-white">sem virar réu</strong>.
+                  </p>
+                  <p className="font-mono text-[13px] uppercase tracking-[0.12em] pt-3 border-t" style={{ color: SAND, borderColor: OD_LINE }}>
+                    “Adestrar o cidadão antes de municiar a arma.”
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="inscricao" className="py-20 md:py-28" style={{ background: GUNMETAL }}>
           <div className="container max-w-6xl mx-auto px-4">
             <div className="grid lg:grid-cols-2 gap-10 lg:gap-14 items-start">
               {/* Esquerda: info */}
