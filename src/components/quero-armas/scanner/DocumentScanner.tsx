@@ -532,8 +532,14 @@ export default function DocumentScanner({
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent className="max-w-4xl p-0 overflow-hidden bg-slate-950 border-slate-800 text-slate-100">
-        <DialogHeader className="px-4 py-3 border-b border-slate-800 bg-slate-900">
+      <DialogContent
+        className="max-w-4xl p-0 overflow-hidden bg-slate-950 border-slate-800 text-slate-100 sm:rounded-xl
+                   w-screen h-[100dvh] sm:w-auto sm:h-auto sm:max-h-[92vh] flex flex-col"
+      >
+        <DialogHeader
+          className="px-4 py-3 border-b border-slate-800 bg-slate-900 shrink-0"
+          style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.75rem)" }}
+        >
           <DialogTitle className="text-sm font-semibold tracking-wider text-slate-100 flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-emerald-400" />
             {title}
@@ -559,17 +565,17 @@ export default function DocumentScanner({
         )}
 
         {!libsError && libsReady && mode === "capture" && (
-          <div className="relative bg-black">
-            <div className="relative w-full aspect-[3/4] sm:aspect-video max-h-[70vh] overflow-hidden flex items-center justify-center">
+          <div className="relative bg-black flex-1 flex flex-col min-h-0">
+            <div className="relative w-full flex-1 min-h-[40vh] overflow-hidden flex items-center justify-center bg-black">
               <video
                 ref={videoRef}
                 playsInline
                 muted
-                className="absolute inset-0 w-full h-full object-contain"
+                className="absolute inset-0 w-full h-full object-cover"
               />
               <canvas
                 ref={overlayRef}
-                className="absolute inset-0 w-full h-full object-contain pointer-events-none"
+                className="absolute inset-0 w-full h-full object-cover pointer-events-none"
               />
               {!stream && (
                 <div className="relative z-10 text-center text-slate-300 text-xs px-6">
@@ -598,7 +604,10 @@ export default function DocumentScanner({
             </div>
 
             {/* Controles */}
-            <div className="flex items-center justify-between gap-2 p-3 bg-slate-900 border-t border-slate-800">
+            <div
+              className="flex items-center justify-between gap-2 p-3 bg-slate-900 border-t border-slate-800 shrink-0"
+              style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 0.75rem)" }}
+            >
               <Button
                 type="button"
                 variant="outline"
