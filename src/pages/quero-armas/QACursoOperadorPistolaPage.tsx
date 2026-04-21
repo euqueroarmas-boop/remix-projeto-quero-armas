@@ -246,10 +246,10 @@ export default function QACursoOperadorPistolaPage() {
       el.setAttribute(selector.startsWith("link") ? "href" : "content", value);
     };
     setMeta('meta[name="description"]', "name", "description",
-      "Aprenda a manusear pistolas com segurança, técnica e controle absoluto. Treinamento prático com munição real, instrutor credenciado CTT-CBC. Vagas limitadas.");
+      "Defesa pessoal real para proteger sua família. 6 a 8h de treinamento prático com munição real, instrutor credenciado. Vagas limitadas.");
     setMeta('meta[property="og:title"]', "property", "og:title", "Curso Operador de Pistola I — Quero Armas");
     setMeta('meta[property="og:description"]', "property", "og:description",
-      "Defenda quem você ama. Treinamento tático completo: 10h prático + teórico, 120 disparos, certificado reconhecido.");
+      "Defenda quem você ama. Treinamento tático: 6 a 8h prático + teórico, 120 disparos, certificado reconhecido.");
     setMeta('meta[property="og:image"]', "property", "og:image", heroImg);
     setMeta('link[rel="canonical"]', "rel", "canonical", "https://wmti.com.br/quero-armas/curso-operador-pistola");
   }, []);
@@ -259,18 +259,18 @@ export default function QACursoOperadorPistolaPage() {
       <div
         className="min-h-screen relative"
         style={{
-          background: `radial-gradient(1200px 600px at 10% -10%, ${OD_DEEP} 0%, ${GUNMETAL_2} 55%, #000 100%)`,
+          background: BLACK,
           color: "white",
         }}
       >
         {/* Grid tático sutil sobre todo o fundo */}
         <div
           aria-hidden
-          className="pointer-events-none fixed inset-0 z-0 opacity-[0.05] mix-blend-overlay"
+          className="pointer-events-none fixed inset-0 z-0 opacity-[0.025]"
           style={{
             backgroundImage:
-              "linear-gradient(rgba(255,255,255,0.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.6) 1px, transparent 1px)",
-            backgroundSize: "48px 48px",
+              "linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)",
+            backgroundSize: "64px 64px",
           }}
         />
         {/* ============ HERO ============ */}
@@ -366,7 +366,7 @@ export default function QACursoOperadorPistolaPage() {
               {/* Trust strip */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-6 border-t" style={{ borderColor: COYOTE_DIM }}>
                 {[
-                  { n: "10h", l: "Instrução ao vivo" },
+                  { n: "6–8h", l: "Instrução ao vivo" },
                   { n: "120", l: "Munições reais" },
                   { n: "05", l: "Operadores / turma" },
                   { n: "IAT", l: "Instrutor credenciado" },
@@ -561,7 +561,7 @@ export default function QACursoOperadorPistolaPage() {
 
             <div className="grid sm:grid-cols-2 gap-3">
               {[
-                { i: Clock, t: "10h de instrução", d: "Teoria + linha de tiro, IAT credenciado" },
+                { i: Clock, t: "6 a 8h de instrução", d: "Teoria + linha de tiro, IAT credenciado" },
                 { i: Coffee, t: "Rancho incluso", d: "Café da manhã e almoço — sem custo adicional" },
                 { i: Target, t: "120 munições reais", d: "Disparos cronometrados e supervisionados" },
                 { i: Shield, t: "EPI completo", d: "Óculos balísticos e protetor auricular fornecidos" },
