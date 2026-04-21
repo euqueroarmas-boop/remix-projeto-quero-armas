@@ -764,7 +764,7 @@ export default function QACursoOperadorPistolaPage() {
                     </div>
                     <div className="text-3xl font-black text-white">R$ 1.890</div>
                     <div className="text-[12px] mt-1 font-mono" style={{ color: STEEL_DIM }}>
-                      em até 18x no cartão*
+                      em até 12x no cartão*
                     </div>
                   </div>
                   <div
@@ -786,7 +786,7 @@ export default function QACursoOperadorPistolaPage() {
                     </div>
                     <div className="text-3xl font-black text-white">R$ 2.490</div>
                     <div className="text-[12px] mt-1 font-mono" style={{ color: STEEL }}>
-                      em até 18x no cartão*
+                      em até 12x no cartão*
                     </div>
                   </div>
                 </div>
