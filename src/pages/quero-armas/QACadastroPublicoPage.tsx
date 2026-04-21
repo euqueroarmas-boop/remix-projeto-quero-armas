@@ -262,6 +262,8 @@ export default function QACadastroPublicoPage() {
           id: body.existing_id,
           status: body.existing_status || "—",
           created_at: body.existing_created_at || "",
+          existing: body.existing_data || {},
+          incoming: payload as Record<string, any>,
         });
         return;
       }
