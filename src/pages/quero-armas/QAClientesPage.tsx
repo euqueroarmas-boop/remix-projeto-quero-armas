@@ -568,7 +568,7 @@ function CadastroDocumentosCard({
               variant="outline"
               onClick={handleScanPdf}
               disabled={scanning}
-              className="gap-1.5 h-8 text-[11px]"
+              className="gap-1.5 h-8 text-[11px] bg-white text-slate-700 border-slate-300 hover:bg-slate-50 hover:text-slate-900"
             >
               {scanning ? <Loader2 className="w-3 h-3 animate-spin" /> : <FileDown className="w-3 h-3" />}
               BAIXAR PDF DIGITALIZADO
