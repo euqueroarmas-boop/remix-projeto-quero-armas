@@ -65,6 +65,7 @@
     "i18next": "^25.10.10",
     "i18next-browser-languagedetector": "^8.2.1",
     "input-otp": "^1.4.2",
+    "jscanify": "1.4.2",
     "jspdf": "^4.2.1",
     "lucide-react": "^0.462.0",
     "mochawesome": "7.1.3",

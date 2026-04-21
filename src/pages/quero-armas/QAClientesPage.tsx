@@ -10,7 +10,7 @@ import {
   Search, User, Phone, Mail, MapPin, FileText, Shield, ChevronLeft,
   Loader2, Eye, Plus, Crosshair, Edit, Trash2, Download, FileDown,
   ChevronDown, ChevronUp, Save, X, XCircle, CheckCircle, TrendingUp, KeyRound, PenTool,
-  HeartPulse, GripVertical,
+  HeartPulse, GripVertical, Camera,
 } from "lucide-react";
 import {
   DndContext, closestCenter, PointerSensor, TouchSensor, KeyboardSensor,
@@ -38,6 +38,7 @@ import { isDispensado, getBaseLegalDispensa, CATEGORIA_MAP, type CategoriaTitula
 import { invalidateQADashboardSnapshot } from "@/components/quero-armas/dashboard/dashboardSnapshot";
 import { objetivoLabel, categoriaLabel } from "./qaServiceCatalog";
 import jsPDF from "jspdf";
+import DocumentScanner from "@/components/quero-armas/scanner/DocumentScanner";
 
 /* ── Pipeline "scanner" real ──
  * 1) Auto-crop: detecta as bordas do papel (regiões claras) e descarta o fundo escuro da foto.
@@ -421,7 +422,8 @@ function CadastroDocumentosCard({
   onUpdated: (next: any) => void;
 }) {
   const [extracting, setExtracting] = useState(false);
-  const [scanning, setScanning] = useState(false);
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [scannerTarget, setScannerTarget] = useState<"identidade" | "endereco" | "avulso">("avulso");
   const idUrl = usePrivateStorageUrl("qa-cadastro-selfies", cadastro.documento_identidade_path);
   const addrUrl = usePrivateStorageUrl("qa-cadastro-selfies", cadastro.comprovante_endereco_path);
 
@@ -524,28 +526,58 @@ function CadastroDocumentosCard({
 
   const hasAnyDoc = !!(cadastro.documento_identidade_path || cadastro.comprovante_endereco_path);
 
-  const handleScanPdf = async () => {
-    if (!idUrl && !addrUrl) {
-      toast.error("Nenhum documento disponível para digitalizar");
-      return;
-    }
-    setScanning(true);
-    const tId = toast.loading("Digitalizando documentos…");
+  const safeBaseName = (cadastro.nome_completo || "documento")
+    .toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
+  const openScanner = (target: "identidade" | "endereco" | "avulso") => {
+    setScannerTarget(target);
+    setScannerOpen(true);
+  };
+
+  const handleScannerComplete = async ({ blob, pageCount }: { blob: Blob; pageCount: number; previewDataUrl: string }) => {
+    const fileNameBase =
+      scannerTarget === "identidade" ? "identidade-digitalizada" :
+      scannerTarget === "endereco" ? "comprovante-endereco-digitalizado" :
+      "documento-digitalizado";
+    const fileName = `${safeBaseName}-${fileNameBase}.pdf`;
+
+    // 1) Sempre permite o download imediato
     try {
-      const items = [
-        idUrl ? { url: idUrl, title: "Documento de identidade" } : null,
-        addrUrl ? { url: addrUrl, title: "Comprovante de endereço" } : null,
-      ].filter(Boolean) as Array<{ url: string; title: string }>;
-      const safeName = (cadastro.nome_completo || "documento").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-      await generateScannedPdf(items, `${safeName}-documentos-digitalizados.pdf`);
-      toast.dismiss(tId);
-      toast.success("PDF digitalizado gerado com sucesso");
-    } catch (err: any) {
-      console.error("[scan-pdf]", err);
-      toast.dismiss(tId);
-      toast.error(err?.message || "Falha ao gerar PDF digitalizado");
-    } finally {
-      setScanning(false);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = fileName;
+      document.body.appendChild(a); a.click();
+      setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 0);
+    } catch (e) { console.error("[scanner-download]", e); }
+
+    // 2) Substitui o anexo do cadastro (somente quando o usuário escolheu um destino)
+    if (scannerTarget === "identidade" || scannerTarget === "endereco") {
+      const tId = toast.loading("Salvando documento digitalizado…");
+      try {
+        const path = `cadastro/${cadastro.id}/${scannerTarget}-${Date.now()}.pdf`;
+        const { error: upErr } = await supabase.storage
+          .from("qa-cadastro-selfies")
+          .upload(path, blob, { contentType: "application/pdf", upsert: true });
+        if (upErr) throw upErr;
+
+        const field = scannerTarget === "identidade" ? "documento_identidade_path" : "comprovante_endereco_path";
+        const { data: updated, error: dbErr } = await supabase
+          .from("qa_cadastro_publico" as any)
+          .update({ [field]: path })
+          .eq("id", cadastro.id)
+          .select("*")
+          .maybeSingle();
+        if (dbErr) throw dbErr;
+        onUpdated(updated);
+        toast.dismiss(tId);
+        toast.success(`Documento substituído (${pageCount} pág.)`);
+      } catch (err: any) {
+        console.error("[scanner-upload]", err);
+        toast.dismiss(tId);
+        toast.error(err?.message || "Falha ao salvar documento digitalizado");
+      }
+    } else {
+      toast.success(`PDF gerado (${pageCount} pág.)`);
     }
   };
 
@@ -556,36 +588,61 @@ function CadastroDocumentosCard({
         <DocumentThumb path={cadastro.documento_identidade_path} label="Documento de identidade" name={cadastro.nome_completo} kind="doc" />
         <DocumentThumb path={cadastro.comprovante_endereco_path} label="Comprovante de endereço" name={cadastro.nome_completo} kind="doc" />
       </div>
-      {hasAnyDoc && (
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-3 border-t" style={{ borderColor: "hsl(220 13% 93%)" }}>
-          <p className="text-[11px] flex-1" style={{ color: "hsl(220 10% 50%)" }}>
-            A IA lê CNH/RG e comprovante e <strong>preenche apenas os campos vazios</strong> do cadastro automaticamente.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+      <div className="flex flex-col gap-3 pt-3 border-t" style={{ borderColor: "hsl(220 13% 93%)" }}>
+        <p className="text-[11px]" style={{ color: "hsl(220 10% 50%)" }}>
+          Use o <strong>scanner de documentos</strong> para capturar com detecção de bordas, correção de
+          perspectiva e geração de PDF multipágina (sem foto comum). Em seguida, o OCR preenche os
+          campos vazios automaticamente.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button" size="sm"
+            onClick={() => openScanner("identidade")}
+            className="gap-1.5 h-8 text-[11px] bg-emerald-600 hover:bg-emerald-500 text-white"
+          >
+            <Camera className="w-3 h-3" />
+            ESCANEAR IDENTIDADE
+          </Button>
+          <Button
+            type="button" size="sm"
+            onClick={() => openScanner("endereco")}
+            className="gap-1.5 h-8 text-[11px] bg-emerald-600 hover:bg-emerald-500 text-white"
+          >
+            <Camera className="w-3 h-3" />
+            ESCANEAR COMPROVANTE
+          </Button>
+          <Button
+            type="button" size="sm" variant="outline"
+            onClick={() => openScanner("avulso")}
+            className="gap-1.5 h-8 text-[11px] bg-white text-slate-700 border-slate-300 hover:bg-slate-50 hover:text-slate-900"
+          >
+            <FileDown className="w-3 h-3" />
+            ESCANEAR & BAIXAR PDF
+          </Button>
+          {hasAnyDoc && (
             <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={handleScanPdf}
-              disabled={scanning}
-              className="gap-1.5 h-8 text-[11px] bg-white text-slate-700 border-slate-300 hover:bg-slate-50 hover:text-slate-900"
-            >
-              {scanning ? <Loader2 className="w-3 h-3 animate-spin" /> : <FileDown className="w-3 h-3" />}
-              BAIXAR PDF DIGITALIZADO
-            </Button>
-            <Button
-              type="button"
-              size="sm"
+              type="button" size="sm"
               onClick={handleExtract}
               disabled={extracting}
-              className="gap-1.5 h-8 text-[11px]"
+              className="gap-1.5 h-8 text-[11px] ml-auto"
             >
               {extracting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Crosshair className="w-3 h-3" />}
               EXTRAIR DADOS VIA OCR
             </Button>
-          </div>
+          )}
         </div>
-      )}
+      </div>
+
+      <DocumentScanner
+        open={scannerOpen}
+        onClose={() => setScannerOpen(false)}
+        onComplete={handleScannerComplete}
+        title={
+          scannerTarget === "identidade" ? "ESCANEAR DOCUMENTO DE IDENTIDADE" :
+          scannerTarget === "endereco" ? "ESCANEAR COMPROVANTE DE ENDEREÇO" :
+          "ESCANEAR DOCUMENTO"
+        }
+      />
     </div>
   );
 }
