@@ -1100,10 +1100,10 @@ function Step0Qualificacao({
     (!needsLivre || value.descricao_servico_livre.trim().length >= 10);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3.5">
       <WelcomeBlock />
 
-      {/* Campo 1 — Objetivo principal */}
+      {/* Campo 1 — Objetivo principal (destaque visual: variante primary) */}
       <TacticalSelect
         icon={Target}
         label="Qual é o seu objetivo principal?"
@@ -1112,6 +1112,7 @@ function Step0Qualificacao({
         placeholder="Selecione seu objetivo"
         options={OBJETIVOS_PRINCIPAIS.map((o) => ({ value: o.value, label: o.label }))}
         required
+        primary
       />
 
       {/* Campo 2 — Categoria */}
@@ -1182,21 +1183,41 @@ function Step0Qualificacao({
         </label>
       )}
 
+      {/* CTA principal — premium, com mais peso e claramente clicável quando ativo */}
       <button
         onClick={onContinue}
         disabled={!valido}
-        className="w-full h-12 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+        className="group w-full h-[52px] rounded-xl text-[13.5px] font-bold tracking-wide uppercase text-white flex items-center justify-center gap-2 transition-all duration-200 mt-1 relative overflow-hidden disabled:cursor-not-allowed"
         style={{
-          background: "linear-gradient(135deg, hsl(215 52% 25%) 0%, hsl(215 50% 32%) 100%)",
-          boxShadow: "0 6px 18px hsl(215 50% 25% / 0.28)",
+          background: valido
+            ? "linear-gradient(135deg, hsl(215 55% 22%) 0%, hsl(215 52% 28%) 50%, hsl(86 28% 26%) 100%)"
+            : "hsl(220 14% 92%)",
+          color: valido ? "white" : "hsl(220 10% 58%)",
+          boxShadow: valido
+            ? "0 10px 24px -8px hsl(215 55% 20% / 0.45), 0 4px 10px -2px hsl(215 55% 20% / 0.20), inset 0 1px 0 hsl(50 60% 88% / 0.18)"
+            : "inset 0 0 0 1px hsl(220 14% 86%)",
+          letterSpacing: "0.04em",
         }}
       >
-        Continuar para documentos
-        <ChevronRight className="w-4 h-4" />
+        {valido && (
+          <span
+            className="absolute inset-x-0 top-0 h-px"
+            style={{ background: "linear-gradient(90deg, transparent, hsl(50 60% 88% / 0.45), transparent)" }}
+          />
+        )}
+        <span>Continuar</span>
+        <ChevronRight
+          className="w-4 h-4 transition-transform group-hover:translate-x-0.5"
+          strokeWidth={2.5}
+        />
       </button>
 
-      <p className="text-[10px] text-center px-2" style={{ color: "hsl(220 10% 55%)" }}>
-        Suas respostas ajudam nossa equipe a preparar seu atendimento. Nenhum compromisso até a confirmação.
+      {/* Texto de apoio — discreto, secundário ao CTA */}
+      <p
+        className="text-[10px] text-center px-4 leading-relaxed pt-1"
+        style={{ color: "hsl(220 10% 62%)" }}
+      >
+        Sem compromisso até a confirmação · Dados protegidos
       </p>
     </div>
   );
@@ -1211,6 +1232,7 @@ function TacticalSelect({
   placeholder,
   options,
   required,
+  primary,
 }: {
   icon: typeof Target;
   label: string;
@@ -1219,24 +1241,58 @@ function TacticalSelect({
   placeholder: string;
   options: { value: string; label: string }[];
   required?: boolean;
+  /** Quando true, aplica acabamento mais forte: usado no campo focal da etapa. */
+  primary?: boolean;
 }) {
   return (
     <label className="block">
-      <span className="text-[10px] font-semibold uppercase tracking-wider flex items-center gap-1.5"
-        style={{ color: "hsl(215 35% 30%)" }}>
-        <Icon className="w-3 h-3" />
-        {label} {required && <span style={{ color: "hsl(0 70% 50%)" }}>*</span>}
+      <span
+        className="font-semibold uppercase flex items-center gap-1.5"
+        style={{
+          color: primary ? "hsl(215 45% 22%)" : "hsl(215 30% 38%)",
+          fontSize: primary ? "11px" : "10px",
+          letterSpacing: primary ? "0.06em" : "0.05em",
+        }}
+      >
+        <Icon className={primary ? "w-3.5 h-3.5" : "w-3 h-3"} strokeWidth={2.2} />
+        {label} {required && <span style={{ color: "hsl(0 65% 52%)" }}>*</span>}
       </span>
-      <div className="relative mt-1.5">
+      <div className="relative mt-2">
+        {/* halo de destaque para o campo focal quando ainda vazio */}
+        {primary && !value && (
+          <div
+            className="absolute -inset-px rounded-xl pointer-events-none"
+            style={{
+              background:
+                "linear-gradient(135deg, hsl(215 50% 25% / 0.10), hsl(86 23% 30% / 0.08))",
+              filter: "blur(6px)",
+            }}
+          />
+        )}
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full h-11 pl-3 pr-9 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(215_50%_45%)] transition appearance-none cursor-pointer"
+          className="relative w-full pl-3.5 pr-10 rounded-xl font-medium outline-none focus:ring-2 transition-all appearance-none cursor-pointer"
           style={{
-            border: value ? "1px solid hsl(215 40% 55%)" : "1px solid hsl(220 13% 86%)",
-            background: "white",
-            color: value ? "hsl(220 25% 18%)" : "hsl(220 10% 55%)",
-            boxShadow: value ? "0 1px 3px hsl(215 50% 30% / 0.08)" : "none",
+            height: primary ? 52 : 44,
+            fontSize: primary ? "14.5px" : "13.5px",
+            border: value
+              ? `1px solid hsl(215 45% ${primary ? 38 : 50}%)`
+              : `1px solid hsl(220 13% ${primary ? 80 : 86}%)`,
+            background: value
+              ? "linear-gradient(180deg, white 0%, hsl(215 30% 99%) 100%)"
+              : "white",
+            color: value ? "hsl(215 35% 16%)" : "hsl(220 10% 55%)",
+            boxShadow: value
+              ? primary
+                ? "0 4px 14px hsl(215 50% 25% / 0.14), inset 0 1px 0 white"
+                : "0 1px 3px hsl(215 50% 30% / 0.08)"
+              : primary
+                ? "0 2px 8px hsl(215 50% 25% / 0.06), inset 0 1px 0 white"
+                : "none",
+            // ring color via custom property
+            // @ts-ignore
+            "--tw-ring-color": "hsl(215 50% 45% / 0.35)",
           }}
         >
           <option value="">{placeholder}</option>
@@ -1244,7 +1300,23 @@ function TacticalSelect({
             <option key={o.value} value={o.value}>{o.label}</option>
           ))}
         </select>
-        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: "hsl(215 35% 35%)" }} />
+        <div
+          className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none rounded-md flex items-center justify-center"
+          style={{
+            width: primary ? 26 : 22,
+            height: primary ? 26 : 22,
+            background: value
+              ? "linear-gradient(135deg, hsl(215 52% 25%) 0%, hsl(215 50% 32%) 100%)"
+              : "hsl(220 14% 96%)",
+            boxShadow: value ? "0 1px 3px hsl(215 50% 25% / 0.25)" : "none",
+          }}
+        >
+          <ChevronDown
+            className={primary ? "w-4 h-4" : "w-3.5 h-3.5"}
+            style={{ color: value ? "white" : "hsl(220 10% 50%)" }}
+            strokeWidth={2.4}
+          />
+        </div>
       </div>
     </label>
   );
