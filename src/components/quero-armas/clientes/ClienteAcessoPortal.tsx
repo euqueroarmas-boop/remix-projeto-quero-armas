@@ -225,7 +225,8 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
 
   const hasAccount = !!customer?.user_id;
   const visiblePassword = generatedPwd || persistedPwd;
-  const visibleEmail = generatedEmail || persistedEmail || (hasAccount ? (customer?.email || cliente.email) : "");
+  const rawEmail = generatedEmail || persistedEmail || (hasAccount ? (customer?.email || cliente.email) : "");
+  const visibleEmail = rawEmail ? rawEmail.toLowerCase().trim() : "";
 
   return (
     <div className="space-y-4">
