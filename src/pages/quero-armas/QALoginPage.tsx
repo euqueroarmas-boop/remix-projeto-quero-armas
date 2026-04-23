@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { QALogo } from "@/components/quero-armas/QALogo";
+import { BackButton } from "@/shared/components/BackButton";
 
 export default function QALoginPage() {
   const [email, setEmail] = useState("");
@@ -58,6 +59,9 @@ export default function QALoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 px-4">
       <div className="w-full max-w-sm">
+        <div className="mb-6 flex justify-start">
+          <BackButton fallback="/" />
+        </div>
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center mb-4">
             <QALogo className="h-24 w-auto rounded-2xl" alt="Quero Armas" />

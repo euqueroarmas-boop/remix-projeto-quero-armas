@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2, Shield, ArrowLeft } from "lucide-react";
+import { BackButton } from "@/shared/components/BackButton";
 
 export default function QAClienteLoginPage() {
   const [email, setEmail] = useState("");
@@ -60,6 +61,9 @@ export default function QAClienteLoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-blue-50/30 px-4">
       <div className="w-full max-w-sm">
+        <div className="mb-6 flex justify-start">
+          <BackButton fallback="/" />
+        </div>
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200/50 mb-4 shadow-sm">
             <Shield className="h-7 w-7 text-blue-600" />
