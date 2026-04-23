@@ -15,6 +15,24 @@ async function hmacVerify(secret: string, message: string, signature: string): P
   return expected === signature;
 }
 
+async function linkMatchingCustomers(supabase: ReturnType<typeof createClient>, userId: string, email: string, document: string) {
+  const normalizedDocument = String(document || "").replace(/\D/g, "");
+  const { data: matches } = await supabase
+    .from("customers")
+    .select("id, email, cnpj_ou_cpf")
+    .or(`email.ilike.${email},cnpj_ou_cpf.eq.${normalizedDocument}`);
+
+  if (!matches?.length) return;
+
+  for (const match of matches) {
+    const sameEmail = (match.email || "").trim().toLowerCase() === email.trim().toLowerCase();
+    const sameDoc = String(match.cnpj_ou_cpf || "").replace(/\D/g, "") === normalizedDocument;
+    if (sameEmail || (normalizedDocument && sameDoc)) {
+      await supabase.from("customers").update({ user_id: userId }).eq("id", match.id);
+    }
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -75,6 +93,74 @@ Deno.serve(async (req) => {
       });
     }
 
+    // ── GET CREDENTIALS ACTION ──
+    if (action === "get_credentials") {
+      if (!email && !customer_id) {
+        return new Response(JSON.stringify({ error: "E-mail ou customer_id obrigatório" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      let targetEmail = email;
+      let targetUserId: string | null = null;
+
+      let targetDocument = "";
+
+      if (customer_id) {
+        const { data: cust } = await supabase
+          .from("customers")
+          .select("email, user_id, cnpj_ou_cpf")
+          .eq("id", customer_id)
+          .single();
+
+        if (!cust) {
+          return new Response(JSON.stringify({ error: "Cliente não encontrado" }), {
+            status: 404,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        targetEmail = targetEmail || cust.email;
+        targetUserId = cust.user_id;
+        targetDocument = cust.cnpj_ou_cpf || "";
+      }
+
+      let authUser = null;
+      if (targetUserId) {
+        const { data } = await supabase.auth.admin.getUserById(targetUserId);
+        authUser = data?.user || null;
+      }
+
+      if (!authUser && targetEmail) {
+        const { data: userList } = await supabase.auth.admin.listUsers();
+        authUser = userList?.users?.find((u: any) => u.email?.toLowerCase() === targetEmail.toLowerCase()) || null;
+      }
+
+      if (!authUser) {
+        return new Response(JSON.stringify({ success: false, has_account: false }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (targetEmail) {
+        await linkMatchingCustomers(supabase, authUser.id, targetEmail, targetDocument);
+      }
+
+      return new Response(JSON.stringify({
+        success: true,
+        has_account: true,
+        user_id: authUser.id,
+        email: authUser.email,
+        temp_password: typeof authUser.user_metadata?.temp_password === "string" ? authUser.user_metadata.temp_password : null,
+        password_change_required: authUser.user_metadata?.password_change_required === true,
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // ── RESET PASSWORD ACTION ──
     if (action === "reset_password") {
       if (!email && !customer_id) {
@@ -123,7 +209,8 @@ Deno.serve(async (req) => {
         user_metadata: {
           ...existingUser.user_metadata,
           password_change_required: true,
-          temp_password: null,
+          temp_password: newPassword,
+          created_via: existingUser.user_metadata?.created_via || "admin_portal",
         },
       });
 
@@ -223,7 +310,13 @@ Deno.serve(async (req) => {
       email,
       password,
       email_confirm: true,
-      user_metadata: { name: name || email },
+      user_metadata: {
+        name: name || email,
+        temp_password: password,
+        password_change_required: true,
+        auto_created: true,
+        created_via: "admin_portal",
+      },
     });
 
     if (authError) {
@@ -238,13 +331,21 @@ Deno.serve(async (req) => {
           // Update password to the new temp password
           await supabase.auth.admin.updateUserById(existing.id, {
             password,
-            user_metadata: { ...existing.user_metadata, name: name || email },
+            user_metadata: {
+              ...existing.user_metadata,
+              name: name || email,
+              temp_password: password,
+              password_change_required: true,
+              auto_created: true,
+              created_via: existing.user_metadata?.created_via || "admin_portal",
+            },
           });
           if (resolvedCustomerId) {
             await supabase.from("customers").update({ user_id: existing.id }).eq("id", resolvedCustomerId);
           }
+          await linkMatchingCustomers(supabase, existing.id, email, customer_data?.cnpj_ou_cpf || "");
           return new Response(
-            JSON.stringify({ success: true, user_id: existing.id, email, reused: true }),
+            JSON.stringify({ success: true, user_id: existing.id, email, temp_password: password, reused: true }),
             { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
@@ -268,6 +369,8 @@ Deno.serve(async (req) => {
         .from("customers")
         .update({ user_id: userId })
         .eq("id", resolvedCustomerId);
+
+      await linkMatchingCustomers(supabase, userId, email, customer_data?.cnpj_ou_cpf || "");
 
       await supabase.from("client_events").insert({
         customer_id: resolvedCustomerId,
@@ -302,7 +405,7 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, user_id: userId, email }),
+      JSON.stringify({ success: true, user_id: userId, email, temp_password: password }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
