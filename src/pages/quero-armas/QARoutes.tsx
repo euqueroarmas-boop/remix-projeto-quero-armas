@@ -27,6 +27,7 @@ const QAEnviarFotoPage = lazyRetry(() => import("./QAEnviarFotoPage"), "QAEnviar
 const QAClienteLoginPage = lazyRetry(() => import("./QAClienteLoginPage"), "QAClienteLoginPage");
 const QAClientePortalPage = lazyRetry(() => import("./QAClientePortalPage"), "QAClientePortalPage");
 const QACursoOperadorPistolaPage = lazyRetry(() => import("./QACursoOperadorPistolaPage"), "QACursoOperadorPistolaPage");
+const HomePage = lazyRetry(() => import("@/pages/HomePage"), "HomePage");
 
 const Loader = () => (
   <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -38,8 +39,8 @@ export default function QARoutes() {
   return (
     <Suspense fallback={<Loader />}>
       <Routes>
-        {/* Raiz: redireciona para o dashboard (QALayout cuida da auth) */}
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        {/* Raiz: landing page principal pública */}
+        <Route path="/" element={<HomePage />} />
 
         {/* Public routes (no auth required) */}
         <Route path="login" element={<QALoginPage />} />
