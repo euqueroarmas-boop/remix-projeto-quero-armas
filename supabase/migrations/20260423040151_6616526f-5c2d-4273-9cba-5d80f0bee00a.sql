@@ -1,0 +1,6 @@
+UPDATE public.lp_services
+SET
+  name = 'Curso Operador de Pistola — Nível I',
+  short_description = 'Formação tática completa em pistola: fundamentos, manuseio seguro, saque, recargas, manutenção e tiro defensivo. Turmas reduzidas, instrutores credenciados e certificado reconhecido para CAC e defesa pessoal.',
+  long_description = 'O Curso Operador de Pistola — Nível I da Quero Armas é o programa mais completo do mercado para quem quer dominar o uso da pistola com segurança técnica e proficiência operacional. São 16 horas de treinamento intensivo cobrindo: fundamentos balísticos, manuseio seguro, postura e empunhadura, saque do coldre, troca de carregadores, correção de panes, tiro a múltiplas distâncias, manutenção preventiva e princípios de tiro defensivo. Turmas com no máximo 8 alunos, instrutores credenciados pelo Exército, infraestrutura própria e certificado reconhecido para fins de CAC, defesa pessoal e ingresso em forças de segurança. Inclui munição, equipamento de proteção, lanche, certificado e acesso ao grupo VIP de egressos.'
+WHERE slug = 'curso-operador-pistola-nivel-1';
