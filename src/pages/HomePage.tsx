@@ -308,6 +308,10 @@ const HomePage = () => {
             <h2 className="font-heading text-2xl font-bold uppercase leading-tight tracking-tight sm:text-4xl lg:text-5xl">"Mas é <span className="text-tactical-gradient">legal</span> ter arma em casa?" — <span className="text-tactical-gradient">Sim. E está na lei.</span></h2>
             <p className="mt-4 text-base text-muted-foreground sm:text-lg">Você não precisa ser policial. Não precisa ser militar. Quatro normas dão a você, cidadão comum, o direito de comprar, registrar e manter arma de fogo em casa pra defesa pessoal:</p>
           </div>
+          <div className="relative mb-8 overflow-hidden rounded-sm border border-border sm:mb-12">
+            <img src={homeLei} alt="Martelo de juiz sobre livro jurídico azul ao lado de pistola Glock, com balança da justiça ao fundo" loading="lazy" width={1920} height={1080} className="aspect-[16/9] w-full object-cover" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
+          </div>
           <div className="grid gap-4 sm:grid-cols-2 sm:gap-5">
             {[
               { code: 'Lei 10.826/03', name: 'Estatuto do Desarmamento', desc: 'O artigo 4º te dá o direito à posse: arma em casa pra defender você e sua família. Você só precisa cumprir os requisitos — e nós te conduzimos por todos eles.' },
