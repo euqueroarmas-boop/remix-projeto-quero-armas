@@ -1,4 +1,4 @@
-import { useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -77,7 +77,7 @@ const modalTheme = {
   "--border": "214 32% 91%",
   "--input": "214 32% 91%",
   "--ring": "42 96% 56%",
-} satisfies CSSProperties;
+} as React.CSSProperties;
 
 function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
