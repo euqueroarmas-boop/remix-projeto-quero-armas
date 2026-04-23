@@ -239,6 +239,35 @@ function InscricaoForm() {
 
 // ============= MAIN =============
 export default function QACursoOperadorPistolaPage() {
+  const { addItem } = useCart();
+  const navigate = useNavigate();
+  const [adding, setAdding] = useState(false);
+
+  const handleComprar = async () => {
+    if (adding) return;
+    setAdding(true);
+    try {
+      const res = await getServiceBySlug(COURSE_SLUG);
+      if (!res?.service) {
+        toast.error("Serviço indisponível no catálogo. Tente novamente em instantes.");
+        return;
+      }
+      addItem({
+        service_id: res.service.id,
+        service_slug: res.service.slug,
+        service_name: res.service.name,
+        unit_price_cents: res.service.base_price_cents,
+        quantity: 1,
+      });
+      toast.success("Curso adicionado ao carrinho.");
+      navigate("/carrinho");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erro ao adicionar ao carrinho.");
+    } finally {
+      setAdding(false);
+    }
+  };
+
   useEffect(() => {
     window.scrollTo(0, 0);
     document.title = "Curso Operador de Pistola I — Quero Armas | Defesa Pessoal e Porte";
