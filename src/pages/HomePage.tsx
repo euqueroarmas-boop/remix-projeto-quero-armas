@@ -479,6 +479,10 @@ const HomePage = () => {
             <h2 className="font-heading text-2xl font-bold uppercase leading-tight tracking-tight sm:text-4xl lg:text-5xl">Quando o sistema cair, <span className="text-tactical-gradient">a munição some das prateleiras em 48 horas</span>. Você fabrica a sua — ou reza.</h2>
             <p className="mt-4 text-base text-muted-foreground sm:text-lg">O registro <strong className="text-foreground">CAC</strong> te dá o direito legal de <strong className="text-foreground">comprar prensa de recarga, pólvora, projétil, espoleta e estojo</strong> — e produzir sua própria munição em casa.</p>
           </div>
+          <div className="relative mb-8 overflow-hidden rounded-sm border border-border sm:mb-12">
+            <img src={homeCacRecarga} alt="Bancada de recarga de munição com prensa metálica, estojos de latão organizados e caixas de madeira de munição" loading="lazy" width={1920} height={1080} className="aspect-[16/9] w-full object-cover" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
+          </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 sm:gap-5">
             {[
               { icon: Wrench, tag: 'Prensa de recarga', title: 'A máquina que te liberta da loja.', desc: 'Single-stage pra começar, progressiva pra produzir 400 tiros/hora.' },
