@@ -23,6 +23,7 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
   const [resetLoading, setResetLoading] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
   const [generatedPwd, setGeneratedPwd] = useState("");
+  const [generatedEmail, setGeneratedEmail] = useState("");
   const [newPwd, setNewPwd] = useState("");
   const [showPwd, setShowPwd] = useState(false);
 
@@ -111,6 +112,7 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
       }
 
       setGeneratedPwd(tempPwd);
+      setGeneratedEmail(cliente.email);
       toast.success("Acesso ao portal criado com sucesso");
       await fetchCustomer();
     } catch (err: any) {
