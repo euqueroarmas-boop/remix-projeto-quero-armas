@@ -212,11 +212,23 @@ export default function QAClientePortalPage() {
     });
     crafs.forEach((cr: any) => { if (cr.data_validade) expDocs.push({ label: `CRAF — ${cr.nome_arma || "Arma"}`, date: cr.data_validade, days: daysUntil(cr.data_validade), category: "CRAF" }); });
     gtes.forEach((g: any) => { if (g.data_validade) expDocs.push({ label: `GTE — ${g.nome_arma || "Arma"}`, date: g.data_validade, days: daysUntil(g.data_validade), category: "GTE" }); });
+    // Documentos enviados pelo próprio cliente (hub pessoal)
+    meusDocs.forEach((d: any) => {
+      if (!d.data_validade) return;
+      const cat = (d.tipo_documento || "outro").toUpperCase();
+      const armaInfo = d.arma_modelo ? ` — ${d.arma_marca || ""} ${d.arma_modelo}`.trim() : "";
+      expDocs.push({
+        label: `${cat}${armaInfo}`,
+        date: d.data_validade,
+        days: daysUntil(d.data_validade),
+        category: cat,
+      });
+    });
     expDocs.sort((a, b) => (a.days ?? 999) - (b.days ?? 999));
     const alerts = expDocs.filter(d => d.days !== null && d.days <= 90);
 
     return { totalServicos, concluidos, emAndamento, totalVendas, expDocs, alerts };
-  }, [cliente, vendas, itens, crafs, gtes, cadastro, examesCliente]);
+  }, [cliente, vendas, itens, crafs, gtes, cadastro, examesCliente, meusDocs]);
 
   // Timeline
   const timeline = useMemo(() => {
