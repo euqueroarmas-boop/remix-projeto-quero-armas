@@ -13,6 +13,8 @@ import { Button } from "@/components/ui/button";
 import { getClienteFK, getVendaFK } from "@/components/quero-armas/clientes/clientFK";
 import { useQAServicosMap } from "@/hooks/useQAServicosMap";
 import { ClienteDocsHubModal } from "@/components/quero-armas/clientes/ClienteDocsHubModal";
+import { usePrivateStorageUrl } from "@/hooks/usePrivateStorageUrl";
+import { Camera, Wand2 } from "lucide-react";
 
 const formatDate = (d: string | null) => {
   if (!d) return "—";
@@ -61,6 +63,14 @@ export default function QAClientePortalPage() {
   const [meusDocs, setMeusDocs] = useState<any[]>([]);
   const [showAddDoc, setShowAddDoc] = useState(false);
   const [docsReloadKey, setDocsReloadKey] = useState(0);
+  const [cadastroPub, setCadastroPub] = useState<{ selfie_path: string | null } | null>(null);
+  const [generatingAvatar, setGeneratingAvatar] = useState(false);
+
+  const avatarPath: string | null =
+    (cliente as any)?.avatar_tatico_path || cadastroPub?.selfie_path || null;
+  const avatarUrl = usePrivateStorageUrl("qa-cadastro-selfies", avatarPath);
+  const hasTacticalAvatar = !!(cliente as any)?.avatar_tatico_path;
+  const hasAnyPhoto = !!avatarPath;
 
   useEffect(() => {
     const load = async () => {
@@ -171,6 +181,18 @@ export default function QAClientePortalPage() {
             .eq("customer_id", customerLink.id)
             .order("created_at", { ascending: false });
           setMeusDocs((docsData as any[]) ?? []);
+        }
+
+        // Selfie do cadastro público (para avatar)
+        if (cpfDigits) {
+          const { data: cadPub } = await supabase
+            .from("qa_cadastro_publico" as any)
+            .select("selfie_path")
+            .eq("cpf", cpfDigits)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          setCadastroPub((cadPub as any) || null);
         }
       } catch (e: any) {
         console.error("[Portal] load error:", e);
