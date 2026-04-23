@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Camera, Loader2, CheckCircle, RotateCcw, Search, Shield, Upload, AlertCircle } from "lucide-react";
 import { QALogo } from "@/components/quero-armas/QALogo";
+import { BackButton } from "@/shared/components/BackButton";
 
 function maskCpf(v: string) {
   const d = v.replace(/\D/g, "").slice(0, 11);
@@ -124,6 +125,9 @@ export default function QAEnviarFotoPage() {
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "linear-gradient(135deg, hsl(220 20% 97%) 0%, hsl(230 20% 94%) 100%)" }}>
       <div className="max-w-md w-full mx-auto px-4 py-8 flex-1">
+        <div className="mb-4 flex justify-start">
+          <BackButton fallback="/" />
+        </div>
         <div className="flex justify-center mb-6"><QALogo /></div>
 
         <div className="qa-card rounded-2xl p-6 md:p-8">
