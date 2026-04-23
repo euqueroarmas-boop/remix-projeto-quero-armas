@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { SiteShell } from '@/shared/components/layout/SiteShell';
 import { Button } from '@/components/ui/button';
 import { GoogleReviewsCarousel } from '@/shared/components/GoogleReviewsCarousel';
+import { SEO } from '@/shared/components/SEO';
 import {
   ArrowRight, ShieldAlert, Crosshair, Skull, Clock, Newspaper, AlertTriangle,
   CheckCircle2, Target, Flame, Lock, Scale, Gavel, Swords, Home, Zap, Shield,
