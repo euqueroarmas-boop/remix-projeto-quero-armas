@@ -102,6 +102,14 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
 
       const tempPwd = generateTempPassword();
 
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) {
+        toast.error("Sessão expirada. Faça login novamente para criar acessos.");
+        setCreateLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase.functions.invoke("create-client-user", {
         body: {
           customer_id: customerId,
@@ -109,6 +117,7 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
           user_password: tempPwd,
           name: cliente.nome_completo,
         },
+        headers: { Authorization: `Bearer ${accessToken}` },
       });
 
       if (error || data?.error) {
@@ -130,6 +139,14 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
     if (!customer?.id) return;
     setResetLoading(true);
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) {
+        toast.error("Sessão expirada. Faça login novamente para redefinir senhas.");
+        setResetLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase.functions.invoke("create-client-user", {
         body: {
           action: "reset_password",
@@ -137,6 +154,7 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
           email: customer.email,
           user_password: newPwd || undefined,
         },
+        headers: { Authorization: `Bearer ${accessToken}` },
       });
 
       if (error || data?.error) {
