@@ -57,6 +57,10 @@ export default function QAClientePortalPage() {
   const [filiacoes, setFiliacoes] = useState<any[]>([]);
   const [examesCliente, setExamesCliente] = useState<any[]>([]);
   const [userName, setUserName] = useState("");
+  const [customerId, setCustomerId] = useState<string | null>(null);
+  const [meusDocs, setMeusDocs] = useState<any[]>([]);
+  const [showAddDoc, setShowAddDoc] = useState(false);
+  const [docsReloadKey, setDocsReloadKey] = useState(0);
 
   useEffect(() => {
     const load = async () => {
@@ -82,6 +86,7 @@ export default function QAClientePortalPage() {
         if (!profile && !customerLink) { toast.error("Perfil não encontrado."); navigate("/area-do-cliente/login", { replace: true }); return; }
 
         setUserName((profile as any)?.nome || customerLink?.responsavel || customerLink?.razao_social || user.email || "");
+        setCustomerId(customerLink?.id ?? null);
 
         const cpfDigits = String(customerLink?.cnpj_ou_cpf || "").replace(/\D/g, "");
         const lookupEmail = (customerLink?.email || user.email || "").trim();
@@ -157,6 +162,16 @@ export default function QAClientePortalPage() {
           if (!latestByTipo.has(e.tipo)) latestByTipo.set(e.tipo, e);
         }
         setExamesCliente(Array.from(latestByTipo.values()));
+
+        // Documentos enviados pelo próprio cliente (hub pessoal)
+        if (customerLink?.id) {
+          const { data: docsData } = await supabase
+            .from("qa_documentos_cliente" as any)
+            .select("*")
+            .eq("customer_id", customerLink.id)
+            .order("created_at", { ascending: false });
+          setMeusDocs((docsData as any[]) ?? []);
+        }
       } catch (e: any) {
         console.error("[Portal] load error:", e);
         toast.error("Erro ao carregar dados");
@@ -165,7 +180,7 @@ export default function QAClientePortalPage() {
       }
     };
     load();
-  }, [navigate]);
+  }, [navigate, docsReloadKey]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
