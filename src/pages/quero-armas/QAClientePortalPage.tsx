@@ -6,11 +6,13 @@ import {
   Shield, User, Phone, Mail, MapPin, LogOut, Calendar, DollarSign,
   CheckCircle, Clock, XCircle, AlertTriangle, Activity, FileText,
   Crosshair, CreditCard, ChevronRight, Bell, Target, Zap, History,
+  FolderArchive, Plus, Trash2, Sparkles, BadgeCheck, Paperclip,
 } from "lucide-react";
 import { HistoricoAtualizacoes } from "@/components/quero-armas/clientes/HistoricoAtualizacoes";
 import { Button } from "@/components/ui/button";
 import { getClienteFK, getVendaFK } from "@/components/quero-armas/clientes/clientFK";
 import { useQAServicosMap } from "@/hooks/useQAServicosMap";
+import { ClienteDocsHubModal } from "@/components/quero-armas/clientes/ClienteDocsHubModal";
 
 const formatDate = (d: string | null) => {
   if (!d) return "—";
@@ -55,6 +57,10 @@ export default function QAClientePortalPage() {
   const [filiacoes, setFiliacoes] = useState<any[]>([]);
   const [examesCliente, setExamesCliente] = useState<any[]>([]);
   const [userName, setUserName] = useState("");
+  const [customerId, setCustomerId] = useState<string | null>(null);
+  const [meusDocs, setMeusDocs] = useState<any[]>([]);
+  const [showAddDoc, setShowAddDoc] = useState(false);
+  const [docsReloadKey, setDocsReloadKey] = useState(0);
 
   useEffect(() => {
     const load = async () => {
@@ -80,6 +86,7 @@ export default function QAClientePortalPage() {
         if (!profile && !customerLink) { toast.error("Perfil não encontrado."); navigate("/area-do-cliente/login", { replace: true }); return; }
 
         setUserName((profile as any)?.nome || customerLink?.responsavel || customerLink?.razao_social || user.email || "");
+        setCustomerId(customerLink?.id ?? null);
 
         const cpfDigits = String(customerLink?.cnpj_ou_cpf || "").replace(/\D/g, "");
         const lookupEmail = (customerLink?.email || user.email || "").trim();
@@ -155,6 +162,16 @@ export default function QAClientePortalPage() {
           if (!latestByTipo.has(e.tipo)) latestByTipo.set(e.tipo, e);
         }
         setExamesCliente(Array.from(latestByTipo.values()));
+
+        // Documentos enviados pelo próprio cliente (hub pessoal)
+        if (customerLink?.id) {
+          const { data: docsData } = await supabase
+            .from("qa_documentos_cliente" as any)
+            .select("*")
+            .eq("customer_id", customerLink.id)
+            .order("created_at", { ascending: false });
+          setMeusDocs((docsData as any[]) ?? []);
+        }
       } catch (e: any) {
         console.error("[Portal] load error:", e);
         toast.error("Erro ao carregar dados");
@@ -163,7 +180,7 @@ export default function QAClientePortalPage() {
       }
     };
     load();
-  }, [navigate]);
+  }, [navigate, docsReloadKey]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -195,11 +212,23 @@ export default function QAClientePortalPage() {
     });
     crafs.forEach((cr: any) => { if (cr.data_validade) expDocs.push({ label: `CRAF — ${cr.nome_arma || "Arma"}`, date: cr.data_validade, days: daysUntil(cr.data_validade), category: "CRAF" }); });
     gtes.forEach((g: any) => { if (g.data_validade) expDocs.push({ label: `GTE — ${g.nome_arma || "Arma"}`, date: g.data_validade, days: daysUntil(g.data_validade), category: "GTE" }); });
+    // Documentos enviados pelo próprio cliente (hub pessoal)
+    meusDocs.forEach((d: any) => {
+      if (!d.data_validade) return;
+      const cat = (d.tipo_documento || "outro").toUpperCase();
+      const armaInfo = d.arma_modelo ? ` — ${d.arma_marca || ""} ${d.arma_modelo}`.trim() : "";
+      expDocs.push({
+        label: `${cat}${armaInfo}`,
+        date: d.data_validade,
+        days: daysUntil(d.data_validade),
+        category: cat,
+      });
+    });
     expDocs.sort((a, b) => (a.days ?? 999) - (b.days ?? 999));
     const alerts = expDocs.filter(d => d.days !== null && d.days <= 90);
 
     return { totalServicos, concluidos, emAndamento, totalVendas, expDocs, alerts };
-  }, [cliente, vendas, itens, crafs, gtes, cadastro, examesCliente]);
+  }, [cliente, vendas, itens, crafs, gtes, cadastro, examesCliente, meusDocs]);
 
   // Timeline
   const timeline = useMemo(() => {
@@ -443,11 +472,112 @@ export default function QAClientePortalPage() {
           </SectionCard>
         )}
 
+        {/* ═══ MEU HUB DE DOCUMENTOS (CR, CRAF, GT, AC...) ═══ */}
+        {customerId && (
+          <SectionCard icon={FolderArchive} title="Meu Hub de Documentos" color="hsl(280 60% 50%)">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-[11px] text-slate-500 leading-snug max-w-[70%]">
+                Cadastre seus CR, CRAF/SINARM, GT, GTE e Autorizações de Compra. A IA pode preencher os campos a partir da foto.
+              </p>
+              <Button
+                size="sm"
+                onClick={() => setShowAddDoc(true)}
+                className="h-8 text-[10px] uppercase tracking-wider"
+                style={{ background: "hsl(280 60% 50%)" }}
+              >
+                <Plus className="h-3 w-3 mr-1" /> Adicionar
+              </Button>
+            </div>
+
+            {meusDocs.length === 0 ? (
+              <div className="text-center py-8 border border-dashed border-slate-200 rounded-xl">
+                <FolderArchive className="h-8 w-8 text-slate-300 mx-auto mb-2" />
+                <p className="text-[11px] text-slate-400">Nenhum documento cadastrado ainda.</p>
+                <p className="text-[10px] text-slate-400 mt-1">Use o botão acima para começar.</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {meusDocs.map((d: any) => {
+                  const dias = daysUntil(d.data_validade);
+                  const cat = (d.tipo_documento || "outro").toUpperCase();
+                  return (
+                    <div key={d.id} className={`p-3 rounded-xl border ${urgencyBg(dias)}`}>
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-white/70 text-slate-600">{cat}</span>
+                            {d.validado_admin && (
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 inline-flex items-center gap-0.5">
+                                <BadgeCheck className="h-2.5 w-2.5" /> VALIDADO
+                              </span>
+                            )}
+                            {d.ia_status === "sugerido" && !d.validado_admin && (
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 inline-flex items-center gap-0.5">
+                                <Sparkles className="h-2.5 w-2.5" /> IA
+                              </span>
+                            )}
+                            {d.arquivo_storage_path && (
+                              <span className="text-[9px] text-slate-500 inline-flex items-center gap-0.5">
+                                <Paperclip className="h-2.5 w-2.5" /> anexo
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[12px] font-semibold text-slate-800 mt-1">
+                            {d.numero_documento || "Sem número"}
+                            {d.arma_modelo && (
+                              <span className="font-normal text-slate-500"> · {d.arma_marca} {d.arma_modelo}{d.arma_calibre ? ` (${d.arma_calibre})` : ""}</span>
+                            )}
+                          </div>
+                          {d.orgao_emissor && (
+                            <div className="text-[10px] text-slate-500 mt-0.5">{d.orgao_emissor}</div>
+                          )}
+                        </div>
+                        <div className="text-right shrink-0">
+                          <div className="text-[10px] text-slate-500 font-mono">{formatDate(d.data_validade)}</div>
+                          <div className={`text-[9px] font-bold ${urgencyColor(dias)}`}>{urgencyLabel(dias)}</div>
+                        </div>
+                      </div>
+                      <div className="flex justify-end mt-2">
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            if (!confirm("Remover este documento?")) return;
+                            const { error } = await supabase
+                              .from("qa_documentos_cliente" as any)
+                              .delete()
+                              .eq("id", d.id);
+                            if (error) { toast.error("Erro ao remover."); return; }
+                            toast.success("Documento removido.");
+                            setDocsReloadKey((k) => k + 1);
+                          }}
+                          className="text-[10px] text-slate-400 hover:text-red-500 inline-flex items-center gap-1"
+                        >
+                          <Trash2 className="h-3 w-3" /> remover
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </SectionCard>
+        )}
+
         {/* Footer */}
         <div className="text-center py-4">
           <p className="text-[10px] text-slate-300 tracking-wider">Quero Armas · Área do Cliente · Acesso seguro e auditado</p>
         </div>
       </main>
+
+      {customerId && (
+        <ClienteDocsHubModal
+          open={showAddDoc}
+          onClose={() => setShowAddDoc(false)}
+          customerId={customerId}
+          qaClienteId={cliente?.id ?? null}
+          onSaved={() => setDocsReloadKey((k) => k + 1)}
+        />
+      )}
     </div>
   );
 }
