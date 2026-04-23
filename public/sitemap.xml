@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/sitemap-style.xsl"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <sitemap><loc>https://www.wmti.com.br/sitemap-pages.xml</loc><lastmod>2026-04-21</lastmod></sitemap>
-  <sitemap><loc>https://www.wmti.com.br/sitemap-blog.xml</loc><lastmod>2026-04-21</lastmod></sitemap>
-  <sitemap><loc>https://www.wmti.com.br/sitemap-programmatic.xml</loc><lastmod>2026-04-21</lastmod></sitemap>
-  <sitemap><loc>https://www.wmti.com.br/sitemap-segments.xml</loc><lastmod>2026-04-21</lastmod></sitemap>
-  <sitemap><loc>https://www.wmti.com.br/sitemap-problems.xml</loc><lastmod>2026-04-21</lastmod></sitemap>
+  <sitemap><loc>https://www.wmti.com.br/sitemap-pages.xml</loc><lastmod>2026-04-23</lastmod></sitemap>
+  <sitemap><loc>https://www.wmti.com.br/sitemap-blog.xml</loc><lastmod>2026-04-23</lastmod></sitemap>
+  <sitemap><loc>https://www.wmti.com.br/sitemap-programmatic.xml</loc><lastmod>2026-04-23</lastmod></sitemap>
+  <sitemap><loc>https://www.wmti.com.br/sitemap-segments.xml</loc><lastmod>2026-04-23</lastmod></sitemap>
+  <sitemap><loc>https://www.wmti.com.br/sitemap-problems.xml</loc><lastmod>2026-04-23</lastmod></sitemap>
 </sitemapindex>

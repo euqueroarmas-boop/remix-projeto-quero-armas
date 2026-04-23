@@ -1,19 +1,18 @@
-import { useState, useRef } from "react";
+import { useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
-  Loader2,
-  Upload,
-  Sparkles,
-  X,
-  FileText,
-  Image as ImageIcon,
-  ShieldCheck,
   Calendar,
-  Hash,
-  Building2,
-  Crosshair,
   CheckCircle2,
+  Crosshair,
+  FileText,
+  Hash,
+  Image as ImageIcon,
+  Loader2,
+  ShieldCheck,
+  Sparkles,
+  Upload,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,7 +28,7 @@ const TIPOS = [
   { value: "gt", label: "GT — Guia de Tráfego", short: "GT" },
   { value: "gte", label: "GTE — Guia de Tráfego Eventual", short: "GTE" },
   { value: "autorizacao_compra", label: "AC — Autorização de Compra", short: "AC" },
-  { value: "outro", label: "Outro documento SIGMA / SINARM", short: "Outro" },
+  { value: "outro", label: "Outro documento SIGMA / SINARM", short: "OUTRO" },
 ] as const;
 
 type FormState = {
@@ -60,6 +59,26 @@ const EMPTY: FormState = {
   arma_especie: "",
 };
 
+const modalTheme = {
+  "--background": "0 0% 100%",
+  "--foreground": "222 47% 11%",
+  "--card": "0 0% 100%",
+  "--card-foreground": "222 47% 11%",
+  "--popover": "0 0% 100%",
+  "--popover-foreground": "222 47% 11%",
+  "--primary": "222 47% 11%",
+  "--primary-foreground": "0 0% 100%",
+  "--secondary": "210 40% 96%",
+  "--secondary-foreground": "222 47% 11%",
+  "--muted": "210 40% 96%",
+  "--muted-foreground": "215 16% 47%",
+  "--accent": "42 96% 56%",
+  "--accent-foreground": "222 47% 11%",
+  "--border": "214 32% 91%",
+  "--input": "214 32% 91%",
+  "--ring": "42 96% 56%",
+} satisfies CSSProperties;
+
 function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -73,6 +92,41 @@ function sanitize(name: string) {
   return name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 80);
 }
 
+function SectionTitle({ title }: { title: string }) {
+  return (
+    <div className="flex items-center gap-3">
+      <div className="h-px flex-1 bg-border" />
+      <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">{title}</span>
+      <div className="h-px flex-1 bg-border" />
+    </div>
+  );
+}
+
+function Field({
+  label,
+  icon: Icon,
+  children,
+  className,
+}: {
+  label: string;
+  icon?: typeof Hash;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <label className={cn("block space-y-1.5", className)}>
+      <span className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
+        {Icon ? <Icon className="h-3.5 w-3.5" /> : null}
+        {label}
+      </span>
+      {children}
+    </label>
+  );
+}
+
+const inputClassName =
+  "h-11 rounded-xl border border-input bg-background text-foreground shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-foreground/15 focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/25 focus-visible:ring-offset-0";
+
 interface Props {
   open: boolean;
   onClose: () => void;
@@ -81,42 +135,16 @@ interface Props {
   onSaved: () => void;
 }
 
-/* -------- Field primitives -------- */
-function Field({
-  label,
-  icon: Icon,
-  children,
-  className,
-}: {
-  label: string;
-  icon?: any;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <label className={cn("group block space-y-1.5", className)}>
-      <span className="flex items-center gap-1.5 text-[11px] font-medium text-slate-600">
-        {Icon && <Icon className="h-3 w-3 text-slate-400 group-focus-within:text-amber-600 transition-colors" />}
-        {label}
-      </span>
-      {children}
-    </label>
-  );
-}
-
-const inputCls =
-  "h-11 rounded-xl bg-white border border-slate-200 text-slate-900 text-sm placeholder:text-slate-300 shadow-sm transition-all hover:border-slate-300 focus-visible:ring-2 focus-visible:ring-amber-500/30 focus-visible:border-amber-500 focus-visible:ring-offset-0";
-
 export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, onSaved }: Props) {
   const [form, setForm] = useState<FormState>(EMPTY);
   const [file, setFile] = useState<File | null>(null);
   const [extracting, setExtracting] = useState(false);
   const [saving, setSaving] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const showArmaFields = form.tipo_documento !== "cr";
-  const tipoAtual = TIPOS.find((t) => t.value === form.tipo_documento);
+  const tipoAtual = TIPOS.find((tipo) => tipo.value === form.tipo_documento);
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -124,38 +152,42 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
 
   async function handleExtract() {
     if (!file) {
-      toast.error("Selecione um arquivo (imagem ou PDF) primeiro.");
+      toast.error("Selecione um arquivo primeiro.");
       return;
     }
     if (!file.type.startsWith("image/")) {
-      toast.message("A IA funciona melhor com fotos/imagens. PDFs serão anexados sem extração automática.");
+      toast.message("A leitura com IA funciona melhor com foto. PDFs serão anexados sem extração automática.");
       return;
     }
+
     setExtracting(true);
     try {
       const dataUrl = await fileToDataUrl(file);
       const { data, error } = await supabase.functions.invoke("qa-extract-cliente-doc", {
         body: { tipo_documento: form.tipo_documento, imageDataUrl: dataUrl },
       });
+
       if (error) throw error;
-      const s = (data as any)?.sugestao || {};
+
+      const sugestao = (data as any)?.sugestao || {};
       setForm((prev) => ({
         ...prev,
-        numero_documento: s.numero_documento || prev.numero_documento,
-        orgao_emissor: s.orgao_emissor || prev.orgao_emissor,
-        data_emissao: s.data_emissao || prev.data_emissao,
-        data_validade: s.data_validade || prev.data_validade,
-        observacoes: s.observacoes || prev.observacoes,
-        arma_marca: s.arma_marca || prev.arma_marca,
-        arma_modelo: s.arma_modelo || prev.arma_modelo,
-        arma_calibre: s.arma_calibre || prev.arma_calibre,
-        arma_numero_serie: s.arma_numero_serie || prev.arma_numero_serie,
-        arma_especie: s.arma_especie || prev.arma_especie,
+        numero_documento: sugestao.numero_documento || prev.numero_documento,
+        orgao_emissor: sugestao.orgao_emissor || prev.orgao_emissor,
+        data_emissao: sugestao.data_emissao || prev.data_emissao,
+        data_validade: sugestao.data_validade || prev.data_validade,
+        observacoes: sugestao.observacoes || prev.observacoes,
+        arma_marca: sugestao.arma_marca || prev.arma_marca,
+        arma_modelo: sugestao.arma_modelo || prev.arma_modelo,
+        arma_calibre: sugestao.arma_calibre || prev.arma_calibre,
+        arma_numero_serie: sugestao.arma_numero_serie || prev.arma_numero_serie,
+        arma_especie: sugestao.arma_especie || prev.arma_especie,
       }));
-      toast.success("Campos preenchidos pela IA. Revise antes de salvar.");
+
+      toast.success("Campos sugeridos pela IA. Revise antes de salvar.");
     } catch (e: any) {
       console.error("[extract] error:", e);
-      toast.error(e?.message || "Falha ao processar com IA.");
+      toast.error(e?.message || "Falha ao processar o documento.");
     } finally {
       setExtracting(false);
     }
@@ -166,6 +198,7 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
       toast.error("Escolha o tipo de documento.");
       return;
     }
+
     setSaving(true);
     try {
       let storagePath: string | null = null;
@@ -204,8 +237,8 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
         ia_status: storagePath ? "sugerido" : "nao_processado",
       };
 
-      const { error: insErr } = await supabase.from("qa_documentos_cliente" as any).insert(payload);
-      if (insErr) throw insErr;
+      const { error: insertError } = await supabase.from("qa_documentos_cliente" as any).insert(payload);
+      if (insertError) throw insertError;
 
       toast.success("Documento adicionado com sucesso.");
       setForm(EMPTY);
@@ -220,33 +253,39 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
     }
   }
 
-  function onDrop(e: React.DragEvent) {
-    e.preventDefault();
+  function handleDrop(event: React.DragEvent<HTMLDivElement>) {
+    event.preventDefault();
     setDragOver(false);
-    const f = e.dataTransfer.files?.[0];
-    if (f) setFile(f);
+    const droppedFile = event.dataTransfer.files?.[0];
+    if (droppedFile) setFile(droppedFile);
   }
 
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-lg p-0 gap-0 overflow-hidden bg-slate-50 border-0 shadow-2xl rounded-2xl max-h-[92vh]">
-        {/* HERO */}
-        <div className="relative px-6 pt-6 pb-5 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white overflow-hidden">
-          <div className="absolute -top-16 -right-16 h-48 w-48 rounded-full bg-amber-500/20 blur-3xl" />
-          <div className="absolute -bottom-20 -left-10 h-40 w-40 rounded-full bg-amber-400/10 blur-3xl" />
-          <div className="relative flex items-start gap-3">
-            <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 shadow-lg shadow-amber-500/30 flex items-center justify-center shrink-0">
-              <ShieldCheck className="h-5 w-5 text-slate-900" strokeWidth={2.5} />
+    <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
+      <DialogContent
+        style={modalTheme}
+        className="w-[calc(100vw-1rem)] max-w-xl rounded-[28px] border border-border bg-background p-0 text-foreground shadow-2xl max-h-[92dvh] overflow-hidden gap-0 flex flex-col"
+      >
+        <div className="shrink-0 border-b border-border bg-gradient-to-b from-background to-muted/70 px-4 py-4 sm:px-6 sm:py-5">
+          <div className="flex items-start gap-3">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-accent/18 text-accent-foreground shadow-sm">
+              <ShieldCheck className="h-5 w-5" strokeWidth={2.4} />
             </div>
-            <div className="flex-1 min-w-0">
-              <h2 className="text-base font-semibold leading-tight">Adicionar Documento</h2>
-              <p className="text-[12px] text-slate-300 mt-0.5 leading-snug">
-                Anexe seu documento — a IA preenche e você revisa.
+
+            <div className="min-w-0 flex-1">
+              <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                Hub documental
+              </div>
+              <h2 className="text-[28px] leading-none font-heading text-foreground">Adicionar Documento</h2>
+              <p className="mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
+                Anexe seu documento, deixe a IA sugerir os campos e revise tudo antes de salvar.
               </p>
             </div>
+
             <button
+              type="button"
               onClick={onClose}
-              className="h-8 w-8 rounded-lg bg-white/10 hover:bg-white/20 transition-colors flex items-center justify-center text-white/80 hover:text-white"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-background text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               aria-label="Fechar"
             >
               <X className="h-4 w-4" />
@@ -254,253 +293,239 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
           </div>
         </div>
 
-        {/* BODY */}
-        <div className="overflow-y-auto px-6 py-5 space-y-5">
-          {/* TIPO PILL */}
-          <div>
-            <div className="text-[11px] font-medium text-slate-600 mb-2">Que tipo de documento é?</div>
-            <Select value={form.tipo_documento} onValueChange={(v) => update("tipo_documento", v)}>
-              <SelectTrigger className={cn(inputCls, "h-12 font-medium")}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="rounded-xl">
-                {TIPOS.map((t) => (
-                  <SelectItem key={t.value} value={t.value} className="text-sm">
-                    {t.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* UPLOAD */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-[11px] font-medium text-slate-600">Arquivo</div>
-              {tipoAtual && (
-                <span className="text-[10px] font-semibold tracking-wider uppercase text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
-                  {tipoAtual.short}
-                </span>
-              )}
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 sm:py-5 [-webkit-overflow-scrolling:touch]">
+          <div className="space-y-5 pb-6">
+            <div className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
+              <Field label="Que tipo de documento é?">
+                <Select value={form.tipo_documento} onValueChange={(value) => update("tipo_documento", value)}>
+                  <SelectTrigger className={cn(inputClassName, "h-12 rounded-2xl text-left text-sm font-medium")}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="border-border bg-popover text-popover-foreground">
+                    {TIPOS.map((tipo) => (
+                      <SelectItem key={tipo.value} value={tipo.value} className="focus:bg-muted focus:text-foreground">
+                        {tipo.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
             </div>
 
-            {!file ? (
-              <div
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setDragOver(true);
-                }}
-                onDragLeave={() => setDragOver(false)}
-                onDrop={onDrop}
-                onClick={() => fileInputRef.current?.click()}
-                className={cn(
-                  "cursor-pointer rounded-2xl border-2 border-dashed bg-white transition-all p-6 flex flex-col items-center justify-center gap-3 text-center",
-                  dragOver
-                    ? "border-amber-500 bg-amber-50/60 scale-[1.01]"
-                    : "border-slate-200 hover:border-amber-400 hover:bg-amber-50/30",
-                )}
-              >
-                <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-amber-100 to-amber-200 flex items-center justify-center shadow-sm">
-                  <Upload className="h-5 w-5 text-amber-700" strokeWidth={2.2} />
-                </div>
+            <div className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
+              <div className="mb-3 flex items-center justify-between gap-3">
                 <div>
-                  <div className="text-sm font-semibold text-slate-900">Toque ou arraste o arquivo</div>
-                  <div className="text-[11px] text-slate-500 mt-0.5">JPG · PNG · PDF · até 20MB</div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Arquivo</div>
+                  <div className="mt-1 text-sm text-foreground">Envie foto ou PDF do documento</div>
                 </div>
+                {tipoAtual ? (
+                  <span className="rounded-full bg-accent/18 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-accent-foreground">
+                    {tipoAtual.short}
+                  </span>
+                ) : null}
               </div>
-            ) : (
-              <div className="rounded-2xl border border-slate-200 bg-white p-3 flex items-center gap-3 shadow-sm">
-                <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-emerald-100 to-emerald-200 flex items-center justify-center shrink-0">
-                  {file.type.startsWith("image/") ? (
-                    <ImageIcon className="h-5 w-5 text-emerald-700" />
-                  ) : (
-                    <FileText className="h-5 w-5 text-emerald-700" />
+
+              {!file ? (
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  onDragOver={(event) => {
+                    event.preventDefault();
+                    setDragOver(true);
+                  }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={handleDrop}
+                  className={cn(
+                    "cursor-pointer rounded-2xl border-2 border-dashed p-6 text-center transition-all",
+                    dragOver ? "border-accent bg-accent/8" : "border-border bg-muted/45 hover:border-accent hover:bg-accent/6",
                   )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="text-sm font-medium text-slate-900 truncate">{file.name}</div>
-                  <div className="text-[11px] text-slate-500 flex items-center gap-1.5">
-                    <CheckCircle2 className="h-3 w-3 text-emerald-600" />
-                    {(file.size / 1024).toFixed(0)} KB · pronto
-                  </div>
-                </div>
-                <button
-                  onClick={() => setFile(null)}
-                  className="h-9 w-9 rounded-xl bg-slate-100 hover:bg-red-50 text-slate-500 hover:text-red-600 flex items-center justify-center transition-colors shrink-0"
-                  aria-label="Remover arquivo"
                 >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            )}
+                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/18 text-accent-foreground shadow-sm">
+                    <Upload className="h-5 w-5" />
+                  </div>
+                  <div className="mt-4 text-base font-semibold text-foreground">Toque ou arraste o arquivo</div>
+                  <div className="mt-1 text-sm text-muted-foreground">JPG · PNG · PDF · até 20MB</div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3 rounded-2xl border border-border bg-muted/40 p-3">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-background text-accent-foreground shadow-sm">
+                    {file.type.startsWith("image/") ? <ImageIcon className="h-5 w-5" /> : <FileText className="h-5 w-5" />}
+                  </div>
 
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*,application/pdf"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
-              className="hidden"
-            />
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-semibold text-foreground">{file.name}</div>
+                    <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-accent-foreground" />
+                      {(file.size / 1024).toFixed(0)} KB
+                    </div>
+                  </div>
 
-            {/* AI BUTTON */}
-            <button
-              type="button"
-              onClick={handleExtract}
-              disabled={!file || extracting || !file?.type?.startsWith("image/")}
-              className="mt-3 w-full h-12 rounded-xl relative overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-lg hover:shadow-amber-500/30 active:scale-[0.99]"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-amber-500 via-amber-500 to-orange-500" />
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-              <span className="relative flex items-center justify-center gap-2 text-white text-sm font-semibold">
-                {extracting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Sparkles className="h-4 w-4" />
-                )}
-                {extracting ? "A IA está lendo o documento..." : "Preencher com IA ✨"}
-              </span>
-            </button>
-            <p className="text-[11px] text-slate-500 text-center mt-2">
-              A IA sugere os campos. Você revisa e ajusta antes de salvar.
-            </p>
-          </div>
+                  <button
+                    type="button"
+                    onClick={() => setFile(null)}
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border bg-background text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    aria-label="Remover arquivo"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
 
-          {/* DIVIDER */}
-          <div className="flex items-center gap-3">
-            <div className="h-px flex-1 bg-slate-200" />
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Dados do documento</span>
-            <div className="h-px flex-1 bg-slate-200" />
-          </div>
-
-          {/* CAMPOS */}
-          <div className="space-y-3">
-            <Field label="Número do documento" icon={Hash}>
-              <Input
-                value={form.numero_documento}
-                onChange={(e) => update("numero_documento", e.target.value)}
-                placeholder="Ex.: 1234567"
-                className={inputCls}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*,application/pdf"
+                onChange={(event) => setFile(event.target.files?.[0] || null)}
+                className="hidden"
               />
-            </Field>
 
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Órgão emissor" icon={Building2}>
+              <Button
+                type="button"
+                onClick={handleExtract}
+                disabled={!file || extracting || !file.type.startsWith("image/")}
+                className="mt-3 h-12 w-full rounded-2xl bg-accent text-accent-foreground hover:bg-accent/90"
+              >
+                {extracting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                {extracting ? "Lendo documento com IA..." : "Preencher com IA"}
+              </Button>
+
+              <p className="mt-2 text-center text-xs leading-relaxed text-muted-foreground">
+                A IA sugere os campos e você confirma antes de salvar.
+              </p>
+            </div>
+
+            <SectionTitle title="Dados do documento" />
+
+            <div className="grid gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
+              <Field label="Número do documento" icon={Hash}>
                 <Input
-                  value={form.orgao_emissor}
-                  onChange={(e) => update("orgao_emissor", e.target.value)}
-                  placeholder="PF, EB..."
-                  className={inputCls}
+                  value={form.numero_documento}
+                  onChange={(event) => update("numero_documento", event.target.value)}
+                  placeholder="Ex.: 1234567"
+                  className={inputClassName}
                 />
               </Field>
-              <Field label="Emissão" icon={Calendar}>
+
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Órgão emissor">
+                  <Input
+                    value={form.orgao_emissor}
+                    onChange={(event) => update("orgao_emissor", event.target.value)}
+                    placeholder="PF, EB..."
+                    className={inputClassName}
+                  />
+                </Field>
+
+                <Field label="Emissão" icon={Calendar}>
+                  <Input
+                    type="date"
+                    value={form.data_emissao}
+                    onChange={(event) => update("data_emissao", event.target.value)}
+                    className={inputClassName}
+                  />
+                </Field>
+              </div>
+
+              <Field label="Validade" icon={Calendar}>
                 <Input
                   type="date"
-                  value={form.data_emissao}
-                  onChange={(e) => update("data_emissao", e.target.value)}
-                  className={inputCls}
+                  value={form.data_validade}
+                  onChange={(event) => update("data_validade", event.target.value)}
+                  className={inputClassName}
                 />
               </Field>
             </div>
 
-            <Field label="Validade" icon={Calendar}>
-              <Input
-                type="date"
-                value={form.data_validade}
-                onChange={(e) => update("data_validade", e.target.value)}
-                className={inputCls}
-              />
-            </Field>
-          </div>
-
-          {/* ARMA */}
-          {showArmaFields && (
-            <div className="rounded-2xl border border-amber-200/70 bg-gradient-to-br from-amber-50 to-orange-50/40 p-4 space-y-3">
-              <div className="flex items-center gap-2 text-[12px] font-semibold text-amber-800">
-                <div className="h-7 w-7 rounded-lg bg-amber-200/70 flex items-center justify-center">
-                  <Crosshair className="h-3.5 w-3.5 text-amber-700" />
+            {showArmaFields ? (
+              <div className="rounded-2xl border border-accent/30 bg-accent/8 p-4 shadow-sm sm:p-5">
+                <div className="mb-3 flex items-center gap-2">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-background text-accent-foreground shadow-sm">
+                    <Crosshair className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Arma vinculada</div>
+                    <div className="text-sm font-medium text-foreground">Preencha ou ajuste os dados identificados</div>
+                  </div>
                 </div>
-                Dados da arma
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Espécie">
-                  <Input
-                    value={form.arma_especie}
-                    onChange={(e) => update("arma_especie", e.target.value)}
-                    placeholder="Pistola..."
-                    className={inputCls}
-                  />
-                </Field>
-                <Field label="Marca">
-                  <Input
-                    value={form.arma_marca}
-                    onChange={(e) => update("arma_marca", e.target.value)}
-                    placeholder="Taurus..."
-                    className={inputCls}
-                  />
-                </Field>
-                <Field label="Modelo">
-                  <Input
-                    value={form.arma_modelo}
-                    onChange={(e) => update("arma_modelo", e.target.value)}
-                    className={inputCls}
-                  />
-                </Field>
-                <Field label="Calibre">
-                  <Input
-                    value={form.arma_calibre}
-                    onChange={(e) => update("arma_calibre", e.target.value)}
-                    placeholder=".380, 9mm..."
-                    className={inputCls}
-                  />
-                </Field>
-                <Field label="Nº de série" className="col-span-2">
-                  <Input
-                    value={form.arma_numero_serie}
-                    onChange={(e) => update("arma_numero_serie", e.target.value)}
-                    className={inputCls}
-                  />
-                </Field>
-              </div>
-            </div>
-          )}
 
-          <Field label="Observações (opcional)">
-            <Textarea
-              value={form.observacoes}
-              onChange={(e) => update("observacoes", e.target.value)}
-              rows={2}
-              placeholder="Alguma informação extra que devamos saber..."
-              className="rounded-xl bg-white border-slate-200 text-slate-900 text-sm placeholder:text-slate-300 shadow-sm focus-visible:ring-2 focus-visible:ring-amber-500/30 focus-visible:border-amber-500 resize-none"
-            />
-          </Field>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Espécie">
+                    <Input
+                      value={form.arma_especie}
+                      onChange={(event) => update("arma_especie", event.target.value)}
+                      placeholder="Pistola"
+                      className={inputClassName}
+                    />
+                  </Field>
+
+                  <Field label="Marca">
+                    <Input
+                      value={form.arma_marca}
+                      onChange={(event) => update("arma_marca", event.target.value)}
+                      placeholder="Taurus"
+                      className={inputClassName}
+                    />
+                  </Field>
+
+                  <Field label="Modelo">
+                    <Input
+                      value={form.arma_modelo}
+                      onChange={(event) => update("arma_modelo", event.target.value)}
+                      className={inputClassName}
+                    />
+                  </Field>
+
+                  <Field label="Calibre">
+                    <Input
+                      value={form.arma_calibre}
+                      onChange={(event) => update("arma_calibre", event.target.value)}
+                      placeholder="9mm"
+                      className={inputClassName}
+                    />
+                  </Field>
+
+                  <Field label="Nº de série" className="col-span-2">
+                    <Input
+                      value={form.arma_numero_serie}
+                      onChange={(event) => update("arma_numero_serie", event.target.value)}
+                      className={inputClassName}
+                    />
+                  </Field>
+                </div>
+              </div>
+            ) : null}
+
+            <div className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
+              <Field label="Observações">
+                <Textarea
+                  value={form.observacoes}
+                  onChange={(event) => update("observacoes", event.target.value)}
+                  rows={3}
+                  placeholder="Se necessário, adicione detalhes complementares."
+                  className="min-h-[110px] rounded-2xl border border-input bg-background text-sm text-foreground shadow-sm placeholder:text-muted-foreground/55 focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/25 focus-visible:ring-offset-0 resize-none"
+                />
+              </Field>
+            </div>
+          </div>
         </div>
 
-        {/* FOOTER */}
-        <div className="px-6 py-4 border-t border-slate-200 bg-white flex gap-2.5">
-          <Button
-            variant="outline"
-            onClick={onClose}
-            className="flex-1 h-11 rounded-xl border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900 font-medium"
-          >
-            Cancelar
-          </Button>
-          <Button
-            onClick={handleSave}
-            disabled={saving}
-            className="flex-[1.4] h-11 rounded-xl bg-gradient-to-r from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 text-white font-semibold shadow-lg shadow-slate-900/20"
-          >
-            {saving ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Salvando...
-              </>
-            ) : (
-              <>
-                <ShieldCheck className="h-4 w-4 mr-2" />
-                Salvar documento
-              </>
-            )}
-          </Button>
+        <div className="shrink-0 border-t border-border bg-background px-4 py-4 sm:px-6">
+          <div className="flex gap-2.5">
+            <Button
+              variant="outline"
+              onClick={onClose}
+              className="h-11 flex-1 rounded-2xl border-border bg-background text-foreground hover:bg-muted"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleSave}
+              disabled={saving}
+              className="h-11 flex-[1.2] rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
+              {saving ? "Salvando..." : "Salvar documento"}
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
