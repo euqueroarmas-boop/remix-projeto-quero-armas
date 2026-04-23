@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import {
   Shield, Target, Award, Users, Clock, MapPin, CheckCircle2,
   AlertTriangle, Crosshair, Wrench, BookOpen, Trophy, Coffee,
-  MessageCircle, Phone, Mail, Lock, Zap, Flame
+  MessageCircle, Phone, Mail, Lock, Zap, Flame, ShoppingCart
 } from "lucide-react";
 import heroImg from "@/assets/qa-curso-hero.jpg";
 import maintImg from "@/assets/qa-curso-manutencao.jpg";
@@ -12,6 +12,11 @@ import ameacaImg from "@/assets/qa-ameaca.jpg";
 import instrutorImg from "@/assets/qa-instrutor.jpg";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useCart } from "@/shared/cart/CartProvider";
+import { useNavigate } from "react-router-dom";
+import { getServiceBySlug } from "@/shared/data/catalog";
+
+const COURSE_SLUG = "curso-operador-pistola-nivel-1";
 
 const WPP_NUMBER = "5511978481919";
 const WPP_DISPLAY = "(11) 97848-1919";
