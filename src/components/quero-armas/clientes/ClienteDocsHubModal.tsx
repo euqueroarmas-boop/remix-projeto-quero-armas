@@ -264,7 +264,7 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
       <DialogContent
         style={modalTheme}
-        className="w-[calc(100vw-1rem)] max-w-xl rounded-[28px] border border-border bg-background p-0 text-foreground shadow-2xl max-h-[92dvh] overflow-hidden gap-0 flex flex-col"
+        className="w-[calc(100vw-1rem)] max-w-xl rounded-[28px] border border-border bg-background p-0 text-foreground shadow-2xl max-h-[92dvh] overflow-hidden gap-0 flex flex-col [&>button.absolute]:hidden"
       >
         <div className="shrink-0 border-b border-border bg-gradient-to-b from-background to-muted/70 px-4 py-4 sm:px-6 sm:py-5">
           <div className="flex items-start gap-3">
@@ -273,10 +273,12 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
             </div>
 
             <div className="min-w-0 flex-1">
-              <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              <div className="mb-1 font-tactical text-[11px] font-semibold uppercase tracking-[0.28em] text-muted-foreground">
                 Hub documental
               </div>
-              <h2 className="text-[28px] leading-none font-heading text-foreground">Adicionar Documento</h2>
+              <h2 className="font-tactical text-[26px] font-bold uppercase leading-none tracking-[0.04em] text-foreground">
+                Adicionar Documento
+              </h2>
               <p className="mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
                 Anexe seu documento, deixe a IA sugerir os campos e revise tudo antes de salvar.
               </p>

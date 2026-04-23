@@ -18,6 +18,7 @@ export default {
       fontFamily: {
         heading: ['Oswald', 'Inter', 'sans-serif'],
         sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        tactical: ['Rajdhani', 'Oswald', 'Inter', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
