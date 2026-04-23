@@ -6,11 +6,13 @@ import {
   Shield, User, Phone, Mail, MapPin, LogOut, Calendar, DollarSign,
   CheckCircle, Clock, XCircle, AlertTriangle, Activity, FileText,
   Crosshair, CreditCard, ChevronRight, Bell, Target, Zap, History,
+  FolderArchive, Plus, Trash2, Sparkles, BadgeCheck, Paperclip,
 } from "lucide-react";
 import { HistoricoAtualizacoes } from "@/components/quero-armas/clientes/HistoricoAtualizacoes";
 import { Button } from "@/components/ui/button";
 import { getClienteFK, getVendaFK } from "@/components/quero-armas/clientes/clientFK";
 import { useQAServicosMap } from "@/hooks/useQAServicosMap";
+import { ClienteDocsHubModal } from "@/components/quero-armas/clientes/ClienteDocsHubModal";
 
 const formatDate = (d: string | null) => {
   if (!d) return "—";
