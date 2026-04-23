@@ -140,21 +140,19 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
     );
   }
 
-  if (!customerId) {
-    return (
-      <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-800 text-sm">
-        <div className="flex items-center gap-2 font-semibold mb-1">
-          <AlertCircle className="h-4 w-4" /> Cliente sem acesso ao portal
-        </div>
-        <p className="text-xs">
-          Este cliente ainda não possui credenciais ativas no portal — não há documentos enviados.
-          Provisione o acesso na aba <strong>Portal</strong> para liberar o hub do cliente.
-        </p>
-      </div>
-    );
-  }
-
   if (docs.length === 0) {
+    if (!customerId) {
+      return (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-800 text-sm">
+          <div className="flex items-center gap-2 font-semibold mb-1">
+            <AlertCircle className="h-4 w-4" /> Cliente sem acesso ao portal
+          </div>
+          <p className="text-xs">
+            Este cliente ainda não possui credenciais ativas no portal — provisione o acesso na aba <strong>Portal</strong> para liberar o envio pelo cliente.
+          </p>
+        </div>
+      );
+    }
     return (
       <div className="rounded-xl border border-slate-200 bg-slate-50 p-6 text-center">
         <FileText className="h-8 w-8 text-slate-300 mx-auto mb-2" />
