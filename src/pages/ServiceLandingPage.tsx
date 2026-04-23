@@ -135,13 +135,13 @@ const ServiceLandingPage = () => {
   const { slug } = useParams();
   const [service, setService] = useState<ServiceWithCategory | null>(null);
   const [landing, setLanding] = useState<ServiceLandingData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
 
   // Redireciona o serviço de Curso de Pistola para a landing premium dedicada
   if (slug === 'curso-operador-pistola-nivel-1' || slug === 'curso-operador-pistola') {
     return <Navigate to="/quero-armas/curso-operador-pistola" replace />;
   }
-  const [loading, setLoading] = useState(true);
-  const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
     if (!slug) return;
