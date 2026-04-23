@@ -1,6 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 interface BackButtonProps {
@@ -36,17 +35,24 @@ export const BackButton = ({ className, label = 'Voltar', fallback }: BackButton
   };
 
   return (
-    <Button
+    <button
       type="button"
-      variant="ghost"
-      size="sm"
       onClick={handleClick}
       aria-label={label}
-      className={cn('gap-1.5 text-muted-foreground hover:text-foreground', className)}
+      className={cn(
+        'group inline-flex items-center gap-2 rounded-full',
+        'border border-slate-200/80 bg-white/70 px-3.5 py-1.5',
+        'text-slate-600 shadow-sm backdrop-blur-sm',
+        'transition-all duration-200',
+        'hover:border-slate-300 hover:bg-white hover:text-slate-900 hover:shadow',
+        'active:scale-[0.97]',
+        'focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400/40',
+        className,
+      )}
     >
-      <ArrowLeft className="size-4" />
-      <span className="font-heading text-xs uppercase tracking-[0.15em]">{label}</span>
-    </Button>
+      <ArrowLeft className="size-3.5 transition-transform duration-200 group-hover:-translate-x-0.5" />
+      <span className="text-[10px] font-semibold uppercase tracking-[0.18em]">{label}</span>
+    </button>
   );
 };
 

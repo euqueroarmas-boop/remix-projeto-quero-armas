@@ -6,6 +6,7 @@ import {
   Target, Layers, ChevronDown,
 } from "lucide-react";
 import { QALogo } from "@/components/quero-armas/QALogo";
+import { BackButton } from "@/shared/components/BackButton";
 import {
   OBJETIVOS_PRINCIPAIS,
   CATEGORIAS_SERVICO,
@@ -348,6 +349,9 @@ export default function QACadastroPublicoPage() {
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "linear-gradient(135deg, hsl(220 25% 97%) 0%, hsl(225 30% 94%) 100%)" }}>
       <div className="max-w-md w-full mx-auto px-4 py-6 flex-1">
+        <div className="mb-4 flex justify-start">
+          <BackButton fallback="/" />
+        </div>
         <div className="bg-white rounded-[20px] shadow-[0_10px_40px_-12px_rgba(15,23,42,0.12),0_2px_8px_-2px_rgba(15,23,42,0.04)] border border-slate-200/70 overflow-hidden">
           {/* Cabeçalho — composição refinada com logo integrada */}
           <div className="px-6 pt-6 pb-5 relative">
