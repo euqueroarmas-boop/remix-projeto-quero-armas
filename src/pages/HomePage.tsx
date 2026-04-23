@@ -521,6 +521,10 @@ const HomePage = () => {
             </div>
             <div className="relative">
               <div className="pointer-events-none absolute inset-0 -z-10 rounded-full bg-primary/10 blur-3xl" />
+              <div className="relative mb-5 overflow-hidden rounded-sm border border-border">
+                <img src={homeFamilia} alt="Cofre biométrico de parede aberto exibindo pistola, com porta-retrato familiar ao lado em quarto residencial" loading="lazy" width={1920} height={1080} className="aspect-[16/9] w-full object-cover" />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/60 to-transparent" />
+              </div>
               <div className="grid gap-3 sm:gap-4">
                 {[
                   { q: '"E se as crianças acharem?"', a: 'Cofre biométrico fixado na parede. Abre só com a sua digital.' },
