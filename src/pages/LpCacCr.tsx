@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { SiteShell } from '@/shared/components/layout/SiteShell';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Trophy, Crosshair, Boxes, FileText, Shield, Award, Target, Phone } from 'lucide-react';
+import { ArrowRight, Trophy, Crosshair, Boxes, FileText, Shield, Award, Target, Phone, CheckCircle2, AlertTriangle, Bell, Calendar, Quote, HelpCircle } from 'lucide-react';
 
 const LpCacCr = () => (
   <SiteShell>
