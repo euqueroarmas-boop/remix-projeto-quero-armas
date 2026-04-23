@@ -1,0 +1,10 @@
+BEGIN;
+DELETE FROM lp_service_landing_pages;
+DELETE FROM lp_services;
+DELETE FROM lp_service_categories;
+INSERT INTO lp_service_categories(id,slug,name,description,display_order,is_active) VALUES ('48526f1f-03c0-469d-b14b-62319ff6242e','sinarm-pf','SINARM / Polícia Federal','Serviços de posse e porte de arma de fogo regulados pelo SINARM, sob responsabilidade da Polícia Federal.',1,true);
+INSERT INTO lp_service_categories(id,slug,name,description,display_order,is_active) VALUES ('9dda9af0-9f6a-4b49-9563-bfb2ba0692c3','sigma-eb','SIGMA / Exército Brasileiro','Concessão de Registro (CR) e serviços do sistema SIGMA para CACs — caçadores, atiradores e colecionadores — sob responsabilidade do Exército Brasileiro.',2,true);
+INSERT INTO lp_service_categories(id,slug,name,description,display_order,is_active) VALUES ('c1709fef-d777-4c2c-a7a5-b21072341992','treinamento','Treinamento Operacional','Cursos operacionais de tiro e manuseio (Nível I, II, III).',5,true);
+INSERT INTO lp_service_categories(id,slug,name,description,display_order,is_active) VALUES ('272c2237-9249-4fac-a601-7d6b7204a8b3','equipamento','Equipamento Tático','Coletes, munição e seleção de equipamento defensivo.',20,true);
+INSERT INTO lp_service_categories(id,slug,name,description,display_order,is_active) VALUES ('b31e1c44-df6b-4c9a-8588-32e6b0d7ad21','consultoria','Consultoria','Orientação técnica e jurídica especializada.',30,true);
+COMMIT;
