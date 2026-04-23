@@ -20,18 +20,27 @@ export const BackButton = ({ className, label = 'Voltar', fallback }: BackButton
   if (location.pathname === '/' || location.pathname === '') return null;
 
   const handleClick = () => {
+    // Calcula destino de fallback (parâmetro explícito ou nível acima)
+    const computedFallback = (() => {
+      if (fallback) return fallback;
+      const segments = location.pathname.split('/').filter(Boolean);
+      segments.pop();
+      return segments.length ? `/${segments.join('/')}` : '/';
+    })();
+
+    // Tenta voltar no histórico; se não houver mudança real, vai para o fallback
     if (window.history.length > 1) {
+      const currentPath = location.pathname;
       navigate(-1);
+      // Se após um tick continuamos no mesmo lugar, força o fallback
+      window.setTimeout(() => {
+        if (window.location.pathname === currentPath) {
+          navigate(computedFallback, { replace: true });
+        }
+      }, 120);
       return;
     }
-    if (fallback) {
-      navigate(fallback);
-      return;
-    }
-    // fallback automático: sobe um nível na URL
-    const segments = location.pathname.split('/').filter(Boolean);
-    segments.pop();
-    navigate(segments.length ? `/${segments.join('/')}` : '/');
+    navigate(computedFallback, { replace: true });
   };
 
   return (
