@@ -94,6 +94,26 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                 {item.label}
               </NavLink>
             ))}
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center gap-1 font-heading text-sm uppercase tracking-[0.15em] text-muted-foreground transition-colors hover:text-foreground focus:outline-none">
+                Quero Armas <ChevronDown className="size-3.5" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="max-h-[80vh] w-64 overflow-y-auto">
+                {queroArmasGroups.map((group, idx) => (
+                  <div key={group.label}>
+                    {idx > 0 && <DropdownMenuSeparator />}
+                    <DropdownMenuLabel className="text-xs uppercase tracking-widest text-accent">
+                      {group.label}
+                    </DropdownMenuLabel>
+                    {group.links.map((link) => (
+                      <DropdownMenuItem key={link.to} asChild>
+                        <Link to={link.to}>{link.label}</Link>
+                      </DropdownMenuItem>
+                    ))}
+                  </div>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </nav>
 
           <div className="flex items-center gap-1.5 sm:gap-3">
