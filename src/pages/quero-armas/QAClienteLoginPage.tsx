@@ -36,16 +36,24 @@ export default function QAClienteLoginPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Falha ao obter usuário");
 
-      const { data: profile } = await supabase
-        .from("qa_usuarios_perfis" as any)
-        .select("*")
-        .eq("user_id", user.id)
-        .eq("ativo", true)
-        .maybeSingle();
+      // Aceita: (a) admin QA com perfil ativo OU (b) cliente vinculado em customers
+      const [{ data: qaProfile }, { data: customer }] = await Promise.all([
+        supabase
+          .from("qa_usuarios_perfis" as any)
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("ativo", true)
+          .maybeSingle(),
+        supabase
+          .from("customers")
+          .select("id")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+      ]);
 
-      if (!profile) {
+      if (!qaProfile && !customer) {
         await supabase.auth.signOut();
-        toast.error("Acesso negado. Perfil não encontrado.");
+        toast.error("Acesso negado. Conta sem vínculo de cliente.");
         return;
       }
 
