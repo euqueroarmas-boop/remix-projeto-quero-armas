@@ -551,6 +551,10 @@ const HomePage = () => {
             </div>
             <h2 className="font-heading text-2xl font-bold uppercase leading-tight tracking-tight sm:text-4xl lg:text-5xl">Você atirou em legítima defesa. <span className="text-tactical-gradient">Agora começa o jogo de verdade.</span></h2>
           </div>
+          <div className="relative mb-8 overflow-hidden rounded-sm border border-border sm:mb-12">
+            <img src={homeProtocolo} alt="Mão depositando pistola no chão enquanto outra segura celular, com luzes de viatura ao fundo — protocolo pós-disparo" loading="lazy" width={1920} height={1080} className="aspect-[16/9] w-full object-cover" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
+          </div>
           <div className="grid gap-4 sm:gap-5">
             {[
               { n: 'T+0', title: 'Tiro disparado.', desc: 'Mantenha a arma apontada até confirmar a cessação da ameaça. Cena preservada = inquérito limpo.' },
@@ -581,6 +585,10 @@ const HomePage = () => {
         <div className={containerCls}>
           <div className="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-14">
             <div className="relative order-2 lg:order-1">
+              <div className="relative mb-5 overflow-hidden rounded-sm border border-border">
+                <img src={homeMulherArmada} alt="Mulher brasileira treinando tiro em estande com revólver .38, protetor auricular amarelo e óculos balísticos" loading="lazy" width={1920} height={1080} className="aspect-[16/9] w-full object-cover" />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/60 to-transparent" />
+              </div>
               <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
                 {[
                   { v: '.380', l: 'Pistola compacta · Mão menor · Recuo controlável' },
@@ -618,6 +626,10 @@ const HomePage = () => {
             </div>
             <h2 className="font-heading text-2xl font-bold uppercase leading-tight tracking-tight sm:text-4xl lg:text-5xl">Comprar arma pela internet sozinho é <span className="text-tactical-gradient">jogar R$ 8 mil no lixo</span> — ou pior, na cadeia.</h2>
           </div>
+          <div className="relative mb-8 overflow-hidden rounded-sm border border-border sm:mb-12">
+            <img src={homeLoja} alt="Loja licenciada de armas com vitrine de pistolas e revólveres sobre veludo branco e prateleiras com munição ao fundo" loading="lazy" width={1920} height={1080} className="aspect-[16/9] w-full object-cover" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
+          </div>
           <div className="grid gap-4 sm:grid-cols-2 sm:gap-5">
             {[
               { title: 'Golpe do PIX antecipado', desc: 'Loja fake no Instagram, preço 30% abaixo do mercado. Você paga, somem com seu dinheiro.' },
@@ -647,6 +659,10 @@ const HomePage = () => {
           <div className="mb-10 max-w-2xl sm:mb-14">
             <div className="mb-3 font-heading text-xs uppercase tracking-[0.2em] text-accent">A jornada operacional · 6 etapas</div>
             <h2 className="font-heading text-2xl font-bold uppercase leading-tight tracking-tight sm:text-4xl lg:text-5xl">Do <span className="text-tactical-gradient">civil desarmado</span> ao operador pronto. Em 6 passos.</h2>
+          </div>
+          <div className="relative mb-8 overflow-hidden rounded-sm border border-border sm:mb-12">
+            <img src={homeJornada} alt="Silhueta de operador caminhando de túnel escuro em direção à luz dourada, carregando bolsa tática de tiro" loading="lazy" width={1920} height={1080} className="aspect-[16/9] w-full object-cover" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
           </div>
           <div className="grid gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
             {journey.map((m) => (
