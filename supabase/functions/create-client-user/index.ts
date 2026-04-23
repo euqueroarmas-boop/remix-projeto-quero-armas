@@ -105,10 +105,12 @@ Deno.serve(async (req) => {
       let targetEmail = email;
       let targetUserId: string | null = null;
 
+      let targetDocument = "";
+
       if (customer_id) {
         const { data: cust } = await supabase
           .from("customers")
-          .select("email, user_id")
+          .select("email, user_id, cnpj_ou_cpf")
           .eq("id", customer_id)
           .single();
 
@@ -121,6 +123,7 @@ Deno.serve(async (req) => {
 
         targetEmail = targetEmail || cust.email;
         targetUserId = cust.user_id;
+        targetDocument = cust.cnpj_ou_cpf || "";
       }
 
       let authUser = null;
@@ -139,6 +142,10 @@ Deno.serve(async (req) => {
           status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
+      }
+
+      if (targetEmail) {
+        await linkMatchingCustomers(supabase, authUser.id, targetEmail, targetDocument);
       }
 
       return new Response(JSON.stringify({
