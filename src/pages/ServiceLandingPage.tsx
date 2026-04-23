@@ -138,11 +138,6 @@ const ServiceLandingPage = () => {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
-  // Redireciona o serviço de Curso de Pistola para a landing premium dedicada
-  if (slug === 'curso-operador-pistola-nivel-1' || slug === 'curso-operador-pistola') {
-    return <Navigate to="/quero-armas/curso-operador-pistola" replace />;
-  }
-
   useEffect(() => {
     if (!slug) return;
     setLoading(true);
@@ -161,6 +156,11 @@ const ServiceLandingPage = () => {
       })
       .finally(() => setLoading(false));
   }, [slug]);
+
+  // Redireciona o serviço de Curso de Pistola para a landing premium dedicada
+  if (slug === 'curso-operador-pistola-nivel-1' || slug === 'curso-operador-pistola') {
+    return <Navigate to="/quero-armas/curso-operador-pistola" replace />;
+  }
 
   if (loading) {
     return (
