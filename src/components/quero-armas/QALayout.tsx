@@ -5,7 +5,6 @@ import { QAAuthProvider, useQAAuthContext } from "./QAAuthContext";
 import { PanelLeftOpen } from "lucide-react";
 import { QABreadcrumb } from "./QABreadcrumb";
 import { QAFooter } from "./QAFooter";
-import { BackButton } from "@/shared/components/BackButton";
 
 function QALayoutInner() {
   const { user, profile, loading, signOut } = useQAAuthContext();
@@ -37,9 +36,6 @@ function QALayoutInner() {
           </header>
           <main className="flex-1 overflow-auto"
             style={{ background: "hsl(220 20% 97%)" }}>
-            <div className="px-3 pt-3 md:px-6 md:pt-4">
-              <BackButton fallback="/dashboard" />
-            </div>
             <QABreadcrumb />
             <div className="p-3 md:p-6 lg:p-8">
               <Outlet />
