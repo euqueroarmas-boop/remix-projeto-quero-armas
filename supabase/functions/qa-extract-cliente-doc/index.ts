@@ -132,7 +132,7 @@ Deno.serve(async (req) => {
       return json({ error: "tipo_documento inválido" }, 400);
     }
     if (!imageDataUrl.startsWith("data:")) {
-      return json({ error: "imageDataUrl deve ser uma data URL (data:image/...;base64,...)" }, 400);
+      return json({ error: "imageDataUrl deve ser uma data URL (data:image/... ou data:application/pdf)" }, 400);
     }
 
     const raw = await callVision(imageDataUrl, tipo);
