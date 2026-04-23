@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   Calendar,
+  Camera,
   CheckCircle2,
   Crosshair,
   FileText,
@@ -14,7 +15,6 @@ import {
   Upload,
   X,
 } from "lucide-react";
-import { Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
