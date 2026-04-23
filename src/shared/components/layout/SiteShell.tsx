@@ -14,6 +14,7 @@ import { useAuth } from '@/shared/auth/AuthProvider';
 import { useCart } from '@/shared/cart/CartProvider';
 import { Menu, ShieldCheck, ShoppingCart, ChevronDown } from 'lucide-react';
 import logoWhite from '@/assets/logo-white.png';
+import { BackButton } from '@/shared/components/BackButton';
 
 interface SiteShellProps {
   children: ReactNode;
@@ -220,7 +221,12 @@ export const SiteShell = ({ children }: SiteShellProps) => {
         </div>
       </header>
 
-      <main className="relative z-10 w-full max-w-full flex-1 overflow-x-clip pt-16 sm:pt-20">{children}</main>
+      <main className="relative z-10 w-full max-w-full flex-1 overflow-x-clip pt-16 sm:pt-20">
+        <div className="container pt-3">
+          <BackButton />
+        </div>
+        {children}
+      </main>
 
       <footer className="relative z-10 border-t border-border/60 bg-surface-overlay">
         <div className="container grid gap-8 py-10 sm:grid-cols-2 sm:py-12 md:grid-cols-3">
