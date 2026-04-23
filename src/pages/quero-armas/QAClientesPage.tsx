@@ -10,7 +10,7 @@ import {
   Search, User, Phone, Mail, MapPin, FileText, Shield, ChevronLeft,
   Loader2, Eye, Plus, Crosshair, Edit, Trash2, Download, FileDown,
   ChevronDown, ChevronUp, Save, X, XCircle, CheckCircle, TrendingUp, KeyRound, PenTool,
-  HeartPulse, GripVertical, Camera, Upload,
+  HeartPulse, GripVertical, Camera, Upload, ShieldCheck,
 } from "lucide-react";
 import {
   DndContext, closestCenter, PointerSensor, TouchSensor, KeyboardSensor,
@@ -31,6 +31,7 @@ import { exportClientes, exportCrafs, exportGtes, exportCr, exportVendas } from 
 import ClienteAcessoPortal from "@/components/quero-armas/clientes/ClienteAcessoPortal";
 import ClientePecas from "@/components/quero-armas/clientes/ClientePecas";
 import ClienteExames from "@/components/quero-armas/clientes/ClienteExames";
+import ClienteDocsEnviados from "@/components/quero-armas/clientes/ClienteDocsEnviados";
 import { getClienteFK, getVendaFK } from "@/components/quero-armas/clientes/clientFK";
 import { usePrivateStorageUrl } from "@/hooks/usePrivateStorageUrl";
 import { useQAStatusServico } from "@/hooks/useQAStatusServico";
@@ -1776,6 +1777,7 @@ export default function QAClientesPage() {
                 { value: "docs", icon: FileDown, label: "Docs" },
                 { value: "exames", icon: HeartPulse, label: "Exames" },
                 { value: "pecas", icon: PenTool, label: "Peças" },
+                { value: "hub", icon: ShieldCheck, label: "Hub Cliente" },
                 { value: "portal", icon: KeyRound, label: "Portal" },
               ].map(t => (
                 <TabsTrigger key={t.value} value={t.value} className="text-[10px] whitespace-nowrap px-2.5 data-[state=active]:bg-slate-800 data-[state=active]:text-white rounded-lg font-semibold">
@@ -2234,6 +2236,10 @@ export default function QAClientesPage() {
               {/* PEÇAS JURÍDICAS */}
               <TabsContent value="pecas" className="mt-3">
                 <ClientePecas cliente={c} />
+              </TabsContent>
+              {/* HUB DO CLIENTE — documentos enviados pelo próprio cliente */}
+              <TabsContent value="hub" className="mt-3">
+                <ClienteDocsEnviados cliente={c} />
               </TabsContent>
               {/* ACESSO AO PORTAL */}
               <TabsContent value="historico" className="mt-3">
