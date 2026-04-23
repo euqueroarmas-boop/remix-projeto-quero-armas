@@ -123,7 +123,8 @@ Deno.serve(async (req) => {
         user_metadata: {
           ...existingUser.user_metadata,
           password_change_required: true,
-          temp_password: null,
+          temp_password: newPassword,
+          created_via: existingUser.user_metadata?.created_via || "admin_portal",
         },
       });
 
@@ -223,7 +224,13 @@ Deno.serve(async (req) => {
       email,
       password,
       email_confirm: true,
-      user_metadata: { name: name || email },
+      user_metadata: {
+        name: name || email,
+        temp_password: password,
+        password_change_required: true,
+        auto_created: true,
+        created_via: "admin_portal",
+      },
     });
 
     if (authError) {
@@ -238,13 +245,20 @@ Deno.serve(async (req) => {
           // Update password to the new temp password
           await supabase.auth.admin.updateUserById(existing.id, {
             password,
-            user_metadata: { ...existing.user_metadata, name: name || email },
+            user_metadata: {
+              ...existing.user_metadata,
+              name: name || email,
+              temp_password: password,
+              password_change_required: true,
+              auto_created: true,
+              created_via: existing.user_metadata?.created_via || "admin_portal",
+            },
           });
           if (resolvedCustomerId) {
             await supabase.from("customers").update({ user_id: existing.id }).eq("id", resolvedCustomerId);
           }
           return new Response(
-            JSON.stringify({ success: true, user_id: existing.id, email, reused: true }),
+            JSON.stringify({ success: true, user_id: existing.id, email, temp_password: password, reused: true }),
             { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
@@ -302,7 +316,7 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, user_id: userId, email }),
+      JSON.stringify({ success: true, user_id: userId, email, temp_password: password }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
