@@ -265,7 +265,14 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
             size="sm"
             variant="outline"
             className="w-full mt-3 h-9 text-xs font-semibold border-emerald-300 text-emerald-700 hover:bg-emerald-100 rounded-xl"
-            onClick={() => copyText(`Portal: ${portalUrl}\nE-mail: ${visibleEmail}\nSenha: ${visiblePassword}`, "Credenciais completas copiadas")}
+            onClick={() => copyText(
+              [
+                `Portal: ${portalUrl}`,
+                `E-mail: ${visibleEmail}`,
+                `Senha: ${visiblePassword}`,
+              ].join("\r\n"),
+              "Credenciais completas copiadas"
+            )}
           >
             <Copy className="h-3.5 w-3.5 mr-1.5" /> Copiar Tudo (URL + Login + Senha)
           </Button>
