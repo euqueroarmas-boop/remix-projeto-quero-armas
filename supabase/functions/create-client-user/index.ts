@@ -15,6 +15,24 @@ async function hmacVerify(secret: string, message: string, signature: string): P
   return expected === signature;
 }
 
+async function linkMatchingCustomers(supabase: ReturnType<typeof createClient>, userId: string, email: string, document: string) {
+  const normalizedDocument = String(document || "").replace(/\D/g, "");
+  const { data: matches } = await supabase
+    .from("customers")
+    .select("id, email, cnpj_ou_cpf")
+    .or(`email.ilike.${email},cnpj_ou_cpf.eq.${normalizedDocument}`);
+
+  if (!matches?.length) return;
+
+  for (const match of matches) {
+    const sameEmail = (match.email || "").trim().toLowerCase() === email.trim().toLowerCase();
+    const sameDoc = String(match.cnpj_ou_cpf || "").replace(/\D/g, "") === normalizedDocument;
+    if (sameEmail || (normalizedDocument && sameDoc)) {
+      await supabase.from("customers").update({ user_id: userId }).eq("id", match.id);
+    }
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -71,6 +89,67 @@ Deno.serve(async (req) => {
     if (!authorized) {
       return new Response(JSON.stringify({ error: "Não autorizado" }), {
         status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ── GET CREDENTIALS ACTION ──
+    if (action === "get_credentials") {
+      if (!email && !customer_id) {
+        return new Response(JSON.stringify({ error: "E-mail ou customer_id obrigatório" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      let targetEmail = email;
+      let targetUserId: string | null = null;
+
+      if (customer_id) {
+        const { data: cust } = await supabase
+          .from("customers")
+          .select("email, user_id")
+          .eq("id", customer_id)
+          .single();
+
+        if (!cust) {
+          return new Response(JSON.stringify({ error: "Cliente não encontrado" }), {
+            status: 404,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        targetEmail = targetEmail || cust.email;
+        targetUserId = cust.user_id;
+      }
+
+      let authUser = null;
+      if (targetUserId) {
+        const { data } = await supabase.auth.admin.getUserById(targetUserId);
+        authUser = data?.user || null;
+      }
+
+      if (!authUser && targetEmail) {
+        const { data: userList } = await supabase.auth.admin.listUsers();
+        authUser = userList?.users?.find((u: any) => u.email?.toLowerCase() === targetEmail.toLowerCase()) || null;
+      }
+
+      if (!authUser) {
+        return new Response(JSON.stringify({ success: false, has_account: false }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      return new Response(JSON.stringify({
+        success: true,
+        has_account: true,
+        user_id: authUser.id,
+        email: authUser.email,
+        temp_password: typeof authUser.user_metadata?.temp_password === "string" ? authUser.user_metadata.temp_password : null,
+        password_change_required: authUser.user_metadata?.password_change_required === true,
+      }), {
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -257,6 +336,7 @@ Deno.serve(async (req) => {
           if (resolvedCustomerId) {
             await supabase.from("customers").update({ user_id: existing.id }).eq("id", resolvedCustomerId);
           }
+          await linkMatchingCustomers(supabase, existing.id, email, customer_data?.cnpj_ou_cpf || "");
           return new Response(
             JSON.stringify({ success: true, user_id: existing.id, email, temp_password: password, reused: true }),
             { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -282,6 +362,8 @@ Deno.serve(async (req) => {
         .from("customers")
         .update({ user_id: userId })
         .eq("id", resolvedCustomerId);
+
+      await linkMatchingCustomers(supabase, userId, email, customer_data?.cnpj_ou_cpf || "");
 
       await supabase.from("client_events").insert({
         customer_id: resolvedCustomerId,
