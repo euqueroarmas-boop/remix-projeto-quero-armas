@@ -31,7 +31,6 @@ const queroArmasGroups: { label: string; links: { to: string; label: string }[] 
       { to: '/quero-armas/cadastro', label: 'Cadastro de cliente' },
       { to: '/quero-armas/cadastro/foto', label: 'Enviar foto (cadastro)' },
       { to: '/quero-armas/enviar-foto', label: 'Enviar foto' },
-      { to: '/quero-armas/curso-operador-pistola', label: 'Curso Operador de Pistola' },
     ],
   },
   {

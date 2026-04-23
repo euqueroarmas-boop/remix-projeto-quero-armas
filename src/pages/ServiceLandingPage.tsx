@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, Navigate } from 'react-router-dom';
 import { SiteShell } from '@/shared/components/layout/SiteShell';
 import { Button } from '@/components/ui/button';
 import { getServiceBySlug, type ServiceLandingData, type ServiceWithCategory } from '@/shared/data/catalog';
@@ -156,6 +156,11 @@ const ServiceLandingPage = () => {
       })
       .finally(() => setLoading(false));
   }, [slug]);
+
+  // Redireciona o serviço de Curso de Pistola para a landing premium dedicada
+  if (slug === 'curso-operador-pistola-nivel-1' || slug === 'curso-operador-pistola') {
+    return <Navigate to="/quero-armas/curso-operador-pistola" replace />;
+  }
 
   if (loading) {
     return (
