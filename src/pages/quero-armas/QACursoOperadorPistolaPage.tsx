@@ -374,6 +374,20 @@ export default function QACursoOperadorPistolaPage() {
 
               <div className="flex flex-col sm:flex-row gap-3 mb-10">
                 <button
+                  onClick={handleComprar}
+                  disabled={adding}
+                  className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-sm font-black tracking-[0.15em] uppercase text-[13.5px] transition-all hover:brightness-110 disabled:opacity-60"
+                  style={{
+                    background: SAND,
+                    color: BLACK,
+                    boxShadow: "0 12px 32px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.25)",
+                    border: `1px solid ${SAND_DIM}`,
+                  }}
+                >
+                  <ShoppingCart className="w-4 h-4" />
+                  {adding ? "Adicionando..." : "Comprar curso agora"}
+                </button>
+                <button
                   onClick={() => openWpp("vaga")}
                   className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-sm font-black text-white tracking-[0.15em] uppercase text-[13.5px] transition-all hover:brightness-110"
                   style={{
@@ -892,6 +906,22 @@ export default function QACursoOperadorPistolaPage() {
                     Envio protocolado · retorno do IAT em até 1 dia útil.
                   </p>
                 </div>
+
+                <button
+                  onClick={handleComprar}
+                  disabled={adding}
+                  className="w-full mb-5 inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-sm font-black text-[13px] uppercase tracking-[0.18em] transition-all hover:brightness-110 disabled:opacity-60"
+                  style={{
+                    background: SAND,
+                    color: BLACK,
+                    border: `1px solid ${SAND_DIM}`,
+                    boxShadow: "0 8px 22px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.25)",
+                  }}
+                >
+                  <ShoppingCart className="w-4 h-4" />
+                  {adding ? "Adicionando..." : "Comprar e ir para o checkout"}
+                </button>
+
                 <InscricaoForm />
 
                 <div className="mt-6 pt-5 border-t text-center" style={{ borderColor: COYOTE_DIM }}>
