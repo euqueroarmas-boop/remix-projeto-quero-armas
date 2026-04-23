@@ -24,11 +24,42 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
   const [createLoading, setCreateLoading] = useState(false);
   const [generatedPwd, setGeneratedPwd] = useState("");
   const [generatedEmail, setGeneratedEmail] = useState("");
+  const [persistedPwd, setPersistedPwd] = useState("");
+  const [persistedEmail, setPersistedEmail] = useState("");
   const [newPwd, setNewPwd] = useState("");
   const [showPwd, setShowPwd] = useState(false);
 
   const portalUrl = `${window.location.origin}/area-do-cliente`;
   const resetUrl = `${window.location.origin}/redefinir-senha`;
+
+  const fetchStoredCredentials = useCallback(async (customerRecord?: any) => {
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) return null;
+
+      const { data, error } = await supabase.functions.invoke("create-client-user", {
+        body: {
+          action: "get_credentials",
+          customer_id: customerRecord?.id,
+          email: customerRecord?.email || cliente.email,
+        },
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+
+      if (error || data?.error || !data?.has_account) {
+        setPersistedPwd("");
+        setPersistedEmail("");
+        return null;
+      }
+
+      setPersistedPwd(data?.temp_password || "");
+      setPersistedEmail(data?.email || customerRecord?.email || cliente.email || "");
+      return data;
+    } catch {
+      return null;
+    }
+  }, [cliente.email]);
 
   const fetchCustomer = useCallback(async () => {
     setLoading(true);
@@ -59,12 +90,23 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
         if (data && data.length) found = data[0];
       }
 
-      setCustomer(found);
+      if (found) {
+        const credentials = await fetchStoredCredentials(found);
+        setCustomer({
+          ...found,
+          user_id: credentials?.user_id || found.user_id,
+          email: credentials?.email || found.email,
+        });
+      } else {
+        setCustomer(null);
+        setPersistedPwd("");
+        setPersistedEmail("");
+      }
     } catch (err) {
       console.error("Erro ao buscar customer:", err);
     }
     setLoading(false);
-  }, [cliente.cpf, cliente.email]);
+  }, [cliente.cpf, cliente.email, fetchStoredCredentials]);
 
   useEffect(() => {
     fetchCustomer();
@@ -111,8 +153,12 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
         return;
       }
 
-      setGeneratedPwd(tempPwd);
-      setGeneratedEmail(cliente.email);
+      const savedPassword = data?.temp_password || tempPwd;
+      const savedEmail = data?.email || cliente.email;
+      setGeneratedPwd(savedPassword);
+      setGeneratedEmail(savedEmail);
+      setPersistedPwd(savedPassword);
+      setPersistedEmail(savedEmail);
       toast.success("Acesso ao portal criado com sucesso");
       await fetchCustomer();
     } catch (err: any) {
@@ -149,7 +195,12 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
         return;
       }
 
-      setGeneratedPwd(newPwd || data?.temp_password || "");
+      const savedPassword = newPwd || data?.temp_password || "";
+      const savedEmail = data?.email || customer.email || cliente.email;
+      setGeneratedPwd(savedPassword);
+      setGeneratedEmail(savedEmail);
+      setPersistedPwd(savedPassword);
+      setPersistedEmail(savedEmail);
       setNewPwd("");
       toast.success("Senha redefinida com sucesso");
     } catch (err: any) {
@@ -173,11 +224,13 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
   }
 
   const hasAccount = !!customer?.user_id;
+  const visiblePassword = generatedPwd || persistedPwd;
+  const visibleEmail = generatedEmail || persistedEmail || (hasAccount ? (customer?.email || cliente.email) : "");
 
   return (
     <div className="space-y-4">
       {/* ── CREDENCIAIS RECÉM-GERADAS ── */}
-      {generatedPwd && (
+      {visiblePassword && (
         <div className="rounded-2xl border-2 border-emerald-300 bg-emerald-50 p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-3">
             <CheckCircle className="h-5 w-5 text-emerald-600" />
@@ -187,13 +240,13 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
             Anote ou envie ao cliente. Esta senha não será exibida novamente.
           </p>
           <div className="space-y-2">
-            {generatedEmail && (
+            {visibleEmail && (
               <div className="flex items-center justify-between bg-white rounded-xl px-3 py-2.5 border border-emerald-200">
                 <div className="min-w-0 flex-1">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">E-mail / Login</span>
-                  <p className="text-sm font-mono font-semibold text-slate-800 truncate">{generatedEmail}</p>
+                  <p className="text-sm font-mono font-semibold text-slate-800 truncate">{visibleEmail}</p>
                 </div>
-                <Button variant="ghost" size="sm" className="h-8 shrink-0 text-emerald-600" onClick={() => copyText(generatedEmail, "E-mail copiado")}>
+                <Button variant="ghost" size="sm" className="h-8 shrink-0 text-emerald-600" onClick={() => copyText(visibleEmail, "E-mail copiado")}>
                   <Copy className="h-3.5 w-3.5" />
                 </Button>
               </div>
@@ -201,9 +254,9 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
             <div className="flex items-center justify-between bg-white rounded-xl px-3 py-2.5 border border-emerald-200">
               <div className="min-w-0 flex-1">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Senha</span>
-                <p className="text-sm font-mono font-bold text-emerald-800">{generatedPwd}</p>
+                <p className="text-sm font-mono font-bold text-emerald-800">{visiblePassword}</p>
               </div>
-              <Button variant="ghost" size="sm" className="h-8 shrink-0 text-emerald-600" onClick={() => copyText(generatedPwd, "Senha copiada")}>
+              <Button variant="ghost" size="sm" className="h-8 shrink-0 text-emerald-600" onClick={() => copyText(visiblePassword, "Senha copiada")}>
                 <Copy className="h-3.5 w-3.5" />
               </Button>
             </div>
@@ -212,7 +265,7 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
             size="sm"
             variant="outline"
             className="w-full mt-3 h-9 text-xs font-semibold border-emerald-300 text-emerald-700 hover:bg-emerald-100 rounded-xl"
-            onClick={() => copyText(`Portal: ${portalUrl}\nE-mail: ${generatedEmail}\nSenha: ${generatedPwd}`, "Credenciais completas copiadas")}
+            onClick={() => copyText(`Portal: ${portalUrl}\nE-mail: ${visibleEmail}\nSenha: ${visiblePassword}`, "Credenciais completas copiadas")}
           >
             <Copy className="h-3.5 w-3.5 mr-1.5" /> Copiar Tudo (URL + Login + Senha)
           </Button>
@@ -295,18 +348,18 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
           </div>
 
           {/* Generated password display */}
-          {generatedPwd && (
+          {visiblePassword && (
             <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600">Senha gerada</span>
-                  <p className="text-sm font-mono font-bold text-emerald-800 mt-0.5">{generatedPwd}</p>
+                  <p className="text-sm font-mono font-bold text-emerald-800 mt-0.5">{visiblePassword}</p>
                 </div>
                 <Button
                   variant="ghost"
                   size="sm"
                   className="text-emerald-600 hover:text-emerald-700 h-8 rounded-xl"
-                  onClick={() => copyText(generatedPwd, "Senha copiada")}
+                  onClick={() => copyText(visiblePassword, "Senha copiada")}
                 >
                   <Copy className="h-3.5 w-3.5 mr-1" /> Copiar
                 </Button>
