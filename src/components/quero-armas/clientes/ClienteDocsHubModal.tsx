@@ -332,24 +332,34 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
               </div>
 
               {!file ? (
-                <div
-                  onClick={() => fileInputRef.current?.click()}
-                  onDragOver={(event) => {
-                    event.preventDefault();
-                    setDragOver(true);
-                  }}
-                  onDragLeave={() => setDragOver(false)}
-                  onDrop={handleDrop}
-                  className={cn(
-                    "cursor-pointer rounded-2xl border-2 border-dashed p-6 text-center transition-all",
-                    dragOver ? "border-accent bg-accent/8" : "border-border bg-muted/45 hover:border-accent hover:bg-accent/6",
-                  )}
-                >
-                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/18 text-accent-foreground shadow-sm">
-                    <Upload className="h-5 w-5" />
+                <div className="space-y-2.5">
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    onDragOver={(event) => {
+                      event.preventDefault();
+                      setDragOver(true);
+                    }}
+                    onDragLeave={() => setDragOver(false)}
+                    onDrop={handleDrop}
+                    className={cn(
+                      "cursor-pointer rounded-2xl border-2 border-dashed p-6 text-center transition-all",
+                      dragOver ? "border-accent bg-accent/8" : "border-border bg-muted/45 hover:border-accent hover:bg-accent/6",
+                    )}
+                  >
+                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/18 text-accent-foreground shadow-sm">
+                      <Upload className="h-5 w-5" />
+                    </div>
+                    <div className="mt-4 text-base font-semibold text-foreground">Toque ou arraste o arquivo</div>
+                    <div className="mt-1 text-sm text-muted-foreground">JPG · PNG · PDF · até 20MB</div>
                   </div>
-                  <div className="mt-4 text-base font-semibold text-foreground">Toque ou arraste o arquivo</div>
-                  <div className="mt-1 text-sm text-muted-foreground">JPG · PNG · PDF · até 20MB</div>
+                  <button
+                    type="button"
+                    onClick={() => cameraInputRef.current?.click()}
+                    className="flex w-full items-center justify-center gap-2 rounded-2xl border border-border bg-background px-4 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-muted active:bg-muted"
+                  >
+                    <Camera className="h-4 w-4" />
+                    Tirar foto agora
+                  </button>
                 </div>
               ) : (
                 <div className="flex items-center gap-3 rounded-2xl border border-border bg-muted/40 p-3">
@@ -383,11 +393,19 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
                 onChange={(event) => setFile(event.target.files?.[0] || null)}
                 className="hidden"
               />
+              <input
+                ref={cameraInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={(event) => setFile(event.target.files?.[0] || null)}
+                className="hidden"
+              />
 
               <Button
                 type="button"
                 onClick={handleExtract}
-                disabled={!file || extracting || !file.type.startsWith("image/")}
+                disabled={!file || extracting || !(file.type.startsWith("image/") || file.type === "application/pdf")}
                 className="mt-3 h-12 w-full rounded-2xl bg-accent text-accent-foreground hover:bg-accent/90"
               >
                 {extracting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
