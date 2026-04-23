@@ -1715,6 +1715,531 @@ export type Database = {
         }
         Relationships: []
       }
+      lp_contract_acceptances: {
+        Row: {
+          acceptance_method: string
+          acceptance_type: Database["public"]["Enums"]["lp_acceptance_type"]
+          accepted_at: string
+          content_hash: string
+          contract_id: string
+          id: string
+          ip_address: string | null
+          metadata: Json
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          acceptance_method?: string
+          acceptance_type?: Database["public"]["Enums"]["lp_acceptance_type"]
+          accepted_at?: string
+          content_hash: string
+          contract_id: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          acceptance_method?: string
+          acceptance_type?: Database["public"]["Enums"]["lp_acceptance_type"]
+          accepted_at?: string
+          content_hash?: string
+          contract_id?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lp_contract_acceptances_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "lp_contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lp_contract_templates: {
+        Row: {
+          body: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+          variables_schema: Json
+          version: number
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+          variables_schema?: Json
+          version?: number
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+          variables_schema?: Json
+          version?: number
+        }
+        Relationships: []
+      }
+      lp_contracts: {
+        Row: {
+          checkout_accepted_at: string | null
+          contract_number: string
+          created_at: string
+          id: string
+          order_id: string
+          rendered_content: string | null
+          signature_metadata: Json | null
+          signed_at: string | null
+          status: Database["public"]["Enums"]["lp_contract_status"]
+          template_id: string | null
+          template_snapshot: string | null
+          template_version: number | null
+          updated_at: string
+          user_id: string
+          variables: Json
+        }
+        Insert: {
+          checkout_accepted_at?: string | null
+          contract_number?: string
+          created_at?: string
+          id?: string
+          order_id: string
+          rendered_content?: string | null
+          signature_metadata?: Json | null
+          signed_at?: string | null
+          status?: Database["public"]["Enums"]["lp_contract_status"]
+          template_id?: string | null
+          template_snapshot?: string | null
+          template_version?: number | null
+          updated_at?: string
+          user_id: string
+          variables?: Json
+        }
+        Update: {
+          checkout_accepted_at?: string | null
+          contract_number?: string
+          created_at?: string
+          id?: string
+          order_id?: string
+          rendered_content?: string | null
+          signature_metadata?: Json | null
+          signed_at?: string | null
+          status?: Database["public"]["Enums"]["lp_contract_status"]
+          template_id?: string | null
+          template_snapshot?: string | null
+          template_version?: number | null
+          updated_at?: string
+          user_id?: string
+          variables?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lp_contracts_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "lp_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lp_contracts_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "lp_contract_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lp_order_items: {
+        Row: {
+          created_at: string
+          id: string
+          order_id: string
+          quantity: number
+          service_id: string | null
+          service_name_snapshot: string
+          service_slug_snapshot: string
+          subtotal_cents: number
+          unit_price_cents: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          order_id: string
+          quantity?: number
+          service_id?: string | null
+          service_name_snapshot: string
+          service_slug_snapshot: string
+          subtotal_cents: number
+          unit_price_cents: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          order_id?: string
+          quantity?: number
+          service_id?: string | null
+          service_name_snapshot?: string
+          service_slug_snapshot?: string
+          subtotal_cents?: number
+          unit_price_cents?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lp_order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "lp_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lp_order_items_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "lp_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lp_orders: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          order_number: string
+          status: Database["public"]["Enums"]["lp_order_status"]
+          subtotal_cents: number
+          total_cents: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          order_number?: string
+          status?: Database["public"]["Enums"]["lp_order_status"]
+          subtotal_cents?: number
+          total_cents?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          order_number?: string
+          status?: Database["public"]["Enums"]["lp_order_status"]
+          subtotal_cents?: number
+          total_cents?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      lp_payment_providers: {
+        Row: {
+          config: Json
+          created_at: string
+          display_name: string
+          environment: Database["public"]["Enums"]["lp_provider_environment"]
+          id: string
+          is_active: boolean
+          key: string
+          updated_at: string
+        }
+        Insert: {
+          config?: Json
+          created_at?: string
+          display_name: string
+          environment?: Database["public"]["Enums"]["lp_provider_environment"]
+          id?: string
+          is_active?: boolean
+          key: string
+          updated_at?: string
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          display_name?: string
+          environment?: Database["public"]["Enums"]["lp_provider_environment"]
+          id?: string
+          is_active?: boolean
+          key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      lp_payments: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          external_id: string | null
+          id: string
+          order_id: string
+          paid_at: string | null
+          payment_method: string | null
+          provider: string
+          provider_id: string | null
+          raw_payload: Json | null
+          status: Database["public"]["Enums"]["lp_payment_status"]
+          updated_at: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          external_id?: string | null
+          id?: string
+          order_id: string
+          paid_at?: string | null
+          payment_method?: string | null
+          provider: string
+          provider_id?: string | null
+          raw_payload?: Json | null
+          status?: Database["public"]["Enums"]["lp_payment_status"]
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          external_id?: string | null
+          id?: string
+          order_id?: string
+          paid_at?: string | null
+          payment_method?: string | null
+          provider?: string
+          provider_id?: string | null
+          raw_payload?: Json | null
+          status?: Database["public"]["Enums"]["lp_payment_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lp_payments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "lp_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lp_payments_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "lp_payment_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lp_service_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number
+          id: string
+          is_active: boolean
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      lp_service_landing_pages: {
+        Row: {
+          blocks: Json
+          created_at: string
+          hero_image_url: string | null
+          hero_subtitle: string | null
+          hero_title: string | null
+          id: string
+          is_published: boolean
+          seo_description: string | null
+          seo_title: string | null
+          service_id: string
+          updated_at: string
+        }
+        Insert: {
+          blocks?: Json
+          created_at?: string
+          hero_image_url?: string | null
+          hero_subtitle?: string | null
+          hero_title?: string | null
+          id?: string
+          is_published?: boolean
+          seo_description?: string | null
+          seo_title?: string | null
+          service_id: string
+          updated_at?: string
+        }
+        Update: {
+          blocks?: Json
+          created_at?: string
+          hero_image_url?: string | null
+          hero_subtitle?: string | null
+          hero_title?: string | null
+          id?: string
+          is_published?: boolean
+          seo_description?: string | null
+          seo_title?: string | null
+          service_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lp_service_landing_pages_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: true
+            referencedRelation: "lp_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lp_services: {
+        Row: {
+          base_price_cents: number
+          category_id: string | null
+          created_at: string
+          display_order: number
+          id: string
+          is_active: boolean
+          long_description: string | null
+          name: string
+          short_description: string | null
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          base_price_cents?: number
+          category_id?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          long_description?: string | null
+          name: string
+          short_description?: string | null
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          base_price_cents?: number
+          category_id?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          long_description?: string | null
+          name?: string
+          short_description?: string | null
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lp_services_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "lp_service_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lp_webhook_events: {
+        Row: {
+          event_type: string
+          external_event_id: string
+          id: string
+          order_id: string | null
+          payment_id: string | null
+          processed_at: string | null
+          processing_error: string | null
+          provider_key: string
+          raw_payload: Json
+          received_at: string
+          signature: string | null
+          status: Database["public"]["Enums"]["lp_webhook_event_status"]
+        }
+        Insert: {
+          event_type: string
+          external_event_id: string
+          id?: string
+          order_id?: string | null
+          payment_id?: string | null
+          processed_at?: string | null
+          processing_error?: string | null
+          provider_key: string
+          raw_payload: Json
+          received_at?: string
+          signature?: string | null
+          status?: Database["public"]["Enums"]["lp_webhook_event_status"]
+        }
+        Update: {
+          event_type?: string
+          external_event_id?: string
+          id?: string
+          order_id?: string | null
+          payment_id?: string | null
+          processed_at?: string | null
+          processing_error?: string | null
+          provider_key?: string
+          raw_payload?: Json
+          received_at?: string
+          signature?: string | null
+          status?: Database["public"]["Enums"]["lp_webhook_event_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lp_webhook_events_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "lp_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lp_webhook_events_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "lp_payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       network_diagnostics: {
         Row: {
           average_pc_age: string | null
@@ -1805,6 +2330,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      profiles: {
+        Row: {
+          cpf: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cpf?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cpf?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       prompt_intelligence: {
         Row: {
@@ -4608,6 +5163,27 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["lp_app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["lp_app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["lp_app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_streaks: {
         Row: {
           consistency_score: number | null
@@ -4741,6 +5317,13 @@ export type Database = {
       }
     }
     Functions: {
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["lp_app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       qa_busca_auxiliar_caso: {
         Args: {
           match_count?: number
@@ -4790,7 +5373,32 @@ export type Database = {
       unaccent: { Args: { "": string }; Returns: string }
     }
     Enums: {
-      [_ in never]: never
+      lp_acceptance_type: "checkout_terms" | "contract_signature"
+      lp_app_role: "admin" | "client"
+      lp_contract_status:
+        | "draft"
+        | "awaiting_signature"
+        | "signed"
+        | "cancelled"
+      lp_order_status:
+        | "pending"
+        | "paid"
+        | "in_progress"
+        | "completed"
+        | "cancelled"
+      lp_payment_status:
+        | "pending"
+        | "authorized"
+        | "paid"
+        | "failed"
+        | "refunded"
+      lp_provider_environment: "sandbox" | "live"
+      lp_webhook_event_status:
+        | "received"
+        | "processing"
+        | "processed"
+        | "failed"
+        | "ignored"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -4917,6 +5525,37 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      lp_acceptance_type: ["checkout_terms", "contract_signature"],
+      lp_app_role: ["admin", "client"],
+      lp_contract_status: [
+        "draft",
+        "awaiting_signature",
+        "signed",
+        "cancelled",
+      ],
+      lp_order_status: [
+        "pending",
+        "paid",
+        "in_progress",
+        "completed",
+        "cancelled",
+      ],
+      lp_payment_status: [
+        "pending",
+        "authorized",
+        "paid",
+        "failed",
+        "refunded",
+      ],
+      lp_provider_environment: ["sandbox", "live"],
+      lp_webhook_event_status: [
+        "received",
+        "processing",
+        "processed",
+        "failed",
+        "ignored",
+      ],
+    },
   },
 } as const
