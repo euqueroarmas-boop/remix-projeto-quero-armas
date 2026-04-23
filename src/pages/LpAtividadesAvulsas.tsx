@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { SiteShell } from '@/shared/components/layout/SiteShell';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Target, Coffee, Users, CheckCircle2, Phone, Crosshair, GraduationCap, Calendar, Heart } from 'lucide-react';
+import { ArrowRight, Target, Coffee, Users, CheckCircle2, Phone, Crosshair, GraduationCap, Calendar, Heart, Quote, HelpCircle, MapPin, Clock, Shield } from 'lucide-react';
 
 const LpAtividadesAvulsas = () => (
   <SiteShell>
