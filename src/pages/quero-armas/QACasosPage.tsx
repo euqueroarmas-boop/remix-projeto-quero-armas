@@ -3,8 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import CaseDetailPanel from "@/components/CaseDetailPanel";
-import NovoCasoModal from "@/components/NovoCasoModal";
+import CaseDetailPanel from "@/components/quero-armas/CaseDetailPanel";
+import NovoCasoModal from "@/components/quero-armas/NovoCasoModal";
 import {
   Search, FolderOpen, PenTool, CheckCircle, XCircle, Clock, Eye,
   Shield, BookOpen, Plus,

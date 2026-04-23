@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import { QALogo } from "@/components/QALogo";
+import { QALogo } from "@/components/quero-armas/QALogo";
 
 export default function QALoginPage() {
   const [email, setEmail] = useState("");

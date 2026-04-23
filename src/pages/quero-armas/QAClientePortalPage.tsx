@@ -7,9 +7,9 @@ import {
   CheckCircle, Clock, XCircle, AlertTriangle, Activity, FileText,
   Crosshair, CreditCard, ChevronRight, Bell, Target, Zap, History,
 } from "lucide-react";
-import { HistoricoAtualizacoes } from "@/components/clientes/HistoricoAtualizacoes";
+import { HistoricoAtualizacoes } from "@/components/quero-armas/clientes/HistoricoAtualizacoes";
 import { Button } from "@/components/ui/button";
-import { getClienteFK, getVendaFK } from "@/components/clientes/clientFK";
+import { getClienteFK, getVendaFK } from "@/components/quero-armas/clientes/clientFK";
 import { useQAServicosMap } from "@/hooks/useQAServicosMap";
 
 const formatDate = (d: string | null) => {

@@ -5,7 +5,7 @@ import {
   Sparkles, ChevronRight, RotateCcw, AlertCircle, ArrowLeft, Shield, Info, Search,
   Target, Layers, ChevronDown,
 } from "lucide-react";
-import { QALogo } from "@/components/QALogo";
+import { QALogo } from "@/components/quero-armas/QALogo";
 import {
   OBJETIVOS_PRINCIPAIS,
   CATEGORIAS_SERVICO,

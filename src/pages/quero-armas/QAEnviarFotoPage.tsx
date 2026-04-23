@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Camera, Loader2, CheckCircle, RotateCcw, Search, Shield, Upload, AlertCircle } from "lucide-react";
-import { QALogo } from "@/components/QALogo";
+import { QALogo } from "@/components/quero-armas/QALogo";
 
 function maskCpf(v: string) {
   const d = v.replace(/\D/g, "").slice(0, 11);

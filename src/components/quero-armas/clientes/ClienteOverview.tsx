@@ -5,7 +5,7 @@ import {
   ArrowRight, Eye, Activity, Zap, Target, Bell, CreditCard,
   ChevronRight, MapPin, Phone, Mail, User,
 } from "lucide-react";
-import { computeExameStatus, formatExameCountdown } from "@/components/clientes/ClienteExames";
+import { computeExameStatus, formatExameCountdown } from "@/components/quero-armas/clientes/ClienteExames";
 import { useQAServicosMap } from "@/hooks/useQAServicosMap";
 
 interface Props {

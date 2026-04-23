@@ -3,7 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { Loader2 } from "lucide-react";
 
-const QALayout = lazyRetry(() => import("@/components/QALayout"), "QALayout");
+const QALayout = lazyRetry(() => import("@/components/quero-armas/QALayout"), "QALayout");
 const QALoginPage = lazyRetry(() => import("./QALoginPage"), "QALoginPage");
 const QADashboardPage = lazyRetry(() => import("./QADashboardPage"), "QADashboardPage");
 const QABaseConhecimentoPage = lazyRetry(() => import("./QABaseConhecimentoPage"), "QABaseConhecimentoPage");

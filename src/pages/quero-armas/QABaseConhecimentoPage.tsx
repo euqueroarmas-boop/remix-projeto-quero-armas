@@ -11,7 +11,7 @@ import {
   ExternalLink, RefreshCw, Trash2, Power, Star, Zap, ShieldCheck,
   Link2, Globe, Plus, X, ArrowRight, ChevronDown, ChevronUp,
 } from "lucide-react";
-import { useQAAuthContext } from "@/components/QAAuthContext";
+import { useQAAuthContext } from "@/components/quero-armas/QAAuthContext";
 import { Link } from "react-router-dom";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { formatDuration } from "@/lib/formatDuration";

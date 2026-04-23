@@ -14,9 +14,9 @@ import {
 
 // LazyOnVisible removido dos widgets críticos por estabilidade (mount único, sem IO).
 
-const DashboardExames = lazy(() => import("@/components/dashboard/DashboardExames"));
-const DashboardProcessosMonitor = lazy(() => import("@/components/dashboard/DashboardProcessosMonitor"));
-const DashboardPrazosRecursais = lazy(() => import("@/components/dashboard/DashboardPrazosRecursais"));
+const DashboardExames = lazy(() => import("@/components/quero-armas/dashboard/DashboardExames"));
+const DashboardProcessosMonitor = lazy(() => import("@/components/quero-armas/dashboard/DashboardProcessosMonitor"));
+const DashboardPrazosRecursais = lazy(() => import("@/components/quero-armas/dashboard/DashboardPrazosRecursais"));
 
 interface Stats {
   documentos: number;

@@ -16,9 +16,9 @@ import {
   BookOpen, MapPin, Building2, Info, Paperclip, FileText, X, Upload, RefreshCw,
   Search, ChevronDown, ChevronUp, XCircle, Clock, FolderOpen, User, ChevronsUpDown,
 } from "lucide-react";
-import { useQAAuthContext } from "@/components/QAAuthContext";
+import { useQAAuthContext } from "@/components/quero-armas/QAAuthContext";
 import { logSistema } from "@/lib/logSistema";
-import DraftingView, { type DraftingResult } from "@/components/DraftingView";
+import DraftingView, { type DraftingResult } from "@/components/quero-armas/DraftingView";
 
 /* ── Types ── */
 type DocUploadStage = "pending" | "queued" | "uploading" | "saved" | "extracting" | "processing" | "done" | "failed";

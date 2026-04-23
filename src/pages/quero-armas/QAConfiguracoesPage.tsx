@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2, Save, Plus, Pencil, Trash2, X, Check, Settings, Database, User } from "lucide-react";
-import { useQAAuthContext } from "@/components/QAAuthContext";
+import { useQAAuthContext } from "@/components/quero-armas/QAAuthContext";
 
 interface ConfigItem { id: string; chave: string; valor: number; descricao: string | null; }
 interface Servico { id: number; nome_servico: string; valor_servico: number; is_combo?: boolean; }
