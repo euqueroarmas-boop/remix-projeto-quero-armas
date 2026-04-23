@@ -13,6 +13,8 @@ import { Button } from "@/components/ui/button";
 import { getClienteFK, getVendaFK } from "@/components/quero-armas/clientes/clientFK";
 import { useQAServicosMap } from "@/hooks/useQAServicosMap";
 import { ClienteDocsHubModal } from "@/components/quero-armas/clientes/ClienteDocsHubModal";
+import { usePrivateStorageUrl } from "@/hooks/usePrivateStorageUrl";
+import { Camera, Wand2 } from "lucide-react";
 
 const formatDate = (d: string | null) => {
   if (!d) return "—";
@@ -44,6 +46,61 @@ function SectionCard({ icon: Icon, title, color, children }: { icon: any; title:
   );
 }
 
+function ClientAvatar({
+  url,
+  name,
+  hasPhoto,
+  isTactical,
+}: {
+  url: string | null;
+  name: string;
+  hasPhoto: boolean;
+  isTactical: boolean;
+}) {
+  const initials = (name || "")
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((n) => n[0]?.toUpperCase())
+    .join("");
+
+  const ring = isTactical
+    ? "ring-2 ring-amber-400 ring-offset-2 ring-offset-white"
+    : "ring-1 ring-slate-200 ring-offset-2 ring-offset-white";
+
+  if (hasPhoto && url) {
+    return (
+      <div className="relative shrink-0">
+        <div className={`w-16 h-16 md:w-20 md:h-20 rounded-2xl overflow-hidden ${ring} shadow-md`}>
+          <img src={url} alt={name} className="w-full h-full object-cover" />
+        </div>
+        {isTactical && (
+          <span
+            title="Avatar tático"
+            className="absolute -bottom-1 -right-1 inline-flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-md"
+          >
+            <BadgeCheck className="h-3.5 w-3.5" />
+          </span>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative shrink-0">
+      <div
+        className="w-16 h-16 md:w-20 md:h-20 rounded-2xl flex items-center justify-center shadow-md text-white font-bold text-xl tracking-wider ring-1 ring-amber-200/50"
+        style={{ background: "linear-gradient(135deg, hsl(220 25% 18%), hsl(220 30% 28%))" }}
+      >
+        <span className="text-amber-300">{initials || "?"}</span>
+      </div>
+      <span className="absolute -bottom-1 -right-1 inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-400 text-slate-900 shadow-md">
+        <Camera className="h-3 w-3" />
+      </span>
+    </div>
+  );
+}
+
 export default function QAClientePortalPage() {
   const navigate = useNavigate();
   const { map: SERVICO_MAP } = useQAServicosMap();
@@ -61,6 +118,14 @@ export default function QAClientePortalPage() {
   const [meusDocs, setMeusDocs] = useState<any[]>([]);
   const [showAddDoc, setShowAddDoc] = useState(false);
   const [docsReloadKey, setDocsReloadKey] = useState(0);
+  const [cadastroPub, setCadastroPub] = useState<{ selfie_path: string | null } | null>(null);
+  const [generatingAvatar, setGeneratingAvatar] = useState(false);
+
+  const avatarPath: string | null =
+    (cliente as any)?.avatar_tatico_path || cadastroPub?.selfie_path || null;
+  const avatarUrl = usePrivateStorageUrl("qa-cadastro-selfies", avatarPath);
+  const hasTacticalAvatar = !!(cliente as any)?.avatar_tatico_path;
+  const hasAnyPhoto = !!avatarPath;
 
   useEffect(() => {
     const load = async () => {
@@ -171,6 +236,18 @@ export default function QAClientePortalPage() {
             .eq("customer_id", customerLink.id)
             .order("created_at", { ascending: false });
           setMeusDocs((docsData as any[]) ?? []);
+        }
+
+        // Selfie do cadastro público (para avatar)
+        if (cpfDigits) {
+          const { data: cadPub } = await supabase
+            .from("qa_cadastro_publico" as any)
+            .select("selfie_path")
+            .eq("cpf", cpfDigits)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          setCadastroPub((cadPub as any) || null);
         }
       } catch (e: any) {
         console.error("[Portal] load error:", e);
@@ -292,12 +369,56 @@ export default function QAClientePortalPage() {
           <div className="h-1 w-full" style={{ background: "linear-gradient(90deg, hsl(230 80% 56%), hsl(262 60% 55%))" }} />
           <div className="p-5 md:p-6">
             <div className="flex flex-col md:flex-row md:items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0" style={{ background: "hsl(230 80% 96%)" }}>
-                <User className="h-6 w-6" style={{ color: "hsl(230 80% 56%)" }} />
-              </div>
+              <ClientAvatar
+                url={avatarUrl}
+                name={cliente.nome_completo}
+                hasPhoto={hasAnyPhoto}
+                isTactical={hasTacticalAvatar}
+              />
               <div className="flex-1 min-w-0">
                 <h1 className="text-xl font-bold" style={{ color: "hsl(220 20% 18%)" }}>Olá, {cliente.nome_completo.split(" ")[0]}!</h1>
                 <p className="text-[12px] mt-1" style={{ color: "hsl(220 10% 55%)" }}>Aqui está o resumo completo do seu atendimento conosco.</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {!hasAnyPhoto ? (
+                    <Button
+                      size="sm"
+                      onClick={() => navigate("/quero-armas/cadastro/foto")}
+                      className="h-8 px-3 text-[11px] font-semibold rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600 shadow-sm"
+                    >
+                      <Camera className="h-3.5 w-3.5 mr-1.5" /> Enviar minha foto
+                    </Button>
+                  ) : !hasTacticalAvatar ? (
+                    <Button
+                      size="sm"
+                      disabled={generatingAvatar}
+                      onClick={async () => {
+                        if (!cliente?.cpf) return;
+                        setGeneratingAvatar(true);
+                        try {
+                          const { data, error } = await supabase.functions.invoke("qa-gerar-avatar-tatico", {
+                            body: { cpf: cliente.cpf },
+                          });
+                          if (error) throw error;
+                          if ((data as any)?.error) throw new Error((data as any).error);
+                          toast.success("Avatar tático criado!");
+                          setCliente({ ...cliente, avatar_tatico_path: (data as any).avatar_path });
+                        } catch (e: any) {
+                          toast.error(e?.message || "Falha ao gerar avatar.");
+                        } finally {
+                          setGeneratingAvatar(false);
+                        }
+                      }}
+                      className="h-8 px-3 text-[11px] font-semibold rounded-lg bg-slate-900 text-white hover:bg-slate-800 shadow-sm"
+                    >
+                      <Wand2 className="h-3.5 w-3.5 mr-1.5" />
+                      {generatingAvatar ? "Criando avatar..." : "Gerar avatar tático com IA"}
+                    </Button>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full bg-slate-900/5 text-[10px] font-semibold uppercase tracking-wider text-slate-700">
+                      <BadgeCheck className="h-3 w-3 text-emerald-600" /> Avatar tático ativo
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
             {/* Quick stats */}
