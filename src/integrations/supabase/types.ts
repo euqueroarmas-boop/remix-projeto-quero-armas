@@ -3017,6 +3017,8 @@ export type Database = {
       }
       qa_clientes: {
         Row: {
+          avatar_tatico_gerado_em: string | null
+          avatar_tatico_path: string | null
           bairro: string | null
           bairro2: string | null
           categoria_titular: string | null
@@ -3067,6 +3069,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          avatar_tatico_gerado_em?: string | null
+          avatar_tatico_path?: string | null
           bairro?: string | null
           bairro2?: string | null
           categoria_titular?: string | null
@@ -3117,6 +3121,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          avatar_tatico_gerado_em?: string | null
+          avatar_tatico_path?: string | null
           bairro?: string | null
           bairro2?: string | null
           categoria_titular?: string | null
