@@ -86,7 +86,7 @@ const CheckoutPage = () => {
                 <div><dt className="text-xs uppercase text-muted-foreground">CPF</dt><dd>{profile?.cpf ?? '—'}</dd></div>
               </dl>
               <p className="mt-3 text-xs text-muted-foreground">
-                Atualize seus dados no <Link to="/quero-armas/area-do-cliente" className="text-accent hover:underline">portal</Link>.
+                Atualize seus dados no <Link to="/area-do-cliente" className="text-accent hover:underline">portal</Link>.
               </p>
             </div>
             <div className="rounded-sm border border-border bg-surface-elevated p-6">

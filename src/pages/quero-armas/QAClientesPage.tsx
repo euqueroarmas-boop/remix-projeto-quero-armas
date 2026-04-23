@@ -23,22 +23,22 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 
 import { toast } from "sonner";
-import ClienteFormModal from "@/components/quero-armas/clientes/ClienteFormModal";
-import ClienteOverview from "@/components/quero-armas/clientes/ClienteOverview";
-import { CrafModal, GteModal, CrModal, VendaModal, FiliacaoModal, DeleteConfirm } from "@/components/quero-armas/clientes/SubEntityModals";
-import { HistoricoAtualizacoes } from "@/components/quero-armas/clientes/HistoricoAtualizacoes";
-import { exportClientes, exportCrafs, exportGtes, exportCr, exportVendas } from "@/components/quero-armas/clientes/ClienteExport";
-import ClienteAcessoPortal from "@/components/quero-armas/clientes/ClienteAcessoPortal";
-import ClientePecas from "@/components/quero-armas/clientes/ClientePecas";
-import ClienteExames from "@/components/quero-armas/clientes/ClienteExames";
-import { getClienteFK, getVendaFK } from "@/components/quero-armas/clientes/clientFK";
+import ClienteFormModal from "@/components/clientes/ClienteFormModal";
+import ClienteOverview from "@/components/clientes/ClienteOverview";
+import { CrafModal, GteModal, CrModal, VendaModal, FiliacaoModal, DeleteConfirm } from "@/components/clientes/SubEntityModals";
+import { HistoricoAtualizacoes } from "@/components/clientes/HistoricoAtualizacoes";
+import { exportClientes, exportCrafs, exportGtes, exportCr, exportVendas } from "@/components/clientes/ClienteExport";
+import ClienteAcessoPortal from "@/components/clientes/ClienteAcessoPortal";
+import ClientePecas from "@/components/clientes/ClientePecas";
+import ClienteExames from "@/components/clientes/ClienteExames";
+import { getClienteFK, getVendaFK } from "@/components/clientes/clientFK";
 import { usePrivateStorageUrl } from "@/hooks/usePrivateStorageUrl";
 import { useQAStatusServico } from "@/hooks/useQAStatusServico";
-import { isDispensado, getBaseLegalDispensa, CATEGORIA_MAP, type CategoriaTitular } from "@/components/quero-armas/clientes/categoriaTitular";
-import { invalidateQADashboardSnapshot } from "@/components/quero-armas/dashboard/dashboardSnapshot";
+import { isDispensado, getBaseLegalDispensa, CATEGORIA_MAP, type CategoriaTitular } from "@/components/clientes/categoriaTitular";
+import { invalidateQADashboardSnapshot } from "@/components/dashboard/dashboardSnapshot";
 import { objetivoLabel, categoriaLabel } from "./qaServiceCatalog";
 import jsPDF from "jspdf";
-import DocumentScanner from "@/components/quero-armas/scanner/DocumentScanner";
+import DocumentScanner from "@/components/scanner/DocumentScanner";
 
 /* ── Pipeline "scanner" real ──
  * 1) Auto-crop: detecta as bordas do papel (regiões claras) e descarta o fundo escuro da foto.

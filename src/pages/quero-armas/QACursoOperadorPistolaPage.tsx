@@ -124,7 +124,7 @@ function InscricaoForm() {
           phone: form.phone,
           service_interest: `Curso Operador de Pistola I — ${form.turma === "vip" ? "VIP" : "Padrão"}`,
           message: form.message || `Quero reservar minha vaga no Curso Operador de Pistola I (turma ${form.turma === "vip" ? "VIP" : "Padrão"}).`,
-          source_page: "/quero-armas/curso-operador-pistola",
+          source_page: "/curso-operador-pistola",
         },
       });
       if (error || !data?.success) throw new Error(data?.errors?.[0] || error?.message || "Erro");
@@ -286,7 +286,7 @@ export default function QACursoOperadorPistolaPage() {
     setMeta('meta[property="og:description"]', "property", "og:description",
       "Defenda quem você ama. Treinamento tático: 6 a 8h prático + teórico, 120 disparos, certificado reconhecido.");
     setMeta('meta[property="og:image"]', "property", "og:image", heroImg);
-    setMeta('link[rel="canonical"]', "rel", "canonical", "https://wmti.com.br/quero-armas/curso-operador-pistola");
+    setMeta('link[rel="canonical"]', "rel", "canonical", "https://wmti.com.br/curso-operador-pistola");
   }, []);
 
   return (

@@ -50,7 +50,7 @@ export function QABreadcrumb() {
       style={{ borderColor: "hsl(220 13% 91%)" }}
     >
       <Link
-        to="/quero-armas/dashboard"
+        to="/dashboard"
         className="flex items-center gap-1.5 font-semibold uppercase tracking-wider transition-colors"
         style={{ color: "hsl(220 20% 18%)" }}
         onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "hsl(230 80% 56%)")}
@@ -61,7 +61,7 @@ export function QABreadcrumb() {
       </Link>
       {crumbs.map((slug, i) => {
         const isLast = i === crumbs.length - 1;
-        const href = "/quero-armas/" + crumbs.slice(0, i + 1).join("/");
+        const href = "/" + crumbs.slice(0, i + 1).join("/");
         return (
           <span key={href} className="flex items-center gap-2">
             <ChevronRight className="h-3 w-3" style={{ color: "hsl(220 13% 80%)" }} />

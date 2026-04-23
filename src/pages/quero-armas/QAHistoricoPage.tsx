@@ -10,9 +10,9 @@ import {
   Scale, Gavel, BookOpen, CheckCircle, MessageSquare,
   Download, Copy, Check, Award,
 } from "lucide-react";
-import { useQAAuthContext } from "@/components/quero-armas/QAAuthContext";
+import { useQAAuthContext } from "@/components/QAAuthContext";
 import { downloadGeracaoDocx } from "@/lib/qaDocxDownload";
-import FeedbackAprendizadoPanel from "@/components/quero-armas/FeedbackAprendizadoPanel";
+import FeedbackAprendizadoPanel from "@/components/FeedbackAprendizadoPanel";
 
 type TabType = "consultas" | "geracoes";
 

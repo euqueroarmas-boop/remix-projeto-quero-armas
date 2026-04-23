@@ -16,9 +16,9 @@ import {
   BookOpen, MapPin, Building2, Info, Paperclip, FileText, X, Upload, RefreshCw,
   Search, ChevronDown, ChevronUp, XCircle, Clock, FolderOpen, User, ChevronsUpDown,
 } from "lucide-react";
-import { useQAAuthContext } from "@/components/quero-armas/QAAuthContext";
+import { useQAAuthContext } from "@/components/QAAuthContext";
 import { logSistema } from "@/lib/logSistema";
-import DraftingView, { type DraftingResult } from "@/components/quero-armas/DraftingView";
+import DraftingView, { type DraftingResult } from "@/components/DraftingView";
 
 /* ── Types ── */
 type DocUploadStage = "pending" | "queued" | "uploading" | "saved" | "extracting" | "processing" | "done" | "failed";
@@ -1275,7 +1275,7 @@ export default function QAGerarPecaPage() {
           </h1>
         </div>
         {(savedCasoId || casoId) && (
-          <Button variant="outline" size="sm" onClick={() => navigate(`/quero-armas/casos`)}
+          <Button variant="outline" size="sm" onClick={() => navigate(`/casos`)}
             className="bg-white border-slate-200 text-slate-600 hover:text-slate-700 h-6 md:h-7 text-[10px] shrink-0">
             <FolderOpen className="h-3 w-3 mr-1" /> Casos
           </Button>
@@ -1597,7 +1597,7 @@ export default function QAGerarPecaPage() {
         onRetry={() => { setGenStep("idle"); setGenError(""); setShowDraftingView(false); setStreamedText(""); setValidationErrors([]); gerar(); }}
         onCopy={copiarMinuta}
         onExportDocx={exportarDocx}
-        onOpenCase={() => savedCasoId && navigate(`/quero-armas/gerar-peca?caso=${savedCasoId}`)}
+        onOpenCase={() => savedCasoId && navigate(`/gerar-peca?caso=${savedCasoId}`)}
         validationErrors={validationErrors}
         isExporting={isExporting}
       />

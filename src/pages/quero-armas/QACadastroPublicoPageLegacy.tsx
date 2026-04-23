@@ -6,7 +6,7 @@ import {
   Loader2, CheckCircle, Search, Plus, AlertCircle, Shield, Camera, RotateCcw,
   IdCard, FileText, Sparkles, Upload, X,
 } from "lucide-react";
-import { QALogo } from "@/components/quero-armas/QALogo";
+import { QALogo } from "@/components/QALogo";
 
 /* ── Types ── */
 type Step = 0 | 1 | 2 | 3 | 4 | 5;

@@ -29,38 +29,38 @@ const queroArmasGroups: { label: string; links: { to: string; label: string }[] 
   {
     label: 'Público',
     links: [
-      { to: '/quero-armas/cadastro', label: 'Cadastro de cliente' },
-      { to: '/quero-armas/cadastro/foto', label: 'Enviar foto (cadastro)' },
-      { to: '/quero-armas/enviar-foto', label: 'Enviar foto' },
+      { to: '/cadastro', label: 'Cadastro de cliente' },
+      { to: '/cadastro/foto', label: 'Enviar foto (cadastro)' },
+      { to: '/enviar-foto', label: 'Enviar foto' },
     ],
   },
   {
     label: 'Área do Cliente',
     links: [
-      { to: '/quero-armas/area-do-cliente/login', label: 'Login do cliente' },
-      { to: '/quero-armas/area-do-cliente', label: 'Portal do cliente' },
+      { to: '/area-do-cliente/login', label: 'Login do cliente' },
+      { to: '/area-do-cliente', label: 'Portal do cliente' },
     ],
   },
   {
     label: 'Administração',
     links: [
-      { to: '/quero-armas/login', label: 'Login admin' },
-      { to: '/quero-armas/dashboard', label: 'Dashboard' },
-      { to: '/quero-armas/ia', label: 'IA Jurídica' },
-      { to: '/quero-armas/casos', label: 'Casos' },
-      { to: '/quero-armas/gerar-peca', label: 'Gerar peça' },
-      { to: '/quero-armas/clientes', label: 'Clientes' },
-      { to: '/quero-armas/clubes', label: 'Clubes' },
-      { to: '/quero-armas/financeiro', label: 'Financeiro' },
-      { to: '/quero-armas/relatorios', label: 'Relatórios' },
-      { to: '/quero-armas/historico', label: 'Histórico' },
-      { to: '/quero-armas/auditoria', label: 'Auditoria' },
-      { to: '/quero-armas/auditoria/recursos-administrativos', label: 'Recursos administrativos' },
-      { to: '/quero-armas/base-conhecimento', label: 'Base de conhecimento' },
-      { to: '/quero-armas/legislacao', label: 'Legislação' },
-      { to: '/quero-armas/jurisprudencia', label: 'Jurisprudência' },
-      { to: '/quero-armas/modelos-docx', label: 'Modelos DOCX' },
-      { to: '/quero-armas/configuracoes', label: 'Configurações' },
+      { to: '/login', label: 'Login admin' },
+      { to: '/dashboard', label: 'Dashboard' },
+      { to: '/ia', label: 'IA Jurídica' },
+      { to: '/casos', label: 'Casos' },
+      { to: '/gerar-peca', label: 'Gerar peça' },
+      { to: '/clientes', label: 'Clientes' },
+      { to: '/clubes', label: 'Clubes' },
+      { to: '/financeiro', label: 'Financeiro' },
+      { to: '/relatorios', label: 'Relatórios' },
+      { to: '/historico', label: 'Histórico' },
+      { to: '/auditoria', label: 'Auditoria' },
+      { to: '/auditoria/recursos-administrativos', label: 'Recursos administrativos' },
+      { to: '/base-conhecimento', label: 'Base de conhecimento' },
+      { to: '/legislacao', label: 'Legislação' },
+      { to: '/jurisprudencia', label: 'Jurisprudência' },
+      { to: '/modelos-docx', label: 'Modelos DOCX' },
+      { to: '/configuracoes', label: 'Configurações' },
     ],
   },
 ];
@@ -138,10 +138,10 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                   </Button>
                 )}
                 <Button asChild variant="default" size="sm" className="hidden sm:inline-flex">
-                  <Link to="/quero-armas/area-do-cliente">Meu Portal</Link>
+                  <Link to="/area-do-cliente">Meu Portal</Link>
                 </Button>
                 <Button asChild variant="default" size="sm" className="sm:hidden">
-                  <Link to="/quero-armas/area-do-cliente">Portal</Link>
+                  <Link to="/area-do-cliente">Portal</Link>
                 </Button>
               </>
             ) : (
@@ -204,7 +204,7 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                   )}
                   {user && (
                     <Button asChild variant="default" onClick={() => setMenuOpen(false)}>
-                      <Link to="/quero-armas/area-do-cliente">Meu Portal</Link>
+                      <Link to="/area-do-cliente">Meu Portal</Link>
                     </Button>
                   )}
                   {user && isAdmin && (
@@ -243,7 +243,7 @@ export const SiteShell = ({ children }: SiteShellProps) => {
             <h4 className="mb-3 font-heading text-xs uppercase tracking-widest text-accent">Serviços</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li><Link to="/servicos" className="hover:text-foreground">Catálogo completo</Link></li>
-              <li><Link to="/quero-armas/area-do-cliente" className="hover:text-foreground">Portal do cliente</Link></li>
+              <li><Link to="/area-do-cliente" className="hover:text-foreground">Portal do cliente</Link></li>
             </ul>
           </div>
           <div>

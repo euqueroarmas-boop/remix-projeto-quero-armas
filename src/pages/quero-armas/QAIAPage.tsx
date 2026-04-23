@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Bot, Send, Loader2, BookOpen, Scale, Gavel, AlertTriangle, CheckCircle, BarChart3 } from "lucide-react";
-import { useQAAuthContext } from "@/components/quero-armas/QAAuthContext";
+import { useQAAuthContext } from "@/components/QAAuthContext";
 
 const TIPOS_PECA = [
   "peticao_inicial", "recurso", "mandado_seguranca", "parecer",

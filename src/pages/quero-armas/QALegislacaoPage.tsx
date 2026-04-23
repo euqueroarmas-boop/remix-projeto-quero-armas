@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Plus, Search, Scale, CheckCircle, Loader2 } from "lucide-react";
-import { useQAAuthContext } from "@/components/quero-armas/QAAuthContext";
+import { useQAAuthContext } from "@/components/QAAuthContext";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
 const TIPOS_NORMA = ["lei", "decreto", "instrucao_normativa", "portaria", "resolucao", "nota_tecnica", "outro"];

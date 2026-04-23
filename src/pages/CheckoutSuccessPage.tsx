@@ -29,7 +29,7 @@ const CheckoutSuccessPage = () => {
               : 'Seu pedido foi confirmado e o pagamento iniciado. Acompanhe pelo seu portal.'}
           </p>
           <div className="mt-8 grid gap-3 text-left sm:grid-cols-2">
-            <Link to="/quero-armas/area-do-cliente" className="group flex items-start gap-3 rounded-sm border border-border bg-background p-4 transition-colors hover:border-accent/40">
+            <Link to="/area-do-cliente" className="group flex items-start gap-3 rounded-sm border border-border bg-background p-4 transition-colors hover:border-accent/40">
               <ListChecks className="mt-0.5 size-5 shrink-0 text-accent" />
               <div className="min-w-0">
                 <p className="font-heading text-sm font-semibold uppercase tracking-wide">Meus pedidos</p>
@@ -37,7 +37,7 @@ const CheckoutSuccessPage = () => {
               </div>
               <ArrowRight className="ml-auto mt-1 size-4 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
             </Link>
-            <Link to="/quero-armas/area-do-cliente" className="group flex items-start gap-3 rounded-sm border border-border bg-background p-4 transition-colors hover:border-accent/40">
+            <Link to="/area-do-cliente" className="group flex items-start gap-3 rounded-sm border border-border bg-background p-4 transition-colors hover:border-accent/40">
               <FileText className="mt-0.5 size-5 shrink-0 text-accent" />
               <div className="min-w-0">
                 <p className="font-heading text-sm font-semibold uppercase tracking-wide">Meu contrato</p>
@@ -47,7 +47,7 @@ const CheckoutSuccessPage = () => {
             </Link>
           </div>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
-            <Button asChild size="lg"><Link to="/quero-armas/area-do-cliente">Ir para o portal</Link></Button>
+            <Button asChild size="lg"><Link to="/area-do-cliente">Ir para o portal</Link></Button>
             <Button asChild variant="outline" size="lg"><Link to="/servicos">Voltar ao catálogo</Link></Button>
           </div>
         </div>

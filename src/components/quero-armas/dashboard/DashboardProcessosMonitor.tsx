@@ -732,7 +732,7 @@ export default function DashboardProcessosMonitor() {
                         <td className="px-3 py-2 text-right">
                           {r.clienteId && (
                             <Link
-                              to={`/quero-armas/clientes?cliente=${r.clienteId}`}
+                              to={`/clientes?cliente=${r.clienteId}`}
                               className="inline-flex items-center gap-1 text-[11px] font-medium text-blue-600 hover:underline"
                             >
                               Abrir <ArrowUpRight className="w-3 h-3" />
@@ -824,7 +824,7 @@ export default function DashboardProcessosMonitor() {
                     {r.clienteId && (
                       <div className="mt-1.5 flex justify-end">
                         <Link
-                          to={`/quero-armas/clientes?cliente=${r.clienteId}`}
+                          to={`/clientes?cliente=${r.clienteId}`}
                           className="shrink-0 inline-flex items-center gap-1 text-[11px] font-medium text-blue-600"
                         >
                           Abrir cliente <ChevronRight className="w-3 h-3" />

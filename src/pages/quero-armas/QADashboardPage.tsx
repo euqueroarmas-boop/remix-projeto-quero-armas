@@ -14,9 +14,9 @@ import {
 
 // LazyOnVisible removido dos widgets críticos por estabilidade (mount único, sem IO).
 
-const DashboardExames = lazy(() => import("@/components/quero-armas/dashboard/DashboardExames"));
-const DashboardProcessosMonitor = lazy(() => import("@/components/quero-armas/dashboard/DashboardProcessosMonitor"));
-const DashboardPrazosRecursais = lazy(() => import("@/components/quero-armas/dashboard/DashboardPrazosRecursais"));
+const DashboardExames = lazy(() => import("@/components/dashboard/DashboardExames"));
+const DashboardProcessosMonitor = lazy(() => import("@/components/dashboard/DashboardProcessosMonitor"));
+const DashboardPrazosRecursais = lazy(() => import("@/components/dashboard/DashboardPrazosRecursais"));
 
 interface Stats {
   documentos: number;
@@ -286,9 +286,9 @@ export default function QADashboardPage() {
   }
 
   const alerts = [
-    stats.erros > 0 && { label: `${stats.erros} documento(s) com erro de processamento`, icon: XCircle, color: "text-red-500", bg: "bg-red-50 border-red-100", link: "/quero-armas/base-conhecimento" },
-    stats.pendentes > 0 && { label: `${stats.pendentes} documento(s) pendente(s) de validação`, icon: AlertTriangle, color: "text-amber-500", bg: "bg-amber-50 border-amber-100", link: "/quero-armas/base-conhecimento" },
-    stats.rascunhos > 0 && { label: `${stats.rascunhos} peça(s) em rascunho aguardando revisão`, icon: Clock, color: "text-blue-500", bg: "bg-blue-50 border-blue-100", link: "/quero-armas/historico" },
+    stats.erros > 0 && { label: `${stats.erros} documento(s) com erro de processamento`, icon: XCircle, color: "text-red-500", bg: "bg-red-50 border-red-100", link: "/base-conhecimento" },
+    stats.pendentes > 0 && { label: `${stats.pendentes} documento(s) pendente(s) de validação`, icon: AlertTriangle, color: "text-amber-500", bg: "bg-amber-50 border-amber-100", link: "/base-conhecimento" },
+    stats.rascunhos > 0 && { label: `${stats.rascunhos} peça(s) em rascunho aguardando revisão`, icon: Clock, color: "text-blue-500", bg: "bg-blue-50 border-blue-100", link: "/historico" },
   ].filter(Boolean) as any[];
 
   const statusBadge = (s: string) => {
@@ -314,7 +314,7 @@ export default function QADashboardPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Link to="/quero-armas/gerar-peca"
+          <Link to="/gerar-peca"
             className="flex items-center gap-1.5 h-8 px-3 text-[11px] font-semibold rounded-md transition-all hover:opacity-90 shadow-sm no-glow"
             style={{ background: "hsl(230 80% 56%)", color: "#ffffff" }}>
             <PenTool className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Nova Peça</span>
@@ -370,7 +370,7 @@ export default function QADashboardPage() {
               <h3 className="text-sm font-semibold" style={{ color: "hsl(220 20% 18%)" }}>Cadastros Recentes</h3>
               <p className="text-xs mt-0.5" style={{ color: "hsl(220 10% 62%)" }}>Clientes que preencheram o formulário público</p>
             </div>
-            <Link to="/quero-armas/clientes" className="flex items-center gap-1 text-xs font-medium hover:underline" style={{ color: "hsl(230 80% 56%)" }}>
+            <Link to="/clientes" className="flex items-center gap-1 text-xs font-medium hover:underline" style={{ color: "hsl(230 80% 56%)" }}>
               Ver todos <ArrowRight className="h-3 w-3" />
             </Link>
           </div>
@@ -609,7 +609,7 @@ export default function QADashboardPage() {
           title="Últimas Peças"
           subtitle="Peças jurídicas recentes"
           items={recentPecas}
-          linkTo="/quero-armas/historico"
+          linkTo="/historico"
           icon={PenTool}
           statusBadge={statusBadge}
         />
@@ -617,7 +617,7 @@ export default function QADashboardPage() {
           title="Últimos Documentos"
           subtitle="Documentos processados"
           items={recentDocs}
-          linkTo="/quero-armas/base-conhecimento"
+          linkTo="/base-conhecimento"
           icon={FileText}
           statusBadge={statusBadge}
           isDoc
@@ -626,10 +626,10 @@ export default function QADashboardPage() {
 
       {/* Quick actions */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <QuickAction icon={PenTool} label="Gerar Peça" desc="Nova petição" to="/quero-armas/gerar-peca" color={COLORS.blue} />
-        <QuickAction icon={BookOpen} label="Base Jurídica" desc="Consultar acervo" to="/quero-armas/base-conhecimento" color={COLORS.purple} />
-        <QuickAction icon={Shield} label="Assistente IA" desc="Consulta inteligente" to="/quero-armas/ia" color={COLORS.cyan} />
-        <QuickAction icon={BarChart3} label="Relatórios" desc="Visão analítica" to="/quero-armas/relatorios" color={COLORS.green} />
+        <QuickAction icon={PenTool} label="Gerar Peça" desc="Nova petição" to="/gerar-peca" color={COLORS.blue} />
+        <QuickAction icon={BookOpen} label="Base Jurídica" desc="Consultar acervo" to="/base-conhecimento" color={COLORS.purple} />
+        <QuickAction icon={Shield} label="Assistente IA" desc="Consulta inteligente" to="/ia" color={COLORS.cyan} />
+        <QuickAction icon={BarChart3} label="Relatórios" desc="Visão analítica" to="/relatorios" color={COLORS.green} />
       </div>
     </div>
   );
@@ -717,7 +717,7 @@ function RecentList({ title, subtitle, items, linkTo, icon: Icon, statusBadge, i
               </div>
             );
             return isDoc ? (
-              <Link key={item.id} to={`/quero-armas/base-conhecimento/${item.id}`}>{content}</Link>
+              <Link key={item.id} to={`/base-conhecimento/${item.id}`}>{content}</Link>
             ) : (
               <div key={item.id}>{content}</div>
             );

@@ -5,7 +5,7 @@ import {
   Sparkles, ChevronRight, RotateCcw, AlertCircle, ArrowLeft, Shield, Info, Search,
   Target, Layers, ChevronDown,
 } from "lucide-react";
-import { QALogo } from "@/components/quero-armas/QALogo";
+import { QALogo } from "@/components/QALogo";
 import {
   OBJETIVOS_PRINCIPAIS,
   CATEGORIAS_SERVICO,
@@ -1000,7 +1000,7 @@ function Step4Done({ firstName }: { firstName: string }) {
       </div>
 
       <a
-        href="/quero-armas/area-do-cliente/login"
+        href="/area-do-cliente/login"
         className="block w-full h-12 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2"
         style={{ background: "linear-gradient(135deg, hsl(230 80% 56%), hsl(240 80% 60%))", boxShadow: "0 4px 14px hsl(230 80% 56% / 0.35)" }}
       >

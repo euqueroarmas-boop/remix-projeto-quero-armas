@@ -27,7 +27,7 @@ import AdminDashboard from "@/pages/admin/AdminDashboard";
 import AdminCategorias from "@/pages/admin/AdminCategorias";
 import AdminServicos from "@/pages/admin/AdminServicos";
 
-const QARoutes = lazyRetry(() => import("./pages/quero-armas/QARoutes.tsx"), "QARoutes");
+const QARoutes = lazyRetry(() => import("./pages/QARoutes.tsx"), "QARoutes");
 
 const queryClient = new QueryClient();
 
@@ -66,8 +66,8 @@ const App = () => (
                   <Route path="/contratos/:id/assinar" element={<ProtectedRoute><ContractSignaturePage /></ProtectedRoute>} />
 
                   {/* Portal do cliente → redireciona para o portal robusto existente */}
-                  <Route path="/portal" element={<Navigate to="/quero-armas/area-do-cliente" replace />} />
-                  <Route path="/portal/*" element={<Navigate to="/quero-armas/area-do-cliente" replace />} />
+                  <Route path="/portal" element={<Navigate to="/area-do-cliente" replace />} />
+                  <Route path="/portal/*" element={<Navigate to="/area-do-cliente" replace />} />
 
                   {/* Admin */}
                   <Route path="/admin" element={<ProtectedRoute requireRole="admin"><AdminDashboard /></ProtectedRoute>} />
@@ -75,7 +75,7 @@ const App = () => (
                   <Route path="/admin/servicos" element={<ProtectedRoute requireRole="admin"><AdminServicos /></ProtectedRoute>} />
 
                   {/* Quero Armas (portal cliente robusto + admin) */}
-                  <Route path="/quero-armas/*" element={<QARoutes />} />
+                  <Route path="/*" element={<QARoutes />} />
 
                   {/* Catch-all */}
                   <Route path="*" element={<Navigate to="/" replace />} />

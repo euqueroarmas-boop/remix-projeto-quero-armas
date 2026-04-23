@@ -175,8 +175,8 @@ export default function DashboardPrazosRecursais() {
           {visible.map(r => {
             const tone = toneFor(r.diasRestantes);
             const link = r.clienteIdLegado
-              ? `/quero-armas/clientes?cliente=${r.clienteIdLegado}`
-              : `/quero-armas/clientes`;
+              ? `/clientes?cliente=${r.clienteIdLegado}`
+              : `/clientes`;
             const [ly, lm, ld] = r.dataLimite.split("-");
             const dataLimiteBr = `${ld}/${lm}/${ly}`;
             return (

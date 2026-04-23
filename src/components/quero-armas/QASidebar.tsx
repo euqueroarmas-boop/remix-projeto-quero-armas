@@ -15,31 +15,31 @@ const NAV_GROUPS = [
   {
     label: "Operação",
     items: [
-      { title: "Dashboard", url: "/quero-armas/dashboard", icon: LayoutDashboard },
-      { title: "Gerar Peça", url: "/quero-armas/gerar-peca", icon: PenTool },
-      { title: "Casos", url: "/quero-armas/casos", icon: FolderOpen },
-      { title: "Clientes", url: "/quero-armas/clientes", icon: Users },
-      { title: "Clubes de Tiro", url: "/quero-armas/clubes", icon: Building2 },
-      { title: "Financeiro", url: "/quero-armas/financeiro", icon: DollarSign },
-      { title: "Relatórios", url: "/quero-armas/relatorios", icon: BarChart3 },
-      { title: "Assistente IA", url: "/quero-armas/ia", icon: Shield },
+      { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
+      { title: "Gerar Peça", url: "/gerar-peca", icon: PenTool },
+      { title: "Casos", url: "/casos", icon: FolderOpen },
+      { title: "Clientes", url: "/clientes", icon: Users },
+      { title: "Clubes de Tiro", url: "/clubes", icon: Building2 },
+      { title: "Financeiro", url: "/financeiro", icon: DollarSign },
+      { title: "Relatórios", url: "/relatorios", icon: BarChart3 },
+      { title: "Assistente IA", url: "/ia", icon: Shield },
     ],
   },
   {
     label: "Acervo",
     items: [
-      { title: "Base Jurídica", url: "/quero-armas/base-conhecimento", icon: BookOpen },
-      { title: "Legislação", url: "/quero-armas/legislacao", icon: Scale },
-      { title: "Jurisprudência", url: "/quero-armas/jurisprudencia", icon: Gavel },
-      { title: "Modelos DOCX", url: "/quero-armas/modelos-docx", icon: FileBox },
+      { title: "Base Jurídica", url: "/base-conhecimento", icon: BookOpen },
+      { title: "Legislação", url: "/legislacao", icon: Scale },
+      { title: "Jurisprudência", url: "/jurisprudencia", icon: Gavel },
+      { title: "Modelos DOCX", url: "/modelos-docx", icon: FileBox },
     ],
   },
   {
     label: "Sistema",
     items: [
-      { title: "Auditoria", url: "/quero-armas/auditoria", icon: ShieldCheck },
-      { title: "Histórico", url: "/quero-armas/historico", icon: History },
-      { title: "Configurações", url: "/quero-armas/configuracoes", icon: Settings },
+      { title: "Auditoria", url: "/auditoria", icon: ShieldCheck },
+      { title: "Histórico", url: "/historico", icon: History },
+      { title: "Configurações", url: "/configuracoes", icon: Settings },
     ],
   },
 ];
@@ -58,10 +58,10 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
 
   const canAccess = (url: string) => {
     if (perfil === "leitura_auditoria") {
-      return !["/quero-armas/gerar-peca", "/quero-armas/modelos-docx"].includes(url);
+      return !["/gerar-peca", "/modelos-docx"].includes(url);
     }
     if (perfil === "assistente_juridico") {
-      return url !== "/quero-armas/configuracoes";
+      return url !== "/configuracoes";
     }
     return true;
   };

@@ -654,28 +654,28 @@ async function renderBlogPost(slug: string): Promise<PageMeta | null> {
 
 // Quero Armas pages — branded OG preview
 function renderQuerArmasPage(path: string): PageMeta {
-  const QA_OG = "/quero-armas-preview.jpg";
+  const QA_OG = "/-preview.jpg";
   const QA_SITE = "Quero Armas — Assessoria Jurídica";
 
-  if (path === "/quero-armas/cadastro") {
+  if (path === "/cadastro") {
     return {
       title: "Cadastro de Cliente | Quero Armas",
       description: "Inicie seu processo de Posse, Porte ou CAC. Cadastro 100% online, seguro e em conformidade com a LGPD.",
       h1: "Cadastro Quero Armas",
       content: "Preencha seus dados para iniciar seu processo de aquisição de arma de fogo (Posse, Porte, CAC). Atendimento jurídico especializado, processo digital e acompanhamento integral.",
-      links: [{ label: "Área do Cliente", href: "/quero-armas/area-do-cliente" }],
+      links: [{ label: "Área do Cliente", href: "/area-do-cliente" }],
       ogImage: QA_OG,
       siteName: QA_SITE,
     };
   }
 
-  if (path === "/quero-armas/area-do-cliente" || path === "/quero-armas/area-do-cliente/login") {
+  if (path === "/area-do-cliente" || path === "/area-do-cliente/login") {
     return {
       title: "Área do Cliente | Quero Armas",
       description: "Acesse seu portal Quero Armas: acompanhe processos, documentos, prazos e protocolos de Posse, Porte e CAC.",
       h1: "Área do Cliente Quero Armas",
       content: "Portal seguro para acompanhamento de processos jurídicos de Posse, Porte e CAC. Acesso 24/7 a documentos, status e prazos.",
-      links: [{ label: "Cadastro", href: "/quero-armas/cadastro" }],
+      links: [{ label: "Cadastro", href: "/cadastro" }],
       ogImage: QA_OG,
       siteName: QA_SITE,
     };
@@ -687,8 +687,8 @@ function renderQuerArmasPage(path: string): PageMeta {
     h1: "Quero Armas",
     content: "Plataforma jurídica especializada em direito armamentista: Posse, Porte de arma de fogo e CAC (Caçador, Atirador e Colecionador). Acompanhamento integral, processo digital e equipe especializada.",
     links: [
-      { label: "Cadastro", href: "/quero-armas/cadastro" },
-      { label: "Área do Cliente", href: "/quero-armas/area-do-cliente" },
+      { label: "Cadastro", href: "/cadastro" },
+      { label: "Área do Cliente", href: "/area-do-cliente" },
     ],
     ogImage: QA_OG,
     siteName: QA_SITE,
@@ -717,7 +717,7 @@ Deno.serve(async (req) => {
   }
 
   // 1b. Quero Armas pages (custom OG branding)
-  if (path === "/quero-armas" || path.startsWith("/quero-armas/")) {
+  if (path === "/" || path.startsWith("/")) {
     const qaPage = renderQuerArmasPage(path);
     return new Response(renderHtml(qaPage, path), {
       headers: { ...corsHeaders, "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=3600" },
