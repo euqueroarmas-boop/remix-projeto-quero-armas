@@ -57,7 +57,7 @@ export const getServiceBySlug = async (
 
   return {
     service: service as unknown as ServiceWithCategory,
-    landing: (landing as ServiceLandingData | null) ?? null,
+    landing: (landing as unknown as ServiceLandingData | null) ?? null,
   };
 };
 
