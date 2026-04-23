@@ -7,6 +7,17 @@ import homeArsenal from '@/assets/home-arsenal.jpg';
 import homeColete from '@/assets/home-colete.jpg';
 import homeMunicao from '@/assets/home-municao.jpg';
 import homeCursoOperador from '@/assets/home-curso-operador.jpg';
+import homeDor from '@/assets/home-dor.jpg';
+import homeManchetes from '@/assets/home-manchetes.jpg';
+import homeColapso from '@/assets/home-colapso.jpg';
+import homePilares from '@/assets/home-pilares.jpg';
+import homeLei from '@/assets/home-lei.jpg';
+import homeCacRecarga from '@/assets/home-cac-recarga.jpg';
+import homeFamilia from '@/assets/home-familia.jpg';
+import homeProtocolo from '@/assets/home-protocolo.jpg';
+import homeMulherArmada from '@/assets/home-mulher-armada.jpg';
+import homeLoja from '@/assets/home-loja.jpg';
+import homeJornada from '@/assets/home-jornada.jpg';
 import {
   ArrowRight, ShieldAlert, Crosshair, Skull, Clock, Newspaper, AlertTriangle,
   CheckCircle2, Target, Flame, Lock, Scale, Gavel, Swords, Home, Zap, Shield,
