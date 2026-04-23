@@ -56,17 +56,25 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
       }
       setCustomerId(custId);
 
-      if (!custId) {
+      // Busca documentos por customer_id (portal) OU qa_cliente_id (cadastro QA legado)
+      const qaId = cliente.id ? Number(cliente.id) : null;
+      let query = supabase
+        .from("qa_documentos_cliente" as any)
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (custId && qaId) {
+        query = query.or(`customer_id.eq.${custId},qa_cliente_id.eq.${qaId}`);
+      } else if (custId) {
+        query = query.eq("customer_id", custId);
+      } else if (qaId) {
+        query = query.eq("qa_cliente_id", qaId);
+      } else {
         setDocs([]);
         return;
       }
 
-      const { data, error } = await supabase
-        .from("qa_documentos_cliente" as any)
-        .select("*")
-        .eq("customer_id", custId)
-        .order("created_at", { ascending: false });
-
+      const { data, error } = await query;
       if (error) throw error;
       setDocs((data as any[]) || []);
     } catch (err: any) {
@@ -132,21 +140,19 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
     );
   }
 
-  if (!customerId) {
-    return (
-      <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-800 text-sm">
-        <div className="flex items-center gap-2 font-semibold mb-1">
-          <AlertCircle className="h-4 w-4" /> Cliente sem acesso ao portal
-        </div>
-        <p className="text-xs">
-          Este cliente ainda não possui credenciais ativas no portal — não há documentos enviados.
-          Provisione o acesso na aba <strong>Portal</strong> para liberar o hub do cliente.
-        </p>
-      </div>
-    );
-  }
-
   if (docs.length === 0) {
+    if (!customerId) {
+      return (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-800 text-sm">
+          <div className="flex items-center gap-2 font-semibold mb-1">
+            <AlertCircle className="h-4 w-4" /> Cliente sem acesso ao portal
+          </div>
+          <p className="text-xs">
+            Este cliente ainda não possui credenciais ativas no portal — provisione o acesso na aba <strong>Portal</strong> para liberar o envio pelo cliente.
+          </p>
+        </div>
+      );
+    }
     return (
       <div className="rounded-xl border border-slate-200 bg-slate-50 p-6 text-center">
         <FileText className="h-8 w-8 text-slate-300 mx-auto mb-2" />
