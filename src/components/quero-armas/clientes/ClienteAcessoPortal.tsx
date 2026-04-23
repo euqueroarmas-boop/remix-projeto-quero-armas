@@ -44,9 +44,9 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
           .from("customers")
           .select("id, email, user_id, razao_social, cnpj_ou_cpf, status_cliente")
           .ilike("email", email)
-          .limit(1)
-          .maybeSingle();
-        if (data) found = data;
+          .order("user_id", { ascending: false, nullsFirst: false })
+          .limit(1);
+        if (data && data.length) found = data[0];
       }
 
       if (!found && cpfClean) {
@@ -54,9 +54,9 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
           .from("customers")
           .select("id, email, user_id, razao_social, cnpj_ou_cpf, status_cliente")
           .eq("cnpj_ou_cpf", cpfClean)
-          .limit(1)
-          .maybeSingle();
-        if (data) found = data;
+          .order("user_id", { ascending: false, nullsFirst: false })
+          .limit(1);
+        if (data && data.length) found = data[0];
       }
 
       setCustomer(found);
