@@ -62,38 +62,49 @@ export default function QAClientePortalPage() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) { navigate("/area-do-cliente/login", { replace: true }); return; }
 
-        // Check client profile
-        const { data: profile } = await supabase
-          .from("qa_usuarios_perfis" as any)
-          .select("*")
-          .eq("user_id", user.id)
-          .eq("ativo", true)
-          .maybeSingle();
+        const [{ data: profile }, { data: customerLink }] = await Promise.all([
+          supabase
+            .from("qa_usuarios_perfis" as any)
+            .select("*")
+            .eq("user_id", user.id)
+            .eq("ativo", true)
+            .maybeSingle(),
+          supabase
+            .from("customers")
+            .select("id, email, cnpj_ou_cpf, razao_social, responsavel")
+            .eq("user_id", user.id)
+            .limit(1)
+            .maybeSingle(),
+        ]);
 
-        if (!profile) { toast.error("Perfil não encontrado."); navigate("/area-do-cliente/login", { replace: true }); return; }
+        if (!profile && !customerLink) { toast.error("Perfil não encontrado."); navigate("/area-do-cliente/login", { replace: true }); return; }
 
-        setUserName((profile as any).nome || user.email || "");
+        setUserName((profile as any)?.nome || customerLink?.responsavel || customerLink?.razao_social || user.email || "");
 
-        // Find client by CPF from user email or profile
-        const cpfDigits = (user.email || "").replace(/\D/g, "");
+        const cpfDigits = String(customerLink?.cnpj_ou_cpf || "").replace(/\D/g, "");
+        const lookupEmail = (customerLink?.email || user.email || "").trim();
         let clienteData: any = null;
 
-        // Try by user_id linkage first, then by CPF match
-        const { data: clienteByCpf } = await supabase
-          .from("qa_clientes" as any)
-          .select("*")
-          .eq("cpf", cpfDigits)
-          .maybeSingle();
+        const { data: clienteByCpf } = cpfDigits
+          ? await supabase
+              .from("qa_clientes" as any)
+              .select("*")
+              .eq("cpf", cpfDigits)
+              .limit(1)
+              .maybeSingle()
+          : { data: null };
 
         if (clienteByCpf) {
           clienteData = clienteByCpf;
         } else {
-          // Try matching by email
-          const { data: clienteByEmail } = await supabase
-            .from("qa_clientes" as any)
-            .select("*")
-            .eq("email", user.email)
-            .maybeSingle();
+          const { data: clienteByEmail } = lookupEmail
+            ? await supabase
+                .from("qa_clientes" as any)
+                .select("*")
+                .ilike("email", lookupEmail)
+                .limit(1)
+                .maybeSingle()
+            : { data: null };
           clienteData = clienteByEmail;
         }
 
