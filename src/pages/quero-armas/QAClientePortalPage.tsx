@@ -314,12 +314,56 @@ export default function QAClientePortalPage() {
           <div className="h-1 w-full" style={{ background: "linear-gradient(90deg, hsl(230 80% 56%), hsl(262 60% 55%))" }} />
           <div className="p-5 md:p-6">
             <div className="flex flex-col md:flex-row md:items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0" style={{ background: "hsl(230 80% 96%)" }}>
-                <User className="h-6 w-6" style={{ color: "hsl(230 80% 56%)" }} />
-              </div>
+              <ClientAvatar
+                url={avatarUrl}
+                name={cliente.nome_completo}
+                hasPhoto={hasAnyPhoto}
+                isTactical={hasTacticalAvatar}
+              />
               <div className="flex-1 min-w-0">
                 <h1 className="text-xl font-bold" style={{ color: "hsl(220 20% 18%)" }}>Olá, {cliente.nome_completo.split(" ")[0]}!</h1>
                 <p className="text-[12px] mt-1" style={{ color: "hsl(220 10% 55%)" }}>Aqui está o resumo completo do seu atendimento conosco.</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {!hasAnyPhoto ? (
+                    <Button
+                      size="sm"
+                      onClick={() => navigate("/quero-armas/cadastro/foto")}
+                      className="h-8 px-3 text-[11px] font-semibold rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600 shadow-sm"
+                    >
+                      <Camera className="h-3.5 w-3.5 mr-1.5" /> Enviar minha foto
+                    </Button>
+                  ) : !hasTacticalAvatar ? (
+                    <Button
+                      size="sm"
+                      disabled={generatingAvatar}
+                      onClick={async () => {
+                        if (!cliente?.cpf) return;
+                        setGeneratingAvatar(true);
+                        try {
+                          const { data, error } = await supabase.functions.invoke("qa-gerar-avatar-tatico", {
+                            body: { cpf: cliente.cpf },
+                          });
+                          if (error) throw error;
+                          if ((data as any)?.error) throw new Error((data as any).error);
+                          toast.success("Avatar tático criado!");
+                          setCliente({ ...cliente, avatar_tatico_path: (data as any).avatar_path });
+                        } catch (e: any) {
+                          toast.error(e?.message || "Falha ao gerar avatar.");
+                        } finally {
+                          setGeneratingAvatar(false);
+                        }
+                      }}
+                      className="h-8 px-3 text-[11px] font-semibold rounded-lg bg-slate-900 text-white hover:bg-slate-800 shadow-sm"
+                    >
+                      <Wand2 className="h-3.5 w-3.5 mr-1.5" />
+                      {generatingAvatar ? "Criando avatar..." : "Gerar avatar tático com IA"}
+                    </Button>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full bg-slate-900/5 text-[10px] font-semibold uppercase tracking-wider text-slate-700">
+                      <BadgeCheck className="h-3 w-3 text-emerald-600" /> Avatar tático ativo
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
             {/* Quick stats */}
