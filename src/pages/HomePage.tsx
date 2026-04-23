@@ -7,6 +7,17 @@ import homeArsenal from '@/assets/home-arsenal.jpg';
 import homeColete from '@/assets/home-colete.jpg';
 import homeMunicao from '@/assets/home-municao.jpg';
 import homeCursoOperador from '@/assets/home-curso-operador.jpg';
+import homeDor from '@/assets/home-dor.jpg';
+import homeManchetes from '@/assets/home-manchetes.jpg';
+import homeColapso from '@/assets/home-colapso.jpg';
+import homePilares from '@/assets/home-pilares.jpg';
+import homeLei from '@/assets/home-lei.jpg';
+import homeCacRecarga from '@/assets/home-cac-recarga.jpg';
+import homeFamilia from '@/assets/home-familia.jpg';
+import homeProtocolo from '@/assets/home-protocolo.jpg';
+import homeMulherArmada from '@/assets/home-mulher-armada.jpg';
+import homeLoja from '@/assets/home-loja.jpg';
+import homeJornada from '@/assets/home-jornada.jpg';
 import {
   ArrowRight, ShieldAlert, Crosshair, Skull, Clock, Newspaper, AlertTriangle,
   CheckCircle2, Target, Flame, Lock, Scale, Gavel, Swords, Home, Zap, Shield,
@@ -149,6 +160,10 @@ const HomePage = () => {
             <div className="mb-3 font-heading text-xs uppercase tracking-[0.2em] text-accent">Diagnóstico tático</div>
             <h2 className="font-heading text-2xl font-bold uppercase leading-tight tracking-tight sm:text-4xl lg:text-5xl">Quatro cenários. <span className="text-tactical-gradient">Você já está em pelo menos um.</span></h2>
           </div>
+          <div className="relative mb-8 overflow-hidden rounded-sm border border-border sm:mb-12">
+            <img src={homeDor} alt="Silhueta de homem em sala escura às 3 da manhã empunhando pistola Glock em posição de defesa domiciliar" loading="lazy" width={1920} height={1080} className="aspect-[16/9] w-full object-cover" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
+          </div>
           <div className="grid gap-5 sm:grid-cols-2 lg:gap-6">
             {painPoints.map((p, i) => {
               const Icon = p.icon;
@@ -190,6 +205,10 @@ const HomePage = () => {
             <h2 className="font-heading text-2xl font-bold uppercase leading-tight tracking-tight sm:text-4xl lg:text-5xl">Enquanto você lê isto, <span className="text-tactical-gradient">outra família está sendo destruída</span>.</h2>
             <p className="mt-4 text-base text-muted-foreground sm:text-lg">Não é manchete distante. É o seu CEP. É o caminho da escola. É o portão da sua casa às 22h47 de uma terça qualquer.</p>
           </div>
+          <div className="relative mb-8 overflow-hidden rounded-sm border border-border sm:mb-12">
+            <img src={homeManchetes} alt="Rua urbana brasileira à noite com luzes de viatura policial e fita de isolamento amarela em primeiro plano" loading="lazy" width={1920} height={1080} className="aspect-[16/9] w-full object-cover" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
+          </div>
           <div className="grid gap-4 sm:grid-cols-2 sm:gap-5">
             {newsHeadlines.map((n) => (
               <article key={n.title} className="group relative flex flex-col gap-3 rounded-sm border border-border bg-card p-5 transition-colors hover:border-primary/40 sm:p-6">
@@ -223,6 +242,10 @@ const HomePage = () => {
             </div>
             <div className="relative">
               <div className="pointer-events-none absolute inset-0 -z-10 rounded-full bg-primary/10 blur-3xl" />
+              <div className="relative mb-5 overflow-hidden rounded-sm border border-border">
+                <img src={homeColapso} alt="Cenário urbano em colapso institucional com fumaça, prédios escuros e rua abandonada" loading="lazy" width={1920} height={1080} className="aspect-[16/9] w-full object-cover" />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/60 to-transparent" />
+              </div>
               <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 {[
                   { v: '14 dias', l: 'Argentina · Saques 2001' },
@@ -248,6 +271,10 @@ const HomePage = () => {
             <div className="mb-3 font-heading text-xs uppercase tracking-[0.2em] text-accent">A tríade não-negociável</div>
             <h2 className="font-heading text-2xl font-bold uppercase leading-tight tracking-tight sm:text-4xl lg:text-5xl">Existe um caminho. <span className="text-tactical-gradient">Três pilares</span>. Falta um, falham todos.</h2>
             <p className="mt-4 text-base text-muted-foreground sm:text-lg">Não vendemos curso solto. Não vendemos só documento. Não somos loja. Somos a estrutura completa que te leva do civil despreparado ao operador armado, legalizado e treinado.</p>
+          </div>
+          <div className="relative mb-8 overflow-hidden rounded-sm border border-border sm:mb-12">
+            <img src={homePilares} alt="Tríade pilares: pistola Glock, livro jurídico e protetor auricular sobre superfície de ardósia escura" loading="lazy" width={1920} height={1080} className="aspect-[16/9] w-full object-cover" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
           </div>
           <div className="grid gap-5 lg:grid-cols-3 lg:gap-6">
             {pillars.map((p) => {
@@ -280,6 +307,10 @@ const HomePage = () => {
             </div>
             <h2 className="font-heading text-2xl font-bold uppercase leading-tight tracking-tight sm:text-4xl lg:text-5xl">"Mas é <span className="text-tactical-gradient">legal</span> ter arma em casa?" — <span className="text-tactical-gradient">Sim. E está na lei.</span></h2>
             <p className="mt-4 text-base text-muted-foreground sm:text-lg">Você não precisa ser policial. Não precisa ser militar. Quatro normas dão a você, cidadão comum, o direito de comprar, registrar e manter arma de fogo em casa pra defesa pessoal:</p>
+          </div>
+          <div className="relative mb-8 overflow-hidden rounded-sm border border-border sm:mb-12">
+            <img src={homeLei} alt="Martelo de juiz sobre livro jurídico azul ao lado de pistola Glock, com balança da justiça ao fundo" loading="lazy" width={1920} height={1080} className="aspect-[16/9] w-full object-cover" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
           </div>
           <div className="grid gap-4 sm:grid-cols-2 sm:gap-5">
             {[
@@ -448,6 +479,10 @@ const HomePage = () => {
             <h2 className="font-heading text-2xl font-bold uppercase leading-tight tracking-tight sm:text-4xl lg:text-5xl">Quando o sistema cair, <span className="text-tactical-gradient">a munição some das prateleiras em 48 horas</span>. Você fabrica a sua — ou reza.</h2>
             <p className="mt-4 text-base text-muted-foreground sm:text-lg">O registro <strong className="text-foreground">CAC</strong> te dá o direito legal de <strong className="text-foreground">comprar prensa de recarga, pólvora, projétil, espoleta e estojo</strong> — e produzir sua própria munição em casa.</p>
           </div>
+          <div className="relative mb-8 overflow-hidden rounded-sm border border-border sm:mb-12">
+            <img src={homeCacRecarga} alt="Bancada de recarga de munição com prensa metálica, estojos de latão organizados e caixas de madeira de munição" loading="lazy" width={1920} height={1080} className="aspect-[16/9] w-full object-cover" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
+          </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 sm:gap-5">
             {[
               { icon: Wrench, tag: 'Prensa de recarga', title: 'A máquina que te liberta da loja.', desc: 'Single-stage pra começar, progressiva pra produzir 400 tiros/hora.' },
@@ -486,6 +521,10 @@ const HomePage = () => {
             </div>
             <div className="relative">
               <div className="pointer-events-none absolute inset-0 -z-10 rounded-full bg-primary/10 blur-3xl" />
+              <div className="relative mb-5 overflow-hidden rounded-sm border border-border">
+                <img src={homeFamilia} alt="Cofre biométrico de parede aberto exibindo pistola, com porta-retrato familiar ao lado em quarto residencial" loading="lazy" width={1920} height={1080} className="aspect-[16/9] w-full object-cover" />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/60 to-transparent" />
+              </div>
               <div className="grid gap-3 sm:gap-4">
                 {[
                   { q: '"E se as crianças acharem?"', a: 'Cofre biométrico fixado na parede. Abre só com a sua digital.' },
@@ -511,6 +550,10 @@ const HomePage = () => {
               <Phone className="size-3.5" />Protocolo pós-disparo · O minuto que decide o resto da sua vida
             </div>
             <h2 className="font-heading text-2xl font-bold uppercase leading-tight tracking-tight sm:text-4xl lg:text-5xl">Você atirou em legítima defesa. <span className="text-tactical-gradient">Agora começa o jogo de verdade.</span></h2>
+          </div>
+          <div className="relative mb-8 overflow-hidden rounded-sm border border-border sm:mb-12">
+            <img src={homeProtocolo} alt="Mão depositando pistola no chão enquanto outra segura celular, com luzes de viatura ao fundo — protocolo pós-disparo" loading="lazy" width={1920} height={1080} className="aspect-[16/9] w-full object-cover" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
           </div>
           <div className="grid gap-4 sm:gap-5">
             {[
@@ -542,6 +585,10 @@ const HomePage = () => {
         <div className={containerCls}>
           <div className="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-14">
             <div className="relative order-2 lg:order-1">
+              <div className="relative mb-5 overflow-hidden rounded-sm border border-border">
+                <img src={homeMulherArmada} alt="Mulher brasileira treinando tiro em estande com revólver .38, protetor auricular amarelo e óculos balísticos" loading="lazy" width={1920} height={1080} className="aspect-[16/9] w-full object-cover" />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/60 to-transparent" />
+              </div>
               <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
                 {[
                   { v: '.380', l: 'Pistola compacta · Mão menor · Recuo controlável' },
@@ -579,6 +626,10 @@ const HomePage = () => {
             </div>
             <h2 className="font-heading text-2xl font-bold uppercase leading-tight tracking-tight sm:text-4xl lg:text-5xl">Comprar arma pela internet sozinho é <span className="text-tactical-gradient">jogar R$ 8 mil no lixo</span> — ou pior, na cadeia.</h2>
           </div>
+          <div className="relative mb-8 overflow-hidden rounded-sm border border-border sm:mb-12">
+            <img src={homeLoja} alt="Loja licenciada de armas com vitrine de pistolas e revólveres sobre veludo branco e prateleiras com munição ao fundo" loading="lazy" width={1920} height={1080} className="aspect-[16/9] w-full object-cover" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
+          </div>
           <div className="grid gap-4 sm:grid-cols-2 sm:gap-5">
             {[
               { title: 'Golpe do PIX antecipado', desc: 'Loja fake no Instagram, preço 30% abaixo do mercado. Você paga, somem com seu dinheiro.' },
@@ -608,6 +659,10 @@ const HomePage = () => {
           <div className="mb-10 max-w-2xl sm:mb-14">
             <div className="mb-3 font-heading text-xs uppercase tracking-[0.2em] text-accent">A jornada operacional · 6 etapas</div>
             <h2 className="font-heading text-2xl font-bold uppercase leading-tight tracking-tight sm:text-4xl lg:text-5xl">Do <span className="text-tactical-gradient">civil desarmado</span> ao operador pronto. Em 6 passos.</h2>
+          </div>
+          <div className="relative mb-8 overflow-hidden rounded-sm border border-border sm:mb-12">
+            <img src={homeJornada} alt="Silhueta de operador caminhando de túnel escuro em direção à luz dourada, carregando bolsa tática de tiro" loading="lazy" width={1920} height={1080} className="aspect-[16/9] w-full object-cover" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
           </div>
           <div className="grid gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
             {journey.map((m) => (
