@@ -2237,6 +2237,10 @@ export default function QAClientesPage() {
               <TabsContent value="pecas" className="mt-3">
                 <ClientePecas cliente={c} />
               </TabsContent>
+              {/* HUB DO CLIENTE — documentos enviados pelo próprio cliente */}
+              <TabsContent value="hub" className="mt-3">
+                <ClienteDocsEnviados cliente={c} />
+              </TabsContent>
               {/* ACESSO AO PORTAL */}
               <TabsContent value="historico" className="mt-3">
                 <HistoricoAtualizacoes clienteId={c.id} showSnapshot />
