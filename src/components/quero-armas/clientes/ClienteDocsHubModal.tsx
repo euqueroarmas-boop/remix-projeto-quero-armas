@@ -14,6 +14,7 @@ import {
   Upload,
   X,
 } from "lucide-react";
+import { Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -142,6 +143,7 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
   const [saving, setSaving] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const showArmaFields = form.tipo_documento !== "cr";
   const tipoAtual = TIPOS.find((tipo) => tipo.value === form.tipo_documento);
@@ -155,8 +157,10 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
       toast.error("Selecione um arquivo primeiro.");
       return;
     }
-    if (!file.type.startsWith("image/")) {
-      toast.message("A leitura com IA funciona melhor com foto. PDFs serão anexados sem extração automática.");
+    const isImage = file.type.startsWith("image/");
+    const isPdf = file.type === "application/pdf";
+    if (!isImage && !isPdf) {
+      toast.error("Envie uma foto (JPG/PNG) ou PDF para a IA ler.");
       return;
     }
 
