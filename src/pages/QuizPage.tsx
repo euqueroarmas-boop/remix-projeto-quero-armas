@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SiteShell } from '@/shared/components/layout/SiteShell';
+import { SEO } from '@/shared/components/SEO';
 import { ArrowRight, Shield, Target, Crosshair, Home, Trophy, Briefcase, CheckCircle2 } from 'lucide-react';
 
 type Profile = 'defesa-pessoal-posse' | 'cac-cr' | 'atividades-avulsas';
