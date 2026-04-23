@@ -205,6 +205,10 @@ const HomePage = () => {
             <h2 className="font-heading text-2xl font-bold uppercase leading-tight tracking-tight sm:text-4xl lg:text-5xl">Enquanto você lê isto, <span className="text-tactical-gradient">outra família está sendo destruída</span>.</h2>
             <p className="mt-4 text-base text-muted-foreground sm:text-lg">Não é manchete distante. É o seu CEP. É o caminho da escola. É o portão da sua casa às 22h47 de uma terça qualquer.</p>
           </div>
+          <div className="relative mb-8 overflow-hidden rounded-sm border border-border sm:mb-12">
+            <img src={homeManchetes} alt="Rua urbana brasileira à noite com luzes de viatura policial e fita de isolamento amarela em primeiro plano" loading="lazy" width={1920} height={1080} className="aspect-[16/9] w-full object-cover" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
+          </div>
           <div className="grid gap-4 sm:grid-cols-2 sm:gap-5">
             {newsHeadlines.map((n) => (
               <article key={n.title} className="group relative flex flex-col gap-3 rounded-sm border border-border bg-card p-5 transition-colors hover:border-primary/40 sm:p-6">
