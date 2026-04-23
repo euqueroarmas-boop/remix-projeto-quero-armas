@@ -1,12 +1,9 @@
+import { useState } from "react";
 import { useLocation, Link } from "react-router-dom";
 import {
-  Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
-  SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar,
-} from "@/components/ui/sidebar";
-import {
-  LayoutDashboard, PenTool, FolderOpen, FileText, Scale, Gavel,
+  LayoutDashboard, PenTool, FolderOpen, Scale, Gavel,
   BookOpen, FileBox, History, Settings, LogOut, Shield, Users, Building2, BarChart3, DollarSign, ShieldCheck,
-  PanelLeftOpen,
+  PanelLeftOpen, Home,
 } from "lucide-react";
 import { QALogo } from "./QALogo";
 
@@ -47,9 +44,10 @@ const NAV_GROUPS = [
 interface Props { perfil: string; nome: string; signOut: () => Promise<void> }
 
 export function QASidebar({ perfil, nome, signOut }: Props) {
-  const { state, toggleSidebar, isMobile, setOpenMobile } = useSidebar();
-  const collapsed = isMobile ? false : state === "collapsed";
+  const [expanded, setExpanded] = useState(false);
+  const collapsed = !expanded;
   const location = useLocation();
+  const toggleSidebar = () => setExpanded(v => !v);
 
   const initials = (nome || "U").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
 
@@ -67,12 +65,15 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
   };
 
   return (
-    <Sidebar collapsible="icon" className="border-r"
+    <aside
+      className="sticky top-0 h-screen shrink-0 border-r flex flex-col z-30 transition-[width] duration-200"
       style={{
+        width: collapsed ? "3.25rem" : "16rem",
         background: "hsl(0 0% 100%)",
         borderColor: "hsl(220 13% 91%)",
-      } as React.CSSProperties}>
-      <SidebarContent className="py-3 flex flex-col" style={{ background: "hsl(0 0% 100%)" }}>
+      }}
+    >
+      <div className="py-3 flex flex-col h-full" style={{ background: "hsl(0 0% 100%)" }}>
 
         {/* Collapsed: clickable bar area to expand */}
         {collapsed && (
