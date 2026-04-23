@@ -2,9 +2,17 @@ import { Link, NavLink } from 'react-router-dom';
 import { ReactNode, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/shared/auth/AuthProvider';
 import { useCart } from '@/shared/cart/CartProvider';
-import { Menu, ShieldCheck, ShoppingCart } from 'lucide-react';
+import { Menu, ShieldCheck, ShoppingCart, ChevronDown } from 'lucide-react';
 import logoWhite from '@/assets/logo-white.png';
 
 interface SiteShellProps {
@@ -14,6 +22,47 @@ interface SiteShellProps {
 const navItems = [
   { to: '/servicos', label: 'Serviços' },
   { to: '/descobrir-meu-caminho', label: 'Diagnóstico' },
+];
+
+const queroArmasGroups: { label: string; links: { to: string; label: string }[] }[] = [
+  {
+    label: 'Público',
+    links: [
+      { to: '/quero-armas/cadastro', label: 'Cadastro de cliente' },
+      { to: '/quero-armas/cadastro/foto', label: 'Enviar foto (cadastro)' },
+      { to: '/quero-armas/enviar-foto', label: 'Enviar foto' },
+      { to: '/quero-armas/curso-operador-pistola', label: 'Curso Operador de Pistola' },
+    ],
+  },
+  {
+    label: 'Área do Cliente',
+    links: [
+      { to: '/quero-armas/area-do-cliente/login', label: 'Login do cliente' },
+      { to: '/quero-armas/area-do-cliente', label: 'Portal do cliente' },
+    ],
+  },
+  {
+    label: 'Administração',
+    links: [
+      { to: '/quero-armas/login', label: 'Login admin' },
+      { to: '/quero-armas/dashboard', label: 'Dashboard' },
+      { to: '/quero-armas/ia', label: 'IA Jurídica' },
+      { to: '/quero-armas/casos', label: 'Casos' },
+      { to: '/quero-armas/gerar-peca', label: 'Gerar peça' },
+      { to: '/quero-armas/clientes', label: 'Clientes' },
+      { to: '/quero-armas/clubes', label: 'Clubes' },
+      { to: '/quero-armas/financeiro', label: 'Financeiro' },
+      { to: '/quero-armas/relatorios', label: 'Relatórios' },
+      { to: '/quero-armas/historico', label: 'Histórico' },
+      { to: '/quero-armas/auditoria', label: 'Auditoria' },
+      { to: '/quero-armas/auditoria/recursos-administrativos', label: 'Recursos administrativos' },
+      { to: '/quero-armas/base-conhecimento', label: 'Base de conhecimento' },
+      { to: '/quero-armas/legislacao', label: 'Legislação' },
+      { to: '/quero-armas/jurisprudencia', label: 'Jurisprudência' },
+      { to: '/quero-armas/modelos-docx', label: 'Modelos DOCX' },
+      { to: '/quero-armas/configuracoes', label: 'Configurações' },
+    ],
+  },
 ];
 
 export const SiteShell = ({ children }: SiteShellProps) => {
@@ -45,6 +94,26 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                 {item.label}
               </NavLink>
             ))}
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center gap-1 font-heading text-sm uppercase tracking-[0.15em] text-muted-foreground transition-colors hover:text-foreground focus:outline-none">
+                Quero Armas <ChevronDown className="size-3.5" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="max-h-[80vh] w-64 overflow-y-auto">
+                {queroArmasGroups.map((group, idx) => (
+                  <div key={group.label}>
+                    {idx > 0 && <DropdownMenuSeparator />}
+                    <DropdownMenuLabel className="text-xs uppercase tracking-widest text-accent">
+                      {group.label}
+                    </DropdownMenuLabel>
+                    {group.links.map((link) => (
+                      <DropdownMenuItem key={link.to} asChild>
+                        <Link to={link.to}>{link.label}</Link>
+                      </DropdownMenuItem>
+                    ))}
+                  </div>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </nav>
 
           <div className="flex items-center gap-1.5 sm:gap-3">
@@ -105,6 +174,28 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                       {item.label}
                     </NavLink>
                   ))}
+                  <div className="my-4 h-px bg-border" />
+                  <div className="max-h-[50vh] overflow-y-auto pr-1">
+                    {queroArmasGroups.map((group) => (
+                      <div key={group.label} className="mb-3">
+                        <p className="mb-1 px-1 font-heading text-[10px] uppercase tracking-widest text-accent">
+                          {group.label}
+                        </p>
+                        <div className="flex flex-col">
+                          {group.links.map((link) => (
+                            <Link
+                              key={link.to}
+                              to={link.to}
+                              onClick={() => setMenuOpen(false)}
+                              className="rounded-sm px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-surface-elevated hover:text-foreground"
+                            >
+                              {link.label}
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                   <div className="my-4 h-px bg-border" />
                   {!user && (
                     <Button asChild variant="default" onClick={() => setMenuOpen(false)}>
