@@ -3372,6 +3372,105 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_documentos_cliente: {
+        Row: {
+          arma_calibre: string | null
+          arma_especie: string | null
+          arma_marca: string | null
+          arma_modelo: string | null
+          arma_numero_serie: string | null
+          arquivo_mime: string | null
+          arquivo_nome: string | null
+          arquivo_storage_path: string | null
+          created_at: string
+          customer_id: string
+          data_emissao: string | null
+          data_validade: string | null
+          ia_dados_extraidos: Json | null
+          ia_processado_em: string | null
+          ia_status: string
+          id: string
+          numero_documento: string | null
+          observacoes: string | null
+          orgao_emissor: string | null
+          qa_cliente_id: number | null
+          tipo_documento: string
+          updated_at: string
+          validado_admin: boolean
+          validado_em: string | null
+          validado_por: string | null
+        }
+        Insert: {
+          arma_calibre?: string | null
+          arma_especie?: string | null
+          arma_marca?: string | null
+          arma_modelo?: string | null
+          arma_numero_serie?: string | null
+          arquivo_mime?: string | null
+          arquivo_nome?: string | null
+          arquivo_storage_path?: string | null
+          created_at?: string
+          customer_id: string
+          data_emissao?: string | null
+          data_validade?: string | null
+          ia_dados_extraidos?: Json | null
+          ia_processado_em?: string | null
+          ia_status?: string
+          id?: string
+          numero_documento?: string | null
+          observacoes?: string | null
+          orgao_emissor?: string | null
+          qa_cliente_id?: number | null
+          tipo_documento: string
+          updated_at?: string
+          validado_admin?: boolean
+          validado_em?: string | null
+          validado_por?: string | null
+        }
+        Update: {
+          arma_calibre?: string | null
+          arma_especie?: string | null
+          arma_marca?: string | null
+          arma_modelo?: string | null
+          arma_numero_serie?: string | null
+          arquivo_mime?: string | null
+          arquivo_nome?: string | null
+          arquivo_storage_path?: string | null
+          created_at?: string
+          customer_id?: string
+          data_emissao?: string | null
+          data_validade?: string | null
+          ia_dados_extraidos?: Json | null
+          ia_processado_em?: string | null
+          ia_status?: string
+          id?: string
+          numero_documento?: string | null
+          observacoes?: string | null
+          orgao_emissor?: string | null
+          qa_cliente_id?: number | null
+          tipo_documento?: string
+          updated_at?: string
+          validado_admin?: boolean
+          validado_em?: string | null
+          validado_por?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_documentos_cliente_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_documentos_cliente_qa_cliente_id_fkey"
+            columns: ["qa_cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       qa_documentos_conhecimento: {
         Row: {
           ativo: boolean
