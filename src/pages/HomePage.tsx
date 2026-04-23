@@ -272,6 +272,10 @@ const HomePage = () => {
             <h2 className="font-heading text-2xl font-bold uppercase leading-tight tracking-tight sm:text-4xl lg:text-5xl">Existe um caminho. <span className="text-tactical-gradient">Três pilares</span>. Falta um, falham todos.</h2>
             <p className="mt-4 text-base text-muted-foreground sm:text-lg">Não vendemos curso solto. Não vendemos só documento. Não somos loja. Somos a estrutura completa que te leva do civil despreparado ao operador armado, legalizado e treinado.</p>
           </div>
+          <div className="relative mb-8 overflow-hidden rounded-sm border border-border sm:mb-12">
+            <img src={homePilares} alt="Tríade pilares: pistola Glock, livro jurídico e protetor auricular sobre superfície de ardósia escura" loading="lazy" width={1920} height={1080} className="aspect-[16/9] w-full object-cover" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
+          </div>
           <div className="grid gap-5 lg:grid-cols-3 lg:gap-6">
             {pillars.map((p) => {
               const Icon = p.icon;
