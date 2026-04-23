@@ -205,6 +205,42 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
 
     setSaving(true);
     try {
+      // Bloqueio de duplicidade
+      const tipoLabel = TIPOS.find((t) => t.value === form.tipo_documento)?.short || form.tipo_documento.toUpperCase();
+      const numeroNorm = (form.numero_documento || "").replace(/\s+/g, "").toUpperCase();
+
+      // CR: único por cliente (não importa número)
+      if (form.tipo_documento === "cr") {
+        const { data: existsCr, error: errCr } = await supabase
+          .from("qa_documentos_cliente" as any)
+          .select("id")
+          .eq("customer_id", customerId)
+          .eq("tipo_documento", "cr")
+          .limit(1);
+        if (errCr) throw errCr;
+        if ((existsCr as any[])?.length) {
+          toast.error("Este cliente já possui um CR cadastrado. Edite o existente em vez de duplicar.");
+          setSaving(false);
+          return;
+        }
+      } else if (numeroNorm) {
+        // Demais tipos: bloqueia se mesmo tipo + mesmo número já existir
+        const { data: existsNum, error: errNum } = await supabase
+          .from("qa_documentos_cliente" as any)
+          .select("id, numero_documento")
+          .eq("customer_id", customerId)
+          .eq("tipo_documento", form.tipo_documento);
+        if (errNum) throw errNum;
+        const dup = (existsNum as any[] | null)?.find(
+          (d) => (d.numero_documento || "").replace(/\s+/g, "").toUpperCase() === numeroNorm,
+        );
+        if (dup) {
+          toast.error(`Já existe um ${tipoLabel} com o número ${form.numero_documento} para este cliente.`);
+          setSaving(false);
+          return;
+        }
+      }
+
       let storagePath: string | null = null;
       let fileName: string | null = null;
       let mime: string | null = null;
