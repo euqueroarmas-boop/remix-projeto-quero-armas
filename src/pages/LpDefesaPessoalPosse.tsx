@@ -1,10 +1,25 @@
 import { Link } from 'react-router-dom';
 import { SiteShell } from '@/shared/components/layout/SiteShell';
 import { Button } from '@/components/ui/button';
+import { SEO } from '@/shared/components/SEO';
 import { ArrowRight, Home, Shield, Skull, AlertTriangle, CheckCircle2, Lock, Scale, Target, Phone, X, FileCheck, Users } from 'lucide-react';
 
 const LpDefesaPessoalPosse = () => (
   <SiteShell>
+    <SEO
+      title="Posse de Arma para Defesa Domiciliar · Lei 10.826/03 | Quero Armas"
+      description="Posse legalizada na Polícia Federal para defender sua família em casa. Documentação, exame psicológico, técnico e suporte jurídico em 60-120 dias."
+      canonical="/defesa-pessoal-posse"
+      jsonLd={{
+        '@context': 'https://schema.org',
+        '@type': 'Service',
+        name: 'Posse de Arma de Fogo para Defesa Domiciliar',
+        provider: { '@type': 'Organization', name: 'Quero Armas' },
+        areaServed: 'BR',
+        serviceType: 'Documentação de posse na Polícia Federal',
+        description: 'Processo completo de posse domiciliar conforme Lei 10.826/03 e Decreto 11.615/23.',
+      }}
+    />
     <section className="relative w-full overflow-hidden border-b border-border bg-background py-20 sm:py-28">
       <div className="container max-w-5xl text-center">
         <div className="mb-4 inline-flex items-center gap-2 rounded-sm border border-accent/40 bg-accent/10 px-3 py-1.5">

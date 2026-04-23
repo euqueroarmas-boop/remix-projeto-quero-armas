@@ -1,10 +1,25 @@
 import { Link } from 'react-router-dom';
 import { SiteShell } from '@/shared/components/layout/SiteShell';
 import { Button } from '@/components/ui/button';
+import { SEO } from '@/shared/components/SEO';
 import { ArrowRight, Target, Coffee, Users, CheckCircle2, Phone, Crosshair, GraduationCap, Calendar, Heart, Quote, HelpCircle, MapPin, Clock, Shield } from 'lucide-react';
 
 const LpAtividadesAvulsas = () => (
   <SiteShell>
+    <SEO
+      title="Atire no Estande sem ser CAC · Cursos Avulsos | Quero Armas"
+      description="Experimente o tiro real sem burocracia: visite o estande, faça curso avulso e descubra o universo armado antes de qualquer processo. Sem compromisso."
+      canonical="/atividades-avulsas"
+      jsonLd={{
+        '@context': 'https://schema.org',
+        '@type': 'Service',
+        name: 'Atividades Avulsas no Estande de Tiro',
+        provider: { '@type': 'Organization', name: 'Quero Armas' },
+        areaServed: 'BR',
+        serviceType: 'Experiência de tiro e cursos avulsos',
+        description: 'Atire como visitante, faça curso avulso e treine sem precisar ser CAC ou ter posse.',
+      }}
+    />
     <section className="relative w-full overflow-hidden border-b border-border bg-background py-20 sm:py-28">
       <div className="container max-w-5xl text-center">
         <div className="mb-4 inline-flex items-center gap-2 rounded-sm border border-accent/40 bg-accent/10 px-3 py-1.5">

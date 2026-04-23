@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SiteShell } from '@/shared/components/layout/SiteShell';
+import { SEO } from '@/shared/components/SEO';
 import { ArrowRight, Shield, Target, Crosshair, Home, Trophy, Briefcase, CheckCircle2 } from 'lucide-react';
 
 type Profile = 'defesa-pessoal-posse' | 'cac-cr' | 'atividades-avulsas';
@@ -69,6 +70,11 @@ const QuizPage = () => {
 
   return (
     <SiteShell>
+      <SEO
+        title="Descobrir Meu Caminho · Diagnóstico Tático | Quero Armas"
+        description="Em 2 perguntas você descobre o caminho certo: posse domiciliar, CR no Exército ou atividades avulsas no estande. Diagnóstico rápido e direto."
+        canonical="/descobrir-meu-caminho"
+      />
       <section className="container max-w-4xl py-16 sm:py-24">
         <div className="mb-8 text-center">
           <div className="mb-3 font-heading text-xs uppercase tracking-[0.2em] text-accent">

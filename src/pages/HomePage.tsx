@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { SiteShell } from '@/shared/components/layout/SiteShell';
 import { Button } from '@/components/ui/button';
 import { GoogleReviewsCarousel } from '@/shared/components/GoogleReviewsCarousel';
+import { SEO } from '@/shared/components/SEO';
 import {
   ArrowRight, ShieldAlert, Crosshair, Skull, Clock, Newspaper, AlertTriangle,
   CheckCircle2, Target, Flame, Lock, Scale, Gavel, Swords, Home, Zap, Shield,
@@ -51,6 +52,40 @@ const HomePage = () => {
   const containerCls = 'mx-auto w-full max-w-full box-border px-4 sm:container sm:px-6 lg:px-8';
   return (
     <SiteShell>
+      <SEO
+        title="Quero Armas · Posse, CAC/CR e Treinamento Tático Legalizado"
+        description="Posse domiciliar, CR no Exército, cursos de tiro e habitualidade. Documentação na PF e EB, treinamento real e suporte jurídico. Saia legalizado e armado."
+        canonical="/"
+        type="website"
+        jsonLd={[
+          {
+            '@context': 'https://schema.org',
+            '@type': 'Organization',
+            name: 'Quero Armas',
+            url: 'https://queroarmas.com.br',
+            logo: 'https://queroarmas.com.br/logo.png',
+            sameAs: ['https://wa.me/5511978481919'],
+            contactPoint: {
+              '@type': 'ContactPoint',
+              telephone: '+55-11-97848-1919',
+              contactType: 'customer service',
+              areaServed: 'BR',
+              availableLanguage: ['pt-BR'],
+            },
+          },
+          {
+            '@context': 'https://schema.org',
+            '@type': 'WebSite',
+            name: 'Quero Armas',
+            url: 'https://queroarmas.com.br',
+            potentialAction: {
+              '@type': 'SearchAction',
+              target: 'https://queroarmas.com.br/servicos?q={search_term_string}',
+              'query-input': 'required name=search_term_string',
+            },
+          },
+        ]}
+      />
       {/* 1 · HERO */}
       <section className="relative w-full max-w-full overflow-x-clip border-b border-border/60">
         <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,hsl(var(--primary)/0.18),transparent_60%)]" />

@@ -1,10 +1,25 @@
 import { Link } from 'react-router-dom';
 import { SiteShell } from '@/shared/components/layout/SiteShell';
 import { Button } from '@/components/ui/button';
+import { SEO } from '@/shared/components/SEO';
 import { ArrowRight, Trophy, Crosshair, Boxes, FileText, Shield, Award, Target, Phone, CheckCircle2, AlertTriangle, Bell, Calendar, Quote, HelpCircle } from 'lucide-react';
 
 const LpCacCr = () => (
   <SiteShell>
+    <SEO
+      title="CR no Exército · CAC Colecionador, Atirador e Caçador | Quero Armas"
+      description="CR ativo no Exército, acervo legal e habitualidade blindada. Documentação completa, controle de prazos e suporte CAC. Foco no tiro, papel é com a gente."
+      canonical="/cac-cr"
+      jsonLd={{
+        '@context': 'https://schema.org',
+        '@type': 'Service',
+        name: 'Registro CR — Colecionador, Atirador e Caçador',
+        provider: { '@type': 'Organization', name: 'Quero Armas' },
+        areaServed: 'BR',
+        serviceType: 'Documentação CAC/CR no Exército Brasileiro',
+        description: 'Filiação a clube, registro CR no Exército, aquisição de armas, controle de habitualidade e renovação.',
+      }}
+    />
     <section className="relative w-full overflow-hidden border-b border-border bg-background py-20 sm:py-28">
       <div className="container max-w-5xl text-center">
         <div className="mb-4 inline-flex items-center gap-2 rounded-sm border border-accent/40 bg-accent/10 px-3 py-1.5">
