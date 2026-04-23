@@ -241,14 +241,14 @@ Deno.serve(async (req) => {
 
     const userId = authData.user.id;
 
-    if (customer_id) {
+    if (resolvedCustomerId) {
       await supabase
         .from("customers")
         .update({ user_id: userId })
-        .eq("id", customer_id);
+        .eq("id", resolvedCustomerId);
 
       await supabase.from("client_events").insert({
-        customer_id,
+        customer_id: resolvedCustomerId,
         event_type: "cadastro",
         title: "Acesso ao portal criado",
         description: `Credenciais criadas para ${email}`,
@@ -259,7 +259,7 @@ Deno.serve(async (req) => {
       tipo: "admin",
       status: "success",
       mensagem: "Usuário do cliente criado com sucesso",
-      payload: { email, user_id: userId, customer_id },
+      payload: { email, user_id: userId, customer_id: resolvedCustomerId },
     });
 
     // ── EMAIL: Send invite with credentials via SMTP ──
