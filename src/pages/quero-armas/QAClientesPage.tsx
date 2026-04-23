@@ -10,7 +10,7 @@ import {
   Search, User, Phone, Mail, MapPin, FileText, Shield, ChevronLeft,
   Loader2, Eye, Plus, Crosshair, Edit, Trash2, Download, FileDown,
   ChevronDown, ChevronUp, Save, X, XCircle, CheckCircle, TrendingUp, KeyRound, PenTool,
-  HeartPulse, GripVertical, Camera, Upload,
+  HeartPulse, GripVertical, Camera, Upload, ShieldCheck,
 } from "lucide-react";
 import {
   DndContext, closestCenter, PointerSensor, TouchSensor, KeyboardSensor,
