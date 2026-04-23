@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { password: adminPwd, customer_id, email, user_password, name, action } = body;
+    const { password: adminPwd, customer_id, email, user_password, name, action, customer_data } = body;
     const password = user_password || "";
 
     const ADMIN_PASSWORD = Deno.env.get("ADMIN_PASSWORD");
