@@ -46,6 +46,61 @@ function SectionCard({ icon: Icon, title, color, children }: { icon: any; title:
   );
 }
 
+function ClientAvatar({
+  url,
+  name,
+  hasPhoto,
+  isTactical,
+}: {
+  url: string | null;
+  name: string;
+  hasPhoto: boolean;
+  isTactical: boolean;
+}) {
+  const initials = (name || "")
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((n) => n[0]?.toUpperCase())
+    .join("");
+
+  const ring = isTactical
+    ? "ring-2 ring-amber-400 ring-offset-2 ring-offset-white"
+    : "ring-1 ring-slate-200 ring-offset-2 ring-offset-white";
+
+  if (hasPhoto && url) {
+    return (
+      <div className="relative shrink-0">
+        <div className={`w-16 h-16 md:w-20 md:h-20 rounded-2xl overflow-hidden ${ring} shadow-md`}>
+          <img src={url} alt={name} className="w-full h-full object-cover" />
+        </div>
+        {isTactical && (
+          <span
+            title="Avatar tático"
+            className="absolute -bottom-1 -right-1 inline-flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-md"
+          >
+            <BadgeCheck className="h-3.5 w-3.5" />
+          </span>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative shrink-0">
+      <div
+        className="w-16 h-16 md:w-20 md:h-20 rounded-2xl flex items-center justify-center shadow-md text-white font-bold text-xl tracking-wider ring-1 ring-amber-200/50"
+        style={{ background: "linear-gradient(135deg, hsl(220 25% 18%), hsl(220 30% 28%))" }}
+      >
+        <span className="text-amber-300">{initials || "?"}</span>
+      </div>
+      <span className="absolute -bottom-1 -right-1 inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-400 text-slate-900 shadow-md">
+        <Camera className="h-3 w-3" />
+      </span>
+    </div>
+  );
+}
+
 export default function QAClientePortalPage() {
   const navigate = useNavigate();
   const { map: SERVICO_MAP } = useQAServicosMap();
