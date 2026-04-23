@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import {
   Shield, Target, Award, Users, Clock, MapPin, CheckCircle2,
   AlertTriangle, Crosshair, Wrench, BookOpen, Trophy, Coffee,
-  MessageCircle, Phone, Mail, Lock, Zap, Flame
+  MessageCircle, Phone, Mail, Lock, Zap, Flame, ShoppingCart
 } from "lucide-react";
 import heroImg from "@/assets/qa-curso-hero.jpg";
 import maintImg from "@/assets/qa-curso-manutencao.jpg";
@@ -12,6 +12,11 @@ import ameacaImg from "@/assets/qa-ameaca.jpg";
 import instrutorImg from "@/assets/qa-instrutor.jpg";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useCart } from "@/shared/cart/CartProvider";
+import { useNavigate } from "react-router-dom";
+import { getServiceBySlug } from "@/shared/data/catalog";
+
+const COURSE_SLUG = "curso-operador-pistola-nivel-1";
 
 const WPP_NUMBER = "5511978481919";
 const WPP_DISPLAY = "(11) 97848-1919";
@@ -234,6 +239,35 @@ function InscricaoForm() {
 
 // ============= MAIN =============
 export default function QACursoOperadorPistolaPage() {
+  const { addItem } = useCart();
+  const navigate = useNavigate();
+  const [adding, setAdding] = useState(false);
+
+  const handleComprar = async () => {
+    if (adding) return;
+    setAdding(true);
+    try {
+      const res = await getServiceBySlug(COURSE_SLUG);
+      if (!res?.service) {
+        toast.error("Serviço indisponível no catálogo. Tente novamente em instantes.");
+        return;
+      }
+      addItem({
+        service_id: res.service.id,
+        service_slug: res.service.slug,
+        service_name: res.service.name,
+        unit_price_cents: res.service.base_price_cents,
+        quantity: 1,
+      });
+      toast.success("Curso adicionado ao carrinho.");
+      navigate("/carrinho");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erro ao adicionar ao carrinho.");
+    } finally {
+      setAdding(false);
+    }
+  };
+
   useEffect(() => {
     window.scrollTo(0, 0);
     document.title = "Curso Operador de Pistola I — Quero Armas | Defesa Pessoal e Porte";
@@ -339,6 +373,20 @@ export default function QACursoOperadorPistolaPage() {
               </p>
 
               <div className="flex flex-col sm:flex-row gap-3 mb-10">
+                <button
+                  onClick={handleComprar}
+                  disabled={adding}
+                  className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-sm font-black tracking-[0.15em] uppercase text-[13.5px] transition-all hover:brightness-110 disabled:opacity-60"
+                  style={{
+                    background: SAND,
+                    color: BLACK,
+                    boxShadow: "0 12px 32px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.25)",
+                    border: `1px solid ${SAND_DIM}`,
+                  }}
+                >
+                  <ShoppingCart className="w-4 h-4" />
+                  {adding ? "Adicionando..." : "Comprar curso agora"}
+                </button>
                 <button
                   onClick={() => openWpp("vaga")}
                   className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-sm font-black text-white tracking-[0.15em] uppercase text-[13.5px] transition-all hover:brightness-110"
@@ -858,6 +906,22 @@ export default function QACursoOperadorPistolaPage() {
                     Envio protocolado · retorno do IAT em até 1 dia útil.
                   </p>
                 </div>
+
+                <button
+                  onClick={handleComprar}
+                  disabled={adding}
+                  className="w-full mb-5 inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-sm font-black text-[13px] uppercase tracking-[0.18em] transition-all hover:brightness-110 disabled:opacity-60"
+                  style={{
+                    background: SAND,
+                    color: BLACK,
+                    border: `1px solid ${SAND_DIM}`,
+                    boxShadow: "0 8px 22px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.25)",
+                  }}
+                >
+                  <ShoppingCart className="w-4 h-4" />
+                  {adding ? "Adicionando..." : "Comprar e ir para o checkout"}
+                </button>
+
                 <InscricaoForm />
 
                 <div className="mt-6 pt-5 border-t text-center" style={{ borderColor: COYOTE_DIM }}>
