@@ -38,6 +38,9 @@ export default function QARoutes() {
   return (
     <Suspense fallback={<Loader />}>
       <Routes>
+        {/* Raiz: redireciona para o dashboard (QALayout cuida da auth) */}
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
         {/* Public routes (no auth required) */}
         <Route path="login" element={<QALoginPage />} />
         <Route path="cadastro" element={<QACadastroPublicoPage />} />
@@ -75,6 +78,9 @@ export default function QARoutes() {
           {/* Legacy redirect: rota antiga */}
           <Route path="recursos-auditoria" element={<Navigate to="/auditoria/recursos-administrativos" replace />} />
         </Route>
+
+        {/* Catch-all */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>
   );
