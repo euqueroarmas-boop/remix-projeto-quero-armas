@@ -176,6 +176,49 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
 
   return (
     <div className="space-y-4">
+      {/* ── CREDENCIAIS RECÉM-GERADAS ── */}
+      {generatedPwd && (
+        <div className="rounded-2xl border-2 border-emerald-300 bg-emerald-50 p-5 shadow-sm">
+          <div className="flex items-center gap-2 mb-3">
+            <CheckCircle className="h-5 w-5 text-emerald-600" />
+            <h3 className="text-sm font-bold text-emerald-800 uppercase tracking-wider">Credenciais Geradas</h3>
+          </div>
+          <p className="text-[11px] text-emerald-700 mb-3">
+            Anote ou envie ao cliente. Esta senha não será exibida novamente.
+          </p>
+          <div className="space-y-2">
+            {generatedEmail && (
+              <div className="flex items-center justify-between bg-white rounded-xl px-3 py-2.5 border border-emerald-200">
+                <div className="min-w-0 flex-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">E-mail / Login</span>
+                  <p className="text-sm font-mono font-semibold text-slate-800 truncate">{generatedEmail}</p>
+                </div>
+                <Button variant="ghost" size="sm" className="h-8 shrink-0 text-emerald-600" onClick={() => copyText(generatedEmail, "E-mail copiado")}>
+                  <Copy className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            )}
+            <div className="flex items-center justify-between bg-white rounded-xl px-3 py-2.5 border border-emerald-200">
+              <div className="min-w-0 flex-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Senha</span>
+                <p className="text-sm font-mono font-bold text-emerald-800">{generatedPwd}</p>
+              </div>
+              <Button variant="ghost" size="sm" className="h-8 shrink-0 text-emerald-600" onClick={() => copyText(generatedPwd, "Senha copiada")}>
+                <Copy className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            className="w-full mt-3 h-9 text-xs font-semibold border-emerald-300 text-emerald-700 hover:bg-emerald-100 rounded-xl"
+            onClick={() => copyText(`Portal: ${portalUrl}\nE-mail: ${generatedEmail}\nSenha: ${generatedPwd}`, "Credenciais completas copiadas")}
+          >
+            <Copy className="h-3.5 w-3.5 mr-1.5" /> Copiar Tudo (URL + Login + Senha)
+          </Button>
+        </div>
+      )}
+
       {/* ── STATUS CARD ── */}
       <div className={`rounded-2xl border p-5 ${hasAccount
         ? "bg-emerald-50/60 border-emerald-200/60"
