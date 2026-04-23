@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { password: adminPwd, customer_id, email, user_password, name, action } = body;
+    const { password: adminPwd, customer_id, email, user_password, name, action, customer_data } = body;
     const password = user_password || "";
 
     const ADMIN_PASSWORD = Deno.env.get("ADMIN_PASSWORD");
@@ -155,27 +155,64 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (!customer_id) {
-      await logSistemaBackend({
-        tipo: "admin",
-        status: "error",
-        mensagem: "Tentativa de criar usuário sem vínculo com cliente",
-        payload: { email },
-      });
-      return new Response(JSON.stringify({ error: "É obrigatório vincular o usuário a um cliente cadastrado (customer_id)" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    let resolvedCustomerId = customer_id as string | undefined;
+    let customerCheck: { id: string; razao_social: string; email: string } | null = null;
+
+    if (resolvedCustomerId) {
+      const { data: existing } = await supabase
+        .from("customers")
+        .select("id, razao_social, email")
+        .eq("id", resolvedCustomerId)
+        .maybeSingle();
+      customerCheck = existing;
     }
 
-    // Verify customer exists
-    const { data: customerCheck } = await supabase
-      .from("customers")
-      .select("id, razao_social, email")
-      .eq("id", customer_id)
-      .single();
+    // Auto-create customer if not found and customer_data provided
+    if (!customerCheck && customer_data) {
+      const cnpjCpf = String(customer_data.cnpj_ou_cpf || "").replace(/\D/g, "");
+      // Try lookup by email or cpf to avoid duplicates
+      if (customer_data.email) {
+        const { data: byEmail } = await supabase
+          .from("customers")
+          .select("id, razao_social, email")
+          .ilike("email", customer_data.email)
+          .limit(1)
+          .maybeSingle();
+        if (byEmail) customerCheck = byEmail;
+      }
+      if (!customerCheck && cnpjCpf) {
+        const { data: byDoc } = await supabase
+          .from("customers")
+          .select("id, razao_social, email")
+          .eq("cnpj_ou_cpf", cnpjCpf)
+          .limit(1)
+          .maybeSingle();
+        if (byDoc) customerCheck = byDoc;
+      }
+      if (!customerCheck) {
+        const { data: created, error: createErr } = await supabase
+          .from("customers")
+          .insert({
+            email: customer_data.email || email,
+            razao_social: customer_data.razao_social || customer_data.nome_completo || name || email,
+            responsavel: customer_data.responsavel || customer_data.nome_completo || name || email,
+            cnpj_ou_cpf: cnpjCpf,
+            status_cliente: customer_data.status_cliente || "ativo",
+          })
+          .select("id, razao_social, email")
+          .single();
+        if (createErr) {
+          return new Response(JSON.stringify({ error: "Erro ao criar registro de cliente: " + createErr.message }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        customerCheck = created;
+      }
+      resolvedCustomerId = customerCheck.id;
+    }
 
-    if (!customerCheck) {
+    if (!customerCheck || !resolvedCustomerId) {
       return new Response(JSON.stringify({ error: "Cliente não encontrado no sistema" }), {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -204,14 +241,14 @@ Deno.serve(async (req) => {
 
     const userId = authData.user.id;
 
-    if (customer_id) {
+    if (resolvedCustomerId) {
       await supabase
         .from("customers")
         .update({ user_id: userId })
-        .eq("id", customer_id);
+        .eq("id", resolvedCustomerId);
 
       await supabase.from("client_events").insert({
-        customer_id,
+        customer_id: resolvedCustomerId,
         event_type: "cadastro",
         title: "Acesso ao portal criado",
         description: `Credenciais criadas para ${email}`,
@@ -222,7 +259,7 @@ Deno.serve(async (req) => {
       tipo: "admin",
       status: "success",
       mensagem: "Usuário do cliente criado com sucesso",
-      payload: { email, user_id: userId, customer_id },
+      payload: { email, user_id: userId, customer_id: resolvedCustomerId },
     });
 
     // ── EMAIL: Send invite with credentials via SMTP ──

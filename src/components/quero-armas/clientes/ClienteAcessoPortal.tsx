@@ -76,30 +76,7 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
     }
     setCreateLoading(true);
     try {
-      let customerId = customer?.id;
-
-      // If no customer record exists, we need one first
-      if (!customerId) {
-        const { data: newCust, error: custErr } = await supabase
-          .from("customers")
-          .insert({
-            email: cliente.email,
-            razao_social: cliente.nome_completo,
-            responsavel: cliente.nome_completo,
-            cnpj_ou_cpf: (cliente.cpf || "").replace(/\D/g, ""),
-            status_cliente: "ativo",
-          })
-          .select("id")
-          .single();
-
-        if (custErr) {
-          toast.error("Erro ao criar registro de cliente: " + custErr.message);
-          setCreateLoading(false);
-          return;
-        }
-        customerId = newCust.id;
-      }
-
+      const customerId = customer?.id;
       const tempPwd = generateTempPassword();
 
       const { data: sessionData } = await supabase.auth.getSession();
@@ -116,6 +93,13 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
           email: cliente.email,
           user_password: tempPwd,
           name: cliente.nome_completo,
+          customer_data: {
+            email: cliente.email,
+            razao_social: cliente.nome_completo,
+            responsavel: cliente.nome_completo,
+            cnpj_ou_cpf: (cliente.cpf || "").replace(/\D/g, ""),
+            status_cliente: "ativo",
+          },
         },
         headers: { Authorization: `Bearer ${accessToken}` },
       });
