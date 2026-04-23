@@ -3,6 +3,10 @@ import { SiteShell } from '@/shared/components/layout/SiteShell';
 import { Button } from '@/components/ui/button';
 import { GoogleReviewsCarousel } from '@/shared/components/GoogleReviewsCarousel';
 import { SEO } from '@/shared/components/SEO';
+import homeArsenal from '@/assets/home-arsenal.jpg';
+import homeColete from '@/assets/home-colete.jpg';
+import homeMunicao from '@/assets/home-municao.jpg';
+import homeCursoOperador from '@/assets/home-curso-operador.jpg';
 import {
   ArrowRight, ShieldAlert, Crosshair, Skull, Clock, Newspaper, AlertTriangle,
   CheckCircle2, Target, Flame, Lock, Scale, Gavel, Swords, Home, Zap, Shield,
@@ -344,6 +348,10 @@ const HomePage = () => {
             </div>
             <h2 className="font-heading text-2xl font-bold uppercase leading-tight tracking-tight sm:text-4xl lg:text-5xl">Poder de parada de <span className="text-tactical-gradient">verdade</span>. Não de catálogo de revista.</h2>
           </div>
+          <div className="relative mb-10 overflow-hidden rounded-sm border border-border sm:mb-14">
+            <img src={homeArsenal} alt="Arsenal tático: pistolas, revólver .357 Magnum e espingarda calibre 12 sobre superfície escura" loading="lazy" width={1920} height={1080} className="aspect-[16/9] w-full object-cover" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
+          </div>
           <div className="grid gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4">
             {arsenal.map((a) => (
               <article key={a.cal} className="group relative flex flex-col gap-3 rounded-sm border border-border bg-card p-5 transition-colors hover:border-accent/50 sm:p-6">
@@ -375,6 +383,10 @@ const HomePage = () => {
             </div>
             <div className="relative">
               <div className="pointer-events-none absolute inset-0 -z-10 rounded-full bg-primary/10 blur-3xl" />
+              <div className="relative mb-5 overflow-hidden rounded-sm border border-border">
+                <img src={homeColete} alt="Colete balístico tático preto NIJ Nível IIIA com placa rígida e webbing MOLLE" loading="lazy" width={1920} height={1080} className="aspect-[16/9] w-full object-cover" />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/60 to-transparent" />
+              </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
                 {[
                   { lvl: 'NIJ IIIA', stops: 'Pistola .22 → .44 Mag · 9mm · .40 · .357' },
@@ -404,6 +416,10 @@ const HomePage = () => {
             </div>
             <h2 className="font-heading text-2xl font-bold uppercase leading-tight tracking-tight sm:text-4xl lg:text-5xl">Você atirou no bandido. <span className="text-tactical-gradient">O projétil saiu pelas costas dele e matou seu filho no quarto.</span></h2>
             <p className="mt-4 text-base text-muted-foreground sm:text-lg">Não é hipótese. É física básica. <strong className="text-foreground">FMJ (ponta sólida)</strong> atravessa drywall, porta de madeira, parede de tijolo furado. Arma defensiva exige <strong className="text-foreground">munição defensiva</strong>.</p>
+          </div>
+          <div className="relative mb-10 overflow-hidden rounded-sm border border-border sm:mb-14">
+            <img src={homeMunicao} alt="Munições defensivas em latão: cartuchos 9mm, .40 S&W, .45 ACP e .357 Magnum com projéteis FMJ e JHP" loading="lazy" width={1920} height={1080} className="aspect-[16/9] w-full object-cover" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
           </div>
           <div className="grid gap-4 sm:grid-cols-3 sm:gap-5">
             {[
@@ -618,6 +634,10 @@ const HomePage = () => {
             </div>
             <h2 className="font-heading text-2xl font-bold uppercase leading-tight tracking-tight sm:text-4xl lg:text-5xl">Pare de ser <span className="text-tactical-gradient">observador armado</span>. Vire <span className="text-tactical-gradient">operador de pistola</span>.</h2>
             <p className="mt-4 text-base text-muted-foreground sm:text-lg"><strong className="text-foreground">120 disparos reais</strong>, instrutor credenciado <strong className="text-foreground">CTT-CBC (XXVIII turma)</strong>, turma de no máximo <strong className="text-foreground">5 alunos</strong>.</p>
+          </div>
+          <div className="relative mb-10 overflow-hidden rounded-sm border border-border sm:mb-14">
+            <img src={homeCursoOperador} alt="Operador de pistola treinando em estande de tiro coberto, com pistola Glock e proteção auricular, mira em alvo de silhueta" loading="lazy" width={1920} height={1080} className="aspect-[16/9] w-full object-cover" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
           </div>
           <div className="grid gap-10 lg:grid-cols-2 lg:items-start lg:gap-12">
             <div className="flex flex-col gap-6">
