@@ -47,7 +47,7 @@ export default function QALoginPage() {
         return;
       }
       toast.success("Acesso autorizado");
-      navigate("/quero-armas/dashboard", { replace: true });
+      navigate("/dashboard", { replace: true });
     } catch (err: any) {
       toast.error(err.message || "Erro ao autenticar");
     } finally {

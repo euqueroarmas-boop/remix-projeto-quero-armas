@@ -154,7 +154,7 @@ export default function QACasosPage() {
                   <button onClick={() => setDetailCase(c)} className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-slate-100 transition-colors" style={{ color: "hsl(220 10% 55%)" }}>
                     <Eye className="h-4 w-4" />
                   </button>
-                  <button onClick={() => navigate(`/quero-armas/gerar-peca?caso=${c.id}`)} className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-slate-100 transition-colors" style={{ color: "hsl(220 10% 55%)" }}>
+                  <button onClick={() => navigate(`/gerar-peca?caso=${c.id}`)} className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-slate-100 transition-colors" style={{ color: "hsl(220 10% 55%)" }}>
                     <PenTool className="h-4 w-4" />
                   </button>
                 </div>
@@ -245,7 +245,7 @@ export default function QACasosPage() {
               onClose={() => setDetailCase(null)}
               onDeferido={handleSetDeferido}
               onIndeferido={handleSetIndeferido}
-              onEdit={(id) => { setDetailCase(null); navigate(`/quero-armas/gerar-peca?caso=${id}`); }}
+              onEdit={(id) => { setDetailCase(null); navigate(`/gerar-peca?caso=${id}`); }}
               statusColor={statusColor}
             />
           )}

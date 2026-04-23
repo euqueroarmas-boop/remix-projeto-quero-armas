@@ -1,4 +1,4 @@
-import logoSrc from "@/assets/quero-armas-logo.png";
+import logoSrc from "@/assets/-logo.png";
 
 interface QALogoProps {
   className?: string;
@@ -7,7 +7,7 @@ interface QALogoProps {
 
 /**
  * Logo oficial do módulo Quero Armas.
- * Use este componente em qualquer lugar do /quero-armas/* que precise exibir a marca.
+ * Use este componente em qualquer lugar do /* que precise exibir a marca.
  */
 export function QALogo({ className = "h-8 w-8", alt = "Quero Armas" }: QALogoProps) {
   return (

@@ -189,7 +189,7 @@ export default function QARecursosAuditoriaPage() {
     <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-5">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <Link to="/quero-armas/dashboard" className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-800 mb-1">
+          <Link to="/dashboard" className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-800 mb-1">
             <ArrowLeft className="h-3.5 w-3.5" /> Voltar ao Dashboard
           </Link>
           <h1 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900">AUDITORIA DE RECURSOS ADMINISTRATIVOS</h1>
@@ -247,7 +247,7 @@ export default function QARecursosAuditoriaPage() {
                   <tr key={l.itemId} className="border-t border-slate-100 hover:bg-slate-50">
                     <td className="px-3 py-2">
                       {l.clienteIdLegado ? (
-                        <Link to={`/quero-armas/clientes?id=${l.clienteIdLegado}`} className="font-medium text-slate-800 hover:underline">{l.clienteNome}</Link>
+                        <Link to={`/clientes?id=${l.clienteIdLegado}`} className="font-medium text-slate-800 hover:underline">{l.clienteNome}</Link>
                       ) : <span className="font-medium text-slate-800">{l.clienteNome}</span>}
                     </td>
                     <td className="px-3 py-2 text-slate-600">{l.servicoNome}</td>

@@ -169,7 +169,7 @@ export default function QADocumentoDetalhePage() {
       await updateDoc({ ativo: false, ativo_na_ia: false });
       await auditLog("documento_desativado", {});
       toast.success("Documento desativado da IA.");
-      navigate("/quero-armas/base-conhecimento");
+      navigate("/base-conhecimento");
     } catch (err: any) {
       toast.error(err.message || "Erro ao desativar");
     } finally {
@@ -191,7 +191,7 @@ export default function QADocumentoDetalhePage() {
       await auditLog("documento_excluido_permanente", { storage_path: doc.storage_path });
       await supabase.from("qa_documentos_conhecimento" as any).delete().eq("id", doc.id);
       toast.success("Documento excluído permanentemente.");
-      navigate("/quero-armas/base-conhecimento");
+      navigate("/base-conhecimento");
     } catch (err: any) {
       toast.error(err.message || "Erro ao excluir");
     } finally {
@@ -219,7 +219,7 @@ export default function QADocumentoDetalhePage() {
   return (
     <div className="space-y-6 max-w-5xl">
       <div className="flex items-center gap-3">
-        <Link to="/quero-armas/base-conhecimento">
+        <Link to="/base-conhecimento">
           <Button variant="ghost" size="sm" className="text-slate-600 hover:text-slate-700"><ArrowLeft className="h-4 w-4 mr-1" /> Voltar</Button>
         </Link>
       </div>

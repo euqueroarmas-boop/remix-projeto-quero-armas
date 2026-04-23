@@ -63,7 +63,7 @@ export default function QAAuditoriaPage() {
             </div>
           );
           return m.available
-            ? <Link key={m.slug} to={`/quero-armas/auditoria/${m.slug}`}>{card}</Link>
+            ? <Link key={m.slug} to={`/auditoria/${m.slug}`}>{card}</Link>
             : <div key={m.slug}>{card}</div>;
         })}
       </div>

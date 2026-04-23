@@ -159,7 +159,7 @@ const ServiceLandingPage = () => {
 
   // Redireciona o serviço de Curso de Pistola para a landing premium dedicada
   if (slug === 'curso-operador-pistola-nivel-1' || slug === 'curso-operador-pistola') {
-    return <Navigate to="/quero-armas/curso-operador-pistola" replace />;
+    return <Navigate to="/curso-operador-pistola" replace />;
   }
 
   if (loading) {

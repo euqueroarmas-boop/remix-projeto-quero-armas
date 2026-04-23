@@ -11,7 +11,7 @@ const AuthPage = () => {
   const { user, loading, signIn, signUp } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const from = (location.state as { from?: string })?.from ?? '/quero-armas/area-do-cliente';
+  const from = (location.state as { from?: string })?.from ?? '/area-do-cliente';
 
   const [tab, setTab] = useState<'signin' | 'signup'>('signin');
   const [submitting, setSubmitting] = useState(false);

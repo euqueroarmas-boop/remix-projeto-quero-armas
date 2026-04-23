@@ -38,6 +38,9 @@ export default function QARoutes() {
   return (
     <Suspense fallback={<Loader />}>
       <Routes>
+        {/* Raiz: redireciona para o dashboard (QALayout cuida da auth) */}
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
         {/* Public routes (no auth required) */}
         <Route path="login" element={<QALoginPage />} />
         <Route path="cadastro" element={<QACadastroPublicoPage />} />
@@ -49,8 +52,8 @@ export default function QARoutes() {
         <Route path="area-do-cliente/login" element={<QAClienteLoginPage />} />
         <Route path="area-do-cliente" element={<QAClientePortalPage />} />
         {/* Legacy redirects */}
-        <Route path="portal/login" element={<Navigate to="/quero-armas/area-do-cliente/login" replace />} />
-        <Route path="portal" element={<Navigate to="/quero-armas/area-do-cliente" replace />} />
+        <Route path="portal/login" element={<Navigate to="/area-do-cliente/login" replace />} />
+        <Route path="portal" element={<Navigate to="/area-do-cliente" replace />} />
         
         {/* Protected admin routes */}
         <Route element={<QALayout />}>
@@ -73,8 +76,11 @@ export default function QARoutes() {
           <Route path="auditoria" element={<QAAuditoriaPage />} />
           <Route path="auditoria/recursos-administrativos" element={<QARecursosAuditoriaPage />} />
           {/* Legacy redirect: rota antiga */}
-          <Route path="recursos-auditoria" element={<Navigate to="/quero-armas/auditoria/recursos-administrativos" replace />} />
+          <Route path="recursos-auditoria" element={<Navigate to="/auditoria/recursos-administrativos" replace />} />
         </Route>
+
+        {/* Catch-all */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>
   );

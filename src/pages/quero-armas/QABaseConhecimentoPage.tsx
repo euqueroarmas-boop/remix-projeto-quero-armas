@@ -217,7 +217,7 @@ function ActivityItem({ item, onDismiss, onReprocess }: { item: TrackedImport; o
         )}
       </div>
       {isDone && (
-        <Link to={`/quero-armas/base-conhecimento/${item.doc_id}`} className="shrink-0">
+        <Link to={`/base-conhecimento/${item.doc_id}`} className="shrink-0">
           <Button size="sm" variant="ghost" className="text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 h-7 px-2 text-[10px] gap-1">
             Abrir <ArrowRight className="h-3 w-3" />
           </Button>
@@ -904,7 +904,7 @@ export default function QABaseConhecimentoPage() {
             return (
               <div key={d.id} className="qa-card flex items-center gap-3 p-4 group">
                 {statusIcon(d.status_processamento)}
-                <Link to={`/quero-armas/base-conhecimento/${d.id}`} className="flex-1 min-w-0 cursor-pointer">
+                <Link to={`/base-conhecimento/${d.id}`} className="flex-1 min-w-0 cursor-pointer">
                   <div className="text-[13px] font-medium truncate flex items-center gap-1.5 transition-colors group-hover:text-blue-600"
                     style={{ color: "hsl(220 20% 18%)" }}>
                     {d.titulo}
@@ -956,7 +956,7 @@ export default function QABaseConhecimentoPage() {
                   className="text-red-300 hover:text-red-500 hover:bg-red-50 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
-                <Link to={`/quero-armas/base-conhecimento/${d.id}`}>
+                <Link to={`/base-conhecimento/${d.id}`}>
                   <ExternalLink className="h-3.5 w-3.5 shrink-0 transition-colors group-hover:text-blue-500" style={{ color: "hsl(220 10% 72%)" }} />
                 </Link>
               </div>

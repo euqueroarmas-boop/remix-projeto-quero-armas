@@ -22,7 +22,7 @@ function QALayoutInner() {
   }
 
   if (!user || !profile) {
-    return <Navigate to="/quero-armas/login" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   return (
@@ -38,7 +38,7 @@ function QALayoutInner() {
           <main className="flex-1 overflow-auto"
             style={{ background: "hsl(220 20% 97%)" }}>
             <div className="px-3 pt-3 md:px-6 md:pt-4">
-              <BackButton fallback="/quero-armas/dashboard" />
+              <BackButton fallback="/dashboard" />
             </div>
             <QABreadcrumb />
             <div className="p-3 md:p-6 lg:p-8">
