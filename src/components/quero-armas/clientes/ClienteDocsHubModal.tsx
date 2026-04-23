@@ -73,6 +73,7 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
   const [file, setFile] = useState<File | null>(null);
   const [extracting, setExtracting] = useState(false);
   const [saving, setSaving] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const showArmaFields = form.tipo_documento !== "cr";
 
