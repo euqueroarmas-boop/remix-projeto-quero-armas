@@ -227,6 +227,28 @@ Deno.serve(async (req) => {
     });
 
     if (authError) {
+      // Idempotent: if user already exists, link to customer and return success
+      const msg = (authError.message || "").toLowerCase();
+      if (msg.includes("already") || msg.includes("registered") || msg.includes("exists")) {
+        const { data: userList } = await supabase.auth.admin.listUsers();
+        const existing = userList?.users?.find(
+          (u: any) => u.email?.toLowerCase() === email.toLowerCase()
+        );
+        if (existing) {
+          // Update password to the new temp password
+          await supabase.auth.admin.updateUserById(existing.id, {
+            password,
+            user_metadata: { ...existing.user_metadata, name: name || email },
+          });
+          if (resolvedCustomerId) {
+            await supabase.from("customers").update({ user_id: existing.id }).eq("id", resolvedCustomerId);
+          }
+          return new Response(
+            JSON.stringify({ success: true, user_id: existing.id, email, reused: true }),
+            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      }
       await logSistemaBackend({
         tipo: "admin",
         status: "error",
