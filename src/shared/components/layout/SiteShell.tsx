@@ -175,6 +175,28 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                     </NavLink>
                   ))}
                   <div className="my-4 h-px bg-border" />
+                  <div className="max-h-[50vh] overflow-y-auto pr-1">
+                    {queroArmasGroups.map((group) => (
+                      <div key={group.label} className="mb-3">
+                        <p className="mb-1 px-1 font-heading text-[10px] uppercase tracking-widest text-accent">
+                          {group.label}
+                        </p>
+                        <div className="flex flex-col">
+                          {group.links.map((link) => (
+                            <Link
+                              key={link.to}
+                              to={link.to}
+                              onClick={() => setMenuOpen(false)}
+                              className="rounded-sm px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-surface-elevated hover:text-foreground"
+                            >
+                              {link.label}
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="my-4 h-px bg-border" />
                   {!user && (
                     <Button asChild variant="default" onClick={() => setMenuOpen(false)}>
                       <Link to="/auth">Acesso Cliente</Link>
