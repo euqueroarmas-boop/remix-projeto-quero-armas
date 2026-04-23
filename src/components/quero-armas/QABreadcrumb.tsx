@@ -33,15 +33,13 @@ const labelOf = (slug: string) =>
 
 export function QABreadcrumb() {
   const location = useLocation();
-  const parts = location.pathname.split("/").filter(Boolean); // ex: ["quero-armas", "auditoria", "recursos-administrativos"]
+  const parts = location.pathname.split("/").filter(Boolean); // ex: ["auditoria", "recursos-administrativos"]
 
-  // Esconde no dashboard (raiz) e em rotas fora do módulo
-  if (parts[0] !== "quero-armas") return null;
-  const inner = parts.slice(1);
-  if (inner.length === 0 || (inner.length === 1 && inner[0] === "dashboard")) return null;
+  // Esconde no dashboard (raiz) e em rotas vazias
+  if (parts.length === 0 || (parts.length === 1 && parts[0] === "dashboard")) return null;
 
   // Trilha (sem incluir "dashboard" pois já é o link inicial)
-  const crumbs = inner.filter((p) => p !== "dashboard");
+  const crumbs = parts.filter((p) => p !== "dashboard");
 
   return (
     <nav
