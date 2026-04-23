@@ -160,6 +160,10 @@ const HomePage = () => {
             <div className="mb-3 font-heading text-xs uppercase tracking-[0.2em] text-accent">Diagnóstico tático</div>
             <h2 className="font-heading text-2xl font-bold uppercase leading-tight tracking-tight sm:text-4xl lg:text-5xl">Quatro cenários. <span className="text-tactical-gradient">Você já está em pelo menos um.</span></h2>
           </div>
+          <div className="relative mb-8 overflow-hidden rounded-sm border border-border sm:mb-12">
+            <img src={homeDor} alt="Silhueta de homem em sala escura às 3 da manhã empunhando pistola Glock em posição de defesa domiciliar" loading="lazy" width={1920} height={1080} className="aspect-[16/9] w-full object-cover" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
+          </div>
           <div className="grid gap-5 sm:grid-cols-2 lg:gap-6">
             {painPoints.map((p, i) => {
               const Icon = p.icon;
