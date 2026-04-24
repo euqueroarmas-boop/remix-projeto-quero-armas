@@ -1,13 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Loader2, Lock, Mail, ShieldCheck, ArrowRight, KeyRound, Sparkles } from "lucide-react";
-import { BackButton } from "@/shared/components/BackButton";
-import logoQueroArmas from "@/assets/quero-armas-logo.png";
+import { Loader2, ChevronLeft, Crosshair, Sparkles } from "lucide-react";
 
 export default function QAClienteLoginPage() {
   const [email, setEmail] = useState("");
@@ -69,156 +64,216 @@ export default function QAClienteLoginPage() {
   };
 
   return (
-    <div className="relative min-h-screen flex flex-col px-5 pt-6 pb-8 overflow-hidden bg-[#070707] text-white">
-      {/* Background tático: vinheta + grid sutil + scanline */}
-      <div className="pointer-events-none absolute inset-0">
+    <div
+      className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden bg-[#030303] text-[#e0e0e0] uppercase"
+      style={{ fontFamily: "'Rajdhani', sans-serif" }}
+    >
+      {/* Tactical grid */}
+      <div
+        className="absolute inset-0 opacity-60 pointer-events-none"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(255,42,42,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,42,42,0.04) 1px, transparent 1px)",
+          backgroundSize: "40px 40px",
+        }}
+      />
+      {/* Vignette */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(circle at center, transparent 0%, #030303 80%)",
+        }}
+      />
+      {/* Scanlines */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-20"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(0,0,0,0) 50%, rgba(0,0,0,0.25) 50%)",
+          backgroundSize: "100% 4px",
+        }}
+      />
+
+      {/* Terminal */}
+      <div className="relative z-10 w-full max-w-[400px] bg-[#0a0a0a]/90 border border-[#1f1f1f] backdrop-blur-md p-6 flex flex-col gap-7 shadow-[0_0_60px_rgba(255,42,42,0.05)]">
+        {/* HUD bar */}
         <div
-          className="absolute inset-0 opacity-[0.06]"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(255,255,255,.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.5) 1px, transparent 1px)",
-            backgroundSize: "56px 56px",
-            maskImage:
-              "radial-gradient(ellipse at center, black 30%, transparent 75%)",
-            WebkitMaskImage:
-              "radial-gradient(ellipse at center, black 30%, transparent 75%)",
-          }}
-        />
-        <div className="absolute -top-32 left-1/2 -translate-x-1/2 h-[380px] w-[380px] rounded-full bg-red-700/15 blur-3xl" />
-        <div className="absolute bottom-0 inset-x-0 h-48 bg-gradient-to-t from-black to-transparent" />
-      </div>
-
-      {/* Topbar */}
-      <div className="relative z-10 flex items-center justify-between mb-6">
-        <BackButton fallback="/" />
-        <div className="flex items-center gap-1.5 text-[10px] tracking-[0.2em] uppercase text-white/40">
-          <span className="relative flex h-1.5 w-1.5">
-            <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
-            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
-          </span>
-          Sistema online
+          className="flex items-center justify-between text-[11px] tracking-[0.2em] text-zinc-500"
+          style={{ fontFamily: "'JetBrains Mono', monospace" }}
+        >
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 hover:text-[#ff2a2a] transition-colors group"
+          >
+            <ChevronLeft className="h-3 w-3 text-[#ff2a2a] group-hover:-translate-x-0.5 transition-transform" />
+            VOLTAR
+          </button>
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full rounded-none bg-[#ff2a2a] opacity-75 animate-ping" />
+              <span className="relative inline-flex h-1.5 w-1.5 bg-[#ff2a2a]" />
+            </span>
+            <span>NODE_SECURE</span>
+          </div>
         </div>
-      </div>
 
-      <div className="relative z-10 w-full max-w-sm mx-auto flex-1 flex flex-col">
-        {/* Logo + título */}
-        <div className="text-center mb-6">
-          <img
-            src={logoQueroArmas}
-            alt="Quero Armas"
-            className="h-24 w-auto mx-auto object-contain mix-blend-screen drop-shadow-[0_6px_24px_rgba(220,38,38,0.35)]"
-            draggable={false}
-          />
-          <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-red-500/25 bg-red-500/[0.06]">
-            <ShieldCheck className="h-3 w-3 text-red-400" />
-            <span className="text-[10px] text-red-300/90 tracking-[0.22em] uppercase font-bold">
-              Área do Cliente
+        {/* Branding */}
+        <div className="flex flex-col items-center gap-3">
+          <div className="text-[#ff2a2a] flex items-center gap-2.5 tracking-[0.15em] font-bold">
+            <span
+              className="text-sm opacity-50"
+              style={{ fontFamily: "'JetBrains Mono', monospace" }}
+            >
+              [
+            </span>
+            <Crosshair className="h-5 w-5" strokeWidth={2.5} />
+            <span className="text-xl">QUERO ARMAS</span>
+            <span
+              className="text-sm opacity-50"
+              style={{ fontFamily: "'JetBrains Mono', monospace" }}
+            >
+              ]
             </span>
           </div>
-        </div>
-
-        {/* CTA PRIMEIRO ACESSO — destaque máximo */}
-        <button
-          type="button"
-          onClick={() => navigate("/ativar-acesso")}
-          className="group relative mb-6 w-full overflow-hidden rounded-2xl p-[1.5px] bg-gradient-to-r from-red-500 via-red-600 to-red-800 shadow-[0_10px_40px_-10px_rgba(220,38,38,0.6)] transition-transform active:scale-[0.99]"
-        >
-          <div className="relative rounded-[14px] bg-gradient-to-br from-[#1a0606] via-[#0d0303] to-[#1a0606] px-4 py-4 flex items-center gap-3">
-            {/* shimmer */}
-            <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-            <div className="relative shrink-0 h-11 w-11 rounded-xl bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center shadow-inner shadow-red-900/50">
-              <Sparkles className="h-5 w-5 text-white" />
-            </div>
-            <div className="relative flex-1 text-left">
-              <div className="flex items-center gap-1.5 text-[9px] font-bold text-red-400 tracking-[0.2em] uppercase">
-                <span className="h-px w-3 bg-red-500/60" />
-                Primeiro acesso
-              </div>
-              <div className="text-[15px] font-bold text-white leading-tight mt-0.5">
-                Ativar minha conta
-              </div>
-              <div className="text-[10px] text-white/50 mt-0.5">
-                Já recebeu o convite? Comece aqui.
-              </div>
-            </div>
-            <ArrowRight className="relative h-5 w-5 text-red-400 transition-transform group-hover:translate-x-1" />
-          </div>
-        </button>
-
-        {/* Divisor */}
-        <div className="flex items-center gap-3 mb-5">
-          <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent" />
-          <span className="text-[10px] tracking-[0.25em] uppercase text-white/35 font-semibold">
-            Já tenho conta
-          </span>
-          <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent" />
-        </div>
-
-        {/* Form login (secundário) */}
-        <form
-          onSubmit={handleLogin}
-          className="relative space-y-3.5 rounded-2xl p-5 border border-white/[0.08] bg-white/[0.02] backdrop-blur-xl"
-        >
-          <div className="space-y-1.5">
-            <Label htmlFor="email" className="text-white/45 text-[10px] uppercase tracking-[0.18em] font-bold">
-              E-mail
-            </Label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/25" />
-              <Input
-                id="email" type="email" required value={email}
-                onChange={e => setEmail(e.target.value)}
-                className="pl-9 h-11 text-sm rounded-lg bg-black/50 border-white/[0.08] text-white placeholder:text-white/20 focus:border-red-500/50 focus:ring-red-500/15"
-                placeholder="seu@email.com"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="password" className="text-white/45 text-[10px] uppercase tracking-[0.18em] font-bold">
-              Senha
-            </Label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/25" />
-              <Input
-                id="password" type="password" required value={password}
-                onChange={e => setPassword(e.target.value)}
-                className="pl-9 h-11 text-sm rounded-lg bg-black/50 border-white/[0.08] text-white placeholder:text-white/20 focus:border-red-500/50 focus:ring-red-500/15"
-                placeholder="••••••••"
-              />
-            </div>
-          </div>
-
-          <Button
-            type="submit"
-            disabled={loading}
-            className="group w-full h-11 text-sm font-bold rounded-lg border border-white/10 text-white/90 bg-white/[0.04] hover:bg-white/[0.08] hover:text-white transition-all active:scale-[0.98]"
+          <div
+            className="text-[9px] tracking-[0.3em] text-zinc-500 px-3 py-1 border border-zinc-800"
+            style={{ fontFamily: "'JetBrains Mono', monospace" }}
           >
-            {loading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <span className="inline-flex items-center gap-2 tracking-wider uppercase">
-                <KeyRound className="h-4 w-4" />
-                Entrar
-              </span>
-            )}
-          </Button>
+            PROTOCOLO_LEGAL_ARMAMENTO
+          </div>
+        </div>
 
-          <div className="text-center pt-0.5">
+        {/* PRIMEIRO ACESSO — destaque máximo */}
+        <div className="flex flex-col gap-2">
+          <div
+            className="text-[10px] tracking-[0.2em] text-zinc-500 pl-2 border-l-2 border-[#ff2a2a]/50"
+            style={{ fontFamily: "'JetBrains Mono', monospace" }}
+          >
+            &gt; Inicializar Registro
+          </div>
+          <button
+            type="button"
+            onClick={() => navigate("/ativar-acesso")}
+            className="w-full relative bg-[#ff2a2a]/5 hover:bg-[#ff2a2a]/10 border border-[#ff2a2a]/40 hover:border-[#ff2a2a] p-6 flex flex-col items-center gap-3 transition-all shadow-[0_0_25px_rgba(255,42,42,0.15)] hover:shadow-[0_0_45px_rgba(255,42,42,0.35)] group"
+          >
+            {/* targeting brackets */}
+            <div className="absolute top-0 left-0 size-3 border-t-2 border-l-2 border-[#ff2a2a]" />
+            <div className="absolute top-0 right-0 size-3 border-t-2 border-r-2 border-[#ff2a2a]" />
+            <div className="absolute bottom-0 left-0 size-3 border-b-2 border-l-2 border-[#ff2a2a]" />
+            <div className="absolute bottom-0 right-0 size-3 border-b-2 border-r-2 border-[#ff2a2a]" />
+
+            <Sparkles className="h-6 w-6 text-[#ff2a2a] group-hover:scale-110 transition-transform" />
+            <div className="flex flex-col items-center text-center gap-1">
+              <span className="text-2xl font-bold tracking-widest text-white">
+                PRIMEIRO ACESSO
+              </span>
+              <span
+                className="text-[11px] tracking-[0.25em] text-[#ff2a2a]"
+                style={{ fontFamily: "'JetBrains Mono', monospace" }}
+              >
+                ATIVAR_MINHA_CONTA // 0X1
+              </span>
+            </div>
+          </button>
+        </div>
+
+        {/* Divider */}
+        <div className="flex items-center gap-4 opacity-60">
+          <div className="h-px bg-[#1f1f1f] flex-1" />
+          <div
+            className="text-[9px] tracking-[0.3em] text-zinc-500"
+            style={{ fontFamily: "'JetBrains Mono', monospace" }}
+          >
+            AUTENTICAR_OPERADOR
+          </div>
+          <div className="h-px bg-[#1f1f1f] flex-1" />
+        </div>
+
+        {/* Login form (secundário) */}
+        <form onSubmit={handleLogin} className="flex flex-col gap-5">
+          <div className="flex flex-col gap-2">
+            <label
+              className="text-[10px] tracking-[0.2em] text-zinc-500"
+              style={{ fontFamily: "'JetBrains Mono', monospace" }}
+            >
+              ID CREDENCIAL
+            </label>
+            <div className="flex items-center border-b border-[#1f1f1f] focus-within:border-[#ff2a2a]/60 bg-black/40 transition-colors">
+              <span
+                className="text-[#ff2a2a]/60 text-sm pl-3"
+                style={{ fontFamily: "'JetBrains Mono', monospace" }}
+              >
+                &gt;
+              </span>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="seu@email.com"
+                className="w-full bg-transparent p-3 text-sm text-white outline-none lowercase placeholder:text-zinc-700 placeholder:tracking-wider"
+                style={{ fontFamily: "'JetBrains Mono', monospace" }}
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label
+              className="text-[10px] tracking-[0.2em] text-zinc-500"
+              style={{ fontFamily: "'JetBrains Mono', monospace" }}
+            >
+              CHAVE DE ACESSO
+            </label>
+            <div className="flex items-center border-b border-[#1f1f1f] focus-within:border-[#ff2a2a]/60 bg-black/40 transition-colors">
+              <span
+                className="text-[#ff2a2a]/60 text-sm pl-3"
+                style={{ fontFamily: "'JetBrains Mono', monospace" }}
+              >
+                &gt;
+              </span>
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full bg-transparent p-3 text-sm tracking-widest text-white outline-none placeholder:text-zinc-700"
+                style={{ fontFamily: "'JetBrains Mono', monospace" }}
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between mt-1">
             <button
               type="button"
               onClick={handleForgotPassword}
-              className="text-[11px] text-white/35 hover:text-red-400 transition-colors"
+              className="text-[10px] text-zinc-500 hover:text-[#ff2a2a] tracking-[0.2em] transition-colors"
+              style={{ fontFamily: "'JetBrains Mono', monospace" }}
             >
-              Esqueci minha senha
+              [ RECUPERAR ]
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="border border-[#1f1f1f] hover:border-zinc-400 px-6 py-2.5 text-[13px] tracking-[0.15em] text-zinc-300 hover:text-white font-bold bg-[#030303] transition-all active:scale-[0.98] inline-flex items-center gap-2"
+            >
+              {loading ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                "LOGIN"
+              )}
             </button>
           </div>
         </form>
-
-        <p className="text-center text-[10px] text-white/25 mt-auto pt-8 tracking-[0.22em] uppercase font-semibold">
-          Ambiente seguro · Dados protegidos
-        </p>
       </div>
+
+      {/* Webfont loader */}
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Rajdhani:wght@500;600;700&display=swap"
+      />
     </div>
   );
 }
