@@ -594,6 +594,159 @@ export type Database = {
           },
         ]
       }
+      cliente_acesso_logs: {
+        Row: {
+          created_at: string
+          customer_id: string | null
+          detalhes: Json | null
+          email: string | null
+          evento: string
+          id: string
+          identificador_mascarado: string | null
+          ip: string | null
+          qa_cliente_id: number | null
+          status: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          customer_id?: string | null
+          detalhes?: Json | null
+          email?: string | null
+          evento: string
+          id?: string
+          identificador_mascarado?: string | null
+          ip?: string | null
+          qa_cliente_id?: number | null
+          status?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string | null
+          detalhes?: Json | null
+          email?: string | null
+          evento?: string
+          id?: string
+          identificador_mascarado?: string | null
+          ip?: string | null
+          qa_cliente_id?: number | null
+          status?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      cliente_auth_links: {
+        Row: {
+          activated_at: string | null
+          created_at: string
+          customer_id: string | null
+          documento_normalizado: string | null
+          email: string | null
+          email_pendente: string | null
+          id: string
+          last_login_at: string | null
+          motivo: string | null
+          qa_cliente_id: number | null
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          activated_at?: string | null
+          created_at?: string
+          customer_id?: string | null
+          documento_normalizado?: string | null
+          email?: string | null
+          email_pendente?: string | null
+          id?: string
+          last_login_at?: string | null
+          motivo?: string | null
+          qa_cliente_id?: number | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          activated_at?: string | null
+          created_at?: string
+          customer_id?: string | null
+          documento_normalizado?: string | null
+          email?: string | null
+          email_pendente?: string | null
+          id?: string
+          last_login_at?: string | null
+          motivo?: string | null
+          qa_cliente_id?: number | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cliente_auth_links_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cliente_auth_links_qa_cliente_id_fkey"
+            columns: ["qa_cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cliente_otp_codes: {
+        Row: {
+          attempts: number
+          code_hash: string
+          consumed_at: string | null
+          created_at: string
+          customer_id: string | null
+          documento_normalizado: string | null
+          email: string
+          expires_at: string
+          id: string
+          ip: string | null
+          purpose: string
+          qa_cliente_id: number | null
+        }
+        Insert: {
+          attempts?: number
+          code_hash: string
+          consumed_at?: string | null
+          created_at?: string
+          customer_id?: string | null
+          documento_normalizado?: string | null
+          email: string
+          expires_at: string
+          id?: string
+          ip?: string | null
+          purpose?: string
+          qa_cliente_id?: number | null
+        }
+        Update: {
+          attempts?: number
+          code_hash?: string
+          consumed_at?: string | null
+          created_at?: string
+          customer_id?: string | null
+          documento_normalizado?: string | null
+          email?: string
+          expires_at?: string
+          id?: string
+          ip?: string | null
+          purpose?: string
+          qa_cliente_id?: number | null
+        }
+        Relationships: []
+      }
       cms_blocks: {
         Row: {
           active: boolean
