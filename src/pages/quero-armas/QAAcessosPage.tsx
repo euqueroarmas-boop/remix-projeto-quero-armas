@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   ShieldCheck, RefreshCw, CheckCircle2, XCircle, Mail, Search,
-  Trash2, Send, AlertTriangle, History, Loader2, User, Filter,
+  Trash2, Send, AlertTriangle, History, Loader2, User,
+  Users, Clock, ShieldAlert, ShieldOff,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -133,68 +134,98 @@ export default function QAAcessosPage() {
   };
 
   return (
-    <div className="p-6 max-w-[1400px] mx-auto">
-      <header className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-lg bg-slate-900 text-white flex items-center justify-center">
-            <ShieldCheck className="h-5 w-5" />
-          </div>
-          <div>
-            <h1 className="text-xl font-semibold text-slate-900">Acessos de Clientes</h1>
-            <p className="text-xs text-slate-500">Gerencie vínculos, ativações pendentes e auditoria de portal.</p>
-          </div>
+    <div className="space-y-5 md:space-y-6 max-w-7xl mx-auto">
+      {/* Page title */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-xl md:text-2xl font-bold tracking-tight" style={{ color: "hsl(220 20% 18%)" }}>
+            Acessos de Clientes
+          </h1>
+          <p className="text-sm mt-0.5" style={{ color: "hsl(220 10% 62%)" }}>
+            Vínculos, ativações pendentes e auditoria do portal.
+          </p>
         </div>
-        <Button onClick={load} variant="outline" size="sm" disabled={loading}>
-          {loading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <RefreshCw className="h-4 w-4 mr-1" />}
-          Atualizar
-        </Button>
-      </header>
+        <button
+          onClick={load}
+          disabled={loading}
+          className="flex items-center gap-1.5 h-8 px-3 text-[11px] font-semibold rounded-md transition-all hover:opacity-90 shadow-sm no-glow disabled:opacity-60"
+          style={{ background: "hsl(230 80% 56%)", color: "#ffffff" }}
+        >
+          {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+          <span className="hidden sm:inline">Atualizar</span>
+        </button>
+      </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-5">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
         {([
-          ["all", "Total", counts.all, "bg-slate-50 text-slate-700"],
-          ["active", "Ativos", counts.active, "bg-emerald-50 text-emerald-700"],
-          ["pending", "Pendentes", counts.pending, "bg-amber-50 text-amber-700"],
-          ["awaiting_admin", "Aguard. Admin", counts.awaiting_admin, "bg-orange-50 text-orange-700"],
-          ["blocked", "Bloqueados", counts.blocked, "bg-rose-50 text-rose-700"],
-        ] as const).map(([key, label, n, cls]) => (
-          <button key={key}
-            onClick={() => setStatusFilter(key as string)}
-            className={`text-left rounded-lg border p-3 transition ${statusFilter === key ? "border-slate-900 ring-1 ring-slate-900" : "border-slate-200"} ${cls}`}>
-            <div className="text-[11px] uppercase tracking-wide opacity-70">{label}</div>
-            <div className="text-2xl font-semibold">{n}</div>
-          </button>
-        ))}
+          { key: "all", label: "Total", value: counts.all, icon: Users, color: "hsl(230 80% 56%)" },
+          { key: "active", label: "Ativos", value: counts.active, icon: CheckCircle2, color: "hsl(152 60% 42%)" },
+          { key: "pending", label: "Pendentes", value: counts.pending, icon: Clock, color: "hsl(38 92% 50%)" },
+          { key: "awaiting_admin", label: "Aguard. Admin", value: counts.awaiting_admin, icon: ShieldAlert, color: "hsl(24 90% 54%)" },
+          { key: "blocked", label: "Bloqueados", value: counts.blocked, icon: ShieldOff, color: "hsl(0 72% 55%)" },
+        ] as const).map((k) => {
+          const active = statusFilter === k.key;
+          const Icon = k.icon;
+          return (
+            <button
+              key={k.key}
+              onClick={() => setStatusFilter(k.key)}
+              className={`qa-card qa-hover-lift p-4 md:p-5 text-left transition-all ${active ? "ring-2" : ""}`}
+              style={active ? { boxShadow: `inset 0 0 0 2px ${k.color}` } : undefined}
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div
+                  className="w-9 h-9 rounded-lg flex items-center justify-center"
+                  style={{ background: k.color + "14" }}
+                >
+                  <Icon className="h-4 w-4" style={{ color: k.color }} />
+                </div>
+              </div>
+              <div className="qa-kpi text-2xl md:text-3xl mb-1" style={{ color: "hsl(220 20% 14%)" }}>
+                {k.value.toLocaleString("pt-BR")}
+              </div>
+              <div className="text-xs font-medium" style={{ color: "hsl(220 10% 55%)" }}>{k.label}</div>
+            </button>
+          );
+        })}
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-1 border-b border-slate-200 mb-4">
+      <div className="qa-card p-1.5 inline-flex items-center gap-1">
         {[
           { k: "acessos", label: "Vínculos", icon: ShieldCheck },
           { k: "logs", label: "Auditoria", icon: History },
-        ].map(({ k, label, icon: Icon }) => (
-          <button key={k}
-            onClick={() => setTab(k as any)}
-            className={`px-4 py-2 text-sm font-medium flex items-center gap-2 border-b-2 transition ${
-              tab === k ? "border-slate-900 text-slate-900" : "border-transparent text-slate-500 hover:text-slate-700"
-            }`}>
-            <Icon className="h-4 w-4" /> {label}
-          </button>
-        ))}
+        ].map(({ k, label, icon: Icon }) => {
+          const isActive = tab === k;
+          return (
+            <button
+              key={k}
+              onClick={() => setTab(k as any)}
+              className="flex items-center gap-1.5 h-8 px-3 text-xs font-semibold rounded-md transition-all"
+              style={
+                isActive
+                  ? { background: "hsl(230 80% 56%)", color: "#ffffff" }
+                  : { color: "hsl(220 10% 45%)" }
+              }
+            >
+              <Icon className="h-3.5 w-3.5" /> {label}
+            </button>
+          );
+        })}
       </div>
 
       {tab === "acessos" && (
-        <>
-          <div className="flex gap-2 mb-3">
+        <div className="qa-card p-4 md:p-5">
+          <div className="flex gap-2 mb-4">
             <div className="relative flex-1">
               <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <Input placeholder="Buscar por nome, e-mail, CPF/CNPJ..." className="pl-9"
+              <Input placeholder="Buscar por nome, e-mail, CPF/CNPJ..." className="pl-9 bg-white"
                 value={search} onChange={(e) => setSearch(e.target.value)} />
             </div>
           </div>
 
-          <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
+          <div className="rounded-xl border bg-white overflow-hidden" style={{ borderColor: "hsl(220 13% 91%)" }}>
             {loading ? (
               <div className="p-12 flex justify-center text-slate-400">
                 <Loader2 className="h-6 w-6 animate-spin" />
@@ -276,11 +307,12 @@ export default function QAAcessosPage() {
               </div>
             )}
           </div>
-        </>
+        </div>
       )}
 
       {tab === "logs" && (
-        <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
+        <div className="qa-card p-4 md:p-5">
+          <div className="rounded-xl border bg-white overflow-hidden" style={{ borderColor: "hsl(220 13% 91%)" }}>
           {loading ? (
             <div className="p-12 flex justify-center text-slate-400">
               <Loader2 className="h-6 w-6 animate-spin" />
@@ -308,6 +340,7 @@ export default function QAAcessosPage() {
               ))}
             </div>
           )}
+          </div>
         </div>
       )}
     </div>
