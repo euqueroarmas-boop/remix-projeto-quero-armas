@@ -113,6 +113,16 @@ export default function QAClienteLoginPage() {
           </div>
         </form>
 
+        <div className="text-center mt-4">
+          <button
+            type="button"
+            onClick={() => navigate("/ativar-acesso")}
+            className="text-xs text-blue-600 hover:text-blue-800 font-medium transition-colors"
+          >
+            Primeiro acesso? Ativar minha conta →
+          </button>
+        </div>
+
         <p className="text-center text-[10px] text-slate-300 mt-6 tracking-wider">
           Ambiente seguro · Dados protegidos
         </p>
