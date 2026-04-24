@@ -12,7 +12,21 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/shared/auth/AuthProvider';
 import { useCart } from '@/shared/cart/CartProvider';
-import { Menu, ShieldCheck, ShoppingCart, ChevronDown } from 'lucide-react';
+import {
+  Menu,
+  ShieldCheck,
+  ShoppingCart,
+  ChevronDown,
+  X,
+  Briefcase,
+  Stethoscope,
+  UserPlus,
+  Camera,
+  UserCircle,
+  LayoutDashboard,
+  LogIn,
+  ChevronRight,
+} from 'lucide-react';
 import logoWhite from '@/assets/logo-white.png';
 import { BackButton } from '@/shared/components/BackButton';
 
@@ -21,28 +35,30 @@ interface SiteShellProps {
 }
 
 const navItems = [
-  { to: '/servicos', label: 'Serviços' },
-  { to: '/descobrir-meu-caminho', label: 'Diagnóstico' },
+  { to: '/servicos', label: 'Serviços', icon: Briefcase },
+  { to: '/descobrir-meu-caminho', label: 'Diagnóstico', icon: Stethoscope },
 ];
 
-const queroArmasGroups: { label: string; links: { to: string; label: string }[] }[] = [
+type NavLinkItem = { to: string; label: string; icon: typeof Briefcase };
+
+const queroArmasGroups: { label: string; links: NavLinkItem[] }[] = [
   {
     label: 'Público',
     links: [
-      { to: '/cadastro', label: 'Cadastro de cliente' },
-      { to: '/enviar-foto', label: 'Enviar foto' },
+      { to: '/cadastro', label: 'Cadastro de cliente', icon: UserPlus },
+      { to: '/enviar-foto', label: 'Enviar foto', icon: Camera },
     ],
   },
   {
     label: 'Área do Cliente',
     links: [
-      { to: '/area-do-cliente', label: 'Área do Cliente' },
+      { to: '/area-do-cliente', label: 'Área do Cliente', icon: UserCircle },
     ],
   },
   {
     label: 'Administração',
     links: [
-      { to: '/dashboard', label: 'Painel Admin' },
+      { to: '/dashboard', label: 'Painel Admin', icon: LayoutDashboard },
     ],
   },
 ];
@@ -138,64 +154,134 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                   <Menu className="size-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-[85vw] max-w-sm border-border bg-background">
-                <div className="mt-8 flex flex-col gap-1">
-                  {navItems.map((item) => (
-                    <NavLink
-                      key={item.to}
-                      to={item.to}
-                      onClick={() => setMenuOpen(false)}
-                      className={({ isActive }) =>
-                        `rounded-sm border px-4 py-3 font-heading text-sm uppercase tracking-[0.15em] transition-colors ${
-                          isActive
-                            ? 'border-accent/40 bg-accent/10 text-accent'
-                            : 'border-transparent text-foreground hover:border-border hover:bg-surface-elevated'
-                        }`
-                      }
-                    >
-                      {item.label}
-                    </NavLink>
-                  ))}
-                  <div className="my-4 h-px bg-border" />
-                  <div className="max-h-[50vh] overflow-y-auto pr-1">
+              <SheetContent
+                side="right"
+                className="flex w-[88vw] max-w-sm flex-col gap-0 border-l border-border bg-gradient-to-b from-background via-background to-surface-overlay p-0 [&>button]:hidden"
+              >
+                {/* Header do drawer */}
+                <div className="relative flex items-center justify-between border-b border-border/60 bg-surface-overlay/80 px-5 py-4 backdrop-blur">
+                  <div className="absolute inset-x-0 top-0 h-px bg-gradient-tactical" />
+                  <Link
+                    to="/"
+                    onClick={() => setMenuOpen(false)}
+                    className="flex items-center gap-2"
+                    aria-label="Eu Quero Armas — Início"
+                  >
+                    <img src={logoWhite} alt="Eu Quero Armas" className="h-8 w-auto" />
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setMenuOpen(false)}
+                    className="flex size-9 items-center justify-center rounded-sm border border-border/60 text-muted-foreground transition-colors hover:border-accent/60 hover:text-accent"
+                    aria-label="Fechar menu"
+                  >
+                    <X className="size-4" />
+                  </button>
+                </div>
+
+                {/* Conteúdo rolável */}
+                <div className="flex-1 overflow-y-auto px-4 py-5">
+                  {/* Navegação principal */}
+                  <p className="mb-2 px-2 font-heading text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">
+                    Navegação
+                  </p>
+                  <div className="flex flex-col gap-1">
+                    {navItems.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <NavLink
+                          key={item.to}
+                          to={item.to}
+                          onClick={() => setMenuOpen(false)}
+                          className={({ isActive }) =>
+                            `group flex items-center gap-3 rounded-sm border px-3 py-3 font-heading text-sm uppercase tracking-[0.12em] transition-all ${
+                              isActive
+                                ? 'border-accent/50 bg-accent/10 text-accent shadow-brass'
+                                : 'border-border/40 bg-surface-elevated/40 text-foreground hover:border-accent/30 hover:bg-surface-elevated hover:text-accent'
+                            }`
+                          }
+                        >
+                          <Icon className="size-4 shrink-0" />
+                          <span className="flex-1">{item.label}</span>
+                          <ChevronRight className="size-3.5 opacity-0 transition-opacity group-hover:opacity-60" />
+                        </NavLink>
+                      );
+                    })}
+                  </div>
+
+                  {/* Grupos Quero Armas */}
+                  <div className="mt-6">
                     {queroArmasGroups.map((group) => (
-                      <div key={group.label} className="mb-3">
-                        <p className="mb-1 px-1 font-heading text-[10px] uppercase tracking-widest text-accent">
-                          {group.label}
-                        </p>
-                        <div className="flex flex-col">
-                          {group.links.map((link) => (
-                            <Link
-                              key={link.to}
-                              to={link.to}
-                              onClick={() => setMenuOpen(false)}
-                              className="rounded-sm px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-surface-elevated hover:text-foreground"
-                            >
-                              {link.label}
-                            </Link>
-                          ))}
+                      <div key={group.label} className="mb-5">
+                        <div className="mb-2 flex items-center gap-2 px-2">
+                          <span className="h-px flex-1 bg-border/60" />
+                          <p className="font-heading text-[10px] uppercase tracking-[0.2em] text-accent">
+                            {group.label}
+                          </p>
+                          <span className="h-px flex-1 bg-border/60" />
+                        </div>
+                        <div className="flex flex-col gap-0.5">
+                          {group.links.map((link) => {
+                            const Icon = link.icon;
+                            return (
+                              <Link
+                                key={link.to}
+                                to={link.to}
+                                onClick={() => setMenuOpen(false)}
+                                className="group flex items-center gap-3 rounded-sm px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-surface-elevated hover:text-foreground"
+                              >
+                                <Icon className="size-4 shrink-0 text-muted-foreground/60 group-hover:text-accent" />
+                                <span className="flex-1">{link.label}</span>
+                                <ChevronRight className="size-3.5 opacity-0 transition-opacity group-hover:opacity-60" />
+                              </Link>
+                            );
+                          })}
                         </div>
                       </div>
                     ))}
                   </div>
-                  <div className="my-4 h-px bg-border" />
-                  {!user && (
-                    <Button asChild variant="default" onClick={() => setMenuOpen(false)}>
-                      <Link to="/auth">Acesso Cliente</Link>
-                    </Button>
-                  )}
-                  {user && (
-                    <Button asChild variant="default" onClick={() => setMenuOpen(false)}>
-                      <Link to="/area-do-cliente">Meu Portal</Link>
-                    </Button>
-                  )}
-                  {user && isAdmin && (
-                    <Button asChild variant="outline" onClick={() => setMenuOpen(false)}>
-                      <Link to="/admin">
-                        <ShieldCheck className="mr-2 size-4" /> Painel Admin
+                </div>
+
+                {/* Footer com CTA */}
+                <div className="border-t border-border/60 bg-surface-overlay/80 p-4 backdrop-blur">
+                  {!user ? (
+                    <Button
+                      asChild
+                      className="h-11 w-full font-heading uppercase tracking-[0.15em] shadow-tactical"
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      <Link to="/auth">
+                        <LogIn className="mr-2 size-4" /> Acesso Cliente
                       </Link>
                     </Button>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      <Button
+                        asChild
+                        className="h-11 w-full font-heading uppercase tracking-[0.15em] shadow-tactical"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        <Link to="/area-do-cliente">
+                          <UserCircle className="mr-2 size-4" /> Meu Portal
+                        </Link>
+                      </Button>
+                      {isAdmin && (
+                        <Button
+                          asChild
+                          variant="outline"
+                          className="h-10 w-full font-heading uppercase tracking-[0.15em]"
+                          onClick={() => setMenuOpen(false)}
+                        >
+                          <Link to="/admin">
+                            <ShieldCheck className="mr-2 size-4" /> Painel Admin
+                          </Link>
+                        </Button>
+                      )}
+                    </div>
                   )}
+                  <p className="mt-3 text-center font-heading text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60">
+                    Eu Quero Armas · Conformidade Total
+                  </p>
                 </div>
               </SheetContent>
             </Sheet>
