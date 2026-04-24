@@ -3032,6 +3032,7 @@ export type Database = {
           complemento2: string | null
           cpf: string | null
           created_at: string
+          customer_id: string | null
           data_nascimento: string | null
           email: string | null
           emissor_rg: string | null
@@ -3067,6 +3068,7 @@ export type Database = {
           titulo_eleitor: string | null
           uf_emissor_rg: string | null
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           avatar_tatico_gerado_em?: string | null
@@ -3084,6 +3086,7 @@ export type Database = {
           complemento2?: string | null
           cpf?: string | null
           created_at?: string
+          customer_id?: string | null
           data_nascimento?: string | null
           email?: string | null
           emissor_rg?: string | null
@@ -3119,6 +3122,7 @@ export type Database = {
           titulo_eleitor?: string | null
           uf_emissor_rg?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           avatar_tatico_gerado_em?: string | null
@@ -3136,6 +3140,7 @@ export type Database = {
           complemento2?: string | null
           cpf?: string | null
           created_at?: string
+          customer_id?: string | null
           data_nascimento?: string | null
           email?: string | null
           emissor_rg?: string | null
@@ -3171,8 +3176,17 @@ export type Database = {
           titulo_eleitor?: string | null
           uf_emissor_rg?: string | null
           updated_at?: string
+          user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "qa_clientes_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       qa_clubes: {
         Row: {
