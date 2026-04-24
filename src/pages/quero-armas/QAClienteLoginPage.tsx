@@ -66,7 +66,7 @@ export default function QAClienteLoginPage() {
 
   return (
     <div
-      className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden bg-[#030303] text-[#e0e0e0] uppercase"
+      className="relative min-h-screen flex items-center justify-center p-4 overflow-y-auto md:overflow-hidden bg-[#030303] text-[#e0e0e0] uppercase"
       style={{ fontFamily: "'Rajdhani', sans-serif" }}
     >
       {/* Tactical grid */}
@@ -97,7 +97,7 @@ export default function QAClienteLoginPage() {
       />
 
       {/* Terminal */}
-      <div className="relative z-10 w-full max-w-[400px] bg-[#0a0a0a]/90 border border-[#1f1f1f] backdrop-blur-md p-6 flex flex-col gap-7 shadow-[0_0_60px_rgba(255,42,42,0.05)]">
+      <div className="relative z-10 w-full max-w-[400px] bg-[#0a0a0a]/90 md:border md:border-[#1f1f1f] backdrop-blur-md p-6 flex flex-col gap-7 md:shadow-[0_0_60px_rgba(255,42,42,0.05)]">
         {/* HUD bar */}
         <div
           className="flex items-center justify-between text-[11px] tracking-[0.2em] text-zinc-500"
@@ -265,6 +265,10 @@ export default function QAClienteLoginPage() {
         rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Rajdhani:wght@500;600;700&display=swap"
       />
+      <style>{`
+        html, body { scrollbar-width: none; -ms-overflow-style: none; }
+        html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; height: 0; }
+      `}</style>
     </div>
   );
 }
