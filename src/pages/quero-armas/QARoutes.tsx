@@ -26,6 +26,7 @@ const QACadastroPublicoPage = lazyRetry(() => import("./QACadastroPublicoPage"),
 const QAEnviarFotoPage = lazyRetry(() => import("./QAEnviarFotoPage"), "QAEnviarFotoPage");
 const QAClienteLoginPage = lazyRetry(() => import("./QAClienteLoginPage"), "QAClienteLoginPage");
 const QAClientePortalPage = lazyRetry(() => import("./QAClientePortalPage"), "QAClientePortalPage");
+const QAAtivarAcessoPage = lazyRetry(() => import("./QAAtivarAcessoPage"), "QAAtivarAcessoPage");
 const QACursoOperadorPistolaPage = lazyRetry(() => import("./QACursoOperadorPistolaPage"), "QACursoOperadorPistolaPage");
 const HomePage = lazyRetry(() => import("@/pages/HomePage"), "HomePage");
 
@@ -52,6 +53,8 @@ export default function QARoutes() {
         {/* Client portal (separate auth flow) */}
         <Route path="area-do-cliente/login" element={<QAClienteLoginPage />} />
         <Route path="area-do-cliente" element={<QAClientePortalPage />} />
+        <Route path="ativar-acesso" element={<QAAtivarAcessoPage />} />
+        <Route path="portal/acessar" element={<QAAtivarAcessoPage />} />
         {/* Legacy redirects */}
         <Route path="portal/login" element={<Navigate to="/area-do-cliente/login" replace />} />
         <Route path="portal" element={<Navigate to="/area-do-cliente" replace />} />

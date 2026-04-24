@@ -63,12 +63,7 @@ export default function QAAtivarAcessoPage() {
       }
       setEmailMascarado(data?.email_mascarado || "");
       setClienteNome(data?.cliente_nome || "");
-      // The OTP id is not returned for security; user will paste code → we use email + code → backend matches
-      // We DO need otp_id; backend does return... but in current impl we didn't return it. We need it.
-      // For simplicity backend does return otp via magic link. So we ask user to use the code OR the link.
-      // To make code-only entry work, request returns nothing → we need the code path differently.
-      // Adjust: backend returns success only; user types code; we send identificador+code to verify? Simpler: include otp_id.
-      // We'll rely on a list/most-recent lookup on verify side via email — adjust below.
+      if (data?.otp_id) setOtpId(data.otp_id);
       setStep("otp");
       toast.success(`Código enviado para ${data?.email_mascarado || "seu e-mail"}`);
     } catch (e: any) {
