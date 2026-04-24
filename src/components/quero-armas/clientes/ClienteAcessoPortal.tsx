@@ -76,13 +76,14 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
       const cpfClean = (cliente.cpf || "").replace(/\D/g, "");
       const email = (cliente.email || "").trim().toLowerCase();
 
-      const { data: qaFound } = await supabase
+      const { data: qaFoundRaw } = await supabase
         .from("qa_clientes" as any)
         .select("id, nome_completo, email, cpf, user_id, customer_id, status, updated_at")
         .eq("id", cliente.id)
         .maybeSingle();
 
-      setQaCustomer(qaFound || null);
+      const qaFound = (qaFoundRaw as any) || null;
+      setQaCustomer(qaFound);
 
       let found: any = null;
 
