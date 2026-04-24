@@ -20,6 +20,7 @@ interface Props {
 export default function ClienteAcessoPortal({ cliente }: Props) {
   const [loading, setLoading] = useState(true);
   const [customer, setCustomer] = useState<any>(null);
+  const [qaCustomer, setQaCustomer] = useState<any>(null);
   const [resetLoading, setResetLoading] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
   const [generatedPwd, setGeneratedPwd] = useState("");
@@ -34,7 +35,7 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
   const portalUrl = `${window.location.origin}/area-do-cliente`;
   const resetUrl = `${window.location.origin}/redefinir-senha`;
 
-  const fetchStoredCredentials = useCallback(async (customerRecord?: any) => {
+  const fetchStoredCredentials = useCallback(async (customerRecord?: any, qaCustomerRecord?: any) => {
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       const accessToken = sessionData?.session?.access_token;
@@ -43,13 +44,15 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
       const { data, error } = await supabase.functions.invoke("create-client-user", {
         body: {
           action: "get_credentials",
+          qa_client_id: qaCustomerRecord?.id || cliente.id,
           customer_id: customerRecord?.id,
-          email: customerRecord?.email || cliente.email,
+          email: customerRecord?.email || qaCustomerRecord?.email || cliente.email,
+          document: qaCustomerRecord?.cpf || cliente.cpf,
         },
         headers: { Authorization: `Bearer ${accessToken}` },
       });
 
-      if (error || data?.error || !data?.has_account) {
+      if (error || data?.error) {
         setPersistedPwd("");
         setPersistedEmail("");
         setPersistedHasAccount(false);
@@ -58,25 +61,41 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
       }
 
       setPersistedPwd(data?.temp_password || "");
-      setPersistedEmail(data?.email || customerRecord?.email || cliente.email || "");
-      setPersistedHasAccount(true);
+      setPersistedEmail(data?.email || customerRecord?.email || qaCustomerRecord?.email || cliente.email || "");
+      setPersistedHasAccount(!!data?.has_account);
       setPersistedUserId(data?.user_id || null);
       return data;
     } catch {
       return null;
     }
-  }, [cliente.email]);
+  }, [cliente.cpf, cliente.email, cliente.id]);
 
   const fetchCustomer = useCallback(async () => {
     setLoading(true);
     try {
-      // Look up the WMTi customers table by email or CPF
       const cpfClean = (cliente.cpf || "").replace(/\D/g, "");
       const email = (cliente.email || "").trim().toLowerCase();
 
+      const { data: qaFound } = await supabase
+        .from("qa_clientes" as any)
+        .select("id, nome_completo, email, cpf, user_id, customer_id, status, updated_at")
+        .eq("id", cliente.id)
+        .maybeSingle();
+
+      setQaCustomer(qaFound || null);
+
       let found: any = null;
 
-      if (email) {
+      if (qaFound?.customer_id) {
+        const { data } = await supabase
+          .from("customers")
+          .select("id, email, user_id, razao_social, cnpj_ou_cpf, status_cliente")
+          .eq("id", qaFound.customer_id)
+          .limit(1);
+        if (data && data.length) found = data[0];
+      }
+
+      if (!found && email) {
         const { data } = await supabase
           .from("customers")
           .select("id, email, user_id, razao_social, cnpj_ou_cpf, status_cliente")
@@ -96,25 +115,23 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
         if (data && data.length) found = data[0];
       }
 
-      if (found) {
-        const credentials = await fetchStoredCredentials(found);
+      const credentials = await fetchStoredCredentials(found, qaFound);
+
+      if (found || credentials?.customer_id) {
         setCustomer({
-          ...found,
-          user_id: credentials?.user_id || found.user_id,
-          email: credentials?.email || found.email,
+          ...(found || {}),
+          id: found?.id || credentials?.customer_id,
+          user_id: credentials?.user_id || found?.user_id || null,
+          email: credentials?.email || found?.email || qaFound?.email || cliente.email,
         });
       } else {
         setCustomer(null);
-        setPersistedPwd("");
-        setPersistedEmail("");
-        setPersistedHasAccount(false);
-        setPersistedUserId(null);
       }
     } catch (err) {
       console.error("Erro ao buscar customer:", err);
     }
     setLoading(false);
-  }, [cliente.cpf, cliente.email, fetchStoredCredentials]);
+  }, [cliente.cpf, cliente.email, cliente.id, fetchStoredCredentials]);
 
   useEffect(() => {
     fetchCustomer();
@@ -140,15 +157,17 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
 
       const { data, error } = await supabase.functions.invoke("create-client-user", {
         body: {
+          qa_client_id: qaCustomer?.id || cliente.id,
           customer_id: customerId,
           email: cliente.email,
+          document: qaCustomer?.cpf || cliente.cpf,
           user_password: tempPwd,
           name: cliente.nome_completo,
           customer_data: {
             email: cliente.email,
             razao_social: cliente.nome_completo,
             responsavel: cliente.nome_completo,
-            cnpj_ou_cpf: (cliente.cpf || "").replace(/\D/g, ""),
+            cnpj_ou_cpf: (qaCustomer?.cpf || cliente.cpf || "").replace(/\D/g, ""),
             status_cliente: "ativo",
           },
         },
@@ -167,6 +186,8 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
       setGeneratedEmail(savedEmail);
       setPersistedPwd(savedPassword);
       setPersistedEmail(savedEmail);
+      setPersistedHasAccount(true);
+      setPersistedUserId(data?.user_id || null);
       toast.success("Acesso ao portal criado com sucesso");
       await fetchCustomer();
     } catch (err: any) {
@@ -176,7 +197,8 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
   };
 
   const handleResetPassword = async () => {
-    if (!customer?.id) return;
+    const targetCustomerId = customer?.id;
+    if (!targetCustomerId && !qaCustomer?.id) return;
     setResetLoading(true);
     try {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -190,8 +212,10 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
       const { data, error } = await supabase.functions.invoke("create-client-user", {
         body: {
           action: "reset_password",
-          customer_id: customer.id,
-          email: customer.email,
+          qa_client_id: qaCustomer?.id || cliente.id,
+          customer_id: targetCustomerId,
+          email: customer?.email || qaCustomer?.email || cliente.email,
+          document: qaCustomer?.cpf || cliente.cpf,
           user_password: newPwd || undefined,
         },
         headers: { Authorization: `Bearer ${accessToken}` },
@@ -204,13 +228,16 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
       }
 
       const savedPassword = newPwd || data?.temp_password || "";
-      const savedEmail = data?.email || customer.email || cliente.email;
+      const savedEmail = data?.email || customer?.email || qaCustomer?.email || cliente.email;
       setGeneratedPwd(savedPassword);
       setGeneratedEmail(savedEmail);
       setPersistedPwd(savedPassword);
       setPersistedEmail(savedEmail);
+      setPersistedHasAccount(true);
+      setPersistedUserId(data?.user_id || null);
       setNewPwd("");
       toast.success("Senha redefinida com sucesso");
+      await fetchCustomer();
     } catch (err: any) {
       toast.error(err.message || "Erro ao redefinir senha");
     }
@@ -231,16 +258,15 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
     );
   }
 
-  const hasAccount = !!(customer?.user_id || persistedUserId || persistedHasAccount);
+  const hasAccount = !!(customer?.user_id || qaCustomer?.user_id || persistedUserId || persistedHasAccount);
   const visiblePassword = generatedPwd || persistedPwd;
-  const rawEmail = generatedEmail || persistedEmail || (hasAccount ? (customer?.email || cliente.email) : "");
+  const rawEmail = generatedEmail || persistedEmail || (hasAccount ? (customer?.email || qaCustomer?.email || cliente.email) : "");
   const visibleEmail = rawEmail ? rawEmail.toLowerCase().trim() : "";
-  const displayEmail = visibleEmail || (customer?.email || cliente.email || "").toLowerCase().trim();
-  const displayUserId = customer?.user_id || persistedUserId || "";
+  const displayEmail = visibleEmail || (customer?.email || qaCustomer?.email || cliente.email || "").toLowerCase().trim();
+  const displayUserId = customer?.user_id || qaCustomer?.user_id || persistedUserId || "";
 
   return (
     <div className="space-y-4">
-      {/* ── CREDENCIAIS RECÉM-GERADAS ── */}
       {visiblePassword && (
         <div className="rounded-2xl border-2 border-emerald-300 bg-emerald-50 p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-3">
@@ -276,30 +302,20 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
             size="sm"
             variant="outline"
             className="w-full mt-3 h-9 text-xs font-semibold border-emerald-300 text-emerald-700 hover:bg-emerald-100 rounded-xl"
-            onClick={() => copyText(
-              [
-                `Portal: ${portalUrl}`,
-                `E-mail: ${visibleEmail}`,
-                `Senha: ${visiblePassword}`,
-              ].join("\r\n"),
-              "Credenciais completas copiadas"
-            )}
+            onClick={() => copyText([
+              `Portal: ${portalUrl}`,
+              `E-mail: ${visibleEmail}`,
+              `Senha: ${visiblePassword}`,
+            ].join("\r\n"), "Credenciais completas copiadas")}
           >
             <Copy className="h-3.5 w-3.5 mr-1.5" /> Copiar Tudo (URL + Login + Senha)
           </Button>
         </div>
       )}
 
-      {/* ── STATUS CARD ── */}
-      <div className={`rounded-2xl border p-5 ${hasAccount
-        ? "bg-emerald-50/60 border-emerald-200/60"
-        : "bg-amber-50/40 border-amber-200/50"
-      }`}>
+      <div className={`rounded-2xl border p-5 ${hasAccount ? "bg-emerald-50/60 border-emerald-200/60" : "bg-amber-50/40 border-amber-200/50"}`}>
         <div className="flex items-center gap-3 mb-4">
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${hasAccount
-            ? "bg-emerald-100 text-emerald-600"
-            : "bg-amber-100 text-amber-600"
-          }`}>
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${hasAccount ? "bg-emerald-100 text-emerald-600" : "bg-amber-100 text-amber-600"}`}>
             <Shield className="h-5 w-5" />
           </div>
           <div>
@@ -318,7 +334,6 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
           </div>
         </div>
 
-        {/* Info rows */}
         <div className="space-y-2">
           <InfoRow icon={Mail} label="Login E-mail" value={hasAccount ? displayEmail : "—"} copyable={hasAccount && !!displayEmail} onCopy={() => copyText(displayEmail)} />
           <InfoRow icon={Hash} label="Login CPF/CNPJ" value={hasAccount ? "Habilitado" : "—"} />
@@ -328,10 +343,8 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
         </div>
       </div>
 
-      {/* ── ACTIONS ── */}
       {hasAccount ? (
         <div className="space-y-4">
-          {/* Reset password */}
           <div className="rounded-2xl border border-slate-200 bg-white p-5">
             <div className="flex items-center gap-2 mb-3">
               <KeyRound className="h-4 w-4 text-slate-500" />
@@ -345,12 +358,7 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
                 onChange={e => setNewPwd(e.target.value)}
                 className="text-sm h-9 bg-slate-50 border-slate-200"
               />
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9 shrink-0"
-                onClick={() => setShowPwd(!showPwd)}
-              >
+              <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0" onClick={() => setShowPwd(!showPwd)}>
                 {showPwd ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
               </Button>
               <Button
@@ -365,7 +373,6 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
             </div>
           </div>
 
-          {/* Generated password display */}
           {visiblePassword && (
             <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4">
               <div className="flex items-center justify-between">
@@ -373,12 +380,7 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
                   <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600">Senha gerada</span>
                   <p className="text-sm font-mono font-bold text-emerald-800 mt-0.5">{visiblePassword}</p>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-emerald-600 hover:text-emerald-700 h-8 rounded-xl"
-                  onClick={() => copyText(visiblePassword, "Senha copiada")}
-                >
+                <Button variant="ghost" size="sm" className="text-emerald-600 hover:text-emerald-700 h-8 rounded-xl" onClick={() => copyText(visiblePassword, "Senha copiada")}>
                   <Copy className="h-3.5 w-3.5 mr-1" /> Copiar
                 </Button>
               </div>
@@ -386,7 +388,6 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
           )}
         </div>
       ) : (
-        /* Create access */
         <div className="rounded-2xl border border-slate-200 bg-white p-5">
           <div className="text-center space-y-3">
             <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto">
@@ -411,34 +412,19 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
         </div>
       )}
 
-      {/* ── QUICK LINKS ── */}
       <div className="rounded-2xl border border-slate-200 bg-white p-5">
         <div className="flex items-center gap-2 mb-3">
           <Link2 className="h-4 w-4 text-slate-500" />
           <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600">Links do Portal</h4>
         </div>
         <div className="space-y-2.5">
-          <LinkRow
-            label="URL Login"
-            url={portalUrl}
-            path="/area-do-cliente"
-            onCopy={() => copyText(portalUrl, "URL de login copiada")}
-            onOpen={() => window.open(portalUrl, "_blank")}
-          />
-          <LinkRow
-            label="URL Redefinição de Senha"
-            url={resetUrl}
-            path="/redefinir-senha"
-            onCopy={() => copyText(resetUrl, "URL de reset copiada")}
-            onOpen={() => window.open(resetUrl, "_blank")}
-          />
+          <LinkRow label="URL Login" url={portalUrl} path="/area-do-cliente" onCopy={() => copyText(portalUrl, "URL de login copiada")} onOpen={() => window.open(portalUrl, "_blank")} />
+          <LinkRow label="URL Redefinição de Senha" url={resetUrl} path="/redefinir-senha" onCopy={() => copyText(resetUrl, "URL de reset copiada")} onOpen={() => window.open(resetUrl, "_blank")} />
         </div>
       </div>
     </div>
   );
 }
-
-/* ── Sub-components ── */
 
 function InfoRow({ icon: Icon, label, value, copyable, onCopy }: {
   icon: any; label: string; value: string; copyable?: boolean; onCopy?: () => void;
