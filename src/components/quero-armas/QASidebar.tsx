@@ -34,6 +34,7 @@ const NAV_GROUPS = [
     label: "Sistema",
     items: [
       { title: "Auditoria", url: "/auditoria", icon: ShieldCheck },
+      { title: "Acessos de Clientes", url: "/acessos", icon: ShieldCheck },
       { title: "Histórico", url: "/historico", icon: History },
       { title: "Configurações", url: "/configuracoes", icon: Settings },
     ],
