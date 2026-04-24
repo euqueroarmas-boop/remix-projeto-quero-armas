@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2, Lock, Mail, ShieldCheck, ArrowRight } from "lucide-react";
 import { BackButton } from "@/shared/components/BackButton";
-import logoEuQueroArmas from "@/assets/logo-eu-quero-armas.png";
+import logoQueroArmas from "@/assets/quero-armas-logo.png";
 
 export default function QAClienteLoginPage() {
   const [email, setEmail] = useState("");
@@ -93,9 +93,9 @@ export default function QAClienteLoginPage() {
         <div className="text-center mb-7">
           <div className="inline-flex items-center justify-center mb-5">
             <img
-              src={logoEuQueroArmas}
-              alt="Eu Quero Armas"
-              className="h-16 w-auto object-contain drop-shadow-[0_4px_24px_rgba(220,38,38,0.35)]"
+              src={logoQueroArmas}
+              alt="Quero Armas"
+              className="h-28 w-auto object-contain drop-shadow-[0_8px_32px_rgba(220,38,38,0.25)]"
               draggable={false}
             />
           </div>
