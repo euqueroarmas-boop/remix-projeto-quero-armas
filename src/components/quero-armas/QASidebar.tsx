@@ -71,7 +71,7 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
         borderColor: "hsl(220 13% 91%)",
       }}
     >
-      <div className="py-3 flex flex-col h-full overflow-hidden">
+      <div className="py-3 flex flex-col flex-1">
         {/* Header / toggle */}
         {collapsed ? (
           <button
@@ -108,7 +108,7 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
         )}
 
         {/* Nav groups */}
-        <nav className="flex-1 overflow-y-auto overflow-x-hidden">
+        <nav className="flex-1 overflow-x-hidden">
           {NAV_GROUPS.map(group => {
             const visibleItems = group.items.filter(i => canAccess(i.url));
             if (visibleItems.length === 0) return null;
