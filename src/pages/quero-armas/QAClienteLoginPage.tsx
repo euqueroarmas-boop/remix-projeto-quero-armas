@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, ChevronLeft, Crosshair, Sparkles } from "lucide-react";
+import { Loader2, ChevronLeft, Sparkles } from "lucide-react";
+import logoWhite from "@/assets/logo-white.png";
 
 export default function QAClienteLoginPage() {
   const [email, setEmail] = useState("");
@@ -121,22 +122,12 @@ export default function QAClienteLoginPage() {
 
         {/* Branding */}
         <div className="flex flex-col items-center gap-3">
-          <div className="text-[#ff2a2a] flex items-center gap-2.5 tracking-[0.15em] font-bold">
-            <span
-              className="text-sm opacity-50"
-              style={{ fontFamily: "'JetBrains Mono', monospace" }}
-            >
-              [
-            </span>
-            <Crosshair className="h-5 w-5" strokeWidth={2.5} />
-            <span className="text-xl">QUERO ARMAS</span>
-            <span
-              className="text-sm opacity-50"
-              style={{ fontFamily: "'JetBrains Mono', monospace" }}
-            >
-              ]
-            </span>
-          </div>
+          <img
+            src={logoWhite}
+            alt="Eu Quero Armas"
+            className="h-12 w-auto object-contain drop-shadow-[0_4px_20px_rgba(255,42,42,0.25)]"
+            draggable={false}
+          />
           <div
             className="text-[9px] tracking-[0.3em] text-zinc-500 px-3 py-1 border border-zinc-800"
             style={{ fontFamily: "'JetBrains Mono', monospace" }}
