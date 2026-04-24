@@ -23,8 +23,8 @@ type LinkRow = {
   last_login_at: string | null;
   created_at: string;
   updated_at: string;
-  qa_clientes?: { id: number; nome: string | null; cpf: string | null; email: string | null } | null;
-  customers?: { id: string; nome: string | null; cnpj_ou_cpf: string | null; email: string | null } | null;
+  qa_clientes?: { id: number; nome_completo: string | null; cpf: string | null; email: string | null } | null;
+  customers?: { id: string; nome_fantasia: string | null; cnpj_ou_cpf: string | null; email: string | null } | null;
 };
 
 type LogRow = {
