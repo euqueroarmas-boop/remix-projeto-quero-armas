@@ -156,8 +156,7 @@ export const SiteShell = ({ children }: SiteShellProps) => {
               </SheetTrigger>
               <SheetContent
                 side="right"
-                hideClose
-                className="flex w-[88vw] max-w-sm flex-col gap-0 border-l border-border bg-gradient-to-b from-background via-background to-surface-overlay p-0"
+                className="flex w-[88vw] max-w-sm flex-col gap-0 border-l border-border bg-gradient-to-b from-background via-background to-surface-overlay p-0 [&>button]:hidden"
               >
                 {/* Header do drawer */}
                 <div className="relative flex items-center justify-between border-b border-border/60 bg-surface-overlay/80 px-5 py-4 backdrop-blur">
