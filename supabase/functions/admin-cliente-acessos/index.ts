@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
     if (action === "list") {
       const { data, error } = await admin
         .from("cliente_auth_links")
-        .select("*, qa_clientes(id,nome,cpf,email), customers(id,nome,cnpj_ou_cpf,email)")
+        .select("*, qa_clientes(id,nome_completo,cpf,email), customers(id,nome_fantasia,cnpj_ou_cpf,email)")
         .order("created_at", { ascending: false })
         .limit(500);
       if (error) throw error;
