@@ -13,10 +13,7 @@
 import { SignPdf } from "npm:@signpdf/signpdf@3.3.0";
 import { P12Signer } from "npm:@signpdf/signer-p12@3.3.0";
 import { pdflibAddPlaceholder } from "npm:@signpdf/placeholder-pdf-lib@3.3.0";
-import {
-  SUBFILTER_ETSI_CADES_DETACHED,
-  SUBFILTER_ADOBE_PKCS7_DETACHED,
-} from "npm:@signpdf/utils@3.3.0";
+const SUBFILTER_ETSI_CADES_DETACHED = "ETSI.CAdES.detached";
 
 export interface SignPdfOptions {
   reason?: string;
