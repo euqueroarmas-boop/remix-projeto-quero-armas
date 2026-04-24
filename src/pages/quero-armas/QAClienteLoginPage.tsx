@@ -66,7 +66,7 @@ export default function QAClienteLoginPage() {
 
   return (
     <div
-      className="relative min-h-screen flex items-center justify-center p-4 overflow-y-auto md:overflow-hidden bg-[#030303] text-[#e0e0e0] uppercase"
+      className="qa-login-shell relative w-full flex items-center justify-center p-4 bg-[#030303] text-[#e0e0e0] uppercase"
       style={{ fontFamily: "'Rajdhani', sans-serif" }}
     >
       {/* Tactical grid */}
@@ -268,6 +268,10 @@ export default function QAClienteLoginPage() {
       <style>{`
         html, body { scrollbar-width: none; -ms-overflow-style: none; }
         html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; height: 0; }
+        .qa-login-shell { height: 100svh; min-height: 100svh; overflow: hidden; }
+        @media (max-height: 760px) {
+          .qa-login-shell { height: auto; min-height: 100svh; overflow-y: auto; align-items: flex-start; }
+        }
       `}</style>
     </div>
   );
