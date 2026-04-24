@@ -10,6 +10,7 @@ export interface DashboardItemSnapshotRow {
   data_protocolo: string | null;
   data_ultima_atualizacao: string | null;
   data_deferimento: string | null;
+  numero_processo: string | null;
 }
 
 export interface DashboardVendaSnapshotRow {
@@ -25,6 +26,7 @@ export interface DashboardClienteSnapshotRow {
   id_legado: number | null;
   nome_completo: string | null;
   celular: string | null;
+  cpf: string | null;
 }
 
 export interface DashboardServicoSnapshotRow {
@@ -72,7 +74,7 @@ async function fetchDashboardSnapshot(): Promise<QADashboardSnapshot> {
     supabase
       .from("qa_itens_venda" as any)
       .select(
-        "id, venda_id, servico_id, status, data_indeferimento, data_recurso_administrativo, data_protocolo, data_ultima_atualizacao, data_deferimento"
+        "id, venda_id, servico_id, status, data_indeferimento, data_recurso_administrativo, data_protocolo, data_ultima_atualizacao, data_deferimento, numero_processo"
       ),
     supabase
       .from("qa_exames_cliente" as any)
@@ -126,7 +128,7 @@ async function fetchDashboardSnapshot(): Promise<QADashboardSnapshot> {
   const clientesRes = clienteFilters.length
     ? await supabase
         .from("qa_clientes" as any)
-        .select("id, id_legado, nome_completo, celular")
+        .select("id, id_legado, nome_completo, celular, cpf")
         .or(clienteFilters.join(","))
     : { data: [] as any[], error: null };
 
