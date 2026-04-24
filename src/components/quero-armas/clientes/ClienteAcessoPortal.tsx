@@ -26,6 +26,8 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
   const [generatedEmail, setGeneratedEmail] = useState("");
   const [persistedPwd, setPersistedPwd] = useState("");
   const [persistedEmail, setPersistedEmail] = useState("");
+  const [persistedHasAccount, setPersistedHasAccount] = useState(false);
+  const [persistedUserId, setPersistedUserId] = useState<string | null>(null);
   const [newPwd, setNewPwd] = useState("");
   const [showPwd, setShowPwd] = useState(false);
 
@@ -50,11 +52,15 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
       if (error || data?.error || !data?.has_account) {
         setPersistedPwd("");
         setPersistedEmail("");
+        setPersistedHasAccount(false);
+        setPersistedUserId(null);
         return null;
       }
 
       setPersistedPwd(data?.temp_password || "");
       setPersistedEmail(data?.email || customerRecord?.email || cliente.email || "");
+      setPersistedHasAccount(true);
+      setPersistedUserId(data?.user_id || null);
       return data;
     } catch {
       return null;
@@ -101,6 +107,8 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
         setCustomer(null);
         setPersistedPwd("");
         setPersistedEmail("");
+        setPersistedHasAccount(false);
+        setPersistedUserId(null);
       }
     } catch (err) {
       console.error("Erro ao buscar customer:", err);
@@ -223,10 +231,12 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
     );
   }
 
-  const hasAccount = !!customer?.user_id;
+  const hasAccount = !!(customer?.user_id || persistedUserId || persistedHasAccount);
   const visiblePassword = generatedPwd || persistedPwd;
   const rawEmail = generatedEmail || persistedEmail || (hasAccount ? (customer?.email || cliente.email) : "");
   const visibleEmail = rawEmail ? rawEmail.toLowerCase().trim() : "";
+  const displayEmail = visibleEmail || (customer?.email || cliente.email || "").toLowerCase().trim();
+  const displayUserId = customer?.user_id || persistedUserId || "";
 
   return (
     <div className="space-y-4">
@@ -310,10 +320,10 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
 
         {/* Info rows */}
         <div className="space-y-2">
-          <InfoRow icon={Mail} label="Login E-mail" value={hasAccount ? customer.email : "—"} copyable={hasAccount} onCopy={() => copyText(customer.email)} />
+          <InfoRow icon={Mail} label="Login E-mail" value={hasAccount ? displayEmail : "—"} copyable={hasAccount && !!displayEmail} onCopy={() => copyText(displayEmail)} />
           <InfoRow icon={Hash} label="Login CPF/CNPJ" value={hasAccount ? "Habilitado" : "—"} />
-          {hasAccount && customer.user_id && (
-            <InfoRow icon={Hash} label="Auth User ID" value={customer.user_id.slice(0, 12) + "..."} copyable onCopy={() => copyText(customer.user_id, "User ID copiado")} />
+          {hasAccount && displayUserId && (
+            <InfoRow icon={Hash} label="Auth User ID" value={displayUserId.slice(0, 12) + "..."} copyable onCopy={() => copyText(displayUserId, "User ID copiado")} />
           )}
         </div>
       </div>
