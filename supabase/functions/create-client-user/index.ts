@@ -7,8 +7,8 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-admin-token, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-type SupabaseClient = ReturnType<typeof createClient>;
-type AuthUser = Awaited<ReturnType<SupabaseClient["auth"]["admin"]["getUserById"]>>["data"]["user"];
+type SupabaseClient = any;
+type AuthUser = any;
 
 type QaClient = {
   id: number;
