@@ -89,8 +89,8 @@ export default function QAAcessosPage() {
       if (!q) return true;
       const blob = [
         l.email, l.email_pendente, l.documento_normalizado,
-        l.qa_clientes?.nome, l.qa_clientes?.cpf, l.qa_clientes?.email,
-        l.customers?.nome, l.customers?.cnpj_ou_cpf, l.customers?.email,
+        l.qa_clientes?.nome_completo, l.qa_clientes?.cpf, l.qa_clientes?.email,
+        l.customers?.nome_fantasia, l.customers?.cnpj_ou_cpf, l.customers?.email,
       ].filter(Boolean).join(" ").toLowerCase();
       return blob.includes(q);
     });
@@ -205,7 +205,7 @@ export default function QAAcessosPage() {
               <div className="divide-y divide-slate-100">
                 {filtered.map((l) => {
                   const meta = STATUS_META[l.status] || STATUS_META.pending;
-                  const nome = l.qa_clientes?.nome || l.customers?.nome || "—";
+                  const nome = l.qa_clientes?.nome_completo || l.customers?.nome_fantasia || "—";
                   const doc = l.qa_clientes?.cpf || l.customers?.cnpj_ou_cpf || l.documento_normalizado || "—";
                   const isActing = (a: string) => acting === l.id + ":" + a;
                   return (
