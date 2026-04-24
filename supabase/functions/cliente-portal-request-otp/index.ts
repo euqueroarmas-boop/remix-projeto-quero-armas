@@ -187,6 +187,7 @@ Deno.serve(async (req) => {
 
     return new Response(JSON.stringify({
       success: true,
+      otp_id: otpRow.id,
       email_mascarado: maskEmail(emailDestino),
       requires_admin_approval: emailNovoSolicitado,
       cliente_nome: nome,
