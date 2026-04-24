@@ -17,6 +17,7 @@ const QAModelosDocxPage = lazyRetry(() => import("./QAModelosDocxPage"), "QAMode
 const QAHistoricoPage = lazyRetry(() => import("./QAHistoricoPage"), "QAHistoricoPage");
 const QAConfiguracoesPage = lazyRetry(() => import("./QAConfiguracoesPage"), "QAConfiguracoesPage");
 const QAClientesPage = lazyRetry(() => import("./QAClientesPage"), "QAClientesPage");
+const QAAcessosPage = lazyRetry(() => import("./QAAcessosPage"), "QAAcessosPage");
 const QAClubesPage = lazyRetry(() => import("./QAClubesPage"), "QAClubesPage");
 const QARelatoriosPage = lazyRetry(() => import("./QARelatoriosPage"), "QARelatoriosPage");
 const QAFinanceiroPage = lazyRetry(() => import("./QAFinanceiroPage"), "QAFinanceiroPage");
@@ -73,6 +74,7 @@ export default function QARoutes() {
           <Route path="historico" element={<QAHistoricoPage />} />
           <Route path="configuracoes" element={<QAConfiguracoesPage />} />
           <Route path="clientes" element={<QAClientesPage />} />
+          <Route path="acessos" element={<QAAcessosPage />} />
           <Route path="clubes" element={<QAClubesPage />} />
           <Route path="financeiro" element={<QAFinanceiroPage />} />
           <Route path="relatorios" element={<QARelatoriosPage />} />
