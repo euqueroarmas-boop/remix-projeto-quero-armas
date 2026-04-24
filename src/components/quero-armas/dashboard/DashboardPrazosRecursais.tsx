@@ -16,10 +16,12 @@
 
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, Plus, Copy } from "lucide-react";
 import { useWidgetLoader } from "@/hooks/useWidgetLoader";
 import WidgetStateView from "./WidgetStateView";
 import { loadQADashboardSnapshot } from "./dashboardSnapshot";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface ItemRow {
   id: number;
@@ -28,14 +30,19 @@ interface ItemRow {
   status: string | null;
   data_indeferimento: string | null;
   data_recurso_administrativo: string | null;
+  numero_processo: string | null;
 }
 interface VendaRow { id: number; id_legado: number | null; cliente_id: number | null; }
-interface ClienteRow { id: number; id_legado: number | null; nome_completo: string | null; }
+interface ClienteRow { id: number; id_legado: number | null; nome_completo: string | null; cpf: string | null; }
 
 interface PrazoRow {
   itemId: number;
   clienteIdLegado: number | null;
+  clienteId: number | null;
   clienteNome: string;
+  cpf: string | null;
+  senhaGov: string | null;
+  protocolo: string | null;
   tipo: "Posse" | "Porte" | "CRAF";
   dataIndeferimento: string;
   dataLimite: string;
@@ -101,6 +108,21 @@ export default function DashboardPrazosRecursais() {
     const vMap = new Map(vendas.map(v => [v.id_legado, v]));
     const cMap = new Map(clientes.map(c => [c.id_legado, c]));
 
+    // Busca senhas gov dos clientes envolvidos (qa_cadastro_cr.cliente_id → qa_clientes.id)
+    const clienteInternalIds = clientes.map(c => c.id);
+    const senhaMap = new Map<number, string>();
+    if (clienteInternalIds.length) {
+      const { data: crRows } = await supabase
+        .from("qa_cadastro_cr" as any)
+        .select("cliente_id, senha_gov")
+        .in("cliente_id", clienteInternalIds as any);
+      for (const row of (crRows as any[] | null) || []) {
+        if (row?.cliente_id && row?.senha_gov && !senhaMap.has(row.cliente_id)) {
+          senhaMap.set(row.cliente_id, String(row.senha_gov));
+        }
+      }
+    }
+
     const today = todayISO();
     const built: PrazoRow[] = [];
     for (const it of itensList) {
@@ -116,7 +138,11 @@ export default function DashboardPrazosRecursais() {
       built.push({
         itemId: it.id,
         clienteIdLegado: cliente.id_legado ?? null,
+        clienteId: cliente.id ?? null,
         clienteNome: cliente.nome_completo || `Cliente #${cliente.id}`,
+        cpf: cliente.cpf ?? null,
+        senhaGov: cliente.id != null ? senhaMap.get(cliente.id) ?? null : null,
+        protocolo: it.numero_processo ?? null,
         tipo,
         dataIndeferimento: dIndef,
         dataLimite: dLimite,
@@ -179,6 +205,19 @@ export default function DashboardPrazosRecursais() {
               : `/clientes`;
             const [ly, lm, ld] = r.dataLimite.split("-");
             const dataLimiteBr = `${ld}/${lm}/${ly}`;
+            const cpfFmt = r.cpf ? r.cpf.replace(/\D/g, "").replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4") : null;
+            const handleCopy = (e: React.MouseEvent, label: string, value: string | null | undefined) => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (!value) {
+                toast.error(`${label} indisponível`);
+                return;
+              }
+              navigator.clipboard.writeText(value).then(
+                () => toast.success(`${label} copiado`),
+                () => toast.error(`Falha ao copiar ${label}`)
+              );
+            };
             return (
               <Link
                 key={r.itemId}
@@ -194,6 +233,35 @@ export default function DashboardPrazosRecursais() {
                 </div>
                 <div className="text-[11px] font-semibold text-slate-900 leading-tight line-clamp-2 group-hover:text-blue-700 group-hover:underline uppercase">
                   {r.clienteNome}
+                </div>
+                <div className="flex flex-col gap-0.5 -mx-1">
+                  <button
+                    type="button"
+                    onClick={(e) => handleCopy(e, "Protocolo", r.protocolo)}
+                    className="flex items-center gap-1 px-1 py-0.5 rounded hover:bg-slate-200/60 text-[9px] font-mono text-slate-700 truncate"
+                    title={r.protocolo ? `Copiar protocolo: ${r.protocolo}` : "Sem protocolo"}
+                  >
+                    <Copy className="h-2.5 w-2.5 shrink-0 text-slate-400" />
+                    <span className="truncate">PROT: {r.protocolo || "—"}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => handleCopy(e, "CPF", cpfFmt)}
+                    className="flex items-center gap-1 px-1 py-0.5 rounded hover:bg-slate-200/60 text-[9px] font-mono text-slate-700 truncate"
+                    title={cpfFmt ? `Copiar CPF: ${cpfFmt}` : "Sem CPF"}
+                  >
+                    <Copy className="h-2.5 w-2.5 shrink-0 text-slate-400" />
+                    <span className="truncate">CPF: {cpfFmt || "—"}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => handleCopy(e, "Senha Gov", r.senhaGov)}
+                    className="flex items-center gap-1 px-1 py-0.5 rounded hover:bg-slate-200/60 text-[9px] font-mono text-slate-700 truncate"
+                    title={r.senhaGov ? "Copiar Senha Gov" : "Sem senha gov"}
+                  >
+                    <Copy className="h-2.5 w-2.5 shrink-0 text-slate-400" />
+                    <span className="truncate">GOV: {r.senhaGov ? "••••••" : "—"}</span>
+                  </button>
                 </div>
                 <div className="mt-auto flex items-baseline gap-1">
                   <span className={`text-xl font-black leading-none ${tone.text}`}>{r.diasRestantes}</span>
