@@ -64,7 +64,7 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
 
   return (
     <aside
-      className="sticky top-0 h-screen shrink-0 border-r flex flex-col z-30 transition-[width] duration-200"
+      className="shrink-0 border-r flex flex-col z-30 transition-[width] duration-200 self-start min-h-screen"
       style={{
         width: collapsed ? "3.25rem" : "16rem",
         background: "hsl(0 0% 100%)",
