@@ -97,7 +97,7 @@ export default function QAClienteLoginPage() {
       />
 
       {/* Terminal */}
-      <div className="relative z-10 w-full max-w-[400px] bg-[#0a0a0a]/90 md:border md:border-[#1f1f1f] backdrop-blur-md p-6 flex flex-col gap-7 md:shadow-[0_0_60px_rgba(255,42,42,0.05)]">
+      <div className="relative z-10 w-full max-w-[400px] sm:max-w-[440px] md:max-w-[480px] lg:max-w-[520px] bg-[#0a0a0a]/90 md:border md:border-[#1f1f1f] backdrop-blur-md p-5 sm:p-6 md:p-8 flex flex-col gap-6 md:gap-7 md:shadow-[0_0_60px_rgba(255,42,42,0.05)]">
         {/* HUD bar */}
         <div
           className="flex items-center justify-between text-[11px] tracking-[0.2em] text-zinc-500"
@@ -157,7 +157,7 @@ export default function QAClienteLoginPage() {
 
             <Sparkles className="h-6 w-6 text-[#ff2a2a] group-hover:scale-110 transition-transform" />
             <div className="flex flex-col items-center text-center gap-1">
-              <span className="text-2xl font-bold tracking-widest text-white">
+              <span className="text-xl sm:text-2xl font-bold tracking-widest text-white">
                 PRIMEIRO ACESSO
               </span>
               <span
@@ -268,9 +268,9 @@ export default function QAClienteLoginPage() {
       <style>{`
         html, body { scrollbar-width: none; -ms-overflow-style: none; }
         html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; height: 0; }
-        .qa-login-shell { height: 100svh; min-height: 100svh; overflow: hidden; }
-        @media (max-height: 760px) {
-          .qa-login-shell { height: auto; min-height: 100svh; overflow-y: auto; align-items: flex-start; }
+        .qa-login-shell { min-height: 100svh; height: 100svh; overflow: hidden; }
+        @media (max-height: 820px), (max-width: 480px) {
+          .qa-login-shell { height: auto; min-height: 100svh; overflow-y: auto; align-items: flex-start; padding-top: 1rem; padding-bottom: 1rem; }
         }
       `}</style>
     </div>
