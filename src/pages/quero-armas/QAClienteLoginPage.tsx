@@ -263,14 +263,14 @@ export default function QAClienteLoginPage() {
       {/* ===================== DESKTOP / NOTEBOOK (md+) — split full-screen ===================== */}
       <div className="hidden md:grid relative z-10 w-full h-screen grid-cols-2">
         {/* Coluna esquerda — branding/hero */}
-        <div className="relative flex flex-col justify-between p-10 lg:p-14 xl:p-20 border-r border-[#1f1f1f] bg-gradient-to-br from-[#0a0a0a] via-[#080808] to-[#030303] overflow-hidden">
+        <div className="relative flex flex-col items-center justify-center p-10 lg:p-14 xl:p-20 border-r border-[#1f1f1f] bg-gradient-to-br from-[#0a0a0a] via-[#080808] to-[#030303] overflow-hidden">
           {/* glow */}
           <div className="absolute -top-32 -left-32 w-[480px] h-[480px] rounded-full bg-[#ff2a2a]/10 blur-[120px] pointer-events-none" />
           <div className="absolute bottom-0 right-0 w-[300px] h-[300px] rounded-full bg-[#ff2a2a]/5 blur-[100px] pointer-events-none" />
 
-          {/* Top: voltar + status */}
+          {/* Top: voltar + status (absoluto) */}
           <div
-            className="relative flex items-center justify-between text-[11px] tracking-[0.2em] text-zinc-500"
+            className="absolute top-8 left-10 lg:left-14 xl:left-20 right-10 lg:right-14 xl:right-20 flex items-center justify-between text-[11px] tracking-[0.2em] text-zinc-500"
             style={{ fontFamily: "'JetBrains Mono', monospace" }}
           >
             <button
@@ -291,7 +291,7 @@ export default function QAClienteLoginPage() {
           </div>
 
           {/* Centro: logo + manifesto */}
-          <div className="relative flex flex-col gap-8 max-w-[520px]">
+          <div className="relative flex flex-col gap-7 max-w-[520px] w-full">
             <img
               src={logoWhite}
               alt="Eu Quero Armas"
@@ -333,9 +333,9 @@ export default function QAClienteLoginPage() {
             </div>
           </div>
 
-          {/* Rodapé */}
+          {/* Rodapé (absoluto) */}
           <div
-            className="relative text-[10px] tracking-[0.25em] text-zinc-600"
+            className="absolute bottom-8 left-10 lg:left-14 xl:left-20 text-[10px] tracking-[0.25em] text-zinc-600"
             style={{ fontFamily: "'JetBrains Mono', monospace" }}
           >
             © {new Date().getFullYear()} EU QUERO ARMAS // SECURE_TERMINAL
