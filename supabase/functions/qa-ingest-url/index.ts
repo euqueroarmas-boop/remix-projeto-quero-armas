@@ -176,7 +176,7 @@ async function processUrl(url: string, titulo: string, tipo_documento: string, u
         entidade_id: doc_id,
         acao: "ingestao_url_texto_invalido",
         detalhes_json: { url, metodoExtracao, textLength: textoExtraido.length },
-      }).catch(() => {});
+      });
       return;
     }
 
@@ -280,7 +280,7 @@ async function processUrl(url: string, titulo: string, tipo_documento: string, u
       entidade_id: doc_id,
       acao: "ingestao_url_concluida",
       detalhes_json: { url, chunks_criados: chunks.length, tamanho_texto: textoExtraido.length, metodoExtracao },
-    }).catch(() => {});
+    });
 
     await updateStatus(supabase, doc_id, "gerando_embeddings");
     try {
@@ -312,7 +312,7 @@ async function processUrl(url: string, titulo: string, tipo_documento: string, u
       entidade_id: doc_id,
       acao: "ingestao_url_erro",
       detalhes_json: { url, erro: err?.message },
-    }).catch(() => {});
+    });
   }
 }
 
@@ -357,7 +357,7 @@ Deno.serve(async (req) => {
 
     if (insertErr) throw new Error(insertErr.message);
 
-    EdgeRuntime.waitUntil(processUrl(url, docTitle, tipo_documento || "outro", user_id || "", newDoc.id));
+    (globalThis as any).EdgeRuntime?.waitUntil(processUrl(url, docTitle, tipo_documento || "outro", user_id || "", newDoc.id));
 
     return new Response(JSON.stringify({
       success: true,
