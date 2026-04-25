@@ -80,6 +80,7 @@ export default function QARoutes() {
           <Route path="legislacao" element={<QALegislacaoPage />} />
           <Route path="jurisprudencia" element={<QAJurisprudenciaPage />} />
           <Route path="modelos-docx" element={<QAModelosDocxPage />} />
+          <Route path="armamentos" element={<QAArmamentosAdminPage />} />
           <Route path="gerar-peca" element={<QAGerarPecaPage />} />
           <Route path="casos" element={<QACasosPage />} />
           <Route path="historico" element={<QAHistoricoPage />} />
