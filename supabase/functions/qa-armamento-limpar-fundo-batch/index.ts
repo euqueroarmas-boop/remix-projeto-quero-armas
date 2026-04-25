@@ -112,8 +112,10 @@ async function removeBg(bytes: Uint8Array, mime: string): Promise<{ bytes: Uint8
     } else {
       return { bytes: u8, mime: m[1] };
     }
-    const flooded = floodBackground(rgba, w, h, 45);
-    const chromaed = chromaKeyToAlpha(flooded, w, h);
+    // Para imagens grandes (>1.2MP) pulamos o flood (evita estouro de memória do worker)
+    const big = (w * h) > 1_200_000;
+    const step1 = big ? rgba : floodBackground(rgba, w, h, 45);
+    const chromaed = chromaKeyToAlpha(step1, w, h);
     const enc = pngEncode(chromaed, w, h);
     return { bytes: enc, mime: "image/png" };
   } catch (e) {
