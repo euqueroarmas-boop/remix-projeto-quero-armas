@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
-import { ChevronRight, FileText, Crosshair, Layers, ShieldAlert, Star } from "lucide-react";
-import { WeaponSilhouette } from "./WeaponSilhouette";
+import { ChevronRight, FileText, Crosshair, Layers, ShieldAlert, Star, Radio } from "lucide-react";
 import {
   buildWeaponInfo,
   maskSerial,
@@ -10,6 +9,7 @@ import {
   WEAPON_KIND_LABEL,
 } from "./utils";
 import { useArmamentoCatalogo, type ArmamentoCatalogo } from "./useArmamentoCatalogo";
+import { backgroundForKind, renderForKind } from "./weaponAssets";
 
 export interface WorkbenchWeapon {
   id: number | string;
@@ -39,10 +39,10 @@ interface Props {
 }
 
 const toneClasses = {
-  ok: { ring: "ring-emerald-200", chip: "bg-emerald-50 text-emerald-700", dot: "bg-emerald-500" },
-  warn: { ring: "ring-amber-200", chip: "bg-amber-50 text-amber-700", dot: "bg-amber-500" },
-  danger: { ring: "ring-red-200", chip: "bg-red-50 text-red-700", dot: "bg-red-500" },
-  muted: { ring: "ring-slate-200", chip: "bg-slate-100 text-slate-600", dot: "bg-slate-400" },
+  ok: { glow: "shadow-[0_0_24px_-6px_rgba(16,185,129,0.55)]", chip: "bg-emerald-400/15 text-emerald-300 border-emerald-400/40", dot: "bg-emerald-400" },
+  warn: { glow: "shadow-[0_0_24px_-6px_rgba(245,158,11,0.55)]", chip: "bg-amber-400/15 text-amber-300 border-amber-400/40", dot: "bg-amber-400" },
+  danger: { glow: "shadow-[0_0_24px_-6px_rgba(239,68,68,0.55)]", chip: "bg-red-500/15 text-red-300 border-red-500/40", dot: "bg-red-500" },
+  muted: { glow: "shadow-[0_0_24px_-6px_rgba(148,163,184,0.35)]", chip: "bg-white/5 text-white/60 border-white/10", dot: "bg-white/40" },
 };
 
 function urgencyText(days: number | null): string {
@@ -68,96 +68,137 @@ function WeaponCard({
   const tone = urgencyTone(w.daysToExpire);
   const c = toneClasses[tone];
   const accent =
-    tone === "ok"
-      ? TACTICAL.ok
-      : tone === "warn"
-      ? TACTICAL.warn
-      : tone === "danger"
-      ? TACTICAL.danger
-      : TACTICAL.cyan;
+    tone === "ok" ? "#10b981"
+    : tone === "warn" ? "#f59e0b"
+    : tone === "danger" ? "#ef4444"
+    : "#22d3ee";
   const marca = catalog?.marca || info.marca || info.label;
   const modelo = catalog?.modelo || info.modelo || "";
   const calibre = catalog?.calibre || info.calibre || "—";
+  const bg = backgroundForKind(info.kind);
+  const render = renderForKind(info.kind);
+
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`group relative w-full overflow-hidden rounded-2xl border border-slate-200/80 bg-gradient-to-br from-slate-50 via-white to-slate-50 p-4 text-left shadow-sm ring-1 ${c.ring} transition-all hover:-translate-y-[1px] hover:shadow-lg`}
+      className={`group relative w-full overflow-hidden rounded-2xl border border-white/10 text-left transition-all hover:-translate-y-[2px] hover:border-white/30 ${c.glow}`}
+      style={{ background: "linear-gradient(180deg, rgba(10,12,18,0.9), rgba(6,8,12,0.95))" }}
     >
-      {/* HUD ticks */}
+      {/* Cinematic background */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-60 transition-opacity group-hover:opacity-80"
+        style={{
+          backgroundImage: `url(${bg})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      />
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background: `linear-gradient(180deg, rgba(2,4,8,0.45) 0%, rgba(2,4,8,0.85) 100%), radial-gradient(circle at 50% 60%, ${accent}1f, transparent 70%)`,
+        }}
+      />
+      {/* Scanline subtle */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.05]"
+        style={{
+          backgroundImage: "repeating-linear-gradient(0deg, transparent 0, transparent 2px, rgba(255,255,255,0.6) 2px, rgba(255,255,255,0.6) 3px)",
+        }}
+      />
+      {/* Corner ticks */}
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-0 top-0 h-3 w-6 border-l border-t border-slate-300/70" />
-        <div className="absolute right-0 top-0 h-3 w-6 border-r border-t border-slate-300/70" />
-        <div className="absolute bottom-0 left-0 h-3 w-6 border-b border-l border-slate-300/70" />
-        <div className="absolute bottom-0 right-0 h-3 w-6 border-b border-r border-slate-300/70" />
+        <div className="absolute left-2 top-2 h-3 w-6 border-l border-t border-white/40" />
+        <div className="absolute right-2 top-2 h-3 w-6 border-r border-t border-white/40" />
+        <div className="absolute bottom-2 left-2 h-3 w-6 border-b border-l border-white/40" />
+        <div className="absolute bottom-2 right-2 h-3 w-6 border-b border-r border-white/40" />
       </div>
-      <div className="flex items-start justify-between">
-        <div>
-          <div className="flex items-center gap-1.5">
-            <span className={`inline-block h-1.5 w-1.5 rounded-full ${c.dot}`} />
-            <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-slate-500">
-              {WEAPON_KIND_LABEL[info.kind]}
+
+      <div className="relative p-4">
+        <div className="flex items-start justify-between">
+          <div>
+            <div className="flex items-center gap-1.5">
+              <span className={`inline-block h-1.5 w-1.5 rounded-full ${c.dot} animate-pulse`} />
+              <span className="text-[9px] font-bold uppercase tracking-[0.24em] text-white/70">
+                {WEAPON_KIND_LABEL[info.kind]}
+              </span>
+              {catalog && (
+                <span className="inline-flex items-center gap-0.5 rounded-sm border border-emerald-400/40 bg-emerald-400/10 px-1 py-0.5 text-[8px] font-black uppercase tracking-wider text-emerald-300">
+                  <Star className="h-2 w-2 fill-emerald-400 text-emerald-400" /> ID
+                </span>
+              )}
+            </div>
+            <div className="mt-1 text-[16px] font-black uppercase tracking-tight text-white leading-tight">
+              {marca}
+            </div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-300/90">
+              {modelo}
+            </div>
+          </div>
+          <span
+            className={`shrink-0 rounded-sm border px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.16em] ${c.chip}`}
+          >
+            {urgencyText(w.daysToExpire)}
+          </span>
+        </div>
+
+        {/* Weapon render with glow */}
+        <div className={`relative mx-auto my-3 ${size === "lg" ? "h-32" : "h-24"} w-full`}>
+          <div
+            className="absolute inset-0"
+            style={{
+              background: `radial-gradient(ellipse at 50% 70%, ${accent}55, transparent 60%)`,
+              filter: "blur(8px)",
+            }}
+          />
+          <img
+            src={render}
+            alt={`${marca} ${modelo}`}
+            loading="lazy"
+            className="relative h-full w-full object-contain drop-shadow-[0_8px_18px_rgba(0,0,0,0.8)]"
+          />
+        </div>
+
+        {/* Mini stats armory */}
+        {catalog && (
+          <div className="grid grid-cols-3 gap-2 border-t border-white/10 pt-2">
+            <MiniStat label="DMG" value={catalog.stat_dano} color="#ef4444" />
+            <MiniStat label="PRC" value={catalog.stat_precisao} color="#22d3ee" />
+            <MiniStat label="MOB" value={catalog.stat_mobilidade} color="#10b981" />
+          </div>
+        )}
+
+        <div className="mt-2 grid grid-cols-3 gap-2 border-t border-white/10 pt-2 text-[10px]">
+          <div>
+            <div className="font-mono text-[9px] uppercase tracking-wider text-white/40">CAL</div>
+            <div className="font-bold text-white/90">{calibre}</div>
+          </div>
+          <div>
+            <div className="font-mono text-[9px] uppercase tracking-wider text-white/40">SIGMA</div>
+            <div className="truncate font-mono text-white/80">{w.numero_sigma || "—"}</div>
+          </div>
+          <div>
+            <div className="font-mono text-[9px] uppercase tracking-wider text-white/40">N° SÉRIE</div>
+            <div className="truncate font-mono text-white/80">{maskSerial(w.numero_arma)}</div>
+          </div>
+        </div>
+
+        <div className="mt-3 flex items-center justify-between text-[10px] text-white/50">
+          <span className="inline-flex items-center gap-1">
+            <span className="rounded bg-white/10 px-1.5 py-0.5 font-bold uppercase tracking-wider text-white/80">
+              {w.source}
             </span>
-            {catalog && (
-              <span className="inline-flex items-center gap-0.5 rounded-sm bg-emerald-50 px-1 py-0.5 text-[8px] font-black uppercase tracking-wider text-emerald-700">
-                <Star className="h-2 w-2 fill-emerald-500 text-emerald-500" /> ID
+            {w.hasGte && (
+              <span className="rounded bg-cyan-400/15 px-1.5 py-0.5 font-bold uppercase tracking-wider text-cyan-300">
+                + GTE
               </span>
             )}
-          </div>
-          <div className="mt-1 text-[14px] font-bold text-slate-800 leading-tight">
-            {marca}{" "}
-            <span className="font-medium text-slate-500">{modelo}</span>
-          </div>
-        </div>
-        <span
-          className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${c.chip}`}
-        >
-          {urgencyText(w.daysToExpire)}
-        </span>
-      </div>
-
-      <div className={`mx-auto my-2 ${size === "lg" ? "h-24" : "h-20"} w-full`}>
-        <WeaponSilhouette kind={info.kind} accent={accent} className="h-full w-full" />
-      </div>
-
-      {/* Mini stats armory */}
-      {catalog && (
-        <div className="grid grid-cols-3 gap-1.5 border-t border-dashed border-slate-200 pt-2">
-          <MiniStat label="DMG" value={catalog.stat_dano} color="#ef4444" />
-          <MiniStat label="PRC" value={catalog.stat_precisao} color="#06b6d4" />
-          <MiniStat label="MOB" value={catalog.stat_mobilidade} color="#10b981" />
-        </div>
-      )}
-
-      <div className="grid grid-cols-3 gap-2 border-t border-dashed border-slate-200 pt-2 text-[10px]">
-        <div>
-          <div className="font-mono text-[9px] uppercase tracking-wider text-slate-400">CAL</div>
-          <div className="font-bold text-slate-700">{calibre}</div>
-        </div>
-        <div>
-          <div className="font-mono text-[9px] uppercase tracking-wider text-slate-400">SIGMA</div>
-          <div className="font-mono text-slate-700">{w.numero_sigma || "—"}</div>
-        </div>
-        <div>
-          <div className="font-mono text-[9px] uppercase tracking-wider text-slate-400">N° SÉRIE</div>
-          <div className="font-mono text-slate-700">{maskSerial(w.numero_arma)}</div>
-        </div>
-      </div>
-
-      <div className="mt-3 flex items-center justify-between text-[10px] text-slate-500">
-        <span className="inline-flex items-center gap-1">
-          <span className="rounded bg-slate-900/5 px-1.5 py-0.5 font-bold uppercase tracking-wider">
-            {w.source}
           </span>
-          {w.hasGte && (
-            <span className="rounded bg-cyan-50 px-1.5 py-0.5 font-bold uppercase tracking-wider text-cyan-700">
-              + GTE
-            </span>
-          )}
-        </span>
-        <span className="inline-flex items-center gap-1 text-slate-400 group-hover:text-slate-600">
-          DETALHES <ChevronRight className="h-3 w-3" />
-        </span>
+          <span className="inline-flex items-center gap-1 text-white/40 group-hover:text-cyan-300">
+            INSPECIONAR <ChevronRight className="h-3 w-3" />
+          </span>
+        </div>
       </div>
     </button>
   );
@@ -168,11 +209,11 @@ function MiniStat({ label, value, color }: { label: string; value: number | null
   return (
     <div>
       <div className="flex items-center justify-between text-[8px]">
-        <span className="font-bold uppercase tracking-wider text-slate-400">{label}</span>
-        <span className="font-mono text-slate-600">{value ?? "—"}</span>
+        <span className="font-bold uppercase tracking-wider text-white/50">{label}</span>
+        <span className="font-mono text-white/70">{value ?? "—"}</span>
       </div>
-      <div className="mt-0.5 h-1 overflow-hidden rounded-full bg-slate-200/70">
-        <div className="h-full rounded-full" style={{ width: `${v}%`, background: color, boxShadow: `0 0 4px ${color}88` }} />
+      <div className="mt-0.5 h-1 overflow-hidden rounded-full bg-white/10">
+        <div className="h-full rounded-full" style={{ width: `${v}%`, background: color, boxShadow: `0 0 6px ${color}cc` }} />
       </div>
     </div>
   );
@@ -181,38 +222,31 @@ function MiniStat({ label, value, color }: { label: string; value: number | null
 function DocumentTag({ d }: { d: DocCard }) {
   const tone = urgencyTone(d.daysToExpire);
   const c = toneClasses[tone];
+  const accent =
+    tone === "ok" ? "#10b981"
+    : tone === "warn" ? "#f59e0b"
+    : tone === "danger" ? "#ef4444"
+    : "#22d3ee";
   return (
     <button
       type="button"
       onClick={d.onOpen}
-      className="group relative flex w-full items-center gap-2.5 overflow-hidden rounded-xl border border-slate-200 bg-white px-3 py-2 text-left shadow-sm transition-all hover:-translate-y-[1px] hover:shadow-md"
+      className="group relative flex w-full items-center gap-2.5 overflow-hidden rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-left transition-all hover:-translate-y-[1px] hover:border-white/25 hover:bg-white/[0.06]"
     >
-      <span
-        className="absolute left-0 top-0 h-full w-1"
-        style={{
-          background:
-            tone === "ok"
-              ? TACTICAL.ok
-              : tone === "warn"
-              ? TACTICAL.warn
-              : tone === "danger"
-              ? TACTICAL.danger
-              : TACTICAL.cyan,
-        }}
-      />
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-50 text-slate-500">
+      <span className="absolute left-0 top-0 h-full w-1" style={{ background: accent, boxShadow: `0 0 8px ${accent}` }} />
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-black/40 text-cyan-300">
         <FileText className="h-3.5 w-3.5" />
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
-          <span className="rounded bg-slate-900/5 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-slate-600">
+          <span className="rounded bg-white/10 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-white/80">
             {d.category}
           </span>
-          <span className={`rounded-full px-1.5 py-0.5 text-[8px] font-bold uppercase ${c.chip}`}>
+          <span className={`rounded-sm border px-1.5 py-0.5 text-[8px] font-bold uppercase ${c.chip}`}>
             {urgencyText(d.daysToExpire)}
           </span>
         </div>
-        <div className="mt-0.5 truncate text-[11px] font-semibold text-slate-700">{d.title}</div>
+        <div className="mt-0.5 truncate text-[11px] font-semibold text-white/90">{d.title}</div>
       </div>
     </button>
   );
@@ -237,57 +271,58 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon }:
   const overflow = longas.length + grupoCurtas.length - (visibleLongas.length + visibleCurtas.length);
 
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-sm">
+    <div className="relative overflow-hidden rounded-3xl border border-white/10 shadow-2xl"
+      style={{ background: "linear-gradient(180deg, #07090f 0%, #04060a 100%)" }}
+    >
       {/* Top HUD strip */}
-      <div className="flex items-center justify-between border-b border-slate-100 bg-gradient-to-r from-slate-50 via-white to-slate-50 px-5 py-3">
+      <div className="flex items-center justify-between border-b border-white/10 bg-black/50 px-5 py-3 backdrop-blur">
         <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-900 text-cyan-300">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-cyan-400/15 text-cyan-300 ring-1 ring-cyan-400/30">
             <Crosshair className="h-3.5 w-3.5" />
           </div>
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-700">
-              Bancada Tática
+            <div className="text-[11px] font-black uppercase tracking-[0.28em] text-white">
+              ARMORY · BANCADA TÁTICA
             </div>
-            <div className="text-[10px] text-slate-400">Arsenal interpretado a partir do seu cadastro</div>
+            <div className="text-[10px] uppercase tracking-wider text-white/40">Arsenal interpretado a partir do seu cadastro</div>
           </div>
         </div>
         <div className="hidden items-center gap-3 md:flex">
-          <div className="flex items-center gap-1 text-[10px] text-slate-500">
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            STATUS · ATIVO
+          <div className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-emerald-300">
+            <Radio className="h-3 w-3 animate-pulse" />
+            ONLINE
           </div>
-          <div className="text-[10px] font-mono text-slate-400">
-            {enriched.length} ITEM(S)
+          <div className="text-[10px] font-mono text-white/50">
+            {enriched.length.toString().padStart(2, "0")} ITEM(S)
           </div>
         </div>
       </div>
 
       {/* Bench body */}
-      <div
-        className="relative px-4 py-6 md:px-8 md:py-8"
-        style={{
-          backgroundImage:
-            "radial-gradient(circle at 50% 0%, rgba(15,23,42,0.04), transparent 60%), linear-gradient(180deg, #fafafa, #f3f4f6)",
-        }}
-      >
+      <div className="relative px-4 py-6 md:px-6 md:py-7">
         {/* grid lines */}
         <div
-          className="pointer-events-none absolute inset-0 opacity-[0.06]"
+          className="pointer-events-none absolute inset-0 opacity-[0.07]"
           style={{
             backgroundImage:
-              "linear-gradient(to right, #0f172a 1px, transparent 1px), linear-gradient(to bottom, #0f172a 1px, transparent 1px)",
+              "linear-gradient(to right, #22d3ee 1px, transparent 1px), linear-gradient(to bottom, #22d3ee 1px, transparent 1px)",
             backgroundSize: "32px 32px",
           }}
+        />
+        {/* ambient glow */}
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-40"
+          style={{ background: "radial-gradient(ellipse at 50% 0%, rgba(34,211,238,0.12), transparent 70%)" }}
         />
 
         {enriched.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
-            <ShieldAlert className="h-10 w-10 text-slate-300" />
+            <ShieldAlert className="h-10 w-10 text-white/30" />
             <div>
-              <div className="text-[12px] font-bold uppercase tracking-wider text-slate-600">
+              <div className="text-[12px] font-bold uppercase tracking-wider text-white/80">
                 NENHUMA ARMA NO ACERVO
               </div>
-              <p className="mt-1 max-w-sm text-[11px] text-slate-500">
+              <p className="mt-1 max-w-sm text-[11px] text-white/40">
                 Cadastre seus CRAFs para que o sistema monte automaticamente sua bancada.
               </p>
             </div>
@@ -328,9 +363,9 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon }:
                 <button
                   type="button"
                   onClick={() => setShowAll(true)}
-                  className="rounded-full border border-slate-300 bg-white px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-600 shadow-sm hover:border-slate-400"
+                  className="rounded-full border border-cyan-400/40 bg-cyan-400/10 px-4 py-1.5 text-[10px] font-black uppercase tracking-wider text-cyan-300 hover:bg-cyan-400/20"
                 >
-                  Ver todos ({overflow} +)
+                  Ver todos (+{overflow})
                 </button>
               </div>
             )}
@@ -338,16 +373,16 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon }:
         )}
 
         {/* Caixas de munição + cartões de documento (rodapé da bancada) */}
-        <div className="mt-6 grid gap-4 lg:grid-cols-3">
+        <div className="relative mt-6 grid gap-4 lg:grid-cols-3">
           <div className="lg:col-span-1">
             <div className="mb-2 flex items-center gap-1.5">
-              <Layers className="h-3.5 w-3.5 text-slate-500" />
-              <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-600">
+              <Layers className="h-3.5 w-3.5 text-cyan-300" />
+              <div className="text-[10px] font-black uppercase tracking-[0.24em] text-white/80">
                 Munições · Por Calibre
               </div>
             </div>
             {ammoByCalibre.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-slate-200 bg-white/60 px-3 py-4 text-center text-[11px] text-slate-400">
+              <div className="rounded-xl border border-dashed border-white/15 bg-white/[0.02] px-3 py-4 text-center text-[11px] text-white/40">
                 Nenhuma munição cadastrada
               </div>
             ) : (
@@ -355,18 +390,18 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon }:
                 {ammoByCalibre.slice(0, 6).map((a) => (
                   <div
                     key={a.calibre}
-                    className="rounded-xl border border-slate-200 bg-white p-2 shadow-sm"
+                    className="rounded-xl border border-white/10 bg-black/30 p-2 backdrop-blur"
                   >
-                    <div className="text-[9px] font-bold uppercase tracking-wider text-slate-500">
+                    <div className="text-[9px] font-bold uppercase tracking-wider text-white/50">
                       {a.calibre}
                     </div>
-                    <div className="mt-0.5 font-mono text-[15px] font-bold text-slate-800">
+                    <div className="mt-0.5 font-mono text-[15px] font-bold text-white">
                       {a.quantidade.toLocaleString("pt-BR")}
                     </div>
-                    <div className="mt-1 h-1 w-full rounded-full bg-slate-100">
+                    <div className="mt-1 h-1 w-full rounded-full bg-white/10">
                       <div
-                        className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-cyan-600"
-                        style={{ width: `${Math.min(100, (a.quantidade / 200) * 100)}%` }}
+                        className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-cyan-500"
+                        style={{ width: `${Math.min(100, (a.quantidade / 200) * 100)}%`, boxShadow: "0 0 6px #22d3ee" }}
                       />
                     </div>
                   </div>
@@ -377,13 +412,13 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon }:
 
           <div className="lg:col-span-2">
             <div className="mb-2 flex items-center gap-1.5">
-              <FileText className="h-3.5 w-3.5 text-slate-500" />
-              <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-600">
+              <FileText className="h-3.5 w-3.5 text-cyan-300" />
+              <div className="text-[10px] font-black uppercase tracking-[0.24em] text-white/80">
                 Documentos na Bancada
               </div>
             </div>
             {documents.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-slate-200 bg-white/60 px-3 py-4 text-center text-[11px] text-slate-400">
+              <div className="rounded-xl border border-dashed border-white/15 bg-white/[0.02] px-3 py-4 text-center text-[11px] text-white/40">
                 Nenhum documento vinculado
               </div>
             ) : (
