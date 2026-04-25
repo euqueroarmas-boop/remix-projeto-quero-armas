@@ -381,6 +381,50 @@ export default function QAClientePortalPage() {
       </header>
 
       <main className="max-w-5xl mx-auto px-4 py-6 space-y-5">
+        {/* ═══ TABS NAVIGATION ═══ */}
+        <div className="sticky top-[60px] z-30 -mx-4 mb-1 border-b border-slate-200/70 bg-gradient-to-b from-white/95 to-white/85 px-4 py-2 backdrop-blur-md">
+          <div className="inline-flex items-center gap-1 rounded-2xl border border-slate-200 bg-white p-1 shadow-sm">
+            <button
+              type="button"
+              onClick={() => setActiveTab("arsenal")}
+              className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-all ${
+                activeTab === "arsenal"
+                  ? "bg-slate-900 text-white shadow-sm"
+                  : "text-slate-500 hover:bg-slate-50"
+              }`}
+            >
+              <CrosshairIcon className="h-3.5 w-3.5" /> Arsenal
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("resumo")}
+              className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-all ${
+                activeTab === "resumo"
+                  ? "bg-slate-900 text-white shadow-sm"
+                  : "text-slate-500 hover:bg-slate-50"
+              }`}
+            >
+              <LayoutDashboard className="h-3.5 w-3.5" /> Resumo
+            </button>
+          </div>
+        </div>
+
+        {activeTab === "arsenal" && cliente && analysis && (
+          <ArsenalView
+            clienteId={cliente.id}
+            clienteNome={cliente.nome_completo}
+            crafs={crafs}
+            gtes={gtes}
+            cadastroCr={cadastro}
+            meusDocs={meusDocs}
+            expDocs={analysis.expDocs}
+            alerts={analysis.alerts as any}
+            onOpenAddDoc={() => setShowAddDoc(true)}
+          />
+        )}
+
+        {activeTab === "resumo" && (
+        <>
         {/* ═══ WELCOME HEADER ═══ */}
         <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
           <div className="h-1 w-full" style={{ background: "linear-gradient(90deg, hsl(230 80% 56%), hsl(262 60% 55%))" }} />
