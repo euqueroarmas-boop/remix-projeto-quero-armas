@@ -128,3 +128,148 @@
   .shadow-brass { box-shadow: var(--shadow-brass); }
   .shadow-deep { box-shadow: var(--shadow-deep); }
 }
+
+/* =====================================================================
+   QUERO ARMAS — TACTICAL PORTAL THEME (Cinza Chumbo + Âmbar)
+   Escopo: somente quando [data-tactical-portal] está presente.
+   Objetivo: 100% preto tático, KPIs com texto branco, fontes legíveis.
+   ===================================================================== */
+[data-tactical-portal] {
+  --tac-bg: #0a0c10;
+  --tac-surface: #14171c;
+  --tac-surface-2: #1c1f24;
+  --tac-surface-3: #262a31;
+  --tac-border: #2f343c;
+  --tac-text: #f4ecd0;
+  --tac-text-soft: #d8d2bb;
+  --tac-text-muted: #b6b09a;
+  --tac-amber: #f5a524;
+
+  background: var(--tac-bg) !important;
+  color: var(--tac-text) !important;
+  font-size: 18px;
+  font-weight: 500;
+}
+[data-tactical-portal] *,
+[data-tactical-portal] *::before,
+[data-tactical-portal] *::after { border-color: var(--tac-border) !important; }
+
+/* Cobertura total de fundos brancos / claros */
+[data-tactical-portal] .bg-white,
+[data-tactical-portal] .bg-slate-50,
+[data-tactical-portal] .bg-slate-100,
+[data-tactical-portal] .bg-gray-50,
+[data-tactical-portal] .bg-gray-100,
+[data-tactical-portal] .bg-blue-50\/30,
+[data-tactical-portal] [class*="bg-white/"],
+[data-tactical-portal] [class*="from-white"],
+[data-tactical-portal] [class*="to-white"],
+[data-tactical-portal] [class*="via-white"],
+[data-tactical-portal] [class*="from-slate-50"],
+[data-tactical-portal] [class*="to-slate-50"],
+[data-tactical-portal] [class*="from-slate-100"],
+[data-tactical-portal] [class*="to-blue-50"] {
+  background: var(--tac-surface) !important;
+  background-image: none !important;
+}
+
+[data-tactical-portal] .bg-amber-50\/60,
+[data-tactical-portal] .bg-emerald-50\/60,
+[data-tactical-portal] .bg-red-50\/60,
+[data-tactical-portal] .bg-emerald-50,
+[data-tactical-portal] .bg-amber-50,
+[data-tactical-portal] .bg-red-50 {
+  background: var(--tac-surface-3) !important;
+}
+
+/* Bordas claras → bordas táticas */
+[data-tactical-portal] [class*="border-slate-100"],
+[data-tactical-portal] [class*="border-slate-200"],
+[data-tactical-portal] [class*="border-amber-200"],
+[data-tactical-portal] [class*="border-emerald-200"],
+[data-tactical-portal] [class*="border-red-200"] {
+  border-color: var(--tac-border) !important;
+}
+
+/* Tipografia: tudo legível e claro */
+[data-tactical-portal] .text-slate-400,
+[data-tactical-portal] .text-slate-500,
+[data-tactical-portal] .text-slate-600,
+[data-tactical-portal] .text-slate-700,
+[data-tactical-portal] .text-slate-800,
+[data-tactical-portal] .text-slate-900,
+[data-tactical-portal] .text-gray-400,
+[data-tactical-portal] .text-gray-500,
+[data-tactical-portal] .text-gray-600,
+[data-tactical-portal] .text-gray-700,
+[data-tactical-portal] .text-gray-800,
+[data-tactical-portal] .text-gray-900,
+[data-tactical-portal] .text-black {
+  color: var(--tac-text) !important;
+}
+
+[data-tactical-portal] h1,
+[data-tactical-portal] h2,
+[data-tactical-portal] h3,
+[data-tactical-portal] h4 { color: #ffffff !important; font-weight: 700 !important; }
+
+/* Cores acentuadas viram âmbar para coerência */
+[data-tactical-portal] .text-blue-500,
+[data-tactical-portal] .text-blue-600,
+[data-tactical-portal] .text-indigo-500,
+[data-tactical-portal] .text-indigo-600,
+[data-tactical-portal] .text-purple-500,
+[data-tactical-portal] .text-purple-600 { color: var(--tac-amber) !important; }
+
+/* KPIs / Quick stats — texto BRANCO obrigatório */
+[data-tactical-portal] .grid > div[style*="background"] {
+  background: var(--tac-surface-2) !important;
+}
+[data-tactical-portal] .grid > div[style*="background"] > div > div:first-child,
+[data-tactical-portal] .grid > div[style*="background"] > div > div:last-child {
+  color: #ffffff !important;
+}
+[data-tactical-portal] .grid > div[style*="background"] svg { color: var(--tac-amber) !important; }
+
+/* Tipografia mínima — corpo 18px / auxiliar 16px */
+[data-tactical-portal] .text-\[9px\],
+[data-tactical-portal] .text-\[10px\],
+[data-tactical-portal] .text-\[11px\],
+[data-tactical-portal] .text-xs { font-size: 16px !important; line-height: 1.4 !important; }
+[data-tactical-portal] .text-\[12px\],
+[data-tactical-portal] .text-sm { font-size: 17px !important; line-height: 1.45 !important; }
+[data-tactical-portal] .text-base { font-size: 18px !important; }
+[data-tactical-portal] .text-lg { font-size: 20px !important; }
+[data-tactical-portal] .text-xl { font-size: 24px !important; }
+[data-tactical-portal] p, [data-tactical-portal] span, [data-tactical-portal] div { font-weight: 500; }
+
+/* Sticky headers / blur backgrounds */
+[data-tactical-portal] header,
+[data-tactical-portal] .backdrop-blur-md,
+[data-tactical-portal] .backdrop-blur-lg {
+  background: rgba(10, 12, 16, 0.92) !important;
+  border-color: var(--tac-border) !important;
+}
+
+/* Botões escuros (slate-900) → âmbar */
+[data-tactical-portal] .bg-slate-900,
+[data-tactical-portal] .bg-slate-800 {
+  background: var(--tac-amber) !important;
+  color: #0a0c10 !important;
+}
+
+/* Inputs */
+[data-tactical-portal] input,
+[data-tactical-portal] textarea,
+[data-tactical-portal] select {
+  background: var(--tac-surface-2) !important;
+  color: var(--tac-text) !important;
+  border-color: var(--tac-border) !important;
+}
+[data-tactical-portal] input::placeholder,
+[data-tactical-portal] textarea::placeholder { color: var(--tac-text-muted) !important; }
+
+/* Mantém PDFs em fundo claro (impressão) */
+@media print {
+  [data-tactical-portal] { background: #ffffff !important; color: #000000 !important; }
+}
