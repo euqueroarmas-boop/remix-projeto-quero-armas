@@ -23,6 +23,7 @@ const QARelatoriosPage = lazyRetry(() => import("./QARelatoriosPage"), "QARelato
 const QAFinanceiroPage = lazyRetry(() => import("./QAFinanceiroPage"), "QAFinanceiroPage");
 const QARecursosAuditoriaPage = lazyRetry(() => import("./QARecursosAuditoriaPage"), "QARecursosAuditoriaPage");
 const QAAuditoriaPage = lazyRetry(() => import("./QAAuditoriaPage"), "QAAuditoriaPage");
+const QAArmamentosAdminPage = lazyRetry(() => import("./QAArmamentosAdminPage"), "QAArmamentosAdminPage");
 const QACadastroPublicoPage = lazyRetry(() => import("./QACadastroPublicoPage"), "QACadastroPublicoPage");
 const QAEnviarFotoPage = lazyRetry(() => import("./QAEnviarFotoPage"), "QAEnviarFotoPage");
 const QAClienteLoginPage = lazyRetry(() => import("./QAClienteLoginPage"), "QAClienteLoginPage");
@@ -79,6 +80,7 @@ export default function QARoutes() {
           <Route path="legislacao" element={<QALegislacaoPage />} />
           <Route path="jurisprudencia" element={<QAJurisprudenciaPage />} />
           <Route path="modelos-docx" element={<QAModelosDocxPage />} />
+          <Route path="armamentos" element={<QAArmamentosAdminPage />} />
           <Route path="gerar-peca" element={<QAGerarPecaPage />} />
           <Route path="casos" element={<QACasosPage />} />
           <Route path="historico" element={<QAHistoricoPage />} />

@@ -2670,11 +2670,17 @@ export type Database = {
           comprimento_cano_mm: number | null
           created_at: string
           descricao: string | null
+          fonte_dados: string
+          fonte_url: string | null
           id: string
+          imagem_url: string | null
           marca: string
           modelo: string
+          observacoes: string | null
           origem: string | null
           peso_gramas: number | null
+          revisado_em: string | null
+          revisado_por: string | null
           search_tokens: string | null
           stat_alcance: number | null
           stat_cadencia: number | null
@@ -2682,6 +2688,7 @@ export type Database = {
           stat_dano: number | null
           stat_mobilidade: number | null
           stat_precisao: number | null
+          status_revisao: string
           tipo: string
           updated_at: string
           velocidade_projetil_ms: number | null
@@ -2696,11 +2703,17 @@ export type Database = {
           comprimento_cano_mm?: number | null
           created_at?: string
           descricao?: string | null
+          fonte_dados?: string
+          fonte_url?: string | null
           id?: string
+          imagem_url?: string | null
           marca: string
           modelo: string
+          observacoes?: string | null
           origem?: string | null
           peso_gramas?: number | null
+          revisado_em?: string | null
+          revisado_por?: string | null
           search_tokens?: string | null
           stat_alcance?: number | null
           stat_cadencia?: number | null
@@ -2708,6 +2721,7 @@ export type Database = {
           stat_dano?: number | null
           stat_mobilidade?: number | null
           stat_precisao?: number | null
+          status_revisao?: string
           tipo: string
           updated_at?: string
           velocidade_projetil_ms?: number | null
@@ -2722,11 +2736,17 @@ export type Database = {
           comprimento_cano_mm?: number | null
           created_at?: string
           descricao?: string | null
+          fonte_dados?: string
+          fonte_url?: string | null
           id?: string
+          imagem_url?: string | null
           marca?: string
           modelo?: string
+          observacoes?: string | null
           origem?: string | null
           peso_gramas?: number | null
+          revisado_em?: string | null
+          revisado_por?: string | null
           search_tokens?: string | null
           stat_alcance?: number | null
           stat_cadencia?: number | null
@@ -2734,6 +2754,7 @@ export type Database = {
           stat_dano?: number | null
           stat_mobilidade?: number | null
           stat_precisao?: number | null
+          status_revisao?: string
           tipo?: string
           updated_at?: string
           velocidade_projetil_ms?: number | null
