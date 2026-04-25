@@ -262,20 +262,33 @@ function DocumentTag({ d }: { d: DocCard }) {
 
 export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon }: Props) {
   const [showAll, setShowAll] = useState(false);
-  const { match, autoCreatePending, loading: catLoading } = useArmamentoCatalogo();
+  const { match, byId, resolveCraf, loading: catLoading } = useArmamentoCatalogo();
 
   const enriched = useMemo(
-    () => weapons.map((w) => ({ w, info: buildWeaponInfo(w.nome_arma, w.numero_arma), catalog: match(w.nome_arma) })),
-    [weapons, match],
+    () => weapons.map((w) => ({
+      w,
+      info: buildWeaponInfo(w.nome_arma, w.numero_arma),
+      // Prioriza vínculo direto (catalogo_id na CRAF/GTE) → senão tenta match fuzzy
+      catalog: byId(w.catalogo_id || null) || match(w.nome_arma),
+    })),
+    [weapons, match, byId],
   );
 
-  // Para armas sem match no catálogo, pede pra IA gerar entrada pendente de revisão (uma vez).
+  // Para CRAFs/GTEs ainda não vinculados ao catálogo: dispara resolução IA (1× por arma).
   useEffect(() => {
     if (catLoading) return;
-    enriched.forEach(({ w, info, catalog }) => {
-      if (!catalog && w.nome_arma) autoCreatePending(w.nome_arma, info.kind as any, null);
+    enriched.forEach(({ w }) => {
+      if (!w.catalogo_id && w.nome_arma) {
+        if (w.source === "CRAF" && typeof w.id === "number") {
+          resolveCraf({ craf_id: w.id });
+        } else if (w.source === "GTE" && typeof w.id === "number") {
+          resolveCraf({ gte_id: w.id });
+        } else {
+          resolveCraf({ nome_arma: w.nome_arma });
+        }
+      }
     });
-  }, [enriched, catLoading, autoCreatePending]);
+  }, [enriched, catLoading, resolveCraf]);
 
   const longas = enriched.filter((e) => ["fuzil", "carabina", "espingarda"].includes(e.info.kind));
   const curtas = enriched.filter((e) => ["pistola", "revolver", "submetralhadora"].includes(e.info.kind));
