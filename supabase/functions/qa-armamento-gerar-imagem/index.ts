@@ -27,8 +27,8 @@ function buildPrompt(it: any): string {
     it.comprimento_cano_mm ? `with ${it.comprimento_cano_mm}mm barrel` : "",
     "Strict left-side profile view, slide/barrel pointing to the RIGHT, factory new condition.",
     `CRITICAL ACCURACY: must match the exact production ${it.marca} ${it.modelo} — correct slide length, slide serrations, frame generation, trigger guard contour, magazine well, beavertail, sights (front + rear), accessory rail, grip texture/stippling, controls placement, and manufacturer engraving authentic to this specific reference model. Do NOT invent a generic firearm.`,
-    "OUTPUT FORMAT: square PNG with FULLY TRANSPARENT BACKGROUND (alpha channel). No white, gray, black, colored, studio, paper, canvas, scene, shadow plate, floor, gradient, or rectangular background — only the firearm pixels cut out cleanly with anti-aliased transparent edges.",
-    "Soft studio lighting, sharp focus, ultra-high detail, no text overlays, no watermarks, no logos other than authentic manufacturer engraving on the slide.",
+    "OUTPUT FORMAT: square PNG on a perfectly flat pure chroma-key green background (#00FF00 RGB 0,255,0) for background removal. Absolutely no studio scene, no floor, no gradient, no shadow plate, no vignette, no white/gray/black background, no reflections.",
+    "Soft studio lighting on the firearm only, sharp focus, ultra-high detail, no text overlays, no watermarks, no logos other than authentic manufacturer engraving on the slide.",
     "Centered composition; the weapon fills 96% of the frame width, oversized, with almost no padding while keeping the full firearm visible.",
   ].filter(Boolean).join(" ");
 }
@@ -43,10 +43,12 @@ function stripBackgroundAndCropPng(input: Uint8Array): Uint8Array {
   const sample = [0, width - 1, (height - 1) * width, height * width - 1]
     .map((idx) => [rgba[idx * 4], rgba[idx * 4 + 1], rgba[idx * 4 + 2]]);
   const bg = sample.reduce((acc, c) => [acc[0] + c[0], acc[1] + c[1], acc[2] + c[2]], [0, 0, 0]).map((v) => v / sample.length);
+  const greenKey = bg[1] > 150 && bg[1] > bg[0] * 1.35 && bg[1] > bg[2] * 1.35;
   const isLikelyBg = (idx: number) => {
     const i = idx * 4;
     const r = rgba[i], g = rgba[i + 1], b = rgba[i + 2], a = rgba[i + 3];
     if (a < 8) return true;
+    if (greenKey && g > 115 && g > r * 1.22 && g > b * 1.22) return true;
     const d = Math.hypot(r - bg[0], g - bg[1], b - bg[2]);
     const max = Math.max(r, g, b), min = Math.min(r, g, b);
     return d < 62 || (r > 222 && g > 222 && b > 222 && max - min < 34);
