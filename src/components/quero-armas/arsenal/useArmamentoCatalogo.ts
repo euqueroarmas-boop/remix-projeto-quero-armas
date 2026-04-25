@@ -57,6 +57,35 @@ export function useArmamentoCatalogo() {
     };
   }, []);
 
+  /** Pede pra IA gerar uma entrada pendente de revisão (fire-and-forget, dedup). */
+  const requestedRef = (typeof window !== "undefined") ? ((window as any).__qaArmaReqs ||= new Set<string>()) : new Set<string>();
+  async function autoCreatePending(rawName: string, tipo?: WeaponKind | null, calibre?: string | null) {
+    const key = `${rawName}|${tipo || ""}|${calibre || ""}`.toUpperCase();
+    if (requestedRef.has(key)) return;
+    requestedRef.add(key);
+    // Tenta extrair marca + modelo de forma simples ("Taurus G2C 9mm" -> marca/modelo)
+    const parts = rawName.trim().split(/\s+/);
+    if (parts.length < 2) return;
+    const marca = parts[0];
+    const modelo = parts.slice(1, 3).join(" ");
+    try {
+      const { data } = await supabase.functions.invoke("qa-armamento-gerar-ia", {
+        body: { marca, modelo, calibre, tipo },
+      });
+      const d = (data as any)?.data;
+      if (!d) return;
+      const payload = {
+        ...d,
+        fonte_dados: "ia_gerado",
+        status_revisao: "pendente_revisao",
+        search_tokens: `${d.marca} ${d.modelo} ${d.apelido || ""} ${d.calibre || ""}`.toUpperCase(),
+      };
+      await supabase.from("qa_armamentos_catalogo" as any).insert(payload);
+    } catch (e) {
+      console.warn("autoCreate falhou", e);
+    }
+  }
+
   /** Tenta encontrar o melhor match para um nome livre de arma. */
   const matcher = useMemo(() => {
     const indexed = items.map((it) => ({
@@ -86,5 +115,5 @@ export function useArmamentoCatalogo() {
     };
   }, [items]);
 
-  return { items, loading, match: matcher };
+  return { items, loading, match: matcher, autoCreatePending };
 }
