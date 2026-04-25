@@ -147,7 +147,7 @@
 
   background: var(--tac-bg) !important;
   color: var(--tac-text) !important;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
 }
 [data-tactical-portal] *,
@@ -231,16 +231,26 @@
 }
 [data-tactical-portal] .grid > div[style*="background"] svg { color: var(--tac-amber) !important; }
 
-/* Tipografia mínima — corpo 16px / auxiliar 14px */
+/* Tipografia mínima — corpo 14px / auxiliar 12px */
 [data-tactical-portal] .text-\[9px\],
 [data-tactical-portal] .text-\[10px\],
 [data-tactical-portal] .text-\[11px\],
-[data-tactical-portal] .text-xs { font-size: 14px !important; line-height: 1.4 !important; }
+[data-tactical-portal] .text-xs { font-size: 12px !important; line-height: 1.4 !important; }
 [data-tactical-portal] .text-\[12px\],
-[data-tactical-portal] .text-sm { font-size: 15px !important; line-height: 1.45 !important; }
-[data-tactical-portal] .text-base { font-size: 16px !important; }
-[data-tactical-portal] .text-lg { font-size: 18px !important; }
-[data-tactical-portal] .text-xl { font-size: 20px !important; }
+[data-tactical-portal] .text-sm { font-size: 13px !important; line-height: 1.45 !important; }
+[data-tactical-portal] .text-base { font-size: 14px !important; }
+[data-tactical-portal] .text-lg { font-size: 16px !important; }
+[data-tactical-portal] .text-xl { font-size: 18px !important; }
+
+/* Pílulas de urgência (laudos psicológico/tiro) — contraste reforçado sobre âmbar */
+[data-tactical-portal] .text-amber-500,
+[data-tactical-portal] .text-amber-600,
+[data-tactical-portal] .text-orange-500,
+[data-tactical-portal] .text-orange-600 { color: #ffd86b !important; }
+[data-tactical-portal] .text-emerald-500,
+[data-tactical-portal] .text-emerald-600 { color: #6ee7a8 !important; }
+[data-tactical-portal] .text-red-500,
+[data-tactical-portal] .text-red-600 { color: #ff8a8a !important; }
 [data-tactical-portal] p, [data-tactical-portal] span, [data-tactical-portal] div { font-weight: 500; }
 
 /* Sticky headers / blur backgrounds */
