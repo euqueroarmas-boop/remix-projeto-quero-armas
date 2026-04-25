@@ -21,6 +21,36 @@ const TIPO_KEYWORDS: Record<string, string> = {
   outra: "firearm product photo white background",
 };
 
+/** Mapeia marca normalizada → domínio oficial para tentativa direta. */
+const OFFICIAL_SITES: Record<string, string> = {
+  taurus: "taurusarmas.com.br",
+  glock: "us.glock.com",
+  cbc: "cbc.com.br",
+  imbel: "imbel.gov.br",
+  rossi: "rossiusa.com",
+  beretta: "beretta.com",
+  "smith & wesson": "smith-wesson.com",
+  "smith&wesson": "smith-wesson.com",
+  sw: "smith-wesson.com",
+  sig: "sigsauer.com",
+  "sig sauer": "sigsauer.com",
+  hk: "heckler-koch.com",
+  "heckler & koch": "heckler-koch.com",
+  cz: "czub.cz",
+  fn: "fnamerica.com",
+  springfield: "springfield-armory.com",
+  ruger: "ruger.com",
+  colt: "colt.com",
+  walther: "waltherarms.com",
+  kimber: "kimberamerica.com",
+  benelli: "benelli.it",
+  mossberg: "mossberg.com",
+  remington: "remingtonfirearms.com",
+  winchester: "winchesterguns.com",
+  arex: "arexdefense.com",
+  fireeagle: "fireeagle.com.br",
+};
+
 /** Domínios preferidos: e-commerces e sites de fabricantes que normalmente
  *  têm fotos com fundo branco e fiéis ao modelo real. */
 const PREFERRED_HOSTS = [
@@ -50,6 +80,13 @@ const PREFERRED_HOSTS = [
   "shopify.com",
 ];
 
+const norm = (s: string) =>
+  (s || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+
 function hostScore(url: string): number {
   try {
     const h = new URL(url).hostname.toLowerCase();
@@ -59,6 +96,82 @@ function hostScore(url: string): number {
     return 0;
   } catch {
     return -1;
+  }
+}
+
+/** ===== 1) WIKIMEDIA COMMONS ===== */
+async function wikimediaSearch(query: string): Promise<string[]> {
+  try {
+    const api =
+      `https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*` +
+      `&generator=search&gsrnamespace=6&gsrlimit=10&gsrsearch=${encodeURIComponent(query)}` +
+      `&prop=imageinfo&iiprop=url|mime|size&iiurlwidth=1200`;
+    const res = await fetch(api, { headers: { "User-Agent": UA } });
+    if (!res.ok) return [];
+    const json = await res.json();
+    const pages = json?.query?.pages || {};
+    const urls: string[] = [];
+    for (const k of Object.keys(pages)) {
+      const info = pages[k]?.imageinfo?.[0];
+      if (!info) continue;
+      const mime = (info.mime || "").toLowerCase();
+      if (!mime.startsWith("image/")) continue;
+      if (mime.includes("svg")) continue;
+      const u = info.thumburl || info.url;
+      if (u) urls.push(u);
+    }
+    return urls;
+  } catch (e) {
+    console.warn("[wiki] erro", e);
+    return [];
+  }
+}
+
+/** ===== 2) SCRAPE DO SITE OFICIAL ===== */
+async function scrapeOfficialSite(
+  domain: string,
+  marca: string,
+  modelo: string,
+): Promise<string[]> {
+  try {
+    const q = `site:${domain} ${marca} ${modelo}`;
+    const ddg = await fetch(
+      `https://duckduckgo.com/html/?q=${encodeURIComponent(q)}`,
+      { headers: { "User-Agent": UA } },
+    );
+    const html = await ddg.text();
+    // Extrai resultados que pertencem ao domínio oficial
+    const re = new RegExp(
+      `https?:\\/\\/[^"'\\s]*${domain.replace(/\./g, "\\.")}[^"'\\s]*`,
+      "gi",
+    );
+    const pages = Array.from(new Set((html.match(re) || []).slice(0, 5)));
+    const imgs: string[] = [];
+    for (const p of pages) {
+      try {
+        const r = await fetch(p, { headers: { "User-Agent": UA }, redirect: "follow" });
+        if (!r.ok) continue;
+        const body = await r.text();
+        // og:image / twitter:image
+        const og =
+          body.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)/i)?.[1] ||
+          body.match(/<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)/i)?.[1];
+        if (og) imgs.push(og.startsWith("http") ? og : new URL(og, p).toString());
+        // imagens grandes inline
+        const matches = body.match(/<img[^>]+src=["']([^"']+\.(?:jpe?g|png|webp))[^"']*["'][^>]*>/gi) || [];
+        for (const m of matches.slice(0, 6)) {
+          const src = m.match(/src=["']([^"']+)["']/i)?.[1];
+          if (!src) continue;
+          const abs = src.startsWith("http") ? src : new URL(src, p).toString();
+          if (/logo|icon|sprite|placeholder/i.test(abs)) continue;
+          imgs.push(abs);
+        }
+      } catch (_) { /* ignora página */ }
+    }
+    return Array.from(new Set(imgs));
+  } catch (e) {
+    console.warn("[oficial] erro", domain, e);
+    return [];
   }
 }
 
@@ -148,19 +261,64 @@ Deno.serve(async (req) => {
       .eq("id", id);
 
     const tipoKw = TIPO_KEYWORDS[arma.tipo] || TIPO_KEYWORDS.outra;
-    // Vamos tentar 3 variações de query do mais específico para o mais genérico.
+
+    let chosenUrl: string | null = null;
+    let chosenSourceUrl: string | null = null;
+    let chosenBytes: Uint8Array | null = null;
+    let chosenMime = "image/jpeg";
+    let fonte = "ddg";
+
+    const marcaN = norm(arma.marca);
+    const officialDomain = OFFICIAL_SITES[marcaN] ||
+      OFFICIAL_SITES[marcaN.split(" ")[0]] || null;
+
+    // ===== ETAPA 1: WIKIMEDIA =====
+    const wikiQueries = [
+      `${arma.marca} ${arma.modelo}`,
+      `${arma.marca} ${arma.modelo} pistol`,
+      `${arma.marca} ${arma.modelo} firearm`,
+    ];
+    outerWiki: for (const q of wikiQueries) {
+      console.log("[wiki] query:", q);
+      const urls = await wikimediaSearch(q);
+      for (const u of urls.slice(0, 6)) {
+        const dl = await downloadImage(u);
+        if (dl) {
+          chosenUrl = u;
+          chosenSourceUrl = u;
+          chosenBytes = dl.bytes;
+          chosenMime = dl.mime;
+          fonte = "wikimedia";
+          break outerWiki;
+        }
+      }
+    }
+
+    // ===== ETAPA 2: SITE OFICIAL =====
+    if (!chosenBytes && officialDomain) {
+      console.log("[oficial] domínio:", officialDomain);
+      const urls = await scrapeOfficialSite(officialDomain, arma.marca, arma.modelo);
+      for (const u of urls.slice(0, 8)) {
+        const dl = await downloadImage(u);
+        if (dl) {
+          chosenUrl = u;
+          chosenSourceUrl = `https://${officialDomain}`;
+          chosenBytes = dl.bytes;
+          chosenMime = dl.mime;
+          fonte = "oficial";
+          break;
+        }
+      }
+    }
+
+    // ===== ETAPA 3: DUCKDUCKGO IMAGES (fallback) =====
     const queries = [
       `${arma.marca} ${arma.modelo} ${arma.calibre || ""} ${tipoKw}`.replace(/\s+/g, " ").trim(),
       `${arma.marca} ${arma.modelo} ${tipoKw}`.replace(/\s+/g, " ").trim(),
       `${arma.marca} ${arma.modelo} firearm`,
     ];
 
-    let chosenUrl: string | null = null;
-    let chosenSourceUrl: string | null = null;
-    let chosenBytes: Uint8Array | null = null;
-    let chosenMime = "image/jpeg";
-
-    outer: for (const q of queries) {
+    if (!chosenBytes) outer: for (const q of queries) {
       console.log("[busca] query:", q);
       const results = await ddgImageSearch(q);
       if (!results.length) continue;
@@ -181,6 +339,7 @@ Deno.serve(async (req) => {
           chosenSourceUrl = r.url || null;
           chosenBytes = dl.bytes;
           chosenMime = dl.mime;
+          fonte = "ddg";
           break outer;
         }
       }
@@ -192,7 +351,7 @@ Deno.serve(async (req) => {
         .update({ imagem_status: "erro" })
         .eq("id", id);
       return new Response(
-        JSON.stringify({ error: "Nenhuma foto adequada encontrada" }),
+        JSON.stringify({ error: "Nenhuma foto adequada encontrada (wikimedia/oficial/ddg)" }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
@@ -241,6 +400,7 @@ Deno.serve(async (req) => {
         imagem: publicUrl,
         fonte_imagem: chosenUrl,
         fonte_pagina: chosenSourceUrl,
+        fonte,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
