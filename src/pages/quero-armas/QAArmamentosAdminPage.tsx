@@ -216,6 +216,7 @@ export default function QAArmamentosAdminPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[64px]">Foto</TableHead>
                 <TableHead>Marca / Modelo</TableHead>
                 <TableHead>Tipo</TableHead>
                 <TableHead>Calibre</TableHead>
@@ -229,6 +230,15 @@ export default function QAArmamentosAdminPage() {
             <TableBody>
               {filtered.map((it) => (
                 <TableRow key={it.id} className="cursor-pointer" onClick={() => openEdit(it)}>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    {it.imagem ? (
+                      <img src={it.imagem} alt={`${it.marca} ${it.modelo}`} className="h-10 w-16 object-contain rounded bg-black/80" />
+                    ) : (
+                      <div className="h-10 w-16 grid place-items-center rounded border border-dashed border-muted-foreground/30 text-muted-foreground">
+                        <ImageIcon className="h-4 w-4" />
+                      </div>
+                    )}
+                  </TableCell>
                   <TableCell>
                     <div className="font-medium">{it.marca} {it.modelo}</div>
                     {it.apelido && <div className="text-xs text-muted-foreground">"{it.apelido}"</div>}
@@ -240,6 +250,9 @@ export default function QAArmamentosAdminPage() {
                   <TableCell><StatusBadge s={it.status_revisao} /></TableCell>
                   <TableCell><Badge variant="outline">{FONTE_LABEL[it.fonte_dados]}</Badge></TableCell>
                   <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                    <Button size="sm" variant="ghost" onClick={() => gerarImagem(it)} title={it.imagem ? "Regerar imagem" : "Gerar imagem"} disabled={imgBusyId === it.id}>
+                      {imgBusyId === it.id ? <Loader2 className="h-4 w-4 animate-spin" /> : (it.imagem ? <RefreshCcw className="h-4 w-4" /> : <ImageIcon className="h-4 w-4" />)}
+                    </Button>
                     {it.status_revisao !== "verificado" && (
                       <Button size="sm" variant="ghost" onClick={() => marcarVerificado(it)} title="Marcar verificado">
                         <CheckCircle2 className="h-4 w-4" />
@@ -252,7 +265,7 @@ export default function QAArmamentosAdminPage() {
                 </TableRow>
               ))}
               {filtered.length === 0 && (
-                <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Nenhum resultado</TableCell></TableRow>
+                <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">Nenhum resultado</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
