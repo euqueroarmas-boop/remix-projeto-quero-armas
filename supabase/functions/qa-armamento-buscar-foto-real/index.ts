@@ -230,6 +230,64 @@ async function downloadImage(url: string): Promise<{ bytes: Uint8Array; mime: st
   }
 }
 
+/** Remove fundo branco/claro/xadrez de transparência usando IA (Gemini image edit).
+ *  Retorna PNG transparente. Se falhar, devolve os bytes originais. */
+async function removeBackgroundAI(bytes: Uint8Array, mime: string): Promise<{ bytes: Uint8Array; mime: string; transparent: boolean }> {
+  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+  if (!LOVABLE_API_KEY) return { bytes, mime, transparent: false };
+  try {
+    // base64 da imagem
+    let bin = "";
+    for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    const b64 = btoa(bin);
+    const dataUrl = `data:${mime};base64,${b64}`;
+
+    const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash-image",
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: "Isolate the firearm from the image. Remove ALL background completely (white, gray, checkerboard pattern, watermarks, logos, text). Return ONLY the firearm with a fully TRANSPARENT background. Keep the firearm pixel-perfect, do not redraw or stylize it. Output as PNG with alpha channel.",
+              },
+              { type: "image_url", image_url: { url: dataUrl } },
+            ],
+          },
+        ],
+        modalities: ["image", "text"],
+      }),
+    });
+    if (!resp.ok) {
+      console.warn("[bg-remove] gateway falhou", resp.status);
+      return { bytes, mime, transparent: false };
+    }
+    const json = await resp.json();
+    const imgUrl: string | undefined = json?.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    if (!imgUrl || !imgUrl.startsWith("data:image/")) {
+      console.warn("[bg-remove] sem imagem na resposta");
+      return { bytes, mime, transparent: false };
+    }
+    const m = imgUrl.match(/^data:(image\/[^;]+);base64,(.+)$/);
+    if (!m) return { bytes, mime, transparent: false };
+    const outMime = m[1];
+    const outBin = atob(m[2]);
+    const outBytes = new Uint8Array(outBin.length);
+    for (let i = 0; i < outBin.length; i++) outBytes[i] = outBin.charCodeAt(i);
+    return { bytes: outBytes, mime: outMime, transparent: true };
+  } catch (e) {
+    console.warn("[bg-remove] erro", e);
+    return { bytes, mime, transparent: false };
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
@@ -356,17 +414,25 @@ Deno.serve(async (req) => {
       );
     }
 
-    const ext = chosenMime.includes("png")
+    // ===== ETAPA 4: REMOÇÃO DE FUNDO =====
+    // Sempre tenta remover o fundo para padronizar PNG transparente — evita o "xadrez"
+    // que aparecia quando a imagem original já vinha com tabuleiro de transparência embutido.
+    const cleaned = await removeBackgroundAI(chosenBytes, chosenMime);
+    const finalBytes = cleaned.bytes;
+    const finalMime = cleaned.mime;
+    const isTransparent = cleaned.transparent;
+
+    const ext = finalMime.includes("png")
       ? "png"
-      : chosenMime.includes("webp")
+      : finalMime.includes("webp")
       ? "webp"
       : "jpg";
     const path = `${arma.id}.${ext}`;
 
     const { error: upErr } = await sb.storage
       .from("qa-armamentos")
-      .upload(path, chosenBytes, {
-        contentType: chosenMime,
+      .upload(path, finalBytes, {
+        contentType: finalMime,
         upsert: true,
         cacheControl: "31536000",
       });
@@ -388,6 +454,8 @@ Deno.serve(async (req) => {
       .update({
         imagem: publicUrl,
         imagem_url: chosenUrl,
+        imagem_fonte: chosenUrl,
+        tem_fundo_transparente: isTransparent,
         imagem_status: "pronta",
         imagem_gerada_em: new Date().toISOString(),
         fonte_url: chosenSourceUrl || arma.fonte_url,

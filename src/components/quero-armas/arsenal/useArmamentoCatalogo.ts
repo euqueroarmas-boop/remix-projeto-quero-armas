@@ -59,34 +59,39 @@ export function useArmamentoCatalogo() {
     };
   }, []);
 
-  /** Pede pra IA gerar uma entrada pendente de revisão (fire-and-forget, dedup). */
+  /** Pede para a IA identificar a arma do CRAF/GTE e vincular ao catálogo (dedup global). */
   const requestedRef = (typeof window !== "undefined") ? ((window as any).__qaArmaReqs ||= new Set<string>()) : new Set<string>();
-  async function autoCreatePending(rawName: string, tipo?: WeaponKind | null, calibre?: string | null) {
-    const key = `${rawName}|${tipo || ""}|${calibre || ""}`.toUpperCase();
-    if (requestedRef.has(key)) return;
+  async function resolveCraf(opts: { craf_id?: number | string; gte_id?: number | string; nome_arma?: string | null }) {
+    const key = `${opts.craf_id || ""}|${opts.gte_id || ""}|${opts.nome_arma || ""}`.toUpperCase();
+    if (!key.trim() || requestedRef.has(key)) return null;
     requestedRef.add(key);
-    // Tenta extrair marca + modelo de forma simples ("Taurus G2C 9mm" -> marca/modelo)
-    const parts = rawName.trim().split(/\s+/);
-    if (parts.length < 2) return;
-    const marca = parts[0];
-    const modelo = parts.slice(1, 3).join(" ");
     try {
-      const { data } = await supabase.functions.invoke("qa-armamento-gerar-ia", {
-        body: { marca, modelo, calibre, tipo },
-      });
-      const d = (data as any)?.data;
-      if (!d) return;
-      const payload = {
-        ...d,
-        fonte_dados: "ia_gerado",
-        status_revisao: "pendente_revisao",
-        search_tokens: `${d.marca} ${d.modelo} ${d.apelido || ""} ${d.calibre || ""}`.toUpperCase(),
-      };
-      await supabase.from("qa_armamentos_catalogo" as any).insert(payload);
+      const body: any = {};
+      if (opts.craf_id) body.craf_id = opts.craf_id;
+      else if (opts.gte_id) body.gte_id = opts.gte_id;
+      else if (opts.nome_arma) body.nome_arma = opts.nome_arma;
+      const { data, error } = await supabase.functions.invoke("qa-resolver-arma-craf", { body });
+      if (error) { console.warn("[resolveCraf] erro", error); return null; }
+      const cat = (data as any)?.catalog as ArmamentoCatalogo | undefined;
+      if (cat) {
+        setItems((prev) => {
+          const exists = prev.some((p) => p.id === cat.id);
+          return exists ? prev.map((p) => (p.id === cat.id ? cat : p)) : [...prev, cat];
+        });
+        return cat;
+      }
     } catch (e) {
-      console.warn("autoCreate falhou", e);
+      console.warn("[resolveCraf] falhou", e);
     }
+    return null;
   }
+
+  /** Lookup direto por id (quando CRAF/GTE já tem catalogo_id vinculado). */
+  const byId = useMemo(() => {
+    const m = new Map<string, ArmamentoCatalogo>();
+    items.forEach((it) => m.set(it.id, it));
+    return (id: string | null | undefined) => (id ? m.get(id) || null : null);
+  }, [items]);
 
   /** Tenta encontrar o melhor match para um nome livre de arma. */
   const matcher = useMemo(() => {
@@ -117,5 +122,5 @@ export function useArmamentoCatalogo() {
     };
   }, [items]);
 
-  return { items, loading, match: matcher, autoCreatePending };
+  return { items, loading, match: matcher, byId, resolveCraf };
 }
