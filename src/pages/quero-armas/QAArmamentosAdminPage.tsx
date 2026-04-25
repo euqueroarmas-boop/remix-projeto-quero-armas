@@ -214,7 +214,14 @@ export default function QAArmamentosAdminPage() {
           <h1 className="text-2xl font-bold tracking-tight">CATÁLOGO DE ARMAMENTOS</h1>
           <p className="text-sm text-muted-foreground">Base técnica de armas reais usadas pelos clientes do Arsenal.</p>
         </div>
-        <Button onClick={openNew}><Plus className="h-4 w-4 mr-2" />Nova arma</Button>
+        <div className="flex items-center gap-2">
+          <Button variant="secondary" onClick={buscarTodasFotos} disabled={bulkBusy} title="Busca foto real em fontes públicas para cada arma sem foto">
+            {bulkBusy
+              ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Buscando {bulkProgress?.done}/{bulkProgress?.total}</>
+              : <><Camera className="h-4 w-4 mr-2" />Buscar fotos reais</>}
+          </Button>
+          <Button onClick={openNew}><Plus className="h-4 w-4 mr-2" />Nova arma</Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
