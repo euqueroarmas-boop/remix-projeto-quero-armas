@@ -25,7 +25,7 @@ import {
   GraduationCap, BookOpen, Coffee, Users, MapPin, Calendar, Award,
 } from 'lucide-react';
 
-const PORTAL_PATH = '/area-do-cliente';
+const PORTAL_PATH = '/area-do-cliente/login';
 
 const pillars = [
   { icon: Swords, kicker: 'Pilar 01 · Armamento', title: 'Arma curta ou longa. A que vai salvar a sua família.', desc: 'Pistola pra andar com você. Espingarda pra dormir tranquilo. Revólver que nunca falha. Não é coleção. Não é hobby. É a ferramenta que decide se sua mulher vai dormir viúva ou se seus filhos vão crescer com pai. Te orientamos na escolha certa pro seu perfil, sua casa e a ameaça real do seu CEP.' },

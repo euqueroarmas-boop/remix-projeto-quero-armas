@@ -50,12 +50,6 @@ const queroArmasGroups: { label: string; links: NavLinkItem[] }[] = [
     ],
   },
   {
-    label: 'Área do Cliente',
-    links: [
-      { to: '/area-do-cliente', label: 'Área do Cliente', icon: UserCircle },
-    ],
-  },
-  {
     label: 'Administração',
     links: [
       { to: '/dashboard', label: 'Painel Admin', icon: LayoutDashboard },
@@ -144,7 +138,7 @@ export const SiteShell = ({ children }: SiteShellProps) => {
               </>
             ) : (
               <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex">
-                <Link to="/auth">Acesso Cliente</Link>
+                <Link to="/area-do-cliente/login">Acesso Cliente</Link>
               </Button>
             )}
 
@@ -250,7 +244,7 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                       className="h-11 w-full font-heading uppercase tracking-[0.15em] shadow-tactical"
                       onClick={() => setMenuOpen(false)}
                     >
-                      <Link to="/auth">
+                      <Link to="/area-do-cliente/login">
                         <LogIn className="mr-2 size-4" /> Acesso Cliente
                       </Link>
                     </Button>
