@@ -151,7 +151,7 @@ Deno.serve(async (req) => {
       const certPassword = new TextDecoder().decode(decryptedPassBytes);
 
       // Extract signer name from certificate for visual stamp
-      const forgeMod = await import("npm:node-forge@1.3.1");
+      const forgeMod = await import("https://esm.sh/node-forge@1.3.1");
       const forge = forgeMod.default || forgeMod;
 
       function uint8ToBinaryString(bytes: Uint8Array): string {
