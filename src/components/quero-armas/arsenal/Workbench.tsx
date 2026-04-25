@@ -265,8 +265,7 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon }:
   useEffect(() => {
     if (catLoading) return;
     enriched.forEach(({ w, info, catalog }) => {
-      if (!catalog && w.nome_arma) autoCreatePending(w.nome_arma, info.kind as any, w.calibre || null);
-      void 0;
+      if (!catalog && w.nome_arma) autoCreatePending(w.nome_arma, info.kind as any, null);
     });
   }, [enriched, catLoading, autoCreatePending]);
 
