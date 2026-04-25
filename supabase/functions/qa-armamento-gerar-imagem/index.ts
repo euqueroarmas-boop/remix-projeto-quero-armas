@@ -44,13 +44,15 @@ function stripBackgroundAndCropPng(input: Uint8Array): Uint8Array {
     .map((idx) => [rgba[idx * 4], rgba[idx * 4 + 1], rgba[idx * 4 + 2]]);
   const bg = sample.reduce((acc, c) => [acc[0] + c[0], acc[1] + c[1], acc[2] + c[2]], [0, 0, 0]).map((v) => v / sample.length);
   const greenKey = bg[1] > 150 && bg[1] > bg[0] * 1.35 && bg[1] > bg[2] * 1.35;
+  const lightNeutralKey = bg[0] > 155 && bg[1] > 155 && bg[2] > 155 && Math.max(...bg) - Math.min(...bg) < 42;
   const isLikelyBg = (idx: number) => {
     const i = idx * 4;
     const r = rgba[i], g = rgba[i + 1], b = rgba[i + 2], a = rgba[i + 3];
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
     if (a < 8) return true;
     if (greenKey && g > 115 && g > r * 1.22 && g > b * 1.22) return true;
+    if (lightNeutralKey && r > 150 && g > 150 && b > 150 && max - min < 46) return true;
     const d = Math.hypot(r - bg[0], g - bg[1], b - bg[2]);
-    const max = Math.max(r, g, b), min = Math.min(r, g, b);
     return d < 62 || (r > 222 && g > 222 && b > 222 && max - min < 34);
   };
   const seen = new Uint8Array(width * height);
