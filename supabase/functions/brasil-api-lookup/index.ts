@@ -145,7 +145,7 @@ Deno.serve(async (req) => {
 });
 
 async function logLookup(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   type: string,
   value: string,
   status: string,

@@ -92,7 +92,7 @@ Deno.serve(async (req) => {
           return { error: `Table '${q.table}' not allowed`, data: null, count: null };
         }
 
-        let query = supabase
+        let query: any = supabase
           .from(q.table)
           .select(q.select || "*", q.count ? { count: "exact" } : undefined);
 
