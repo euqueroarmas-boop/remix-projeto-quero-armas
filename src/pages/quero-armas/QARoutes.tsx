@@ -23,6 +23,7 @@ const QARelatoriosPage = lazyRetry(() => import("./QARelatoriosPage"), "QARelato
 const QAFinanceiroPage = lazyRetry(() => import("./QAFinanceiroPage"), "QAFinanceiroPage");
 const QARecursosAuditoriaPage = lazyRetry(() => import("./QARecursosAuditoriaPage"), "QARecursosAuditoriaPage");
 const QAAuditoriaPage = lazyRetry(() => import("./QAAuditoriaPage"), "QAAuditoriaPage");
+const QAArmamentosAdminPage = lazyRetry(() => import("./QAArmamentosAdminPage"), "QAArmamentosAdminPage");
 const QACadastroPublicoPage = lazyRetry(() => import("./QACadastroPublicoPage"), "QACadastroPublicoPage");
 const QAEnviarFotoPage = lazyRetry(() => import("./QAEnviarFotoPage"), "QAEnviarFotoPage");
 const QAClienteLoginPage = lazyRetry(() => import("./QAClienteLoginPage"), "QAClienteLoginPage");
