@@ -3,7 +3,7 @@ import { useLocation, Link } from "react-router-dom";
 import {
   LayoutDashboard, PenTool, FolderOpen, Scale, Gavel,
   BookOpen, FileBox, History, Settings, LogOut, Shield, Users, Building2, BarChart3, DollarSign, ShieldCheck,
-  PanelLeftOpen, Home,
+  PanelLeftOpen, Home, Crosshair,
 } from "lucide-react";
 import { QALogo } from "./QALogo";
 
@@ -28,6 +28,7 @@ const NAV_GROUPS = [
       { title: "Legislação", url: "/legislacao", icon: Scale },
       { title: "Jurisprudência", url: "/jurisprudencia", icon: Gavel },
       { title: "Modelos DOCX", url: "/modelos-docx", icon: FileBox },
+      { title: "Catálogo de Armas", url: "/armamentos", icon: Crosshair },
     ],
   },
   {
