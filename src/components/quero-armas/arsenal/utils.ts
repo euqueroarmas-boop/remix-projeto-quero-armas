@@ -29,7 +29,7 @@ const NORM = (s: string) =>
     .toUpperCase();
 
 const KIND_HINTS: { kind: WeaponKind; tokens: string[] }[] = [
-  { kind: "pistola", tokens: ["PISTOLA", "GLOCK", "TAURUS PT", "TH9", "TH40", "TH380", "G2C", "G3C", "M&P", "BERETTA", "1911", "P226", "P320", "P226", "PT840", "TX22", "G17", "G19", "G22", "G25", "G26"] },
+  { kind: "pistola", tokens: ["PISTOLA", "GLOCK", "TAURUS PT", "TH9", "TH 9", "TH40", "TH380", "TS9", "TS 9", "G2C", "G3C", "M&P", "BERETTA", "1911", "P226", "P320", "P226", "PT840", "TX22", "TX 22", "G17", "G19", "G22", "G25", "G26"] },
   { kind: "revolver", tokens: ["REVOLVER", "RT", "RT85", "RT605", "RT82", "ROSSI"] },
   { kind: "espingarda", tokens: ["ESPINGARDA", "PUMP", "CALIBRE 12", "CAL 12", "MOSSBERG", "ST12"] },
   { kind: "carabina", tokens: ["CARABINA", "CT", "CTT", "T4", "PCC", "CTM-R", ".22 LR", "22LR"] },
@@ -48,7 +48,7 @@ export function inferWeaponKind(...inputs: (string | null | undefined)[]): Weapo
 }
 
 const CALIBRE_REGEX =
-  /(\.?\s?9\s?MM|\.380|\.40|\.357|\.38|\.45|\.22\s?LR|\.22|\.223|\.308|\.44|7\.62|5\.56|CAL\.?\s?12|CALIBRE\s?12|12\s?GA)/i;
+  /(9\s?[x×]\s?19\s?MM|9\s?[x×]\s?19|9\s?MM\s?PARABELLUM|\.?\s?9\s?MM|\.380|\.40|\.357|\.38|\.45|\.22\s?LONG\s?RIFLE|22\s?LONG\s?RIFLE|\.22\s?LR|\.22|\.223|\.308|\.44|7\.62|5\.56|CAL\.?\s?12|CALIBRE\s?12|12\s?GA)/i;
 
 export function extractCalibre(...inputs: (string | null | undefined)[]): string | null {
   const blob = inputs.filter(Boolean).join(" ");
@@ -56,6 +56,8 @@ export function extractCalibre(...inputs: (string | null | undefined)[]): string
   if (!m) return null;
   const raw = m[0].toUpperCase().replace(/\s+/g, "");
   if (raw.includes("CALIBRE12") || raw.includes("CAL.12") || raw.includes("CAL12") || raw.includes("12GA")) return "CAL .12";
+  if (raw.includes("9X19") || raw.includes("9MM")) return "9MM";
+  if (raw.includes("22LONGRIFLE")) return ".22 LR";
   if (raw.includes("9MM") || raw === ".9MM") return "9MM";
   return raw.startsWith(".") ? raw : raw;
 }

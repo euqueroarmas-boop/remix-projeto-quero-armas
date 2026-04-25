@@ -19,6 +19,12 @@ interface Props {
   onUpdateAvatarClick?: () => void;
 }
 
+const normalizeDocWeaponName = (doc: any) => {
+  const marca = String(doc?.arma_marca || "").trim();
+  const modelo = String(doc?.arma_modelo || "").trim();
+  return [marca, modelo].filter(Boolean).join(" ").trim() || null;
+};
+
 const daysUntil = (d: string | null): number | null => {
   if (!d) return null;
   try {
@@ -54,7 +60,7 @@ export function ArsenalView({
       const k = (g.numero_arma || g.numero_sigma || "").toString().trim();
       if (k) gteByArma.set(k, g);
     });
-    return crafs.map((c: any) => {
+    const fromCrafs = crafs.map((c: any) => {
       const k = (c.numero_arma || c.numero_sigma || "").toString().trim();
       const gte = k ? gteByArma.get(k) : null;
       return {
@@ -68,7 +74,27 @@ export function ArsenalView({
         hasGte: !!gte,
       };
     });
-  }, [crafs, gtes]);
+    const crafKeys = new Set(
+      fromCrafs.map((w) => `${w.numero_arma || ""}|${w.numero_sigma || ""}|${(w.nome_arma || "").toUpperCase()}`),
+    );
+    const fromDocs = meusDocs
+      .filter((d: any) => String(d.tipo_documento || "").toLowerCase() === "craf" && normalizeDocWeaponName(d))
+      .map((d: any) => {
+        const nome = normalizeDocWeaponName(d);
+        return {
+          id: `doc-${d.id}`,
+          source: "CRAF" as const,
+          nome_arma: nome,
+          numero_arma: d.arma_numero_serie || d.numero_documento || null,
+          numero_sigma: d.numero_documento || null,
+          data_validade: d.data_validade,
+          daysToExpire: daysUntil(d.data_validade),
+          hasGte: false,
+        };
+      })
+      .filter((w: WorkbenchWeapon) => !crafKeys.has(`${w.numero_arma || ""}|${w.numero_sigma || ""}|${(w.nome_arma || "").toUpperCase()}`));
+    return [...fromCrafs, ...fromDocs];
+  }, [crafs, gtes, meusDocs]);
 
   // Documentos a exibir como "tags" sobre a bancada
   const benchDocs = useMemo(() => {
@@ -216,12 +242,12 @@ export function ArsenalView({
 
       {/* KPIs */}
       <ArsenalSummary
-        totalArmas={crafs.length}
+        totalArmas={weapons.length}
         totalMunicoes={ammo.total}
         totalCalibres={ammo.byCalibre.length}
         crStatus={crStatus.tone}
         crLabel={crStatus.label}
-        totalCrafs={crafs.length}
+        totalCrafs={weapons.filter((w) => w.source === "CRAF").length}
         alerts={alerts.length}
       />
 
@@ -250,7 +276,7 @@ export function ArsenalView({
                 tone={alerts.length === 0 ? "ok" : "warn"}
               />
               <Row label="Validade do CR" value={crStatus.label} tone={crStatus.tone} />
-              <Row label="CRAFs vinculados" value={String(crafs.length)} tone="cyan" />
+              <Row label="CRAFs vinculados" value={String(weapons.filter((w) => w.source === "CRAF").length)} tone="cyan" />
               <Row label="Guias ativas" value={String(gtes.length)} tone="cyan" />
               <Row label="Munições totais" value={ammo.total.toLocaleString("pt-BR")} tone="ok" />
             </div>

@@ -231,12 +231,16 @@ export default function QAClientePortalPage() {
         }
         setExamesCliente(Array.from(latestByTipo.values()));
 
-        // Documentos enviados pelo próprio cliente (hub pessoal)
-        if (customerLink?.id) {
+        // Documentos enviados/rastreados para o cliente (hub pessoal + vínculo direto do QA)
+        const docFilters = [
+          clienteData.id ? `qa_cliente_id.eq.${clienteData.id}` : "",
+          customerLink?.id ? `customer_id.eq.${customerLink.id}` : "",
+        ].filter(Boolean).join(",");
+        if (docFilters) {
           const { data: docsData } = await supabase
             .from("qa_documentos_cliente" as any)
             .select("*")
-            .eq("customer_id", customerLink.id)
+            .or(docFilters)
             .order("created_at", { ascending: false });
           setMeusDocs((docsData as any[]) ?? []);
         }
