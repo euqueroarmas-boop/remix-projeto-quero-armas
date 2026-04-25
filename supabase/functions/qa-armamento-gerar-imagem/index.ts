@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import UPNG from "https://esm.sh/upng-js@2.1.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -26,10 +27,71 @@ function buildPrompt(it: any): string {
     it.comprimento_cano_mm ? `with ${it.comprimento_cano_mm}mm barrel` : "",
     "Strict left-side profile view, slide/barrel pointing to the RIGHT, factory new condition.",
     `CRITICAL ACCURACY: must match the exact production ${it.marca} ${it.modelo} — correct slide length, slide serrations, frame generation, trigger guard contour, magazine well, beavertail, sights (front + rear), accessory rail, grip texture/stippling, controls placement, and manufacturer engraving authentic to this specific reference model. Do NOT invent a generic firearm.`,
-    "OUTPUT FORMAT: PNG with FULLY TRANSPARENT BACKGROUND (alpha channel). No background color, no scene, no shadow plate, no floor — only the firearm cut out cleanly with anti-aliased edges.",
-    "Soft studio lighting, sharp focus, ultra-high detail, no text overlays, no watermarks, no logos other than authentic manufacturer engraving on the slide.",
-    "Centered composition; the weapon fills ~90% of the frame width with small even padding around it.",
+    "OUTPUT FORMAT: square PNG on a perfectly flat pure chroma-key green background (#00FF00 RGB 0,255,0) for background removal. Absolutely no studio scene, no floor, no gradient, no shadow plate, no vignette, no white/gray/black background, no reflections.",
+    "Soft studio lighting on the firearm only, sharp focus, ultra-high detail, no text overlays, no watermarks, no logos other than authentic manufacturer engraving on the slide.",
+    "Centered composition; the weapon fills 96% of the frame width, oversized, with almost no padding while keeping the full firearm visible.",
   ].filter(Boolean).join(" ");
+}
+
+function stripBackgroundAndCropPng(input: Uint8Array): Uint8Array {
+  const sourceBuffer = new ArrayBuffer(input.byteLength);
+  new Uint8Array(sourceBuffer).set(input);
+  const decoded = UPNG.decode(sourceBuffer);
+  const width = decoded.width;
+  const height = decoded.height;
+  const rgba = new Uint8Array(UPNG.toRGBA8(decoded)[0]);
+  const sample = [0, width - 1, (height - 1) * width, height * width - 1]
+    .map((idx) => [rgba[idx * 4], rgba[idx * 4 + 1], rgba[idx * 4 + 2]]);
+  const bg = sample.reduce((acc, c) => [acc[0] + c[0], acc[1] + c[1], acc[2] + c[2]], [0, 0, 0]).map((v) => v / sample.length);
+  const greenKey = bg[1] > 150 && bg[1] > bg[0] * 1.35 && bg[1] > bg[2] * 1.35;
+  const isLikelyBg = (idx: number) => {
+    const i = idx * 4;
+    const r = rgba[i], g = rgba[i + 1], b = rgba[i + 2], a = rgba[i + 3];
+    if (a < 8) return true;
+    if (greenKey && g > 115 && g > r * 1.22 && g > b * 1.22) return true;
+    const d = Math.hypot(r - bg[0], g - bg[1], b - bg[2]);
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    return d < 62 || (r > 222 && g > 222 && b > 222 && max - min < 34);
+  };
+  const seen = new Uint8Array(width * height);
+  const queue: number[] = [];
+  const enqueue = (idx: number) => {
+    if (idx < 0 || idx >= seen.length || seen[idx] || !isLikelyBg(idx)) return;
+    seen[idx] = 1;
+    queue.push(idx);
+  };
+  for (let x = 0; x < width; x++) { enqueue(x); enqueue((height - 1) * width + x); }
+  for (let y = 0; y < height; y++) { enqueue(y * width); enqueue(y * width + width - 1); }
+  for (let p = 0; p < queue.length; p++) {
+    const idx = queue[p];
+    const x = idx % width;
+    if (x > 0) enqueue(idx - 1);
+    if (x < width - 1) enqueue(idx + 1);
+    enqueue(idx - width);
+    enqueue(idx + width);
+  }
+  let minX = width, minY = height, maxX = -1, maxY = -1;
+  for (let idx = 0; idx < seen.length; idx++) {
+    if (seen[idx]) rgba[idx * 4 + 3] = 0;
+    if (rgba[idx * 4 + 3] > 12) {
+      const x = idx % width, y = Math.floor(idx / width);
+      minX = Math.min(minX, x); minY = Math.min(minY, y); maxX = Math.max(maxX, x); maxY = Math.max(maxY, y);
+    }
+  }
+  if (maxX < minX || maxY < minY) return input;
+  const pad = Math.max(6, Math.round(Math.max(maxX - minX + 1, maxY - minY + 1) * 0.018));
+  minX = Math.max(0, minX - pad); minY = Math.max(0, minY - pad);
+  maxX = Math.min(width - 1, maxX + pad); maxY = Math.min(height - 1, maxY + pad);
+  const outW = maxX - minX + 1, outH = maxY - minY + 1;
+  const cropped = new Uint8Array(outW * outH * 4);
+  for (let y = 0; y < outH; y++) {
+    const src = ((minY + y) * width + minX) * 4;
+    const dst = y * outW * 4;
+    cropped.set(rgba.subarray(src, src + outW * 4), dst);
+  }
+  const croppedBuffer = new ArrayBuffer(cropped.byteLength);
+  new Uint8Array(croppedBuffer).set(cropped);
+  return new Uint8Array(UPNG.encode([croppedBuffer], outW, outH, 0));
 }
 
 Deno.serve(async (req) => {
@@ -70,12 +132,13 @@ Deno.serve(async (req) => {
 
     // Decodifica base64
     const [header, b64] = dataUrl.split(",");
-    const mime = header.match(/data:(image\/\w+)/)?.[1] || "image/png";
-    const ext = mime.split("/")[1] || "png";
+    const mime = "image/png";
+    const ext = "png";
     const bin = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+    const finalBin = stripBackgroundAndCropPng(bin);
     const path = `${arma.id}.${ext}`;
 
-    const { error: upErr } = await sb.storage.from("qa-armamentos").upload(path, bin, {
+    const { error: upErr } = await sb.storage.from("qa-armamentos").upload(path, finalBin, {
       contentType: mime,
       upsert: true,
       cacheControl: "31536000",

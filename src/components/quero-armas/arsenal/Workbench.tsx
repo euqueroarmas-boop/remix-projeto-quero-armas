@@ -144,7 +144,7 @@ function WeaponCard({
         </div>
 
         {/* Weapon render with glow — transparent, large, detailed */}
-        <div className={`relative mx-auto my-4 ${size === "lg" ? "h-56" : "h-44"} w-full`}>
+        <div className={`relative mx-auto my-4 ${size === "lg" ? "h-72 md:h-80" : "h-60 md:h-64"} w-full`}>
           <div
             className="absolute inset-0"
             style={{
@@ -157,7 +157,7 @@ function WeaponCard({
             alt={`${marca} ${modelo}`}
             loading="lazy"
             style={{ background: "transparent" }}
-            className="relative h-full w-full object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.85)]"
+            className="relative h-full w-[112%] max-w-none -translate-x-[6%] object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.85)]"
           />
         </div>
 

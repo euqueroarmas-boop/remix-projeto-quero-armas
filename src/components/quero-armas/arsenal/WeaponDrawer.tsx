@@ -127,7 +127,7 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
           </div>
 
           {/* Hero da arma com glow */}
-          <div className="relative mt-4 h-72 w-full overflow-hidden rounded-xl border border-white/10">
+          <div className="relative mt-4 h-[26rem] w-full overflow-hidden rounded-xl border border-white/10">
             <div
               className="absolute inset-0"
               style={{
@@ -147,7 +147,7 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
                 src={catalog?.imagem || renderForKind(info.kind)}
                 alt={`${displayMarca} ${displayModelo}`}
                 style={{ background: "transparent" }}
-                className="h-full w-full object-contain drop-shadow-[0_14px_32px_rgba(0,0,0,0.95)]"
+                className="h-full w-[118%] max-w-none object-contain drop-shadow-[0_14px_32px_rgba(0,0,0,0.95)]"
               />
             </div>
             {/* corner ticks */}
@@ -258,11 +258,12 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
                     {v.modelo}
                   </div>
                   <div className="mt-0.5 text-[9px] font-mono text-cyan-300/80">{v.calibre}</div>
-                  <div className="mt-1 h-12">
+                  <div className="mt-1 h-20">
                     <img
-                      src={renderForKind(v.tipo as any)}
+                      src={v.imagem || renderForKind(v.tipo as any)}
                       alt={v.modelo}
-                      className="h-full w-full object-contain opacity-90"
+                      style={{ background: "transparent" }}
+                      className="h-full w-[112%] max-w-none -translate-x-[6%] object-contain opacity-90"
                     />
                   </div>
                 </div>
