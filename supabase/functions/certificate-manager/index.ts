@@ -64,7 +64,7 @@ async function hashBytes(bytes: Uint8Array): Promise<string> {
 
 // ─── Safe forge import ───
 async function getForge() {
-  const mod = await import("npm:node-forge@1.3.1");
+  const mod = await import("https://esm.sh/node-forge@1.3.1");
   // Handle both default export and namespace export
   return mod.default || mod;
 }

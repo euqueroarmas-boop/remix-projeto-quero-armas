@@ -155,7 +155,7 @@ Deno.serve(async (req) => {
     let keyBits = 0;
     let chainCount = 0;
     try {
-      const forgeMod = await import("npm:node-forge@1.3.1");
+      const forgeMod = await import("https://esm.sh/node-forge@1.3.1");
       const forge = forgeMod.default || forgeMod;
       const pfxAsn1 = forge.asn1.fromDer(uint8ToBinaryString(pfxBytes));
       const pfxObj = forge.pkcs12.pkcs12FromAsn1(pfxAsn1, password);
