@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { decode as pngDecode, encode as pngEncode } from "https://deno.land/x/pngs@0.1.1/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -8,6 +9,60 @@ const corsHeaders = {
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
+
+/** Aplica chroma-key: converte pixels claros (branco/cinza/xadrez) e quase-claros para alpha=0.
+ *  Funciona em PNGs já decodificados (RGBA). */
+function chromaKeyToAlpha(rgba: Uint8Array, w: number, h: number): Uint8Array {
+  const out = new Uint8Array(rgba.length);
+  out.set(rgba);
+  // limiar: pixel é "fundo" se for muito claro (cada canal >= 235) OU cinza claro saturação baixa.
+  for (let i = 0; i < out.length; i += 4) {
+    const r = out[i], g = out[i + 1], b = out[i + 2];
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    const sat = max === 0 ? 0 : (max - min) / max;
+    // branco puro / quase branco
+    if (r >= 240 && g >= 240 && b >= 240) { out[i + 3] = 0; continue; }
+    // cinza claro de baixa saturação (típico do xadrez/CDN)
+    if (lum >= 215 && sat < 0.08) { out[i + 3] = 0; continue; }
+    // suaviza borda: pixels intermediários muito claros recebem alpha proporcional
+    if (lum >= 225 && sat < 0.15) {
+      const a = Math.max(0, Math.min(255, Math.round((255 - lum) * 6)));
+      out[i + 3] = a;
+    }
+  }
+  return out;
+}
+
+/** Floods do pixel (0,0) e cantos para remover patterns de fundo (xadrez) que não são branco puro. */
+function floodBackground(rgba: Uint8Array, w: number, h: number, tol = 40): Uint8Array {
+  const out = new Uint8Array(rgba);
+  const visited = new Uint8Array(w * h);
+  const seeds = [[0, 0], [w - 1, 0], [0, h - 1], [w - 1, h - 1]];
+  const stack: number[] = [];
+  for (const [sx, sy] of seeds) {
+    const idx = sy * w + sx;
+    const r0 = rgba[idx * 4], g0 = rgba[idx * 4 + 1], b0 = rgba[idx * 4 + 2];
+    stack.push(sx, sy, r0, g0, b0);
+    while (stack.length) {
+      const b = stack.pop()!, g = stack.pop()!, r = stack.pop()!, y = stack.pop()!, x = stack.pop()!;
+      if (x < 0 || y < 0 || x >= w || y >= h) continue;
+      const i = y * w + x;
+      if (visited[i]) continue;
+      const pi = i * 4;
+      const dr = Math.abs(out[pi] - r), dg = Math.abs(out[pi + 1] - g), db = Math.abs(out[pi + 2] - b);
+      if (dr > tol || dg > tol || db > tol) continue;
+      visited[i] = 1;
+      out[pi + 3] = 0;
+      stack.push(x + 1, y, r, g, b);
+      stack.push(x - 1, y, r, g, b);
+      stack.push(x, y + 1, r, g, b);
+      stack.push(x, y - 1, r, g, b);
+    }
+  }
+  return out;
+}
 
 /** Roda a imagem pelo Gemini image edit removendo qualquer fundo (xadrez, branco, cinza). */
 async function removeBg(bytes: Uint8Array, mime: string): Promise<{ bytes: Uint8Array; mime: string } | null> {
@@ -41,7 +96,30 @@ async function removeBg(bytes: Uint8Array, mime: string): Promise<{ bytes: Uint8
   const out = atob(m[2]);
   const u8 = new Uint8Array(out.length);
   for (let i = 0; i < out.length; i++) u8[i] = out.charCodeAt(i);
-  return { bytes: u8, mime: m[1] };
+
+  // Pós-processamento garantido: decodifica PNG, força alpha por chroma-key + flood dos cantos, recodifica.
+  try {
+    const dec = pngDecode(u8);
+    const w = dec.width, h = dec.height;
+    // garante 4 canais
+    let rgba: Uint8Array;
+    if (dec.image.length === w * h * 4) rgba = dec.image as Uint8Array;
+    else if (dec.image.length === w * h * 3) {
+      rgba = new Uint8Array(w * h * 4);
+      for (let i = 0, j = 0; i < dec.image.length; i += 3, j += 4) {
+        rgba[j] = dec.image[i]; rgba[j + 1] = dec.image[i + 1]; rgba[j + 2] = dec.image[i + 2]; rgba[j + 3] = 255;
+      }
+    } else {
+      return { bytes: u8, mime: m[1] };
+    }
+    const flooded = floodBackground(rgba, w, h, 45);
+    const chromaed = chromaKeyToAlpha(flooded, w, h);
+    const enc = pngEncode(chromaed, w, h);
+    return { bytes: enc, mime: "image/png" };
+  } catch (e) {
+    console.warn("[postproc] falhou", e);
+    return { bytes: u8, mime: m[1] };
+  }
 }
 
 Deno.serve(async (req) => {
