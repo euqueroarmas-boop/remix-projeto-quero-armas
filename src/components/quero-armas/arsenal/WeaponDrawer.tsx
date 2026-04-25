@@ -1,5 +1,6 @@
 import { X, ShieldCheck, Calendar, Hash, FileBadge, Crosshair, Layers, AlertTriangle, Gauge, Weight, Ruler, Zap, MapPin, BadgeCheck } from "lucide-react";
 import { WeaponSilhouette } from "./WeaponSilhouette";
+import { backgroundForKind, renderForKind } from "./weaponAssets";
 import {
   buildWeaponInfo,
   maskSerial,
@@ -126,23 +127,27 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
           </div>
 
           {/* Hero da arma com glow */}
-          <div className="relative mt-4 h-40 w-full overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br from-white/[0.03] to-transparent">
+          <div className="relative mt-4 h-48 w-full overflow-hidden rounded-xl border border-white/10">
             <div
-              className="absolute inset-0 opacity-40"
+              className="absolute inset-0"
               style={{
-                backgroundImage:
-                  "linear-gradient(to right, rgba(255,255,255,0.06) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.06) 1px, transparent 1px)",
-                backgroundSize: "24px 24px",
+                backgroundImage: `url(${backgroundForKind(info.kind)})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
               }}
             />
             <div
               className="absolute inset-0"
               style={{
-                background: `radial-gradient(circle at 50% 60%, ${accent}33, transparent 60%)`,
+                background: `linear-gradient(180deg, rgba(2,4,8,0.3), rgba(2,4,8,0.65)), radial-gradient(circle at 50% 60%, ${accent}40, transparent 65%)`,
               }}
             />
-            <div className="relative flex h-full items-center justify-center px-6" style={{ color: accent }}>
-              <WeaponSilhouette kind={info.kind} accent={accent} className="h-full w-full" />
+            <div className="relative flex h-full items-center justify-center px-6">
+              <img
+                src={renderForKind(info.kind)}
+                alt={`${displayMarca} ${displayModelo}`}
+                className="h-full w-full object-contain drop-shadow-[0_10px_24px_rgba(0,0,0,0.9)]"
+              />
             </div>
             {/* corner ticks */}
             <div className="pointer-events-none absolute left-2 top-2 h-3 w-6 border-l border-t border-white/30" />
@@ -252,8 +257,12 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
                     {v.modelo}
                   </div>
                   <div className="mt-0.5 text-[9px] font-mono text-cyan-300/80">{v.calibre}</div>
-                  <div className="mt-1 h-10" style={{ color: accent }}>
-                    <WeaponSilhouette kind={v.tipo} accent={accent} className="h-full w-full opacity-80" />
+                  <div className="mt-1 h-12">
+                    <img
+                      src={renderForKind(v.tipo as any)}
+                      alt={v.modelo}
+                      className="h-full w-full object-contain opacity-90"
+                    />
                   </div>
                 </div>
               ))}

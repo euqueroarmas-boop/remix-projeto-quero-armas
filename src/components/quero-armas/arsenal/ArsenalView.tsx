@@ -166,36 +166,47 @@ export function ArsenalView({
 
   return (
     <div className="space-y-5">
-      {/* HERO TÁTICO */}
-      <div className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-sm">
+      {/* HERO TÁTICO DARK */}
+      <div
+        className="relative overflow-hidden rounded-3xl border border-white/10 shadow-2xl"
+        style={{ background: "linear-gradient(180deg, #07090f 0%, #04060a 100%)" }}
+      >
         <div
-          className="pointer-events-none absolute inset-0 opacity-40"
+          className="pointer-events-none absolute inset-0 opacity-70"
           style={{
             backgroundImage:
-              "radial-gradient(circle at 0% 0%, hsl(190 80% 45% / 0.12), transparent 40%), radial-gradient(circle at 100% 100%, hsl(220 30% 18% / 0.08), transparent 40%)",
+              "radial-gradient(circle at 0% 0%, rgba(34,211,238,0.18), transparent 50%), radial-gradient(circle at 100% 100%, rgba(16,185,129,0.10), transparent 50%)",
+          }}
+        />
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.06]"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right, #22d3ee 1px, transparent 1px), linear-gradient(to bottom, #22d3ee 1px, transparent 1px)",
+            backgroundSize: "32px 32px",
           }}
         />
         <div className="relative flex flex-col gap-3 p-5 md:flex-row md:items-center md:justify-between md:p-6">
           <div>
             <div className="flex items-center gap-2">
-              <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
-              <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-slate-500">
+              <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
+              <span className="text-[10px] font-black uppercase tracking-[0.28em] text-cyan-300">
                 ARSENAL INTELIGENTE · {clienteNome.split(" ")[0]}
               </span>
             </div>
-            <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 md:text-3xl">
-              Gestão Inteligente do Seu Acervo
+            <h1 className="mt-1 text-2xl font-black tracking-tight text-white md:text-3xl uppercase">
+              Gunsmith · Seu Acervo
             </h1>
-            <p className="mt-1 max-w-2xl text-[12px] text-slate-500">
+            <p className="mt-1 max-w-2xl text-[12px] text-white/50">
               O sistema interpreta automaticamente seus CRAFs, GTEs, CR e documentos para
-              montar a bancada tática abaixo. Toque em qualquer item para ver detalhes.
+              montar a bancada tática abaixo. Toque em qualquer item para inspecionar.
             </p>
           </div>
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={onOpenAddDoc}
-              className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-slate-900 px-3 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm hover:bg-slate-800"
+              className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-cyan-400/40 bg-cyan-400/15 px-3 text-[10px] font-black uppercase tracking-wider text-cyan-200 hover:bg-cyan-400/25"
             >
               <Upload className="h-3.5 w-3.5" /> Enviar documento
             </button>
