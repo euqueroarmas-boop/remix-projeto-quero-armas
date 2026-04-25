@@ -72,6 +72,7 @@ export function ArsenalView({
         data_validade: c.data_validade,
         daysToExpire: daysUntil(c.data_validade),
         hasGte: !!gte,
+        catalogo_id: c.catalogo_id || null,
       };
     });
     const crafKeys = new Set(

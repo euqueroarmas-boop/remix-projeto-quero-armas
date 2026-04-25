@@ -20,6 +20,7 @@ export interface WorkbenchWeapon {
   data_validade: string | null;
   daysToExpire: number | null;
   hasGte?: boolean;
+  catalogo_id?: string | null;
 }
 
 interface DocCard {
