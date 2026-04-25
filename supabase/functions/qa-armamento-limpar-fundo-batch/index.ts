@@ -78,7 +78,7 @@ async function removeBg(bytes: Uint8Array, mime: string): Promise<{ bytes: Uint8
       messages: [{
         role: "user",
         content: [
-          { type: "text", text: "Isolate the firearm. Remove ALL background completely — including any white, gray, or checkerboard transparency pattern visible in the image. Return ONLY the firearm with a fully TRANSPARENT background (real PNG alpha channel). Do NOT redraw, restyle, recolor or modify the firearm itself in any way — keep it pixel-perfect identical. Output PNG with alpha." },
+              { type: "text", text: "Isolate the firearm on a PURE WHITE (#FFFFFF) background. Remove ALL original background — any checkerboard pattern, gray, watermarks, logos, text. Output 1024x1024 max, PNG. Do NOT redraw, restyle or recolor the firearm — keep it pixel-perfect identical." },
           { type: "image_url", image_url: { url: dataUrl } },
         ],
       }],
