@@ -36,7 +36,7 @@ interface SiteShellProps {
 
 const navItems = [
   { to: '/servicos', label: 'Serviços', icon: Briefcase },
-  { to: '/descobrir-meu-caminho', label: 'Diagnóstico', icon: Stethoscope },
+  { to: '/descobrir-meu-caminho', label: 'Como Escolher', icon: Stethoscope },
 ];
 
 type NavLinkItem = { to: string; label: string; icon: typeof Briefcase };
