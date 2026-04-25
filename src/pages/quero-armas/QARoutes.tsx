@@ -31,6 +31,10 @@ const QAAtivarAcessoPage = lazyRetry(() => import("./QAAtivarAcessoPage"), "QAAt
 const QACursoOperadorPistolaPage = lazyRetry(() => import("./QACursoOperadorPistolaPage"), "QACursoOperadorPistolaPage");
 const HomePage = lazyRetry(() => import("@/pages/HomePage"), "HomePage");
 const ServicesListPage = lazyRetry(() => import("@/pages/ServicesListPage"), "ServicesListPage");
+const QuizPage = lazyRetry(() => import("@/pages/QuizPage"), "QuizPage");
+const LpDefesaPessoalPosse = lazyRetry(() => import("@/pages/LpDefesaPessoalPosse"), "LpDefesaPessoalPosse");
+const LpCacCr = lazyRetry(() => import("@/pages/LpCacCr"), "LpCacCr");
+const LpAtividadesAvulsas = lazyRetry(() => import("@/pages/LpAtividadesAvulsas"), "LpAtividadesAvulsas");
 
 const Loader = () => (
   <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -47,6 +51,10 @@ export default function QARoutes() {
 
         {/* Public routes (no auth required) */}
         <Route path="servicos" element={<ServicesListPage />} />
+        <Route path="descobrir-meu-caminho" element={<QuizPage />} />
+        <Route path="lp/defesa-pessoal-posse" element={<LpDefesaPessoalPosse />} />
+        <Route path="lp/cac-cr" element={<LpCacCr />} />
+        <Route path="lp/atividades-avulsas" element={<LpAtividadesAvulsas />} />
         <Route path="login" element={<QALoginPage />} />
         <Route path="cadastro" element={<QACadastroPublicoPage />} />
         <Route path="cadastro/foto" element={<QAEnviarFotoPage />} />
