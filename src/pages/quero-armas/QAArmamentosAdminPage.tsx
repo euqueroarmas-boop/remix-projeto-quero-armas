@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Plus, Sparkles, Globe, Trash2, CheckCircle2, AlertCircle, Search } from "lucide-react";
+import { Loader2, Plus, Sparkles, Globe, Trash2, CheckCircle2, AlertCircle, Search, Image as ImageIcon, RefreshCcw } from "lucide-react";
 import { toast } from "sonner";
 
 type Status = "rascunho" | "pendente_revisao" | "verificado" | "rejeitado";
@@ -28,6 +28,8 @@ interface Arma {
   status_revisao: Status; fonte_dados: Fonte; fonte_url: string | null;
   observacoes: string | null; ativo: boolean;
   search_tokens: string | null;
+  imagem: string | null;
+  imagem_status: "pendente" | "gerando" | "pronta" | "erro" | null;
 }
 
 const TIPOS = ["pistola","revolver","espingarda","carabina","fuzil","submetralhadora","outra"];
@@ -54,6 +56,7 @@ export default function QAArmamentosAdminPage() {
   const [aiBusy, setAiBusy] = useState(false);
   const [scrapeBusy, setScrapeBusy] = useState(false);
   const [scrapeUrl, setScrapeUrl] = useState("");
+  const [imgBusyId, setImgBusyId] = useState<string | null>(null);
 
   async function load() {
     setLoading(true);
@@ -114,6 +117,26 @@ export default function QAArmamentosAdminPage() {
       .update({ status_revisao: "verificado", revisado_em: new Date().toISOString(), revisado_por: u.user?.id || null })
       .eq("id", it.id);
     if (error) toast.error(error.message); else { toast.success("Marcado como verificado"); load(); }
+  }
+
+  async function gerarImagem(it: Pick<Arma, "id" | "marca" | "modelo">) {
+    if (!it.id) { toast.error("Salve a arma antes de gerar a imagem"); return; }
+    setImgBusyId(it.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-armamento-gerar-imagem", { body: { id: it.id } });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      toast.success(`Imagem gerada para ${it.marca} ${it.modelo}`);
+      const url = (data as any)?.imagem as string | undefined;
+      if (url) {
+        setEditing((p) => (p && p.id === it.id ? { ...p, imagem: url, imagem_status: "pronta" } : p));
+      }
+      load();
+    } catch (e: any) {
+      toast.error(`Falha ao gerar imagem: ${e?.message || e}`);
+    } finally {
+      setImgBusyId(null);
+    }
   }
 
   async function gerarComIA() {
@@ -193,6 +216,7 @@ export default function QAArmamentosAdminPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[64px]">Foto</TableHead>
                 <TableHead>Marca / Modelo</TableHead>
                 <TableHead>Tipo</TableHead>
                 <TableHead>Calibre</TableHead>
@@ -206,6 +230,15 @@ export default function QAArmamentosAdminPage() {
             <TableBody>
               {filtered.map((it) => (
                 <TableRow key={it.id} className="cursor-pointer" onClick={() => openEdit(it)}>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    {it.imagem ? (
+                      <img src={it.imagem} alt={`${it.marca} ${it.modelo}`} className="h-10 w-16 object-contain rounded bg-black/80" />
+                    ) : (
+                      <div className="h-10 w-16 grid place-items-center rounded border border-dashed border-muted-foreground/30 text-muted-foreground">
+                        <ImageIcon className="h-4 w-4" />
+                      </div>
+                    )}
+                  </TableCell>
                   <TableCell>
                     <div className="font-medium">{it.marca} {it.modelo}</div>
                     {it.apelido && <div className="text-xs text-muted-foreground">"{it.apelido}"</div>}
@@ -217,6 +250,9 @@ export default function QAArmamentosAdminPage() {
                   <TableCell><StatusBadge s={it.status_revisao} /></TableCell>
                   <TableCell><Badge variant="outline">{FONTE_LABEL[it.fonte_dados]}</Badge></TableCell>
                   <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                    <Button size="sm" variant="ghost" onClick={() => gerarImagem(it)} title={it.imagem ? "Regerar imagem" : "Gerar imagem"} disabled={imgBusyId === it.id}>
+                      {imgBusyId === it.id ? <Loader2 className="h-4 w-4 animate-spin" /> : (it.imagem ? <RefreshCcw className="h-4 w-4" /> : <ImageIcon className="h-4 w-4" />)}
+                    </Button>
                     {it.status_revisao !== "verificado" && (
                       <Button size="sm" variant="ghost" onClick={() => marcarVerificado(it)} title="Marcar verificado">
                         <CheckCircle2 className="h-4 w-4" />
@@ -229,7 +265,7 @@ export default function QAArmamentosAdminPage() {
                 </TableRow>
               ))}
               {filtered.length === 0 && (
-                <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Nenhum resultado</TableCell></TableRow>
+                <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">Nenhum resultado</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
@@ -321,6 +357,33 @@ export default function QAArmamentosAdminPage() {
               </div>
 
               <Field label="Observações internas"><Textarea rows={2} value={editing.observacoes || ""} onChange={(e) => setF("observacoes", e.target.value)} /></Field>
+
+              <div className="rounded-md border p-3 space-y-3 bg-muted/30">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-xs uppercase tracking-wide text-muted-foreground">Imagem fotorrealista da arma</Label>
+                    <p className="text-xs text-muted-foreground mt-0.5">Render fiel gerado por IA (Nano Banana Pro) com base em marca, modelo e calibre.</p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={!editing.id || imgBusyId === editing.id}
+                    onClick={() => editing.id && gerarImagem({ id: editing.id, marca: editing.marca || "", modelo: editing.modelo || "" })}
+                  >
+                    {imgBusyId === editing.id ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : (editing.imagem ? <RefreshCcw className="h-4 w-4 mr-2" /> : <ImageIcon className="h-4 w-4 mr-2" />)}
+                    {editing.imagem ? "Regerar imagem" : "Gerar imagem"}
+                  </Button>
+                </div>
+                {editing.imagem ? (
+                  <div className="grid place-items-center bg-black rounded-md p-2">
+                    <img src={editing.imagem} alt={`${editing.marca} ${editing.modelo}`} className="max-h-48 object-contain" />
+                  </div>
+                ) : (
+                  <div className="grid place-items-center h-32 border border-dashed rounded-md text-muted-foreground text-sm">
+                    {editing.id ? "Nenhuma imagem ainda. Clique em 'Gerar imagem'." : "Salve a arma primeiro para gerar a imagem."}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

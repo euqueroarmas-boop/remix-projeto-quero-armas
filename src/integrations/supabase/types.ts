@@ -2673,6 +2673,9 @@ export type Database = {
           fonte_dados: string
           fonte_url: string | null
           id: string
+          imagem: string | null
+          imagem_gerada_em: string | null
+          imagem_status: string
           imagem_url: string | null
           marca: string
           modelo: string
@@ -2706,6 +2709,9 @@ export type Database = {
           fonte_dados?: string
           fonte_url?: string | null
           id?: string
+          imagem?: string | null
+          imagem_gerada_em?: string | null
+          imagem_status?: string
           imagem_url?: string | null
           marca: string
           modelo: string
@@ -2739,6 +2745,9 @@ export type Database = {
           fonte_dados?: string
           fonte_url?: string | null
           id?: string
+          imagem?: string | null
+          imagem_gerada_em?: string | null
+          imagem_status?: string
           imagem_url?: string | null
           marca?: string
           modelo?: string
