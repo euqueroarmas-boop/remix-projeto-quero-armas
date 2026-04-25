@@ -4429,6 +4429,39 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_municoes: {
+        Row: {
+          calibre: string
+          cliente_id: number
+          created_at: string
+          id: string
+          marca: string | null
+          observacao: string | null
+          quantidade: number
+          updated_at: string
+        }
+        Insert: {
+          calibre: string
+          cliente_id: number
+          created_at?: string
+          id?: string
+          marca?: string | null
+          observacao?: string | null
+          quantidade?: number
+          updated_at?: string
+        }
+        Update: {
+          calibre?: string
+          cliente_id?: number
+          created_at?: string
+          id?: string
+          marca?: string | null
+          observacao?: string | null
+          quantidade?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       qa_referencias_preferenciais: {
         Row: {
           ativo: boolean | null

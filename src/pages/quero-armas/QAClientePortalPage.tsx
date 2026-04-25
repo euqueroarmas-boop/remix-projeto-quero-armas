@@ -15,6 +15,8 @@ import { useQAServicosMap } from "@/hooks/useQAServicosMap";
 import { ClienteDocsHubModal } from "@/components/quero-armas/clientes/ClienteDocsHubModal";
 import { usePrivateStorageUrl } from "@/hooks/usePrivateStorageUrl";
 import { Camera, Wand2 } from "lucide-react";
+import { ArsenalView } from "@/components/quero-armas/arsenal/ArsenalView";
+import { Crosshair as CrosshairIcon, LayoutDashboard } from "lucide-react";
 
 const formatDate = (d: string | null) => {
   if (!d) return "—";
@@ -120,6 +122,7 @@ export default function QAClientePortalPage() {
   const [docsReloadKey, setDocsReloadKey] = useState(0);
   const [cadastroPub, setCadastroPub] = useState<{ selfie_path: string | null } | null>(null);
   const [generatingAvatar, setGeneratingAvatar] = useState(false);
+  const [activeTab, setActiveTab] = useState<"arsenal" | "resumo">("arsenal");
 
   const avatarPath: string | null =
     (cliente as any)?.avatar_tatico_path || cadastroPub?.selfie_path || null;
@@ -378,6 +381,50 @@ export default function QAClientePortalPage() {
       </header>
 
       <main className="max-w-5xl mx-auto px-4 py-6 space-y-5">
+        {/* ═══ TABS NAVIGATION ═══ */}
+        <div className="sticky top-[60px] z-30 -mx-4 mb-1 border-b border-slate-200/70 bg-gradient-to-b from-white/95 to-white/85 px-4 py-2 backdrop-blur-md">
+          <div className="inline-flex items-center gap-1 rounded-2xl border border-slate-200 bg-white p-1 shadow-sm">
+            <button
+              type="button"
+              onClick={() => setActiveTab("arsenal")}
+              className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-all ${
+                activeTab === "arsenal"
+                  ? "bg-slate-900 text-white shadow-sm"
+                  : "text-slate-500 hover:bg-slate-50"
+              }`}
+            >
+              <CrosshairIcon className="h-3.5 w-3.5" /> Arsenal
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("resumo")}
+              className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-all ${
+                activeTab === "resumo"
+                  ? "bg-slate-900 text-white shadow-sm"
+                  : "text-slate-500 hover:bg-slate-50"
+              }`}
+            >
+              <LayoutDashboard className="h-3.5 w-3.5" /> Resumo
+            </button>
+          </div>
+        </div>
+
+        {activeTab === "arsenal" && cliente && analysis && (
+          <ArsenalView
+            clienteId={cliente.id}
+            clienteNome={cliente.nome_completo}
+            crafs={crafs}
+            gtes={gtes}
+            cadastroCr={cadastro}
+            meusDocs={meusDocs}
+            expDocs={analysis.expDocs}
+            alerts={analysis.alerts as any}
+            onOpenAddDoc={() => setShowAddDoc(true)}
+          />
+        )}
+
+        {activeTab === "resumo" && (
+        <>
         {/* ═══ WELCOME HEADER ═══ */}
         <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
           <div className="h-1 w-full" style={{ background: "linear-gradient(90deg, hsl(230 80% 56%), hsl(262 60% 55%))" }} />
@@ -702,6 +749,8 @@ export default function QAClientePortalPage() {
         <div className="text-center py-4">
           <p className="text-[10px] text-slate-300 tracking-wider">Quero Armas · Área do Cliente · Acesso seguro e auditado</p>
         </div>
+        </>
+        )}
       </main>
 
       {customerId && (
