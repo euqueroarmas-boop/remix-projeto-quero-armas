@@ -30,6 +30,7 @@ const QAClientePortalPage = lazyRetry(() => import("./QAClientePortalPage"), "QA
 const QAAtivarAcessoPage = lazyRetry(() => import("./QAAtivarAcessoPage"), "QAAtivarAcessoPage");
 const QACursoOperadorPistolaPage = lazyRetry(() => import("./QACursoOperadorPistolaPage"), "QACursoOperadorPistolaPage");
 const HomePage = lazyRetry(() => import("@/pages/HomePage"), "HomePage");
+const ServicesListPage = lazyRetry(() => import("@/pages/ServicesListPage"), "ServicesListPage");
 
 const Loader = () => (
   <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -45,6 +46,7 @@ export default function QARoutes() {
         <Route path="/" element={<HomePage />} />
 
         {/* Public routes (no auth required) */}
+        <Route path="servicos" element={<ServicesListPage />} />
         <Route path="login" element={<QALoginPage />} />
         <Route path="cadastro" element={<QACadastroPublicoPage />} />
         <Route path="cadastro/foto" element={<QAEnviarFotoPage />} />
