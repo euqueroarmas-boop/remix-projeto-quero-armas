@@ -436,7 +436,7 @@ Deno.serve(async (req) => {
       score_confianca: scoreConfianca,
     }), { headers: { ...corsH, "Content-Type": "application/json" } });
 
-  } catch (err) {
+  } catch (err: any) {
     console.error("qa-consulta-ia error:", err);
     return new Response(JSON.stringify({ error: err.message }), {
       status: 500,

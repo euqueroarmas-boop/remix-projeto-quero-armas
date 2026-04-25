@@ -117,7 +117,7 @@ async function extractDocxSimple(rawBytes: Uint8Array): Promise<string> {
   // DOCX is a ZIP containing XML files - extract text from document.xml
   try {
     const { default: mammoth } = await import("https://esm.sh/mammoth@1.8.0?bundle");
-    const { value } = await mammoth.extractRawText({ arrayBuffer: rawBytes.buffer });
+    const { value } = await mammoth.extractRawText({ arrayBuffer: rawBytes.buffer as ArrayBuffer });
     return sanitizeText(value || "");
   } catch (e) {
     console.error("docx extraction failed, falling back to Vision:", e);
@@ -339,7 +339,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    EdgeRuntime.waitUntil(processDocument(storage_path, user_id));
+    (globalThis as any).EdgeRuntime?.waitUntil(processDocument(storage_path, user_id));
 
     return new Response(JSON.stringify({ success: true, message: "Processamento iniciado" }), {
       headers: { ...corsH, "Content-Type": "application/json" },

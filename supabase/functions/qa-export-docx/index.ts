@@ -295,7 +295,7 @@ Deno.serve(async (req) => {
     });
 
     // Return the file as download
-    return new Response(docxBytes, {
+    return new Response(docxBytes as BodyInit, {
       headers: {
         ...corsH,
         "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -303,7 +303,7 @@ Deno.serve(async (req) => {
       },
     });
 
-  } catch (err) {
+  } catch (err: any) {
     console.error("qa-export-docx error:", err);
     return new Response(JSON.stringify({ error: err.message }), {
       status: 500,

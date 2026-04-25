@@ -93,7 +93,7 @@ Deno.serve(async (req) => {
     }).eq("id", id);
 
     return new Response(JSON.stringify({ ok: true, imagem: publicUrl }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-  } catch (e) {
+  } catch (e: any) {
     console.error("[qa-armamento-gerar-imagem]", e);
     return new Response(JSON.stringify({ error: String(e?.message || e) }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }

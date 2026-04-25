@@ -80,7 +80,7 @@ async function listAllUsersByEmail(supabase: SupabaseClient, email: string): Pro
     if (error) throw error;
 
     const users = data?.users || [];
-    const found = users.find((user) => normalizeEmail(user.email) === target) || null;
+    const found = users.find((user: any) => normalizeEmail(user.email) === target) || null;
     if (found) return found;
     if (users.length < 200) break;
   }

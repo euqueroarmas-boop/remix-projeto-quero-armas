@@ -1310,7 +1310,7 @@ IGNORE qualquer menção no contexto a tipos de peça diferentes. O tipo é FIXO
             })}\n\n`));
 
             controller.close();
-          } catch (streamErr) {
+          } catch (streamErr: any) {
             console.error("Stream processing error:", streamErr);
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "error", error: streamErr.message || "Erro durante streaming" })}\n\n`));
             controller.close();
@@ -1462,7 +1462,7 @@ IGNORE qualquer menção no contexto a tipos de peça diferentes. O tipo é FIXO
       } : null,
     }), { headers: { ...corsH, "Content-Type": "application/json" } });
 
-  } catch (err) {
+  } catch (err: any) {
     console.error("qa-gerar-peca error:", err);
     return new Response(JSON.stringify({ error: err.message }), {
       status: 500, headers: { ...corsH, "Content-Type": "application/json" },

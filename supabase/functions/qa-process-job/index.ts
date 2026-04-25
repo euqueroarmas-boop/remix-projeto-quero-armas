@@ -243,7 +243,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    EdgeRuntime.waitUntil(processJob(job_id));
+    (globalThis as any).EdgeRuntime?.waitUntil(processJob(job_id));
 
     return new Response(JSON.stringify({
       success: true,

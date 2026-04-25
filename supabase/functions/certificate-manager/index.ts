@@ -389,7 +389,7 @@ async function getEncryptionKey() {
 async function encryptBytes(bytes: Uint8Array): Promise<Uint8Array> {
   const key = await getEncryptionKey();
   const iv = crypto.getRandomValues(new Uint8Array(12));
-  const encrypted = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, bytes);
+  const encrypted = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, bytes as BufferSource);
   const result = new Uint8Array(iv.length + new Uint8Array(encrypted).length);
   result.set(iv);
   result.set(new Uint8Array(encrypted), iv.length);
