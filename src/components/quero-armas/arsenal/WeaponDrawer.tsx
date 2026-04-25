@@ -127,7 +127,7 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
           </div>
 
           {/* Hero da arma com glow */}
-          <div className="relative mt-4 h-48 w-full overflow-hidden rounded-xl border border-white/10">
+          <div className="relative mt-4 h-72 w-full overflow-hidden rounded-xl border border-white/10">
             <div
               className="absolute inset-0"
               style={{
@@ -142,11 +142,12 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
                 background: `linear-gradient(180deg, rgba(2,4,8,0.3), rgba(2,4,8,0.65)), radial-gradient(circle at 50% 60%, ${accent}40, transparent 65%)`,
               }}
             />
-            <div className="relative flex h-full items-center justify-center px-6">
+            <div className="relative flex h-full items-center justify-center px-4 py-4">
               <img
                 src={catalog?.imagem || renderForKind(info.kind)}
                 alt={`${displayMarca} ${displayModelo}`}
-                className="h-full w-full object-contain drop-shadow-[0_10px_24px_rgba(0,0,0,0.9)]"
+                style={{ background: "transparent" }}
+                className="h-full w-full object-contain drop-shadow-[0_14px_32px_rgba(0,0,0,0.95)]"
               />
             </div>
             {/* corner ticks */}

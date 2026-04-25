@@ -21,13 +21,14 @@ function buildPrompt(it: any): string {
   };
   const tipo = tipoMap[it.tipo] || "firearm";
   return [
-    `Ultra photorealistic studio product photograph of a ${it.marca} ${it.modelo} ${tipo}`,
+    `Ultra photorealistic catalog product photograph of the EXACT real-world ${it.marca} ${it.modelo} ${tipo}`,
     it.calibre ? `chambered in ${it.calibre}` : "",
     it.comprimento_cano_mm ? `with ${it.comprimento_cano_mm}mm barrel` : "",
-    "side profile view, slide/barrel pointing right, in pristine factory finish.",
-    "The firearm must be EXACTLY the real-world model with all correct proportions, slide serrations, frame texture, trigger guard shape, sights, grip texture, and manufacturer markings authentic to this exact model.",
-    "Lit by soft cinematic studio lighting on a pure pitch-black background (#000000), subtle rim light highlighting metal edges, sharp focus, ultra-high detail, no text overlays, no watermarks, no logos other than the manufacturer engraving on the slide.",
-    "Centered composition, the weapon fills 80% of the frame horizontally, professional gun magazine catalog photography style.",
+    "Strict left-side profile view, slide/barrel pointing to the RIGHT, factory new condition.",
+    `CRITICAL ACCURACY: must match the exact production ${it.marca} ${it.modelo} — correct slide length, slide serrations, frame generation, trigger guard contour, magazine well, beavertail, sights (front + rear), accessory rail, grip texture/stippling, controls placement, and manufacturer engraving authentic to this specific reference model. Do NOT invent a generic firearm.`,
+    "OUTPUT FORMAT: PNG with FULLY TRANSPARENT BACKGROUND (alpha channel). No background color, no scene, no shadow plate, no floor — only the firearm cut out cleanly with anti-aliased edges.",
+    "Soft studio lighting, sharp focus, ultra-high detail, no text overlays, no watermarks, no logos other than authentic manufacturer engraving on the slide.",
+    "Centered composition; the weapon fills ~90% of the frame width with small even padding around it.",
   ].filter(Boolean).join(" ");
 }
 
