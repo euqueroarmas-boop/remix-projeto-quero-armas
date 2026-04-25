@@ -76,7 +76,7 @@ function WeaponCard({
   const modelo = catalog?.modelo || info.modelo || "";
   const calibre = catalog?.calibre || info.calibre || "—";
   const bg = backgroundForKind(info.kind);
-  const render = renderForKind(info.kind);
+  const render = catalog?.imagem || renderForKind(info.kind);
 
   return (
     <button
