@@ -749,6 +749,8 @@ export default function QAClientePortalPage() {
         <div className="text-center py-4">
           <p className="text-[10px] text-slate-300 tracking-wider">Quero Armas · Área do Cliente · Acesso seguro e auditado</p>
         </div>
+        </>
+        )}
       </main>
 
       {customerId && (
