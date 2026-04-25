@@ -414,17 +414,25 @@ Deno.serve(async (req) => {
       );
     }
 
-    const ext = chosenMime.includes("png")
+    // ===== ETAPA 4: REMOÇÃO DE FUNDO =====
+    // Sempre tenta remover o fundo para padronizar PNG transparente — evita o "xadrez"
+    // que aparecia quando a imagem original já vinha com tabuleiro de transparência embutido.
+    const cleaned = await removeBackgroundAI(chosenBytes, chosenMime);
+    const finalBytes = cleaned.bytes;
+    const finalMime = cleaned.mime;
+    const isTransparent = cleaned.transparent;
+
+    const ext = finalMime.includes("png")
       ? "png"
-      : chosenMime.includes("webp")
+      : finalMime.includes("webp")
       ? "webp"
       : "jpg";
     const path = `${arma.id}.${ext}`;
 
     const { error: upErr } = await sb.storage
       .from("qa-armamentos")
-      .upload(path, chosenBytes, {
-        contentType: chosenMime,
+      .upload(path, finalBytes, {
+        contentType: finalMime,
         upsert: true,
         cacheControl: "31536000",
       });
@@ -446,6 +454,8 @@ Deno.serve(async (req) => {
       .update({
         imagem: publicUrl,
         imagem_url: chosenUrl,
+        imagem_fonte: chosenUrl,
+        tem_fundo_transparente: isTransparent,
         imagem_status: "pronta",
         imagem_gerada_em: new Date().toISOString(),
         fonte_url: chosenSourceUrl || arma.fonte_url,
