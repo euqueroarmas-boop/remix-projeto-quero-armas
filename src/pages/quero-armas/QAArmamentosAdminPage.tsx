@@ -357,6 +357,33 @@ export default function QAArmamentosAdminPage() {
               </div>
 
               <Field label="Observações internas"><Textarea rows={2} value={editing.observacoes || ""} onChange={(e) => setF("observacoes", e.target.value)} /></Field>
+
+              <div className="rounded-md border p-3 space-y-3 bg-muted/30">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-xs uppercase tracking-wide text-muted-foreground">Imagem fotorrealista da arma</Label>
+                    <p className="text-xs text-muted-foreground mt-0.5">Render fiel gerado por IA (Nano Banana Pro) com base em marca, modelo e calibre.</p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={!editing.id || imgBusyId === editing.id}
+                    onClick={() => editing.id && gerarImagem({ id: editing.id, marca: editing.marca || "", modelo: editing.modelo || "" })}
+                  >
+                    {imgBusyId === editing.id ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : (editing.imagem ? <RefreshCcw className="h-4 w-4 mr-2" /> : <ImageIcon className="h-4 w-4 mr-2" />)}
+                    {editing.imagem ? "Regerar imagem" : "Gerar imagem"}
+                  </Button>
+                </div>
+                {editing.imagem ? (
+                  <div className="grid place-items-center bg-black rounded-md p-2">
+                    <img src={editing.imagem} alt={`${editing.marca} ${editing.modelo}`} className="max-h-48 object-contain" />
+                  </div>
+                ) : (
+                  <div className="grid place-items-center h-32 border border-dashed rounded-md text-muted-foreground text-sm">
+                    {editing.id ? "Nenhuma imagem ainda. Clique em 'Gerar imagem'." : "Salve a arma primeiro para gerar a imagem."}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
