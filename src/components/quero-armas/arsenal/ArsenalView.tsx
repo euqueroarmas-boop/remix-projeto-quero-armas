@@ -283,10 +283,10 @@ export function ArsenalView({
             </div>
           </div>
 
-          <div className="rounded-2xl border border-amber-200/60 bg-amber-50/40 p-4 shadow-sm">
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
             <div className="mb-2 flex items-center gap-1.5">
-              <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
-              <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-700">
+              <AlertTriangle className="h-3.5 w-3.5 text-slate-600" />
+              <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-700">
                 Próximos vencimentos
               </div>
             </div>
@@ -297,7 +297,7 @@ export function ArsenalView({
                 {alerts.slice(0, 5).map((a, i) => (
                   <div key={i} className="flex items-center justify-between text-[11px]">
                     <span className="truncate text-slate-700">{a.label}</span>
-                    <span className="ml-2 shrink-0 font-mono text-[10px] text-amber-700">
+                    <span className="ml-2 shrink-0 font-mono text-[10px] text-slate-600">
                       {a.days! < 0 ? `Vencido ${Math.abs(a.days!)}d` : `${a.days}d`}
                     </span>
                   </div>
