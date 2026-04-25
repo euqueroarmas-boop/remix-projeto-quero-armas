@@ -176,7 +176,7 @@ async function processUrl(url: string, titulo: string, tipo_documento: string, u
         entidade_id: doc_id,
         acao: "ingestao_url_texto_invalido",
         detalhes_json: { url, metodoExtracao, textLength: textoExtraido.length },
-      }).catch(() => {});
+      });
       return;
     }
 
@@ -280,7 +280,7 @@ async function processUrl(url: string, titulo: string, tipo_documento: string, u
       entidade_id: doc_id,
       acao: "ingestao_url_concluida",
       detalhes_json: { url, chunks_criados: chunks.length, tamanho_texto: textoExtraido.length, metodoExtracao },
-    }).catch(() => {});
+    });
 
     await updateStatus(supabase, doc_id, "gerando_embeddings");
     try {
@@ -296,12 +296,12 @@ async function processUrl(url: string, titulo: string, tipo_documento: string, u
       console.log("Embeddings will be retried separately");
     }
 
-  } catch (err) {
-    console.error("URL processing failed:", err.message);
+  } catch (err: any) {
+    console.error("URL processing failed:", err?.message);
     await supabase.from("qa_documentos_conhecimento")
       .update({
         status_processamento: "erro",
-        resumo_extraido: `Erro: ${err.message}`,
+        resumo_extraido: `Erro: ${err?.message}`,
         updated_at: new Date().toISOString(),
       })
       .eq("id", doc_id);
@@ -311,8 +311,8 @@ async function processUrl(url: string, titulo: string, tipo_documento: string, u
       entidade: "qa_documentos_conhecimento",
       entidade_id: doc_id,
       acao: "ingestao_url_erro",
-      detalhes_json: { url, erro: err.message },
-    }).catch(() => {});
+      detalhes_json: { url, erro: err?.message },
+    });
   }
 }
 
@@ -357,7 +357,7 @@ Deno.serve(async (req) => {
 
     if (insertErr) throw new Error(insertErr.message);
 
-    EdgeRuntime.waitUntil(processUrl(url, docTitle, tipo_documento || "outro", user_id || "", newDoc.id));
+    (globalThis as any).EdgeRuntime?.waitUntil(processUrl(url, docTitle, tipo_documento || "outro", user_id || "", newDoc.id));
 
     return new Response(JSON.stringify({
       success: true,
@@ -367,8 +367,8 @@ Deno.serve(async (req) => {
       headers: { ...corsH, "Content-Type": "application/json" },
     });
 
-  } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
+  } catch (err: any) {
+    return new Response(JSON.stringify({ error: err?.message }), {
       status: 500,
       headers: { ...corsH, "Content-Type": "application/json" },
     });

@@ -58,7 +58,7 @@ async function validateAdminToken(req: Request): Promise<boolean> {
 }
 
 async function hashBytes(bytes: Uint8Array): Promise<string> {
-  const hash = await crypto.subtle.digest("SHA-256", bytes);
+  const hash = await crypto.subtle.digest("SHA-256", bytes as BufferSource);
   return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
@@ -389,7 +389,7 @@ async function getEncryptionKey() {
 async function encryptBytes(bytes: Uint8Array): Promise<Uint8Array> {
   const key = await getEncryptionKey();
   const iv = crypto.getRandomValues(new Uint8Array(12));
-  const encrypted = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, bytes);
+  const encrypted = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, bytes as BufferSource);
   const result = new Uint8Array(iv.length + new Uint8Array(encrypted).length);
   result.set(iv);
   result.set(new Uint8Array(encrypted), iv.length);

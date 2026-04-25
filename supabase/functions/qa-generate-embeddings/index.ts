@@ -164,7 +164,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    EdgeRuntime.waitUntil(generateEmbeddings(documento_id));
+    (globalThis as any).EdgeRuntime?.waitUntil(generateEmbeddings(documento_id));
 
     return new Response(JSON.stringify({ success: true, message: "Embedding generation started" }), {
       headers: { ...corsH, "Content-Type": "application/json" },

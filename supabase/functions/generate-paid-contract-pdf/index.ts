@@ -42,7 +42,7 @@ function stripHtml(html?: string | null) {
     .trim();
 }
 
-async function loadLetterhead(pdfDoc: InstanceType<typeof PDFDocument>) {
+async function loadLetterhead(pdfDoc: any) {
   const LETTERHEAD_URL = `${Deno.env.get("SUPABASE_URL")}/storage/v1/object/public/contract-assets/timbrado-wmti.pdf`;
   try {
     const resp = await fetch(LETTERHEAD_URL);
@@ -343,9 +343,9 @@ async function buildPdfBytes(context: Awaited<ReturnType<typeof getPostPurchaseC
   y -= 4;
 
   // Fetch real signature data from contract_signatures table
-  let signIp = context.contract.client_ip || "Não disponível";
+  let signIp = (context.contract as any).client_ip || "Não disponível";
   let signAgent = "Não disponível";
-  let signDateRaw = context.contract.signed_at ? new Date(context.contract.signed_at) : new Date();
+  let signDateRaw = (context.contract as any).signed_at ? new Date((context.contract as any).signed_at) : new Date();
 
   try {
     const supabaseForSig = createServiceClient();
@@ -517,7 +517,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    const pdfUrl = await resolveSignedUrl(supabase, pdfPath);
+    const pdfUrl = await resolveSignedUrl(supabase, pdfPath as string);
     const fileName = `contrato-wmti-${context.contract.id.slice(0, 8).toUpperCase()}.pdf`;
 
     if (sendEmail) {

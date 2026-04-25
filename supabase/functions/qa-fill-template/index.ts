@@ -227,7 +227,7 @@ Deno.serve(async (req) => {
 
     const filename = `${template_key}_${(cliente.nome_completo || "cliente").replace(/\s+/g, "_")}.docx`;
 
-    return new Response(outputBuffer, {
+    return new Response(outputBuffer as BodyInit, {
       headers: {
         ...corsHeaders,
         "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
