@@ -144,7 +144,7 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
             />
             <div className="relative flex h-full items-center justify-center px-6">
               <img
-                src={renderForKind(info.kind)}
+                src={catalog?.imagem || renderForKind(info.kind)}
                 alt={`${displayMarca} ${displayModelo}`}
                 className="h-full w-full object-contain drop-shadow-[0_10px_24px_rgba(0,0,0,0.9)]"
               />
