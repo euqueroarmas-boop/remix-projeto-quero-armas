@@ -428,7 +428,7 @@ async function triggerGitHubWorkflow(
   testType: string,
   runId: string,
   ingestToken?: string,
-  supabase?: ReturnType<typeof createClient>
+  supabase?: any
 ): Promise<{ success: boolean; error?: string; github_run_id?: string }> {
   try {
     // Capture timestamp before dispatch to find the run later
