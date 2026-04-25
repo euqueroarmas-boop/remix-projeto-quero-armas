@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-export type LogTipo = "checkout" | "webhook" | "email" | "contrato" | "erro" | "pagamento" | "admin";
+export type LogTipo = "checkout" | "webhook" | "email" | "contrato" | "erro" | "pagamento" | "admin" | "lgpd";
 export type LogStatus = "success" | "error" | "warning" | "info";
 
 export async function logSistemaBackend(params: {
