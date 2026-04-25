@@ -11,9 +11,9 @@ function createTraceId(explicitTraceId?: string) {
 }
 
 /**
- * Central SMTP email sender for WMTi.
+ * Central SMTP email sender for Quero Armas.
  * All transactional/operational emails go through this function.
- * Sender: WMTi <naoresponda@wmti.com.br>
+ * Sender: Quero Armas <naoresponda@euqueroarmas.com.br>
  */
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -46,8 +46,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    const fromName = Deno.env.get("SMTP_FROM_NAME") || "WMTi";
+    const fromName = Deno.env.get("SMTP_FROM_NAME") || "Quero Armas";
     const fromEmail = Deno.env.get("SMTP_FROM_EMAIL") || SMTP_USER;
+    const fromDomain = (fromEmail.split("@")[1] || "euqueroarmas.com.br").trim();
 
     console.info(`[send-smtp-email][${traceId}] request_received`, JSON.stringify({
       to,
@@ -78,7 +79,7 @@ Deno.serve(async (req) => {
     }
 
     await readResponse();
-    const ehloRes = await sendCommand(`EHLO wmti.com.br`);
+    const ehloRes = await sendCommand(`EHLO ${fromDomain}`);
 
     if (SMTP_PORT === 587 && ehloRes.includes("STARTTLS")) {
       await sendCommand("STARTTLS");
@@ -116,7 +117,7 @@ Deno.serve(async (req) => {
 
     const boundary = `----=_Part_${Date.now()}_${Math.random().toString(36).slice(2)}`;
     const date = new Date().toUTCString();
-    const messageId = `<${Date.now()}.${Math.random().toString(36).slice(2)}@wmti.com.br>`;
+    const messageId = `<${Date.now()}.${Math.random().toString(36).slice(2)}@${fromDomain}>`;
 
     let emailContent = `From: ${fromName} <${fromEmail}>\r\n`;
     emailContent += `To: ${to}\r\n`;
