@@ -127,7 +127,7 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
           </div>
 
           {/* Hero da arma com glow */}
-          <div className="relative mt-4 h-[26rem] w-full overflow-hidden rounded-xl border border-white/10">
+          <div className="relative mt-4 h-[26rem] w-full overflow-hidden rounded-xl border border-white/10 bg-slate-950/75">
             <div
               className="absolute inset-0"
               style={{
@@ -139,7 +139,7 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
             <div
               className="absolute inset-0"
               style={{
-                background: `linear-gradient(180deg, rgba(2,4,8,0.3), rgba(2,4,8,0.65)), radial-gradient(circle at 50% 60%, ${accent}40, transparent 65%)`,
+                background: `linear-gradient(180deg, rgba(2,4,8,0.2), rgba(2,4,8,0.78)), radial-gradient(circle at 50% 60%, ${accent}36, transparent 66%)`,
               }}
             />
             <div className="relative flex h-full items-center justify-center px-4 py-4">
