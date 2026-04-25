@@ -124,6 +124,10 @@ class SmtpSession {
     return await this.readResponse(["250"]);
   }
 
+  async upgradeToTls(hostname: string) {
+    this.conn = await withTimeout(Deno.startTls(this.conn as Deno.TcpConn, { hostname }), `[send-smtp-email][${this.traceId}] SMTP STARTTLS`);
+  }
+
   close() {
     try {
       this.conn.close();
@@ -222,14 +226,13 @@ async function sendViaSmtp(payload: {
 
     if (!SMTP_SECURE && ehloRes.includes("STARTTLS")) {
       await session.command("STARTTLS", ["220"]);
-      const tlsConn = await withTimeout(Deno.startTls(session["conn"] as Deno.TcpConn, { hostname: SMTP_HOST }), `[send-smtp-email][${traceId}] SMTP STARTTLS`);
-      session = new SmtpSession(tlsConn, traceId);
+      await session.upgradeToTls(SMTP_HOST);
       await session.command(`EHLO ${fromDomain}`, ["250"]);
     }
 
     await session.command("AUTH LOGIN", ["334"]);
-    await session.command(btoa(SMTP_USER), ["334"]);
-    await session.command(btoa(SMTP_PASS), ["235"]);
+    await session.command(toBase64Utf8(SMTP_USER), ["334"]);
+    await session.command(toBase64Utf8(SMTP_PASS), ["235"]);
     await session.command(`MAIL FROM:<${escapeEnvelope(fromEmail)}>`, ["250"]);
     const rcptRes = await session.command(`RCPT TO:<${escapeEnvelope(to)}>`, ["250", "251"]);
     await session.command("DATA", ["354"]);
