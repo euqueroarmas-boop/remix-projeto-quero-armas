@@ -97,7 +97,7 @@ export default function QAClienteLoginPage() {
       />
 
       {/* Terminal */}
-      <div className="relative z-10 w-full max-w-[400px] sm:max-w-[440px] md:max-w-[480px] lg:max-w-[520px] bg-[#0a0a0a]/90 md:border md:border-[#1f1f1f] backdrop-blur-md p-5 sm:p-6 md:p-8 flex flex-col gap-6 md:gap-7 md:shadow-[0_0_60px_rgba(255,42,42,0.05)]">
+      <div className="relative z-10 w-full max-w-[420px] bg-[#0a0a0a]/90 border border-[#1f1f1f] backdrop-blur-md p-5 sm:p-6 flex flex-col gap-6 shadow-[0_0_60px_rgba(255,42,42,0.05)]">
         {/* HUD bar */}
         <div
           className="flex items-center justify-between text-[11px] tracking-[0.2em] text-zinc-500"
