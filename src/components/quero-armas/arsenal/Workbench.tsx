@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ChevronRight, FileText, Crosshair, Calendar, Hash, Layers, ShieldAlert } from "lucide-react";
+import { ChevronRight, FileText, Crosshair, Layers, ShieldAlert, Star } from "lucide-react";
 import { WeaponSilhouette } from "./WeaponSilhouette";
 import {
   buildWeaponInfo,
@@ -9,6 +9,7 @@ import {
   WeaponInfo,
   WEAPON_KIND_LABEL,
 } from "./utils";
+import { useArmamentoCatalogo, type ArmamentoCatalogo } from "./useArmamentoCatalogo";
 
 export interface WorkbenchWeapon {
   id: number | string;
@@ -54,11 +55,13 @@ function urgencyText(days: number | null): string {
 function WeaponCard({
   w,
   info,
+  catalog,
   onClick,
   size = "md",
 }: {
   w: WorkbenchWeapon;
   info: WeaponInfo;
+  catalog: ArmamentoCatalogo | null;
   onClick: () => void;
   size?: "lg" | "md";
 }) {
@@ -72,6 +75,9 @@ function WeaponCard({
       : tone === "danger"
       ? TACTICAL.danger
       : TACTICAL.cyan;
+  const marca = catalog?.marca || info.marca || info.label;
+  const modelo = catalog?.modelo || info.modelo || "";
+  const calibre = catalog?.calibre || info.calibre || "—";
   return (
     <button
       type="button"
@@ -92,10 +98,15 @@ function WeaponCard({
             <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-slate-500">
               {WEAPON_KIND_LABEL[info.kind]}
             </span>
+            {catalog && (
+              <span className="inline-flex items-center gap-0.5 rounded-sm bg-emerald-50 px-1 py-0.5 text-[8px] font-black uppercase tracking-wider text-emerald-700">
+                <Star className="h-2 w-2 fill-emerald-500 text-emerald-500" /> ID
+              </span>
+            )}
           </div>
           <div className="mt-1 text-[14px] font-bold text-slate-800 leading-tight">
-            {info.marca || info.label}{" "}
-            <span className="font-medium text-slate-500">{info.modelo || ""}</span>
+            {marca}{" "}
+            <span className="font-medium text-slate-500">{modelo}</span>
           </div>
         </div>
         <span
@@ -109,10 +120,19 @@ function WeaponCard({
         <WeaponSilhouette kind={info.kind} accent={accent} className="h-full w-full" />
       </div>
 
+      {/* Mini stats armory */}
+      {catalog && (
+        <div className="grid grid-cols-3 gap-1.5 border-t border-dashed border-slate-200 pt-2">
+          <MiniStat label="DMG" value={catalog.stat_dano} color="#ef4444" />
+          <MiniStat label="PRC" value={catalog.stat_precisao} color="#06b6d4" />
+          <MiniStat label="MOB" value={catalog.stat_mobilidade} color="#10b981" />
+        </div>
+      )}
+
       <div className="grid grid-cols-3 gap-2 border-t border-dashed border-slate-200 pt-2 text-[10px]">
         <div>
           <div className="font-mono text-[9px] uppercase tracking-wider text-slate-400">CAL</div>
-          <div className="font-bold text-slate-700">{info.calibre || "—"}</div>
+          <div className="font-bold text-slate-700">{calibre}</div>
         </div>
         <div>
           <div className="font-mono text-[9px] uppercase tracking-wider text-slate-400">SIGMA</div>
@@ -140,6 +160,21 @@ function WeaponCard({
         </span>
       </div>
     </button>
+  );
+}
+
+function MiniStat({ label, value, color }: { label: string; value: number | null; color: string }) {
+  const v = Math.max(0, Math.min(100, value ?? 0));
+  return (
+    <div>
+      <div className="flex items-center justify-between text-[8px]">
+        <span className="font-bold uppercase tracking-wider text-slate-400">{label}</span>
+        <span className="font-mono text-slate-600">{value ?? "—"}</span>
+      </div>
+      <div className="mt-0.5 h-1 overflow-hidden rounded-full bg-slate-200/70">
+        <div className="h-full rounded-full" style={{ width: `${v}%`, background: color, boxShadow: `0 0 4px ${color}88` }} />
+      </div>
+    </div>
   );
 }
 
@@ -185,10 +220,11 @@ function DocumentTag({ d }: { d: DocCard }) {
 
 export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon }: Props) {
   const [showAll, setShowAll] = useState(false);
+  const { match } = useArmamentoCatalogo();
 
   const enriched = useMemo(
-    () => weapons.map((w) => ({ w, info: buildWeaponInfo(w.nome_arma, w.numero_arma) })),
-    [weapons],
+    () => weapons.map((w) => ({ w, info: buildWeaponInfo(w.nome_arma, w.numero_arma), catalog: match(w.nome_arma) })),
+    [weapons, match],
   );
 
   const longas = enriched.filter((e) => ["fuzil", "carabina", "espingarda"].includes(e.info.kind));
@@ -260,11 +296,12 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon }:
           <div className="relative space-y-4">
             {visibleLongas.length > 0 && (
               <div className="grid gap-3 md:grid-cols-2">
-                {visibleLongas.map(({ w, info }) => (
+                {visibleLongas.map(({ w, info, catalog }) => (
                   <WeaponCard
                     key={`${w.source}-${w.id}`}
                     w={w}
                     info={info}
+                    catalog={catalog}
                     onClick={() => onSelectWeapon(w, info)}
                     size="lg"
                   />
@@ -274,11 +311,12 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon }:
 
             {visibleCurtas.length > 0 && (
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {visibleCurtas.map(({ w, info }) => (
+                {visibleCurtas.map(({ w, info, catalog }) => (
                   <WeaponCard
                     key={`${w.source}-${w.id}`}
                     w={w}
                     info={info}
+                    catalog={catalog}
                     onClick={() => onSelectWeapon(w, info)}
                   />
                 ))}

@@ -2659,6 +2659,87 @@ export type Database = {
           },
         ]
       }
+      qa_armamentos_catalogo: {
+        Row: {
+          alcance_efetivo_m: number | null
+          apelido: string | null
+          ativo: boolean
+          calibre: string
+          capacidade_carregador: number | null
+          classificacao_legal: string | null
+          comprimento_cano_mm: number | null
+          created_at: string
+          descricao: string | null
+          id: string
+          marca: string
+          modelo: string
+          origem: string | null
+          peso_gramas: number | null
+          search_tokens: string | null
+          stat_alcance: number | null
+          stat_cadencia: number | null
+          stat_controle: number | null
+          stat_dano: number | null
+          stat_mobilidade: number | null
+          stat_precisao: number | null
+          tipo: string
+          updated_at: string
+          velocidade_projetil_ms: number | null
+        }
+        Insert: {
+          alcance_efetivo_m?: number | null
+          apelido?: string | null
+          ativo?: boolean
+          calibre: string
+          capacidade_carregador?: number | null
+          classificacao_legal?: string | null
+          comprimento_cano_mm?: number | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          marca: string
+          modelo: string
+          origem?: string | null
+          peso_gramas?: number | null
+          search_tokens?: string | null
+          stat_alcance?: number | null
+          stat_cadencia?: number | null
+          stat_controle?: number | null
+          stat_dano?: number | null
+          stat_mobilidade?: number | null
+          stat_precisao?: number | null
+          tipo: string
+          updated_at?: string
+          velocidade_projetil_ms?: number | null
+        }
+        Update: {
+          alcance_efetivo_m?: number | null
+          apelido?: string | null
+          ativo?: boolean
+          calibre?: string
+          capacidade_carregador?: number | null
+          classificacao_legal?: string | null
+          comprimento_cano_mm?: number | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          marca?: string
+          modelo?: string
+          origem?: string | null
+          peso_gramas?: number | null
+          search_tokens?: string | null
+          stat_alcance?: number | null
+          stat_cadencia?: number | null
+          stat_controle?: number | null
+          stat_dano?: number | null
+          stat_mobilidade?: number | null
+          stat_precisao?: number | null
+          tipo?: string
+          updated_at?: string
+          velocidade_projetil_ms?: number | null
+        }
+        Relationships: []
+      }
       qa_cadastro_cr: {
         Row: {
           check_exame_tiro: boolean | null
