@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Plus, Sparkles, Globe, Trash2, CheckCircle2, AlertCircle, Search, Image as ImageIcon, RefreshCcw } from "lucide-react";
+import { Loader2, Plus, Sparkles, Globe, Trash2, CheckCircle2, AlertCircle, Search, Image as ImageIcon, RefreshCcw, Camera } from "lucide-react";
 import { toast } from "sonner";
 
 type Status = "rascunho" | "pendente_revisao" | "verificado" | "rejeitado";
@@ -57,6 +57,8 @@ export default function QAArmamentosAdminPage() {
   const [scrapeBusy, setScrapeBusy] = useState(false);
   const [scrapeUrl, setScrapeUrl] = useState("");
   const [imgBusyId, setImgBusyId] = useState<string | null>(null);
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null);
 
   async function load() {
     setLoading(true);
@@ -123,20 +125,54 @@ export default function QAArmamentosAdminPage() {
     if (!it.id) { toast.error("Salve a arma antes de gerar a imagem"); return; }
     setImgBusyId(it.id);
     try {
-      const { data, error } = await supabase.functions.invoke("qa-armamento-gerar-imagem", { body: { id: it.id } });
+      const { data, error } = await supabase.functions.invoke("qa-armamento-buscar-foto-real", { body: { id: it.id } });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
-      toast.success(`Imagem gerada para ${it.marca} ${it.modelo}`);
+      toast.success(`Foto real encontrada para ${it.marca} ${it.modelo}`);
       const url = (data as any)?.imagem as string | undefined;
       if (url) {
         setEditing((p) => (p && p.id === it.id ? { ...p, imagem: url, imagem_status: "pronta" } : p));
       }
       load();
     } catch (e: any) {
-      toast.error(`Falha ao gerar imagem: ${e?.message || e}`);
+      toast.error(`Não encontrei foto real para ${it.marca} ${it.modelo}: ${e?.message || e}`);
     } finally {
       setImgBusyId(null);
     }
+  }
+
+  /** Busca foto real para todas as armas que ainda não têm foto pronta. */
+  async function buscarTodasFotos() {
+    const pendentes = items.filter((i) => !i.imagem || i.imagem_status !== "pronta");
+    if (pendentes.length === 0) {
+      toast.info("Todas as armas já possuem foto.");
+      return;
+    }
+    if (!confirm(`Buscar foto real para ${pendentes.length} arma(s)? Pode demorar alguns minutos.`)) return;
+    setBulkBusy(true);
+    setBulkProgress({ done: 0, total: pendentes.length });
+    let ok = 0;
+    let fail = 0;
+    for (let i = 0; i < pendentes.length; i++) {
+      const it = pendentes[i];
+      try {
+        const { data, error } = await supabase.functions.invoke(
+          "qa-armamento-buscar-foto-real",
+          { body: { id: it.id } },
+        );
+        if (error) throw error;
+        if ((data as any)?.error) throw new Error((data as any).error);
+        ok++;
+      } catch (e: any) {
+        console.warn(`Falha em ${it.marca} ${it.modelo}:`, e?.message || e);
+        fail++;
+      }
+      setBulkProgress({ done: i + 1, total: pendentes.length });
+    }
+    setBulkBusy(false);
+    setBulkProgress(null);
+    toast.success(`Concluído: ${ok} foto(s) encontrada(s), ${fail} falha(s).`);
+    load();
   }
 
   async function gerarComIA() {
@@ -178,7 +214,14 @@ export default function QAArmamentosAdminPage() {
           <h1 className="text-2xl font-bold tracking-tight">CATÁLOGO DE ARMAMENTOS</h1>
           <p className="text-sm text-muted-foreground">Base técnica de armas reais usadas pelos clientes do Arsenal.</p>
         </div>
-        <Button onClick={openNew}><Plus className="h-4 w-4 mr-2" />Nova arma</Button>
+        <div className="flex items-center gap-2">
+          <Button variant="secondary" onClick={buscarTodasFotos} disabled={bulkBusy} title="Busca foto real em fontes públicas para cada arma sem foto">
+            {bulkBusy
+              ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Buscando {bulkProgress?.done}/{bulkProgress?.total}</>
+              : <><Camera className="h-4 w-4 mr-2" />Buscar fotos reais</>}
+          </Button>
+          <Button onClick={openNew}><Plus className="h-4 w-4 mr-2" />Nova arma</Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
