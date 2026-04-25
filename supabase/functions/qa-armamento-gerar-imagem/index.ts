@@ -34,7 +34,9 @@ function buildPrompt(it: any): string {
 }
 
 function stripBackgroundAndCropPng(input: Uint8Array): Uint8Array {
-  const decoded = UPNG.decode(input.buffer.slice(input.byteOffset, input.byteOffset + input.byteLength));
+  const sourceBuffer = new ArrayBuffer(input.byteLength);
+  new Uint8Array(sourceBuffer).set(input);
+  const decoded = UPNG.decode(sourceBuffer);
   const width = decoded.width;
   const height = decoded.height;
   const rgba = new Uint8Array(UPNG.toRGBA8(decoded)[0]);
@@ -85,7 +87,9 @@ function stripBackgroundAndCropPng(input: Uint8Array): Uint8Array {
     const dst = y * outW * 4;
     cropped.set(rgba.subarray(src, src + outW * 4), dst);
   }
-  return new Uint8Array(UPNG.encode([cropped.buffer], outW, outH, 0));
+  const croppedBuffer = new ArrayBuffer(cropped.byteLength);
+  new Uint8Array(croppedBuffer).set(cropped);
+  return new Uint8Array(UPNG.encode([croppedBuffer], outW, outH, 0));
 }
 
 Deno.serve(async (req) => {
@@ -126,12 +130,13 @@ Deno.serve(async (req) => {
 
     // Decodifica base64
     const [header, b64] = dataUrl.split(",");
-    const mime = header.match(/data:(image\/\w+)/)?.[1] || "image/png";
-    const ext = mime.split("/")[1] || "png";
+    const mime = "image/png";
+    const ext = "png";
     const bin = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+    const finalBin = stripBackgroundAndCropPng(bin);
     const path = `${arma.id}.${ext}`;
 
-    const { error: upErr } = await sb.storage.from("qa-armamentos").upload(path, bin, {
+    const { error: upErr } = await sb.storage.from("qa-armamentos").upload(path, finalBin, {
       contentType: mime,
       upsert: true,
       cacheControl: "31536000",
