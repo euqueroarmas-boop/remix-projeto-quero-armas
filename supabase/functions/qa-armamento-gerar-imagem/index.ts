@@ -74,7 +74,10 @@ function stripBackgroundAndCropPng(input: Uint8Array): Uint8Array {
   }
   let minX = width, minY = height, maxX = -1, maxY = -1;
   for (let idx = 0; idx < seen.length; idx++) {
-    if (seen[idx]) rgba[idx * 4 + 3] = 0;
+    const i = idx * 4;
+    const r = rgba[i], g = rgba[i + 1], b = rgba[i + 2];
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    if (seen[idx] || (r > 232 && g > 232 && b > 232 && max - min < 28)) rgba[i + 3] = 0;
     if (rgba[idx * 4 + 3] > 12) {
       const x = idx % width, y = Math.floor(idx / width);
       minX = Math.min(minX, x); minY = Math.min(minY, y); maxX = Math.max(maxX, x); maxY = Math.max(maxY, y);
