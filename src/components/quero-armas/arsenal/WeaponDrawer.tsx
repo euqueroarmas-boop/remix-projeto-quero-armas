@@ -147,7 +147,7 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
                 src={catalog?.imagem || renderForKind(info.kind)}
                 alt={`${displayMarca} ${displayModelo}`}
                 style={{ background: "transparent" }}
-                className="h-full w-[118%] max-w-none object-contain drop-shadow-[0_14px_32px_rgba(0,0,0,0.95)]"
+                className="h-full w-full max-w-full object-contain px-2 py-3 drop-shadow-[0_14px_32px_rgba(0,0,0,0.95)]"
               />
             </div>
             {/* corner ticks */}
