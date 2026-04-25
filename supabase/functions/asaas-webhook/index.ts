@@ -5,7 +5,7 @@ import { logFiscalEvent, logFiscalChanges, detectSensitiveChanges } from "../_sh
 
 // ── LGPD LOGICAL LOCK: check if customer is anonymized ──
 async function isCustomerLgpdLocked(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   customerId: string | null
 ): Promise<boolean> {
   if (!customerId) return false;
@@ -19,7 +19,7 @@ async function isCustomerLgpdLocked(
 }
 
 async function logLgpdBlock(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   operation: string,
   details: Record<string, unknown>
 ) {
@@ -47,7 +47,7 @@ const corsHeaders = {
 
 // ── HELPER: resolve customer_id from Asaas customer ID via mapping table ──
 async function resolveCustomerByAsaasId(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   asaasCustomerId: string
 ): Promise<string | null> {
   if (!asaasCustomerId) return null;
@@ -62,7 +62,7 @@ async function resolveCustomerByAsaasId(
 
 // ── HELPER: resolve customer via payment chain (fallback) ──
 async function resolveCustomerByPayment(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   asaasPaymentId: string
 ): Promise<{ customerId: string | null; contractId: string | null; paymentId: string | null }> {
   const result = { customerId: null as string | null, contractId: null as string | null, paymentId: null as string | null };
@@ -97,7 +97,7 @@ async function resolveCustomerByPayment(
 
 // ── HELPER: ensure asaas_customer_map entry exists ──
 async function ensureCustomerMapping(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   asaasCustomerId: string,
   internalCustomerId: string
 ) {
