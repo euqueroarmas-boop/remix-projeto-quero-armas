@@ -342,19 +342,19 @@ export default function QAClientePortalPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
-        <div className="w-8 h-8 border-2 border-slate-300 border-t-blue-500 rounded-full animate-spin" />
+      <div data-tactical-portal className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-amber-500/40 border-t-amber-400 rounded-full animate-spin" />
       </div>
     );
   }
 
   if (!cliente) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 px-4">
+      <div data-tactical-portal className="min-h-screen flex items-center justify-center px-4">
         <div className="text-center max-w-sm">
-          <Shield className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-          <h2 className="text-lg font-bold text-slate-700">Perfil não vinculado</h2>
-          <p className="text-sm text-slate-500 mt-2">Seu cadastro ainda não foi vinculado a um perfil de cliente. Entre em contato conosco para ativar seu acesso.</p>
+          <Shield className="h-12 w-12 text-amber-400 mx-auto mb-4" />
+          <h2 className="text-lg font-bold">Perfil não vinculado</h2>
+          <p className="text-sm mt-2">Seu cadastro ainda não foi vinculado a um perfil de cliente. Entre em contato conosco para ativar seu acesso.</p>
           <Button onClick={handleLogout} variant="outline" className="mt-6">Sair</Button>
         </div>
       </div>
@@ -362,7 +362,7 @@ export default function QAClientePortalPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30">
+    <div data-tactical-portal className="min-h-screen">
       {/* ═══ TOP BAR ═══ */}
       <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-lg border-b border-slate-200/60 shadow-sm">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
