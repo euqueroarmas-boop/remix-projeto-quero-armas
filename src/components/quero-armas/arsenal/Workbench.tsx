@@ -143,20 +143,21 @@ function WeaponCard({
           </span>
         </div>
 
-        {/* Weapon render with glow */}
-        <div className={`relative mx-auto my-3 ${size === "lg" ? "h-32" : "h-24"} w-full`}>
+        {/* Weapon render with glow — transparent, large, detailed */}
+        <div className={`relative mx-auto my-4 ${size === "lg" ? "h-56" : "h-44"} w-full`}>
           <div
             className="absolute inset-0"
             style={{
-              background: `radial-gradient(ellipse at 50% 70%, ${accent}55, transparent 60%)`,
-              filter: "blur(8px)",
+              background: `radial-gradient(ellipse at 50% 65%, ${accent}55, transparent 65%)`,
+              filter: "blur(14px)",
             }}
           />
           <img
             src={render}
             alt={`${marca} ${modelo}`}
             loading="lazy"
-            className="relative h-full w-full object-contain drop-shadow-[0_8px_18px_rgba(0,0,0,0.8)]"
+            style={{ background: "transparent" }}
+            className="relative h-full w-full object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.85)]"
           />
         </div>
 
