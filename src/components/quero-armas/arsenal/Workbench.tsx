@@ -144,12 +144,18 @@ function WeaponCard({
         </div>
 
         {/* Weapon render with glow — transparent, large, detailed */}
-        <div className={`relative mx-auto my-4 ${size === "lg" ? "h-72 md:h-80" : "h-60 md:h-64"} w-full`}>
+        <div className={`relative mx-auto my-4 overflow-hidden rounded-xl border border-white/10 ${size === "lg" ? "h-72 md:h-80" : "h-60 md:h-64"} w-full bg-slate-950/70`}>
+          <div
+            className="absolute inset-0 opacity-35"
+            style={{
+              backgroundImage: "linear-gradient(to right, rgba(34,211,238,0.16) 1px, transparent 1px), linear-gradient(to bottom, rgba(34,211,238,0.16) 1px, transparent 1px)",
+              backgroundSize: "24px 24px",
+            }}
+          />
           <div
             className="absolute inset-0"
             style={{
-              background: `radial-gradient(ellipse at 50% 65%, ${accent}55, transparent 65%)`,
-              filter: "blur(14px)",
+              background: `linear-gradient(180deg, rgba(2,4,8,0.18), rgba(2,4,8,0.72)), radial-gradient(ellipse at 50% 65%, ${accent}33, transparent 68%)`,
             }}
           />
           <img
