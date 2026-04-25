@@ -24,6 +24,8 @@ export interface ArmamentoCatalogo {
   stat_mobilidade: number | null;
   stat_controle: number | null;
   search_tokens: string | null;
+  imagem: string | null;
+  imagem_status: string | null;
 }
 
 const NORM = (s: string) =>
