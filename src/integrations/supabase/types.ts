@@ -2674,9 +2674,11 @@ export type Database = {
           fonte_url: string | null
           id: string
           imagem: string | null
+          imagem_fonte: string | null
           imagem_gerada_em: string | null
           imagem_status: string
           imagem_url: string | null
+          manual_url: string | null
           marca: string
           modelo: string
           observacoes: string | null
@@ -2692,6 +2694,7 @@ export type Database = {
           stat_mobilidade: number | null
           stat_precisao: number | null
           status_revisao: string
+          tem_fundo_transparente: boolean
           tipo: string
           updated_at: string
           velocidade_projetil_ms: number | null
@@ -2710,9 +2713,11 @@ export type Database = {
           fonte_url?: string | null
           id?: string
           imagem?: string | null
+          imagem_fonte?: string | null
           imagem_gerada_em?: string | null
           imagem_status?: string
           imagem_url?: string | null
+          manual_url?: string | null
           marca: string
           modelo: string
           observacoes?: string | null
@@ -2728,6 +2733,7 @@ export type Database = {
           stat_mobilidade?: number | null
           stat_precisao?: number | null
           status_revisao?: string
+          tem_fundo_transparente?: boolean
           tipo: string
           updated_at?: string
           velocidade_projetil_ms?: number | null
@@ -2746,9 +2752,11 @@ export type Database = {
           fonte_url?: string | null
           id?: string
           imagem?: string | null
+          imagem_fonte?: string | null
           imagem_gerada_em?: string | null
           imagem_status?: string
           imagem_url?: string | null
+          manual_url?: string | null
           marca?: string
           modelo?: string
           observacoes?: string | null
@@ -2764,6 +2772,7 @@ export type Database = {
           stat_mobilidade?: number | null
           stat_precisao?: number | null
           status_revisao?: string
+          tem_fundo_transparente?: boolean
           tipo?: string
           updated_at?: string
           velocidade_projetil_ms?: number | null
@@ -3565,6 +3574,7 @@ export type Database = {
       }
       qa_crafs: {
         Row: {
+          catalogo_id: string | null
           cliente_id: number | null
           data_validade: string | null
           id: number
@@ -3575,6 +3585,7 @@ export type Database = {
           numero_sigma: string | null
         }
         Insert: {
+          catalogo_id?: string | null
           cliente_id?: number | null
           data_validade?: string | null
           id?: number
@@ -3585,6 +3596,7 @@ export type Database = {
           numero_sigma?: string | null
         }
         Update: {
+          catalogo_id?: string | null
           cliente_id?: number | null
           data_validade?: string | null
           id?: number
@@ -3594,7 +3606,15 @@ export type Database = {
           numero_arma?: string | null
           numero_sigma?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "qa_crafs_catalogo_id_fkey"
+            columns: ["catalogo_id"]
+            isOneToOne: false
+            referencedRelation: "qa_armamentos_catalogo"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       qa_document_jobs: {
         Row: {
@@ -4178,6 +4198,7 @@ export type Database = {
       }
       qa_gtes: {
         Row: {
+          catalogo_id: string | null
           cliente_id: number | null
           data_validade: string | null
           id: number
@@ -4188,6 +4209,7 @@ export type Database = {
           numero_sigma: string | null
         }
         Insert: {
+          catalogo_id?: string | null
           cliente_id?: number | null
           data_validade?: string | null
           id?: number
@@ -4198,6 +4220,7 @@ export type Database = {
           numero_sigma?: string | null
         }
         Update: {
+          catalogo_id?: string | null
           cliente_id?: number | null
           data_validade?: string | null
           id?: number
@@ -4207,7 +4230,15 @@ export type Database = {
           numero_arma?: string | null
           numero_sigma?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "qa_gtes_catalogo_id_fkey"
+            columns: ["catalogo_id"]
+            isOneToOne: false
+            referencedRelation: "qa_armamentos_catalogo"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       qa_itens_venda: {
         Row: {
