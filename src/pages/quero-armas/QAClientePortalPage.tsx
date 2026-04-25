@@ -313,8 +313,14 @@ export default function QAClientePortalPage() {
     // Documentos enviados pelo próprio cliente (hub pessoal)
     meusDocs.forEach((d: any) => {
       if (!d.data_validade) return;
-      const cat = (d.tipo_documento || "outro").toUpperCase();
-      const armaInfo = d.arma_modelo ? ` — ${d.arma_marca || ""} ${d.arma_modelo}`.trim() : "";
+      const tipoRaw = (d.tipo_documento || "outro").toLowerCase();
+      const cat = tipoRaw.toUpperCase();
+      // Evita duplicar o CR já presente em qa_cadastro_cr (validade_cr)
+      if (tipoRaw === "cr" && cadastro?.validade_cr) return;
+      // Para CRAFs, prioriza modelo (mais curto) sobre marca para não truncar em mobile
+      const armaInfo = d.arma_modelo
+        ? ` — ${d.arma_modelo}${d.arma_calibre ? ` ${d.arma_calibre}` : ""}`
+        : "";
       expDocs.push({
         label: `${cat}${armaInfo}`,
         date: d.data_validade,
