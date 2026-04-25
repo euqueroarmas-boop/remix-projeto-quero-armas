@@ -59,7 +59,7 @@ Deno.serve(async (req) => {
       replyTo: reply_to ?? null,
     }));
 
-    const conn = SMTP_PORT === 465
+    let conn: Deno.TlsConn | Deno.TcpConn = SMTP_PORT === 465
       ? await Deno.connectTls({ hostname: SMTP_HOST, port: SMTP_PORT })
       : await Deno.connect({ hostname: SMTP_HOST, port: SMTP_PORT });
 
@@ -83,9 +83,9 @@ Deno.serve(async (req) => {
 
     if (SMTP_PORT === 587 && ehloRes.includes("STARTTLS")) {
       await sendCommand("STARTTLS");
-      const tlsConn = await Deno.startTls(conn as Deno.TcpConn, { hostname: SMTP_HOST });
-      tlsConn.close();
-      console.warn(`[send-smtp-email][${traceId}] starttls_attempted_port_587`);
+      conn = await Deno.startTls(conn as Deno.TcpConn, { hostname: SMTP_HOST });
+      // Re-EHLO over TLS (required by RFC 3207)
+      await sendCommand(`EHLO ${fromDomain}`);
     }
 
     await sendCommand("AUTH LOGIN");
