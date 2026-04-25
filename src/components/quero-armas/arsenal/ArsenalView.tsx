@@ -242,12 +242,12 @@ export function ArsenalView({
 
       {/* KPIs */}
       <ArsenalSummary
-        totalArmas={crafs.length}
+        totalArmas={weapons.length}
         totalMunicoes={ammo.total}
         totalCalibres={ammo.byCalibre.length}
         crStatus={crStatus.tone}
         crLabel={crStatus.label}
-        totalCrafs={crafs.length}
+        totalCrafs={weapons.filter((w) => w.source === "CRAF").length}
         alerts={alerts.length}
       />
 
@@ -276,7 +276,7 @@ export function ArsenalView({
                 tone={alerts.length === 0 ? "ok" : "warn"}
               />
               <Row label="Validade do CR" value={crStatus.label} tone={crStatus.tone} />
-              <Row label="CRAFs vinculados" value={String(crafs.length)} tone="cyan" />
+              <Row label="CRAFs vinculados" value={String(weapons.filter((w) => w.source === "CRAF").length)} tone="cyan" />
               <Row label="Guias ativas" value={String(gtes.length)} tone="cyan" />
               <Row label="Munições totais" value={ammo.total.toLocaleString("pt-BR")} tone="ok" />
             </div>
