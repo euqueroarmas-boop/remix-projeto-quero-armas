@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChevronRight, FileText, Crosshair, Layers, ShieldAlert, Star, Radio } from "lucide-react";
 import {
   buildWeaponInfo,
@@ -266,6 +266,7 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon }:
     if (catLoading) return;
     enriched.forEach(({ w, info, catalog }) => {
       if (!catalog && w.nome_arma) autoCreatePending(w.nome_arma, info.kind as any, w.calibre || null);
+      void 0;
     });
   }, [enriched, catLoading, autoCreatePending]);
 
