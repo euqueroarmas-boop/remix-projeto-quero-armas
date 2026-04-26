@@ -2789,6 +2789,11 @@ export type Database = {
           num_item_servico_cr: number | null
           numero_cr: string | null
           senha_gov: string | null
+          senha_gov_encrypted: string | null
+          senha_gov_iv: string | null
+          senha_gov_tag: string | null
+          senha_gov_updated_at: string | null
+          senha_gov_updated_by: string | null
           validade_cr: string | null
           validade_exame_tiro: string | null
           validade_laudo_psicologico: string | null
@@ -2802,6 +2807,11 @@ export type Database = {
           num_item_servico_cr?: number | null
           numero_cr?: string | null
           senha_gov?: string | null
+          senha_gov_encrypted?: string | null
+          senha_gov_iv?: string | null
+          senha_gov_tag?: string | null
+          senha_gov_updated_at?: string | null
+          senha_gov_updated_by?: string | null
           validade_cr?: string | null
           validade_exame_tiro?: string | null
           validade_laudo_psicologico?: string | null
@@ -2815,6 +2825,11 @@ export type Database = {
           num_item_servico_cr?: number | null
           numero_cr?: string | null
           senha_gov?: string | null
+          senha_gov_encrypted?: string | null
+          senha_gov_iv?: string | null
+          senha_gov_tag?: string | null
+          senha_gov_updated_at?: string | null
+          senha_gov_updated_by?: string | null
           validade_cr?: string | null
           validade_exame_tiro?: string | null
           validade_laudo_psicologico?: string | null
@@ -4691,6 +4706,50 @@ export type Database = {
             columns: ["geracao_id"]
             isOneToOne: false
             referencedRelation: "qa_geracoes_pecas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_senha_gov_acessos: {
+        Row: {
+          acao: string
+          cadastro_cr_id: number
+          cliente_id: number | null
+          contexto: string | null
+          created_at: string
+          id: string
+          ip: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          acao: string
+          cadastro_cr_id: number
+          cliente_id?: number | null
+          contexto?: string | null
+          created_at?: string
+          id?: string
+          ip?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          acao?: string
+          cadastro_cr_id?: number
+          cliente_id?: number | null
+          contexto?: string | null
+          created_at?: string
+          id?: string
+          ip?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_senha_gov_acessos_cadastro_cr_id_fkey"
+            columns: ["cadastro_cr_id"]
+            isOneToOne: false
+            referencedRelation: "qa_cadastro_cr"
             referencedColumns: ["id"]
           },
         ]
