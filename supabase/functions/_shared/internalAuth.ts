@@ -134,3 +134,46 @@ export async function requireAdminOrInternal(req: Request): Promise<AuthGuard> {
 }
 
 export const internalCorsHeaders = corsHeaders;
+
+/**
+ * Lighter variant: accepts any authenticated user OR an internal/admin caller.
+ * Useful for endpoints that may legitimately be triggered by a logged-in
+ * customer (not necessarily admin), but should NEVER be reachable anonymously.
+ */
+export async function requireAuthenticatedOrInternal(req: Request): Promise<AuthGuard> {
+  // Try the strict path first (admin / internal / legacy admin token)
+  const strict = await requireAdminOrInternal(req);
+  if (strict.ok) return strict;
+
+  // Fall back: any valid Supabase JWT
+  const authHeader = req.headers.get("Authorization") || "";
+  if (authHeader.startsWith("Bearer ")) {
+    const token = authHeader.slice(7).trim();
+    try {
+      const url = Deno.env.get("SUPABASE_URL")!;
+      const anon = Deno.env.get("SUPABASE_ANON_KEY")!;
+      const userClient = createClient(url, anon, {
+        global: { headers: { Authorization: `Bearer ${token}` } },
+      });
+      const { data, error } = await userClient.auth.getClaims(token);
+      if (!error && data?.claims?.sub) {
+        return {
+          ok: true,
+          via: "admin",
+          userId: data.claims.sub as string,
+          email: (data.claims.email as string | undefined) ?? null,
+        };
+      }
+    } catch {
+      /* fall through */
+    }
+  }
+
+  return {
+    ok: false,
+    response: new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    }),
+  };
+}
