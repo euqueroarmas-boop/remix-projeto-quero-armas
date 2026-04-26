@@ -142,16 +142,16 @@ function WeaponCard({
               CAL · {calibre}
             </div>
           </div>
-          <div className="flex shrink-0 flex-col items-end gap-1">
+          <div className="flex shrink-0 flex-col items-end gap-1 max-w-[45%]">
             <span
-              className={`rounded-sm border px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.16em] ${c.chip}`}
+              className={`rounded-sm border px-1.5 py-0.5 text-[7px] font-black uppercase tracking-[0.08em] leading-tight whitespace-nowrap ${c.chip}`}
             >
               {urgencyText(w.daysToExpire)}
             </span>
-            <span className="inline-flex items-center gap-1 rounded bg-white/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white/80">
+            <span className="inline-flex items-center gap-1 rounded bg-white/10 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-white/80">
               {w.source}
               {w.hasGte && (
-                <span className="rounded bg-cyan-400/15 px-1 py-0.5 text-[8px] font-bold uppercase tracking-wider text-cyan-300">
+                <span className="rounded bg-cyan-400/15 px-1 py-0.5 text-[7px] font-bold uppercase tracking-wider text-cyan-300">
                   + GTE
                 </span>
               )}
