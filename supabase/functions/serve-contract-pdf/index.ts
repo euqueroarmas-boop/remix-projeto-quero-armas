@@ -54,6 +54,20 @@ Deno.serve(async (req) => {
       });
     }
 
+    // 🔒 Onda 6: require admin/internal OR a valid authenticated user up-front.
+    // Ownership check happens after we load the contract (below).
+    const adminGuard = await requireAdminOrInternal(req);
+    let authenticatedUserId: string | null = null;
+    if (!adminGuard.ok) {
+      authenticatedUserId = await getAuthenticatedUserId(req);
+      if (!authenticatedUserId) {
+        return new Response(JSON.stringify({ error: "Não autorizado" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     const supabase = createServiceClient();
 
     // Find the contract
@@ -73,18 +87,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 🔒 Onda 6: Authorization. Allow if:
-    //   (a) caller is admin or internal service, OR
-    //   (b) authenticated user owns the contract (customers.user_id == auth.uid())
-    const guard = await requireAdminOrInternal(req);
-    if (!guard.ok) {
-      const authenticatedUserId = await getAuthenticatedUserId(req);
-      if (!authenticatedUserId) {
-        return new Response(JSON.stringify({ error: "Não autorizado" }), {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
+    // Ownership check for non-admin callers
+    if (!adminGuard.ok && authenticatedUserId) {
       const { data: customer } = await supabase
         .from("customers")
         .select("user_id")
