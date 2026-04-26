@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Plus, Sparkles, Globe, Trash2, CheckCircle2, AlertCircle, Search, Image as ImageIcon, RefreshCcw, Camera } from "lucide-react";
+import { Loader2, Plus, Sparkles, Globe, Trash2, CheckCircle2, AlertCircle, Search, Image as ImageIcon, RefreshCcw, Camera, Eraser } from "lucide-react";
 import { toast } from "sonner";
 
 type Status = "rascunho" | "pendente_revisao" | "verificado" | "rejeitado";
@@ -59,6 +59,7 @@ export default function QAArmamentosAdminPage() {
   const [imgBusyId, setImgBusyId] = useState<string | null>(null);
   const [bulkBusy, setBulkBusy] = useState(false);
   const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null);
+  const [bgBusy, setBgBusy] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -175,6 +176,27 @@ export default function QAArmamentosAdminPage() {
     load();
   }
 
+  /** Reprocessa o fundo (alpha real) de todas as armas que tenham imagem. */
+  async function limparFundoTodas() {
+    if (!confirm("Reprocessar o fundo de todas as armas com imagem? Pode levar alguns minutos.")) return;
+    setBgBusy(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-armamento-limpar-fundo-batch", {
+        body: { force: true, limit: 100 },
+      });
+      if (error) throw error;
+      const d = data as any;
+      const ok = (d?.results || []).filter((r: any) => r.ok).length;
+      const fail = (d?.results || []).filter((r: any) => !r.ok).length;
+      toast.success(`Fundo limpo em ${ok} arma(s)${fail ? `, ${fail} falha(s)` : ""}.`);
+      load();
+    } catch (e: any) {
+      toast.error("Erro ao limpar fundo: " + (e?.message || e));
+    } finally {
+      setBgBusy(false);
+    }
+  }
+
   async function gerarComIA() {
     if (!editing?.marca || !editing?.modelo) { toast.error("Preencha marca e modelo primeiro"); return; }
     setAiBusy(true);
@@ -219,6 +241,11 @@ export default function QAArmamentosAdminPage() {
             {bulkBusy
               ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Buscando {bulkProgress?.done}/{bulkProgress?.total}</>
               : <><Camera className="h-4 w-4 mr-2" />Buscar fotos reais</>}
+          </Button>
+          <Button variant="secondary" onClick={limparFundoTodas} disabled={bgBusy} title="Remove fundos brancos, cinzas e xadrez de todas as imagens (gera PNG com transparência real)">
+            {bgBusy
+              ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Limpando fundo…</>
+              : <><Eraser className="h-4 w-4 mr-2" />Limpar fundo (todas)</>}
           </Button>
           <Button onClick={openNew}><Plus className="h-4 w-4 mr-2" />Nova arma</Button>
         </div>
