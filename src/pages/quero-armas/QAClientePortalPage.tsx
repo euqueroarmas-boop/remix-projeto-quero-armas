@@ -400,11 +400,15 @@ export default function QAClientePortalPage() {
               <CrosshairIcon className="h-4 w-4" style={{ color: "#c9a961" }} />
             </div>
             <div className="flex flex-col min-w-0">
-              <span className="text-[9px] font-black uppercase tracking-[0.32em]" style={{ color: "#c9a961" }}>
+              <span className="text-[8px] font-bold uppercase tracking-[0.12em]" style={{ color: "#c9a961" }}>
                 Área do Cliente
               </span>
               <span className="truncate text-[13px] md:text-sm font-bold uppercase tracking-wide text-white leading-tight">
-                {userName || "Cliente"}
+                {(() => {
+                  const parts = (userName || "Cliente").trim().split(/\s+/).filter(Boolean);
+                  if (parts.length <= 1) return parts[0] || "Cliente";
+                  return `${parts[0]} ${parts[parts.length - 1]}`;
+                })()}
               </span>
               <span className="text-[10px] uppercase tracking-[0.18em] text-white/40 leading-tight">
                 Arsenal inteligente
