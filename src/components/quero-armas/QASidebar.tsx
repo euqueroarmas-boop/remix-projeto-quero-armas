@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useLocation, Link } from "react-router-dom";
 import {
   LayoutDashboard, PenTool, FolderOpen, Scale, Gavel,
@@ -46,55 +46,9 @@ interface Props { perfil: string; nome: string; signOut: () => Promise<void> }
 
 export function QASidebar({ perfil, nome, signOut }: Props) {
   const [expanded, setExpanded] = useState(false);
-  const [slideOffset, setSlideOffset] = useState(0);
-  const sidebarRef = useRef<HTMLElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
   const collapsed = !expanded;
   const location = useLocation();
   const toggleSidebar = () => setExpanded(v => !v);
-
-  useEffect(() => {
-    let frame = 0;
-    let lastOffset = -1;
-
-    const updateOffset = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        const sidebar = sidebarRef.current;
-        const menu = menuRef.current;
-        if (!sidebar || !menu) return;
-
-        const layoutTop = sidebar.getBoundingClientRect().top + window.scrollY;
-        const layoutHeight = sidebar.offsetHeight;
-        const menuHeight = menu.offsetHeight;
-        const maxOffset = Math.max(0, layoutHeight - menuHeight);
-        const scrollRange = Math.max(1, layoutHeight - window.innerHeight);
-        const progress = Math.min(1, Math.max(0, (window.scrollY - layoutTop) / scrollRange));
-        const nextOffset = Math.round(maxOffset * progress);
-
-        if (Math.abs(lastOffset - nextOffset) < 1) return;
-        lastOffset = nextOffset;
-        setSlideOffset(nextOffset);
-      });
-    };
-
-    window.addEventListener("scroll", updateOffset, { passive: true });
-    window.addEventListener("resize", updateOffset);
-
-    // Recalcula após mudanças de layout iniciais (sem loop de mutation observer)
-    const t1 = setTimeout(updateOffset, 100);
-    const t2 = setTimeout(updateOffset, 500);
-    const t3 = setTimeout(updateOffset, 1500);
-
-    return () => {
-      cancelAnimationFrame(frame);
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
-      window.removeEventListener("scroll", updateOffset);
-      window.removeEventListener("resize", updateOffset);
-    };
-  }, [collapsed]);
 
   const initials = (nome || "U").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
 
@@ -111,7 +65,6 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
 
   return (
     <aside
-      ref={sidebarRef}
       data-qa-sidebar="true"
       className="shrink-0 overflow-x-hidden border-r flex flex-col transition-[width] duration-200"
       style={{
@@ -121,11 +74,7 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
         borderColor: "hsl(220 13% 91%)",
       }}
     >
-      <div
-        ref={menuRef}
-        className="py-3 flex flex-col"
-        style={{ transform: `translate3d(0, ${slideOffset}px, 0)` }}
-      >
+      <div className="py-3 flex flex-col">
         {/* Header / toggle */}
         {collapsed ? (
           <button
