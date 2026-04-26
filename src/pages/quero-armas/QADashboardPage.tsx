@@ -461,6 +461,7 @@ export default function QADashboardPage() {
                   <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
                     c.status === "pendente" ? "bg-amber-50 text-amber-600" :
                     c.status === "aprovado" ? "bg-emerald-50 text-emerald-600" :
+                    c.status === "recusado" ? "bg-rose-50 text-rose-600" :
                     "bg-slate-100 text-slate-500"
                   }`}>{c.status}</span>
                   <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-semibold border ${
@@ -471,6 +472,37 @@ export default function QADashboardPage() {
                   <span className="text-[10px]" style={{ color: "hsl(220 10% 62%)" }}>
                     {new Date(c.created_at).toLocaleDateString("pt-BR")}
                   </span>
+                  {c.status === "pendente" && (
+                    <div className="flex items-center gap-1 mt-1">
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (!confirm(`Aprovar cadastro de ${c.nome_completo}?`)) return;
+                          const { error } = await supabase.from("qa_cadastro_publico" as any).update({ status: "aprovado" }).eq("id", c.id);
+                          if (error) { alert("Erro: " + error.message); return; }
+                          setNovosCadastros((prev) => prev.map((x) => x.id === c.id ? { ...x, status: "aprovado" } : x));
+                        }}
+                        className="text-[9px] px-2 py-0.5 rounded-full font-semibold bg-emerald-500 text-white hover:bg-emerald-600 transition"
+                        title="Aprovar"
+                      >
+                        Aprovar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const motivo = prompt(`Recusar cadastro de ${c.nome_completo}.\nInforme o motivo (opcional):`, "");
+                          if (motivo === null) return;
+                          const { error } = await supabase.from("qa_cadastro_publico" as any).update({ status: "recusado", motivo_recusa: motivo || null }).eq("id", c.id);
+                          if (error) { alert("Erro: " + error.message); return; }
+                          setNovosCadastros((prev) => prev.map((x) => x.id === c.id ? { ...x, status: "recusado" } : x));
+                        }}
+                        className="text-[9px] px-2 py-0.5 rounded-full font-semibold bg-rose-500 text-white hover:bg-rose-600 transition"
+                        title="Recusar"
+                      >
+                        Recusar
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
