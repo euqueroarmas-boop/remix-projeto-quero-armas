@@ -2835,10 +2835,13 @@ export default function QAClientesPage() {
       )}
 
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-16 gap-3">
-          <div className="w-8 h-8 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" />
-          <span className="text-[11px] uppercase tracking-wider" style={{ color: "hsl(220 10% 62%)" }}>Carregando...</span>
-        </div>
+        <LoadingState label="Carregando clientes…" />
+      ) : loadError ? (
+        <ErrorRetryState
+          error={loadError}
+          onRetry={loadClientes}
+          title="Não foi possível carregar os clientes"
+        />
       ) : tabView === "clientes" ? (
         <div className="space-y-2">
           {filtered.length === 0 && <div className="text-center py-12 text-sm" style={{ color: "hsl(220 10% 62%)" }}>Nenhum cliente encontrado.</div>}
