@@ -1,8 +1,37 @@
+# Eu Quero Armas — robots.txt
+
 User-agent: *
 Allow: /
-Disallow: /admin
-Disallow: /area-do-cliente
-Disallow: /contrato
-Disallow: /api
+Allow: /servicos
+Allow: /cadastro
+Allow: /lp/
+Allow: /curso-operador-pistola
+Allow: /descobrir-meu-caminho
+Allow: /login
+Allow: /area-do-cliente/login
 
-Sitemap: https://www.wmti.com.br/sitemap.xml
+# Áreas administrativas e portal autenticado: não indexar
+Disallow: /dashboard
+Disallow: /clientes
+Disallow: /casos
+Disallow: /gerar-peca
+Disallow: /armamentos
+Disallow: /base-conhecimento
+Disallow: /jurisprudencia
+Disallow: /legislacao
+Disallow: /modelos-docx
+Disallow: /historico
+Disallow: /configuracoes
+Disallow: /acessos
+Disallow: /clubes
+Disallow: /financeiro
+Disallow: /relatorios
+Disallow: /auditoria
+Disallow: /ia
+Disallow: /area-do-cliente
+Disallow: /ativar-acesso
+Disallow: /portal/
+Disallow: /admin/
+Disallow: /quero-armas/
+
+Sitemap: https://www.euqueroarmas.com.br/sitemap.xml
