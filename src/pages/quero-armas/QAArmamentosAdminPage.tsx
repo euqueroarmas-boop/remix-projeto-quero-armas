@@ -13,7 +13,6 @@ import { Loader2, Plus, Sparkles, Globe, Trash2, CheckCircle2, AlertCircle, Sear
 import { ImageOff, X } from "lucide-react";
 import { toast } from "sonner";
 import { LoadingState } from "@/components/quero-armas/LoadStates";
-  const [semImagemFilter, setSemImagemFilter] = useState<boolean>(false);
 
 type Status = "rascunho" | "pendente_revisao" | "verificado" | "rejeitado";
 type Fonte = "curado" | "ia_gerado" | "scrape_fabricante" | "importado";
@@ -63,6 +62,7 @@ export default function QAArmamentosAdminPage() {
   const [bulkBusy, setBulkBusy] = useState(false);
   const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null);
   const [bgBusy, setBgBusy] = useState(false);
+  const [semImagemFilter, setSemImagemFilter] = useState<boolean>(false);
 
   async function load() {
     setLoading(true);
