@@ -15,7 +15,7 @@
  * Layout: grid de até 9 cards pequenos (mais antigo → mais novo). 10º card "+N".
  */
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Loader2, Plus, Copy } from "lucide-react";
 import { useWidgetLoader } from "@/hooks/useWidgetLoader";
@@ -140,6 +140,7 @@ function toneFor(dias: number) {
 export default function DashboardPrazosRecursais() {
   const [govSenhas, setGovSenhas] = useState<Record<number, string>>({});
   const [govLoading, setGovLoading] = useState<Record<number, boolean>>({});
+  const prefetchedRef = useRef<Set<number>>(new Set());
 
   const { state, data, reload } = useWidgetLoader<PrazoRow[]>(async (signal) => {
     const snapshot = await loadQADashboardSnapshot(signal);
@@ -239,6 +240,45 @@ export default function DashboardPrazosRecursais() {
   const rows = data ?? [];
   const visible = useMemo(() => rows.slice(0, MAX_CARDS), [rows]);
   const overflow = useMemo(() => rows.slice(MAX_CARDS), [rows]);
+
+  /**
+   * Pré-carrega as Senhas Gov dos cards visíveis assim que o usuário está
+   * autenticado e o widget renderizou os dados. Isso garante que, ao clicar
+   * para copiar, a cópia aconteça de forma SÍNCRONA dentro do gesto do usuário
+   * — requisito do Safari iOS. As senhas ficam apenas em memória (state),
+   * são purgadas no refresh/logout e cada acesso é auditado pela edge
+   * function (qa_senha_gov_acessos).
+   */
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      // só pré-carrega se houver sessão ativa
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData?.session) return;
+
+      const targets = visible
+        .map((r) => r.cadastroCrId)
+        .filter((id): id is number => !!id && !prefetchedRef.current.has(id));
+      if (!targets.length) return;
+
+      await Promise.all(
+        targets.map(async (id) => {
+          prefetchedRef.current.add(id);
+          try {
+            const senha = await getSenhaGov(id, "Prazos Recursais (prefetch)");
+            if (cancelled || !senha) return;
+            setGovSenhas((prev) => (prev[id] ? prev : { ...prev, [id]: senha }));
+          } catch {
+            // falha silenciosa — usuário ainda pode tentar manualmente
+            prefetchedRef.current.delete(id);
+          }
+        }),
+      );
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [visible]);
 
   if (state === "loading") {
     return (
