@@ -52,6 +52,8 @@ interface PrazoRow {
   tipo: "Posse" | "Porte" | "CRAF";
   /** Tipo do evento que disparou a contagem (NOTIFICAÇÃO ou INDEFERIMENTO). */
   evento: "NOTIFICAÇÃO" | "INDEFERIMENTO";
+  /** Status atual do serviço (ex.: "RECURSO ADMINISTRATIVO", "INDEFERIDO"). */
+  status: string | null;
   dataEvento: string;
   dataLimite: string;
   diasRestantes: number;
@@ -183,6 +185,7 @@ export default function DashboardPrazosRecursais() {
           null,
         tipo,
         evento,
+        status: it.status ?? null,
         dataEvento: dEvento,
         dataLimite: dLimite,
         diasRestantes,
