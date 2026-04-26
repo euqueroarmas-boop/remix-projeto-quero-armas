@@ -16,7 +16,7 @@ import { ClienteDocsHubModal } from "@/components/quero-armas/clientes/ClienteDo
 import { usePrivateStorageUrl } from "@/hooks/usePrivateStorageUrl";
 import { Camera, Wand2 } from "lucide-react";
 import { ArsenalView } from "@/components/quero-armas/arsenal/ArsenalView";
-import { Crosshair as CrosshairIcon, LayoutDashboard } from "lucide-react";
+import { Crosshair as CrosshairIcon, LayoutDashboard, Upload } from "lucide-react";
 import { ForcePasswordChangeModal } from "@/components/quero-armas/clientes/ForcePasswordChangeModal";
 
 const formatDate = (d: string | null) => {
