@@ -23,7 +23,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 
 import { toast } from "sonner";
-import { LoadingState, ErrorRetryState } from "@/components/quero-armas/LoadStates";
+import { LoadingState, ErrorRetryState, EmptyState, SkeletonList } from "@/components/quero-armas/LoadStates";
 import ClienteFormModal from "@/components/quero-armas/clientes/ClienteFormModal";
 import ClienteOverview from "@/components/quero-armas/clientes/ClienteOverview";
 import { CrafModal, GteModal, CrModal, VendaModal, FiliacaoModal, DeleteConfirm } from "@/components/quero-armas/clientes/SubEntityModals";
@@ -2836,7 +2836,7 @@ export default function QAClientesPage() {
       )}
 
       {loading ? (
-        <LoadingState label="Carregando clientes…" />
+        <SkeletonList rows={6} />
       ) : loadError ? (
         <ErrorRetryState
           error={loadError}
@@ -2845,7 +2845,13 @@ export default function QAClientesPage() {
         />
       ) : tabView === "clientes" ? (
         <div className="space-y-2">
-          {filtered.length === 0 && <div className="text-center py-12 text-sm" style={{ color: "hsl(220 10% 62%)" }}>Nenhum cliente encontrado.</div>}
+          {filtered.length === 0 && (
+            <EmptyState
+              icon={<User className="h-5 w-5" />}
+              title="Nenhum cliente encontrado"
+              description="Ajuste os filtros ou cadastre um novo cliente para começar."
+            />
+          )}
           {filtered.map(c => (
             <button key={c.id} onClick={() => openClient(c)}
               className="w-full flex items-start gap-3 px-3 py-3 md:px-4 rounded-xl border transition-all hover:shadow-sm active:scale-[0.99] text-left group qa-card"

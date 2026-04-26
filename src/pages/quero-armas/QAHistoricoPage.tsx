@@ -13,6 +13,8 @@ import {
 import { useQAAuthContext } from "@/components/quero-armas/QAAuthContext";
 import { downloadGeracaoDocx } from "@/lib/qaDocxDownload";
 import FeedbackAprendizadoPanel from "@/components/quero-armas/FeedbackAprendizadoPanel";
+import { EmptyState, SkeletonList } from "@/components/quero-armas/LoadStates";
+import { Inbox } from "lucide-react";
 
 type TabType = "consultas" | "geracoes";
 
@@ -166,13 +168,15 @@ export default function QAHistoricoPage() {
 
       {/* Content */}
       {loading ? (
-        <div className="flex justify-center py-16">
-          <div className="w-8 h-8 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" />
-        </div>
+        <SkeletonList rows={5} />
       ) : items.length === 0 ? (
-        <div className="text-center py-16" style={{ color: "hsl(220 10% 55%)" }}>
-          <p className="text-sm">Nenhum registro</p>
-        </div>
+        <EmptyState
+          icon={<Inbox className="h-5 w-5" />}
+          title={tab === "geracoes" ? "Nenhuma geração registrada" : "Nenhuma consulta no histórico"}
+          description={tab === "geracoes"
+            ? "Suas peças geradas aparecerão aqui para consulta, download e revisão."
+            : "Quando você consultar a base de conhecimento, o histórico será exibido aqui."}
+        />
       ) : (
         <div className="space-y-2">
           {items.map((item: any) => {

@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Plus, Search, Gavel, CheckCircle, Loader2, Upload, FileText, Link as LinkIcon } from "lucide-react";
 import { useQAAuthContext } from "@/components/quero-armas/QAAuthContext";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { EmptyState, SkeletonList } from "@/components/quero-armas/LoadStates";
 
 type TabMode = "manual" | "arquivo" | "link";
 
@@ -359,14 +360,15 @@ export default function QAJurisprudenciaPage() {
 
       {/* Content */}
       {loading ? (
-        <div className="flex justify-center py-16">
-          <div className="w-8 h-8 border-2 border-slate-200 border-t-[#2563eb] rounded-full animate-spin" />
-        </div>
+        <SkeletonList rows={4} />
       ) : items.length === 0 ? (
-        <div className="text-center py-16">
-          <Gavel className="h-12 w-12 mx-auto mb-3 text-[#cbd5e1]" />
-          <p className="text-sm text-[#94a3b8]">Nenhuma jurisprudência cadastrada</p>
-        </div>
+        <EmptyState
+          icon={<Gavel className="h-5 w-5" />}
+          title={busca ? "Nenhum resultado para sua busca" : "Nenhuma jurisprudência cadastrada"}
+          description={busca
+            ? "Tente outros termos ou cadastre uma nova decisão."
+            : "Cadastre julgados manualmente, por arquivo ou link para alimentar a base."}
+        />
       ) : (
         <div className="space-y-2">
           {items.map((j: any) => (
