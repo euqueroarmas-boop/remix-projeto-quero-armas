@@ -10,7 +10,7 @@ import {
 } from "./utils";
 import type { WorkbenchWeapon } from "./Workbench";
 import { useArmamentoCatalogo, type ArmamentoCatalogo } from "./useArmamentoCatalogo";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 
 interface RelatedDoc {
   category: string;
@@ -48,6 +48,21 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
     return items.filter((it) => it.tipo === info.kind && (!catalog || it.id !== catalog.id)).slice(0, 4);
   }, [items, info, catalog]);
 
+  // Lock background scroll while drawer is open + ESC to close
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [open, onClose]);
+
   if (!open || !weapon || !info) return null;
   const tone = urgencyTone(weapon.daysToExpire);
   const accent =
@@ -64,15 +79,9 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
   const displayCalibre = catalog?.calibre || info.calibre || "—";
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-stretch justify-end bg-slate-900/60 backdrop-blur-sm">
-      <button
-        type="button"
-        aria-label="Fechar"
-        onClick={onClose}
-        className="flex-1"
-      />
+    <div className="fixed inset-0 z-[60] flex items-stretch justify-center">
       <aside
-        className="relative flex h-full w-full max-w-xl flex-col overflow-y-auto border-l border-slate-700/40 text-slate-100 shadow-2xl"
+        className="relative flex h-full w-full flex-col overflow-y-auto overscroll-contain text-slate-100 shadow-2xl"
         style={{
           background:
             "radial-gradient(circle at 20% 0%, hsl(190 60% 22% / 0.35), transparent 50%), radial-gradient(circle at 80% 100%, hsl(220 30% 14% / 0.6), transparent 60%), linear-gradient(180deg, hsl(220 28% 10%), hsl(220 25% 7%))",
