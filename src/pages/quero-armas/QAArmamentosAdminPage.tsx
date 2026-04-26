@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Plus, Sparkles, Globe, Trash2, CheckCircle2, AlertCircle, Search, Image as ImageIcon, RefreshCcw, Camera, Eraser } from "lucide-react";
+import { Loader2, Plus, Sparkles, Globe, Trash2, CheckCircle2, AlertCircle, Search, Image as ImageIcon, RefreshCcw, Camera, Eraser, Crosshair, Target, Layers, Flag, Shield } from "lucide-react";
 import { toast } from "sonner";
 
 type Status = "rascunho" | "pendente_revisao" | "verificado" | "rejeitado";
@@ -230,48 +230,64 @@ export default function QAArmamentosAdminPage() {
   function setF<K extends keyof Arma>(k: K, v: any) { setEditing((p) => ({ ...(p || {}), [k]: v })); }
 
   return (
-    <div className="container max-w-7xl mx-auto p-6 space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">CATÁLOGO DE ARMAMENTOS</h1>
-          <p className="text-sm text-muted-foreground">Base técnica de armas reais usadas pelos clientes do Arsenal.</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="secondary" onClick={buscarTodasFotos} disabled={bulkBusy} title="Busca foto real em fontes públicas para cada arma sem foto">
+    <div className="min-h-screen bg-[#0a0d10] text-zinc-100">
+      <div className="container max-w-7xl mx-auto p-6 space-y-6">
+      {/* HEADER TÁTICO */}
+      <div className="relative overflow-hidden rounded-xl border border-amber-500/20 bg-gradient-to-br from-zinc-950 via-zinc-900 to-black p-6">
+        <div className="absolute inset-0 opacity-[0.04] pointer-events-none" style={{ backgroundImage: "linear-gradient(rgba(255,255,255,.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.5) 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
+        <div className="absolute -top-10 -right-10 w-56 h-56 rounded-full bg-amber-500/10 blur-3xl pointer-events-none" />
+        <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="h-12 w-12 rounded-lg border border-amber-500/40 bg-amber-500/10 grid place-items-center">
+              <Crosshair className="h-6 w-6 text-amber-400" />
+            </div>
+            <div>
+              <div className="text-[10px] font-mono uppercase tracking-[0.3em] text-amber-400/80">// ARSENAL · BASE TÉCNICA</div>
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white">CATÁLOGO DE ARMAMENTOS</h1>
+              <p className="text-xs text-zinc-400 mt-0.5">Inventário técnico operacional · Armas reais utilizadas pelos clientes do Arsenal.</p>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" className="border-zinc-700 bg-zinc-900/60 text-zinc-200 hover:bg-zinc-800 hover:text-white" onClick={buscarTodasFotos} disabled={bulkBusy} title="Busca foto real em fontes públicas para cada arma sem foto">
             {bulkBusy
-              ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Buscando {bulkProgress?.done}/{bulkProgress?.total}</>
-              : <><Camera className="h-4 w-4 mr-2" />Buscar fotos reais</>}
-          </Button>
-          <Button variant="secondary" onClick={limparFundoTodas} disabled={bgBusy} title="Remove fundos brancos, cinzas e xadrez de todas as imagens (gera PNG com transparência real)">
-            {bgBusy
-              ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Limpando fundo…</>
-              : <><Eraser className="h-4 w-4 mr-2" />Limpar fundo (todas)</>}
-          </Button>
-          <Button onClick={openNew}><Plus className="h-4 w-4 mr-2" />Nova arma</Button>
+                ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Buscando {bulkProgress?.done}/{bulkProgress?.total}</>
+                : <><Camera className="h-4 w-4 mr-2" />Buscar fotos reais</>}
+            </Button>
+            <Button variant="outline" className="border-zinc-700 bg-zinc-900/60 text-zinc-200 hover:bg-zinc-800 hover:text-white" onClick={limparFundoTodas} disabled={bgBusy} title="Remove fundos brancos, cinzas e xadrez de todas as imagens (gera PNG com transparência real)">
+              {bgBusy
+                ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Limpando fundo…</>
+                : <><Eraser className="h-4 w-4 mr-2" />Limpar fundo</>}
+            </Button>
+            <Button onClick={openNew} className="bg-amber-500 text-black hover:bg-amber-400 font-semibold">
+              <Plus className="h-4 w-4 mr-2" />Nova arma
+            </Button>
+          </div>
         </div>
       </div>
 
+      {/* KPIs HUD */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Kpi label="Total" value={stats.total} />
-        <Kpi label="Verificados" value={stats.verificados} tone="success" />
-        <Kpi label="Pendentes revisão" value={stats.pendentes} tone="warn" />
-        <Kpi label="Gerados por IA" value={stats.ia} />
+        <Kpi label="TOTAL" value={stats.total} icon={<Layers className="h-4 w-4" />} />
+        <Kpi label="VERIFICADOS" value={stats.verificados} tone="success" icon={<CheckCircle2 className="h-4 w-4" />} />
+        <Kpi label="PENDENTES" value={stats.pendentes} tone="warn" icon={<AlertCircle className="h-4 w-4" />} />
+        <Kpi label="GERADOS · IA" value={stats.ia} icon={<Sparkles className="h-4 w-4" />} />
       </div>
 
-      <Card className="p-4 flex flex-col md:flex-row gap-3">
+      {/* BARRA DE FILTROS */}
+      <Card className="p-3 flex flex-col md:flex-row gap-3 bg-zinc-950/80 border-zinc-800">
         <div className="relative flex-1">
-          <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input className="pl-9" placeholder="Buscar marca, modelo, calibre…" value={q} onChange={(e) => setQ(e.target.value)} />
+          <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-amber-400/70" />
+          <Input className="pl-9 bg-black/40 border-zinc-800 text-zinc-100 placeholder:text-zinc-500 focus-visible:ring-amber-500/40" placeholder="Buscar marca, modelo, calibre…" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
         <Select value={tipoFilter} onValueChange={setTipoFilter}>
-          <SelectTrigger className="md:w-48"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="md:w-48 bg-black/40 border-zinc-800 text-zinc-100"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="todos">Todos os tipos</SelectItem>
             {TIPOS.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="md:w-56"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="md:w-56 bg-black/40 border-zinc-800 text-zinc-100"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="todos">Todos os status</SelectItem>
             {Object.entries(STATUS_LABEL).map(([k,v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
@@ -279,68 +295,26 @@ export default function QAArmamentosAdminPage() {
         </Select>
       </Card>
 
-      <Card className="overflow-hidden">
-        {loading ? (
-          <div className="p-12 text-center text-muted-foreground"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[64px]">Foto</TableHead>
-                <TableHead>Marca / Modelo</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Calibre</TableHead>
-                <TableHead>Capac.</TableHead>
-                <TableHead>Origem</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Fonte</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((it) => (
-                <TableRow key={it.id} className="cursor-pointer" onClick={() => openEdit(it)}>
-                  <TableCell onClick={(e) => e.stopPropagation()}>
-                    {it.imagem ? (
-                      <img src={it.imagem} alt={`${it.marca} ${it.modelo}`} className="h-10 w-16 object-contain rounded bg-black/80" />
-                    ) : (
-                      <div className="h-10 w-16 grid place-items-center rounded border border-dashed border-muted-foreground/30 text-muted-foreground">
-                        <ImageIcon className="h-4 w-4" />
-                      </div>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="font-medium">{it.marca} {it.modelo}</div>
-                    {it.apelido && <div className="text-xs text-muted-foreground">"{it.apelido}"</div>}
-                  </TableCell>
-                  <TableCell className="capitalize">{it.tipo}</TableCell>
-                  <TableCell>{it.calibre}</TableCell>
-                  <TableCell>{it.capacidade_carregador ?? "—"}</TableCell>
-                  <TableCell>{it.origem ?? "—"}</TableCell>
-                  <TableCell><StatusBadge s={it.status_revisao} /></TableCell>
-                  <TableCell><Badge variant="outline">{FONTE_LABEL[it.fonte_dados]}</Badge></TableCell>
-                  <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                    <Button size="sm" variant="ghost" onClick={() => gerarImagem(it)} title={it.imagem ? "Regerar imagem" : "Gerar imagem"} disabled={imgBusyId === it.id}>
-                      {imgBusyId === it.id ? <Loader2 className="h-4 w-4 animate-spin" /> : (it.imagem ? <RefreshCcw className="h-4 w-4" /> : <ImageIcon className="h-4 w-4" />)}
-                    </Button>
-                    {it.status_revisao !== "verificado" && (
-                      <Button size="sm" variant="ghost" onClick={() => marcarVerificado(it)} title="Marcar verificado">
-                        <CheckCircle2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                    <Button size="sm" variant="ghost" onClick={() => remove(it)} title="Excluir">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {filtered.length === 0 && (
-                <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">Nenhum resultado</TableCell></TableRow>
-              )}
-            </TableBody>
-          </Table>
-        )}
-      </Card>
+      {/* GRID DE CARDS DARK-TACTICAL */}
+      {loading ? (
+        <div className="p-16 text-center text-zinc-500"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></div>
+      ) : filtered.length === 0 ? (
+        <Card className="p-16 text-center bg-zinc-950/60 border-zinc-800 text-zinc-500">Nenhum armamento corresponde aos filtros.</Card>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {filtered.map((it) => (
+            <WeaponCard
+              key={it.id}
+              it={it}
+              busy={imgBusyId === it.id}
+              onOpen={() => openEdit(it)}
+              onGerarImagem={() => gerarImagem(it)}
+              onVerificar={() => marcarVerificado(it)}
+              onRemove={() => remove(it)}
+            />
+          ))}
+        </div>
+      )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -465,17 +439,142 @@ export default function QAArmamentosAdminPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 }
 
-function Kpi({ label, value, tone }: { label: string; value: number; tone?: "success" | "warn" }) {
-  const colorMap: Record<string,string> = { success: "text-emerald-600", warn: "text-amber-600" };
+function Kpi({ label, value, tone, icon }: { label: string; value: number; tone?: "success" | "warn"; icon?: React.ReactNode }) {
+  const toneMap: Record<string,{ value: string; ring: string; bg: string }> = {
+    success: { value: "text-emerald-300", ring: "border-emerald-500/30", bg: "bg-emerald-500/10" },
+    warn:    { value: "text-amber-300",   ring: "border-amber-500/30",   bg: "bg-amber-500/10" },
+  };
+  const t = tone ? toneMap[tone] : { value: "text-zinc-100", ring: "border-zinc-800", bg: "bg-zinc-800/40" };
   return (
-    <Card className="p-4">
-      <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
-      <div className={`text-2xl font-bold mt-1 ${tone ? colorMap[tone] : ""}`}>{value}</div>
+    <Card className={`p-4 bg-zinc-950/80 border ${t.ring} relative overflow-hidden`}>
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/40 to-transparent" />
+      <div className="flex items-center justify-between">
+        <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-zinc-400">{label}</div>
+        <div className={`h-7 w-7 grid place-items-center rounded ${t.bg} ${t.value}`}>{icon}</div>
+      </div>
+      <div className={`text-3xl font-bold mt-2 tabular-nums ${t.value}`}>{value}</div>
     </Card>
+  );
+}
+
+const TIPO_ICON: Record<string, string> = {
+  pistola: "🔫", revolver: "🔫", espingarda: "🪖", carabina: "🎯", fuzil: "🎯", submetralhadora: "🎯", outra: "⚙️",
+};
+
+function WeaponCard({
+  it, busy, onOpen, onGerarImagem, onVerificar, onRemove,
+}: {
+  it: Arma;
+  busy: boolean;
+  onOpen: () => void;
+  onGerarImagem: () => void;
+  onVerificar: () => void;
+  onRemove: () => void;
+}) {
+  const verificado = it.status_revisao === "verificado";
+  const pendente = it.status_revisao === "pendente_revisao";
+  return (
+    <div
+      onClick={onOpen}
+      className="group relative cursor-pointer rounded-xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-[#0c1014] to-black overflow-hidden hover:border-amber-500/50 hover:shadow-[0_0_0_1px_rgba(245,158,11,0.15),0_20px_60px_-20px_rgba(245,158,11,0.25)] transition-all duration-300"
+    >
+      {/* faixa superior tática */}
+      <div className="flex items-center justify-between px-3 py-1.5 bg-black/60 border-b border-zinc-800/80">
+        <div className="flex items-center gap-2">
+          <span className={`h-1.5 w-1.5 rounded-full ${verificado ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,.8)]" : pendente ? "bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,.8)]" : "bg-zinc-500"}`} />
+          <span className="text-[9px] font-mono uppercase tracking-[0.2em] text-zinc-400">
+            ID·{it.id.slice(0, 6).toUpperCase()}
+          </span>
+        </div>
+        <span className="text-[9px] font-mono uppercase tracking-[0.2em] text-zinc-500">{FONTE_LABEL[it.fonte_dados]}</span>
+      </div>
+
+      {/* visual da arma */}
+      <div className="relative aspect-[16/10] bg-[radial-gradient(ellipse_at_center,rgba(245,158,11,0.06),transparent_60%),linear-gradient(180deg,#0a0d10,#000)] grid place-items-center overflow-hidden">
+        {/* grade tática */}
+        <div className="absolute inset-0 opacity-[0.08]" style={{ backgroundImage: "linear-gradient(rgba(255,255,255,.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.6) 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
+        {/* alvo de mira nos cantos */}
+        <div className="absolute top-2 left-2 h-3 w-3 border-l border-t border-amber-500/40" />
+        <div className="absolute top-2 right-2 h-3 w-3 border-r border-t border-amber-500/40" />
+        <div className="absolute bottom-2 left-2 h-3 w-3 border-l border-b border-amber-500/40" />
+        <div className="absolute bottom-2 right-2 h-3 w-3 border-r border-b border-amber-500/40" />
+
+        {it.imagem ? (
+          <img
+            src={it.imagem}
+            alt={`${it.marca} ${it.modelo}`}
+            className="relative z-10 max-h-[85%] max-w-[88%] object-contain drop-shadow-[0_8px_30px_rgba(0,0,0,0.9)] group-hover:scale-105 transition-transform duration-500"
+          />
+        ) : (
+          <div className="relative z-10 flex flex-col items-center gap-2 text-zinc-600">
+            <Target className="h-10 w-10" />
+            <span className="text-[10px] font-mono uppercase tracking-[0.2em]">SEM IMAGEM</span>
+          </div>
+        )}
+
+        {/* tag de tipo */}
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-black/70 border border-zinc-800 text-[9px] font-mono uppercase tracking-[0.25em] text-zinc-300">
+          {it.tipo}
+        </div>
+      </div>
+
+      {/* corpo */}
+      <div className="p-3 space-y-3">
+        <div>
+          <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-amber-400/80">{it.marca}</div>
+          <div className="text-base font-bold text-white leading-tight truncate">{it.modelo}</div>
+          {it.apelido && <div className="text-[11px] text-zinc-500 italic mt-0.5">"{it.apelido}"</div>}
+        </div>
+
+        {/* specs em linha */}
+        <div className="grid grid-cols-3 gap-1.5 text-center">
+          <Spec icon={<Crosshair className="h-3 w-3" />} label="CAL" value={it.calibre || "—"} />
+          <Spec icon={<Layers className="h-3 w-3" />} label="CAP" value={it.capacidade_carregador != null ? String(it.capacidade_carregador) : "—"} />
+          <Spec icon={<Flag className="h-3 w-3" />} label="ORIG" value={it.origem || "—"} />
+        </div>
+
+        {/* status + classificação */}
+        <div className="flex items-center justify-between gap-2">
+          <StatusBadge s={it.status_revisao} />
+          {it.classificacao_legal && (
+            <span className={`text-[9px] font-mono uppercase tracking-[0.2em] px-1.5 py-0.5 rounded border ${it.classificacao_legal === "Uso Restrito" ? "border-red-500/40 text-red-300 bg-red-500/10" : "border-emerald-500/40 text-emerald-300 bg-emerald-500/10"}`}>
+              {it.classificacao_legal === "Uso Restrito" ? "UR" : "UP"}
+            </span>
+          )}
+        </div>
+
+        {/* ações */}
+        <div className="flex items-center gap-1 pt-2 border-t border-zinc-800" onClick={(e) => e.stopPropagation()}>
+          <Button size="sm" variant="ghost" className="flex-1 h-8 text-zinc-400 hover:text-amber-300 hover:bg-amber-500/10" onClick={onGerarImagem} disabled={busy} title={it.imagem ? "Regerar imagem" : "Gerar imagem"}>
+            {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : (it.imagem ? <RefreshCcw className="h-3.5 w-3.5" /> : <ImageIcon className="h-3.5 w-3.5" />)}
+          </Button>
+          {!verificado && (
+            <Button size="sm" variant="ghost" className="flex-1 h-8 text-zinc-400 hover:text-emerald-300 hover:bg-emerald-500/10" onClick={onVerificar} title="Marcar verificado">
+              <CheckCircle2 className="h-3.5 w-3.5" />
+            </Button>
+          )}
+          <Button size="sm" variant="ghost" className="flex-1 h-8 text-zinc-400 hover:text-red-300 hover:bg-red-500/10" onClick={onRemove} title="Excluir">
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Spec({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  return (
+    <div className="rounded border border-zinc-800/80 bg-black/40 px-1.5 py-1.5">
+      <div className="flex items-center justify-center gap-1 text-zinc-500 text-[8px] font-mono uppercase tracking-[0.2em]">
+        {icon}{label}
+      </div>
+      <div className="text-[11px] font-bold text-zinc-100 truncate mt-0.5">{value}</div>
+    </div>
   );
 }
 
@@ -489,12 +588,12 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 function StatusBadge({ s }: { s: Status }) {
-  const map: Record<Status, { variant: any; label: string }> = {
-    rascunho: { variant: "outline", label: "Rascunho" },
-    pendente_revisao: { variant: "secondary", label: "Pendente" },
-    verificado: { variant: "default", label: "Verificado" },
-    rejeitado: { variant: "destructive", label: "Rejeitado" },
+  const map: Record<Status, { cls: string; label: string }> = {
+    rascunho:         { cls: "border-zinc-700 text-zinc-300 bg-zinc-800/40",         label: "RASCUNHO" },
+    pendente_revisao: { cls: "border-amber-500/40 text-amber-300 bg-amber-500/10",   label: "PENDENTE" },
+    verificado:       { cls: "border-emerald-500/40 text-emerald-300 bg-emerald-500/10", label: "VERIFICADO" },
+    rejeitado:        { cls: "border-red-500/40 text-red-300 bg-red-500/10",         label: "REJEITADO" },
   };
   const c = map[s];
-  return <Badge variant={c.variant}>{c.label}</Badge>;
+  return <span className={`inline-flex items-center px-2 py-0.5 rounded border text-[9px] font-mono uppercase tracking-[0.2em] ${c.cls}`}>{c.label}</span>;
 }
