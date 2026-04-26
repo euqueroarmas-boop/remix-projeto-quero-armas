@@ -10,6 +10,8 @@ import {
   Shield, BookOpen, Plus,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useResilientLoad } from "@/components/quero-armas/hooks/useResilientLoad";
+import { ErrorRetryState, LoadingState } from "@/components/quero-armas/LoadStates";
 
 const STATUS_OPTIONS = [
   { value: "todos", label: "Todos" },
@@ -24,29 +26,34 @@ const STATUS_OPTIONS = [
 
 export default function QACasosPage() {
   const navigate = useNavigate();
-  const [cases, setCases] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
   const [detailCase, setDetailCase] = useState<any>(null);
   const [activeTab, setActiveTab] = useState("casos");
   const [showNovoCaso, setShowNovoCaso] = useState(false);
 
-  const load = async () => {
-    setLoading(true);
-    try {
-      let query = supabase.from("qa_casos" as any).select("*").order("created_at", { ascending: false }).limit(100);
+  const {
+    data: casesData,
+    status: loadStatus,
+    error: loadError,
+    reload: load,
+  } = useResilientLoad<any[]>(
+    async () => {
+      let query = supabase
+        .from("qa_casos" as any)
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(100);
       if (statusFilter !== "todos") query = query.eq("status", statusFilter);
-      const { data } = await query;
-      setCases((data as any[]) ?? []);
-    } catch (err) {
-      console.error("[QACasos] load error:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => { load(); }, [statusFilter]);
+      const { data, error } = await query;
+      if (error) throw error;
+      return (data as any[]) ?? [];
+    },
+    [statusFilter],
+    { label: "QACasos.load", timeoutMs: 12000 },
+  );
+  const cases = casesData ?? [];
+  const loading = loadStatus === "loading";
 
   const filtered = cases.filter(c => {
     if (!search) return true;
@@ -108,10 +115,15 @@ export default function QACasosPage() {
 
   const renderCaseList = (items: any[]) => {
     if (loading) {
+      return <LoadingState label="Carregando casos…" />;
+    }
+    if (loadStatus === "error") {
       return (
-        <div className="flex justify-center py-12">
-          <div className="w-8 h-8 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" />
-        </div>
+        <ErrorRetryState
+          error={loadError}
+          onRetry={load}
+          title="Não foi possível carregar os casos"
+        />
       );
     }
     if (items.length === 0) {
