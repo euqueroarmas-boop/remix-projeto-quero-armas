@@ -302,7 +302,7 @@ export default function DashboardPrazosRecursais() {
                     title={r.senhaGov ? "Copiar Senha Gov" : "Sem senha gov"}
                   >
                     <Copy className="h-2.5 w-2.5 shrink-0 text-slate-400" />
-                    <span className="truncate">GOV: {r.senhaGov ? "••••••" : "—"}</span>
+                    <span className="truncate">GOV: {r.senhaGov || "—"}</span>
                   </button>
                 </div>
                 <div className="mt-auto flex items-baseline gap-1">
