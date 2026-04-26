@@ -193,6 +193,7 @@ Deno.serve(async (req) => {
     }));
 
     const smtpResponse = await supabase.functions.invoke("send-smtp-email", {
+      headers: { "x-internal-token": Deno.env.get("INTERNAL_FUNCTION_TOKEN") ?? "" },
       body: {
         to: email,
         subject,

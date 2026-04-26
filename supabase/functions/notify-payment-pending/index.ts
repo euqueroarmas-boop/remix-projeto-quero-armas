@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { logSistemaBackend } from "../_shared/logSistema.ts";
 import { buildPaymentPendingHtml, buildPaymentPendingText } from "../_shared/emailTemplates.ts";
+import { requireAdminOrInternal } from "../_shared/internalAuth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -17,6 +18,10 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // 🔒 Onda 6
+  const guard = await requireAdminOrInternal(req);
+  if (!guard.ok) return guard.response;
 
   try {
     const body = await req.json();
