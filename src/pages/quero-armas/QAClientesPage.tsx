@@ -2021,7 +2021,7 @@ export default function QAClientesPage() {
                                       <SelectContent>
                                         {(statusList.length > 0
                                           ? statusList.map(s => s.nome)
-                                          : ["EM ANÁLISE", "PRONTO PARA ANÁLISE", "À INICIAR", "À FAZER", "AGUARDANDO DOCUMENTAÇÃO", "PASTA FÍSICA - AGUARDANDO LIBERAÇÃO", "DEFERIDO", "INDEFERIDO", "RECURSO ADMINISTRATIVO", "CONCLUÍDO", "DESISTIU", "RESTITUÍDO"]
+                                          : ["EM ANÁLISE", "PRONTO PARA ANÁLISE", "À INICIAR", "À FAZER", "AGUARDANDO DOCUMENTAÇÃO", "PASTA FÍSICA - AGUARDANDO LIBERAÇÃO", "DEFERIDO", "INDEFERIDO", "NOTIFICADO", "RECURSO ADMINISTRATIVO", "CONCLUÍDO", "DESISTIU", "RESTITUÍDO"]
                                         ).map(s => (
                                           <SelectItem key={s} value={s} className="text-[10px]">{s}</SelectItem>
                                         ))}
