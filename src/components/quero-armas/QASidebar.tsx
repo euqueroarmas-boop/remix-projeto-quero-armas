@@ -69,6 +69,7 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
       className="shrink-0 overflow-x-hidden border-r flex flex-col transition-[width] duration-200"
       style={{
         width: collapsed ? "4.25rem" : "16rem",
+        minHeight: "100%",
         background: "hsl(0 0% 100%)",
         borderColor: "hsl(220 13% 91%)",
       }}

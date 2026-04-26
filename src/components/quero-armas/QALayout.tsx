@@ -23,7 +23,7 @@ function QALayoutInner() {
   }
 
   return (
-    <div className="min-h-screen w-full grid grid-cols-[auto_minmax(0,1fr)] items-start" style={{ background: "hsl(220 20% 97%)" }}>
+    <div className="min-h-screen w-full grid grid-cols-[auto_minmax(0,1fr)] items-stretch" style={{ background: "hsl(220 20% 97%)" }}>
       <QASidebar perfil={profile.perfil} nome={profile.nome} signOut={signOut} />
       <main className="min-w-0 flex flex-col" style={{ background: "hsl(220 20% 97%)" }}>
         <QABreadcrumb />
