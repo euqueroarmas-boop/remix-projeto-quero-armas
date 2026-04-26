@@ -52,6 +52,8 @@ interface PrazoRow {
   tipo: "Posse" | "Porte" | "CRAF";
   /** Tipo do evento que disparou a contagem (NOTIFICAÇÃO ou INDEFERIMENTO). */
   evento: "NOTIFICAÇÃO" | "INDEFERIMENTO";
+  /** Status atual do serviço (ex.: "RECURSO ADMINISTRATIVO", "INDEFERIDO"). */
+  status: string | null;
   dataEvento: string;
   dataLimite: string;
   diasRestantes: number;
@@ -183,6 +185,7 @@ export default function DashboardPrazosRecursais() {
           null,
         tipo,
         evento,
+        status: it.status ?? null,
         dataEvento: dEvento,
         dataLimite: dLimite,
         diasRestantes,
@@ -200,7 +203,7 @@ export default function DashboardPrazosRecursais() {
     return (
       <div className="space-y-4">
         <div>
-          <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide">Recursos Administrativos — Prazo de 10 Dias (PF)</h3>
+          <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide">Prazos Processuais — 10 Dias · Lei 9.784/99 (PF)</h3>
           <p className="text-[11px] text-slate-500 mt-0.5">Carregando…</p>
         </div>
         <div className="bg-white border border-slate-200 rounded-xl p-6 flex items-center justify-center shadow-sm">
@@ -213,7 +216,7 @@ export default function DashboardPrazosRecursais() {
   if (state === "error" || state === "timeout") {
     return (
       <WidgetStateView
-        title="Recursos Administrativos — Prazo de 10 Dias (PF)"
+        title="Prazos Processuais — 10 Dias · Lei 9.784/99 (PF)"
         state={state}
         onRetry={reload}
       />
@@ -227,10 +230,10 @@ export default function DashboardPrazosRecursais() {
       {/* Header — mesmo padrão do Monitoramento de Exames */}
       <div>
         <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide">
-          Recursos Administrativos — Prazo de 10 Dias (PF)
+          Prazos Processuais — 10 Dias · Lei 9.784/99 (PF)
         </h3>
         <p className="text-[11px] text-slate-500 mt-0.5">
-          {rows.length} cliente(s) em prazo de recurso · ordenado do mais antigo ao mais novo
+          {rows.length} cliente(s) em prazo legal de manifestação · ordenado do mais antigo ao mais novo
         </p>
       </div>
 
@@ -276,6 +279,11 @@ export default function DashboardPrazosRecursais() {
                 <div className="text-[8.5px] font-bold uppercase tracking-wider text-slate-500 leading-none">
                   {r.tipo} PF · {r.evento}
                 </div>
+                {r.status && (
+                  <div className="text-[8.5px] font-bold uppercase tracking-wider text-blue-700 leading-none truncate">
+                    Status: {r.status}
+                  </div>
+                )}
                 <div className="flex flex-col gap-0.5 -mx-1">
                   <button
                     type="button"

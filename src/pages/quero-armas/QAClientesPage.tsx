@@ -1228,6 +1228,19 @@ export default function QAClientesPage() {
       }
       const today = new Date();
       payload.data_ultima_atualizacao = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+      // Regra automática: ao preencher data_indeferimento em serviços PF (Posse/Porte/CRAF),
+      // o status passa automaticamente para "RECURSO ADMINISTRATIVO" — assim o card de
+      // prazos do dashboard reflete a fase processual correta (Lei 9.784/99 art. 59).
+      const SERVICOS_PF_RECURSO_IDS = [2, 3, 26];
+      if (
+        servicoId && SERVICOS_PF_RECURSO_IDS.includes(servicoId) &&
+        Object.prototype.hasOwnProperty.call(payload, "data_indeferimento") &&
+        payload.data_indeferimento &&
+        payload.data_indeferimento !== currentItem?.data_indeferimento &&
+        String(currentItem?.status || "").toUpperCase() !== "RECURSO ADMINISTRATIVO"
+      ) {
+        payload.status = "RECURSO ADMINISTRATIVO";
+      }
       const { error } = await supabase.from("qa_itens_venda" as any).update(payload).eq("id", expandedItemId);
       if (error) throw error;
       setItens(prev => prev.map((i: any) => i.id === expandedItemId ? { ...i, ...payload } : i));
