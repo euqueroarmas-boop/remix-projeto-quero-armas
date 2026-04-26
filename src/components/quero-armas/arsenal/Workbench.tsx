@@ -142,11 +142,21 @@ function WeaponCard({
               CAL · {calibre}
             </div>
           </div>
-          <span
-            className={`shrink-0 rounded-sm border px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.16em] ${c.chip}`}
-          >
-            {urgencyText(w.daysToExpire)}
-          </span>
+          <div className="flex shrink-0 flex-col items-end gap-1">
+            <span
+              className={`rounded-sm border px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.16em] ${c.chip}`}
+            >
+              {urgencyText(w.daysToExpire)}
+            </span>
+            <span className="inline-flex items-center gap-1 rounded bg-white/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white/80">
+              {w.source}
+              {w.hasGte && (
+                <span className="rounded bg-cyan-400/15 px-1 py-0.5 text-[8px] font-bold uppercase tracking-wider text-cyan-300">
+                  + GTE
+                </span>
+              )}
+            </span>
+          </div>
         </div>
 
         {/* Weapon render with glow — transparent, large, detailed */}
@@ -198,17 +208,7 @@ function WeaponCard({
         </div>
 
         <div className="mt-3 flex items-center justify-between text-[10px] text-white/50">
-          <span className="inline-flex items-center gap-1">
-            <span className="rounded bg-white/10 px-1.5 py-0.5 font-bold uppercase tracking-wider text-white/80">
-              {w.source}
-            </span>
-            {w.hasGte && (
-              <span className="rounded bg-cyan-400/15 px-1.5 py-0.5 font-bold uppercase tracking-wider text-cyan-300">
-                + GTE
-              </span>
-            )}
-          </span>
-          <span className="inline-flex items-center gap-1 text-white/40 group-hover:text-cyan-300">
+          <span className="inline-flex items-center gap-1 text-white/40 group-hover:text-cyan-300 ml-auto">
             INSPECIONAR <ChevronRight className="h-3 w-3" />
           </span>
         </div>
