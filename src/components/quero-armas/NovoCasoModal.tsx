@@ -8,9 +8,8 @@ import { toast } from "sonner";
 const TIPOS_SERVICO = [
   { value: "defesa_posse_arma", label: "Defesa para Posse de Arma" },
   { value: "defesa_porte_arma", label: "Defesa para Porte de Arma" },
-  { value: "defesa_craf", label: "Defesa para CRAF" },
   { value: "recurso_administrativo", label: "Recurso Administrativo" },
-  { value: "outro", label: "Outro" },
+  { value: "resposta_a_notificacao", label: "Resposta à Notificação" },
 ];
 
 const STATUS_OPTIONS = [
@@ -88,6 +87,7 @@ export default function NovoCasoModal({ open, onOpenChange, onCreated, preselect
       const tipoLabel = TIPOS_SERVICO.find(t => t.value === tipoServico)?.label || tipoServico;
       const payload = {
         titulo: titulo.trim(),
+        cliente_id: selectedCliente.id,
         nome_requerente: selectedCliente.nome_completo,
         cpf_cnpj: selectedCliente.cpf || null,
         tipo_peca: tipoServico,
