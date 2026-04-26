@@ -52,7 +52,22 @@ export function ForcePasswordChangeModal({ open, onSuccess }: Props) {
       toast.success("Senha atualizada com sucesso!");
       onSuccess();
     } catch (err: any) {
-      toast.error(err?.message || "Não foi possível atualizar a senha.");
+      const raw = (err?.message || "").toLowerCase();
+      if (
+        raw.includes("weak") ||
+        raw.includes("pwned") ||
+        raw.includes("known") ||
+        raw.includes("compromis")
+      ) {
+        toast.error(
+          "Esta senha aparece em vazamentos públicos e é considerada fraca. Escolha uma senha única, com letras, números e símbolos.",
+          { duration: 7000 }
+        );
+      } else if (raw.includes("should be at least") || raw.includes("password")) {
+        toast.error(err.message);
+      } else {
+        toast.error(err?.message || "Não foi possível atualizar a senha.");
+      }
     } finally {
       setLoading(false);
     }
