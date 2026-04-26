@@ -68,24 +68,21 @@ export async function resolveCustomerLoginEmail(input: string): Promise<string |
     return normalizedInput.toLowerCase();
   }
 
-  const variants = buildDocumentVariants(normalizedInput);
-  if (!variants.length) {
+  // SECURITY: customer email lookup by document moved to edge function
+  // (service_role) since direct anon SELECT on customers is no longer allowed.
+  try {
+    const { data, error } = await supabase.functions.invoke("customer-lookup-email", {
+      body: { document: normalizedInput },
+    });
+    if (error) {
+      console.error("[customerResolver] Erro ao localizar e-mail por documento:", error.message);
+      return null;
+    }
+    return (data?.email as string | null) ?? null;
+  } catch (err) {
+    console.error("[customerResolver] Falha ao invocar customer-lookup-email:", err);
     return null;
   }
-
-  const { data, error } = await supabase
-    .from("customers")
-    .select("email, user_id, created_at")
-    .in("cnpj_ou_cpf", variants)
-    .order("created_at", { ascending: false })
-    .limit(20);
-
-  if (error) {
-    console.error("[customerResolver] Erro ao localizar e-mail por documento:", error.message);
-    return null;
-  }
-
-  return pickPreferredCustomer(data ?? [])?.email?.toLowerCase() ?? null;
 }
 
 export async function resolvePortalCustomer(userId: string, email?: string | null): Promise<ResolvedCustomer | null> {
