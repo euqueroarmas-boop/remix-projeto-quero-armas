@@ -19,6 +19,7 @@ import {
 import { useQAAuthContext } from "@/components/quero-armas/QAAuthContext";
 import { logSistema } from "@/lib/logSistema";
 import DraftingView, { type DraftingResult } from "@/components/quero-armas/DraftingView";
+import { TIPOS_PECA as TIPOS_PECA_CATALOG } from "@/components/quero-armas/tiposPeca";
 
 /* ── Types ── */
 type DocUploadStage = "pending" | "queued" | "uploading" | "saved" | "extracting" | "processing" | "done" | "failed";
@@ -102,12 +103,7 @@ const TIPOS_DOC_AUXILIAR = [
   { value: "outro", label: "Outro documento probatório" },
 ];
 
-const TIPOS_PECA = [
-  { value: "defesa_posse_arma", label: "Defesa para Posse de Arma" },
-  { value: "defesa_porte_arma", label: "Defesa para Porte de Arma" },
-  { value: "recurso_administrativo", label: "Recurso Administrativo" },
-  { value: "resposta_a_notificacao", label: "Resposta à Notificação" },
-];
+const TIPOS_PECA = TIPOS_PECA_CATALOG;
 
 // TIPOS_SERVICO removido — redundante com TIPOS_PECA
 
