@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Activity, AlertTriangle, History, Plus, Sparkles, Upload, FileBadge, Crosshair } from "lucide-react";
-import { ArsenalSummary } from "./ArsenalSummary";
+import { ArsenalSummary, ArsenalSummaryTarget } from "./ArsenalSummary";
 import { Workbench, WorkbenchWeapon } from "./Workbench";
 import { WeaponDrawer } from "./WeaponDrawer";
 import { MunicoesManager } from "./MunicoesManager";
@@ -51,6 +51,16 @@ export function ArsenalView({
     total: 0,
     byCalibre: [],
   });
+
+  const scrollToSection = (target: ArsenalSummaryTarget) => {
+    const sectionId =
+      target === "alertas" || target === "cr" || target === "crafs"
+        ? "arsenal-situacao"
+        : target === "municoes" || target === "calibres"
+        ? "arsenal-municoes"
+        : "arsenal-bancada";
+    document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   /** Constrói lista de armas a partir dos CRAFs (fonte primária) e
    *  agrega informação de GTE quando o número de série bate. */
@@ -275,10 +285,11 @@ export function ArsenalView({
         crLabel={crStatus.label}
         totalCrafs={weapons.filter((w) => w.source === "CRAF").length}
         alerts={alerts.length}
+        onNavigate={scrollToSection}
       />
 
       {/* Bancada + Sidebar */}
-      <div className="grid gap-4 xl:grid-cols-[1fr_320px]">
+      <div id="arsenal-bancada" className="grid scroll-mt-28 gap-4 xl:grid-cols-[1fr_320px]">
         <Workbench
           weapons={weapons}
           documents={benchDocs}
@@ -287,7 +298,7 @@ export function ArsenalView({
         />
 
         {/* Sidebar Status */}
-        <aside className="space-y-3">
+        <aside id="arsenal-situacao" className="scroll-mt-28 space-y-3">
           <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
             <div className="mb-2 flex items-center gap-1.5">
               <Activity className="h-3.5 w-3.5" style={{ color: TACTICAL.cyan }} />
@@ -334,7 +345,9 @@ export function ArsenalView({
       </div>
 
       {/* Munições */}
-      <MunicoesManager clienteId={clienteId} onChange={setAmmo} />
+      <div id="arsenal-municoes" className="scroll-mt-28">
+        <MunicoesManager clienteId={clienteId} onChange={setAmmo} />
+      </div>
 
       <WeaponDrawer
         open={!!selected}
