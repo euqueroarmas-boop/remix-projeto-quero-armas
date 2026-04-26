@@ -76,6 +76,18 @@ export function ArsenalView({
     total: 0,
     byCalibre: [],
   });
+  const { match: matchCatalogo, byId: catalogoById, resolveCraf, loading: catalogoLoading } = useArmamentoCatalogo();
+
+  // Resolve via IA CRAFs/GTEs sem catalogo_id (uma vez por arma)
+  useEffect(() => {
+    if (catalogoLoading) return;
+    crafs.forEach((c: any) => {
+      if (!c.catalogo_id && c.nome_arma) resolveCraf({ craf_id: c.id });
+    });
+    gtes.forEach((g: any) => {
+      if (!g.catalogo_id && g.nome_arma) resolveCraf({ gte_id: g.id });
+    });
+  }, [crafs, gtes, catalogoLoading, resolveCraf]);
 
   const scrollToSection = (target: ArsenalSummaryTarget) => {
     const sectionId =
@@ -146,20 +158,22 @@ export function ArsenalView({
     }
     crafs.forEach((c: any) => {
       if (!c.data_validade) return;
+      const cat = catalogoById(c.catalogo_id) || matchCatalogo(c.nome_arma);
       list.push({
         id: `craf-${c.id}`,
         category: "CRAF",
-        title: formatArmaTitulo(c.nome_arma, c.calibre),
+        title: formatArmaTitulo(c.nome_arma, c.calibre, cat),
         date: c.data_validade,
         daysToExpire: daysUntil(c.data_validade),
       });
     });
     gtes.forEach((g: any) => {
       if (!g.data_validade) return;
+      const cat = catalogoById(g.catalogo_id) || matchCatalogo(g.nome_arma);
       list.push({
         id: `gte-${g.id}`,
         category: "GTE",
-        title: formatArmaTitulo(g.nome_arma, g.calibre),
+        title: formatArmaTitulo(g.nome_arma, g.calibre, cat),
         date: g.data_validade,
         daysToExpire: daysUntil(g.data_validade),
       });
@@ -170,8 +184,9 @@ export function ArsenalView({
       // Para CRAF/GTE o título deve ser o nome da arma (marca + modelo).
       // Apenas documentos sem vínculo de arma caem no número do documento.
       const ehDocDeArma = tipo === "craf" || tipo === "gte";
+      const cat = matchCatalogo(armaNome || d.numero_documento);
       const titulo = ehDocDeArma
-        ? formatArmaTitulo(armaNome || d.numero_documento, d.arma_calibre)
+        ? formatArmaTitulo(armaNome || d.numero_documento, d.arma_calibre, cat)
         : (d.numero_documento || armaNome || "Documento").toUpperCase();
       list.push({
         id: `doc-${d.id}`,
