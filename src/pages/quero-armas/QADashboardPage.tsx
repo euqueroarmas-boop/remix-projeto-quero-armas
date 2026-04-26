@@ -574,8 +574,9 @@ export default function QADashboardPage() {
             </div>
           </div>
           <div className="h-52 md:h-56">
+            {hasWeekActivity ? (
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={weekTrend} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+              <AreaChart data={weekActivity} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="gradBlue" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor={COLORS.blue} stopOpacity={0.15} />
@@ -594,6 +595,11 @@ export default function QADashboardPage() {
                 <Area type="monotone" dataKey="docs" name="Docs" stroke={COLORS.purple} fill="url(#gradPurple)" strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full text-xs text-slate-400">
+                {weekActivityLoaded ? "Sem dados suficientes nos últimos 7 dias" : "Carregando..."}
+              </div>
+            )}
           </div>
         </div>
 
