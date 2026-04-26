@@ -274,7 +274,7 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                     </div>
                   )}
                   <p className="mt-3 text-center font-heading text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60">
-                    Eu Quero Armas · Conformidade Total
+                    Eu Quero Armas · Conformidade Legal
                   </p>
                 </div>
               </SheetContent>
