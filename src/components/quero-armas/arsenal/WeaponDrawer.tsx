@@ -258,12 +258,11 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
                     {v.modelo}
                   </div>
                   <div className="mt-0.5 text-[9px] font-mono text-cyan-300/80">{v.calibre}</div>
-                  <div className="mt-1 h-20">
+                  <div className="mt-1 h-20 overflow-hidden rounded-md bg-slate-950 ring-1 ring-white/5">
                     <img
                       src={v.imagem || renderForKind(v.tipo as any)}
                       alt={v.modelo}
-                      style={{ background: "transparent" }}
-                      className="h-full w-[112%] max-w-none -translate-x-[6%] object-contain opacity-90"
+                      className="h-full w-[112%] max-w-none -translate-x-[6%] object-contain opacity-95"
                     />
                   </div>
                 </div>
