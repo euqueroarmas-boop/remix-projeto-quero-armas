@@ -269,6 +269,10 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // 🔒 Onda 6: only admin users or internal callers may send emails
+  const guard = await requireAdminOrInternal(req);
+  if (!guard.ok) return guard.response;
+
   const requestTraceId = createTraceId();
 
   try {
