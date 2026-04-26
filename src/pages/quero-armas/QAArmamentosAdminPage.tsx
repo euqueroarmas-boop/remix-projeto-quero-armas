@@ -481,13 +481,13 @@ function WeaponCard({
   return (
     <div
       onClick={onOpen}
-      className="group relative cursor-pointer rounded-xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-[#0c1014] to-black overflow-hidden hover:border-amber-500/50 hover:shadow-[0_0_0_1px_rgba(245,158,11,0.15),0_20px_60px_-20px_rgba(245,158,11,0.25)] transition-all duration-300"
+      className="group relative cursor-pointer rounded-xl border border-zinc-200 bg-white overflow-hidden hover:border-amber-500/60 shadow-[0_2px_12px_-6px_rgba(0,0,0,0.08)] hover:shadow-[0_0_0_1px_rgba(245,158,11,0.25),0_20px_50px_-20px_rgba(245,158,11,0.35)] transition-all duration-300"
     >
       {/* faixa superior tática */}
-      <div className="flex items-center justify-between px-3 py-1.5 bg-black/60 border-b border-zinc-800/80">
+      <div className="flex items-center justify-between px-3 py-1.5 bg-[#fafaf7] border-b border-zinc-200">
         <div className="flex items-center gap-2">
-          <span className={`h-1.5 w-1.5 rounded-full ${verificado ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,.8)]" : pendente ? "bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,.8)]" : "bg-zinc-500"}`} />
-          <span className="text-[9px] font-mono uppercase tracking-[0.2em] text-zinc-400">
+          <span className={`h-1.5 w-1.5 rounded-full ${verificado ? "bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,.6)]" : pendente ? "bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,.6)]" : "bg-zinc-400"}`} />
+          <span className="text-[9px] font-mono uppercase tracking-[0.2em] text-zinc-500">
             ID·{it.id.slice(0, 6).toUpperCase()}
           </span>
         </div>
@@ -495,30 +495,30 @@ function WeaponCard({
       </div>
 
       {/* visual da arma */}
-      <div className="relative aspect-[16/10] bg-[radial-gradient(ellipse_at_center,rgba(245,158,11,0.06),transparent_60%),linear-gradient(180deg,#0a0d10,#000)] grid place-items-center overflow-hidden">
+      <div className="relative aspect-[16/10] bg-[radial-gradient(ellipse_at_center,rgba(245,158,11,0.10),transparent_65%),linear-gradient(180deg,#ffffff,#f3f1ec)] grid place-items-center overflow-hidden">
         {/* grade tática */}
-        <div className="absolute inset-0 opacity-[0.08]" style={{ backgroundImage: "linear-gradient(rgba(255,255,255,.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.6) 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
+        <div className="absolute inset-0 opacity-[0.06]" style={{ backgroundImage: "linear-gradient(rgba(0,0,0,.6) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,.6) 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
         {/* alvo de mira nos cantos */}
-        <div className="absolute top-2 left-2 h-3 w-3 border-l border-t border-amber-500/40" />
-        <div className="absolute top-2 right-2 h-3 w-3 border-r border-t border-amber-500/40" />
-        <div className="absolute bottom-2 left-2 h-3 w-3 border-l border-b border-amber-500/40" />
-        <div className="absolute bottom-2 right-2 h-3 w-3 border-r border-b border-amber-500/40" />
+        <div className="absolute top-2 left-2 h-3 w-3 border-l border-t border-amber-600/50" />
+        <div className="absolute top-2 right-2 h-3 w-3 border-r border-t border-amber-600/50" />
+        <div className="absolute bottom-2 left-2 h-3 w-3 border-l border-b border-amber-600/50" />
+        <div className="absolute bottom-2 right-2 h-3 w-3 border-r border-b border-amber-600/50" />
 
         {it.imagem ? (
           <img
             src={it.imagem}
             alt={`${it.marca} ${it.modelo}`}
-            className="relative z-10 max-h-[85%] max-w-[88%] object-contain drop-shadow-[0_8px_30px_rgba(0,0,0,0.9)] group-hover:scale-105 transition-transform duration-500"
+            className="relative z-10 max-h-[85%] max-w-[88%] object-contain drop-shadow-[0_10px_25px_rgba(0,0,0,0.25)] group-hover:scale-105 transition-transform duration-500"
           />
         ) : (
-          <div className="relative z-10 flex flex-col items-center gap-2 text-zinc-600">
+          <div className="relative z-10 flex flex-col items-center gap-2 text-zinc-400">
             <Target className="h-10 w-10" />
             <span className="text-[10px] font-mono uppercase tracking-[0.2em]">SEM IMAGEM</span>
           </div>
         )}
 
         {/* tag de tipo */}
-        <div className="absolute top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-black/70 border border-zinc-800 text-[9px] font-mono uppercase tracking-[0.25em] text-zinc-300">
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-zinc-900/85 border border-zinc-800 text-[9px] font-mono uppercase tracking-[0.25em] text-amber-200">
           {it.tipo}
         </div>
       </div>
@@ -526,8 +526,8 @@ function WeaponCard({
       {/* corpo */}
       <div className="p-3 space-y-3">
         <div>
-          <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-amber-400/80">{it.marca}</div>
-          <div className="text-base font-bold text-white leading-tight truncate">{it.modelo}</div>
+          <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-amber-700">{it.marca}</div>
+          <div className="text-base font-bold text-zinc-900 leading-tight truncate">{it.modelo}</div>
           {it.apelido && <div className="text-[11px] text-zinc-500 italic mt-0.5">"{it.apelido}"</div>}
         </div>
 
@@ -542,23 +542,23 @@ function WeaponCard({
         <div className="flex items-center justify-between gap-2">
           <StatusBadge s={it.status_revisao} />
           {it.classificacao_legal && (
-            <span className={`text-[9px] font-mono uppercase tracking-[0.2em] px-1.5 py-0.5 rounded border ${it.classificacao_legal === "Uso Restrito" ? "border-red-500/40 text-red-300 bg-red-500/10" : "border-emerald-500/40 text-emerald-300 bg-emerald-500/10"}`}>
+            <span className={`text-[9px] font-mono uppercase tracking-[0.2em] px-1.5 py-0.5 rounded border ${it.classificacao_legal === "Uso Restrito" ? "border-red-500/50 text-red-700 bg-red-500/10" : "border-emerald-500/50 text-emerald-700 bg-emerald-500/10"}`}>
               {it.classificacao_legal === "Uso Restrito" ? "UR" : "UP"}
             </span>
           )}
         </div>
 
         {/* ações */}
-        <div className="flex items-center gap-1 pt-2 border-t border-zinc-800" onClick={(e) => e.stopPropagation()}>
-          <Button size="sm" variant="ghost" className="flex-1 h-8 text-zinc-400 hover:text-amber-300 hover:bg-amber-500/10" onClick={onGerarImagem} disabled={busy} title={it.imagem ? "Regerar imagem" : "Gerar imagem"}>
+        <div className="flex items-center gap-1 pt-2 border-t border-zinc-200" onClick={(e) => e.stopPropagation()}>
+          <Button size="sm" variant="ghost" className="flex-1 h-8 text-zinc-500 hover:text-amber-700 hover:bg-amber-500/10" onClick={onGerarImagem} disabled={busy} title={it.imagem ? "Regerar imagem" : "Gerar imagem"}>
             {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : (it.imagem ? <RefreshCcw className="h-3.5 w-3.5" /> : <ImageIcon className="h-3.5 w-3.5" />)}
           </Button>
           {!verificado && (
-            <Button size="sm" variant="ghost" className="flex-1 h-8 text-zinc-400 hover:text-emerald-300 hover:bg-emerald-500/10" onClick={onVerificar} title="Marcar verificado">
+            <Button size="sm" variant="ghost" className="flex-1 h-8 text-zinc-500 hover:text-emerald-700 hover:bg-emerald-500/10" onClick={onVerificar} title="Marcar verificado">
               <CheckCircle2 className="h-3.5 w-3.5" />
             </Button>
           )}
-          <Button size="sm" variant="ghost" className="flex-1 h-8 text-zinc-400 hover:text-red-300 hover:bg-red-500/10" onClick={onRemove} title="Excluir">
+          <Button size="sm" variant="ghost" className="flex-1 h-8 text-zinc-500 hover:text-red-700 hover:bg-red-500/10" onClick={onRemove} title="Excluir">
             <Trash2 className="h-3.5 w-3.5" />
           </Button>
         </div>
@@ -569,11 +569,11 @@ function WeaponCard({
 
 function Spec({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="rounded border border-zinc-800/80 bg-black/40 px-1.5 py-1.5">
+    <div className="rounded border border-zinc-200 bg-[#fafaf7] px-1.5 py-1.5">
       <div className="flex items-center justify-center gap-1 text-zinc-500 text-[8px] font-mono uppercase tracking-[0.2em]">
         {icon}{label}
       </div>
-      <div className="text-[11px] font-bold text-zinc-100 truncate mt-0.5">{value}</div>
+      <div className="text-[11px] font-bold text-zinc-900 truncate mt-0.5">{value}</div>
     </div>
   );
 }
@@ -581,7 +581,7 @@ function Spec({ icon, label, value }: { icon: React.ReactNode; label: string; va
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1">
-      <Label className="text-xs uppercase tracking-wide text-white">{label}</Label>
+      <Label className="text-xs uppercase tracking-wide text-zinc-700">{label}</Label>
       {children}
     </div>
   );
@@ -589,10 +589,10 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 function StatusBadge({ s }: { s: Status }) {
   const map: Record<Status, { cls: string; label: string }> = {
-    rascunho:         { cls: "border-zinc-700 text-zinc-300 bg-zinc-800/40",         label: "RASCUNHO" },
-    pendente_revisao: { cls: "border-amber-500/40 text-amber-300 bg-amber-500/10",   label: "PENDENTE" },
-    verificado:       { cls: "border-emerald-500/40 text-emerald-300 bg-emerald-500/10", label: "VERIFICADO" },
-    rejeitado:        { cls: "border-red-500/40 text-red-300 bg-red-500/10",         label: "REJEITADO" },
+    rascunho:         { cls: "border-zinc-300 text-zinc-600 bg-zinc-100",                  label: "RASCUNHO" },
+    pendente_revisao: { cls: "border-amber-500/50 text-amber-700 bg-amber-500/10",         label: "PENDENTE" },
+    verificado:       { cls: "border-emerald-500/50 text-emerald-700 bg-emerald-500/10",   label: "VERIFICADO" },
+    rejeitado:        { cls: "border-red-500/50 text-red-700 bg-red-500/10",               label: "REJEITADO" },
   };
   const c = map[s];
   return <span className={`inline-flex items-center px-2 py-0.5 rounded border text-[9px] font-mono uppercase tracking-[0.2em] ${c.cls}`}>{c.label}</span>;
