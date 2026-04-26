@@ -279,11 +279,25 @@ export default function QAArmamentosAdminPage() {
       </div>
 
       {/* KPIs HUD */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <Kpi label="TOTAL" value={stats.total} icon={<Layers className="h-4 w-4" />} />
         <Kpi label="VERIFICADOS" value={stats.verificados} tone="success" icon={<CheckCircle2 className="h-4 w-4" />} />
         <Kpi label="PENDENTES" value={stats.pendentes} tone="warn" icon={<AlertCircle className="h-4 w-4" />} />
         <Kpi label="GERADOS · IA" value={stats.ia} icon={<Sparkles className="h-4 w-4" />} />
+        <button
+          type="button"
+          onClick={() => { setSemImagemFilter(!semImagemFilter); setStatusFilter("todos"); setTipoFilter("todos"); }}
+          title="Clique para filtrar armas sem imagem"
+          className={`relative rounded-lg border bg-white p-3 text-left transition-all hover:shadow-sm ${
+            semImagemFilter ? "border-amber-500 ring-2 ring-amber-500/20" : "border-zinc-200"
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className={`text-[10px] font-mono uppercase tracking-[0.2em] ${stats.semImagem > 0 ? "text-amber-700" : "text-zinc-500"}`}>SEM IMAGEM</span>
+            <ImageOff className={`h-4 w-4 ${stats.semImagem > 0 ? "text-amber-600" : "text-zinc-400"}`} />
+          </div>
+          <div className={`mt-1 text-2xl font-bold ${stats.semImagem > 0 ? "text-amber-700" : "text-zinc-700"}`}>{stats.semImagem}</div>
+        </button>
       </div>
 
       {/* BARRA DE FILTROS */}
@@ -308,9 +322,32 @@ export default function QAArmamentosAdminPage() {
         </Select>
       </Card>
 
+      {/* LINHA DE CONTAGEM E LIMPAR FILTROS */}
+      <div className="flex items-center justify-between text-xs text-zinc-600 px-1 -mt-2">
+        <div className="font-mono uppercase tracking-wider">
+          {loading
+            ? "Carregando…"
+            : `${filtered.length} ${filtered.length === 1 ? "resultado" : "resultados"}${filtered.length !== stats.total ? ` · de ${stats.total} total` : ""}`}
+          {semImagemFilter && (
+            <span className="ml-2 inline-flex items-center gap-1 rounded bg-amber-50 px-1.5 py-0.5 text-[10px] text-amber-700 border border-amber-200">
+              <ImageOff className="h-3 w-3" /> Sem imagem
+            </span>
+          )}
+        </div>
+        {filtrosAtivos && (
+          <button
+            type="button"
+            onClick={limparFiltros}
+            className="inline-flex items-center gap-1 rounded-md border border-zinc-300 bg-white px-2 py-1 text-[11px] font-medium text-zinc-700 hover:bg-zinc-50"
+          >
+            <X className="h-3 w-3" /> Limpar filtros
+          </button>
+        )}
+      </div>
+
       {/* GRID DE CARDS DARK-TACTICAL */}
       {loading ? (
-        <div className="p-16 text-center text-zinc-400"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></div>
+        <LoadingState label="Carregando catálogo…" />
       ) : filtered.length === 0 ? (
         <Card className="p-16 text-center bg-white border-zinc-200 text-zinc-500">Nenhum armamento corresponde aos filtros.</Card>
       ) : (
