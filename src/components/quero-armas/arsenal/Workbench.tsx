@@ -334,15 +334,6 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon }:
 
       {/* Bench body */}
       <div className="relative px-4 py-6 md:px-6 md:py-7">
-        {/* grid lines */}
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.07]"
-          style={{
-            backgroundImage:
-              "linear-gradient(to right, #22d3ee 1px, transparent 1px), linear-gradient(to bottom, #22d3ee 1px, transparent 1px)",
-            backgroundSize: "32px 32px",
-          }}
-        />
         {/* ambient glow */}
         <div
           className="pointer-events-none absolute inset-x-0 top-0 h-40"
