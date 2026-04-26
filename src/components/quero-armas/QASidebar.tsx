@@ -55,6 +55,7 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
 
   useEffect(() => {
     let frame = 0;
+    let lastOffset = -1;
 
     const updateOffset = () => {
       cancelAnimationFrame(frame);
@@ -71,26 +72,25 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
         const progress = Math.min(1, Math.max(0, (window.scrollY - layoutTop) / scrollRange));
         const nextOffset = Math.round(maxOffset * progress);
 
-        setSlideOffset((current) => (Math.abs(current - nextOffset) < 1 ? current : nextOffset));
+        if (Math.abs(lastOffset - nextOffset) < 1) return;
+        lastOffset = nextOffset;
+        setSlideOffset(nextOffset);
       });
     };
 
-    const resizeObserver = typeof ResizeObserver !== "undefined" ? new ResizeObserver(updateOffset) : null;
-    const mutationObserver = typeof MutationObserver !== "undefined" ? new MutationObserver(updateOffset) : null;
-
-    resizeObserver?.observe(document.body);
-    if (sidebarRef.current) resizeObserver?.observe(sidebarRef.current);
-    if (menuRef.current) resizeObserver?.observe(menuRef.current);
-    mutationObserver?.observe(document.body, { childList: true, subtree: true });
-
     window.addEventListener("scroll", updateOffset, { passive: true });
     window.addEventListener("resize", updateOffset);
-    updateOffset();
+
+    // Recalcula após mudanças de layout iniciais (sem loop de mutation observer)
+    const t1 = setTimeout(updateOffset, 100);
+    const t2 = setTimeout(updateOffset, 500);
+    const t3 = setTimeout(updateOffset, 1500);
 
     return () => {
       cancelAnimationFrame(frame);
-      resizeObserver?.disconnect();
-      mutationObserver?.disconnect();
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
       window.removeEventListener("scroll", updateOffset);
       window.removeEventListener("resize", updateOffset);
     };
