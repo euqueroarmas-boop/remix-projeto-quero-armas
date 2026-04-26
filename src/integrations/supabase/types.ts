@@ -700,6 +700,13 @@ export type Database = {
             referencedRelation: "qa_clientes"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_cliente_auth_links__qa_cliente"
+            columns: ["qa_cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
         ]
       }
       cliente_otp_codes: {
@@ -1205,6 +1212,20 @@ export type Database = {
           },
           {
             foreignKeyName: "contracts_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_contracts__customer"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_contracts__quote"
             columns: ["quote_id"]
             isOneToOne: false
             referencedRelation: "quotes"
@@ -2005,6 +2026,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_lp_contracts__order"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "lp_orders"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "lp_contracts_order_id_fkey"
             columns: ["order_id"]
             isOneToOne: false
@@ -2055,6 +2083,13 @@ export type Database = {
           unit_price_cents?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_lp_order_items__order"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "lp_orders"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "lp_order_items_order_id_fkey"
             columns: ["order_id"]
@@ -3187,6 +3222,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_qa_casos__cliente"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "qa_casos_cliente_id_fkey"
             columns: ["cliente_id"]
             isOneToOne: false
@@ -3227,6 +3269,13 @@ export type Database = {
           texto_chunk?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_qa_chunks__documento"
+            columns: ["documento_id"]
+            isOneToOne: false
+            referencedRelation: "qa_documentos_conhecimento"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "qa_chunks_conhecimento_documento_id_fkey"
             columns: ["documento_id"]
@@ -3634,6 +3683,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_qa_crafs__cliente"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "qa_crafs_catalogo_id_fkey"
             columns: ["catalogo_id"]
             isOneToOne: false
@@ -3786,6 +3842,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_qa_doc_cliente__qa_cliente"
+            columns: ["qa_cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "qa_documentos_cliente_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
@@ -3915,6 +3978,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_qa_embeddings__chunk"
+            columns: ["chunk_id"]
+            isOneToOne: false
+            referencedRelation: "qa_chunks_conhecimento"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "qa_embeddings_chunk_id_fkey"
             columns: ["chunk_id"]
             isOneToOne: false
@@ -4002,7 +4072,15 @@ export type Database = {
           tipo?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_qa_exames__cliente"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       qa_feedback_geracoes: {
         Row: {
@@ -4091,7 +4169,15 @@ export type Database = {
           numero_filiacao?: string | null
           validade_filiacao?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_qa_filiacoes__cliente"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       qa_fontes_normativas: {
         Row: {
@@ -4401,6 +4487,20 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_qa_itens_venda__servico"
+            columns: ["servico_id"]
+            isOneToOne: false
+            referencedRelation: "qa_servicos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_qa_itens_venda__venda"
+            columns: ["venda_id"]
+            isOneToOne: false
+            referencedRelation: "qa_vendas"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "qa_itens_venda_venda_id_fk"
             columns: ["venda_id"]
             isOneToOne: false
@@ -4417,7 +4517,7 @@ export type Database = {
           payload: Json
         }
         Insert: {
-          id: number
+          id?: number
           motivo?: string
           movido_em?: string
           payload: Json
@@ -4767,6 +4867,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_qa_senha_gov__cliente"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "qa_senha_gov_acessos_cadastro_cr_id_fkey"
             columns: ["cadastro_cr_id"]
             isOneToOne: false
@@ -5059,6 +5166,13 @@ export type Database = {
           valor_aberto?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_qa_vendas__cliente"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "qa_vendas_cliente_id_fk"
             columns: ["cliente_id"]
@@ -5851,7 +5965,15 @@ export type Database = {
           tipo?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_qa_exames__cliente"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Functions: {
