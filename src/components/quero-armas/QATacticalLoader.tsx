@@ -34,17 +34,6 @@ export default function QATacticalLoader() {
 
   return (
     <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-black">
-      {/* Grid tático sutil */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.06]"
-        style={{
-          backgroundImage:
-            "linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)",
-          backgroundSize: "32px 32px",
-        }}
-      />
-
       <div className="relative w-[78%] max-w-md">
         <div className="mb-3 flex items-end justify-between">
           <span className="text-[11px] font-black uppercase tracking-[0.42em] text-white">
