@@ -661,7 +661,17 @@ export default function DashboardProcessosMonitor() {
                         <td className="px-3 py-2.5 font-medium text-slate-700 align-top">
                           <div className="flex items-center gap-1.5">
                             {r.isComboGroup && <Sparkles className="w-3.5 h-3.5 text-indigo-500 shrink-0" />}
-                            <span className="truncate">{r.clienteNome}</span>
+                            {r.clienteId ? (
+                              <Link
+                                to={`/clientes?cliente=${r.clienteId}`}
+                                className="truncate text-blue-700 hover:text-blue-900 hover:underline"
+                                title="Abrir cadastro do cliente"
+                              >
+                                {r.clienteNome}
+                              </Link>
+                            ) : (
+                              <span className="truncate">{r.clienteNome}</span>
+                            )}
                           </div>
                         </td>
                         <td className="px-3 py-2.5 text-slate-600 align-top">
@@ -757,7 +767,16 @@ export default function DashboardProcessosMonitor() {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5">
                           {r.isComboGroup && <Sparkles className="w-3.5 h-3.5 text-indigo-500 shrink-0" />}
-                          <div className="text-[13px] font-semibold text-slate-700 truncate">{r.clienteNome}</div>
+                          {r.clienteId ? (
+                            <Link
+                              to={`/clientes?cliente=${r.clienteId}`}
+                              className="text-[13px] font-semibold text-blue-700 truncate hover:underline"
+                            >
+                              {r.clienteNome}
+                            </Link>
+                          ) : (
+                            <div className="text-[13px] font-semibold text-slate-700 truncate">{r.clienteNome}</div>
+                          )}
                         </div>
                         {r.isComboGroup ? (
                           <div className="mt-1.5 space-y-1">
