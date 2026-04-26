@@ -230,35 +230,35 @@ export default function QAArmamentosAdminPage() {
   function setF<K extends keyof Arma>(k: K, v: any) { setEditing((p) => ({ ...(p || {}), [k]: v })); }
 
   return (
-    <div className="min-h-screen bg-[#0a0d10] text-zinc-100">
+    <div className="min-h-screen bg-[#f6f5f1] text-zinc-900">
       <div className="container max-w-7xl mx-auto p-6 space-y-6">
       {/* HEADER TÁTICO */}
-      <div className="relative overflow-hidden rounded-xl border border-amber-500/20 bg-gradient-to-br from-zinc-950 via-zinc-900 to-black p-6">
-        <div className="absolute inset-0 opacity-[0.04] pointer-events-none" style={{ backgroundImage: "linear-gradient(rgba(255,255,255,.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.5) 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
+      <div className="relative overflow-hidden rounded-xl border border-zinc-200 bg-gradient-to-br from-white via-[#fafaf7] to-[#f1efe9] p-6 shadow-[0_4px_24px_-12px_rgba(0,0,0,0.08)]">
+        <div className="absolute inset-0 opacity-[0.04] pointer-events-none" style={{ backgroundImage: "linear-gradient(rgba(0,0,0,.5) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,.5) 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
         <div className="absolute -top-10 -right-10 w-56 h-56 rounded-full bg-amber-500/10 blur-3xl pointer-events-none" />
         <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="h-12 w-12 rounded-lg border border-amber-500/40 bg-amber-500/10 grid place-items-center">
-              <Crosshair className="h-6 w-6 text-amber-400" />
+            <div className="h-12 w-12 rounded-lg border border-amber-500/50 bg-amber-500/10 grid place-items-center">
+              <Crosshair className="h-6 w-6 text-amber-600" />
             </div>
             <div>
-              <div className="text-[10px] font-mono uppercase tracking-[0.3em] text-amber-400/80">// ARSENAL · BASE TÉCNICA</div>
-              <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white">CATÁLOGO DE ARMAMENTOS</h1>
-              <p className="text-xs text-zinc-400 mt-0.5">Inventário técnico operacional · Armas reais utilizadas pelos clientes do Arsenal.</p>
+              <div className="text-[10px] font-mono uppercase tracking-[0.3em] text-amber-700">// ARSENAL · BASE TÉCNICA</div>
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-zinc-900">CATÁLOGO DE ARMAMENTOS</h1>
+              <p className="text-xs text-zinc-500 mt-0.5">Inventário técnico operacional · Armas reais utilizadas pelos clientes do Arsenal.</p>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Button variant="outline" className="border-zinc-700 bg-zinc-900/60 text-zinc-200 hover:bg-zinc-800 hover:text-white" onClick={buscarTodasFotos} disabled={bulkBusy} title="Busca foto real em fontes públicas para cada arma sem foto">
+            <Button variant="outline" className="border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-50" onClick={buscarTodasFotos} disabled={bulkBusy} title="Busca foto real em fontes públicas para cada arma sem foto">
             {bulkBusy
                 ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Buscando {bulkProgress?.done}/{bulkProgress?.total}</>
                 : <><Camera className="h-4 w-4 mr-2" />Buscar fotos reais</>}
             </Button>
-            <Button variant="outline" className="border-zinc-700 bg-zinc-900/60 text-zinc-200 hover:bg-zinc-800 hover:text-white" onClick={limparFundoTodas} disabled={bgBusy} title="Remove fundos brancos, cinzas e xadrez de todas as imagens (gera PNG com transparência real)">
+            <Button variant="outline" className="border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-50" onClick={limparFundoTodas} disabled={bgBusy} title="Remove fundos brancos, cinzas e xadrez de todas as imagens (gera PNG com transparência real)">
               {bgBusy
                 ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Limpando fundo…</>
                 : <><Eraser className="h-4 w-4 mr-2" />Limpar fundo</>}
             </Button>
-            <Button onClick={openNew} className="bg-amber-500 text-black hover:bg-amber-400 font-semibold">
+            <Button onClick={openNew} className="bg-zinc-900 text-amber-300 hover:bg-zinc-800 font-semibold">
               <Plus className="h-4 w-4 mr-2" />Nova arma
             </Button>
           </div>
@@ -274,20 +274,20 @@ export default function QAArmamentosAdminPage() {
       </div>
 
       {/* BARRA DE FILTROS */}
-      <Card className="p-3 flex flex-col md:flex-row gap-3 bg-zinc-950/80 border-zinc-800">
+      <Card className="p-3 flex flex-col md:flex-row gap-3 bg-white border-zinc-200 shadow-sm">
         <div className="relative flex-1">
-          <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-amber-400/70" />
-          <Input className="pl-9 bg-black/40 border-zinc-800 text-zinc-100 placeholder:text-zinc-500 focus-visible:ring-amber-500/40" placeholder="Buscar marca, modelo, calibre…" value={q} onChange={(e) => setQ(e.target.value)} />
+          <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-amber-600" />
+          <Input className="pl-9 bg-white border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus-visible:ring-amber-500/40" placeholder="Buscar marca, modelo, calibre…" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
         <Select value={tipoFilter} onValueChange={setTipoFilter}>
-          <SelectTrigger className="md:w-48 bg-black/40 border-zinc-800 text-zinc-100"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="md:w-48 bg-white border-zinc-200 text-zinc-900"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="todos">Todos os tipos</SelectItem>
             {TIPOS.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="md:w-56 bg-black/40 border-zinc-800 text-zinc-100"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="md:w-56 bg-white border-zinc-200 text-zinc-900"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="todos">Todos os status</SelectItem>
             {Object.entries(STATUS_LABEL).map(([k,v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
@@ -297,9 +297,9 @@ export default function QAArmamentosAdminPage() {
 
       {/* GRID DE CARDS DARK-TACTICAL */}
       {loading ? (
-        <div className="p-16 text-center text-zinc-500"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></div>
+        <div className="p-16 text-center text-zinc-400"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></div>
       ) : filtered.length === 0 ? (
-        <Card className="p-16 text-center bg-zinc-950/60 border-zinc-800 text-zinc-500">Nenhum armamento corresponde aos filtros.</Card>
+        <Card className="p-16 text-center bg-white border-zinc-200 text-zinc-500">Nenhum armamento corresponde aos filtros.</Card>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filtered.map((it) => (
