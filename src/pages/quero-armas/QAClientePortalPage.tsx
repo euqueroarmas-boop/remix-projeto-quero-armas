@@ -328,7 +328,12 @@ export default function QAClientePortalPage() {
         category: cat,
       });
     });
-    expDocs.sort((a, b) => (a.days ?? 999) - (b.days ?? 999));
+    expDocs.sort((a, b) => {
+      // CR sempre primeiro
+      if (a.category === "CR" && b.category !== "CR") return -1;
+      if (b.category === "CR" && a.category !== "CR") return 1;
+      return (a.days ?? 999) - (b.days ?? 999);
+    });
     const alerts = expDocs.filter(d => d.days !== null && d.days <= 90);
 
     return { totalServicos, concluidos, emAndamento, totalVendas, expDocs, alerts };
