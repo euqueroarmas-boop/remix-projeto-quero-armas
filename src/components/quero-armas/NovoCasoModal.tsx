@@ -4,13 +4,9 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, User, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { TIPOS_PECA as TIPOS_SERVICO_CATALOG } from "./tiposPeca";
 
-const TIPOS_SERVICO = [
-  { value: "defesa_posse_arma", label: "Defesa para Posse de Arma" },
-  { value: "defesa_porte_arma", label: "Defesa para Porte de Arma" },
-  { value: "recurso_administrativo", label: "Recurso Administrativo" },
-  { value: "resposta_a_notificacao", label: "Resposta à Notificação" },
-];
+const TIPOS_SERVICO = TIPOS_SERVICO_CATALOG;
 
 const STATUS_OPTIONS = [
   { value: "rascunho", label: "Rascunho" },
