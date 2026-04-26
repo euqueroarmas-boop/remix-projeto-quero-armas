@@ -5,6 +5,7 @@ import { Workbench, WorkbenchWeapon } from "./Workbench";
 import { WeaponDrawer } from "./WeaponDrawer";
 import { MunicoesManager } from "./MunicoesManager";
 import { TACTICAL, urgencyTone, buildWeaponInfo } from "./utils";
+import { useArmamentoCatalogo, type ArmamentoCatalogo } from "./useArmamentoCatalogo";
 
 interface Props {
   clienteId: number;
@@ -25,11 +26,21 @@ const normalizeDocWeaponName = (doc: any) => {
   return [marca, modelo].filter(Boolean).join(" ").trim() || null;
 };
 
-const formatArmaTitulo = (nomeArma: string | null | undefined, calibreHint?: string | null): string => {
+const formatArmaTitulo = (
+  nomeArma: string | null | undefined,
+  calibreHint?: string | null,
+  catalog?: ArmamentoCatalogo | null,
+): string => {
   const info = buildWeaponInfo(nomeArma || null, null);
-  const marca = (info.marca || "").trim();
-  const modelo = (info.modelo || "").trim();
-  const calibre = (info.calibre || calibreHint || "").trim();
+  const marca = (catalog?.marca || info.marca || "").trim();
+  const modeloRaw = (catalog?.modelo || info.modelo || "").trim();
+  // Insere espaços em "PumpMilitary3.0" -> "Pump Military 3.0"
+  const modelo = modeloRaw
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/([A-Za-z])(\d)/g, "$1 $2")
+    .replace(/\s+/g, " ")
+    .trim();
+  const calibre = (catalog?.calibre || info.calibre || calibreHint || "").trim();
   const partes: string[] = [];
   if (marca) partes.push(marca);
   if (modelo) partes.push(modelo);
