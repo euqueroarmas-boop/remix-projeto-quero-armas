@@ -4024,11 +4024,11 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "fk_qa_itens_venda__venda"
+            foreignKeyName: "fk_qa_itens_venda__venda_legado"
             columns: ["venda_id"]
             isOneToOne: false
             referencedRelation: "qa_vendas"
-            referencedColumns: ["id"]
+            referencedColumns: ["id_legado"]
           },
           {
             foreignKeyName: "qa_itens_venda_venda_id_fk"
@@ -4697,11 +4697,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "fk_qa_vendas__cliente"
+            foreignKeyName: "fk_qa_vendas__cliente_legado"
             columns: ["cliente_id"]
             isOneToOne: false
             referencedRelation: "qa_clientes"
-            referencedColumns: ["id"]
+            referencedColumns: ["id_legado"]
           },
           {
             foreignKeyName: "qa_vendas_cliente_id_fk"
