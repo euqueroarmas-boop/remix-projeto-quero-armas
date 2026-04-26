@@ -34,12 +34,16 @@ const formatArmaTitulo = (
   const info = buildWeaponInfo(nomeArma || null, null);
   const marca = (catalog?.marca || info.marca || "").trim();
   const modeloRaw = (catalog?.modelo || info.modelo || "").trim();
-  // Insere espaços em "PumpMilitary3.0" -> "Pump Military 3.0"
-  const modelo = modeloRaw
-    .replace(/([a-z])([A-Z])/g, "$1 $2")
-    .replace(/([A-Za-z])(\d)/g, "$1 $2")
-    .replace(/\s+/g, " ")
-    .trim();
+  // Espingardas levam espaços ("Pump Military 3.0").
+  // Pistolas, revólveres e fuzis ficam compactados ("TS9", "RT838", "T4").
+  const isEspingarda = info.kind === "espingarda";
+  const modelo = isEspingarda
+    ? modeloRaw
+        .replace(/([a-z])([A-Z])/g, "$1 $2")
+        .replace(/([A-Za-z])(\d)/g, "$1 $2")
+        .replace(/\s+/g, " ")
+        .trim()
+    : modeloRaw.replace(/\s+/g, "").trim();
   const calibre = (catalog?.calibre || info.calibre || calibreHint || "").trim();
   const partes: string[] = [];
   if (marca) partes.push(marca);
