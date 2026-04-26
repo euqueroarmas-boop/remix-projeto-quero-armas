@@ -66,7 +66,7 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
   return (
     <aside
       data-qa-sidebar="true"
-      className="sticky top-0 z-20 h-[100dvh] max-h-[100dvh] shrink-0 self-start overflow-y-auto overflow-x-hidden border-r flex flex-col transition-[width] duration-200"
+      className="shrink-0 overflow-x-hidden border-r flex flex-col transition-[width] duration-200"
       style={{
         width: collapsed ? "4.25rem" : "16rem",
         background: "hsl(0 0% 100%)",
