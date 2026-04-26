@@ -53,16 +53,23 @@ async function loadKey(): Promise<CryptoKey> {
   if (bytes.length !== 32) {
     throw new Error(`QA_ENCRYPTION_KEY deve ter 32 bytes (recebido ${bytes.length})`);
   }
-  return await crypto.subtle.importKey("raw", bytes, { name: "AES-GCM" }, false, [
-    "encrypt",
-    "decrypt",
-  ]);
+  return await crypto.subtle.importKey(
+    "raw",
+    bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer,
+    { name: "AES-GCM" },
+    false,
+    ["encrypt", "decrypt"],
+  );
 }
 
 async function encryptSenha(plaintext: string, key: CryptoKey) {
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const enc = new TextEncoder().encode(plaintext);
-  const cipherBuf = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, enc);
+  const cipherBuf = await crypto.subtle.encrypt(
+    { name: "AES-GCM", iv: iv.buffer.slice(0) as ArrayBuffer },
+    key,
+    enc.buffer.slice(0) as ArrayBuffer,
+  );
   const cipher = new Uint8Array(cipherBuf);
   // WebCrypto AES-GCM já anexa o tag (16 bytes) ao final do ciphertext
   const tagLen = 16;
@@ -80,7 +87,9 @@ async function decryptSenha(
   const full = new Uint8Array(ct.length + tag.length);
   full.set(ct, 0);
   full.set(tag, ct.length);
-  const plainBuf = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, full);
+  const ivBuf = iv.buffer.slice(iv.byteOffset, iv.byteOffset + iv.byteLength) as ArrayBuffer;
+  const fullBuf = full.buffer.slice(0) as ArrayBuffer;
+  const plainBuf = await crypto.subtle.decrypt({ name: "AES-GCM", iv: ivBuf }, key, fullBuf);
   return new TextDecoder().decode(plainBuf);
 }
 
