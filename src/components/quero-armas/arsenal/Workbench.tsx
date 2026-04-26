@@ -76,7 +76,16 @@ function WeaponCard({
     : tone === "ok" ? "#10b981"
     : "#64748b";
   const marca = catalog?.marca || info.marca || info.label;
-  const modelo = catalog?.modelo || info.modelo || "";
+  const modeloRaw = (catalog?.modelo || info.modelo || "").toString();
+  // Espingardas com espaços; demais armas compactadas (TS9, RT838, T4).
+  const isEspingarda = info.kind === "espingarda";
+  const modelo = isEspingarda
+    ? modeloRaw
+        .replace(/([a-z])([A-Z])/g, "$1 $2")
+        .replace(/([A-Za-z])(\d)/g, "$1 $2")
+        .replace(/\s+/g, " ")
+        .trim()
+    : modeloRaw.replace(/\s+/g, "").trim();
   const calibre = catalog?.calibre || info.calibre || "—";
   const bg = backgroundForKind(info.kind);
   const render = catalog?.imagem || renderForKind(info.kind);
