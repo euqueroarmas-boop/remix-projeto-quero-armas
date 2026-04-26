@@ -19,6 +19,7 @@ import {
 import { useQAAuthContext } from "@/components/quero-armas/QAAuthContext";
 import { logSistema } from "@/lib/logSistema";
 import DraftingView, { type DraftingResult } from "@/components/quero-armas/DraftingView";
+import { TIPOS_PECA as TIPOS_PECA_CATALOG } from "@/components/quero-armas/tiposPeca";
 
 /* ── Types ── */
 type DocUploadStage = "pending" | "queued" | "uploading" | "saved" | "extracting" | "processing" | "done" | "failed";
@@ -102,12 +103,7 @@ const TIPOS_DOC_AUXILIAR = [
   { value: "outro", label: "Outro documento probatório" },
 ];
 
-const TIPOS_PECA = [
-  { value: "defesa_posse_arma", label: "Defesa para Posse de Arma" },
-  { value: "defesa_porte_arma", label: "Defesa para Porte de Arma" },
-  { value: "recurso_administrativo", label: "Recurso Administrativo" },
-  { value: "resposta_a_notificacao", label: "Resposta à Notificação" },
-];
+const TIPOS_PECA = TIPOS_PECA_CATALOG;
 
 // TIPOS_SERVICO removido — redundante com TIPOS_PECA
 
@@ -298,6 +294,8 @@ export default function QAGerarPecaPage() {
 
   // Editing existing case
   const [casoId, setCasoId] = useState<string | null>(null);
+  // Cliente vinculado ao caso (preservado entre carregamento e geração)
+  const [clienteIdVinculado, setClienteIdVinculado] = useState<number | null>(null);
 
   // CEP
   const [cepStatus, setCepStatus] = useState<CepStatus>("idle");
@@ -354,7 +352,7 @@ export default function QAGerarPecaPage() {
       if (!data) return;
       const c = data as any;
       setCasoId(c.id);
-      // titulo auto-gerado a partir do nome
+      // 1) Hidrata pelo snapshot histórico do caso (sempre presente)
       setNomeRequerente(c.nome_requerente || "");
       setCpfCnpj(c.cpf_cnpj || "");
       setEntradaCaso(c.descricao_caso || "");
@@ -373,6 +371,30 @@ export default function QAGerarPecaPage() {
       if (c.unidade_pf) {
         setCircunscricaoResolvida({ unidade_pf: c.unidade_pf, sigla_unidade: c.sigla_unidade_pf || "", tipo_unidade: "", municipio_sede: "", uf: c.uf || "", base_legal: "" });
         setCircunscricaoStatus("resolved");
+      }
+
+      // 2) Se houver vínculo real com cliente, hidrata dados frescos (sobrepõe snapshot apenas onde houver valor)
+      if (c.cliente_id) {
+        setClienteIdVinculado(Number(c.cliente_id));
+        try {
+          const { data: clienteData } = await supabase
+            .from("qa_clientes" as any)
+            .select("nome_completo, cpf, cidade, estado, cep, endereco, bairro")
+            .eq("id", c.cliente_id)
+            .maybeSingle();
+          if (clienteData) {
+            const cl = clienteData as any;
+            if (cl.nome_completo) setNomeRequerente(cl.nome_completo);
+            if (cl.cpf) setCpfCnpj(cl.cpf);
+            if (cl.cidade) setClienteCidade(cl.cidade);
+            if (cl.estado) setClienteUf(cl.estado);
+            if (cl.cep) setClienteCep(cl.cep);
+            if (cl.endereco) setClienteEndereco(cl.endereco);
+            if (cl.bairro) setClienteBairro(cl.bairro);
+          }
+        } catch (err) {
+          console.warn("[QAGerarPeca] Falha ao hidratar cliente vinculado:", err);
+        }
       }
     };
     loadCase();
@@ -881,6 +903,7 @@ export default function QAGerarPecaPage() {
 
       const casoData: Record<string, any> = {
         titulo: `Caso ${nomeRequerente || "sem título"}`,
+        cliente_id: clienteIdVinculado ?? null,
         nome_requerente: nomeRequerente,
         cpf_cnpj: cpfCnpj || null,
         tipo_peca: tipoPeca,
@@ -933,6 +956,22 @@ export default function QAGerarPecaPage() {
 
       if (persistedGeracaoId) {
         setResultado((prev) => prev ? { ...prev, geracao_id: persistedGeracaoId } : prev);
+      }
+
+      // Reforço de integridade: garante que a peça gerada esteja vinculada ao caso/cliente
+      // (cobre o cenário em que o caso foi criado AGORA, depois da chamada à edge function).
+      if (persistedGeracaoId) {
+        const { error: linkGeracaoError } = await supabase
+          .from("qa_geracoes_pecas" as any)
+          .update({
+            caso_id: savedId,
+            cliente_id: clienteIdVinculado ?? null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", persistedGeracaoId);
+        if (linkGeracaoError) {
+          console.warn("[saveCaso] Falha ao reforçar vínculo da peça com o caso:", linkGeracaoError);
+        }
       }
 
       if (auxiliarDocIds.length > 0) {
@@ -1042,6 +1081,7 @@ export default function QAGerarPecaPage() {
           stream: true,
           usuario_id: user?.id, caso_titulo: nomeRequerente, entrada_caso: entradaCaso,
           tipo_peca: tipoPeca, foco, caso_id: casoId || null,
+          cliente_id: clienteIdVinculado ?? null,
           cliente_cidade: clienteCidade.trim(), cliente_uf: clienteUf.trim(),
           cliente_endereco: clienteEndereco.trim() || null, cliente_cep: clienteCep.trim() || null,
           nome_requerente: nomeRequerente.trim(),

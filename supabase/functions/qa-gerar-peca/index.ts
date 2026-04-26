@@ -720,6 +720,12 @@ Deno.serve(async (req) => {
     } = reqBody;
     const wantStream = !!reqBody.stream;
 
+    // IDs de documentos auxiliares enviados explicitamente pelo front
+    // (mesmo que ainda não estejam vinculados ao caso_id no banco).
+    const documentos_auxiliares_ids: string[] = Array.isArray(reqBody.documentos_auxiliares_ids)
+      ? (reqBody.documentos_auxiliares_ids as any[]).filter(Boolean).map(String)
+      : [];
+
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -864,15 +870,49 @@ Deno.serve(async (req) => {
     let fontesAuxiliares: any[] = [];
     let evidenceDocs: EvidenceDoc[] = [];
     const caso_id = req_caso_id?.trim() || null;
+    // Cliente vinculado: prioriza payload; se ausente e houver caso, deriva do qa_casos.cliente_id.
+    let cliente_id_final: number | null = (typeof reqClienteId === "number" || typeof reqClienteId === "string")
+      ? Number(reqClienteId) || null
+      : null;
+    if (!cliente_id_final && caso_id) {
+      const { data: casoRow } = await supabase
+        .from("qa_casos")
+        .select("cliente_id")
+        .eq("id", caso_id)
+        .maybeSingle();
+      if (casoRow?.cliente_id) cliente_id_final = Number(casoRow.cliente_id) || null;
+    }
 
-    if (caso_id) {
-      const { data: auxDocs } = await supabase.from("qa_documentos_conhecimento")
-        .select("id, titulo, tipo_documento, texto_extraido, resumo_extraido, categoria")
-        .eq("status_processamento", "concluido")
-        .eq("ativo", true)
-        .eq("papel_documento", "auxiliar_caso")
-        .eq("caso_id", caso_id)
-        .limit(30);
+    if (caso_id || documentos_auxiliares_ids.length > 0) {
+      // 1) Documentos vinculados ao caso (via caso_id)
+      const auxDocsMap = new Map<string, any>();
+      if (caso_id) {
+        const { data: porCaso } = await supabase.from("qa_documentos_conhecimento")
+          .select("id, titulo, tipo_documento, texto_extraido, resumo_extraido, categoria")
+          .eq("status_processamento", "concluido")
+          .eq("ativo", true)
+          .eq("papel_documento", "auxiliar_caso")
+          .eq("caso_id", caso_id)
+          .limit(30);
+        (porCaso || []).forEach((d: any) => auxDocsMap.set(d.id, d));
+      }
+
+      // 2) Documentos enviados explicitamente por ID (mesmo sem caso_id ainda)
+      if (documentos_auxiliares_ids.length > 0) {
+        const idsFaltantes = documentos_auxiliares_ids.filter(id => !auxDocsMap.has(id));
+        if (idsFaltantes.length > 0) {
+          const { data: porIds } = await supabase.from("qa_documentos_conhecimento")
+            .select("id, titulo, tipo_documento, texto_extraido, resumo_extraido, categoria")
+            .eq("status_processamento", "concluido")
+            .eq("ativo", true)
+            .in("id", idsFaltantes)
+            .limit(30);
+          (porIds || []).forEach((d: any) => auxDocsMap.set(d.id, d));
+        }
+      }
+
+      const auxDocs = Array.from(auxDocsMap.values());
+      console.log(`[qa-gerar-peca] Auxiliary docs collected: ${auxDocs.length} (caso_id=${caso_id || "—"}, explicit_ids=${documentos_auxiliares_ids.length})`);
 
       // Classify each doc by type
       const priorityDocs: typeof auxDocs = [];
@@ -1275,6 +1315,8 @@ IGNORE qualquer menção no contexto a tipos de peça diferentes. O tipo é FIXO
               status: "gerado", status_revisao: "rascunho",
               profundidade: "tecnica_concisa", tom: "tecnico_padrao", foco: foco || "legalidade",
               score_confianca: scoreConfianca, versao: 1,
+              caso_id: caso_id || null,
+              cliente_id: cliente_id_final ?? null,
             }).select("id").single();
 
             await supabase.from("qa_logs_auditoria").insert({
@@ -1418,6 +1460,8 @@ IGNORE qualquer menção no contexto a tipos de peça diferentes. O tipo é FIXO
       foco: foco || "legalidade",
       score_confianca: scoreConfianca,
       versao: 1,
+      caso_id: caso_id || null,
+      cliente_id: cliente_id_final ?? null,
     }).select("id").single();
 
     await supabase.from("qa_logs_auditoria").insert({
