@@ -386,24 +386,40 @@ export default function QAClientePortalPage() {
         onSuccess={() => setMustChangePassword(false)}
       />
       {/* ═══ TOP BAR ═══ */}
-      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-lg border-b border-slate-200/60 shadow-sm">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex flex-col">
-            <span className="text-base md:text-lg font-bold leading-tight" style={{ color: "hsl(220 20% 18%)" }}>
-              Área do Cliente
-            </span>
-            <span className="text-[11px] md:text-xs text-slate-500 leading-tight mt-0.5">
-              Bem-vindo, {userName || "cliente"}
-            </span>
-            <span className="text-[10px] md:text-[11px] text-slate-400 leading-tight">
-              ao seu arsenal inteligente
-            </span>
+      <header
+        className="sticky top-0 z-50 border-b border-white/10 backdrop-blur-xl"
+        style={{ background: "linear-gradient(180deg, rgba(10,10,10,0.92) 0%, rgba(6,6,6,0.88) 100%)" }}
+      >
+        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+          {/* Identidade */}
+          <div className="flex items-center gap-3 min-w-0">
+            <div
+              className="hidden sm:flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#c9a961]/40"
+              style={{ background: "linear-gradient(135deg, rgba(201,169,97,0.18), rgba(201,169,97,0.04))" }}
+            >
+              <CrosshairIcon className="h-4 w-4" style={{ color: "#c9a961" }} />
+            </div>
+            <div className="flex flex-col min-w-0">
+              <span className="text-[9px] font-black uppercase tracking-[0.32em]" style={{ color: "#c9a961" }}>
+                Área do Cliente
+              </span>
+              <span className="truncate text-[13px] md:text-sm font-bold uppercase tracking-wide text-white leading-tight">
+                {userName || "Cliente"}
+              </span>
+              <span className="text-[10px] uppercase tracking-[0.18em] text-white/40 leading-tight">
+                Arsenal inteligente
+              </span>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={handleLogout} className="h-8 px-3 text-[11px] text-slate-500 hover:text-red-500">
-              <LogOut className="h-3.5 w-3.5 mr-1" /> SAIR
-            </Button>
-          </div>
+
+          {/* Ações */}
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-3 text-[10px] font-black uppercase tracking-[0.22em] text-white/80 transition hover:border-red-400/50 hover:bg-red-500/10 hover:text-red-300"
+          >
+            <LogOut className="h-3.5 w-3.5" /> Sair
+          </button>
         </div>
       </header>
 
