@@ -30,7 +30,6 @@ describe("useResilientLoad", () => {
   });
 
   it("aplica timeout duro quando o loader trava", async () => {
-    vi.useFakeTimers();
     const loader = vi.fn().mockImplementation(
       () => new Promise(() => {}), // nunca resolve
     );
@@ -38,12 +37,7 @@ describe("useResilientLoad", () => {
       useResilientLoad(loader, [], { timeoutMs: 50, label: "test" }),
     );
 
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(60);
-    });
-
-    await waitFor(() => expect(result.current.status).toBe("error"));
+    await waitFor(() => expect(result.current.status).toBe("error"), { timeout: 1000 });
     expect(result.current.error?.message).toMatch(/timeout/i);
-    vi.useRealTimers();
   });
 });
