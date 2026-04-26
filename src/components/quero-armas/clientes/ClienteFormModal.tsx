@@ -292,7 +292,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
 
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="w-[96vw] max-w-3xl max-h-[90vh] overflow-hidden p-0 bg-white border-slate-200 text-slate-800 qa-premium gap-0">
+      <DialogContent className="w-[96vw] max-w-3xl max-h-[90dvh] overflow-hidden p-0 bg-white border-slate-200 text-slate-800 qa-premium gap-0">
 
         {/* ── Header ── */}
         <DialogHeader className="px-6 pt-5 pb-4 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">

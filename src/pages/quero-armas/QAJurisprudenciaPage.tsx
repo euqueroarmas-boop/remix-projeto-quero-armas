@@ -198,7 +198,7 @@ export default function QAJurisprudenciaPage() {
                 <Plus className="h-3.5 w-3.5" /> Nova Jurisprudência
               </button>
             </DialogTrigger>
-            <DialogContent className="bg-white border-slate-200 text-slate-800 max-w-2xl max-h-[85vh] overflow-y-auto rounded-xl">
+            <DialogContent className="bg-white border-slate-200 text-slate-800 max-w-2xl max-h-[90dvh] overflow-y-auto overscroll-contain pb-[max(1.5rem,env(safe-area-inset-bottom))] rounded-xl">
               <DialogHeader>
                 <DialogTitle className="text-sm font-semibold text-[#1e293b]">Cadastrar Jurisprudência</DialogTitle>
               </DialogHeader>

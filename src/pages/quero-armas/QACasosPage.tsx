@@ -283,7 +283,7 @@ export default function QACasosPage() {
 
       {/* Detail dialog */}
       <Dialog open={!!detailCase} onOpenChange={() => setDetailCase(null)}>
-        <DialogContent className="bg-white border-slate-200 max-w-3xl max-h-[85vh] overflow-y-auto p-3 md:p-6 rounded-xl">
+        <DialogContent className="bg-white border-slate-200 max-w-3xl max-h-[90dvh] overflow-y-auto overscroll-contain pb-[max(1.5rem,env(safe-area-inset-bottom))] p-3 md:p-6 rounded-xl">
           {detailCase && (
             <CaseDetailPanel
               caso={detailCase}
