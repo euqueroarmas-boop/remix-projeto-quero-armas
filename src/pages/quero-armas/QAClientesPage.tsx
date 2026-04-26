@@ -23,6 +23,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 
 import { toast } from "sonner";
+import { LoadingState, ErrorRetryState } from "@/components/quero-armas/LoadStates";
 import ClienteFormModal from "@/components/quero-armas/clientes/ClienteFormModal";
 import ClienteOverview from "@/components/quero-armas/clientes/ClienteOverview";
 import { CrafModal, GteModal, CrModal, VendaModal, FiliacaoModal, DeleteConfirm } from "@/components/quero-armas/clientes/SubEntityModals";
