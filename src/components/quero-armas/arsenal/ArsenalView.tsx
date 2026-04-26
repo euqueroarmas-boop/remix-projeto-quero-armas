@@ -280,14 +280,6 @@ export function ArsenalView({
               "radial-gradient(circle at 0% 0%, rgba(255,255,255,0.06), transparent 50%), radial-gradient(circle at 100% 100%, rgba(255,255,255,0.04), transparent 50%)",
           }}
         />
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.06]"
-          style={{
-            backgroundImage:
-              "linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)",
-            backgroundSize: "32px 32px",
-          }}
-        />
         <div className="relative flex flex-col gap-3 p-5 md:flex-row md:items-center md:justify-between md:p-6">
           <div>
             <div className="flex items-center gap-2">
