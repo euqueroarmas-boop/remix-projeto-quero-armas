@@ -97,6 +97,9 @@ export default function QADashboardPage() {
   const [cadastrosPorDia, setCadastrosPorDia] = useState<DayCount[]>([]);
   const [cadastrosPorMes, setCadastrosPorMes] = useState<MonthCount[]>([]);
   const [servicosDistrib, setServicosDistrib] = useState<ServicoCount[]>([]);
+  // Atividade semanal real (peças e documentos por dia, últimos 7 dias).
+  const [weekActivity, setWeekActivity] = useState<{ day: string; pecas: number; docs: number }[]>([]);
+  const [weekActivityLoaded, setWeekActivityLoaded] = useState(false);
   const [loading, setLoading] = useState(true);
   // Widgets pesados (Prazos, Exames, Processos) só montam depois da parte estática.
   const [mountHeavy, setMountHeavy] = useState(false);
@@ -226,6 +229,67 @@ export default function QADashboardPage() {
       }
     };
 
+    // Onda 3b — Atividade semanal real (peças/docs criados nos últimos 7 dias)
+    const loadWeekActivity = async () => {
+      if (cancelled) return;
+      try {
+        const now = new Date();
+        const sevenDaysAgo = new Date(now);
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+        sevenDaysAgo.setHours(0, 0, 0, 0);
+
+        const since = sevenDaysAgo.toISOString();
+
+        const [pecasRes, docsRes] = await Promise.allSettled([
+          supabase.from("qa_geracoes_pecas" as any)
+            .select("created_at")
+            .gte("created_at", since)
+            .limit(1000),
+          supabase.from("qa_documentos_conhecimento" as any)
+            .select("created_at")
+            .eq("ativo", true)
+            .gte("created_at", since)
+            .limit(1000),
+        ]);
+        if (cancelled) return;
+
+        const pecasRows = pecasRes.status === "fulfilled" ? ((pecasRes.value as any).data as any[] || []) : [];
+        const docsRows = docsRes.status === "fulfilled" ? ((docsRes.value as any).data as any[] || []) : [];
+
+        const labels = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+        // Inicializa janela de 7 dias terminando hoje
+        const buckets: { date: Date; key: string; day: string; pecas: number; docs: number }[] = [];
+        for (let i = 6; i >= 0; i--) {
+          const dt = new Date(now);
+          dt.setHours(0, 0, 0, 0);
+          dt.setDate(dt.getDate() - i);
+          buckets.push({
+            date: dt,
+            key: dt.toISOString().slice(0, 10),
+            day: labels[dt.getDay()],
+            pecas: 0,
+            docs: 0,
+          });
+        }
+        const byKey = new Map(buckets.map(b => [b.key, b]));
+
+        pecasRows.forEach((r: any) => {
+          const k = new Date(r.created_at).toISOString().slice(0, 10);
+          const b = byKey.get(k); if (b) b.pecas += 1;
+        });
+        docsRows.forEach((r: any) => {
+          const k = new Date(r.created_at).toISOString().slice(0, 10);
+          const b = byKey.get(k); if (b) b.docs += 1;
+        });
+
+        setWeekActivity(buckets.map(b => ({ day: b.day, pecas: b.pecas, docs: b.docs })));
+        setWeekActivityLoaded(true);
+      } catch (err) {
+        console.warn("[QADashboard] atividade semanal falhou (não bloqueante):", err);
+        setWeekActivityLoaded(true);
+      }
+    };
+
     // Estabilidade > esperteza: setTimeout simples e previsível.
     // Onda 2 entra logo após a crítica; Onda 3 (gráficos, fora da primeira dobra) fica mais tarde.
     loadCritical()
@@ -236,6 +300,7 @@ export default function QADashboardPage() {
       .finally(() => {
         setTimeout(() => { if (!cancelled) void loadSecondary(); }, 250);
         setTimeout(() => { if (!cancelled) void loadCharts(); }, 800);
+        setTimeout(() => { if (!cancelled) void loadWeekActivity(); }, 900);
       });
 
     return () => {
