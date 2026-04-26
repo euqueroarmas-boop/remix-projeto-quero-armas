@@ -1331,12 +1331,26 @@ export default function QAClientesPage() {
 
   const loadClientes = async () => {
     setLoading(true);
+    setLoadError(null);
+    // Safety: nunca deixar o spinner principal eterno (12s).
+    const safety = setTimeout(() => {
+      console.warn("[QAClientes] safety timeout 12s — liberando UI com erro");
+      setLoadError(new Error("Tempo limite excedido ao carregar clientes."));
+      setLoading(false);
+    }, 12000);
     try {
-      const { data } = await supabase.from("qa_clientes" as any).select("*").order("nome_completo", { ascending: true });
+      const { data, error } = await supabase
+        .from("qa_clientes" as any)
+        .select("*")
+        .order("nome_completo", { ascending: true });
+      if (error) throw error;
       setClientes((data as any[]) ?? []);
-    } catch (err) {
+      setLoadError(null);
+    } catch (err: any) {
       console.error("[QAClientes] loadClientes error:", err);
+      setLoadError(err instanceof Error ? err : new Error(String(err?.message || err)));
     } finally {
+      clearTimeout(safety);
       setLoading(false);
     }
   };
