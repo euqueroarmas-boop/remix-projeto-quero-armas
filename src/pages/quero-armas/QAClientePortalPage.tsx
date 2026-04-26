@@ -377,17 +377,18 @@ export default function QAClientePortalPage() {
       {/* ═══ TOP BAR ═══ */}
       <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-lg border-b border-slate-200/60 shadow-sm">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "hsl(230 80% 96%)" }}>
-              <Shield className="h-4 w-4" style={{ color: "hsl(230 80% 56%)" }} />
-            </div>
-            <div>
-              <span className="text-sm font-bold" style={{ color: "hsl(220 20% 18%)" }}>Quero Armas</span>
-              <span className="text-[10px] text-slate-400 block">Área do Cliente</span>
-            </div>
+          <div className="flex flex-col">
+            <span className="text-base md:text-lg font-bold leading-tight" style={{ color: "hsl(220 20% 18%)" }}>
+              Área do Cliente
+            </span>
+            <span className="text-[11px] md:text-xs text-slate-500 leading-tight mt-0.5">
+              Bem-vindo, {userName || "cliente"}
+            </span>
+            <span className="text-[10px] md:text-[11px] text-slate-400 leading-tight">
+              ao seu arsenal inteligente
+            </span>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-[11px] font-medium text-slate-500 hidden sm:block">{userName}</span>
             <Button variant="ghost" size="sm" onClick={handleLogout} className="h-8 px-3 text-[11px] text-slate-500 hover:text-red-500">
               <LogOut className="h-3.5 w-3.5 mr-1" /> SAIR
             </Button>
