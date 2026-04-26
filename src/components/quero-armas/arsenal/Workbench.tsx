@@ -188,7 +188,7 @@ function WeaponCard({
           </div>
           <div>
             <div className="font-mono text-[9px] uppercase tracking-wider text-white/40">N° SÉRIE</div>
-            <div className="truncate font-mono text-white/80">{maskSerial(w.numero_arma)}</div>
+            <div className="truncate font-mono text-white/80">{w.numero_arma || "—"}</div>
           </div>
         </div>
 
