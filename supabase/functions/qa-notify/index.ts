@@ -113,6 +113,14 @@ Deno.serve(async (req) => {
   const traceId = `qa-notify-${crypto.randomUUID()}`;
 
   try {
+    // Auth: accept staff JWT OR cron token
+    const { requireQAStaff, requireCronToken } = await import("../_shared/qaAuth.ts");
+    const cronCheck = requireCronToken(req);
+    if (!cronCheck.ok) {
+      const staffCheck = await requireQAStaff(req);
+      if (!staffCheck.ok) return staffCheck.response;
+    }
+
     const body = (await req.json()) as Payload;
     const { template, to, data } = body;
 

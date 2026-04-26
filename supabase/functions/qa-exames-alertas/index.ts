@@ -32,6 +32,14 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Auth: accept staff JWT OR cron token
+  const { requireQAStaff, requireCronToken } = await import("../_shared/qaAuth.ts");
+  const cronCheck = requireCronToken(req);
+  if (!cronCheck.ok) {
+    const staffCheck = await requireQAStaff(req);
+    if (!staffCheck.ok) return staffCheck.response;
+  }
+
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const sb = createClient(supabaseUrl, supabaseKey);

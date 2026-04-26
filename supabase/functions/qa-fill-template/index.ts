@@ -153,6 +153,10 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const { requireQAStaff } = await import("../_shared/qaAuth.ts");
+    const guard = await requireQAStaff(req);
+    if (!guard.ok) return guard.response;
+
     const { template_key, cliente_id, extra_fields } = await req.json();
 
     if (!template_key || !cliente_id) {

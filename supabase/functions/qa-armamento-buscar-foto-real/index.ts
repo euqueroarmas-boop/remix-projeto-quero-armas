@@ -319,6 +319,11 @@ async function removeBackgroundAI(bytes: Uint8Array, mime: string): Promise<{ by
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
+    // Auth: require active QA staff
+    const { requireQAStaff } = await import("../_shared/qaAuth.ts");
+    const guard = await requireQAStaff(req);
+    if (!guard.ok) return guard.response;
+
     const body = await req.json().catch(() => ({}));
     const id = body?.id as string | undefined;
     if (!id) {
