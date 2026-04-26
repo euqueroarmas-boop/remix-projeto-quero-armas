@@ -141,7 +141,27 @@ export function ArsenalView({
         daysToExpire: daysUntil(d.data_validade),
       });
     });
-    list.sort((a, b) => (a.daysToExpire ?? 9999) - (b.daysToExpire ?? 9999));
+    // Ordem da bancada:
+    //  1) CR sempre primeiro
+    //  2) CRAFs por ordem de deferimento (validade ascendente = mais antigo primeiro)
+    //  3) Demais documentos por proximidade de vencimento
+    const categoryRank = (cat: string) => {
+      if (cat === "CR") return 0;
+      if (cat === "CRAF") return 1;
+      return 2;
+    };
+    list.sort((a, b) => {
+      const ra = categoryRank(a.category);
+      const rb = categoryRank(b.category);
+      if (ra !== rb) return ra - rb;
+      if (a.category === "CRAF" && b.category === "CRAF") {
+        // Validade ascendente equivale a ordem de deferimento (mais antigo primeiro)
+        const da = a.date ? new Date(a.date).getTime() : Number.POSITIVE_INFINITY;
+        const db = b.date ? new Date(b.date).getTime() : Number.POSITIVE_INFINITY;
+        return da - db;
+      }
+      return (a.daysToExpire ?? 9999) - (b.daysToExpire ?? 9999);
+    });
     return list;
   }, [cadastroCr, crafs, gtes, meusDocs]);
 
