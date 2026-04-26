@@ -355,11 +355,11 @@ export default function QADashboardPage() {
 
       {/* KPI Cards - Row 1 */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
-        <KPICard icon={Users} label="Novos Cadastros" value={stats.novosCadastros} trend={stats.novosCadastros > 0 ? "novo" : "—"} positive={stats.novosCadastros > 0} />
-        <KPICard icon={FileText} label="Acervo Jurídico" value={totalAcervo} trend={totalAcervo > 0 ? `${totalAcervo}` : "—"} positive={totalAcervo > 0} />
-        <KPICard icon={PenTool} label="Peças Geradas" value={stats.pecas} trend={stats.pecas > 0 ? `${stats.pecas}` : "—"} positive={stats.pecas > 0} />
-        <KPICard icon={CheckCircle} label="Aprovadas" value={stats.aprovadas} trend={stats.aprovadas > 0 ? `${stats.aprovadas}` : "—"} positive={stats.aprovadas > 0} />
-        <KPICard icon={Shield} label="Consultas IA" value={stats.consultas} trend={stats.consultas > 0 ? `${stats.consultas}` : "—"} positive={stats.consultas > 0} />
+        <KPICard to="/clientes" icon={Users} label="Novos Cadastros" value={stats.novosCadastros} trend={stats.novosCadastros > 0 ? "novo" : "—"} positive={stats.novosCadastros > 0} />
+        <KPICard to="/base-conhecimento" icon={FileText} label="Acervo Jurídico" value={totalAcervo} trend={totalAcervo > 0 ? `${totalAcervo}` : "—"} positive={totalAcervo > 0} />
+        <KPICard to="/historico" icon={PenTool} label="Peças Geradas" value={stats.pecas} trend={stats.pecas > 0 ? `${stats.pecas}` : "—"} positive={stats.pecas > 0} />
+        <KPICard to="/historico" icon={CheckCircle} label="Aprovadas" value={stats.aprovadas} trend={stats.aprovadas > 0 ? `${stats.aprovadas}` : "—"} positive={stats.aprovadas > 0} />
+        <KPICard to="/ia" icon={Shield} label="Consultas IA" value={stats.consultas} trend={stats.consultas > 0 ? `${stats.consultas}` : "—"} positive={stats.consultas > 0} />
       </div>
 
       {/* Novos Cadastros Públicos */}
@@ -596,10 +596,10 @@ export default function QADashboardPage() {
 
         {/* Mini metric cards */}
         <div className="grid grid-cols-2 gap-3 content-start">
-          <MiniMetricCard icon={BookOpen} label="Documentos" value={stats.documentos} color={COLORS.blue} />
-          <MiniMetricCard icon={Scale} label="Normas" value={stats.normas} color={COLORS.purple} />
-          <MiniMetricCard icon={Gavel} label="Jurisprudências" value={stats.jurisprudencias} color={COLORS.cyan} />
-          <MiniMetricCard icon={Activity} label="Referências" value={stats.referencias} color={COLORS.green} />
+          <MiniMetricCard to="/base-conhecimento" icon={BookOpen} label="Documentos" value={stats.documentos} color={COLORS.blue} />
+          <MiniMetricCard to="/legislacao" icon={Scale} label="Normas" value={stats.normas} color={COLORS.purple} />
+          <MiniMetricCard to="/jurisprudencia" icon={Gavel} label="Jurisprudências" value={stats.jurisprudencias} color={COLORS.cyan} />
+          <MiniMetricCard to="/base-conhecimento" icon={Activity} label="Referências" value={stats.referencias} color={COLORS.green} />
         </div>
       </div>
 
@@ -637,11 +637,11 @@ export default function QADashboardPage() {
 
 /* ── Sub-components ── */
 
-function KPICard({ icon: Icon, label, value, trend, positive }: {
-  icon: any; label: string; value: number; trend: string; positive: boolean;
+function KPICard({ icon: Icon, label, value, trend, positive, to }: {
+  icon: any; label: string; value: number; trend: string; positive: boolean; to?: string;
 }) {
-  return (
-    <div className="qa-card qa-hover-lift p-4 md:p-5">
+  const content = (
+    <div className="qa-card qa-hover-lift p-4 md:p-5 cursor-pointer h-full">
       <div className="flex items-start justify-between mb-3">
         <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: "hsl(230 80% 96%)" }}>
           <Icon className="h-4.5 w-4.5" style={{ color: "hsl(230 80% 56%)" }} />
@@ -661,13 +661,14 @@ function KPICard({ icon: Icon, label, value, trend, positive }: {
       <div className="text-xs font-medium" style={{ color: "hsl(220 10% 55%)" }}>{label}</div>
     </div>
   );
+  return to ? <Link to={to} className="block">{content}</Link> : content;
 }
 
-function MiniMetricCard({ icon: Icon, label, value, color }: {
-  icon: any; label: string; value: number; color: string;
+function MiniMetricCard({ icon: Icon, label, value, color, to }: {
+  icon: any; label: string; value: number; color: string; to?: string;
 }) {
-  return (
-    <div className="qa-card qa-hover-lift p-4">
+  const content = (
+    <div className="qa-card qa-hover-lift p-4 cursor-pointer h-full">
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
           style={{ background: color + "14" }}>
@@ -680,6 +681,7 @@ function MiniMetricCard({ icon: Icon, label, value, color }: {
       </div>
     </div>
   );
+  return to ? <Link to={to} className="block">{content}</Link> : content;
 }
 
 function RecentList({ title, subtitle, items, linkTo, icon: Icon, statusBadge, isDoc }: {
