@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { decode as pngDecode, encode as pngEncode } from "https://deno.land/x/pngs@0.1.1/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -230,6 +231,31 @@ async function downloadImage(url: string): Promise<{ bytes: Uint8Array; mime: st
   }
 }
 
+function removeCheckerAndLightBackground(bytes: Uint8Array): { bytes: Uint8Array; transparent: boolean } | null {
+  try {
+    const dec = pngDecode(bytes);
+    const w = dec.width;
+    const h = dec.height;
+    const rgba = dec.image.length === w * h * 4 ? new Uint8Array(dec.image) : null;
+    if (!rgba) return null;
+    let changed = false;
+    for (let i = 0; i < rgba.length; i += 4) {
+      const r = rgba[i], g = rgba[i + 1], b = rgba[i + 2], a = rgba[i + 3];
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      if (a === 0) continue;
+      if ((lum > 170 && max - min < 25) || (r > 235 && g > 235 && b > 235)) {
+        rgba[i + 3] = 0;
+        changed = true;
+      }
+    }
+    return { bytes: pngEncode(rgba, w, h), transparent: true && changed };
+  } catch {
+    return null;
+  }
+}
+
 /** Remove fundo branco/claro/xadrez de transparência usando IA (Gemini image edit).
  *  Retorna PNG transparente. Se falhar, devolve os bytes originais. */
 async function removeBackgroundAI(bytes: Uint8Array, mime: string): Promise<{ bytes: Uint8Array; mime: string; transparent: boolean }> {
@@ -281,6 +307,8 @@ async function removeBackgroundAI(bytes: Uint8Array, mime: string): Promise<{ by
     const outBin = atob(m[2]);
     const outBytes = new Uint8Array(outBin.length);
     for (let i = 0; i < outBin.length; i++) outBytes[i] = outBin.charCodeAt(i);
+    const scrubbed = outMime.includes("png") ? removeCheckerAndLightBackground(outBytes) : null;
+    if (scrubbed) return { bytes: scrubbed.bytes, mime: "image/png", transparent: true };
     return { bytes: outBytes, mime: outMime, transparent: true };
   } catch (e) {
     console.warn("[bg-remove] erro", e);
