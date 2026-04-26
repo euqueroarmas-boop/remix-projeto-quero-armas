@@ -12,6 +12,8 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
+import { LoadingState } from "@/components/quero-armas/LoadStates";
+
 // LazyOnVisible removido dos widgets críticos por estabilidade (mount único, sem IO).
 
 const DashboardExames = lazy(() => import("@/components/quero-armas/dashboard/DashboardExames"));
