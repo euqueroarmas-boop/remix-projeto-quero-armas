@@ -15,7 +15,7 @@
  * Layout: grid de até 9 cards pequenos (mais antigo → mais novo). 10º card "+N".
  */
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Loader2, Plus, Copy } from "lucide-react";
 import { useWidgetLoader } from "@/hooks/useWidgetLoader";
@@ -29,15 +29,7 @@ import { getSenhaGov } from "@/components/quero-armas/clientes/senhaGovApi";
  * Copia texto compatível com Safari iOS, que bloqueia navigator.clipboard
  * fora de gestos síncronos. Faz fallback via textarea + execCommand('copy').
  */
-async function copyTextSafe(text: string): Promise<boolean> {
-  try {
-    if (navigator.clipboard && window.isSecureContext) {
-      await navigator.clipboard.writeText(text);
-      return true;
-    }
-  } catch {
-    /* fallback abaixo */
-  }
+function copyTextFallback(text: string): boolean {
   try {
     const ta = document.createElement("textarea");
     ta.value = text;
@@ -56,6 +48,18 @@ async function copyTextSafe(text: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+async function copyTextSafe(text: string): Promise<boolean> {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch {
+    /* fallback abaixo */
+  }
+  return copyTextFallback(text);
 }
 
 interface ItemRow {
@@ -134,6 +138,9 @@ function toneFor(dias: number) {
 }
 
 export default function DashboardPrazosRecursais() {
+  const [govSenhas, setGovSenhas] = useState<Record<number, string>>({});
+  const [govLoading, setGovLoading] = useState<Record<number, boolean>>({});
+
   const { state, data, reload } = useWidgetLoader<PrazoRow[]>(async (signal) => {
     const snapshot = await loadQADashboardSnapshot(signal);
     const servicoIdsPF = Object.keys(SERVICOS_PF_RECURSO).map(Number);
@@ -346,24 +353,41 @@ export default function DashboardPrazosRecursais() {
                         toast.error("Sem CR cadastrado");
                         return;
                       }
+
+                      const cached = govSenhas[r.cadastroCrId];
+                      if (cached) {
+                        const ok = await copyTextSafe(cached);
+                        if (ok) toast.success("Senha Gov copiada");
+                        else toast.error("Não foi possível copiar — toque e segure na senha para copiar");
+                        return;
+                      }
+
+                      setGovLoading((prev) => ({ ...prev, [r.cadastroCrId!]: true }));
                       try {
                         const senha = await getSenhaGov(r.cadastroCrId, "Prazos Recursais");
                         if (!senha) {
                           toast.info("Sem Senha Gov cadastrada");
                           return;
                         }
-                        const ok = await copyTextSafe(senha);
-                        if (ok) toast.success("Senha Gov copiada");
-                        else toast.error("Não foi possível copiar — toque e segure para copiar manualmente");
+                        setGovSenhas((prev) => ({ ...prev, [r.cadastroCrId!]: senha }));
+                        toast.success("Senha Gov autenticada — toque novamente para copiar");
                       } catch (err: any) {
                         toast.error("Senha Gov: " + (err?.message || "erro"));
+                      } finally {
+                        setGovLoading((prev) => ({ ...prev, [r.cadastroCrId!]: false }));
                       }
                     }}
                     className="flex items-center gap-1 px-1 py-0.5 rounded hover:bg-slate-200/60 text-[9px] font-mono text-slate-700 truncate"
-                    title={r.cadastroCrId ? "Copiar Senha Gov (decifra sob demanda)" : "Sem CR"}
+                    title={r.cadastroCrId ? "Autenticar e copiar Senha Gov" : "Sem CR"}
                   >
-                    <Copy className="h-2.5 w-2.5 shrink-0 text-slate-400" />
-                    <span className="truncate">GOV: {r.cadastroCrId ? "•••• copiar" : "—"}</span>
+                    {r.cadastroCrId && govLoading[r.cadastroCrId] ? (
+                      <Loader2 className="h-2.5 w-2.5 shrink-0 animate-spin text-slate-400" />
+                    ) : (
+                      <Copy className="h-2.5 w-2.5 shrink-0 text-slate-400" />
+                    )}
+                    <span className="truncate select-text">
+                      GOV: {r.cadastroCrId ? govSenhas[r.cadastroCrId] || "•••• autenticar" : "—"}
+                    </span>
                   </button>
                 </div>
                 <div className="mt-auto flex items-baseline gap-1">
