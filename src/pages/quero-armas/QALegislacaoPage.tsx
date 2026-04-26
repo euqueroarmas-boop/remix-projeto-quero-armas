@@ -86,7 +86,7 @@ export default function QALegislacaoPage() {
                 <Plus className="h-3.5 w-3.5" /> Nova Norma
               </button>
             </DialogTrigger>
-            <DialogContent className="bg-white border-slate-200 text-slate-800 max-w-2xl max-h-[85vh] overflow-y-auto rounded-xl">
+            <DialogContent className="bg-white border-slate-200 text-slate-800 max-w-2xl max-h-[90dvh] overflow-y-auto rounded-xl">
               <DialogHeader>
                 <DialogTitle className="text-sm font-semibold" style={{ color: "hsl(220 20% 18%)" }}>Cadastrar Norma</DialogTitle>
               </DialogHeader>
