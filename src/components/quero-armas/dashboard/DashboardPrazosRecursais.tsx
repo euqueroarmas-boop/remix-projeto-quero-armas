@@ -1,10 +1,11 @@
 /**
  * Dashboard — Prazos Recursais (PF: Posse, Porte e CRAF)
  *
- * Trigger: item com data_indeferimento preenchida E serviço sendo
- * Posse PF (id=2), Porte PF (id=3) ou CRAF PF (id=26).
- * Janela: D = data_indeferimento; prazo = D+10 (Lei 9.784/99 art. 59 +
- * Decreto 9.847/19 art. 10). Vencidos NÃO aparecem (filtra diasRestantes >= 0).
+ * Trigger: item com data_notificacao OU data_indeferimento preenchida E
+ * serviço sendo Posse PF (id=2), Porte PF (id=3) ou CRAF PF (id=26).
+ * Janela: D = data mais recente entre notificação/indeferimento; prazo = D+10
+ * (Lei 9.784/99 art. 59 + Decreto 9.847/19 art. 10).
+ * Vencidos NÃO aparecem (filtra diasRestantes >= 0).
  * Cores por dias restantes: 🟢 8–10 · 🟡 5–7 · 🔴 0–4.
  *
  * FKs em produção:
@@ -29,6 +30,7 @@ interface ItemRow {
   servico_id: number | null;
   status: string | null;
   data_indeferimento: string | null;
+  data_notificacao: string | null;
   data_recurso_administrativo: string | null;
   numero_processo: string | null;
 }
@@ -44,7 +46,9 @@ interface PrazoRow {
   senhaGov: string | null;
   protocolo: string | null;
   tipo: "Posse" | "Porte" | "CRAF";
-  dataIndeferimento: string;
+  /** Tipo do evento que disparou a contagem (NOTIFICAÇÃO ou INDEFERIMENTO). */
+  evento: "NOTIFICAÇÃO" | "INDEFERIMENTO";
+  dataEvento: string;
   dataLimite: string;
   diasRestantes: number;
 }
@@ -94,7 +98,10 @@ export default function DashboardPrazosRecursais() {
     const snapshot = await loadQADashboardSnapshot(signal);
     const servicoIdsPF = Object.keys(SERVICOS_PF_RECURSO).map(Number);
     const itensList = snapshot.itens.filter(
-      (item) => item.data_indeferimento && item.servico_id != null && servicoIdsPF.includes(item.servico_id)
+      (item) =>
+        (item.data_indeferimento || item.data_notificacao) &&
+        item.servico_id != null &&
+        servicoIdsPF.includes(item.servico_id)
     ) as ItemRow[];
     if (!itensList.length) return [];
 
@@ -131,8 +138,22 @@ export default function DashboardPrazosRecursais() {
       const venda = vMap.get(it.venda_id);
       const cliente = venda?.cliente_id != null ? cMap.get(venda.cliente_id) : null;
       if (!cliente) continue;
-      const dIndef = it.data_indeferimento!;
-      const dLimite = addDaysISO(dIndef, 10);
+      // Usa a data mais recente entre Notificação e Indeferimento como gatilho
+      // do prazo recursal — assim o card reflete a janela ativa.
+      const dNotif = it.data_notificacao || null;
+      const dIndef = it.data_indeferimento || null;
+      let dEvento: string | null = null;
+      let evento: "NOTIFICAÇÃO" | "INDEFERIMENTO" = "INDEFERIMENTO";
+      if (dNotif && dIndef) {
+        if (dNotif >= dIndef) { dEvento = dNotif; evento = "NOTIFICAÇÃO"; }
+        else { dEvento = dIndef; evento = "INDEFERIMENTO"; }
+      } else if (dNotif) {
+        dEvento = dNotif; evento = "NOTIFICAÇÃO";
+      } else if (dIndef) {
+        dEvento = dIndef; evento = "INDEFERIMENTO";
+      }
+      if (!dEvento) continue;
+      const dLimite = addDaysISO(dEvento, 10);
       const diasRestantes = diffDays(today, dLimite);
       if (diasRestantes < 0 || diasRestantes > 10) continue;
       built.push({
@@ -144,7 +165,8 @@ export default function DashboardPrazosRecursais() {
         senhaGov: cliente.id != null ? senhaMap.get(cliente.id) ?? null : null,
         protocolo: it.numero_processo ?? null,
         tipo,
-        dataIndeferimento: dIndef,
+        evento,
+        dataEvento: dEvento,
         dataLimite: dLimite,
         diasRestantes,
       });
@@ -222,7 +244,7 @@ export default function DashboardPrazosRecursais() {
               <Link
                 key={r.itemId}
                 to={link}
-                title={`${r.clienteNome} — ${r.tipo} PF · prazo fatal ${dataLimiteBr}`}
+                title={`${r.clienteNome} — ${r.tipo} PF · ${r.evento} · prazo fatal ${dataLimiteBr}`}
                 className={`group flex flex-col gap-1.5 px-3 py-3 ${tone.bg} hover:bg-slate-50 transition-colors min-h-[88px]`}
               >
                 <div className="flex items-center gap-1.5">
@@ -233,6 +255,9 @@ export default function DashboardPrazosRecursais() {
                 </div>
                 <div className="text-[11px] font-semibold text-slate-900 leading-tight line-clamp-2 group-hover:text-blue-700 group-hover:underline uppercase">
                   {r.clienteNome}
+                </div>
+                <div className="text-[8.5px] font-bold uppercase tracking-wider text-slate-500 leading-none">
+                  {r.tipo} PF · {r.evento}
                 </div>
                 <div className="flex flex-col gap-0.5 -mx-1">
                   <button
