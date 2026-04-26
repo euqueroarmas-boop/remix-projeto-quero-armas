@@ -336,11 +336,7 @@ export default function QADashboardPage() {
   const hasWeekActivity = weekActivity.some(d => d.pecas > 0 || d.docs > 0);
 
   if (loading) {
-    return (
-      <div className="flex justify-center py-20">
-        <div className="w-8 h-8 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" />
-      </div>
-    );
+    return <LoadingState label="Carregando dashboard…" />;
   }
 
   const alerts = [
