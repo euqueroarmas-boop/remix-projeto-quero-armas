@@ -164,7 +164,7 @@ function WeaponCard({
             alt={`${marca} ${modelo}`}
             loading="lazy"
             style={{ background: "transparent" }}
-            className="relative h-full w-full max-w-full object-contain px-2 py-3 drop-shadow-[0_12px_24px_rgba(0,0,0,0.85)]"
+            className={`relative h-full w-full max-w-full object-contain px-2 py-3 drop-shadow-[0_12px_24px_rgba(0,0,0,0.85)] ${info.kind === "espingarda" ? "scale-110" : ""}`}
           />
         </div>
 
