@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Plus, Sparkles, Globe, Trash2, CheckCircle2, AlertCircle, Search, Image as ImageIcon, RefreshCcw, Camera, Eraser } from "lucide-react";
+import { Loader2, Plus, Sparkles, Globe, Trash2, CheckCircle2, AlertCircle, Search, Image as ImageIcon, RefreshCcw, Camera, Eraser, Crosshair, Target, Layers, Flag, Shield } from "lucide-react";
 import { toast } from "sonner";
 
 type Status = "rascunho" | "pendente_revisao" | "verificado" | "rejeitado";
@@ -230,48 +230,64 @@ export default function QAArmamentosAdminPage() {
   function setF<K extends keyof Arma>(k: K, v: any) { setEditing((p) => ({ ...(p || {}), [k]: v })); }
 
   return (
-    <div className="container max-w-7xl mx-auto p-6 space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">CATÁLOGO DE ARMAMENTOS</h1>
-          <p className="text-sm text-muted-foreground">Base técnica de armas reais usadas pelos clientes do Arsenal.</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="secondary" onClick={buscarTodasFotos} disabled={bulkBusy} title="Busca foto real em fontes públicas para cada arma sem foto">
+    <div className="min-h-screen bg-[#0a0d10] text-zinc-100">
+      <div className="container max-w-7xl mx-auto p-6 space-y-6">
+      {/* HEADER TÁTICO */}
+      <div className="relative overflow-hidden rounded-xl border border-amber-500/20 bg-gradient-to-br from-zinc-950 via-zinc-900 to-black p-6">
+        <div className="absolute inset-0 opacity-[0.04] pointer-events-none" style={{ backgroundImage: "linear-gradient(rgba(255,255,255,.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.5) 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
+        <div className="absolute -top-10 -right-10 w-56 h-56 rounded-full bg-amber-500/10 blur-3xl pointer-events-none" />
+        <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="h-12 w-12 rounded-lg border border-amber-500/40 bg-amber-500/10 grid place-items-center">
+              <Crosshair className="h-6 w-6 text-amber-400" />
+            </div>
+            <div>
+              <div className="text-[10px] font-mono uppercase tracking-[0.3em] text-amber-400/80">// ARSENAL · BASE TÉCNICA</div>
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white">CATÁLOGO DE ARMAMENTOS</h1>
+              <p className="text-xs text-zinc-400 mt-0.5">Inventário técnico operacional · Armas reais utilizadas pelos clientes do Arsenal.</p>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" className="border-zinc-700 bg-zinc-900/60 text-zinc-200 hover:bg-zinc-800 hover:text-white" onClick={buscarTodasFotos} disabled={bulkBusy} title="Busca foto real em fontes públicas para cada arma sem foto">
             {bulkBusy
-              ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Buscando {bulkProgress?.done}/{bulkProgress?.total}</>
-              : <><Camera className="h-4 w-4 mr-2" />Buscar fotos reais</>}
-          </Button>
-          <Button variant="secondary" onClick={limparFundoTodas} disabled={bgBusy} title="Remove fundos brancos, cinzas e xadrez de todas as imagens (gera PNG com transparência real)">
-            {bgBusy
-              ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Limpando fundo…</>
-              : <><Eraser className="h-4 w-4 mr-2" />Limpar fundo (todas)</>}
-          </Button>
-          <Button onClick={openNew}><Plus className="h-4 w-4 mr-2" />Nova arma</Button>
+                ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Buscando {bulkProgress?.done}/{bulkProgress?.total}</>
+                : <><Camera className="h-4 w-4 mr-2" />Buscar fotos reais</>}
+            </Button>
+            <Button variant="outline" className="border-zinc-700 bg-zinc-900/60 text-zinc-200 hover:bg-zinc-800 hover:text-white" onClick={limparFundoTodas} disabled={bgBusy} title="Remove fundos brancos, cinzas e xadrez de todas as imagens (gera PNG com transparência real)">
+              {bgBusy
+                ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Limpando fundo…</>
+                : <><Eraser className="h-4 w-4 mr-2" />Limpar fundo</>}
+            </Button>
+            <Button onClick={openNew} className="bg-amber-500 text-black hover:bg-amber-400 font-semibold">
+              <Plus className="h-4 w-4 mr-2" />Nova arma
+            </Button>
+          </div>
         </div>
       </div>
 
+      {/* KPIs HUD */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Kpi label="Total" value={stats.total} />
-        <Kpi label="Verificados" value={stats.verificados} tone="success" />
-        <Kpi label="Pendentes revisão" value={stats.pendentes} tone="warn" />
-        <Kpi label="Gerados por IA" value={stats.ia} />
+        <Kpi label="TOTAL" value={stats.total} icon={<Layers className="h-4 w-4" />} />
+        <Kpi label="VERIFICADOS" value={stats.verificados} tone="success" icon={<CheckCircle2 className="h-4 w-4" />} />
+        <Kpi label="PENDENTES" value={stats.pendentes} tone="warn" icon={<AlertCircle className="h-4 w-4" />} />
+        <Kpi label="GERADOS · IA" value={stats.ia} icon={<Sparkles className="h-4 w-4" />} />
       </div>
 
-      <Card className="p-4 flex flex-col md:flex-row gap-3">
+      {/* BARRA DE FILTROS */}
+      <Card className="p-3 flex flex-col md:flex-row gap-3 bg-zinc-950/80 border-zinc-800">
         <div className="relative flex-1">
-          <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input className="pl-9" placeholder="Buscar marca, modelo, calibre…" value={q} onChange={(e) => setQ(e.target.value)} />
+          <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-amber-400/70" />
+          <Input className="pl-9 bg-black/40 border-zinc-800 text-zinc-100 placeholder:text-zinc-500 focus-visible:ring-amber-500/40" placeholder="Buscar marca, modelo, calibre…" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
         <Select value={tipoFilter} onValueChange={setTipoFilter}>
-          <SelectTrigger className="md:w-48"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="md:w-48 bg-black/40 border-zinc-800 text-zinc-100"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="todos">Todos os tipos</SelectItem>
             {TIPOS.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="md:w-56"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="md:w-56 bg-black/40 border-zinc-800 text-zinc-100"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="todos">Todos os status</SelectItem>
             {Object.entries(STATUS_LABEL).map(([k,v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
@@ -279,68 +295,26 @@ export default function QAArmamentosAdminPage() {
         </Select>
       </Card>
 
-      <Card className="overflow-hidden">
-        {loading ? (
-          <div className="p-12 text-center text-muted-foreground"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[64px]">Foto</TableHead>
-                <TableHead>Marca / Modelo</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Calibre</TableHead>
-                <TableHead>Capac.</TableHead>
-                <TableHead>Origem</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Fonte</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((it) => (
-                <TableRow key={it.id} className="cursor-pointer" onClick={() => openEdit(it)}>
-                  <TableCell onClick={(e) => e.stopPropagation()}>
-                    {it.imagem ? (
-                      <img src={it.imagem} alt={`${it.marca} ${it.modelo}`} className="h-10 w-16 object-contain rounded bg-black/80" />
-                    ) : (
-                      <div className="h-10 w-16 grid place-items-center rounded border border-dashed border-muted-foreground/30 text-muted-foreground">
-                        <ImageIcon className="h-4 w-4" />
-                      </div>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="font-medium">{it.marca} {it.modelo}</div>
-                    {it.apelido && <div className="text-xs text-muted-foreground">"{it.apelido}"</div>}
-                  </TableCell>
-                  <TableCell className="capitalize">{it.tipo}</TableCell>
-                  <TableCell>{it.calibre}</TableCell>
-                  <TableCell>{it.capacidade_carregador ?? "—"}</TableCell>
-                  <TableCell>{it.origem ?? "—"}</TableCell>
-                  <TableCell><StatusBadge s={it.status_revisao} /></TableCell>
-                  <TableCell><Badge variant="outline">{FONTE_LABEL[it.fonte_dados]}</Badge></TableCell>
-                  <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                    <Button size="sm" variant="ghost" onClick={() => gerarImagem(it)} title={it.imagem ? "Regerar imagem" : "Gerar imagem"} disabled={imgBusyId === it.id}>
-                      {imgBusyId === it.id ? <Loader2 className="h-4 w-4 animate-spin" /> : (it.imagem ? <RefreshCcw className="h-4 w-4" /> : <ImageIcon className="h-4 w-4" />)}
-                    </Button>
-                    {it.status_revisao !== "verificado" && (
-                      <Button size="sm" variant="ghost" onClick={() => marcarVerificado(it)} title="Marcar verificado">
-                        <CheckCircle2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                    <Button size="sm" variant="ghost" onClick={() => remove(it)} title="Excluir">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {filtered.length === 0 && (
-                <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">Nenhum resultado</TableCell></TableRow>
-              )}
-            </TableBody>
-          </Table>
-        )}
-      </Card>
+      {/* GRID DE CARDS DARK-TACTICAL */}
+      {loading ? (
+        <div className="p-16 text-center text-zinc-500"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></div>
+      ) : filtered.length === 0 ? (
+        <Card className="p-16 text-center bg-zinc-950/60 border-zinc-800 text-zinc-500">Nenhum armamento corresponde aos filtros.</Card>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {filtered.map((it) => (
+            <WeaponCard
+              key={it.id}
+              it={it}
+              busy={imgBusyId === it.id}
+              onOpen={() => openEdit(it)}
+              onGerarImagem={() => gerarImagem(it)}
+              onVerificar={() => marcarVerificado(it)}
+              onRemove={() => remove(it)}
+            />
+          ))}
+        </div>
+      )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
