@@ -202,10 +202,15 @@ export default function QAClienteLoginPage() {
                 type="email"
                 required
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => setEmail(e.target.value.toLowerCase())}
                 placeholder="seu@email.com"
-                className="w-full bg-transparent p-3 text-sm text-white outline-none lowercase placeholder:text-zinc-700 placeholder:tracking-wider"
-                style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                inputMode="email"
+                autoComplete="username"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                name="email"
+                className="w-full bg-transparent p-3 text-sm text-white outline-none placeholder:text-zinc-700 placeholder:tracking-wider"
               />
             </div>
           </div>
@@ -230,8 +235,12 @@ export default function QAClienteLoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-transparent p-3 text-sm tracking-widest text-white outline-none placeholder:text-zinc-700"
-                style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                autoComplete="current-password"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                name="password"
+                className="w-full bg-transparent p-3 text-sm text-white outline-none placeholder:text-zinc-700"
               />
             </div>
           </div>
@@ -410,10 +419,15 @@ export default function QAClienteLoginPage() {
                     type="email"
                     required
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => setEmail(e.target.value.toLowerCase())}
                     placeholder="seu@email.com"
-                    className="w-full bg-transparent p-3.5 text-sm text-white outline-none lowercase placeholder:text-zinc-700 placeholder:tracking-wider"
-                    style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                    inputMode="email"
+                    autoComplete="username"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    name="email"
+                    className="w-full bg-transparent p-3.5 text-sm text-white outline-none placeholder:text-zinc-700 placeholder:tracking-wider"
                   />
                 </div>
               </div>
@@ -438,8 +452,12 @@ export default function QAClienteLoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full bg-transparent p-3.5 text-sm tracking-widest text-white outline-none placeholder:text-zinc-700"
-                    style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                    autoComplete="current-password"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    name="password"
+                    className="w-full bg-transparent p-3.5 text-sm text-white outline-none placeholder:text-zinc-700"
                   />
                 </div>
               </div>
