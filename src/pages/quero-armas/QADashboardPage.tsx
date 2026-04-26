@@ -332,15 +332,8 @@ export default function QADashboardPage() {
     { name: "Erros", value: stats.erros },
   ].filter(d => d.value > 0), [stats]);
 
-  // Simulated weekly trend (sparkline)
-  const weekTrend = useMemo(() => {
-    const base = stats.pecas;
-    return ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"].map((d, i) => ({
-      day: d,
-      pecas: Math.max(0, Math.round(base * (0.08 + Math.random() * 0.18))),
-      docs: Math.max(0, Math.round(stats.documentos * (0.06 + Math.random() * 0.14))),
-    }));
-  }, [stats]);
+  // Atividade semanal vem 100% de dados reais (weekActivity), agregada por dia nos últimos 7 dias.
+  const hasWeekActivity = weekActivity.some(d => d.pecas > 0 || d.docs > 0);
 
   if (loading) {
     return (
