@@ -151,12 +151,16 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
                 background: `linear-gradient(180deg, rgba(2,4,8,0.2), rgba(2,4,8,0.78)), radial-gradient(circle at 50% 60%, ${accent}36, transparent 66%)`,
               }}
             />
-            <div className="relative flex h-full items-center justify-center px-4 py-4">
+            <div className="relative flex h-full items-center justify-center px-2 py-2">
               <img
                 src={catalog?.imagem || renderForKind(info.kind)}
                 alt={`${displayMarca} ${displayModelo}`}
                 style={{ background: "transparent" }}
-                className="h-full w-full max-w-full object-contain px-2 py-3 drop-shadow-[0_14px_32px_rgba(0,0,0,0.95)]"
+                className={
+                  ["espingarda", "fuzil", "carabina", "submetralhadora"].includes(info.kind)
+                    ? "h-auto max-h-full w-full max-w-[98%] object-contain drop-shadow-[0_14px_32px_rgba(0,0,0,0.95)]"
+                    : "h-full w-full max-w-full object-contain px-2 py-3 drop-shadow-[0_14px_32px_rgba(0,0,0,0.95)]"
+                }
               />
             </div>
             {/* corner ticks */}
