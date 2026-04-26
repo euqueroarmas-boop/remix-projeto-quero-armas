@@ -3,6 +3,39 @@ import { Eye, EyeOff, Copy, Loader2, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { getSenhaGov } from "./senhaGovApi";
 
+/**
+ * Copia texto compatível com Safari iOS, que bloqueia navigator.clipboard
+ * fora de gestos síncronos. Faz fallback via textarea + execCommand('copy').
+ */
+async function copyTextSafe(text: string): Promise<boolean> {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch {
+    /* fallback abaixo */
+  }
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.top = "0";
+    ta.style.left = "0";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    ta.setSelectionRange(0, text.length);
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    return ok;
+  } catch {
+    return false;
+  }
+}
+
 interface Props {
   cadastroCrId: number | null | undefined;
   /** "row" = inline tipo Field (admin); "compact" = mini chip */
@@ -47,12 +80,15 @@ export function SenhaGovField({ cadastroCrId, variant = "row", contexto }: Props
 
   const copy = async () => {
     const s = await ensure();
-    if (s) {
-      await navigator.clipboard.writeText(s);
-      toast.success("Senha Gov copiada");
-    } else {
+    if (!s) {
       toast.info("Sem Senha Gov cadastrada");
+      return;
     }
+    // Safari iOS bloqueia clipboard.writeText após await (perde user gesture).
+    // Tentamos Clipboard API, com fallback para textarea + execCommand.
+    const ok = await copyTextSafe(s);
+    if (ok) toast.success("Senha Gov copiada");
+    else toast.error("Não foi possível copiar — toque e segure para copiar manualmente");
   };
 
   if (variant === "compact") {
