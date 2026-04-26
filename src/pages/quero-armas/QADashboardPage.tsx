@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo, useRef, lazy, Suspense } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
 import {
   AlertTriangle, CheckCircle, Clock, XCircle, PenTool, BookOpen,
   ArrowRight, FileText, Shield, TrendingUp, TrendingDown, Users,
@@ -477,10 +478,10 @@ export default function QADashboardPage() {
                       <button
                         type="button"
                         onClick={async () => {
-                          if (!confirm(`Aprovar cadastro de ${c.nome_completo}?`)) return;
                           const { error } = await supabase.from("qa_cadastro_publico" as any).update({ status: "aprovado" }).eq("id", c.id);
-                          if (error) { alert("Erro: " + error.message); return; }
+                          if (error) { toast.error("Erro ao aprovar: " + error.message); return; }
                           setNovosCadastros((prev) => prev.map((x) => x.id === c.id ? { ...x, status: "aprovado" } : x));
+                          toast.success(`${c.nome_completo} aprovado`);
                         }}
                         className="text-[9px] px-2 py-0.5 rounded-full font-semibold bg-emerald-500 text-white hover:bg-emerald-600 transition"
                         title="Aprovar"
@@ -490,11 +491,12 @@ export default function QADashboardPage() {
                       <button
                         type="button"
                         onClick={async () => {
-                          const motivo = prompt(`Recusar cadastro de ${c.nome_completo}.\nInforme o motivo (opcional):`, "");
-                          if (motivo === null) return;
-                          const { error } = await supabase.from("qa_cadastro_publico" as any).update({ status: "recusado", motivo_recusa: motivo || null }).eq("id", c.id);
-                          if (error) { alert("Erro: " + error.message); return; }
+                          const { error } = await supabase.from("qa_cadastro_publico" as any).update({ status: "recusado" }).eq("id", c.id);
+                          if (error) { toast.error("Erro ao recusar: " + error.message); return; }
                           setNovosCadastros((prev) => prev.map((x) => x.id === c.id ? { ...x, status: "recusado" } : x));
+                          toast.success(`${c.nome_completo} recusado`, {
+                            description: "Status atualizado para 'recusado'.",
+                          });
                         }}
                         className="text-[9px] px-2 py-0.5 rounded-full font-semibold bg-rose-500 text-white hover:bg-rose-600 transition"
                         title="Recusar"
