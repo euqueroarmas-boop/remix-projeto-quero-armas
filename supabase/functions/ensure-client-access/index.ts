@@ -6,6 +6,10 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // 🔒 Onda 6: only admin users or internal callers may grant client access
+  const guard = await requireAdminOrInternal(req);
+  if (!guard.ok) return guard.response;
+
   try {
     const { quote_id } = await req.json();
     if (!quote_id) {
