@@ -903,6 +903,7 @@ export default function QAGerarPecaPage() {
 
       const casoData: Record<string, any> = {
         titulo: `Caso ${nomeRequerente || "sem título"}`,
+        cliente_id: clienteIdVinculado ?? null,
         nome_requerente: nomeRequerente,
         cpf_cnpj: cpfCnpj || null,
         tipo_peca: tipoPeca,
