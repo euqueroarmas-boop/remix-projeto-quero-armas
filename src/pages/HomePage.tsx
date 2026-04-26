@@ -726,19 +726,7 @@ const HomePage = () => {
               <div className="pointer-events-none absolute inset-0 -z-10 rounded-full bg-primary/10 blur-3xl" />
               <article className="relative flex flex-col gap-6 rounded-sm border border-primary/40 bg-card p-6 shadow-deep sm:p-8">
                 <div className="absolute left-0 top-0 h-[3px] w-full bg-gradient-tactical" />
-                <div className="font-heading text-xs uppercase tracking-[0.2em] text-primary">Investimento · Operador de Pistola I</div>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="rounded-sm border border-border bg-background/40 p-5">
-                    <div className="font-heading text-xs uppercase tracking-[0.18em] text-muted-foreground">Turma</div>
-                    <div className="mt-2 font-heading text-3xl font-bold tracking-tight sm:text-4xl">R$ 1.890</div>
-                    <div className="mt-2 text-xs uppercase tracking-[0.14em] text-muted-foreground">Em até 18x no cartão*</div>
-                  </div>
-                  <div className="rounded-sm border border-accent/40 bg-accent/10 p-5">
-                    <div className="font-heading text-xs uppercase tracking-[0.18em] text-accent">VIP</div>
-                    <div className="mt-2 font-heading text-3xl font-bold tracking-tight sm:text-4xl">R$ 2.490</div>
-                    <div className="mt-2 text-xs uppercase tracking-[0.14em] text-muted-foreground">Em até 18x no cartão*</div>
-                  </div>
-                </div>
+                <div className="font-heading text-xs uppercase tracking-[0.2em] text-primary">Operador de Pistola I · Quero Armas</div>
                 <div className="rounded-sm border border-border bg-background/40 p-5">
                   <div className="font-heading text-xs uppercase tracking-[0.18em] text-accent">Tudo incluso</div>
                   <ul className="mt-3 grid gap-2 text-sm">
@@ -767,9 +755,9 @@ const HomePage = () => {
                   </div>
                 </div>
                 <Button asChild size="lg" className="w-full font-heading uppercase tracking-[0.1em]">
-                  <a href="https://wa.me/5511978481919" target="_blank" rel="noopener noreferrer">Reservar minha vaga agora <ArrowRight className="ml-2 size-5" /></a>
+                  <a href="/servicos">Ver investimento e modalidades <ArrowRight className="ml-2 size-5" /></a>
                 </Button>
-                <p className="text-center font-heading text-xs uppercase tracking-[0.14em] text-muted-foreground">Vagas limitadas · Máx. 5 alunos por turma<br />*acréscimo da maquininha de cartão</p>
+                <p className="text-center font-heading text-xs uppercase tracking-[0.14em] text-muted-foreground">Vagas limitadas · Máx. 5 alunos por turma<br />Valores e condições centralizados na página de Serviços</p>
               </article>
             </div>
           </div>
