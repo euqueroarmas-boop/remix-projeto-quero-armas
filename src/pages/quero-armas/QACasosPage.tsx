@@ -12,6 +12,7 @@ import {
 import { toast } from "sonner";
 import { useResilientLoad } from "@/components/quero-armas/hooks/useResilientLoad";
 import { ErrorRetryState, LoadingState } from "@/components/quero-armas/LoadStates";
+import { useSubmitAction } from "@/components/quero-armas/hooks/useSubmitAction";
 
 const STATUS_OPTIONS = [
   { value: "todos", label: "Todos" },
@@ -54,6 +55,7 @@ export default function QACasosPage() {
   );
   const cases = casesData ?? [];
   const loading = loadStatus === "loading";
+  const { submitting: changingStatus, run: runStatusChange } = useSubmitAction();
 
   const filtered = cases.filter(c => {
     if (!search) return true;
@@ -82,36 +84,67 @@ export default function QACasosPage() {
 
   const handleSetDeferido = useCallback(async (casoId: string) => {
     try {
-      await supabase.from("qa_casos" as any).update({ status: "deferido", updated_at: new Date().toISOString() }).eq("id", casoId);
-      const { data: auxDocs } = await supabase.from("qa_documentos_conhecimento" as any)
-        .select("id").eq("caso_id", casoId).eq("papel_documento", "auxiliar_caso");
-      if (auxDocs && auxDocs.length > 0) {
-        const docIds = (auxDocs as any[]).map(d => d.id);
-        await supabase.from("qa_documentos_conhecimento" as any)
-          .update({ papel_documento: "aprendizado", ativo_na_ia: true, updated_at: new Date().toISOString() }).in("id", docIds);
-      }
-      await supabase.from("qa_logs_auditoria" as any).insert({
-        entidade: "qa_casos", entidade_id: casoId, acao: "marcar_deferido",
-        detalhes_json: { docs_promovidos: auxDocs?.length || 0 },
-      });
-      toast.success("Caso marcado como deferido. Documentos promovidos para aprendizado da IA.");
+      await runStatusChange(
+        async () => {
+          const { error: upErr } = await supabase
+            .from("qa_casos" as any)
+            .update({ status: "deferido", updated_at: new Date().toISOString() })
+            .eq("id", casoId);
+          if (upErr) throw upErr;
+          const { data: auxDocs } = await supabase
+            .from("qa_documentos_conhecimento" as any)
+            .select("id")
+            .eq("caso_id", casoId)
+            .eq("papel_documento", "auxiliar_caso");
+          if (auxDocs && auxDocs.length > 0) {
+            const docIds = (auxDocs as any[]).map((d) => d.id);
+            await supabase
+              .from("qa_documentos_conhecimento" as any)
+              .update({ papel_documento: "aprendizado", ativo_na_ia: true, updated_at: new Date().toISOString() })
+              .in("id", docIds);
+          }
+          await supabase.from("qa_logs_auditoria" as any).insert({
+            entidade: "qa_casos",
+            entidade_id: casoId,
+            acao: "marcar_deferido",
+            detalhes_json: { docs_promovidos: auxDocs?.length || 0 },
+          });
+        },
+        {
+          loadingMessage: "Marcando como deferido…",
+          successMessage: "Caso marcado como deferido. Documentos promovidos para aprendizado da IA.",
+          errorMessage: (err) => (err instanceof Error && err.message) || "Erro ao atualizar status",
+        },
+      );
       setDetailCase(null);
       load();
-    } catch (err: any) {
-      toast.error(err.message || "Erro ao atualizar status");
+    } catch {
+      // toast já exibido
     }
-  }, []);
+  }, [runStatusChange, load]);
 
   const handleSetIndeferido = useCallback(async (casoId: string) => {
     try {
-      await supabase.from("qa_casos" as any).update({ status: "indeferido", updated_at: new Date().toISOString() }).eq("id", casoId);
-      toast.success("Caso marcado como indeferido.");
+      await runStatusChange(
+        async () => {
+          const { error } = await supabase
+            .from("qa_casos" as any)
+            .update({ status: "indeferido", updated_at: new Date().toISOString() })
+            .eq("id", casoId);
+          if (error) throw error;
+        },
+        {
+          loadingMessage: "Marcando como indeferido…",
+          successMessage: "Caso marcado como indeferido.",
+          errorMessage: (err) => (err instanceof Error && err.message) || "Erro ao atualizar status",
+        },
+      );
       setDetailCase(null);
       load();
-    } catch (err: any) {
-      toast.error(err.message || "Erro ao atualizar status");
+    } catch {
+      // toast já exibido
     }
-  }, []);
+  }, [runStatusChange, load]);
 
   const renderCaseList = (items: any[]) => {
     if (loading) {
