@@ -130,13 +130,18 @@ export function ArsenalView({
       });
     });
     meusDocs.slice(0, 4).forEach((d: any) => {
+      const armaNome = [d.arma_marca, d.arma_modelo].filter(Boolean).join(" ").trim();
+      const tipo = String(d.tipo_documento || "").toLowerCase();
+      // Para CRAF/GTE o título deve ser o nome da arma (marca + modelo).
+      // Apenas documentos sem vínculo de arma caem no número do documento.
+      const ehDocDeArma = tipo === "craf" || tipo === "gte";
+      const titulo = ehDocDeArma
+        ? (armaNome || d.numero_documento || "Arma")
+        : (d.numero_documento || armaNome || "Documento");
       list.push({
         id: `doc-${d.id}`,
         category: (d.tipo_documento || "DOC").toUpperCase(),
-        title:
-          d.numero_documento ||
-          [d.arma_marca, d.arma_modelo].filter(Boolean).join(" ") ||
-          "Documento",
+        title: titulo,
         date: d.data_validade,
         daysToExpire: daysUntil(d.data_validade),
       });
