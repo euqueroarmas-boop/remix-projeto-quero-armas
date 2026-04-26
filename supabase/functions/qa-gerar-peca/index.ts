@@ -720,6 +720,12 @@ Deno.serve(async (req) => {
     } = reqBody;
     const wantStream = !!reqBody.stream;
 
+    // IDs de documentos auxiliares enviados explicitamente pelo front
+    // (mesmo que ainda não estejam vinculados ao caso_id no banco).
+    const documentos_auxiliares_ids: string[] = Array.isArray(reqBody.documentos_auxiliares_ids)
+      ? (reqBody.documentos_auxiliares_ids as any[]).filter(Boolean).map(String)
+      : [];
+
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
