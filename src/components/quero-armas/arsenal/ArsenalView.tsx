@@ -374,7 +374,9 @@ export function ArsenalView({
                   <div key={i} className="flex items-center justify-between text-[11px]">
                     <span className="truncate text-slate-700">{a.label}</span>
                     <span className="ml-2 shrink-0 font-mono text-[10px] text-slate-600">
-                      {a.days! < 0 ? `Vencido ${Math.abs(a.days!)}d` : `${a.days}d`}
+                      {a.days! < 0
+                        ? `Vencido há ${Math.abs(a.days!)} ${Math.abs(a.days!) === 1 ? "dia" : "dias"}`
+                        : `${a.days} ${a.days === 1 ? "dia" : "dias"}`}
                     </span>
                   </div>
                 ))}
