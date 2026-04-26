@@ -17,6 +17,7 @@ import { usePrivateStorageUrl } from "@/hooks/usePrivateStorageUrl";
 import { Camera, Wand2 } from "lucide-react";
 import { ArsenalView } from "@/components/quero-armas/arsenal/ArsenalView";
 import { Crosshair as CrosshairIcon, LayoutDashboard } from "lucide-react";
+import { ForcePasswordChangeModal } from "@/components/quero-armas/clientes/ForcePasswordChangeModal";
 
 const formatDate = (d: string | null) => {
   if (!d) return "—";
@@ -123,6 +124,7 @@ export default function QAClientePortalPage() {
   const [cadastroPub, setCadastroPub] = useState<{ selfie_path: string | null } | null>(null);
   const [generatingAvatar, setGeneratingAvatar] = useState(false);
   const [activeTab, setActiveTab] = useState<"arsenal" | "resumo">("arsenal");
+  const [mustChangePassword, setMustChangePassword] = useState(false);
 
   const avatarPath: string | null =
     (cliente as any)?.avatar_tatico_path || cadastroPub?.selfie_path || null;
@@ -135,6 +137,11 @@ export default function QAClientePortalPage() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) { navigate("/area-do-cliente/login", { replace: true }); return; }
+
+        // Força troca de senha no primeiro acesso
+        if (user.user_metadata?.password_change_required === true) {
+          setMustChangePassword(true);
+        }
 
         const [{ data: profile }, { data: customerLink }] = await Promise.all([
           supabase
