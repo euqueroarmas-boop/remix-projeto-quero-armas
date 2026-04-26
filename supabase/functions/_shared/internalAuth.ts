@@ -136,6 +136,16 @@ export async function requireAdminOrInternal(req: Request): Promise<AuthGuard> {
 export const internalCorsHeaders = corsHeaders;
 
 /**
+ * Helper for edge-function-to-edge-function calls.
+ * Returns headers required to authenticate as an internal service caller.
+ * Always include these headers when invoking another sensitive function.
+ */
+export function internalCallHeaders(): Record<string, string> {
+  const token = Deno.env.get("INTERNAL_FUNCTION_TOKEN");
+  return token ? { "x-internal-token": token } : {};
+}
+
+/**
  * Lighter variant: accepts any authenticated user OR an internal/admin caller.
  * Useful for endpoints that may legitimately be triggered by a logged-in
  * customer (not necessarily admin), but should NEVER be reachable anonymously.
