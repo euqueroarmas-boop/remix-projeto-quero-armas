@@ -871,14 +871,36 @@ Deno.serve(async (req) => {
     let evidenceDocs: EvidenceDoc[] = [];
     const caso_id = req_caso_id?.trim() || null;
 
-    if (caso_id) {
-      const { data: auxDocs } = await supabase.from("qa_documentos_conhecimento")
-        .select("id, titulo, tipo_documento, texto_extraido, resumo_extraido, categoria")
-        .eq("status_processamento", "concluido")
-        .eq("ativo", true)
-        .eq("papel_documento", "auxiliar_caso")
-        .eq("caso_id", caso_id)
-        .limit(30);
+    if (caso_id || documentos_auxiliares_ids.length > 0) {
+      // 1) Documentos vinculados ao caso (via caso_id)
+      const auxDocsMap = new Map<string, any>();
+      if (caso_id) {
+        const { data: porCaso } = await supabase.from("qa_documentos_conhecimento")
+          .select("id, titulo, tipo_documento, texto_extraido, resumo_extraido, categoria")
+          .eq("status_processamento", "concluido")
+          .eq("ativo", true)
+          .eq("papel_documento", "auxiliar_caso")
+          .eq("caso_id", caso_id)
+          .limit(30);
+        (porCaso || []).forEach((d: any) => auxDocsMap.set(d.id, d));
+      }
+
+      // 2) Documentos enviados explicitamente por ID (mesmo sem caso_id ainda)
+      if (documentos_auxiliares_ids.length > 0) {
+        const idsFaltantes = documentos_auxiliares_ids.filter(id => !auxDocsMap.has(id));
+        if (idsFaltantes.length > 0) {
+          const { data: porIds } = await supabase.from("qa_documentos_conhecimento")
+            .select("id, titulo, tipo_documento, texto_extraido, resumo_extraido, categoria")
+            .eq("status_processamento", "concluido")
+            .eq("ativo", true)
+            .in("id", idsFaltantes)
+            .limit(30);
+          (porIds || []).forEach((d: any) => auxDocsMap.set(d.id, d));
+        }
+      }
+
+      const auxDocs = Array.from(auxDocsMap.values());
+      console.log(`[qa-gerar-peca] Auxiliary docs collected: ${auxDocs.length} (caso_id=${caso_id || "—"}, explicit_ids=${documentos_auxiliares_ids.length})`);
 
       // Classify each doc by type
       const priorityDocs: typeof auxDocs = [];
