@@ -545,12 +545,19 @@ function WeaponCard({
       </div>
 
       {/* visual da arma */}
-      <div className="relative aspect-[16/10] grid place-items-center overflow-hidden">
+      <div
+        className="relative aspect-[16/10] grid place-items-center overflow-hidden isolate"
+        style={{
+          background:
+            "radial-gradient(ellipse at center, #ffffff 0%, #f6f5f1 65%, #ecebe5 100%)",
+        }}
+      >
         {it.imagem ? (
           <img
             src={it.imagem}
             alt={`${it.marca} ${it.modelo}`}
-            className="relative z-10 max-h-[88%] max-w-[92%] object-contain drop-shadow-[0_10px_20px_rgba(0,0,0,0.18)] group-hover:scale-105 transition-transform duration-500"
+            loading="lazy"
+            className="relative z-10 max-h-[80%] max-w-[88%] w-auto h-auto object-contain drop-shadow-[0_10px_20px_rgba(0,0,0,0.18)] group-hover:scale-[1.03] transition-transform duration-500 pointer-events-none select-none"
           />
         ) : (
           <div className="relative z-10 flex flex-col items-center gap-2 text-zinc-400">
@@ -560,7 +567,7 @@ function WeaponCard({
         )}
 
         {/* tag de tipo */}
-        <div className="absolute top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/40 text-[9px] font-mono uppercase tracking-[0.25em] text-amber-700">
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20 px-2 py-0.5 rounded-full bg-amber-500/90 border border-amber-600 text-[9px] font-mono uppercase tracking-[0.25em] text-white shadow-sm">
           {it.tipo}
         </div>
       </div>
