@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, Link } from "react-router-dom";
 import {
   LayoutDashboard, PenTool, FolderOpen, Scale, Gavel,
@@ -46,9 +46,55 @@ interface Props { perfil: string; nome: string; signOut: () => Promise<void> }
 
 export function QASidebar({ perfil, nome, signOut }: Props) {
   const [expanded, setExpanded] = useState(false);
+  const [slideOffset, setSlideOffset] = useState(0);
+  const sidebarRef = useRef<HTMLElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const collapsed = !expanded;
   const location = useLocation();
   const toggleSidebar = () => setExpanded(v => !v);
+
+  useEffect(() => {
+    let frame = 0;
+
+    const updateOffset = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const sidebar = sidebarRef.current;
+        const menu = menuRef.current;
+        if (!sidebar || !menu) return;
+
+        const layoutTop = sidebar.getBoundingClientRect().top + window.scrollY;
+        const layoutHeight = sidebar.offsetHeight;
+        const menuHeight = menu.offsetHeight;
+        const maxOffset = Math.max(0, layoutHeight - menuHeight);
+        const scrollRange = Math.max(1, layoutHeight - window.innerHeight);
+        const progress = Math.min(1, Math.max(0, (window.scrollY - layoutTop) / scrollRange));
+        const nextOffset = Math.round(maxOffset * progress);
+
+        setSlideOffset((current) => (Math.abs(current - nextOffset) < 1 ? current : nextOffset));
+      });
+    };
+
+    const resizeObserver = typeof ResizeObserver !== "undefined" ? new ResizeObserver(updateOffset) : null;
+    const mutationObserver = typeof MutationObserver !== "undefined" ? new MutationObserver(updateOffset) : null;
+
+    resizeObserver?.observe(document.body);
+    if (sidebarRef.current) resizeObserver?.observe(sidebarRef.current);
+    if (menuRef.current) resizeObserver?.observe(menuRef.current);
+    mutationObserver?.observe(document.body, { childList: true, subtree: true });
+
+    window.addEventListener("scroll", updateOffset, { passive: true });
+    window.addEventListener("resize", updateOffset);
+    updateOffset();
+
+    return () => {
+      cancelAnimationFrame(frame);
+      resizeObserver?.disconnect();
+      mutationObserver?.disconnect();
+      window.removeEventListener("scroll", updateOffset);
+      window.removeEventListener("resize", updateOffset);
+    };
+  }, [collapsed]);
 
   const initials = (nome || "U").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
 
@@ -65,6 +111,7 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
 
   return (
     <aside
+      ref={sidebarRef}
       data-qa-sidebar="true"
       className="shrink-0 overflow-x-hidden border-r flex flex-col transition-[width] duration-200"
       style={{
@@ -74,7 +121,11 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
         borderColor: "hsl(220 13% 91%)",
       }}
     >
-      <div className="py-3 flex flex-col flex-1">
+      <div
+        ref={menuRef}
+        className="py-3 flex flex-col"
+        style={{ transform: `translate3d(0, ${slideOffset}px, 0)` }}
+      >
         {/* Header / toggle */}
         {collapsed ? (
           <button
@@ -111,7 +162,7 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
         )}
 
         {/* Nav groups */}
-        <nav className="flex-1 overflow-x-hidden">
+        <nav className="overflow-x-hidden">
           {NAV_GROUPS.map(group => {
             const visibleItems = group.items.filter(i => canAccess(i.url));
             if (visibleItems.length === 0) return null;
