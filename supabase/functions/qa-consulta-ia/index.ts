@@ -110,6 +110,11 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsH });
 
   try {
+    // Auth: require active QA staff
+    const { requireQAStaff } = await import("../_shared/qaAuth.ts");
+    const guard = await requireQAStaff(req);
+    if (!guard.ok) return guard.response;
+
     const { usuario_id, caso_titulo, entrada_usuario, tipo_peca, profundidade, tom, foco, cliente_id } = await req.json();
     if (!entrada_usuario) throw new Error("entrada_usuario required");
 

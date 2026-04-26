@@ -156,6 +156,11 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsH });
 
   try {
+    // Auth: require active QA staff
+    const { requireQAStaff } = await import("../_shared/qaAuth.ts");
+    const guard = await requireQAStaff(req);
+    if (!guard.ok) return guard.response;
+
     const { documento_id } = await req.json();
     if (!documento_id) {
       return new Response(JSON.stringify({ error: "documento_id required" }), {
