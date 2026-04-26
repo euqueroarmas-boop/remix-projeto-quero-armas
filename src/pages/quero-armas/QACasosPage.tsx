@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useResilientLoad } from "@/components/quero-armas/hooks/useResilientLoad";
-import { ErrorRetryState, LoadingState } from "@/components/quero-armas/LoadStates";
+import { EmptyState, ErrorRetryState, SkeletonList } from "@/components/quero-armas/LoadStates";
 import { useSubmitAction } from "@/components/quero-armas/hooks/useSubmitAction";
 
 const STATUS_OPTIONS = [
@@ -148,7 +148,7 @@ export default function QACasosPage() {
 
   const renderCaseList = (items: any[]) => {
     if (loading) {
-      return <LoadingState label="Carregando casos…" />;
+      return <SkeletonList rows={5} />;
     }
     if (loadStatus === "error") {
       return (
@@ -161,10 +161,20 @@ export default function QACasosPage() {
     }
     if (items.length === 0) {
       return (
-        <div className="text-center py-16">
-          <FolderOpen className="h-12 w-12 mx-auto mb-3" style={{ color: "hsl(220 13% 85%)" }} />
-          <p className="text-sm" style={{ color: "hsl(220 10% 55%)" }}>Nenhum caso encontrado</p>
-        </div>
+        <EmptyState
+          icon={<FolderOpen className="h-5 w-5" />}
+          title={search || statusFilter !== "todos" ? "Nenhum caso corresponde aos filtros" : "Ainda não há casos cadastrados"}
+          description={search || statusFilter !== "todos"
+            ? "Ajuste a busca ou o status para ver outros resultados."
+            : "Crie um novo caso para começar a gerar peças e organizar requerentes."}
+          action={
+            !search && statusFilter === "todos" ? (
+              <button onClick={() => setShowNovoCaso(true)} className="qa-btn-primary inline-flex items-center gap-1.5 no-glow">
+                <Plus className="h-3.5 w-3.5" /> Novo Caso
+              </button>
+            ) : undefined
+          }
+        />
       );
     }
 
@@ -265,11 +275,11 @@ export default function QACasosPage() {
       {/* Content */}
       {activeTab === "casos" ? renderCaseList(casosAtivos) : (
         servicosConcluidos.length === 0 ? (
-          <div className="text-center py-16">
-            <BookOpen className="h-12 w-12 mx-auto mb-3" style={{ color: "hsl(220 13% 85%)" }} />
-            <p className="text-sm" style={{ color: "hsl(220 10% 55%)" }}>Nenhum serviço deferido ainda</p>
-            <p className="text-xs mt-1" style={{ color: "hsl(220 10% 70%)" }}>Marque um caso como "Deferido" para promovê-lo ao aprendizado da IA.</p>
-          </div>
+          <EmptyState
+            icon={<BookOpen className="h-5 w-5" />}
+            title="Nenhum serviço deferido ainda"
+            description='Marque um caso como "Deferido" para promovê-lo ao aprendizado da IA.'
+          />
         ) : (
           <>
             <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl border bg-emerald-50 border-emerald-200">
