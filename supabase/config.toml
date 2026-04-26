@@ -1,1 +1,4 @@
 project_id = "ogkltfqvzweeqkfmrzts"
+
+[functions.customer-lookup-email]
+verify_jwt = false
