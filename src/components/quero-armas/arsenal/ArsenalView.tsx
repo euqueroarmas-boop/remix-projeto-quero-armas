@@ -227,22 +227,22 @@ export function ArsenalView({
           className="pointer-events-none absolute inset-0 opacity-70"
           style={{
             backgroundImage:
-              "radial-gradient(circle at 0% 0%, rgba(34,211,238,0.18), transparent 50%), radial-gradient(circle at 100% 100%, rgba(16,185,129,0.10), transparent 50%)",
+              "radial-gradient(circle at 0% 0%, rgba(201,169,97,0.18), transparent 50%), radial-gradient(circle at 100% 100%, rgba(201,169,97,0.10), transparent 50%)",
           }}
         />
         <div
           className="pointer-events-none absolute inset-0 opacity-[0.06]"
           style={{
             backgroundImage:
-              "linear-gradient(to right, #22d3ee 1px, transparent 1px), linear-gradient(to bottom, #22d3ee 1px, transparent 1px)",
+              "linear-gradient(to right, #c9a961 1px, transparent 1px), linear-gradient(to bottom, #c9a961 1px, transparent 1px)",
             backgroundSize: "32px 32px",
           }}
         />
         <div className="relative flex flex-col gap-3 p-5 md:flex-row md:items-center md:justify-between md:p-6">
           <div>
             <div className="flex items-center gap-2">
-              <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
-              <span className="text-[10px] font-black uppercase tracking-[0.28em] text-cyan-300">
+              <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-[#c9a961]" />
+              <span className="text-[10px] font-black uppercase tracking-[0.28em] text-[#c9a961]">
                 ARSENAL INTELIGENTE · {clienteNome.split(" ")[0]}
               </span>
             </div>
