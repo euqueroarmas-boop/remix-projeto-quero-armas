@@ -294,6 +294,8 @@ export default function QAGerarPecaPage() {
 
   // Editing existing case
   const [casoId, setCasoId] = useState<string | null>(null);
+  // Cliente vinculado ao caso (preservado entre carregamento e geração)
+  const [clienteIdVinculado, setClienteIdVinculado] = useState<number | null>(null);
 
   // CEP
   const [cepStatus, setCepStatus] = useState<CepStatus>("idle");
@@ -350,6 +352,30 @@ export default function QAGerarPecaPage() {
       if (!data) return;
       const c = data as any;
       setCasoId(c.id);
+      // Vínculo com cliente: prioriza cliente_id real; mantém snapshot histórico
+      if (c.cliente_id) {
+        setClienteIdVinculado(Number(c.cliente_id));
+        // Hidrata dados frescos do cliente vinculado (sobrepõe snapshot se houver atualização)
+        try {
+          const { data: clienteData } = await supabase
+            .from("qa_clientes" as any)
+            .select("nome_completo, cpf, cidade, estado, cep, endereco, bairro")
+            .eq("id", c.cliente_id)
+            .maybeSingle();
+          if (clienteData) {
+            const cl = clienteData as any;
+            if (cl.nome_completo) setNomeRequerente(cl.nome_completo);
+            if (cl.cpf) setCpfCnpj(cl.cpf);
+            if (cl.cidade) setClienteCidade(cl.cidade);
+            if (cl.estado) setClienteUf(cl.estado);
+            if (cl.cep) setClienteCep(cl.cep);
+            if (cl.endereco) setClienteEndereco(cl.endereco);
+            if (cl.bairro) setClienteBairro(cl.bairro);
+          }
+        } catch (err) {
+          console.warn("[QAGerarPeca] Falha ao hidratar cliente vinculado:", err);
+        }
+      }
       // titulo auto-gerado a partir do nome
       setNomeRequerente(c.nome_requerente || "");
       setCpfCnpj(c.cpf_cnpj || "");
