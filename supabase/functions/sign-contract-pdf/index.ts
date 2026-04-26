@@ -7,11 +7,12 @@ import { decode as base64Decode } from "https://deno.land/std@0.208.0/encoding/b
 import { crypto } from "https://deno.land/std@0.208.0/crypto/mod.ts";
 import { logSistemaBackend } from "../_shared/logSistema.ts";
 import { addPlaceholderAndSign, addLateralMark } from "../_shared/pdfSign.ts";
+import { requireAdminOrInternal } from "../_shared/internalAuth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, x-internal-token, x-admin-token",
 };
 
 const CERT_BUCKET = "certificates";
@@ -73,6 +74,10 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // 🔒 Onda 6: only admin users or internal callers may sign contracts
+  const guard = await requireAdminOrInternal(req);
+  if (!guard.ok) return guard.response;
 
   const supabase = createServiceClient();
 
