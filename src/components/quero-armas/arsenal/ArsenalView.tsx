@@ -25,6 +25,20 @@ const normalizeDocWeaponName = (doc: any) => {
   return [marca, modelo].filter(Boolean).join(" ").trim() || null;
 };
 
+const formatArmaTitulo = (nomeArma: string | null | undefined, calibreHint?: string | null): string => {
+  const info = buildWeaponInfo(nomeArma || null, null);
+  const marca = (info.marca || "").trim();
+  const modelo = (info.modelo || "").trim();
+  const calibre = (info.calibre || calibreHint || "").trim();
+  const partes: string[] = [];
+  if (marca) partes.push(marca);
+  if (modelo) partes.push(modelo);
+  let base = partes.join(" ");
+  if (!base) base = (nomeArma || "ARMA").trim();
+  if (calibre) base = `${base} · CAL ${calibre}`;
+  return base.toUpperCase();
+};
+
 const daysUntil = (d: string | null): number | null => {
   if (!d) return null;
   try {
@@ -114,7 +128,7 @@ export function ArsenalView({
       list.push({
         id: `craf-${c.id}`,
         category: "CRAF",
-        title: c.nome_arma || "Arma",
+        title: formatArmaTitulo(c.nome_arma, c.calibre),
         date: c.data_validade,
         daysToExpire: daysUntil(c.data_validade),
       });
@@ -124,7 +138,7 @@ export function ArsenalView({
       list.push({
         id: `gte-${g.id}`,
         category: "GTE",
-        title: g.nome_arma || "Guia de Tráfego",
+        title: formatArmaTitulo(g.nome_arma, g.calibre),
         date: g.data_validade,
         daysToExpire: daysUntil(g.data_validade),
       });
@@ -136,8 +150,8 @@ export function ArsenalView({
       // Apenas documentos sem vínculo de arma caem no número do documento.
       const ehDocDeArma = tipo === "craf" || tipo === "gte";
       const titulo = ehDocDeArma
-        ? (armaNome || d.numero_documento || "Arma")
-        : (d.numero_documento || armaNome || "Documento");
+        ? formatArmaTitulo(armaNome || d.numero_documento, d.arma_calibre)
+        : (d.numero_documento || armaNome || "Documento").toUpperCase();
       list.push({
         id: `doc-${d.id}`,
         category: (d.tipo_documento || "DOC").toUpperCase(),
