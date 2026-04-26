@@ -5,7 +5,6 @@ import { Workbench, WorkbenchWeapon } from "./Workbench";
 import { WeaponDrawer } from "./WeaponDrawer";
 import { MunicoesManager } from "./MunicoesManager";
 import { TACTICAL, urgencyTone, buildWeaponInfo } from "./utils";
-import { useArmamentoCatalogo, type ArmamentoCatalogo } from "./useArmamentoCatalogo";
 
 interface Props {
   clienteId: number;
@@ -26,21 +25,11 @@ const normalizeDocWeaponName = (doc: any) => {
   return [marca, modelo].filter(Boolean).join(" ").trim() || null;
 };
 
-const formatArmaTitulo = (
-  nomeArma: string | null | undefined,
-  calibreHint?: string | null,
-  catalog?: ArmamentoCatalogo | null,
-): string => {
+const formatArmaTitulo = (nomeArma: string | null | undefined, calibreHint?: string | null): string => {
   const info = buildWeaponInfo(nomeArma || null, null);
-  const marca = (catalog?.marca || info.marca || "").trim();
-  const modeloRaw = (catalog?.modelo || info.modelo || "").trim();
-  // Insere espaços em "PumpMilitary3.0" -> "Pump Military 3.0"
-  const modelo = modeloRaw
-    .replace(/([a-z])([A-Z])/g, "$1 $2")
-    .replace(/([A-Za-z])(\d)/g, "$1 $2")
-    .replace(/\s+/g, " ")
-    .trim();
-  const calibre = (catalog?.calibre || info.calibre || calibreHint || "").trim();
+  const marca = (info.marca || "").trim();
+  const modelo = (info.modelo || "").trim();
+  const calibre = (info.calibre || calibreHint || "").trim();
   const partes: string[] = [];
   if (marca) partes.push(marca);
   if (modelo) partes.push(modelo);
@@ -76,18 +65,6 @@ export function ArsenalView({
     total: 0,
     byCalibre: [],
   });
-  const { match: matchCatalogo, byId: catalogoById, resolveCraf, loading: catalogoLoading } = useArmamentoCatalogo();
-
-  // Resolve via IA CRAFs/GTEs sem catalogo_id (uma vez por arma)
-  useEffect(() => {
-    if (catalogoLoading) return;
-    crafs.forEach((c: any) => {
-      if (!c.catalogo_id && c.nome_arma) resolveCraf({ craf_id: c.id });
-    });
-    gtes.forEach((g: any) => {
-      if (!g.catalogo_id && g.nome_arma) resolveCraf({ gte_id: g.id });
-    });
-  }, [crafs, gtes, catalogoLoading, resolveCraf]);
 
   const scrollToSection = (target: ArsenalSummaryTarget) => {
     const sectionId =
@@ -158,22 +135,20 @@ export function ArsenalView({
     }
     crafs.forEach((c: any) => {
       if (!c.data_validade) return;
-      const cat = catalogoById(c.catalogo_id) || matchCatalogo(c.nome_arma);
       list.push({
         id: `craf-${c.id}`,
         category: "CRAF",
-        title: formatArmaTitulo(c.nome_arma, c.calibre, cat),
+        title: formatArmaTitulo(c.nome_arma, c.calibre),
         date: c.data_validade,
         daysToExpire: daysUntil(c.data_validade),
       });
     });
     gtes.forEach((g: any) => {
       if (!g.data_validade) return;
-      const cat = catalogoById(g.catalogo_id) || matchCatalogo(g.nome_arma);
       list.push({
         id: `gte-${g.id}`,
         category: "GTE",
-        title: formatArmaTitulo(g.nome_arma, g.calibre, cat),
+        title: formatArmaTitulo(g.nome_arma, g.calibre),
         date: g.data_validade,
         daysToExpire: daysUntil(g.data_validade),
       });
@@ -184,9 +159,8 @@ export function ArsenalView({
       // Para CRAF/GTE o título deve ser o nome da arma (marca + modelo).
       // Apenas documentos sem vínculo de arma caem no número do documento.
       const ehDocDeArma = tipo === "craf" || tipo === "gte";
-      const cat = matchCatalogo(armaNome || d.numero_documento);
       const titulo = ehDocDeArma
-        ? formatArmaTitulo(armaNome || d.numero_documento, d.arma_calibre, cat)
+        ? formatArmaTitulo(armaNome || d.numero_documento, d.arma_calibre)
         : (d.numero_documento || armaNome || "Documento").toUpperCase();
       list.push({
         id: `doc-${d.id}`,
@@ -218,7 +192,7 @@ export function ArsenalView({
       return (a.daysToExpire ?? 9999) - (b.daysToExpire ?? 9999);
     });
     return list;
-  }, [cadastroCr, crafs, gtes, meusDocs, matchCatalogo, catalogoById]);
+  }, [cadastroCr, crafs, gtes, meusDocs]);
 
   // Drawer: documentos relacionados à arma selecionada
   const relatedDocs = useMemo(() => {

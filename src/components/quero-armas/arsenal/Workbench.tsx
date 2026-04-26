@@ -40,7 +40,7 @@ interface Props {
 }
 
 const toneClasses = {
-  ok: { glow: "shadow-[0_0_24px_-6px_rgba(0,0,0,0.6)]", chip: "bg-emerald-400/15 text-emerald-300 border-emerald-400/40", dot: "bg-emerald-400" },
+  ok: { glow: "shadow-[0_0_24px_-6px_rgba(201,169,97,0.45)]", chip: "bg-emerald-400/15 text-emerald-300 border-emerald-400/40", dot: "bg-emerald-400" },
   warn: { glow: "shadow-[0_0_24px_-6px_rgba(245,158,11,0.55)]", chip: "bg-amber-400/15 text-amber-300 border-amber-400/40", dot: "bg-amber-400" },
   danger: { glow: "shadow-[0_0_24px_-6px_rgba(239,68,68,0.55)]", chip: "bg-red-500/15 text-red-300 border-red-500/40", dot: "bg-red-500" },
   muted: { glow: "shadow-[0_0_24px_-6px_rgba(148,163,184,0.35)]", chip: "bg-white/5 text-white/60 border-white/10", dot: "bg-white/40" },
@@ -48,10 +48,9 @@ const toneClasses = {
 
 function urgencyText(days: number | null): string {
   if (days === null) return "SEM DATA";
-  const fmt = (n: number) => n.toLocaleString("pt-BR");
-  if (days < 0) return `VENCIDO ${fmt(Math.abs(days))} DIAS`;
+  if (days < 0) return `VENCIDO ${Math.abs(days)}D`;
   if (days === 0) return "VENCE HOJE";
-  return `${fmt(days)} DIAS RESTANTES`;
+  return `${days}D RESTANTES`;
 }
 
 function WeaponCard({
