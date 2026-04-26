@@ -381,6 +381,10 @@ export default function QAClientePortalPage() {
 
   return (
     <div data-tactical-portal className="min-h-screen">
+      <ForcePasswordChangeModal
+        open={mustChangePassword}
+        onSuccess={() => setMustChangePassword(false)}
+      />
       {/* ═══ TOP BAR ═══ */}
       <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-lg border-b border-slate-200/60 shadow-sm">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
