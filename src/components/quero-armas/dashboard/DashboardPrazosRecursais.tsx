@@ -47,7 +47,7 @@ interface PrazoRow {
   clienteId: number | null;
   clienteNome: string;
   cpf: string | null;
-  senhaGov: string | null;
+  cadastroCrId: number | null;
   protocolo: string | null;
   tipo: "Posse" | "Porte" | "CRAF";
   /** Tipo do evento que disparou a contagem (NOTIFICAÇÃO ou INDEFERIMENTO). */
