@@ -25,6 +25,39 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getSenhaGov } from "@/components/quero-armas/clientes/senhaGovApi";
 
+/**
+ * Copia texto compatível com Safari iOS, que bloqueia navigator.clipboard
+ * fora de gestos síncronos. Faz fallback via textarea + execCommand('copy').
+ */
+async function copyTextSafe(text: string): Promise<boolean> {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch {
+    /* fallback abaixo */
+  }
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.top = "0";
+    ta.style.left = "0";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    ta.setSelectionRange(0, text.length);
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    return ok;
+  } catch {
+    return false;
+  }
+}
+
 interface ItemRow {
   id: number;
   venda_id: number;            // → qa_vendas.id_legado
@@ -319,8 +352,9 @@ export default function DashboardPrazosRecursais() {
                           toast.info("Sem Senha Gov cadastrada");
                           return;
                         }
-                        await navigator.clipboard.writeText(senha);
-                        toast.success("Senha Gov copiada");
+                        const ok = await copyTextSafe(senha);
+                        if (ok) toast.success("Senha Gov copiada");
+                        else toast.error("Não foi possível copiar — toque e segure para copiar manualmente");
                       } catch (err: any) {
                         toast.error("Senha Gov: " + (err?.message || "erro"));
                       }
