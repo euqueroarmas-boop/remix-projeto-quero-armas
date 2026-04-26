@@ -17,8 +17,8 @@ export default function QATacticalLoader() {
     let start = performance.now();
     const tick = (now: number) => {
       const elapsed = (now - start) / 1000; // segundos
-      // Curva assintótica: ~92% em ~3s, satura abaixo de 95%
-      const next = Math.min(95, 100 * (1 - Math.exp(-elapsed / 1.1)));
+      // Curva assintótica suave até 99% — finaliza ao desmontar
+      const next = Math.min(99, 100 * (1 - Math.exp(-elapsed / 0.9)));
       setProgress((p) => (next > p ? next : p));
       raf = requestAnimationFrame(tick);
     };
