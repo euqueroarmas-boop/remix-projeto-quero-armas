@@ -8,16 +8,13 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { AuthProvider } from "@/shared/auth/AuthProvider";
 import { CartProvider } from "@/shared/cart/CartProvider";
+import QATacticalLoader from "@/components/quero-armas/QATacticalLoader";
 
 const QARoutes = lazyRetry(() => import("./pages/quero-armas/QARoutes.tsx"), "QARoutes");
 
 const queryClient = new QueryClient();
 
-const PageLoader = () => (
-  <div className="min-h-screen flex items-center justify-center bg-background">
-    <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-  </div>
-);
+const PageLoader = () => <QATacticalLoader />;
 
 /**
  * Redireciona /quero-armas/<resto> → /<resto> preservando query/hash.
