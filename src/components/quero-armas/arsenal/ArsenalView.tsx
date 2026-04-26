@@ -272,46 +272,6 @@ export function ArsenalView({
 
   return (
     <div className="space-y-5">
-      {/* HERO TÁTICO DARK */}
-      <div
-        className="relative overflow-hidden rounded-3xl border border-white/10 shadow-2xl"
-        style={{ background: "linear-gradient(180deg, #07090f 0%, #04060a 100%)" }}
-      >
-        <div
-          className="pointer-events-none absolute inset-0 opacity-70"
-          style={{
-            backgroundImage:
-              "radial-gradient(circle at 0% 0%, rgba(255,255,255,0.06), transparent 50%), radial-gradient(circle at 100% 100%, rgba(255,255,255,0.04), transparent 50%)",
-          }}
-        />
-        <div className="relative flex flex-col gap-3 p-5 md:flex-row md:items-center md:justify-between md:p-6">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-white/70" />
-              <span className="text-[10px] font-black uppercase tracking-[0.28em] text-white/80">
-                ARSENAL INTELIGENTE · {clienteNome.split(" ")[0]}
-              </span>
-            </div>
-            <h1 className="mt-1 text-2xl font-black tracking-tight text-white md:text-3xl uppercase">
-              Gunsmith · Seu Acervo
-            </h1>
-            <p className="mt-1 max-w-2xl text-[12px] text-white/50">
-              O sistema interpreta automaticamente seus CRAFs, GTEs, CR e documentos para
-              montar a bancada tática abaixo. Toque em qualquer item para inspecionar.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={onOpenAddDoc}
-              className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-cyan-400/40 bg-cyan-400/15 px-3 text-[10px] font-black uppercase tracking-wider text-cyan-200 hover:bg-cyan-400/25"
-            >
-              <Upload className="h-3.5 w-3.5" /> Enviar documento
-            </button>
-          </div>
-        </div>
-      </div>
-
       {/* KPIs */}
       <ArsenalSummary
         totalArmas={weapons.length}
