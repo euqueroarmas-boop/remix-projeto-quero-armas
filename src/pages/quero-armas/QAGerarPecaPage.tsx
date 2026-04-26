@@ -958,6 +958,22 @@ export default function QAGerarPecaPage() {
         setResultado((prev) => prev ? { ...prev, geracao_id: persistedGeracaoId } : prev);
       }
 
+      // Reforço de integridade: garante que a peça gerada esteja vinculada ao caso/cliente
+      // (cobre o cenário em que o caso foi criado AGORA, depois da chamada à edge function).
+      if (persistedGeracaoId) {
+        const { error: linkGeracaoError } = await supabase
+          .from("qa_geracoes_pecas" as any)
+          .update({
+            caso_id: savedId,
+            cliente_id: clienteIdVinculado ?? null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", persistedGeracaoId);
+        if (linkGeracaoError) {
+          console.warn("[saveCaso] Falha ao reforçar vínculo da peça com o caso:", linkGeracaoError);
+        }
+      }
+
       if (auxiliarDocIds.length > 0) {
         const { error: linkDocsError } = await supabase.from("qa_documentos_conhecimento" as any)
           .update({ caso_id: savedId, updated_at: new Date().toISOString() })
