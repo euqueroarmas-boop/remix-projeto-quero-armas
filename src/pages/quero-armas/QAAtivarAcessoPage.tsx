@@ -9,6 +9,65 @@ type Step = "identify" | "needs_email" | "otp" | "success" | "awaiting_admin" | 
 
 const MONO = { fontFamily: "'JetBrains Mono', monospace" } as const;
 
+const FieldLabel = ({ children }: { children: React.ReactNode }) => (
+  <label className="text-[10px] tracking-[0.2em] text-zinc-500" style={MONO}>
+    {children}
+  </label>
+);
+
+const TacticalInput = (props: React.InputHTMLAttributes<HTMLInputElement>) => (
+  <div className="flex items-center border-b border-[#1f1f1f] focus-within:border-[#ff2a2a]/60 bg-black/40 transition-colors">
+    <span className="text-[#ff2a2a]/60 text-sm pl-3" style={MONO}>&gt;</span>
+    <input
+      {...props}
+      className={`w-full bg-transparent p-3 text-sm text-white outline-none normal-case placeholder:text-zinc-700 placeholder:tracking-wider ${props.className || ""}`}
+      style={{ ...MONO, ...(props.style || {}) }}
+    />
+  </div>
+);
+
+const PrimaryButton = ({ children, onClick, disabled, type = "button" }: any) => (
+  <button
+    type={type}
+    onClick={onClick}
+    disabled={disabled}
+    className="w-full relative bg-[#ff2a2a]/5 hover:bg-[#ff2a2a]/10 border border-[#ff2a2a]/40 hover:border-[#ff2a2a] px-6 py-3.5 flex items-center justify-center gap-2 transition-all shadow-[0_0_25px_rgba(255,42,42,0.12)] hover:shadow-[0_0_45px_rgba(255,42,42,0.3)] disabled:opacity-50 disabled:cursor-not-allowed text-[13px] tracking-[0.2em] text-white font-bold"
+  >
+    <div className="absolute top-0 left-0 size-2.5 border-t-2 border-l-2 border-[#ff2a2a]" />
+    <div className="absolute top-0 right-0 size-2.5 border-t-2 border-r-2 border-[#ff2a2a]" />
+    <div className="absolute bottom-0 left-0 size-2.5 border-b-2 border-l-2 border-[#ff2a2a]" />
+    <div className="absolute bottom-0 right-0 size-2.5 border-b-2 border-r-2 border-[#ff2a2a]" />
+    {children}
+  </button>
+);
+
+const Notice = ({
+  tone,
+  icon: Icon,
+  children,
+}: {
+  tone: "warn" | "success" | "info";
+  icon: any;
+  children: React.ReactNode;
+}) => {
+  const colors =
+    tone === "success"
+      ? { border: "border-[#22c55e]/40", text: "text-[#86efac]", icon: "text-[#22c55e]", bg: "bg-[#22c55e]/5" }
+      : tone === "warn"
+      ? { border: "border-[#f59e0b]/40", text: "text-[#fcd34d]", icon: "text-[#f59e0b]", bg: "bg-[#f59e0b]/5" }
+      : { border: "border-[#1f1f1f]", text: "text-zinc-400", icon: "text-zinc-500", bg: "bg-black/40" };
+  return (
+    <div className={`relative ${colors.bg} border ${colors.border} p-4 flex items-start gap-3`}>
+      <div className={`absolute top-0 left-0 size-2 border-t border-l ${colors.border}`} />
+      <div className={`absolute bottom-0 right-0 size-2 border-b border-r ${colors.border}`} />
+      <Icon className={`h-4 w-4 ${colors.icon} mt-0.5 shrink-0`} />
+      <div className={`text-[12px] leading-relaxed ${colors.text} normal-case`} style={MONO}>
+        {children}
+      </div>
+    </div>
+  );
+};
+
 export default function QAAtivarAcessoPage() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
