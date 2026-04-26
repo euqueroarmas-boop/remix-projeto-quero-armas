@@ -58,7 +58,7 @@ export default function QATacticalLoader() {
         <div className="mt-3 flex items-center gap-2">
           <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
           <span className="font-mono text-[9px] uppercase tracking-[0.32em] text-white/40">
-            Inicializando módulos · Quero Armas
+            Sistema de Armas · Inicializando Modulos
           </span>
         </div>
       </div>
