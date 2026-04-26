@@ -1,7 +1,7 @@
 import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { lazyRetry } from "@/lib/lazyRetry";
-import { Loader2 } from "lucide-react";
+import QATacticalLoader from "@/components/quero-armas/QATacticalLoader";
 
 const QALayout = lazyRetry(() => import("@/components/quero-armas/QALayout"), "QALayout");
 const QALoginPage = lazyRetry(() => import("./QALoginPage"), "QALoginPage");
@@ -37,15 +37,9 @@ const LpDefesaPessoalPosse = lazyRetry(() => import("@/pages/LpDefesaPessoalPoss
 const LpCacCr = lazyRetry(() => import("@/pages/LpCacCr"), "LpCacCr");
 const LpAtividadesAvulsas = lazyRetry(() => import("@/pages/LpAtividadesAvulsas"), "LpAtividadesAvulsas");
 
-const Loader = () => (
-  <div className="min-h-screen flex items-center justify-center bg-slate-50">
-    <div className="w-6 h-6 border-2 border-slate-700 border-t-slate-400 rounded-full animate-spin" />
-  </div>
-);
-
 export default function QARoutes() {
   return (
-    <Suspense fallback={<Loader />}>
+    <Suspense fallback={<QATacticalLoader />}>
       <Routes>
         {/* Raiz: landing page principal pública */}
         <Route path="/" element={<HomePage />} />
