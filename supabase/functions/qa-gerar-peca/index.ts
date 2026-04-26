@@ -870,6 +870,18 @@ Deno.serve(async (req) => {
     let fontesAuxiliares: any[] = [];
     let evidenceDocs: EvidenceDoc[] = [];
     const caso_id = req_caso_id?.trim() || null;
+    // Cliente vinculado: prioriza payload; se ausente e houver caso, deriva do qa_casos.cliente_id.
+    let cliente_id_final: number | null = (typeof reqClienteId === "number" || typeof reqClienteId === "string")
+      ? Number(reqClienteId) || null
+      : null;
+    if (!cliente_id_final && caso_id) {
+      const { data: casoRow } = await supabase
+        .from("qa_casos")
+        .select("cliente_id")
+        .eq("id", caso_id)
+        .maybeSingle();
+      if (casoRow?.cliente_id) cliente_id_final = Number(casoRow.cliente_id) || null;
+    }
 
     if (caso_id || documentos_auxiliares_ids.length > 0) {
       // 1) Documentos vinculados ao caso (via caso_id)
