@@ -10,7 +10,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2, Plus, Sparkles, Globe, Trash2, CheckCircle2, AlertCircle, Search, Image as ImageIcon, RefreshCcw, Camera, Eraser, Crosshair, Target, Layers, Flag, Shield } from "lucide-react";
+import { ImageOff, X } from "lucide-react";
 import { toast } from "sonner";
+import { LoadingState } from "@/components/quero-armas/LoadStates";
+  const [semImagemFilter, setSemImagemFilter] = useState<boolean>(false);
 
 type Status = "rascunho" | "pendente_revisao" | "verificado" | "rejeitado";
 type Fonte = "curado" | "ia_gerado" | "scrape_fabricante" | "importado";
@@ -75,6 +78,7 @@ export default function QAArmamentosAdminPage() {
     return items.filter((it) => {
       if (tipoFilter !== "todos" && it.tipo !== tipoFilter) return false;
       if (statusFilter !== "todos" && it.status_revisao !== statusFilter) return false;
+      if (semImagemFilter && !!it.imagem) return false;
       if (!norm) return true;
       return [it.marca, it.modelo, it.apelido, it.calibre].filter(Boolean).join(" ").toLowerCase().includes(norm);
     });
@@ -85,7 +89,16 @@ export default function QAArmamentosAdminPage() {
     pendentes: items.filter(i => i.status_revisao === "pendente_revisao").length,
     verificados: items.filter(i => i.status_revisao === "verificado").length,
     ia: items.filter(i => i.fonte_dados === "ia_gerado").length,
+    semImagem: items.filter(i => !i.imagem).length,
   }), [items]);
+
+  const filtrosAtivos = q.trim() !== "" || tipoFilter !== "todos" || statusFilter !== "todos" || semImagemFilter;
+  const limparFiltros = () => {
+    setQ("");
+    setTipoFilter("todos");
+    setStatusFilter("todos");
+    setSemImagemFilter(false);
+  };
 
   function openNew() { setEditing(empty()); setScrapeUrl(""); setOpen(true); }
   function openEdit(it: Arma) { setEditing({ ...it }); setScrapeUrl(it.fonte_url || ""); setOpen(true); }
