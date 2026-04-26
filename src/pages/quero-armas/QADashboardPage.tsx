@@ -641,7 +641,7 @@ function KPICard({ icon: Icon, label, value, trend, positive, to }: {
   icon: any; label: string; value: number; trend: string; positive: boolean; to?: string;
 }) {
   const content = (
-    <div className="qa-card qa-hover-lift p-4 md:p-5 cursor-pointer h-full">
+    <div className="qa-card qa-hover-lift p-4 md:p-5 cursor-pointer h-full pointer-events-none">
       <div className="flex items-start justify-between mb-3">
         <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: "hsl(230 80% 96%)" }}>
           <Icon className="h-4.5 w-4.5" style={{ color: "hsl(230 80% 56%)" }} />
@@ -661,14 +661,14 @@ function KPICard({ icon: Icon, label, value, trend, positive, to }: {
       <div className="text-xs font-medium" style={{ color: "hsl(220 10% 55%)" }}>{label}</div>
     </div>
   );
-  return to ? <Link to={to} className="block">{content}</Link> : content;
+  return to ? <Link to={to} className="block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-xl">{content}</Link> : content;
 }
 
 function MiniMetricCard({ icon: Icon, label, value, color, to }: {
   icon: any; label: string; value: number; color: string; to?: string;
 }) {
   const content = (
-    <div className="qa-card qa-hover-lift p-4 cursor-pointer h-full">
+    <div className="qa-card qa-hover-lift p-4 cursor-pointer h-full pointer-events-none">
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
           style={{ background: color + "14" }}>
@@ -681,7 +681,7 @@ function MiniMetricCard({ icon: Icon, label, value, color, to }: {
       </div>
     </div>
   );
-  return to ? <Link to={to} className="block">{content}</Link> : content;
+  return to ? <Link to={to} className="block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-xl">{content}</Link> : content;
 }
 
 function RecentList({ title, subtitle, items, linkTo, icon: Icon, statusBadge, isDoc }: {
