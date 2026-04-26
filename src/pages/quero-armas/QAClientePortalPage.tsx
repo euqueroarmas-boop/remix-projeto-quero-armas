@@ -477,10 +477,10 @@ export default function QAClientePortalPage() {
               {/* Eyebrow premium */}
               <div className="flex items-center gap-1.5">
                 <span
-                  className="text-[9px] font-bold uppercase"
+                  className="text-[8px] font-bold uppercase"
                   style={{
                     color: "#c9a961",
-                    letterSpacing: "0.42em",
+                    letterSpacing: "0.12em",
                   }}
                 >
                   Área do Cliente
@@ -507,7 +507,11 @@ export default function QAClientePortalPage() {
                   textShadow: "0 1px 0 rgba(0,0,0,0.7)",
                 }}
               >
-                {userName || "Cliente"}
+                {(() => {
+                  const parts = (userName || "Cliente").trim().split(/\s+/).filter(Boolean);
+                  if (parts.length <= 1) return parts[0] || "Cliente";
+                  return `${parts[0]} ${parts[parts.length - 1]}`;
+                })()}
               </h1>
 
               {/* Sub-rótulo com ornamentos */}
