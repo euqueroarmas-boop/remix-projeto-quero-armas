@@ -258,7 +258,7 @@ export default function QAArmamentosAdminPage() {
                 ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Limpando fundo…</>
                 : <><Eraser className="h-4 w-4 mr-2" />Limpar fundo</>}
             </Button>
-            <Button onClick={openNew} className="bg-zinc-900 text-amber-300 hover:bg-zinc-800 font-semibold">
+            <Button onClick={openNew} className="bg-amber-500 text-white hover:bg-amber-600 font-semibold">
               <Plus className="h-4 w-4 mr-2" />Nova arma
             </Button>
           </div>
@@ -495,20 +495,12 @@ function WeaponCard({
       </div>
 
       {/* visual da arma */}
-      <div className="relative aspect-[16/10] bg-[radial-gradient(ellipse_at_center,rgba(245,158,11,0.10),transparent_65%),linear-gradient(180deg,#ffffff,#f3f1ec)] grid place-items-center overflow-hidden">
-        {/* grade tática */}
-        <div className="absolute inset-0 opacity-[0.06]" style={{ backgroundImage: "linear-gradient(rgba(0,0,0,.6) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,.6) 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
-        {/* alvo de mira nos cantos */}
-        <div className="absolute top-2 left-2 h-3 w-3 border-l border-t border-amber-600/50" />
-        <div className="absolute top-2 right-2 h-3 w-3 border-r border-t border-amber-600/50" />
-        <div className="absolute bottom-2 left-2 h-3 w-3 border-l border-b border-amber-600/50" />
-        <div className="absolute bottom-2 right-2 h-3 w-3 border-r border-b border-amber-600/50" />
-
+      <div className="relative aspect-[16/10] grid place-items-center overflow-hidden">
         {it.imagem ? (
           <img
             src={it.imagem}
             alt={`${it.marca} ${it.modelo}`}
-            className="relative z-10 max-h-[85%] max-w-[88%] object-contain drop-shadow-[0_10px_25px_rgba(0,0,0,0.25)] group-hover:scale-105 transition-transform duration-500"
+            className="relative z-10 max-h-[88%] max-w-[92%] object-contain drop-shadow-[0_10px_20px_rgba(0,0,0,0.18)] group-hover:scale-105 transition-transform duration-500"
           />
         ) : (
           <div className="relative z-10 flex flex-col items-center gap-2 text-zinc-400">
@@ -518,7 +510,7 @@ function WeaponCard({
         )}
 
         {/* tag de tipo */}
-        <div className="absolute top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-zinc-900/85 border border-zinc-800 text-[9px] font-mono uppercase tracking-[0.25em] text-amber-200">
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/40 text-[9px] font-mono uppercase tracking-[0.25em] text-amber-700">
           {it.tipo}
         </div>
       </div>
