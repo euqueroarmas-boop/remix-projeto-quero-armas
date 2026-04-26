@@ -4155,6 +4155,8 @@ export type Database = {
       }
       qa_geracoes_pecas: {
         Row: {
+          caso_id: string | null
+          cliente_id: number | null
           created_at: string
           documentos_referencia_json: Json | null
           docx_path: string | null
@@ -4177,6 +4179,8 @@ export type Database = {
           versao: number
         }
         Insert: {
+          caso_id?: string | null
+          cliente_id?: number | null
           created_at?: string
           documentos_referencia_json?: Json | null
           docx_path?: string | null
@@ -4199,6 +4203,8 @@ export type Database = {
           versao?: number
         }
         Update: {
+          caso_id?: string | null
+          cliente_id?: number | null
           created_at?: string
           documentos_referencia_json?: Json | null
           docx_path?: string | null
@@ -4220,7 +4226,22 @@ export type Database = {
           usuario_id?: string
           versao?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "qa_geracoes_pecas_caso_id_fkey"
+            columns: ["caso_id"]
+            isOneToOne: false
+            referencedRelation: "qa_casos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_geracoes_pecas_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       qa_gtes: {
         Row: {
