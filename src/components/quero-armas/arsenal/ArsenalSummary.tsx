@@ -1,6 +1,8 @@
 import { ReactNode } from "react";
-import { Crosshair, Layers, ShieldCheck, AlertTriangle, FileBadge, Boxes } from "lucide-react";
+import { Crosshair, Layers, ShieldCheck, AlertTriangle, FileBadge, Boxes, ChevronRight } from "lucide-react";
 import { TACTICAL } from "./utils";
+
+export type ArsenalSummaryTarget = "armas" | "municoes" | "crafs" | "cr" | "calibres" | "alertas";
 
 interface Props {
   totalArmas: number;
@@ -10,6 +12,7 @@ interface Props {
   crLabel: string;
   totalCrafs: number;
   alerts: number;
+  onNavigate?: (target: ArsenalSummaryTarget) => void;
 }
 
 function Kpi({
@@ -18,12 +21,14 @@ function Kpi({
   value,
   hint,
   tone = "cyan",
+  onClick,
 }: {
   icon: ReactNode;
   label: string;
   value: string | number;
   hint?: string;
   tone?: "cyan" | "ok" | "warn" | "danger" | "steel";
+  onClick?: () => void;
 }) {
   const color =
     tone === "ok"
@@ -36,8 +41,10 @@ function Kpi({
       ? TACTICAL.steel
       : TACTICAL.cyan;
   return (
-    <div
-      className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm transition-all hover:shadow-md"
+    <button
+      type="button"
+      onClick={onClick}
+      className="group relative w-full overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-amber-300/50"
       style={{ boxShadow: `inset 0 0 0 1px ${color}10` }}
     >
       <div
@@ -52,16 +59,16 @@ function Kpi({
           {icon}
         </div>
         <div
-          className="rounded-full px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.18em]"
+          className="inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.18em]"
           style={{ background: `${color}10`, color }}
         >
-          KPI
+          KPI <ChevronRight className="h-2.5 w-2.5 transition-transform group-hover:translate-x-0.5" />
         </div>
       </div>
       <div className="mt-3 text-2xl font-bold text-slate-800 leading-none font-mono">{value}</div>
       <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">{label}</div>
       {hint && <div className="mt-2 text-[10px] text-slate-400">{hint}</div>}
-    </div>
+    </button>
   );
 }
 
@@ -73,6 +80,7 @@ export function ArsenalSummary({
   crLabel,
   totalCrafs,
   alerts,
+  onNavigate,
 }: Props) {
   return (
     <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
@@ -82,6 +90,7 @@ export function ArsenalSummary({
         value={totalArmas}
         hint={totalArmas === 0 ? "Sem CRAFs cadastrados" : "Cadastradas"}
         tone="cyan"
+        onClick={() => onNavigate?.("armas")}
       />
       <Kpi
         icon={<Boxes className="h-4 w-4" />}
@@ -89,6 +98,7 @@ export function ArsenalSummary({
         value={totalMunicoes.toLocaleString("pt-BR")}
         hint={totalCalibres > 0 ? `${totalCalibres} calibres` : "Sem estoque"}
         tone="steel"
+        onClick={() => onNavigate?.("municoes")}
       />
       <Kpi
         icon={<FileBadge className="h-4 w-4" />}
@@ -96,12 +106,14 @@ export function ArsenalSummary({
         value={totalCrafs}
         hint="Vinculados ao acervo"
         tone="cyan"
+        onClick={() => onNavigate?.("crafs")}
       />
       <Kpi
         icon={<ShieldCheck className="h-4 w-4" />}
         label="Status CR"
         value={crLabel}
         tone={crStatus === "muted" ? "steel" : crStatus}
+        onClick={() => onNavigate?.("cr")}
       />
       <Kpi
         icon={<Layers className="h-4 w-4" />}
@@ -109,6 +121,7 @@ export function ArsenalSummary({
         value={totalCalibres}
         hint="Diferentes em estoque"
         tone="ok"
+        onClick={() => onNavigate?.("calibres")}
       />
       <Kpi
         icon={<AlertTriangle className="h-4 w-4" />}
@@ -116,6 +129,7 @@ export function ArsenalSummary({
         value={alerts}
         hint={alerts === 0 ? "Tudo em dia" : "Vencimentos próximos"}
         tone={alerts === 0 ? "ok" : alerts > 2 ? "danger" : "warn"}
+        onClick={() => onNavigate?.("alertas")}
       />
     </div>
   );
