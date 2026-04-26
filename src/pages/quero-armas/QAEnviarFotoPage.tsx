@@ -234,9 +234,8 @@ export default function QAEnviarFotoPage() {
         </div>
 
         <div className="text-center mt-6 text-[11px]" style={{ color: "hsl(220 10% 50%)" }}>
-          © {new Date().getFullYear()} · Criado e desenvolvido por{" "}
-          <span className="font-semibold" style={{ color: "hsl(220 20% 25%)" }}>WMTi Tecnologia da Informação</span>. Todos os direitos reservados.
-          <div className="mt-1">+55 (11) 96316-6915</div>
+          © {new Date().getFullYear()} ·{" "}
+          <span className="font-semibold" style={{ color: "hsl(220 20% 25%)" }}>Quero Armas</span>. Todos os direitos reservados.
         </div>
       </div>
     </div>
