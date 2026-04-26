@@ -121,17 +121,17 @@ export default function DashboardPrazosRecursais() {
     const vMap = new Map(vendas.map(v => [v.id_legado, v]));
     const cMap = new Map(clientes.map(c => [c.id_legado, c]));
 
-    // Busca senhas gov dos clientes envolvidos (qa_cadastro_cr.cliente_id → qa_clientes.id)
+    // Mapa cliente_id -> cadastro_cr.id (para revelação on-demand via edge function)
     const clienteInternalIds = clientes.map(c => c.id);
-    const senhaMap = new Map<number, string>();
+    const cadastroMap = new Map<number, number>();
     if (clienteInternalIds.length) {
       const { data: crRows } = await supabase
         .from("qa_cadastro_cr" as any)
-        .select("cliente_id, senha_gov")
+        .select("id, cliente_id")
         .in("cliente_id", clienteInternalIds as any);
       for (const row of (crRows as any[] | null) || []) {
-        if (row?.cliente_id && row?.senha_gov && !senhaMap.has(row.cliente_id)) {
-          senhaMap.set(row.cliente_id, String(row.senha_gov));
+        if (row?.cliente_id && row?.id && !cadastroMap.has(row.cliente_id)) {
+          cadastroMap.set(row.cliente_id, Number(row.id));
         }
       }
     }
@@ -168,7 +168,7 @@ export default function DashboardPrazosRecursais() {
         clienteId: cliente.id ?? null,
         clienteNome: cliente.nome_completo || `Cliente #${cliente.id}`,
         cpf: cliente.cpf ?? null,
-        senhaGov: cliente.id != null ? senhaMap.get(cliente.id) ?? null : null,
+        cadastroCrId: cliente.id != null ? cadastroMap.get(cliente.id) ?? null : null,
         protocolo:
           (it.servico_id === 2
             ? it.numero_posse
