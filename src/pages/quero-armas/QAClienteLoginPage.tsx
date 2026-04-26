@@ -88,7 +88,7 @@ export default function QAClienteLoginPage() {
         className="absolute inset-0 opacity-60 md:opacity-30 pointer-events-none"
         style={{
           backgroundImage:
-            "linear-gradient(rgba(255,42,42,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,42,42,0.04) 1px, transparent 1px)",
+            "linear-gradient(rgba(201,169,97,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(201,169,97,0.04) 1px, transparent 1px)",
           backgroundSize: "40px 40px",
         }}
       />
@@ -111,7 +111,7 @@ export default function QAClienteLoginPage() {
       />
 
       {/* ===================== MOBILE / TABLET (até md) — mantém o terminal centralizado ===================== */}
-      <div className="md:hidden relative z-10 w-full max-w-[420px] bg-[#0a0a0a]/90 border border-[#1f1f1f] backdrop-blur-md p-5 sm:p-6 flex flex-col gap-6 shadow-[0_0_60px_rgba(255,42,42,0.05)]">
+      <div className="md:hidden relative z-10 w-full max-w-[420px] bg-[#0a0a0a]/90 border border-[#1f1f1f] backdrop-blur-md p-5 sm:p-6 flex flex-col gap-6 shadow-[0_0_60px_rgba(201,169,97,0.05)]">
         {/* HUD bar */}
         <div
           className="flex items-center justify-between text-[11px] tracking-[0.2em] text-zinc-500"
@@ -120,15 +120,15 @@ export default function QAClienteLoginPage() {
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex items-center gap-2 hover:text-[#ff2a2a] transition-colors group"
+            className="flex items-center gap-2 hover:text-[#c9a961] transition-colors group"
           >
-            <ChevronLeft className="h-3 w-3 text-[#ff2a2a] group-hover:-translate-x-0.5 transition-transform" />
+            <ChevronLeft className="h-3 w-3 text-[#c9a961] group-hover:-translate-x-0.5 transition-transform" />
             VOLTAR
           </button>
           <div className="flex items-center gap-2">
             <span className="relative flex h-1.5 w-1.5">
-              <span className="absolute inline-flex h-full w-full rounded-none bg-[#ff2a2a] opacity-75 animate-ping" />
-              <span className="relative inline-flex h-1.5 w-1.5 bg-[#ff2a2a]" />
+              <span className="absolute inline-flex h-full w-full rounded-none bg-[#c9a961] opacity-75 animate-ping" />
+              <span className="relative inline-flex h-1.5 w-1.5 bg-[#c9a961]" />
             </span>
             <span>NODE_SECURE</span>
           </div>
@@ -139,7 +139,7 @@ export default function QAClienteLoginPage() {
           <img
             src={logoWhite}
             alt="Eu Quero Armas"
-            className="h-12 w-auto object-contain drop-shadow-[0_4px_20px_rgba(255,42,42,0.25)]"
+            className="h-12 w-auto object-contain drop-shadow-[0_4px_20px_rgba(201,169,97,0.25)]"
             draggable={false}
           />
           <div
@@ -153,7 +153,7 @@ export default function QAClienteLoginPage() {
         {/* PRIMEIRO ACESSO — destaque máximo */}
         <div className="flex flex-col gap-2">
           <div
-            className="text-[10px] tracking-[0.2em] text-zinc-500 pl-2 border-l-2 border-[#ff2a2a]/50"
+            className="text-[10px] tracking-[0.2em] text-zinc-500 pl-2 border-l-2 border-[#c9a961]/50"
             style={{ fontFamily: "'JetBrains Mono', monospace" }}
           >
             &gt; Inicializar Registro
@@ -161,21 +161,21 @@ export default function QAClienteLoginPage() {
           <button
             type="button"
             onClick={() => navigate("/ativar-acesso")}
-            className="w-full relative bg-[#ff2a2a]/5 hover:bg-[#ff2a2a]/10 border border-[#ff2a2a]/40 hover:border-[#ff2a2a] p-6 flex flex-col items-center gap-3 transition-all shadow-[0_0_25px_rgba(255,42,42,0.15)] hover:shadow-[0_0_45px_rgba(255,42,42,0.35)] group"
+            className="w-full relative bg-[#c9a961]/5 hover:bg-[#c9a961]/10 border border-[#c9a961]/40 hover:border-[#c9a961] p-6 flex flex-col items-center gap-3 transition-all shadow-[0_0_25px_rgba(201,169,97,0.15)] hover:shadow-[0_0_45px_rgba(201,169,97,0.35)] group"
           >
             {/* targeting brackets */}
-            <div className="absolute top-0 left-0 size-3 border-t-2 border-l-2 border-[#ff2a2a]" />
-            <div className="absolute top-0 right-0 size-3 border-t-2 border-r-2 border-[#ff2a2a]" />
-            <div className="absolute bottom-0 left-0 size-3 border-b-2 border-l-2 border-[#ff2a2a]" />
-            <div className="absolute bottom-0 right-0 size-3 border-b-2 border-r-2 border-[#ff2a2a]" />
+            <div className="absolute top-0 left-0 size-3 border-t-2 border-l-2 border-[#c9a961]" />
+            <div className="absolute top-0 right-0 size-3 border-t-2 border-r-2 border-[#c9a961]" />
+            <div className="absolute bottom-0 left-0 size-3 border-b-2 border-l-2 border-[#c9a961]" />
+            <div className="absolute bottom-0 right-0 size-3 border-b-2 border-r-2 border-[#c9a961]" />
 
-            <Sparkles className="h-6 w-6 text-[#ff2a2a] group-hover:scale-110 transition-transform" />
+            <Sparkles className="h-6 w-6 text-[#c9a961] group-hover:scale-110 transition-transform" />
             <div className="flex flex-col items-center text-center gap-1">
               <span className="text-xl sm:text-2xl font-bold tracking-widest text-white">
                 PRIMEIRO ACESSO
               </span>
               <span
-                className="text-[11px] tracking-[0.25em] text-[#ff2a2a]"
+                className="text-[11px] tracking-[0.25em] text-[#c9a961]"
                 style={{ fontFamily: "'JetBrains Mono', monospace" }}
               >
                 ATIVAR_MINHA_CONTA // 0X1
@@ -205,9 +205,9 @@ export default function QAClienteLoginPage() {
             >
               ID CREDENCIAL
             </label>
-            <div className="flex items-center border-b border-[#1f1f1f] focus-within:border-[#ff2a2a]/60 bg-black/40 transition-colors">
+            <div className="flex items-center border-b border-[#1f1f1f] focus-within:border-[#c9a961]/60 bg-black/40 transition-colors">
               <span
-                className="text-[#ff2a2a]/60 text-sm pl-3"
+                className="text-[#c9a961]/60 text-sm pl-3"
                 style={{ fontFamily: "'JetBrains Mono', monospace" }}
               >
                 &gt;
@@ -236,9 +236,9 @@ export default function QAClienteLoginPage() {
             >
               CHAVE DE ACESSO
             </label>
-            <div className="flex items-center border-b border-[#1f1f1f] focus-within:border-[#ff2a2a]/60 bg-black/40 transition-colors">
+            <div className="flex items-center border-b border-[#1f1f1f] focus-within:border-[#c9a961]/60 bg-black/40 transition-colors">
               <span
-                className="text-[#ff2a2a]/60 text-sm pl-3"
+                className="text-[#c9a961]/60 text-sm pl-3"
                 style={{ fontFamily: "'JetBrains Mono', monospace" }}
               >
                 &gt;
@@ -263,7 +263,7 @@ export default function QAClienteLoginPage() {
             <button
               type="button"
               onClick={handleForgotPassword}
-              className="text-[10px] text-zinc-500 hover:text-[#ff2a2a] tracking-[0.2em] transition-colors"
+              className="text-[10px] text-zinc-500 hover:text-[#c9a961] tracking-[0.2em] transition-colors"
               style={{ fontFamily: "'JetBrains Mono', monospace" }}
             >
               [ RECUPERAR ]
@@ -288,8 +288,8 @@ export default function QAClienteLoginPage() {
         {/* Coluna esquerda — branding/hero */}
         <div className="relative flex flex-col items-center justify-center p-10 lg:p-14 xl:p-20 border-r border-[#1f1f1f] bg-gradient-to-br from-[#0a0a0a] via-[#080808] to-[#030303] overflow-hidden">
           {/* glow */}
-          <div className="absolute -top-32 -left-32 w-[480px] h-[480px] rounded-full bg-[#ff2a2a]/10 blur-[120px] pointer-events-none" />
-          <div className="absolute bottom-0 right-0 w-[300px] h-[300px] rounded-full bg-[#ff2a2a]/5 blur-[100px] pointer-events-none" />
+          <div className="absolute -top-32 -left-32 w-[480px] h-[480px] rounded-full bg-[#c9a961]/10 blur-[120px] pointer-events-none" />
+          <div className="absolute bottom-0 right-0 w-[300px] h-[300px] rounded-full bg-[#c9a961]/5 blur-[100px] pointer-events-none" />
 
           {/* Top: voltar + status (absoluto) */}
           <div
@@ -299,15 +299,15 @@ export default function QAClienteLoginPage() {
             <button
               type="button"
               onClick={() => navigate(-1)}
-              className="flex items-center gap-2 hover:text-[#ff2a2a] transition-colors group"
+              className="flex items-center gap-2 hover:text-[#c9a961] transition-colors group"
             >
-              <ChevronLeft className="h-3 w-3 text-[#ff2a2a] group-hover:-translate-x-0.5 transition-transform" />
+              <ChevronLeft className="h-3 w-3 text-[#c9a961] group-hover:-translate-x-0.5 transition-transform" />
               VOLTAR
             </button>
             <div className="flex items-center gap-2">
               <span className="relative flex h-1.5 w-1.5">
-                <span className="absolute inline-flex h-full w-full bg-[#ff2a2a] opacity-75 animate-ping" />
-                <span className="relative inline-flex h-1.5 w-1.5 bg-[#ff2a2a]" />
+                <span className="absolute inline-flex h-full w-full bg-[#c9a961] opacity-75 animate-ping" />
+                <span className="relative inline-flex h-1.5 w-1.5 bg-[#c9a961]" />
               </span>
               <span>NODE_SECURE</span>
             </div>
@@ -318,7 +318,7 @@ export default function QAClienteLoginPage() {
             <img
               src={logoWhite}
               alt="Eu Quero Armas"
-              className="h-20 lg:h-24 w-auto object-contain drop-shadow-[0_8px_40px_rgba(255,42,42,0.35)]"
+              className="h-20 lg:h-24 w-auto object-contain drop-shadow-[0_8px_40px_rgba(201,169,97,0.35)]"
               draggable={false}
             />
             <div
@@ -328,7 +328,7 @@ export default function QAClienteLoginPage() {
               PROTOCOLO_LEGAL_ARMAMENTO
             </div>
             <h1 className="text-3xl lg:text-4xl xl:text-5xl font-bold tracking-widest text-white leading-tight">
-              ÁREA DO <span className="text-[#ff2a2a]">OPERADOR</span>
+              ÁREA DO <span className="text-[#c9a961]">OPERADOR</span>
             </h1>
             <p
               className="text-sm lg:text-base tracking-[0.15em] text-zinc-400 normal-case"
@@ -350,7 +350,7 @@ export default function QAClienteLoginPage() {
                   style={{ fontFamily: "'JetBrains Mono', monospace" }}
                 >
                   <span className="text-[9px] tracking-[0.25em] text-zinc-600">{s.k}</span>
-                  <span className="text-xs tracking-[0.2em] text-[#ff2a2a]">{s.v}</span>
+                  <span className="text-xs tracking-[0.2em] text-[#c9a961]">{s.v}</span>
                 </div>
               ))}
             </div>
@@ -371,7 +371,7 @@ export default function QAClienteLoginPage() {
             {/* PRIMEIRO ACESSO */}
             <div className="flex flex-col gap-2">
               <div
-                className="text-[10px] tracking-[0.2em] text-zinc-500 pl-2 border-l-2 border-[#ff2a2a]/50"
+                className="text-[10px] tracking-[0.2em] text-zinc-500 pl-2 border-l-2 border-[#c9a961]/50"
                 style={{ fontFamily: "'JetBrains Mono', monospace" }}
               >
                 &gt; Inicializar Registro
@@ -379,20 +379,20 @@ export default function QAClienteLoginPage() {
               <button
                 type="button"
                 onClick={() => navigate("/ativar-acesso")}
-                className="w-full relative bg-[#ff2a2a]/5 hover:bg-[#ff2a2a]/10 border border-[#ff2a2a]/40 hover:border-[#ff2a2a] p-6 lg:p-7 flex items-center gap-5 transition-all shadow-[0_0_25px_rgba(255,42,42,0.15)] hover:shadow-[0_0_45px_rgba(255,42,42,0.35)] group"
+                className="w-full relative bg-[#c9a961]/5 hover:bg-[#c9a961]/10 border border-[#c9a961]/40 hover:border-[#c9a961] p-6 lg:p-7 flex items-center gap-5 transition-all shadow-[0_0_25px_rgba(201,169,97,0.15)] hover:shadow-[0_0_45px_rgba(201,169,97,0.35)] group"
               >
-                <div className="absolute top-0 left-0 size-3 border-t-2 border-l-2 border-[#ff2a2a]" />
-                <div className="absolute top-0 right-0 size-3 border-t-2 border-r-2 border-[#ff2a2a]" />
-                <div className="absolute bottom-0 left-0 size-3 border-b-2 border-l-2 border-[#ff2a2a]" />
-                <div className="absolute bottom-0 right-0 size-3 border-b-2 border-r-2 border-[#ff2a2a]" />
+                <div className="absolute top-0 left-0 size-3 border-t-2 border-l-2 border-[#c9a961]" />
+                <div className="absolute top-0 right-0 size-3 border-t-2 border-r-2 border-[#c9a961]" />
+                <div className="absolute bottom-0 left-0 size-3 border-b-2 border-l-2 border-[#c9a961]" />
+                <div className="absolute bottom-0 right-0 size-3 border-b-2 border-r-2 border-[#c9a961]" />
 
-                <Sparkles className="h-7 w-7 text-[#ff2a2a] group-hover:scale-110 transition-transform shrink-0" />
+                <Sparkles className="h-7 w-7 text-[#c9a961] group-hover:scale-110 transition-transform shrink-0" />
                 <div className="flex flex-col items-start text-left gap-1">
                   <span className="text-xl lg:text-2xl font-bold tracking-widest text-white">
                     PRIMEIRO ACESSO
                   </span>
                   <span
-                    className="text-[11px] tracking-[0.25em] text-[#ff2a2a]"
+                    className="text-[11px] tracking-[0.25em] text-[#c9a961]"
                     style={{ fontFamily: "'JetBrains Mono', monospace" }}
                   >
                     ATIVAR_MINHA_CONTA // 0X1
@@ -422,9 +422,9 @@ export default function QAClienteLoginPage() {
                 >
                   ID CREDENCIAL
                 </label>
-                <div className="flex items-center border-b border-[#1f1f1f] focus-within:border-[#ff2a2a]/60 bg-black/40 transition-colors">
+                <div className="flex items-center border-b border-[#1f1f1f] focus-within:border-[#c9a961]/60 bg-black/40 transition-colors">
                   <span
-                    className="text-[#ff2a2a]/60 text-sm pl-3"
+                    className="text-[#c9a961]/60 text-sm pl-3"
                     style={{ fontFamily: "'JetBrains Mono', monospace" }}
                   >
                     &gt;
@@ -453,9 +453,9 @@ export default function QAClienteLoginPage() {
                 >
                   CHAVE DE ACESSO
                 </label>
-                <div className="flex items-center border-b border-[#1f1f1f] focus-within:border-[#ff2a2a]/60 bg-black/40 transition-colors">
+                <div className="flex items-center border-b border-[#1f1f1f] focus-within:border-[#c9a961]/60 bg-black/40 transition-colors">
                   <span
-                    className="text-[#ff2a2a]/60 text-sm pl-3"
+                    className="text-[#c9a961]/60 text-sm pl-3"
                     style={{ fontFamily: "'JetBrains Mono', monospace" }}
                   >
                     &gt;
@@ -480,7 +480,7 @@ export default function QAClienteLoginPage() {
                 <button
                   type="button"
                   onClick={handleForgotPassword}
-                  className="text-[10px] text-zinc-500 hover:text-[#ff2a2a] tracking-[0.2em] transition-colors"
+                  className="text-[10px] text-zinc-500 hover:text-[#c9a961] tracking-[0.2em] transition-colors"
                   style={{ fontFamily: "'JetBrains Mono', monospace" }}
                 >
                   [ RECUPERAR ]
@@ -488,7 +488,7 @@ export default function QAClienteLoginPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="border border-[#1f1f1f] hover:border-[#ff2a2a] hover:bg-[#ff2a2a]/5 px-8 py-3 text-[13px] tracking-[0.2em] text-zinc-200 hover:text-white font-bold bg-[#030303] transition-all active:scale-[0.98] inline-flex items-center gap-2"
+                  className="border border-[#1f1f1f] hover:border-[#c9a961] hover:bg-[#c9a961]/5 px-8 py-3 text-[13px] tracking-[0.2em] text-zinc-200 hover:text-white font-bold bg-[#030303] transition-all active:scale-[0.98] inline-flex items-center gap-2"
                 >
                   {loading ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
