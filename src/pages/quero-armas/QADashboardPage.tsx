@@ -19,6 +19,7 @@ import { LoadingState } from "@/components/quero-armas/LoadStates";
 const DashboardExames = lazy(() => import("@/components/quero-armas/dashboard/DashboardExames"));
 const DashboardProcessosMonitor = lazy(() => import("@/components/quero-armas/dashboard/DashboardProcessosMonitor"));
 const DashboardPrazosRecursais = lazy(() => import("@/components/quero-armas/dashboard/DashboardPrazosRecursais"));
+const DashboardAtividadesRecentes = lazy(() => import("@/components/quero-armas/dashboard/DashboardAtividadesRecentes"));
 
 interface Stats {
   documentos: number;
@@ -405,6 +406,10 @@ export default function QADashboardPage() {
 
           <Suspense fallback={<div className="qa-card p-6 flex justify-center"><div className="w-5 h-5 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" /></div>}>
             <DashboardProcessosMonitor />
+          </Suspense>
+
+          <Suspense fallback={<div className="qa-card p-6 flex justify-center"><div className="w-5 h-5 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" /></div>}>
+            <DashboardAtividadesRecentes />
           </Suspense>
         </>
       )}
