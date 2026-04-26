@@ -397,7 +397,7 @@ export default function QAClientePortalPage() {
               className="hidden sm:flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#c9a961]/40"
               style={{ background: "linear-gradient(135deg, rgba(201,169,97,0.18), rgba(201,169,97,0.04))" }}
             >
-              <Crosshair className="h-4 w-4" style={{ color: "#c9a961" }} />
+              <CrosshairIcon className="h-4 w-4" style={{ color: "#c9a961" }} />
             </div>
             <div className="flex flex-col min-w-0">
               <span className="text-[9px] font-black uppercase tracking-[0.32em]" style={{ color: "#c9a961" }}>
