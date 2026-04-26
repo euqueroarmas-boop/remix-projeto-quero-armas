@@ -18,7 +18,55 @@ interface Props {
   onChange?: (totals: { total: number; byCalibre: { calibre: string; quantidade: number }[] }) => void;
 }
 
-const COMMON_CALIBRES = ["9MM", ".380", ".40", ".38", ".357", ".22LR", ".223", ".308", "CAL .12", "5.56"];
+const COMMON_CALIBRES = [
+  // Pistolas / submetralhadoras
+  "9MM",
+  ".380",
+  ".40",
+  ".45 ACP",
+  "10MM",
+  ".25 ACP",
+  ".32 ACP",
+  "9X21",
+  ".357 SIG",
+  // Revólveres
+  ".38",
+  ".357",
+  ".44 MAGNUM",
+  ".44 SPECIAL",
+  ".22 MAGNUM",
+  // Rimfire
+  ".22LR",
+  ".22 CURTO",
+  ".17 HMR",
+  // Fuzis / carabinas
+  ".223",
+  "5.56",
+  ".308",
+  "7.62X51",
+  "7.62X39",
+  "7.62X63 (.30-06)",
+  ".300 BLACKOUT",
+  ".30-30",
+  ".338 LAPUA",
+  ".338 MAGNUM",
+  ".50 BMG",
+  ".416",
+  // Espingardas
+  "CAL .12",
+  "CAL .16",
+  "CAL .20",
+  "CAL .24",
+  "CAL .28",
+  "CAL .32",
+  "CAL .36",
+  "CAL .410",
+  // Caça / esportivos comuns
+  ".243 WIN",
+  ".270 WIN",
+  "7MM REM MAG",
+  "6.5 CREEDMOOR",
+];
 
 export function MunicoesManager({ clienteId, onChange }: Props) {
   const [items, setItems] = useState<Municao[]>([]);
