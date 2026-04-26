@@ -47,12 +47,15 @@ export function SenhaGovField({ cadastroCrId, variant = "row", contexto }: Props
 
   const copy = async () => {
     const s = await ensure();
-    if (s) {
-      await navigator.clipboard.writeText(s);
-      toast.success("Senha Gov copiada");
-    } else {
+    if (!s) {
       toast.info("Sem Senha Gov cadastrada");
+      return;
     }
+    // Safari iOS bloqueia clipboard.writeText após await (perde user gesture).
+    // Tentamos Clipboard API, com fallback para textarea + execCommand.
+    const ok = await copyTextSafe(s);
+    if (ok) toast.success("Senha Gov copiada");
+    else toast.error("Não foi possível copiar — toque e segure para copiar manualmente");
   };
 
   if (variant === "compact") {
