@@ -136,7 +136,7 @@ function WeaponCard({
             <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-300/90">
               {modelo}
             </div>
-            <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.18em] text-amber-300/90">
+            <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.18em] text-white/70">
               CAL · {calibre}
             </div>
           </div>
