@@ -5364,6 +5364,12 @@ export type Database = {
           unidade_pf: string
         }[]
       }
+      qa_sweep_indeferimento_por_prazo: {
+        Args: never
+        Returns: {
+          itens_atualizados: number
+        }[]
+      }
       unaccent: { Args: { "": string }; Returns: string }
     }
     Enums: {
