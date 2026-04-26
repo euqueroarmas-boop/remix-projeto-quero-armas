@@ -41,7 +41,7 @@ interface Props {
 
 const toneClasses = {
   ok: { glow: "shadow-[0_0_24px_-6px_rgba(0,0,0,0.6)]", chip: "bg-emerald-400/15 text-emerald-300 border-emerald-400/40", dot: "bg-emerald-400" },
-  warn: { glow: "shadow-[0_0_24px_-6px_rgba(245,158,11,0.55)]", chip: "bg-amber-400/15 text-amber-300 border-amber-400/40", dot: "bg-amber-400" },
+  warn: { glow: "shadow-[0_0_24px_-6px_rgba(0,0,0,0.6)]", chip: "bg-amber-400/15 text-amber-300 border-amber-400/40", dot: "bg-amber-400" },
   danger: { glow: "shadow-[0_0_24px_-6px_rgba(239,68,68,0.55)]", chip: "bg-red-500/15 text-red-300 border-red-500/40", dot: "bg-red-500" },
   muted: { glow: "shadow-[0_0_24px_-6px_rgba(148,163,184,0.35)]", chip: "bg-white/5 text-white/60 border-white/10", dot: "bg-white/40" },
 };
@@ -69,11 +69,12 @@ function WeaponCard({
 }) {
   const tone = urgencyTone(w.daysToExpire);
   const c = toneClasses[tone];
+  // Aura/fundo do card sempre neutro (sem amarelo/dourado).
+  // Cores semânticas ficam apenas em chips, dots e badges de urgência.
   const accent =
-    tone === "ok" ? "#10b981"
-    : tone === "warn" ? "#f59e0b"
-    : tone === "danger" ? "#ef4444"
-    : "#22d3ee";
+    tone === "danger" ? "#ef4444"
+    : tone === "ok" ? "#10b981"
+    : "#64748b";
   const marca = catalog?.marca || info.marca || info.label;
   const modelo = catalog?.modelo || info.modelo || "";
   const calibre = catalog?.calibre || info.calibre || "—";
