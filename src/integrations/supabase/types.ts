@@ -3093,6 +3093,7 @@ export type Database = {
           bairro: string | null
           cep: string | null
           cidade: string | null
+          cliente_id: number | null
           cpf_cnpj: string | null
           created_at: string
           descricao_caso: string | null
@@ -3119,6 +3120,7 @@ export type Database = {
           bairro?: string | null
           cep?: string | null
           cidade?: string | null
+          cliente_id?: number | null
           cpf_cnpj?: string | null
           created_at?: string
           descricao_caso?: string | null
@@ -3145,6 +3147,7 @@ export type Database = {
           bairro?: string | null
           cep?: string | null
           cidade?: string | null
+          cliente_id?: number | null
           cpf_cnpj?: string | null
           created_at?: string
           descricao_caso?: string | null
@@ -3167,7 +3170,15 @@ export type Database = {
           updated_at?: string
           usuario_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "qa_casos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       qa_chunks_conhecimento: {
         Row: {
@@ -5800,6 +5811,12 @@ export type Database = {
           texto_chunk: string
         }[]
       }
+      qa_current_cliente_id: { Args: { _uid: string }; Returns: number }
+      qa_has_qa_perfil: {
+        Args: { _perfis: string[]; _uid: string }
+        Returns: boolean
+      }
+      qa_is_active_staff: { Args: { _uid: string }; Returns: boolean }
       qa_listar_municipios_por_uf: {
         Args: { p_uf: string }
         Returns: {
