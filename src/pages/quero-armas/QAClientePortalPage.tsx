@@ -387,27 +387,51 @@ export default function QAClientePortalPage() {
       />
       {/* ═══ TOP BAR ═══ */}
       <header
-        className="sticky top-0 z-50 border-b border-white/10 backdrop-blur-xl"
-        style={{ background: "linear-gradient(180deg, rgba(10,10,10,0.92) 0%, rgba(6,6,6,0.88) 100%)" }}
+        className="sticky top-0 z-50 border-b border-[#c9a961]/25 backdrop-blur-xl shadow-[0_8px_24px_-12px_rgba(0,0,0,0.9)]"
+        style={{ background: "linear-gradient(180deg, rgba(8,8,8,0.96) 0%, rgba(4,4,4,0.92) 100%)" }}
       >
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+        {/* Faixa superior tática (corner ticks + scanline) */}
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-px" style={{ background: "linear-gradient(90deg, transparent, rgba(201,169,97,0.55), transparent)" }} />
+        <div className="pointer-events-none absolute inset-0 opacity-[0.05]" style={{ backgroundImage: "repeating-linear-gradient(0deg, transparent 0, transparent 2px, rgba(255,255,255,0.5) 2px, rgba(255,255,255,0.5) 3px)" }} />
+        <div className="relative max-w-5xl mx-auto px-4 py-3.5 flex items-center justify-between gap-3">
           {/* Identidade */}
           <div className="flex items-center gap-3 min-w-0">
-            <div
-              className="hidden sm:flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#c9a961]/40"
-              style={{ background: "linear-gradient(135deg, rgba(201,169,97,0.18), rgba(201,169,97,0.04))" }}
-            >
-              <CrosshairIcon className="h-4 w-4" style={{ color: "#c9a961" }} />
+            {/* Insígnia tática com cantos */}
+            <div className="relative hidden sm:block">
+              <div
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-[#c9a961]/50"
+                style={{
+                  background: "linear-gradient(135deg, rgba(201,169,97,0.22), rgba(201,169,97,0.04) 60%, rgba(0,0,0,0.6))",
+                  boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.5), 0 0 18px -8px rgba(201,169,97,0.55)",
+                }}
+              >
+                <CrosshairIcon className="h-5 w-5" style={{ color: "#c9a961" }} />
+              </div>
+              {/* corner ticks */}
+              <span className="pointer-events-none absolute -left-1 -top-1 h-2 w-2 border-l border-t border-[#c9a961]/70" />
+              <span className="pointer-events-none absolute -right-1 -top-1 h-2 w-2 border-r border-t border-[#c9a961]/70" />
+              <span className="pointer-events-none absolute -left-1 -bottom-1 h-2 w-2 border-l border-b border-[#c9a961]/70" />
+              <span className="pointer-events-none absolute -right-1 -bottom-1 h-2 w-2 border-r border-b border-[#c9a961]/70" />
             </div>
+
+            {/* Divisor vertical dourado */}
+            <div className="hidden sm:block h-10 w-px" style={{ background: "linear-gradient(180deg, transparent, rgba(201,169,97,0.55), transparent)" }} />
+
             <div className="flex flex-col min-w-0">
-              <span className="text-[9px] font-black uppercase tracking-[0.32em]" style={{ color: "#c9a961" }}>
-                Área do Cliente
-              </span>
-              <span className="truncate text-[13px] md:text-sm font-bold uppercase tracking-wide text-white leading-tight">
+              <div className="flex items-center gap-1.5">
+                <span className="inline-block h-1 w-1 rounded-full bg-[#c9a961] animate-pulse" />
+                <span className="text-[9px] font-black uppercase tracking-[0.34em]" style={{ color: "#c9a961" }}>
+                  Área do Cliente
+                </span>
+              </div>
+              <span
+                className="truncate text-[14px] md:text-[15px] font-black uppercase tracking-[0.06em] text-white leading-tight"
+                style={{ textShadow: "0 1px 0 rgba(0,0,0,0.6)" }}
+              >
                 {userName || "Cliente"}
               </span>
-              <span className="text-[10px] uppercase tracking-[0.18em] text-white/40 leading-tight">
-                Arsenal inteligente
+              <span className="text-[9px] uppercase tracking-[0.28em] text-white/35 leading-tight font-semibold">
+                · Arsenal Inteligente ·
               </span>
             </div>
           </div>
@@ -416,11 +440,15 @@ export default function QAClientePortalPage() {
           <button
             type="button"
             onClick={handleLogout}
-            className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-3 text-[10px] font-black uppercase tracking-[0.22em] text-white/80 transition hover:border-red-400/50 hover:bg-red-500/10 hover:text-red-300"
+            className="group relative inline-flex h-10 shrink-0 items-center gap-2 overflow-hidden rounded-md border border-[#c9a961]/30 bg-black/40 px-3.5 text-[10px] font-black uppercase tracking-[0.28em] text-white/85 transition hover:border-red-400/60 hover:text-red-300"
+            style={{ boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.5)" }}
           >
-            <LogOut className="h-3.5 w-3.5" /> Sair
+            <span className="pointer-events-none absolute inset-x-0 top-0 h-px" style={{ background: "linear-gradient(90deg, transparent, rgba(201,169,97,0.6), transparent)" }} />
+            <LogOut className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" /> Sair
           </button>
         </div>
+        {/* Faixa inferior dourada */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px" style={{ background: "linear-gradient(90deg, transparent, rgba(201,169,97,0.45), transparent)" }} />
       </header>
 
       <main className="max-w-5xl mx-auto px-4 py-6 space-y-5">
