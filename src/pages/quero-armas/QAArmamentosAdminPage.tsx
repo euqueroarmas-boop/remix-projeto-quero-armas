@@ -446,15 +446,15 @@ export default function QAArmamentosAdminPage() {
 
 function Kpi({ label, value, tone, icon }: { label: string; value: number; tone?: "success" | "warn"; icon?: React.ReactNode }) {
   const toneMap: Record<string,{ value: string; ring: string; bg: string }> = {
-    success: { value: "text-emerald-300", ring: "border-emerald-500/30", bg: "bg-emerald-500/10" },
-    warn:    { value: "text-amber-300",   ring: "border-amber-500/30",   bg: "bg-amber-500/10" },
+    success: { value: "text-emerald-700", ring: "border-emerald-500/40", bg: "bg-emerald-500/10" },
+    warn:    { value: "text-amber-700",   ring: "border-amber-500/40",   bg: "bg-amber-500/10" },
   };
-  const t = tone ? toneMap[tone] : { value: "text-zinc-100", ring: "border-zinc-800", bg: "bg-zinc-800/40" };
+  const t = tone ? toneMap[tone] : { value: "text-zinc-900", ring: "border-zinc-200", bg: "bg-zinc-100" };
   return (
-    <Card className={`p-4 bg-zinc-950/80 border ${t.ring} relative overflow-hidden`}>
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/40 to-transparent" />
+    <Card className={`p-4 bg-white border ${t.ring} relative overflow-hidden shadow-sm`}>
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/60 to-transparent" />
       <div className="flex items-center justify-between">
-        <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-zinc-400">{label}</div>
+        <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-zinc-500">{label}</div>
         <div className={`h-7 w-7 grid place-items-center rounded ${t.bg} ${t.value}`}>{icon}</div>
       </div>
       <div className={`text-3xl font-bold mt-2 tabular-nums ${t.value}`}>{value}</div>
