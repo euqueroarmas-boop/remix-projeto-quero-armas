@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Activity, ArrowRight, ShieldCheck, FileText, PenTool, Users, FolderOpen } from "lucide-react";
 import { Link } from "react-router-dom";
-import { LoadingState, ErrorRetryState } from "@/components/quero-armas/LoadStates";
+import { ErrorRetryState, SkeletonList, EmptyState } from "@/components/quero-armas/LoadStates";
 
 interface AuditRow {
   id: string;
@@ -106,7 +106,7 @@ export default function DashboardAtividadesRecentes() {
       </div>
 
       {loading ? (
-        <LoadingState label="Carregando atividades…" variant="inline" />
+        <SkeletonList rows={4} />
       ) : error ? (
         <ErrorRetryState
           variant="inline"
@@ -115,9 +115,11 @@ export default function DashboardAtividadesRecentes() {
           title="Não foi possível carregar atividades"
         />
       ) : items.length === 0 ? (
-        <div className="text-center py-6 text-xs" style={{ color: "hsl(220 10% 62%)" }}>
-          Nenhuma atividade registrada ainda.
-        </div>
+        <EmptyState
+          icon={<Activity className="h-5 w-5" />}
+          title="Nenhuma atividade registrada"
+          description="As ações realizadas no sistema (cadastros, casos, peças) aparecerão aqui."
+        />
       ) : (
         <div className="space-y-1.5">
           {items.map((row) => {
