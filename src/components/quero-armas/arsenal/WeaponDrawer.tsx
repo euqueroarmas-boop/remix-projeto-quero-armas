@@ -210,7 +210,7 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
         {/* Specs técnicos */}
         <div className="mt-4 grid grid-cols-2 gap-2 px-6">
           <SpecCell icon={<Hash className="h-3 w-3" />}    label="SIGMA"     value={weapon.numero_sigma || "—"} />
-          <SpecCell icon={<FileBadge className="h-3 w-3" />} label="Nº SÉRIE" value={maskSerial(weapon.numero_arma)} />
+          <SpecCell icon={<FileBadge className="h-3 w-3" />} label="Nº SÉRIE" value={weapon.numero_arma || "—"} />
           <SpecCell icon={<Crosshair className="h-3 w-3" />} label="CALIBRE"  value={displayCalibre} />
           <SpecCell icon={<Calendar className="h-3 w-3" />}  label="VALIDADE" value={formatDate(weapon.data_validade)} />
           {catalog?.capacidade_carregador && (
