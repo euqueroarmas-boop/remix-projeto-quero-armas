@@ -26,6 +26,7 @@ import { toast } from "sonner";
 import ClienteFormModal from "@/components/quero-armas/clientes/ClienteFormModal";
 import ClienteOverview from "@/components/quero-armas/clientes/ClienteOverview";
 import { CrafModal, GteModal, CrModal, VendaModal, FiliacaoModal, DeleteConfirm } from "@/components/quero-armas/clientes/SubEntityModals";
+import SenhaGovField from "@/components/quero-armas/clientes/SenhaGovField";
 import { HistoricoAtualizacoes } from "@/components/quero-armas/clientes/HistoricoAtualizacoes";
 import { exportClientes, exportCrafs, exportGtes, exportCr, exportVendas } from "@/components/quero-armas/clientes/ClienteExport";
 import ClienteAcessoPortal from "@/components/quero-armas/clientes/ClienteAcessoPortal";
@@ -1830,7 +1831,7 @@ export default function QAClientesPage() {
                 <Section title="Identificação">
                   <Field label="Nome" value={c.nome_completo} />
                   <Field label="CPF" value={formatCpf(c.cpf)} copyable />
-                  {cadastro?.senha_gov && <Field label="Senha Gov" value={cadastro.senha_gov} copyable />}
+                  {cadastro?.id && <SenhaGovField cadastroCrId={cadastro.id} contexto="aba Dados" />}
                   <Field label="RG / CIN" value={c.rg ? `${maskRg(c.rg)}${c.emissor_rg ? ` — ${c.emissor_rg}` : ""}${(c as any).uf_emissor_rg ? `/${(c as any).uf_emissor_rg}` : ""}` : "—"} />
                   <Field label="Nascimento" value={formatDate(c.data_nascimento)} />
                   <Field label="Naturalidade" value={c.naturalidade} />
@@ -2231,7 +2232,7 @@ export default function QAClientesPage() {
                       ) : (
                         <Field label="Exame de Tiro" value={formatDate(cadastro.validade_exame_tiro)} />
                       )}
-                      <Field label="Senha Gov" value={cadastro.senha_gov} />
+                      <SenhaGovField cadastroCrId={cadastro.id} contexto="aba CR" />
                       {/* Checks ✓ só aparecem se NÃO dispensado E marcado */}
                       <div className="flex gap-4 mt-2 text-[10px]">
                         {!dispensaLaudo && cadastro.check_laudo_psi && <span className="text-emerald-400">✓ Laudo Psicológico OK</span>}
