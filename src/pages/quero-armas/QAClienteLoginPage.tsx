@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, ChevronLeft, Sparkles } from "lucide-react";
@@ -10,6 +10,20 @@ export default function QAClienteLoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const state = location.state as { prefillEmail?: string; prefillPassword?: string } | null;
+    if (state?.prefillEmail) setEmail(state.prefillEmail);
+    if (state?.prefillPassword) {
+      setPassword(state.prefillPassword);
+      toast.success("Credenciais preenchidas. Clique em entrar.");
+    }
+    if (state?.prefillEmail || state?.prefillPassword) {
+      // Limpa o state para não repetir ao recarregar
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   const handleForgotPassword = async () => {
     if (!email) { toast.error("Informe seu e-mail primeiro."); return; }

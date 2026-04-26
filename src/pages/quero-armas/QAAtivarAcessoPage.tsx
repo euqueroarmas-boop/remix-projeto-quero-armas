@@ -368,7 +368,16 @@ export default function QAAtivarAcessoPage() {
                 </div>
               ))}
             </div>
-            <PrimaryButton onClick={() => navigate("/area-do-cliente/login")}>
+            <PrimaryButton
+              onClick={() =>
+                navigate("/area-do-cliente/login", {
+                  state: {
+                    prefillEmail: credentials.email,
+                    prefillPassword: credentials.password,
+                  },
+                })
+              }
+            >
               <ShieldCheck className="h-4 w-4" />
               IR PARA O PORTAL
             </PrimaryButton>
