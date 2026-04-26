@@ -20,6 +20,7 @@ const DashboardExames = lazy(() => import("@/components/quero-armas/dashboard/Da
 const DashboardProcessosMonitor = lazy(() => import("@/components/quero-armas/dashboard/DashboardProcessosMonitor"));
 const DashboardPrazosRecursais = lazy(() => import("@/components/quero-armas/dashboard/DashboardPrazosRecursais"));
 const DashboardAtividadesRecentes = lazy(() => import("@/components/quero-armas/dashboard/DashboardAtividadesRecentes"));
+const DashboardFunilOperacional = lazy(() => import("@/components/quero-armas/dashboard/DashboardFunilOperacional"));
 
 interface Stats {
   documentos: number;
@@ -422,6 +423,13 @@ export default function QADashboardPage() {
         <KPICard to="/historico" icon={CheckCircle} label="Aprovadas" value={stats.aprovadas} trend={stats.aprovadas > 0 ? `${stats.aprovadas}` : "—"} positive={stats.aprovadas > 0} />
         <KPICard to="/ia" icon={Shield} label="Consultas IA" value={stats.consultas} trend={stats.consultas > 0 ? `${stats.consultas}` : "—"} positive={stats.consultas > 0} />
       </div>
+
+      {/* Funil Operacional Executivo (lazy, mountHeavy) */}
+      {mountHeavy && (
+        <Suspense fallback={<div className="qa-card p-6 flex justify-center"><div className="w-5 h-5 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" /></div>}>
+          <DashboardFunilOperacional />
+        </Suspense>
+      )}
 
       {/* Novos Cadastros Públicos */}
       {novosCadastros.length > 0 && (
