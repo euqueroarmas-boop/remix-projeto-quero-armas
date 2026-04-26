@@ -68,11 +68,12 @@ function WeaponCard({
 }) {
   const tone = urgencyTone(w.daysToExpire);
   const c = toneClasses[tone];
+  // Aura/fundo do card sempre neutro (sem amarelo/dourado).
+  // Cores semânticas ficam apenas em chips, dots e badges de urgência.
   const accent =
-    tone === "ok" ? "#10b981"
-    : tone === "warn" ? "#f59e0b"
-    : tone === "danger" ? "#ef4444"
-    : "#22d3ee";
+    tone === "danger" ? "#ef4444"
+    : tone === "ok" ? "#10b981"
+    : "#64748b";
   const marca = catalog?.marca || info.marca || info.label;
   const modelo = catalog?.modelo || info.modelo || "";
   const calibre = catalog?.calibre || info.calibre || "—";
