@@ -386,39 +386,55 @@ export default function DashboardPrazosRecursais() {
                   </button>
                   <button
                     type="button"
-                    onClick={async (e) => {
+                    onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
                       if (!r.cadastroCrId) {
                         toast.error("Sem CR cadastrado");
                         return;
                       }
-
                       const cached = govSenhas[r.cadastroCrId];
+                      // Caminho SÍNCRONO (compatível com Safari iOS): se a
+                      // senha já foi pré-carregada após o login, copia agora.
                       if (cached) {
-                        const ok = await copyTextSafe(cached);
-                        if (ok) toast.success("Senha Gov copiada");
-                        else toast.error("Não foi possível copiar — toque e segure na senha para copiar");
+                        // copyTextFallback é síncrono; só cai para clipboard
+                        // async como tentativa adicional não-bloqueante.
+                        const ok = copyTextFallback(cached);
+                        if (ok) {
+                          toast.success("Senha Gov copiada");
+                        } else {
+                          // tentativa async como último recurso
+                          copyTextSafe(cached).then((ok2) => {
+                            if (ok2) toast.success("Senha Gov copiada");
+                            else toast.error("Não foi possível copiar");
+                          });
+                        }
                         return;
                       }
-
-                      setGovLoading((prev) => ({ ...prev, [r.cadastroCrId!]: true }));
-                      try {
-                        const senha = await getSenhaGov(r.cadastroCrId, "Prazos Recursais");
-                        if (!senha) {
-                          toast.info("Sem Senha Gov cadastrada");
-                          return;
-                        }
-                        setGovSenhas((prev) => ({ ...prev, [r.cadastroCrId!]: senha }));
-                        toast.success("Senha Gov autenticada — toque novamente para copiar");
-                      } catch (err: any) {
-                        toast.error("Senha Gov: " + (err?.message || "erro"));
-                      } finally {
-                        setGovLoading((prev) => ({ ...prev, [r.cadastroCrId!]: false }));
-                      }
+                      // Sem cache → autentica/decripta agora (1 toque) e
+                      // já tenta copiar em seguida.
+                      const id = r.cadastroCrId;
+                      setGovLoading((prev) => ({ ...prev, [id]: true }));
+                      getSenhaGov(id, "Prazos Recursais")
+                        .then(async (senha) => {
+                          if (!senha) {
+                            toast.info("Sem Senha Gov cadastrada");
+                            return;
+                          }
+                          setGovSenhas((prev) => ({ ...prev, [id]: senha }));
+                          const ok = await copyTextSafe(senha);
+                          if (ok) toast.success("Senha Gov copiada");
+                          else toast.success("Senha Gov liberada — toque novamente para copiar");
+                        })
+                        .catch((err: any) => {
+                          toast.error("Senha Gov: " + (err?.message || "erro"));
+                        })
+                        .finally(() => {
+                          setGovLoading((prev) => ({ ...prev, [id]: false }));
+                        });
                     }}
                     className="flex items-center gap-1 px-1 py-0.5 rounded hover:bg-slate-200/60 text-[9px] font-mono text-slate-700 truncate"
-                    title={r.cadastroCrId ? "Autenticar e copiar Senha Gov" : "Sem CR"}
+                    title={r.cadastroCrId ? (govSenhas[r.cadastroCrId] ? "Copiar Senha Gov" : "Autenticar e copiar Senha Gov") : "Sem CR"}
                   >
                     {r.cadastroCrId && govLoading[r.cadastroCrId] ? (
                       <Loader2 className="h-2.5 w-2.5 shrink-0 animate-spin text-slate-400" />
