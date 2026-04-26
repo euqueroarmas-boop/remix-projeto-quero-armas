@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { getSenhaGov } from "./senhaGovApi";
 
 function csvEscape(val: any): string {
   if (val == null) return "";
@@ -48,8 +49,14 @@ export async function exportCr(clienteId: number, nomeCliente: string) {
   const { data } = await supabase.from("qa_cadastro_cr" as any).select("*").eq("cliente_id", clienteId).limit(1);
   if (!data?.length) { toast.info("Nenhum CR"); return; }
   const cr = (data as any[])[0];
+  let senhaGov = "";
+  try {
+    senhaGov = (await getSenhaGov(cr.id, `export CSV CR — ${nomeCliente}`)) || "";
+  } catch (e: any) {
+    toast.error("Senha Gov não exportada: " + (e?.message || "erro"));
+  }
   const headers = ["Nº CR", "Validade CR", "Laudo Psicológico", "Exame Tiro", "Senha Gov"];
-  const rows = [[cr.numero_cr, cr.validade_cr, cr.validade_laudo_psicologico, cr.validade_exame_tiro, cr.senha_gov]];
+  const rows = [[cr.numero_cr, cr.validade_cr, cr.validade_laudo_psicologico, cr.validade_exame_tiro, senhaGov]];
   downloadCsv(`cr_${nomeCliente.replace(/\s/g, "_")}.csv`, headers, rows);
   toast.success("CR exportado");
 }
