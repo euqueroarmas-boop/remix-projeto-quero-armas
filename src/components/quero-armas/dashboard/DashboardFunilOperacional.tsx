@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { Users, FolderOpen, PenTool, CheckCircle, ArrowRight, TrendingUp } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface FunnelStage {
   key: string;
@@ -145,7 +146,7 @@ export default function DashboardFunilOperacional() {
             Conversão total
           </div>
           <div className="text-lg font-bold" style={{ color: "hsl(160 70% 36%)" }}>
-            {stats.loading ? "—" : `${conversao}%`}
+            {stats.loading ? <Skeleton className="h-5 w-12 inline-block align-middle" /> : `${conversao}%`}
           </div>
         </div>
       </div>
@@ -169,7 +170,7 @@ export default function DashboardFunilOperacional() {
                 </span>
               </div>
               <div className="text-xl font-bold" style={{ color: "hsl(220 20% 18%)" }}>
-                {stats.loading ? "—" : s.value.toLocaleString("pt-BR")}
+                {stats.loading ? <Skeleton className="h-6 w-14" /> : s.value.toLocaleString("pt-BR")}
               </div>
               <div className="text-[10px]" style={{ color: "hsl(220 10% 62%)" }}>
                 {s.hint}
