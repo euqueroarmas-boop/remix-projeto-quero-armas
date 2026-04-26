@@ -23,6 +23,7 @@ import WidgetStateView from "./WidgetStateView";
 import { loadQADashboardSnapshot } from "./dashboardSnapshot";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { getSenhaGov } from "@/components/quero-armas/clientes/senhaGovApi";
 
 interface ItemRow {
   id: number;
@@ -305,12 +306,30 @@ export default function DashboardPrazosRecursais() {
                   </button>
                   <button
                     type="button"
-                    onClick={(e) => handleCopy(e, "Senha Gov", r.senhaGov)}
+                    onClick={async (e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (!r.cadastroCrId) {
+                        toast.error("Sem CR cadastrado");
+                        return;
+                      }
+                      try {
+                        const senha = await getSenhaGov(r.cadastroCrId, "Prazos Recursais");
+                        if (!senha) {
+                          toast.info("Sem Senha Gov cadastrada");
+                          return;
+                        }
+                        await navigator.clipboard.writeText(senha);
+                        toast.success("Senha Gov copiada");
+                      } catch (err: any) {
+                        toast.error("Senha Gov: " + (err?.message || "erro"));
+                      }
+                    }}
                     className="flex items-center gap-1 px-1 py-0.5 rounded hover:bg-slate-200/60 text-[9px] font-mono text-slate-700 truncate"
-                    title={r.senhaGov ? "Copiar Senha Gov" : "Sem senha gov"}
+                    title={r.cadastroCrId ? "Copiar Senha Gov (decifra sob demanda)" : "Sem CR"}
                   >
                     <Copy className="h-2.5 w-2.5 shrink-0 text-slate-400" />
-                    <span className="truncate">GOV: {r.senhaGov || "—"}</span>
+                    <span className="truncate">GOV: {r.cadastroCrId ? "•••• copiar" : "—"}</span>
                   </button>
                 </div>
                 <div className="mt-auto flex items-baseline gap-1">
