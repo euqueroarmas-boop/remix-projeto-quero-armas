@@ -136,6 +136,9 @@ function WeaponCard({
             <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-300/90">
               {modelo}
             </div>
+            <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.18em] text-amber-300/90">
+              CAL · {calibre}
+            </div>
           </div>
           <span
             className={`shrink-0 rounded-sm border px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.16em] ${c.chip}`}
