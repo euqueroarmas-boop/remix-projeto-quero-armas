@@ -23,6 +23,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 
 import { toast } from "sonner";
+import { LoadingState, ErrorRetryState } from "@/components/quero-armas/LoadStates";
 import ClienteFormModal from "@/components/quero-armas/clientes/ClienteFormModal";
 import ClienteOverview from "@/components/quero-armas/clientes/ClienteOverview";
 import { CrafModal, GteModal, CrModal, VendaModal, FiliacaoModal, DeleteConfirm } from "@/components/quero-armas/clientes/SubEntityModals";
@@ -956,6 +957,7 @@ export default function QAClientesPage() {
   const { statuses: statusList } = useQAStatusServico();
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<Error | null>(null);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Cliente | null>(null);
   const [tab, setTab] = useState("resumo");
@@ -1331,12 +1333,26 @@ export default function QAClientesPage() {
 
   const loadClientes = async () => {
     setLoading(true);
+    setLoadError(null);
+    // Safety: nunca deixar o spinner principal eterno (12s).
+    const safety = setTimeout(() => {
+      console.warn("[QAClientes] safety timeout 12s — liberando UI com erro");
+      setLoadError(new Error("Tempo limite excedido ao carregar clientes."));
+      setLoading(false);
+    }, 12000);
     try {
-      const { data } = await supabase.from("qa_clientes" as any).select("*").order("nome_completo", { ascending: true });
+      const { data, error } = await supabase
+        .from("qa_clientes" as any)
+        .select("*")
+        .order("nome_completo", { ascending: true });
+      if (error) throw error;
       setClientes((data as any[]) ?? []);
-    } catch (err) {
+      setLoadError(null);
+    } catch (err: any) {
       console.error("[QAClientes] loadClientes error:", err);
+      setLoadError(err instanceof Error ? err : new Error(String(err?.message || err)));
     } finally {
+      clearTimeout(safety);
       setLoading(false);
     }
   };
@@ -2820,10 +2836,13 @@ export default function QAClientesPage() {
       )}
 
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-16 gap-3">
-          <div className="w-8 h-8 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" />
-          <span className="text-[11px] uppercase tracking-wider" style={{ color: "hsl(220 10% 62%)" }}>Carregando...</span>
-        </div>
+        <LoadingState label="Carregando clientes…" />
+      ) : loadError ? (
+        <ErrorRetryState
+          error={loadError}
+          onRetry={loadClientes}
+          title="Não foi possível carregar os clientes"
+        />
       ) : tabView === "clientes" ? (
         <div className="space-y-2">
           {filtered.length === 0 && <div className="text-center py-12 text-sm" style={{ color: "hsl(220 10% 62%)" }}>Nenhum cliente encontrado.</div>}
