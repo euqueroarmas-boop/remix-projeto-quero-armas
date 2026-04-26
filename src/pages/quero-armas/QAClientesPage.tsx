@@ -956,6 +956,7 @@ export default function QAClientesPage() {
   const { statuses: statusList } = useQAStatusServico();
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<Error | null>(null);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Cliente | null>(null);
   const [tab, setTab] = useState("resumo");
