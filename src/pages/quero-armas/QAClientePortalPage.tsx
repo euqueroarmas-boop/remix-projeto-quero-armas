@@ -740,6 +740,76 @@ export default function QAClientePortalPage() {
           </div>
         )}
 
+        {/* ═══ PRÓXIMA AÇÃO PRIORITÁRIA — destaque do item mais urgente (≤30d ou vencido) ═══ */}
+        {analysis && (() => {
+          const prioridade = [...analysis.expDocs]
+            .filter((d) => d.days !== null && (d.days as number) <= 30)
+            .sort((a, b) => (a.days as number) - (b.days as number))[0];
+          if (!prioridade) return null;
+          const isVencido = (prioridade.days as number) < 0;
+          return (
+            <div
+              className="relative overflow-hidden rounded-2xl border shadow-sm"
+              style={{
+                background: isVencido
+                  ? "linear-gradient(135deg, hsl(0 80% 97%), hsl(0 60% 99%))"
+                  : "linear-gradient(135deg, hsl(38 95% 96%), hsl(38 80% 99%))",
+                borderColor: isVencido ? "hsl(0 70% 85%)" : "hsl(38 80% 80%)",
+              }}
+            >
+              <div
+                className="absolute inset-x-0 top-0 h-1"
+                style={{
+                  background: isVencido
+                    ? "linear-gradient(90deg, hsl(0 72% 55%), hsl(15 80% 55%))"
+                    : "linear-gradient(90deg, hsl(38 92% 50%), hsl(28 92% 55%))",
+                }}
+              />
+              <div className="p-4 md:p-5 flex items-center gap-4">
+                <div
+                  className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-sm"
+                  style={{
+                    background: isVencido ? "hsl(0 72% 55%)" : "hsl(38 92% 50%)",
+                    color: "white",
+                  }}
+                >
+                  <AlertTriangle className="h-5 w-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span
+                      className="text-[9px] font-bold uppercase tracking-[0.18em]"
+                      style={{ color: isVencido ? "hsl(0 72% 45%)" : "hsl(28 80% 38%)" }}
+                    >
+                      Próxima ação prioritária
+                    </span>
+                    <span
+                      className="text-[8px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider"
+                      style={{
+                        background: "white",
+                        color: isVencido ? "hsl(0 72% 45%)" : "hsl(28 80% 38%)",
+                      }}
+                    >
+                      {prioridade.category}
+                    </span>
+                  </div>
+                  <div className="text-[14px] font-bold text-slate-800 truncate">
+                    {prioridade.label}
+                  </div>
+                  <div className="text-[11px] text-slate-600 mt-0.5">
+                    {isVencido
+                      ? `Vencido há ${Math.abs(prioridade.days as number)} dia(s) — regularize com urgência.`
+                      : `Vence em ${prioridade.days} dia(s) — providencie a renovação.`}
+                    {prioridade.date && (
+                      <span className="font-mono ml-2 opacity-70">({formatDate(prioridade.date)})</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
         {/* ═══ SERVICES ═══ */}
         <SectionCard icon={Target} title="Meus Serviços" color="hsl(230 80% 56%)">
           {itens.length === 0 ? (
