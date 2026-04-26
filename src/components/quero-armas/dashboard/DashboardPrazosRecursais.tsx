@@ -34,6 +34,9 @@ interface ItemRow {
   data_recurso_administrativo: string | null;
   numero_processo: string | null;
   numero_requerimento: string | null;
+  numero_posse: string | null;
+  numero_porte: string | null;
+  numero_craf: string | null;
 }
 interface VendaRow { id: number; id_legado: number | null; cliente_id: number | null; }
 interface ClienteRow { id: number; id_legado: number | null; nome_completo: string | null; cpf: string | null; }
@@ -165,9 +168,18 @@ export default function DashboardPrazosRecursais() {
         cpf: cliente.cpf ?? null,
         senhaGov: cliente.id != null ? senhaMap.get(cliente.id) ?? null : null,
         protocolo:
-          (it.servico_id === 3 ? it.numero_requerimento : it.numero_processo) ??
-          it.numero_requerimento ??
+          (it.servico_id === 2
+            ? it.numero_posse
+            : it.servico_id === 3
+              ? it.numero_requerimento
+              : it.servico_id === 26
+                ? it.numero_craf
+                : it.numero_processo) ??
           it.numero_processo ??
+          it.numero_requerimento ??
+          it.numero_posse ??
+          it.numero_porte ??
+          it.numero_craf ??
           null,
         tipo,
         evento,
