@@ -37,21 +37,35 @@ function hexToBytes(hex: string): Uint8Array {
 }
 
 async function loadKey(): Promise<CryptoKey> {
-  const raw = Deno.env.get("QA_ENCRYPTION_KEY") || "";
-  if (!raw) throw new Error("QA_ENCRYPTION_KEY not configured");
-  let bytes: Uint8Array;
-  try {
-    // Aceita base64 (44 chars p/ 32 bytes) ou hex (64 chars)
-    if (/^[0-9a-fA-F]{64}$/.test(raw.trim())) {
-      bytes = hexToBytes(raw.trim());
-    } else {
-      bytes = b64ToBytes(raw.trim());
+  const rawEnv = Deno.env.get("QA_ENCRYPTION_KEY") || "";
+  if (!rawEnv) throw new Error("QA_ENCRYPTION_KEY not configured");
+  // Remove qualquer whitespace/quebra de linha que possa ter vindo da UI
+  const raw = rawEnv.replace(/\s+/g, "").trim();
+  let bytes: Uint8Array | null = null;
+
+  // 1) Hex de 64 chars
+  if (/^[0-9a-fA-F]{64}$/.test(raw)) {
+    bytes = hexToBytes(raw);
+  } else {
+    // 2) base64 ou base64url (converte url-safe -> std e adiciona padding)
+    let b64 = raw.replace(/-/g, "+").replace(/_/g, "/");
+    while (b64.length % 4 !== 0) b64 += "=";
+    try {
+      bytes = b64ToBytes(b64);
+    } catch {
+      bytes = null;
     }
-  } catch {
-    throw new Error("QA_ENCRYPTION_KEY inválida (use base64 ou hex de 32 bytes)");
+  }
+
+  if (!bytes) {
+    throw new Error(
+      `QA_ENCRYPTION_KEY inválida (formato não reconhecido, length=${raw.length})`,
+    );
   }
   if (bytes.length !== 32) {
-    throw new Error(`QA_ENCRYPTION_KEY deve ter 32 bytes (recebido ${bytes.length})`);
+    throw new Error(
+      `QA_ENCRYPTION_KEY deve ter 32 bytes (recebido ${bytes.length}, length string=${raw.length})`,
+    );
   }
   return await crypto.subtle.importKey(
     "raw",
