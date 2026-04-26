@@ -552,8 +552,6 @@ function WeaponCard({
             "radial-gradient(ellipse at center, #ffffff 0%, #f6f5f1 65%, #ecebe5 100%)",
         }}
       >
-        {/* camada opaca garantida — bloqueia qualquer xadrez/transparência embutida na imagem */}
-        <div className="absolute inset-0 -z-0 bg-white" aria-hidden="true" />
         {it.imagem ? (
           <img
             src={it.imagem}
