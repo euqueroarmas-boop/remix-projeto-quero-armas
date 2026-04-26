@@ -653,7 +653,7 @@ export type Database = {
           qa_cliente_id: number | null
           status: string
           updated_at: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           activated_at?: string | null
@@ -668,7 +668,7 @@ export type Database = {
           qa_cliente_id?: number | null
           status?: string
           updated_at?: string
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           activated_at?: string | null
@@ -683,7 +683,7 @@ export type Database = {
           qa_cliente_id?: number | null
           status?: string
           updated_at?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: [
           {
@@ -1154,7 +1154,7 @@ export type Database = {
           contract_text: string | null
           contract_type: string | null
           created_at: string
-          customer_id: string | null
+          customer_id: string
           id: string
           monthly_value: number | null
           quote_id: string | null
@@ -1173,7 +1173,7 @@ export type Database = {
           contract_text?: string | null
           contract_type?: string | null
           created_at?: string
-          customer_id?: string | null
+          customer_id: string
           id?: string
           monthly_value?: number | null
           quote_id?: string | null
@@ -1192,7 +1192,7 @@ export type Database = {
           contract_text?: string | null
           contract_type?: string | null
           created_at?: string
-          customer_id?: string | null
+          customer_id?: string
           id?: string
           monthly_value?: number | null
           quote_id?: string | null
@@ -4406,10 +4406,10 @@ export type Database = {
           registro_cad: string | null
           servico_id: number | null
           sort_order: number | null
-          status: string | null
+          status: string
           validade_autorizacao: string | null
-          valor: number | null
-          venda_id: number | null
+          valor: number
+          venda_id: number
         }
         Insert: {
           calibre?: string | null
@@ -4443,10 +4443,10 @@ export type Database = {
           registro_cad?: string | null
           servico_id?: number | null
           sort_order?: number | null
-          status?: string | null
+          status?: string
           validade_autorizacao?: string | null
-          valor?: number | null
-          venda_id?: number | null
+          valor?: number
+          venda_id: number
         }
         Update: {
           calibre?: string | null
@@ -4480,10 +4480,10 @@ export type Database = {
           registro_cad?: string | null
           servico_id?: number | null
           sort_order?: number | null
-          status?: string | null
+          status?: string
           validade_autorizacao?: string | null
-          valor?: number | null
-          venda_id?: number | null
+          valor?: number
+          venda_id?: number
         }
         Relationships: [
           {
@@ -5118,7 +5118,7 @@ export type Database = {
       }
       qa_vendas: {
         Row: {
-          cliente_id: number | null
+          cliente_id: number
           created_at: string
           data_cadastro: string | null
           data_deferimento: string | null
@@ -5129,12 +5129,12 @@ export type Database = {
           id: number
           id_legado: number
           numero_processo: string | null
-          status: string | null
+          status: string
           valor_a_pagar: number | null
           valor_aberto: number
         }
         Insert: {
-          cliente_id?: number | null
+          cliente_id: number
           created_at?: string
           data_cadastro?: string | null
           data_deferimento?: string | null
@@ -5145,12 +5145,12 @@ export type Database = {
           id?: number
           id_legado: number
           numero_processo?: string | null
-          status?: string | null
+          status?: string
           valor_a_pagar?: number | null
           valor_aberto?: number
         }
         Update: {
-          cliente_id?: number | null
+          cliente_id?: number
           created_at?: string
           data_cadastro?: string | null
           data_deferimento?: string | null
@@ -5161,7 +5161,7 @@ export type Database = {
           id?: number
           id_legado?: number
           numero_processo?: string | null
-          status?: string | null
+          status?: string
           valor_a_pagar?: number | null
           valor_aberto?: number
         }
