@@ -257,7 +257,7 @@ function DocumentTag({ d }: { d: DocCard }) {
             {urgencyText(d.daysToExpire)}
           </span>
         </div>
-        <div className="mt-0.5 truncate text-[11px] font-semibold text-white/90">{d.title}</div>
+        <div className="mt-0.5 truncate text-[11px] font-bold uppercase tracking-wide text-white/90">{d.title}</div>
       </div>
     </button>
   );
