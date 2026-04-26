@@ -1315,6 +1315,8 @@ IGNORE qualquer menção no contexto a tipos de peça diferentes. O tipo é FIXO
               status: "gerado", status_revisao: "rascunho",
               profundidade: "tecnica_concisa", tom: "tecnico_padrao", foco: foco || "legalidade",
               score_confianca: scoreConfianca, versao: 1,
+              caso_id: caso_id || null,
+              cliente_id: cliente_id_final ?? null,
             }).select("id").single();
 
             await supabase.from("qa_logs_auditoria").insert({
