@@ -218,7 +218,7 @@ export function ArsenalView({
       return (a.daysToExpire ?? 9999) - (b.daysToExpire ?? 9999);
     });
     return list;
-  }, [cadastroCr, crafs, gtes, meusDocs]);
+  }, [cadastroCr, crafs, gtes, meusDocs, matchCatalogo, catalogoById]);
 
   // Drawer: documentos relacionados à arma selecionada
   const relatedDocs = useMemo(() => {
