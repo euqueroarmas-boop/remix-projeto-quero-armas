@@ -588,12 +588,12 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 function StatusBadge({ s }: { s: Status }) {
-  const map: Record<Status, { variant: any; label: string }> = {
-    rascunho: { variant: "outline", label: "Rascunho" },
-    pendente_revisao: { variant: "secondary", label: "Pendente" },
-    verificado: { variant: "default", label: "Verificado" },
-    rejeitado: { variant: "destructive", label: "Rejeitado" },
+  const map: Record<Status, { cls: string; label: string }> = {
+    rascunho:         { cls: "border-zinc-700 text-zinc-300 bg-zinc-800/40",         label: "RASCUNHO" },
+    pendente_revisao: { cls: "border-amber-500/40 text-amber-300 bg-amber-500/10",   label: "PENDENTE" },
+    verificado:       { cls: "border-emerald-500/40 text-emerald-300 bg-emerald-500/10", label: "VERIFICADO" },
+    rejeitado:        { cls: "border-red-500/40 text-red-300 bg-red-500/10",         label: "REJEITADO" },
   };
   const c = map[s];
-  return <Badge variant={c.variant}>{c.label}</Badge>;
+  return <span className={`inline-flex items-center px-2 py-0.5 rounded border text-[9px] font-mono uppercase tracking-[0.2em] ${c.cls}`}>{c.label}</span>;
 }
